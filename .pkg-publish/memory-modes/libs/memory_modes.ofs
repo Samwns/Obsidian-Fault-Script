@@ -1,0 +1,21 @@
+// memory-modes package for OFS
+// Install with packages/install_library.sh or install_library.ps1
+// Use with: attach "memory_modes.ofs"
+
+vein memory_mode_safe_name() -> obsidian {
+    return "fracture"
+}
+
+vein memory_mode_unsafe_name() -> obsidian {
+    return "abyss"
+}
+
+vein memory_mode_mid_name() -> obsidian {
+    return "fractal"
+}
+
+vein explain_memory_modes() -> void {
+    echo("fracture = safe pointers")
+    echo("abyss = unrestricted memory")
+    echo("fractal = effect-lifted intermediate mode")
+}
