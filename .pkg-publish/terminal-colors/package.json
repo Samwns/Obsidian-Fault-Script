@@ -1,0 +1,14 @@
+{
+  "name": "@samwns/ofs-lib-terminal-colors",
+  "version": "1.0.0",
+  "description": "ANSI color helpers for OFS terminal output",
+  "license": "BSL-1.0",
+  "files": [
+    "libs",
+    "ofspkg.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

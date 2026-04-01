@@ -1,0 +1,14 @@
+{
+  "name": "@samwns/ofs-lib-memory-modes",
+  "version": "1.0.0",
+  "description": "Helpers and docs for fracture/abyss/fractal memory modes",
+  "license": "BSL-1.0",
+  "files": [
+    "libs",
+    "ofspkg.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  }
+}

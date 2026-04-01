@@ -30,11 +30,8 @@ jobs:
         run: |
           OWNER_LOWER=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
           echo "OWNER_LOWER=$OWNER_LOWER" >> "$GITHUB_ENV"
-          cat > "$HOME/.npmrc" <<EOF
-          @${OWNER_LOWER}:registry=https://npm.pkg.github.com
-          //npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
-          always-auth=true
-          EOF
+          printf "@%s:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\nalways-auth=true\n" \
+            "$OWNER_LOWER" "$NODE_AUTH_TOKEN" > "$HOME/.npmrc"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -50,6 +47,7 @@ jobs:
             short_name=$(node -pe "require('./${dir}/ofspkg.json').name")
             version=$(node -pe "require('./${dir}/ofspkg.json').version")
             description=$(node -pe "require('./${dir}/ofspkg.json').description || ''")
+            main_module=$(node -pe "require('./${dir}/ofspkg.json').main")
             package_name="@${OWNER_LOWER}/ofs-lib-${short_name}"
             workdir=".pkg-publish/${short_name}"
 
@@ -59,30 +57,11 @@ jobs:
             cp -r "$dir/libs" "$workdir/libs"
             cp "$dir/ofspkg.json" "$workdir/ofspkg.json"
 
-            cat > "$workdir/README.md" <<EOF
-            # ${package_name}
+            printf "# %s\n\nOFS library package published via GitHub Packages.\n\nMain module: %s\n\nUsage in OFS:\n\nattach \"%s\"\n" \
+              "$package_name" "$main_module" "$(basename "$main_module")" > "$workdir/README.md"
 
-            OFS library package published via GitHub Packages.
-
-            Main module: $(node -pe "require('./${dir}/ofspkg.json').main")
-
-            Usage in OFS:
-
-            attach \"$(basename $(node -pe "require('./${dir}/ofspkg.json').main"))\"
-            EOF
-
-            cat > "$workdir/package.json" <<EOF
-            {
-              "name": "${package_name}",
-              "version": "${version}",
-              "description": "${description}",
-              "license": "BSL-1.0",
-              "files": ["libs", "ofspkg.json", "README.md"],
-              "publishConfig": {
-                "registry": "https://npm.pkg.github.com"
-              }
-            }
-            EOF
+            node -e 'const fs=require("fs"); const out=process.argv[1]; const p={name:process.argv[2], version:process.argv[3], description:process.argv[4], license:"BSL-1.0", files:["libs","ofspkg.json","README.md"], publishConfig:{registry:"https://npm.pkg.github.com"}}; fs.writeFileSync(out, JSON.stringify(p,null,2)+"\n");' \
+              "$workdir/package.json" "$package_name" "$version" "$description"
 
             if npm view "${package_name}@${version}" version >/dev/null 2>&1; then
               echo "Skipping ${package_name}@${version} (already published)"
