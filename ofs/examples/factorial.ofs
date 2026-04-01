@@ -1,0 +1,15 @@
+// OFS Example: Factorial using recursion
+// Demonstrates: vein functions, recursion, if/else, return
+
+vein factorial(n: stone) -> stone {
+    if (n <= 1) {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+core main() {
+    cycle (forge i = 1; i <= 10; i++) {
+        echo(factorial(i))
+    }
+}

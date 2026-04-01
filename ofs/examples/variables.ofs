@@ -1,0 +1,36 @@
+// OFS Example: Variables and type inference
+// Demonstrates: forge, type inference, explicit types, compound assignment
+
+core main() {
+    // Type inference
+    forge name = "Obsidian"
+    forge count = 42
+    forge pi = 3.14159
+    forge active = true
+
+    echo(name)
+    echo(count)
+    echo(pi)
+    echo(active)
+
+    // Explicit types
+    forge score: stone = 100
+    forge ratio: crystal = 0.75
+
+    // Compound assignment
+    score += 50
+    echo(score)     // 150
+
+    score -= 25
+    echo(score)     // 125
+
+    score *= 2
+    echo(score)     // 250
+
+    // Increment / decrement
+    forge i: stone = 0
+    i++
+    i++
+    i++
+    echo(i)         // 3
+}

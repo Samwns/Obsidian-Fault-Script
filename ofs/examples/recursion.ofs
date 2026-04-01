@@ -1,0 +1,32 @@
+// Demonstrating recursive functions
+vein fibonacci(n: stone) -> stone {
+    if (n <= 0) { return 0 }
+    if (n == 1) { return 1 }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+vein gcd(a: stone, b: stone) -> stone {
+    if (b == 0) { return a }
+    return gcd(b, a % b)
+}
+
+vein power(base: stone, exp: stone) -> stone {
+    if (exp == 0) { return 1 }
+    return base * power(base, exp - 1)
+}
+
+core main() {
+    // Fibonacci sequence
+    echo("Fibonacci:")
+    cycle (forge i = 0; i < 10; i++) {
+        echo(fibonacci(i))
+    }
+
+    // GCD
+    echo("GCD of 48 and 18:")
+    echo(gcd(48, 18))
+
+    // Power
+    echo("2^10:")
+    echo(power(2, 10))
+}

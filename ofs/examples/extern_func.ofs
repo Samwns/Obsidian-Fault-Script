@@ -1,0 +1,16 @@
+// Demonstrating extern function declarations
+// These link to the OFS runtime C functions
+
+extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
+extern vein ofs_sqrt(val: crystal) -> crystal
+
+core main() {
+    forge base: crystal = 2.0
+    forge exp: crystal = 10.0
+    forge result: crystal = ofs_pow(base, exp)
+    echo(result)
+
+    forge val: crystal = 144.0
+    forge root: crystal = ofs_sqrt(val)
+    echo(root)
+}

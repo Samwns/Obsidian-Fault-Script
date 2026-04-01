@@ -1,0 +1,44 @@
+// Demonstrating math operations
+extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
+extern vein ofs_sqrt(val: crystal) -> crystal
+
+vein is_prime(n: stone) -> bool {
+    if (n < 2) { return false }
+    if (n < 4) { return true }
+    if (n % 2 == 0) { return false }
+    forge i: stone = 3
+    while (i * i <= n) {
+        if (n % i == 0) { return false }
+        i += 2
+    }
+    return true
+}
+
+core main() {
+    // Basic arithmetic
+    forge a: stone = 15
+    forge b: stone = 4
+    echo(a + b)
+    echo(a - b)
+    echo(a * b)
+    echo(a / b)
+    echo(a % b)
+
+    // Float math
+    forge x: crystal = 3.14
+    forge y: crystal = 2.0
+    echo(x + y)
+    echo(x * y)
+
+    // Power and sqrt
+    echo(ofs_pow(2.0, 10.0))
+    echo(ofs_sqrt(144.0))
+
+    // Prime check
+    echo("Primes up to 30:")
+    cycle (forge i = 2; i <= 30; i++) {
+        if (is_prime(i)) {
+            echo(i)
+        }
+    }
+}

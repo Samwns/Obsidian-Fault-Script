@@ -1,0 +1,31 @@
+// OFS Example: Calculator functions
+// Demonstrates: multiple vein functions, type annotations, arithmetic
+
+vein add(a: stone, b: stone) -> stone {
+    return a + b
+}
+
+vein subtract(a: stone, b: stone) -> stone {
+    return a - b
+}
+
+vein multiply(a: stone, b: stone) -> stone {
+    return a * b
+}
+
+vein divide(a: crystal, b: crystal) -> crystal {
+    return a / b
+}
+
+core main() {
+    forge x: stone = 15
+    forge y: stone = 7
+
+    echo(add(x, y))        // 22
+    echo(subtract(x, y))   // 8
+    echo(multiply(x, y))   // 105
+
+    forge a: crystal = 22.0
+    forge b: crystal = 7.0
+    echo(divide(a, b))     // 3.14286
+}
