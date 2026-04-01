@@ -179,6 +179,15 @@ jobs:
             }
           }
 
+          if (Test-Path "build\libofs_runtime.a") {
+            Copy-Item "build\libofs_runtime.a" "dist\libofs_runtime.a"
+          } elseif (Test-Path "build\Release\ofs_runtime.lib") {
+            Copy-Item "build\Release\ofs_runtime.lib" "dist\ofs_runtime.lib"
+          } else {
+            Write-Error "Runtime static library not found (expected build\\libofs_runtime.a or build\\Release\\ofs_runtime.lib)."
+            exit 1
+          }
+
           Copy-Item "LICENSE" "dist\LICENSE.txt"
 
           if (Test-Path "${{ matrix.artifact }}") { Remove-Item "${{ matrix.artifact }}" -Force }

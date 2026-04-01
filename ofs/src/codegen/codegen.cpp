@@ -19,6 +19,17 @@
 #include <llvm/IR/DerivedTypes.h>
 #include <cstdlib>
 #include <iostream>
+#include <filesystem>
+#include <vector>
+#ifdef _WIN32
+#include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
+#include <limits.h>
+#else
+#include <unistd.h>
+#include <limits.h>
+#endif
 
 namespace ofs {
 
@@ -166,12 +177,38 @@ void CodeGen::emit_object(const std::string& filepath) {
 
 // ── Link ──────────────────────────────────────────────────────────────────
 
-void CodeGen::link(const std::string& obj_file, const std::string& out_file) {
-    // Find the runtime library - look in common locations
-    std::string runtime_obj;
+static std::string get_executable_dir() {
+#ifdef _WIN32
+    char buffer[MAX_PATH];
+    DWORD len = GetModuleFileNameA(nullptr, buffer, MAX_PATH);
+    if (len == 0 || len == MAX_PATH) {
+        return "";
+    }
+    return std::filesystem::path(buffer).parent_path().string();
+#elif defined(__APPLE__)
+    uint32_t size = 0;
+    _NSGetExecutablePath(nullptr, &size);
+    std::string exe_path(size, '\0');
+    if (_NSGetExecutablePath(exe_path.data(), &size) != 0) {
+        return "";
+    }
+    return std::filesystem::path(exe_path.c_str()).parent_path().string();
+#else
+    char buffer[PATH_MAX] = {0};
+    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+    if (len <= 0) {
+        return "";
+    }
+    buffer[len] = '\0';
+    return std::filesystem::path(buffer).parent_path().string();
+#endif
+}
 
-    // Try to find ofs_runtime.o relative to the executable or in known paths
-    const char* paths[] = {
+void CodeGen::link(const std::string& obj_file, const std::string& out_file) {
+    std::string runtime_obj;
+    const std::string exe_dir = get_executable_dir();
+
+    std::vector<std::string> paths = {
         "ofs_runtime.o",
         "./ofs_runtime.o",
         "../ofs_runtime.o",
@@ -179,10 +216,18 @@ void CodeGen::link(const std::string& obj_file, const std::string& out_file) {
         "../build/ofs_runtime.o",
         "build/libofs_runtime.a",
         "../build/libofs_runtime.a",
+        "libofs_runtime.a",
+        "ofs_runtime.lib"
     };
 
-    for (auto& p : paths) {
-        if (FILE* f = fopen(p, "r")) {
+    if (!exe_dir.empty()) {
+        paths.push_back((std::filesystem::path(exe_dir) / "libofs_runtime.a").string());
+        paths.push_back((std::filesystem::path(exe_dir) / "ofs_runtime.lib").string());
+        paths.push_back((std::filesystem::path(exe_dir) / "ofs_runtime.o").string());
+    }
+
+    for (const auto& p : paths) {
+        if (FILE* f = fopen(p.c_str(), "r")) {
             fclose(f);
             runtime_obj = p;
             break;
