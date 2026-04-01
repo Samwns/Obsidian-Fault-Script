@@ -1,60 +1,58 @@
 # Obsidian Fault Script (OFS)
 
-> Linguagem compilada, estaticamente tipada, que gera código de máquina nativo via LLVM.  
-> Simplicidade de alto nível + controle de baixo nível, com palavras-chave temáticas de geologia.
+> A compiled, statically-typed language that generates native machine code via LLVM.  
+> High-level simplicity + low-level control, with geology-themed keywords.
 
 ---
 
-## ⬇️ Download (sem precisar compilar)
+## ⬇️ Download (no build required)
 
-Baixe o executável pronto para o seu sistema na [página de Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
+Download the pre-built binary for your platform from the [Releases page](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
 
-| Sistema       | Arquivo                  |
+| Platform      | File                     |
 |---------------|--------------------------|
 | Linux (x64)   | `ofs-linux-x64`          |
 | Windows (x64) | `ofs-windows-x64.exe`    |
 | macOS (ARM)   | `ofs-macos-arm64`        |
 
 ```bash
-# Linux / macOS — tornar executável e mover para o PATH
+# Linux / macOS — make executable and move to PATH
 chmod +x ofs-linux-x64
 sudo mv ofs-linux-x64 /usr/local/bin/ofs
 
-# Windows — renomear e adicionar ao PATH manualmente
+# Windows — rename and add to PATH manually
 ren ofs-windows-x64.exe ofs.exe
 ```
 
 ---
 
-## 🔄 Versionamento Automático
+## 🔄 Automatic Versioning
 
-A versão segue o padrão **`1.0.x`** — todo push na `main` incrementa o patch automaticamente:
+Versions follow the **`1.0.x`** scheme — every push to `main` auto-increments the patch:
 
 ```
 v1.0.0  →  v1.0.1  →  v1.0.2  ...
 ```
 
-Cada [Release](https://github.com/Samwns/Obsidian-Fault-Script/releases) inclui:
-- Binários compilados para Linux, Windows e macOS
-- Changelog com todos os commits desde a versão anterior
+Each [Release](https://github.com/Samwns/Obsidian-Fault-Script/releases) includes:
+- Pre-built binaries for Linux, Windows, and macOS
+- Changelog with all commits since the previous release
 
-Para ver o que mudou em cada versão, acesse a [página de Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases).
+Full version history: [docs/CHANGELOG.md](docs/CHANGELOG.md)
 
-Histórico detalhado de versões e mudanças: [docs/CHANGELOG.md](docs/CHANGELOG.md)
-
-### Novidades (v1.0.x)
+### What's new (v1.0.x)
 
 - Pattern matching: `match`, `case`, `default`
-- Variáveis imutáveis: `const`
-- Enumerações: `strata`
-- Tratamento de erro: `tremor`, `catch`, `throw`
-- Operadores novos: `<<`, `>>`, `%=` e bitwise (`&`, `|`, `^`)
+- Immutable variables: `const`
+- Enumerations: `strata`
+- Error handling: `tremor`, `catch`, `throw`
+- New operators: `<<`, `>>`, `%=`, and bitwise (`&`, `|`, `^`)
 
 ---
 
-## 🚀 Olá, Mundo!
+## 🚀 Hello, World!
 
-Crie um arquivo `hello.ofs`:
+Create a file `hello.ofs`:
 
 ```ofs
 core main() {
@@ -62,7 +60,7 @@ core main() {
 }
 ```
 
-Execute:
+Run it:
 
 ```bash
 ofs hello.ofs
@@ -70,9 +68,9 @@ ofs hello.ofs
 
 ---
 
-## 📖 Exemplos
+## 📖 Examples
 
-### Alto nível — funções e structs
+### High-level — functions and structs
 
 ```ofs
 monolith Player {
@@ -93,14 +91,14 @@ core main() {
 }
 ```
 
-### Baixo nível — ponteiros e extern C
+### Low-level — pointers and extern C
 
 ```ofs
-// Chama função C diretamente
+// Call a C function directly
 extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
 
 core main() {
-    // Ponteiro seguro via bloco fracture
+    // Safe pointer via fracture block
     forge x: stone = 10
     fracture {
         shard p: *stone = &x
@@ -108,13 +106,13 @@ core main() {
     }
     echo(x)   // 42
 
-    // Chamada C: 2^10
+    // C call: 2^10
     forge result = ofs_pow(2.0, 10.0)
     echo(result)   // 1024
 }
 ```
 
-### Alto nível — loop e coleções
+### High-level — loops and collections
 
 ```ofs
 core main() {
@@ -130,13 +128,13 @@ core main() {
 
 ---
 
-## 🔧 Compilar do Código-Fonte
+## 🔧 Build from Source
 
-> Só necessário se quiser contribuir ou não tiver release para o seu sistema.
+> Only needed if you want to contribute or there is no release binary for your platform.
 
-**Dependências:**
+**Requirements:**
 - CMake 3.20+
-- Compilador C++17 (GCC 9+, Clang 10+, MSVC 2019+)
+- C++17 compiler (GCC 9+, Clang 10+, MSVC 2019+)
 - LLVM 17+
 
 ```bash
@@ -157,24 +155,24 @@ cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build --config Release
 ```
 
-Binário gerado em `build/ofs` (Linux/macOS) ou `build\Release\ofs.exe` (Windows).
+Binary output: `build/ofs` (Linux/macOS) or `build\Release\ofs.exe` (Windows).
 
 ---
 
-## 🖥️ Comandos
+## 🖥️ Commands
 
 ```bash
-ofs hello.ofs              # executa diretamente
-ofs build hello.ofs -o hello  # compila para binário nativo
-ofs check hello.ofs        # verifica tipos sem compilar
-ofs ir    hello.ofs        # exibe o LLVM IR gerado
-ofs ast   hello.ofs        # exibe a AST
-ofs help                   # mostra ajuda
+ofs hello.ofs                  # run directly (like python)
+ofs build hello.ofs -o hello   # compile to native binary
+ofs check hello.ofs            # type-check only, no output
+ofs ir    hello.ofs            # print generated LLVM IR
+ofs ast   hello.ofs            # print the AST
+ofs help                       # show help
 ```
 
 ---
 
-## 📖 Referência da Linguagem
+## 📖 Language Reference
 
 ### Types
 
