@@ -29,6 +29,15 @@ sudo installer -pkg ofs-macos-arm64-installer.pkg -target /
 code --install-extension ofs-vscode-extension.vsix
 ```
 
+Alternative install path in VS Code:
+1. Open VS Code
+2. Open Extensions panel
+3. Click the `...` menu
+4. Choose `Install from VSIX...`
+5. Select `ofs-vscode-extension.vsix`
+
+Important: do not install `ofs-vscode-extension.vsix` using `VSIXInstaller.exe` from Visual Studio. That installer is for Visual Studio IDE extensions, not VS Code extensions.
+
 Windows: run `ofs-windows-x64-installer.exe` and complete the installer wizard.
 
 ## VS Code Extension

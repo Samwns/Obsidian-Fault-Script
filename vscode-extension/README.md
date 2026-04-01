@@ -18,6 +18,20 @@ Language support for OFS with:
 - `OFS: Run Current File`
 - `OFS: Check Current File`
 
+## Install (.vsix)
+
+Use one of these methods:
+- `code --install-extension ofs-vscode-extension.vsix`
+- VS Code -> Extensions -> `...` -> `Install from VSIX...`
+
+Do not use Visual Studio `VSIXInstaller.exe` for this package. It only supports Visual Studio IDE extensions, while this package targets Microsoft Visual Studio Code.
+
+## Build in GitHub Actions
+
+The release workflow packages the extension with:
+- `npm ci`
+- `node ./node_modules/@vscode/vsce/vsce package --out ../ofs-vscode-extension.vsix`
+
 ## Notes
 
 The extension shells out to the OFS CLI for diagnostics and execution, so make sure OFS is installed and available in PATH.

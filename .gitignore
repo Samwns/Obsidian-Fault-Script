@@ -6,3 +6,4 @@ build-debug/
 *.out
 /tmp/
 *.exe
+vscode-extension/node_modules/
