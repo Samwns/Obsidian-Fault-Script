@@ -80,107 +80,32 @@ jobs:
           echo "LLVM_DIR=$(brew --prefix llvm@17)/lib/cmake/llvm" >> "$GITHUB_ENV"
           echo "$(brew --prefix llvm@17)/bin" >> "$GITHUB_PATH"
 
-      - name: Install LLVM (Windows)
+      - name: Setup LLVM Toolchain (Windows)
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          $llvmConfig = $null
+          # The hosted LLVM on Windows runners ships clang, but not the
+          # development CMake package nor the C++ libraries required by this project.
+          # Use MSYS2 UCRT packages instead, which provide a complete LLVM dev setup.
+          C:\msys64\usr\bin\bash.exe -lc "pacman -Sy --noconfirm"
+          C:\msys64\usr\bin\bash.exe -lc "pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-llvm"
 
-          Write-Host "Runner tool cache: $env:RUNNER_TOOL_CACHE"
-          where.exe clang 2>$null
+          $ucrtBin = "C:\msys64\ucrt64\bin"
+          $llvmCmake = "C:\msys64\ucrt64\lib\cmake\llvm"
 
-          # Search common locations first
-          $candidates = @(
-            "$env:RUNNER_TOOL_CACHE\LLVM\*\x64\lib\cmake\llvm\LLVMConfig.cmake",
-            "C:\hostedtoolcache\windows\LLVM\*\x64\lib\cmake\llvm\LLVMConfig.cmake",
-            "C:\Program Files\LLVM\lib\cmake\llvm\LLVMConfig.cmake",
-            "C:\LLVM\lib\cmake\llvm\LLVMConfig.cmake",
-            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\**\LLVMConfig.cmake",
-            "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\**\LLVMConfig.cmake"
-          )
-          foreach ($c in $candidates) {
-            $match = Get-ChildItem -Path $c -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($match) {
-              $llvmConfig = $match.FullName
-              break
-            }
-          }
-
-          # If clang is already on PATH, inspect nearby directories first.
-          if (-not $llvmConfig) {
-            $clangCmd = Get-Command clang -ErrorAction SilentlyContinue
-            if ($clangCmd) {
-              $clangDir = Split-Path $clangCmd.Source -Parent
-              $nearby = @(
-                (Join-Path (Split-Path $clangDir -Parent) "lib\cmake\llvm\LLVMConfig.cmake"),
-                (Join-Path (Split-Path (Split-Path $clangDir -Parent) -Parent) "lib\cmake\llvm\LLVMConfig.cmake")
-              )
-              foreach ($c in $nearby) {
-                if (Test-Path $c) {
-                  $llvmConfig = $c
-                  break
-                }
-              }
-            }
-          }
-
-          # Fallback: recursive search
-          if (-not $llvmConfig) {
-            $roots = @(
-              "$env:RUNNER_TOOL_CACHE\LLVM",
-              "C:\hostedtoolcache\windows\LLVM",
-              "C:\Program Files\LLVM",
-              "C:\LLVM",
-              "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm"
-            )
-            foreach ($root in $roots) {
-              if (Test-Path $root) {
-                $found = Get-ChildItem $root -Recurse -Filter "LLVMConfig.cmake" -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($found) {
-                  $llvmConfig = $found.FullName
-                  break
-                }
-              }
-            }
-          }
-
-          # If still missing, install latest LLVM and search again
-          if (-not $llvmConfig) {
-            Write-Host "LLVMConfig.cmake not found. Installing LLVM via choco..."
-            choco install llvm -y
-
-            $roots = @("C:\Program Files\LLVM", "C:\LLVM")
-            foreach ($root in $roots) {
-              if (Test-Path $root) {
-                $found = Get-ChildItem $root -Recurse -Filter "LLVMConfig.cmake" -ErrorAction SilentlyContinue | Select-Object -First 1
-                if ($found) {
-                  $llvmConfig = $found.FullName
-                  break
-                }
-              }
-            }
-          }
-
-          if (-not $llvmConfig) {
-            Write-Error "Could not locate LLVMConfig.cmake after install attempt."
+          if (-not (Test-Path (Join-Path $llvmCmake "LLVMConfig.cmake"))) {
+            Write-Error "MSYS2 LLVMConfig.cmake was not installed as expected."
             exit 1
           }
 
-          $llvmCmake = Split-Path $llvmConfig -Parent
-          $llvmRoot = Split-Path $llvmCmake -Parent | Split-Path -Parent
-          $llvmBin = Join-Path $llvmRoot "bin"
-
-          Write-Host "LLVMConfig: $llvmConfig"
+          Write-Host "Using MSYS2 UCRT LLVM toolchain"
           Write-Host "LLVM_DIR: $llvmCmake"
-          Write-Host "LLVM bin: $llvmBin"
-          if (Test-Path $llvmBin) {
-            Get-ChildItem $llvmBin -Filter clang*.exe -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -HideTableHeaders
-          }
+          Get-ChildItem $ucrtBin -Filter "clang*.exe" -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -HideTableHeaders
 
-          if (Test-Path $llvmBin) {
-            $llvmBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          }
+          $ucrtBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
           "LLVM_DIR=$llvmCmake" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CC=C:/msys64/ucrt64/bin/gcc.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "CXX=C:/msys64/ucrt64/bin/g++.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Configure (Linux / macOS)
         if: runner.os != 'Windows'
@@ -189,7 +114,7 @@ jobs:
       - name: Configure (Windows)
         if: runner.os == 'Windows'
         shell: powershell
-        run: cmake -B build -S ofs -A x64 "-DLLVM_DIR=$env:LLVM_DIR"
+        run: cmake -B build -S ofs -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="$env:CC" -DCMAKE_CXX_COMPILER="$env:CXX" "-DLLVM_DIR=$env:LLVM_DIR"
 
       - name: Build
         run: cmake --build build --config Release
@@ -201,7 +126,15 @@ jobs:
       - name: Stage binary (Windows)
         if: runner.os == 'Windows'
         shell: powershell
-        run: Copy-Item build\Release\${{ matrix.binary }} ${{ matrix.artifact }}
+        run: |
+          if (Test-Path "build\${{ matrix.binary }}") {
+            Copy-Item "build\${{ matrix.binary }}" "${{ matrix.artifact }}"
+          } elseif (Test-Path "build\Release\${{ matrix.binary }}") {
+            Copy-Item "build\Release\${{ matrix.binary }}" "${{ matrix.artifact }}"
+          } else {
+            Write-Error "Windows binary not found after build."
+            exit 1
+          }
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
