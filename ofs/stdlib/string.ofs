@@ -1,0 +1,21 @@
+// OFS Standard Library — String Module
+// String utility functions
+
+// Note: ofs_str_len, ofs_str_char_at, ofs_str_substr, ofs_str_concat
+// are available as runtime builtins.
+
+vein repeat_str(s: obsidian, n: stone) -> obsidian {
+    forge result: obsidian = ""
+    cycle (forge i = 0; i < n; i++) {
+        result = result + s
+    }
+    return result
+}
+
+vein starts_with_char(s: obsidian, c: stone) -> bool {
+    return ofs_str_char_at(s, 0) == c
+}
+
+vein is_empty(s: obsidian) -> bool {
+    return ofs_str_len(s) == 0
+}

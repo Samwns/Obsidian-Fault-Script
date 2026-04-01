@@ -1,0 +1,14 @@
+// Demonstrating type casting with 'as' keyword
+core main() {
+    forge x: stone = 42
+    forge y: crystal = x as crystal
+    echo(y)
+
+    forge pi: crystal = 3.14159
+    forge rounded: stone = pi as stone
+    echo(rounded)
+
+    forge flag: bool = true
+    forge num: stone = flag as stone
+    echo(num)
+}

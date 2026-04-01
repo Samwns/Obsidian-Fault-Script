@@ -1,0 +1,18 @@
+// Demonstrating while loop syntax
+core main() {
+    forge count: stone = 10
+
+    // Count down using while
+    while (count > 0) {
+        echo(count)
+        count -= 1
+    }
+    echo("Liftoff!")
+
+    // Find first power of 2 greater than 1000
+    forge n: stone = 1
+    while (n <= 1000) {
+        n = n * 2
+    }
+    echo(n)
+}

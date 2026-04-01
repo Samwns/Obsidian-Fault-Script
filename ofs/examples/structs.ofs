@@ -1,0 +1,18 @@
+monolith Player {
+    name: obsidian
+    hp:   stone
+    speed: crystal
+}
+
+vein greet(p: Player) -> void {
+    echo(p.name)
+    echo(p.hp)
+}
+
+core main() {
+    forge hero: Player
+    hero.name = "Obsidian Knight"
+    hero.hp   = 100
+    hero.speed = 1.5
+    greet(hero)
+}

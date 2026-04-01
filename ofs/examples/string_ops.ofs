@@ -1,0 +1,20 @@
+// Demonstrating string operations
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_concat(a: obsidian, b: obsidian) -> obsidian
+
+core main() {
+    forge greeting: obsidian = "Hello"
+    forge name: obsidian = "World"
+    forge message: obsidian = greeting + ", " + name + "!"
+    echo(message)
+
+    // String concatenation with +=
+    forge result: obsidian = "OFS"
+    result += " is "
+    result += "awesome!"
+    echo(result)
+
+    // String length via extern
+    forge len: stone = ofs_str_len(message)
+    echo(len)
+}

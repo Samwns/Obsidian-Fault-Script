@@ -1,0 +1,54 @@
+// Advanced monolith (struct) usage
+monolith Vector2D {
+    x: crystal
+    y: crystal
+}
+
+monolith Player {
+    name: obsidian
+    hp: stone
+    speed: crystal
+    level: stone
+}
+
+vein add_vectors(a: Vector2D, b: Vector2D) -> Vector2D {
+    forge result: Vector2D
+    result.x = a.x + b.x
+    result.y = a.y + b.y
+    return result
+}
+
+vein print_player(p: Player) {
+    echo(p.name)
+    echo(p.hp)
+    echo(p.level)
+}
+
+vein level_up(p: Player) -> Player {
+    p.level = p.level + 1
+    p.hp = p.hp + 10
+    return p
+}
+
+core main() {
+    // Vector operations
+    forge v1: Vector2D
+    v1.x = 1.0
+    v1.y = 2.0
+
+    forge v2: Vector2D
+    v2.x = 3.0
+    v2.y = 4.0
+
+    // Player system
+    forge hero: Player
+    hero.name = "Obsidian Knight"
+    hero.hp = 100
+    hero.speed = 1.5
+    hero.level = 1
+
+    print_player(hero)
+    hero = level_up(hero)
+    echo("After level up:")
+    print_player(hero)
+}

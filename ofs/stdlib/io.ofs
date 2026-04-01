@@ -1,0 +1,21 @@
+// OFS Standard Library — I/O Module
+// Input/Output utility functions
+
+// Note: echo() is a built-in. ofs_read_line() is a runtime builtin.
+
+vein prompt(message: obsidian) -> obsidian {
+    echo(message)
+    return ofs_read_line()
+}
+
+vein print_separator(ch: obsidian, count: stone) {
+    forge line: obsidian = ""
+    cycle (forge i = 0; i < count; i++) {
+        line = line + ch
+    }
+    echo(line)
+}
+
+vein print_header(title: obsidian) {
+    echo("=== " + title + " ===")
+}
