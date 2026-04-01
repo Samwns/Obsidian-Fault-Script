@@ -154,6 +154,28 @@ core main() {
 }
 ```
 
+## 📦 Libraries Via Packages
+
+You can test package unpack/install flow with libraries included in this repo:
+
+- `terminal-colors`
+- `memory-modes`
+
+Build and install:
+
+```bash
+./packages/build_packages.sh
+./packages/install_library.sh packages/dist/terminal-colors.tar.gz
+./packages/install_library.sh packages/dist/memory-modes.tar.gz
+export OFS_LIB_PATH="$HOME/.ofs/libs"
+```
+
+Run package demo:
+
+```bash
+ofs ofs/examples/packages_demo.ofs
+```
+
 ---
 
 ## 🔧 Build from Source

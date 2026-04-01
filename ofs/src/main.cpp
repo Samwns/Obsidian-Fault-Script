@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
+#include <regex>
+#include <unordered_set>
 #include <unistd.h>
 #ifdef _WIN32
 #include <process.h>
@@ -17,6 +19,97 @@
 #include "i18n.hpp"
 
 static const char* OFS_VERSION = "1.0.4";
+
+static std::string trim_copy(const std::string& s) {
+    const auto begin = s.find_first_not_of(" \t\r\n");
+    if (begin == std::string::npos) return "";
+    const auto end = s.find_last_not_of(" \t\r\n");
+    return s.substr(begin, end - begin + 1);
+}
+
+static std::vector<std::filesystem::path> parse_lib_paths() {
+    std::vector<std::filesystem::path> paths;
+    const char* env = std::getenv("OFS_LIB_PATH");
+    if (!env || !*env) return paths;
+
+    std::string raw(env);
+#ifdef _WIN32
+    const char sep = ';';
+#else
+    const char sep = ':';
+#endif
+
+    std::stringstream ss(raw);
+    std::string item;
+    while (std::getline(ss, item, sep)) {
+        item = trim_copy(item);
+        if (!item.empty()) paths.emplace_back(item);
+    }
+    return paths;
+}
+
+static std::filesystem::path resolve_attach_path(const std::string& attach_path,
+                                                 const std::filesystem::path& base_dir) {
+    std::filesystem::path candidate(attach_path);
+    if (candidate.is_absolute()) return candidate;
+
+    auto local = (base_dir / candidate).lexically_normal();
+    if (std::filesystem::exists(local)) return local;
+
+    for (const auto& lib_root : parse_lib_paths()) {
+        auto from_lib = (lib_root / candidate).lexically_normal();
+        if (std::filesystem::exists(from_lib)) return from_lib;
+    }
+
+    return local;
+}
+
+static std::string resolve_attaches_recursive(const std::string& source,
+                                              const std::filesystem::path& base_dir,
+                                              std::unordered_set<std::string>& visited) {
+    static const std::regex kAttachRegex("^\\s*(attach|import)\\s+\"([^\"]+)\"\\s*$");
+
+    std::stringstream in(source);
+    std::string line;
+    std::string imports_merged;
+    std::string body;
+
+    while (std::getline(in, line)) {
+        std::smatch m;
+        if (std::regex_match(line, m, kAttachRegex)) {
+            auto target = resolve_attach_path(m[2].str(), base_dir);
+            std::error_code ec;
+            auto key = std::filesystem::weakly_canonical(target, ec).string();
+            if (ec) key = target.lexically_normal().string();
+
+            if (visited.find(key) != visited.end()) {
+                continue;
+            }
+            visited.insert(key);
+
+            std::ifstream f(target);
+            if (!f) {
+                throw std::runtime_error(OFS_MSG("cannot open attached module: ", "não foi possível abrir módulo attach: ") + target.string());
+            }
+
+            std::string mod_source((std::istreambuf_iterator<char>(f)), {});
+            imports_merged += resolve_attaches_recursive(mod_source, target.parent_path(), visited);
+            imports_merged += "\n";
+            continue;
+        }
+
+        body += line;
+        body += "\n";
+    }
+
+    return imports_merged + body;
+}
+
+static std::string preprocess_source(const std::string& file, const std::string& source) {
+    std::filesystem::path p(file);
+    std::unordered_set<std::string> visited;
+    return resolve_attaches_recursive(source, p.parent_path().empty() ? std::filesystem::current_path() : p.parent_path(), visited);
+}
 
 void print_usage() {
     if (ofs_locale_is_pt()) {
@@ -100,7 +193,8 @@ static std::string temp_executable_path() {
 
 // Execute the full compile-and-run pipeline for a source file
 static int run_file(const std::string& file, const std::string& source) {
-    ofs::Lexer lexer(source, file);
+    std::string merged_source = preprocess_source(file, source);
+    ofs::Lexer lexer(merged_source, file);
     auto tokens = lexer.tokenize();
 
     ofs::Parser parser(std::move(tokens));
@@ -186,6 +280,8 @@ int main(int argc, char** argv) {
 
     try {
         // 1. Lex
+        source = preprocess_source(file, source);
+
         ofs::Lexer lexer(source, file);
         auto tokens = lexer.tokenize();
 

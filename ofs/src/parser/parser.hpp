@@ -31,6 +31,7 @@ private:
     StmtPtr parse_stmt();
     StmtPtr parse_block();           // { stmts... }
     StmtPtr parse_forge_stmt();      // forge x = ...
+    StmtPtr parse_shard_stmt();      // shard p: *stone = &x
     StmtPtr parse_const_stmt();      // const x = ...
     StmtPtr parse_if_stmt();         // if (cond) { } else { }
     StmtPtr parse_cycle_stmt();      // cycle (...) { }

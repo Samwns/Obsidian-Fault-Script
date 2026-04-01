@@ -1,0 +1,145 @@
+// Comprehensive OFS showcase focused on features that currently work end-to-end.
+
+extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
+extern vein ofs_sqrt(val: crystal) -> crystal
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+monolith Hero {
+    name: obsidian
+    hp: stone
+    speed: crystal
+}
+
+vein separator(title: obsidian) -> void {
+    echo("")
+    echo("=== " + title + " ===")
+}
+
+vein add(a: stone, b: stone) -> stone {
+    return a + b
+}
+
+vein accelerate(value: crystal, factor: crystal) -> crystal {
+    return value * factor
+}
+
+core main() {
+    separator("Obsid Block + 3-part command")
+
+    // C-style cycle has 3 parts: init; condition; step
+    cycle (forge cmd_i: stone = 0; cmd_i < 3; cmd_i++) {
+        echo(cmd_i)
+    }
+
+    // Block style using ':' ... obsid
+    if (1 == 1):
+        echo("block closed with obsid")
+    obsid
+
+    separator("Typed And Inferred Commands")
+
+    // Explicitly typed (tipada)
+    forge typed_count: stone = 5
+    forge typed_price: crystal = 9.5
+    forge typed_name: obsidian = "typed"
+    echo(typed_count)
+    echo(typed_price)
+    echo(typed_name)
+
+    // Inferred (nao tipada)
+    forge inferred_count = 12
+    forge inferred_ratio = 2.75
+    forge inferred_name = "inferred"
+    echo(inferred_count)
+    echo(inferred_ratio)
+    echo(inferred_name)
+
+    separator("Numbers")
+
+    const bonus: stone = 7
+    forge total: stone = add(10, 20)
+    total += bonus
+    echo(total)
+
+    forge ratio: crystal = total as crystal
+    ratio = ratio / 3.0
+    echo(ratio)
+
+    separator("Arrays And Loops")
+
+    forge values = [2, 4, 6, 8, 10]
+    forge sum: stone = 0
+
+    cycle (value in values) {
+        sum += value
+    }
+    echo(sum)
+
+    cycle (forge i = 0; i < 5; i++) {
+        echo(values[i])
+    }
+
+    forge countdown: stone = 3
+    while (countdown > 0) {
+        echo(countdown)
+        countdown -= 1
+    }
+
+    separator("Strings")
+
+    forge report: obsidian = "sum=" + ofs_stone_to_obsidian(sum)
+    echo(report)
+    echo(ofs_str_len(report))
+
+    separator("Pointers")
+
+    forge x: stone = 10
+    fracture {
+        shard p: *stone = &x;
+        *p = *p + 32
+    }
+    echo(x)
+
+    separator("Memory Modes")
+
+    // fracture: safe pointer usage
+    fracture {
+        shard safe_ptr: *stone = &x;
+        *safe_ptr = *safe_ptr + 1
+    }
+
+    // abyss: unsafe/unrestricted memory operations
+    abyss {
+        shard raw_ptr: *stone = &x;
+        *raw_ptr = *raw_ptr + 1
+    }
+
+    // fractal: intermediate effect-lifted block
+    fractal {
+        echo("fractal block active")
+    }
+
+    echo(x)
+
+    separator("Structs")
+
+    forge hero: Hero
+    hero.name = "Obsidian Knight"
+    hero.hp = 120
+    hero.speed = accelerate(1.5, 2.0)
+    echo(hero.name)
+    echo(hero.hp)
+    echo(hero.speed)
+
+    separator("Runtime Math")
+
+    forge power: crystal = ofs_pow(2.0, 8.0)
+    forge root: crystal = ofs_sqrt(81.0)
+    echo(power)
+    echo(root)
+
+    separator("Done")
+    echo("OFS showcase completed")
+    echo("END")
+}

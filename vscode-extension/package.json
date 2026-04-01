@@ -69,7 +69,8 @@
     "commands": [
       {
         "command": "ofs.runFile",
-        "title": "Run Current OFS File",
+        "title": "Run OFS File",
+        "shortTitle": "Run",
         "category": "OFS",
         "icon": {
           "light": "./media/play-light.svg",
@@ -78,7 +79,8 @@
       },
       {
         "command": "ofs.checkFile",
-        "title": "Check Current OFS File",
+        "title": "Check OFS File",
+        "shortTitle": "Check",
         "category": "OFS",
         "icon": {
           "light": "./media/check-light.svg",

@@ -1,0 +1,6 @@
+{
+  "name": "terminal-colors",
+  "version": "1.0.0",
+  "description": "ANSI color helpers for OFS terminal output",
+  "main": "libs/terminal_colors.ofs"
+}

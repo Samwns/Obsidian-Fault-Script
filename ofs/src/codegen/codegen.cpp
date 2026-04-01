@@ -268,6 +268,7 @@ void CodeGen::declare_runtime() {
     declare("echo_crystal",  void_ty, {f64_ty});
     declare("echo_obsidian", void_ty, {i8ptr_ty});
     declare("echo_bool",     void_ty, {i32_ty});
+    declare("ofs_echo_color",void_ty, {i8ptr_ty, i8ptr_ty});
     declare("echo_newline",  void_ty, {});
     declare("ofs_alloc",     i8ptr_ty, {i64_ty});
     declare("ofs_free",      void_ty, {i8ptr_ty});
@@ -440,6 +441,11 @@ void CodeGen::gen_global_forge(const GlobalForgeDecl& g) {
 }
 
 void CodeGen::gen_extern(const ExternFuncDecl& e) {
+    if (auto* existing = mod_->getFunction(e.name)) {
+        functions_[e.name] = existing;
+        return;
+    }
+
     std::vector<llvm::Type*> param_types;
     for (auto& p : e.params) {
         param_types.push_back(llvm_type(p.type));
