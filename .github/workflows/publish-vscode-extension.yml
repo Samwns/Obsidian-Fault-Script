@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd vscode-extension
-          npm install
+          npm ci
 
       - name: Publish extension
         env:
@@ -38,4 +38,4 @@ jobs:
             exit 1
           fi
           cd vscode-extension
-          npx @vscode/vsce publish --pat "$VSCE_PAT"
+          node ./node_modules/@vscode/vsce/vsce publish --pat "$VSCE_PAT"

@@ -201,8 +201,8 @@ jobs:
       - name: Package extension (.vsix)
         run: |
           cd vscode-extension
-          npm install
-          npx @vscode/vsce package --out ../ofs-vscode-extension.vsix
+          npm ci
+          node ./node_modules/@vscode/vsce/vsce package --out ../ofs-vscode-extension.vsix
 
       - name: Upload extension artifact
         uses: actions/upload-artifact@v4
