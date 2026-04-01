@@ -7,6 +7,7 @@
 #include <unistd.h>
 #ifdef _WIN32
 #include <process.h>
+#include <windows.h>
 #endif
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
@@ -15,12 +16,12 @@
 #include "ast/ast_printer.hpp"
 #include "i18n.hpp"
 
-static const char* OFS_VERSION = "1.0.0";
+static const char* OFS_VERSION = "1.0.4";
 
 void print_usage() {
     if (ofs_locale_is_pt()) {
         std::cout <<
-"\nofs — Obsidian Fault Script compilador v" << OFS_VERSION << "\n"
+"\nofs - Obsidian Fault Script compilador v" << OFS_VERSION << "\n"
 "\nUso:\n"
 "  ofs <arquivo.ofs>                     Executa o script diretamente (como python)\n"
 "  ofs run    <arquivo.ofs>              Compila e executa imediatamente\n"
@@ -37,7 +38,7 @@ void print_usage() {
 "  ofs check hello.ofs                  Verifica tipos apenas\n\n";
     } else {
         std::cout <<
-"\nofs — Obsidian Fault Script compiler v" << OFS_VERSION << "\n"
+"\nofs - Obsidian Fault Script compiler v" << OFS_VERSION << "\n"
 "\nUsage:\n"
 "  ofs <file.ofs>                        Run a script directly (like python)\n"
 "  ofs run    <file.ofs>                 Compile and run immediately\n"
@@ -89,6 +90,14 @@ static std::string temp_path(const std::string& suffix) {
     return (tmp_dir / name).string();
 }
 
+static std::string temp_executable_path() {
+#ifdef _WIN32
+    return temp_path(".exe");
+#else
+    return temp_path("");
+#endif
+}
+
 // Execute the full compile-and-run pipeline for a source file
 static int run_file(const std::string& file, const std::string& source) {
     ofs::Lexer lexer(source, file);
@@ -104,7 +113,7 @@ static int run_file(const std::string& file, const std::string& source) {
     codegen.generate(mod);
 
     std::string obj = temp_path(".o");
-    std::string exe = temp_path("");
+    std::string exe = temp_executable_path();
     codegen.emit_object(obj);
     codegen.link(obj, exe);
     int result = std::system(("\"" + exe + "\"").c_str());
@@ -114,6 +123,11 @@ static int run_file(const std::string& file, const std::string& source) {
 }
 
 int main(int argc, char** argv) {
+#ifdef _WIN32
+    SetConsoleOutputCP(CP_UTF8);
+    SetConsoleCP(CP_UTF8);
+#endif
+
     if (argc < 2) { print_usage(); return 1; }
 
     std::string cmd  = argv[1];
@@ -121,7 +135,7 @@ int main(int argc, char** argv) {
 
     // ── Quick commands (no file needed) ──────────────────────────────────
     if (cmd == "version" || cmd == "--version" || cmd == "-v") {
-        std::cout << "ofs " << OFS_VERSION << " — Obsidian Fault Script\n";
+        std::cout << "ofs " << OFS_VERSION << " - Obsidian Fault Script\n";
         return 0;
     }
 
@@ -219,7 +233,7 @@ int main(int argc, char** argv) {
 
         if (cmd == "run") {
             std::string obj = temp_path(".o");
-            std::string exe = temp_path("");
+            std::string exe = temp_executable_path();
             codegen.emit_object(obj);
             codegen.link(obj, exe);
             int result = std::system(("\"" + exe + "\"").c_str());

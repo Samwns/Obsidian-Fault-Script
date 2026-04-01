@@ -4,6 +4,7 @@
   "description": "Language support, diagnostics, autocomplete and run commands for OFS",
   "version": "0.1.0",
   "publisher": "samwns",
+  "icon": "media/ofs.png",
   "license": "BSL-1.0",
   "repository": {
     "type": "git",
@@ -38,7 +39,11 @@
         "extensions": [
           ".ofs"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./media/ofs.svg",
+          "dark": "./media/ofs.svg"
+        }
       }
     ],
     "grammars": [
@@ -64,25 +69,33 @@
     "commands": [
       {
         "command": "ofs.runFile",
-        "title": "OFS: Run Current File",
-        "category": "OFS"
+        "title": "Run Current OFS File",
+        "category": "OFS",
+        "icon": {
+          "light": "./media/play-light.svg",
+          "dark": "./media/play-dark.svg"
+        }
       },
       {
         "command": "ofs.checkFile",
-        "title": "OFS: Check Current File",
-        "category": "OFS"
+        "title": "Check Current OFS File",
+        "category": "OFS",
+        "icon": {
+          "light": "./media/check-light.svg",
+          "dark": "./media/check-dark.svg"
+        }
       }
     ],
     "menus": {
       "editor/title": [
         {
           "command": "ofs.runFile",
-          "when": "editorLangId == ofs",
+          "when": "resourceLangId == ofs",
           "group": "navigation@1"
         },
         {
           "command": "ofs.checkFile",
-          "when": "editorLangId == ofs",
+          "when": "resourceLangId == ofs",
           "group": "navigation@2"
         }
       ]
