@@ -110,7 +110,7 @@ enum class TokenKind {
 
     // ── Special ───────────────────────────────────────────────────────────
     END_OF_FILE,
-    ERROR
+    TOK_ERROR
 };
 
 struct Token {
