@@ -9,6 +9,11 @@ InstallDir "$PROGRAMFILES64\Obsidian Fault Script"
 InstallDirRegKey HKLM "Software\ObsidianFaultScript" "InstallDir"
 RequestExecutionLevel admin
 
+!define MUI_ICON "packaging\assets\ofs.ico"
+!define MUI_UNICON "packaging\assets\ofs.ico"
+Icon "packaging\assets\ofs.ico"
+UninstallIcon "packaging\assets\ofs.ico"
+
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
@@ -24,10 +29,12 @@ Section "Install"
 	File "dist\libstdc++-6.dll"
 	File "dist\libgcc_s_seh-1.dll"
 	File "dist\libwinpthread-1.dll"
+	File /oname=ofs.ico "packaging\assets\ofs.ico"
 
 	WriteRegStr HKLM "Software\ObsidianFaultScript" "InstallDir" "$INSTDIR"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ObsidianFaultScript" "DisplayName" "Obsidian Fault Script"
 	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ObsidianFaultScript" "UninstallString" "$INSTDIR\uninstall.exe"
+	WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\ObsidianFaultScript" "DisplayIcon" "$INSTDIR\ofs.ico"
 	WriteUninstaller "$INSTDIR\uninstall.exe"
 
 	# Add install dir to system PATH (append only).
@@ -42,6 +49,7 @@ Section "Uninstall"
 	Delete "$INSTDIR\libstdc++-6.dll"
 	Delete "$INSTDIR\libgcc_s_seh-1.dll"
 	Delete "$INSTDIR\libwinpthread-1.dll"
+	Delete "$INSTDIR\ofs.ico"
 	Delete "$INSTDIR\uninstall.exe"
 	RMDir "$INSTDIR"
 
