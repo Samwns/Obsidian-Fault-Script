@@ -189,11 +189,11 @@ void CodeGen::link(const std::string& obj_file, const std::string& out_file) {
         }
     }
 
-    std::string cmd = "cc " + obj_file;
+    std::string cmd = "cc \"" + obj_file + "\"";
     if (!runtime_obj.empty()) {
-        cmd += " " + runtime_obj;
+        cmd += " \"" + runtime_obj + "\"";
     }
-    cmd += " -o " + out_file + " -lm";
+    cmd += " -o \"" + out_file + "\" -lm";
 
     int ret = std::system(cmd.c_str());
     if (ret != 0) {
