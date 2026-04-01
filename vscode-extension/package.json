@@ -1,0 +1,91 @@
+{
+  "name": "obsidian-fault-script",
+  "displayName": "Obsidian Fault Script",
+  "description": "Language support, diagnostics, autocomplete and run commands for OFS",
+  "version": "0.1.0",
+  "publisher": "samwns",
+  "license": "BSL-1.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Samwns/Obsidian-Fault-Script.git"
+  },
+  "homepage": "https://github.com/Samwns/Obsidian-Fault-Script",
+  "bugs": {
+    "url": "https://github.com/Samwns/Obsidian-Fault-Script/issues"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Debuggers"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "ofs",
+        "aliases": [
+          "OFS",
+          "Obsidian Fault Script"
+        ],
+        "extensions": [
+          ".ofs"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ofs",
+        "scopeName": "source.ofs",
+        "path": "./syntaxes/ofs.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "ofs",
+        "path": "./snippets/ofs.code-snippets"
+      }
+    ],
+    "themes": [
+      {
+        "label": "Obsidian Fault Purple",
+        "uiTheme": "vs-dark",
+        "path": "./themes/obsidian-fault-purple-color-theme.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "ofs.runFile",
+        "title": "OFS: Run Current File"
+      },
+      {
+        "command": "ofs.checkFile",
+        "title": "OFS: Check Current File"
+      }
+    ],
+    "configuration": {
+      "title": "Obsidian Fault Script",
+      "properties": {
+        "ofs.path": {
+          "type": "string",
+          "default": "ofs",
+          "description": "Path to OFS compiler executable."
+        },
+        "ofs.diagnosticsOnType": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run ofs check while typing (debounced)."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "package": "npx @vscode/vsce package"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.2.0"
+  }
+}

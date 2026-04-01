@@ -1,0 +1,61 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#6d3cff"/>
+      <stop offset="100%" stop-color="#2e1065"/>
+    </linearGradient>
+
+    <linearGradient id="g2" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#4c1d95"/>
+    </linearGradient>
+
+    <linearGradient id="g3" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c4b5fd"/>
+      <stop offset="100%" stop-color="#5b21b6"/>
+    </linearGradient>
+
+    <radialGradient id="core" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="lightDir" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+
+    <filter id="blur">
+      <feGaussianBlur stdDeviation="4"/>
+    </filter>
+  </defs>
+
+  <ellipse cx="128" cy="225" rx="55" ry="10" fill="#000" opacity="0.25"/>
+
+  <polygon points="128,20 210,74 210,182 128,236 46,182 46,74" fill="url(#g1)"/>
+
+  <polygon points="128,20 170,60 86,60" fill="url(#g3)"/>
+  <polygon points="86,60 128,20 46,74" fill="url(#g2)"/>
+  <polygon points="170,60 210,74 128,20" fill="url(#g2)"/>
+
+  <polygon points="86,60 46,74 46,182 90,140" fill="#4c1d95"/>
+  <polygon points="170,60 210,74 210,182 166,140" fill="#6d3cff"/>
+
+  <polygon points="86,60 170,60 166,140 90,140" fill="url(#g1)" opacity="0.7"/>
+
+  <polygon points="90,140 46,182 128,236" fill="#2e1065"/>
+  <polygon points="166,140 210,182 128,236" fill="#3b1fa3"/>
+
+  <polygon points="90,140 166,140 128,236" fill="#5b21b6" opacity="0.85"/>
+
+  <ellipse cx="128" cy="130" rx="45" ry="70" fill="url(#core)" filter="url(#blur)"/>
+
+  <polygon points="128,20 170,60 150,90" fill="url(#glass)" opacity="0.5"/>
+
+  <polygon points="46,74 86,60 90,140 46,182" fill="url(#lightDir)" opacity="0.4"/>
+</svg>

@@ -53,13 +53,13 @@ jobs:
         include:
           - os: ubuntu-22.04
             binary: ofs
-            artifact: ofs-linux-x64
+            artifact: ofs-linux-x64-installer.tar.gz
           - os: windows-2022
             binary: ofs.exe
-            artifact: ofs-windows-x64.zip
+            artifact: ofs-windows-x64-installer.exe
           - os: macos-14
             binary: ofs
-            artifact: ofs-macos-arm64
+            artifact: ofs-macos-arm64-installer.pkg
 
     steps:
       - uses: actions/checkout@v4
@@ -107,6 +107,11 @@ jobs:
           "CC=C:/msys64/ucrt64/bin/gcc.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "CXX=C:/msys64/ucrt64/bin/g++.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
+      - name: Install NSIS (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: choco install nsis -y
+
       - name: Configure (Linux / macOS)
         if: runner.os != 'Windows'
         run: cmake -B build -S ofs -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR="$LLVM_DIR"
@@ -119,11 +124,29 @@ jobs:
       - name: Build
         run: cmake --build build --config Release
 
-      - name: Stage binary (Linux / macOS)
-        if: runner.os != 'Windows'
-        run: cp build/${{ matrix.binary }} ${{ matrix.artifact }}
+      - name: Stage installer (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p dist-installer
+          cp build/${{ matrix.binary }} dist-installer/ofs
+          cp packaging/linux/install.sh dist-installer/install.sh
+          chmod +x dist-installer/ofs dist-installer/install.sh
+          tar -czf ${{ matrix.artifact }} -C dist-installer .
 
-      - name: Stage binary (Windows)
+      - name: Stage installer (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          rm -rf pkgroot
+          mkdir -p pkgroot/usr/local/bin
+          cp build/${{ matrix.binary }} pkgroot/usr/local/bin/ofs
+          chmod +x pkgroot/usr/local/bin/ofs
+          pkgbuild \
+            --root pkgroot \
+            --identifier io.obsidianfaultscript.ofs \
+            --version "${{ needs.version.outputs.tag }}" \
+            "${{ matrix.artifact }}"
+
+      - name: Stage installer (Windows)
         if: runner.os == 'Windows'
         shell: powershell
         run: |
@@ -155,7 +178,7 @@ jobs:
           }
 
           if (Test-Path "${{ matrix.artifact }}") { Remove-Item "${{ matrix.artifact }}" -Force }
-          Compress-Archive -Path dist\* -DestinationPath "${{ matrix.artifact }}"
+          & "C:\Program Files (x86)\NSIS\makensis.exe" /V2 /NOCD /DOUTPUT="${{ matrix.artifact }}" packaging\windows\installer.nsi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -163,10 +186,34 @@ jobs:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
 
+  vscode_extension:
+    name: Build VS Code Extension
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Package extension (.vsix)
+        run: |
+          cd vscode-extension
+          npm install
+          npx @vscode/vsce package --out ../ofs-vscode-extension.vsix
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ofs-vscode-extension.vsix
+          path: ofs-vscode-extension.vsix
+
   # ── 3. Publica a Release com changelog automático ────────────────────────
   release:
     name: Publish Release
-    needs: [version, build]
+    needs: [version, build, vscode_extension]
     runs-on: ubuntu-latest
 
     steps:
