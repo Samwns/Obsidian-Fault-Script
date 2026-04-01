@@ -114,6 +114,24 @@ int main() {
     test("invalid cast string to stone",
         analyze_fails("core main() {\n    forge s: obsidian = \"hello\"\n    forge n: stone = s as stone\n}"));
 
+    test("pure cannot call impure",
+        analyze_fails(
+            "vein b() intent impure { return }\n"
+            "vein a() intent pure { b() }\n"
+            "core main() { a() }"));
+
+    test("impure cannot call fractal outside fractal block",
+        analyze_fails(
+            "vein f() intent fractal { return }\n"
+            "vein a() intent impure { f() }\n"
+            "core main() { a() }"));
+
+    test("impure can call fractal inside fractal block",
+        analyze_ok(
+            "vein f() intent fractal { return }\n"
+            "vein a() intent impure { fractal { f() } }\n"
+            "core main() { a() }"));
+
     std::cout << "\nAll semantic tests passed!\n";
     return 0;
 }

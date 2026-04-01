@@ -145,6 +145,18 @@ int main() {
     test("extern token",  t[0].kind == TokenKind::KW_EXTERN);
     test("extern vein",   t[1].kind == TokenKind::KW_VEIN);
 
+    // OSF keywords
+    t = lex("intent pure impure fractal obsid flow truth glyph ptr");
+    test("intent keyword",  t[0].kind == TokenKind::KW_INTENT);
+    test("pure keyword",    t[1].kind == TokenKind::KW_PURE);
+    test("impure keyword",  t[2].kind == TokenKind::KW_IMPURE);
+    test("fractal keyword", t[3].kind == TokenKind::KW_FRACTAL);
+    test("obsid keyword",   t[4].kind == TokenKind::KW_OBSID);
+    test("flow keyword",    t[5].kind == TokenKind::KW_FLOW);
+    test("truth keyword",   t[6].kind == TokenKind::KW_TRUTH);
+    test("glyph keyword",   t[7].kind == TokenKind::KW_GLYPH);
+    test("ptr keyword",     t[8].kind == TokenKind::KW_PTR);
+
     std::cout << "\nAll lexer tests passed!\n";
     return 0;
 }

@@ -26,6 +26,7 @@ private:
     void check_return(ReturnStmt& s);
     void check_fracture(FractureStmt& s);
     void check_abyss(AbyssStmt& s);
+    void check_fractal(FractalStmt& s);
     void check_while(WhileCycleStmt& s);
     void check_match(MatchStmt& s);
     void check_tremor(TremorStmt& s);
@@ -53,9 +54,13 @@ private:
     // ── State ─────────────────────────────────────────────────────────────
     Scope       scope_;
     OFSType     current_return_type_;    // for return checking
+    FuncIntent  current_intent_ = FuncIntent::Impure;
     bool        inside_fracture_ = false;
     bool        inside_abyss_    = false;
+    bool        inside_fractal_  = false;
     bool        inside_cycle_    = false;
+
+    std::unordered_map<std::string, FuncIntent> function_intents_;
 
     // Monolith registry (for field access checks)
     std::unordered_map<std::string, MonolithDecl*> monoliths_;

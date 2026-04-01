@@ -45,6 +45,7 @@ private:
     void       gen_return(const ReturnStmt& s);
     void       gen_fracture(const FractureStmt& s);
     void       gen_abyss(const AbyssStmt& s);
+    void       gen_fractal(const FractalStmt& s);
     void       gen_while(const WhileCycleStmt& s);
     void       gen_match(const MatchStmt& s);
     void       gen_tremor(const TremorStmt& s);

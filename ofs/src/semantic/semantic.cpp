@@ -22,6 +22,7 @@ void SemanticAnalyzer::analyze(Module& mod) {
             sym.type = fn->return_type;
             sym.kind = SymbolKind::Function;
             scope_.define(fn->name, sym);
+            function_intents_[fn->name] = fn->intent;
         } else if (auto* ext = dynamic_cast<ExternFuncDecl*>(d.get())) {
             Symbol sym;
             sym.name = ext->name;
@@ -59,7 +60,9 @@ void SemanticAnalyzer::analyze(Module& mod) {
 // ── Declaration checks ────────────────────────────────────────────────────
 
 void SemanticAnalyzer::check_func(FuncDecl& fn) {
+    FuncIntent prev_intent = current_intent_;
     current_return_type_ = fn.return_type;
+    current_intent_ = fn.intent;
     scope_.push();
 
     // Define parameters
@@ -73,6 +76,7 @@ void SemanticAnalyzer::check_func(FuncDecl& fn) {
 
     if (fn.body) check_stmt(*fn.body);
     scope_.pop();
+    current_intent_ = prev_intent;
 }
 
 void SemanticAnalyzer::check_monolith(MonolithDecl& m) {
@@ -151,6 +155,8 @@ void SemanticAnalyzer::check_stmt(Stmt& s) {
         check_fracture(*fr);
     } else if (auto* ab = dynamic_cast<AbyssStmt*>(&s)) {
         check_abyss(*ab);
+    } else if (auto* fb = dynamic_cast<FractalStmt*>(&s)) {
+        check_fractal(*fb);
     } else if (auto* w = dynamic_cast<WhileCycleStmt*>(&s)) {
         check_while(*w);
     } else if (auto* cs = dynamic_cast<ConstStmt*>(&s)) {
@@ -316,6 +322,16 @@ void SemanticAnalyzer::check_abyss(AbyssStmt& s) {
     // Inside abyss, skip type checking (unsafe block)
     if (s.body) check_stmt(*s.body);
     inside_abyss_ = prev;
+}
+
+void SemanticAnalyzer::check_fractal(FractalStmt& s) {
+    bool prev_fractal = inside_fractal_;
+    bool prev_abyss = inside_abyss_;
+    inside_fractal_ = true;
+    inside_abyss_ = true; // fractal block lifts unsafe restrictions
+    if (s.body) check_stmt(*s.body);
+    inside_abyss_ = prev_abyss;
+    inside_fractal_ = prev_fractal;
 }
 
 void SemanticAnalyzer::check_while(WhileCycleStmt& s) {
@@ -526,6 +542,25 @@ OFSType SemanticAnalyzer::check_call(CallExpr& e) {
     if (auto* id = dynamic_cast<IdentExpr*>(e.callee.get())) {
         auto* sym = scope_.lookup(id->name);
         if (sym && sym->kind == SymbolKind::Function) {
+            auto it = function_intents_.find(id->name);
+            FuncIntent called_intent = (it != function_intents_.end()) ? it->second : FuncIntent::Impure;
+
+            if (current_intent_ == FuncIntent::Pure &&
+                (called_intent == FuncIntent::Impure || called_intent == FuncIntent::Fractal)) {
+                throw SemanticError(
+                    OFS_MSG("pure function cannot call impure/fractal function '" + id->name + "'",
+                            "função pure não pode chamar função impure/fractal '" + id->name + "'"),
+                    e.line, e.col);
+            }
+
+            if (current_intent_ == FuncIntent::Impure &&
+                called_intent == FuncIntent::Fractal && !inside_fractal_) {
+                throw SemanticError(
+                    OFS_MSG("impure function cannot call fractal function '" + id->name + "' outside fractal block",
+                            "função impure não pode chamar função fractal '" + id->name + "' fora de bloco fractal"),
+                    e.line, e.col);
+            }
+
             return sym->type;
         }
         // Monolith constructor

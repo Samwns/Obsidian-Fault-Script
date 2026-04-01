@@ -38,9 +38,12 @@ private:
     StmtPtr parse_return_stmt();     // return expr
     StmtPtr parse_fracture_stmt();   // fracture { }
     StmtPtr parse_abyss_stmt();      // abyss { }
+    StmtPtr parse_fractal_stmt();    // fractal { }
     StmtPtr parse_match_stmt();      // match expr { case val: ... default: ... }
     StmtPtr parse_tremor_stmt();     // tremor { } catch (e: type) { }
     StmtPtr parse_throw_stmt();      // throw expr
+    StmtPtr parse_obsid_block();     // : stmts... obsid
+    StmtPtr parse_stmt_block();      // { ... } or : ... obsid
 
     // ── Expressions (Pratt parser with precedence climbing) ───────────────
     ExprPtr parse_expr(int min_prec = 0);

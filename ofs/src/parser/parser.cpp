@@ -168,6 +168,21 @@ std::unique_ptr<FuncDecl> Parser::parse_func(bool is_core) {
         fn->return_type = OFSType::void_t();
     }
 
+    // Optional effect intent. Default: impure.
+    if (match(TokenKind::KW_INTENT)) {
+        if (match(TokenKind::KW_PURE)) {
+            fn->intent = FuncIntent::Pure;
+        } else if (match(TokenKind::KW_IMPURE)) {
+            fn->intent = FuncIntent::Impure;
+        } else if (match(TokenKind::KW_FRACTAL)) {
+            fn->intent = FuncIntent::Fractal;
+        } else {
+            throw error("expected intent type: pure, impure, or fractal");
+        }
+    } else {
+        fn->intent = FuncIntent::Impure;
+    }
+
     skip_newlines();
     fn->body = parse_block();
 
@@ -281,9 +296,14 @@ StmtPtr Parser::parse_stmt() {
     if (check(TokenKind::KW_RETURN))    return parse_return_stmt();
     if (check(TokenKind::KW_FRACTURE))  return parse_fracture_stmt();
     if (check(TokenKind::KW_ABYSS))     return parse_abyss_stmt();
+    if (check(TokenKind::KW_FRACTAL))   return parse_fractal_stmt();
     if (check(TokenKind::KW_MATCH))     return parse_match_stmt();
     if (check(TokenKind::KW_TREMOR))    return parse_tremor_stmt();
     if (check(TokenKind::KW_THROW))     return parse_throw_stmt();
+
+    if (check(TokenKind::KW_OBSID)) {
+        throw error("unexpected 'obsid' without matching ':' block start");
+    }
 
     if (check(TokenKind::KW_BREAK)) {
         auto s = std::make_unique<BreakStmt>();
@@ -313,6 +333,7 @@ StmtPtr Parser::parse_block() {
     auto block = std::make_unique<BlockStmt>();
     block->line = peek().line;
     block->col = peek().col;
+    block->style = BlockStyle::Brace;
 
     expect(TokenKind::LBRACE, "expected '{'");
     skip_newlines();
@@ -326,6 +347,34 @@ StmtPtr Parser::parse_block() {
 
     expect(TokenKind::RBRACE, "expected '}'");
     return block;
+}
+
+StmtPtr Parser::parse_obsid_block() {
+    auto block = std::make_unique<BlockStmt>();
+    block->line = peek().line;
+    block->col = peek().col;
+    block->style = BlockStyle::Obsid;
+
+    expect(TokenKind::COLON, "expected ':' to start obsid block");
+    skip_newlines();
+
+    while (!check(TokenKind::KW_OBSID) && !is_at_end()) {
+        if (check(TokenKind::RBRACE)) {
+            throw error("unexpected '}' inside obsid block; close with 'obsid'");
+        }
+        block->stmts.push_back(parse_stmt());
+        skip_newlines();
+        while (match(TokenKind::SEMICOLON)) skip_newlines();
+    }
+
+    expect(TokenKind::KW_OBSID, "expected 'obsid' to close block started by ':'");
+    return block;
+}
+
+StmtPtr Parser::parse_stmt_block() {
+    if (check(TokenKind::LBRACE)) return parse_block();
+    if (check(TokenKind::COLON)) return parse_obsid_block();
+    throw error("expected block body: '{...}' or ': ... obsid'");
 }
 
 StmtPtr Parser::parse_forge_stmt() {
@@ -353,11 +402,14 @@ StmtPtr Parser::parse_if_stmt() {
     s->col = peek().col;
 
     advance(); // consume 'if'
-    expect(TokenKind::LPAREN, "expected '(' after 'if'");
-    s->cond = parse_expr();
-    expect(TokenKind::RPAREN, "expected ')' after if condition");
+    if (match(TokenKind::LPAREN)) {
+        s->cond = parse_expr();
+        expect(TokenKind::RPAREN, "expected ')' after if condition");
+    } else {
+        s->cond = parse_expr();
+    }
     skip_newlines();
-    s->then_block = parse_block();
+    s->then_block = parse_stmt_block();
     skip_newlines();
 
     if (match(TokenKind::KW_ELSE)) {
@@ -366,7 +418,7 @@ StmtPtr Parser::parse_if_stmt() {
             // else if: wrap in a block for consistency
             s->else_block = parse_if_stmt();
         } else {
-            s->else_block = parse_block();
+            s->else_block = parse_stmt_block();
         }
     }
 
@@ -392,7 +444,7 @@ StmtPtr Parser::parse_cycle_stmt() {
         s->range_expr = parse_expr();
         expect(TokenKind::RPAREN, "expected ')' after cycle range");
         skip_newlines();
-        s->body = parse_block();
+        s->body = parse_stmt_block();
     } else {
         // C-style
         s->is_range = false;
@@ -403,7 +455,7 @@ StmtPtr Parser::parse_cycle_stmt() {
         s->step = parse_expr();
         expect(TokenKind::RPAREN, "expected ')' after cycle step");
         skip_newlines();
-        s->body = parse_block();
+        s->body = parse_stmt_block();
     }
 
     return s;
@@ -414,11 +466,14 @@ StmtPtr Parser::parse_while_stmt() {
     s->line = peek().line;
     s->col = peek().col;
     advance(); // consume 'while'
-    expect(TokenKind::LPAREN, "expected '(' after 'while'");
-    s->cond = parse_expr();
-    expect(TokenKind::RPAREN, "expected ')' after while condition");
+    if (match(TokenKind::LPAREN)) {
+        s->cond = parse_expr();
+        expect(TokenKind::RPAREN, "expected ')' after while condition");
+    } else {
+        s->cond = parse_expr();
+    }
     skip_newlines();
-    s->body = parse_block();
+    s->body = parse_stmt_block();
     return s;
 }
 
@@ -453,6 +508,16 @@ StmtPtr Parser::parse_abyss_stmt() {
     s->line = peek().line;
     s->col = peek().col;
     advance(); // consume 'abyss'
+    skip_newlines();
+    s->body = parse_block();
+    return s;
+}
+
+StmtPtr Parser::parse_fractal_stmt() {
+    auto s = std::make_unique<FractalStmt>();
+    s->line = peek().line;
+    s->col = peek().col;
+    advance(); // consume 'fractal'
     skip_newlines();
     s->body = parse_block();
     return s;
@@ -574,6 +639,10 @@ OFSType Parser::parse_type() {
     if (match(TokenKind::KW_OBSIDIAN)) return OFSType::obsidian();
     if (match(TokenKind::KW_BOOL))     return OFSType::boolean();
     if (match(TokenKind::KW_VOID))     return OFSType::void_t();
+    if (match(TokenKind::KW_FLOW))     return OFSType::crystal();
+    if (match(TokenKind::KW_TRUTH))    return OFSType::boolean();
+    if (match(TokenKind::KW_GLYPH))    return OFSType::obsidian();
+    if (match(TokenKind::KW_PTR))      return OFSType::shard_of(OFSType::stone());
     if (check(TokenKind::STAR))        return parse_shard_type();
 
     // Named type (monolith)
