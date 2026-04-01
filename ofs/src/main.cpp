@@ -9,30 +9,46 @@
 #include "semantic/semantic.hpp"
 #include "codegen/codegen.hpp"
 #include "ast/ast_printer.hpp"
+#include "i18n.hpp"
 
 static const char* OFS_VERSION = "1.0.0";
 
 void print_usage() {
-    std::cout << R"(
-ofs — Obsidian Fault Script compiler v)" << OFS_VERSION << R"(
-
-Usage:
-  ofs <file.ofs>                        Run a script directly (like python)
-  ofs run    <file.ofs>                 Compile and run immediately
-  ofs build  <file.ofs> [-o output]     Compile to native executable
-  ofs check  <file.ofs>                 Type-check only (no output)
-  ofs tokens <file.ofs>                 Print token stream (debug)
-  ofs ast    <file.ofs>                 Print AST (debug)
-  ofs ir     <file.ofs>                 Emit LLVM IR (debug)
-  ofs version                           Print compiler version
-  ofs help                              Show this help message
-
-Examples:
-  ofs hello.ofs                         Run hello.ofs directly
-  ofs build hello.ofs -o hello          Compile to executable
-  ofs check hello.ofs                   Type-check only
-
-)";
+    if (ofs_locale_is_pt()) {
+        std::cout <<
+"\nofs — Obsidian Fault Script compilador v" << OFS_VERSION << "\n"
+"\nUso:\n"
+"  ofs <arquivo.ofs>                     Executa o script diretamente (como python)\n"
+"  ofs run    <arquivo.ofs>              Compila e executa imediatamente\n"
+"  ofs build  <arquivo.ofs> [-o saida]  Compila para executável nativo\n"
+"  ofs check  <arquivo.ofs>             Verifica tipos sem compilar\n"
+"  ofs tokens <arquivo.ofs>             Exibe o fluxo de tokens (debug)\n"
+"  ofs ast    <arquivo.ofs>             Exibe a AST (debug)\n"
+"  ofs ir     <arquivo.ofs>             Emite o LLVM IR (debug)\n"
+"  ofs version                          Exibe a versão do compilador\n"
+"  ofs help                             Mostra esta mensagem de ajuda\n"
+"\nExemplos:\n"
+"  ofs hello.ofs                        Executa hello.ofs diretamente\n"
+"  ofs build hello.ofs -o hello         Compila para executável\n"
+"  ofs check hello.ofs                  Verifica tipos apenas\n\n";
+    } else {
+        std::cout <<
+"\nofs — Obsidian Fault Script compiler v" << OFS_VERSION << "\n"
+"\nUsage:\n"
+"  ofs <file.ofs>                        Run a script directly (like python)\n"
+"  ofs run    <file.ofs>                 Compile and run immediately\n"
+"  ofs build  <file.ofs> [-o output]     Compile to native executable\n"
+"  ofs check  <file.ofs>                 Type-check only (no output)\n"
+"  ofs tokens <file.ofs>                 Print token stream (debug)\n"
+"  ofs ast    <file.ofs>                 Print AST (debug)\n"
+"  ofs ir     <file.ofs>                 Emit LLVM IR (debug)\n"
+"  ofs version                           Print compiler version\n"
+"  ofs help                              Show this help message\n"
+"\nExamples:\n"
+"  ofs hello.ofs                         Run hello.ofs directly\n"
+"  ofs build hello.ofs -o hello          Compile to executable\n"
+"  ofs check hello.ofs                   Type-check only\n\n";
+    }
 }
 
 // Check if a string ends with a given suffix
@@ -101,7 +117,7 @@ int main(int argc, char** argv) {
     if (ends_with(cmd, ".ofs")) {
         std::string file = cmd;
         std::ifstream f(file);
-        if (!f) { std::cerr << "ofs: cannot open '" << file << "'\n"; return 1; }
+        if (!f) { std::cerr << OFS_MSG("ofs: cannot open '", "ofs: não foi possível abrir '") << file << "'\n"; return 1; }
         std::string source((std::istreambuf_iterator<char>(f)), {});
         source = strip_shebang(source);
 
@@ -109,14 +125,14 @@ int main(int argc, char** argv) {
             return run_file(file, source);
         } catch (const ofs::ParseError& e) {
             std::cerr << file << ":" << e.line << ":" << e.col
-                      << ": parse error: " << e.what() << "\n";
+                      << OFS_MSG(": parse error: ", ": erro de sintaxe: ") << e.what() << "\n";
             return 1;
         } catch (const ofs::SemanticError& e) {
             std::cerr << file << ":" << e.line << ":" << e.col
-                      << ": type error: " << e.what() << "\n";
+                      << OFS_MSG(": type error: ", ": erro de tipo: ") << e.what() << "\n";
             return 1;
         } catch (const std::exception& e) {
-            std::cerr << "ofs: error: " << e.what() << "\n";
+            std::cerr << OFS_MSG("ofs: error: ", "ofs: erro: ") << e.what() << "\n";
             return 1;
         }
     }
@@ -133,7 +149,7 @@ int main(int argc, char** argv) {
 
     // Read source
     std::ifstream f(file);
-    if (!f) { std::cerr << "ofs: cannot open '" << file << "'\n"; return 1; }
+    if (!f) { std::cerr << OFS_MSG("ofs: cannot open '", "ofs: não foi possível abrir '") << file << "'\n"; return 1; }
     std::string source((std::istreambuf_iterator<char>(f)), {});
     source = strip_shebang(source);
 
@@ -162,7 +178,7 @@ int main(int argc, char** argv) {
         sem.analyze(mod);
 
         if (cmd == "check") {
-            std::cout << "OK — no errors\n";
+            std::cout << OFS_MSG("OK — no errors\n", "OK — sem erros\n");
             return 0;
         }
 
@@ -172,7 +188,7 @@ int main(int argc, char** argv) {
 
         if (cmd == "ir") {
             codegen.emit_ir(out + ".ll");
-            std::cout << "LLVM IR written to " << out << ".ll\n";
+            std::cout << OFS_MSG("LLVM IR written to ", "LLVM IR gravado em ") << out << ".ll\n";
             return 0;
         }
 
@@ -180,7 +196,7 @@ int main(int argc, char** argv) {
             std::string obj = out + ".o";
             codegen.emit_object(obj);
             codegen.link(obj, out);
-            std::cout << "Built: " << out << "\n";
+            std::cout << OFS_MSG("Built: ", "Compilado: ") << out << "\n";
             return 0;
         }
 
@@ -195,20 +211,20 @@ int main(int argc, char** argv) {
             return result;
         }
 
-        std::cerr << "ofs: unknown command '" << cmd << "'\n";
+        std::cerr << OFS_MSG("ofs: unknown command '", "ofs: comando desconhecido '") << cmd << "'\n";
         print_usage();
         return 1;
 
     } catch (const ofs::ParseError& e) {
         std::cerr << file << ":" << e.line << ":" << e.col
-                  << ": parse error: " << e.what() << "\n";
+                  << OFS_MSG(": parse error: ", ": erro de sintaxe: ") << e.what() << "\n";
         return 1;
     } catch (const ofs::SemanticError& e) {
         std::cerr << file << ":" << e.line << ":" << e.col
-                  << ": type error: " << e.what() << "\n";
+                  << OFS_MSG(": type error: ", ": erro de tipo: ") << e.what() << "\n";
         return 1;
     } catch (const std::exception& e) {
-        std::cerr << "ofs: error: " << e.what() << "\n";
+        std::cerr << OFS_MSG("ofs: error: ", "ofs: erro: ") << e.what() << "\n";
         return 1;
     }
 }
