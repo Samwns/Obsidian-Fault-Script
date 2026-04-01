@@ -132,8 +132,8 @@ DeclPtr Parser::parse_decl() {
     if (check(TokenKind::KW_MONOLITH)) return parse_monolith();
     if (check(TokenKind::KW_STRATA))   return parse_strata();
     if (check(TokenKind::KW_FORGE))    return parse_global_forge();
-    throw error(OFS_MSG("expected declaration (core, vein, monolith, strata, or forge)",
-                         "esperada declaração (core, vein, monolith, strata ou forge)"));
+    throw error(OFS_MSG("expected declaration (core, vein, monolith, strata, forge, or attach)",
+                         "esperada declaração (core, vein, monolith, strata, forge ou attach)"));
 }
 
 std::unique_ptr<FuncDecl> Parser::parse_func(bool is_core) {
@@ -193,8 +193,8 @@ std::unique_ptr<ImportDecl> Parser::parse_import() {
     auto imp = std::make_unique<ImportDecl>();
     imp->line = peek().line;
     imp->col = peek().col;
-    advance(); // consume 'import'
-    imp->path = expect(TokenKind::STRING_LIT, "expected string path after 'import'").lexeme;
+    advance(); // consume 'attach' or legacy 'import'
+    imp->path = expect(TokenKind::STRING_LIT, "expected string path after 'attach'").lexeme;
     return imp;
 }
 

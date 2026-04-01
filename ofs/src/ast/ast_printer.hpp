@@ -54,7 +54,7 @@ private:
             std::cout << "\n";
         } else if (auto* imp = dynamic_cast<const ImportDecl*>(&d)) {
             indent(depth);
-            std::cout << "import \"" << imp->path << "\"\n";
+            std::cout << "attach \"" << imp->path << "\"\n";
         } else if (auto* ext = dynamic_cast<const ExternFuncDecl*>(&d)) {
             indent(depth);
             std::cout << "extern vein " << ext->name << "(";

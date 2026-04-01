@@ -145,13 +145,13 @@ int main() {
         test("return: value=42", val && val->value == 42);
     }
 
-    // Parse import declaration
+    // Parse attach declaration
     {
-        auto mod = parse_source("import \"stdlib/core.ofs\"\ncore main() {\n    echo(\"hi\")\n}");
-        test("import: 2 decls", mod.decls.size() == 2);
+        auto mod = parse_source("attach \"stdlib/core.ofs\"\ncore main() {\n    echo(\"hi\")\n}");
+        test("attach: 2 decls", mod.decls.size() == 2);
         auto* imp = dynamic_cast<ImportDecl*>(mod.decls[0].get());
-        test("import: is ImportDecl", imp != nullptr);
-        test("import: path", imp->path == "stdlib/core.ofs");
+        test("attach: is ImportDecl", imp != nullptr);
+        test("attach: path", imp->path == "stdlib/core.ofs");
     }
 
     // Parse extern function
