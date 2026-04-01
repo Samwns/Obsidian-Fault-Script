@@ -1,0 +1,157 @@
+name: Auto Release
+
+# Dispara a cada push na main — cria tag v1.0.x automaticamente e publica release
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  # ── 1. Incrementa a versão patch e cria a tag ─────────────────────────────
+  version:
+    name: Bump patch version
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # necessário para listar todas as tags
+
+      - name: Bump patch (1.0.x → 1.0.x+1)
+        id: bump
+        run: |
+          LATEST=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          if [ -z "$LATEST" ]; then
+            NEW="v1.0.0"
+          else
+            MAJOR=$(echo "$LATEST" | sed 's/v//' | cut -d. -f1)
+            MINOR=$(echo "$LATEST" | cut -d. -f2)
+            PATCH=$(echo "$LATEST" | cut -d. -f3)
+            NEW="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+          echo "tag=$NEW" >> "$GITHUB_OUTPUT"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$NEW"
+          git push origin "$NEW"
+
+  # ── 2. Build nas 3 plataformas ────────────────────────────────────────────
+  build:
+    name: Build (${{ matrix.os }})
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            binary: ofs
+            artifact: ofs-linux-x64
+          - os: windows-latest
+            binary: ofs.exe
+            artifact: ofs-windows-x64.exe
+          - os: macos-14
+            binary: ofs
+            artifact: ofs-macos-arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install LLVM (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 17
+          sudo apt-get install -y llvm-17-dev
+          echo "LLVM_DIR=/usr/lib/llvm-17/lib/cmake/llvm" >> "$GITHUB_ENV"
+
+      - name: Install LLVM (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install llvm@17
+          echo "LLVM_DIR=$(brew --prefix llvm@17)/lib/cmake/llvm" >> "$GITHUB_ENV"
+          echo "$(brew --prefix llvm@17)/bin" >> "$GITHUB_PATH"
+
+      - name: Install LLVM (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          # Use whatever LLVM is already installed (>= 17) or install latest
+          $clang = Get-Command clang -ErrorAction SilentlyContinue
+          $ver = if ($clang) { [int]($clang.FileVersionInfo.ProductMajorPart) } else { 0 }
+          if ($ver -lt 17) {
+            choco install llvm -y
+          }
+          $llvmBin = "C:\Program Files\LLVM\bin"
+          $llvmCmake = "C:\Program Files\LLVM\lib\cmake\llvm"
+          echo $llvmBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          echo "LLVM_DIR=$llvmCmake" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Configure (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: cmake -B build -S ofs -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR="$LLVM_DIR"
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: cmake -B build -S ofs "-DLLVM_DIR=$env:LLVM_DIR"
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Stage binary (Linux / macOS)
+        if: runner.os != 'Windows'
+        run: cp build/${{ matrix.binary }} ${{ matrix.artifact }}
+
+      - name: Stage binary (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: Copy-Item build\Release\${{ matrix.binary }} ${{ matrix.artifact }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.artifact }}
+
+  # ── 3. Publica a Release com changelog automático ────────────────────────
+  release:
+    name: Publish Release
+    needs: [version, build]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build changelog desde a tag anterior
+        id: changelog
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+          PREV=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p')
+          if [ -z "$PREV" ]; then
+            LOG=$(git log --pretty="- %s (%h)" HEAD)
+          else
+            LOG=$(git log --pretty="- %s (%h)" ${PREV}..HEAD)
+          fi
+          # Salva em arquivo para preservar quebras de linha
+          printf "## O que mudou em %s\n\n%s\n" "$TAG" "$LOG" > changelog.md
+          cat changelog.md
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: ${{ needs.version.outputs.tag }}
+          body_path: changelog.md
+          files: dist/*
+
