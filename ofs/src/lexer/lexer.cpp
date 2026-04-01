@@ -1,6 +1,7 @@
 #include "lexer.hpp"
 #include <sstream>
 #include <cstdlib>
+#include "../i18n.hpp"
 
 namespace ofs {
 
@@ -151,7 +152,8 @@ Token Lexer::next_token() {
             return make_token(TokenKind::GT);
     }
 
-    return make_error(std::string("unexpected character: ") + c);
+    return make_error(OFS_MSG(std::string("unexpected character: ") + c,
+                              std::string("caractere inesperado: ") + c));
 }
 
 // ── Character helpers ─────────────────────────────────────────────────────
@@ -206,11 +208,11 @@ Token Lexer::lex_string() {
     while (!is_at_end() && peek() != '"') {
         char c = peek();
         if (c == '\n') {
-            return make_error("unterminated string literal");
+            return make_error(OFS_MSG("unterminated string literal", "literal de string não terminada"));
         }
         if (c == '\\') {
             advance(); // skip backslash
-            if (is_at_end()) return make_error("unterminated escape in string");
+            if (is_at_end()) return make_error(OFS_MSG("unterminated escape in string", "sequência de escape não terminada na string"));
             char esc = advance();
             switch (esc) {
                 case 'n':  value += '\n'; break;
@@ -227,7 +229,7 @@ Token Lexer::lex_string() {
             value += advance();
         }
     }
-    if (is_at_end()) return make_error("unterminated string literal");
+    if (is_at_end()) return make_error(OFS_MSG("unterminated string literal", "literal de string não terminada"));
     advance(); // consume closing "
 
     Token t;

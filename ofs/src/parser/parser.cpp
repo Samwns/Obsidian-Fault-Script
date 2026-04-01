@@ -1,6 +1,7 @@
 #include "parser.hpp"
 #include <algorithm>
 #include <cassert>
+#include "../i18n.hpp"
 
 namespace ofs {
 
@@ -40,7 +41,7 @@ bool Parser::match_any(std::initializer_list<TokenKind> kinds) {
 
 Token Parser::expect(TokenKind kind, const std::string& msg) {
     if (check(kind)) return advance();
-    throw error(msg + " (got '" + peek().lexeme + "')");
+    throw error(msg + OFS_MSG(" (got '", " (encontrado '") + peek().lexeme + "')");
 }
 
 void Parser::skip_newlines() {
@@ -131,7 +132,8 @@ DeclPtr Parser::parse_decl() {
     if (check(TokenKind::KW_MONOLITH)) return parse_monolith();
     if (check(TokenKind::KW_STRATA))   return parse_strata();
     if (check(TokenKind::KW_FORGE))    return parse_global_forge();
-    throw error("expected declaration (core, vein, monolith, strata, or forge)");
+    throw error(OFS_MSG("expected declaration (core, vein, monolith, strata, or forge)",
+                         "esperada declaração (core, vein, monolith, strata ou forge)"));
 }
 
 std::unique_ptr<FuncDecl> Parser::parse_func(bool is_core) {
@@ -579,7 +581,7 @@ OFSType Parser::parse_type() {
         return OFSType::named(advance().lexeme);
     }
 
-    throw error("expected type");
+    throw error(OFS_MSG("expected type", "tipo esperado"));
 }
 
 OFSType Parser::parse_shard_type() {
@@ -822,7 +824,7 @@ ExprPtr Parser::parse_primary() {
         return expr;
     }
 
-    throw error("expected expression");
+    throw error(OFS_MSG("expected expression", "expressão esperada"));
 }
 
 ExprPtr Parser::parse_call(ExprPtr callee) {
