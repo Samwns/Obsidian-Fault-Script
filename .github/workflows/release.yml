@@ -130,6 +130,7 @@ jobs:
           mkdir -p dist-installer
           cp build/${{ matrix.binary }} dist-installer/ofs
           cp packaging/linux/install.sh dist-installer/install.sh
+          cp packaging/assets/ofs-256.png dist-installer/ofs.png
           chmod +x dist-installer/ofs dist-installer/install.sh
           tar -czf ${{ matrix.artifact }} -C dist-installer .
 
