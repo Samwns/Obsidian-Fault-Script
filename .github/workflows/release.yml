@@ -131,6 +131,7 @@ jobs:
           cp build/${{ matrix.binary }} dist-installer/ofs
           cp packaging/linux/install.sh dist-installer/install.sh
           cp packaging/assets/ofs-256.png dist-installer/ofs.png
+          cp LICENSE dist-installer/LICENSE
           chmod +x dist-installer/ofs dist-installer/install.sh
           tar -czf ${{ matrix.artifact }} -C dist-installer .
 
@@ -177,6 +178,8 @@ jobs:
               exit 1
             }
           }
+
+          Copy-Item "LICENSE" "dist\LICENSE.txt"
 
           if (Test-Path "${{ matrix.artifact }}") { Remove-Item "${{ matrix.artifact }}" -Force }
           & "C:\Program Files (x86)\NSIS\makensis.exe" /V2 /NOCD /DOUTPUT="${{ matrix.artifact }}" packaging\windows\installer.nsi
@@ -232,20 +235,74 @@ jobs:
           else
             LOG=$(git log --pretty="- %s (%h)" ${PREV}..HEAD)
           fi
-          # Salva em arquivo para preservar quebras de linha
           printf "## O que mudou em %s\n\n%s\n" "$TAG" "$LOG" > changelog.md
-          cat changelog.md
 
       - uses: actions/download-artifact@v4
         with:
           path: dist
           merge-multiple: true
 
+      - name: Build release notes (licença, log, docs, agradecimentos)
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+
+          LINUX_CONTENTS="(artifact not found)"
+          if [ -f "dist/ofs-linux-x64-installer.tar.gz" ]; then
+            LINUX_CONTENTS=$(tar -tzf dist/ofs-linux-x64-installer.tar.gz | sed 's/^/- /')
+          fi
+
+          VSIX_CONTENTS="(artifact not found)"
+          if [ -f "dist/ofs-vscode-extension.vsix" ]; then
+            VSIX_CONTENTS=$(unzip -l dist/ofs-vscode-extension.vsix | tail -n +4 | head -n -2 | awk '{print "- "$4}')
+          fi
+
+          cat > release_notes.md <<EOF
+          # Obsidian Fault Script ${TAG}
+
+          ## Changelog
+
+          $(cat changelog.md)
+
+          ## Logs de conteúdo dos instaladores
+
+          ### Linux (ofs-linux-x64-installer.tar.gz)
+          ${LINUX_CONTENTS}
+
+          ### Windows (ofs-windows-x64-installer.exe)
+          - Instala: ofs.exe
+          - Instala: libstdc++-6.dll
+          - Instala: libgcc_s_seh-1.dll
+          - Instala: libwinpthread-1.dll
+          - Instala: ofs.ico (ícone do app)
+          - Instala: LICENSE.txt (termos de licença)
+
+          ### VS Code Extension (ofs-vscode-extension.vsix)
+          ${VSIX_CONTENTS}
+
+          ## Termos de licença
+
+          - Projeto licenciado sob BSL-1.0
+          - Texto completo: https://github.com/${{ github.repository }}/blob/main/LICENSE
+
+          ## Documentação
+
+          - README: https://github.com/${{ github.repository }}/blob/main/README.md
+          - Getting Started: https://github.com/${{ github.repository }}/blob/main/docs/GETTING_STARTED.md
+          - Language Reference: https://github.com/${{ github.repository }}/blob/main/docs/LANGUAGE_REFERENCE.md
+          - Changelog: https://github.com/${{ github.repository }}/blob/main/docs/CHANGELOG.md
+
+          ## Agradecimentos
+
+          Obrigado a todas as pessoas que abriram issues, enviaram feedback e testaram os instaladores e a extensão VS Code.
+          EOF
+
+          cat release_notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.version.outputs.tag }}
           name: ${{ needs.version.outputs.tag }}
-          body_path: changelog.md
+          body_path: release_notes.md
           files: dist/*
 

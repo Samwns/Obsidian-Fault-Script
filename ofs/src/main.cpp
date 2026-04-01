@@ -3,7 +3,11 @@
 #include <sstream>
 #include <algorithm>
 #include <cstdlib>
+#include <filesystem>
 #include <unistd.h>
+#ifdef _WIN32
+#include <process.h>
+#endif
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
 #include "semantic/semantic.hpp"
@@ -69,7 +73,20 @@ static std::string strip_shebang(const std::string& source) {
 
 // Generate a unique temporary file path using the process ID
 static std::string temp_path(const std::string& suffix) {
-    return "/tmp/ofs_" + std::to_string(getpid()) + suffix;
+#ifdef _WIN32
+    const int pid = _getpid();
+#else
+    const int pid = getpid();
+#endif
+
+    std::error_code ec;
+    auto tmp_dir = std::filesystem::temp_directory_path(ec);
+    if (ec) {
+        tmp_dir = std::filesystem::current_path();
+    }
+
+    auto name = std::string("ofs_") + std::to_string(pid) + suffix;
+    return (tmp_dir / name).string();
 }
 
 // Execute the full compile-and-run pipeline for a source file
@@ -90,7 +107,7 @@ static int run_file(const std::string& file, const std::string& source) {
     std::string exe = temp_path("");
     codegen.emit_object(obj);
     codegen.link(obj, exe);
-    int result = std::system(exe.c_str());
+    int result = std::system(("\"" + exe + "\"").c_str());
     std::remove(obj.c_str());
     std::remove(exe.c_str());
     return result;
@@ -205,7 +222,7 @@ int main(int argc, char** argv) {
             std::string exe = temp_path("");
             codegen.emit_object(obj);
             codegen.link(obj, exe);
-            int result = std::system(exe.c_str());
+            int result = std::system(("\"" + exe + "\"").c_str());
             std::remove(obj.c_str());
             std::remove(exe.c_str());
             return result;
