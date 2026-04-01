@@ -39,7 +39,7 @@ core main() {
 ```
 
 A program file (`.ofs`) can contain:
-- **Import declarations** (`import`)
+- **Attach declarations** (`attach`)
 - **Extern function declarations** (`extern vein`)
 - **Function declarations** (`vein` or `core`)
 - **Structure declarations** (`monolith`)
@@ -428,11 +428,11 @@ Note: String (`obsidian`) casts require runtime functions (`ofs_stone_to_obsidia
 
 ## Imports
 
-Import other OFS source files:
+Attach other OFS source files:
 
 ```ofs
-import "stdlib/core.ofs"
-import "stdlib/math.ofs"
+attach "stdlib/core.ofs"
+attach "stdlib/math.ofs"
 ```
 
 Imports must appear at the top level, before or between other declarations.
@@ -729,7 +729,7 @@ Complete list of reserved keywords:
 | `obsidian` | `KW_OBSIDIAN`    | String type (i8*)          |
 | `bool`     | `KW_BOOL`        | Boolean type (i1)          |
 | `void`     | `KW_VOID`        | Void type                  |
-| `import`   | `KW_IMPORT`      | Import module              |
+| `attach`   | `KW_IMPORT`      | Attach module              |
 | `while`    | `KW_WHILE`       | Condition-only loop        |
 | `extern`   | `KW_EXTERN`      | Foreign function           |
 | `as`       | `KW_AS`          | Type cast                  |

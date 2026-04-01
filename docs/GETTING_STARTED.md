@@ -342,7 +342,7 @@ ofs fizzbuzz.ofs
 
 - **`while` loops**: `while (cond) { }` for condition-only looping
 - **Type casting**: `expr as type` for explicit conversions
-- **`import`**: Include other OFS modules
+- **`attach`**: Include other OFS modules
 - **`extern`**: Declare C functions for low-level access
 - **Expanded runtime**: String ops, math, I/O, type conversions
 - **Standard library**: `core.ofs`, `math.ofs`, `string.ofs`, `io.ofs`

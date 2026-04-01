@@ -109,9 +109,9 @@ int main() {
     test("program: lbrace", t[4].kind == TokenKind::LBRACE);
     test("program: echo",   t[5].kind == TokenKind::KW_ECHO);
 
-    // New keywords: import, while, extern, as, match/case/default/const/strata/tremor/catch/throw
-    t = lex("import while extern as match case default const strata tremor catch throw");
-    test("import keyword",  t[0].kind == TokenKind::KW_IMPORT);
+    // New keywords: attach, while, extern, as, match/case/default/const/strata/tremor/catch/throw
+    t = lex("attach while extern as match case default const strata tremor catch throw");
+    test("attach keyword",  t[0].kind == TokenKind::KW_IMPORT);
     test("while keyword",   t[1].kind == TokenKind::KW_WHILE);
     test("extern keyword",  t[2].kind == TokenKind::KW_EXTERN);
     test("as keyword",      t[3].kind == TokenKind::KW_AS);
@@ -124,10 +124,10 @@ int main() {
     test("catch keyword",   t[10].kind == TokenKind::KW_CATCH);
     test("throw keyword",   t[11].kind == TokenKind::KW_THROW);
 
-    // Import statement
-    t = lex("import \"stdlib/core.ofs\"");
-    test("import token",  t[0].kind == TokenKind::KW_IMPORT);
-    test("import path",   t[1].kind == TokenKind::STRING_LIT && t[1].lexeme == "stdlib/core.ofs");
+    // Attach statement
+    t = lex("attach \"stdlib/core.ofs\"");
+    test("attach token",  t[0].kind == TokenKind::KW_IMPORT);
+    test("attach path",   t[1].kind == TokenKind::STRING_LIT && t[1].lexeme == "stdlib/core.ofs");
 
     // While loop tokens
     t = lex("while (x > 0) { }");

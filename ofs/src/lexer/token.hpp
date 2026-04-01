@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <unordered_map>
+#include <cstdint>
 
 namespace ofs {
 
@@ -34,7 +35,7 @@ enum class TokenKind {
     KW_NULL,        // null
     KW_BREAK,       // break
     KW_CONTINUE,    // continue
-    KW_IMPORT,      // import
+    KW_IMPORT,      // attach / import
     KW_WHILE,       // while   (condition-only loop)
     KW_EXTERN,      // extern  (foreign function)
     KW_AS,          // as      (type cast)
@@ -145,6 +146,7 @@ const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"null",     TokenKind::KW_NULL},
     {"break",    TokenKind::KW_BREAK},
     {"continue", TokenKind::KW_CONTINUE},
+    {"attach",   TokenKind::KW_IMPORT},
     {"import",   TokenKind::KW_IMPORT},
     {"while",    TokenKind::KW_WHILE},
     {"extern",   TokenKind::KW_EXTERN},

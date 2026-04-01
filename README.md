@@ -249,8 +249,8 @@ forge b: stone = true as stone    // bool to stone
 ### Imports and Extern
 
 ```ofs
-// Import other OFS modules
-import "stdlib/core.ofs"
+// Attach other OFS modules
+attach "stdlib/core.ofs"
 
 // Declare external C functions
 extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
@@ -329,7 +329,7 @@ core main() {
 | `shard`      | Pointer type                    | `shard p: *stone`             |
 | `echo`       | Print (polymorphic)             | `echo("hello")`               |
 | `while`      | Condition-only loop             | `while (x > 0) { }`          |
-| `import`     | Import OFS module               | `import "stdlib/core.ofs"`   |
+| `attach`     | Attach OFS module               | `attach "stdlib/core.ofs"`   |
 | `extern`     | Foreign function declaration    | `extern vein puts(s: obsidian) -> stone` |
 | `as`         | Type cast                       | `x as crystal`               |
 | `if` / `else`| Conditional                     | `if (x > 0) { }`             |
@@ -389,7 +389,7 @@ ctest --output-on-failure
 | v0.7    | Dynamic arrays + range-based cycle                     | ✅ Done |
 | v0.8    | abyss (unsafe memory), raw mem access                  | ✅ Done |
 | v0.9    | String operations (concat, compare)                    | ✅ Done |
-| v1.0    | Standard library, import, extern, while, type casts   | ✅ Done |
+| v1.0    | Standard library, attach, extern, while, type casts   | ✅ Done |
 
 ---
 

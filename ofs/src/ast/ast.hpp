@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include <optional>
+#include <cstdint>
 
 namespace ofs {
 
@@ -276,7 +277,7 @@ struct GlobalForgeDecl : Decl {
     ExprPtr             initializer;
 };
 
-// import "path/to/file.ofs"
+// attach "path/to/file.ofs"
 struct ImportDecl : Decl {
     std::string path;  // the import path string
 };

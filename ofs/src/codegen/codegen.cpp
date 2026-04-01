@@ -11,6 +11,7 @@
 #include <llvm/Support/Host.h>
 #endif
 #include <llvm/Config/llvm-config.h>
+#include <llvm/Support/CodeGen.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
 #include <llvm/IR/GlobalVariable.h>
@@ -36,7 +37,7 @@ std::unique_ptr<llvm::Module> CodeGen::generate(const Module& mod) {
     mod_ = std::make_unique<llvm::Module>("ofs_module", ctx_);
 
     // Set target triple
-    auto triple = llvm::sys::getDefaultTargetTriple();
+    llvm::Triple triple(llvm::sys::getDefaultTargetTriple());
     mod_->setTargetTriple(triple);
 
     // Declare runtime functions
@@ -117,9 +118,9 @@ void CodeGen::emit_ir(const std::string& filepath) {
 // ── Emit Object ───────────────────────────────────────────────────────────
 
 void CodeGen::emit_object(const std::string& filepath) {
-    auto triple = llvm::sys::getDefaultTargetTriple();
+    llvm::Triple triple(llvm::sys::getDefaultTargetTriple());
     std::string error;
-    auto target = llvm::TargetRegistry::lookupTarget(triple, error);
+    auto target = llvm::TargetRegistry::lookupTarget(triple.str(), error);
     if (!target) {
         std::cerr << "target error: " << error << "\n";
         return;
@@ -144,7 +145,11 @@ void CodeGen::emit_object(const std::string& filepath) {
     }
 
     llvm::legacy::PassManager pass;
+#if LLVM_VERSION_MAJOR >= 18
+    if (tm->addPassesToEmitFile(pass, dest, nullptr, llvm::CodeGenFileType::ObjectFile)) {
+#else
     if (tm->addPassesToEmitFile(pass, dest, nullptr, llvm::CGFT_ObjectFile)) {
+#endif
         std::cerr << "target machine can't emit a file of this type\n";
         return;
     }

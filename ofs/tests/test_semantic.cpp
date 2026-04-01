@@ -102,9 +102,9 @@ int main() {
     test("extern function",
         analyze_ok("extern vein ofs_pow(base: crystal, exp: crystal) -> crystal\ncore main() {\n    forge r: crystal = ofs_pow(2.0, 10.0)\n}"));
 
-    // Import
-    test("import declaration",
-        analyze_ok("import \"stdlib/core.ofs\"\ncore main() {\n    echo(\"hello\")\n}"));
+    // Attach
+    test("attach declaration",
+        analyze_ok("attach \"stdlib/core.ofs\"\ncore main() {\n    echo(\"hello\")\n}"));
 
     // Invalid: break in while should work
     test("break in while",

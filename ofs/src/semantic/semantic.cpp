@@ -104,10 +104,10 @@ void SemanticAnalyzer::check_global_forge(GlobalForgeDecl& g) {
 }
 
 void SemanticAnalyzer::check_import(ImportDecl& i) {
-    // Import resolution is handled at codegen time
-    // Semantic check: just validate the path is non-empty
+    // Attach resolution is handled at codegen time.
+    // Semantic check: just validate the path is non-empty.
     if (i.path.empty()) {
-        throw SemanticError(OFS_MSG("import path cannot be empty", "caminho do import não pode ser vazio"), i.line, i.col);
+        throw SemanticError(OFS_MSG("attach path cannot be empty", "caminho do attach não pode ser vazio"), i.line, i.col);
     }
 }
 
