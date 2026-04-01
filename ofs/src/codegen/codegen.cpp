@@ -11,7 +11,6 @@
 #include <llvm/Support/Host.h>
 #endif
 #include <llvm/Config/llvm-config.h>
-#include <llvm/ADT/Triple.h>
 #include <llvm/Support/CodeGen.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
