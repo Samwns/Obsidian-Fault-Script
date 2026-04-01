@@ -17,7 +17,7 @@ std::string Token::to_string() const {
         case TokenKind::IDENT:      ss << "IDENT(" << lexeme << ")"; break;
         case TokenKind::NEWLINE:    ss << "NEWLINE"; break;
         case TokenKind::END_OF_FILE:ss << "EOF"; break;
-        case TokenKind::ERROR:      ss << "ERROR(" << lexeme << ")"; break;
+        case TokenKind::TOK_ERROR:  ss << "ERROR(" << lexeme << ")"; break;
         default:                    ss << "TOKEN(" << lexeme << ")"; break;
     }
     return ss.str();
@@ -32,7 +32,7 @@ std::vector<Token> Lexer::tokenize() {
     std::vector<Token> tokens;
     while (!is_at_end()) {
         Token t = next_token();
-        if (t.kind != TokenKind::ERROR || !t.lexeme.empty()) {
+        if (t.kind != TokenKind::TOK_ERROR || !t.lexeme.empty()) {
             tokens.push_back(std::move(t));
         }
         if (tokens.back().kind == TokenKind::END_OF_FILE) break;
@@ -195,7 +195,7 @@ Token Lexer::make_token(TokenKind kind) {
 
 Token Lexer::make_error(const std::string& msg) {
     Token t;
-    t.kind = TokenKind::ERROR;
+    t.kind = TokenKind::TOK_ERROR;
     t.lexeme = msg;
     t.line = tok_line_;
     t.col = tok_col_;
