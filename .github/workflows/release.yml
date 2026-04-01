@@ -9,6 +9,9 @@ on:
 permissions:
   contents: write
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ── 1. Incrementa a versão patch e cria a tag ─────────────────────────────
   version:
@@ -51,7 +54,7 @@ jobs:
           - os: ubuntu-22.04
             binary: ofs
             artifact: ofs-linux-x64
-          - os: windows-latest
+          - os: windows-2022
             binary: ofs.exe
             artifact: ofs-windows-x64.exe
           - os: macos-14
@@ -72,6 +75,8 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install llvm@17
+          brew unlink llvm@15 || true
+          brew link --overwrite llvm@17 || true
           echo "LLVM_DIR=$(brew --prefix llvm@17)/lib/cmake/llvm" >> "$GITHUB_ENV"
           echo "$(brew --prefix llvm@17)/bin" >> "$GITHUB_PATH"
 
@@ -79,44 +84,102 @@ jobs:
         if: runner.os == 'Windows'
         shell: powershell
         run: |
-          # Detect installed clang version (parse --version output, not FileVersionInfo)
-          $verNum = 0
-          try {
-            $verOutput = & clang --version 2>&1
-            if ($verOutput -match 'clang version (\d+)') { $verNum = [int]$Matches[1] }
-          } catch {}
-          Write-Host "Detected clang version: $verNum"
+          $llvmConfig = $null
 
-          if ($verNum -lt 17) {
-            Write-Host "Installing LLVM via choco..."
+          Write-Host "Runner tool cache: $env:RUNNER_TOOL_CACHE"
+          where.exe clang 2>$null
+
+          # Search common locations first
+          $candidates = @(
+            "$env:RUNNER_TOOL_CACHE\LLVM\*\x64\lib\cmake\llvm\LLVMConfig.cmake",
+            "C:\hostedtoolcache\windows\LLVM\*\x64\lib\cmake\llvm\LLVMConfig.cmake",
+            "C:\Program Files\LLVM\lib\cmake\llvm\LLVMConfig.cmake",
+            "C:\LLVM\lib\cmake\llvm\LLVMConfig.cmake",
+            "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\**\LLVMConfig.cmake",
+            "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm\**\LLVMConfig.cmake"
+          )
+          foreach ($c in $candidates) {
+            $match = Get-ChildItem -Path $c -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($match) {
+              $llvmConfig = $match.FullName
+              break
+            }
+          }
+
+          # If clang is already on PATH, inspect nearby directories first.
+          if (-not $llvmConfig) {
+            $clangCmd = Get-Command clang -ErrorAction SilentlyContinue
+            if ($clangCmd) {
+              $clangDir = Split-Path $clangCmd.Source -Parent
+              $nearby = @(
+                (Join-Path (Split-Path $clangDir -Parent) "lib\cmake\llvm\LLVMConfig.cmake"),
+                (Join-Path (Split-Path (Split-Path $clangDir -Parent) -Parent) "lib\cmake\llvm\LLVMConfig.cmake")
+              )
+              foreach ($c in $nearby) {
+                if (Test-Path $c) {
+                  $llvmConfig = $c
+                  break
+                }
+              }
+            }
+          }
+
+          # Fallback: recursive search
+          if (-not $llvmConfig) {
+            $roots = @(
+              "$env:RUNNER_TOOL_CACHE\LLVM",
+              "C:\hostedtoolcache\windows\LLVM",
+              "C:\Program Files\LLVM",
+              "C:\LLVM",
+              "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Tools\Llvm"
+            )
+            foreach ($root in $roots) {
+              if (Test-Path $root) {
+                $found = Get-ChildItem $root -Recurse -Filter "LLVMConfig.cmake" -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($found) {
+                  $llvmConfig = $found.FullName
+                  break
+                }
+              }
+            }
+          }
+
+          # If still missing, install latest LLVM and search again
+          if (-not $llvmConfig) {
+            Write-Host "LLVMConfig.cmake not found. Installing LLVM via choco..."
             choco install llvm -y
-            $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
-          }
 
-          # Locate LLVMConfig.cmake via llvm-config --cmakedir
-          $llvmCmake = $null
-          try {
-            $llvmCmake = (& llvm-config --cmakedir 2>&1).Trim()
-            Write-Host "llvm-config cmake dir: $llvmCmake"
-          } catch {}
-
-          # Verify or fallback: search for LLVMConfig.cmake on disk
-          if (-not $llvmCmake -or -not (Test-Path (Join-Path $llvmCmake "LLVMConfig.cmake"))) {
-            Write-Host "Searching for LLVMConfig.cmake..."
-            $found = Get-ChildItem "C:\Program Files\LLVM" -Recurse -Filter "LLVMConfig.cmake" -ErrorAction SilentlyContinue | Select-Object -First 1
-            if (-not $found) {
-              $found = Get-ChildItem "C:\LLVM" -Recurse -Filter "LLVMConfig.cmake" -ErrorAction SilentlyContinue | Select-Object -First 1
-            }
-            if ($found) {
-              $llvmCmake = $found.DirectoryName
-              Write-Host "Found at: $llvmCmake"
-            } else {
-              Write-Error "Could not locate LLVMConfig.cmake — LLVM install may have failed."
-              exit 1
+            $roots = @("C:\Program Files\LLVM", "C:\LLVM")
+            foreach ($root in $roots) {
+              if (Test-Path $root) {
+                $found = Get-ChildItem $root -Recurse -Filter "LLVMConfig.cmake" -ErrorAction SilentlyContinue | Select-Object -First 1
+                if ($found) {
+                  $llvmConfig = $found.FullName
+                  break
+                }
+              }
             }
           }
 
-          "C:\Program Files\LLVM\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          if (-not $llvmConfig) {
+            Write-Error "Could not locate LLVMConfig.cmake after install attempt."
+            exit 1
+          }
+
+          $llvmCmake = Split-Path $llvmConfig -Parent
+          $llvmRoot = Split-Path $llvmCmake -Parent | Split-Path -Parent
+          $llvmBin = Join-Path $llvmRoot "bin"
+
+          Write-Host "LLVMConfig: $llvmConfig"
+          Write-Host "LLVM_DIR: $llvmCmake"
+          Write-Host "LLVM bin: $llvmBin"
+          if (Test-Path $llvmBin) {
+            Get-ChildItem $llvmBin -Filter clang*.exe -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -HideTableHeaders
+          }
+
+          if (Test-Path $llvmBin) {
+            $llvmBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          }
           "LLVM_DIR=$llvmCmake" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Configure (Linux / macOS)
@@ -126,7 +189,7 @@ jobs:
       - name: Configure (Windows)
         if: runner.os == 'Windows'
         shell: powershell
-        run: cmake -B build -S ofs "-DLLVM_DIR=$env:LLVM_DIR"
+        run: cmake -B build -S ofs -A x64 "-DLLVM_DIR=$env:LLVM_DIR"
 
       - name: Build
         run: cmake --build build --config Release

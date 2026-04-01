@@ -422,6 +422,8 @@ void CodeGen::gen_stmt(const Stmt& s) {
         gen_fracture(*fr);
     } else if (auto* ab = dynamic_cast<const AbyssStmt*>(&s)) {
         gen_abyss(*ab);
+    } else if (auto* fb = dynamic_cast<const FractalStmt*>(&s)) {
+        gen_fractal(*fb);
     } else if (auto* w = dynamic_cast<const WhileCycleStmt*>(&s)) {
         gen_while(*w);
     } else if (auto* cs = dynamic_cast<const ConstStmt*>(&s)) {
@@ -661,6 +663,10 @@ void CodeGen::gen_fracture(const FractureStmt& s) {
 }
 
 void CodeGen::gen_abyss(const AbyssStmt& s) {
+    if (s.body) gen_stmt(*s.body);
+}
+
+void CodeGen::gen_fractal(const FractalStmt& s) {
     if (s.body) gen_stmt(*s.body);
 }
 

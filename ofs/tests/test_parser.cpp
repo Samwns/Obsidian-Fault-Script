@@ -257,6 +257,42 @@ int main() {
         test("bitwise: top op=|", top->op == "|");
     }
 
+    // Parse obsid block syntax
+    {
+        auto mod = parse_source(
+            "core main() {\n"
+            "    forge x: stone = 10\n"
+            "    if x > 5:\n"
+            "        echo(x)\n"
+            "    obsid\n"
+            "}");
+        auto* fn = dynamic_cast<FuncDecl*>(mod.decls[0].get());
+        auto* body = dynamic_cast<BlockStmt*>(fn->body.get());
+        auto* if_stmt = dynamic_cast<IfStmt*>(body->stmts[1].get());
+        test("obsid: if exists", if_stmt != nullptr);
+        auto* then_block = dynamic_cast<BlockStmt*>(if_stmt->then_block.get());
+        test("obsid: then block", then_block != nullptr);
+        test("obsid: style", then_block->style == BlockStyle::Obsid);
+    }
+
+    // Parse function intent
+    {
+        auto mod = parse_source("vein io() intent pure {\n    return\n}");
+        auto* fn = dynamic_cast<FuncDecl*>(mod.decls[0].get());
+        test("intent: exists", fn != nullptr);
+        test("intent: pure", fn->intent == FuncIntent::Pure);
+    }
+
+    // Parse fractal block statement
+    {
+        auto mod = parse_source("core main() {\n    fractal {\n        echo(1)\n    }\n}");
+        auto* fn = dynamic_cast<FuncDecl*>(mod.decls[0].get());
+        auto* body = dynamic_cast<BlockStmt*>(fn->body.get());
+        auto* fb = dynamic_cast<FractalStmt*>(body->stmts[0].get());
+        test("fractal: exists", fb != nullptr);
+        test("fractal: has body", fb->body != nullptr);
+    }
+
     std::cout << "\nAll parser tests passed!\n";
     return 0;
 }

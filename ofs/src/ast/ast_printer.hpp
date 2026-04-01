@@ -27,7 +27,12 @@ private:
                 if (i > 0) std::cout << ", ";
                 std::cout << fn->params[i].name << ": " << fn->params[i].type.to_string();
             }
-            std::cout << ") -> " << fn->return_type.to_string() << "\n";
+            std::cout << ") -> " << fn->return_type.to_string();
+            std::cout << " intent ";
+            if (fn->intent == FuncIntent::Pure) std::cout << "pure";
+            else if (fn->intent == FuncIntent::Fractal) std::cout << "fractal";
+            else std::cout << "impure";
+            std::cout << "\n";
             if (fn->body) print_stmt(*fn->body, depth + 1);
         } else if (auto* m = dynamic_cast<const MonolithDecl*>(&d)) {
             indent(depth);
@@ -134,6 +139,10 @@ private:
             indent(depth);
             std::cout << "abyss\n";
             if (ab->body) print_stmt(*ab->body, depth + 1);
+        } else if (auto* fb = dynamic_cast<const FractalStmt*>(&s)) {
+            indent(depth);
+            std::cout << "fractal\n";
+            if (fb->body) print_stmt(*fb->body, depth + 1);
         }
     }
 

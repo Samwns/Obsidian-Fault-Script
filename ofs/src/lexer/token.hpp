@@ -46,6 +46,11 @@ enum class TokenKind {
     KW_TREMOR,      // tremor  (try/error handling)
     KW_CATCH,       // catch
     KW_THROW,       // throw
+    KW_INTENT,      // intent
+    KW_PURE,        // pure
+    KW_IMPURE,      // impure
+    KW_FRACTAL,     // fractal
+    KW_OBSID,       // obsid (block terminator)
 
     // ── Type Keywords ─────────────────────────────────────────────────────
     KW_STONE,       // stone    -> i64
@@ -53,6 +58,10 @@ enum class TokenKind {
     KW_OBSIDIAN,    // obsidian -> i8* (string)
     KW_BOOL,        // bool     -> i1
     KW_VOID,        // void
+    KW_FLOW,        // flow     -> crystal (alias)
+    KW_TRUTH,       // truth    -> bool (alias)
+    KW_GLYPH,       // glyph    -> obsidian (alias)
+    KW_PTR,         // ptr      -> shard<stone> (alias)
 
     // ── Operators ─────────────────────────────────────────────────────────
     PLUS,           // +
@@ -148,11 +157,20 @@ const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"tremor",   TokenKind::KW_TREMOR},
     {"catch",    TokenKind::KW_CATCH},
     {"throw",    TokenKind::KW_THROW},
+    {"intent",   TokenKind::KW_INTENT},
+    {"pure",     TokenKind::KW_PURE},
+    {"impure",   TokenKind::KW_IMPURE},
+    {"fractal",  TokenKind::KW_FRACTAL},
+    {"obsid",    TokenKind::KW_OBSID},
     {"stone",    TokenKind::KW_STONE},
     {"crystal",  TokenKind::KW_CRYSTAL},
     {"obsidian", TokenKind::KW_OBSIDIAN},
     {"bool",     TokenKind::KW_BOOL},
     {"void",     TokenKind::KW_VOID},
+    {"flow",     TokenKind::KW_FLOW},
+    {"truth",    TokenKind::KW_TRUTH},
+    {"glyph",    TokenKind::KW_GLYPH},
+    {"ptr",      TokenKind::KW_PTR},
 };
 
 } // namespace ofs

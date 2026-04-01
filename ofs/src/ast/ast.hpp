@@ -66,6 +66,17 @@ struct OFSType {
     bool is_pointer() const;
 };
 
+enum class BlockStyle {
+    Brace,
+    Obsid,
+};
+
+enum class FuncIntent {
+    Pure,
+    Impure,
+    Fractal,
+};
+
 // ── Expressions ───────────────────────────────────────────────────────────
 
 struct Expr {
@@ -140,7 +151,10 @@ struct Stmt {
 };
 
 struct ExprStmt     : Stmt { ExprPtr expr; };
-struct BlockStmt    : Stmt { std::vector<StmtPtr> stmts; };
+struct BlockStmt    : Stmt {
+    BlockStyle style = BlockStyle::Brace;
+    std::vector<StmtPtr> stmts;
+};
 struct ReturnStmt   : Stmt { ExprPtr value; /* nullable for void */ };
 struct BreakStmt    : Stmt {};
 struct ContinueStmt : Stmt {};
@@ -185,6 +199,11 @@ struct FractureStmt : Stmt {
 
 struct AbyssStmt : Stmt {
     // abyss { ... } — unsafe memory block
+    StmtPtr body;
+};
+
+struct FractalStmt : Stmt {
+    // fractal { ... } — unrestricted effect block
     StmtPtr body;
 };
 
@@ -239,6 +258,7 @@ struct FuncDecl : Decl {
     std::vector<Param> params;
     OFSType            return_type;
     StmtPtr            body;
+    FuncIntent         intent = FuncIntent::Impure;
     bool               is_core = false; // core main()
 };
 
