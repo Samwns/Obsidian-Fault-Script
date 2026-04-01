@@ -33,7 +33,7 @@ CodeGen::CodeGen() : builder_(ctx_) {
 
 // ── Generate ──────────────────────────────────────────────────────────────
 
-std::unique_ptr<llvm::Module> CodeGen::generate(const Module& mod) {
+void CodeGen::generate(const Module& mod) {
     mod_ = std::make_unique<llvm::Module>("ofs_module", ctx_);
 
     // Set target triple
@@ -103,8 +103,6 @@ std::unique_ptr<llvm::Module> CodeGen::generate(const Module& mod) {
     if (llvm::verifyModule(*mod_, &err_stream)) {
         std::cerr << "LLVM verification error:\n" << err_str << "\n";
     }
-
-    return std::move(mod_);
 }
 
 // ── Emit IR ───────────────────────────────────────────────────────────────

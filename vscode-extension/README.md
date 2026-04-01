@@ -18,6 +18,8 @@ Language support for OFS with:
 - `OFS: Run Current File`
 - `OFS: Check Current File`
 
+When an `.ofs` file is active, the editor title bar shows quick action buttons for Run and Check.
+
 ## Install (.vsix)
 
 Use one of these methods:

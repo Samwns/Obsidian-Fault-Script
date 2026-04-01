@@ -15,9 +15,8 @@ class CodeGen {
 public:
     CodeGen();
 
-    // Generate LLVM IR from AST module
-    // Returns the LLVM Module (ready to compile to object file)
-    std::unique_ptr<llvm::Module> generate(const Module& mod);
+    // Generate LLVM IR from AST module and keep it in internal state.
+    void generate(const Module& mod);
 
     // Emit LLVM IR as text to a file (for debugging: ofs build --emit-llvm)
     void emit_ir(const std::string& filepath);

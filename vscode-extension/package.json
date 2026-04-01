@@ -21,6 +21,11 @@
     "Linters",
     "Debuggers"
   ],
+  "activationEvents": [
+    "onLanguage:ofs",
+    "onCommand:ofs.runFile",
+    "onCommand:ofs.checkFile"
+  ],
   "main": "./src/extension.js",
   "contributes": {
     "languages": [
@@ -59,13 +64,29 @@
     "commands": [
       {
         "command": "ofs.runFile",
-        "title": "OFS: Run Current File"
+        "title": "OFS: Run Current File",
+        "category": "OFS"
       },
       {
         "command": "ofs.checkFile",
-        "title": "OFS: Check Current File"
+        "title": "OFS: Check Current File",
+        "category": "OFS"
       }
     ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "ofs.runFile",
+          "when": "editorLangId == ofs",
+          "group": "navigation@1"
+        },
+        {
+          "command": "ofs.checkFile",
+          "when": "editorLangId == ofs",
+          "group": "navigation@2"
+        }
+      ]
+    },
     "configuration": {
       "title": "Obsidian Fault Script",
       "properties": {
