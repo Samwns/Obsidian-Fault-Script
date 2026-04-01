@@ -1,0 +1,59 @@
+{
+  "name": "Obsidian Fault Purple",
+  "type": "dark",
+  "colors": {
+    "editor.background": "#12071f",
+    "editor.foreground": "#efe7ff",
+    "editorLineNumber.foreground": "#8f73b8",
+    "editorLineNumber.activeForeground": "#c4a9ff",
+    "editor.selectionBackground": "#5b21b655",
+    "editor.inactiveSelectionBackground": "#4c1d9540",
+    "activityBar.background": "#1f1038",
+    "activityBar.foreground": "#efe7ff",
+    "sideBar.background": "#160a29",
+    "sideBar.foreground": "#d8c8ff",
+    "statusBar.background": "#2e1065",
+    "statusBar.foreground": "#f4eeff",
+    "titleBar.activeBackground": "#2a0f57",
+    "titleBar.activeForeground": "#f4eeff"
+  },
+  "tokenColors": [
+    {
+      "scope": ["comment"],
+      "settings": {
+        "foreground": "#8f7ba8"
+      }
+    },
+    {
+      "scope": ["keyword", "storage", "keyword.control"],
+      "settings": {
+        "foreground": "#c084fc",
+        "fontStyle": "bold"
+      }
+    },
+    {
+      "scope": ["storage.type", "support.type"],
+      "settings": {
+        "foreground": "#a78bfa"
+      }
+    },
+    {
+      "scope": ["string"],
+      "settings": {
+        "foreground": "#ddd6fe"
+      }
+    },
+    {
+      "scope": ["constant.numeric"],
+      "settings": {
+        "foreground": "#f0abfc"
+      }
+    },
+    {
+      "scope": ["entity.name.function"],
+      "settings": {
+        "foreground": "#e9d5ff"
+      }
+    }
+  ]
+}

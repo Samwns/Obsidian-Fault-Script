@@ -5,24 +5,43 @@
 
 ---
 
-## ⬇️ Download (no build required)
+## ⬇️ Download (installers)
 
 Download the pre-built binary for your platform from the [Releases page](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
 
-| Platform      | File                     |
-|---------------|--------------------------|
-| Linux (x64)   | `ofs-linux-x64`          |
-| Windows (x64) | `ofs-windows-x64.zip`    |
-| macOS (ARM)   | `ofs-macos-arm64`        |
+| Platform      | Installer file                      |
+|---------------|-------------------------------------|
+| Linux (x64)   | `ofs-linux-x64-installer.tar.gz`    |
+| Windows (x64) | `ofs-windows-x64-installer.exe`     |
+| macOS (ARM)   | `ofs-macos-arm64-installer.pkg`     |
+| VS Code       | `ofs-vscode-extension.vsix`         |
 
 ```bash
-# Linux / macOS — make executable and move to PATH
-chmod +x ofs-linux-x64
-sudo mv ofs-linux-x64 /usr/local/bin/ofs
+# Linux
+tar -xzf ofs-linux-x64-installer.tar.gz
+chmod +x install.sh
+./install.sh
 
-# Windows — extract zip and add folder to PATH (or keep DLLs next to ofs.exe)
-tar -xf ofs-windows-x64.zip
+# macOS
+sudo installer -pkg ofs-macos-arm64-installer.pkg -target /
+
+# VS Code extension (all platforms)
+code --install-extension ofs-vscode-extension.vsix
 ```
+
+Windows: run `ofs-windows-x64-installer.exe` and complete the installer wizard.
+
+## VS Code Extension
+
+The release also includes `ofs-vscode-extension.vsix`.
+
+Features:
+- Syntax highlighting for `.ofs`
+- Autocomplete for language keywords
+- Snippets (main, function, if, attach)
+- Diagnostics from `ofs check` (on save and while typing)
+- Commands to run/check the current file
+- Included purple theme: `Obsidian Fault Purple`
 
 ---
 
