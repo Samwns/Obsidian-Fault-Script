@@ -1,0 +1,95 @@
+name: Publish OFS Libraries
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - packages/src/**
+      - .github/workflows/publish-libraries.yml
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Configure npm for GitHub Packages
+        run: |
+          OWNER_LOWER=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')
+          echo "OWNER_LOWER=$OWNER_LOWER" >> "$GITHUB_ENV"
+          cat > "$HOME/.npmrc" <<EOF
+          @${OWNER_LOWER}:registry=https://npm.pkg.github.com
+          //npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
+          always-auth=true
+          EOF
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish libraries as packages
+        run: |
+          set -euo pipefail
+          mkdir -p .pkg-publish
+
+          for dir in packages/src/*; do
+            [[ -d "$dir" ]] || continue
+            [[ -f "$dir/ofspkg.json" ]] || continue
+
+            short_name=$(node -pe "require('./${dir}/ofspkg.json').name")
+            version=$(node -pe "require('./${dir}/ofspkg.json').version")
+            description=$(node -pe "require('./${dir}/ofspkg.json').description || ''")
+            package_name="@${OWNER_LOWER}/ofs-lib-${short_name}"
+            workdir=".pkg-publish/${short_name}"
+
+            rm -rf "$workdir"
+            mkdir -p "$workdir"
+
+            cp -r "$dir/libs" "$workdir/libs"
+            cp "$dir/ofspkg.json" "$workdir/ofspkg.json"
+
+            cat > "$workdir/README.md" <<EOF
+            # ${package_name}
+
+            OFS library package published via GitHub Packages.
+
+            Main module: $(node -pe "require('./${dir}/ofspkg.json').main")
+
+            Usage in OFS:
+
+            attach \"$(basename $(node -pe "require('./${dir}/ofspkg.json').main"))\"
+            EOF
+
+            cat > "$workdir/package.json" <<EOF
+            {
+              "name": "${package_name}",
+              "version": "${version}",
+              "description": "${description}",
+              "license": "BSL-1.0",
+              "files": ["libs", "ofspkg.json", "README.md"],
+              "publishConfig": {
+                "registry": "https://npm.pkg.github.com"
+              }
+            }
+            EOF
+
+            if npm view "${package_name}@${version}" version >/dev/null 2>&1; then
+              echo "Skipping ${package_name}@${version} (already published)"
+              continue
+            fi
+
+            npm publish "$workdir"
+          done
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

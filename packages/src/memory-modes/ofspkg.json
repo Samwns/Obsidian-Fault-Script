@@ -1,0 +1,6 @@
+{
+  "name": "memory-modes",
+  "version": "1.0.0",
+  "description": "Helpers and docs for fracture/abyss/fractal memory modes",
+  "main": "libs/memory_modes.ofs"
+}

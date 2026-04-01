@@ -12,6 +12,7 @@ void echo_stone(int64_t v);
 void echo_crystal(double v);
 void echo_obsidian(const char* s);
 void echo_bool(int v);
+void ofs_echo_color(const char* ansi_color, const char* text);
 void echo_newline(void);
 
 // Memory allocation

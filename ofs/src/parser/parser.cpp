@@ -289,6 +289,7 @@ StmtPtr Parser::parse_stmt() {
 
     if (check(TokenKind::LBRACE))       return parse_block();
     if (check(TokenKind::KW_FORGE))     return parse_forge_stmt();
+    if (check(TokenKind::KW_SHARD))     return parse_shard_stmt();
     if (check(TokenKind::KW_CONST))     return parse_const_stmt();
     if (check(TokenKind::KW_IF))        return parse_if_stmt();
     if (check(TokenKind::KW_CYCLE))     return parse_cycle_stmt();
@@ -388,6 +389,24 @@ StmtPtr Parser::parse_forge_stmt() {
     if (match(TokenKind::COLON)) {
         s->type_ann = parse_type();
     }
+
+    if (match(TokenKind::EQ)) {
+        s->initializer = parse_expr();
+    }
+
+    return s;
+}
+
+StmtPtr Parser::parse_shard_stmt() {
+    auto s = std::make_unique<ForgeStmt>();
+    s->line = peek().line;
+    s->col = peek().col;
+
+    advance(); // consume 'shard'
+    s->name = expect(TokenKind::IDENT, "expected variable name after 'shard'").lexeme;
+
+    expect(TokenKind::COLON, "expected ':' after shard variable name");
+    s->type_ann = parse_type();
 
     if (match(TokenKind::EQ)) {
         s->initializer = parse_expr();

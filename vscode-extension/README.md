@@ -3,6 +3,8 @@
 Language support for OFS with:
 - Syntax highlighting
 - Autocomplete for core keywords
+- Autocomplete for functions/monoliths from attached libraries (`attach`) resolved via `OFS_LIB_PATH`
+- Hover docs for OFS commands/keywords with inline examples
 - Snippets
 - Diagnostics powered by `ofs check`
 - Commands to run and check current file

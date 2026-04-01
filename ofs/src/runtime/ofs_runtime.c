@@ -24,6 +24,23 @@ void echo_bool(int v) {
     puts(v ? "true" : "false");
 }
 
+void ofs_echo_color(const char* ansi_color, const char* text) {
+    const char* color = ansi_color ? ansi_color : "\x1b[0m";
+    char normalized[64] = {0};
+
+    // Accept escaped forms from source strings: "\\u001b[31m" or "\\x1b[31m".
+    if (strncmp(color, "\\u001b[", 7) == 0) {
+        snprintf(normalized, sizeof(normalized), "\x1b[%s", color + 7);
+        color = normalized;
+    } else if (strncmp(color, "\\x1b[", 5) == 0) {
+        snprintf(normalized, sizeof(normalized), "\x1b[%s", color + 5);
+        color = normalized;
+    }
+
+    const char* value = text ? text : "";
+    printf("%s%s\x1b[0m\n", color, value);
+}
+
 void echo_newline(void) {
     putchar('\n');
 }

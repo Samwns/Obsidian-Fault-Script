@@ -1,0 +1,14 @@
+attach "terminal_colors.ofs"
+attach "memory_modes.ofs"
+
+core main() {
+    echo("Package demo start")
+
+    echo_green("green text from terminal-colors package")
+    echo_purple("purple text from terminal-colors package")
+
+    explain_memory_modes()
+    echo("mid mode name: " + memory_mode_mid_name())
+
+    echo("Package demo end")
+}

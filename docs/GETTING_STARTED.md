@@ -333,6 +333,7 @@ ofs fizzbuzz.ofs
 
 ## What's Next?
 
+- Run the complete feature showcase: `ofs examples/showcase.ofs`
 - Read the **[Language Reference](LANGUAGE_REFERENCE.md)** for complete syntax documentation
 - Check the **[examples/](../ofs/examples/)** directory for more programs
 - Explore the **[standard library](../ofs/stdlib/)** for reusable functions
