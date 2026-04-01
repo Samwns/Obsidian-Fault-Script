@@ -11,6 +11,7 @@
 #include <llvm/Support/Host.h>
 #endif
 #include <llvm/Config/llvm-config.h>
+#include <llvm/ADT/Triple.h>
 #include <llvm/Support/CodeGen.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
@@ -37,8 +38,12 @@ std::unique_ptr<llvm::Module> CodeGen::generate(const Module& mod) {
     mod_ = std::make_unique<llvm::Module>("ofs_module", ctx_);
 
     // Set target triple
-    llvm::Triple triple(llvm::sys::getDefaultTargetTriple());
+    std::string triple = llvm::sys::getDefaultTargetTriple();
+#if LLVM_VERSION_MAJOR >= 20
+    mod_->setTargetTriple(llvm::Triple(triple));
+#else
     mod_->setTargetTriple(triple);
+#endif
 
     // Declare runtime functions
     declare_runtime();
@@ -118,9 +123,9 @@ void CodeGen::emit_ir(const std::string& filepath) {
 // ── Emit Object ───────────────────────────────────────────────────────────
 
 void CodeGen::emit_object(const std::string& filepath) {
-    llvm::Triple triple(llvm::sys::getDefaultTargetTriple());
+    std::string triple = llvm::sys::getDefaultTargetTriple();
     std::string error;
-    auto target = llvm::TargetRegistry::lookupTarget(triple.str(), error);
+    auto target = llvm::TargetRegistry::lookupTarget(triple, error);
     if (!target) {
         std::cerr << "target error: " << error << "\n";
         return;
@@ -134,7 +139,11 @@ void CodeGen::emit_object(const std::string& filepath) {
 #else
     auto rm = llvm::Optional<llvm::Reloc::Model>(llvm::Reloc::PIC_);
 #endif
+#if LLVM_VERSION_MAJOR >= 20
+    auto tm = target->createTargetMachine(llvm::Triple(triple), cpu, features, opt, rm);
+#else
     auto tm = target->createTargetMachine(triple, cpu, features, opt, rm);
+#endif
     mod_->setDataLayout(tm->createDataLayout());
 
     std::error_code ec;
