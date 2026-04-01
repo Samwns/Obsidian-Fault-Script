@@ -12,7 +12,7 @@ Download the pre-built binary for your platform from the [Releases page](https:/
 | Platform      | File                     |
 |---------------|--------------------------|
 | Linux (x64)   | `ofs-linux-x64`          |
-| Windows (x64) | `ofs-windows-x64.exe`    |
+| Windows (x64) | `ofs-windows-x64.zip`    |
 | macOS (ARM)   | `ofs-macos-arm64`        |
 
 ```bash
@@ -20,8 +20,8 @@ Download the pre-built binary for your platform from the [Releases page](https:/
 chmod +x ofs-linux-x64
 sudo mv ofs-linux-x64 /usr/local/bin/ofs
 
-# Windows — rename and add to PATH manually
-ren ofs-windows-x64.exe ofs.exe
+# Windows — extract zip and add folder to PATH (or keep DLLs next to ofs.exe)
+tar -xf ofs-windows-x64.zip
 ```
 
 ---

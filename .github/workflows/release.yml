@@ -56,7 +56,7 @@ jobs:
             artifact: ofs-linux-x64
           - os: windows-2022
             binary: ofs.exe
-            artifact: ofs-windows-x64.exe
+            artifact: ofs-windows-x64.zip
           - os: macos-14
             binary: ofs
             artifact: ofs-macos-arm64
@@ -127,14 +127,35 @@ jobs:
         if: runner.os == 'Windows'
         shell: powershell
         run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+
           if (Test-Path "build\${{ matrix.binary }}") {
-            Copy-Item "build\${{ matrix.binary }}" "${{ matrix.artifact }}"
+            Copy-Item "build\${{ matrix.binary }}" "dist\ofs.exe"
           } elseif (Test-Path "build\Release\${{ matrix.binary }}") {
-            Copy-Item "build\Release\${{ matrix.binary }}" "${{ matrix.artifact }}"
+            Copy-Item "build\Release\${{ matrix.binary }}" "dist\ofs.exe"
           } else {
             Write-Error "Windows binary not found after build."
             exit 1
           }
+
+          # Bundle required MinGW runtime DLLs to avoid missing-entrypoint errors on user machines.
+          $dlls = @(
+            "C:\msys64\ucrt64\bin\libstdc++-6.dll",
+            "C:\msys64\ucrt64\bin\libgcc_s_seh-1.dll",
+            "C:\msys64\ucrt64\bin\libwinpthread-1.dll"
+          )
+
+          foreach ($dll in $dlls) {
+            if (Test-Path $dll) {
+              Copy-Item $dll dist\
+            } else {
+              Write-Error "Required runtime DLL not found: $dll"
+              exit 1
+            }
+          }
+
+          if (Test-Path "${{ matrix.artifact }}") { Remove-Item "${{ matrix.artifact }}" -Force }
+          Compress-Archive -Path dist\* -DestinationPath "${{ matrix.artifact }}"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
