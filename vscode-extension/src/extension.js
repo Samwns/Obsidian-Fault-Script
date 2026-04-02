@@ -129,11 +129,12 @@ function getShellCommand(ofsPath, filePath) {
   const terminalConfig = vscode.workspace.getConfiguration('terminal.integrated');
   const defaultProfile = terminalConfig.get('defaultProfile.windows', '');
 
-  if (/powershell|pwsh/i.test(defaultProfile)) {
-    return `& "${escapedOfs}" "${escapedFile}"`;
+  if (/cmd|command\s*prompt/i.test(defaultProfile)) {
+    return `"${escapedOfs}" "${escapedFile}"`;
   }
 
-  return `"${escapedOfs}" "${escapedFile}"`;
+  // Safe default for modern VS Code on Windows, where PowerShell/pwsh is common.
+  return `& "${escapedOfs}" "${escapedFile}"`;
 }
 
 function createRangeFromLineCol(document, line, col) {
@@ -360,7 +361,7 @@ function runCurrentFile() {
       return;
     }
 
-    const terminal = vscode.window.createTerminal({
+    const terminal = vscode.window.activeTerminal || vscode.window.createTerminal({
       name: 'OFS Run',
       cwd,
       iconPath: new vscode.ThemeIcon('play')

@@ -3,7 +3,7 @@
   "displayName": "Obsidian Fault Script",
   "description": "Language support, diagnostics, autocomplete and run commands for OFS",
   "version": "0.1.0",
-  "publisher": "samwns",
+  "publisher": "Obsidian-Fault-Script",
   "icon": "media/ofs.png",
   "license": "BSL-1.0",
   "repository": {
