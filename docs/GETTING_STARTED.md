@@ -337,7 +337,7 @@ ofs fizzbuzz.ofs
 - Read the **[Language Reference](LANGUAGE_REFERENCE.md)** for complete syntax documentation
 - Check the **[examples/](../ofs/examples/)** directory for more programs
 - Explore the **[standard library](../ofs/stdlib/)** for reusable functions
-- Look at the **[Roadmap](../OFS_COMPILER_ROADMAP.md)** for the full development history
+- Continue with the **[OFS Beginner Journey](../OFS_JORNADA_INICIANTE.md)** for the next study steps
 
 ### New in v1.0
 
