@@ -89,16 +89,18 @@
       }
     ],
     "menus": {
-      "editor/title": [
+      "editor/title/run": [
         {
           "command": "ofs.runFile",
           "when": "resourceLangId == ofs",
-          "group": "navigation@1"
-        },
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
         {
           "command": "ofs.checkFile",
           "when": "resourceLangId == ofs",
-          "group": "navigation@2"
+          "group": "navigation"
         }
       ]
     },
