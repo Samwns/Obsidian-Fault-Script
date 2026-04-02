@@ -83,8 +83,39 @@ const ATTACH_REGEX = /^\s*(attach|import)\s+"([^"]+)"\s*$/;
 const VEIN_REGEX = /^\s*(?:extern\s+)?vein\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/;
 const MONOLITH_REGEX = /^\s*monolith\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/;
 
+function getWorkspaceRoot() {
+  return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || vscode.workspace.rootPath || undefined;
+}
+
+function getBundledCompilerPath() {
+  const root = getWorkspaceRoot();
+  if (!root) {
+    return null;
+  }
+
+  const candidates = process.platform === 'win32'
+    ? [
+        path.join(root, 'ofs', 'build', 'ofs.exe'),
+        path.join(root, 'ofs', 'build', 'Release', 'ofs.exe')
+      ]
+    : [path.join(root, 'ofs', 'build', 'ofs')];
+
+  for (const candidate of candidates) {
+    if (fs.existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
 function getOfsPath() {
-  return vscode.workspace.getConfiguration().get('ofs.path', 'ofs');
+  const configured = vscode.workspace.getConfiguration().get('ofs.path', 'ofs');
+  if (configured && configured !== 'ofs') {
+    return configured;
+  }
+
+  return getBundledCompilerPath() || configured;
 }
 
 function getShellCommand(ofsPath, filePath) {
@@ -233,6 +264,34 @@ function parseDiagnostics(document, output) {
   return diagnostics;
 }
 
+function parseFirstCompilerError(output) {
+  const lines = output.split(/\r?\n/);
+
+  for (const line of lines) {
+    const match = line.match(DIAGNOSTIC_REGEX);
+    if (!match) {
+      continue;
+    }
+
+    return {
+      line: Number.parseInt(match[2], 10),
+      col: Number.parseInt(match[3], 10),
+      message: match[4].trim() || 'Unknown OFS error'
+    };
+  }
+
+  const fallback = output.trim();
+  return fallback ? { line: null, col: null, message: fallback } : null;
+}
+
+function runExecFile(command, args, options = {}) {
+  return new Promise((resolve) => {
+    cp.execFile(command, args, options, (error, stdout, stderr) => {
+      resolve({ error, stdout, stderr });
+    });
+  });
+}
+
 function runOfsCheck(document, diagnosticCollection) {
   if (!document || document.languageId !== 'ofs') {
     return;
@@ -241,7 +300,7 @@ function runOfsCheck(document, diagnosticCollection) {
   const ofsPath = getOfsPath();
   const args = ['check', document.fileName];
 
-  cp.execFile(ofsPath, args, { cwd: vscode.workspace.rootPath || undefined }, (error, stdout, stderr) => {
+  cp.execFile(ofsPath, args, { cwd: getWorkspaceRoot() || undefined }, (error, stdout, stderr) => {
     if (!error) {
       diagnosticCollection.set(document.uri, []);
       return;
@@ -274,12 +333,36 @@ function runCurrentFile() {
   }
 
   const document = editor.document;
-  document.save().then(() => {
+  document.save().then(async () => {
     const ofsPath = getOfsPath();
     const file = document.fileName;
+    const cwd = path.dirname(file);
+
+    const checkResult = await runExecFile(ofsPath, ['check', file], { cwd });
+    if (checkResult.error) {
+      const combined = `${checkResult.stdout || ''}\n${checkResult.stderr || ''}`;
+      const diagnostics = parseDiagnostics(document, combined);
+      const firstError = parseFirstCompilerError(combined);
+
+      if (diagnostics.length > 0) {
+        const collection = vscode.languages.createDiagnosticCollection('ofs-run');
+        collection.set(document.uri, diagnostics);
+        setTimeout(() => collection.dispose(), 15000);
+      }
+
+      if (firstError?.line && firstError?.col) {
+        vscode.window.showErrorMessage(`OFS line ${firstError.line}, col ${firstError.col}: ${firstError.message}`);
+      } else if (firstError?.message) {
+        vscode.window.showErrorMessage(`OFS: ${firstError.message}`);
+      } else {
+        vscode.window.showErrorMessage('OFS failed to run.');
+      }
+      return;
+    }
+
     const terminal = vscode.window.createTerminal({
       name: 'OFS Run',
-      cwd: path.dirname(file),
+      cwd,
       iconPath: new vscode.ThemeIcon('play')
     });
     terminal.show(true);

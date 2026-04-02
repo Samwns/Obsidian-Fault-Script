@@ -69,7 +69,7 @@
     "commands": [
       {
         "command": "ofs.runFile",
-        "title": "Run OFS File",
+        "title": "Run",
         "shortTitle": "Run",
         "category": "OFS",
         "icon": {
@@ -79,7 +79,7 @@
       },
       {
         "command": "ofs.checkFile",
-        "title": "Check OFS File",
+        "title": "Check",
         "shortTitle": "Check",
         "category": "OFS",
         "icon": {
