@@ -65,6 +65,16 @@ static std::string quote_arg(const std::string& s) {
     return out;
 }
 
+static std::string quote_ps_single(const std::string& s) {
+    std::string out = "'";
+    for (char c : s) {
+        if (c == '\'') out += "''";
+        else out += c;
+    }
+    out += "'";
+    return out;
+}
+
 static std::string run_capture(const std::string& cmd) {
     std::string out;
     FILE* pipe = OFS_POPEN(cmd.c_str(), "r");
@@ -105,7 +115,7 @@ static bool download_file(const std::string& url, const std::filesystem::path& o
     // Use PowerShell because it's available on all supported Windows hosts.
     std::string cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
                       "\"$ProgressPreference='SilentlyContinue'; "
-                      "Invoke-WebRequest -Uri " + quote_arg(url) + " -OutFile " + quote_arg(out_path.string()) + "\"";
+                      "Invoke-WebRequest -Uri " + quote_ps_single(url) + " -OutFile " + quote_ps_single(out_path.string()) + "\"";
     return std::system(cmd.c_str()) == 0;
 #else
     std::string out = quote_arg(out_path.string());
@@ -122,7 +132,7 @@ static std::string fetch_latest_tag() {
     std::string raw = run_capture(
         "powershell -NoProfile -ExecutionPolicy Bypass -Command "
         "\"$ProgressPreference='SilentlyContinue'; "
-        "$r = Invoke-RestMethod -Uri " + quote_arg(api) + "; "
+    "$r = Invoke-RestMethod -Uri " + quote_ps_single(api) + "; "
         "if ($r.tag_name) { $r.tag_name }\"");
 #else
     std::string raw = run_capture("curl -fsSL " + quote_arg(api));
@@ -226,8 +236,14 @@ static int run_self_update() {
 #ifdef _WIN32
     animate(cli_style::paint(OFS_MSG("Installing", "Instalando"), cli_style::CYAN, true));
         std::string install_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
-                                  "\"Start-Process -FilePath " + quote_arg(downloaded_path.string()) + " -Verb RunAs -Wait\"";
+                                  "\"Start-Process -FilePath " + quote_ps_single(downloaded_path.string()) + " -Verb RunAs -Wait\"";
         int rc = std::system(install_cmd.c_str());
+        if (rc != 0) {
+            // Fallback: try non-elevated install for environments where UAC prompt is blocked.
+            std::string fallback_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
+                                       "\"Start-Process -FilePath " + quote_ps_single(downloaded_path.string()) + " -Wait\"";
+            rc = std::system(fallback_cmd.c_str());
+        }
 #elif __APPLE__
     animate(cli_style::paint(OFS_MSG("Installing", "Instalando"), cli_style::CYAN, true));
         std::string install_cmd = "sudo installer -pkg " + quote_arg(downloaded_path.string()) + " -target /";
