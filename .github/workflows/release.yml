@@ -164,35 +164,6 @@ jobs:
           mv ofs_*.deb ofs-linux-x64.deb
           mv ofs-*.x86_64.rpm ofs-linux-x64.rpm
 
-          # Build AppImage for broad distro compatibility.
-          rm -rf AppDir
-          mkdir -p AppDir/usr/bin
-          cp build/${{ matrix.binary }} AppDir/usr/bin/ofs
-          chmod +x AppDir/usr/bin/ofs
-
-          cat > AppDir/ofs.desktop <<'EOF'
-          [Desktop Entry]
-          Type=Application
-          Name=Obsidian Fault Script
-          Exec=ofs
-          Icon=ofs
-          Categories=Development;
-          Terminal=true
-          EOF
-
-          cp packaging/assets/ofs-256.png AppDir/ofs.png
-
-          cat > AppDir/AppRun <<'EOF'
-          #!/bin/sh
-          HERE="$(dirname "$(readlink -f "$0")")"
-          export PATH="$HERE/usr/bin:$PATH"
-          exec "$HERE/usr/bin/ofs" "$@"
-          EOF
-          chmod +x AppDir/AppRun
-
-          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
-          chmod +x appimagetool
-          ARCH=x86_64 ./appimagetool AppDir ofs-linux-x64.AppImage
 
       - name: Stage installer (macOS)
         if: runner.os == 'macOS'
@@ -266,7 +237,6 @@ jobs:
           path: |
             ofs-linux-x64.deb
             ofs-linux-x64.rpm
-            ofs-linux-x64.AppImage
 
   vscode_extension:
     name: Build VS Code Extension
@@ -325,7 +295,6 @@ jobs:
           TAG="${{ needs.version.outputs.tag }}"
 
           [ -f "dist/ofs-linux-x64-installer.tar.gz" ] && mv "dist/ofs-linux-x64-installer.tar.gz" "dist/ofs-linux-x64-installer-${TAG}.tar.gz"
-          [ -f "dist/ofs-linux-x64.AppImage" ] && mv "dist/ofs-linux-x64.AppImage" "dist/ofs-linux-x64-${TAG}.AppImage"
           [ -f "dist/ofs-linux-x64.deb" ] && mv "dist/ofs-linux-x64.deb" "dist/ofs-linux-x64-${TAG}.deb"
           [ -f "dist/ofs-linux-x64.rpm" ] && mv "dist/ofs-linux-x64.rpm" "dist/ofs-linux-x64-${TAG}.rpm"
           [ -f "dist/ofs-windows-x64-installer.exe" ] && mv "dist/ofs-windows-x64-installer.exe" "dist/ofs-windows-x64-installer-${TAG}.exe"
@@ -351,7 +320,6 @@ jobs:
           fi
 
           LINUX_EXTRA="- $(basename "$LINUX_TAR") (tar.gz)"
-          [ -f "dist/ofs-linux-x64-${TAG}.AppImage" ] && LINUX_EXTRA="${LINUX_EXTRA}\n- ofs-linux-x64-${TAG}.AppImage"
           [ -f "dist/ofs-linux-x64-${TAG}.deb" ] && LINUX_EXTRA="${LINUX_EXTRA}\n- ofs-linux-x64-${TAG}.deb"
           [ -f "dist/ofs-linux-x64-${TAG}.rpm" ] && LINUX_EXTRA="${LINUX_EXTRA}\n- ofs-linux-x64-${TAG}.rpm"
 
@@ -406,7 +374,7 @@ jobs:
 
           ## Install Notes by Platform
 
-          - Linux: extract tar.gz and run `install.sh`, or use AppImage/DEB/RPM.
+          - Linux: extract tar.gz and run `install.sh`, or use DEB/RPM.
           - Windows: run installer exe as administrator.
           - macOS: install pkg and allow permissions if prompted.
           - VS Code: install the VSIX from Extensions > Install from VSIX.
