@@ -3,9 +3,11 @@
 #include <sstream>
 #include <algorithm>
 #include <cstdlib>
+#include <cstdio>
 #include <filesystem>
 #include <regex>
 #include <unordered_set>
+#include <vector>
 #include <unistd.h>
 #ifdef _WIN32
 #include <process.h>
@@ -19,6 +21,201 @@
 #include "i18n.hpp"
 
 static const char* OFS_VERSION = "1.0.4";
+static const char* OFS_REPO_OWNER = "Samwns";
+static const char* OFS_REPO_NAME  = "Obsidian-Fault-Script";
+
+static std::string trim_copy(const std::string& s);
+
+#ifdef _WIN32
+#define OFS_POPEN _popen
+#define OFS_PCLOSE _pclose
+#else
+#define OFS_POPEN popen
+#define OFS_PCLOSE pclose
+#endif
+
+static std::string quote_arg(const std::string& s) {
+    std::string out = "\"";
+    for (char c : s) {
+        if (c == '"') out += "\\\"";
+        else out += c;
+    }
+    out += '"';
+    return out;
+}
+
+static std::string run_capture(const std::string& cmd) {
+    std::string out;
+    FILE* pipe = OFS_POPEN(cmd.c_str(), "r");
+    if (!pipe) return out;
+    char buffer[512];
+    while (fgets(buffer, sizeof(buffer), pipe)) {
+        out += buffer;
+    }
+    OFS_PCLOSE(pipe);
+    return out;
+}
+
+static std::vector<int> parse_version_nums(const std::string& version_like) {
+    std::vector<int> nums;
+    std::regex re("(\\d+)");
+    auto begin = std::sregex_iterator(version_like.begin(), version_like.end(), re);
+    auto end = std::sregex_iterator();
+    for (auto it = begin; it != end; ++it) {
+        nums.push_back(std::stoi((*it)[1].str()));
+        if (nums.size() == 3) break;
+    }
+    while (nums.size() < 3) nums.push_back(0);
+    return nums;
+}
+
+static int compare_semver(const std::string& a, const std::string& b) {
+    auto av = parse_version_nums(a);
+    auto bv = parse_version_nums(b);
+    for (int i = 0; i < 3; ++i) {
+        if (av[i] < bv[i]) return -1;
+        if (av[i] > bv[i]) return 1;
+    }
+    return 0;
+}
+
+static bool download_file(const std::string& url, const std::filesystem::path& out_path) {
+#ifdef _WIN32
+    // Use PowerShell because it's available on all supported Windows hosts.
+    std::string cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
+                      "\"$ProgressPreference='SilentlyContinue'; "
+                      "Invoke-WebRequest -Uri " + quote_arg(url) + " -OutFile " + quote_arg(out_path.string()) + "\"";
+    return std::system(cmd.c_str()) == 0;
+#else
+    std::string out = quote_arg(out_path.string());
+    std::string cmd = "curl -fsSL --retry 3 -o " + out + " " + quote_arg(url)
+                    + " || wget -q -O " + out + " " + quote_arg(url);
+    return std::system(cmd.c_str()) == 0;
+#endif
+}
+
+static std::string fetch_latest_tag() {
+    const std::string api = "https://api.github.com/repos/" + std::string(OFS_REPO_OWNER) + "/" + OFS_REPO_NAME + "/releases/latest";
+
+#ifdef _WIN32
+    std::string raw = run_capture(
+        "powershell -NoProfile -ExecutionPolicy Bypass -Command "
+        "\"$ProgressPreference='SilentlyContinue'; "
+        "$r = Invoke-RestMethod -Uri " + quote_arg(api) + "; "
+        "if ($r.tag_name) { $r.tag_name }\"");
+#else
+    std::string raw = run_capture("curl -fsSL " + quote_arg(api));
+#endif
+
+    raw = trim_copy(raw);
+    if (raw.empty()) return "";
+
+    // Windows path already returns only tag_name; Unix path returns full JSON.
+    if (!raw.empty() && raw[0] == 'v') {
+        return trim_copy(raw);
+    }
+
+    std::smatch m;
+    if (std::regex_search(raw, m, std::regex("\"tag_name\"\\s*:\\s*\"([^\"]+)\""))) {
+        return m[1].str();
+    }
+    return "";
+}
+
+static int run_self_update() {
+    try {
+        std::string current = std::string("v") + OFS_VERSION;
+        std::string latest = fetch_latest_tag();
+
+        if (latest.empty()) {
+            std::cerr << OFS_MSG("ofs update: failed to fetch latest release tag\n",
+                                 "ofs update: falha ao buscar tag da release mais recente\n");
+            return 1;
+        }
+
+        if (compare_semver(current, latest) >= 0) {
+            std::cout << OFS_MSG("OFS is already up to date (", "OFS ja esta atualizado (")
+                      << current << ")\n";
+            return 0;
+        }
+
+        std::vector<std::string> candidates;
+#ifdef _WIN32
+        candidates.push_back("ofs-windows-x64-installer-" + latest + ".exe");
+        candidates.push_back("ofs-windows-x64-installer.exe");
+#elif __APPLE__
+        candidates.push_back("ofs-macos-arm64-installer-" + latest + ".pkg");
+        candidates.push_back("ofs-macos-arm64-installer.pkg");
+#else
+        candidates.push_back("ofs-linux-x64-installer-" + latest + ".tar.gz");
+        candidates.push_back("ofs-linux-x64-installer.tar.gz");
+#endif
+
+        std::error_code ec;
+        auto tmp_root = std::filesystem::temp_directory_path(ec);
+        if (ec) tmp_root = std::filesystem::current_path();
+    #ifdef _WIN32
+        const int pid = _getpid();
+    #else
+        const int pid = getpid();
+    #endif
+        auto workdir = tmp_root / ("ofs_update_" + std::to_string(pid));
+        std::filesystem::create_directories(workdir);
+
+        std::string downloaded_asset;
+        std::filesystem::path downloaded_path;
+        for (const auto& asset : candidates) {
+            std::string url = "https://github.com/" + std::string(OFS_REPO_OWNER) + "/" + OFS_REPO_NAME + "/releases/download/" + latest + "/" + asset;
+            auto out = workdir / asset;
+            std::cout << OFS_MSG("Trying: ", "Tentando: ") << asset << "\n";
+            if (download_file(url, out)) {
+                downloaded_asset = asset;
+                downloaded_path = out;
+                break;
+            }
+        }
+
+        if (downloaded_asset.empty()) {
+            std::filesystem::remove_all(workdir);
+            std::cerr << OFS_MSG("ofs update: failed to download installer asset\n",
+                                 "ofs update: falha ao baixar artefato do instalador\n");
+            return 1;
+        }
+
+        std::cout << OFS_MSG("Downloaded: ", "Baixado: ") << downloaded_asset << "\n";
+
+#ifdef _WIN32
+        std::string install_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
+                                  "\"Start-Process -FilePath " + quote_arg(downloaded_path.string()) + " -Verb RunAs -Wait\"";
+        int rc = std::system(install_cmd.c_str());
+#elif __APPLE__
+        std::string install_cmd = "sudo installer -pkg " + quote_arg(downloaded_path.string()) + " -target /";
+        int rc = std::system(install_cmd.c_str());
+#else
+        auto unpack = workdir / "unpack";
+        std::filesystem::create_directories(unpack);
+        auto install_script = unpack / "install.sh";
+        std::string install_cmd = "tar -xzf " + quote_arg(downloaded_path.string()) + " -C " + quote_arg(unpack.string())
+                                + " && chmod +x " + quote_arg(install_script.string())
+                                + " && " + quote_arg(install_script.string());
+        int rc = std::system(install_cmd.c_str());
+#endif
+
+        std::filesystem::remove_all(workdir);
+
+        if (rc != 0) {
+            std::cerr << OFS_MSG("ofs update: installer execution failed\n",
+                                 "ofs update: falha ao executar instalador\n");
+            return rc;
+        }
+
+        std::cout << OFS_MSG("Update completed to ", "Atualizacao concluida para ") << latest << "\n";
+        return 0;
+    } catch (const std::exception& e) {
+        std::cerr << OFS_MSG("ofs update: error: ", "ofs update: erro: ") << e.what() << "\n";
+        return 1;
+    }
+}
 
 static std::string trim_copy(const std::string& s) {
     const auto begin = s.find_first_not_of(" \t\r\n");
@@ -124,11 +321,13 @@ void print_usage() {
 "  ofs ast    <arquivo.ofs>             Exibe a AST (debug)\n"
 "  ofs ir     <arquivo.ofs>             Emite o LLVM IR (debug)\n"
 "  ofs version                          Exibe a versão do compilador\n"
+"  ofs update                           Atualiza para a release mais recente\n"
 "  ofs help                             Mostra esta mensagem de ajuda\n"
 "\nExemplos:\n"
 "  ofs hello.ofs                        Executa hello.ofs diretamente\n"
 "  ofs build hello.ofs -o hello         Compila para executável\n"
-"  ofs check hello.ofs                  Verifica tipos apenas\n\n";
+"  ofs check hello.ofs                  Verifica tipos apenas\n"
+"  ofs update                           Atualiza OFS via GitHub Releases\n\n";
     } else {
         std::cout <<
 "\nofs - Obsidian Fault Script compiler v" << OFS_VERSION << "\n"
@@ -141,11 +340,13 @@ void print_usage() {
 "  ofs ast    <file.ofs>                 Print AST (debug)\n"
 "  ofs ir     <file.ofs>                 Emit LLVM IR (debug)\n"
 "  ofs version                           Print compiler version\n"
+"  ofs update                            Update to the latest release\n"
 "  ofs help                              Show this help message\n"
 "\nExamples:\n"
 "  ofs hello.ofs                         Run hello.ofs directly\n"
 "  ofs build hello.ofs -o hello          Compile to executable\n"
-"  ofs check hello.ofs                   Type-check only\n\n";
+"  ofs check hello.ofs                   Type-check only\n"
+"  ofs update                            Update OFS from GitHub Releases\n\n";
     }
 }
 
@@ -236,6 +437,10 @@ int main(int argc, char** argv) {
     if (cmd == "help" || cmd == "--help" || cmd == "-h") {
         print_usage();
         return 0;
+    }
+
+    if (cmd == "update") {
+        return run_self_update();
     }
 
     // ── Auto-detect: ofs file.ofs → run directly (like python) ───────────

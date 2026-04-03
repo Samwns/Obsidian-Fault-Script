@@ -45,7 +45,7 @@
       "patterns": [
         {
           "name": "keyword.control.ofs",
-          "match": "\\b(core|vein|forge|const|if|else|while|cycle|match|case|default|return|break|continue|throw|tremor|catch|fracture|obsid|intent|pure|impure|fractal|extern|attach|import|as)\\b"
+          "match": "\\b(core|vein|forge|const|if|else|while|cycle|match|case|default|return|break|continue|throw|tremor|catch|fracture|abyss|obsid|intent|tectonic|pure|impure|fractal|extern|attach|import|as)\\b"
         },
         {
           "name": "constant.language.boolean.ofs",

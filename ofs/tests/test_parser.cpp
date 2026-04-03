@@ -293,6 +293,54 @@ int main() {
         test("fractal: has body", fb->body != nullptr);
     }
 
+    // Parse tectonic aliases for memory/effect modes
+    {
+        auto mod = parse_source(
+            "core main() {\n"
+            "    tectonic fracture {\n"
+            "        forge x = 1\n"
+            "    }\n"
+            "    tectonic abyss {\n"
+            "        echo(2)\n"
+            "    }\n"
+            "    tectonic fractal {\n"
+            "        echo(3)\n"
+            "    }\n"
+            "}");
+        auto* fn = dynamic_cast<FuncDecl*>(mod.decls[0].get());
+        auto* body = dynamic_cast<BlockStmt*>(fn->body.get());
+        auto* tfrac = dynamic_cast<FractureStmt*>(body->stmts[0].get());
+        auto* tabyss = dynamic_cast<AbyssStmt*>(body->stmts[1].get());
+        auto* tfractal = dynamic_cast<FractalStmt*>(body->stmts[2].get());
+        test("tectonic fracture: parsed", tfrac != nullptr);
+        test("tectonic abyss: parsed", tabyss != nullptr);
+        test("tectonic fractal: parsed", tfractal != nullptr);
+    }
+
+    // Parse tectonic textual aliases: safe/unsafe/bedrock
+    {
+        auto mod = parse_source(
+            "core main() {\n"
+            "    tectonic safe {\n"
+            "        forge x = 1\n"
+            "    }\n"
+            "    tectonic unsafe {\n"
+            "        echo(2)\n"
+            "    }\n"
+            "    tectonic bedrock {\n"
+            "        echo(3)\n"
+            "    }\n"
+            "}");
+        auto* fn = dynamic_cast<FuncDecl*>(mod.decls[0].get());
+        auto* body = dynamic_cast<BlockStmt*>(fn->body.get());
+        auto* tsafe = dynamic_cast<FractureStmt*>(body->stmts[0].get());
+        auto* tunsafe = dynamic_cast<AbyssStmt*>(body->stmts[1].get());
+        auto* tbedrock = dynamic_cast<FractalStmt*>(body->stmts[2].get());
+        test("tectonic safe: parsed", tsafe != nullptr);
+        test("tectonic unsafe: parsed", tunsafe != nullptr);
+        test("tectonic bedrock: parsed", tbedrock != nullptr);
+    }
+
     std::cout << "\nAll parser tests passed!\n";
     return 0;
 }
