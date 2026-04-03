@@ -63,30 +63,6 @@
     ],
     "commands": [
       {
-        "command": "ofs.runNative",
-        "title": "Run",
-        "shortTitle": "Run",
-        "category": "OFS",
-        "icon": "$(run)"
-      },
-      {
-        "command": "ofs.debugNative",
-        "title": "Debug",
-        "shortTitle": "Debug",
-        "category": "OFS",
-        "icon": "$(debug-alt-small)"
-      },
-      {
-        "command": "ofs.runFile",
-        "title": "Run (Terminal)",
-        "shortTitle": "RunTerm",
-        "category": "OFS",
-        "icon": {
-          "light": "./media/play-light.svg",
-          "dark": "./media/play-dark.svg"
-        }
-      },
-      {
         "command": "ofs.checkFile",
         "title": "Check",
         "shortTitle": "Check",
@@ -95,6 +71,48 @@
           "light": "./media/check-light.svg",
           "dark": "./media/check-dark.svg"
         }
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "ofs-native",
+        "label": "OFS Native",
+        "languages": [
+          "ofs"
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Resolved automatically from the active .ofs file."
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Working directory for the launched program."
+              },
+              "noDebug": {
+                "type": "boolean",
+                "default": false,
+                "description": "Run without debugger attached."
+              }
+            }
+          }
+        },
+        "initialConfigurations": [
+          {
+            "name": "OFS: Executar arquivo atual",
+            "type": "ofs-native",
+            "request": "launch",
+            "noDebug": true
+          },
+          {
+            "name": "OFS: Depurar arquivo atual",
+            "type": "ofs-native",
+            "request": "launch"
+          }
+        ]
       }
     ],
     "menus": {},

@@ -208,23 +208,23 @@ void CodeGen::link(const std::string& obj_file, const std::string& out_file) {
     std::string runtime_obj;
     const std::string exe_dir = get_executable_dir();
 
-    std::vector<std::string> paths = {
-        "ofs_runtime.o",
-        "./ofs_runtime.o",
-        "../ofs_runtime.o",
-        "build/ofs_runtime.o",
-        "../build/ofs_runtime.o",
-        "build/libofs_runtime.a",
-        "../build/libofs_runtime.a",
-        "libofs_runtime.a",
-        "ofs_runtime.lib"
-    };
+    std::vector<std::string> paths;
 
     if (!exe_dir.empty()) {
+        // Prefer runtime shipped next to the active compiler binary
+        // (important for VS Code embedded compiler and portable installs).
         paths.push_back((std::filesystem::path(exe_dir) / "libofs_runtime.a").string());
         paths.push_back((std::filesystem::path(exe_dir) / "ofs_runtime.lib").string());
         paths.push_back((std::filesystem::path(exe_dir) / "ofs_runtime.o").string());
     }
+
+    paths.push_back("ofs_runtime.o");
+    paths.push_back("./ofs_runtime.o");
+    paths.push_back("../ofs_runtime.o");
+    // Do not search workspace-local build outputs here; they may belong to
+    // another OFS build and cause ABI/runtime symbol mismatches.
+    paths.push_back("libofs_runtime.a");
+    paths.push_back("ofs_runtime.lib");
 
     for (const auto& p : paths) {
         if (FILE* f = fopen(p.c_str(), "r")) {

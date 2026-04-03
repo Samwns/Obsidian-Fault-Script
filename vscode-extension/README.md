@@ -19,8 +19,8 @@ Language / Idioma:
 - Autocomplete for core language symbols
 - Autocomplete for attached libraries resolved from `attach` and `OFS_LIB_PATH`
 - Diagnostics using `ofs check`
-- Native editor title actions: `Run` and `Debug`
-- Extra editor title actions: `Check` and `Run (Terminal)`
+- Native VS Code Run and Debug integration (F5 / Run and Debug panel)
+- Command palette action: `OFS: Check`
 - Built-in OFS theme: `Obsidian Fault Purple`
 - Embedded compiler support (`bin/<platform>/ofs`) with auto-install fallback
 
@@ -45,12 +45,9 @@ Language / Idioma:
 
 ### Commands
 
-- `OFS: Run` (`ofs.runNative`) - native run flow
-- `OFS: Debug` (`ofs.debugNative`) - native debug flow
 - `OFS: Check` (`ofs.checkFile`)
-- `OFS: Run (Terminal)` (`ofs.runFile`)
 
-When an `.ofs` file is active, native Run/Debug actions appear in the editor title bar.
+Run/Debug now uses native VS Code debug configurations (`ofs-native`) instead of custom extension buttons.
 
 ### Install From VSIX
 
@@ -98,8 +95,8 @@ npm run package
 - Autocomplete para simbolos da linguagem
 - Autocomplete para bibliotecas anexadas via `attach` e `OFS_LIB_PATH`
 - Diagnosticos usando `ofs check`
-- Acoes nativas no titulo do editor: `Run` e `Debug`
-- Acoes extras no titulo do editor: `Check` e `Run (Terminal)`
+- Integracao nativa com Executar/Depurar do VS Code (F5 / painel Run and Debug)
+- Acao na paleta de comandos: `OFS: Check`
 - Tema integrado: `Obsidian Fault Purple`
 - Suporte a compilador embutido (`bin/<plataforma>/ofs`) com fallback de auto-instalacao
 
@@ -124,12 +121,9 @@ npm run package
 
 ### Comandos
 
-- `OFS: Run` (`ofs.runNative`) - fluxo nativo de execucao
-- `OFS: Debug` (`ofs.debugNative`) - fluxo nativo de depuracao
 - `OFS: Check` (`ofs.checkFile`)
-- `OFS: Run (Terminal)` (`ofs.runFile`)
 
-Quando um arquivo `.ofs` esta ativo, as acoes nativas Run/Debug aparecem no titulo do editor.
+Executar/Depurar agora usa configuracoes nativas de debug do VS Code (`ofs-native`) no lugar de botoes customizados da extensao.
 
 ### Instalar Via VSIX
 

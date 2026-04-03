@@ -804,6 +804,89 @@ function getExecutableRunCommand(exePath) {
   return `"${escaped}"`;
 }
 
+async function ensureNativeDebuggerAvailable() {
+  let debugConfig = getNativeDebuggerConfig('placeholder', process.cwd());
+  if (debugConfig) {
+    return true;
+  }
+
+  vscode.window.showInformationMessage('Instalando extensao de depuracao C/C++ (ms-vscode.cpptools)...');
+  try {
+    await vscode.commands.executeCommand('workbench.extensions.installExtension', 'ms-vscode.cpptools');
+  } catch {
+    // Handled below by capability check.
+  }
+
+  debugConfig = getNativeDebuggerConfig('placeholder', process.cwd());
+  return !!debugConfig;
+}
+
+function createNativeLaunchTemplate() {
+  return [
+    {
+      name: 'OFS: Executar arquivo atual',
+      type: 'ofs-native',
+      request: 'launch',
+      noDebug: true
+    },
+    {
+      name: 'OFS: Depurar arquivo atual',
+      type: 'ofs-native',
+      request: 'launch'
+    }
+  ];
+}
+
+async function resolveOfsLaunchConfiguration(config) {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.languageId !== 'ofs') {
+    vscode.window.showErrorMessage('Abra um arquivo .ofs para executar ou depurar.');
+    return undefined;
+  }
+
+  await editor.document.save();
+  const compiled = await compileForNativeRun(editor.document);
+  if (!compiled) {
+    return undefined;
+  }
+
+  let debugConfig = getNativeDebuggerConfig(compiled.exePath, compiled.cwd);
+  if (!debugConfig) {
+    const available = await ensureNativeDebuggerAvailable();
+    if (!available) {
+      vscode.window.showErrorMessage('Depurador nativo indisponivel. Recarregue o VS Code apos instalar o depurador C/C++.');
+      return undefined;
+    }
+    debugConfig = getNativeDebuggerConfig(compiled.exePath, compiled.cwd);
+  }
+
+  if (!debugConfig) {
+    vscode.window.showErrorMessage('Falha ao configurar depurador nativo para OFS.');
+    return undefined;
+  }
+
+  return {
+    ...debugConfig,
+    ...config,
+    type: debugConfig.type,
+    request: 'launch',
+    name: config?.name || (config?.noDebug ? 'OFS: Executar arquivo atual' : 'OFS: Depurar arquivo atual'),
+    program: compiled.exePath,
+    cwd: compiled.cwd,
+    args: Array.isArray(config?.args) ? config.args : [],
+    externalConsole: false,
+    console: 'internalConsole',
+    internalConsoleOptions: 'openOnSessionStart',
+    logging: {
+      engineLogging: false,
+      trace: false,
+      traceResponse: false,
+      moduleLoad: false,
+      programOutput: true
+    }
+  };
+}
+
 async function runCurrentFileNative() {
   const editor = vscode.window.activeTextEditor;
   if (!editor || editor.document.languageId !== 'ofs') {
@@ -947,12 +1030,26 @@ function activate(context) {
   const diagnosticCollection = vscode.languages.createDiagnosticCollection('ofs');
   context.subscriptions.push(diagnosticCollection);
 
-  const runCmd = vscode.commands.registerCommand('ofs.runFile', () => runCurrentFile());
   const checkCmd = vscode.commands.registerCommand('ofs.checkFile', () => checkCurrentFile(diagnosticCollection));
-  const nativeRunCmd = vscode.commands.registerCommand('ofs.runNative', () => runCurrentFileNative());
-  const nativeDebugCmd = vscode.commands.registerCommand('ofs.debugNative', () => debugCurrentFileNative());
+  context.subscriptions.push(checkCmd);
 
-  context.subscriptions.push(runCmd, checkCmd, nativeRunCmd, nativeDebugCmd);
+  const debugProvider = vscode.debug.registerDebugConfigurationProvider(
+    'ofs-native',
+    {
+      provideDebugConfigurations() {
+        return createNativeLaunchTemplate();
+      },
+      async resolveDebugConfiguration(_folder, config) {
+        if (!config || Object.keys(config).length === 0) {
+          return resolveOfsLaunchConfiguration({ request: 'launch', noDebug: false });
+        }
+        return resolveOfsLaunchConfiguration(config);
+      }
+    },
+    vscode.DebugConfigurationProviderTriggerKind.Dynamic
+  );
+
+  context.subscriptions.push(debugProvider);
   registerCompletionProvider(context);
   registerFileDecorations(context);
   registerHoverProvider(context);
