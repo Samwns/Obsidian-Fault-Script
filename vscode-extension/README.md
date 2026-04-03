@@ -19,8 +19,10 @@ Language / Idioma:
 - Autocomplete for core language symbols
 - Autocomplete for attached libraries resolved from `attach` and `OFS_LIB_PATH`
 - Diagnostics using `ofs check`
-- Editor title actions: `Run` and `Check`
+- Native editor title actions: `Run` and `Debug`
+- Extra editor title actions: `Check` and `Run (Terminal)`
 - Built-in OFS theme: `Obsidian Fault Purple`
+- Embedded compiler support (`bin/<platform>/ofs`) with auto-install fallback
 
 ### Requirements
 
@@ -38,12 +40,17 @@ Language / Idioma:
 - `ofs.autoInstallCompiler`
 : Automatically installs OFS compiler on extension activation when missing. Default: `true`.
 
+- `ofs.preferEmbeddedCompiler`
+: Prefer compiler embedded in extension (`bin/<platform>/ofs`) before workspace/system compiler. Default: `true`.
+
 ### Commands
 
-- `OFS: Run` (`ofs.runFile`)
+- `OFS: Run` (`ofs.runNative`) - native run flow
+- `OFS: Debug` (`ofs.debugNative`) - native debug flow
 - `OFS: Check` (`ofs.checkFile`)
+- `OFS: Run (Terminal)` (`ofs.runFile`)
 
-When an `.ofs` file is active, quick actions appear in the editor title bar.
+When an `.ofs` file is active, native Run/Debug actions appear in the editor title bar.
 
 ### Install From VSIX
 
@@ -91,8 +98,10 @@ npm run package
 - Autocomplete para simbolos da linguagem
 - Autocomplete para bibliotecas anexadas via `attach` e `OFS_LIB_PATH`
 - Diagnosticos usando `ofs check`
-- Acoes no titulo do editor: `Run` e `Check`
+- Acoes nativas no titulo do editor: `Run` e `Debug`
+- Acoes extras no titulo do editor: `Check` e `Run (Terminal)`
 - Tema integrado: `Obsidian Fault Purple`
+- Suporte a compilador embutido (`bin/<plataforma>/ofs`) com fallback de auto-instalacao
 
 ### Requisitos
 
@@ -110,12 +119,17 @@ npm run package
 - `ofs.autoInstallCompiler`
 : Instala automaticamente o compilador OFS ao ativar a extensao quando ele nao estiver presente. Padrao: `true`.
 
+- `ofs.preferEmbeddedCompiler`
+: Prioriza o compilador embutido na extensao (`bin/<plataforma>/ofs`) antes do compilador do workspace/sistema. Padrao: `true`.
+
 ### Comandos
 
-- `OFS: Run` (`ofs.runFile`)
+- `OFS: Run` (`ofs.runNative`) - fluxo nativo de execucao
+- `OFS: Debug` (`ofs.debugNative`) - fluxo nativo de depuracao
 - `OFS: Check` (`ofs.checkFile`)
+- `OFS: Run (Terminal)` (`ofs.runFile`)
 
-Quando um arquivo `.ofs` esta ativo, as acoes rapidas aparecem no titulo do editor.
+Quando um arquivo `.ofs` esta ativo, as acoes nativas Run/Debug aparecem no titulo do editor.
 
 ### Instalar Via VSIX
 

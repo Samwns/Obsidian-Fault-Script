@@ -151,6 +151,24 @@ let extensionContextRef = null;
 let managedCompilerPathCache = null;
 let compilerInstallPromise = null;
 
+function platformTriple() {
+  if (process.platform === 'win32' && os.arch() === 'x64') return 'win32-x64';
+  if (process.platform === 'linux' && os.arch() === 'x64') return 'linux-x64';
+  if (process.platform === 'darwin' && os.arch() === 'arm64') return 'darwin-arm64';
+  return null;
+}
+
+function getEmbeddedCompilerPath() {
+  const triple = platformTriple();
+  if (!triple || !extensionContextRef?.extensionPath) {
+    return null;
+  }
+
+  const fileName = process.platform === 'win32' ? 'ofs.exe' : 'ofs';
+  const candidate = path.join(extensionContextRef.extensionPath, 'bin', triple, fileName);
+  return fs.existsSync(candidate) ? candidate : null;
+}
+
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
@@ -339,6 +357,14 @@ function getOfsPath() {
     return configured;
   }
 
+  const preferEmbedded = vscode.workspace.getConfiguration().get('ofs.preferEmbeddedCompiler', true);
+  if (preferEmbedded) {
+    const embedded = getEmbeddedCompilerPath();
+    if (embedded) {
+      return embedded;
+    }
+  }
+
   const bundled = getBundledCompilerPath();
   if (bundled) {
     return bundled;
@@ -372,6 +398,14 @@ async function ensureCompilerInstalledOnActivate() {
   const configured = vscode.workspace.getConfiguration().get('ofs.path', 'ofs');
   if (configured && configured !== 'ofs') {
     return configured;
+  }
+
+  const preferEmbedded = vscode.workspace.getConfiguration().get('ofs.preferEmbeddedCompiler', true);
+  if (preferEmbedded) {
+    const embedded = getEmbeddedCompilerPath();
+    if (embedded) {
+      return embedded;
+    }
   }
 
   const bundled = getBundledCompilerPath();
@@ -676,6 +710,102 @@ function runCurrentFile() {
   });
 }
 
+async function compileForNativeRun(document) {
+  if (compilerInstallPromise) {
+    await compilerInstallPromise;
+  }
+
+  const ofsPath = getOfsPath();
+  const cwd = path.dirname(document.fileName);
+  const outDir = extensionContextRef?.globalStorageUri?.fsPath
+    ? path.join(extensionContextRef.globalStorageUri.fsPath, 'native-bin')
+    : path.join(cwd, '.ofs-bin');
+
+  ensureDir(outDir);
+
+  const baseName = path.basename(document.fileName, path.extname(document.fileName)).replace(/[^a-zA-Z0-9_-]/g, '_');
+  const exeName = process.platform === 'win32' ? `${baseName}.exe` : baseName;
+  const exePath = path.join(outDir, exeName);
+
+  const buildResult = await runExecFile(ofsPath, ['build', document.fileName, '-o', exePath], { cwd });
+  if (buildResult.error) {
+    const combined = `${buildResult.stdout || ''}\n${buildResult.stderr || ''}`;
+    const firstError = parseFirstCompilerError(combined);
+    if (firstError?.line && firstError?.col) {
+      vscode.window.showErrorMessage(`OFS build error line ${firstError.line}, col ${firstError.col}: ${firstError.message}`);
+    } else {
+      vscode.window.showErrorMessage(`OFS build failed: ${combined.trim() || 'unknown error'}`);
+    }
+    return null;
+  }
+
+  return { exePath, cwd };
+}
+
+function buildNativeDebugConfig(exePath, cwd) {
+  const config = {
+    name: 'OFS Native Launch',
+    request: 'launch',
+    program: exePath,
+    cwd,
+    args: [],
+    stopAtEntry: false,
+    externalConsole: false
+  };
+
+  if (process.platform === 'darwin') {
+    return {
+      ...config,
+      type: 'cppdbg',
+      MIMode: 'lldb'
+    };
+  }
+
+  return {
+    ...config,
+    type: 'cppdbg',
+    MIMode: 'gdb'
+  };
+}
+
+async function runCurrentFileNative() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.languageId !== 'ofs') {
+    vscode.window.showErrorMessage('Open an .ofs file to run.');
+    return;
+  }
+
+  await editor.document.save();
+  const compiled = await compileForNativeRun(editor.document);
+  if (!compiled) return;
+
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+  const debugConfig = buildNativeDebugConfig(compiled.exePath, compiled.cwd);
+  const ok = await vscode.debug.startDebugging(workspaceFolder, debugConfig, { noDebug: true });
+  if (!ok) {
+    vscode.window.showWarningMessage('Native Run could not start. Install C/C++ debugger extension (ms-vscode.cpptools).');
+  }
+}
+
+async function debugCurrentFileNative() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.languageId !== 'ofs') {
+    vscode.window.showErrorMessage('Open an .ofs file to debug.');
+    return;
+  }
+
+  await editor.document.save();
+  const compiled = await compileForNativeRun(editor.document);
+  if (!compiled) return;
+
+  const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
+  const debugConfig = buildNativeDebugConfig(compiled.exePath, compiled.cwd);
+  const ok = await vscode.debug.startDebugging(workspaceFolder, debugConfig);
+  if (!ok) {
+    vscode.window.showWarningMessage('Native Debug could not start. Install C/C++ debugger extension (ms-vscode.cpptools).');
+  }
+}
+
 function checkCurrentFile(diagnosticCollection) {
   const editor = vscode.window.activeTextEditor;
   if (!editor || editor.document.languageId !== 'ofs') {
@@ -766,8 +896,10 @@ function activate(context) {
 
   const runCmd = vscode.commands.registerCommand('ofs.runFile', () => runCurrentFile());
   const checkCmd = vscode.commands.registerCommand('ofs.checkFile', () => checkCurrentFile(diagnosticCollection));
+  const nativeRunCmd = vscode.commands.registerCommand('ofs.runNative', () => runCurrentFileNative());
+  const nativeDebugCmd = vscode.commands.registerCommand('ofs.debugNative', () => debugCurrentFileNative());
 
-  context.subscriptions.push(runCmd, checkCmd);
+  context.subscriptions.push(runCmd, checkCmd, nativeRunCmd, nativeDebugCmd);
   registerCompletionProvider(context);
   registerFileDecorations(context);
   registerHoverProvider(context);

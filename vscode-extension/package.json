@@ -22,11 +22,6 @@
     "Linters",
     "Debuggers"
   ],
-  "activationEvents": [
-    "onLanguage:ofs",
-    "onCommand:ofs.runFile",
-    "onCommand:ofs.checkFile"
-  ],
   "main": "./src/extension.js",
   "contributes": {
     "languages": [
@@ -68,9 +63,23 @@
     ],
     "commands": [
       {
-        "command": "ofs.runFile",
+        "command": "ofs.runNative",
         "title": "Run",
         "shortTitle": "Run",
+        "category": "OFS",
+        "icon": "$(run)"
+      },
+      {
+        "command": "ofs.debugNative",
+        "title": "Debug",
+        "shortTitle": "Debug",
+        "category": "OFS",
+        "icon": "$(debug-alt-small)"
+      },
+      {
+        "command": "ofs.runFile",
+        "title": "Run (Terminal)",
+        "shortTitle": "RunTerm",
         "category": "OFS",
         "icon": {
           "light": "./media/play-light.svg",
@@ -91,16 +100,26 @@
     "menus": {
       "editor/title/run": [
         {
-          "command": "ofs.runFile",
+          "command": "ofs.runNative",
           "when": "resourceLangId == ofs",
-          "group": "navigation"
+          "group": "navigation@1"
+        },
+        {
+          "command": "ofs.debugNative",
+          "when": "resourceLangId == ofs",
+          "group": "navigation@2"
         }
       ],
       "editor/title": [
         {
           "command": "ofs.checkFile",
           "when": "resourceLangId == ofs",
-          "group": "navigation"
+          "group": "navigation@3"
+        },
+        {
+          "command": "ofs.runFile",
+          "when": "resourceLangId == ofs",
+          "group": "navigation@4"
         }
       ]
     },
@@ -121,6 +140,11 @@
           "type": "boolean",
           "default": true,
           "description": "Automatically install OFS compiler on extension activation when it is missing."
+        },
+        "ofs.preferEmbeddedCompiler": {
+          "type": "boolean",
+          "default": true,
+          "description": "Prefer compiler binary embedded in extension (bin/<platform>) before workspace/system compiler."
         }
       }
     }
