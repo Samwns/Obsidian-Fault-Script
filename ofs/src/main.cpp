@@ -185,6 +185,8 @@ static int run_self_update() {
 
         std::vector<std::string> candidates;
 #ifdef _WIN32
+    candidates.push_back("ofs-windows-x64-portable-" + latest + ".zip");
+    candidates.push_back("ofs-windows-x64-portable.zip");
         candidates.push_back("ofs-windows-x64-installer-" + latest + ".exe");
         candidates.push_back("ofs-windows-x64-installer.exe");
 #elif __APPLE__
@@ -234,10 +236,91 @@ static int run_self_update() {
                   << downloaded_asset << "\n";
 
 #ifdef _WIN32
-    animate(cli_style::paint(OFS_MSG("Installing", "Instalando"), cli_style::CYAN, true));
+        auto has_suffix = [](const std::string& s, const std::string& suffix) {
+            return s.size() >= suffix.size() &&
+                   s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
+        };
+
+        int rc = 0;
+        if (has_suffix(downloaded_asset, ".zip")) {
+            animate(cli_style::paint(OFS_MSG("Applying portable update", "Aplicando atualizacao portatil"), cli_style::CYAN, true));
+
+            auto unpack = workdir / "unpack";
+            std::filesystem::create_directories(unpack);
+
+            std::string expand_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
+                                     "\"Expand-Archive -LiteralPath " + quote_ps_single(downloaded_path.string())
+                                     + " -DestinationPath " + quote_ps_single(unpack.string()) + " -Force\"";
+            rc = std::system(expand_cmd.c_str());
+            if (rc != 0) {
+                std::filesystem::remove_all(workdir);
+                std::cerr << cli_style::paint(
+                    OFS_MSG("ofs update: failed to extract portable update package\n",
+                            "ofs update: falha ao extrair pacote portatil de atualizacao\n"),
+                    cli_style::RED, true);
+                return rc;
+            }
+
+            const std::string install_dir = get_executable_dir();
+            if (install_dir.empty()) {
+                std::filesystem::remove_all(workdir);
+                std::cerr << cli_style::paint(
+                    OFS_MSG("ofs update: could not determine installation directory\n",
+                            "ofs update: nao foi possivel determinar o diretorio de instalacao\n"),
+                    cli_style::RED, true);
+                return 1;
+            }
+
+            auto script_path = workdir / "apply_update.ps1";
+            std::ofstream script(script_path);
+            if (!script) {
+                std::filesystem::remove_all(workdir);
+                std::cerr << cli_style::paint(
+                    OFS_MSG("ofs update: failed to prepare update script\n",
+                            "ofs update: falha ao preparar script de atualizacao\n"),
+                    cli_style::RED, true);
+                return 1;
+            }
+
+            const int pid = _getpid();
+            script
+                << "$ErrorActionPreference = 'Stop'\n"
+                << "$src = " << quote_ps_single(unpack.string()) << "\n"
+                << "$dst = " << quote_ps_single(install_dir) << "\n"
+                << "$pid = " << pid << "\n"
+                << "for ($i = 0; $i -lt 120; $i++) { if (-not (Get-Process -Id $pid -ErrorAction SilentlyContinue)) { break }; Start-Sleep -Milliseconds 250 }\n"
+                << "$filesToReplace = @('ofs.exe','libstdc++-6.dll','libgcc_s_seh-1.dll','libwinpthread-1.dll','libofs_runtime.a')\n"
+                << "foreach ($f in $filesToReplace) { $p = Join-Path $dst $f; if (Test-Path $p) { Remove-Item $p -Force -ErrorAction SilentlyContinue } }\n"
+                << "Get-ChildItem -Path $src -File | ForEach-Object { Copy-Item $_.FullName -Destination (Join-Path $dst $_.Name) -Force }\n"
+                << "exit 0\n";
+            script.close();
+
+            std::string apply_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -File " + quote_arg(script_path.string());
+            rc = std::system(apply_cmd.c_str());
+
+            if (rc != 0) {
+                std::cerr << cli_style::paint(
+                    OFS_MSG("ofs update: failed to apply portable update\n",
+                            "ofs update: falha ao aplicar atualizacao portatil\n"),
+                    cli_style::RED, true);
+                return rc;
+            }
+
+            std::cout << cli_style::paint(
+                OFS_MSG("Portable update applied. Restart OFS terminal/session to use the new version.\n",
+                        "Atualizacao portatil aplicada. Reinicie o terminal/sessao do OFS para usar a nova versao.\n"),
+                cli_style::GREEN, true);
+
+            // Intentionally keep workdir in case script logging is needed by users/admins.
+            std::cout << cli_style::paint(OFS_MSG("Update completed to ", "Atualizacao concluida para "), cli_style::GREEN, true)
+                      << latest << "\n";
+            return 0;
+        }
+
+        animate(cli_style::paint(OFS_MSG("Installing", "Instalando"), cli_style::CYAN, true));
         std::string install_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
                                   "\"Start-Process -FilePath " + quote_ps_single(downloaded_path.string()) + " -Verb RunAs -Wait\"";
-        int rc = std::system(install_cmd.c_str());
+        rc = std::system(install_cmd.c_str());
         if (rc != 0) {
             // Fallback: try non-elevated install for environments where UAC prompt is blocked.
             std::string fallback_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "

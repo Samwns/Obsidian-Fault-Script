@@ -244,6 +244,10 @@ jobs:
 
           Copy-Item "LICENSE" "dist\LICENSE.txt"
 
+          # Portable package used by `ofs update` on Windows (no installer flow).
+          if (Test-Path "ofs-windows-x64-portable.zip") { Remove-Item "ofs-windows-x64-portable.zip" -Force }
+          Compress-Archive -Path dist\* -DestinationPath "ofs-windows-x64-portable.zip" -Force
+
           if (Test-Path "${{ matrix.artifact }}") { Remove-Item "${{ matrix.artifact }}" -Force }
           & "C:\Program Files (x86)\NSIS\makensis.exe" /V2 /NOCD /DOUTPUT="${{ matrix.artifact }}" packaging\windows\installer.nsi
 
@@ -252,6 +256,13 @@ jobs:
         with:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
+
+      - name: Upload Windows portable artifact
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ofs-windows-x64-portable.zip
+          path: ofs-windows-x64-portable.zip
 
       - name: Upload Linux extra artifacts
         if: runner.os == 'Linux'
@@ -328,6 +339,7 @@ jobs:
           [ -f "dist/ofs-linux-x64.deb" ] && mv "dist/ofs-linux-x64.deb" "dist/ofs-linux-x64-${TAG}.deb"
           [ -f "dist/ofs-linux-x64.rpm" ] && mv "dist/ofs-linux-x64.rpm" "dist/ofs-linux-x64-${TAG}.rpm"
           [ -f "dist/ofs-windows-x64-installer.exe" ] && mv "dist/ofs-windows-x64-installer.exe" "dist/ofs-windows-x64-installer-${TAG}.exe"
+          [ -f "dist/ofs-windows-x64-portable.zip" ] && mv "dist/ofs-windows-x64-portable.zip" "dist/ofs-windows-x64-portable-${TAG}.zip"
           [ -f "dist/ofs-macos-arm64-installer.pkg" ] && mv "dist/ofs-macos-arm64-installer.pkg" "dist/ofs-macos-arm64-installer-${TAG}.pkg"
           [ -f "dist/ofs-vscode-extension.vsix" ] && mv "dist/ofs-vscode-extension.vsix" "dist/ofs-vscode-extension-${TAG}.vsix"
 
@@ -340,6 +352,9 @@ jobs:
 
           WIN_EXE="dist/ofs-windows-x64-installer-${TAG}.exe"
           [ ! -f "$WIN_EXE" ] && WIN_EXE="dist/ofs-windows-x64-installer.exe"
+
+          WIN_PORTABLE="dist/ofs-windows-x64-portable-${TAG}.zip"
+          [ ! -f "$WIN_PORTABLE" ] && WIN_PORTABLE="dist/ofs-windows-x64-portable.zip"
 
           VSIX_FILE="dist/ofs-vscode-extension-${TAG}.vsix"
           [ ! -f "$VSIX_FILE" ] && VSIX_FILE="dist/ofs-vscode-extension.vsix"
@@ -398,6 +413,7 @@ jobs:
           - Instala: libwinpthread-1.dll
           - Instala: ofs.ico (ícone do app)
           - Instala: LICENSE.txt (termos de licença)
+          - Portable update package: $(basename "$WIN_PORTABLE")
 
           ### VS Code Extension ($(basename "$VSIX_FILE"))
           ${VSIX_CONTENTS}
@@ -406,6 +422,7 @@ jobs:
 
           - Linux: extract tar.gz and run `install.sh`, or use DEB/RPM.
           - Windows: run installer exe as administrator.
+          - Windows update (`ofs update`): uses the portable zip package to replace old files in place.
           - macOS: install pkg and allow permissions if prompted.
           - VS Code: install the VSIX from Extensions > Install from VSIX.
 

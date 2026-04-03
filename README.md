@@ -9,7 +9,7 @@ Language / Idioma:
 
 ## English
 
-A compiled, statically typed language designed to help people learn programming with fast feedback.
+A hybrid language (interpreted run flow + native compilation), statically typed, designed to help people learn programming with fast feedback.
 Write simple code, run it with one command, and move into lower-level concepts when you are ready.
 
 ### Start in 5 minutes
@@ -73,7 +73,7 @@ ofs help                        # help
 
 ## Portugues (Brasil)
 
-Linguagem compilada, estaticamente tipada e feita para aprender programacao com feedback rapido.
+Linguagem hibrida (fluxo interpretado de execucao + compilacao nativa), estaticamente tipada e feita para aprender programacao com feedback rapido.
 Voce escreve codigo simples, roda com um comando e evolui para conceitos de baixo nivel quando quiser.
 
 ### Comece em 5 minutos
