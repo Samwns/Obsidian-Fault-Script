@@ -76,6 +76,16 @@ jobs:
           # Keep VS Code extension manifest version aligned with release tag.
           node -e "const fs=require('fs');const p='vscode-extension/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
 
+          # Sync library package versions
+          for lib_dir in .pkg-publish/*/; do
+            if [ -f "$lib_dir/package.json" ]; then
+              node -e "const fs=require('fs');const p='$lib_dir/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
+            fi
+            if [ -f "$lib_dir/ofspkg.json" ]; then
+              node -e "const fs=require('fs');const p='$lib_dir/ofspkg.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
+            fi
+          done
+
       - name: Install LLVM (Linux)
         if: runner.os == 'Linux'
         run: |
