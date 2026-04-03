@@ -8,6 +8,8 @@
 #include <regex>
 #include <unordered_set>
 #include <vector>
+#include <chrono>
+#include <thread>
 #include <unistd.h>
 #ifdef _WIN32
 #include <process.h>
@@ -124,7 +126,17 @@ static std::string fetch_latest_tag() {
 
 static int run_self_update() {
     try {
+        const char* frames[] = {"[=     ]", "[==    ]", "[===   ]", "[ ==== ]", "[  === ]", "[   == ]", "[    = ]"};
+        auto animate = [&](const std::string& label, int loops = 7) {
+            for (int i = 0; i < loops; ++i) {
+                std::cout << "\r" << label << " " << frames[i % 7] << std::flush;
+                std::this_thread::sleep_for(std::chrono::milliseconds(45));
+            }
+            std::cout << "\r" << label << " [done ]\n";
+        };
+
         std::string current = std::string("v") + OFS_VERSION;
+        animate(OFS_MSG("Checking releases", "Verificando releases"));
         std::string latest = fetch_latest_tag();
 
         if (latest.empty()) {
@@ -168,6 +180,7 @@ static int run_self_update() {
             std::string url = "https://github.com/" + std::string(OFS_REPO_OWNER) + "/" + OFS_REPO_NAME + "/releases/download/" + latest + "/" + asset;
             auto out = workdir / asset;
             std::cout << OFS_MSG("Trying: ", "Tentando: ") << asset << "\n";
+            animate(OFS_MSG("Downloading", "Baixando"));
             if (download_file(url, out)) {
                 downloaded_asset = asset;
                 downloaded_path = out;
@@ -185,16 +198,19 @@ static int run_self_update() {
         std::cout << OFS_MSG("Downloaded: ", "Baixado: ") << downloaded_asset << "\n";
 
 #ifdef _WIN32
+    animate(OFS_MSG("Installing", "Instalando"));
         std::string install_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
                                   "\"Start-Process -FilePath " + quote_arg(downloaded_path.string()) + " -Verb RunAs -Wait\"";
         int rc = std::system(install_cmd.c_str());
 #elif __APPLE__
+    animate(OFS_MSG("Installing", "Instalando"));
         std::string install_cmd = "sudo installer -pkg " + quote_arg(downloaded_path.string()) + " -target /";
         int rc = std::system(install_cmd.c_str());
 #else
         auto unpack = workdir / "unpack";
         std::filesystem::create_directories(unpack);
         auto install_script = unpack / "install.sh";
+    animate(OFS_MSG("Installing", "Instalando"));
         std::string install_cmd = "tar -xzf " + quote_arg(downloaded_path.string()) + " -C " + quote_arg(unpack.string())
                                 + " && chmod +x " + quote_arg(install_script.string())
                                 + " && " + quote_arg(install_script.string());
@@ -308,12 +324,23 @@ static std::string preprocess_source(const std::string& file, const std::string&
     return resolve_attaches_recursive(source, p.parent_path().empty() ? std::filesystem::current_path() : p.parent_path(), visited);
 }
 
+static void print_ascii_banner() {
+    std::cout << R"(
+  ____  _____ ____
+ / __ \/ ___// __/   Obsidian Fault Script
+/ /_/ / /__ /\ \     language + compiler
+\____/\___//___/
+
+)";
+}
+
 void print_usage() {
+    print_ascii_banner();
     if (ofs_locale_is_pt()) {
         std::cout <<
 "\nofs - Obsidian Fault Script compilador v" << OFS_VERSION << "\n"
 "\nUso:\n"
-"  ofs <arquivo.ofs>                     Executa o script diretamente (como python)\n"
+"  ofs <arquivo.ofs>                     Executa o script diretamente\n"
 "  ofs run    <arquivo.ofs>              Compila e executa imediatamente\n"
 "  ofs build  <arquivo.ofs> [-o saida]  Compila para executável nativo\n"
 "  ofs check  <arquivo.ofs>             Verifica tipos sem compilar\n"
@@ -332,7 +359,7 @@ void print_usage() {
         std::cout <<
 "\nofs - Obsidian Fault Script compiler v" << OFS_VERSION << "\n"
 "\nUsage:\n"
-"  ofs <file.ofs>                        Run a script directly (like python)\n"
+"  ofs <file.ofs>                        Run a script directly\n"
 "  ofs run    <file.ofs>                 Compile and run immediately\n"
 "  ofs build  <file.ofs> [-o output]     Compile to native executable\n"
 "  ofs check  <file.ofs>                 Type-check only (no output)\n"
@@ -430,7 +457,9 @@ int main(int argc, char** argv) {
 
     // ── Quick commands (no file needed) ──────────────────────────────────
     if (cmd == "version" || cmd == "--version" || cmd == "-v") {
+        print_ascii_banner();
         std::cout << "ofs " << OFS_VERSION << " - Obsidian Fault Script\n";
+        std::cout << OFS_MSG("status: stable\n", "status: estavel\n");
         return 0;
     }
 
@@ -443,7 +472,7 @@ int main(int argc, char** argv) {
         return run_self_update();
     }
 
-    // ── Auto-detect: ofs file.ofs → run directly (like python) ───────────
+    // ── Auto-detect: ofs file.ofs → run directly ─────────────────────────
     if (ends_with(cmd, ".ofs")) {
         std::string file = cmd;
         std::ifstream f(file);

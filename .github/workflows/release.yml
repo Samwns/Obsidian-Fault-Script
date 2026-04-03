@@ -363,6 +363,24 @@ jobs:
           cat > release_notes.md <<EOF
           # Obsidian Fault Script ${TAG}
 
+          > Release generated automatically from main.
+
+          ## Quick Start
+
+          1. Download the asset for your platform below.
+          2. Install OFS.
+          3. Run `ofs version` to confirm.
+
+          ## Quick Update
+
+          If OFS is already installed, run:
+
+          ```bash
+          ofs update
+          ```
+
+          This command checks the latest GitHub Release, downloads the correct installer for your OS, and updates automatically.
+
           ## Changelog
 
           $(cat changelog.md)
@@ -385,6 +403,13 @@ jobs:
 
           ### VS Code Extension ($(basename "$VSIX_FILE"))
           ${VSIX_CONTENTS}
+
+          ## Install Notes by Platform
+
+          - Linux: extract tar.gz and run `install.sh`, or use AppImage/DEB/RPM.
+          - Windows: run installer exe as administrator.
+          - macOS: install pkg and allow permissions if prompted.
+          - VS Code: install the VSIX from Extensions > Install from VSIX.
 
           ## Termos de licença
 
