@@ -2,6 +2,8 @@ const vscode = require('vscode');
 const cp = require('child_process');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
+const https = require('https');
 
 const KEYWORDS = [
   'core', 'vein', 'forge', 'const', 'monolith', 'strata', 'extern',
@@ -86,6 +88,167 @@ const DIAGNOSTIC_REGEX = /^(.*):(\d+):(\d+):\s*(.*)$/;
 const ATTACH_REGEX = /^\s*(attach|import)\s+"([^"]+)"\s*$/;
 const VEIN_REGEX = /^\s*(?:extern\s+)?vein\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/;
 const MONOLITH_REGEX = /^\s*monolith\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/;
+const RELEASES_API = 'https://api.github.com/repos/Samwns/Obsidian-Fault-Script/releases/latest';
+
+let extensionContextRef = null;
+let managedCompilerPathCache = null;
+let compilerInstallPromise = null;
+
+function ensureDir(dirPath) {
+  fs.mkdirSync(dirPath, { recursive: true });
+}
+
+function getManagedCompilerPath() {
+  if (!extensionContextRef?.globalStorageUri?.fsPath) {
+    return null;
+  }
+
+  const installDir = path.join(extensionContextRef.globalStorageUri.fsPath, 'compiler');
+  ensureDir(installDir);
+  return process.platform === 'win32'
+    ? path.join(installDir, 'ofs.exe')
+    : path.join(installDir, 'ofs');
+}
+
+function httpGetJson(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { headers: { 'User-Agent': 'obsidian-fault-vscode-extension' } }, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        resolve(httpGetJson(res.headers.location));
+        return;
+      }
+
+      if (res.statusCode !== 200) {
+        reject(new Error(`HTTP ${res.statusCode} while fetching ${url}`));
+        return;
+      }
+
+      let raw = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => { raw += chunk; });
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(raw));
+        } catch (err) {
+          reject(err);
+        }
+      });
+    });
+    req.on('error', reject);
+  });
+}
+
+function downloadToFile(url, destPath) {
+  return new Promise((resolve, reject) => {
+    const file = fs.createWriteStream(destPath);
+    const request = https.get(url, { headers: { 'User-Agent': 'obsidian-fault-vscode-extension' } }, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        file.close(() => {
+          fs.rm(destPath, { force: true }, () => {
+            resolve(downloadToFile(res.headers.location, destPath));
+          });
+        });
+        return;
+      }
+
+      if (res.statusCode !== 200) {
+        file.close(() => fs.rm(destPath, { force: true }, () => reject(new Error(`HTTP ${res.statusCode} while downloading asset`))));
+        return;
+      }
+
+      res.pipe(file);
+      file.on('finish', () => file.close(resolve));
+    });
+
+    request.on('error', (err) => {
+      file.close(() => fs.rm(destPath, { force: true }, () => reject(err)));
+    });
+  });
+}
+
+function pickReleaseAsset(releaseData) {
+  const assets = Array.isArray(releaseData?.assets) ? releaseData.assets : [];
+  if (process.platform === 'linux' && os.arch() === 'x64') {
+    return assets.find((a) => /^ofs-linux-x64-installer-.*\.tar\.gz$/.test(a.name))
+      || assets.find((a) => a.name === 'ofs-linux-x64-installer.tar.gz');
+  }
+
+  if (process.platform === 'win32' && os.arch() === 'x64') {
+    return assets.find((a) => /^ofs-windows-x64-installer-.*\.exe$/.test(a.name))
+      || assets.find((a) => a.name === 'ofs-windows-x64-installer.exe');
+  }
+
+  if (process.platform === 'darwin' && os.arch() === 'arm64') {
+    return assets.find((a) => /^ofs-macos-arm64-installer-.*\.pkg$/.test(a.name))
+      || assets.find((a) => a.name === 'ofs-macos-arm64-installer.pkg');
+  }
+
+  return null;
+}
+
+async function installCompilerFromRelease(progress) {
+  progress.report({ message: 'Checking latest OFS release...', increment: 10 });
+  const release = await httpGetJson(RELEASES_API);
+  const asset = pickReleaseAsset(release);
+  if (!asset?.browser_download_url || !asset?.name) {
+    throw new Error(`No compatible installer found for ${process.platform}-${os.arch()}`);
+  }
+
+  const managedPath = getManagedCompilerPath();
+  if (!managedPath) {
+    throw new Error('Could not prepare extension storage for compiler install');
+  }
+
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ofs-ext-install-'));
+  const assetPath = path.join(tmpDir, asset.name);
+
+  progress.report({ message: `Downloading ${asset.name}...`, increment: 35 });
+  await downloadToFile(asset.browser_download_url, assetPath);
+
+  if (process.platform === 'linux') {
+    const unpackDir = path.join(tmpDir, 'unpack');
+    ensureDir(unpackDir);
+    const extracted = await runExecFile('tar', ['-xzf', assetPath, '-C', unpackDir]);
+    if (extracted.error) {
+      throw new Error((extracted.stderr || extracted.stdout || 'Failed to extract Linux installer').trim());
+    }
+
+    const binaryCandidate = path.join(unpackDir, 'ofs');
+    if (!fs.existsSync(binaryCandidate)) {
+      throw new Error('Downloaded package does not contain compiler binary');
+    }
+
+    fs.copyFileSync(binaryCandidate, managedPath);
+    fs.chmodSync(managedPath, 0o755);
+    progress.report({ message: 'Compiler installed in extension storage.', increment: 45 });
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    return managedPath;
+  }
+
+  if (process.platform === 'win32') {
+    progress.report({ message: 'Running Windows installer...', increment: 20 });
+    const winInstall = await runExecFile('powershell', [
+      '-NoProfile',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-Command',
+      `Start-Process -FilePath '${assetPath.replace(/'/g, "''")}' -Verb RunAs -Wait`
+    ]);
+    if (winInstall.error) {
+      throw new Error((winInstall.stderr || winInstall.stdout || 'Windows installer execution failed').trim());
+    }
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    return 'ofs';
+  }
+
+  if (process.platform === 'darwin') {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    throw new Error('Automatic install on macOS requires admin privileges. Install the .pkg from Releases.');
+  }
+
+  fs.rmSync(tmpDir, { recursive: true, force: true });
+  throw new Error(`Unsupported platform: ${process.platform}-${os.arch()}`);
+}
 
 function getWorkspaceRoot() {
   return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath || vscode.workspace.rootPath || undefined;
@@ -119,7 +282,81 @@ function getOfsPath() {
     return configured;
   }
 
-  return getBundledCompilerPath() || configured;
+  const bundled = getBundledCompilerPath();
+  if (bundled) {
+    return bundled;
+  }
+
+  const managed = managedCompilerPathCache || getManagedCompilerPath();
+  if (managed && fs.existsSync(managed)) {
+    managedCompilerPathCache = managed;
+    return managed;
+  }
+
+  return configured;
+}
+
+async function commandExists(commandName) {
+  if (!commandName) {
+    return false;
+  }
+
+  const checker = process.platform === 'win32' ? 'where' : 'which';
+  const result = await runExecFile(checker, [commandName]);
+  return !result.error;
+}
+
+async function ensureCompilerInstalledOnActivate() {
+  const autoInstall = vscode.workspace.getConfiguration().get('ofs.autoInstallCompiler', true);
+  if (!autoInstall) {
+    return null;
+  }
+
+  const configured = vscode.workspace.getConfiguration().get('ofs.path', 'ofs');
+  if (configured && configured !== 'ofs') {
+    return configured;
+  }
+
+  const bundled = getBundledCompilerPath();
+  if (bundled) {
+    return bundled;
+  }
+
+  const managed = getManagedCompilerPath();
+  if (managed && fs.existsSync(managed)) {
+    managedCompilerPathCache = managed;
+    return managed;
+  }
+
+  if (await commandExists('ofs')) {
+    return 'ofs';
+  }
+
+  if (compilerInstallPromise) {
+    return compilerInstallPromise;
+  }
+
+  compilerInstallPromise = vscode.window.withProgress(
+    {
+      location: vscode.ProgressLocation.Notification,
+      title: 'Installing OFS compiler',
+      cancellable: false
+    },
+    async (progress) => installCompilerFromRelease(progress)
+  ).then((installedPath) => {
+    if (installedPath && installedPath !== 'ofs') {
+      managedCompilerPathCache = installedPath;
+    }
+    vscode.window.showInformationMessage('OFS compiler installed and ready to use.');
+    return installedPath;
+  }).catch((err) => {
+    vscode.window.showWarningMessage(`OFS compiler auto-install failed: ${err.message}`);
+    return null;
+  }).finally(() => {
+    compilerInstallPromise = null;
+  });
+
+  return compilerInstallPromise;
 }
 
 function getShellCommand(ofsPath, filePath) {
@@ -297,37 +534,40 @@ function runExecFile(command, args, options = {}) {
   });
 }
 
-function runOfsCheck(document, diagnosticCollection) {
+async function runOfsCheck(document, diagnosticCollection) {
   if (!document || document.languageId !== 'ofs') {
     return;
+  }
+
+  if (compilerInstallPromise) {
+    await compilerInstallPromise;
   }
 
   const ofsPath = getOfsPath();
   const args = ['check', document.fileName];
 
-  cp.execFile(ofsPath, args, { cwd: getWorkspaceRoot() || undefined }, (error, stdout, stderr) => {
-    if (!error) {
-      diagnosticCollection.set(document.uri, []);
-      return;
-    }
+  const result = await runExecFile(ofsPath, args, { cwd: getWorkspaceRoot() || undefined });
+  if (!result.error) {
+    diagnosticCollection.set(document.uri, []);
+    return;
+  }
 
-    const combined = `${stdout || ''}\n${stderr || ''}`;
-    const diagnostics = parseDiagnostics(document, combined);
+  const combined = `${result.stdout || ''}\n${result.stderr || ''}`;
+  const diagnostics = parseDiagnostics(document, combined);
 
-    if (diagnostics.length === 0) {
-      const fallbackRange = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 1));
-      diagnosticCollection.set(document.uri, [
-        new vscode.Diagnostic(
-          fallbackRange,
-          combined.trim() || 'OFS check failed. Verify ofs.path and compiler installation.',
-          vscode.DiagnosticSeverity.Error
-        )
-      ]);
-      return;
-    }
+  if (diagnostics.length === 0) {
+    const fallbackRange = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 1));
+    diagnosticCollection.set(document.uri, [
+      new vscode.Diagnostic(
+        fallbackRange,
+        combined.trim() || 'OFS check failed. Verify ofs.path and compiler installation.',
+        vscode.DiagnosticSeverity.Error
+      )
+    ]);
+    return;
+  }
 
-    diagnosticCollection.set(document.uri, diagnostics);
-  });
+  diagnosticCollection.set(document.uri, diagnostics);
 }
 
 function runCurrentFile() {
@@ -339,6 +579,10 @@ function runCurrentFile() {
 
   const document = editor.document;
   document.save().then(async () => {
+    if (compilerInstallPromise) {
+      await compilerInstallPromise;
+    }
+
     const ofsPath = getOfsPath();
     const file = document.fileName;
     const cwd = path.dirname(file);
@@ -382,8 +626,8 @@ function checkCurrentFile(diagnosticCollection) {
     return;
   }
 
-  editor.document.save().then(() => {
-    runOfsCheck(editor.document, diagnosticCollection);
+  editor.document.save().then(async () => {
+    await runOfsCheck(editor.document, diagnosticCollection);
     vscode.window.showInformationMessage('OFS check completed.');
   });
 }
@@ -452,6 +696,11 @@ function registerHoverProvider(context) {
 }
 
 function activate(context) {
+  extensionContextRef = context;
+  if (context.globalStorageUri?.fsPath) {
+    ensureDir(context.globalStorageUri.fsPath);
+  }
+
   const diagnosticCollection = vscode.languages.createDiagnosticCollection('ofs');
   context.subscriptions.push(diagnosticCollection);
 
@@ -462,6 +711,8 @@ function activate(context) {
   registerCompletionProvider(context);
   registerFileDecorations(context);
   registerHoverProvider(context);
+
+  ensureCompilerInstalledOnActivate();
 
   let timer = null;
   const refreshDiagnostics = (document) => {

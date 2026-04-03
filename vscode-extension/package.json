@@ -116,6 +116,11 @@
           "type": "boolean",
           "default": true,
           "description": "Run ofs check while typing (debounced)."
+        },
+        "ofs.autoInstallCompiler": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically install OFS compiler on extension activation when it is missing."
         }
       }
     }
