@@ -126,6 +126,7 @@ ofs check arquivo.ofs           # valida tipos e sintaxe
 ofs build arquivo.ofs -o app    # gera binario nativo
 ofs ast arquivo.ofs             # mostra arvore sintatica
 ofs ir arquivo.ofs              # mostra LLVM IR
+ofs update                      # atualiza para a release mais recente
 ofs help                        # ajuda
 ```
 

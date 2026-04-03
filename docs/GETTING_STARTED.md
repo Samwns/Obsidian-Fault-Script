@@ -327,6 +327,7 @@ ofs fizzbuzz.ofs
 | `ofs ast file.ofs`         | Show parse tree (debug)            |
 | `ofs ir file.ofs`          | Show LLVM IR (debug)               |
 | `ofs version`              | Show version                       |
+| `ofs update`               | Download and install latest release |
 | `ofs help`                 | Show help                          |
 
 ---
