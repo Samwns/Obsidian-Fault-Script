@@ -194,7 +194,14 @@ std::unique_ptr<ImportDecl> Parser::parse_import() {
     imp->line = peek().line;
     imp->col = peek().col;
     advance(); // consume 'attach' or legacy 'import'
-    imp->path = expect(TokenKind::STRING_LIT, "expected string path after 'attach'").lexeme;
+    if (check(TokenKind::STRING_LIT)) {
+        imp->path = advance().lexeme;
+    } else if (check(TokenKind::IDENT)) {
+        // Built-in module shorthand: attach serve
+        imp->path = advance().lexeme;
+    } else {
+        throw error("expected string path or module name after 'attach'");
+    }
     return imp;
 }
 

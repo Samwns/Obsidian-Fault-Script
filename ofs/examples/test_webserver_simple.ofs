@@ -1,0 +1,7 @@
+attach "../stdlib/webserver.ofs"
+
+core main() {
+    echo("Testing webserver library...")
+    forge resp = http_response(200, MIME_JSON, "{}")
+    echo("Response created")
+}

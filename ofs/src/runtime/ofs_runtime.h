@@ -61,6 +61,10 @@ void  echo_stone_nn(int64_t v);
 void  echo_crystal_nn(double v);
 void  echo_obsidian_nn(const char* s);
 
+// Embedded webserver helpers
+int64_t ofs_webserver_serve_once(int64_t port, const char* content_type, const char* body);
+int64_t ofs_webserver_serve_forever(int64_t port, const char* content_type, const char* body);
+
 #ifdef __cplusplus
 }
 #endif

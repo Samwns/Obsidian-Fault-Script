@@ -1,0 +1,57 @@
+// Example: Simple HTTP Server Utilities (webserver library showcase)
+// This demonstrates what's available before socket support is added
+
+attach "serve"
+
+core main() {
+    echo("=== OFS Webserver Library Demo ===\n")
+    
+    // Test 1: HTTP Response Building
+    echo("Test 1: Building HTTP Responses")
+    forge ok_response = http_response(200, MIME_JSON, "{\"status\":\"ok\"}")
+    echo("Response length: " + ofs_stone_to_obsidian(ofs_str_len(ok_response)))
+    echo("")
+    
+    // Test 2: JSON Building
+    echo("Test 2: Building JSON Objects")
+    forge json = "{" + json_string("name", "Alice") + "," + json_number("age", 30) + "}"
+    echo("JSON: " + json)
+    echo("")
+    
+    // Test 3: Status Code Mapping
+    echo("Test 3: HTTP Status Messages")
+    echo("200 -> " + status_text(200))
+    echo("404 -> " + status_text(404))
+    echo("500 -> " + status_text(500))
+    echo("")
+    
+    // Test 4: MIME Types
+    echo("Test 4: MIME Type Detection")
+    echo("style.css -> " + get_mime_type("style.css"))
+    echo("data.json -> " + get_mime_type("data.json"))
+    echo("page.html -> " + get_mime_type("page.html"))
+    echo("")
+    
+    // Test 5: Error Response
+    echo("Test 5: Error Response Building")
+    forge error_json = http_response(404, MIME_JSON, json_string("error", "Resource not found"))
+    echo("Error response length: " + ofs_stone_to_obsidian(ofs_str_len(error_json)))
+    echo("")
+    
+    // Test 6: HTML Generation
+    echo("Test 6: HTML Page Generation")
+    forge html = html_page("Welcome", "<h1>Hello World</h1><p>This is a test page</p>")
+    echo("HTML page length: " + ofs_stone_to_obsidian(ofs_str_len(html)))
+    echo("")
+    
+    // Test 7: Logging
+    echo("Test 7: Server Logging")
+    log_request("GET", "/api/users", 200)
+    log_request("POST", "/api/users", 201)
+    log_request("GET", "/api/notfound", 404)
+    echo("[INFO] Server initialized on port 8080")
+    echo("[ERROR] Connection timeout on client socket")
+    echo("")
+    
+    echo("=== All Tests Completed ===")
+}

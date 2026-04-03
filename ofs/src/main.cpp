@@ -24,7 +24,7 @@
 #include "ast/ast_printer.hpp"
 #include "i18n.hpp"
 
-static const char* OFS_VERSION = "1.0.4";
+static const char* OFS_VERSION = "1.0.38";
 static const char* OFS_REPO_OWNER = "Samwns";
 static const char* OFS_REPO_NAME  = "Obsidian-Fault-Script";
 
@@ -181,7 +181,7 @@ static std::string fetch_latest_tag() {
     return "";
 }
 
-static int run_self_update() {
+static int run_self_update(bool force_repair = false) {
     try {
         const char* frames[] = {"[=     ]", "[==    ]", "[===   ]", "[ ==== ]", "[  === ]", "[   == ]", "[    = ]"};
         auto animate = [&](const std::string& label, int loops = 7) {
@@ -206,9 +206,20 @@ static int run_self_update() {
         }
 
         if (compare_semver(current, latest) >= 0) {
+    #ifdef _WIN32
+            if (!force_repair) {
             std::cout << cli_style::paint(OFS_MSG("OFS is already up to date (", "OFS ja esta atualizado ("), cli_style::GREEN, true)
-                      << current << ")\n";
+                  << current << ")\n";
+            std::cout << cli_style::paint(
+                OFS_MSG("Running Windows repair update to refresh files in place...\n",
+                    "Executando atualizacao de reparo no Windows para atualizar arquivos no local...\n"),
+                cli_style::YELLOW, true);
+            }
+    #else
+            std::cout << cli_style::paint(OFS_MSG("OFS is already up to date (", "OFS ja esta atualizado ("), cli_style::GREEN, true)
+                  << current << ")\n";
             return 0;
+    #endif
         }
 
         std::vector<std::string> candidates;
@@ -316,31 +327,78 @@ static int run_self_update() {
                 << "$src = " << quote_ps_single(unpack.string()) << "\n"
                 << "$dst = " << quote_ps_single(install_dir) << "\n"
                 << "$targetPid = " << pid << "\n"
-                << "for ($i = 0; $i -lt 120; $i++) { if (-not (Get-Process -Id $targetPid -ErrorAction SilentlyContinue)) { break }; Start-Sleep -Milliseconds 250 }\n"
-                << "$filesToReplace = @('ofs.exe','libstdc++-6.dll','libgcc_s_seh-1.dll','libwinpthread-1.dll','libofs_runtime.a')\n"
-                << "foreach ($f in $filesToReplace) { $p = Join-Path $dst $f; if (Test-Path $p) { Remove-Item $p -Force -ErrorAction SilentlyContinue } }\n"
-                << "Get-ChildItem -Path $src -File | ForEach-Object { Copy-Item $_.FullName -Destination (Join-Path $dst $_.Name) -Force }\n"
-                << "exit 0\n";
+                    << "$logFile = " << quote_ps_single((workdir / "update.log").string()) << "\n"
+                    << "\"$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') Update script started\" | Out-File -FilePath $logFile -Append\n"
+                    << "try {\n"
+                    << "  \"$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') Waiting for process $targetPid to exit...\" | Out-File -FilePath $logFile -Append\n"
+                    << "  for ($i = 0; $i -lt 240; $i++) { if (-not (Get-Process -Id $targetPid -ErrorAction SilentlyContinue)) { break }; Start-Sleep -Milliseconds 250 }\n"
+                    << "  \"$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') Process wait complete\" | Out-File -FilePath $logFile -Append\n"
+                    << "  if (-not (Test-Path $dst)) { New-Item -ItemType Directory -Path $dst -Force | Out-Null }\n"
+                    << "  $files = Get-ChildItem -Path $src -File\n"
+                    << "  \"$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') Found $($files.Count) files to copy from $src\" | Out-File -FilePath $logFile -Append\n"
+                    << "  foreach ($item in $files) {\n"
+                    << "    $destFile = Join-Path $dst $item.Name\n"
+                    << "    $copied = $false\n"
+                    << "    for ($r = 0; $r -lt 40; $r++) {\n"
+                    << "      try { \n"
+                    << "        Copy-Item $item.FullName -Destination $destFile -Force -ErrorAction Stop\n"
+                    << "        $copied = $true\n"
+                    << "        \"$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') Copied $($item.Name)\" | Out-File -FilePath $logFile -Append\n"
+                    << "        break \n"
+                    << "      }\n"
+                    << "      catch { \n"
+                    << "        if ($r -eq 39) {\n"
+                    << "          \"$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ERROR Failed to copy $($item.Name) after 40 retries\" | Out-File -FilePath $logFile -Append\n"
+                    << "        }\n"
+                    << "        Start-Sleep -Milliseconds 250 \n"
+                    << "      }\n"
+                    << "    }\n"
+                    << "    if (-not $copied) { throw \"Failed to replace $destFile after 40 retries\" }\n"
+                    << "  }\n"
+                    << "  \"$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') Update completed successfully\" | Out-File -FilePath $logFile -Append\n"
+                    << "  exit 0\n"
+                    << "}\n"
+                    << "catch {\n"
+                    << "  \"$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') ERROR: $($_.Exception.Message)\" | Out-File -FilePath $logFile -Append\n"
+                    << "  exit 1\n"
+                    << "}\n";
             script.close();
 
-            std::string apply_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -File " + quote_arg(script_path.string());
+            std::string apply_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
+                                    "\"Start-Process -FilePath 'powershell' -Verb RunAs -WindowStyle Hidden "
+                                    "-ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ''"
+                                    + script_path.string() + "'''\"";
             rc = std::system(apply_cmd.c_str());
+
+            if (rc != 0) {
+                // Fallback: no elevation (for user-local installs where admin is unnecessary).
+                std::string fallback_apply = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
+                                             "\"Start-Process -FilePath 'powershell' -WindowStyle Hidden "
+                                             "-ArgumentList '-NoProfile -ExecutionPolicy Bypass -File ''"
+                                             + script_path.string() + "'''\"";
+                rc = std::system(fallback_apply.c_str());
+            }
 
             if (rc != 0) {
                 std::cerr << cli_style::paint(
                     OFS_MSG("ofs update: failed to apply portable update\n",
                             "ofs update: falha ao aplicar atualizacao portatil\n"),
                     cli_style::RED, true);
+                    std::string log_path = (workdir / "update.log").string();
+                    std::cout << cli_style::paint(
+                        OFS_MSG("See detailed log at: ",
+                                "Veja log detalhado em: "),
+                        cli_style::YELLOW, true) << log_path << "\n";
                 return rc;
             }
 
             std::cout << cli_style::paint(
-                OFS_MSG("Portable update applied. Restart OFS terminal/session to use the new version.\n",
-                        "Atualizacao portatil aplicada. Reinicie o terminal/sessao do OFS para usar a nova versao.\n"),
+                OFS_MSG("Portable update scheduled. Close this OFS process and wait a few seconds for file replacement.\n",
+                    "Atualizacao portatil agendada. Feche este processo OFS e aguarde alguns segundos para a substituicao dos arquivos.\n"),
                 cli_style::GREEN, true);
 
             // Intentionally keep workdir in case script logging is needed by users/admins.
-            std::cout << cli_style::paint(OFS_MSG("Update completed to ", "Atualizacao concluida para "), cli_style::GREEN, true)
+            std::cout << cli_style::paint(OFS_MSG("Update process started for ", "Processo de atualizacao iniciado para "), cli_style::GREEN, true)
                       << latest << "\n";
             return 0;
         }
@@ -434,10 +492,71 @@ static std::filesystem::path resolve_attach_path(const std::string& attach_path,
     return local;
 }
 
+static std::string builtin_module_source(const std::string& module_name) {
+    if (module_name != "serve" && module_name != "webserver") {
+        return "";
+    }
+
+    return R"OFS(
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_contains(haystack: obsidian, needle: obsidian) -> bool
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+forge MIME_JSON = "application/json"
+forge MIME_HTML = "text/html; charset=utf-8"
+forge MIME_TEXT = "text/plain; charset=utf-8"
+forge MIME_CSS  = "text/css"
+forge MIME_JS   = "application/javascript"
+
+vein status_text(code: stone) -> obsidian {
+    if (code == 200) { return "OK" }
+    else if (code == 201) { return "Created" }
+    else if (code == 400) { return "Bad Request" }
+    else if (code == 404) { return "Not Found" }
+    else if (code == 500) { return "Internal Server Error" }
+    return "Unknown"
+}
+
+vein http_response(status: stone, content_type: obsidian, body: obsidian) -> obsidian {
+    forge response = "HTTP/1.1 " + ofs_stone_to_obsidian(status) + " " + status_text(status)
+    response = response + "\r\nContent-Type: " + content_type
+    response = response + "\r\nContent-Length: " + ofs_stone_to_obsidian(ofs_str_len(body))
+    response = response + "\r\nConnection: close\r\n\r\n" + body
+    return response
+}
+
+vein json_string(key: obsidian, value: obsidian) -> obsidian {
+    return "\"" + key + "\":\"" + value + "\""
+}
+
+vein json_number(key: obsidian, value: stone) -> obsidian {
+    return "\"" + key + "\":" + ofs_stone_to_obsidian(value)
+}
+
+vein get_mime_type(filename: obsidian) -> obsidian {
+    if (ofs_str_contains(filename, ".json")) { return MIME_JSON }
+    else if (ofs_str_contains(filename, ".html")) { return MIME_HTML }
+    else if (ofs_str_contains(filename, ".css")) { return MIME_CSS }
+    else if (ofs_str_contains(filename, ".js")) { return MIME_JS }
+    return MIME_TEXT
+}
+
+vein log_request(method: obsidian, path: obsidian, status: stone) {
+    echo("[" + method + "] " + path + " -> " + ofs_stone_to_obsidian(status))
+}
+
+vein html_page(title: obsidian, body: obsidian) -> obsidian {
+    forge html = "<html><head><title>" + title + "</title></head>"
+    html = html + "<body>" + body + "</body></html>"
+    return html
+}
+)OFS";
+}
+
 static std::string resolve_attaches_recursive(const std::string& source,
                                               const std::filesystem::path& base_dir,
                                               std::unordered_set<std::string>& visited) {
-    static const std::regex kAttachRegex("^\\s*(attach|import)\\s+\"([^\"]+)\"\\s*$");
+    static const std::regex kAttachRegex("^\\s*(attach|import)\\s+(?:\"([^\"]+)\"|([A-Za-z_][A-Za-z0-9_-]*))\\s*$");
 
     std::stringstream in(source);
     std::string line;
@@ -447,7 +566,20 @@ static std::string resolve_attaches_recursive(const std::string& source,
     while (std::getline(in, line)) {
         std::smatch m;
         if (std::regex_match(line, m, kAttachRegex)) {
-            auto target = resolve_attach_path(m[2].str(), base_dir);
+            std::string module_ref = m[2].matched ? m[2].str() : m[3].str();
+
+            std::string builtin = builtin_module_source(module_ref);
+            if (!builtin.empty()) {
+                std::string builtin_key = "builtin:" + module_ref;
+                if (visited.find(builtin_key) == visited.end()) {
+                    visited.insert(builtin_key);
+                    imports_merged += resolve_attaches_recursive(builtin, base_dir, visited);
+                    imports_merged += "\n";
+                }
+                continue;
+            }
+
+            auto target = resolve_attach_path(module_ref, base_dir);
             std::error_code ec;
             auto key = std::filesystem::weakly_canonical(target, ec).string();
             if (ec) key = target.lexically_normal().string();
@@ -645,7 +777,14 @@ int main(int argc, char** argv) {
     }
 
     if (cmd == "update") {
-        return run_self_update();
+        bool force_repair = false;
+        if (argc > 2) {
+            std::string flag = argv[2];
+            if (flag == "--force" || flag == "-f") {
+                force_repair = true;
+            }
+        }
+        return run_self_update(force_repair);
     }
 
     // ── Auto-detect: ofs file.ofs → run directly ─────────────────────────
