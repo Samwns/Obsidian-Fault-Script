@@ -505,8 +505,43 @@ void CodeGen::gen_stmt(const Stmt& s) {
     }
 }
 
+void CodeGen::predeclare_block_locals(const BlockStmt& s) {
+    for (auto& st : s.stmts) {
+        if (auto* f = dynamic_cast<const ForgeStmt*>(st.get())) {
+            OFSType type = f->type_ann.value_or(OFSType::stone());
+            auto* llvm_ty = llvm_type(type);
+            if (type.base == BaseType::Named) {
+                auto it = struct_types_.find(type.name);
+                if (it != struct_types_.end()) {
+                    auto* alloca = create_alloca(cur_fn_, f->name, it->second);
+                    set_var(f->name, alloca);
+                    continue;
+                }
+            }
+            auto* alloca = create_alloca(cur_fn_, f->name, llvm_ty);
+            builder_.CreateStore(llvm::Constant::getNullValue(llvm_ty), alloca);
+            set_var(f->name, alloca);
+        } else if (auto* c = dynamic_cast<const ConstStmt*>(st.get())) {
+            OFSType type = c->type_ann.value_or(OFSType::stone());
+            auto* llvm_ty = llvm_type(type);
+            if (type.base == BaseType::Named) {
+                auto it = struct_types_.find(type.name);
+                if (it != struct_types_.end()) {
+                    auto* alloca = create_alloca(cur_fn_, c->name, it->second);
+                    set_var(c->name, alloca);
+                    continue;
+                }
+            }
+            auto* alloca = create_alloca(cur_fn_, c->name, llvm_ty);
+            builder_.CreateStore(llvm::Constant::getNullValue(llvm_ty), alloca);
+            set_var(c->name, alloca);
+        }
+    }
+}
+
 void CodeGen::gen_block(const BlockStmt& s) {
     var_stack_.push_back({});
+    predeclare_block_locals(s);
     for (auto& st : s.stmts) {
         gen_stmt(*st);
         // Stop generating after a terminator
@@ -518,18 +553,23 @@ void CodeGen::gen_block(const BlockStmt& s) {
 void CodeGen::gen_forge(const ForgeStmt& s) {
     OFSType type = s.type_ann.value_or(OFSType::stone());
     auto* llvm_ty = llvm_type(type);
+    auto* alloca = get_var(s.name);
 
     // For named types (monolith), allocate the struct directly
-    if (type.base == BaseType::Named) {
+    if (!alloca && type.base == BaseType::Named) {
         auto it = struct_types_.find(type.name);
         if (it != struct_types_.end()) {
-            auto* alloca = create_alloca(cur_fn_, s.name, it->second);
+            alloca = create_alloca(cur_fn_, s.name, it->second);
             set_var(s.name, alloca);
             return;
         }
     }
 
-    auto* alloca = create_alloca(cur_fn_, s.name, llvm_ty);
+    if (!alloca) {
+        alloca = create_alloca(cur_fn_, s.name, llvm_ty);
+        builder_.CreateStore(llvm::Constant::getNullValue(llvm_ty), alloca);
+        set_var(s.name, alloca);
+    }
 
     if (s.initializer) {
         auto* val = gen_expr(*s.initializer);
@@ -544,12 +584,7 @@ void CodeGen::gen_forge(const ForgeStmt& s) {
             }
             builder_.CreateStore(val, alloca);
         }
-    } else {
-        // Default initialize
-        builder_.CreateStore(llvm::Constant::getNullValue(llvm_ty), alloca);
     }
-
-    set_var(s.name, alloca);
 }
 
 void CodeGen::gen_if(const IfStmt& s) {
@@ -780,17 +815,22 @@ void CodeGen::gen_const(const ConstStmt& s) {
     // Backend lowering is equivalent to forge for now; semantic layer tracks const intent.
     OFSType type = s.type_ann.value_or(OFSType::stone());
     auto* llvm_ty = llvm_type(type);
+    auto* alloca = get_var(s.name);
 
-    if (type.base == BaseType::Named) {
+    if (!alloca && type.base == BaseType::Named) {
         auto it = struct_types_.find(type.name);
         if (it != struct_types_.end()) {
-            auto* alloca = create_alloca(cur_fn_, s.name, it->second);
+            alloca = create_alloca(cur_fn_, s.name, it->second);
             set_var(s.name, alloca);
             return;
         }
     }
 
-    auto* alloca = create_alloca(cur_fn_, s.name, llvm_ty);
+    if (!alloca) {
+        alloca = create_alloca(cur_fn_, s.name, llvm_ty);
+        builder_.CreateStore(llvm::Constant::getNullValue(llvm_ty), alloca);
+        set_var(s.name, alloca);
+    }
 
     if (s.initializer) {
         auto* val = gen_expr(*s.initializer);
@@ -804,11 +844,7 @@ void CodeGen::gen_const(const ConstStmt& s) {
             }
             builder_.CreateStore(val, alloca);
         }
-    } else {
-        builder_.CreateStore(llvm::Constant::getNullValue(llvm_ty), alloca);
     }
-
-    set_var(s.name, alloca);
 }
 
 void CodeGen::gen_match(const MatchStmt& s) {

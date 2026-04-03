@@ -18,6 +18,7 @@ private:
 
     // ── Statements ────────────────────────────────────────────────────────
     void check_stmt(Stmt& s);
+    void predeclare_block_symbols(BlockStmt& s);
     void check_block(BlockStmt& s);
     void check_forge(ForgeStmt& s);
     void check_const(ConstStmt& s);

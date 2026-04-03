@@ -180,8 +180,29 @@ void SemanticAnalyzer::check_stmt(Stmt& s) {
     }
 }
 
+void SemanticAnalyzer::predeclare_block_symbols(BlockStmt& s) {
+    for (auto& st : s.stmts) {
+        if (auto* f = dynamic_cast<ForgeStmt*>(st.get())) {
+            Symbol sym;
+            sym.name = f->name;
+            sym.type = f->type_ann.value_or(OFSType::infer());
+            sym.kind = SymbolKind::Variable;
+            scope_.define(f->name, sym);
+        } else if (auto* c = dynamic_cast<ConstStmt*>(st.get())) {
+            Symbol sym;
+            sym.name = c->name;
+            sym.type = c->type_ann.value_or(OFSType::infer());
+            sym.kind = SymbolKind::Variable;
+            sym.is_const = true;
+            sym.is_mut = false;
+            scope_.define(c->name, sym);
+        }
+    }
+}
+
 void SemanticAnalyzer::check_block(BlockStmt& s) {
     scope_.push();
+    predeclare_block_symbols(s);
     for (auto& st : s.stmts) check_stmt(*st);
     scope_.pop();
 }
@@ -218,6 +239,10 @@ void SemanticAnalyzer::check_forge(ForgeStmt& s) {
     sym.name = s.name;
     sym.type = type;
     sym.kind = SymbolKind::Variable;
+    if (auto* existing = scope_.lookup(s.name)) {
+        sym.is_const = existing->is_const;
+        sym.is_mut = existing->is_mut;
+    }
     scope_.define(s.name, sym);
 }
 

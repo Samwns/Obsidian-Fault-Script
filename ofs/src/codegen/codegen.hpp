@@ -36,6 +36,7 @@ private:
     void       gen_strata(const StrataDecl& s);
 
     void       gen_stmt(const Stmt& s);
+    void       predeclare_block_locals(const BlockStmt& s);
     void       gen_block(const BlockStmt& s);
     void       gen_forge(const ForgeStmt& s);
     void       gen_const(const ConstStmt& s);

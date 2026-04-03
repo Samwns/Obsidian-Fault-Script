@@ -56,6 +56,9 @@ int main() {
     test("arithmetic",
         analyze_ok("core main() {\n    forge x = 1 + 2\n    forge y = x * 3\n}"));
 
+    test("forward local forge reference in block",
+        analyze_ok("core main() {\n    echo(x)\n    forge x = 1 + 2\n}"));
+
     test("if statement",
         analyze_ok("core main() {\n    forge x = 10\n    if (x > 5) {\n        echo(x)\n    }\n}"));
 
