@@ -63,6 +63,20 @@
     ],
     "commands": [
       {
+        "command": "ofs.runNative",
+        "title": "Run",
+        "shortTitle": "Run",
+        "category": "OFS",
+        "icon": "$(run)"
+      },
+      {
+        "command": "ofs.debugNative",
+        "title": "Debug",
+        "shortTitle": "Debug",
+        "category": "OFS",
+        "icon": "$(debug-alt-small)"
+      },
+      {
         "command": "ofs.checkFile",
         "title": "Check",
         "shortTitle": "Check",
@@ -115,7 +129,20 @@
         ]
       }
     ],
-    "menus": {},
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "ofs.runNative",
+          "when": "resourceLangId == ofs",
+          "group": "navigation@1"
+        },
+        {
+          "command": "ofs.debugNative",
+          "when": "resourceLangId == ofs",
+          "group": "navigation@2"
+        }
+      ]
+    },
     "configuration": {
       "title": "Obsidian Fault Script",
       "properties": {

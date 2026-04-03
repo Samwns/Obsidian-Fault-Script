@@ -150,6 +150,7 @@ const RELEASES_API = 'https://api.github.com/repos/Samwns/Obsidian-Fault-Script/
 let extensionContextRef = null;
 let managedCompilerPathCache = null;
 let compilerInstallPromise = null;
+let ofsRunOutput = null;
 
 function platformTriple() {
   if (process.platform === 'win32' && os.arch() === 'x64') return 'win32-x64';
@@ -851,13 +852,37 @@ async function resolveOfsLaunchConfiguration(config) {
   }
 
   let debugConfig = getNativeDebuggerConfig(compiled.exePath, compiled.cwd);
-  if (!debugConfig) {
+  if (!config?.noDebug && !debugConfig) {
     const available = await ensureNativeDebuggerAvailable();
     if (!available) {
       vscode.window.showErrorMessage('Depurador nativo indisponivel. Recarregue o VS Code apos instalar o depurador C/C++.');
       return undefined;
     }
     debugConfig = getNativeDebuggerConfig(compiled.exePath, compiled.cwd);
+  }
+
+  if (config?.noDebug) {
+    if (!ofsRunOutput) {
+      ofsRunOutput = vscode.window.createOutputChannel('OFS Run');
+    }
+
+    ofsRunOutput.clear();
+    ofsRunOutput.show(true);
+
+    const args = Array.isArray(config?.args) ? config.args : [];
+    const child = cp.execFile(compiled.exePath, args, { cwd: compiled.cwd });
+    child.stdout?.on('data', (chunk) => ofsRunOutput.append(String(chunk)));
+    child.stderr?.on('data', (chunk) => ofsRunOutput.append(String(chunk)));
+    child.on('error', (err) => {
+      ofsRunOutput.appendLine(`\n[erro] ${err.message}`);
+    });
+    child.on('close', (code) => {
+      if (code !== 0) {
+        ofsRunOutput.appendLine(`\n[processo finalizado com codigo ${code}]`);
+      }
+    });
+
+    return undefined;
   }
 
   if (!debugConfig) {
@@ -1030,8 +1055,28 @@ function activate(context) {
   const diagnosticCollection = vscode.languages.createDiagnosticCollection('ofs');
   context.subscriptions.push(diagnosticCollection);
 
+  const nativeRunCmd = vscode.commands.registerCommand('ofs.runNative', async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    await vscode.debug.startDebugging(workspaceFolder, {
+      type: 'ofs-native',
+      request: 'launch',
+      name: 'OFS: Executar arquivo atual',
+      noDebug: true
+    });
+  });
+
+  const nativeDebugCmd = vscode.commands.registerCommand('ofs.debugNative', async () => {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    await vscode.debug.startDebugging(workspaceFolder, {
+      type: 'ofs-native',
+      request: 'launch',
+      name: 'OFS: Depurar arquivo atual',
+      noDebug: false
+    });
+  });
+
   const checkCmd = vscode.commands.registerCommand('ofs.checkFile', () => checkCurrentFile(diagnosticCollection));
-  context.subscriptions.push(checkCmd);
+  context.subscriptions.push(nativeRunCmd, nativeDebugCmd, checkCmd);
 
   const debugProvider = vscode.debug.registerDebugConfigurationProvider(
     'ofs-native',
