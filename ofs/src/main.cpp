@@ -315,8 +315,8 @@ static int run_self_update() {
                 << "$ErrorActionPreference = 'Stop'\n"
                 << "$src = " << quote_ps_single(unpack.string()) << "\n"
                 << "$dst = " << quote_ps_single(install_dir) << "\n"
-                << "$pid = " << pid << "\n"
-                << "for ($i = 0; $i -lt 120; $i++) { if (-not (Get-Process -Id $pid -ErrorAction SilentlyContinue)) { break }; Start-Sleep -Milliseconds 250 }\n"
+                << "$targetPid = " << pid << "\n"
+                << "for ($i = 0; $i -lt 120; $i++) { if (-not (Get-Process -Id $targetPid -ErrorAction SilentlyContinue)) { break }; Start-Sleep -Milliseconds 250 }\n"
                 << "$filesToReplace = @('ofs.exe','libstdc++-6.dll','libgcc_s_seh-1.dll','libwinpthread-1.dll','libofs_runtime.a')\n"
                 << "foreach ($f in $filesToReplace) { $p = Join-Path $dst $f; if (Test-Path $p) { Remove-Item $p -Force -ErrorAction SilentlyContinue } }\n"
                 << "Get-ChildItem -Path $src -File | ForEach-Object { Copy-Item $_.FullName -Destination (Join-Path $dst $_.Name) -Force }\n"
@@ -484,11 +484,11 @@ static std::string preprocess_source(const std::string& file, const std::string&
 static void print_ascii_banner() {
     std::cout
         << "\n"
-        << cli_style::paint("   ____  _____ ____  ", cli_style::BLUE, true) << "\n"
-        << cli_style::paint("  / __ \\/ ___// __/  ", cli_style::BLUE, true) << "  "
-        << cli_style::paint("OFS", cli_style::CYAN, true) << "  Obsidian Fault Script\n"
-        << cli_style::paint(" / /_/ / /__ /\\ \\    ", cli_style::BLUE, true) << "  language + compiler\n"
-        << cli_style::paint(" \\____/\\___//___/    ", cli_style::BLUE, true) << "\n\n";
+    << cli_style::paint(" ______        ______      ______    ", cli_style::BLUE, true) << "\n"
+    << cli_style::paint("/\\  __ \\      /\\  ___\\    /\\  ___\\   ", cli_style::BLUE, true) << "\n"
+    << cli_style::paint("\\ \\ \\/\\ \\     \\ \\  __\\    \\ \\___  \\  ", cli_style::BLUE, true) << "\n"
+    << cli_style::paint(" \\ \\_____\\     \\ \\_\\       \\/\\_____\\ ", cli_style::BLUE, true) << "\n"
+    << cli_style::paint("  \\/_____/      \\/_/        \\/_____/ ", cli_style::BLUE, true) << "\n\n";
 }
 
 void print_usage() {

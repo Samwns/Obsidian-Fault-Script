@@ -25,20 +25,40 @@ void echo_bool(int v) {
 }
 
 void ofs_echo_color(const char* ansi_color, const char* text) {
-    const char* color = ansi_color ? ansi_color : "\x1b[0m";
-    char normalized[64] = {0};
-
-    // Accept escaped forms from source strings: "\\u001b[31m" or "\\x1b[31m".
-    if (strncmp(color, "\\u001b[", 7) == 0) {
-        snprintf(normalized, sizeof(normalized), "\x1b[%s", color + 7);
-        color = normalized;
-    } else if (strncmp(color, "\\x1b[", 5) == 0) {
-        snprintf(normalized, sizeof(normalized), "\x1b[%s", color + 5);
-        color = normalized;
+    const char* raw_color = ansi_color ? ansi_color : "\x1b[0m";
+    const size_t raw_len = strlen(raw_color);
+    char* normalized = (char*)malloc(raw_len + 1);
+    int allocated = 1;
+    if (!normalized) {
+        normalized = (char*)"\x1b[0m";
+        allocated = 0;
+    } else {
+        size_t i = 0;
+        size_t w = 0;
+        while (i < raw_len) {
+            if (i + 7 <= raw_len && strncmp(raw_color + i, "\\u001b[", 7) == 0) {
+                normalized[w++] = '\x1b';
+                normalized[w++] = '[';
+                i += 7;
+                continue;
+            }
+            if (i + 5 <= raw_len && strncmp(raw_color + i, "\\x1b[", 5) == 0) {
+                normalized[w++] = '\x1b';
+                normalized[w++] = '[';
+                i += 5;
+                continue;
+            }
+            normalized[w++] = raw_color[i++];
+        }
+        normalized[w] = '\0';
     }
 
     const char* value = text ? text : "";
-    printf("%s%s\x1b[0m\n", color, value);
+    printf("%s%s\x1b[0m\n", normalized, value);
+
+    if (allocated) {
+        free(normalized);
+    }
 }
 
 void echo_newline(void) {

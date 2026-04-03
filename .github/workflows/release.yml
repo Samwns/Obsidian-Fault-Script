@@ -86,6 +86,16 @@ jobs:
             fi
           done
 
+      - name: Guard updater PowerShell variable usage (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $source = Get-Content "ofs/src/main.cpp" -Raw
+          if ($source -match '\$pid\s*=') {
+            Write-Error "Updater script must not assign to `$pid (reserved PowerShell variable)."
+            exit 1
+          }
+
       - name: Install LLVM (Linux)
         if: runner.os == 'Linux'
         run: |

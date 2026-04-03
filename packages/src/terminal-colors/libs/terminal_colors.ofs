@@ -4,15 +4,30 @@
 
 extern vein ofs_echo_color(ansi_color: obsidian, text: obsidian) -> void
 
+vein ansi_black() -> obsidian { return "\u001b[30m" }
 vein ansi_red() -> obsidian { return "\u001b[31m" }
 vein ansi_green() -> obsidian { return "\u001b[32m" }
 vein ansi_yellow() -> obsidian { return "\u001b[33m" }
 vein ansi_blue() -> obsidian { return "\u001b[34m" }
 vein ansi_purple() -> obsidian { return "\u001b[35m" }
 vein ansi_cyan() -> obsidian { return "\u001b[36m" }
+vein ansi_white() -> obsidian { return "\u001b[37m" }
+
+vein ansi_bg_black() -> obsidian { return "\u001b[40m" }
+vein ansi_bg_red() -> obsidian { return "\u001b[41m" }
+vein ansi_bg_green() -> obsidian { return "\u001b[42m" }
+vein ansi_bg_yellow() -> obsidian { return "\u001b[43m" }
+vein ansi_bg_blue() -> obsidian { return "\u001b[44m" }
+vein ansi_bg_purple() -> obsidian { return "\u001b[45m" }
+vein ansi_bg_cyan() -> obsidian { return "\u001b[46m" }
+vein ansi_bg_white() -> obsidian { return "\u001b[47m" }
 
 vein color_echo(color: obsidian, text: obsidian) -> void {
     ofs_echo_color(color, text)
+}
+
+vein color_bg_echo(foreground: obsidian, background: obsidian, text: obsidian) -> void {
+    ofs_echo_color(foreground + background, text)
 }
 
 vein echo_red(text: obsidian) -> void {
@@ -37,4 +52,20 @@ vein echo_purple(text: obsidian) -> void {
 
 vein echo_cyan(text: obsidian) -> void {
     color_echo(ansi_cyan(), text)
+}
+
+vein echo_on_blue(text: obsidian) -> void {
+    color_bg_echo(ansi_white(), ansi_bg_blue(), text)
+}
+
+vein echo_on_green(text: obsidian) -> void {
+    color_bg_echo(ansi_black(), ansi_bg_green(), text)
+}
+
+vein echo_on_red(text: obsidian) -> void {
+    color_bg_echo(ansi_white(), ansi_bg_red(), text)
+}
+
+vein echo_on_yellow(text: obsidian) -> void {
+    color_bg_echo(ansi_black(), ansi_bg_yellow(), text)
 }

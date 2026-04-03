@@ -1,5 +1,7 @@
 // Comprehensive OFS showcase focused on features that currently work end-to-end.
 
+attach "../stdlib/terminal_colors.ofs"
+
 extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
 extern vein ofs_sqrt(val: crystal) -> crystal
 extern vein ofs_str_len(s: obsidian) -> stone
@@ -91,6 +93,11 @@ core main() {
     forge report: obsidian = "sum=" + ofs_stone_to_obsidian(sum)
     echo(report)
     echo(ofs_str_len(report))
+
+    separator("Terminal Colors")
+    echo_red("foreground red")
+    echo_on_blue("highlighted string with blue background")
+    color_bg_echo(ansi_yellow(), ansi_bg_purple(), "yellow on purple")
 
     separator("Pointers")
 
