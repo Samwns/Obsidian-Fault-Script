@@ -14,6 +14,8 @@
 #ifdef _WIN32
 #include <process.h>
 #include <windows.h>
+#elif defined(__APPLE__)
+#include <mach-o/dyld.h>
 #endif
 #include "lexer/lexer.hpp"
 #include "parser/parser.hpp"
@@ -25,6 +27,32 @@
 static const char* OFS_VERSION = "1.0.4";
 static const char* OFS_REPO_OWNER = "Samwns";
 static const char* OFS_REPO_NAME  = "Obsidian-Fault-Script";
+
+static std::string get_executable_dir() {
+#ifdef _WIN32
+    char buffer[MAX_PATH];
+    DWORD len = GetModuleFileNameA(nullptr, buffer, MAX_PATH);
+    if (len == 0 || len == MAX_PATH) {
+        return "";
+    }
+    return std::filesystem::path(buffer).parent_path().string();
+#elif defined(__APPLE__)
+    uint32_t size = 0;
+    _NSGetExecutablePath(nullptr, &size);
+    std::string exe_path(size, '\0');
+    if (_NSGetExecutablePath(exe_path.data(), &size) != 0) {
+        return "";
+    }
+    return std::filesystem::path(exe_path.c_str()).parent_path().string();
+#else
+    std::error_code ec;
+    auto cwd = std::filesystem::current_path(ec);
+    if (ec) {
+        return "";
+    }
+    return cwd.string();
+#endif
+}
 
 namespace cli_style {
 static const char* RESET  = "\x1b[0m";
