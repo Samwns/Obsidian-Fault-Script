@@ -21,6 +21,18 @@ jobs:
       tag: ${{ steps.bump.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Sync version in source
+        shell: bash
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+          VERSION="${TAG#v}"
+
+          # Keep compiler-reported version aligned with release tag.
+          sed -i -E "s/static const char\* OFS_VERSION = \"[0-9]+\.[0-9]+\.[0-9]+\";/static const char* OFS_VERSION = \"${VERSION}\";/" ofs/src/main.cpp
+
+          # Keep VS Code extension manifest version aligned with release tag.
+          node -e "const fs=require('fs');const p='vscode-extension/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
         with:
           fetch-depth: 0   # necessário para listar todas as tags
 
@@ -168,6 +180,8 @@ jobs:
       - name: Stage installer (macOS)
         if: runner.os == 'macOS'
         run: |
+          VERSION_RAW="${{ needs.version.outputs.tag }}"
+          VERSION="${VERSION_RAW#v}"
           rm -rf pkgroot
           mkdir -p pkgroot/usr/local/bin
           cp build/${{ matrix.binary }} pkgroot/usr/local/bin/ofs
@@ -175,7 +189,7 @@ jobs:
           pkgbuild \
             --root pkgroot \
             --identifier io.obsidianfaultscript.ofs \
-            --version "${{ needs.version.outputs.tag }}" \
+            --version "${VERSION}" \
             "${{ matrix.artifact }}"
 
       - name: Stage installer (Windows)
@@ -244,6 +258,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Sync extension version
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+          VERSION="${TAG#v}"
+          node -e "const fs=require('fs');const p='vscode-extension/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
