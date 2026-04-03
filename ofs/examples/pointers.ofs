@@ -3,8 +3,8 @@ core main() {
     echo(x)
 
     fracture {
-        shard p: *stone = &x
-        *p = 42
+        shard p: *stone = &x;
+        *p = 42;
     }
 
     echo(x)

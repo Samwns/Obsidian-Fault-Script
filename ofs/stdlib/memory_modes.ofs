@@ -1,0 +1,13 @@
+// Memory Modes Library Stub
+// Provides memory management mode utilities
+
+vein explain_memory_modes() {
+    echo("Memory Modes:")
+    echo("- bedrock: Manual memory management")
+    echo("- fractal: Region-based allocation")
+    echo("- abyss: Garbage collected")
+}
+
+vein memory_mode_mid_name() -> obsidian {
+    return "fractal"
+}

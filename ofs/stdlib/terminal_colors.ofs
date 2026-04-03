@@ -1,0 +1,22 @@
+// Terminal Colors Library Stub
+// Provides colored text output functions
+
+vein echo_red(msg: obsidian) {
+    echo("[RED] " + msg)
+}
+
+vein echo_green(msg: obsidian) {
+    echo("[GREEN] " + msg)
+}
+
+vein echo_purple(msg: obsidian) {
+    echo("[PURPLE] " + msg)
+}
+
+vein echo_blue(msg: obsidian) {
+    echo("[BLUE] " + msg)
+}
+
+vein echo_yellow(msg: obsidian) {
+    echo("[YELLOW] " + msg)
+}

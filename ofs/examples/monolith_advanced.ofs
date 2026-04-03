@@ -25,9 +25,11 @@ vein print_player(p: Player) {
 }
 
 vein level_up(p: Player) -> Player {
-    p.level = p.level + 1
-    p.hp = p.hp + 10
-    return p
+    forge updated: Player
+    updated = p
+    updated.level = p.level + 1
+    updated.hp = p.hp + 10
+    return updated
 }
 
 core main() {
