@@ -768,6 +768,42 @@ function buildNativeDebugConfig(exePath, cwd) {
   };
 }
 
+function hasExtension(id) {
+  return !!vscode.extensions.getExtension(id);
+}
+
+function getNativeDebuggerConfig(exePath, cwd) {
+  if (hasExtension('ms-vscode.cpptools')) {
+    return buildNativeDebugConfig(exePath, cwd);
+  }
+
+  if (hasExtension('vadimcn.vscode-lldb')) {
+    return {
+      name: 'OFS Native Launch (LLDB)',
+      type: 'lldb',
+      request: 'launch',
+      program: exePath,
+      cwd,
+      args: []
+    };
+  }
+
+  return null;
+}
+
+function getExecutableRunCommand(exePath) {
+  const escaped = exePath.replace(/"/g, '\\"');
+  if (process.platform === 'win32') {
+    const terminalConfig = vscode.workspace.getConfiguration('terminal.integrated');
+    const defaultProfile = terminalConfig.get('defaultProfile.windows', '');
+    if (/cmd|command\s*prompt/i.test(defaultProfile)) {
+      return `"${escaped}"`;
+    }
+    return `& "${escaped}"`;
+  }
+  return `"${escaped}"`;
+}
+
 async function runCurrentFileNative() {
   const editor = vscode.window.activeTextEditor;
   if (!editor || editor.document.languageId !== 'ofs') {
@@ -779,12 +815,14 @@ async function runCurrentFileNative() {
   const compiled = await compileForNativeRun(editor.document);
   if (!compiled) return;
 
-  const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-  const debugConfig = buildNativeDebugConfig(compiled.exePath, compiled.cwd);
-  const ok = await vscode.debug.startDebugging(workspaceFolder, debugConfig, { noDebug: true });
-  if (!ok) {
-    vscode.window.showWarningMessage('Native Run could not start. Install C/C++ debugger extension (ms-vscode.cpptools).');
-  }
+  // Run should work even without a debugger extension.
+  const terminal = vscode.window.activeTerminal || vscode.window.createTerminal({
+    name: 'OFS Native Run',
+    cwd: compiled.cwd,
+    iconPath: new vscode.ThemeIcon('run')
+  });
+  terminal.show(true);
+  terminal.sendText(getExecutableRunCommand(compiled.exePath));
 }
 
 async function debugCurrentFileNative() {
@@ -799,10 +837,25 @@ async function debugCurrentFileNative() {
   if (!compiled) return;
 
   const workspaceFolder = vscode.workspace.getWorkspaceFolder(editor.document.uri);
-  const debugConfig = buildNativeDebugConfig(compiled.exePath, compiled.cwd);
+  let debugConfig = getNativeDebuggerConfig(compiled.exePath, compiled.cwd);
+  if (!debugConfig) {
+    vscode.window.showInformationMessage('Installing C/C++ debugger extension (ms-vscode.cpptools)...');
+    try {
+      await vscode.commands.executeCommand('workbench.extensions.installExtension', 'ms-vscode.cpptools');
+    } catch {
+      // keep handling below with explicit message
+    }
+
+    debugConfig = getNativeDebuggerConfig(compiled.exePath, compiled.cwd);
+    if (!debugConfig) {
+      vscode.window.showErrorMessage('Native debugger is not available yet. Reload VS Code after debugger extension installation.');
+      return;
+    }
+  }
+
   const ok = await vscode.debug.startDebugging(workspaceFolder, debugConfig);
   if (!ok) {
-    vscode.window.showWarningMessage('Native Debug could not start. Install C/C++ debugger extension (ms-vscode.cpptools).');
+    vscode.window.showWarningMessage('Native Debug could not start. Verify debugger extension setup.');
   }
 }
 

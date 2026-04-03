@@ -97,32 +97,7 @@
         }
       }
     ],
-    "menus": {
-      "editor/title/run": [
-        {
-          "command": "ofs.runNative",
-          "when": "resourceLangId == ofs",
-          "group": "navigation@1"
-        },
-        {
-          "command": "ofs.debugNative",
-          "when": "resourceLangId == ofs",
-          "group": "navigation@2"
-        }
-      ],
-      "editor/title": [
-        {
-          "command": "ofs.checkFile",
-          "when": "resourceLangId == ofs",
-          "group": "navigation@3"
-        },
-        {
-          "command": "ofs.runFile",
-          "when": "resourceLangId == ofs",
-          "group": "navigation@4"
-        }
-      ]
-    },
+    "menus": {},
     "configuration": {
       "title": "Obsidian Fault Script",
       "properties": {
