@@ -26,6 +26,25 @@ static const char* OFS_VERSION = "1.0.4";
 static const char* OFS_REPO_OWNER = "Samwns";
 static const char* OFS_REPO_NAME  = "Obsidian-Fault-Script";
 
+namespace cli_style {
+static const char* RESET  = "\x1b[0m";
+static const char* BOLD   = "\x1b[1m";
+static const char* CYAN   = "\x1b[36m";
+static const char* BLUE   = "\x1b[34m";
+static const char* GREEN  = "\x1b[32m";
+static const char* YELLOW = "\x1b[33m";
+static const char* RED    = "\x1b[31m";
+
+static std::string paint(const std::string& s, const char* color, bool bold = false) {
+    std::string out;
+    if (bold) out += BOLD;
+    out += color;
+    out += s;
+    out += RESET;
+    return out;
+}
+}
+
 static std::string trim_copy(const std::string& s);
 
 #ifdef _WIN32
@@ -132,21 +151,24 @@ static int run_self_update() {
                 std::cout << "\r" << label << " " << frames[i % 7] << std::flush;
                 std::this_thread::sleep_for(std::chrono::milliseconds(45));
             }
-            std::cout << "\r" << label << " [done ]\n";
+            std::cout << "\r" << label << " "
+                      << cli_style::paint("[done ]", cli_style::GREEN, true) << "\n";
         };
 
         std::string current = std::string("v") + OFS_VERSION;
-        animate(OFS_MSG("Checking releases", "Verificando releases"));
+        animate(cli_style::paint(OFS_MSG("Checking releases", "Verificando releases"), cli_style::CYAN, true));
         std::string latest = fetch_latest_tag();
 
         if (latest.empty()) {
-            std::cerr << OFS_MSG("ofs update: failed to fetch latest release tag\n",
-                                 "ofs update: falha ao buscar tag da release mais recente\n");
+            std::cerr << cli_style::paint(
+                OFS_MSG("ofs update: failed to fetch latest release tag\n",
+                        "ofs update: falha ao buscar tag da release mais recente\n"),
+                cli_style::RED, true);
             return 1;
         }
 
         if (compare_semver(current, latest) >= 0) {
-            std::cout << OFS_MSG("OFS is already up to date (", "OFS ja esta atualizado (")
+            std::cout << cli_style::paint(OFS_MSG("OFS is already up to date (", "OFS ja esta atualizado ("), cli_style::GREEN, true)
                       << current << ")\n";
             return 0;
         }
@@ -179,8 +201,9 @@ static int run_self_update() {
         for (const auto& asset : candidates) {
             std::string url = "https://github.com/" + std::string(OFS_REPO_OWNER) + "/" + OFS_REPO_NAME + "/releases/download/" + latest + "/" + asset;
             auto out = workdir / asset;
-            std::cout << OFS_MSG("Trying: ", "Tentando: ") << asset << "\n";
-            animate(OFS_MSG("Downloading", "Baixando"));
+            std::cout << cli_style::paint(OFS_MSG("Trying: ", "Tentando: "), cli_style::YELLOW, true)
+                      << asset << "\n";
+            animate(cli_style::paint(OFS_MSG("Downloading", "Baixando"), cli_style::BLUE, true));
             if (download_file(url, out)) {
                 downloaded_asset = asset;
                 downloaded_path = out;
@@ -190,27 +213,30 @@ static int run_self_update() {
 
         if (downloaded_asset.empty()) {
             std::filesystem::remove_all(workdir);
-            std::cerr << OFS_MSG("ofs update: failed to download installer asset\n",
-                                 "ofs update: falha ao baixar artefato do instalador\n");
+                std::cerr << cli_style::paint(
+                OFS_MSG("ofs update: failed to download installer asset\n",
+                    "ofs update: falha ao baixar artefato do instalador\n"),
+                cli_style::RED, true);
             return 1;
         }
 
-        std::cout << OFS_MSG("Downloaded: ", "Baixado: ") << downloaded_asset << "\n";
+            std::cout << cli_style::paint(OFS_MSG("Downloaded: ", "Baixado: "), cli_style::GREEN, true)
+                  << downloaded_asset << "\n";
 
 #ifdef _WIN32
-    animate(OFS_MSG("Installing", "Instalando"));
+    animate(cli_style::paint(OFS_MSG("Installing", "Instalando"), cli_style::CYAN, true));
         std::string install_cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
                                   "\"Start-Process -FilePath " + quote_arg(downloaded_path.string()) + " -Verb RunAs -Wait\"";
         int rc = std::system(install_cmd.c_str());
 #elif __APPLE__
-    animate(OFS_MSG("Installing", "Instalando"));
+    animate(cli_style::paint(OFS_MSG("Installing", "Instalando"), cli_style::CYAN, true));
         std::string install_cmd = "sudo installer -pkg " + quote_arg(downloaded_path.string()) + " -target /";
         int rc = std::system(install_cmd.c_str());
 #else
         auto unpack = workdir / "unpack";
         std::filesystem::create_directories(unpack);
         auto install_script = unpack / "install.sh";
-    animate(OFS_MSG("Installing", "Instalando"));
+    animate(cli_style::paint(OFS_MSG("Installing", "Instalando"), cli_style::CYAN, true));
         std::string install_cmd = "tar -xzf " + quote_arg(downloaded_path.string()) + " -C " + quote_arg(unpack.string())
                                 + " && chmod +x " + quote_arg(install_script.string())
                                 + " && " + quote_arg(install_script.string());
@@ -220,15 +246,19 @@ static int run_self_update() {
         std::filesystem::remove_all(workdir);
 
         if (rc != 0) {
-            std::cerr << OFS_MSG("ofs update: installer execution failed\n",
-                                 "ofs update: falha ao executar instalador\n");
+            std::cerr << cli_style::paint(
+                OFS_MSG("ofs update: installer execution failed\n",
+                        "ofs update: falha ao executar instalador\n"),
+                cli_style::RED, true);
             return rc;
         }
 
-        std::cout << OFS_MSG("Update completed to ", "Atualizacao concluida para ") << latest << "\n";
+        std::cout << cli_style::paint(OFS_MSG("Update completed to ", "Atualizacao concluida para "), cli_style::GREEN, true)
+                  << latest << "\n";
         return 0;
     } catch (const std::exception& e) {
-        std::cerr << OFS_MSG("ofs update: error: ", "ofs update: erro: ") << e.what() << "\n";
+        std::cerr << cli_style::paint(OFS_MSG("ofs update: error: ", "ofs update: erro: "), cli_style::RED, true)
+                  << e.what() << "\n";
         return 1;
     }
 }
@@ -325,20 +355,21 @@ static std::string preprocess_source(const std::string& file, const std::string&
 }
 
 static void print_ascii_banner() {
-    std::cout << R"(
-  ____  _____ ____
- / __ \/ ___// __/   Obsidian Fault Script
-/ /_/ / /__ /\ \     language + compiler
-\____/\___//___/
-
-)";
+    std::cout
+        << "\n"
+        << cli_style::paint("   ____  _____ ____  ", cli_style::BLUE, true) << "\n"
+        << cli_style::paint("  / __ \\/ ___// __/  ", cli_style::BLUE, true) << "  "
+        << cli_style::paint("OFS", cli_style::CYAN, true) << "  Obsidian Fault Script\n"
+        << cli_style::paint(" / /_/ / /__ /\\ \\    ", cli_style::BLUE, true) << "  language + compiler\n"
+        << cli_style::paint(" \\____/\\___//___/    ", cli_style::BLUE, true) << "\n\n";
 }
 
 void print_usage() {
     print_ascii_banner();
     if (ofs_locale_is_pt()) {
         std::cout <<
-"\nofs - Obsidian Fault Script compilador v" << OFS_VERSION << "\n"
+"\n" << cli_style::paint("ofs", cli_style::CYAN, true)
+<< " - Obsidian Fault Script compilador v" << OFS_VERSION << "\n"
 "\nUso:\n"
 "  ofs <arquivo.ofs>                     Executa o script diretamente\n"
 "  ofs run    <arquivo.ofs>              Compila e executa imediatamente\n"
@@ -350,6 +381,14 @@ void print_usage() {
 "  ofs version                          Exibe a versão do compilador\n"
 "  ofs update                           Atualiza para a release mais recente\n"
 "  ofs help                             Mostra esta mensagem de ajuda\n"
+"\nContexto dos comandos:\n"
+"  run    -> fluxo rápido (desenvolvimento diário)\n"
+"  build  -> gera binário final para distribuir/publicar\n"
+"  check  -> valida tipos e erros sem gerar artefatos\n"
+"  tokens -> debug léxico (inspecionar tokenização)\n"
+"  ast    -> debug sintático (inspecionar árvore)\n"
+"  ir     -> debug/otimização LLVM (inspecionar IR)\n"
+"  update -> autoatualização via releases do GitHub\n"
 "\nExemplos:\n"
 "  ofs hello.ofs                        Executa hello.ofs diretamente\n"
 "  ofs build hello.ofs -o hello         Compila para executável\n"
@@ -357,7 +396,8 @@ void print_usage() {
 "  ofs update                           Atualiza OFS via GitHub Releases\n\n";
     } else {
         std::cout <<
-"\nofs - Obsidian Fault Script compiler v" << OFS_VERSION << "\n"
+"\n" << cli_style::paint("ofs", cli_style::CYAN, true)
+<< " - Obsidian Fault Script compiler v" << OFS_VERSION << "\n"
 "\nUsage:\n"
 "  ofs <file.ofs>                        Run a script directly\n"
 "  ofs run    <file.ofs>                 Compile and run immediately\n"
@@ -369,6 +409,14 @@ void print_usage() {
 "  ofs version                           Print compiler version\n"
 "  ofs update                            Update to the latest release\n"
 "  ofs help                              Show this help message\n"
+"\nCommand context:\n"
+"  run    -> fastest dev loop (compile + execute now)\n"
+"  build  -> generate final native binary for shipping\n"
+"  check  -> type/safety validation without output artifacts\n"
+"  tokens -> lexical debug (inspect token stream)\n"
+"  ast    -> syntax debug (inspect parsed tree)\n"
+"  ir     -> LLVM debug/optimization inspection\n"
+"  update -> self-update from GitHub releases\n"
 "\nExamples:\n"
 "  ofs hello.ofs                         Run hello.ofs directly\n"
 "  ofs build hello.ofs -o hello          Compile to executable\n"
@@ -458,8 +506,9 @@ int main(int argc, char** argv) {
     // ── Quick commands (no file needed) ──────────────────────────────────
     if (cmd == "version" || cmd == "--version" || cmd == "-v") {
         print_ascii_banner();
-        std::cout << "ofs " << OFS_VERSION << " - Obsidian Fault Script\n";
-        std::cout << OFS_MSG("status: stable\n", "status: estavel\n");
+        std::cout << cli_style::paint("ofs ", cli_style::CYAN, true)
+                  << OFS_VERSION << " - Obsidian Fault Script\n";
+        std::cout << cli_style::paint(OFS_MSG("status: stable\n", "status: estavel\n"), cli_style::GREEN, true);
         return 0;
     }
 

@@ -16,42 +16,52 @@ const KEYWORDS = [
 const HOVER_DOCS = {
   core: {
     description: 'Entry point do programa OFS.',
+    context: 'Use para definir o ponto inicial do programa (main).',
     example: 'core main() {\n    echo("hello")\n}'
   },
   vein: {
     description: 'Declara uma funcao.',
+    context: 'Use quando precisar reutilizar logica em blocos nomeados.',
     example: 'vein add(a: stone, b: stone) -> stone {\n    return a + b\n}'
   },
   forge: {
     description: 'Declara variavel (tipada ou inferida).',
+    context: 'Use para criar variaveis locais em funcoes/blocos.',
     example: 'forge x: stone = 10\nforge y = 20'
   },
   const: {
     description: 'Declara variavel imutavel.',
+    context: 'Use para valores que nao devem mudar durante a execucao.',
     example: 'const max: stone = 100'
   },
   cycle: {
     description: 'Loop range-based ou C-style (3 partes).',
+    context: 'Use para iteracoes controladas por faixa, colecoes ou contador.',
     example: 'cycle (n in nums) {\n    echo(n)\n}\ncycle (forge i = 0; i < 10; i++) {\n    echo(i)\n}'
   },
   while: {
     description: 'Loop por condicao.',
+    context: 'Use quando o numero de repeticoes depende de estado dinamico.',
     example: 'while (x > 0) {\n    x -= 1\n}'
   },
   fracture: {
     description: 'Bloco seguro para operacoes com ponteiros.',
+    context: 'Use para manipulacao de ponteiros com restricoes de seguranca.',
     example: 'fracture {\n    shard p: *stone = &x;\n    *p = 42\n}'
   },
   abyss: {
     description: 'Bloco de memoria irrestrita (unsafe).',
+    context: 'Use apenas quando precisar de operacoes de memoria sem guardrails.',
     example: 'abyss {\n    // operacoes sem restricoes de seguranca\n}'
   },
   fractal: {
     description: 'Bloco intermediario de efeitos.',
+    context: 'Use para fluxo intermediario entre modos estritos e irrestritos.',
     example: 'fractal {\n    echo("effect-lifted block")\n}'
   },
   tectonic: {
     description: 'Diretiva prefixo para modos: fracture, abyss ou fractal.',
+    context: 'Use para selecionar explicitamente o modo de memoria do bloco.',
     example: 'tectonic fracture {\n    shard p: *stone = &x\n}\ntectonic safe {\n    shard q: *stone = &x\n}\ntectonic unsafe {\n    // alias de abyss\n}\ntectonic bedrock {\n    // alias de fractal\n}'
   },
   obsid: {
@@ -60,6 +70,7 @@ const HOVER_DOCS = {
   },
   attach: {
     description: 'Importa modulo OFS por caminho.',
+    context: 'Use para trazer funcoes/monoliths de arquivos .ofs externos.',
     example: 'attach "terminal_colors.ofs"'
   },
   extern: {
@@ -80,7 +91,53 @@ const HOVER_DOCS = {
   },
   as: {
     description: 'Cast explicito de tipo.',
+    context: 'Use quando precisar converter um valor entre tipos compativeis.',
     example: 'forge y: crystal = x as crystal'
+  },
+  run: {
+    description: 'Comando CLI para compilar e executar imediatamente.',
+    context: 'Melhor para ciclo rapido de desenvolvimento e testes locais.',
+    example: 'ofs run main.ofs'
+  },
+  build: {
+    description: 'Comando CLI para gerar executavel nativo.',
+    context: 'Use para distribuicao, release e execucao sem compilador no alvo.',
+    example: 'ofs build main.ofs -o app'
+  },
+  check: {
+    description: 'Comando CLI para validar tipos/semantica sem gerar binario.',
+    context: 'Use em validacao rapida, CI e antes de executar build/run.',
+    example: 'ofs check main.ofs'
+  },
+  tokens: {
+    description: 'Comando CLI de debug lexico (stream de tokens).',
+    context: 'Use quando precisar diagnosticar tokenizacao e lexer.',
+    example: 'ofs tokens main.ofs'
+  },
+  ast: {
+    description: 'Comando CLI de debug sintatico (arvore AST).',
+    context: 'Use para investigar parsing e estrutura do codigo.',
+    example: 'ofs ast main.ofs'
+  },
+  ir: {
+    description: 'Comando CLI para emitir LLVM IR.',
+    context: 'Use para debug de codegen e analise de otimizacao.',
+    example: 'ofs ir main.ofs'
+  },
+  version: {
+    description: 'Comando CLI para exibir versao do compilador.',
+    context: 'Use para diagnostico de ambiente e compatibilidade.',
+    example: 'ofs version'
+  },
+  update: {
+    description: 'Comando CLI de autoatualizacao via GitHub Releases.',
+    context: 'Use para atualizar o compilador para a release mais recente.',
+    example: 'ofs update'
+  },
+  help: {
+    description: 'Comando CLI de ajuda com lista e contexto dos comandos.',
+    context: 'Use para consultar sintaxe e fluxo recomendado de uso.',
+    example: 'ofs help'
   }
 };
 
@@ -684,6 +741,9 @@ function registerHoverProvider(context) {
 
       const md = new vscode.MarkdownString();
       md.appendMarkdown(`**${word}**\n\n${doc.description}\n\n`);
+      if (doc.context) {
+        md.appendMarkdown(`**Contexto:** ${doc.context}\n\n`);
+      }
       md.appendMarkdown('Exemplo:\n');
       md.appendCodeblock(doc.example, 'ofs');
       md.isTrusted = false;

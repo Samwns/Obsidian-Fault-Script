@@ -1,4 +1,6 @@
-# Obsidian Fault Script VS Code Extension
+# Obsidian Fault Script - VS Code Extension
+
+Dedicated documentation for the VS Code extension of Obsidian Fault Script (OFS).
 
 Language / Idioma:
 
@@ -9,92 +11,142 @@ Language / Idioma:
 
 ## English
 
-Language support for OFS with:
+### What This Extension Provides
 
-- Syntax highlighting
-- Autocomplete for core keywords
-- Autocomplete for functions/monoliths from attached libraries (`attach`) resolved through `OFS_LIB_PATH`
-- Hover docs for OFS commands/keywords with inline examples
-- Snippets
-- Diagnostics powered by `ofs check`
-- Commands to run and check the current file
-- Purple theme: Obsidian Fault Purple
+- Syntax highlighting for `.ofs` files
+- Snippets for faster authoring
+- Hover documentation for OFS keywords and commands
+- Autocomplete for core language symbols
+- Autocomplete for attached libraries resolved from `attach` and `OFS_LIB_PATH`
+- Diagnostics using `ofs check`
+- Editor title actions: `Run` and `Check`
+- Built-in OFS theme: `Obsidian Fault Purple`
+
+### Requirements
+
+- VS Code `^1.85.0`
+- OFS compiler in PATH or configured with `ofs.path`
 
 ### Settings
 
-- `ofs.path`: path to the OFS executable (default: `ofs`)
-- `ofs.diagnosticsOnType`: run diagnostics while typing (default: true)
+- `ofs.path`
+: Path to OFS executable. Default: `ofs`.
+
+- `ofs.diagnosticsOnType`
+: Run diagnostics while typing (debounced). Default: `true`.
+
+- `ofs.autoInstallCompiler`
+: Automatically installs OFS compiler on extension activation when missing. Default: `true`.
 
 ### Commands
 
-- `OFS: Run Current File`
-- `OFS: Check Current File`
+- `OFS: Run` (`ofs.runFile`)
+- `OFS: Check` (`ofs.checkFile`)
 
-When an `.ofs` file is active, the editor title bar shows quick action buttons for Run and Check.
+When an `.ofs` file is active, quick actions appear in the editor title bar.
 
-### Install (.vsix)
+### Install From VSIX
 
-Use one of these methods:
+```bash
+code --install-extension ofs-vscode-extension.vsix
+```
 
-- `code --install-extension ofs-vscode-extension.vsix`
-- VS Code -> Extensions -> `...` -> `Install from VSIX...`
+Or in VS Code: Extensions -> `...` -> `Install from VSIX...`
 
-Do not use Visual Studio `VSIXInstaller.exe` for this package. It only supports Visual Studio IDE extensions, while this package targets Microsoft Visual Studio Code.
+Important: do not use Visual Studio `VSIXInstaller.exe`; this package targets Visual Studio Code only.
 
-### Build in GitHub Actions
+### Build Extension Package Locally
 
-The release workflow packages the extension with:
+```bash
+cd vscode-extension
+npm ci
+npm run package
+```
 
-- `npm ci`
-- `node ./node_modules/@vscode/vsce/vsce package --out ../ofs-vscode-extension.vsix`
+### Troubleshooting
 
-### Notes
+- `ofs: command not found`
+: Set `ofs.path` in settings or add OFS to PATH.
 
-The extension shells out to the OFS CLI for diagnostics and execution, so make sure OFS is installed and available in PATH.
+- No diagnostics shown
+: Ensure `ofs.diagnosticsOnType` is enabled and the file is saved as `.ofs`.
+
+- Attach/autocomplete for libraries not appearing
+: Verify `attach` paths and `OFS_LIB_PATH` configuration.
+
+### Repository Links
+
+- Main repository: https://github.com/Samwns/Obsidian-Fault-Script
+- Issues: https://github.com/Samwns/Obsidian-Fault-Script/issues
 
 ---
 
 ## Portugues (Brasil)
 
-Suporte de linguagem para OFS com:
+### O Que Esta Extensao Oferece
 
-- Highlight de sintaxe
-- Autocomplete de palavras-chave principais
-- Autocomplete para funcoes/monoliths de bibliotecas anexadas (`attach`) resolvidas via `OFS_LIB_PATH`
-- Hover docs para comandos/palavras-chave OFS com exemplos inline
-- Snippets
-- Diagnosticos com `ofs check`
-- Comandos para executar e validar o arquivo atual
-- Tema roxo: Obsidian Fault Purple
+- Highlight de sintaxe para arquivos `.ofs`
+- Snippets para acelerar a escrita
+- Hover docs para palavras-chave e comandos OFS
+- Autocomplete para simbolos da linguagem
+- Autocomplete para bibliotecas anexadas via `attach` e `OFS_LIB_PATH`
+- Diagnosticos usando `ofs check`
+- Acoes no titulo do editor: `Run` e `Check`
+- Tema integrado: `Obsidian Fault Purple`
+
+### Requisitos
+
+- VS Code `^1.85.0`
+- Compilador OFS no PATH ou configurado em `ofs.path`
 
 ### Configuracoes
 
-- `ofs.path`: caminho para o executavel OFS (padrao: `ofs`)
-- `ofs.diagnosticsOnType`: executar diagnosticos enquanto digita (padrao: true)
+- `ofs.path`
+: Caminho para o executavel OFS. Padrao: `ofs`.
+
+- `ofs.diagnosticsOnType`
+: Executa diagnosticos enquanto digita (com debounce). Padrao: `true`.
+
+- `ofs.autoInstallCompiler`
+: Instala automaticamente o compilador OFS ao ativar a extensao quando ele nao estiver presente. Padrao: `true`.
 
 ### Comandos
 
-- `OFS: Run Current File`
-- `OFS: Check Current File`
+- `OFS: Run` (`ofs.runFile`)
+- `OFS: Check` (`ofs.checkFile`)
 
-Quando um arquivo `.ofs` esta ativo, a barra de titulo do editor mostra os botoes rapidos de Run e Check.
+Quando um arquivo `.ofs` esta ativo, as acoes rapidas aparecem no titulo do editor.
 
-### Instalacao (.vsix)
+### Instalar Via VSIX
 
-Use um dos metodos:
+```bash
+code --install-extension ofs-vscode-extension.vsix
+```
 
-- `code --install-extension ofs-vscode-extension.vsix`
-- VS Code -> Extensions -> `...` -> `Install from VSIX...`
+Ou no VS Code: Extensions -> `...` -> `Install from VSIX...`
 
-Nao use o `VSIXInstaller.exe` do Visual Studio para este pacote. Ele so suporta extensoes do Visual Studio IDE, enquanto este pacote e para o Microsoft Visual Studio Code.
+Importante: nao use o `VSIXInstaller.exe` do Visual Studio; este pacote e apenas para Visual Studio Code.
 
-### Build no GitHub Actions
+### Gerar Pacote da Extensao Localmente
 
-O workflow de release empacota a extensao com:
+```bash
+cd vscode-extension
+npm ci
+npm run package
+```
 
-- `npm ci`
-- `node ./node_modules/@vscode/vsce/vsce package --out ../ofs-vscode-extension.vsix`
+### Solucao de Problemas
 
-### Notas
+- `ofs: command not found`
+: Configure `ofs.path` ou adicione OFS no PATH.
 
-A extensao chama a CLI do OFS para diagnosticos e execucao. Entao, garanta que o OFS esta instalado e disponivel no PATH.
+- Sem diagnosticos no editor
+: Verifique se `ofs.diagnosticsOnType` esta ativo e se o arquivo e `.ofs`.
+
+- Sem autocomplete para bibliotecas
+: Confira caminhos de `attach` e a variavel `OFS_LIB_PATH`.
+
+### Links
+
+- Repositorio principal: https://github.com/Samwns/Obsidian-Fault-Script
+- Issues: https://github.com/Samwns/Obsidian-Fault-Script/issues
