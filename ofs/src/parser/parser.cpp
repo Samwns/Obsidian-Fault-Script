@@ -295,6 +295,7 @@ StmtPtr Parser::parse_stmt() {
     if (check(TokenKind::KW_CYCLE))     return parse_cycle_stmt();
     if (check(TokenKind::KW_WHILE))     return parse_while_stmt();
     if (check(TokenKind::KW_RETURN))    return parse_return_stmt();
+    if (check(TokenKind::KW_TECTONIC))  return parse_tectonic_stmt();
     if (check(TokenKind::KW_FRACTURE))  return parse_fracture_stmt();
     if (check(TokenKind::KW_ABYSS))     return parse_abyss_stmt();
     if (check(TokenKind::KW_FRACTAL))   return parse_fractal_stmt();
@@ -510,6 +511,68 @@ StmtPtr Parser::parse_return_stmt() {
     }
 
     return s;
+}
+
+StmtPtr Parser::parse_tectonic_stmt() {
+    Token tk = advance(); // consume 'tectonic'
+    skip_newlines();
+
+    auto make_fracture = [&]() -> StmtPtr {
+        auto s = std::make_unique<FractureStmt>();
+        s->line = tk.line;
+        s->col = tk.col;
+        skip_newlines();
+        s->body = parse_stmt_block();
+        return s;
+    };
+
+    auto make_abyss = [&]() -> StmtPtr {
+        auto s = std::make_unique<AbyssStmt>();
+        s->line = tk.line;
+        s->col = tk.col;
+        skip_newlines();
+        s->body = parse_stmt_block();
+        return s;
+    };
+
+    auto make_fractal = [&]() -> StmtPtr {
+        auto s = std::make_unique<FractalStmt>();
+        s->line = tk.line;
+        s->col = tk.col;
+        skip_newlines();
+        s->body = parse_stmt_block();
+        return s;
+    };
+
+    if (match(TokenKind::KW_FRACTURE)) {
+        return make_fracture();
+    }
+
+    if (match(TokenKind::KW_ABYSS)) {
+        return make_abyss();
+    }
+
+    if (match(TokenKind::KW_FRACTAL)) {
+        return make_fractal();
+    }
+
+    if (check(TokenKind::IDENT)) {
+        std::string mode = peek().lexeme;
+        if (mode == "safe") {
+            advance();
+            return make_fracture();
+        }
+        if (mode == "unsafe") {
+            advance();
+            return make_abyss();
+        }
+        if (mode == "bedrock") {
+            advance();
+            return make_fractal();
+        }
+    }
+
+    throw error("expected tectonic mode: fracture|safe, abyss|unsafe, or fractal|bedrock");
 }
 
 StmtPtr Parser::parse_fracture_stmt() {

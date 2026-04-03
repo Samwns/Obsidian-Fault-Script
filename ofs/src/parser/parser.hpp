@@ -37,6 +37,7 @@ private:
     StmtPtr parse_cycle_stmt();      // cycle (...) { }
     StmtPtr parse_while_stmt();      // while (cond) { }
     StmtPtr parse_return_stmt();     // return expr
+    StmtPtr parse_tectonic_stmt();   // tectonic fracture|abyss|fractal { }
     StmtPtr parse_fracture_stmt();   // fracture { }
     StmtPtr parse_abyss_stmt();      // abyss { }
     StmtPtr parse_fractal_stmt();    // fractal { }

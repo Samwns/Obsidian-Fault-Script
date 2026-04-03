@@ -7,7 +7,7 @@ const KEYWORDS = [
   'core', 'vein', 'forge', 'const', 'monolith', 'strata', 'extern',
   'if', 'else', 'while', 'cycle', 'match', 'case', 'default',
   'return', 'break', 'continue', 'throw', 'tremor', 'catch',
-  'fracture', 'obsid', 'attach', 'import', 'intent', 'pure', 'impure', 'fractal',
+  'fracture', 'abyss', 'obsid', 'attach', 'import', 'intent', 'tectonic', 'pure', 'impure', 'fractal',
   'true', 'false', 'null', 'as'
 ];
 
@@ -47,6 +47,10 @@ const HOVER_DOCS = {
   fractal: {
     description: 'Bloco intermediario de efeitos.',
     example: 'fractal {\n    echo("effect-lifted block")\n}'
+  },
+  tectonic: {
+    description: 'Diretiva prefixo para modos: fracture, abyss ou fractal.',
+    example: 'tectonic fracture {\n    shard p: *stone = &x\n}\ntectonic safe {\n    shard q: *stone = &x\n}\ntectonic unsafe {\n    // alias de abyss\n}\ntectonic bedrock {\n    // alias de fractal\n}'
   },
   obsid: {
     description: 'Fechamento de bloco no estilo ": ... obsid".',

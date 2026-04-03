@@ -48,6 +48,7 @@ enum class TokenKind {
     KW_CATCH,       // catch
     KW_THROW,       // throw
     KW_INTENT,      // intent
+    KW_TECTONIC,    // tectonic (mode directive prefix)
     KW_PURE,        // pure
     KW_IMPURE,      // impure
     KW_FRACTAL,     // fractal
@@ -160,6 +161,7 @@ const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"catch",    TokenKind::KW_CATCH},
     {"throw",    TokenKind::KW_THROW},
     {"intent",   TokenKind::KW_INTENT},
+    {"tectonic", TokenKind::KW_TECTONIC},
     {"pure",     TokenKind::KW_PURE},
     {"impure",   TokenKind::KW_IMPURE},
     {"fractal",  TokenKind::KW_FRACTAL},

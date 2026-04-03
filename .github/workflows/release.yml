@@ -68,7 +68,8 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 17
-          sudo apt-get install -y llvm-17-dev
+          sudo apt-get install -y llvm-17-dev ruby ruby-dev build-essential rpm
+          sudo gem install --no-document fpm
           echo "LLVM_DIR=/usr/lib/llvm-17/lib/cmake/llvm" >> "$GITHUB_ENV"
 
       - name: Install LLVM (macOS)
@@ -135,6 +136,64 @@ jobs:
           chmod +x dist-installer/ofs dist-installer/install.sh
           tar -czf ${{ matrix.artifact }} -C dist-installer .
 
+          # Build .deb and .rpm for major Linux distro families.
+          rm -rf pkgroot
+          mkdir -p pkgroot/usr/local/bin
+          mkdir -p pkgroot/usr/local/share/doc/ofs
+          cp build/${{ matrix.binary }} pkgroot/usr/local/bin/ofs
+          cp LICENSE pkgroot/usr/local/share/doc/ofs/LICENSE
+          chmod +x pkgroot/usr/local/bin/ofs
+
+          VERSION_RAW="${{ needs.version.outputs.tag }}"
+          VERSION="${VERSION_RAW#v}"
+
+          fpm -s dir -t deb -n ofs -v "$VERSION" \
+            --description "Obsidian Fault Script compiler" \
+            --license "BSL-1.0" \
+            --url "https://github.com/${{ github.repository }}" \
+            --maintainer "Obsidian Fault Script" \
+            -C pkgroot .
+
+          fpm -s dir -t rpm -n ofs -v "$VERSION" \
+            --description "Obsidian Fault Script compiler" \
+            --license "BSL-1.0" \
+            --url "https://github.com/${{ github.repository }}" \
+            --maintainer "Obsidian Fault Script" \
+            -C pkgroot .
+
+          mv ofs_*.deb ofs-linux-x64.deb
+          mv ofs-*.x86_64.rpm ofs-linux-x64.rpm
+
+          # Build AppImage for broad distro compatibility.
+          rm -rf AppDir
+          mkdir -p AppDir/usr/bin
+          cp build/${{ matrix.binary }} AppDir/usr/bin/ofs
+          chmod +x AppDir/usr/bin/ofs
+
+          cat > AppDir/ofs.desktop <<'EOF'
+          [Desktop Entry]
+          Type=Application
+          Name=Obsidian Fault Script
+          Exec=ofs
+          Icon=ofs
+          Categories=Development;
+          Terminal=true
+          EOF
+
+          cp packaging/assets/ofs-256.png AppDir/ofs.png
+
+          cat > AppDir/AppRun <<'EOF'
+          #!/bin/sh
+          HERE="$(dirname "$(readlink -f "$0")")"
+          export PATH="$HERE/usr/bin:$PATH"
+          exec "$HERE/usr/bin/ofs" "$@"
+          EOF
+          chmod +x AppDir/AppRun
+
+          wget -q https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage -O appimagetool
+          chmod +x appimagetool
+          ARCH=x86_64 ./appimagetool AppDir ofs-linux-x64.AppImage
+
       - name: Stage installer (macOS)
         if: runner.os == 'macOS'
         run: |
@@ -199,6 +258,16 @@ jobs:
           name: ${{ matrix.artifact }}
           path: ${{ matrix.artifact }}
 
+      - name: Upload Linux extra artifacts
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ofs-linux-extra-packages
+          path: |
+            ofs-linux-x64.deb
+            ofs-linux-x64.rpm
+            ofs-linux-x64.AppImage
+
   vscode_extension:
     name: Build VS Code Extension
     needs: version
@@ -251,18 +320,44 @@ jobs:
           path: dist
           merge-multiple: true
 
+      - name: Add version to release asset filenames
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+
+          [ -f "dist/ofs-linux-x64-installer.tar.gz" ] && mv "dist/ofs-linux-x64-installer.tar.gz" "dist/ofs-linux-x64-installer-${TAG}.tar.gz"
+          [ -f "dist/ofs-linux-x64.AppImage" ] && mv "dist/ofs-linux-x64.AppImage" "dist/ofs-linux-x64-${TAG}.AppImage"
+          [ -f "dist/ofs-linux-x64.deb" ] && mv "dist/ofs-linux-x64.deb" "dist/ofs-linux-x64-${TAG}.deb"
+          [ -f "dist/ofs-linux-x64.rpm" ] && mv "dist/ofs-linux-x64.rpm" "dist/ofs-linux-x64-${TAG}.rpm"
+          [ -f "dist/ofs-windows-x64-installer.exe" ] && mv "dist/ofs-windows-x64-installer.exe" "dist/ofs-windows-x64-installer-${TAG}.exe"
+          [ -f "dist/ofs-macos-arm64-installer.pkg" ] && mv "dist/ofs-macos-arm64-installer.pkg" "dist/ofs-macos-arm64-installer-${TAG}.pkg"
+          [ -f "dist/ofs-vscode-extension.vsix" ] && mv "dist/ofs-vscode-extension.vsix" "dist/ofs-vscode-extension-${TAG}.vsix"
+
       - name: Build release notes (licença, log, docs, agradecimentos)
         run: |
           TAG="${{ needs.version.outputs.tag }}"
 
+          LINUX_TAR="dist/ofs-linux-x64-installer-${TAG}.tar.gz"
+          [ ! -f "$LINUX_TAR" ] && LINUX_TAR="dist/ofs-linux-x64-installer.tar.gz"
+
+          WIN_EXE="dist/ofs-windows-x64-installer-${TAG}.exe"
+          [ ! -f "$WIN_EXE" ] && WIN_EXE="dist/ofs-windows-x64-installer.exe"
+
+          VSIX_FILE="dist/ofs-vscode-extension-${TAG}.vsix"
+          [ ! -f "$VSIX_FILE" ] && VSIX_FILE="dist/ofs-vscode-extension.vsix"
+
           LINUX_CONTENTS="(artifact not found)"
-          if [ -f "dist/ofs-linux-x64-installer.tar.gz" ]; then
-            LINUX_CONTENTS=$(tar -tzf dist/ofs-linux-x64-installer.tar.gz | sed 's/^/- /')
+          if [ -f "$LINUX_TAR" ]; then
+            LINUX_CONTENTS=$(tar -tzf "$LINUX_TAR" | sed 's/^/- /')
           fi
 
+          LINUX_EXTRA="- $(basename "$LINUX_TAR") (tar.gz)"
+          [ -f "dist/ofs-linux-x64-${TAG}.AppImage" ] && LINUX_EXTRA="${LINUX_EXTRA}\n- ofs-linux-x64-${TAG}.AppImage"
+          [ -f "dist/ofs-linux-x64-${TAG}.deb" ] && LINUX_EXTRA="${LINUX_EXTRA}\n- ofs-linux-x64-${TAG}.deb"
+          [ -f "dist/ofs-linux-x64-${TAG}.rpm" ] && LINUX_EXTRA="${LINUX_EXTRA}\n- ofs-linux-x64-${TAG}.rpm"
+
           VSIX_CONTENTS="(artifact not found)"
-          if [ -f "dist/ofs-vscode-extension.vsix" ]; then
-            VSIX_CONTENTS=$(unzip -l dist/ofs-vscode-extension.vsix | tail -n +4 | head -n -2 | awk '{print "- "$4}')
+          if [ -f "$VSIX_FILE" ]; then
+            VSIX_CONTENTS=$(unzip -l "$VSIX_FILE" | tail -n +4 | head -n -2 | awk '{print "- "$4}')
           fi
 
           cat > release_notes.md <<EOF
@@ -274,10 +369,13 @@ jobs:
 
           ## Logs de conteúdo dos instaladores
 
-          ### Linux (ofs-linux-x64-installer.tar.gz)
+          ### Linux ($(basename "$LINUX_TAR"))
           ${LINUX_CONTENTS}
 
-          ### Windows (ofs-windows-x64-installer.exe)
+          ### Linux packages (main distros)
+          ${LINUX_EXTRA}
+
+          ### Windows ($(basename "$WIN_EXE"))
           - Instala: ofs.exe
           - Instala: libstdc++-6.dll
           - Instala: libgcc_s_seh-1.dll
@@ -285,7 +383,7 @@ jobs:
           - Instala: ofs.ico (ícone do app)
           - Instala: LICENSE.txt (termos de licença)
 
-          ### VS Code Extension (ofs-vscode-extension.vsix)
+          ### VS Code Extension ($(basename "$VSIX_FILE"))
           ${VSIX_CONTENTS}
 
           ## Termos de licença
