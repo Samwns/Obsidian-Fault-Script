@@ -597,6 +597,54 @@ abyss {
 - Only use when absolutely necessary
 - Prefer `fracture` for pointer operations
 
+### Directive alias: tectonic
+
+You can use `tectonic` as a prefix directive for memory/effect modes.
+This is an alias syntax that maps to the same runtime/semantic behavior:
+
+- `tectonic fracture { ... }` -> same as `fracture { ... }`
+- `tectonic safe { ... }` -> same as `fracture { ... }`
+- `tectonic abyss { ... }` -> same as `abyss { ... }`
+- `tectonic unsafe { ... }` -> same as `abyss { ... }`
+- `tectonic fractal { ... }` -> same as `fractal { ... }`
+- `tectonic bedrock { ... }` -> same as `fractal { ... }`
+
+Example:
+
+```ofs
+core main() {
+    forge x: stone = 10
+
+    tectonic fracture {
+        shard p: *stone = &x
+        *p = 20
+    }
+
+    tectonic safe {
+        shard q: *stone = &x
+        *q = *q + 1
+    }
+
+    tectonic abyss {
+        shard raw: *stone = &x
+        *raw = *raw + 1
+    }
+
+    tectonic unsafe {
+        shard raw2: *stone = &x
+        *raw2 = *raw2 + 1
+    }
+
+    tectonic fractal {
+        echo("effect-lifted mode")
+    }
+
+    tectonic bedrock {
+        echo("bedrock alias for fractal")
+    }
+}
+```
+
 ---
 
 ## Built-in Functions
@@ -741,3 +789,4 @@ Complete list of reserved keywords:
 | `tremor`   | `KW_TREMOR`      | Error handling block       |
 | `catch`    | `KW_CATCH`       | Error handler              |
 | `throw`    | `KW_THROW`       | Raise error value          |
+| `tectonic` | `KW_TECTONIC`    | Mode directive prefix      |

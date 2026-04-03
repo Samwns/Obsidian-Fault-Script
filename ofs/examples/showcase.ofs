@@ -120,6 +120,16 @@ core main() {
         echo("fractal block active")
     }
 
+    // tectonic aliases (same behavior as above)
+    tectonic fracture {
+        shard alias_ptr: *stone = &x;
+        *alias_ptr = *alias_ptr + 1
+    }
+
+    tectonic fractal {
+        echo("tectonic fractal active")
+    }
+
     echo(x)
 
     separator("Structs")

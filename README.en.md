@@ -126,6 +126,7 @@ ofs check file.ofs              # validate types and syntax
 ofs build file.ofs -o app       # build native binary
 ofs ast file.ofs                # show syntax tree
 ofs ir file.ofs                 # show LLVM IR
+ofs update                      # update to the latest release
 ofs help                        # help
 ```
 
