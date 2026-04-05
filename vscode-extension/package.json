@@ -64,63 +64,42 @@
     "commands": [
       {
         "command": "ofs.runNative",
-        "title": "Run",
+        "title": "Run OFS File",
         "shortTitle": "Run",
         "category": "OFS",
-        "icon": {
-          "light": "./media/play-light.svg",
-          "dark": "./media/play-dark.svg"
-        }
+        "icon": "$(play)"
       },
       {
         "command": "ofs.debugNative",
-        "title": "Debug",
+        "title": "Debug OFS File",
         "shortTitle": "Debug",
         "category": "OFS",
-        "icon": {
-          "light": "./media/ofs.svg",
-          "dark": "./media/ofs.svg"
-        }
+        "icon": "$(debug-alt-small)"
       },
       {
         "command": "ofs.checkFile",
-        "title": "Check",
+        "title": "Check OFS File",
         "shortTitle": "Check",
         "category": "OFS",
-        "icon": {
-          "light": "./media/check-light.svg",
-          "dark": "./media/check-dark.svg"
-        }
+        "icon": "$(check-all)"
       },
       {
         "command": "ofs.pauseExecution",
         "title": "Pause Execution",
-        "shortTitle": "Pause",
         "category": "OFS",
-        "icon": {
-          "light": "./media/ofs.svg",
-          "dark": "./media/ofs.svg"
-        }
+        "icon": "$(debug-pause)"
       },
       {
         "command": "ofs.resumeExecution",
         "title": "Resume Execution",
-        "shortTitle": "Resume",
         "category": "OFS",
-        "icon": {
-          "light": "./media/play-light.svg",
-          "dark": "./media/play-dark.svg"
-        }
+        "icon": "$(debug-continue)"
       },
       {
         "command": "ofs.stopExecution",
         "title": "Stop Execution",
-        "shortTitle": "Stop",
         "category": "OFS",
-        "icon": {
-          "light": "./media/check-light.svg",
-          "dark": "./media/check-dark.svg"
-        }
+        "icon": "$(debug-stop)"
       }
     ],
     "debuggers": [
@@ -166,7 +145,7 @@
       }
     ],
     "menus": {
-      "editor/title": [
+      "editor/title/run": [
         {
           "command": "ofs.runNative",
           "when": "resourceLangId == ofs",
@@ -178,19 +157,26 @@
           "group": "navigation@2"
         },
         {
+          "command": "ofs.checkFile",
+          "when": "resourceLangId == ofs",
+          "group": "2_check@1"
+        }
+      ],
+      "editor/title": [
+        {
           "command": "ofs.pauseExecution",
           "when": "resourceLangId == ofs && ofs.executionRunning && !ofs.executionPaused",
-          "group": "navigation@3"
+          "group": "navigation@1"
         },
         {
           "command": "ofs.resumeExecution",
           "when": "resourceLangId == ofs && ofs.executionRunning && ofs.executionPaused",
-          "group": "navigation@3"
+          "group": "navigation@1"
         },
         {
           "command": "ofs.stopExecution",
           "when": "resourceLangId == ofs && ofs.executionRunning",
-          "group": "navigation@4"
+          "group": "navigation@2"
         }
       ]
     },

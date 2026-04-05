@@ -941,7 +941,32 @@ function runCurrentFile() {
       await compilerInstallPromise;
     }
 
-    const ofsPath = getOfsPathForNativeBuild();
+    let ofsPath = getOfsPath();
+
+    // If getOfsPath returned the bare 'ofs' default, verify it is reachable.
+    // When it is not on PATH, trigger auto-install and resolve again.
+    if (ofsPath === 'ofs' && !(await commandExists('ofs'))) {
+      const autoInstall = vscode.workspace.getConfiguration().get('ofs.autoInstallCompiler', true);
+      if (autoInstall) {
+        try {
+          const installed = await vscode.window.withProgress(
+            { location: vscode.ProgressLocation.Notification, title: 'Installing OFS compiler', cancellable: false },
+            (progress) => installCompilerFromRelease(progress)
+          );
+          if (installed && installed !== 'ofs') {
+            managedCompilerPathCache = installed;
+          }
+        } catch (err) {
+          vscode.window.showErrorMessage(`OFS compiler not found and auto-install failed: ${err.message}`);
+          return;
+        }
+      } else {
+        vscode.window.showErrorMessage('OFS compiler not found. Set ofs.path or enable ofs.autoInstallCompiler.');
+        return;
+      }
+      ofsPath = getOfsPath();
+    }
+
     const file = document.fileName;
     const cwd = path.dirname(file);
     const terminal = vscode.window.activeTerminal;
