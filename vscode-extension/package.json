@@ -85,6 +85,27 @@
           "light": "./media/check-light.svg",
           "dark": "./media/check-dark.svg"
         }
+      },
+      {
+        "command": "ofs.pauseExecution",
+        "title": "Pause Execution",
+        "shortTitle": "Pause",
+        "category": "OFS",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "ofs.resumeExecution",
+        "title": "Resume Execution",
+        "shortTitle": "Resume",
+        "category": "OFS",
+        "icon": "$(debug-continue)"
+      },
+      {
+        "command": "ofs.stopExecution",
+        "title": "Stop Execution",
+        "shortTitle": "Stop",
+        "category": "OFS",
+        "icon": "$(debug-stop)"
       }
     ],
     "debuggers": [
@@ -140,6 +161,21 @@
           "command": "ofs.debugNative",
           "when": "resourceLangId == ofs",
           "group": "navigation@2"
+        },
+        {
+          "command": "ofs.pauseExecution",
+          "when": "resourceLangId == ofs && ofs.executionRunning && !ofs.executionPaused",
+          "group": "navigation@3"
+        },
+        {
+          "command": "ofs.resumeExecution",
+          "when": "resourceLangId == ofs && ofs.executionRunning && ofs.executionPaused",
+          "group": "navigation@3"
+        },
+        {
+          "command": "ofs.stopExecution",
+          "when": "resourceLangId == ofs && ofs.executionRunning",
+          "group": "navigation@4"
         }
       ]
     },
