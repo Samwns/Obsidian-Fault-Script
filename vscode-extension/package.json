@@ -166,7 +166,7 @@
       }
     ],
     "menus": {
-      "editor/title/run": [
+      "editor/title": [
         {
           "command": "ofs.runNative",
           "when": "resourceLangId == ofs",

@@ -612,7 +612,9 @@ async function pauseActiveExecution() {
 
   const pid = activeExecution.childProcess?.pid;
   if (!pid) {
-    vscode.window.showWarningMessage('Pausar execucao no terminal atual exige controle de processo que a API do terminal nao fornece.');
+    activeExecution.terminal?.sendText('\u001A', false);
+    activeExecution.paused = true;
+    await setExecutionContext(true, true);
     return;
   }
 
@@ -642,7 +644,9 @@ async function resumeActiveExecution() {
 
   const pid = activeExecution.childProcess?.pid;
   if (!pid) {
-    vscode.window.showWarningMessage('Continuar execucao no terminal atual exige controle de processo que a API do terminal nao fornece.');
+    activeExecution.terminal?.sendText('fg');
+    activeExecution.paused = false;
+    await setExecutionContext(true, false);
     return;
   }
 
@@ -711,6 +715,25 @@ function getShellCommand(ofsPath, filePath) {
 
   // Safe default for modern VS Code on Windows, where PowerShell/pwsh is common.
   return `& "${escapedOfs}" "${escapedFile}"`;
+}
+
+function getTerminalRunCommand(ofsPath, filePath) {
+  const fileName = path.basename(filePath).replace(/"/g, '\\"');
+  const compilerName = path.basename(ofsPath || 'ofs').toLowerCase();
+
+  if (process.platform === 'win32') {
+    if (ofsPath === 'ofs' || compilerName === 'ofs.exe') {
+      return `ofs run "${fileName}"`;
+    }
+
+    return `& "${ofsPath.replace(/"/g, '\\"')}" run "${fileName}"`;
+  }
+
+  if (ofsPath === 'ofs' || compilerName === 'ofs') {
+    return `ofs run "${fileName}"`;
+  }
+
+  return `"${ofsPath.replace(/"/g, '\\"')}" run "${fileName}"`;
 }
 
 function createRangeFromLineCol(document, line, col) {
@@ -918,9 +941,15 @@ function runCurrentFile() {
       await compilerInstallPromise;
     }
 
-    const ofsPath = getOfsPath();
+    const ofsPath = getOfsPathForNativeBuild();
     const file = document.fileName;
     const cwd = path.dirname(file);
+    const terminal = vscode.window.activeTerminal;
+
+    if (!terminal) {
+      vscode.window.showErrorMessage('Abra um terminal no VS Code antes de executar o arquivo OFS.');
+      return;
+    }
 
     const checkResult = await runExecFile(ofsPath, ['check', file], { cwd });
     if (checkResult.error) {
@@ -944,13 +973,31 @@ function runCurrentFile() {
       return;
     }
 
-    const terminal = vscode.window.activeTerminal || vscode.window.createTerminal({
-      name: 'OFS Run',
-      cwd,
-      iconPath: new vscode.ThemeIcon('play')
-    });
+    activeExecution = {
+      paused: false,
+      terminal,
+      childProcess: null,
+      shellExecution: null,
+      sourceFile: file
+    };
+
+    await setExecutionContext(true, false);
     terminal.show(true);
-    terminal.sendText(getShellCommand(ofsPath, file));
+
+    const commandLine = getTerminalRunCommand(ofsPath, file);
+    const shellIntegration = await waitForShellIntegration(terminal);
+    if (shellIntegration) {
+      const execution = shellIntegration.executeCommand(commandLine);
+      activeExecution.shellExecution = execution;
+      execution.exitCode.then(async () => {
+        await clearActiveExecution();
+      }).catch(async () => {
+        await clearActiveExecution();
+      });
+      return;
+    }
+
+    terminal.sendText(commandLine);
   });
 }
 
@@ -1103,6 +1150,11 @@ async function resolveOfsLaunchConfiguration(config) {
     return undefined;
   }
 
+  if (config?.noDebug) {
+    runCurrentFile();
+    return undefined;
+  }
+
   await editor.document.save();
   const compiled = await compileForNativeRun(editor.document);
   if (!compiled) {
@@ -1117,11 +1169,6 @@ async function resolveOfsLaunchConfiguration(config) {
       return undefined;
     }
     debugConfig = getNativeDebuggerConfig(compiled.exePath, compiled.cwd);
-  }
-
-  if (config?.noDebug) {
-    await runCompiledExecutableInTerminal(compiled, 'OFS Native Run');
-    return undefined;
   }
 
   if (!debugConfig) {
@@ -1289,15 +1336,7 @@ function activate(context) {
   const diagnosticCollection = vscode.languages.createDiagnosticCollection('ofs');
   context.subscriptions.push(diagnosticCollection);
 
-  const nativeRunCmd = vscode.commands.registerCommand('ofs.runNative', async () => {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    await vscode.debug.startDebugging(workspaceFolder, {
-      type: 'ofs-native',
-      request: 'launch',
-      name: 'OFS: Executar arquivo atual',
-      noDebug: true
-    });
-  });
+  const nativeRunCmd = vscode.commands.registerCommand('ofs.runNative', () => runCurrentFile());
 
   const nativeDebugCmd = vscode.commands.registerCommand('ofs.debugNative', async () => {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
