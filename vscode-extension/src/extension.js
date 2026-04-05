@@ -430,6 +430,70 @@ function getOfsPathForNativeBuild() {
   return configured;
 }
 
+function ensureCompilerExecutable(ofsPath) {
+  if (!ofsPath || ofsPath === 'ofs' || process.platform === 'win32') {
+    return ofsPath;
+  }
+
+  try {
+    fs.chmodSync(ofsPath, 0o755);
+  } catch {
+    // Ignore chmod failures here and let execution report the real error later.
+  }
+
+  return ofsPath;
+}
+
+async function resolveReadyOfsPath() {
+  if (compilerInstallPromise) {
+    await compilerInstallPromise;
+  }
+
+  let ofsPath = getOfsPath();
+  if (ofsPath !== 'ofs') {
+    return ensureCompilerExecutable(ofsPath);
+  }
+
+  if (await commandExists('ofs')) {
+    return 'ofs';
+  }
+
+  const autoInstall = vscode.workspace.getConfiguration().get('ofs.autoInstallCompiler', true);
+  if (!autoInstall) {
+    return null;
+  }
+
+  if (!compilerInstallPromise) {
+    compilerInstallPromise = vscode.window.withProgress(
+      {
+        location: vscode.ProgressLocation.Notification,
+        title: 'Installing OFS compiler',
+        cancellable: false
+      },
+      async (progress) => installCompilerFromRelease(progress)
+    ).then((installedPath) => {
+      if (installedPath && installedPath !== 'ofs') {
+        managedCompilerPathCache = installedPath;
+      }
+      vscode.window.showInformationMessage('OFS compiler installed and ready to use.');
+      return installedPath;
+    }).catch((err) => {
+      vscode.window.showWarningMessage(`OFS compiler auto-install failed: ${err.message}`);
+      return null;
+    }).finally(() => {
+      compilerInstallPromise = null;
+    });
+  }
+
+  await compilerInstallPromise;
+  ofsPath = getOfsPath();
+  if (ofsPath === 'ofs' && !(await commandExists('ofs'))) {
+    return null;
+  }
+
+  return ensureCompilerExecutable(ofsPath);
+}
+
 async function commandExists(commandName) {
   if (!commandName) {
     return false;
@@ -565,14 +629,21 @@ async function waitForShellIntegration(terminal, timeoutMs = 1500) {
   });
 }
 
+function getOrCreateExecutionTerminal() {
+  const existingTerminal = vscode.window.activeTerminal;
+  if (existingTerminal) {
+    return existingTerminal;
+  }
+
+  const terminal = vscode.window.createTerminal({ name: 'OFS' });
+  terminal.show(true);
+  return terminal;
+}
+
 async function runCompiledExecutableInTerminal(compiled, terminalName) {
   await terminateActiveExecution({ silent: true });
 
-  const terminal = vscode.window.activeTerminal;
-  if (!terminal) {
-    vscode.window.showErrorMessage('Abra um terminal no VS Code antes de executar o arquivo OFS.');
-    return;
-  }
+  const terminal = getOrCreateExecutionTerminal();
 
   activeExecution = {
     paused: false,
@@ -897,11 +968,11 @@ async function runOfsCheck(document, diagnosticCollection) {
     return;
   }
 
-  if (compilerInstallPromise) {
-    await compilerInstallPromise;
+  const ofsPath = await resolveReadyOfsPath();
+  if (!ofsPath) {
+    return;
   }
 
-  const ofsPath = getOfsPath();
   const args = ['check', document.fileName];
 
   const result = await runExecFile(ofsPath, args, { cwd: getWorkspaceRoot() || undefined });
@@ -937,44 +1008,15 @@ function runCurrentFile() {
 
   const document = editor.document;
   document.save().then(async () => {
-    if (compilerInstallPromise) {
-      await compilerInstallPromise;
-    }
-
-    let ofsPath = getOfsPath();
-
-    // If getOfsPath returned the bare 'ofs' default, verify it is reachable.
-    // When it is not on PATH, trigger auto-install and resolve again.
-    if (ofsPath === 'ofs' && !(await commandExists('ofs'))) {
-      const autoInstall = vscode.workspace.getConfiguration().get('ofs.autoInstallCompiler', true);
-      if (autoInstall) {
-        try {
-          const installed = await vscode.window.withProgress(
-            { location: vscode.ProgressLocation.Notification, title: 'Installing OFS compiler', cancellable: false },
-            (progress) => installCompilerFromRelease(progress)
-          );
-          if (installed && installed !== 'ofs') {
-            managedCompilerPathCache = installed;
-          }
-        } catch (err) {
-          vscode.window.showErrorMessage(`OFS compiler not found and auto-install failed: ${err.message}`);
-          return;
-        }
-      } else {
-        vscode.window.showErrorMessage('OFS compiler not found. Set ofs.path or enable ofs.autoInstallCompiler.');
-        return;
-      }
-      ofsPath = getOfsPath();
+    const ofsPath = await resolveReadyOfsPath();
+    if (!ofsPath) {
+      vscode.window.showErrorMessage('OFS compiler not found. Enable ofs.autoInstallCompiler or configure ofs.path.');
+      return;
     }
 
     const file = document.fileName;
     const cwd = path.dirname(file);
-    const terminal = vscode.window.activeTerminal;
-
-    if (!terminal) {
-      vscode.window.showErrorMessage('Abra um terminal no VS Code antes de executar o arquivo OFS.');
-      return;
-    }
+    const terminal = getOrCreateExecutionTerminal();
 
     const checkResult = await runExecFile(ofsPath, ['check', file], { cwd });
     if (checkResult.error) {
@@ -1012,7 +1054,7 @@ function runCurrentFile() {
     const commandLine = getTerminalRunCommand(ofsPath, file);
     const shellIntegration = await waitForShellIntegration(terminal);
     if (shellIntegration) {
-      const execution = shellIntegration.executeCommand(commandLine);
+      const execution = shellIntegration.executeCommand(ofsPath, ['run', file]);
       activeExecution.shellExecution = execution;
       execution.exitCode.then(async () => {
         await clearActiveExecution();
