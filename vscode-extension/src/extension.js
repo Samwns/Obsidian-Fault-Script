@@ -170,6 +170,19 @@ function getEmbeddedCompilerPath() {
   return fs.existsSync(candidate) ? candidate : null;
 }
 
+function compilerHasNativeRuntime(ofsPath) {
+  if (!ofsPath || ofsPath === 'ofs') {
+    return true;
+  }
+
+  const compilerDir = path.dirname(ofsPath);
+  return [
+    path.join(compilerDir, 'libofs_runtime.a'),
+    path.join(compilerDir, 'ofs_runtime.lib'),
+    path.join(compilerDir, 'ofs_runtime.o')
+  ].some((candidate) => fs.existsSync(candidate));
+}
+
 function ensureDir(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
@@ -296,6 +309,15 @@ async function installCompilerFromRelease(progress) {
 
     fs.copyFileSync(binaryCandidate, managedPath);
     fs.chmodSync(managedPath, 0o755);
+
+    const installDir = path.dirname(managedPath);
+    for (const runtimeFile of ['libofs_runtime.a', 'ofs_runtime.o', 'ofs_runtime.lib']) {
+      const sourcePath = path.join(unpackDir, runtimeFile);
+      if (fs.existsSync(sourcePath)) {
+        fs.copyFileSync(sourcePath, path.join(installDir, runtimeFile));
+      }
+    }
+
     progress.report({ message: 'Compiler installed in extension storage.', increment: 45 });
     fs.rmSync(tmpDir, { recursive: true, force: true });
     return managedPath;
@@ -380,6 +402,34 @@ function getOfsPath() {
   return configured;
 }
 
+function getOfsPathForNativeBuild() {
+  const configured = vscode.workspace.getConfiguration().get('ofs.path', 'ofs');
+  if (configured && configured !== 'ofs') {
+    return configured;
+  }
+
+  const bundled = getBundledCompilerPath();
+  if (bundled && compilerHasNativeRuntime(bundled)) {
+    return bundled;
+  }
+
+  const preferEmbedded = vscode.workspace.getConfiguration().get('ofs.preferEmbeddedCompiler', true);
+  if (preferEmbedded) {
+    const embedded = getEmbeddedCompilerPath();
+    if (embedded && compilerHasNativeRuntime(embedded)) {
+      return embedded;
+    }
+  }
+
+  const managed = managedCompilerPathCache || getManagedCompilerPath();
+  if (managed && fs.existsSync(managed) && compilerHasNativeRuntime(managed)) {
+    managedCompilerPathCache = managed;
+    return managed;
+  }
+
+  return configured;
+}
+
 async function commandExists(commandName) {
   if (!commandName) {
     return false;
@@ -451,127 +501,19 @@ async function ensureCompilerInstalledOnActivate() {
   return compilerInstallPromise;
 }
 
-function quotePosix(value) {
-  return `'${String(value).replace(/'/g, `'\\''`)}'`;
-}
-
-function quotePowerShell(value) {
-  return `'${String(value).replace(/'/g, "''")}'`;
-}
-
 async function setExecutionContext(running, paused) {
   await vscode.commands.executeCommand('setContext', 'ofs.executionRunning', running);
   await vscode.commands.executeCommand('setContext', 'ofs.executionPaused', paused);
 }
 
-function getExecutionControlDir() {
-  const baseDir = extensionContextRef?.globalStorageUri?.fsPath
-    ? path.join(extensionContextRef.globalStorageUri.fsPath, 'execution')
-    : path.join(os.tmpdir(), 'ofs-vscode-execution');
-
-  ensureDir(baseDir);
-  return baseDir;
-}
-
-function getExecutionControlPaths() {
-  const controlDir = getExecutionControlDir();
-  return {
-    controlDir,
-    pidFile: path.join(controlDir, 'ofs-run.pid'),
-    stateFile: path.join(controlDir, 'ofs-run.state'),
-    runnerPath: process.platform === 'win32'
-      ? path.join(controlDir, 'ofs-terminal-runner.ps1')
-      : path.join(controlDir, 'ofs-terminal-runner.sh')
-  };
-}
-
-function ensureTerminalRunnerScript() {
-  const controlPaths = getExecutionControlPaths();
-
-  if (process.platform === 'win32') {
-    const runnerSource = [
-      'param(',
-      '  [string]$PidFile,',
-      '  [string]$StateFile,',
-      '  [string]$ExecutablePath',
-      ')',
-      '',
-      '$ErrorActionPreference = "Stop"',
-      '',
-      'try {',
-      '  $process = Start-Process -FilePath $ExecutablePath -PassThru -NoNewWindow',
-      '  Set-Content -LiteralPath $PidFile -Value $process.Id -NoNewline',
-      '  Set-Content -LiteralPath $StateFile -Value "running" -NoNewline',
-      '  Wait-Process -Id $process.Id',
-      '  exit $process.ExitCode',
-      '} finally {',
-      '  Remove-Item -LiteralPath $PidFile -Force -ErrorAction SilentlyContinue',
-      '  Remove-Item -LiteralPath $StateFile -Force -ErrorAction SilentlyContinue',
-      '}'
-    ].join('\n');
-
-    fs.writeFileSync(controlPaths.runnerPath, runnerSource, 'utf8');
-    return controlPaths;
-  }
-
-  const runnerSource = [
-    '#!/usr/bin/env bash',
-    'set -u',
-    '',
-    'pid_file="$1"',
-    'state_file="$2"',
-    'shift 2',
-    '',
-    'cleanup() {',
-    '  rm -f "$pid_file" "$state_file"',
-    '}',
-    '',
-    'trap cleanup EXIT',
-    '',
-    '"$@" &',
-    'child=$!',
-    'printf "%s\\n" "$child" > "$pid_file"',
-    'printf "running\\n" > "$state_file"',
-    'wait "$child"',
-    'exit $?'
-  ].join('\n');
-
-  fs.writeFileSync(controlPaths.runnerPath, runnerSource, 'utf8');
-  fs.chmodSync(controlPaths.runnerPath, 0o755);
-  return controlPaths;
-}
-
-function cleanupExecutionFiles(execution = activeExecution) {
-  if (!execution) {
-    return;
-  }
-
-  fs.rmSync(execution.pidFile, { force: true });
-  fs.rmSync(execution.stateFile, { force: true });
-}
-
 function stopExecutionWatcher() {
-  if (activeExecution?.watcher) {
-    clearInterval(activeExecution.watcher);
-    activeExecution.watcher = null;
-  }
+  return undefined;
 }
 
 async function clearActiveExecution() {
   stopExecutionWatcher();
-  cleanupExecutionFiles(activeExecution);
   activeExecution = null;
   await setExecutionContext(false, false);
-}
-
-function readActiveExecutionPid() {
-  if (!activeExecution?.pidFile || !fs.existsSync(activeExecution.pidFile)) {
-    return null;
-  }
-
-  const raw = fs.readFileSync(activeExecution.pidFile, 'utf8').trim();
-  const pid = Number.parseInt(raw, 10);
-  return Number.isInteger(pid) ? pid : null;
 }
 
 function isProcessAlive(pid) {
@@ -588,65 +530,73 @@ function isProcessAlive(pid) {
 }
 
 function startExecutionWatcher() {
-  stopExecutionWatcher();
-
-  if (!activeExecution) {
-    return;
-  }
-
-  activeExecution.watcher = setInterval(async () => {
-    const pid = readActiveExecutionPid();
-    const hasStateFile = !!activeExecution?.stateFile && fs.existsSync(activeExecution.stateFile);
-
-    if (pid && isProcessAlive(pid)) {
-      return;
-    }
-
-    if (!pid && hasStateFile) {
-      return;
-    }
-
-    await clearActiveExecution();
-  }, 1000);
+  return undefined;
 }
 
-function getTerminalExecutionCommand(exePath, cwd, controlPaths) {
-  if (process.platform === 'win32') {
-    return [
-      'powershell',
-      '-NoProfile',
-      '-ExecutionPolicy',
-      'Bypass',
-      '-Command',
-      `Set-Location -LiteralPath ${quotePowerShell(cwd)}; & ${quotePowerShell(controlPaths.runnerPath)} ${quotePowerShell(controlPaths.pidFile)} ${quotePowerShell(controlPaths.stateFile)} ${quotePowerShell(exePath)}`
-    ].join(' ');
+function normalizeTerminalChunk(chunk) {
+  return String(chunk).replace(/\r?\n/g, '\r\n');
+}
+
+async function waitForShellIntegration(terminal, timeoutMs = 1500) {
+  if (terminal.shellIntegration) {
+    return terminal.shellIntegration;
   }
 
-  return `cd ${quotePosix(cwd)} && ${quotePosix(controlPaths.runnerPath)} ${quotePosix(controlPaths.pidFile)} ${quotePosix(controlPaths.stateFile)} ${quotePosix(exePath)}`;
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) {
+        settled = true;
+        disposable.dispose();
+        resolve(terminal.shellIntegration || null);
+      }
+    }, timeoutMs);
+
+    const disposable = vscode.window.onDidChangeTerminalShellIntegration(({ terminal: changedTerminal, shellIntegration }) => {
+      if (changedTerminal !== terminal || settled) {
+        return;
+      }
+
+      settled = true;
+      clearTimeout(timer);
+      disposable.dispose();
+      resolve(shellIntegration);
+    });
+  });
 }
 
 async function runCompiledExecutableInTerminal(compiled, terminalName) {
   await terminateActiveExecution({ silent: true });
 
-  const controlPaths = ensureTerminalRunnerScript();
-  cleanupExecutionFiles(controlPaths);
-
-  const terminal = vscode.window.activeTerminal || vscode.window.createTerminal({
-    name: terminalName,
-    cwd: compiled.cwd,
-    iconPath: new vscode.ThemeIcon('run')
-  });
+  const terminal = vscode.window.activeTerminal;
+  if (!terminal) {
+    vscode.window.showErrorMessage('Abra um terminal no VS Code antes de executar o arquivo OFS.');
+    return;
+  }
 
   activeExecution = {
-    ...controlPaths,
     paused: false,
-    terminal
+    terminal,
+    childProcess: null,
+    shellExecution: null
   };
 
   await setExecutionContext(true, false);
-  startExecutionWatcher();
   terminal.show(true);
-  terminal.sendText(getTerminalExecutionCommand(compiled.exePath, compiled.cwd, controlPaths));
+
+  const shellIntegration = await waitForShellIntegration(terminal);
+  if (shellIntegration) {
+    const execution = shellIntegration.executeCommand(compiled.exePath, []);
+    activeExecution.shellExecution = execution;
+    execution.exitCode.then(async () => {
+      await clearActiveExecution();
+    }).catch(async () => {
+      await clearActiveExecution();
+    });
+    return;
+  }
+
+  terminal.sendText(getExecutableRunCommand(compiled.exePath));
 }
 
 async function pauseActiveExecution() {
@@ -656,14 +606,13 @@ async function pauseActiveExecution() {
   }
 
   if (process.platform === 'win32') {
-    vscode.window.showWarningMessage('Pausar execucao ainda nao e suportado no Windows.');
+    vscode.window.showWarningMessage('Pausar execucao no terminal atual nao e suportado no Windows.');
     return;
   }
 
-  const pid = readActiveExecutionPid();
+  const pid = activeExecution.childProcess?.pid;
   if (!pid) {
-    await clearActiveExecution();
-    vscode.window.showWarningMessage('A execucao OFS ja foi finalizada.');
+    vscode.window.showWarningMessage('Pausar execucao no terminal atual exige controle de processo que a API do terminal nao fornece.');
     return;
   }
 
@@ -687,14 +636,13 @@ async function resumeActiveExecution() {
   }
 
   if (process.platform === 'win32') {
-    vscode.window.showWarningMessage('Continuar execucao ainda nao e suportado no Windows.');
+    vscode.window.showWarningMessage('Continuar execucao no terminal atual nao e suportado no Windows.');
     return;
   }
 
-  const pid = readActiveExecutionPid();
+  const pid = activeExecution.childProcess?.pid;
   if (!pid) {
-    await clearActiveExecution();
-    vscode.window.showWarningMessage('A execucao OFS ja foi finalizada.');
+    vscode.window.showWarningMessage('Continuar execucao no terminal atual exige controle de processo que a API do terminal nao fornece.');
     return;
   }
 
@@ -719,8 +667,9 @@ async function terminateActiveExecution(options = {}) {
     return;
   }
 
-  const pid = readActiveExecutionPid();
+  const pid = activeExecution.childProcess?.pid;
   if (!pid) {
+    activeExecution.terminal?.sendText('\u0003', false);
     await clearActiveExecution();
     return;
   }
@@ -1010,7 +959,7 @@ async function compileForNativeRun(document) {
     await compilerInstallPromise;
   }
 
-  const ofsPath = getOfsPath();
+  const ofsPath = getOfsPathForNativeBuild();
   const cwd = path.dirname(document.fileName);
   const outDir = extensionContextRef?.globalStorageUri?.fsPath
     ? path.join(extensionContextRef.globalStorageUri.fsPath, 'native-bin')
@@ -1034,7 +983,22 @@ async function compileForNativeRun(document) {
     return null;
   }
 
-  return { exePath, cwd };
+  if (!fs.existsSync(exePath)) {
+    const combined = `${buildResult.stdout || ''}\n${buildResult.stderr || ''}`.trim();
+    const message = combined || 'OFS build terminou sem gerar o executavel esperado.';
+    vscode.window.showErrorMessage(`OFS build failed: ${message}`);
+    return null;
+  }
+
+  if (process.platform !== 'win32') {
+    try {
+      fs.chmodSync(exePath, 0o755);
+    } catch {
+      // Ignore permission adjustment failures and let execution report if needed.
+    }
+  }
+
+  return { exePath, cwd, sourceFile: document.fileName };
 }
 
 function buildNativeDebugConfig(exePath, cwd) {
@@ -1109,7 +1073,7 @@ async function ensureNativeDebuggerAvailable() {
   try {
     await vscode.commands.executeCommand('workbench.extensions.installExtension', 'ms-vscode.cpptools');
   } catch {
-    // Handled below by capability check.
+    // Checked below again.
   }
 
   debugConfig = getNativeDebuggerConfig('placeholder', process.cwd());

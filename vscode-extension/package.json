@@ -67,14 +67,20 @@
         "title": "Run",
         "shortTitle": "Run",
         "category": "OFS",
-        "icon": "$(run)"
+        "icon": {
+          "light": "./media/play-light.svg",
+          "dark": "./media/play-dark.svg"
+        }
       },
       {
         "command": "ofs.debugNative",
         "title": "Debug",
         "shortTitle": "Debug",
         "category": "OFS",
-        "icon": "$(debug-alt-small)"
+        "icon": {
+          "light": "./media/ofs.svg",
+          "dark": "./media/ofs.svg"
+        }
       },
       {
         "command": "ofs.checkFile",
@@ -91,21 +97,30 @@
         "title": "Pause Execution",
         "shortTitle": "Pause",
         "category": "OFS",
-        "icon": "$(debug-pause)"
+        "icon": {
+          "light": "./media/ofs.svg",
+          "dark": "./media/ofs.svg"
+        }
       },
       {
         "command": "ofs.resumeExecution",
         "title": "Resume Execution",
         "shortTitle": "Resume",
         "category": "OFS",
-        "icon": "$(debug-continue)"
+        "icon": {
+          "light": "./media/play-light.svg",
+          "dark": "./media/play-dark.svg"
+        }
       },
       {
         "command": "ofs.stopExecution",
         "title": "Stop Execution",
         "shortTitle": "Stop",
         "category": "OFS",
-        "icon": "$(debug-stop)"
+        "icon": {
+          "light": "./media/check-light.svg",
+          "dark": "./media/check-dark.svg"
+        }
       }
     ],
     "debuggers": [
