@@ -346,6 +346,9 @@ void CodeGen::link(const std::string& obj_file, const std::string& out_file) {
         std::cerr << "runtime library not found (expected libofs_runtime.a/ofs_runtime.o near compiler or in standard library paths)\n";
     }
     cmd += " -o \"" + out_file + "\" -lm";
+#ifdef _WIN32
+    cmd += " -lws2_32";
+#endif
 
     int ret = std::system(cmd.c_str());
     if (ret != 0) {

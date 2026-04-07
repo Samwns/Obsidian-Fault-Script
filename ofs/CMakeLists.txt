@@ -62,6 +62,10 @@ target_link_libraries(ofs PRIVATE ${LLVM_LIBS})
 # ── Runtime (compiled as C, linked into every OFS program) ────────────────
 add_library(ofs_runtime STATIC src/runtime/ofs_runtime.c)
 
+if(WIN32)
+    target_link_libraries(ofs_runtime PRIVATE ws2_32)
+endif()
+
 install(TARGETS ofs
     RUNTIME DESTINATION bin
 )

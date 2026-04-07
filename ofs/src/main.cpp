@@ -1279,6 +1279,10 @@ static int run_file(const std::string& file, const std::string& source) {
     std::string exe = temp_executable_path();
     codegen.emit_object(obj);
     codegen.link(obj, exe);
+    if (!std::filesystem::exists(exe)) {
+        std::remove(obj.c_str());
+        return 1;
+    }
     int result = std::system(("\"" + exe + "\"").c_str());
     std::remove(obj.c_str());
     std::remove(exe.c_str());
@@ -1446,6 +1450,9 @@ int main(int argc, char** argv) {
             std::string obj = out + ".o";
             codegen.emit_object(obj);
             codegen.link(obj, out);
+            if (!std::filesystem::exists(out)) {
+                return 1;
+            }
             std::cout << OFS_MSG("Built: ", "Compilado: ") << out << "\n";
             return 0;
         }
@@ -1455,6 +1462,10 @@ int main(int argc, char** argv) {
             std::string exe = temp_executable_path();
             codegen.emit_object(obj);
             codegen.link(obj, exe);
+            if (!std::filesystem::exists(exe)) {
+                std::remove(obj.c_str());
+                return 1;
+            }
             int result = std::system(("\"" + exe + "\"").c_str());
             std::remove(obj.c_str());
             std::remove(exe.c_str());
