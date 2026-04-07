@@ -41,6 +41,7 @@ private:
     StmtPtr parse_fracture_stmt();   // fracture { }
     StmtPtr parse_abyss_stmt();      // abyss { }
     StmtPtr parse_fractal_stmt();    // fractal { }
+    StmtPtr parse_bedrock_stmt();    // bedrock { }
     StmtPtr parse_match_stmt();      // match expr { case val: ... default: ... }
     StmtPtr parse_tremor_stmt();     // tremor { } catch (e: type) { }
     StmtPtr parse_throw_stmt();      // throw expr

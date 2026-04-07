@@ -1,5 +1,7 @@
 #include "codegen.hpp"
 #include <llvm/IR/Verifier.h>
+#include <llvm/IR/Intrinsics.h>
+#include <llvm/Support/AtomicOrdering.h>
 #include <llvm/IR/LegacyPassManager.h>
 #include <llvm/MC/TargetRegistry.h>
 #include <llvm/Support/FileSystem.h>
@@ -32,6 +34,26 @@
 #endif
 
 namespace ofs {
+
+namespace {
+
+bool is_fault_intrinsic_name(const std::string& name) {
+    return name == "fault_count" ||
+           name == "fault_fence" ||
+           name == "fault_prefetch" ||
+           name == "fault_trap" ||
+           name == "fault_lead" ||
+           name == "fault_trail" ||
+           name == "fault_swap" ||
+           name == "fault_spin_left" ||
+           name == "fault_spin_right" ||
+           name == "fault_step" ||
+           name == "fault_cut" ||
+           name == "fault_patch" ||
+           name == "fault_weave";
+}
+
+}
 
 // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -126,6 +148,51 @@ void CodeGen::emit_ir(const std::string& filepath) {
         return;
     }
     mod_->print(os, nullptr);
+}
+
+void CodeGen::emit_asm(const std::string& filepath) {
+    std::string triple = llvm::sys::getDefaultTargetTriple();
+    std::string error;
+    auto target = llvm::TargetRegistry::lookupTarget(triple, error);
+    if (!target) {
+        std::cerr << "target error: " << error << "\n";
+        return;
+    }
+
+    auto cpu = "generic";
+    auto features = "";
+    llvm::TargetOptions opt;
+#if LLVM_VERSION_MAJOR >= 16
+    auto rm = std::optional<llvm::Reloc::Model>(llvm::Reloc::PIC_);
+#else
+    auto rm = llvm::Optional<llvm::Reloc::Model>(llvm::Reloc::PIC_);
+#endif
+#if LLVM_VERSION_MAJOR >= 20
+    auto tm = target->createTargetMachine(llvm::Triple(triple), cpu, features, opt, rm);
+#else
+    auto tm = target->createTargetMachine(triple, cpu, features, opt, rm);
+#endif
+    mod_->setDataLayout(tm->createDataLayout());
+
+    std::error_code ec;
+    llvm::raw_fd_ostream dest(filepath, ec, llvm::sys::fs::OF_None);
+    if (ec) {
+        std::cerr << "could not open file: " << ec.message() << "\n";
+        return;
+    }
+
+    llvm::legacy::PassManager pass;
+#if LLVM_VERSION_MAJOR >= 18
+    if (tm->addPassesToEmitFile(pass, dest, nullptr, llvm::CodeGenFileType::AssemblyFile)) {
+#else
+    if (tm->addPassesToEmitFile(pass, dest, nullptr, llvm::CGFT_AssemblyFile)) {
+#endif
+        std::cerr << "target machine can't emit a file of this type\n";
+        return;
+    }
+
+    pass.run(*mod_);
+    dest.flush();
 }
 
 // ── Emit Object ───────────────────────────────────────────────────────────
@@ -421,7 +488,8 @@ void CodeGen::gen_monolith(const MonolithDecl& m) {
         field_names.push_back(f.name);
     }
 
-    auto* st = llvm::StructType::create(ctx_, field_types, m.name);
+    bool packed = m.layout == "packed";
+    auto* st = llvm::StructType::create(ctx_, field_types, m.name, packed);
     struct_types_[m.name] = st;
     struct_fields_[m.name] = field_names;
 }
@@ -441,7 +509,9 @@ void CodeGen::gen_global_forge(const GlobalForgeDecl& g) {
 }
 
 void CodeGen::gen_extern(const ExternFuncDecl& e) {
-    if (auto* existing = mod_->getFunction(e.name)) {
+    const std::string symbol_name = e.link_name.empty() ? e.name : e.link_name;
+
+    if (auto* existing = mod_->getFunction(symbol_name)) {
         functions_[e.name] = existing;
         return;
     }
@@ -454,7 +524,7 @@ void CodeGen::gen_extern(const ExternFuncDecl& e) {
 
     auto* ft = llvm::FunctionType::get(ret_type, param_types, e.is_variadic);
     auto* fn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
-                                       e.name, mod_.get());
+                                       symbol_name, mod_.get());
     functions_[e.name] = fn;
 
     // Name parameters
@@ -486,6 +556,8 @@ void CodeGen::gen_stmt(const Stmt& s) {
         gen_abyss(*ab);
     } else if (auto* fb = dynamic_cast<const FractalStmt*>(&s)) {
         gen_fractal(*fb);
+    } else if (auto* bb = dynamic_cast<const BedrockStmt*>(&s)) {
+        gen_bedrock(*bb);
     } else if (auto* w = dynamic_cast<const WhileCycleStmt*>(&s)) {
         gen_while(*w);
     } else if (auto* cs = dynamic_cast<const ConstStmt*>(&s)) {
@@ -764,6 +836,10 @@ void CodeGen::gen_abyss(const AbyssStmt& s) {
 }
 
 void CodeGen::gen_fractal(const FractalStmt& s) {
+    if (s.body) gen_stmt(*s.body);
+}
+
+void CodeGen::gen_bedrock(const BedrockStmt& s) {
     if (s.body) gen_stmt(*s.body);
 }
 
@@ -1083,6 +1159,105 @@ llvm::Value* CodeGen::gen_unary(const UnaryExpr& e) {
 llvm::Value* CodeGen::gen_call(const CallExpr& e) {
     auto* id = dynamic_cast<const IdentExpr*>(e.callee.get());
     if (!id) return nullptr;
+
+    if (is_fault_intrinsic_name(id->name)) {
+        if (id->name == "fault_fence") {
+            builder_.CreateFence(llvm::AtomicOrdering::SequentiallyConsistent);
+            return nullptr;
+        }
+        if (id->name == "fault_prefetch") {
+            if (e.args.size() != 1) return nullptr;
+            auto* addr = gen_expr(*e.args[0]);
+            if (!addr || !addr->getType()->isPointerTy()) return nullptr;
+            auto* i8_ptr = builder_.CreateBitCast(addr, llvm::PointerType::getUnqual(builder_.getInt8Ty()), "fault_prefetch_ptr");
+            std::vector<llvm::Type*> prefetch_types = {i8_ptr->getType()};
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::prefetch, prefetch_types);
+            std::vector<llvm::Value*> prefetch_args = {
+                i8_ptr,
+                llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx_), 0),
+                llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx_), 3),
+                llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx_), 1)
+            };
+            builder_.CreateCall(fn, prefetch_args);
+            return nullptr;
+        }
+        if (id->name == "fault_trap") {
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::trap);
+            builder_.CreateCall(fn, {});
+            return nullptr;
+        }
+        if (id->name == "fault_step") {
+            if (e.args.size() != 2) return nullptr;
+            auto* base_ptr = gen_expr(*e.args[0]);
+            auto* offset = gen_expr(*e.args[1]);
+            if (!base_ptr || !offset || !base_ptr->getType()->isPointerTy()) return nullptr;
+            if (!offset->getType()->isIntegerTy(64)) return nullptr;
+            if (e.args[0]->resolved_type.base != BaseType::Shard || !e.args[0]->resolved_type.inner) {
+                return nullptr;
+            }
+            auto* elem_ty = llvm_type(*e.args[0]->resolved_type.inner);
+            return builder_.CreateGEP(elem_ty, base_ptr, {offset}, "fault_step");
+        }
+
+        std::vector<llvm::Value*> args;
+        for (auto& arg : e.args) {
+            auto* arg_val = gen_expr(*arg);
+            if (!arg_val) return nullptr;
+            if (!arg_val->getType()->isIntegerTy(64)) {
+                if (arg_val->getType()->isIntegerTy(1)) {
+                    arg_val = builder_.CreateZExt(arg_val, llvm::Type::getInt64Ty(ctx_), "fault_zext");
+                } else {
+                    return nullptr;
+                }
+            }
+            args.push_back(arg_val);
+        }
+
+        if (id->name == "fault_count") {
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::ctpop, {llvm::Type::getInt64Ty(ctx_)});
+            return builder_.CreateCall(fn, {args[0]}, "fault_count");
+        }
+        if (id->name == "fault_lead") {
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::ctlz, {llvm::Type::getInt64Ty(ctx_)});
+            return builder_.CreateCall(fn, {args[0], llvm::ConstantInt::get(llvm::Type::getInt1Ty(ctx_), 0)}, "fault_lead");
+        }
+        if (id->name == "fault_trail") {
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::cttz, {llvm::Type::getInt64Ty(ctx_)});
+            return builder_.CreateCall(fn, {args[0], llvm::ConstantInt::get(llvm::Type::getInt1Ty(ctx_), 0)}, "fault_trail");
+        }
+        if (id->name == "fault_swap") {
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::bswap, {llvm::Type::getInt64Ty(ctx_)});
+            return builder_.CreateCall(fn, {args[0]}, "fault_swap");
+        }
+        if (id->name == "fault_spin_left") {
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::fshl, {llvm::Type::getInt64Ty(ctx_)});
+            return builder_.CreateCall(fn, {args[0], args[0], args[1]}, "fault_spin_left");
+        }
+        if (id->name == "fault_spin_right") {
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::fshr, {llvm::Type::getInt64Ty(ctx_)});
+            return builder_.CreateCall(fn, {args[0], args[0], args[1]}, "fault_spin_right");
+        }
+        if (id->name == "fault_cut") {
+            auto* shifted = builder_.CreateLShr(args[0], args[1], "fault_cut_shift");
+            auto* one = llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 1);
+            auto* width_mask = builder_.CreateSub(builder_.CreateShl(one, args[2], "fault_cut_span"), one, "fault_cut_mask");
+            return builder_.CreateAnd(shifted, width_mask, "fault_cut");
+        }
+        if (id->name == "fault_patch") {
+            auto* one = llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 1);
+            auto* width_mask = builder_.CreateSub(builder_.CreateShl(one, args[2], "fault_patch_span"), one, "fault_patch_mask");
+            auto* field_mask = builder_.CreateShl(width_mask, args[1], "fault_patch_field_mask");
+            auto* cleared = builder_.CreateAnd(args[0], builder_.CreateNot(field_mask, "fault_patch_not_mask"), "fault_patch_cleared");
+            auto* inserted = builder_.CreateShl(builder_.CreateAnd(args[3], width_mask, "fault_patch_trim"), args[1], "fault_patch_inserted");
+            return builder_.CreateOr(cleared, inserted, "fault_patch");
+        }
+        if (id->name == "fault_weave") {
+            auto* left = builder_.CreateAnd(args[1], args[0], "fault_weave_left");
+            auto* mask_not = builder_.CreateNot(args[0], "fault_weave_not");
+            auto* right = builder_.CreateAnd(args[2], mask_not, "fault_weave_right");
+            return builder_.CreateOr(left, right, "fault_weave");
+        }
+    }
 
     llvm::Function* fn = nullptr;
 

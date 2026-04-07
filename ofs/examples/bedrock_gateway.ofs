@@ -1,0 +1,61 @@
+attach "../stdlib/bedrock.ofs"
+
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+vein line(title: obsidian) -> void {
+    echo("")
+    echo("=== " + title + " ===")
+}
+
+vein apply_request(cost: stone, budget: *stone, accepted: *stone, rejected: *stone, processed: *stone) -> void {
+    if (bedrock_cell_read(budget) >= cost) {
+        bedrock_cell_sub(budget, cost)
+        bedrock_cell_add(accepted, 1)
+        bedrock_cell_add(processed, cost)
+        echo("accepted cost=" + ofs_stone_to_obsidian(cost))
+    } else {
+        bedrock_cell_add(rejected, 1)
+        echo("rejected cost=" + ofs_stone_to_obsidian(cost))
+    }
+}
+
+vein emergency_credit(budget: *stone, credit: stone) -> void {
+    fracture {
+        *budget = *budget + credit
+    }
+    echo("emergency credit=" + ofs_stone_to_obsidian(credit))
+}
+
+vein print_report(budget: *stone, accepted: *stone, rejected: *stone, processed: *stone) -> void {
+    line("gateway report")
+    echo(bedrock_snapshot("budget", budget, "accepted", accepted, "rejected", rejected))
+    echo(bedrock_pair("processed", bedrock_cell_read(processed)))
+}
+
+core main() {
+    line("boot")
+
+    forge budget = bedrock_cell_new(120)
+    forge accepted = bedrock_cell_new(0)
+    forge rejected = bedrock_cell_new(0)
+    forge processed = bedrock_cell_new(0)
+
+    forge incoming = [15, 25, 40, 60, 10, 30]
+
+    line("normal traffic")
+    cycle (cost in incoming) {
+        apply_request(cost, budget, accepted, rejected, processed)
+    }
+
+    line("manual low-level intervention")
+    emergency_credit(budget, 35)
+    apply_request(20, budget, accepted, rejected, processed)
+    apply_request(50, budget, accepted, rejected, processed)
+
+    print_report(budget, accepted, rejected, processed)
+
+    bedrock_cell_drop(budget)
+    bedrock_cell_drop(accepted)
+    bedrock_cell_drop(rejected)
+    bedrock_cell_drop(processed)
+}

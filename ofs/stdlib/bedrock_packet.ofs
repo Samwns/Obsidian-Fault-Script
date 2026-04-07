@@ -1,0 +1,46 @@
+// OFS Standard Library — Bedrock Packet Module
+// OFS-native packet layout helpers built on top of bedrock regions.
+
+attach "bedrock.ofs"
+
+vein bedrock_packet_base(slot: stone) -> stone {
+    return slot * 2
+}
+
+vein bedrock_packet_store(region: *stone, slot: stone, header: stone, payload: stone) -> void {
+    forge base: stone = bedrock_packet_base(slot)
+    bedrock_view_write(region, base, 0, header)
+    bedrock_view_write(region, base, 1, payload)
+}
+
+vein bedrock_packet_header(region: *stone, slot: stone) -> stone {
+    return bedrock_view_read(region, bedrock_packet_base(slot), 0)
+}
+
+vein bedrock_packet_payload(region: *stone, slot: stone) -> stone {
+    return bedrock_view_read(region, bedrock_packet_base(slot), 1)
+}
+
+vein bedrock_packet_opcode(header: stone) -> stone {
+    return bedrock_lane8_get(header, 1)
+}
+
+vein bedrock_packet_lane(header: stone) -> stone {
+    return bedrock_lane8_get(header, 3)
+}
+
+vein bedrock_packet_opcode_be16(header: stone) -> stone {
+    return bedrock_lane16_be_get(header, 3)
+}
+
+vein bedrock_packet_tail_le16(header: stone) -> stone {
+    return bedrock_lane16_le_get(header, 0)
+}
+
+vein bedrock_packet_set_opcode(header: stone, opcode: stone) -> stone {
+    return bedrock_lane8_set(header, 1, opcode)
+}
+
+vein bedrock_packet_set_lane(header: stone, lane: stone) -> stone {
+    return bedrock_lane8_set(header, 3, lane)
+}

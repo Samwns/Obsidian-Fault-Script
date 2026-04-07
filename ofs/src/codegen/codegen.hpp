@@ -21,6 +21,9 @@ public:
     // Emit LLVM IR as text to a file (for debugging: ofs build --emit-llvm)
     void emit_ir(const std::string& filepath);
 
+    // Emit target-native assembly text
+    void emit_asm(const std::string& filepath);
+
     // Compile to native object file
     void emit_object(const std::string& filepath);
 
@@ -46,6 +49,7 @@ private:
     void       gen_fracture(const FractureStmt& s);
     void       gen_abyss(const AbyssStmt& s);
     void       gen_fractal(const FractalStmt& s);
+    void       gen_bedrock(const BedrockStmt& s);
     void       gen_while(const WhileCycleStmt& s);
     void       gen_match(const MatchStmt& s);
     void       gen_tremor(const TremorStmt& s);

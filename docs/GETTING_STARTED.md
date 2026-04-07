@@ -58,7 +58,87 @@ Run it:
 # Output: Hello, World!
 ```
 
+To inspect how OFS lowers to the native target without leaving the language model:
+
+```bash
+./build/ofs ir hello.ofs
+./build/ofs asm hello.ofs -o hello
+```
+
+This emits `hello.ll` and `hello.s` for inspection while keeping OFS as the source of truth.
+
 That's it! OFS works just like Python — point it at a file and it runs.
+
+### Hybrid High-Level + Low-Level OFS
+
+OFS was designed so high-level and low-level code can coexist in the same file.
+
+```ofs
+attach "../stdlib/bedrock.ofs"
+
+rift vein strlen(text: obsidian) -> stone
+
+core main() {
+    forge score = bedrock_cell_new(0)
+
+    bedrock {
+        bedrock_cell_add(score, fault_count(0x70F0))
+    }
+
+    echo(strlen("fault-console"))
+    echo(bedrock_cell_read(score))
+    bedrock_cell_drop(score)
+}
+```
+
+Use `rift vein` for external boundaries, `bedrock` for typed low-level work, and regular OFS for the rest of the program.
+
+For larger low-level state, use the region helpers in `bedrock.ofs`:
+
+```ofs
+forge region = bedrock_region_new(4)
+bedrock_region_write(region, 0, 10)
+bedrock_region_write(region, 1, 20)
+echo(bedrock_region_read(region, 1))
+bedrock_region_drop(region)
+```
+
+For machine-like field work with OFS names:
+
+```ofs
+bedrock {
+    forge header: stone = 0x70F0AA5500FF1133
+    forge opcode: stone = fault_cut(header, 8, 8)
+    forge patched: stone = fault_patch(header, 40, 8, 0x2A)
+    echo(opcode)
+    echo(patched)
+}
+```
+
+For endian-aware ABI-facing slices without cair em shifts manuais o tempo todo:
+
+```ofs
+bedrock {
+    forge header: stone = 0x70F0AA5500FF1133
+    echo(bedrock_lane16_le_get(header, 0))
+    echo(bedrock_lane16_be_get(header, 3))
+}
+```
+
+For synchronization-style machine hooks inside OFS low-level blocks:
+
+```ofs
+bedrock {
+    fault_fence()
+}
+```
+
+For cache-aware staging in hot low-level paths:
+
+```ofs
+forge region = bedrock_region_new(8)
+bedrock_prefetch(region, 0)
+```
 
 ---
 
@@ -350,3 +430,5 @@ ofs fizzbuzz.ofs
 - **Standard library**: `core.ofs`, `math.ofs`, `string.ofs`, `io.ofs`
 
 Happy coding with OFS! 🪨⚡
+
+- [Bare-metal/Freestanding Profile (experimental)](ofs/docs/BAREMETAL_PROFILE.md)

@@ -30,5 +30,87 @@
     "body": [
       "attach \"$1\""
     ]
+  },
+  "Bedrock Counter": {
+    "prefix": "bedrock",
+    "body": [
+      "attach \"../stdlib/bedrock.ofs\"",
+      "",
+      "core main() {",
+      "    forge counter = bedrock_cell_new(${1:0})",
+      "    bedrock_cell_add(counter, ${2:1})",
+      "    echo(bedrock_cell_read(counter))",
+      "    bedrock_cell_drop(counter)",
+      "}"
+    ]
+  },
+  "Bedrock Block": {
+    "prefix": "bedrock-block",
+    "body": [
+      "bedrock {",
+      "    $0",
+      "}"
+    ]
+  },
+  "Rift Declaration": {
+    "prefix": "rift",
+    "body": [
+      "rift vein ${1:symbol}(${2:arg: obsidian}) -> ${3:stone}"
+    ]
+  },
+  "Bedrock Region": {
+    "prefix": "bedrock-region",
+    "body": [
+      "attach \"../stdlib/bedrock.ofs\"",
+      "",
+      "core main() {",
+      "    forge region = bedrock_region_new(${1:4})",
+      "    bedrock_region_write(region, 0, ${2:10})",
+      "    echo(bedrock_region_read(region, 0))",
+      "    bedrock_region_drop(region)",
+      "}"
+    ]
+  },
+  "Rift Module": {
+    "prefix": "rift-module",
+    "body": [
+      "attach \"../stdlib/rift.ofs\"",
+      "",
+      "core main() {",
+      "    echo(rift_text_size(${1:\"fault\"}))",
+      "}"
+    ]
+  },
+  "Fault Field": {
+    "prefix": "fault-field",
+    "body": [
+      "bedrock {",
+      "    forge ${1:field}: stone = fault_cut(${2:header}, ${3:8}, ${4:8})",
+      "    forge ${5:patched}: stone = fault_patch(${2:header}, ${6:40}, ${7:8}, ${8:0x2A})",
+      "}"
+    ]
+  },
+  "Fault Barrier": {
+    "prefix": "fault-fence",
+    "body": [
+      "bedrock {",
+      "    fault_fence()",
+      "}"
+    ]
+  },
+  "Rift ABI": {
+    "prefix": "rift-abi",
+    "body": [
+      "rift vein ${1:name}(${2:text: obsidian}) -> ${3:stone} bind \"${4:symbol}\" abi ${5:c}"
+    ]
+  },
+  "Packed Monolith": {
+    "prefix": "monolith-packed",
+    "body": [
+      "monolith ${1:Header} layout packed {",
+      "    ${2:tag}: stone",
+      "    ${3:flags}: stone",
+      "}"
+    ]
   }
 }

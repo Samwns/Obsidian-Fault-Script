@@ -28,6 +28,7 @@ private:
     void check_fracture(FractureStmt& s);
     void check_abyss(AbyssStmt& s);
     void check_fractal(FractalStmt& s);
+    void check_bedrock(BedrockStmt& s);
     void check_while(WhileCycleStmt& s);
     void check_match(MatchStmt& s);
     void check_tremor(TremorStmt& s);
@@ -51,6 +52,7 @@ private:
     bool    is_numeric(const OFSType& t)  const;
     OFSType promote(const OFSType& a, const OFSType& b) const; // int+float -> float
     void    expect_type(const OFSType& got, const OFSType& want, int line, int col);
+    void    register_builtin_symbols();
 
     // ── State ─────────────────────────────────────────────────────────────
     Scope       scope_;
@@ -59,6 +61,7 @@ private:
     bool        inside_fracture_ = false;
     bool        inside_abyss_    = false;
     bool        inside_fractal_  = false;
+    bool        inside_bedrock_  = false;
     bool        inside_cycle_    = false;
 
     std::unordered_map<std::string, FuncIntent> function_intents_;

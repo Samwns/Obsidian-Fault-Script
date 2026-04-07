@@ -1,0 +1,7 @@
+// Exemplo mínimo de programa OFS para perfil bare-metal
+
+vein main() {
+    // Em bare-metal real, não há printf nem saída padrão.
+    // Aqui apenas retorna um valor fixo para o ambiente de teste.
+    return 42;
+}

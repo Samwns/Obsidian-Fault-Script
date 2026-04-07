@@ -1,0 +1,99 @@
+attach "../stdlib/bedrock.ofs"
+attach "../stdlib/bedrock_packet.ofs"
+attach "../stdlib/rift.ofs"
+
+vein section(title: obsidian) -> void {
+    echo("")
+    echo("=== " + title + " ===")
+}
+
+vein log_metric(label: obsidian, value: stone) -> void {
+    echo(label + ": " + ofs_stone_to_obsidian(value))
+}
+
+vein packet_bits(header: stone) -> stone {
+    bedrock {
+        return fault_count(header)
+    }
+}
+
+vein ingest_packet(header: stone, score_cell: *stone, alerts_cell: *stone) -> void {
+    bedrock {
+        forge active_bits: stone = fault_count(header)
+        forge front_gap: stone = fault_lead(header)
+        forge tail_gap: stone = fault_trail(header)
+        forge opcode: stone = fault_cut(header, 8, 8)
+        forge lane: stone = fault_cut(header, 24, 8)
+        forge low_lane: stone = bedrock_lane8_get(header, 0)
+        forge mixed: stone = fault_weave(0x00FF00FF00FF00FF, fault_swap(header), fault_spin_left(header, 5))
+        forge packet_score: stone = active_bits + front_gap + tail_gap + opcode + lane + low_lane + (fault_count(mixed) % 17)
+
+        bedrock_cell_add(score_cell, packet_score)
+        if (active_bits < 10) {
+            bedrock_cell_add(alerts_cell, 1)
+        }
+    }
+}
+
+core main() {
+    section("hybrid ofs")
+
+    forge service_name: obsidian = "fault-console"
+    forge foreign_size: stone = rift_text_size(service_name)
+    log_metric("foreign strlen", foreign_size)
+
+    forge total_score = bedrock_cell_new(0)
+    forge alerts = bedrock_cell_new(0)
+    forge packet_scores = bedrock_region_new(3)
+    forge packet_table = bedrock_region_new(6)
+
+    forge packet_a: stone = 0x70F0AA5500FF1133
+    forge packet_b: stone = 0x00FF00FFABCDEF10
+    forge packet_c: stone = 0x1000000000000001
+
+    forge patched_header: stone = bedrock_field_patch(packet_a, 40, 8, 0x2A)
+    forge network_header: stone = bedrock_lane16_be_set(packet_a, 3, 0xBEEF)
+    rift_report_line("patched-header-low-byte-window", bedrock_field_cut(patched_header, 40, 8))
+    rift_report_line("packet-a-lane0", bedrock_lane8_get(packet_a, 0))
+    rift_report_line("packet-a-tail-le16", bedrock_packet_tail_le16(packet_a))
+    rift_report_line("packet-a-head-be16", bedrock_packet_opcode_be16(packet_a))
+    rift_report_line("network-head-be16", bedrock_packet_opcode_be16(network_header))
+
+    section("ingest")
+    bedrock_barrier()
+    bedrock_prefetch(packet_table, 0)
+    ingest_packet(packet_a, total_score, alerts)
+    ingest_packet(packet_b, total_score, alerts)
+    ingest_packet(packet_c, total_score, alerts)
+
+    bedrock_packet_store(packet_table, 0, packet_a, 111)
+    bedrock_packet_store(packet_table, 1, packet_b, 222)
+    bedrock_packet_store(packet_table, 2, packet_c, 333)
+
+    bedrock_region_write(packet_scores, 0, packet_bits(packet_a))
+    bedrock_region_write(packet_scores, 1, packet_bits(packet_b))
+    bedrock_region_write(packet_scores, 2, packet_bits(packet_c))
+
+    section("report")
+    log_metric("total score", bedrock_cell_read(total_score))
+    log_metric("alerts", bedrock_cell_read(alerts))
+    log_metric("packet0 bits", bedrock_region_read(packet_scores, 0))
+    log_metric("packet1 bits", bedrock_region_read(packet_scores, 1))
+    log_metric("packet2 bits", bedrock_region_read(packet_scores, 2))
+    log_metric("view packet1", bedrock_view_read(packet_scores, 1, 0))
+    log_metric("packet0 opcode", bedrock_packet_opcode(bedrock_packet_header(packet_table, 0)))
+    log_metric("packet1 lane", bedrock_packet_lane(bedrock_packet_header(packet_table, 1)))
+    log_metric("packet2 payload", bedrock_packet_payload(packet_table, 2))
+    log_metric("packet0 be16", bedrock_packet_opcode_be16(bedrock_packet_header(packet_table, 0)))
+    log_metric("packet1 le16 tail", bedrock_packet_tail_le16(bedrock_packet_header(packet_table, 1)))
+
+    bedrock {
+        forge folded: stone = fault_spin_right(bedrock_cell_read(total_score), 3)
+        log_metric("folded score", folded)
+    }
+
+    bedrock_cell_drop(total_score)
+    bedrock_cell_drop(alerts)
+    bedrock_region_drop(packet_scores)
+    bedrock_region_drop(packet_table)
+}

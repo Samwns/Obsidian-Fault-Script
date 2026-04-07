@@ -38,6 +38,7 @@ enum class TokenKind {
     KW_IMPORT,      // attach / import
     KW_WHILE,       // while   (condition-only loop)
     KW_EXTERN,      // extern  (foreign function)
+    KW_RIFT,        // rift    (native interop declaration)
     KW_AS,          // as      (type cast)
     KW_MATCH,       // match   (pattern matching)
     KW_CASE,        // case
@@ -49,6 +50,7 @@ enum class TokenKind {
     KW_THROW,       // throw
     KW_INTENT,      // intent
     KW_TECTONIC,    // tectonic (mode directive prefix)
+    KW_BEDROCK,     // bedrock (native low-level block)
     KW_PURE,        // pure
     KW_IMPURE,      // impure
     KW_FRACTAL,     // fractal
@@ -151,6 +153,7 @@ const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"import",   TokenKind::KW_IMPORT},
     {"while",    TokenKind::KW_WHILE},
     {"extern",   TokenKind::KW_EXTERN},
+    {"rift",     TokenKind::KW_RIFT},
     {"as",       TokenKind::KW_AS},
     {"match",    TokenKind::KW_MATCH},
     {"case",     TokenKind::KW_CASE},
@@ -162,6 +165,7 @@ const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"throw",    TokenKind::KW_THROW},
     {"intent",   TokenKind::KW_INTENT},
     {"tectonic", TokenKind::KW_TECTONIC},
+    {"bedrock",  TokenKind::KW_BEDROCK},
     {"pure",     TokenKind::KW_PURE},
     {"impure",   TokenKind::KW_IMPURE},
     {"fractal",  TokenKind::KW_FRACTAL},

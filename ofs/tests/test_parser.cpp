@@ -96,6 +96,14 @@ int main() {
         test("monolith: field1=y", m->fields[1].name == "y");
     }
 
+    // Parse monolith with explicit layout
+    {
+        auto mod = parse_source("monolith Header layout packed {\n    tag: stone\n    flags: stone\n}");
+        auto* m = dynamic_cast<MonolithDecl*>(mod.decls[0].get());
+        test("monolith layout: exists", m != nullptr);
+        test("monolith layout: packed", m->layout == "packed");
+    }
+
     // Parse array literal
     {
         auto mod = parse_source("core main() {\n    forge arr = [1, 2, 3]\n}");
@@ -163,6 +171,24 @@ int main() {
         test("extern: name=puts", ext->name == "puts");
         test("extern: 1 param", ext->params.size() == 1);
         test("extern: ret=stone", ext->return_type.base == BaseType::Stone);
+    }
+
+    // Parse rift function
+    {
+        auto mod = parse_source("rift vein strlen(s: obsidian) -> stone\ncore main() {\n    echo(\"hi\")\n}");
+        test("rift: 2 decls", mod.decls.size() == 2);
+        auto* ext = dynamic_cast<ExternFuncDecl*>(mod.decls[0].get());
+        test("rift: is ExternFuncDecl", ext != nullptr);
+        test("rift: name=strlen", ext->name == "strlen");
+    }
+
+    // Parse rift function with bind/abi metadata
+    {
+        auto mod = parse_source("rift vein text_size(s: obsidian) -> stone bind \"strlen\" abi c\ncore main() {\n    echo(1)\n}");
+        auto* ext = dynamic_cast<ExternFuncDecl*>(mod.decls[0].get());
+        test("rift meta: exists", ext != nullptr);
+        test("rift meta: bind=strlen", ext->link_name == "strlen");
+        test("rift meta: abi=c", ext->abi == "c");
     }
 
     // Parse while loop
@@ -293,6 +319,16 @@ int main() {
         test("fractal: has body", fb->body != nullptr);
     }
 
+    // Parse bedrock block statement
+    {
+        auto mod = parse_source("core main() {\n    bedrock {\n        forge x: stone = fault_count(15)\n    }\n}");
+        auto* fn = dynamic_cast<FuncDecl*>(mod.decls[0].get());
+        auto* body = dynamic_cast<BlockStmt*>(fn->body.get());
+        auto* bb = dynamic_cast<BedrockStmt*>(body->stmts[0].get());
+        test("bedrock: exists", bb != nullptr);
+        test("bedrock: has body", bb->body != nullptr);
+    }
+
     // Parse tectonic aliases for memory/effect modes
     {
         auto mod = parse_source(
@@ -335,7 +371,7 @@ int main() {
         auto* body = dynamic_cast<BlockStmt*>(fn->body.get());
         auto* tsafe = dynamic_cast<FractureStmt*>(body->stmts[0].get());
         auto* tunsafe = dynamic_cast<AbyssStmt*>(body->stmts[1].get());
-        auto* tbedrock = dynamic_cast<FractalStmt*>(body->stmts[2].get());
+        auto* tbedrock = dynamic_cast<BedrockStmt*>(body->stmts[2].get());
         test("tectonic safe: parsed", tsafe != nullptr);
         test("tectonic unsafe: parsed", tunsafe != nullptr);
         test("tectonic bedrock: parsed", tbedrock != nullptr);

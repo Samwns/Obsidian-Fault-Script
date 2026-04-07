@@ -75,3 +75,13 @@ foreach(t test_lexer test_parser test_semantic)
     target_include_directories(${t} PRIVATE src)
     add_test(NAME ${t} COMMAND ${t})
 endforeach()
+
+# ── Freestanding/Bare-metal profile (experimental) ───────────────
+option(OFS_FREESTANDING "Build OFS for freestanding (bare-metal) target" OFF)
+
+if(OFS_FREESTANDING)
+    message(STATUS "Building OFS in freestanding (bare-metal) mode: no libc, custom entrypoint")
+    set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -ffreestanding -nostdlib -fno-builtin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ffreestanding -nostdlib -fno-builtin")
+    # Linker script and startup code would go here for real bare-metal
+endif()

@@ -126,7 +126,7 @@ Module Parser::parse() {
 DeclPtr Parser::parse_decl() {
     skip_newlines();
     if (check(TokenKind::KW_IMPORT))   return parse_import();
-    if (check(TokenKind::KW_EXTERN))   return parse_extern();
+    if (check(TokenKind::KW_EXTERN) || check(TokenKind::KW_RIFT)) return parse_extern();
     if (check(TokenKind::KW_CORE))     return parse_func(true);
     if (check(TokenKind::KW_VEIN))     return parse_func(false);
     if (check(TokenKind::KW_MONOLITH)) return parse_monolith();
@@ -209,8 +209,10 @@ std::unique_ptr<ExternFuncDecl> Parser::parse_extern() {
     auto ext = std::make_unique<ExternFuncDecl>();
     ext->line = peek().line;
     ext->col = peek().col;
-    advance(); // consume 'extern'
-    expect(TokenKind::KW_VEIN, "expected 'vein' after 'extern'");
+    bool is_rift = check(TokenKind::KW_RIFT);
+    ext->is_rift = is_rift;
+    advance(); // consume 'extern' or 'rift'
+    expect(TokenKind::KW_VEIN, is_rift ? "expected 'vein' after 'rift'" : "expected 'vein' after 'extern'");
     ext->name = expect(TokenKind::IDENT, "expected function name").lexeme;
     expect(TokenKind::LPAREN, "expected '(' after extern function name");
 
@@ -234,6 +236,29 @@ std::unique_ptr<ExternFuncDecl> Parser::parse_extern() {
         ext->return_type = OFSType::void_t();
     }
 
+    while (check(TokenKind::IDENT)) {
+        std::string kw = peek().lexeme;
+        if (kw == "bind") {
+            advance();
+            if (check(TokenKind::STRING_LIT)) {
+                ext->link_name = advance().lexeme;
+            } else {
+                throw error("expected string literal after 'bind'");
+            }
+            continue;
+        }
+        if (kw == "abi") {
+            advance();
+            if (check(TokenKind::IDENT)) {
+                ext->abi = advance().lexeme;
+            } else {
+                throw error("expected ABI name after 'abi'");
+            }
+            continue;
+        }
+        break;
+    }
+
     return ext;
 }
 
@@ -244,6 +269,20 @@ std::unique_ptr<MonolithDecl> Parser::parse_monolith() {
 
     advance(); // consume 'monolith'
     m->name = expect(TokenKind::IDENT, "expected monolith name").lexeme;
+
+    while (check(TokenKind::IDENT)) {
+        std::string kw = peek().lexeme;
+        if (kw == "layout") {
+            advance();
+            if (check(TokenKind::IDENT)) {
+                m->layout = advance().lexeme;
+            } else {
+                throw error("expected layout mode after 'layout'");
+            }
+            continue;
+        }
+        break;
+    }
 
     skip_newlines();
     expect(TokenKind::LBRACE, "expected '{' after monolith name");
@@ -306,6 +345,7 @@ StmtPtr Parser::parse_stmt() {
     if (check(TokenKind::KW_FRACTURE))  return parse_fracture_stmt();
     if (check(TokenKind::KW_ABYSS))     return parse_abyss_stmt();
     if (check(TokenKind::KW_FRACTAL))   return parse_fractal_stmt();
+    if (check(TokenKind::KW_BEDROCK))   return parse_bedrock_stmt();
     if (check(TokenKind::KW_MATCH))     return parse_match_stmt();
     if (check(TokenKind::KW_TREMOR))    return parse_tremor_stmt();
     if (check(TokenKind::KW_THROW))     return parse_throw_stmt();
@@ -563,6 +603,15 @@ StmtPtr Parser::parse_tectonic_stmt() {
         return make_fractal();
     }
 
+    if (match(TokenKind::KW_BEDROCK)) {
+        auto s = std::make_unique<BedrockStmt>();
+        s->line = tk.line;
+        s->col = tk.col;
+        skip_newlines();
+        s->body = parse_stmt_block();
+        return s;
+    }
+
     if (check(TokenKind::IDENT)) {
         std::string mode = peek().lexeme;
         if (mode == "safe") {
@@ -607,6 +656,16 @@ StmtPtr Parser::parse_fractal_stmt() {
     s->line = peek().line;
     s->col = peek().col;
     advance(); // consume 'fractal'
+    skip_newlines();
+    s->body = parse_block();
+    return s;
+}
+
+StmtPtr Parser::parse_bedrock_stmt() {
+    auto s = std::make_unique<BedrockStmt>();
+    s->line = peek().line;
+    s->col = peek().col;
+    advance(); // consume 'bedrock'
     skip_newlines();
     s->body = parse_block();
     return s;

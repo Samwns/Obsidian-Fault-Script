@@ -25,8 +25,37 @@
 17. [Statement Termination](#statement-termination)
 18. [Standard Library](#standard-library)
 19. [Keywords](#keywords)
+20. [Low-Level Direction](#low-level-direction)
 
 ---
+
+## Low-Level Direction
+
+OFS supports a hybrid style where high-level and low-level code can live in the same file and function.
+
+This is a language goal, not just a temporary implementation detail.
+
+### Design Rules
+
+- High-level OFS remains the default for application and domain logic.
+- Low-level OFS is opt-in and must stay explicit.
+- `fracture` is the preferred typed pointer layer.
+- `abyss` is the unrestricted raw layer.
+- `fractal` is the effect-lifted bridge.
+- `bedrock` is the emerging OFS-native vocabulary for explicit storage and memory-oriented building blocks.
+
+### Important Scope Note
+
+Current OFS can inspect LLVM IR and native assembly output, and it can call external functions.
+This does **not** mean the language is defined in terms of C or assembly.
+
+The long-term direction is:
+
+- OFS-native low-level primitives first,
+- foreign interop second,
+- foreign dependency never treated as the identity of the language.
+
+See `docs/LOW_LEVEL_ROADMAP.md` for the long-term plan.
 
 ## Program Structure
 
@@ -40,7 +69,7 @@ core main() {
 
 A program file (`.ofs`) can contain:
 - **Attach declarations** (`attach`)
-- **Extern function declarations** (`extern vein`)
+- **Interop declarations** (`extern vein` or `rift vein`)
 - **Function declarations** (`vein` or `core`)
 - **Structure declarations** (`monolith`)
 - **Global variable declarations** (`forge` at top level)
@@ -456,6 +485,44 @@ core main() {
 
 All OFS runtime functions can be accessed via `extern` declarations. This enables low-level and high-level programming in the same language.
 
+### rift vein
+
+OFS now also supports `rift vein` as a native interop-facing declaration form:
+
+```ofs
+rift vein strlen(text: obsidian) -> stone
+
+core main() {
+    echo(strlen("fault"))
+}
+```
+
+`rift vein` lowers to the same foreign-call pipeline as `extern vein`, but it presents interop as an OFS-native boundary instead of framing the feature only as "extern C".
+
+You can also add explicit interop metadata:
+
+```ofs
+rift vein text_size(text: obsidian) -> stone bind "strlen" abi c
+```
+
+- `bind "symbol"` sets the external link symbol name.
+- `abi c` declares the intended ABI.
+- `abi system` is reserved for platform/system-boundary calls.
+
+### Interop Direction
+
+`extern vein` is the current FFI surface. Today it is best suited for runtime and C-compatible symbols.
+
+The roadmap extends this toward richer native interop layers for:
+
+- C object and library boundaries,
+- C++ bridge layers,
+- C# host/runtime bridges,
+- Python embedding or host bindings,
+- target-specific assembly escape hatches.
+
+These are roadmap items, not all implemented features today.
+
 ---
 
 ## Structures (monolith)
@@ -469,6 +536,23 @@ monolith Player {
     speed: crystal
 }
 ```
+
+You can also declare an explicit layout mode:
+
+```ofs
+monolith Header layout packed {
+    tag: stone
+    flags: stone
+}
+```
+
+Supported layout modes today:
+
+- `layout native`
+- `layout packed`
+- `layout c`
+
+`layout packed` lowers to a packed LLVM struct layout. `layout c` is accepted as an explicit ABI-facing intent and currently lowers like `native` until the full ABI/layout subsystem is expanded.
 
 ### Creating Instances
 
@@ -510,7 +594,7 @@ core main() {
 
 ## Pointers (shard / fracture)
 
-Pointer operations are only allowed inside `fracture` (safe) or `abyss` (unsafe) blocks.
+Pointer operations are only allowed inside `fracture` (safe), `bedrock` (typed low-level), or `abyss` (unsafe) blocks.
 
 ### fracture (Safe Pointer Block)
 
@@ -540,6 +624,25 @@ shard p: *stone       // pointer to stone (i64*)
 shard q: *crystal     // pointer to crystal (f64*)
 shard s: *obsidian    // pointer to obsidian (i8**)
 ```
+
+### bedrock (Typed Low-Level Block)
+
+`bedrock` is the OFS-native low-level block for typed machine-adjacent work.
+
+```ofs
+core main() {
+    forge x: stone = 10
+
+    bedrock {
+        shard p: *stone = &x
+        *p = *p + fault_spin_left(1, 3)
+    }
+
+    echo(x)
+}
+```
+
+Use `bedrock` when you want low-level control and machine-like intrinsics while still keeping typed OFS rules.
 
 ---
 
@@ -607,7 +710,7 @@ This is an alias syntax that maps to the same runtime/semantic behavior:
 - `tectonic abyss { ... }` -> same as `abyss { ... }`
 - `tectonic unsafe { ... }` -> same as `abyss { ... }`
 - `tectonic fractal { ... }` -> same as `fractal { ... }`
-- `tectonic bedrock { ... }` -> same as `fractal { ... }`
+- `tectonic bedrock { ... }` -> same as `bedrock { ... }`
 
 Example:
 
@@ -640,7 +743,8 @@ core main() {
     }
 
     tectonic bedrock {
-        echo("bedrock alias for fractal")
+        shard native: *stone = &x
+        *native = *native + 1
     }
 }
 ```
@@ -661,6 +765,41 @@ echo(true)            // prints: true
 ```
 
 `echo` automatically selects the correct runtime print function based on the argument type.
+
+### fault_* intrinsics
+
+Inside `bedrock`, `fracture`, or `abyss`, OFS exposes machine-like intrinsics with OFS-native names:
+
+```ofs
+bedrock {
+    forge x: stone = 0xF0F0
+    echo(fault_count(x))
+    echo(fault_lead(x))
+    echo(fault_trail(x))
+    echo(fault_swap(x))
+    echo(fault_spin_left(x, 4))
+    echo(fault_spin_right(x, 4))
+    echo(fault_weave(0xFF00, 0xAAAA, 0x5555))
+}
+```
+
+Available intrinsics:
+
+- `fault_count(stone)` -> population count
+- `fault_fence()` -> emit a machine-level memory barrier
+- `fault_prefetch(*stone)` -> request a machine-level prefetch for a pointer target
+- `fault_trap()` -> emit a machine-level trap
+- `fault_lead(stone)` -> count leading zeros
+- `fault_trail(stone)` -> count trailing zeros
+- `fault_swap(stone)` -> byte swap
+- `fault_spin_left(stone, stone)` -> rotate left
+- `fault_spin_right(stone, stone)` -> rotate right
+- `fault_step(*stone, stone)` -> typed pointer stepping in elements
+- `fault_cut(value, shift, width)` -> extract a bit field
+- `fault_patch(base, shift, width, insert)` -> replace a bit field
+- `fault_weave(mask, left, right)` -> blend bits from `left` and `right` using `mask`
+
+These functions are designed to cover operations assembly already has, while also giving OFS room for its own machine-oriented vocabulary.
 
 ---
 
@@ -701,6 +840,96 @@ forge result = add(
 ---
 
 ## Standard Library
+
+The standard library is split between application-facing helpers and emerging low-level OFS-native helpers.
+
+Examples:
+
+- `terminal_colors.ofs` for terminal presentation
+- `webserver.ofs` for HTTP helpers
+- `memory_modes.ofs` for memory-mode descriptions
+- `bedrock.ofs` for explicit heap-backed state helpers in OFS-native style
+- `rift.ofs` for OFS-native foreign-boundary wrappers
+- `bedrock_packet.ofs` for packet/header views built on low-level regions
+
+### Bedrock Module
+
+`bedrock.ofs` is the current seed for OFS-native low-level programming.
+
+It provides helpers such as:
+
+- `bedrock_cell_new(initial)`
+- `bedrock_cell_read(cell)`
+- `bedrock_cell_write(cell, value)`
+- `bedrock_cell_add(cell, delta)`
+- `bedrock_cell_sub(cell, delta)`
+- `bedrock_cell_drop(cell)`
+- `bedrock_region_new(len)`
+- `bedrock_region_read(region, index)`
+- `bedrock_region_write(region, index, value)`
+- `bedrock_region_add(region, index, delta)`
+- `bedrock_prefetch(region, index)`
+- `bedrock_region_drop(region)`
+- `bedrock_view_at(region, start, offset)`
+- `bedrock_view_read(region, start, offset)`
+- `bedrock_view_write(region, start, offset, value)`
+- `bedrock_field_cut(value, shift, width)`
+- `bedrock_field_patch(base, shift, width, insert)`
+- `bedrock_lane8_get(value, lane)`
+- `bedrock_lane8_set(value, lane, insert)`
+- `bedrock_lane16_le_get(value, lane)`
+- `bedrock_lane16_be_get(value, lane)`
+- `bedrock_lane16_le_set(value, lane, insert)`
+- `bedrock_lane16_be_set(value, lane, insert)`
+- `bedrock_lane32_le_get(value, lane)`
+- `bedrock_lane32_be_get(value, lane)`
+- `bedrock_lane32_le_set(value, lane, insert)`
+- `bedrock_lane32_be_set(value, lane, insert)`
+- `bedrock_barrier()`
+
+The purpose of this module is not to imitate C APIs directly, but to let low-level programming grow in OFS vocabulary.
+
+These lane helpers also give OFS an endianness-aware surface for ABI-facing bit windows without forcing the user to drop into raw shifts everywhere.
+
+### Rift Module
+
+`rift.ofs` is the first standard-library interop surface built on top of `rift vein`.
+
+It provides wrappers such as:
+
+- `rift_text_size(text)`
+- `rift_line(text)`
+- `rift_banner(title)`
+- `rift_report_line(label, value)`
+
+The goal is to let foreign boundaries be consumed through OFS-facing APIs instead of exposing only raw declarations everywhere.
+
+### Bedrock Packet Module
+
+`bedrock_packet.ofs` is the first structured low-level object-style module built on top of bedrock regions.
+
+It provides helpers such as:
+
+- `bedrock_packet_store(region, slot, header, payload)`
+- `bedrock_packet_header(region, slot)`
+- `bedrock_packet_payload(region, slot)`
+- `bedrock_packet_opcode(header)`
+- `bedrock_packet_lane(header)`
+- `bedrock_packet_opcode_be16(header)`
+- `bedrock_packet_tail_le16(header)`
+- `bedrock_packet_set_opcode(header, opcode)`
+- `bedrock_packet_set_lane(header, lane)`
+
+This is part of the direction where OFS low-level programming gains its own reusable objects/modules instead of exposing only raw operations.
+
+### Hybrid Example Pattern
+
+It is valid and encouraged to mix high-level and low-level OFS in the same file:
+
+- business logic in regular `vein` functions,
+- foreign interop at the boundary through `rift vein`,
+- machine-adjacent work in `bedrock`,
+- explicit storage helpers from `bedrock.ofs`.
 
 OFS includes a standard library written in OFS itself (`stdlib/core.ofs`):
 
@@ -780,6 +1009,7 @@ Complete list of reserved keywords:
 | `attach`   | `KW_IMPORT`      | Attach module              |
 | `while`    | `KW_WHILE`       | Condition-only loop        |
 | `extern`   | `KW_EXTERN`      | Foreign function           |
+| `rift`     | `KW_RIFT`        | Native interop declaration |
 | `as`       | `KW_AS`          | Type cast                  |
 | `match`    | `KW_MATCH`       | Pattern matching           |
 | `case`     | `KW_CASE`        | Match arm                  |
@@ -790,3 +1020,4 @@ Complete list of reserved keywords:
 | `catch`    | `KW_CATCH`       | Error handler              |
 | `throw`    | `KW_THROW`       | Raise error value          |
 | `tectonic` | `KW_TECTONIC`    | Mode directive prefix      |
+| `bedrock`  | `KW_BEDROCK`     | Typed low-level block      |

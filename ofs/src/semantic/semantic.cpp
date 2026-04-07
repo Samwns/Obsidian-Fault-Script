@@ -4,9 +4,35 @@
 
 namespace ofs {
 
+namespace {
+
+bool is_fault_intrinsic_name(const std::string& name) {
+    return name == "fault_count" ||
+           name == "fault_fence" ||
+           name == "fault_prefetch" ||
+           name == "fault_trap" ||
+           name == "fault_lead" ||
+           name == "fault_trail" ||
+           name == "fault_swap" ||
+           name == "fault_spin_left" ||
+           name == "fault_spin_right" ||
+           name == "fault_step" ||
+           name == "fault_cut" ||
+           name == "fault_patch" ||
+           name == "fault_weave";
+}
+
+bool is_low_level_scope(bool inside_fracture, bool inside_abyss, bool inside_bedrock) {
+    return inside_fracture || inside_abyss || inside_bedrock;
+}
+
+}
+
 // ── Main entry ────────────────────────────────────────────────────────────
 
 void SemanticAnalyzer::analyze(Module& mod) {
+    register_builtin_symbols();
+
     // First pass: register all monoliths and functions
     for (auto& d : mod.decls) {
         if (auto* m = dynamic_cast<MonolithDecl*>(d.get())) {
@@ -57,6 +83,36 @@ void SemanticAnalyzer::analyze(Module& mod) {
     }
 }
 
+void SemanticAnalyzer::register_builtin_symbols() {
+    const char* builtin_names[] = {
+        "fault_count",
+        "fault_fence",
+        "fault_prefetch",
+        "fault_trap",
+        "fault_lead",
+        "fault_trail",
+        "fault_swap",
+        "fault_spin_left",
+        "fault_spin_right",
+        "fault_step",
+        "fault_cut",
+        "fault_patch",
+        "fault_weave"
+    };
+
+    for (const char* name : builtin_names) {
+        Symbol sym;
+        sym.name = name;
+        if (std::string(name) == "fault_fence" || std::string(name) == "fault_prefetch" || std::string(name) == "fault_trap") {
+            sym.type = OFSType::void_t();
+        } else {
+            sym.type = OFSType::stone();
+        }
+        sym.kind = SymbolKind::Function;
+        scope_.define(sym.name, sym);
+    }
+}
+
 // ── Declaration checks ────────────────────────────────────────────────────
 
 void SemanticAnalyzer::check_func(FuncDecl& fn) {
@@ -80,6 +136,13 @@ void SemanticAnalyzer::check_func(FuncDecl& fn) {
 }
 
 void SemanticAnalyzer::check_monolith(MonolithDecl& m) {
+    if (m.layout != "native" && m.layout != "packed" && m.layout != "c") {
+        throw SemanticError(
+            OFS_MSG("unsupported monolith layout '" + m.layout + "' (supported: native, packed, c)",
+                    "layout de monolith não suportado '" + m.layout + "' (suportados: native, packed, c)"),
+            m.line, m.col);
+    }
+
     // Check methods if any
     for (auto& method : m.methods) {
         check_func(*method);
@@ -122,6 +185,13 @@ void SemanticAnalyzer::check_extern(ExternFuncDecl& e) {
                 e.line, e.col);
         }
     }
+
+    if (!e.abi.empty() && e.abi != "c" && e.abi != "system") {
+        throw SemanticError(
+            OFS_MSG("unsupported ABI '" + e.abi + "' (supported: c, system)",
+                    "ABI não suportada '" + e.abi + "' (suportadas: c, system)"),
+            e.line, e.col);
+    }
 }
 
 void SemanticAnalyzer::check_strata(StrataDecl& s) {
@@ -157,6 +227,8 @@ void SemanticAnalyzer::check_stmt(Stmt& s) {
         check_abyss(*ab);
     } else if (auto* fb = dynamic_cast<FractalStmt*>(&s)) {
         check_fractal(*fb);
+    } else if (auto* bb = dynamic_cast<BedrockStmt*>(&s)) {
+        check_bedrock(*bb);
     } else if (auto* w = dynamic_cast<WhileCycleStmt*>(&s)) {
         check_while(*w);
     } else if (auto* cs = dynamic_cast<ConstStmt*>(&s)) {
@@ -359,6 +431,19 @@ void SemanticAnalyzer::check_fractal(FractalStmt& s) {
     inside_fractal_ = prev_fractal;
 }
 
+void SemanticAnalyzer::check_bedrock(BedrockStmt& s) {
+    bool prev_bedrock = inside_bedrock_;
+    bool prev_fracture = inside_fracture_;
+    bool prev_fractal = inside_fractal_;
+    inside_bedrock_ = true;
+    inside_fracture_ = true;
+    inside_fractal_ = true;
+    if (s.body) check_stmt(*s.body);
+    inside_fractal_ = prev_fractal;
+    inside_fracture_ = prev_fracture;
+    inside_bedrock_ = prev_bedrock;
+}
+
 void SemanticAnalyzer::check_while(WhileCycleStmt& s) {
     bool prev_cycle = inside_cycle_;
     inside_cycle_ = true;
@@ -523,7 +608,7 @@ OFSType SemanticAnalyzer::check_unary(UnaryExpr& e) {
     }
     if (e.op == "&") {
         // Address-of: only in fracture/abyss
-        if (!inside_fracture_ && !inside_abyss_) {
+        if (!inside_fracture_ && !inside_abyss_ && !inside_bedrock_) {
             throw SemanticError(OFS_MSG("address-of (&) operator only allowed in fracture or abyss block",
                                         "operador de endereço (&) só é permitido em blocos fracture ou abyss"),
                                 e.line, e.col);
@@ -532,7 +617,7 @@ OFSType SemanticAnalyzer::check_unary(UnaryExpr& e) {
     }
     if (e.op == "*") {
         // Dereference
-        if (!inside_fracture_ && !inside_abyss_) {
+        if (!inside_fracture_ && !inside_abyss_ && !inside_bedrock_) {
             throw SemanticError(OFS_MSG("dereference (*) operator only allowed in fracture or abyss block",
                                         "operador de desreferência (*) só é permitido em blocos fracture ou abyss"),
                                 e.line, e.col);
@@ -565,6 +650,77 @@ OFSType SemanticAnalyzer::check_call(CallExpr& e) {
 
     // Look up function
     if (auto* id = dynamic_cast<IdentExpr*>(e.callee.get())) {
+        if (is_fault_intrinsic_name(id->name)) {
+            if (!is_low_level_scope(inside_fracture_, inside_abyss_, inside_bedrock_)) {
+                throw SemanticError(
+                    OFS_MSG("fault intrinsics require fracture, abyss, or bedrock block",
+                            "intrinsics fault exigem bloco fracture, abyss ou bedrock"),
+                    e.line, e.col);
+            }
+
+            const size_t arg_count = e.args.size();
+            if ((id->name == "fault_fence" || id->name == "fault_trap") && arg_count != 0) {
+                throw SemanticError(OFS_MSG("fault intrinsic expects 0 arguments", "intrinsic fault espera 0 argumentos"), e.line, e.col);
+            }
+            if (id->name == "fault_prefetch" && arg_count != 1) {
+                throw SemanticError(OFS_MSG("fault_prefetch expects 1 argument", "fault_prefetch espera 1 argumento"), e.line, e.col);
+            }
+            if ((id->name == "fault_count" || id->name == "fault_lead" || id->name == "fault_trail" || id->name == "fault_swap") && arg_count != 1) {
+                throw SemanticError(OFS_MSG("fault intrinsic expects 1 argument", "intrinsic fault espera 1 argumento"), e.line, e.col);
+            }
+            if ((id->name == "fault_spin_left" || id->name == "fault_spin_right") && arg_count != 2) {
+                throw SemanticError(OFS_MSG("fault spin intrinsic expects 2 arguments", "intrinsic fault spin espera 2 argumentos"), e.line, e.col);
+            }
+            if (id->name == "fault_step" && arg_count != 2) {
+                throw SemanticError(OFS_MSG("fault_step expects 2 arguments", "fault_step espera 2 argumentos"), e.line, e.col);
+            }
+            if (id->name == "fault_cut" && arg_count != 3) {
+                throw SemanticError(OFS_MSG("fault_cut expects 3 arguments", "fault_cut espera 3 argumentos"), e.line, e.col);
+            }
+            if (id->name == "fault_patch" && arg_count != 4) {
+                throw SemanticError(OFS_MSG("fault_patch expects 4 arguments", "fault_patch espera 4 argumentos"), e.line, e.col);
+            }
+            if (id->name == "fault_weave" && arg_count != 3) {
+                throw SemanticError(OFS_MSG("fault_weave expects 3 arguments", "fault_weave espera 3 argumentos"), e.line, e.col);
+            }
+
+            if (id->name == "fault_fence" || id->name == "fault_trap") {
+                return OFSType::void_t();
+            }
+
+            if (id->name == "fault_prefetch") {
+                if (e.args[0]->resolved_type.base != BaseType::Shard) {
+                    throw SemanticError(
+                        OFS_MSG("fault_prefetch requires a pointer argument", "fault_prefetch exige um argumento ponteiro"),
+                        e.line, e.col);
+                }
+                return OFSType::void_t();
+            }
+
+            if (id->name == "fault_step") {
+                if (e.args[0]->resolved_type.base != BaseType::Shard) {
+                    throw SemanticError(
+                        OFS_MSG("fault_step requires a pointer as first argument", "fault_step exige ponteiro no primeiro argumento"),
+                        e.line, e.col);
+                }
+                if (e.args[1]->resolved_type.base != BaseType::Stone) {
+                    throw SemanticError(
+                        OFS_MSG("fault_step requires stone offset", "fault_step exige offset stone"),
+                        e.line, e.col);
+                }
+                return e.args[0]->resolved_type;
+            }
+
+            for (auto& arg : e.args) {
+                if (arg->resolved_type.base != BaseType::Stone) {
+                    throw SemanticError(
+                        OFS_MSG("fault intrinsics require stone arguments", "intrinsics fault exigem argumentos stone"),
+                        e.line, e.col);
+                }
+            }
+            return OFSType::stone();
+        }
+
         auto* sym = scope_.lookup(id->name);
         if (sym && sym->kind == SymbolKind::Function) {
             auto it = function_intents_.find(id->name);

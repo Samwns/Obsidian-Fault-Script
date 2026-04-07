@@ -208,6 +208,11 @@ struct FractalStmt : Stmt {
     StmtPtr body;
 };
 
+struct BedrockStmt : Stmt {
+    // bedrock { ... } — OFS-native typed low-level block
+    StmtPtr body;
+};
+
 // const x: stone = 42  — immutable variable
 struct ConstStmt : Stmt {
     std::string            name;
@@ -268,6 +273,7 @@ struct MonolithDecl : Decl {
     std::string              name;
     std::vector<Param>       fields;  // Param reused: {name, type}
     std::vector<std::unique_ptr<FuncDecl>> methods; // optional methods
+    std::string              layout = "native";
 };
 
 // Top-level forge (global variable)
@@ -288,6 +294,9 @@ struct ExternFuncDecl : Decl {
     std::vector<Param> params;
     OFSType            return_type;
     bool               is_variadic = false;
+    std::string        abi = "c";
+    std::string        link_name;
+    bool               is_rift = false;
 };
 
 // strata Color { Red, Green, Blue }

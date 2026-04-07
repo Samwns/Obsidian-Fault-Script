@@ -1,8 +1,8 @@
 {
   "name": "obsidian-fault-script",
   "displayName": "Obsidian Fault Script",
-  "description": "Language support, diagnostics, autocomplete and run commands for OFS",
-  "version": "1.0.4",
+  "description": "Language support, diagnostics, autocomplete, native run/debug and assembly inspection for OFS",
+  "version": "1.0.7",
   "publisher": "Obsidian-Fault",
   "icon": "media/ofs.png",
   "license": "BSL-1.0",
@@ -84,6 +84,13 @@
         "icon": "$(check-all)"
       },
       {
+        "command": "ofs.emitAssembly",
+        "title": "Emit Native Assembly",
+        "shortTitle": "ASM",
+        "category": "OFS",
+        "icon": "$(symbol-field)"
+      },
+      {
         "command": "ofs.pauseExecution",
         "title": "Pause Execution",
         "category": "OFS",
@@ -160,6 +167,11 @@
           "command": "ofs.checkFile",
           "when": "resourceLangId == ofs",
           "group": "2_check@1"
+        },
+        {
+          "command": "ofs.emitAssembly",
+          "when": "resourceLangId == ofs",
+          "group": "2_check@2"
         }
       ],
       "editor/title": [

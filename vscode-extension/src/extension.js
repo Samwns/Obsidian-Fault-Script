@@ -6,10 +6,11 @@ const os = require('os');
 const https = require('https');
 
 const KEYWORDS = [
-  'core', 'vein', 'forge', 'const', 'monolith', 'strata', 'extern',
+  'core', 'vein', 'forge', 'const', 'monolith', 'strata', 'extern', 'rift',
   'if', 'else', 'while', 'cycle', 'match', 'case', 'default',
   'return', 'break', 'continue', 'throw', 'tremor', 'catch',
-  'fracture', 'abyss', 'obsid', 'attach', 'import', 'intent', 'tectonic', 'pure', 'impure', 'fractal',
+  'fracture', 'abyss', 'bedrock', 'obsid', 'attach', 'import', 'intent', 'tectonic', 'pure', 'impure', 'fractal',
+  'layout', 'bind', 'abi', 'packed', 'native', 'system',
   'true', 'false', 'null', 'as'
 ];
 
@@ -58,6 +59,36 @@ const HOVER_DOCS = {
     description: 'Bloco intermediario de efeitos.',
     context: 'Use para fluxo intermediario entre modos estritos e irrestritos.',
     example: 'fractal {\n    echo("effect-lifted block")\n}'
+  },
+  bedrock: {
+    description: 'Bloco typed low-level nativo da OFS.',
+    context: 'Use para combinar ponteiros, intrinsics fault_* e armazenamento explicito sem cair no modo raw de abyss.',
+    example: 'bedrock {\n    shard p: *stone = &x\n    *p = *p + fault_spin_left(1, 3)\n}'
+  },
+  rift: {
+    description: 'Declaracao de interop nativa da OFS.',
+    context: 'Use como fronteira de chamada para simbolos externos sem apresentar isso apenas como extern C.',
+    example: 'rift vein strlen(text: obsidian) -> stone'
+  },
+  abi: {
+    description: 'Metadado de ABI para fronteiras de interop.',
+    context: 'Use em `rift vein` e `extern vein` para declarar a ABI pretendida, como `c` ou `system`.',
+    example: 'rift vein text_size(text: obsidian) -> stone bind "strlen" abi c'
+  },
+  bind: {
+    description: 'Metadado de símbolo externo.',
+    context: 'Use para ligar um nome OFS a um símbolo externo diferente.',
+    example: 'rift vein text_size(text: obsidian) -> stone bind "strlen" abi c'
+  },
+  layout: {
+    description: 'Metadado de layout para monolith.',
+    context: 'Use para declarar intenção de layout em tipos ABI-facing.',
+    example: 'monolith Header layout packed {\n    tag: stone\n    flags: stone\n}'
+  },
+  packed: {
+    description: 'Modo de layout compacto para monolith.',
+    context: 'Use em `monolith ... layout packed` quando precisar de estrutura compactada no lowering atual.',
+    example: 'monolith Header layout packed {\n    tag: stone\n    flags: stone\n}'
   },
   tectonic: {
     description: 'Diretiva prefixo para modos: fracture, abyss ou fractal.',
@@ -124,6 +155,116 @@ const HOVER_DOCS = {
     context: 'Use para debug de codegen e analise de otimizacao.',
     example: 'ofs ir main.ofs'
   },
+  asm: {
+    description: 'Comando CLI para emitir assembly nativo do alvo.',
+    context: 'Use para inspecionar o lowering final sem abandonar OFS como fonte de verdade.',
+    example: 'ofs asm main.ofs -o main'
+  },
+  fault_count: {
+    description: 'Intrinsic low-level: population count.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss.',
+    example: 'bedrock {\n    echo(fault_count(0xF0F0))\n}'
+  },
+  fault_lead: {
+    description: 'Intrinsic low-level: conta zeros a esquerda.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss.',
+    example: 'bedrock {\n    echo(fault_lead(x))\n}'
+  },
+  fault_trail: {
+    description: 'Intrinsic low-level: conta zeros a direita.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss.',
+    example: 'bedrock {\n    echo(fault_trail(x))\n}'
+  },
+  fault_swap: {
+    description: 'Intrinsic low-level: byte swap.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss.',
+    example: 'bedrock {\n    echo(fault_swap(x))\n}'
+  },
+  fault_spin_left: {
+    description: 'Intrinsic low-level: rotacao para a esquerda.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss.',
+    example: 'bedrock {\n    echo(fault_spin_left(x, 5))\n}'
+  },
+  fault_spin_right: {
+    description: 'Intrinsic low-level: rotacao para a direita.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss.',
+    example: 'bedrock {\n    echo(fault_spin_right(x, 5))\n}'
+  },
+  fault_step: {
+    description: 'Intrinsic low-level: avanca ponteiro tipado por quantidade de elementos.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss. Ideal para regioes e tabelas bedrock.',
+    example: 'bedrock {\n    shard slot: *stone = fault_step(base, 2)\n    *slot = 42\n}'
+  },
+  fault_cut: {
+    description: 'Intrinsic low-level: extrai campo de bits.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss para leitura de layouts e headers.',
+    example: 'bedrock {\n    forge opcode: stone = fault_cut(header, 8, 8)\n}'
+  },
+  fault_patch: {
+    description: 'Intrinsic low-level: reescreve campo de bits.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss para montar headers e estruturas compactadas.',
+    example: 'bedrock {\n    forge patched: stone = fault_patch(header, 40, 8, 0x2A)\n}'
+  },
+  fault_fence: {
+    description: 'Intrinsic low-level: emite barreira de memoria.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss para sincronizacao machine-like.',
+    example: 'bedrock {\n    fault_fence()\n}'
+  },
+  fault_prefetch: {
+    description: 'Intrinsic low-level: solicita prefetch de um alvo em memoria.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss para preparar leituras de ponteiros em caminhos quentes.',
+    example: 'bedrock {\n    fault_prefetch(ptr)\n}'
+  },
+  fault_trap: {
+    description: 'Intrinsic low-level: emite trap de maquina.',
+    context: 'Disponivel em blocos bedrock, fracture e abyss para interrupcao hard-fail.',
+    example: 'bedrock {\n    fault_trap()\n}'
+  },
+  fault_weave: {
+    description: 'Intrinsic low-level da OFS para entrelacar bits por mascara.',
+    context: 'Combina bits de dois valores usando uma mascara, indo alem das operacoes classicas expostas diretamente em assembly.',
+    example: 'bedrock {\n    echo(fault_weave(0xFF00, left, right))\n}'
+  },
+  rift_text_size: {
+    description: 'Wrapper de stdlib para tamanho de texto via rift.',
+    context: 'Use `attach "../stdlib/rift.ofs"` para consumir fronteiras externas com API OFS.',
+    example: 'attach "../stdlib/rift.ofs"\necho(rift_text_size("fault"))'
+  },
+  bedrock_region_new: {
+    description: 'Cria uma regiao low-level de stones zerada.',
+    context: 'Use para buffers/tabelas de tamanho fixo geridos em OFS low-level.',
+    example: 'attach "../stdlib/bedrock.ofs"\nforge region = bedrock_region_new(4)'
+  },
+  bedrock_prefetch: {
+    description: 'Helper OFS para solicitar prefetch de uma regiao bedrock.',
+    context: 'Use antes de ler slots quentes em regioes low-level sem expor chamadas de intrinsic em toda a base.',
+    example: 'bedrock_prefetch(region, 0)'
+  },
+  bedrock_view_read: {
+    description: 'Le um valor a partir de uma view bedrock sobre uma regiao.',
+    context: 'Use para janelas/slices de tabelas low-level sem sair da API OFS.',
+    example: 'echo(bedrock_view_read(region, 1, 0))'
+  },
+  bedrock_lane8_get: {
+    description: 'Helper OFS para extrair um lane de 8 bits.',
+    context: 'Use em headers e layouts compactados sem escrever shifts diretamente.',
+    example: 'echo(bedrock_lane8_get(header, 0))'
+  },
+  bedrock_lane16_le_get: {
+    description: 'Helper OFS para extrair uma janela little-endian de 16 bits.',
+    context: 'Use em tipos ABI-facing e headers quando o layout local segue ordem little-endian.',
+    example: 'echo(bedrock_lane16_le_get(header, 0))'
+  },
+  bedrock_lane16_be_get: {
+    description: 'Helper OFS para extrair uma janela big-endian de 16 bits.',
+    context: 'Use em headers de rede e protocolos sem espalhar byte swap manual pelo codigo.',
+    example: 'echo(bedrock_lane16_be_get(header, 3))'
+  },
+  bedrock_packet_opcode_be16: {
+    description: 'Helper de pacote para ler a janela big-endian de 16 bits do cabecalho.',
+    context: 'Use quando um header OFS precisa expor um campo protocolar em ordem de rede.',
+    example: 'echo(bedrock_packet_opcode_be16(header))'
+  },
   version: {
     description: 'Comando CLI para exibir versao do compilador.',
     context: 'Use para diagnostico de ambiente e compatibilidade.',
@@ -143,8 +284,8 @@ const HOVER_DOCS = {
 
 const DIAGNOSTIC_REGEX = /^(.*):(\d+):(\d+):\s*(.*)$/;
 const ATTACH_REGEX = /^\s*(attach|import)\s+"([^"]+)"\s*$/;
-const VEIN_REGEX = /^\s*(?:extern\s+)?vein\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/;
-const MONOLITH_REGEX = /^\s*monolith\s+([A-Za-z_][A-Za-z0-9_]*)\s*\{/;
+const VEIN_REGEX = /^\s*(?:(?:extern|rift)\s+)?vein\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/;
+const MONOLITH_REGEX = /^\s*monolith\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+layout\s+(?:native|packed|c))?\s*\{/;
 const RELEASES_API = 'https://api.github.com/repos/Samwns/Obsidian-Fault-Script/releases/latest';
 
 let extensionContextRef = null;
@@ -1279,6 +1420,44 @@ async function runCurrentFileNative() {
   await runCompiledExecutableInTerminal(compiled, 'OFS Native Run');
 }
 
+async function emitCurrentAssembly() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.languageId !== 'ofs') {
+    vscode.window.showErrorMessage('Open an OFS file first.');
+    return;
+  }
+
+  await editor.document.save();
+
+  const ofsPath = await resolveReadyOfsPath();
+  if (!ofsPath) {
+    vscode.window.showErrorMessage('OFS compiler not found. Enable ofs.autoInstallCompiler or configure ofs.path.');
+    return;
+  }
+
+  const document = editor.document;
+  const parsed = path.parse(document.fileName);
+  const asmBase = path.join(parsed.dir, parsed.name);
+  const cwd = parsed.dir || getWorkspaceRoot() || undefined;
+  const result = await runExecFile(ofsPath, ['asm', document.fileName, '-o', asmBase], { cwd });
+  const combined = `${result.stdout || ''}${result.stderr || ''}`;
+
+  if (result.error) {
+    vscode.window.showErrorMessage(`OFS asm failed: ${combined.trim() || result.error.message}`);
+    return;
+  }
+
+  const asmPath = `${asmBase}.s`;
+  if (!fs.existsSync(asmPath)) {
+    vscode.window.showErrorMessage('OFS asm terminou sem gerar o arquivo .s esperado.');
+    return;
+  }
+
+  const doc = await vscode.workspace.openTextDocument(asmPath);
+  await vscode.window.showTextDocument(doc, { preview: false });
+  vscode.window.showInformationMessage(`OFS assembly emitted: ${path.basename(asmPath)}`);
+}
+
 async function debugCurrentFileNative() {
   const editor = vscode.window.activeTextEditor;
   if (!editor || editor.document.languageId !== 'ofs') {
@@ -1416,6 +1595,7 @@ function activate(context) {
   });
 
   const checkCmd = vscode.commands.registerCommand('ofs.checkFile', () => checkCurrentFile(diagnosticCollection));
+  const asmCmd = vscode.commands.registerCommand('ofs.emitAssembly', () => emitCurrentAssembly());
   const pauseCmd = vscode.commands.registerCommand('ofs.pauseExecution', () => pauseActiveExecution());
   const resumeCmd = vscode.commands.registerCommand('ofs.resumeExecution', () => resumeActiveExecution());
   const stopCmd = vscode.commands.registerCommand('ofs.stopExecution', () => terminateActiveExecution());
@@ -1423,6 +1603,7 @@ function activate(context) {
     nativeRunCmd,
     nativeDebugCmd,
     checkCmd,
+    asmCmd,
     pauseCmd,
     resumeCmd,
     stopCmd,

@@ -661,6 +661,7 @@ void print_usage() {
 "  ofs tokens <arquivo.ofs>             Exibe o fluxo de tokens (debug)\n"
 "  ofs ast    <arquivo.ofs>             Exibe a AST (debug)\n"
 "  ofs ir     <arquivo.ofs>             Emite o LLVM IR (debug)\n"
+"  ofs asm    <arquivo.ofs>             Emite assembly nativo do alvo\n"
 "  ofs version                          Exibe a versão do compilador\n"
 "  ofs update                           Atualiza para a release mais recente\n"
 "  ofs help                             Mostra esta mensagem de ajuda\n"
@@ -671,10 +672,12 @@ void print_usage() {
 "  tokens -> debug léxico (inspecionar tokenização)\n"
 "  ast    -> debug sintático (inspecionar árvore)\n"
 "  ir     -> debug/otimização LLVM (inspecionar IR)\n"
+"  asm    -> inspeção do código de máquina textual do alvo\n"
 "  update -> autoatualização via releases do GitHub\n"
 "\nExemplos:\n"
 "  ofs hello.ofs                        Executa hello.ofs diretamente\n"
 "  ofs build hello.ofs -o hello         Compila para executável\n"
+"  ofs asm hello.ofs -o hello           Gera hello.s\n"
 "  ofs check hello.ofs                  Verifica tipos apenas\n"
 "  ofs update                           Atualiza OFS via GitHub Releases\n\n";
     } else {
@@ -689,6 +692,7 @@ void print_usage() {
 "  ofs tokens <file.ofs>                 Print token stream (debug)\n"
 "  ofs ast    <file.ofs>                 Print AST (debug)\n"
 "  ofs ir     <file.ofs>                 Emit LLVM IR (debug)\n"
+"  ofs asm    <file.ofs>                 Emit target-native assembly\n"
 "  ofs version                           Print compiler version\n"
 "  ofs update                            Update to the latest release\n"
 "  ofs help                              Show this help message\n"
@@ -699,10 +703,12 @@ void print_usage() {
 "  tokens -> lexical debug (inspect token stream)\n"
 "  ast    -> syntax debug (inspect parsed tree)\n"
 "  ir     -> LLVM debug/optimization inspection\n"
+"  asm    -> inspect target assembly while keeping OFS as source of truth\n"
 "  update -> self-update from GitHub releases\n"
 "\nExamples:\n"
 "  ofs hello.ofs                         Run hello.ofs directly\n"
 "  ofs build hello.ofs -o hello          Compile to executable\n"
+"  ofs asm hello.ofs -o hello            Generate hello.s\n"
 "  ofs check hello.ofs                   Type-check only\n"
 "  ofs update                            Update OFS from GitHub Releases\n\n";
     }
@@ -889,6 +895,12 @@ int main(int argc, char** argv) {
         if (cmd == "ir") {
             codegen.emit_ir(out + ".ll");
             std::cout << OFS_MSG("LLVM IR written to ", "LLVM IR gravado em ") << out << ".ll\n";
+            return 0;
+        }
+
+        if (cmd == "asm") {
+            codegen.emit_asm(out + ".s");
+            std::cout << OFS_MSG("Assembly written to ", "Assembly gravado em ") << out << ".s\n";
             return 0;
         }
 

@@ -71,6 +71,12 @@ int main() {
     test("monolith",
         analyze_ok("monolith Point {\n    x: stone\n    y: stone\n}\ncore main() {\n    forge p: Point\n}"));
 
+    test("monolith packed layout",
+        analyze_ok("monolith Header layout packed {\n    tag: stone\n    flags: stone\n}\ncore main() {\n    forge h: Header\n}"));
+
+    test("monolith invalid layout",
+        analyze_fails("monolith Header layout weird {\n    tag: stone\n}\ncore main() {\n    forge h: Header\n}"));
+
     test("stone + crystal -> crystal (widening)",
         analyze_ok("core main() {\n    forge a: stone = 1\n    forge b: crystal = 2.0\n    forge c = a + b\n}"));
 
@@ -105,6 +111,15 @@ int main() {
     test("extern function",
         analyze_ok("extern vein ofs_pow(base: crystal, exp: crystal) -> crystal\ncore main() {\n    forge r: crystal = ofs_pow(2.0, 10.0)\n}"));
 
+    test("rift function",
+        analyze_ok("rift vein strlen(text: obsidian) -> stone\ncore main() {\n    forge r: stone = strlen(\"fault\")\n}"));
+
+    test("rift abi metadata",
+        analyze_ok("rift vein text_size(text: obsidian) -> stone bind \"strlen\" abi c\ncore main() {\n    forge r: stone = text_size(\"fault\")\n}"));
+
+    test("invalid abi metadata",
+        analyze_fails("rift vein text_size(text: obsidian) -> stone abi weird\ncore main() {\n    forge r: stone = text_size(\"fault\")\n}"));
+
     // Attach
     test("attach declaration",
         analyze_ok("attach \"stdlib/core.ofs\"\ncore main() {\n    echo(\"hello\")\n}"));
@@ -134,6 +149,110 @@ int main() {
             "vein f() intent fractal { return }\n"
             "vein a() intent impure { fractal { f() } }\n"
             "core main() { a() }"));
+
+    test("bedrock allows fault intrinsic",
+        analyze_ok(
+            "core main() {\n"
+            "    bedrock {\n"
+            "        forge x: stone = fault_count(15)\n"
+            "        echo(x)\n"
+            "    }\n"
+            "}"));
+
+    test("fault intrinsic fails outside low-level block",
+        analyze_fails(
+            "core main() {\n"
+            "    forge x: stone = fault_count(15)\n"
+            "}"));
+
+    test("fault intrinsic requires stone args",
+        analyze_fails(
+            "core main() {\n"
+            "    bedrock {\n"
+            "        forge x: stone = fault_count(3.14)\n"
+            "    }\n"
+            "}"));
+
+    test("bedrock allows pointer work",
+        analyze_ok(
+            "core main() {\n"
+            "    forge x: stone = 10\n"
+            "    bedrock {\n"
+            "        shard p: *stone = &x\n"
+            "        *p = *p + 1\n"
+            "    }\n"
+            "}"));
+
+    test("fault_step advances stone pointer",
+        analyze_ok(
+            "extern vein ofs_alloc(size: stone) -> *stone\n"
+            "core main() {\n"
+            "    forge base: *stone = ofs_alloc(16)\n"
+            "    bedrock {\n"
+            "        shard slot: *stone = fault_step(base, 1)\n"
+            "        *slot = 42\n"
+            "    }\n"
+            "}"));
+
+    test("fault_step requires pointer first arg",
+        analyze_fails(
+            "core main() {\n"
+            "    bedrock {\n"
+            "        forge x: stone = fault_step(10, 1)\n"
+            "    }\n"
+            "}"));
+
+    test("fault_cut extracts field",
+        analyze_ok(
+            "core main() {\n"
+            "    bedrock {\n"
+            "        forge x: stone = fault_cut(255, 4, 4)\n"
+            "        echo(x)\n"
+            "    }\n"
+            "}"));
+
+    test("fault_patch writes field",
+        analyze_ok(
+            "core main() {\n"
+            "    bedrock {\n"
+            "        forge x: stone = fault_patch(0, 8, 8, 42)\n"
+            "        echo(x)\n"
+            "    }\n"
+            "}"));
+
+    test("fault_fence allowed in bedrock",
+        analyze_ok(
+            "core main() {\n"
+            "    bedrock {\n"
+            "        fault_fence()\n"
+            "    }\n"
+            "}"));
+
+    test("fault_prefetch allowed in bedrock",
+        analyze_ok(
+            "extern vein ofs_alloc(size: stone) -> *stone\n"
+            "core main() {\n"
+            "    forge base: *stone = ofs_alloc(16)\n"
+            "    bedrock {\n"
+            "        fault_prefetch(base)\n"
+            "    }\n"
+            "}"));
+
+    test("fault_prefetch requires pointer",
+        analyze_fails(
+            "core main() {\n"
+            "    bedrock {\n"
+            "        fault_prefetch(10)\n"
+            "    }\n"
+            "}"));
+
+    test("fault_trap allowed in bedrock",
+        analyze_ok(
+            "core main() {\n"
+            "    bedrock {\n"
+            "        fault_trap()\n"
+            "    }\n"
+            "}"));
 
     std::cout << "\nAll semantic tests passed!\n";
     return 0;
