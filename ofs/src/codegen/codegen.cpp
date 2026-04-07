@@ -1172,7 +1172,11 @@ llvm::Value* CodeGen::gen_call(const CallExpr& e) {
             if (!addr || !addr->getType()->isPointerTy()) return nullptr;
             auto* i8_ptr = builder_.CreateBitCast(addr, llvm::PointerType::getUnqual(builder_.getInt8Ty()), "fault_prefetch_ptr");
             std::vector<llvm::Type*> prefetch_types = {i8_ptr->getType()};
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::prefetch, prefetch_types);
+#else
             auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::prefetch, prefetch_types);
+#endif
             std::vector<llvm::Value*> prefetch_args = {
                 i8_ptr,
                 llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx_), 0),
@@ -1183,7 +1187,11 @@ llvm::Value* CodeGen::gen_call(const CallExpr& e) {
             return nullptr;
         }
         if (id->name == "fault_trap") {
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::trap);
+#else
             auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::trap);
+#endif
             builder_.CreateCall(fn, {});
             return nullptr;
         }
@@ -1215,27 +1223,51 @@ llvm::Value* CodeGen::gen_call(const CallExpr& e) {
         }
 
         if (id->name == "fault_count") {
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::ctpop, {llvm::Type::getInt64Ty(ctx_)});
+#else
             auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::ctpop, {llvm::Type::getInt64Ty(ctx_)});
+#endif
             return builder_.CreateCall(fn, {args[0]}, "fault_count");
         }
         if (id->name == "fault_lead") {
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::ctlz, {llvm::Type::getInt64Ty(ctx_)});
+#else
             auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::ctlz, {llvm::Type::getInt64Ty(ctx_)});
+#endif
             return builder_.CreateCall(fn, {args[0], llvm::ConstantInt::get(llvm::Type::getInt1Ty(ctx_), 0)}, "fault_lead");
         }
         if (id->name == "fault_trail") {
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::cttz, {llvm::Type::getInt64Ty(ctx_)});
+#else
             auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::cttz, {llvm::Type::getInt64Ty(ctx_)});
+#endif
             return builder_.CreateCall(fn, {args[0], llvm::ConstantInt::get(llvm::Type::getInt1Ty(ctx_), 0)}, "fault_trail");
         }
         if (id->name == "fault_swap") {
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::bswap, {llvm::Type::getInt64Ty(ctx_)});
+#else
             auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::bswap, {llvm::Type::getInt64Ty(ctx_)});
+#endif
             return builder_.CreateCall(fn, {args[0]}, "fault_swap");
         }
         if (id->name == "fault_spin_left") {
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::fshl, {llvm::Type::getInt64Ty(ctx_)});
+#else
             auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::fshl, {llvm::Type::getInt64Ty(ctx_)});
+#endif
             return builder_.CreateCall(fn, {args[0], args[0], args[1]}, "fault_spin_left");
         }
         if (id->name == "fault_spin_right") {
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::fshr, {llvm::Type::getInt64Ty(ctx_)});
+#else
             auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::fshr, {llvm::Type::getInt64Ty(ctx_)});
+#endif
             return builder_.CreateCall(fn, {args[0], args[0], args[1]}, "fault_spin_right");
         }
         if (id->name == "fault_cut") {
