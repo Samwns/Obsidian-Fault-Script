@@ -288,7 +288,7 @@ jobs:
 
   vscode_extension:
     name: Build VS Code Extension
-    needs: version
+    needs: [version, build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -299,6 +299,23 @@ jobs:
           VERSION="${TAG#v}"
           node -e "const fs=require('fs');const p='vscode-extension/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
 
+      - name: Download Linux build artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ofs-linux-x64-installer.tar.gz
+          path: linux-artifact
+
+      - name: Extract Linux binary and runtime for extension
+        run: |
+          mkdir -p linux-unpack
+          tar -xzf linux-artifact/ofs-linux-x64-installer.tar.gz -C linux-unpack
+          mkdir -p vscode-extension/bin/linux-x64
+          cp linux-unpack/ofs vscode-extension/bin/linux-x64/ofs
+          chmod +x vscode-extension/bin/linux-x64/ofs
+          if [ -f linux-unpack/libofs_runtime.a ]; then
+            cp linux-unpack/libofs_runtime.a vscode-extension/bin/linux-x64/libofs_runtime.a
+          fi
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -306,9 +323,6 @@ jobs:
 
       - name: Package extension (.vsix)
         run: |
-          mkdir -p vscode-extension/bin/linux-x64
-          cp build/ofs vscode-extension/bin/linux-x64/ofs
-          cp build/libofs_runtime.a vscode-extension/bin/linux-x64/libofs_runtime.a
           cd vscode-extension
           npm ci
           node ./node_modules/@vscode/vsce/vsce package --out ../ofs-vscode-extension.vsix
