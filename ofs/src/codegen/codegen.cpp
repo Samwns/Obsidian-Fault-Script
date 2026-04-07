@@ -860,6 +860,12 @@ void CodeGen::gen_return(const ReturnStmt& s) {
                     val = builder_.CreateTrunc(val, ret_ty, "trunc");
                 } else if (ret_ty->isDoubleTy() && val->getType()->isIntegerTy(64)) {
                     val = builder_.CreateSIToFP(val, ret_ty, "to_float");
+                } else if (ret_ty->isIntegerTy(1) && val->getType()->isIntegerTy()) {
+                    // C runtime bool functions return i32; OFS bool = i1. Convert.
+                    val = builder_.CreateICmpNE(val,
+                        llvm::ConstantInt::get(val->getType(), 0), "to_bool");
+                } else if (ret_ty->isIntegerTy(64) && val->getType()->isIntegerTy(1)) {
+                    val = builder_.CreateZExt(val, ret_ty, "bool_to_stone");
                 }
             }
             builder_.CreateRet(val);

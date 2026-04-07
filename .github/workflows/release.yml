@@ -166,6 +166,8 @@ jobs:
           cp packaging/linux/install.sh dist-installer/install.sh
           cp packaging/assets/ofs-256.png dist-installer/ofs.png
           cp LICENSE dist-installer/LICENSE
+          mkdir -p dist-installer/stdlib
+          cp ofs/stdlib/*.ofs dist-installer/stdlib/
           chmod +x dist-installer/ofs dist-installer/install.sh
           tar -czf ${{ matrix.artifact }} -C dist-installer .
 
@@ -174,9 +176,11 @@ jobs:
           mkdir -p pkgroot/usr/local/bin
           mkdir -p pkgroot/usr/local/lib
           mkdir -p pkgroot/usr/local/share/doc/ofs
+          mkdir -p pkgroot/usr/local/share/ofs/stdlib
           cp build/${{ matrix.binary }} pkgroot/usr/local/bin/ofs
           cp build/libofs_runtime.a pkgroot/usr/local/lib/libofs_runtime.a
           cp LICENSE pkgroot/usr/local/share/doc/ofs/LICENSE
+          cp ofs/stdlib/*.ofs pkgroot/usr/local/share/ofs/stdlib/
           chmod +x pkgroot/usr/local/bin/ofs
 
           VERSION_RAW="${{ needs.version.outputs.tag }}"
@@ -255,6 +259,17 @@ jobs:
             exit 1
           }
 
+          Copy-Item "packaging\windows\infuse.cmd" "dist\infuse.cmd"
+          Copy-Item "packaging\windows\uncover.cmd" "dist\uncover.cmd"
+          Copy-Item "packaging\windows\reinfuse.cmd" "dist\reinfuse.cmd"
+          Copy-Item "packaging\windows\ofs.ps1" "dist\ofs.ps1"
+          Copy-Item "packaging\windows\infuse.ps1" "dist\infuse.ps1"
+          Copy-Item "packaging\windows\uncover.ps1" "dist\uncover.ps1"
+          Copy-Item "packaging\windows\reinfuse.ps1" "dist\reinfuse.ps1"
+
+          New-Item -ItemType Directory -Force -Path "dist\stdlib" | Out-Null
+          Copy-Item "ofs\stdlib\*.ofs" "dist\stdlib\"
+
           Copy-Item "LICENSE" "dist\LICENSE.txt"
 
           # Portable package used by `ofs update` on Windows (no installer flow).
@@ -314,6 +329,10 @@ jobs:
           chmod +x vscode-extension/bin/linux-x64/ofs
           if [ -f linux-unpack/libofs_runtime.a ]; then
             cp linux-unpack/libofs_runtime.a vscode-extension/bin/linux-x64/libofs_runtime.a
+          fi
+          if [ -d linux-unpack/stdlib ]; then
+            mkdir -p vscode-extension/bin/linux-x64/stdlib
+            cp linux-unpack/stdlib/*.ofs vscode-extension/bin/linux-x64/stdlib/
           fi
 
       - name: Setup Node.js

@@ -1863,8 +1863,7 @@ function activate(context) {
     });
   });
 
-  const checkCmd = vscode.command
-  registerAttachDecorations(context);s.registerCommand('ofs.checkFile', () => checkCurrentFile(diagnosticCollection));
+  const checkCmd = vscode.commands.registerCommand('ofs.checkFile', () => checkCurrentFile(diagnosticCollection));
   const asmCmd = vscode.commands.registerCommand('ofs.emitAssembly', () => emitCurrentAssembly());
   const pauseCmd = vscode.commands.registerCommand('ofs.pauseExecution', () => pauseActiveExecution());
   const resumeCmd = vscode.commands.registerCommand('ofs.resumeExecution', () => resumeActiveExecution());
@@ -1904,6 +1903,7 @@ function activate(context) {
   registerCompletionProvider(context);
   registerFileDecorations(context);
   registerHoverProvider(context);
+  registerAttachDecorations(context);
 
   ensureCompilerInstalledOnActivate();
 

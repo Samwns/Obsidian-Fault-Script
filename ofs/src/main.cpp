@@ -77,6 +77,17 @@ static std::string paint(const std::string& s, const char* color, bool bold = fa
 
 static std::string trim_copy(const std::string& s);
 
+static std::string to_lower_copy(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    return s;
+}
+
+static void safe_remove_all(const std::filesystem::path& target) {
+    std::error_code ec;
+    std::filesystem::remove_all(target, ec);
+}
+
 #ifdef _WIN32
 #define OFS_POPEN _popen
 #define OFS_PCLOSE _pclose
@@ -156,30 +167,43 @@ static bool download_file(const std::string& url, const std::filesystem::path& o
 }
 
 static std::string fetch_latest_tag() {
-    const std::string api = "https://api.github.com/repos/" + std::string(OFS_REPO_OWNER) + "/" + OFS_REPO_NAME + "/releases/latest";
+    // Use the HTML redirect endpoint instead of the rate-limited JSON API.
+    // https://github.com/OWNER/REPO/releases/latest  redirects to  .../tag/<tag>
+    const std::string release_url = "https://github.com/" + std::string(OFS_REPO_OWNER) + "/" + OFS_REPO_NAME + "/releases/latest";
 
 #ifdef _WIN32
     std::string raw = run_capture(
         "powershell -NoProfile -ExecutionPolicy Bypass -Command "
         "\"$ProgressPreference='SilentlyContinue'; "
-    "$r = Invoke-RestMethod -Uri " + quote_ps_single(api) + "; "
-        "if ($r.tag_name) { $r.tag_name }\"");
+        "try { "
+        "  $r = Invoke-WebRequest -Uri " + quote_ps_single(release_url) + " -MaximumRedirection 0 -ErrorAction Stop; "
+        "  '' "
+        "} catch { "
+        "  $loc = $_.Exception.Response.Headers['Location']; "
+        "  if ($loc) { $loc.Split('/')[-1] } else { '' } "
+        "}\"");
 #else
-    std::string raw = run_capture("curl -fsSL " + quote_arg(api));
+    // -I = HEAD only, -s = silent, follow up to 0 redirects but grab Location
+    std::string raw = run_capture(
+        "curl -sI -o /dev/null -w '%{redirect_url}' " + quote_arg(release_url));
+    // redirect_url gives the full target URL; extract last segment (the tag)
+    if (raw.empty()) {
+        raw = run_capture("curl -sIL " + quote_arg(release_url) +
+                          " | grep -i '^location:' | tail -1 | sed 's|.*/tag/||' | tr -d '\\r\\n'");
+    }
 #endif
 
     raw = trim_copy(raw);
     if (raw.empty()) return "";
 
-    // Windows path already returns only tag_name; Unix path returns full JSON.
-    if (!raw.empty() && raw[0] == 'v') {
-        return trim_copy(raw);
+    // Extract just the tag name (last path segment) from a full URL like
+    // https://github.com/.../releases/tag/v1.2.3
+    auto slash = raw.rfind('/');
+    if (slash != std::string::npos && slash + 1 < raw.size()) {
+        raw = raw.substr(slash + 1);
     }
-
-    std::smatch m;
-    if (std::regex_search(raw, m, std::regex("\"tag_name\"\\s*:\\s*\"([^\"]+)\""))) {
-        return m[1].str();
-    }
+    raw = trim_copy(raw);
+    if (!raw.empty() && raw[0] == 'v') return raw;
     return "";
 }
 
@@ -483,6 +507,19 @@ static std::string trim_copy(const std::string& s) {
 
 static std::vector<std::filesystem::path> parse_lib_paths() {
     std::vector<std::filesystem::path> paths;
+
+    // Always include the default OFS packages directory so installed packages
+    // work with attach {} without requiring OFS_LIB_PATH to be set.
+#ifdef _WIN32
+    if (const char* appdata = std::getenv("APPDATA")) {
+        if (*appdata) paths.emplace_back(std::string(appdata) + "\\ofs\\packages");
+    }
+#else
+    if (const char* home = std::getenv("HOME")) {
+        if (*home) paths.emplace_back(std::string(home) + "/.ofs/packages");
+    }
+#endif
+
     const char* env = std::getenv("OFS_LIB_PATH");
     if (!env || !*env) return paths;
 
@@ -748,7 +785,48 @@ static std::string get_packages_dir() {
 #endif
 }
 
-// Parse "physics", "{physics}", "{physics:1.2}", "{physics:stable}"
+static bool looks_like_package_spec(const std::string& raw) {
+    std::string s = trim_copy(raw);
+    if (s.empty()) return false;
+    if (s.size() >= 2 && s.front() == '{' && s.back() == '}') {
+        s = trim_copy(s.substr(1, s.size() - 2));
+    }
+
+    static const std::regex spec_re(
+        R"(^[A-Za-z_][A-Za-z0-9_.\-]*(?::[A-Za-z0-9_.\-]+)?$)");
+    return std::regex_match(s, spec_re);
+}
+
+static bool is_powershell_meta_arg(const std::string& raw) {
+    const std::string s = to_lower_copy(trim_copy(raw));
+    return s == "-encodedcommand" || s == "-command" || s == "-file" ||
+           s == "-executionpolicy" || s == "bypass" || s == "-noprofile" ||
+           s == "-noninteractive" || s == "-nop" || s == "-ep";
+}
+
+static std::string extract_package_cli_arg(int argc, char** argv, int start_index) {
+    std::string fallback = (argc > start_index) ? trim_copy(argv[start_index]) : "";
+    if (looks_like_package_spec(fallback)) return fallback;
+
+    bool skip_next = false;
+    for (int i = start_index; i < argc; ++i) {
+        std::string arg = trim_copy(argv[i]);
+        if (arg.empty()) continue;
+        if (skip_next) {
+            skip_next = false;
+            continue;
+        }
+        if (is_powershell_meta_arg(arg)) {
+            skip_next = true;
+            continue;
+        }
+        if (arg[0] == '-' && !looks_like_package_spec(arg)) continue;
+        if (looks_like_package_spec(arg)) return arg;
+    }
+    return fallback;
+}
+
+// Parse "fmt", "{fmt}", "{fmt:1.2}", "{fmt:stable}"
 struct PackageSpec {
     std::string name;
     std::string version; // empty = latest
@@ -861,8 +939,8 @@ static int run_infuse(const std::string& raw_spec, bool update_mode = false) {
     auto spec = parse_package_spec(raw_spec);
     if (spec.name.empty()) {
         std::cerr << cli_style::paint(
-            OFS_MSG("infuse: package name required. Example: infuse physics\n",
-                    "infuse: nome do pacote obrigatorio. Exemplo: infuse physics\n"),
+            OFS_MSG("infuse: package name required. Example: infuse fmt\n",
+                    "infuse: nome do pacote obrigatorio. Exemplo: infuse fmt\n"),
             cli_style::RED, true);
         return 1;
     }
@@ -904,7 +982,15 @@ static int run_infuse(const std::string& raw_spec, bool update_mode = false) {
     std::string base_url = std::string(OFS_PACKAGES_RAW) + spec.name + "/";
 
     // Download ofspkg.json
-    auto tmp_dir = std::filesystem::temp_directory_path() / ("ofs_infuse_" + spec.name);
+    auto tmp_dir = std::filesystem::temp_directory_path() /
+                   ("ofs_infuse_" + spec.name + "_" + std::to_string(
+#ifdef _WIN32
+                        _getpid()
+#else
+                        getpid()
+#endif
+                    ) + "_" + std::to_string(
+                        static_cast<long long>(std::chrono::system_clock::now().time_since_epoch().count())));
     std::filesystem::create_directories(tmp_dir);
     auto pkg_json_tmp = tmp_dir / "ofspkg.json";
 
@@ -913,12 +999,15 @@ static int run_infuse(const std::string& raw_spec, bool update_mode = false) {
             OFS_MSG("infuse: failed to download package metadata\n",
                     "infuse: falha ao baixar metadados do pacote\n"),
             cli_style::RED, true);
-        std::filesystem::remove_all(tmp_dir);
+        safe_remove_all(tmp_dir);
         return 1;
     }
 
-    std::ifstream pf(pkg_json_tmp);
-    std::string pkg_json((std::istreambuf_iterator<char>(pf)), {});
+    std::string pkg_json;
+    {
+        std::ifstream pf(pkg_json_tmp);
+        pkg_json.assign((std::istreambuf_iterator<char>(pf)), {});
+    }
     std::string pkg_name    = json_get_str(pkg_json, "name");
     std::string pkg_version = json_get_str(pkg_json, "version");
     std::string pkg_main    = json_get_str(pkg_json, "main");
@@ -928,7 +1017,7 @@ static int run_infuse(const std::string& raw_spec, bool update_mode = false) {
             OFS_MSG("infuse: invalid package metadata (missing name/main)\n",
                     "infuse: metadados invalidos (name/main ausentes)\n"),
             cli_style::RED, true);
-        std::filesystem::remove_all(tmp_dir);
+        safe_remove_all(tmp_dir);
         return 1;
     }
 
@@ -944,7 +1033,7 @@ static int run_infuse(const std::string& raw_spec, bool update_mode = false) {
                 << pkg_name << OFS_MSG("' already at v", "' ja esta na v") << cur_ver
                 << OFS_MSG(". Use reinfuse to force update.\n",
                            ". Use reinfuse para forcar atualizacao.\n");
-            std::filesystem::remove_all(tmp_dir);
+            safe_remove_all(tmp_dir);
             return 0;
         }
     }
@@ -962,7 +1051,7 @@ static int run_infuse(const std::string& raw_spec, bool update_mode = false) {
             OFS_MSG("infuse: failed to download package library\n",
                     "infuse: falha ao baixar biblioteca do pacote\n"),
             cli_style::RED, true);
-        std::filesystem::remove_all(tmp_dir);
+        safe_remove_all(tmp_dir);
         return 1;
     }
 
@@ -974,7 +1063,7 @@ static int run_infuse(const std::string& raw_spec, bool update_mode = false) {
         std::cerr << cli_style::paint(
             OFS_MSG("infuse: cannot create install directory: ", "infuse: nao foi possivel criar o diretorio: "),
             cli_style::RED, true) << libs_dest.string() << "\n";
-        std::filesystem::remove_all(tmp_dir);
+        safe_remove_all(tmp_dir);
         return 1;
     }
 
@@ -982,7 +1071,7 @@ static int run_infuse(const std::string& raw_spec, bool update_mode = false) {
                                std::filesystem::copy_options::overwrite_existing, ec);
     std::filesystem::copy_file(pkg_json_tmp, install_dir / "ofspkg.json",
                                std::filesystem::copy_options::overwrite_existing, ec);
-    std::filesystem::remove_all(tmp_dir);
+    safe_remove_all(tmp_dir);
 
     if (ec) {
         std::cerr << cli_style::paint(
@@ -1001,22 +1090,23 @@ static int run_infuse(const std::string& raw_spec, bool update_mode = false) {
     std::cout << OFS_MSG("Usage in code:\n", "Uso no codigo:\n")
               << "  attach {" << pkg_name << "}\n\n";
 
-    // Remind about OFS_LIB_PATH if not set
+    // Only remind about OFS_LIB_PATH if the user has a custom packages dir set
+    // (the default packages dir is now always searched automatically).
     const char* lib_path_env = std::getenv("OFS_LIB_PATH");
-    bool in_path = lib_path_env &&
-                   std::string(lib_path_env).find(pkg_dir_str) != std::string::npos;
-    if (!in_path) {
-        std::cout << cli_style::paint(
-            OFS_MSG("Tip: add your packages dir to OFS_LIB_PATH so the compiler can find it:\n",
-                    "Dica: adicione seu diretorio de pacotes ao OFS_LIB_PATH:\n"),
-            cli_style::YELLOW, true);
+    if (lib_path_env && *lib_path_env) {
+        bool in_path = std::string(lib_path_env).find(pkg_dir_str) != std::string::npos;
+        if (!in_path) {
+            std::cout << cli_style::paint(
+                OFS_MSG("Tip: add your packages dir to OFS_LIB_PATH to search it too:\n",
+                        "Dica: adicione seu diretorio ao OFS_LIB_PATH para busca personalizada:\n"),
+                cli_style::YELLOW, true);
 #ifdef _WIN32
-        std::cout << "  [Environment]::SetEnvironmentVariable('OFS_LIB_PATH', '"
-                  << pkg_dir_str << "', 'User')\n\n";
+            std::cout << "  [Environment]::SetEnvironmentVariable('OFS_LIB_PATH', '"
+                      << pkg_dir_str << "', 'User')\n\n";
 #else
-        std::cout << "  export OFS_LIB_PATH=" << quote_arg(pkg_dir_str) << "\n"
-                  << "  # Add to ~/.bashrc or ~/.profile to persist\n\n";
+            std::cout << "  export OFS_LIB_PATH=" << quote_arg(pkg_dir_str) << "\n\n";
 #endif
+        }
     }
     return 0;
 }
@@ -1025,8 +1115,8 @@ static int run_reinfuse(const std::string& raw_spec) {
     auto spec = parse_package_spec(raw_spec);
     if (spec.name.empty()) {
         std::cerr << cli_style::paint(
-            OFS_MSG("reinfuse: package name required. Example: reinfuse physics\n",
-                    "reinfuse: nome do pacote obrigatorio. Exemplo: reinfuse physics\n"),
+            OFS_MSG("reinfuse: package name required. Example: reinfuse fmt\n",
+                    "reinfuse: nome do pacote obrigatorio. Exemplo: reinfuse fmt\n"),
             cli_style::RED, true);
         return 1;
     }
@@ -1071,10 +1161,10 @@ void print_usage() {
 "  infuse  <nome>:stable|beta|nightly   Instala por canal\n"
 "  reinfuse <nome>                      Atualiza um pacote instalado\n"
 "\nExemplos:\n"
-"  uncover physics                      Busca pacotes de fisica\n"
-"  infuse physics                       Instala o pacote physics\n"
-"  infuse {physics:stable}              Instala canal stable de physics\n"
-"  reinfuse physics                     Atualiza physics para a versao mais recente\n"
+"  uncover fmt                          Busca pacotes de formatacao\n"
+"  infuse fmt                           Instala o pacote fmt\n"
+"  infuse {fmt:stable}                  Instala canal stable de fmt\n"
+"  reinfuse fmt                         Atualiza fmt para a versao mais recente\n"
 "\nContexto dos comandos:\n"
 "  run    -> fluxo rápido (desenvolvimento diário)\n"
 "  build  -> gera binário final para distribuir/publicar\n"
@@ -1090,9 +1180,9 @@ void print_usage() {
 "  ofs asm hello.ofs -o hello           Gera hello.s\n"
 "  ofs check hello.ofs                  Verifica tipos apenas\n"
 "  ofs update                           Atualiza OFS via GitHub Releases\n"
-"  uncover physics                      Busca pacotes de fisica\n"
-"  infuse physics                       Instala o pacote physics\n"
-"  reinfuse physics                     Atualiza physics\n\n";
+"  uncover fmt                          Busca pacotes de formatacao\n"
+"  infuse fmt                           Instala o pacote fmt\n"
+"  reinfuse fmt                         Atualiza fmt\n\n";
     } else {
         std::cout <<
 "\n" << cli_style::paint("ofs", cli_style::CYAN, true)
@@ -1121,10 +1211,10 @@ void print_usage() {
 "  ofs asm hello.ofs -o hello            Generate hello.s\n"
 "  ofs check hello.ofs                   Type-check only\n"
 "  ofs update                            Update OFS from GitHub Releases\n"
-"  uncover physics                       Search for physics packages\n"
-"  infuse physics                        Install the physics package\n"
-"  infuse {physics:stable}               Install stable channel of physics\n"
-"  reinfuse physics                      Update physics to latest version\n\n";
+"  uncover fmt                           Search formatting packages\n"
+"  infuse fmt                            Install the fmt package\n"
+"  infuse {fmt:stable}                   Install stable channel of fmt\n"
+"  reinfuse fmt                          Update fmt to latest version\n\n";
     }
 }
 
@@ -1233,8 +1323,8 @@ int main(int argc, char** argv) {
 
     // ── Package commands (no .ofs file needed) ────────────────────────────
     if (cmd == "uncover") {
-        std::string query = argc > 2 ? argv[2] : "";
-        // Strip braces if user typed e.g. uncover {physics}
+        std::string query = extract_package_cli_arg(argc, argv, 2);
+        // Strip braces if user typed e.g. uncover {fmt}
         if (query.size() >= 2 && query.front() == '{' && query.back() == '}')
             query = trim_copy(query.substr(1, query.size() - 2));
         return run_uncover(query);
@@ -1243,13 +1333,13 @@ int main(int argc, char** argv) {
     if (cmd == "infuse") {
         if (argc < 3) {
             std::cerr << cli_style::paint(
-                OFS_MSG("infuse: package spec required. Example: infuse physics\n",
-                        "infuse: especificacao do pacote obrigatoria. Exemplo: infuse physics\n"),
+                OFS_MSG("infuse: package spec required. Example: infuse fmt\n",
+                        "infuse: especificacao do pacote obrigatoria. Exemplo: infuse fmt\n"),
                 cli_style::RED, true);
             return 1;
         }
-        // Allow "infuse physics 1.2" as alternative to "infuse {physics:1.2}"
-        std::string spec_str = argv[2];
+        // Allow "infuse fmt 1.2" as alternative to "infuse {fmt:1.2}"
+        std::string spec_str = extract_package_cli_arg(argc, argv, 2);
         if (argc > 3) spec_str = spec_str + ":" + argv[3];
         return run_infuse(spec_str);
     }
@@ -1257,12 +1347,12 @@ int main(int argc, char** argv) {
     if (cmd == "reinfuse") {
         if (argc < 3) {
             std::cerr << cli_style::paint(
-                OFS_MSG("reinfuse: package spec required. Example: reinfuse physics\n",
-                        "reinfuse: especificacao do pacote obrigatoria. Exemplo: reinfuse physics\n"),
+                OFS_MSG("reinfuse: package spec required. Example: reinfuse fmt\n",
+                        "reinfuse: especificacao do pacote obrigatoria. Exemplo: reinfuse fmt\n"),
                 cli_style::RED, true);
             return 1;
         }
-        return run_reinfuse(argv[2]);
+        return run_reinfuse(extract_package_cli_arg(argc, argv, 2));
     }
 
     // ── Auto-detect: ofs file.ofs → run directly ─────────────────────────

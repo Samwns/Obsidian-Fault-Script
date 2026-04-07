@@ -12,6 +12,8 @@ ICON_TARGET="/usr/share/icons/hicolor/256x256/apps/ofs.png"
 LICENSE_SRC="$SCRIPT_DIR/LICENSE"
 LICENSE_TARGET_DIR="/usr/local/share/doc/ofs"
 LICENSE_TARGET="$LICENSE_TARGET_DIR/LICENSE"
+STDLIB_SRC="$SCRIPT_DIR/stdlib"
+STDLIB_TARGET="/usr/local/share/ofs/stdlib"
 
 if [ ! -f "$BIN" ]; then
   echo "ofs binary not found next to installer script"
@@ -37,6 +39,12 @@ if [ -f "$LICENSE_SRC" ]; then
   echo "[OFS] Installing license terms..."
   sudo install -d "$LICENSE_TARGET_DIR"
   sudo install -m 0644 "$LICENSE_SRC" "$LICENSE_TARGET"
+fi
+
+if [ -d "$STDLIB_SRC" ]; then
+  echo "[OFS] Installing standard library files..."
+  sudo install -d "$STDLIB_TARGET"
+  sudo find "$STDLIB_SRC" -maxdepth 1 -name "*.ofs" -exec install -m 0644 {} "$STDLIB_TARGET/" \;
 fi
 
 echo "[OFS] Installed at $TARGET"
