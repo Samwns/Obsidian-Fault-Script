@@ -62,6 +62,15 @@ target_link_libraries(ofs PRIVATE ${LLVM_LIBS})
 # ── Runtime (compiled as C, linked into every OFS program) ────────────────
 add_library(ofs_runtime STATIC src/runtime/ofs_runtime.c)
 
+install(TARGETS ofs
+    RUNTIME DESTINATION bin
+)
+
+install(TARGETS ofs_runtime
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+)
+
 # ── Tests ─────────────────────────────────────────────────────────────────
 enable_testing()
 

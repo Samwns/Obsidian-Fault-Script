@@ -162,6 +162,7 @@ jobs:
         run: |
           mkdir -p dist-installer
           cp build/${{ matrix.binary }} dist-installer/ofs
+          cp build/libofs_runtime.a dist-installer/libofs_runtime.a
           cp packaging/linux/install.sh dist-installer/install.sh
           cp packaging/assets/ofs-256.png dist-installer/ofs.png
           cp LICENSE dist-installer/LICENSE
@@ -171,8 +172,10 @@ jobs:
           # Build .deb and .rpm for major Linux distro families.
           rm -rf pkgroot
           mkdir -p pkgroot/usr/local/bin
+          mkdir -p pkgroot/usr/local/lib
           mkdir -p pkgroot/usr/local/share/doc/ofs
           cp build/${{ matrix.binary }} pkgroot/usr/local/bin/ofs
+          cp build/libofs_runtime.a pkgroot/usr/local/lib/libofs_runtime.a
           cp LICENSE pkgroot/usr/local/share/doc/ofs/LICENSE
           chmod +x pkgroot/usr/local/bin/ofs
 
@@ -303,6 +306,9 @@ jobs:
 
       - name: Package extension (.vsix)
         run: |
+          mkdir -p vscode-extension/bin/linux-x64
+          cp build/ofs vscode-extension/bin/linux-x64/ofs
+          cp build/libofs_runtime.a vscode-extension/bin/linux-x64/libofs_runtime.a
           cd vscode-extension
           npm ci
           node ./node_modules/@vscode/vsce/vsce package --out ../ofs-vscode-extension.vsix

@@ -21,7 +21,8 @@
 13. [Imports](#imports)
 14. [Extern Functions](#extern-functions)
 15. [Built-in Functions](#built-in-functions)
-16. [Comments](#comments)
+16. [Inline Assembly (asm)](#asm-inline-assembly-escape-hatch)
+17. [Comments](#comments)
 17. [Statement Termination](#statement-termination)
 18. [Standard Library](#standard-library)
 19. [Keywords](#keywords)
@@ -801,6 +802,22 @@ Available intrinsics:
 
 These functions are designed to cover operations assembly already has, while also giving OFS room for its own machine-oriented vocabulary.
 
+### asm (inline assembly escape hatch)
+
+When no `fault_*` intrinsic covers your need, `asm` emits a raw assembly string directly at that point in the code. It can only appear inside a `bedrock`, `fracture`, or `abyss` block.
+
+```ofs
+bedrock {
+    asm "nop"
+    asm "int3"
+}
+```
+
+**Restrictions:**
+- The argument must be a string literal.
+- No input/output operands syntax yet; use `fault_*` intrinsics for that.
+- Generates a void inline-asm call in LLVM IR with volatile semantics.
+
 ---
 
 ## Comments
@@ -1021,3 +1038,4 @@ Complete list of reserved keywords:
 | `throw`    | `KW_THROW`       | Raise error value          |
 | `tectonic` | `KW_TECTONIC`    | Mode directive prefix      |
 | `bedrock`  | `KW_BEDROCK`     | Typed low-level block      |
+| `asm`      | `KW_ASM`         | Inline assembly escape hatch |

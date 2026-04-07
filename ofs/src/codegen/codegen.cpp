@@ -37,6 +37,20 @@
 namespace ofs {
 
 namespace {
+bool runtime_file_exists(const std::filesystem::path& path) {
+    std::error_code ec;
+    return !path.empty() && std::filesystem::is_regular_file(path, ec);
+}
+
+void add_runtime_candidates(std::vector<std::string>& paths, const std::filesystem::path& dir) {
+    if (dir.empty()) {
+        return;
+    }
+
+    paths.push_back((dir / "libofs_runtime.a").string());
+    paths.push_back((dir / "ofs_runtime.lib").string());
+    paths.push_back((dir / "ofs_runtime.o").string());
+}
 
 bool is_fault_intrinsic_name(const std::string& name) {
     return name == "fault_count" ||
@@ -278,21 +292,41 @@ void CodeGen::link(const std::string& obj_file, const std::string& out_file) {
 
     std::vector<std::string> paths;
 
-    if (!exe_dir.empty()) {
-        // Prefer runtime shipped next to the active compiler binary
-        // (important for VS Code embedded compiler and portable installs).
-        paths.push_back((std::filesystem::path(exe_dir) / "libofs_runtime.a").string());
-        paths.push_back((std::filesystem::path(exe_dir) / "ofs_runtime.lib").string());
-        paths.push_back((std::filesystem::path(exe_dir) / "ofs_runtime.o").string());
+    if (const char* runtime_env = std::getenv("OFS_RUNTIME_PATH")) {
+        std::filesystem::path env_path(runtime_env);
+        if (runtime_file_exists(env_path)) {
+            paths.push_back(env_path.string());
+        } else {
+            add_runtime_candidates(paths, env_path);
+        }
     }
 
-    paths.push_back("ofs_runtime.o");
-    paths.push_back("./ofs_runtime.o");
-    paths.push_back("../ofs_runtime.o");
+    if (!exe_dir.empty()) {
+        auto exe_path = std::filesystem::path(exe_dir);
+        // Prefer runtime shipped next to the active compiler binary
+        // (important for VS Code embedded compiler and portable installs).
+        add_runtime_candidates(paths, exe_path);
+        add_runtime_candidates(paths, exe_path / "lib");
+        add_runtime_candidates(paths, exe_path.parent_path());
+        add_runtime_candidates(paths, exe_path.parent_path() / "lib");
+        add_runtime_candidates(paths, exe_path.parent_path() / "lib" / "ofs");
+    }
+
+    add_runtime_candidates(paths, std::filesystem::current_path());
+    add_runtime_candidates(paths, std::filesystem::current_path().parent_path());
+
     // Do not search workspace-local build outputs here; they may belong to
     // another OFS build and cause ABI/runtime symbol mismatches.
     paths.push_back("libofs_runtime.a");
     paths.push_back("ofs_runtime.lib");
+    paths.push_back("ofs_runtime.o");
+
+#ifndef _WIN32
+    add_runtime_candidates(paths, "/usr/local/lib");
+    add_runtime_candidates(paths, "/usr/local/lib/ofs");
+    add_runtime_candidates(paths, "/usr/lib");
+    add_runtime_candidates(paths, "/usr/lib/ofs");
+#endif
 
     for (const auto& p : paths) {
         if (FILE* f = fopen(p.c_str(), "r")) {
@@ -305,6 +339,8 @@ void CodeGen::link(const std::string& obj_file, const std::string& out_file) {
     std::string cmd = "cc \"" + obj_file + "\"";
     if (!runtime_obj.empty()) {
         cmd += " \"" + runtime_obj + "\"";
+    } else {
+        std::cerr << "runtime library not found (expected libofs_runtime.a/ofs_runtime.o near compiler or in standard library paths)\n";
     }
     cmd += " -o \"" + out_file + "\" -lm";
 
