@@ -1,0 +1,6 @@
+{
+  "name": "string",
+  "version": "1.0.0",
+  "description": "String utility functions for OFS: repeat, starts_with, is_empty, and more",
+  "main": "libs/string.ofs"
+}

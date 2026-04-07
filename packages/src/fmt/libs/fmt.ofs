@@ -1,0 +1,242 @@
+// OFS Package: fmt
+// String formatting utilities — padding, alignment, truncation,
+// case conversion, trim, table helpers, separators, and more.
+// Author: OFS Community
+// Version: 1.0.0
+
+// ── External declarations ────────────────────────────────────────────────
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at(s: obsidian, idx: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_str_contains(haystack: obsidian, needle: obsidian) -> bool
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_stone_to_obsidian(n: stone) -> obsidian
+extern vein ofs_str_upper(s: obsidian) -> obsidian
+extern vein ofs_str_lower(s: obsidian) -> obsidian
+
+// ── Padding ──────────────────────────────────────────────────────────────
+
+// Right-pad string with spaces to reach width (left-aligned text)
+vein fmt_pad_right(s: obsidian, width: stone) -> obsidian {
+    forge result: obsidian = s
+    forge len: stone = ofs_str_len(s)
+    while (len < width) {
+        result = result + " "
+        len = len + 1
+    }
+    return result
+}
+
+// Right-pad with a custom single-character string
+vein fmt_pad_right_c(s: obsidian, width: stone, pad: obsidian) -> obsidian {
+    forge result: obsidian = s
+    forge len: stone = ofs_str_len(s)
+    while (len < width) {
+        result = result + pad
+        len = len + 1
+    }
+    return result
+}
+
+// Left-pad string with spaces to reach width (right-aligned text)
+vein fmt_pad_left(s: obsidian, width: stone) -> obsidian {
+    forge prefix: obsidian = ""
+    forge len: stone = ofs_str_len(s)
+    while (len < width) {
+        prefix = prefix + " "
+        len = len + 1
+    }
+    return prefix + s
+}
+
+// Left-pad with a custom single-character string
+vein fmt_pad_left_c(s: obsidian, width: stone, pad: obsidian) -> obsidian {
+    forge prefix: obsidian = ""
+    forge len: stone = ofs_str_len(s)
+    while (len < width) {
+        prefix = prefix + pad
+        len = len + 1
+    }
+    return prefix + s
+}
+
+// Center string within width, padding both sides with spaces
+vein fmt_center(s: obsidian, width: stone) -> obsidian {
+    forge len: stone = ofs_str_len(s)
+    forge total: stone = width - len
+    if (total <= 0) {
+        return s
+    }
+    forge left: stone = total / 2
+    forge right: stone = total - left
+    forge prefix: obsidian = ""
+    forge suffix: obsidian = ""
+    forge i: stone = 0
+    while (i < left) {
+        prefix = prefix + " "
+        i = i + 1
+    }
+    i = 0
+    while (i < right) {
+        suffix = suffix + " "
+        i = i + 1
+    }
+    return prefix + s + suffix
+}
+
+// ── Number formatting ────────────────────────────────────────────────────
+
+// Zero-pad an integer to minimum digit width  e.g. fmt_zero_pad(7, 3) → "007"
+vein fmt_zero_pad(n: stone, width: stone) -> obsidian {
+    forge s: obsidian = ofs_stone_to_obsidian(n)
+    return fmt_pad_left_c(s, width, "0")
+}
+
+// Format an integer with explicit sign: +42 or -42
+vein fmt_sign(n: stone) -> obsidian {
+    if (n >= 0) {
+        return "+" + ofs_stone_to_obsidian(n)
+    }
+    return ofs_stone_to_obsidian(n)
+}
+
+// ── Truncation ───────────────────────────────────────────────────────────
+
+// Truncate to max_len characters, appending "..." if the string was longer
+vein fmt_truncate(s: obsidian, max_len: stone) -> obsidian {
+    forge len: stone = ofs_str_len(s)
+    if (len <= max_len) {
+        return s
+    }
+    return ofs_str_substr(s, 0, max_len - 3) + "..."
+}
+
+// Hard truncate without any suffix
+vein fmt_truncate_hard(s: obsidian, max_len: stone) -> obsidian {
+    forge len: stone = ofs_str_len(s)
+    if (len <= max_len) {
+        return s
+    }
+    return ofs_str_substr(s, 0, max_len)
+}
+
+// ── Repeat & Separators ──────────────────────────────────────────────────
+
+// Repeat a string n times
+vein fmt_repeat(s: obsidian, n: stone) -> obsidian {
+    forge result: obsidian = ""
+    forge i: stone = 0
+    while (i < n) {
+        result = result + s
+        i = i + 1
+    }
+    return result
+}
+
+// Horizontal separator line using ─ (U+2500)
+vein fmt_separator(width: stone) -> obsidian {
+    return fmt_repeat("─", width)
+}
+
+// Separator with a custom character
+vein fmt_separator_c(width: stone, c: obsidian) -> obsidian {
+    return fmt_repeat(c, width)
+}
+
+// ── Case conversion ──────────────────────────────────────────────────────
+
+// Convert all characters to uppercase
+vein fmt_upper(s: obsidian) -> obsidian {
+    return ofs_str_upper(s)
+}
+
+// Convert all characters to lowercase
+vein fmt_lower(s: obsidian) -> obsidian {
+    return ofs_str_lower(s)
+}
+
+// ── Whitespace trimming ──────────────────────────────────────────────────
+
+// Remove leading spaces
+vein fmt_trim_left(s: obsidian) -> obsidian {
+    forge i: stone = 0
+    forge len: stone = ofs_str_len(s)
+    while (i < len) {
+        if (ofs_str_char_at(s, i) == 32) {
+            i = i + 1
+        } else {
+            return ofs_str_substr(s, i, len - i)
+        }
+    }
+    return ""
+}
+
+// Remove trailing spaces
+vein fmt_trim_right(s: obsidian) -> obsidian {
+    forge len: stone = ofs_str_len(s)
+    forge end: stone = len - 1
+    while (end >= 0) {
+        if (ofs_str_char_at(s, end) == 32) {
+            end = end - 1
+        } else {
+            return ofs_str_substr(s, 0, end + 1)
+        }
+    }
+    return ""
+}
+
+// Remove both leading and trailing spaces
+vein fmt_trim(s: obsidian) -> obsidian {
+    return fmt_trim_left(fmt_trim_right(s))
+}
+
+// ── String checks ────────────────────────────────────────────────────────
+
+// Returns true if s starts with the given prefix
+vein fmt_starts_with(s: obsidian, prefix: obsidian) -> bool {
+    forge plen: stone = ofs_str_len(prefix)
+    forge slen: stone = ofs_str_len(s)
+    if (plen > slen) {
+        return false
+    }
+    return ofs_str_eq(ofs_str_substr(s, 0, plen), prefix)
+}
+
+// Returns true if s ends with the given suffix
+vein fmt_ends_with(s: obsidian, suffix: obsidian) -> bool {
+    forge sflen: stone = ofs_str_len(suffix)
+    forge slen: stone = ofs_str_len(s)
+    if (sflen > slen) {
+        return false
+    }
+    return ofs_str_eq(ofs_str_substr(s, slen - sflen, sflen), suffix)
+}
+
+// Returns true if s contains the given substring
+vein fmt_contains_str(s: obsidian, sub: obsidian) -> bool {
+    return ofs_str_contains(s, sub)
+}
+
+// ── Table helpers ────────────────────────────────────────────────────────
+
+// Box-style header: separator + centered title + separator
+vein fmt_header(title: obsidian, width: stone) -> obsidian {
+    forge sep: obsidian = fmt_separator(width)
+    forge centered: obsidian = fmt_center(title, width)
+    return sep + "\n" + centered + "\n" + sep
+}
+
+// Key-value row: key right-padded to key_width, value as-is
+vein fmt_kv(key: obsidian, value: obsidian, key_width: stone) -> obsidian {
+    return fmt_pad_right(key, key_width) + value
+}
+
+// Two-column row, each column padded to its width
+vein fmt_row2(col1: obsidian, col2: obsidian, w1: stone, w2: stone) -> obsidian {
+    return fmt_pad_right(col1, w1) + fmt_pad_right(col2, w2)
+}
+
+// Three-column row
+vein fmt_row3(col1: obsidian, col2: obsidian, col3: obsidian, w1: stone, w2: stone, w3: stone) -> obsidian {
+    return fmt_pad_right(col1, w1) + fmt_pad_right(col2, w2) + fmt_pad_right(col3, w3)
+}

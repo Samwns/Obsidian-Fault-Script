@@ -101,9 +101,9 @@ const HOVER_DOCS = {
     example: 'if (x > 0):\n    echo("ok")\nobsid'
   },
   attach: {
-    description: 'Importa modulo OFS por caminho.',
-    context: 'Use para trazer funcoes/monoliths de arquivos .ofs externos.',
-    example: 'attach "terminal_colors.ofs"'
+    description: 'Importa modulo OFS por nome ou arquivo.',
+    context: 'Use para trazer funcoes/monoliths de bibliotecas stdlib ou arquivos .ofs externos.',
+    example: 'attach {terminal-colors}\n// ou para arquivo especifico:\nattach {F:helpers.ofs}'
   },
   extern: {
     description: 'Declara funcao externa (runtime/C).',
@@ -228,13 +228,13 @@ const HOVER_DOCS = {
   },
   rift_text_size: {
     description: 'Wrapper de stdlib para tamanho de texto via rift.',
-    context: 'Use `attach "../stdlib/rift.ofs"` para consumir fronteiras externas com API OFS.',
-    example: 'attach "../stdlib/rift.ofs"\necho(rift_text_size("fault"))'
+    context: 'Use `attach {rift}` para consumir fronteiras externas com API OFS.',
+    example: 'attach {rift}\necho(rift_text_size("fault"))'
   },
   bedrock_region_new: {
     description: 'Cria uma regiao low-level de stones zerada.',
     context: 'Use para buffers/tabelas de tamanho fixo geridos em OFS low-level.',
-    example: 'attach "../stdlib/bedrock.ofs"\nforge region = bedrock_region_new(4)'
+    example: 'attach {bedrock}\nforge region = bedrock_region_new(4)'
   },
   bedrock_prefetch: {
     description: 'Helper OFS para solicitar prefetch de uma regiao bedrock.',
@@ -304,7 +304,12 @@ const HOVER_DOCS = {
 };
 
 const DIAGNOSTIC_REGEX = /^(.*):(\d+):(\d+):\s*(.*)$/;
-const ATTACH_REGEX = /^\s*(attach|import)\s+"([^"]+)"\s*$/;
+// Matches new brace syntax: attach {name}  or  attach {F:path}
+const ATTACH_LIB_REGEX  = /^\s*(?:attach|import)\s*\{\s*([A-Za-z_][A-Za-z0-9_.\-]*)\s*\}\s*$/;
+const ATTACH_FILE_REGEX = /^\s*attach\s*\{\s*[Ff](?:ile)?:\s*([^}]+?)\s*\}\s*$/;
+const ATTACH_REGEX = ATTACH_LIB_REGEX; // kept for back-compat references
+const REGISTRY_URL = 'https://raw.githubusercontent.com/Samwns/Obsidian-Fault-Script/main/packages/registry.json';
+const REGISTRY_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 const VEIN_REGEX = /^\s*(?:(?:extern|rift)\s+)?vein\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/;
 const MONOLITH_REGEX = /^\s*monolith\s+([A-Za-z_][A-Za-z0-9_]*)(?:\s+layout\s+(?:native|packed|c))?\s*\{/;
 const RELEASES_API = 'https://api.github.com/repos/Samwns/Obsidian-Fault-Script/releases/latest';
@@ -313,6 +318,10 @@ let extensionContextRef = null;
 let managedCompilerPathCache = null;
 let compilerInstallPromise = null;
 let activeExecution = null;
+let installedLibDecoration = null;
+let outdatedLibDecoration = null;
+let registryCache = null;
+let registryCacheTime = 0;
 
 function platformTriple() {
   if (process.platform === 'win32' && os.arch() === 'x64') return 'win32-x64';
@@ -979,6 +988,52 @@ function createRangeFromLineCol(document, line, col) {
   return new vscode.Range(start, end);
 }
 
+// Known stdlib library names -> filenames (mirrors compiler's STDLIB_NAMES map)
+const STDLIB_NAMES = {
+  'core':            'core.ofs',
+  'math':            'math.ofs',
+  'string':          'string.ofs',
+  'io':              'io.ofs',
+  'webserver':       'webserver.ofs',
+  'serve':           'webserver.ofs',
+  'bedrock':         'bedrock.ofs',
+  'bedrock-packet':  'bedrock_packet.ofs',
+  'terminal-colors': 'terminal_colors.ofs',
+  'memory-modes':    'memory_modes.ofs',
+  'test-lib':        'test_lib.ofs',
+};
+
+function getStdlibSearchDirs(docDir) {
+  const dirs = [];
+  const envPath = process.env.OFS_STDLIB_PATH;
+  if (envPath) dirs.push(envPath);
+  let d = docDir || '';
+  for (let i = 0; i < 6 && d; i++) {
+    const candidate = path.join(d, 'stdlib');
+    if (fs.existsSync(candidate)) dirs.push(candidate);
+    const parent = path.dirname(d);
+    if (parent === d) break;
+    d = parent;
+  }
+  dirs.push('/usr/local/share/ofs/stdlib', '/usr/share/ofs/stdlib');
+  return dirs;
+}
+
+function resolveLibraryPath(libName, docDir) {
+  const filename = STDLIB_NAMES[libName] || (libName + '.ofs');
+  for (const dir of getStdlibSearchDirs(docDir)) {
+    const candidate = path.join(dir, filename);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  for (const base of getLibSearchPaths()) {
+    const pkg = path.join(base, libName, 'libs', filename);
+    if (fs.existsSync(pkg)) return pkg;
+    const direct = path.join(base, filename);
+    if (fs.existsSync(direct)) return direct;
+  }
+  return null;
+}
+
 function getLibSearchPaths() {
   const env = process.env.OFS_LIB_PATH || '';
   const sep = process.platform === 'win32' ? ';' : ':';
@@ -986,16 +1041,30 @@ function getLibSearchPaths() {
 }
 
 function resolveAttachPath(modulePath, docDir) {
-  const local = path.resolve(docDir, modulePath);
-  if (fs.existsSync(local)) {
-    return local;
+  // attach {F:path} — explicit file reference
+  const fileParts = modulePath.match(/^[Ff](?:ile)?:(.+)$/);
+  if (fileParts) {
+    const fp = fileParts[1].trim();
+    const local = path.resolve(docDir, fp);
+    if (fs.existsSync(local)) return local;
+    for (const base of getLibSearchPaths()) {
+      const candidate = path.resolve(base, fp);
+      if (fs.existsSync(candidate)) return candidate;
+    }
+    return null;
   }
+
+  // attach {name} — stdlib / package library
+  const byName = resolveLibraryPath(modulePath, docDir);
+  if (byName) return byName;
+
+  // Fallback: treat as a direct relative file path
+  const local = path.resolve(docDir, modulePath);
+  if (fs.existsSync(local)) return local;
 
   for (const base of getLibSearchPaths()) {
     const candidate = path.resolve(base, modulePath);
-    if (fs.existsSync(candidate)) {
-      return candidate;
-    }
+    if (fs.existsSync(candidate)) return candidate;
   }
 
   return null;
@@ -1006,10 +1075,10 @@ function parseAttachTargets(sourceText) {
   const targets = [];
 
   for (const line of lines) {
-    const m = line.match(ATTACH_REGEX);
-    if (m) {
-      targets.push(m[2]);
-    }
+    let m = line.match(ATTACH_LIB_REGEX);
+    if (m) { targets.push(m[1]); continue; }
+    m = line.match(ATTACH_FILE_REGEX);
+    if (m) { targets.push('F:' + m[1].trim()); }
   }
 
   return targets;
@@ -1549,6 +1618,146 @@ function registerCompletionProvider(context) {
   context.subscriptions.push(provider);
 }
 
+// ── Package / library helper functions ──────────────────────────────────
+
+function getInstalledPackagesDir() {
+  if (process.platform === 'win32') {
+    return path.join(process.env.APPDATA || os.homedir(), 'ofs', 'packages');
+  }
+  return path.join(os.homedir(), '.ofs', 'packages');
+}
+
+function getInstalledPackageInfo(name) {
+  const pkgJsonPath = path.join(getInstalledPackagesDir(), name, 'ofspkg.json');
+  if (!fs.existsSync(pkgJsonPath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(pkgJsonPath, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+async function fetchRegistryCached() {
+  const now = Date.now();
+  if (registryCache && (now - registryCacheTime) < REGISTRY_CACHE_TTL_MS) {
+    return registryCache;
+  }
+  try {
+    const data = await httpGetJson(REGISTRY_URL);
+    registryCache = data;
+    registryCacheTime = now;
+    return data;
+  } catch {
+    return registryCache; // return stale cache on error, or null
+  }
+}
+
+function getRegistryStableVersion(registry, name) {
+  if (!Array.isArray(registry?.packages)) return null;
+  const pkg = registry.packages.find((p) => p.name === name);
+  return pkg?.channels?.stable || pkg?.channels?.latest || null;
+}
+
+function isVersionNewer(installedVer, registryVer) {
+  // Returns true if registryVer is strictly newer than installedVer
+  const toNum = (v) => (v || '0').split('.').map(Number);
+  const a = toNum(installedVer);
+  const b = toNum(registryVer);
+  for (let i = 0; i < 3; i++) {
+    if ((b[i] || 0) > (a[i] || 0)) return true;
+    if ((b[i] || 0) < (a[i] || 0)) return false;
+  }
+  return false;
+}
+
+function ensureLibDecorationTypes() {
+  if (!installedLibDecoration) {
+    installedLibDecoration = vscode.window.createTextEditorDecorationType({
+      color: '#7B4FBF',
+      fontWeight: 'bold'
+    });
+  }
+  if (!outdatedLibDecoration) {
+    outdatedLibDecoration = vscode.window.createTextEditorDecorationType({
+      color: '#C48A00',
+      fontWeight: 'bold',
+      textDecoration: 'underline dotted'
+    });
+  }
+}
+
+async function updateAttachDecorations(editor) {
+  if (!editor || editor.document.languageId !== 'ofs') return;
+  ensureLibDecorationTypes();
+
+  const document = editor.document;
+  const installedRanges = [];
+  const outdatedRanges = [];
+
+  let registry = null;
+  try { registry = await fetchRegistryCached(); } catch { /* continue without registry */ }
+
+  for (let i = 0; i < document.lineCount; i++) {
+    const lineText = document.lineAt(i).text;
+    const m = lineText.match(ATTACH_LIB_REGEX);
+    if (!m) continue;
+
+    const libName = m[1];
+    const braceIdx = lineText.indexOf('{');
+    const nameStart = lineText.indexOf(libName, braceIdx);
+    if (nameStart < 0) continue;
+
+    const range = new vscode.Range(
+      new vscode.Position(i, nameStart),
+      new vscode.Position(i, nameStart + libName.length)
+    );
+
+    const isStdlib = Object.prototype.hasOwnProperty.call(STDLIB_NAMES, libName);
+    if (isStdlib) {
+      installedRanges.push(range);
+      continue;
+    }
+
+    const info = getInstalledPackageInfo(libName);
+    if (!info) continue; // not installed — no decoration
+
+    const registryVersion = getRegistryStableVersion(registry, libName);
+    if (registryVersion && isVersionNewer(info.version, registryVersion)) {
+      outdatedRanges.push(range);
+    } else {
+      installedRanges.push(range);
+    }
+  }
+
+  editor.setDecorations(installedLibDecoration, installedRanges);
+  editor.setDecorations(outdatedLibDecoration, outdatedRanges);
+}
+
+function registerAttachDecorations(context) {
+  const refresh = (editor) => { if (editor) updateAttachDecorations(editor).catch(() => {}); };
+
+  context.subscriptions.push(
+    vscode.window.onDidChangeActiveTextEditor(refresh),
+    vscode.workspace.onDidChangeTextDocument((e) => {
+      const editor = vscode.window.activeTextEditor;
+      if (editor && e.document === editor.document) refresh(editor);
+    })
+  );
+
+  if (vscode.window.activeTextEditor) {
+    refresh(vscode.window.activeTextEditor);
+  }
+
+  context.subscriptions.push({
+    dispose() {
+      if (installedLibDecoration) { installedLibDecoration.dispose(); installedLibDecoration = null; }
+      if (outdatedLibDecoration)  { outdatedLibDecoration.dispose();  outdatedLibDecoration  = null; }
+    }
+  });
+}
+
+// ── File decorations (explorer colors) ───────────────────────────────────
+
 function registerFileDecorations(context) {
   const provider = {
     provideFileDecoration(uri) {
@@ -1568,11 +1777,50 @@ function registerFileDecorations(context) {
 
 function registerHoverProvider(context) {
   const provider = vscode.languages.registerHoverProvider('ofs', {
-    provideHover(document, position) {
+    async provideHover(document, position) {
       const range = document.getWordRangeAtPosition(position);
       if (!range) return undefined;
 
       const word = document.getText(range);
+
+      // Check if this word is a library name inside an attach {} on this line
+      const lineText = document.lineAt(position.line).text;
+      const attachMatch = lineText.match(ATTACH_LIB_REGEX);
+      if (attachMatch && attachMatch[1] === word) {
+        const libName = word;
+        const md = new vscode.MarkdownString();
+        md.isTrusted = false;
+
+        const isStdlib = Object.prototype.hasOwnProperty.call(STDLIB_NAMES, libName);
+        if (isStdlib) {
+          md.appendMarkdown(`**${libName}** — *OFS stdlib*\n\n`);
+          md.appendMarkdown('Biblioteca padrão instalada com o compilador OFS.');
+          return new vscode.Hover(md, range);
+        }
+
+        const info = getInstalledPackageInfo(libName);
+        if (info) {
+          md.appendMarkdown(`**${libName}** — v${info.version || '?'}\n\n`);
+          if (info.description) md.appendMarkdown(`${info.description}\n\n`);
+
+          let registry = null;
+          try { registry = await fetchRegistryCached(); } catch { /* no registry */ }
+          const registryVersion = getRegistryStableVersion(registry, libName);
+          if (registryVersion && isVersionNewer(info.version, registryVersion)) {
+            md.appendMarkdown(`> $(warning) **Atualização disponível: v${registryVersion}** — execute \`reinfuse ${libName}\``);
+          } else if (registryVersion) {
+            md.appendMarkdown(`> $(check) Versão atual (estável: v${registryVersion})`);
+          }
+          return new vscode.Hover(md, range);
+        }
+
+        // Not installed
+        md.appendMarkdown(`**${libName}** — *não instalado*\n\n`);
+        md.appendMarkdown(`Execute \`infuse ${libName}\` para instalar.`);
+        return new vscode.Hover(md, range);
+      }
+
+      // Fallback: keyword hover docs
       const doc = HOVER_DOCS[word];
       if (!doc) return undefined;
 
@@ -1615,7 +1863,8 @@ function activate(context) {
     });
   });
 
-  const checkCmd = vscode.commands.registerCommand('ofs.checkFile', () => checkCurrentFile(diagnosticCollection));
+  const checkCmd = vscode.command
+  registerAttachDecorations(context);s.registerCommand('ofs.checkFile', () => checkCurrentFile(diagnosticCollection));
   const asmCmd = vscode.commands.registerCommand('ofs.emitAssembly', () => emitCurrentAssembly());
   const pauseCmd = vscode.commands.registerCommand('ofs.pauseExecution', () => pauseActiveExecution());
   const resumeCmd = vscode.commands.registerCommand('ofs.resumeExecution', () => resumeActiveExecution());

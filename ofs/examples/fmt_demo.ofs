@@ -1,0 +1,85 @@
+// fmt_demo.ofs — Demonstration of the fmt package
+// Install with:  infuse fmt
+// Run with:      ofs run fmt_demo.ofs
+//
+// For local development (without installing):
+attach {F:../../packages/src/fmt/libs/fmt.ofs}
+
+core main() {
+    // ── Padding ──────────────────────────────────────────────────────────
+    echo("=== PADDING ===")
+
+    forge name: obsidian = "Alice"
+    echo(fmt_pad_right(name, 12))           // "Alice       "
+    echo(fmt_pad_left(name, 12))            // "       Alice"
+    echo(fmt_center(name, 12))              // "   Alice    "
+    echo(fmt_pad_right_c(name, 12, "."))    // "Alice......."
+    echo(fmt_pad_left_c("42", 6, "0"))      // "000042"
+
+    // ── Number formatting ────────────────────────────────────────────────
+    echo("=== NUMBERS ===")
+
+    echo(fmt_zero_pad(7, 3))       // 007
+    echo(fmt_zero_pad(42, 5))      // 00042
+    echo(fmt_sign(100))            // +100
+    echo(fmt_sign(-55))            // -55
+
+    // ── Truncation ───────────────────────────────────────────────────────
+    echo("=== TRUNCATION ===")
+
+    forge long_str: obsidian = "Obsidian Fault Script is amazing"
+    echo(fmt_truncate(long_str, 20))       // "Obsidian Fault Sc..."
+    echo(fmt_truncate_hard(long_str, 10))  // "Obsidian F"
+
+    // ── Repeat & Separators ──────────────────────────────────────────────
+    echo("=== SEPARATORS ===")
+
+    echo(fmt_repeat("* ", 5))     // * * * * *
+    echo(fmt_separator(30))       // ──────────────────────────────
+    echo(fmt_separator_c(20, "=")) // ====================
+
+    // ── Case ─────────────────────────────────────────────────────────────
+    echo("=== CASE ===")
+
+    echo(fmt_upper("hello world"))   // HELLO WORLD
+    echo(fmt_lower("OFS IS GREAT"))  // ofs is great
+
+    // ── Trim ─────────────────────────────────────────────────────────────
+    echo("=== TRIM ===")
+
+    forge padded: obsidian = "   hello world   "
+    echo(fmt_trim(padded))        // "hello world"
+    echo(fmt_trim_left(padded))   // "hello world   "
+    echo(fmt_trim_right(padded))  // "   hello world"
+
+    // ── Checks ───────────────────────────────────────────────────────────
+    echo("=== CHECKS ===")
+
+    forge url: obsidian = "https://ofs-lang.dev"
+    if (fmt_starts_with(url, "https")) {
+        echo("secure URL")
+    }
+    if (fmt_ends_with(url, ".dev")) {
+        echo("dev domain")
+    }
+    if (fmt_contains_str(url, "ofs")) {
+        echo("OFS website confirmed")
+    }
+
+    // ── Table output ─────────────────────────────────────────────────────
+    echo("=== TABLE ===")
+
+    echo(fmt_header("OFS Package Report", 40))
+    echo(fmt_row3("Package", "Version", "Status", 15, 10, 12))
+    echo(fmt_separator(40))
+    echo(fmt_row3("fmt",          "1.0.0", "installed", 15, 10, 12))
+    echo(fmt_row3("webserver",    "1.0.0", "installed", 15, 10, 12))
+    echo(fmt_row3("collections",  "2.1.0", "outdated",  15, 10, 12))
+    echo(fmt_separator(40))
+
+    // ── Key-value pairs ───────────────────────────────────────────────────
+    echo("")
+    echo(fmt_kv("Author:",    "OFS Community", 14))
+    echo(fmt_kv("Language:",  "OFS 1.x",       14))
+    echo(fmt_kv("License:",   "MIT",            14))
+}

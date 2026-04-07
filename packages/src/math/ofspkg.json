@@ -1,0 +1,6 @@
+{
+  "name": "math",
+  "version": "1.0.0",
+  "description": "Advanced math functions: primes, digit utilities, reverse numbers, and more",
+  "main": "libs/math.ofs"
+}

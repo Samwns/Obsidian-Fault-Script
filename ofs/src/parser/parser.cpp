@@ -194,14 +194,26 @@ std::unique_ptr<ImportDecl> Parser::parse_import() {
     imp->line = peek().line;
     imp->col = peek().col;
     advance(); // consume 'attach' or legacy 'import'
-    if (check(TokenKind::STRING_LIT)) {
-        imp->path = advance().lexeme;
-    } else if (check(TokenKind::IDENT)) {
-        // Built-in module shorthand: attach serve
-        imp->path = advance().lexeme;
+
+    expect(TokenKind::LBRACE, "expected '{' after 'attach'");
+
+    // attach {F:path}  or  attach {File:path}
+    if (check(TokenKind::IDENT) &&
+        (peek().lexeme == "F" || peek().lexeme == "File")) {
+        advance(); // consume F / File
+        expect(TokenKind::COLON, "expected ':' after 'F' in attach {F:...}");
+        std::string path_str;
+        while (!check(TokenKind::RBRACE) && !is_at_end()) {
+            path_str += peek().lexeme;
+            advance();
+        }
+        imp->path = "F:" + path_str;
     } else {
-        throw error("expected string path or module name after 'attach'");
+        // attach {name}  — library name
+        imp->path = expect(TokenKind::IDENT, "expected library name in attach {name}").lexeme;
     }
+
+    expect(TokenKind::RBRACE, "expected '}' to close 'attach'");
     return imp;
 }
 
@@ -219,6 +231,12 @@ std::unique_ptr<ExternFuncDecl> Parser::parse_extern() {
     if (!check(TokenKind::RPAREN)) {
         do {
             skip_newlines();
+            // Variadic marker: extern vein printf(fmt: obsidian, ...)
+            if (check(TokenKind::ELLIPSIS)) {
+                advance();
+                ext->is_variadic = true;
+                break;
+            }
             Param p;
             p.name = expect(TokenKind::IDENT, "expected parameter name").lexeme;
             expect(TokenKind::COLON, "expected ':' after parameter name");

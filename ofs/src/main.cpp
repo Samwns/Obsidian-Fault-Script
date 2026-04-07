@@ -46,10 +46,12 @@ static std::string get_executable_dir() {
     return std::filesystem::path(exe_path.c_str()).parent_path().string();
 #else
     std::error_code ec;
-    auto cwd = std::filesystem::current_path(ec);
-    if (ec) {
-        return "";
+    auto exe = std::filesystem::read_symlink("/proc/self/exe", ec);
+    if (!ec) {
+        return exe.parent_path().string();
     }
+    auto cwd = std::filesystem::current_path(ec);
+    if (ec) return "";
     return cwd.string();
 #endif
 }
@@ -516,6 +518,68 @@ static std::filesystem::path resolve_attach_path(const std::string& attach_path,
     return local;
 }
 
+// Maps clean library names to their stdlib filenames.
+static const std::unordered_map<std::string, std::string>& stdlib_names() {
+    static const std::unordered_map<std::string, std::string> NAMES = {
+        {"core",            "core.ofs"},
+        {"math",            "math.ofs"},
+        {"string",          "string.ofs"},
+        {"io",              "io.ofs"},
+        {"webserver",       "webserver.ofs"},
+        {"serve",           "webserver.ofs"},
+        {"bedrock",         "bedrock.ofs"},
+        {"bedrock-packet",  "bedrock_packet.ofs"},
+        {"terminal-colors", "terminal_colors.ofs"},
+        {"memory-modes",    "memory_modes.ofs"},
+        {"test-lib",        "test_lib.ofs"},
+    };
+    return NAMES;
+}
+
+// Returns candidate stdlib directories in priority order.
+static std::vector<std::filesystem::path> get_stdlib_search_dirs() {
+    std::vector<std::filesystem::path> dirs;
+
+    if (const char* env = std::getenv("OFS_STDLIB_PATH")) {
+        dirs.emplace_back(env);
+    }
+
+    const std::string exe_dir = get_executable_dir();
+    if (!exe_dir.empty()) {
+        auto d = std::filesystem::path(exe_dir);
+        dirs.push_back(d / "stdlib");                                    // ofs binary next to stdlib/
+        dirs.push_back(d.parent_path() / "stdlib");                      // build/ -> src root stdlib/
+        dirs.push_back(d.parent_path().parent_path() / "stdlib");        // bin/arch/ -> root stdlib/
+        dirs.push_back(d.parent_path() / "share" / "ofs" / "stdlib");    // /usr/local layout
+    }
+
+    dirs.emplace_back("/usr/local/share/ofs/stdlib");
+    dirs.emplace_back("/usr/share/ofs/stdlib");
+    return dirs;
+}
+
+// Resolves a library name to an actual .ofs file path, or returns empty if not found.
+static std::filesystem::path resolve_stdlib_path(const std::string& name) {
+    const auto& names = stdlib_names();
+    auto it = names.find(name);
+    const std::string filename = (it != names.end()) ? it->second : (name + ".ofs");
+
+    for (const auto& dir : get_stdlib_search_dirs()) {
+        auto candidate = (dir / filename).lexically_normal();
+        if (std::filesystem::exists(candidate)) return candidate;
+    }
+
+    // Also search OFS_LIB_PATH package directories.
+    for (const auto& lib_root : parse_lib_paths()) {
+        auto pkg = (lib_root / name / "libs" / filename).lexically_normal();
+        if (std::filesystem::exists(pkg)) return pkg;
+        auto direct = (lib_root / filename).lexically_normal();
+        if (std::filesystem::exists(direct)) return direct;
+    }
+
+    return {};
+}
+
 static std::string builtin_module_source(const std::string& module_name) {
     if (module_name != "serve" && module_name != "webserver") {
         return "";
@@ -580,7 +644,12 @@ vein html_page(title: obsidian, body: obsidian) -> obsidian {
 static std::string resolve_attaches_recursive(const std::string& source,
                                               const std::filesystem::path& base_dir,
                                               std::unordered_set<std::string>& visited) {
-    static const std::regex kAttachRegex("^\\s*(attach|import)\\s+(?:\"([^\"]+)\"|([A-Za-z_][A-Za-z0-9_-]*))\\s*$");
+    // attach {name}       — library or stdlib module
+    static const std::regex kAttachLib(
+        "^\\s*(?:attach|import)\\s*\\{\\s*([A-Za-z_][A-Za-z0-9_.\\-]*)\\s*\\}\\s*$");
+    // attach {F:path}  or  attach {File:path}  — explicit file reference
+    static const std::regex kAttachFile(
+        "^\\s*attach\\s*\\{\\s*[Ff](?:ile)?:\\s*([^\\}]+?)\\s*\\}\\s*$");
 
     std::stringstream in(source);
     std::string line;
@@ -589,12 +658,30 @@ static std::string resolve_attaches_recursive(const std::string& source,
 
     while (std::getline(in, line)) {
         std::smatch m;
-        if (std::regex_match(line, m, kAttachRegex)) {
-            std::string module_ref = m[2].matched ? m[2].str() : m[3].str();
 
-            std::string builtin = builtin_module_source(module_ref);
+        if (std::regex_match(line, m, kAttachLib)) {
+            const std::string name = m[1].str();
+
+            // 1. Try to locate the module file on disk.
+            auto stdlib_path = resolve_stdlib_path(name);
+            if (!stdlib_path.empty()) {
+                std::error_code ec;
+                auto key = std::filesystem::weakly_canonical(stdlib_path, ec).string();
+                if (ec) key = stdlib_path.lexically_normal().string();
+                if (visited.find(key) == visited.end()) {
+                    visited.insert(key);
+                    std::ifstream f(stdlib_path);
+                    std::string mod_src((std::istreambuf_iterator<char>(f)), {});
+                    imports_merged += resolve_attaches_recursive(mod_src, stdlib_path.parent_path(), visited);
+                    imports_merged += "\n";
+                }
+                continue;
+            }
+
+            // 2. Fallback: embedded source (webserver only, for offline/portable use).
+            std::string builtin = builtin_module_source(name);
             if (!builtin.empty()) {
-                std::string builtin_key = "builtin:" + module_ref;
+                std::string builtin_key = "builtin:" + name;
                 if (visited.find(builtin_key) == visited.end()) {
                     visited.insert(builtin_key);
                     imports_merged += resolve_attaches_recursive(builtin, base_dir, visited);
@@ -603,23 +690,28 @@ static std::string resolve_attaches_recursive(const std::string& source,
                 continue;
             }
 
-            auto target = resolve_attach_path(module_ref, base_dir);
+            throw std::runtime_error(
+                OFS_MSG("unknown library in attach {}: ", "biblioteca desconhecida em attach {}: ") + name);
+        }
+
+        if (std::regex_match(line, m, kAttachFile)) {
+            const std::string file_ref = m[1].str();
+            auto target = resolve_attach_path(file_ref, base_dir);
             std::error_code ec;
             auto key = std::filesystem::weakly_canonical(target, ec).string();
             if (ec) key = target.lexically_normal().string();
 
-            if (visited.find(key) != visited.end()) {
-                continue;
-            }
+            if (visited.find(key) != visited.end()) continue;
             visited.insert(key);
 
             std::ifstream f(target);
             if (!f) {
-                throw std::runtime_error(OFS_MSG("cannot open attached module: ", "não foi possível abrir módulo attach: ") + target.string());
+                throw std::runtime_error(
+                    OFS_MSG("cannot open attached file: ", "não foi possível abrir arquivo attach: ") + target.string());
             }
 
-            std::string mod_source((std::istreambuf_iterator<char>(f)), {});
-            imports_merged += resolve_attaches_recursive(mod_source, target.parent_path(), visited);
+            std::string mod_src((std::istreambuf_iterator<char>(f)), {});
+            imports_merged += resolve_attaches_recursive(mod_src, target.parent_path(), visited);
             imports_merged += "\n";
             continue;
         }
@@ -635,6 +727,313 @@ static std::string preprocess_source(const std::string& file, const std::string&
     std::filesystem::path p(file);
     std::unordered_set<std::string> visited;
     return resolve_attaches_recursive(source, p.parent_path().empty() ? std::filesystem::current_path() : p.parent_path(), visited);
+}
+
+// ── Package manager ───────────────────────────────────────────────────────
+
+static const char* OFS_REGISTRY_URL =
+    "https://raw.githubusercontent.com/Samwns/Obsidian-Fault-Script/main/packages/registry.json";
+static const char* OFS_PACKAGES_RAW =
+    "https://raw.githubusercontent.com/Samwns/Obsidian-Fault-Script/main/packages/src/";
+
+static std::string get_packages_dir() {
+#ifdef _WIN32
+    const char* appdata = std::getenv("APPDATA");
+    if (appdata && *appdata) return std::string(appdata) + "\\ofs\\packages";
+    return "";
+#else
+    const char* home = std::getenv("HOME");
+    if (home && *home) return std::string(home) + "/.ofs/packages";
+    return "";
+#endif
+}
+
+// Parse "physics", "{physics}", "{physics:1.2}", "{physics:stable}"
+struct PackageSpec {
+    std::string name;
+    std::string version; // empty = latest
+    std::string channel; // "stable", "beta", "nightly", or empty
+};
+
+static PackageSpec parse_package_spec(const std::string& raw) {
+    PackageSpec spec;
+    std::string s = trim_copy(raw);
+    if (!s.empty() && s.front() == '{' && s.back() == '}')
+        s = trim_copy(s.substr(1, s.size() - 2));
+    auto colon = s.find(':');
+    if (colon != std::string::npos) {
+        spec.name = trim_copy(s.substr(0, colon));
+        std::string ver = trim_copy(s.substr(colon + 1));
+        if (ver == "stable" || ver == "beta" || ver == "nightly")
+            spec.channel = ver;
+        else
+            spec.version = ver;
+    } else {
+        spec.name = s;
+    }
+    return spec;
+}
+
+// Minimal JSON string extraction for a key in the nearest surrounding context
+static std::string json_get_str(const std::string& json, const std::string& key) {
+    std::smatch m;
+    std::regex re("\"" + key + "\"\\s*:\\s*\"([^\"]+)\"");
+    if (std::regex_search(json, m, re)) return m[1].str();
+    return "";
+}
+
+// HTTP GET via curl/wget, returns body string
+static std::string http_get(const std::string& url) {
+    std::string r = run_capture("curl -fsSL --max-time 20 " + quote_arg(url));
+    if (r.empty())
+        r = run_capture("wget -q -O- --timeout=20 " + quote_arg(url));
+    return trim_copy(r);
+}
+
+// Download URL to file path
+static bool download_raw(const std::string& url, const std::filesystem::path& dest) {
+    std::error_code ec;
+    std::filesystem::create_directories(dest.parent_path(), ec);
+    std::string d = quote_arg(dest.string());
+    std::string cmd = "curl -fsSL --max-time 30 -o " + d + " " + quote_arg(url)
+                    + " || wget -q --timeout=30 -O " + d + " " + quote_arg(url);
+    return std::system(cmd.c_str()) == 0;
+}
+
+static int run_uncover(const std::string& query) {
+    std::cout << cli_style::paint(
+        OFS_MSG("Fetching package registry...\n", "Buscando registro de pacotes...\n"),
+        cli_style::CYAN, true);
+
+    std::string body = http_get(OFS_REGISTRY_URL);
+    if (body.empty()) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("uncover: failed to fetch registry — check your internet connection\n",
+                    "uncover: falha ao buscar registro — verifique sua conexao\n"),
+            cli_style::RED, true);
+        return 1;
+    }
+
+    // Scan all name/description/version pairs in the registry
+    std::regex block_re(
+        "\"name\"\\s*:\\s*\"([^\"]+)\"[^}]*?"
+        "(?:\"description\"\\s*:\\s*\"([^\"]+)\")?[^}]*?"
+        "(?:\"stable\"\\s*:\\s*\"([^\"]+)\")?",
+        std::regex::multiline);
+
+    std::string qlower = query;
+    std::transform(qlower.begin(), qlower.end(), qlower.begin(), ::tolower);
+
+    bool found = false;
+    auto begin = std::sregex_iterator(body.begin(), body.end(), block_re);
+    auto end   = std::sregex_iterator();
+
+    std::cout << "\n";
+    for (auto it = begin; it != end; ++it) {
+        std::string pkg_name = (*it)[1].str();
+        std::string desc     = (*it)[2].str();
+        std::string ver      = (*it)[3].str();
+
+        std::string nl = pkg_name;
+        std::transform(nl.begin(), nl.end(), nl.begin(), ::tolower);
+
+        if (!query.empty() && nl.find(qlower) == std::string::npos &&
+            desc.find(query) == std::string::npos) continue;
+
+        std::cout << "  " << cli_style::paint(pkg_name, cli_style::CYAN, true);
+        if (!ver.empty())
+            std::cout << "  " << cli_style::paint("v" + ver, cli_style::GREEN, false);
+        std::cout << "\n";
+        if (!desc.empty())
+            std::cout << "    " << desc << "\n";
+        std::cout << "\n";
+        found = true;
+    }
+
+    if (!found) {
+        std::cout << OFS_MSG("  No packages found matching '", "  Nenhum pacote encontrado para '")
+                  << query << "'\n";
+    }
+    return 0;
+}
+
+static int run_infuse(const std::string& raw_spec, bool update_mode = false) {
+    auto spec = parse_package_spec(raw_spec);
+    if (spec.name.empty()) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("infuse: package name required. Example: infuse physics\n",
+                    "infuse: nome do pacote obrigatorio. Exemplo: infuse physics\n"),
+            cli_style::RED, true);
+        return 1;
+    }
+
+    const std::string pkg_dir_str = get_packages_dir();
+    if (pkg_dir_str.empty()) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("infuse: cannot determine packages directory (HOME/APPDATA not set)\n",
+                    "infuse: nao foi possivel determinar o diretorio de pacotes\n"),
+            cli_style::RED, true);
+        return 1;
+    }
+
+    std::cout << cli_style::paint(
+        OFS_MSG("Fetching registry...\n", "Buscando registro...\n"),
+        cli_style::CYAN, true);
+
+    std::string registry = http_get(OFS_REGISTRY_URL);
+    if (registry.empty()) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("infuse: failed to reach package registry — check your internet connection\n",
+                    "infuse: falha ao acessar registro — verifique sua conexao\n"),
+            cli_style::RED, true);
+        return 1;
+    }
+
+    // Verify package exists in registry
+    std::regex exists_re("\"name\"\\s*:\\s*\"" + spec.name + "\"");
+    if (!std::regex_search(registry, exists_re)) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("infuse: package not found: ", "infuse: pacote nao encontrado: "),
+            cli_style::RED, true) << spec.name << "\n";
+        std::cout << OFS_MSG("  Tip: uncover ", "  Dica: uncover ")
+                  << spec.name << OFS_MSG(" to search\n", " para buscar\n");
+        return 1;
+    }
+
+    // Build download base URL
+    std::string base_url = std::string(OFS_PACKAGES_RAW) + spec.name + "/";
+
+    // Download ofspkg.json
+    auto tmp_dir = std::filesystem::temp_directory_path() / ("ofs_infuse_" + spec.name);
+    std::filesystem::create_directories(tmp_dir);
+    auto pkg_json_tmp = tmp_dir / "ofspkg.json";
+
+    if (!download_raw(base_url + "ofspkg.json", pkg_json_tmp)) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("infuse: failed to download package metadata\n",
+                    "infuse: falha ao baixar metadados do pacote\n"),
+            cli_style::RED, true);
+        std::filesystem::remove_all(tmp_dir);
+        return 1;
+    }
+
+    std::ifstream pf(pkg_json_tmp);
+    std::string pkg_json((std::istreambuf_iterator<char>(pf)), {});
+    std::string pkg_name    = json_get_str(pkg_json, "name");
+    std::string pkg_version = json_get_str(pkg_json, "version");
+    std::string pkg_main    = json_get_str(pkg_json, "main");
+
+    if (pkg_name.empty() || pkg_main.empty()) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("infuse: invalid package metadata (missing name/main)\n",
+                    "infuse: metadados invalidos (name/main ausentes)\n"),
+            cli_style::RED, true);
+        std::filesystem::remove_all(tmp_dir);
+        return 1;
+    }
+
+    // Check already installed
+    auto install_dir = std::filesystem::path(pkg_dir_str) / pkg_name;
+    if (!update_mode && std::filesystem::exists(install_dir / "ofspkg.json")) {
+        std::ifstream ef(install_dir / "ofspkg.json");
+        std::string ej((std::istreambuf_iterator<char>(ef)), {});
+        std::string cur_ver = json_get_str(ej, "version");
+        if (cur_ver == pkg_version) {
+            std::cout << cli_style::paint(
+                OFS_MSG("Package '", "Pacote '"), cli_style::GREEN, true)
+                << pkg_name << OFS_MSG("' already at v", "' ja esta na v") << cur_ver
+                << OFS_MSG(". Use reinfuse to force update.\n",
+                           ". Use reinfuse para forcar atualizacao.\n");
+            std::filesystem::remove_all(tmp_dir);
+            return 0;
+        }
+    }
+
+    // Download main library file
+    auto main_filename = std::filesystem::path(pkg_main).filename();
+    auto main_tmp = tmp_dir / main_filename;
+
+    std::cout << cli_style::paint(
+        OFS_MSG("Downloading ", "Baixando "), cli_style::BLUE, true)
+        << pkg_name << " v" << pkg_version << "...\n";
+
+    if (!download_raw(base_url + pkg_main, main_tmp)) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("infuse: failed to download package library\n",
+                    "infuse: falha ao baixar biblioteca do pacote\n"),
+            cli_style::RED, true);
+        std::filesystem::remove_all(tmp_dir);
+        return 1;
+    }
+
+    // Install: copy to packages dir
+    auto libs_dest = install_dir / "libs";
+    std::error_code ec;
+    std::filesystem::create_directories(libs_dest, ec);
+    if (ec) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("infuse: cannot create install directory: ", "infuse: nao foi possivel criar o diretorio: "),
+            cli_style::RED, true) << libs_dest.string() << "\n";
+        std::filesystem::remove_all(tmp_dir);
+        return 1;
+    }
+
+    std::filesystem::copy_file(main_tmp, libs_dest / main_filename,
+                               std::filesystem::copy_options::overwrite_existing, ec);
+    std::filesystem::copy_file(pkg_json_tmp, install_dir / "ofspkg.json",
+                               std::filesystem::copy_options::overwrite_existing, ec);
+    std::filesystem::remove_all(tmp_dir);
+
+    if (ec) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("infuse: install failed during file copy\n",
+                    "infuse: falha ao copiar arquivos durante instalacao\n"),
+            cli_style::RED, true);
+        return 1;
+    }
+
+    std::cout << cli_style::paint(
+        OFS_MSG("Installed: ", "Instalado: "), cli_style::GREEN, true)
+        << pkg_name << " v" << pkg_version << "\n"
+        << OFS_MSG("  Path: ", "  Local: ") << install_dir.string() << "\n\n";
+
+    // Usage hint
+    std::cout << OFS_MSG("Usage in code:\n", "Uso no codigo:\n")
+              << "  attach {" << pkg_name << "}\n\n";
+
+    // Remind about OFS_LIB_PATH if not set
+    const char* lib_path_env = std::getenv("OFS_LIB_PATH");
+    bool in_path = lib_path_env &&
+                   std::string(lib_path_env).find(pkg_dir_str) != std::string::npos;
+    if (!in_path) {
+        std::cout << cli_style::paint(
+            OFS_MSG("Tip: add your packages dir to OFS_LIB_PATH so the compiler can find it:\n",
+                    "Dica: adicione seu diretorio de pacotes ao OFS_LIB_PATH:\n"),
+            cli_style::YELLOW, true);
+#ifdef _WIN32
+        std::cout << "  [Environment]::SetEnvironmentVariable('OFS_LIB_PATH', '"
+                  << pkg_dir_str << "', 'User')\n\n";
+#else
+        std::cout << "  export OFS_LIB_PATH=" << quote_arg(pkg_dir_str) << "\n"
+                  << "  # Add to ~/.bashrc or ~/.profile to persist\n\n";
+#endif
+    }
+    return 0;
+}
+
+static int run_reinfuse(const std::string& raw_spec) {
+    auto spec = parse_package_spec(raw_spec);
+    if (spec.name.empty()) {
+        std::cerr << cli_style::paint(
+            OFS_MSG("reinfuse: package name required. Example: reinfuse physics\n",
+                    "reinfuse: nome do pacote obrigatorio. Exemplo: reinfuse physics\n"),
+            cli_style::RED, true);
+        return 1;
+    }
+    std::cout << cli_style::paint(
+        OFS_MSG("Updating ", "Atualizando "), cli_style::CYAN, true)
+        << spec.name << "...\n";
+    return run_infuse(spec.name, /*update_mode=*/true);
 }
 
 static void print_ascii_banner() {
@@ -665,6 +1064,17 @@ void print_usage() {
 "  ofs version                          Exibe a versão do compilador\n"
 "  ofs update                           Atualiza para a release mais recente\n"
 "  ofs help                             Mostra esta mensagem de ajuda\n"
+"\nPacotes:\n"
+"  uncover <nome>                       Busca pacotes no repositorio\n"
+"  infuse  <nome>                       Instala um pacote\n"
+"  infuse  <nome>:<versao>              Instala versao especifica\n"
+"  infuse  <nome>:stable|beta|nightly   Instala por canal\n"
+"  reinfuse <nome>                      Atualiza um pacote instalado\n"
+"\nExemplos:\n"
+"  uncover physics                      Busca pacotes de fisica\n"
+"  infuse physics                       Instala o pacote physics\n"
+"  infuse {physics:stable}              Instala canal stable de physics\n"
+"  reinfuse physics                     Atualiza physics para a versao mais recente\n"
 "\nContexto dos comandos:\n"
 "  run    -> fluxo rápido (desenvolvimento diário)\n"
 "  build  -> gera binário final para distribuir/publicar\n"
@@ -679,7 +1089,10 @@ void print_usage() {
 "  ofs build hello.ofs -o hello         Compila para executável\n"
 "  ofs asm hello.ofs -o hello           Gera hello.s\n"
 "  ofs check hello.ofs                  Verifica tipos apenas\n"
-"  ofs update                           Atualiza OFS via GitHub Releases\n\n";
+"  ofs update                           Atualiza OFS via GitHub Releases\n"
+"  uncover physics                      Busca pacotes de fisica\n"
+"  infuse physics                       Instala o pacote physics\n"
+"  reinfuse physics                     Atualiza physics\n\n";
     } else {
         std::cout <<
 "\n" << cli_style::paint("ofs", cli_style::CYAN, true)
@@ -696,21 +1109,22 @@ void print_usage() {
 "  ofs version                           Print compiler version\n"
 "  ofs update                            Update to the latest release\n"
 "  ofs help                              Show this help message\n"
-"\nCommand context:\n"
-"  run    -> fastest dev loop (compile + execute now)\n"
-"  build  -> generate final native binary for shipping\n"
-"  check  -> type/safety validation without output artifacts\n"
-"  tokens -> lexical debug (inspect token stream)\n"
-"  ast    -> syntax debug (inspect parsed tree)\n"
-"  ir     -> LLVM debug/optimization inspection\n"
-"  asm    -> inspect target assembly while keeping OFS as source of truth\n"
-"  update -> self-update from GitHub releases\n"
+"\nPackages:\n"
+"  uncover <name>                        Search packages in the repository\n"
+"  infuse  <name>                        Install a package\n"
+"  infuse  <name>:<version>              Install specific version\n"
+"  infuse  <name>:stable|beta|nightly    Install by channel\n"
+"  reinfuse <name>                       Update an installed package\n"
 "\nExamples:\n"
 "  ofs hello.ofs                         Run hello.ofs directly\n"
 "  ofs build hello.ofs -o hello          Compile to executable\n"
 "  ofs asm hello.ofs -o hello            Generate hello.s\n"
 "  ofs check hello.ofs                   Type-check only\n"
-"  ofs update                            Update OFS from GitHub Releases\n\n";
+"  ofs update                            Update OFS from GitHub Releases\n"
+"  uncover physics                       Search for physics packages\n"
+"  infuse physics                        Install the physics package\n"
+"  infuse {physics:stable}               Install stable channel of physics\n"
+"  reinfuse physics                      Update physics to latest version\n\n";
     }
 }
 
@@ -815,6 +1229,40 @@ int main(int argc, char** argv) {
             }
         }
         return run_self_update(force_repair);
+    }
+
+    // ── Package commands (no .ofs file needed) ────────────────────────────
+    if (cmd == "uncover") {
+        std::string query = argc > 2 ? argv[2] : "";
+        // Strip braces if user typed e.g. uncover {physics}
+        if (query.size() >= 2 && query.front() == '{' && query.back() == '}')
+            query = trim_copy(query.substr(1, query.size() - 2));
+        return run_uncover(query);
+    }
+
+    if (cmd == "infuse") {
+        if (argc < 3) {
+            std::cerr << cli_style::paint(
+                OFS_MSG("infuse: package spec required. Example: infuse physics\n",
+                        "infuse: especificacao do pacote obrigatoria. Exemplo: infuse physics\n"),
+                cli_style::RED, true);
+            return 1;
+        }
+        // Allow "infuse physics 1.2" as alternative to "infuse {physics:1.2}"
+        std::string spec_str = argv[2];
+        if (argc > 3) spec_str = spec_str + ":" + argv[3];
+        return run_infuse(spec_str);
+    }
+
+    if (cmd == "reinfuse") {
+        if (argc < 3) {
+            std::cerr << cli_style::paint(
+                OFS_MSG("reinfuse: package spec required. Example: reinfuse physics\n",
+                        "reinfuse: especificacao do pacote obrigatoria. Exemplo: reinfuse physics\n"),
+                cli_style::RED, true);
+            return 1;
+        }
+        return run_reinfuse(argv[2]);
     }
 
     // ── Auto-detect: ofs file.ofs → run directly ─────────────────────────

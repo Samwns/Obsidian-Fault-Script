@@ -65,7 +65,10 @@ bool is_fault_intrinsic_name(const std::string& name) {
            name == "fault_step" ||
            name == "fault_cut" ||
            name == "fault_patch" ||
-           name == "fault_weave";
+           name == "fault_weave" ||
+           name == "fault_unreachable" ||
+           name == "fault_memcpy" ||
+           name == "fault_memset";
 }
 
 }
@@ -388,6 +391,8 @@ void CodeGen::declare_runtime() {
     declare("ofs_str_char_at",  i64_ty,   {i8ptr_ty, i64_ty});
     declare("ofs_str_substr",   i8ptr_ty, {i8ptr_ty, i64_ty, i64_ty});
     declare("ofs_str_contains", i32_ty,   {i8ptr_ty, i8ptr_ty});
+    declare("ofs_str_upper",    i8ptr_ty, {i8ptr_ty});
+    declare("ofs_str_lower",    i8ptr_ty, {i8ptr_ty});
 
     // Type conversions
     declare("ofs_stone_to_obsidian",   i8ptr_ty, {i64_ty});
@@ -841,6 +846,12 @@ void CodeGen::gen_cycle(const CycleStmt& s) {
 
 void CodeGen::gen_return(const ReturnStmt& s) {
     if (s.value) {
+        // Safety: if function return type is void, discard the value
+        if (cur_fn_->getReturnType()->isVoidTy()) {
+            gen_expr(*s.value); // evaluate for side effects
+            builder_.CreateRetVoid();
+            return;
+        }
         auto* val = gen_expr(*s.value);
         if (val) {
             auto* ret_ty = cur_fn_->getReturnType();
@@ -961,13 +972,62 @@ void CodeGen::gen_const(const ConstStmt& s) {
 }
 
 void CodeGen::gen_match(const MatchStmt& s) {
-    // Stub: evaluate subject now to keep side effects; full lowering to switch/branches later.
-    if (s.subject) {
-        gen_expr(*s.subject);
+    if (!s.subject) return;
+
+    auto* subject_val = gen_expr(*s.subject);
+    if (!subject_val) return;
+
+    auto* merge_bb = llvm::BasicBlock::Create(ctx_, "match_merge", cur_fn_);
+
+    for (size_t i = 0; i < s.arms.size(); i++) {
+        const auto& arm = s.arms[i];
+
+        if (arm.is_default) {
+            // Default arm — unconditional
+            if (arm.body) gen_stmt(*arm.body);
+            if (!builder_.GetInsertBlock()->getTerminator())
+                builder_.CreateBr(merge_bb);
+            // No further arms after default
+            break;
+        }
+
+        // Generate pattern value
+        auto* pattern_val = gen_expr(*arm.pattern);
+        if (!pattern_val) continue;
+
+        // Choose comparison strategy based on subject type
+        llvm::Value* cmp;
+        auto& subj_type = s.subject->resolved_type;
+        if (subj_type.base == BaseType::Obsidian) {
+            // String comparison via runtime
+            auto* eq_i32 = builder_.CreateCall(
+                get_runtime_fn("ofs_str_eq"), {subject_val, pattern_val}, "match_str_eq");
+            cmp = builder_.CreateICmpNE(eq_i32,
+                llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx_), 0), "match_cmp");
+        } else if (subject_val->getType()->isDoubleTy()) {
+            cmp = builder_.CreateFCmpOEQ(subject_val, pattern_val, "match_cmp");
+        } else {
+            cmp = builder_.CreateICmpEQ(subject_val, pattern_val, "match_cmp");
+        }
+
+        auto* arm_bb  = llvm::BasicBlock::Create(ctx_, "match_arm",  cur_fn_);
+        auto* next_bb = llvm::BasicBlock::Create(ctx_, "match_next", cur_fn_);
+        builder_.CreateCondBr(cmp, arm_bb, next_bb);
+
+        // Arm body
+        builder_.SetInsertPoint(arm_bb);
+        if (arm.body) gen_stmt(*arm.body);
+        if (!builder_.GetInsertBlock()->getTerminator())
+            builder_.CreateBr(merge_bb);
+
+        builder_.SetInsertPoint(next_bb);
     }
-    if (!s.arms.empty() && s.arms.back().is_default && s.arms.back().body) {
-        gen_stmt(*s.arms.back().body);
-    }
+
+    // If nothing terminated the current block, jump to merge
+    if (!builder_.GetInsertBlock()->getTerminator())
+        builder_.CreateBr(merge_bb);
+
+    builder_.SetInsertPoint(merge_bb);
 }
 
 void CodeGen::gen_tremor(const TremorStmt& s) {
@@ -1081,6 +1141,9 @@ llvm::Value* CodeGen::gen_expr(const Expr& e) {
     if (auto* cast = dynamic_cast<const CastExpr*>(&e)) {
         return gen_cast(*cast);
     }
+    if (auto* ia = dynamic_cast<const InlineAsmExpr*>(&e)) {
+        return gen_inline_asm(*ia);
+    }
 
     return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
 }
@@ -1095,6 +1158,19 @@ llvm::Value* CodeGen::gen_binary(const BinaryExpr& e) {
         e.left->resolved_type.base == BaseType::Obsidian &&
         e.right->resolved_type.base == BaseType::Obsidian) {
         return builder_.CreateCall(get_runtime_fn("ofs_str_concat"), {left, right}, "concat");
+    }
+
+    // String equality/inequality — must use content comparison, not pointer comparison
+    if ((e.op == "==" || e.op == "!=") &&
+        e.left->resolved_type.base == BaseType::Obsidian &&
+        e.right->resolved_type.base == BaseType::Obsidian) {
+        auto* cmp = builder_.CreateCall(get_runtime_fn("ofs_str_eq"), {left, right}, "str_eq");
+        if (e.op == "!=") {
+            return builder_.CreateICmpEQ(cmp,
+                llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx_), 0), "str_ne");
+        }
+        return builder_.CreateICmpNE(cmp,
+            llvm::ConstantInt::get(llvm::Type::getInt32Ty(ctx_), 0), "str_eq_bool");
     }
 
     // Type promotion: if one is float and one is int, promote int to float
@@ -1229,6 +1305,57 @@ llvm::Value* CodeGen::gen_call(const CallExpr& e) {
             auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::trap);
 #endif
             builder_.CreateCall(fn, {});
+            return nullptr;
+        }
+        if (id->name == "fault_unreachable") {
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::trap);
+#else
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::trap);
+#endif
+            builder_.CreateCall(fn, {});
+            builder_.CreateUnreachable();
+            return nullptr;
+        }
+        if (id->name == "fault_memcpy") {
+            if (e.args.size() != 3) return nullptr;
+            auto* dst = gen_expr(*e.args[0]);
+            auto* src = gen_expr(*e.args[1]);
+            auto* len = gen_expr(*e.args[2]);
+            if (!dst || !src || !len) return nullptr;
+            // Cast pointers to i8* for memcpy
+            auto* i8ptr = llvm::PointerType::getUnqual(builder_.getInt8Ty());
+            auto* dst_i8 = builder_.CreateBitCast(dst, i8ptr, "memcpy_dst");
+            auto* src_i8 = builder_.CreateBitCast(src, i8ptr, "memcpy_src");
+            if (!len->getType()->isIntegerTy(64)) return nullptr;
+            std::vector<llvm::Type*> memcpy_types = {i8ptr, i8ptr, llvm::Type::getInt64Ty(ctx_)};
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::memcpy, memcpy_types);
+#else
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::memcpy, memcpy_types);
+#endif
+            builder_.CreateCall(fn, {dst_i8, src_i8, len,
+                llvm::ConstantInt::get(llvm::Type::getInt1Ty(ctx_), 0)});
+            return nullptr;
+        }
+        if (id->name == "fault_memset") {
+            if (e.args.size() != 3) return nullptr;
+            auto* dst = gen_expr(*e.args[0]);
+            auto* val = gen_expr(*e.args[1]);
+            auto* len = gen_expr(*e.args[2]);
+            if (!dst || !val || !len) return nullptr;
+            auto* i8ptr = llvm::PointerType::getUnqual(builder_.getInt8Ty());
+            auto* dst_i8 = builder_.CreateBitCast(dst, i8ptr, "memset_dst");
+            // val must fit in i8
+            auto* val_i8 = builder_.CreateTrunc(val, llvm::Type::getInt8Ty(ctx_), "memset_val");
+            std::vector<llvm::Type*> memset_types = {i8ptr, llvm::Type::getInt64Ty(ctx_)};
+#if LLVM_VERSION_MAJOR >= 20
+            auto* fn = llvm::Intrinsic::getOrInsertDeclaration(mod_.get(), llvm::Intrinsic::memset, memset_types);
+#else
+            auto* fn = llvm::Intrinsic::getDeclaration(mod_.get(), llvm::Intrinsic::memset, memset_types);
+#endif
+            builder_.CreateCall(fn, {dst_i8, val_i8, len,
+                llvm::ConstantInt::get(llvm::Type::getInt1Ty(ctx_), 0)});
             return nullptr;
         }
         if (id->name == "fault_step") {
@@ -1583,10 +1710,36 @@ llvm::Value* CodeGen::gen_lvalue(const Expr& e) {
 }
 
 llvm::Value* CodeGen::gen_inline_asm(const InlineAsmExpr& e) {
-    // Gera um bloco de inline assembly usando LLVM
-    auto* fn_ty = llvm::FunctionType::get(llvm::Type::getVoidTy(ctx_), false);
-    auto* ia = llvm::InlineAsm::get(fn_ty, e.asm_code, e.outputs.empty() ? "" : e.outputs[0], e.volatile_);
-    return builder_.CreateCall(ia, {});
+    // Collect input values
+    std::vector<llvm::Type*> input_types;
+    std::vector<llvm::Value*> input_vals;
+    for (auto& inp : e.inputs) {
+        auto* val = gen_expr(*inp);
+        if (val) {
+            input_types.push_back(val->getType());
+            input_vals.push_back(val);
+        }
+    }
+
+    // Build constraint string: outputs, then inputs (register), then clobbers
+    std::string constraints;
+    for (auto& out : e.outputs) {
+        if (!constraints.empty()) constraints += ",";
+        constraints += out;
+    }
+    for (size_t i = 0; i < input_vals.size(); i++) {
+        if (!constraints.empty()) constraints += ",";
+        constraints += "r";
+    }
+    if (!e.clobbers.empty()) {
+        if (!constraints.empty()) constraints += ",";
+        constraints += "~{" + e.clobbers + "}";
+    }
+
+    auto* fn_ty = llvm::FunctionType::get(llvm::Type::getVoidTy(ctx_), input_types, false);
+    auto* ia = llvm::InlineAsm::get(fn_ty, e.asm_code, constraints, e.volatile_);
+    builder_.CreateCall(ia, input_vals);
+    return nullptr;
 }
 
 } // namespace ofs

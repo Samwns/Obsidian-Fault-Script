@@ -1,0 +1,6 @@
+{
+  "name": "test-lib",
+  "version": "1.0.0",
+  "description": "OFS test utilities and helpers for unit testing",
+  "main": "libs/test_lib.ofs"
+}

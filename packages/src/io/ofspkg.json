@@ -1,0 +1,6 @@
+{
+  "name": "io",
+  "version": "1.0.0",
+  "description": "I/O utility functions for OFS: prompt, separators, headers",
+  "main": "libs/io.ofs"
+}

@@ -1,6 +1,6 @@
-attach "../stdlib/bedrock.ofs"
-attach "../stdlib/bedrock_packet.ofs"
-attach "../stdlib/rift.ofs"
+attach {bedrock}
+attach {bedrock-packet}
+attach {rift}
 
 vein section(title: obsidian) -> void {
     echo("")

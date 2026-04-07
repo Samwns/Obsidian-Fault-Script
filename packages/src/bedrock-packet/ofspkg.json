@@ -1,0 +1,6 @@
+{
+  "name": "bedrock-packet",
+  "version": "1.0.0",
+  "description": "OFS-native packet layout helpers built on top of bedrock regions",
+  "main": "libs/bedrock_packet.ofs"
+}

@@ -1,0 +1,6 @@
+{
+  "name": "core",
+  "version": "1.0.0",
+  "description": "Core OFS utilities: math, predicates, range helpers, and integer algorithms",
+  "main": "libs/core.ofs"
+}

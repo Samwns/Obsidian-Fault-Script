@@ -458,14 +458,47 @@ Note: String (`obsidian`) casts require runtime functions (`ofs_stone_to_obsidia
 
 ## Imports
 
-Attach other OFS source files:
+Use `attach` to bring stdlib modules, packages, or local files into scope.
+
+### Library attach (stdlib / package)
 
 ```ofs
-attach "stdlib/core.ofs"
-attach "stdlib/math.ofs"
+attach {core}
+attach {math}
+attach {webserver}
+attach {bedrock}
+attach {terminal-colors}
+attach {memory-modes}
 ```
 
-Imports must appear at the top level, before or between other declarations.
+The name inside `{}` maps to a known stdlib module or an installed package. The compiler resolves the file automatically from the stdlib directory, `OFS_STDLIB_PATH`, or `OFS_LIB_PATH`.
+
+### File attach
+
+```ofs
+attach {F:helpers.ofs}
+attach {F:../shared/utils.ofs}
+```
+
+Use the `F:` prefix to reference a specific `.ofs` file by path relative to the current file.
+
+Attach declarations must appear at the top level, before or between other declarations. The preprocessor resolves them before the lexer and parser run, so each module is inlined exactly once (deduplication is automatic).
+
+### Stdlib modules
+
+| Name | Description |
+|------|-------------|
+| `core` | Math helpers, predicates, factorial, fibonacci |
+| `math` | Primes, digit utilities, reverse numbers |
+| `string` | String utilities: repeat, starts_with, is_empty |
+| `io` | prompt, print_separator, print_header |
+| `webserver` | HTTP response builder, MIME types, log helpers |
+| `bedrock` | Low-level heap cells, regions, bit-field helpers |
+| `bedrock-packet` | Packet layout helpers built on bedrock regions |
+| `rift` | Foreign runtime wrappers (C ABI helpers) |
+| `terminal-colors` | ANSI terminal color output |
+| `memory-modes` | Docs and helpers for fracture/abyss/fractal modes |
+| `test-lib` | Unit test utilities |
 
 ---
 
@@ -799,6 +832,9 @@ Available intrinsics:
 - `fault_cut(value, shift, width)` -> extract a bit field
 - `fault_patch(base, shift, width, insert)` -> replace a bit field
 - `fault_weave(mask, left, right)` -> blend bits from `left` and `right` using `mask`
+- `fault_unreachable()` -> marks the current path as unreachable, lowers to `llvm.trap` + `unreachable` IR
+- `fault_memcpy(dst, src, len)` -> bulk memory copy (lowers to `llvm.memcpy`); `dst` and `src` must be pointers
+- `fault_memset(dst, val, len)` -> bulk memory fill with `val` byte (lowers to `llvm.memset`); `dst` must be a pointer
 
 These functions are designed to cover operations assembly already has, while also giving OFS room for its own machine-oriented vocabulary.
 
@@ -815,8 +851,9 @@ bedrock {
 
 **Restrictions:**
 - The argument must be a string literal.
-- No input/output operands syntax yet; use `fault_*` intrinsics for that.
-- Generates a void inline-asm call in LLVM IR with volatile semantics.
+- Input/output operand syntax (full AT&T-style constraints) is not yet parseable; use `fault_*` intrinsics when operand binding is needed.
+- Generates a void inline-asm call in LLVM IR with the assembly string forwarded verbatim.
+- The `asm` expression is lowered to LLVM `InlineAsm`; the compiler correctly dispatches it in both semantic analysis and code generation.
 
 ---
 

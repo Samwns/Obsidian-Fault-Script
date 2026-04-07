@@ -1,5 +1,5 @@
-attach "../stdlib/terminal_colors.ofs"
-attach "../stdlib/memory_modes.ofs"
+attach {terminal-colors}
+attach {memory-modes}
 
 core main() {
     echo("Package demo start")

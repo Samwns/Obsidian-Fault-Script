@@ -1,6 +1,6 @@
 // Comprehensive OFS showcase focused on features that currently work end-to-end.
 
-attach "../stdlib/terminal_colors.ofs"
+attach {terminal-colors}
 
 extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
 extern vein ofs_sqrt(val: crystal) -> crystal

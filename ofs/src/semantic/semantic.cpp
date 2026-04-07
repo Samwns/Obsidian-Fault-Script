@@ -19,7 +19,10 @@ bool is_fault_intrinsic_name(const std::string& name) {
            name == "fault_step" ||
            name == "fault_cut" ||
            name == "fault_patch" ||
-           name == "fault_weave";
+           name == "fault_weave" ||
+           name == "fault_unreachable" ||
+           name == "fault_memcpy" ||
+           name == "fault_memset";
 }
 
 bool is_low_level_scope(bool inside_fracture, bool inside_abyss, bool inside_bedrock) {
@@ -84,30 +87,33 @@ void SemanticAnalyzer::analyze(Module& mod) {
 }
 
 void SemanticAnalyzer::register_builtin_symbols() {
-    const char* builtin_names[] = {
-        "fault_count",
-        "fault_fence",
-        "fault_prefetch",
-        "fault_trap",
-        "fault_lead",
-        "fault_trail",
-        "fault_swap",
-        "fault_spin_left",
-        "fault_spin_right",
-        "fault_step",
-        "fault_cut",
-        "fault_patch",
-        "fault_weave"
+    struct BuiltinDef { const char* name; OFSType type; };
+    BuiltinDef builtins[] = {
+        // Returns stone (bit operations)
+        {"fault_count",      OFSType::stone()},
+        {"fault_lead",       OFSType::stone()},
+        {"fault_trail",      OFSType::stone()},
+        {"fault_swap",       OFSType::stone()},
+        {"fault_spin_left",  OFSType::stone()},
+        {"fault_spin_right", OFSType::stone()},
+        {"fault_cut",        OFSType::stone()},
+        {"fault_patch",      OFSType::stone()},
+        {"fault_weave",      OFSType::stone()},
+        // Returns void
+        {"fault_fence",       OFSType::void_t()},
+        {"fault_prefetch",    OFSType::void_t()},
+        {"fault_trap",        OFSType::void_t()},
+        {"fault_unreachable", OFSType::void_t()},
+        {"fault_memcpy",      OFSType::void_t()},
+        {"fault_memset",      OFSType::void_t()},
+        // fault_step returns pointer — type inferred at call site from first arg
+        {"fault_step",        OFSType::shard_of(OFSType::stone())},
     };
 
-    for (const char* name : builtin_names) {
+    for (auto& b : builtins) {
         Symbol sym;
-        sym.name = name;
-        if (std::string(name) == "fault_fence" || std::string(name) == "fault_prefetch" || std::string(name) == "fault_trap") {
-            sym.type = OFSType::void_t();
-        } else {
-            sym.type = OFSType::stone();
-        }
+        sym.name = b.name;
+        sym.type = b.type;
         sym.kind = SymbolKind::Function;
         scope_.define(sym.name, sym);
     }
@@ -391,9 +397,15 @@ void SemanticAnalyzer::check_cycle(CycleStmt& s) {
 
 void SemanticAnalyzer::check_return(ReturnStmt& s) {
     if (s.value) {
+        // Returning a value from a void function is an error
+        if (current_return_type_.base == BaseType::Void) {
+            throw SemanticError(OFS_MSG(
+                "void function cannot return a value",
+                "função void não pode retornar um valor"),
+                s.line, s.col);
+        }
         OFSType ret_type = check_expr(*s.value);
-        if (current_return_type_.base != BaseType::Void &&
-            current_return_type_.base != BaseType::Infer) {
+        if (current_return_type_.base != BaseType::Infer) {
             if (!is_assignable(current_return_type_, ret_type)) {
                 throw SemanticError(
                     OFS_MSG("return type mismatch: expected " + current_return_type_.to_string() +
@@ -532,6 +544,10 @@ OFSType SemanticAnalyzer::check_expr(Expr& e) {
         result = check_array_lit(*arr);
     } else if (auto* cast = dynamic_cast<CastExpr*>(&e)) {
         result = check_cast(*cast);
+    } else if (auto* ia = dynamic_cast<InlineAsmExpr*>(&e)) {
+        // Inline assembly: check input expressions, returns void
+        for (auto& inp : ia->inputs) check_expr(*inp);
+        result = OFSType::void_t();
     } else {
         result = OFSType::void_t();
     }
@@ -683,8 +699,31 @@ OFSType SemanticAnalyzer::check_call(CallExpr& e) {
             if (id->name == "fault_weave" && arg_count != 3) {
                 throw SemanticError(OFS_MSG("fault_weave expects 3 arguments", "fault_weave espera 3 argumentos"), e.line, e.col);
             }
+            if (id->name == "fault_unreachable" && arg_count != 0) {
+                throw SemanticError(OFS_MSG("fault_unreachable expects 0 arguments", "fault_unreachable espera 0 argumentos"), e.line, e.col);
+            }
+            if (id->name == "fault_memcpy" && arg_count != 3) {
+                throw SemanticError(OFS_MSG("fault_memcpy expects 3 arguments (dst, src, len)", "fault_memcpy espera 3 argumentos (dst, src, len)"), e.line, e.col);
+            }
+            if (id->name == "fault_memset" && arg_count != 3) {
+                throw SemanticError(OFS_MSG("fault_memset expects 3 arguments (dst, val, len)", "fault_memset espera 3 argumentos (dst, val, len)"), e.line, e.col);
+            }
 
             if (id->name == "fault_fence" || id->name == "fault_trap") {
+                return OFSType::void_t();
+            }
+
+            if (id->name == "fault_unreachable") {
+                return OFSType::void_t();
+            }
+
+            if (id->name == "fault_memcpy" || id->name == "fault_memset") {
+                if (e.args[0]->resolved_type.base != BaseType::Shard) {
+                    throw SemanticError(
+                        OFS_MSG(id->name + " requires a pointer as first argument",
+                                id->name + " exige ponteiro como primeiro argumento"),
+                        e.line, e.col);
+                }
                 return OFSType::void_t();
             }
 

@@ -1,0 +1,20 @@
+{
+  "name": "fmt",
+  "version": "1.0.0",
+  "description": "String formatting utilities: padding, alignment, truncation, case conversion, trim, separators, and table helpers",
+  "author": "OFS Community",
+  "license": "MIT",
+  "main": "libs/fmt.ofs",
+  "tags": ["string", "format", "text", "table", "utility"],
+  "channels": {
+    "stable": "1.0.0",
+    "latest": "1.0.0"
+  },
+  "versions": {
+    "1.0.0": {
+      "date": "2026-04-07",
+      "channel": "stable",
+      "main": "libs/fmt.ofs"
+    }
+  }
+}

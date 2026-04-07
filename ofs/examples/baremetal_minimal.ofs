@@ -1,7 +1,12 @@
 // Exemplo mínimo de programa OFS para perfil bare-metal
 
-vein main() {
+vein exit_code() -> stone {
     // Em bare-metal real, não há printf nem saída padrão.
     // Aqui apenas retorna um valor fixo para o ambiente de teste.
-    return 42;
+    return 42
+}
+
+core main() {
+    forge code = exit_code()
+    echo(code)
 }

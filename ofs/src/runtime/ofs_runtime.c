@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <ctype.h>
 #include <math.h>
 
 // ── Echo functions (called by echo() in OFS) ─────────────────────────────
@@ -166,6 +167,28 @@ int ofs_str_contains(const char* haystack, const char* needle) {
     return strstr(haystack, needle) != NULL;
 }
 
+char* ofs_str_upper(const char* s) {
+    if (!s) return ofs_str_concat("", "");
+    int64_t len = (int64_t)strlen(s);
+    char* result = (char*)ofs_alloc(len + 1);
+    for (int64_t i = 0; i < len; i++) {
+        result[i] = (char)toupper((unsigned char)s[i]);
+    }
+    result[len] = '\0';
+    return result;
+}
+
+char* ofs_str_lower(const char* s) {
+    if (!s) return ofs_str_concat("", "");
+    int64_t len = (int64_t)strlen(s);
+    char* result = (char*)ofs_alloc(len + 1);
+    for (int64_t i = 0; i < len; i++) {
+        result[i] = (char)tolower((unsigned char)s[i]);
+    }
+    result[len] = '\0';
+    return result;
+}
+
 // ── Type conversions ──────────────────────────────────────────────────────
 
 char* ofs_stone_to_obsidian(int64_t v) {
@@ -259,4 +282,104 @@ void echo_crystal_nn(double v) {
 
 void echo_obsidian_nn(const char* s) {
     fputs(s ? s : "(null)", stdout);
+}
+
+// ── HTTP webserver helpers ────────────────────────────────────────────────
+// Minimal POSIX-socket-based HTTP server (Linux / macOS).
+// Windows uses Winsock; for now they return -1 on that platform.
+
+#if defined(_WIN32)
+#  include <winsock2.h>
+#  pragma comment(lib, "ws2_32.lib")
+#  define OFS_CLOSE_SOCKET(s) closesocket(s)
+typedef SOCKET ofs_socket_t;
+static int ofs_ws_init(void) {
+    WSADATA wd;
+    return WSAStartup(MAKEWORD(2,2), &wd);
+}
+#else
+#  include <sys/socket.h>
+#  include <netinet/in.h>
+#  include <unistd.h>
+#  define OFS_CLOSE_SOCKET(s) close(s)
+typedef int ofs_socket_t;
+static int ofs_ws_init(void) { return 0; }
+#endif
+
+static ofs_socket_t ofs_make_server(int64_t port) {
+    if (ofs_ws_init() != 0) return (ofs_socket_t)-1;
+
+    ofs_socket_t fd = socket(AF_INET, SOCK_STREAM, 0);
+    if ((int)fd < 0) return (ofs_socket_t)-1;
+
+    int opt = 1;
+    setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt));
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family      = AF_INET;
+    addr.sin_addr.s_addr = INADDR_ANY;
+    addr.sin_port        = htons((unsigned short)port);
+
+    if (bind(fd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+        OFS_CLOSE_SOCKET(fd);
+        return (ofs_socket_t)-1;
+    }
+    listen(fd, 10);
+    return fd;
+}
+
+static void ofs_serve_one(ofs_socket_t server_fd,
+                          const char* content_type, const char* body) {
+    struct sockaddr_in client_addr;
+    memset(&client_addr, 0, sizeof(client_addr));
+#if defined(_WIN32)
+    int client_len = sizeof(client_addr);
+#else
+    socklen_t client_len = sizeof(client_addr);
+#endif
+    ofs_socket_t client_fd = accept(server_fd,
+                                     (struct sockaddr*)&client_addr,
+                                     &client_len);
+    if ((int)client_fd < 0) return;
+
+    /* Discard the request */
+    char req_buf[4096];
+    recv(client_fd, req_buf, sizeof(req_buf) - 1, 0);
+
+    const char* ct = content_type ? content_type : "text/plain";
+    const char* bd = body       ? body        : "";
+    size_t body_len = strlen(bd);
+
+    char header[640];
+    snprintf(header, sizeof(header),
+        "HTTP/1.1 200 OK\r\nContent-Type: %s\r\nContent-Length: %zu\r\nConnection: close\r\n\r\n",
+        ct, body_len);
+
+    send(client_fd, header, (int)strlen(header), 0);
+    send(client_fd, bd,     (int)body_len,       0);
+    OFS_CLOSE_SOCKET(client_fd);
+}
+
+int64_t ofs_webserver_serve_once(int64_t port,
+                                  const char* content_type,
+                                  const char* body) {
+    ofs_socket_t fd = ofs_make_server(port);
+    if ((int)fd < 0) return -1;
+    ofs_serve_one(fd, content_type, body);
+    OFS_CLOSE_SOCKET(fd);
+    return 200;
+}
+
+int64_t ofs_webserver_serve_forever(int64_t port,
+                                     const char* content_type,
+                                     const char* body) {
+    ofs_socket_t fd = ofs_make_server(port);
+    if ((int)fd < 0) return -1;
+    for (;;) {
+        ofs_serve_one(fd, content_type, body);
+    }
+    /* unreachable */
+    OFS_CLOSE_SOCKET(fd);
+    return 0;
 }

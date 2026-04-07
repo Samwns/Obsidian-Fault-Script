@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# OFS package updater wrapper
+# Equivalent to: ofs reinfuse <package>
+exec ofs reinfuse "$@"

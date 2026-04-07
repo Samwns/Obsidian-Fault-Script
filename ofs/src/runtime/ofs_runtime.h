@@ -39,6 +39,8 @@ int64_t ofs_str_len(const char* s);
 int64_t ofs_str_char_at(const char* s, int64_t idx);
 char*   ofs_str_substr(const char* s, int64_t start, int64_t len);
 int     ofs_str_contains(const char* haystack, const char* needle);
+char*   ofs_str_upper(const char* s);
+char*   ofs_str_lower(const char* s);
 
 // Type conversions
 char*   ofs_stone_to_obsidian(int64_t v);

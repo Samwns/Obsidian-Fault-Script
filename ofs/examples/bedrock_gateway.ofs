@@ -1,4 +1,4 @@
-attach "../stdlib/bedrock.ofs"
+attach {bedrock}
 
 extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
 

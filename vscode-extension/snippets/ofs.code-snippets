@@ -28,13 +28,13 @@
   "Attach": {
     "prefix": "attach",
     "body": [
-      "attach \"$1\""
+      "attach {$1}"
     ]
   },
   "Bedrock Counter": {
     "prefix": "bedrock",
     "body": [
-      "attach \"../stdlib/bedrock.ofs\"",
+      "attach {bedrock}",
       "",
       "core main() {",
       "    forge counter = bedrock_cell_new(${1:0})",
@@ -61,7 +61,7 @@
   "Bedrock Region": {
     "prefix": "bedrock-region",
     "body": [
-      "attach \"../stdlib/bedrock.ofs\"",
+      "attach {bedrock}",
       "",
       "core main() {",
       "    forge region = bedrock_region_new(${1:4})",
@@ -74,7 +74,7 @@
   "Rift Module": {
     "prefix": "rift-module",
     "body": [
-      "attach \"../stdlib/rift.ofs\"",
+      "attach {rift}",
       "",
       "core main() {",
       "    echo(rift_text_size(${1:\"fault\"}))",

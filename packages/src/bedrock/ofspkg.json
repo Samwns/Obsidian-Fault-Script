@@ -1,0 +1,6 @@
+{
+  "name": "bedrock",
+  "version": "1.0.0",
+  "description": "OFS-native low-level helpers for explicit heap-backed state (cells, regions, bit fields)",
+  "main": "libs/bedrock.ofs"
+}

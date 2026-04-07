@@ -98,7 +98,9 @@ Token Lexer::next_token() {
         case ',': return make_token(TokenKind::COMMA);
         case ';': return make_token(TokenKind::SEMICOLON);
         case ':': return make_token(TokenKind::COLON);
-        case '.': return make_token(TokenKind::DOT);
+        case '.':
+            if (match('.') && match('.')) return make_token(TokenKind::ELLIPSIS);
+            return make_token(TokenKind::DOT);
         case '~': return make_token(TokenKind::TILDE);
         case '^': return make_token(TokenKind::CARET);
 

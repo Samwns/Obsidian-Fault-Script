@@ -1,5 +1,5 @@
 // terminal-colors package for OFS
-// Use with: attach "terminal_colors.ofs"
+// Use with: attach {terminal-colors}
 
 extern vein ofs_echo_color(ansi_color: obsidian, text: obsidian) -> void
 

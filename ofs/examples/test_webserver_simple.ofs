@@ -1,4 +1,4 @@
-attach "../stdlib/webserver.ofs"
+attach {webserver}
 
 core main() {
     echo("Testing webserver library...")

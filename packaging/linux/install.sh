@@ -43,4 +43,13 @@ echo "[OFS] Installed at $TARGET"
 if [ -f "$RUNTIME_TARGET" ]; then
   echo "[OFS] Runtime installed at $RUNTIME_TARGET"
 fi
+
+# Install package manager wrapper scripts (infuse, uncover, reinfuse)
+for cmd in infuse uncover reinfuse; do
+  if [ -f "$SCRIPT_DIR/$cmd" ]; then
+    echo "[OFS] Installing '$cmd' wrapper..."
+    sudo install -m 0755 "$SCRIPT_DIR/$cmd" "/usr/local/bin/$cmd"
+  fi
+done
+
 ofs version || true

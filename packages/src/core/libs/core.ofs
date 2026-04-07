@@ -1,0 +1,105 @@
+// OFS Standard Library — Core Module
+// Built-in functions and utilities
+
+// ── Math Utilities ───────────────────────────────────────────────────────
+
+vein abs(x: stone) -> stone {
+    if (x < 0) {
+        return -x
+    }
+    return x
+}
+
+vein max(a: stone, b: stone) -> stone {
+    if (a > b) {
+        return a
+    }
+    return b
+}
+
+vein min(a: stone, b: stone) -> stone {
+    if (a < b) {
+        return a
+    }
+    return b
+}
+
+vein clamp(val: stone, lo: stone, hi: stone) -> stone {
+    if (val < lo) { return lo }
+    if (val > hi) { return hi }
+    return val
+}
+
+vein is_even(n: stone) -> bool {
+    return n % 2 == 0
+}
+
+vein is_odd(n: stone) -> bool {
+    return n % 2 != 0
+}
+
+vein sign(x: stone) -> stone {
+    if (x > 0) { return 1 }
+    if (x < 0) { return -1 }
+    return 0
+}
+
+// ── Recursive Math ───────────────────────────────────────────────────────
+
+vein factorial(n: stone) -> stone {
+    if (n <= 1) { return 1 }
+    return n * factorial(n - 1)
+}
+
+vein fibonacci(n: stone) -> stone {
+    if (n <= 0) { return 0 }
+    if (n == 1) { return 1 }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+vein gcd(a: stone, b: stone) -> stone {
+    if (b == 0) { return a }
+    return gcd(b, a % b)
+}
+
+vein lcm(a: stone, b: stone) -> stone {
+    return a / gcd(a, b) * b
+}
+
+vein power(base: stone, exp: stone) -> stone {
+    if (exp == 0) { return 1 }
+    if (exp == 1) { return base }
+    forge result: stone = 1
+    cycle (forge i = 0; i < exp; i++) {
+        result = result * base
+    }
+    return result
+}
+
+// ── Predicates ───────────────────────────────────────────────────────────
+
+vein is_positive(x: stone) -> bool {
+    return x > 0
+}
+
+vein is_negative(x: stone) -> bool {
+    return x < 0
+}
+
+vein is_zero(x: stone) -> bool {
+    return x == 0
+}
+
+vein in_range(val: stone, lo: stone, hi: stone) -> bool {
+    return val >= lo && val <= hi
+}
+
+// ── Swap (via return) ────────────────────────────────────────────────────
+
+vein swap_first(a: stone, b: stone) -> stone {
+    return b
+}
+
+vein swap_second(a: stone, b: stone) -> stone {
+    return a
+}

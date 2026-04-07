@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# OFS package search wrapper
+# Equivalent to: ofs uncover <query>
+exec ofs uncover "$@"

@@ -74,7 +74,7 @@ That's it! OFS works just like Python — point it at a file and it runs.
 OFS was designed so high-level and low-level code can coexist in the same file.
 
 ```ofs
-attach "../stdlib/bedrock.ofs"
+attach {bedrock}
 
 rift vein strlen(text: obsidian) -> stone
 

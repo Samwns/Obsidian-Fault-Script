@@ -1,0 +1,6 @@
+{
+  "name": "rift",
+  "version": "1.0.0",
+  "description": "OFS-native wrappers around foreign runtime boundaries (C ABI, FFI helpers)",
+  "main": "libs/rift.ofs"
+}

@@ -111,6 +111,7 @@ enum class TokenKind {
     COMMA,          // ,
     SEMICOLON,      // ; (optional, used as separator)
     NEWLINE,        // \n (significant for statement separation)
+    ELLIPSIS,       // ... (variadic parameter marker in extern)
 
     // ── Special ───────────────────────────────────────────────────────────
     END_OF_FILE,

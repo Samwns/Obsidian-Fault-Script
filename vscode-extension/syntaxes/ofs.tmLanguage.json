@@ -44,6 +44,23 @@
     "keywords": {
       "patterns": [
         {
+          "comment": "attach {name} — highlight library name inside braces",
+          "name": "meta.attach.ofs",
+          "match": "\\battach\\s*\\{\\s*([A-Za-z_][A-Za-z0-9_.\\-]*)\\s*\\}",
+          "captures": {
+            "1": { "name": "entity.name.module.ofs" }
+          }
+        },
+        {
+          "comment": "attach {F:path} — highlight file path prefix",
+          "name": "meta.attach.file.ofs",
+          "match": "\\battach\\s*\\{\\s*([Ff](?:ile)?):([^}]+)\\}",
+          "captures": {
+            "1": { "name": "keyword.operator.ofs" },
+            "2": { "name": "string.unquoted.ofs" }
+          }
+        },
+        {
           "name": "keyword.control.ofs",
           "match": "\\b(core|vein|forge|const|monolith|strata|if|else|while|cycle|match|case|default|return|break|continue|throw|tremor|catch|fracture|abyss|bedrock|obsid|intent|tectonic|pure|impure|fractal|extern|rift|attach|import|as|layout|bind|abi|packed|native|system|asm|echo|in|shard)\\b"
         },

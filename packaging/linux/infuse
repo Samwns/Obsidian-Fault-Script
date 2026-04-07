@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# OFS package installer wrapper
+# Equivalent to: ofs infuse <package>
+exec ofs infuse "$@"

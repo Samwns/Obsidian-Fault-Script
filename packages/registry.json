@@ -1,0 +1,138 @@
+{
+  "version": "1",
+  "updated": "2026-04-07",
+  "packages": [
+    {
+      "name": "fmt",
+      "description": "String formatting utilities: padding, alignment, truncation, case conversion, trim, separators, and table helpers",
+      "author": "OFS Community",
+      "license": "MIT",
+      "tags": ["string", "format", "text", "table", "utility"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/fmt.ofs" }
+      }
+    },
+    {
+      "name": "core",
+      "description": "Core OFS utilities: math, predicates, range helpers, and integer algorithms",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["core", "math", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/core.ofs" }
+      }
+    },
+    {
+      "name": "math",
+      "description": "Advanced math functions: primes, digit utilities, reverse numbers",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["math", "primes", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/math.ofs" }
+      }
+    },
+    {
+      "name": "string",
+      "description": "String utility functions for OFS: repeat, starts_with, is_empty",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["string", "text", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/string.ofs" }
+      }
+    },
+    {
+      "name": "io",
+      "description": "I/O utility functions for OFS: prompt, separators, headers",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["io", "input", "output", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/io.ofs" }
+      }
+    },
+    {
+      "name": "webserver",
+      "description": "HTTP utility helpers for building web applications in OFS",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["web", "http", "server", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/webserver.ofs" }
+      }
+    },
+    {
+      "name": "bedrock",
+      "description": "Low-level heap cells, regions, and bit-field helpers",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["low-level", "memory", "bits", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/bedrock.ofs" }
+      }
+    },
+    {
+      "name": "bedrock-packet",
+      "description": "Packet layout helpers built on bedrock regions",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["low-level", "packets", "networking", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/bedrock_packet.ofs" }
+      }
+    },
+    {
+      "name": "rift",
+      "description": "Foreign runtime wrappers and C ABI helpers for OFS",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["ffi", "interop", "abi", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/rift.ofs" }
+      }
+    },
+    {
+      "name": "terminal-colors",
+      "description": "ANSI terminal color output helpers for OFS",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["terminal", "colors", "ansi", "ui"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/terminal_colors.ofs" }
+      }
+    },
+    {
+      "name": "memory-modes",
+      "description": "Helpers and documentation for fracture/abyss/fractal memory modes",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["memory", "modes", "fracture", "abyss", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/memory_modes.ofs" }
+      }
+    },
+    {
+      "name": "test-lib",
+      "description": "OFS test utilities and helpers for unit testing",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["test", "unit-test", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/test_lib.ofs" }
+      }
+    }
+  ]
+}

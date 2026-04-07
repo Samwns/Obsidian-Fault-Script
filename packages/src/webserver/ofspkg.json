@@ -1,0 +1,6 @@
+{
+  "name": "webserver",
+  "version": "1.0.0",
+  "description": "HTTP utility helpers for building web applications in OFS",
+  "main": "libs/webserver.ofs"
+}
