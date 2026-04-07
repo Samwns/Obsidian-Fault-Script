@@ -104,6 +104,31 @@
       "rift vein ${1:name}(${2:text: obsidian}) -> ${3:stone} bind \"${4:symbol}\" abi ${5:c}"
     ]
   },
+  "Fracture Block": {
+    "prefix": "fracture",
+    "body": [
+      "fracture {",
+      "    shard ${1:p}: *${2:stone} = &${3:x}",
+      "    $0",
+      "}"
+    ]
+  },
+  "Abyss Block": {
+    "prefix": "abyss",
+    "body": [
+      "abyss {",
+      "    $0",
+      "}"
+    ]
+  },
+  "Inline Assembly": {
+    "prefix": "asm",
+    "body": [
+      "bedrock {",
+      "    asm \"${1:nop}\"",
+      "}"
+    ]
+  },
   "Packed Monolith": {
     "prefix": "monolith-packed",
     "body": [

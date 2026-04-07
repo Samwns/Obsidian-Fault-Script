@@ -11,6 +11,7 @@ const KEYWORDS = [
   'return', 'break', 'continue', 'throw', 'tremor', 'catch',
   'fracture', 'abyss', 'bedrock', 'obsid', 'attach', 'import', 'intent', 'tectonic', 'pure', 'impure', 'fractal',
   'layout', 'bind', 'abi', 'packed', 'native', 'system',
+  'asm', 'echo', 'in', 'shard',
   'true', 'false', 'null', 'as'
 ];
 
@@ -279,6 +280,26 @@ const HOVER_DOCS = {
     description: 'Comando CLI de ajuda com lista e contexto dos comandos.',
     context: 'Use para consultar sintaxe e fluxo recomendado de uso.',
     example: 'ofs help'
+  },
+  asm: {
+    description: 'Escape hatch de inline assembly nativo.',
+    context: 'Use dentro de blocos bedrock/fracture/abyss para emitir instrucoes de maquina diretamente quando nenhum intrinsic fault_* cobre o caso.',
+    example: 'bedrock {\n    asm "nop"\n    asm "int3"\n}'
+  },
+  echo: {
+    description: 'Funcao built-in de saida (print).',
+    context: 'Use para imprimir qualquer valor OFS: stone, crystal, obsidian ou bool. Exibe nova linha automaticamente.',
+    example: 'echo("Hello, World!")\necho(42)\necho(3.14)'
+  },
+  in: {
+    description: 'Palavra-chave de iteracao range-based em cycle.',
+    context: 'Use para iterar sobre colecoes (forjas de array) de forma expressiva.',
+    example: 'cycle (n in nums) {\n    echo(n)\n}'
+  },
+  shard: {
+    description: 'Declara variavel ponteiro tipado.',
+    context: 'Use dentro de fracture ou bedrock para criar ponteiros seguros para valores existentes.',
+    example: 'fracture {\n    shard p: *stone = &x\n    *p = *p + 1\n}'
   }
 };
 
