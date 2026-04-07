@@ -56,6 +56,7 @@ private:
     ExprPtr parse_member(ExprPtr object);
     ExprPtr parse_unary();
     ExprPtr parse_array_literal();
+    ExprPtr parse_inline_asm();
 
     // ── Types ─────────────────────────────────────────────────────────────
     OFSType parse_type();

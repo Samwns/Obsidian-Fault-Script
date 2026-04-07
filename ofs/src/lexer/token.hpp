@@ -55,6 +55,7 @@ enum class TokenKind {
     KW_IMPURE,      // impure
     KW_FRACTAL,     // fractal
     KW_OBSID,       // obsid (block terminator)
+    KW_ASM,          // asm      (inline assembly escape hatch)
 
     // ── Type Keywords ─────────────────────────────────────────────────────
     KW_STONE,       // stone    -> i64
@@ -179,6 +180,7 @@ const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"truth",    TokenKind::KW_TRUTH},
     {"glyph",    TokenKind::KW_GLYPH},
     {"ptr",      TokenKind::KW_PTR},
+    {"asm",      TokenKind::KW_ASM},
 };
 
 } // namespace ofs

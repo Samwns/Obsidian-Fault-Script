@@ -144,6 +144,15 @@ struct CastExpr : Expr {
     ExprPtr expr;
 };
 
+// ── Inline Assembly Escape Hatch ─────────────────────────────
+struct InlineAsmExpr : Expr {
+    std::string asm_code;
+    std::vector<std::string> outputs; // nomes das variáveis de saída
+    std::vector<ExprPtr> inputs;      // expressões de entrada
+    std::string clobbers;             // registradores/clobbers
+    bool volatile_ = false;
+};
+
 // ── Statements ────────────────────────────────────────────────────────────
 
 struct Stmt {

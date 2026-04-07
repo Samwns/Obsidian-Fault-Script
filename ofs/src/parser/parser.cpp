@@ -1034,6 +1034,9 @@ ExprPtr Parser::parse_primary() {
         return parse_array_literal();
     }
 
+    // Inline assembly: asm "..."
+    if (check(TokenKind::KW_ASM)) return parse_inline_asm();
+
     // Parenthesized expression
     if (match(TokenKind::LPAREN)) {
         auto expr = parse_expr();
@@ -1104,6 +1107,18 @@ ExprPtr Parser::parse_array_literal() {
     expect(TokenKind::RBRACKET, "expected ']' after array elements");
 
     return arr;
+}
+
+// Inline assembly escape hatch
+ExprPtr Parser::parse_inline_asm() {
+    auto t = advance(); // asm
+    auto str = expect(TokenKind::STRING_LIT, "expected string after 'asm'");
+    auto expr = std::make_unique<InlineAsmExpr>();
+    expr->line = t.line;
+    expr->col = t.col;
+    expr->asm_code = str.lexeme;
+    // TODO: parse outputs, inputs, clobbers, volatile
+    return expr;
 }
 
 } // namespace ofs

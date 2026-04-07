@@ -1,5 +1,6 @@
 #include "codegen.hpp"
 #include <llvm/IR/Verifier.h>
+#include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/Intrinsics.h>
 #include <llvm/Support/AtomicOrdering.h>
 #include <llvm/IR/LegacyPassManager.h>
@@ -1511,6 +1512,13 @@ llvm::Value* CodeGen::gen_lvalue(const Expr& e) {
         return builder_.CreateBitCast(elem_ptr, llvm::PointerType::getUnqual(load_ty), "typed_ptr");
     }
     return nullptr;
+}
+
+llvm::Value* CodeGen::gen_inline_asm(const InlineAsmExpr& e) {
+    // Gera um bloco de inline assembly usando LLVM
+    auto* fn_ty = llvm::FunctionType::get(llvm::Type::getVoidTy(ctx_), false);
+    auto* ia = llvm::InlineAsm::get(fn_ty, e.asm_code, e.outputs.empty() ? "" : e.outputs[0], e.volatile_);
+    return builder_.CreateCall(ia, {});
 }
 
 } // namespace ofs

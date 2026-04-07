@@ -55,6 +55,7 @@ private:
     void       gen_tremor(const TremorStmt& s);
     void       gen_throw(const ThrowStmt& s);
     void       gen_echo(const EchoExpr& e);
+    llvm::Value* gen_inline_asm(const InlineAsmExpr& e);
 
     llvm::Value* gen_expr(const Expr& e);
     llvm::Value* gen_binary(const BinaryExpr& e);
