@@ -156,7 +156,7 @@ static bool download_file(const std::string& url, const std::filesystem::path& o
     // Use PowerShell because it's available on all supported Windows hosts.
     std::string cmd = "powershell -NoProfile -ExecutionPolicy Bypass -Command "
                       "\"$ProgressPreference='SilentlyContinue'; "
-                      "Invoke-WebRequest -Uri " + quote_ps_single(url) + " -OutFile " + quote_ps_single(out_path.string()) + "\"";
+                      "Invoke-WebRequest -UseBasicParsing -Uri " + quote_ps_single(url) + " -OutFile " + quote_ps_single(out_path.string()) + "\"";
     return std::system(cmd.c_str()) == 0;
 #else
     std::string out = quote_arg(out_path.string());
@@ -176,7 +176,7 @@ static std::string fetch_latest_tag() {
         "powershell -NoProfile -ExecutionPolicy Bypass -Command "
         "\"$ProgressPreference='SilentlyContinue'; "
         "try { "
-        "  $r = Invoke-WebRequest -Uri " + quote_ps_single(release_url) + " -MaximumRedirection 0 -ErrorAction Stop; "
+        "  $r = Invoke-WebRequest -UseBasicParsing -Uri " + quote_ps_single(release_url) + " -MaximumRedirection 0 -ErrorAction Stop; "
         "  '' "
         "} catch { "
         "  $loc = $_.Exception.Response.Headers['Location']; "
