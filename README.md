@@ -1,78 +1,38 @@
 # Obsidian Fault Script (OFS)
 
-Language / Idioma:
+Linguagem híbrida: execute código simples diretamente e evolua para conceitos de baixo nível quando quiser.
 
-- [English](#english)
-- [Portugues (Brasil)](#portugues-brasil)
+[English](#english) | [Português (Brasil)](#português-brasil)
 
 ---
 
 ## English
 
-A hybrid language (interpreted run flow + native compilation), statically typed, designed to help people learn programming with fast feedback.
-Write simple code, run it with one command, and move into lower-level concepts when you are ready, without abandoning the language's own identity.
+A hybrid language (interpreted + compiled), statically typed. Write code, run instantly, then optimize to native binary when needed.
 
-### OFS Direction
+### Install
 
-OFS is not trying to become C with different keywords or assembly with nicer syntax.
+Download from [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
 
-The direction of the language is:
-
-- high-level and low-level OFS must coexist in the same file and program,
-- low-level control must remain native to OFS concepts such as `fracture`, `abyss`, `fractal`, and `bedrock`,
-- interop with C, C++, C#, Python, and assembly should exist as a capability layer, not as the conceptual foundation of the language,
-- the source of truth stays in OFS, even when inspecting LLVM IR or target assembly.
-
-### Start in 5 minutes
-
-1. Download the latest version from [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest).
-2. Install the binary for your platform.
-3. Optional: install the VS Code extension for highlight, diagnostics, and Run button support.
-
-Release files:
-
-| Platform | File |
+| Platform | Command |
 |---|---|
-| Linux (x64) | ofs-linux-x64-installer.tar.gz |
-| Windows (x64) | ofs-windows-x64-installer.exe |
-| macOS (ARM) | ofs-macos-arm64-installer.pkg |
-| VS Code | ofs-vscode-extension.vsix |
+| Linux | `tar -xzf ofs-linux-x64-installer.tar.gz && ./install.sh` |
+| macOS | `sudo installer -pkg ofs-macos-arm64-installer.pkg -target /` |
+| Windows | Run `ofs-windows-x64-installer.exe` |
+| VS Code | `code --install-extension ofs-vscode-extension.vsix` |
 
-Quick install:
-
-```bash
-# Linux
-tar -xzf ofs-linux-x64-installer.tar.gz
-chmod +x install.sh
-./install.sh
-
-# macOS
-sudo installer -pkg ofs-macos-arm64-installer.pkg -target /
-
-# VS Code
-code --install-extension ofs-vscode-extension.vsix
-```
-
-On Windows, run ofs-windows-x64-installer.exe.
-
-### Essential commands
+### Commands
 
 ```bash
-ofs file.ofs                    # run directly
-ofs check file.ofs              # validate types and syntax
-ofs build file.ofs -o app       # build native binary
-ofs ast file.ofs                # show syntax tree
-ofs ir file.ofs                 # show LLVM IR
-ofs asm file.ofs                # show target-native assembly
-ofs update                      # update to the latest release
-ofs help                        # help
+ofs file.ofs              # run directly
+ofs check file.ofs        # validate syntax
+ofs build file.ofs -o app # compile to binary
+ofs ast file.ofs          # syntax tree
+ofs ir file.ofs           # LLVM IR
+ofs asm file.ofs          # assembly
+ofs update                # update to latest
+ofs help                  # help
 ```
-
-### Updates
-
-- To update OFS after installation, run `ofs update`.
-- The command checks the latest GitHub release, downloads the right installer for your platform, and applies the update.
-- To verify after update: `ofs version`.
 
 ### Documentation
 
@@ -101,68 +61,48 @@ A direcao da linguagem e:
 - interoperabilidade com C, C++, C#, Python e assembly existe como camada de capacidade, nao como base conceitual da linguagem,
 - a fonte da verdade continua sendo OFS, mesmo quando voce inspeciona LLVM IR ou assembly nativo.
 
-### Comece em 5 minutos
+### Coms
 
-1. Baixe a versao mais recente em [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest).
-2. Instale o binario do seu sistema.
-3. Opcional: instale a extensao do VS Code para ter highlight, diagnostico e botao de Run.
-
-Arquivos de release:
-
-| Plataforma | Arquivo |
-|---|---|
-| Linux (x64) | ofs-linux-x64-installer.tar.gz |
-| Windows (x64) | ofs-windows-x64-installer.exe |
-| macOS (ARM) | ofs-macos-arm64-installer.pkg |
-| VS Code | ofs-vscode-extension.vsix |
-
-Instalacao rapida:
-
-```bash
-# Linux
-tar -xzf ofs-linux-x64-installer.tar.gz
-chmod +x install.sh
-./install.sh
-
-# macOS
-sudo installer -pkg ofs-macos-arm64-installer.pkg -target /
-
-# VS Code
-code --install-extension ofs-vscode-extension.vsix
-```
-
-No Windows, execute ofs-windows-x64-installer.exe.
-
-### Comandos essenciais
-
-```bash
-ofs arquivo.ofs                 # executa direto
-ofs check arquivo.ofs           # valida tipos e sintaxe
-ofs build arquivo.ofs -o app    # gera binario nativo
-ofs ast arquivo.ofs             # mostra arvore sintatica
-ofs ir arquivo.ofs              # mostra LLVM IR
-ofs asm arquivo.ofs             # mostra assembly nativo do alvo
-ofs update                      # atualiza para a release mais recente
-ofs help                        # ajuda
-```
-
-### Atualizacoes
-
-- Para atualizar o OFS depois de instalado, rode `ofs update`.
-- O comando verifica a release mais recente no GitHub, baixa o instalador certo da sua plataforma e aplica a atualizacao.
-- Para confirmar depois: `ofs version`.
-
-### Documentacao
-
-- [Guia de inicio](docs/GETTING_STARTED.md)
-- [Referencia da linguagem](docs/LANGUAGE_REFERENCE.md)
-- [Roadmap de baixo nivel](docs/LOW_LEVEL_ROADMAP.md)
-- [Jornada de aprendizado OFS](OFS_JORNADA_INICIANTE.md)
-- [Historico de versoes](docs/CHANGELOG.md)
-- [Bare-metal/Freestanding Profile (experimental)](ofs/docs/BAREMETAL_PROFILE.md)
+- [Getting Started](docs/GETTING_STARTED.md)
+- [Language Reference](docs/LANGUAGE_REFERENCE.md)
+- [Beginner Guide](OFS_JORNADA_INICIANTE.md)
+- [Packages](packages/README.md)
+- [Changelog](docs/CHANGELOG.md)
 
 ---
 
-## License / Licenca
+## Português (Brasil)
 
-MIT
+Linguagem híbrida: execute código simples direto e evolua para conceitos de baixo nível quando precisar.
+
+### Instalar
+
+Baixe em [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
+
+| Plataforma | Comando |
+|---|---|
+| Linux | `tar -xzf ofs-linux-x64-installer.tar.gz && ./install.sh` |
+| macOS | `sudo installer -pkg ofs-macos-arm64-installer.pkg -target /` |
+| Windows | Execute `ofs-windows-x64-installer.exe` |
+| VS Code | `code --install-extension ofs-vscode-extension.vsix` |
+
+### Comandos
+
+```bash
+ofs arquivo.ofs           # executa direto
+ofs check arquivo.ofs     # valida sintaxe
+ofs build arquivo.ofs     # compila para binário
+ofs ast arquivo.ofs       # árvore sintática
+ofs ir arquivo.ofs        # LLVM IR
+ofs asm arquivo.ofs       # assembly
+ofs update                # atualiza
+ofs help                  # ajuda
+```
+
+### Docs
+
+- [Guia de Início](docs/GETTING_STARTED.md)
+- [Referência da Linguagem](docs/LANGUAGE_REFERENCE.md)
+- [Guia do Iniciante](OFS_JORNADA_INICIANTE.md)
+- [Pacotes](packages/README.md)
+- [Changelog](docs/CHANGELOG.md)
