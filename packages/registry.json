@@ -1,6 +1,6 @@
 {
   "version": "1",
-  "updated": "2026-04-07",
+  "updated": "2026-04-12",
   "packages": [
     {
       "name": "fmt",
@@ -132,6 +132,17 @@
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
         "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/test_lib.ofs" }
+      }
+    },
+    {
+      "name": "window",
+      "description": "Window and input helpers for OFS native applications",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["window", "input", "graphics", "runtime", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-12", "channel": "stable", "main": "libs/window.ofs" }
       }
     }
   ]
