@@ -130,10 +130,12 @@ DeclPtr Parser::parse_decl() {
     if (check(TokenKind::KW_CORE))     return parse_func(true);
     if (check(TokenKind::KW_VEIN))     return parse_func(false);
     if (check(TokenKind::KW_MONOLITH)) return parse_monolith();
+    if (check(TokenKind::KW_IMPL))     return parse_impl();
+    if (check(TokenKind::KW_NAMESPACE)) return parse_namespace();
     if (check(TokenKind::KW_STRATA))   return parse_strata();
     if (check(TokenKind::KW_FORGE))    return parse_global_forge();
-    throw error(OFS_MSG("expected declaration (core, vein, monolith, strata, forge, or attach)",
-                         "esperada declaração (core, vein, monolith, strata, forge ou attach)"));
+    throw error(OFS_MSG("expected declaration (core, vein, monolith, impl, namespace, strata, forge, or attach)",
+                         "esperada declaração (core, vein, monolith, impl, namespace, strata, forge ou attach)"));
 }
 
 std::unique_ptr<FuncDecl> Parser::parse_func(bool is_core) {
@@ -153,8 +155,13 @@ std::unique_ptr<FuncDecl> Parser::parse_func(bool is_core) {
             skip_newlines();
             Param p;
             p.name = expect(TokenKind::IDENT, "expected parameter name").lexeme;
-            expect(TokenKind::COLON, "expected ':' after parameter name");
-            p.type = parse_type();
+            if (match(TokenKind::COLON)) {
+                p.type = parse_type();
+            } else if (parsing_impl_method_ && p.name == "self") {
+                p.type = OFSType::infer();
+            } else {
+                throw error("expected ':' after parameter name");
+            }
             fn->params.push_back(std::move(p));
         } while (match(TokenKind::COMMA));
     }
@@ -325,6 +332,61 @@ std::unique_ptr<MonolithDecl> Parser::parse_monolith() {
 
     expect(TokenKind::RBRACE, "expected '}' after monolith body");
     return m;
+}
+
+std::unique_ptr<ImplDecl> Parser::parse_impl() {
+    auto impl = std::make_unique<ImplDecl>();
+    impl->line = peek().line;
+    impl->col = peek().col;
+
+    advance(); // consume 'impl'
+    impl->target_name = expect(TokenKind::IDENT, "expected monolith name after impl").lexeme;
+
+    skip_newlines();
+    expect(TokenKind::LBRACE, "expected '{' after impl target");
+    skip_newlines();
+
+    while (!check(TokenKind::RBRACE) && !is_at_end()) {
+        if (!check(TokenKind::KW_VEIN)) {
+            throw error("expected method declaration (vein ...) inside impl");
+        }
+        parsing_impl_method_ = true;
+        auto method = parse_func(false);
+        parsing_impl_method_ = false;
+        bool has_self = !method->params.empty() && method->params[0].name == "self";
+        if (!has_self) {
+            Param self;
+            self.name = "self";
+            self.type = OFSType::named(impl->target_name);
+            method->params.insert(method->params.begin(), std::move(self));
+        }
+        impl->methods.push_back(std::move(method));
+        skip_newlines();
+    }
+
+    expect(TokenKind::RBRACE, "expected '}' after impl body");
+    return impl;
+}
+
+std::unique_ptr<NamespaceDecl> Parser::parse_namespace() {
+    auto ns = std::make_unique<NamespaceDecl>();
+    ns->line = peek().line;
+    ns->col = peek().col;
+
+    advance(); // consume 'namespace'
+    ns->name = expect(TokenKind::IDENT, "expected namespace name").lexeme;
+
+    skip_newlines();
+    expect(TokenKind::LBRACE, "expected '{' after namespace name");
+    skip_newlines();
+
+    while (!check(TokenKind::RBRACE) && !is_at_end()) {
+        ns->declarations.push_back(parse_decl());
+        skip_newlines();
+    }
+
+    expect(TokenKind::RBRACE, "expected '}' after namespace body");
+    return ns;
 }
 
 std::unique_ptr<GlobalForgeDecl> Parser::parse_global_forge() {
@@ -800,7 +862,14 @@ std::unique_ptr<StrataDecl> Parser::parse_strata() {
 // ── Types ─────────────────────────────────────────────────────────────────
 
 OFSType Parser::parse_type() {
+    if (check(TokenKind::KW_VEIN))     return parse_function_type();
     if (match(TokenKind::KW_STONE))    return OFSType::stone();
+    if (match(TokenKind::KW_U8))       return OFSType::u8();
+    if (match(TokenKind::KW_U16))      return OFSType::u16();
+    if (match(TokenKind::KW_U32))      return OFSType::u32();
+    if (match(TokenKind::KW_U64))      return OFSType::u64();
+    if (match(TokenKind::KW_I8))       return OFSType::i8();
+    if (match(TokenKind::KW_I32))      return OFSType::i32();
     if (match(TokenKind::KW_CRYSTAL))  return OFSType::crystal();
     if (match(TokenKind::KW_OBSIDIAN)) return OFSType::obsidian();
     if (match(TokenKind::KW_BOOL))     return OFSType::boolean();
@@ -819,6 +888,23 @@ OFSType Parser::parse_type() {
     throw error(OFS_MSG("expected type", "tipo esperado"));
 }
 
+OFSType Parser::parse_function_type() {
+    expect(TokenKind::KW_VEIN, "expected 'vein' in function type");
+    expect(TokenKind::LPAREN, "expected '(' after 'vein' in function type");
+
+    std::vector<OFSType> params;
+    if (!check(TokenKind::RPAREN)) {
+        do {
+            skip_newlines();
+            params.push_back(parse_type());
+        } while (match(TokenKind::COMMA));
+    }
+    expect(TokenKind::RPAREN, "expected ')' in function type");
+    expect(TokenKind::ARROW, "expected '->' in function type");
+    OFSType ret = parse_type();
+    return OFSType::function_of(std::move(params), ret);
+}
+
 OFSType Parser::parse_shard_type() {
     advance(); // consume '*'
     OFSType inner = parse_type();
@@ -831,6 +917,18 @@ ExprPtr Parser::parse_expr(int min_prec) {
     auto left = parse_unary();
 
     while (true) {
+        // Type cast: expr as type
+        if (check(TokenKind::KW_AS)) {
+            advance(); // consume 'as'
+            auto cast = std::make_unique<CastExpr>();
+            cast->line = left->line;
+            cast->col = left->col;
+            cast->target_type = parse_type();
+            cast->expr = std::move(left);
+            left = std::move(cast);
+            continue;
+        }
+
         // Check for assignment operators
         if (check(TokenKind::EQ) || check(TokenKind::PLUS_EQ) ||
             check(TokenKind::MINUS_EQ) || check(TokenKind::STAR_EQ) ||
@@ -874,17 +972,6 @@ ExprPtr Parser::parse_expr(int min_prec) {
         bin->left = std::move(left);
         bin->right = std::move(right);
         left = std::move(bin);
-    }
-
-    // Type cast: expr as type
-    if (check(TokenKind::KW_AS)) {
-        advance(); // consume 'as'
-        auto cast = std::make_unique<CastExpr>();
-        cast->line = left->line;
-        cast->col = left->col;
-        cast->target_type = parse_type();
-        cast->expr = std::move(left);
-        left = std::move(cast);
     }
 
     return left;
@@ -951,6 +1038,10 @@ ExprPtr Parser::parse_unary() {
 }
 
 ExprPtr Parser::parse_primary() {
+    if (check(TokenKind::KW_VEIN)) {
+        return parse_lambda_expr();
+    }
+
     // Integer literal
     if (check(TokenKind::INT_LIT)) {
         auto e = std::make_unique<IntLitExpr>();
@@ -1063,6 +1154,37 @@ ExprPtr Parser::parse_primary() {
     }
 
     throw error(OFS_MSG("expected expression", "expressão esperada"));
+}
+
+ExprPtr Parser::parse_lambda_expr() {
+    auto lambda = std::make_unique<LambdaExpr>();
+    lambda->line = peek().line;
+    lambda->col = peek().col;
+
+    expect(TokenKind::KW_VEIN, "expected 'vein' to start lambda");
+    expect(TokenKind::LPAREN, "expected '(' after lambda 'vein'");
+
+    if (!check(TokenKind::RPAREN)) {
+        do {
+            skip_newlines();
+            Param p;
+            p.name = expect(TokenKind::IDENT, "expected lambda parameter name").lexeme;
+            expect(TokenKind::COLON, "expected ':' after lambda parameter name");
+            p.type = parse_type();
+            lambda->params.push_back(std::move(p));
+        } while (match(TokenKind::COMMA));
+    }
+    expect(TokenKind::RPAREN, "expected ')' after lambda parameters");
+
+    if (match(TokenKind::ARROW)) {
+        lambda->return_type = parse_type();
+    } else {
+        lambda->return_type = OFSType::void_t();
+    }
+
+    skip_newlines();
+    lambda->body = parse_block();
+    return lambda;
 }
 
 ExprPtr Parser::parse_call(ExprPtr callee) {

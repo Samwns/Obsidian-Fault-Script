@@ -29,6 +29,14 @@ int main() {
     test("obsidian type", t[2].kind == TokenKind::KW_OBSIDIAN);
     test("shard type",    t[3].kind == TokenKind::KW_SHARD);
 
+    t = lex("u8 u16 u32 u64 i8 i32");
+    test("u8 type",   t[0].kind == TokenKind::KW_U8);
+    test("u16 type",  t[1].kind == TokenKind::KW_U16);
+    test("u32 type",  t[2].kind == TokenKind::KW_U32);
+    test("u64 type",  t[3].kind == TokenKind::KW_U64);
+    test("i8 type",   t[4].kind == TokenKind::KW_I8);
+    test("i32 type",  t[5].kind == TokenKind::KW_I32);
+
     // Literals
     t = lex("42 3.14 \"hello\" true false");
     test("int literal",    t[0].kind == TokenKind::INT_LIT && t[0].int_val == 42);
@@ -123,6 +131,10 @@ int main() {
     test("tremor keyword",  t[9].kind == TokenKind::KW_TREMOR);
     test("catch keyword",   t[10].kind == TokenKind::KW_CATCH);
     test("throw keyword",   t[11].kind == TokenKind::KW_THROW);
+
+    t = lex("impl namespace");
+    test("impl keyword",      t[0].kind == TokenKind::KW_IMPL);
+    test("namespace keyword", t[1].kind == TokenKind::KW_NAMESPACE);
 
     // Attach statement
     t = lex("attach \"stdlib/core.ofs\"");

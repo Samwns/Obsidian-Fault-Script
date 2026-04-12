@@ -21,6 +21,8 @@ enum class TokenKind {
     KW_VEIN,        // vein     (function definition)
     KW_FORGE,       // forge    (variable declaration)
     KW_MONOLITH,    // monolith (struct / record)
+    KW_IMPL,        // impl     (methods for monolith)
+    KW_NAMESPACE,   // namespace (symbol grouping)
     KW_FRACTURE,    // fracture (safe pointer block)
     KW_ABYSS,       // abyss    (unsafe memory block)
     KW_CYCLE,       // cycle    (loop)
@@ -59,6 +61,12 @@ enum class TokenKind {
 
     // ── Type Keywords ─────────────────────────────────────────────────────
     KW_STONE,       // stone    -> i64
+    KW_U8,          // u8       -> i8 (unsigned)
+    KW_U16,         // u16      -> i16 (unsigned)
+    KW_U32,         // u32      -> i32 (unsigned)
+    KW_U64,         // u64      -> i64 (unsigned)
+    KW_I8,          // i8       -> i8 (signed)
+    KW_I32,         // i32      -> i32 (signed)
     KW_CRYSTAL,     // crystal  -> f64
     KW_OBSIDIAN,    // obsidian -> i8* (string)
     KW_BOOL,        // bool     -> i1
@@ -137,6 +145,8 @@ const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"vein",     TokenKind::KW_VEIN},
     {"forge",    TokenKind::KW_FORGE},
     {"monolith", TokenKind::KW_MONOLITH},
+    {"impl",     TokenKind::KW_IMPL},
+    {"namespace",TokenKind::KW_NAMESPACE},
     {"fracture", TokenKind::KW_FRACTURE},
     {"abyss",    TokenKind::KW_ABYSS},
     {"cycle",    TokenKind::KW_CYCLE},
@@ -173,6 +183,12 @@ const std::unordered_map<std::string, TokenKind> KEYWORDS = {
     {"fractal",  TokenKind::KW_FRACTAL},
     {"obsid",    TokenKind::KW_OBSID},
     {"stone",    TokenKind::KW_STONE},
+    {"u8",       TokenKind::KW_U8},
+    {"u16",      TokenKind::KW_U16},
+    {"u32",      TokenKind::KW_U32},
+    {"u64",      TokenKind::KW_U64},
+    {"i8",       TokenKind::KW_I8},
+    {"i32",      TokenKind::KW_I32},
     {"crystal",  TokenKind::KW_CRYSTAL},
     {"obsidian", TokenKind::KW_OBSIDIAN},
     {"bool",     TokenKind::KW_BOOL},

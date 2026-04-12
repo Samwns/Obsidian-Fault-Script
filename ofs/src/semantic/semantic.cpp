@@ -25,6 +25,22 @@ bool is_fault_intrinsic_name(const std::string& name) {
            name == "fault_memset";
 }
 
+static std::string join_namespace(const std::vector<std::string>& ns_stack) {
+    if (ns_stack.empty()) return "";
+    std::string out;
+    for (size_t i = 0; i < ns_stack.size(); i++) {
+        if (i > 0) out += "::";
+        out += ns_stack[i];
+    }
+    return out;
+}
+
+static std::string qualify_name(const std::vector<std::string>& ns_stack, const std::string& name) {
+    std::string ns = join_namespace(ns_stack);
+    if (ns.empty()) return name;
+    return ns + "::" + name;
+}
+
 bool is_low_level_scope(bool inside_fracture, bool inside_abyss, bool inside_bedrock) {
     return inside_fracture || inside_abyss || inside_bedrock;
 }
@@ -36,37 +52,82 @@ bool is_low_level_scope(bool inside_fracture, bool inside_abyss, bool inside_bed
 void SemanticAnalyzer::analyze(Module& mod) {
     register_builtin_symbols();
 
-    // First pass: register all monoliths and functions
-    for (auto& d : mod.decls) {
-        if (auto* m = dynamic_cast<MonolithDecl*>(d.get())) {
+    auto register_decl = [&](auto&& self, Decl& d) -> void {
+        if (auto* m = dynamic_cast<MonolithDecl*>(&d)) {
             monoliths_[m->name] = m;
             Symbol sym;
             sym.name = m->name;
             sym.type = OFSType::named(m->name);
             sym.kind = SymbolKind::Monolith;
             scope_.define(m->name, sym);
-        } else if (auto* fn = dynamic_cast<FuncDecl*>(d.get())) {
+            return;
+        }
+
+        if (auto* fn = dynamic_cast<FuncDecl*>(&d)) {
             Symbol sym;
-            sym.name = fn->name;
-            sym.type = fn->return_type;
+            sym.name = qualify_name(namespace_stack_, fn->name);
+            sym.type = function_signature_type(fn->params, fn->return_type);
             sym.kind = SymbolKind::Function;
+            scope_.define(sym.name, sym);
             scope_.define(fn->name, sym);
-            function_intents_[fn->name] = fn->intent;
-        } else if (auto* ext = dynamic_cast<ExternFuncDecl*>(d.get())) {
+            function_intents_[sym.name] = fn->intent;
+            function_types_[sym.name] = sym.type;
+            return;
+        }
+
+        if (auto* ext = dynamic_cast<ExternFuncDecl*>(&d)) {
             Symbol sym;
-            sym.name = ext->name;
-            sym.type = ext->return_type;
+            sym.name = qualify_name(namespace_stack_, ext->name);
+            sym.type = function_signature_type(ext->params, ext->return_type);
             sym.kind = SymbolKind::Function;
+            scope_.define(sym.name, sym);
             scope_.define(ext->name, sym);
-        } else if (auto* st = dynamic_cast<StrataDecl*>(d.get())) {
-            // Register strata type name
+            function_types_[sym.name] = sym.type;
+            return;
+        }
+
+        if (auto* st = dynamic_cast<StrataDecl*>(&d)) {
             Symbol sym;
             sym.name = st->name;
             sym.type = OFSType::named(st->name);
             sym.kind = SymbolKind::Monolith;
             scope_.define(st->name, sym);
+            return;
         }
+
+        if (auto* impl = dynamic_cast<ImplDecl*>(&d)) {
+            for (auto& method : impl->methods) {
+                std::string mangled = impl->target_name + "_" + method->name;
+                OFSType sig = function_signature_type(method->params, method->return_type);
+                impl_method_types_[impl->target_name + "::" + method->name] = sig;
+                impl_method_owner_[impl->target_name + "::" + method->name] = impl->target_name;
+
+                Symbol sym;
+                sym.name = mangled;
+                sym.type = sig;
+                sym.kind = SymbolKind::Function;
+                scope_.define(mangled, sym);
+                function_types_[mangled] = sig;
+            }
+            return;
+        }
+
+        if (auto* ns = dynamic_cast<NamespaceDecl*>(&d)) {
+            namespace_stack_.push_back(ns->name);
+            for (auto& inner : ns->declarations) {
+                self(self, *inner);
+            }
+            namespace_stack_.pop_back();
+            return;
+        }
+    };
+
+    // First pass: register all monoliths and functions
+    for (auto& d : mod.decls) {
+        register_decl(register_decl, *d);
     }
+
+    namespace_stack_.clear();
 
     // Second pass: check everything
     for (auto& d : mod.decls) {
@@ -74,6 +135,10 @@ void SemanticAnalyzer::analyze(Module& mod) {
             check_func(*fn);
         } else if (auto* m = dynamic_cast<MonolithDecl*>(d.get())) {
             check_monolith(*m);
+        } else if (auto* i = dynamic_cast<ImplDecl*>(d.get())) {
+            check_impl(*i);
+        } else if (auto* n = dynamic_cast<NamespaceDecl*>(d.get())) {
+            check_namespace(*n);
         } else if (auto* g = dynamic_cast<GlobalForgeDecl*>(d.get())) {
             check_global_forge(*g);
         } else if (auto* ext = dynamic_cast<ExternFuncDecl*>(d.get())) {
@@ -87,36 +152,44 @@ void SemanticAnalyzer::analyze(Module& mod) {
 }
 
 void SemanticAnalyzer::register_builtin_symbols() {
-    struct BuiltinDef { const char* name; OFSType type; };
+    struct BuiltinDef {
+        const char* name;
+        std::vector<OFSType> params;
+        OFSType ret;
+    };
     BuiltinDef builtins[] = {
-        // Returns stone (bit operations)
-        {"fault_count",      OFSType::stone()},
-        {"fault_lead",       OFSType::stone()},
-        {"fault_trail",      OFSType::stone()},
-        {"fault_swap",       OFSType::stone()},
-        {"fault_spin_left",  OFSType::stone()},
-        {"fault_spin_right", OFSType::stone()},
-        {"fault_cut",        OFSType::stone()},
-        {"fault_patch",      OFSType::stone()},
-        {"fault_weave",      OFSType::stone()},
-        // Returns void
-        {"fault_fence",       OFSType::void_t()},
-        {"fault_prefetch",    OFSType::void_t()},
-        {"fault_trap",        OFSType::void_t()},
-        {"fault_unreachable", OFSType::void_t()},
-        {"fault_memcpy",      OFSType::void_t()},
-        {"fault_memset",      OFSType::void_t()},
-        // fault_step returns pointer — type inferred at call site from first arg
-        {"fault_step",        OFSType::shard_of(OFSType::stone())},
+        {"fault_count",      {OFSType::stone()}, OFSType::stone()},
+        {"fault_lead",       {OFSType::stone()}, OFSType::stone()},
+        {"fault_trail",      {OFSType::stone()}, OFSType::stone()},
+        {"fault_swap",       {OFSType::stone()}, OFSType::stone()},
+        {"fault_spin_left",  {OFSType::stone(), OFSType::stone()}, OFSType::stone()},
+        {"fault_spin_right", {OFSType::stone(), OFSType::stone()}, OFSType::stone()},
+        {"fault_cut",        {OFSType::stone(), OFSType::stone(), OFSType::stone()}, OFSType::stone()},
+        {"fault_patch",      {OFSType::stone(), OFSType::stone(), OFSType::stone(), OFSType::stone()}, OFSType::stone()},
+        {"fault_weave",      {OFSType::stone(), OFSType::stone(), OFSType::stone()}, OFSType::stone()},
+        {"fault_fence",       {}, OFSType::void_t()},
+        {"fault_prefetch",    {OFSType::shard_of(OFSType::stone())}, OFSType::void_t()},
+        {"fault_trap",        {}, OFSType::void_t()},
+        {"fault_unreachable", {}, OFSType::void_t()},
+        {"fault_memcpy",      {OFSType::shard_of(OFSType::stone()), OFSType::shard_of(OFSType::stone()), OFSType::stone()}, OFSType::void_t()},
+        {"fault_memset",      {OFSType::shard_of(OFSType::stone()), OFSType::stone(), OFSType::stone()}, OFSType::void_t()},
+        {"fault_step",        {OFSType::shard_of(OFSType::stone()), OFSType::stone()}, OFSType::shard_of(OFSType::stone())},
     };
 
     for (auto& b : builtins) {
         Symbol sym;
         sym.name = b.name;
-        sym.type = b.type;
+        sym.type = OFSType::function_of(b.params, b.ret);
         sym.kind = SymbolKind::Function;
         scope_.define(sym.name, sym);
+        function_types_[sym.name] = sym.type;
     }
+}
+
+OFSType SemanticAnalyzer::function_signature_type(const std::vector<Param>& params, const OFSType& ret) const {
+    std::vector<OFSType> param_types;
+    for (const auto& p : params) param_types.push_back(p.type);
+    return OFSType::function_of(std::move(param_types), ret);
 }
 
 // ── Declaration checks ────────────────────────────────────────────────────
@@ -153,6 +226,51 @@ void SemanticAnalyzer::check_monolith(MonolithDecl& m) {
     for (auto& method : m.methods) {
         check_func(*method);
     }
+}
+
+void SemanticAnalyzer::check_impl(ImplDecl& i) {
+    auto mono_it = monoliths_.find(i.target_name);
+    if (mono_it == monoliths_.end()) {
+        throw SemanticError(
+            OFS_MSG("impl target '" + i.target_name + "' not found",
+                    "alvo de impl '" + i.target_name + "' não encontrado"),
+            i.line, i.col);
+    }
+
+    for (auto& method : i.methods) {
+        if (method->params.empty() || method->params[0].name != "self") {
+            Param self;
+            self.name = "self";
+            self.type = OFSType::named(i.target_name);
+            method->params.insert(method->params.begin(), std::move(self));
+        }
+        if (method->params[0].type.base == BaseType::Infer) {
+            method->params[0].type = OFSType::named(i.target_name);
+        }
+        check_func(*method);
+    }
+}
+
+void SemanticAnalyzer::check_namespace(NamespaceDecl& n) {
+    namespace_stack_.push_back(n.name);
+    for (auto& d : n.declarations) {
+        if (auto* fn = dynamic_cast<FuncDecl*>(d.get())) {
+            check_func(*fn);
+        } else if (auto* m = dynamic_cast<MonolithDecl*>(d.get())) {
+            check_monolith(*m);
+        } else if (auto* i = dynamic_cast<ImplDecl*>(d.get())) {
+            check_impl(*i);
+        } else if (auto* g = dynamic_cast<GlobalForgeDecl*>(d.get())) {
+            check_global_forge(*g);
+        } else if (auto* e = dynamic_cast<ExternFuncDecl*>(d.get())) {
+            check_extern(*e);
+        } else if (auto* s = dynamic_cast<StrataDecl*>(d.get())) {
+            check_strata(*s);
+        } else if (auto* child = dynamic_cast<NamespaceDecl*>(d.get())) {
+            check_namespace(*child);
+        }
+    }
+    namespace_stack_.pop_back();
 }
 
 void SemanticAnalyzer::check_global_forge(GlobalForgeDecl& g) {
@@ -294,7 +412,7 @@ void SemanticAnalyzer::check_forge(ForgeStmt& s) {
 
     if (s.type_ann) {
         if (s.initializer && type.base != BaseType::Infer) {
-            if (!is_assignable(*s.type_ann, type)) {
+            if (!(inside_abyss_ || inside_bedrock_) && !is_assignable(*s.type_ann, type)) {
                 throw SemanticError(
                     OFS_MSG("type mismatch: cannot assign " + type.to_string() +
                             " to " + s.type_ann->to_string(),
@@ -521,11 +639,19 @@ OFSType SemanticAnalyzer::check_expr(Expr& e) {
     } else if (auto* id = dynamic_cast<IdentExpr*>(&e)) {
         auto* sym = scope_.lookup(id->name);
         if (!sym) {
+            std::string qualified = qualify_name(namespace_stack_, id->name);
+            sym = scope_.lookup(qualified);
+        }
+        if (!sym) {
             throw SemanticError(OFS_MSG("undefined variable '" + id->name + "'",
                                         "variável '" + id->name + "' não definida"),
                                 e.line, e.col);
         }
-        result = sym->type;
+        if (sym->kind == SymbolKind::Function && sym->type.base == BaseType::Function && sym->type.fn_return) {
+            result = sym->type;
+        } else {
+            result = sym->type;
+        }
     } else if (auto* bin = dynamic_cast<BinaryExpr*>(&e)) {
         result = check_binary(*bin);
     } else if (auto* un = dynamic_cast<UnaryExpr*>(&e)) {
@@ -544,6 +670,8 @@ OFSType SemanticAnalyzer::check_expr(Expr& e) {
         result = check_array_lit(*arr);
     } else if (auto* cast = dynamic_cast<CastExpr*>(&e)) {
         result = check_cast(*cast);
+    } else if (auto* lambda = dynamic_cast<LambdaExpr*>(&e)) {
+        result = check_lambda(*lambda);
     } else if (auto* ia = dynamic_cast<InlineAsmExpr*>(&e)) {
         // Inline assembly: check input expressions, returns void
         for (auto& inp : ia->inputs) check_expr(*inp);
@@ -585,19 +713,31 @@ OFSType SemanticAnalyzer::check_binary(BinaryExpr& e) {
         return OFSType::boolean();
     }
 
-    // Bitwise operators and shifts (stone only)
-    if (e.op == "&" || e.op == "|" || e.op == "^" || e.op == "<<" || e.op == ">>") {
-        if (left.base != BaseType::Stone || right.base != BaseType::Stone) {
-            throw SemanticError(OFS_MSG("bitwise operators require stone operands",
-                                        "operadores bit a bit requerem operandos stone"),
+    // Bitwise operators and shifts (integral only)
+    if (e.op == "&" || e.op == "|" || e.op == "^") {
+        if (!is_integral(left) || !is_integral(right)) {
+            throw SemanticError(OFS_MSG("bitwise operators require integral operands",
+                                        "operadores bit a bit requerem operandos inteiros"),
                                 e.line, e.col);
         }
-        return OFSType::stone();
+        return promote(left, right);
+    }
+
+    if (e.op == "<<" || e.op == ">>") {
+        if (!is_integral(left) || !is_integral(right)) {
+            throw SemanticError(OFS_MSG("shift operators require integral operands",
+                                        "operadores de deslocamento requerem operandos inteiros"),
+                                e.line, e.col);
+        }
+        return left;
     }
 
     // Arithmetic operators
     if (e.op == "+" || e.op == "-" || e.op == "*" || e.op == "/" || e.op == "%") {
         if (!is_numeric(left) || !is_numeric(right)) {
+            if (inside_abyss_ || inside_bedrock_) {
+                return OFSType::stone();
+            }
             throw SemanticError(OFS_MSG("arithmetic operator requires numeric operands",
                                         "operador aritmético requer operandos numéricos"),
                                 e.line, e.col);
@@ -661,8 +801,43 @@ OFSType SemanticAnalyzer::check_unary(UnaryExpr& e) {
 }
 
 OFSType SemanticAnalyzer::check_call(CallExpr& e) {
-    OFSType callee_type = check_expr(*e.callee);
+    OFSType callee_type = OFSType::infer();
+    bool callee_is_member = dynamic_cast<MemberExpr*>(e.callee.get()) != nullptr;
+    auto* callee_ident = dynamic_cast<IdentExpr*>(e.callee.get());
+    if (!callee_is_member) {
+        callee_type = check_expr(*e.callee);
+    }
     for (auto& arg : e.args) check_expr(*arg);
+
+    // Function variable/pointer call
+    bool ident_is_declared_function = false;
+    if (callee_ident) {
+        if (auto* sym = scope_.lookup(callee_ident->name)) {
+            ident_is_declared_function = (sym->kind == SymbolKind::Function);
+        }
+    }
+
+    if (callee_type.base == BaseType::Function &&
+        !(callee_ident && is_fault_intrinsic_name(callee_ident->name)) &&
+        (!callee_ident || !ident_is_declared_function)) {
+        if (callee_type.fn_params.size() != e.args.size()) {
+            throw SemanticError(
+                OFS_MSG("function expected " + std::to_string(callee_type.fn_params.size()) +
+                        " arguments but got " + std::to_string(e.args.size()),
+                        "função esperava " + std::to_string(callee_type.fn_params.size()) +
+                        " argumentos mas recebeu " + std::to_string(e.args.size())),
+                e.line, e.col);
+        }
+        for (size_t i = 0; i < e.args.size(); i++) {
+            if (!is_assignable(callee_type.fn_params[i], e.args[i]->resolved_type)) {
+                throw SemanticError(
+                    OFS_MSG("function argument type mismatch at position " + std::to_string(i),
+                            "incompatibilidade de tipo de argumento de função na posição " + std::to_string(i)),
+                    e.line, e.col);
+            }
+        }
+        return callee_type.fn_return ? *callee_type.fn_return : OFSType::void_t();
+    }
 
     // Look up function
     if (auto* id = dynamic_cast<IdentExpr*>(e.callee.get())) {
@@ -762,7 +937,7 @@ OFSType SemanticAnalyzer::check_call(CallExpr& e) {
 
         auto* sym = scope_.lookup(id->name);
         if (sym && sym->kind == SymbolKind::Function) {
-            auto it = function_intents_.find(id->name);
+            auto it = function_intents_.find(sym->name);
             FuncIntent called_intent = (it != function_intents_.end()) ? it->second : FuncIntent::Impure;
 
             if (current_intent_ == FuncIntent::Pure &&
@@ -781,11 +956,49 @@ OFSType SemanticAnalyzer::check_call(CallExpr& e) {
                     e.line, e.col);
             }
 
-            return sym->type;
+            if (sym->type.base == BaseType::Function && sym->type.fn_return) {
+                return *sym->type.fn_return;
+            }
+            return OFSType::void_t();
         }
         // Monolith constructor
         if (sym && sym->kind == SymbolKind::Monolith) {
             return OFSType::named(id->name);
+        }
+
+        std::string qname = qualify_name(namespace_stack_, id->name);
+        auto* qsym = scope_.lookup(qname);
+        if (qsym && qsym->kind == SymbolKind::Function && qsym->type.base == BaseType::Function && qsym->type.fn_return) {
+            return *qsym->type.fn_return;
+        }
+    }
+
+    // obj.method(args) or namespace.function(args)
+    if (auto* mem = dynamic_cast<MemberExpr*>(e.callee.get())) {
+        if (auto* obj_ident = dynamic_cast<IdentExpr*>(mem->object.get())) {
+            std::string ns_candidate = obj_ident->name + "::" + mem->field;
+            auto* ns_fn = scope_.lookup(ns_candidate);
+            if (ns_fn && ns_fn->kind == SymbolKind::Function && ns_fn->type.base == BaseType::Function) {
+                if (ns_fn->type.fn_return) return *ns_fn->type.fn_return;
+                return OFSType::void_t();
+            }
+        }
+
+        OFSType recv_type = check_expr(*mem->object);
+        if (recv_type.base == BaseType::Named) {
+            std::string key = recv_type.name + "::" + mem->field;
+            auto it = impl_method_types_.find(key);
+            if (it == impl_method_types_.end()) {
+                throw SemanticError(
+                    OFS_MSG("method '" + mem->field + "' not found for type '" + recv_type.name + "'",
+                            "método '" + mem->field + "' não encontrado para o tipo '" + recv_type.name + "'"),
+                    e.line, e.col);
+            }
+            OFSType sig = it->second;
+            if (sig.base == BaseType::Function && sig.fn_return) {
+                return *sig.fn_return;
+            }
+            return OFSType::void_t();
         }
     }
 
@@ -812,6 +1025,9 @@ OFSType SemanticAnalyzer::check_assign(AssignExpr& e) {
     OFSType value = check_expr(*e.value);
 
     if (e.op == "=") {
+        if (inside_abyss_ || inside_bedrock_) {
+            return target;
+        }
         if (!is_assignable(target, value)) {
             throw SemanticError(
                 OFS_MSG("cannot assign " + value.to_string() + " to " + target.to_string(),
@@ -901,6 +1117,25 @@ OFSType SemanticAnalyzer::check_cast(CastExpr& e) {
                         e.line, e.col);
 }
 
+OFSType SemanticAnalyzer::check_lambda(LambdaExpr& e) {
+    scope_.push();
+    for (auto& p : e.params) {
+        Symbol sym;
+        sym.name = p.name;
+        sym.type = p.type;
+        sym.kind = SymbolKind::Param;
+        scope_.define(p.name, sym);
+    }
+
+    OFSType prev_ret = current_return_type_;
+    current_return_type_ = e.return_type;
+    if (e.body) check_stmt(*e.body);
+    current_return_type_ = prev_ret;
+
+    scope_.pop();
+    return function_signature_type(e.params, e.return_type);
+}
+
 // ── Type helpers ──────────────────────────────────────────────────────────
 
 OFSType SemanticAnalyzer::infer_type(const Expr& init) {
@@ -912,19 +1147,65 @@ bool SemanticAnalyzer::is_assignable(const OFSType& to, const OFSType& from) con
     if (to == from) return true;
     // Stone can be widened to Crystal
     if (to.base == BaseType::Crystal && from.base == BaseType::Stone) return true;
+    // Numeric assignments are allowed (narrowing/widening handled by codegen cast)
+    if (is_numeric(to) && is_numeric(from)) return true;
     // Infer is always compatible
     if (to.base == BaseType::Infer || from.base == BaseType::Infer) return true;
     return false;
 }
 
 bool SemanticAnalyzer::is_numeric(const OFSType& t) const {
-    return t.base == BaseType::Stone || t.base == BaseType::Crystal;
+    return t.is_numeric();
+}
+
+bool SemanticAnalyzer::is_integral(const OFSType& t) const {
+    return t.is_integral();
+}
+
+bool SemanticAnalyzer::is_unsigned_integer(const OFSType& t) const {
+    return t.is_unsigned_integer();
+}
+
+int SemanticAnalyzer::integer_bits(const OFSType& t) const {
+    return t.integer_bits();
 }
 
 OFSType SemanticAnalyzer::promote(const OFSType& a, const OFSType& b) const {
     if (a.base == BaseType::Crystal || b.base == BaseType::Crystal) {
         return OFSType::crystal();
     }
+
+    // Any operation with stone promotes to stone.
+    if (a.base == BaseType::Stone || b.base == BaseType::Stone) {
+        return OFSType::stone();
+    }
+
+    // Requested unsigned cascade promotion rules.
+    if (a.base == BaseType::U8 && b.base == BaseType::U8)   return OFSType::u16();
+    if (a.base == BaseType::U16 && b.base == BaseType::U16) return OFSType::u32();
+    if (a.base == BaseType::U32 && b.base == BaseType::U32) return OFSType::u64();
+
+    // Signed small integer promotions.
+    if (a.base == BaseType::I8 && b.base == BaseType::I8)   return OFSType::i32();
+    if (a.base == BaseType::I32 && b.base == BaseType::I32) return OFSType::i32();
+
+    // Generic integer promotion fallback.
+    if (is_integral(a) && is_integral(b)) {
+        const int bits = std::max(integer_bits(a), integer_bits(b));
+        const bool both_unsigned = is_unsigned_integer(a) && is_unsigned_integer(b);
+
+        if (both_unsigned) {
+            if (bits <= 8)  return OFSType::u8();
+            if (bits <= 16) return OFSType::u16();
+            if (bits <= 32) return OFSType::u32();
+            return OFSType::u64();
+        }
+
+        if (bits <= 8)  return OFSType::i8();
+        if (bits <= 32) return OFSType::i32();
+        return OFSType::stone();
+    }
+
     return OFSType::stone();
 }
 

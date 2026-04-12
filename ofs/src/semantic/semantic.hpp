@@ -11,6 +11,8 @@ private:
     // ── Declarations ─────────────────────────────────────────────────────
     void check_func(FuncDecl& fn);
     void check_monolith(MonolithDecl& m);
+    void check_impl(ImplDecl& i);
+    void check_namespace(NamespaceDecl& n);
     void check_global_forge(GlobalForgeDecl& g);
     void check_import(ImportDecl& i);
     void check_extern(ExternFuncDecl& e);
@@ -45,14 +47,19 @@ private:
     OFSType check_member(MemberExpr& e);
     OFSType check_array_lit(ArrayLitExpr& e);
     OFSType check_cast(CastExpr& e);
+    OFSType check_lambda(LambdaExpr& e);
 
     // ── Type helpers ──────────────────────────────────────────────────────
     OFSType infer_type(const Expr& init); // infer type from initializer
     bool    is_assignable(const OFSType& to, const OFSType& from) const;
     bool    is_numeric(const OFSType& t)  const;
+    bool    is_integral(const OFSType& t) const;
+    bool    is_unsigned_integer(const OFSType& t) const;
+    int     integer_bits(const OFSType& t) const;
     OFSType promote(const OFSType& a, const OFSType& b) const; // int+float -> float
     void    expect_type(const OFSType& got, const OFSType& want, int line, int col);
     void    register_builtin_symbols();
+    OFSType function_signature_type(const std::vector<Param>& params, const OFSType& ret) const;
 
     // ── State ─────────────────────────────────────────────────────────────
     Scope       scope_;
@@ -65,6 +72,11 @@ private:
     bool        inside_cycle_    = false;
 
     std::unordered_map<std::string, FuncIntent> function_intents_;
+    std::unordered_map<std::string, OFSType> function_types_;
+    std::unordered_map<std::string, OFSType> impl_method_types_;
+    std::unordered_map<std::string, std::string> impl_method_owner_;
+    std::vector<std::string> namespace_stack_;
+    int lambda_counter_ = 0;
 
     // Monolith registry (for field access checks)
     std::unordered_map<std::string, MonolithDecl*> monoliths_;

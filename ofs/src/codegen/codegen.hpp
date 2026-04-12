@@ -66,12 +66,14 @@ private:
     llvm::Value* gen_member(const MemberExpr& e);
     llvm::Value* gen_array_lit(const ArrayLitExpr& e);
     llvm::Value* gen_cast(const CastExpr& e);
+    llvm::Value* gen_lambda(const LambdaExpr& e);
 
     // Get address of an lvalue expression (for assignment, address-of)
     llvm::Value* gen_lvalue(const Expr& e);
 
     // ── LLVM Type Mapping ─────────────────────────────────────────────────
     llvm::Type*     llvm_type(const OFSType& t);
+    llvm::FunctionType* llvm_function_type(const OFSType& t);
     llvm::Type*     llvm_array_struct(const OFSType& element_type);
 
     // ── Runtime function declarations ─────────────────────────────────────
@@ -84,6 +86,12 @@ private:
     llvm::AllocaInst* create_alloca(llvm::Function* fn,
                                      const std::string& name,
                                      llvm::Type* ty);
+    bool            is_integral_type(const OFSType& t) const;
+    bool            is_unsigned_type(const OFSType& t) const;
+    llvm::Value*    cast_to_type(llvm::Value* val, const OFSType& from, const OFSType& to);
+    std::string     current_namespace() const;
+    std::string     qualify_symbol(const std::string& name) const;
+    std::string     mangle_method_name(const std::string& type_name, const std::string& method) const;
 
     // ── State ─────────────────────────────────────────────────────────────
     llvm::LLVMContext                 ctx_;
@@ -102,6 +110,7 @@ private:
 
     // Function declarations (for calls)
     std::unordered_map<std::string, llvm::Function*> functions_;
+    std::unordered_map<std::string, llvm::Function*> method_functions_;
 
     // Current function being generated
     llvm::Function*  cur_fn_ = nullptr;
@@ -112,6 +121,9 @@ private:
 
     // Runtime function cache
     std::unordered_map<std::string, llvm::Function*> runtime_fns_;
+
+    std::vector<std::string> namespace_stack_;
+    int lambda_counter_ = 0;
 };
 
 } // namespace ofs

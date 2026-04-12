@@ -14,7 +14,7 @@ struct SemanticError : std::runtime_error {
 };
 
 // Symbol kinds
-enum class SymbolKind { Variable, Function, Monolith, Param };
+enum class SymbolKind { Variable, Function, Monolith, Namespace, Param };
 
 struct Symbol {
     std::string name;

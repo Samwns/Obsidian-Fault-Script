@@ -101,49 +101,103 @@ void CodeGen::generate(const Module& mod) {
     // Push global scope
     var_stack_.push_back({});
 
-    // First pass: declare all functions and monolith types
-    for (auto& d : mod.decls) {
-        if (auto* fn = dynamic_cast<const FuncDecl*>(d.get())) {
-            // Create function declaration
+    auto declare_decl = [&](auto&& self, const Decl& d) -> void {
+        if (auto* fn = dynamic_cast<const FuncDecl*>(&d)) {
             std::vector<llvm::Type*> param_types;
             for (auto& p : fn->params) {
                 param_types.push_back(llvm_type(p.type));
             }
             llvm::Type* ret_type = llvm_type(fn->return_type);
 
-            // core main() maps to i32 @main()
+            std::string symbol_name = qualify_symbol(fn->name);
             if (fn->is_core && fn->name == "main") {
+                symbol_name = "main";
                 ret_type = llvm::Type::getInt32Ty(ctx_);
             }
 
             auto* ft = llvm::FunctionType::get(ret_type, param_types, false);
             auto* f = llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
-                                              fn->name, mod_.get());
+                                             symbol_name, mod_.get());
             functions_[fn->name] = f;
+            functions_[symbol_name] = f;
 
-            // Name parameters
             size_t i = 0;
             for (auto& arg : f->args()) {
                 arg.setName(fn->params[i].name);
                 i++;
             }
-        } else if (auto* m = dynamic_cast<const MonolithDecl*>(d.get())) {
-            gen_monolith(*m);
-        } else if (auto* st = dynamic_cast<const StrataDecl*>(d.get())) {
-            gen_strata(*st);
-        } else if (auto* ext = dynamic_cast<const ExternFuncDecl*>(d.get())) {
-            gen_extern(*ext);
+            return;
         }
-    }
 
-    // Second pass: generate function bodies and global vars
-    for (auto& d : mod.decls) {
-        if (auto* fn = dynamic_cast<const FuncDecl*>(d.get())) {
-            gen_func(*fn);
-        } else if (auto* g = dynamic_cast<const GlobalForgeDecl*>(d.get())) {
-            gen_global_forge(*g);
+        if (auto* m = dynamic_cast<const MonolithDecl*>(&d)) {
+            gen_monolith(*m);
+            return;
         }
-    }
+
+        if (auto* st = dynamic_cast<const StrataDecl*>(&d)) {
+            gen_strata(*st);
+            return;
+        }
+
+        if (auto* ext = dynamic_cast<const ExternFuncDecl*>(&d)) {
+            gen_extern(*ext);
+            return;
+        }
+
+        if (auto* impl = dynamic_cast<const ImplDecl*>(&d)) {
+            for (const auto& method : impl->methods) {
+                std::vector<llvm::Type*> param_types;
+                for (auto& p : method->params) {
+                    param_types.push_back(llvm_type(p.type));
+                }
+                llvm::Type* ret_type = llvm_type(method->return_type);
+                std::string mangled = mangle_method_name(impl->target_name, method->name);
+                auto* ft = llvm::FunctionType::get(ret_type, param_types, false);
+                auto* f = llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
+                                                 mangled, mod_.get());
+                method_functions_[impl->target_name + "::" + method->name] = f;
+                functions_[mangled] = f;
+                size_t i = 0;
+                for (auto& arg : f->args()) {
+                    arg.setName(method->params[i].name);
+                    i++;
+                }
+            }
+            return;
+        }
+
+        if (auto* ns = dynamic_cast<const NamespaceDecl*>(&d)) {
+            namespace_stack_.push_back(ns->name);
+            for (const auto& inner : ns->declarations) self(self, *inner);
+            namespace_stack_.pop_back();
+            return;
+        }
+    };
+
+    auto emit_decl = [&](auto&& self, const Decl& d) -> void {
+        if (auto* fn = dynamic_cast<const FuncDecl*>(&d)) {
+            gen_func(*fn);
+            return;
+        }
+        if (auto* g = dynamic_cast<const GlobalForgeDecl*>(&d)) {
+            gen_global_forge(*g);
+            return;
+        }
+        if (auto* impl = dynamic_cast<const ImplDecl*>(&d)) {
+            for (const auto& method : impl->methods) gen_func(*method);
+            return;
+        }
+        if (auto* ns = dynamic_cast<const NamespaceDecl*>(&d)) {
+            namespace_stack_.push_back(ns->name);
+            for (const auto& inner : ns->declarations) self(self, *inner);
+            namespace_stack_.pop_back();
+            return;
+        }
+    };
+
+    for (auto& d : mod.decls) declare_decl(declare_decl, *d);
+    namespace_stack_.clear();
+    for (auto& d : mod.decls) emit_decl(emit_decl, *d);
 
     // Pop global scope
     var_stack_.pop_back();
@@ -452,11 +506,125 @@ llvm::AllocaInst* CodeGen::create_alloca(llvm::Function* fn,
     return tmp_builder.CreateAlloca(ty, nullptr, name);
 }
 
+std::string CodeGen::current_namespace() const {
+    if (namespace_stack_.empty()) return "";
+    std::string out;
+    for (size_t i = 0; i < namespace_stack_.size(); i++) {
+        if (i > 0) out += "::";
+        out += namespace_stack_[i];
+    }
+    return out;
+}
+
+std::string CodeGen::qualify_symbol(const std::string& name) const {
+    std::string ns = current_namespace();
+    if (ns.empty()) return name;
+    return ns + "::" + name;
+}
+
+std::string CodeGen::mangle_method_name(const std::string& type_name, const std::string& method) const {
+    return type_name + "_" + method;
+}
+
+bool CodeGen::is_integral_type(const OFSType& t) const {
+    return t.base == BaseType::Stone ||
+           t.base == BaseType::U8 || t.base == BaseType::U16 ||
+           t.base == BaseType::U32 || t.base == BaseType::U64 ||
+           t.base == BaseType::I8 || t.base == BaseType::I32;
+}
+
+bool CodeGen::is_unsigned_type(const OFSType& t) const {
+    return t.base == BaseType::U8 || t.base == BaseType::U16 ||
+           t.base == BaseType::U32 || t.base == BaseType::U64;
+}
+
+llvm::FunctionType* CodeGen::llvm_function_type(const OFSType& t) {
+    if (t.base != BaseType::Function) return nullptr;
+
+    std::vector<llvm::Type*> params;
+    for (const auto& p : t.fn_params) {
+        params.push_back(llvm_type(p));
+    }
+    llvm::Type* ret = t.fn_return ? llvm_type(*t.fn_return) : llvm::Type::getVoidTy(ctx_);
+    return llvm::FunctionType::get(ret, params, false);
+}
+
+llvm::Value* CodeGen::cast_to_type(llvm::Value* val, const OFSType& from, const OFSType& to) {
+    if (!val) return nullptr;
+
+    auto* dst_ty = llvm_type(to);
+    auto* src_ty = val->getType();
+    if (src_ty == dst_ty) return val;
+
+    // To bool
+    if (to.base == BaseType::Bool) {
+        if (src_ty->isIntegerTy()) {
+            return builder_.CreateICmpNE(val, llvm::ConstantInt::get(src_ty, 0), "to_bool");
+        }
+        if (src_ty->isDoubleTy()) {
+            return builder_.CreateFCmpONE(val, llvm::ConstantFP::get(ctx_, llvm::APFloat(0.0)), "to_bool");
+        }
+    }
+
+    // From bool
+    if (from.base == BaseType::Bool) {
+        if (dst_ty->isIntegerTy()) {
+            return builder_.CreateZExt(val, dst_ty, "bool_to_int");
+        }
+        if (dst_ty->isDoubleTy()) {
+            return builder_.CreateUIToFP(val, dst_ty, "bool_to_float");
+        }
+    }
+
+    // Integer <-> Integer
+    if (src_ty->isIntegerTy() && dst_ty->isIntegerTy()) {
+        unsigned src_bits = src_ty->getIntegerBitWidth();
+        unsigned dst_bits = dst_ty->getIntegerBitWidth();
+        if (src_bits == dst_bits) return val;
+        if (src_bits < dst_bits) {
+            if (is_unsigned_type(from) || from.base == BaseType::Bool) {
+                return builder_.CreateZExt(val, dst_ty, "zext");
+            }
+            return builder_.CreateSExt(val, dst_ty, "sext");
+        }
+        return builder_.CreateTrunc(val, dst_ty, "trunc");
+    }
+
+    // Integer -> Float
+    if (src_ty->isIntegerTy() && dst_ty->isDoubleTy()) {
+        if (is_unsigned_type(from) || from.base == BaseType::Bool) {
+            return builder_.CreateUIToFP(val, dst_ty, "uitofp");
+        }
+        return builder_.CreateSIToFP(val, dst_ty, "sitofp");
+    }
+
+    // Float -> Integer
+    if (src_ty->isDoubleTy() && dst_ty->isIntegerTy()) {
+        if (is_unsigned_type(to)) {
+            return builder_.CreateFPToUI(val, dst_ty, "fptoui");
+        }
+        return builder_.CreateFPToSI(val, dst_ty, "fptosi");
+    }
+
+    // Pointer casts fallback
+    if (src_ty->isPointerTy() && dst_ty->isPointerTy()) {
+        return builder_.CreateBitCast(val, dst_ty, "ptr_cast");
+    }
+
+    return builder_.CreateBitCast(val, dst_ty, "cast");
+}
+
 // ── LLVM Type Mapping ─────────────────────────────────────────────────────
 
 llvm::Type* CodeGen::llvm_type(const OFSType& t) {
     switch (t.base) {
         case BaseType::Stone:    return llvm::Type::getInt64Ty(ctx_);
+        case BaseType::U8:
+        case BaseType::I8:       return llvm::Type::getInt8Ty(ctx_);
+        case BaseType::U16:      return llvm::Type::getInt16Ty(ctx_);
+        case BaseType::U32:
+        case BaseType::I32:      return llvm::Type::getInt32Ty(ctx_);
+        case BaseType::U64:      return llvm::Type::getInt64Ty(ctx_);
         case BaseType::Crystal:  return llvm::Type::getDoubleTy(ctx_);
         case BaseType::Obsidian: return llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
         case BaseType::Bool:     return llvm::Type::getInt1Ty(ctx_);
@@ -466,6 +634,11 @@ llvm::Type* CodeGen::llvm_type(const OFSType& t) {
             return llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
         case BaseType::Array:
             return llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
+        case BaseType::Function: {
+            auto* ft = llvm_function_type(t);
+            if (!ft) return llvm::PointerType::getUnqual(llvm::Type::getInt8Ty(ctx_));
+            return llvm::PointerType::getUnqual(ft);
+        }
         case BaseType::Named: {
             auto it = struct_types_.find(t.name);
             if (it != struct_types_.end()) {
@@ -487,7 +660,22 @@ llvm::Type* CodeGen::llvm_array_struct(const OFSType& element_type) {
 // ── Generate Functions ────────────────────────────────────────────────────
 
 void CodeGen::gen_func(const FuncDecl& fn) {
-    auto* llvm_fn = functions_[fn.name];
+    llvm::Function* llvm_fn = nullptr;
+
+    auto it_direct = functions_.find(fn.name);
+    if (it_direct != functions_.end()) llvm_fn = it_direct->second;
+
+    if (!llvm_fn) {
+        auto it_q = functions_.find(qualify_symbol(fn.name));
+        if (it_q != functions_.end()) llvm_fn = it_q->second;
+    }
+
+    if (!llvm_fn && !fn.params.empty() && fn.params[0].name == "self" && fn.params[0].type.base == BaseType::Named) {
+        auto mangled = mangle_method_name(fn.params[0].type.name, fn.name);
+        auto it_m = functions_.find(mangled);
+        if (it_m != functions_.end()) llvm_fn = it_m->second;
+    }
+
     if (!llvm_fn) return;
 
     auto* entry = llvm::BasicBlock::Create(ctx_, "entry", llvm_fn);
@@ -555,9 +743,11 @@ void CodeGen::gen_global_forge(const GlobalForgeDecl& g) {
 
 void CodeGen::gen_extern(const ExternFuncDecl& e) {
     const std::string symbol_name = e.link_name.empty() ? e.name : e.link_name;
+    const std::string exposed_name = qualify_symbol(e.name);
 
     if (auto* existing = mod_->getFunction(symbol_name)) {
         functions_[e.name] = existing;
+        functions_[exposed_name] = existing;
         return;
     }
 
@@ -571,6 +761,7 @@ void CodeGen::gen_extern(const ExternFuncDecl& e) {
     auto* fn = llvm::Function::Create(ft, llvm::Function::ExternalLinkage,
                                        symbol_name, mod_.get());
     functions_[e.name] = fn;
+    functions_[exposed_name] = fn;
 
     // Name parameters
     size_t i = 0;
@@ -693,11 +884,7 @@ void CodeGen::gen_forge(const ForgeStmt& s) {
         if (val) {
             // Handle type coercion
             if (val->getType() != llvm_ty) {
-                if (llvm_ty->isDoubleTy() && val->getType()->isIntegerTy(64)) {
-                    val = builder_.CreateSIToFP(val, llvm_ty, "int_to_float");
-                } else if (llvm_ty->isIntegerTy(64) && val->getType()->isDoubleTy()) {
-                    val = builder_.CreateFPToSI(val, llvm_ty, "float_to_int");
-                }
+                val = cast_to_type(val, s.initializer->resolved_type, type);
             }
             builder_.CreateStore(val, alloca);
         }
@@ -859,16 +1046,30 @@ void CodeGen::gen_return(const ReturnStmt& s) {
         if (val) {
             auto* ret_ty = cur_fn_->getReturnType();
             if (val->getType() != ret_ty) {
-                if (ret_ty->isIntegerTy(32) && val->getType()->isIntegerTy(64)) {
-                    val = builder_.CreateTrunc(val, ret_ty, "trunc");
-                } else if (ret_ty->isDoubleTy() && val->getType()->isIntegerTy(64)) {
-                    val = builder_.CreateSIToFP(val, ret_ty, "to_float");
+                if (ret_ty->isIntegerTy() && val->getType()->isIntegerTy()) {
+                    unsigned src_bits = val->getType()->getIntegerBitWidth();
+                    unsigned dst_bits = ret_ty->getIntegerBitWidth();
+                    if (src_bits < dst_bits) {
+                        if (is_unsigned_type(s.value->resolved_type)) {
+                            val = builder_.CreateZExt(val, ret_ty, "ret_zext");
+                        } else {
+                            val = builder_.CreateSExt(val, ret_ty, "ret_sext");
+                        }
+                    } else if (src_bits > dst_bits) {
+                        val = builder_.CreateTrunc(val, ret_ty, "ret_trunc");
+                    }
+                } else if (ret_ty->isDoubleTy() && val->getType()->isIntegerTy()) {
+                    if (is_unsigned_type(s.value->resolved_type)) {
+                        val = builder_.CreateUIToFP(val, ret_ty, "ret_uitofp");
+                    } else {
+                        val = builder_.CreateSIToFP(val, ret_ty, "ret_sitofp");
+                    }
                 } else if (ret_ty->isIntegerTy(1) && val->getType()->isIntegerTy()) {
                     // C runtime bool functions return i32; OFS bool = i1. Convert.
                     val = builder_.CreateICmpNE(val,
                         llvm::ConstantInt::get(val->getType(), 0), "to_bool");
-                } else if (ret_ty->isIntegerTy(64) && val->getType()->isIntegerTy(1)) {
-                    val = builder_.CreateZExt(val, ret_ty, "bool_to_stone");
+                } else if (ret_ty->isIntegerTy() && val->getType()->isDoubleTy()) {
+                    val = builder_.CreateFPToSI(val, ret_ty, "ret_fptosi");
                 }
             }
             builder_.CreateRet(val);
@@ -969,11 +1170,7 @@ void CodeGen::gen_const(const ConstStmt& s) {
         auto* val = gen_expr(*s.initializer);
         if (val) {
             if (val->getType() != llvm_ty) {
-                if (llvm_ty->isDoubleTy() && val->getType()->isIntegerTy(64)) {
-                    val = builder_.CreateSIToFP(val, llvm_ty, "int_to_float");
-                } else if (llvm_ty->isIntegerTy(64) && val->getType()->isDoubleTy()) {
-                    val = builder_.CreateFPToSI(val, llvm_ty, "float_to_int");
-                }
+                val = cast_to_type(val, s.initializer->resolved_type, type);
             }
             builder_.CreateStore(val, alloca);
         }
@@ -1067,6 +1264,20 @@ void CodeGen::gen_echo(const EchoExpr& e) {
             case BaseType::Stone:
                 builder_.CreateCall(get_runtime_fn("echo_stone"), {val});
                 break;
+            case BaseType::U8:
+            case BaseType::U16:
+            case BaseType::U32:
+            case BaseType::U64: {
+                auto* ext = builder_.CreateZExtOrTrunc(val, llvm::Type::getInt64Ty(ctx_), "echo_uint_to_i64");
+                builder_.CreateCall(get_runtime_fn("echo_stone"), {ext});
+                break;
+            }
+            case BaseType::I8:
+            case BaseType::I32: {
+                auto* ext = builder_.CreateSExtOrTrunc(val, llvm::Type::getInt64Ty(ctx_), "echo_int_to_i64");
+                builder_.CreateCall(get_runtime_fn("echo_stone"), {ext});
+                break;
+            }
             case BaseType::Crystal:
                 builder_.CreateCall(get_runtime_fn("echo_crystal"), {val});
                 break;
@@ -1114,11 +1325,37 @@ llvm::Value* CodeGen::gen_expr(const Expr& e) {
     if (auto* id = dynamic_cast<const IdentExpr*>(&e)) {
         auto* alloca = get_var(id->name);
         if (!alloca) {
+            auto it_fn = functions_.find(id->name);
+            if (it_fn == functions_.end()) {
+                it_fn = functions_.find(qualify_symbol(id->name));
+            }
+            if (it_fn != functions_.end()) {
+                return it_fn->second;
+            }
             std::cerr << "codegen: undefined variable '" << id->name << "'\n";
             return llvm::ConstantInt::get(llvm::Type::getInt64Ty(ctx_), 0);
         }
         // Determine load type
         auto& type = e.resolved_type;
+        if (type.base == BaseType::Named) {
+            auto* named_ptr_ty = llvm_type(type);
+
+            if (auto* ai = llvm::dyn_cast<llvm::AllocaInst>(alloca)) {
+                auto* alloc_ty = ai->getAllocatedType();
+                if (alloc_ty == named_ptr_ty) {
+                    return builder_.CreateLoad(named_ptr_ty, alloca, id->name + "_val");
+                }
+                // Local named value is stored as struct on stack; expression value is its address.
+                return alloca;
+            }
+
+            if (auto* gv = llvm::dyn_cast<llvm::GlobalVariable>(alloca)) {
+                if (gv->getValueType() == named_ptr_ty) {
+                    return builder_.CreateLoad(named_ptr_ty, alloca, id->name + "_val");
+                }
+                return alloca;
+            }
+        }
         auto* load_ty = llvm_type(type);
         return builder_.CreateLoad(load_ty, alloca, id->name + "_val");
     }
@@ -1149,6 +1386,9 @@ llvm::Value* CodeGen::gen_expr(const Expr& e) {
     }
     if (auto* cast = dynamic_cast<const CastExpr*>(&e)) {
         return gen_cast(*cast);
+    }
+    if (auto* lambda = dynamic_cast<const LambdaExpr*>(&e)) {
+        return gen_lambda(*lambda);
     }
     if (auto* ia = dynamic_cast<const InlineAsmExpr*>(&e)) {
         return gen_inline_asm(*ia);
@@ -1185,10 +1425,23 @@ llvm::Value* CodeGen::gen_binary(const BinaryExpr& e) {
     // Type promotion: if one is float and one is int, promote int to float
     bool is_float = left->getType()->isDoubleTy() || right->getType()->isDoubleTy();
     if (is_float) {
-        if (left->getType()->isIntegerTy(64))
-            left = builder_.CreateSIToFP(left, llvm::Type::getDoubleTy(ctx_), "promote_l");
-        if (right->getType()->isIntegerTy(64))
-            right = builder_.CreateSIToFP(right, llvm::Type::getDoubleTy(ctx_), "promote_r");
+        OFSType f64 = OFSType::crystal();
+        if (left->getType()->isIntegerTy()) {
+            left = cast_to_type(left, e.left->resolved_type, f64);
+        }
+        if (right->getType()->isIntegerTy()) {
+            right = cast_to_type(right, e.right->resolved_type, f64);
+        }
+    } else if (left->getType()->isIntegerTy() && right->getType()->isIntegerTy()) {
+        unsigned lbits = left->getType()->getIntegerBitWidth();
+        unsigned rbits = right->getType()->getIntegerBitWidth();
+        if (lbits < rbits) {
+            if (is_unsigned_type(e.left->resolved_type)) left = builder_.CreateZExt(left, right->getType(), "zext_l");
+            else left = builder_.CreateSExt(left, right->getType(), "sext_l");
+        } else if (rbits < lbits) {
+            if (is_unsigned_type(e.right->resolved_type)) right = builder_.CreateZExt(right, left->getType(), "zext_r");
+            else right = builder_.CreateSExt(right, left->getType(), "sext_r");
+        }
     }
 
     // Arithmetic
@@ -1205,22 +1458,33 @@ llvm::Value* CodeGen::gen_binary(const BinaryExpr& e) {
         if (e.op == ">")  return builder_.CreateFCmpOGT(left, right, "fgt");
         if (e.op == ">=") return builder_.CreateFCmpOGE(left, right, "fge");
     } else {
+        bool unsigned_int_op = is_unsigned_type(e.left->resolved_type) &&
+                               is_unsigned_type(e.right->resolved_type);
+
         if (e.op == "+") return builder_.CreateAdd(left, right, "add");
         if (e.op == "-") return builder_.CreateSub(left, right, "sub");
         if (e.op == "*") return builder_.CreateMul(left, right, "mul");
-        if (e.op == "/") return builder_.CreateSDiv(left, right, "div");
-        if (e.op == "%") return builder_.CreateSRem(left, right, "mod");
+        if (e.op == "/") return unsigned_int_op ? builder_.CreateUDiv(left, right, "udiv")
+                                                 : builder_.CreateSDiv(left, right, "sdiv");
+        if (e.op == "%") return unsigned_int_op ? builder_.CreateURem(left, right, "umod")
+                                                 : builder_.CreateSRem(left, right, "smod");
         if (e.op == "&") return builder_.CreateAnd(left, right, "band");
         if (e.op == "|") return builder_.CreateOr(left, right, "bor");
         if (e.op == "^") return builder_.CreateXor(left, right, "bxor");
         if (e.op == "<<") return builder_.CreateShl(left, right, "shl");
-        if (e.op == ">>") return builder_.CreateAShr(left, right, "shr");
+        if (e.op == ">>") return is_unsigned_type(e.left->resolved_type)
+                                 ? builder_.CreateLShr(left, right, "lshr")
+                                 : builder_.CreateAShr(left, right, "ashr");
         if (e.op == "==") return builder_.CreateICmpEQ(left, right, "eq");
         if (e.op == "!=") return builder_.CreateICmpNE(left, right, "ne");
-        if (e.op == "<")  return builder_.CreateICmpSLT(left, right, "lt");
-        if (e.op == "<=") return builder_.CreateICmpSLE(left, right, "le");
-        if (e.op == ">")  return builder_.CreateICmpSGT(left, right, "gt");
-        if (e.op == ">=") return builder_.CreateICmpSGE(left, right, "ge");
+        if (e.op == "<")  return unsigned_int_op ? builder_.CreateICmpULT(left, right, "ult")
+                                                   : builder_.CreateICmpSLT(left, right, "slt");
+        if (e.op == "<=") return unsigned_int_op ? builder_.CreateICmpULE(left, right, "ule")
+                                                   : builder_.CreateICmpSLE(left, right, "sle");
+        if (e.op == ">")  return unsigned_int_op ? builder_.CreateICmpUGT(left, right, "ugt")
+                                                   : builder_.CreateICmpSGT(left, right, "sgt");
+        if (e.op == ">=") return unsigned_int_op ? builder_.CreateICmpUGE(left, right, "uge")
+                                                   : builder_.CreateICmpSGE(left, right, "sge");
     }
 
     // Logical
@@ -1280,9 +1544,7 @@ llvm::Value* CodeGen::gen_unary(const UnaryExpr& e) {
 
 llvm::Value* CodeGen::gen_call(const CallExpr& e) {
     auto* id = dynamic_cast<const IdentExpr*>(e.callee.get());
-    if (!id) return nullptr;
-
-    if (is_fault_intrinsic_name(id->name)) {
+    if (id && is_fault_intrinsic_name(id->name)) {
         if (id->name == "fault_fence") {
             builder_.CreateFence(llvm::AtomicOrdering::SequentiallyConsistent);
             return nullptr;
@@ -1465,31 +1727,130 @@ llvm::Value* CodeGen::gen_call(const CallExpr& e) {
     }
 
     llvm::Function* fn = nullptr;
+    std::string call_name;
 
-    // Check user functions first
-    auto it = functions_.find(id->name);
-    if (it != functions_.end()) fn = it->second;
+    if (id) {
+        call_name = id->name;
+        auto it = functions_.find(id->name);
+        if (it != functions_.end()) fn = it->second;
 
-    // Check runtime functions
-    if (!fn) fn = get_runtime_fn(id->name);
+        if (!fn) {
+            auto q = functions_.find(qualify_symbol(id->name));
+            if (q != functions_.end()) fn = q->second;
+        }
+
+        if (!fn) fn = get_runtime_fn(id->name);
+    }
+
+    // Method call: obj.method(...)
+    if (!fn) {
+        if (auto* mem = dynamic_cast<const MemberExpr*>(e.callee.get())) {
+            if (auto* recv_id = dynamic_cast<const IdentExpr*>(mem->object.get())) {
+                // namespace function call: ns.func(...)
+                std::string ns_name = recv_id->name + "::" + mem->field;
+                auto it_ns = functions_.find(ns_name);
+                if (it_ns != functions_.end()) {
+                    fn = it_ns->second;
+                    call_name = ns_name;
+                }
+            }
+
+            if (!fn && mem->object->resolved_type.base == BaseType::Named) {
+                std::string key = mem->object->resolved_type.name + "::" + mem->field;
+                auto it_m = method_functions_.find(key);
+                if (it_m != method_functions_.end()) {
+                    fn = it_m->second;
+                    call_name = mangle_method_name(mem->object->resolved_type.name, mem->field);
+                }
+            }
+        }
+    }
+
+    // Function pointer call
+    if (!fn) {
+        auto* callee_val = gen_expr(*e.callee);
+        if (callee_val && e.callee->resolved_type.base == BaseType::Function) {
+            auto* callee_ft = llvm_function_type(e.callee->resolved_type);
+            if (!callee_ft) return nullptr;
+            std::vector<llvm::Value*> args;
+            for (size_t i = 0; i < e.args.size(); i++) {
+                auto* arg_val = gen_expr(*e.args[i]);
+                if (!arg_val) return nullptr;
+                auto* param_ty = callee_ft->getParamType(static_cast<unsigned>(i));
+                if (arg_val->getType() != param_ty) {
+                    if (arg_val->getType()->isIntegerTy() && param_ty->isIntegerTy()) {
+                        unsigned src_bits = arg_val->getType()->getIntegerBitWidth();
+                        unsigned dst_bits = param_ty->getIntegerBitWidth();
+                        if (src_bits < dst_bits) arg_val = builder_.CreateSExt(arg_val, param_ty, "fp_arg_sext");
+                        else if (src_bits > dst_bits) arg_val = builder_.CreateTrunc(arg_val, param_ty, "fp_arg_trunc");
+                    } else if (param_ty->isDoubleTy() && arg_val->getType()->isIntegerTy()) {
+                        arg_val = builder_.CreateSIToFP(arg_val, param_ty, "fp_arg_to_f");
+                    } else if (param_ty->isIntegerTy() && arg_val->getType()->isDoubleTy()) {
+                        arg_val = builder_.CreateFPToSI(arg_val, param_ty, "fp_arg_to_i");
+                    }
+                }
+                args.push_back(arg_val);
+            }
+
+            if (callee_val->getType()->isPointerTy() && callee_val->getType() != llvm::PointerType::getUnqual(callee_ft)) {
+                callee_val = builder_.CreateBitCast(callee_val, llvm::PointerType::getUnqual(callee_ft), "fnptr_cast");
+            }
+
+            if (callee_ft->getReturnType()->isVoidTy()) {
+                builder_.CreateCall(callee_ft, callee_val, args);
+                return nullptr;
+            }
+            return builder_.CreateCall(callee_ft, callee_val, args, "call_fnptr");
+        }
+    }
 
     if (!fn) {
-        std::cerr << "codegen: undefined function '" << id->name << "'\n";
+        std::cerr << "codegen: undefined function call\n";
         return nullptr;
     }
 
     std::vector<llvm::Value*> args;
+    size_t arg_offset = 0;
+
+    if (auto* mem = dynamic_cast<const MemberExpr*>(e.callee.get())) {
+        std::string key = mem->object->resolved_type.name + "::" + mem->field;
+        if (method_functions_.find(key) != method_functions_.end()) {
+            auto* self_ptr = gen_lvalue(*mem->object);
+            if (self_ptr) {
+                args.push_back(self_ptr);
+                arg_offset = 1;
+            }
+        }
+    }
+
     for (size_t i = 0; i < e.args.size(); i++) {
         auto* arg_val = gen_expr(*e.args[i]);
         if (arg_val) {
             // Type coercion for parameters
-            if (i < fn->arg_size()) {
-                auto* param_ty = fn->getFunctionType()->getParamType(i);
+            size_t param_index = i + arg_offset;
+            if (param_index < fn->arg_size()) {
+                auto* param_ty = fn->getFunctionType()->getParamType(static_cast<unsigned>(param_index));
                 if (arg_val->getType() != param_ty) {
-                    if (param_ty->isDoubleTy() && arg_val->getType()->isIntegerTy(64)) {
-                        arg_val = builder_.CreateSIToFP(arg_val, param_ty, "arg_promote");
-                    } else if (param_ty->isIntegerTy(64) && arg_val->getType()->isDoubleTy()) {
-                        arg_val = builder_.CreateFPToSI(arg_val, param_ty, "arg_trunc");
+                    if (arg_val->getType()->isIntegerTy() && param_ty->isIntegerTy()) {
+                        unsigned src_bits = arg_val->getType()->getIntegerBitWidth();
+                        unsigned dst_bits = param_ty->getIntegerBitWidth();
+                        if (src_bits < dst_bits) {
+                            if (is_unsigned_type(e.args[i]->resolved_type)) {
+                                arg_val = builder_.CreateZExt(arg_val, param_ty, "arg_zext");
+                            } else {
+                                arg_val = builder_.CreateSExt(arg_val, param_ty, "arg_sext");
+                            }
+                        } else if (src_bits > dst_bits) {
+                            arg_val = builder_.CreateTrunc(arg_val, param_ty, "arg_trunc");
+                        }
+                    } else if (param_ty->isDoubleTy() && arg_val->getType()->isIntegerTy()) {
+                        if (is_unsigned_type(e.args[i]->resolved_type)) {
+                            arg_val = builder_.CreateUIToFP(arg_val, param_ty, "arg_uitofp");
+                        } else {
+                            arg_val = builder_.CreateSIToFP(arg_val, param_ty, "arg_sitofp");
+                        }
+                    } else if (param_ty->isIntegerTy() && arg_val->getType()->isDoubleTy()) {
+                        arg_val = builder_.CreateFPToSI(arg_val, param_ty, "arg_fptosi");
                     }
                 }
             }
@@ -1501,7 +1862,9 @@ llvm::Value* CodeGen::gen_call(const CallExpr& e) {
         builder_.CreateCall(fn, args);
         return nullptr;
     }
-    return builder_.CreateCall(fn, args, "call_" + id->name);
+    if (call_name.empty() && id) call_name = id->name;
+    if (call_name.empty()) call_name = "fn";
+    return builder_.CreateCall(fn, args, "call_" + call_name);
 }
 
 llvm::Value* CodeGen::gen_assign(const AssignExpr& e) {
@@ -1516,11 +1879,7 @@ llvm::Value* CodeGen::gen_assign(const AssignExpr& e) {
         auto& target_type = e.target->resolved_type;
         auto* store_ty = llvm_type(target_type);
         if (rval->getType() != store_ty) {
-            if (store_ty->isDoubleTy() && rval->getType()->isIntegerTy(64)) {
-                rval = builder_.CreateSIToFP(rval, store_ty, "assign_promote");
-            } else if (store_ty->isIntegerTy(64) && rval->getType()->isDoubleTy()) {
-                rval = builder_.CreateFPToSI(rval, store_ty, "assign_trunc");
-            }
+            rval = cast_to_type(rval, e.value->resolved_type, target_type);
         }
         builder_.CreateStore(rval, lval);
     } else {
@@ -1533,8 +1892,8 @@ llvm::Value* CodeGen::gen_assign(const AssignExpr& e) {
         bool is_float = cur->getType()->isDoubleTy();
 
         // Promote rval if needed
-        if (is_float && rval->getType()->isIntegerTy(64)) {
-            rval = builder_.CreateSIToFP(rval, llvm::Type::getDoubleTy(ctx_), "promote");
+        if (rval->getType() != cur->getType()) {
+            rval = cast_to_type(rval, e.value->resolved_type, target_type);
         }
 
         if (e.op == "+=") {
@@ -1639,47 +1998,88 @@ llvm::Value* CodeGen::gen_array_lit(const ArrayLitExpr& e) {
 llvm::Value* CodeGen::gen_cast(const CastExpr& e) {
     auto* val = gen_expr(*e.expr);
     if (!val) return nullptr;
+    return cast_to_type(val, e.expr->resolved_type, e.target_type);
+}
 
-    auto* target_ty = llvm_type(e.target_type);
-    auto* src_ty = val->getType();
+llvm::Value* CodeGen::gen_lambda(const LambdaExpr& e) {
+    std::string lambda_name = "__lambda_" + std::to_string(lambda_counter_++);
 
-    if (src_ty == target_ty) return val; // no-op cast
+    std::vector<llvm::Type*> param_types;
+    for (const auto& p : e.params) {
+        param_types.push_back(llvm_type(p.type));
+    }
+    llvm::Type* ret_ty = llvm_type(e.return_type);
+    auto* ft = llvm::FunctionType::get(ret_ty, param_types, false);
+    auto* fn = llvm::Function::Create(ft, llvm::Function::InternalLinkage, lambda_name, mod_.get());
 
-    // Integer to float
-    if (src_ty->isIntegerTy(64) && target_ty->isDoubleTy()) {
-        return builder_.CreateSIToFP(val, target_ty, "cast_to_crystal");
-    }
-    // Float to integer
-    if (src_ty->isDoubleTy() && target_ty->isIntegerTy(64)) {
-        return builder_.CreateFPToSI(val, target_ty, "cast_to_stone");
-    }
-    // Bool to integer
-    if (src_ty->isIntegerTy(1) && target_ty->isIntegerTy(64)) {
-        return builder_.CreateZExt(val, target_ty, "bool_to_stone");
-    }
-    // Integer to bool
-    if (src_ty->isIntegerTy(64) && target_ty->isIntegerTy(1)) {
-        return builder_.CreateICmpNE(val, llvm::ConstantInt::get(src_ty, 0), "stone_to_bool");
-    }
-    // Bool to float
-    if (src_ty->isIntegerTy(1) && target_ty->isDoubleTy()) {
-        auto* ext = builder_.CreateZExt(val, llvm::Type::getInt64Ty(ctx_), "bool_to_i64");
-        return builder_.CreateSIToFP(ext, target_ty, "bool_to_crystal");
-    }
-    // Float to bool
-    if (src_ty->isDoubleTy() && target_ty->isIntegerTy(1)) {
-        return builder_.CreateFCmpONE(val, llvm::ConstantFP::get(ctx_, llvm::APFloat(0.0)), "crystal_to_bool");
+    size_t i = 0;
+    for (auto& arg : fn->args()) {
+        arg.setName(e.params[i].name);
+        i++;
     }
 
-    // Fallback: bitcast
-    return builder_.CreateBitCast(val, target_ty, "cast");
+    auto* prev_fn = cur_fn_;
+    auto prev_ip = builder_.GetInsertPoint();
+    auto* prev_bb = builder_.GetInsertBlock();
+
+    auto* entry = llvm::BasicBlock::Create(ctx_, "entry", fn);
+    builder_.SetInsertPoint(entry);
+    cur_fn_ = fn;
+    var_stack_.push_back({});
+
+    i = 0;
+    for (auto& arg : fn->args()) {
+        auto* alloca = create_alloca(fn, e.params[i].name, arg.getType());
+        builder_.CreateStore(&arg, alloca);
+        set_var(e.params[i].name, alloca);
+        i++;
+    }
+
+    if (e.body) {
+        gen_stmt(*e.body);
+    }
+
+    if (!builder_.GetInsertBlock()->getTerminator()) {
+        if (e.return_type.base == BaseType::Void) {
+            builder_.CreateRetVoid();
+        } else {
+            builder_.CreateRet(llvm::Constant::getNullValue(ret_ty));
+        }
+    }
+
+    var_stack_.pop_back();
+    cur_fn_ = prev_fn;
+    if (prev_bb) {
+        builder_.SetInsertPoint(prev_bb, prev_ip);
+    }
+
+    return fn;
 }
 
 // ── LValue generation ─────────────────────────────────────────────────────
 
 llvm::Value* CodeGen::gen_lvalue(const Expr& e) {
     if (auto* id = dynamic_cast<const IdentExpr*>(&e)) {
-        return get_var(id->name);
+        auto* slot = get_var(id->name);
+        if (!slot) return nullptr;
+        if (e.resolved_type.base == BaseType::Named) {
+            auto* ptr_ty = llvm_type(e.resolved_type);
+
+            if (auto* ai = llvm::dyn_cast<llvm::AllocaInst>(slot)) {
+                if (ai->getAllocatedType() == ptr_ty) {
+                    return builder_.CreateLoad(ptr_ty, slot, id->name + "_addr");
+                }
+                return slot;
+            }
+
+            if (auto* gv = llvm::dyn_cast<llvm::GlobalVariable>(slot)) {
+                if (gv->getValueType() == ptr_ty) {
+                    return builder_.CreateLoad(ptr_ty, slot, id->name + "_addr");
+                }
+                return slot;
+            }
+        }
+        return slot;
     }
     if (auto* mem = dynamic_cast<const MemberExpr*>(&e)) {
         auto& obj_type = mem->object->resolved_type;

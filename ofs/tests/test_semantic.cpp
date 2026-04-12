@@ -107,6 +107,56 @@ int main() {
     test("cast bool to stone",
         analyze_ok("core main() {\n    forge b: bool = true\n    forge n: stone = b as stone\n}"));
 
+    test("u8 assignment from literal",
+        analyze_ok("core main() {\n    forge r: u8 = 255\n}"));
+
+    test("u8 + u8 promotion to u16",
+        analyze_ok("core main() {\n    forge a: u8 = 10\n    forge b: u8 = 20\n    forge c: u16 = a + b\n}"));
+
+    test("u8 as u32 cast",
+        analyze_ok("core main() {\n    forge a: u8 = 255\n    forge b: u32 = a as u32\n}"));
+
+    test("stone as u8 cast",
+        analyze_ok("core main() {\n    forge a: stone = 1024\n    forge b: u8 = a as u8\n}"));
+
+    test("bitwise with u32",
+        analyze_ok("core main() {\n    forge r: u8 = 255\n    forge g: u8 = 128\n    forge pixel: u32 = (r as u32 << 16) | (g as u32 << 8)\n}"));
+
+    test("impl method call",
+        analyze_ok(
+            "monolith Rect {\n"
+            "    w: stone\n"
+            "    h: stone\n"
+            "}\n"
+            "impl Rect {\n"
+            "    vein area(self) -> stone {\n"
+            "        return self.w * self.h\n"
+            "    }\n"
+            "}\n"
+            "core main() {\n"
+            "    forge r: Rect\n"
+            "    echo(r.area())\n"
+            "}"));
+
+    test("namespace call",
+        analyze_ok(
+            "namespace mymath {\n"
+            "    vein square(x: stone) -> stone { return x * x }\n"
+            "}\n"
+            "core main() {\n"
+            "    echo(mymath.square(4))\n"
+            "}"));
+
+    test("function value type and lambda",
+        analyze_ok(
+            "vein aplicar(v: stone, fn: vein(stone) -> stone) -> stone {\n"
+            "    return fn(v)\n"
+            "}\n"
+            "core main() {\n"
+            "    forge dobrar: vein(stone) -> stone = vein(x: stone) -> stone { return x * 2 }\n"
+            "    echo(aplicar(10, dobrar))\n"
+            "}"));
+
     // Extern function
     test("extern function",
         analyze_ok("extern vein ofs_pow(base: crystal, exp: crystal) -> crystal\ncore main() {\n    forge r: crystal = ofs_pow(2.0, 10.0)\n}"));
@@ -122,7 +172,7 @@ int main() {
 
     // Attach
     test("attach declaration",
-        analyze_ok("attach \"stdlib/core.ofs\"\ncore main() {\n    echo(\"hello\")\n}"));
+        analyze_ok("attach {F:stdlib/core.ofs}\ncore main() {\n    echo(\"hello\")\n}"));
 
     // Invalid: break in while should work
     test("break in while",

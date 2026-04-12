@@ -1,0 +1,11 @@
+core main() {
+    forge r: u8 = 255
+    forge g: u8 = 128
+    forge b: u8 = 0
+
+    forge pixel: u32 = (r as u32 << 16) | (g as u32 << 8) | (b as u32)
+    echo(pixel)
+
+    forge canal: u8 = (pixel >> 16) as u8
+    echo(canal)
+}

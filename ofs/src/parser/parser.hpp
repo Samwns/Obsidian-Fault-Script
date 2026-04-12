@@ -22,6 +22,8 @@ private:
     DeclPtr parse_decl();
     std::unique_ptr<FuncDecl>     parse_func(bool is_core = false);
     std::unique_ptr<MonolithDecl> parse_monolith();
+    std::unique_ptr<ImplDecl> parse_impl();
+    std::unique_ptr<NamespaceDecl> parse_namespace();
     std::unique_ptr<GlobalForgeDecl> parse_global_forge();
     std::unique_ptr<ImportDecl>     parse_import();
     std::unique_ptr<ExternFuncDecl> parse_extern();
@@ -56,10 +58,12 @@ private:
     ExprPtr parse_member(ExprPtr object);
     ExprPtr parse_unary();
     ExprPtr parse_array_literal();
+    ExprPtr parse_lambda_expr();
     ExprPtr parse_inline_asm();
 
     // ── Types ─────────────────────────────────────────────────────────────
     OFSType parse_type();
+    OFSType parse_function_type();
     OFSType parse_shard_type();      // *stone, *crystal, etc.
 
     // ── Helpers ───────────────────────────────────────────────────────────
@@ -81,6 +85,7 @@ private:
 
     std::vector<Token> tokens_;
     size_t             pos_ = 0;
+    bool               parsing_impl_method_ = false;
 };
 
 } // namespace ofs

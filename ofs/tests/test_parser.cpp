@@ -96,6 +96,46 @@ int main() {
         test("monolith: field1=y", m->fields[1].name == "y");
     }
 
+    // Parse impl block
+    {
+        auto mod = parse_source(
+            "monolith Vec2 {\n"
+            "    x: stone\n"
+            "    y: stone\n"
+            "}\n"
+            "impl Vec2 {\n"
+            "    vein len(self) -> stone {\n"
+            "        return self.x + self.y\n"
+            "    }\n"
+            "}\n"
+            "core main() {\n"
+            "    forge v: Vec2\n"
+            "    echo(v.len())\n"
+            "}");
+        test("impl: decl count", mod.decls.size() == 3);
+        auto* impl = dynamic_cast<ImplDecl*>(mod.decls[1].get());
+        test("impl: exists", impl != nullptr);
+        test("impl: target", impl->target_name == "Vec2");
+        test("impl: methods", impl->methods.size() == 1);
+    }
+
+    // Parse namespace declaration
+    {
+        auto mod = parse_source(
+            "namespace mathx {\n"
+            "    vein square(x: stone) -> stone {\n"
+            "        return x * x\n"
+            "    }\n"
+            "}\n"
+            "core main() {\n"
+            "    echo(mathx.square(4))\n"
+            "}");
+        auto* ns = dynamic_cast<NamespaceDecl*>(mod.decls[0].get());
+        test("namespace: exists", ns != nullptr);
+        test("namespace: name", ns->name == "mathx");
+        test("namespace: has decl", ns->declarations.size() == 1);
+    }
+
     // Parse monolith with explicit layout
     {
         auto mod = parse_source("monolith Header layout packed {\n    tag: stone\n    flags: stone\n}");
@@ -155,11 +195,11 @@ int main() {
 
     // Parse attach declaration
     {
-        auto mod = parse_source("attach \"stdlib/core.ofs\"\ncore main() {\n    echo(\"hi\")\n}");
+        auto mod = parse_source("attach {F:stdlib/core.ofs}\ncore main() {\n    echo(\"hi\")\n}");
         test("attach: 2 decls", mod.decls.size() == 2);
         auto* imp = dynamic_cast<ImportDecl*>(mod.decls[0].get());
         test("attach: is ImportDecl", imp != nullptr);
-        test("attach: path", imp->path == "stdlib/core.ofs");
+        test("attach: path", imp->path == "F:stdlib/core.ofs");
     }
 
     // Parse extern function
@@ -212,6 +252,33 @@ int main() {
         auto* cast = dynamic_cast<CastExpr*>(forge->initializer.get());
         test("cast: is CastExpr", cast != nullptr);
         test("cast: target=crystal", cast->target_type.base == BaseType::Crystal);
+    }
+
+    // Parse lambda expression
+    {
+        auto mod = parse_source(
+            "core main() {\n"
+            "    forge dobrar = vein(x: stone) -> stone {\n"
+            "        return x * 2\n"
+            "    }\n"
+            "}\n");
+        auto* fn = dynamic_cast<FuncDecl*>(mod.decls[0].get());
+        auto* body = dynamic_cast<BlockStmt*>(fn->body.get());
+        auto* forge = dynamic_cast<ForgeStmt*>(body->stmts[0].get());
+        auto* lambda = dynamic_cast<LambdaExpr*>(forge->initializer.get());
+        test("lambda: exists", lambda != nullptr);
+        test("lambda: one param", lambda->params.size() == 1);
+        test("lambda: return stone", lambda->return_type.base == BaseType::Stone);
+    }
+
+    // Parse small integer types
+    {
+        auto mod = parse_source("core main() {\n    forge r: u8 = 255\n}");
+        auto* fn = dynamic_cast<FuncDecl*>(mod.decls[0].get());
+        auto* body = dynamic_cast<BlockStmt*>(fn->body.get());
+        auto* forge = dynamic_cast<ForgeStmt*>(body->stmts[0].get());
+        test("u8: forge exists", forge != nullptr);
+        test("u8: typed", forge->type_ann && forge->type_ann->base == BaseType::U8);
     }
 
     // Parse const declaration

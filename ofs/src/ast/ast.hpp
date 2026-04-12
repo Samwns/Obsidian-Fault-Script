@@ -11,6 +11,7 @@ namespace ofs {
 struct Expr;
 struct Stmt;
 struct Decl;
+struct Param;
 using ExprPtr = std::unique_ptr<Expr>;
 using StmtPtr = std::unique_ptr<Stmt>;
 using DeclPtr = std::unique_ptr<Decl>;
@@ -19,12 +20,19 @@ using DeclPtr = std::unique_ptr<Decl>;
 
 enum class BaseType {
     Stone,      // i64
+    U8,         // i8  (unsigned)
+    U16,        // i16 (unsigned)
+    U32,        // i32 (unsigned)
+    U64,        // i64 (unsigned)
+    I8,         // i8  (signed)
+    I32,        // i32 (signed)
     Crystal,    // f64
     Obsidian,   // i8* (string)
     Bool,       // i1
     Void,       // void
     Shard,      // pointer (wraps another type)
     Array,      // dynamic array
+    Function,   // function pointer/type
     Named,      // user-defined struct name
     Infer,      // type to be inferred
 };
@@ -33,9 +41,17 @@ struct OFSType {
     BaseType              base = BaseType::Infer;
     std::string           name;           // for Named types
     std::shared_ptr<OFSType> inner;       // for Shard<T> and Array<T>
+    std::vector<OFSType>  fn_params;      // for Function
+    std::shared_ptr<OFSType> fn_return;   // for Function
     bool                  is_mut = true;   // mutability
 
     static OFSType stone()    { return {BaseType::Stone}; }
+    static OFSType u8()       { return {BaseType::U8}; }
+    static OFSType u16()      { return {BaseType::U16}; }
+    static OFSType u32()      { return {BaseType::U32}; }
+    static OFSType u64()      { return {BaseType::U64}; }
+    static OFSType i8()       { return {BaseType::I8}; }
+    static OFSType i32()      { return {BaseType::I32}; }
     static OFSType crystal()  { return {BaseType::Crystal}; }
     static OFSType obsidian() { return {BaseType::Obsidian}; }
     static OFSType boolean()  { return {BaseType::Bool}; }
@@ -53,6 +69,13 @@ struct OFSType {
         t.inner = std::make_shared<OFSType>(std::move(inner_type));
         return t;
     }
+    static OFSType function_of(std::vector<OFSType> params, OFSType ret) {
+        OFSType t;
+        t.base = BaseType::Function;
+        t.fn_params = std::move(params);
+        t.fn_return = std::make_shared<OFSType>(std::move(ret));
+        return t;
+    }
     static OFSType named(const std::string& n) {
         OFSType t;
         t.base = BaseType::Named;
@@ -64,6 +87,9 @@ struct OFSType {
     bool operator==(const OFSType& o) const;
     bool operator!=(const OFSType& o) const { return !(*this == o); }
     bool is_numeric() const;
+    bool is_integral() const;
+    bool is_unsigned_integer() const;
+    int  integer_bits() const;
     bool is_pointer() const;
 };
 
@@ -76,6 +102,11 @@ enum class FuncIntent {
     Pure,
     Impure,
     Fractal,
+};
+
+struct Param {
+    std::string name;
+    OFSType     type;
 };
 
 // ── Expressions ───────────────────────────────────────────────────────────
@@ -142,6 +173,12 @@ struct TernaryExpr : Expr {
 struct CastExpr : Expr {
     OFSType target_type;
     ExprPtr expr;
+};
+
+struct LambdaExpr : Expr {
+    std::vector<Param> params;
+    OFSType            return_type;
+    StmtPtr            body;
 };
 
 // ── Inline Assembly Escape Hatch ─────────────────────────────
@@ -256,11 +293,6 @@ struct TremorStmt : Stmt {
 
 // ── Declarations ──────────────────────────────────────────────────────────
 
-struct Param {
-    std::string name;
-    OFSType     type;
-};
-
 struct Decl {
     int line = 0, col = 0;
     virtual ~Decl() = default;
@@ -308,6 +340,16 @@ struct ExternFuncDecl : Decl {
     bool               is_rift = false;
 };
 
+struct ImplDecl : Decl {
+    std::string target_name;
+    std::vector<std::unique_ptr<FuncDecl>> methods;
+};
+
+struct NamespaceDecl : Decl {
+    std::string name;
+    std::vector<DeclPtr> declarations;
+};
+
 // strata Color { Red, Green, Blue }
 struct StrataDecl : Decl {
     std::string              name;
@@ -326,12 +368,28 @@ struct Module {
 inline std::string OFSType::to_string() const {
     switch (base) {
         case BaseType::Stone:    return "stone";
+        case BaseType::U8:       return "u8";
+        case BaseType::U16:      return "u16";
+        case BaseType::U32:      return "u32";
+        case BaseType::U64:      return "u64";
+        case BaseType::I8:       return "i8";
+        case BaseType::I32:      return "i32";
         case BaseType::Crystal:  return "crystal";
         case BaseType::Obsidian: return "obsidian";
         case BaseType::Bool:     return "bool";
         case BaseType::Void:     return "void";
         case BaseType::Shard:    return "*" + (inner ? inner->to_string() : "?");
         case BaseType::Array:    return "[" + (inner ? inner->to_string() : "?") + "]";
+        case BaseType::Function: {
+            std::string out = "vein(";
+            for (size_t i = 0; i < fn_params.size(); i++) {
+                if (i > 0) out += ", ";
+                out += fn_params[i].to_string();
+            }
+            out += ") -> ";
+            out += fn_return ? fn_return->to_string() : "void";
+            return out;
+        }
         case BaseType::Named:    return name;
         case BaseType::Infer:    return "infer";
     }
@@ -341,6 +399,15 @@ inline std::string OFSType::to_string() const {
 inline bool OFSType::operator==(const OFSType& o) const {
     if (base != o.base) return false;
     if (base == BaseType::Named) return name == o.name;
+    if (base == BaseType::Function) {
+        if (fn_params.size() != o.fn_params.size()) return false;
+        for (size_t i = 0; i < fn_params.size(); i++) {
+            if (fn_params[i] != o.fn_params[i]) return false;
+        }
+        if (!fn_return && !o.fn_return) return true;
+        if (!fn_return || !o.fn_return) return false;
+        return *fn_return == *o.fn_return;
+    }
     if (base == BaseType::Shard || base == BaseType::Array) {
         if (!inner && !o.inner) return true;
         if (!inner || !o.inner) return false;
@@ -350,7 +417,41 @@ inline bool OFSType::operator==(const OFSType& o) const {
 }
 
 inline bool OFSType::is_numeric() const {
-    return base == BaseType::Stone || base == BaseType::Crystal;
+    return base == BaseType::Stone ||
+           base == BaseType::U8 || base == BaseType::U16 ||
+           base == BaseType::U32 || base == BaseType::U64 ||
+           base == BaseType::I8 || base == BaseType::I32 ||
+           base == BaseType::Crystal;
+}
+
+inline bool OFSType::is_integral() const {
+    return base == BaseType::Stone ||
+           base == BaseType::U8 || base == BaseType::U16 ||
+           base == BaseType::U32 || base == BaseType::U64 ||
+           base == BaseType::I8 || base == BaseType::I32;
+}
+
+inline bool OFSType::is_unsigned_integer() const {
+    return base == BaseType::U8 || base == BaseType::U16 ||
+           base == BaseType::U32 || base == BaseType::U64;
+}
+
+inline int OFSType::integer_bits() const {
+    switch (base) {
+        case BaseType::U8:
+        case BaseType::I8:
+            return 8;
+        case BaseType::U16:
+            return 16;
+        case BaseType::U32:
+        case BaseType::I32:
+            return 32;
+        case BaseType::Stone:
+        case BaseType::U64:
+            return 64;
+        default:
+            return 0;
+    }
 }
 
 inline bool OFSType::is_pointer() const {
