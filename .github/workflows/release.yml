@@ -250,6 +250,25 @@ jobs:
             }
           }
 
+          # Bundle LLVM and compression/runtime DLLs when present. Windows builds
+          # can resolve LLVM from different toolchains, and some packages depend on
+          # libzstd.dll transitively.
+          $dllSources = @(
+            "C:\msys64\ucrt64\bin",
+            "C:\Program Files\LLVM\bin",
+            "C:\Program Files\Git\mingw64\bin"
+          )
+
+          foreach ($source in $dllSources) {
+            if (-not (Test-Path $source)) { continue }
+
+            Get-ChildItem $source -Filter *.dll | Where-Object {
+              $_.Name -match '^(LLVM|libclang|LTO|Remarks|libzstd|zlib1|libxml2)'
+            } | ForEach-Object {
+              Copy-Item $_.FullName dist\ -Force
+            }
+          }
+
           if (Test-Path "build\libofs_runtime.a") {
             Copy-Item "build\libofs_runtime.a" "dist\libofs_runtime.a"
           } elseif (Test-Path "build\Release\ofs_runtime.lib") {
