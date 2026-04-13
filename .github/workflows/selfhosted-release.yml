@@ -43,11 +43,11 @@ jobs:
 
       - name: Build Self-hosted Compiler
         run: |
-          "$OFS_BIN" ofs/ofscc/ofscc.ofs -o ofscc_v2
+          "$OFS_BIN" build ofs/ofscc/ofscc.ofs -o ofscc_v2
 
       - name: Generate Installer Assets with OFS
         run: |
-          "$OFS_BIN" packaging/installer_generator.ofs -o installer_generator
+          OFSCC_INPUT=packaging/installer_generator.ofs OFSCC_OUTPUT=installer_generator ./ofscc_v2
           if [ -f installer_generator ]; then
             ./installer_generator || true
           fi

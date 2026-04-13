@@ -31,7 +31,7 @@ namespace typeck {
         ofs_array_set(_scopes, scope_idx, scope)
     }
     
-    vein resolve(name: obsidian) -> Symbol {
+    vein resolve(name: obsidian) -> infer {
         forge len = ofs_array_len(_scopes)
         forge si = len - 1
         

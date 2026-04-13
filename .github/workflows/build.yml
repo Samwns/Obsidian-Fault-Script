@@ -44,13 +44,12 @@ jobs:
       - name: Build ofscc from OFS source
         run: |
           .toolchain/ofs build ofs/ofscc/ofscc.ofs -o ofscc
-          ./ofscc --help || true
 
       - name: Validate examples with self-hosted compiler
         run: |
-          ./ofscc ofs/examples/hello.ofs -o hello
+          OFSCC_INPUT=ofs/examples/hello.ofs OFSCC_OUTPUT=hello ./ofscc
           ./hello
-          ./ofscc ofs/examples/factorial.ofs -o factorial
+          OFSCC_INPUT=ofs/examples/factorial.ofs OFSCC_OUTPUT=factorial ./ofscc
           ./factorial || true
 
       - name: Generate installers with OFS
@@ -92,8 +91,12 @@ jobs:
       - name: Run hello with self-hosted compiler
         shell: powershell
         run: |
-          .\ofscc.exe ofs\examples\hello.ofs -o hello.exe
+          $env:OFSCC_INPUT = "ofs\examples\hello.ofs"
+          $env:OFSCC_OUTPUT = "hello.exe"
+          .\ofscc.exe
           .\hello.exe
+          Remove-Item Env:OFSCC_INPUT -ErrorAction SilentlyContinue
+          Remove-Item Env:OFSCC_OUTPUT -ErrorAction SilentlyContinue
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

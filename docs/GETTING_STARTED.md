@@ -11,7 +11,7 @@
 ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
 
 # 2. Compilar um programa com OFS
-./ofscc_v1 ofs/examples/hello.ofs -o hello
+OFSCC_INPUT=ofs/examples/hello.ofs OFSCC_OUTPUT=hello ./ofscc_v1
 
 # 3. Rodar
 ./hello
@@ -79,7 +79,7 @@ core main() {
 Compile:
 
 ```bash
-./ofscc_v1 hello.ofs -o hello
+OFSCC_INPUT=hello.ofs OFSCC_OUTPUT=hello ./ofscc_v1
 ./hello
 ```
 
@@ -107,7 +107,7 @@ core main() {
 Compile:
 
 ```bash
-./ofscc_v1 math.ofs -o math
+OFSCC_INPUT=math.ofs OFSCC_OUTPUT=math ./ofscc_v1
 ./math
 ```
 
@@ -115,16 +115,16 @@ Compile:
 
 ```bash
 # FizzBuzz
-./ofscc_v1 ofs/examples/fizzbuzz.ofs -o fizzbuzz && ./fizzbuzz
+OFSCC_INPUT=ofs/examples/fizzbuzz.ofs OFSCC_OUTPUT=fizzbuzz ./ofscc_v1 && ./fizzbuzz
 
 # Recursão
-./ofscc_v1 ofs/examples/recursion.ofs -o rec && ./rec
+OFSCC_INPUT=ofs/examples/recursion.ofs OFSCC_OUTPUT=rec ./ofscc_v1 && ./rec
 
 # Strings
-./ofscc_v1 ofs/examples/string_ops.ofs -o str && ./str
+OFSCC_INPUT=ofs/examples/string_ops.ofs OFSCC_OUTPUT=str ./ofscc_v1 && ./str
 
 # Arrays
-./ofscc_v1 ofs/examples/collections.ofs -o arr && ./arr
+OFSCC_INPUT=ofs/examples/collections.ofs OFSCC_OUTPUT=arr ./ofscc_v1 && ./arr
 ```
 
 ---
@@ -192,6 +192,8 @@ Modos especiais:
 - `OFSCC_MODE=check` (somente validação)
 - `OFSCC_MODE=tokens` (imprime tokens)
 - `OFSCC_MODE=ast` (imprime raiz AST)
+
+Observacao: o `ofscc` atual ainda depende de `gcc/clang` para a etapa final de link/geracao do executavel.
 
 ---
 

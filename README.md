@@ -32,15 +32,37 @@ Download the latest release from [Releases](https://github.com/Samwns/Obsidian-F
 | Windows | Run `ofs-windows-x64-installer.exe` |
 | VS Code | Install `ofs-vscode-extension.vsix` |
 
-### Main commands
+### Core commands
 
 ```bash
+ofs file.ofs                # run directly
+ofs run file.ofs            # compile + run now
+ofs build file.ofs -o app   # build native executable
+ofs check file.ofs          # type/syntax validation only
 ofs tokens file.ofs          # lexer output
 ofs ast file.ofs             # parser output
 ofs ir file.ofs              # LLVM IR output
 ofs asm file.ofs             # native assembly output
 ofs update                   # update to latest release
+ofs help                     # full CLI help
 ```
+
+### Package commands
+
+```bash
+uncover <name>                       # search packages
+infuse <name>                        # install a package
+infuse <name>:<version>              # install specific version
+infuse <name>:stable|beta|nightly    # install by channel
+reinfuse <name>                      # update an installed package
+```
+
+### Command context
+
+- `run` for quick local iteration
+- `build` for distributable binaries
+- `check` for CI/static validation without artifacts
+- `tokens` / `ast` / `ir` / `asm` for compiler/debug visibility
 
 ### Example
 
@@ -110,7 +132,25 @@ ofs ast arquivo.ofs          # mostra a AST
 ofs ir arquivo.ofs           # mostra LLVM IR
 ofs asm arquivo.ofs          # mostra assembly nativo
 ofs update                   # atualiza pela release mais recente
+ofs help                     # ajuda completa da CLI
 ```
+
+### Comandos de pacotes
+
+```bash
+uncover <nome>                       # busca pacotes
+infuse <nome>                        # instala um pacote
+infuse <nome>:<versao>               # instala versao especifica
+infuse <nome>:stable|beta|nightly    # instala por canal
+reinfuse <nome>                      # atualiza pacote instalado
+```
+
+### Contexto dos comandos
+
+- `run` para ciclo rapido de desenvolvimento
+- `build` para gerar binario final de distribuicao
+- `check` para validar em CI sem gerar artefatos
+- `tokens` / `ast` / `ir` / `asm` para debug e inspecao do compilador
 
 ### Exemplo rápido
 

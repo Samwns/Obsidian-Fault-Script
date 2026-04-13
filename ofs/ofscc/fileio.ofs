@@ -20,6 +20,11 @@ extern vein ofs_str_char_at(s: obsidian, idx: stone) -> stone
 extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
 extern vein ofs_str_concat(a: obsidian, b: obsidian) -> obsidian
 extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+extern vein ofs_array_len(arr: infer) -> stone
+extern vein ofs_array_get(arr: infer, idx: stone) -> infer
+extern vein ofs_array_set(arr: infer, idx: stone, value: infer) -> void
+extern vein ofs_array_push(arr: infer, value: infer) -> void
+extern vein ofs_array_pop(arr: infer) -> infer
 
 //  File Reading 
 

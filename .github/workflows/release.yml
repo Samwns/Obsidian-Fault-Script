@@ -60,11 +60,13 @@ jobs:
       - name: Build self-hosted compiler
         run: |
           .toolchain/ofs build ofs/ofscc/ofscc.ofs -o ofs
-          ./ofs --help || true
+          OFSCC_INPUT=ofs/examples/hello.ofs OFSCC_OUTPUT=ofs-hello ./ofs
+          ./ofs-hello
 
       - name: Generate installers using OFS
         run: |
-          ./ofs run packaging/installer_generator.ofs
+          OFSCC_INPUT=packaging/installer_generator.ofs OFSCC_OUTPUT=installer_generator ./ofs
+          ./installer_generator
 
       - name: Build release bundles
         run: |

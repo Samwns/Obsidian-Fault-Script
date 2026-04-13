@@ -1,13 +1,13 @@
 # OFS Self-Hosting — Status Report
 
 **Data**: 12 de Abril de 2026  
-**Status**: ✅ **COMPILADOR OFS IMPLEMENTADO E PRONTO PARA BOOTSTRAP**
+**Status**: ⚠️ **COMPILADOR OFS IMPLEMENTADO, MAS BOOTSTRAP AINDA NAO VALIDADO DE PONTA A PONTA**
 
 ---
 
 ## 🎯 Objetivo Alcançado
 
-O compilador OFS agora é **puramente escrito em OFS**. Quando `ofscc_v2` e `ofscc_v3` produzem binarios identicos, o bootstrap esta validado de ponta a ponta.
+O compilador OFS agora é **puramente escrito em OFS**, mas a validacao final ainda depende de executar o bootstrap completo e provar determinismo real. Hoje o driver `ofscc` usa bridge por variaveis de ambiente, e a cadeia ainda depende de um compilador bootstrap anterior e de `gcc/clang` para gerar o binario final.
 
 | Linguagem | Ano | Milestone |
 |---|---|---|
@@ -15,7 +15,7 @@ O compilador OFS agora é **puramente escrito em OFS**. Quando `ofscc_v2` e `ofs
 | C | 1972 | Bootstrap completo |
 | Rust | 2011 | Self-hosted |
 | Go | 2015 | Self-hosted |
-| **OFS** | **2026** | **🎉 AUTO-SUFICIENTE** |
+| **OFS** | **2026** | **em verificacao de bootstrap** |
 
 ---
 
@@ -139,7 +139,7 @@ ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
 ### 2. Build da v2 (OFS → OFS)
 
 ```bash
-./ofscc_v1 ofs/ofscc/ofscc.ofs -o ofscc_v2
+OFSCC_INPUT=ofs/ofscc/ofscc.ofs OFSCC_OUTPUT=ofscc_v2 ./ofscc_v1
 ```
 
 **Resultado**: `ofscc_v2` — compilador OFS (compilado por ofscc_v1)
@@ -147,7 +147,7 @@ ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
 ### 3. Build da v3 (OFS → OFS)
 
 ```bash
-./ofscc_v2 ofs/ofscc/ofscc.ofs -o ofscc_v3
+OFSCC_INPUT=ofs/ofscc/ofscc.ofs OFSCC_OUTPUT=ofscc_v3 ./ofscc_v2
 ```
 
 **Resultado**: `ofscc_v3` — compilador OFS (compilado por ofscc_v2)
@@ -244,16 +244,16 @@ ofs/ofscc/
 
 ## 🏆 Milestone Achievement
 
-**OFS é agora uma linguagem auto-suficiente.**
+**OFS tem um compilador self-hosted implementado, mas ainda nao e auto-suficiente em toda a cadeia de build.**
 
 Isso significa:
 - ✅ A linguagem é Turing-completa
 - ✅ Prova que é expressiva o suficiente para compiladores
-- ✅ Bootstrap completo (bootstrap OFS -> OFS -> OFS)
-- ✅ Qualificada para produção
-- ✅ Apta para compiler development
+- ⚠️ Bootstrap ainda precisa ser verificado em execucao real (OFS -> OFS -> OFS)
+- ⚠️ O driver self-hosted ainda nao tem CLI equivalente ao bootstrap
+- ⚠️ O backend atual ainda depende de `gcc/clang`
 
-**Próximo passo: Verificar determinismo real no bootstrap.**
+**Próximos passos: validar determinismo real, fechar a CLI e decidir se a dependencia em C compiler externo continua aceitavel.**
 
 ---
 
@@ -261,13 +261,13 @@ Isso significa:
 
 1. **Testar o bootstrap** — Execute `bash ofs/ofscc/test_bootstrap.sh`
 2. **Verificar determinismo** — Compare `ofscc_v2` e `ofscc_v3`
-3. **Compilar primeiro programa** — `./ofscc_v1 examples/hello.ofs`
-4. **Documentar issues** — Qualquer problema encontrado
-5. **Otimizar** — Se houver diffs, investigar por quê
+3. **Testar o bridge atual** — `OFSCC_INPUT=ofs/examples/hello.ofs OFSCC_OUTPUT=hello ./ofscc_v1`
+4. **Fechar a interface** — adicionar argv real ou wrappers oficiais
+5. **Decidir a cadeia final** — manter `gcc/clang` como dependencia ou concluir um backend sem C
 
 ---
 
-**Status Final**: OFS Compiler Self-Hosted v0.1 ✅  
-**Próximo Release**: v1.1.0 (Verified Bootstrap)  
-**Timeline**: 2 semanas para verificação + release
+**Status Final**: OFS Compiler Self-Hosted v0.1 em verificacao  
+**Próximo Release**: validar bootstrap + release coerente com a interface atual  
+**Timeline**: depende da validacao real do bootstrap e da estrategia de dependencia externa
 

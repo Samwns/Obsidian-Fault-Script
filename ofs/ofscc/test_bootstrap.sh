@@ -32,7 +32,7 @@ echo ""
 
 # Passo 2: OFS compila OFS (primeira vez)
 echo "[2/4] Building ofscc_v2 with ofscc_v1 (OFS → OFS)..."
-./ofscc_v1 $OFSCC_SRC -o ofscc_v2 2>/dev/null || {
+OFSCC_INPUT="$OFSCC_SRC" OFSCC_OUTPUT="ofscc_v2" ./ofscc_v1 2>/dev/null || {
     echo "ERROR: ofscc_v1 failed to compile ofscc.ofs"
     exit 1
 }
@@ -41,7 +41,7 @@ echo ""
 
 # Passo 3: OFS compila OFS (segunda vez)
 echo "[3/4] Building ofscc_v3 with ofscc_v2 (OFS → OFS)..."
-./ofscc_v2 $OFSCC_SRC -o ofscc_v3 2>/dev/null || {
+OFSCC_INPUT="$OFSCC_SRC" OFSCC_OUTPUT="ofscc_v3" ./ofscc_v2 2>/dev/null || {
     echo "ERROR: ofscc_v2 failed to compile ofscc.ofs"
     exit 1
 }

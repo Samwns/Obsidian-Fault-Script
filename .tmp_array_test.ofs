@@ -1,0 +1,15 @@
+monolith Foo {
+    val: stone
+}
+forge _sentinel: Foo
+forge pool = [_sentinel]
+vein pool_get(id: stone) -> Foo {
+    return pool[id]
+}
+core main() {
+    forge f: Foo
+    f.val = 42
+    ofs_array_push(pool, f)
+    forge g = pool_get(0)
+    echo(g.val)
+}

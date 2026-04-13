@@ -2,6 +2,8 @@
 
 OFS usa bootstrap self-hosted. O repositorio nao depende mais de codigo C++.
 
+Estado atual: o `ofscc` ainda usa `OFSCC_INPUT` e `OFSCC_OUTPUT` em vez de parsing de argv, e o backend atual ainda chama `gcc/clang` para produzir o binario final.
+
 ## Fluxo
 
 1. obter um compilador OFS bootstrap (release anterior)
@@ -14,8 +16,8 @@ OFS usa bootstrap self-hosted. O repositorio nao depende mais de codigo C++.
 
 ```bash
 ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
-./ofscc_v1 ofs/ofscc/ofscc.ofs -o ofscc_v2
-./ofscc_v2 ofs/ofscc/ofscc.ofs -o ofscc_v3
+OFSCC_INPUT=ofs/ofscc/ofscc.ofs OFSCC_OUTPUT=ofscc_v2 ./ofscc_v1
+OFSCC_INPUT=ofs/ofscc/ofscc.ofs OFSCC_OUTPUT=ofscc_v3 ./ofscc_v2
 cmp -s ofscc_v2 ofscc_v3 && echo "BOOTSTRAP OK"
 ```
 
@@ -30,3 +32,4 @@ bash ofs/ofscc/test_bootstrap.sh
 - binarios deterministas
 - compilacao self-hosted estavel
 - instaladores gerados por OFS via packaging/installer_generator.ofs
+- bootstrap anterior e compilador C ainda sao dependencias externas da cadeia atual

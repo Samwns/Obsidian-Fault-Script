@@ -47,11 +47,12 @@ namespace symtable {
         return -1
     }
 
-    vein get_by_ref(ref: stone) -> Symbol {
+    vein get_by_ref(ref: stone) -> infer {
         forge sidx = ref / 10000
         forge iidx = ref % 10000
         forge scope = ofs_array_get(_scopes, sidx)
-        return ofs_array_get(scope, iidx)
+        forge result = ofs_array_get(scope, iidx)
+        return result
     }
 
     vein clear() -> void {

@@ -37,12 +37,18 @@ Write-Host "Passo 1: bootstrap -> ofscc_v1.exe" -ForegroundColor Yellow
 Check-Success $LASTEXITCODE "build ofscc_v1.exe"
 
 Write-Host "Passo 2: ofscc_v1.exe -> ofscc_v2.exe" -ForegroundColor Yellow
-& .\ofscc_v1.exe build $OfsCcSrc -o ofscc_v2.exe
+$env:OFSCC_INPUT = $OfsCcSrc
+$env:OFSCC_OUTPUT = "ofscc_v2.exe"
+& .\ofscc_v1.exe
 Check-Success $LASTEXITCODE "build ofscc_v2.exe"
 
 Write-Host "Passo 3: ofscc_v2.exe -> ofscc_v3.exe" -ForegroundColor Yellow
-& .\ofscc_v2.exe build $OfsCcSrc -o ofscc_v3.exe
+$env:OFSCC_OUTPUT = "ofscc_v3.exe"
+& .\ofscc_v2.exe
 Check-Success $LASTEXITCODE "build ofscc_v3.exe"
+
+Remove-Item Env:OFSCC_INPUT -ErrorAction SilentlyContinue
+Remove-Item Env:OFSCC_OUTPUT -ErrorAction SilentlyContinue
 
 Write-Host "Passo 4: validando determinismo" -ForegroundColor Yellow
 $Hash2 = (Get-FileHash "ofscc_v2.exe" -Algorithm SHA256).Hash

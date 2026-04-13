@@ -2,6 +2,8 @@
 
 Compilador completo escrito em OFS e usado como caminho principal do projeto.
 
+Estado atual: o driver `ofscc` usa bridge por variaveis de ambiente (`OFSCC_INPUT`, `OFSCC_OUTPUT`, `OFSCC_MODE`, `OFSCC_OPT`) e ainda gera C para `gcc/clang`.
+
 ## Arquitetura
 
 - chars.ofs
@@ -26,6 +28,13 @@ input.ofs -> lexer -> parser -> typeck -> codegen C -> gcc/clang -> binario
 ofs build ofs/ofscc/ofscc.ofs -o ofscc
 ```
 
+## Uso atual do driver
+
+```bash
+OFSCC_INPUT=ofs/examples/hello.ofs OFSCC_OUTPUT=hello ./ofscc
+./hello
+```
+
 ## Bootstrap e determinismo
 
 ```bash
@@ -33,6 +42,8 @@ bash ofs/ofscc/test_bootstrap.sh [bootstrap_compiler]
 ```
 
 Padrao de bootstrap_compiler: ofs
+
+O bootstrap atual ainda exige um compilador OFS anterior e um compilador C externo para fechar a cadeia.
 
 ## Testes
 

@@ -48,17 +48,18 @@ vein node_new(kind: stone, val: obsidian, line: stone, col: stone) -> stone {
     return ofs_array_len(_node_pool) - 1
 }
 
-vein node_get(id: stone) -> Node {
+vein node_get(id: stone) -> infer {
     if (id < 0 || id >= ofs_array_len(_node_pool)) {
         forge dummy: Node
         dummy.kind = -1
         dummy.extra_id = -1
         return dummy
     }
-    return ofs_array_get(_node_pool, id)
+    forge result = ofs_array_get(_node_pool, id)
+    return result
 }
 
-vein node_set(id: stone, n: Node) -> void {
+vein node_set(id: stone, n: infer) -> void {
     if (id < 0 || id >= ofs_array_len(_node_pool)) {
         return
     }
@@ -88,14 +89,15 @@ vein node_add_extra(parent_id: stone, child_id: stone) -> void {
     ofs_array_set(_node_extras, n.extra_id, extras)
 }
 
-vein node_get_extra(parent_id: stone, index: stone) -> stone {
+vein node_get_extra(parent_id: stone, index: stone) -> infer {
     forge n = node_get(parent_id)
     if (n.extra_id < 0) { return -1 }
     forge extras = ofs_array_get(_node_extras, n.extra_id)
     if (index < 0 || index >= ofs_array_len(extras)) {
         return -1
     }
-    return ofs_array_get(extras, index)
+    forge result = ofs_array_get(extras, index)
+    return result
 }
 
 vein node_extra_len(parent_id: stone) -> stone {

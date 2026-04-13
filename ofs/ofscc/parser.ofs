@@ -14,7 +14,7 @@ namespace parser {
     
     //  Token Navigation 
     
-    vein _cur() -> Token {
+    vein _cur() -> infer {
         if (_pos >= _len) {
             forge dummy: Token
             dummy.kind = TOK_EOF
@@ -23,26 +23,28 @@ namespace parser {
             dummy.col = 0
             return dummy
         }
-        return ofs_array_get(_tokens, _pos)
+        forge result = ofs_array_get(_tokens, _pos)
+        return result
     }
     
-    vein _cur_kind() -> stone {
+    vein _cur_kind() -> infer {
         return _cur().kind
     }
     
-    vein _cur_val() -> obsidian {
+    vein _cur_val() -> infer {
         return _cur().val
     }
     
-    vein _advance() -> Token {
+    vein _advance() -> infer {
         forge t = _cur()
         _pos++
         return t
     }
     
-    vein _peek_kind() -> stone {
+    vein _peek_kind() -> infer {
         if (_pos + 1 >= _len) { return TOK_EOF }
-        return ofs_array_get(_tokens, _pos + 1).kind
+        forge peek = ofs_array_get(_tokens, _pos + 1)
+        return peek.kind
     }
     
     vein _expect(kind: stone) -> bool {
