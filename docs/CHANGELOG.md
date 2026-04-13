@@ -4,6 +4,10 @@ All notable changes to this project are recorded here.
 
 ## [Unreleased]
 ### Added
+- Track 1 language update documented and available in the compiler: small integers (`u8`, `u16`, `u32`, `u64`, `i8`, `i32`), `impl`, namespaces, function values/lambdas, and `window` runtime bridge.
+- `window.ofs` standard-library module and `window` package entry for native window/input access.
+- `canvas.ofs` standard-library module and `canvas` package entry for pixel-buffer drawing on top of `window`.
+- VS Code extension grammar, snippets, hover docs, and README updated to cover Track 1 syntax and the canvas/window workflow.
 - New `fault_unreachable()` intrinsic: marks the current code path as unreachable; lowers to `llvm.trap` followed by an LLVM `unreachable` instruction, letting the optimizer eliminate dead branches.
 - New `fault_memcpy(dst, src, len)` intrinsic: lowers to `llvm.memcpy` for bulk memory copies inside `fracture`/`abyss`/`bedrock` blocks.
 - New `fault_memset(dst, val, len)` intrinsic: lowers to `llvm.memset` for bulk memory initialisation inside low-level blocks.
@@ -17,6 +21,7 @@ All notable changes to this project are recorded here.
 - `register_builtin_symbols` rewritten for clarity: each intrinsic now has its exact return type recorded in a table rather than a catch-all `stone` fallback.
 
 ### Fixed
+- Windows updater now resolves the latest release tag more robustly by following redirects and falling back to the GitHub API when needed.
 - **Critical**: String equality (`==`) and inequality (`!=`) on `obsidian` values now use `ofs_str_eq` (content comparison). Previously they compared raw pointer addresses, so two string literals with equal content could compare as unequal.
 - **Critical**: `asm "..."` expressions were never lowered to IR (the dispatch case was missing in `gen_expr`). Fixed by adding the `InlineAsmExpr` branch to `gen_expr` and to `check_expr` in the semantic analyser.
 - Semantic check for `void` function returning a value now raises a proper error (`void function cannot return a value`) instead of silently producing invalid LLVM IR that fails verifier checks.

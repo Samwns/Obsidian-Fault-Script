@@ -574,6 +574,7 @@ static std::filesystem::path resolve_attach_path(const std::string& attach_path,
 // Maps clean library names to their stdlib filenames.
 static const std::unordered_map<std::string, std::string>& stdlib_names() {
     static const std::unordered_map<std::string, std::string> NAMES = {
+        {"canvas",          "canvas.ofs"},
         {"core",            "core.ofs"},
         {"math",            "math.ofs"},
         {"string",          "string.ofs"},

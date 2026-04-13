@@ -1,41 +1,44 @@
 # OFS Jornada Iniciante
 
-Guia rapido para quem esta aprendendo programacao e quer evoluir com OFS sem se perder.
+Guia direto para quem quer aprender OFS por etapas, sem pular do básico para o baixo nível cedo demais.
 
-## Como usar este guia
+## Como usar
 
-1. Escolha um modulo.
-2. Copie o exemplo.
-3. Rode no terminal com `ofs arquivo.ofs`.
-4. Complete o mini desafio.
+1. Copie um módulo por vez.
+2. Rode com `ofs arquivo.ofs`.
+3. Mude alguma coisa no exemplo.
+4. Só avance quando entender o que saiu no terminal.
 
-## Modulo 1: Fundamentos
+---
+
+## Módulo 1: Primeiros valores
 
 Objetivo:
-- Entender `core`, variaveis e tipos basicos.
-
-Exemplo:
+- entender `core`, `forge`, `echo` e tipos básicos.
 
 ```ofs
 core main() {
     forge nome: obsidian = "Ana"
     forge idade: stone = 19
     forge peso: crystal = 55.7
+    forge ativo: bool = true
+
     echo(nome)
     echo(idade)
     echo(peso)
+    echo(ativo)
 }
 ```
 
 Mini desafio:
-- Crie variaveis para cidade e ano atual e imprima tudo.
+- adicione cidade e profissão.
 
-## Modulo 2: Decisao e repeticao
+---
+
+## Módulo 2: Decisão e repetição
 
 Objetivo:
-- Aprender `if`, `else`, `while` e `cycle`.
-
-Exemplo:
+- aprender `if`, `while` e `cycle`.
 
 ```ofs
 core main() {
@@ -46,23 +49,25 @@ core main() {
         energia -= 1
     }
 
+    cycle (forge i = 0; i < 3; i++) {
+        echo(i)
+    }
+
     if (energia == 0) {
-        echo("Recarregar")
-    } else {
-        echo("Continuar")
+        echo("recarregar")
     }
 }
 ```
 
 Mini desafio:
-- Conte de 10 ate 1 e mostre "decolar" no final.
+- conte de 10 até 1 e depois mostre `decolar`.
 
-## Modulo 3: Funcoes
+---
+
+## Módulo 3: Funções
 
 Objetivo:
-- Criar funcoes reutilizaveis com `vein`.
-
-Exemplo:
+- criar lógica reutilizável com `vein`.
 
 ```ofs
 vein dobro(n: stone) -> stone {
@@ -70,56 +75,183 @@ vein dobro(n: stone) -> stone {
 }
 
 core main() {
-    forge x: stone = 21
-    echo(dobro(x))
+    echo(dobro(21))
 }
 ```
 
 Mini desafio:
-- Crie uma funcao `media(a, b)` que retorna a media de dois valores.
+- crie `media(a, b)`.
 
-## Modulo 4: Structs e organizacao
+---
+
+## Módulo 4: Tipos pequenos
 
 Objetivo:
-- Modelar dados com `monolith`.
-
-Exemplo:
+- entender por que `u8` e `u32` existem.
 
 ```ofs
-monolith Player {
-    nome: obsidian
-    hp: stone
+core main() {
+    forge r: u8 = 255
+    forge g: u8 = 128
+    forge b: u8 = 0
+
+    forge pixel: u32 = (r as u32 << 16) | (g as u32 << 8) | (b as u32)
+    echo(pixel)
+}
+```
+
+Mini desafio:
+- extraia o canal vermelho de volta com `as u8`.
+
+---
+
+## Módulo 5: `monolith` e `impl`
+
+Objetivo:
+- modelar dados e colocar comportamento no tipo.
+
+```ofs
+monolith Rect {
+    w: stone
+    h: stone
+}
+
+impl Rect {
+    vein area(self) -> stone {
+        return self.w * self.h
+    }
 }
 
 core main() {
-    forge p: Player
-    p.nome = "Rex"
-    p.hp = 100
-    echo(p.nome)
-    echo(p.hp)
+    forge r: Rect
+    r.w = 10
+    r.h = 20
+    echo(r.area())
 }
 ```
 
 Mini desafio:
-- Adicione um campo `nivel` e mostre no terminal.
+- adicione um método `perimeter`.
 
-## Modulo 5: Nivel avancado
+---
+
+## Módulo 6: `namespace`
 
 Objetivo:
-- Conhecer recursos de baixo nivel quando ja estiver confortavel.
+- organizar funções sem poluir o escopo global.
 
-Topicos:
-- `fracture` e `shard` (ponteiros seguros)
-- `extern` (integracao com C)
-- `attach` (reuso de modulos)
+```ofs
+namespace mathx {
+    vein square(x: stone) -> stone {
+        return x * x
+    }
+}
 
-Sugestao:
-- Use como referencia o arquivo `ofs/examples/showcase.ofs`.
+core main() {
+    echo(mathx.square(4))
+}
+```
 
-## Proximos passos
+Mini desafio:
+- adicione `cube`.
+
+---
+
+## Módulo 7: `attach`
+
+Objetivo:
+- reaproveitar código OFS de outro arquivo.
+
+Arquivo `minha_lib.ofs`:
+
+```ofs
+vein saudacao() -> obsidian {
+    return "oi"
+}
+```
+
+Arquivo principal:
+
+```ofs
+attach {F:minha_lib.ofs}
+
+core main() {
+    echo(saudacao())
+}
+```
+
+Mini desafio:
+- mova duas funções para outro arquivo e importe com `attach {F:...}`.
+
+---
+
+## Módulo 8: Função como valor
+
+Objetivo:
+- usar lambda e passar função como argumento.
+
+```ofs
+vein aplicar(x: stone, fn: vein(stone) -> stone) -> stone {
+    return fn(x)
+}
+
+core main() {
+    forge dobrar = vein(n: stone) -> stone {
+        return n * 2
+    }
+
+    echo(aplicar(10, dobrar))
+}
+```
+
+Mini desafio:
+- troque a lambda por uma que eleva ao quadrado.
+
+---
+
+## Módulo 9: Recursos modernos
+
+Objetivo:
+- conhecer recursos úteis fora do fluxo básico.
+
+```ofs
+const limite: stone = 10
+strata Status { Idle, Running, Failed }
+
+core main() {
+    match limite {
+        case 10: { echo("dez") }
+        default: { echo("outro") }
+    }
+}
+```
+
+Mini desafio:
+- troque o `match` para testar dois valores.
+
+---
+
+## Módulo 10: Quando avançar para o baixo nível
+
+Só entre nisso quando já estiver confortável com os módulos anteriores.
+
+Tópicos:
+- `rift vein`
+- `bedrock`
+- `fracture`
+- `abyss`
+- `window`
+
+Sugestão:
+- veja `ofs/examples/showcase.ofs`
+- veja `ofs/examples/attach_file_demo.ofs`
+- leia `docs/LANGUAGE_REFERENCE.md`
+
+---
+
+## Próximos passos
 
 1. Ler [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
-2. Explorar [docs/LANGUAGE_REFERENCE.md](docs/LANGUAGE_REFERENCE.md)
+2. Ler [docs/LANGUAGE_REFERENCE.md](docs/LANGUAGE_REFERENCE.md)
 3. Rodar exemplos em `ofs/examples/`
-
-Aprender programacao fica mais facil quando voce faz pequenos ciclos: testar, errar, ajustar e testar de novo.
+4. Testar pacotes em [packages/README.md](packages/README.md)

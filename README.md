@@ -1,6 +1,14 @@
 # Obsidian Fault Script (OFS)
 
-Linguagem para aprender programação. Escreva código, execute na hora, compile depois.
+Linguagem para aprender programação e, ao mesmo tempo, chegar perto do sistema quando precisar.
+
+Você pode:
+- escrever um arquivo `.ofs` e rodar direto;
+- validar sem gerar binário;
+- compilar para executável nativo;
+- reutilizar módulos com `attach`;
+- integrar com código externo via `rift vein`;
+- usar recursos modernos da linguagem, como `impl`, `namespace`, lambdas e tipos inteiros pequenos.
 
 [English](#english) | [Português (Brasil)](#português-brasil)
 
@@ -8,27 +16,59 @@ Linguagem para aprender programação. Escreva código, execute na hora, compile
 
 ## English
 
-A hybrid language (interpreted + compiled), statically typed. Write code, run instantly, then optimize to native binary when needed.
+OFS is a statically typed language designed to feel approachable first, but it also exposes lower-level building blocks when needed.
+
+### What OFS supports today
+
+- Native execution flow: `ofs file.ofs`, `ofs run`, `ofs build`
+- Static checking: `ofs check`
+- Debug views: `ofs tokens`, `ofs ast`, `ofs ir`, `ofs asm`
+- Small integer types: `u8`, `u16`, `u32`, `u64`, `i8`, `i32`
+- User types with methods: `monolith` + `impl`
+- Namespaces: `namespace mathx { ... }`
+- Function values and inline lambdas
+- Error and pattern flow: `match`, `tremor/catch/throw`
+- Low-level blocks: `fracture`, `abyss`, `fractal`, `bedrock`
+- Interop with native code via `extern vein` and `rift vein`
+- Standard modules and installable packages
 
 ### Install
 
-Download from [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
+Download the latest release from [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
 
-| Platform | Command |
+| Platform | How to install |
 |---|---|
-| Linux | `tar -xzf ofs-linux-x64-installer.tar.gz && ./install.sh` |
-| macOS | `sudo installer -pkg ofs-macos-arm64-installer.pkg -target /` |
+| Linux | Extract `ofs-linux-x64-installer.tar.gz` and run `./install.sh` |
+| macOS | Run `sudo installer -pkg ofs-macos-arm64-installer.pkg -target /` |
 | Windows | Run `ofs-windows-x64-installer.exe` |
-| VS Code | `code --install-extension ofs-vscode-extension.vsix` |
+| VS Code | Install `ofs-vscode-extension.vsix` |
 
-### Commands
+### Main commands
 
 ```bash
-ofs file.ofs              # run directly
-ofs check file.ofs        # validate syntax
-ofs build file.ofs -o app # compile to binary
-ofs update                # update to latest
-ofs help                  # help
+ofs file.ofs                 # run directly
+ofs run file.ofs             # compile and run now
+ofs build file.ofs -o app    # build native executable
+ofs check file.ofs           # type-check only
+ofs tokens file.ofs          # lexer output
+ofs ast file.ofs             # parser output
+ofs ir file.ofs              # LLVM IR output
+ofs asm file.ofs             # native assembly output
+ofs update                   # update to latest release
+```
+
+### Example
+
+```ofs
+attach {core}
+
+vein double(x: stone) -> stone {
+	return x * 2
+}
+
+core main() {
+	echo(double(21))
+}
 ```
 
 ### Documentation
@@ -43,33 +83,68 @@ ofs help                  # help
 
 ## Português (Brasil)
 
-Linguagem para aprender programação. Escreva código, execute na hora, compile depois.
+OFS é uma linguagem estaticamente tipada feita para ser simples no começo e poderosa quando o projeto crescer.
+
+### O que a linguagem já faz hoje
+
+- Executa arquivos `.ofs` direto com `ofs arquivo.ofs`
+- Compila e roda com `ofs run`
+- Gera executável nativo com `ofs build`
+- Valida sem gerar saída com `ofs check`
+- Mostra tokens, AST, LLVM IR e assembly para debug
+- Tem tipos pequenos: `u8`, `u16`, `u32`, `u64`, `i8`, `i32`
+- Tem `monolith` com métodos via `impl`
+- Tem `namespace` para organizar símbolos
+- Aceita funções como valores e lambdas inline
+- Tem `match`, `tremor/catch/throw`, `const` e `strata`
+- Tem blocos de baixo nível: `fracture`, `abyss`, `fractal`, `bedrock`
+- Faz integração nativa com `extern vein` e `rift vein`
+- Reutiliza módulos por `attach {nome}` ou `attach {F:arquivo.ofs}`
+- Já tem `window` e `canvas` para fluxo gráfico básico em OFS
 
 ### Instalar
 
-Baixe em [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
+Baixe a release mais recente em [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
 
-| Plataforma | Comando |
+| Plataforma | Como instalar |
 |---|---|
-| Linux | `tar -xzf ofs-linux-x64-installer.tar.gz && ./install.sh` |
-| macOS | `sudo installer -pkg ofs-macos-arm64-installer.pkg -target /` |
+| Linux | Extraia `ofs-linux-x64-installer.tar.gz` e rode `./install.sh` |
+| macOS | Rode `sudo installer -pkg ofs-macos-arm64-installer.pkg -target /` |
 | Windows | Execute `ofs-windows-x64-installer.exe` |
-| VS Code | `code --install-extension ofs-vscode-extension.vsix` |
+| VS Code | Instale `ofs-vscode-extension.vsix` |
 
-### Comandos
+### Comandos principais
 
 ```bash
-ofs arquivo.ofs           # executa direto
-ofs check arquivo.ofs     # valida sintaxe
-ofs build arquivo.ofs     # compila para binário
-ofs update                # atualiza
-ofs help                  # ajuda
+ofs arquivo.ofs              # executa direto
+ofs run arquivo.ofs          # compila e executa na hora
+ofs build arquivo.ofs -o app # gera executável nativo
+ofs check arquivo.ofs        # valida tipos e sintaxe
+ofs tokens arquivo.ofs       # mostra tokens
+ofs ast arquivo.ofs          # mostra a AST
+ofs ir arquivo.ofs           # mostra LLVM IR
+ofs asm arquivo.ofs          # mostra assembly nativo
+ofs update                   # atualiza pela release mais recente
+```
+
+### Exemplo rápido
+
+```ofs
+attach {core}
+
+vein dobro(x: stone) -> stone {
+	return x * 2
+}
+
+core main() {
+	echo(dobro(21))
+}
 ```
 
 ### Documentação
 
 - [Guia de Início](docs/GETTING_STARTED.md)
 - [Referência da Linguagem](docs/LANGUAGE_REFERENCE.md)
-- [Guia do Iniciante](OFS_JORNADA_INICIANTE.md)
+- [Jornada Iniciante](OFS_JORNADA_INICIANTE.md)
 - [Pacotes](packages/README.md)
 - [Changelog](docs/CHANGELOG.md)

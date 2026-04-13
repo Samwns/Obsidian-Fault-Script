@@ -6,12 +6,13 @@ const os = require('os');
 const https = require('https');
 
 const KEYWORDS = [
-  'core', 'vein', 'forge', 'const', 'monolith', 'strata', 'extern', 'rift',
+  'core', 'vein', 'forge', 'const', 'monolith', 'impl', 'namespace', 'strata', 'extern', 'rift',
   'if', 'else', 'while', 'cycle', 'match', 'case', 'default',
   'return', 'break', 'continue', 'throw', 'tremor', 'catch',
   'fracture', 'abyss', 'bedrock', 'obsid', 'attach', 'import', 'intent', 'tectonic', 'pure', 'impure', 'fractal',
   'layout', 'bind', 'abi', 'packed', 'native', 'system',
   'asm', 'echo', 'in', 'shard',
+  'u8', 'u16', 'u32', 'u64', 'i8', 'i32',
   'true', 'false', 'null', 'as'
 ];
 
@@ -35,6 +36,46 @@ const HOVER_DOCS = {
     description: 'Declara variavel imutavel.',
     context: 'Use para valores que nao devem mudar durante a execucao.',
     example: 'const max: stone = 100'
+  },
+  impl: {
+    description: 'Declara metodos para um monolith.',
+    context: 'Use para associar comportamento ao tipo e permitir chamadas como `obj.metodo()`.',
+    example: 'impl Rect {\n    vein area(self) -> stone {\n        return self.w * self.h\n    }\n}'
+  },
+  namespace: {
+    description: 'Agrupa simbolos em um escopo nomeado.',
+    context: 'Use para organizar APIs e evitar colisao de nomes.',
+    example: 'namespace mathx {\n    vein square(x: stone) -> stone {\n        return x * x\n    }\n}'
+  },
+  u8: {
+    description: 'Inteiro sem sinal de 8 bits.',
+    context: 'Use para canais de cor, bytes e buffers compactos.',
+    example: 'forge r: u8 = 255'
+  },
+  u16: {
+    description: 'Inteiro sem sinal de 16 bits.',
+    context: 'Use para campos compactos maiores que um byte.',
+    example: 'forge size: u16 = 1024'
+  },
+  u32: {
+    description: 'Inteiro sem sinal de 32 bits.',
+    context: 'Use para pixels RGBA e mascaras.',
+    example: 'forge pixel: u32 = 0xFF0000'
+  },
+  u64: {
+    description: 'Inteiro sem sinal de 64 bits.',
+    context: 'Use para largura de 64 bits sem sinal.',
+    example: 'forge flags: u64 = 1'
+  },
+  i8: {
+    description: 'Inteiro com sinal de 8 bits.',
+    context: 'Use para dados pequenos com sinal.',
+    example: 'forge delta: i8 = -1'
+  },
+  i32: {
+    description: 'Inteiro com sinal de 32 bits.',
+    context: 'Use para inteiros compactos com sinal.',
+    example: 'forge acc: i32 = -42'
   },
   cycle: {
     description: 'Loop range-based ou C-style (3 partes).',
@@ -230,6 +271,16 @@ const HOVER_DOCS = {
     description: 'Wrapper de stdlib para tamanho de texto via rift.',
     context: 'Use `attach {rift}` para consumir fronteiras externas com API OFS.',
     example: 'attach {rift}\necho(rift_text_size("fault"))'
+  },
+  window: {
+    description: 'Modulo nativo de janela e input da OFS.',
+    context: 'Use `attach {window}` para criar janela, ler input e apresentar um buffer.',
+    example: 'attach {window}\nwindow.create("demo", 640, 480)'
+  },
+  canvas: {
+    description: 'Modulo nativo/instavel de canvas da OFS.',
+    context: 'Use `attach {canvas}` para trabalhar com buffer de pixels junto com `window`.',
+    example: 'attach {canvas}\nforge cv = canvas.create(64, 48)\ncanvas.set_pixel(cv, 1, 1, 0xFF0000)'
   },
   bedrock_region_new: {
     description: 'Cria uma regiao low-level de stones zerada.',

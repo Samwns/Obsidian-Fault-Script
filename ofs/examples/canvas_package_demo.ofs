@@ -1,0 +1,9 @@
+attach {F:../../packages/src/canvas/libs/canvas.ofs}
+
+core main() {
+    forge cv = canvas.create(8, 8)
+    canvas.clear(cv, 0x112233)
+    canvas.set_pixel(cv, 1, 1, 0xFF0000)
+    echo(canvas.get_pixel(cv, 1, 1))
+    canvas.destroy(cv)
+}

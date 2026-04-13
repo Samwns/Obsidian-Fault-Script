@@ -1,0 +1,16 @@
+attach {F:../stdlib/canvas.ofs}
+
+core main() {
+    forge cv = canvas.create(64, 48)
+    window.create("Canvas Demo", 64, 48)
+
+    while (window.poll()) {
+        canvas.clear(cv, 0x1A1A2E)
+        canvas.fill_rect(cv, 4, 4, 16, 10, 0x00FFAA)
+        canvas.set_pixel(cv, input.mouse_x(), input.mouse_y(), 0xFF0000)
+        canvas.present(cv)
+    }
+
+    window.destroy()
+    canvas.destroy(cv)
+}

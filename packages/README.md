@@ -1,4 +1,6 @@
-# OFS Packages (Bibliotecas)
+# OFS Packages
+
+Pacotes OFS são módulos `.ofs` organizados para instalação local ou publicação no catálogo do projeto.
 
 [English](#english) | [Português (Brasil)](#português-brasil)
 
@@ -6,100 +8,152 @@
 
 ## English
 
-### Install local package (Linux/macOS)
+### Package flow
+
+1. Search with `uncover`
+2. Install with `infuse`
+3. Use in code with `attach {name}`
+4. Update with `reinfuse`
+
+### CLI usage
 
 ```bash
-./packages/install_library.sh packages/dist/terminal-colors.tar.gz
-export OFS_LIB_PATH="$HOME/.ofs/libs"
+uncover fmt
+infuse fmt
+infuse {fmt:stable}
+reinfuse fmt
 ```
 
-### Install local package (Windows PowerShell)
-
-```powershell
-./packages/install_library.ps1 -Package packages/dist/terminal-colors.tar.gz
-$env:OFS_LIB_PATH = "$HOME/.ofs/libs"
-```
-
-### Uninstall library (Linux/macOS)
-
-```bash
-./packages/uninstall_library.sh terminal-colors
-```
-
-### Uninstall library (Windows PowerShell)
-
-```powershell
-./packages/uninstall_library.ps1 -LibraryName terminal-colors
-```
-
-### Install from GitHub Packages (requires NPM_TOKEN)
+### Install local package archive
 
 Linux/macOS:
+
 ```bash
-NPM_TOKEN=your_token ./packages/install_from_github_packages.sh terminal-colors 1.0.0
-export OFS_LIB_PATH="$HOME/.ofs/libs"
+./packages/install_library.sh packages/dist/window.tar.gz
 ```
 
 Windows PowerShell:
+
 ```powershell
-$env:NPM_TOKEN = "your_token"
-./packages/install_from_github_packages.ps1 -LibraryName terminal-colors -Version 1.0.0
-$env:OFS_LIB_PATH = "$HOME/.ofs/libs"
+./packages/install_library.ps1 -Package packages/dist/window.tar.gz
 ```
 
-### Test
+### Uninstall
+
+Linux/macOS:
 
 ```bash
-OFS_LIB_PATH="$HOME/.ofs/libs" ./ofs/build/ofs ofs/examples/packages_demo.ofs
+./packages/uninstall_library.sh window
 ```
+
+Windows PowerShell:
+
+```powershell
+./packages/uninstall_library.ps1 -LibraryName window
+```
+
+### Use in code
+
+```ofs
+attach {window}
+attach {fmt}
+```
+
+### Notes
+
+- The default user packages directory is searched automatically.
+- `OFS_LIB_PATH` is only needed when you want extra custom search paths.
+
+### Current packages in the repository
+
+- `canvas` (native, unstable)
+- `bedrock`
+- `bedrock-packet`
+- `core`
+- `fmt`
+- `io`
+- `math`
+- `memory-modes`
+- `rift`
+- `string`
+- `terminal-colors`
+- `test-lib`
+- `webserver`
+- `window`
 
 ---
 
 ## Português (Brasil)
 
-### Instalar pacote local (Linux/macOS)
+### Fluxo de pacote
+
+1. Busque com `uncover`
+2. Instale com `infuse`
+3. Use no código com `attach {nome}`
+4. Atualize com `reinfuse`
+
+### Uso pela CLI
 
 ```bash
-./packages/install_library.sh packages/dist/terminal-colors.tar.gz
-export OFS_LIB_PATH="$HOME/.ofs/libs"
+uncover fmt
+infuse fmt
+infuse {fmt:stable}
+reinfuse fmt
 ```
 
-### Instalar pacote local (Windows PowerShell)
-
-```powershell
-./packages/install_library.ps1 -Package packages/dist/terminal-colors.tar.gz
-$env:OFS_LIB_PATH = "$HOME/.ofs/libs"
-```
-
-### Desinstalar biblioteca (Linux/macOS)
-
-```bash
-./packages/uninstall_library.sh terminal-colors
-```
-
-### Desinstalar biblioteca (Windows PowerShell)
-
-```powershell
-./packages/uninstall_library.ps1 -LibraryName terminal-colors
-```
-
-### Instalar do GitHub Packages (requer NPM_TOKEN)
+### Instalar pacote local
 
 Linux/macOS:
+
 ```bash
-NPM_TOKEN=seu_token ./packages/install_from_github_packages.sh terminal-colors 1.0.0
-export OFS_LIB_PATH="$HOME/.ofs/libs"
+./packages/install_library.sh packages/dist/window.tar.gz
 ```
 
 Windows PowerShell:
+
 ```powershell
-$env:NPM_TOKEN = "seu_token"
-./packages/install_from_github_packages.ps1 -LibraryName terminal-colors -Version 1.0.0
-$env:OFS_LIB_PATH = "$HOME/.ofs/libs"
+./packages/install_library.ps1 -Package packages/dist/window.tar.gz
 ```
 
-### Testar
+### Desinstalar
+
+Linux/macOS:
 
 ```bash
-OFS_LIB_PATH="$HOME/.ofs/libs" ./ofs/build/ofs ofs/examples/packages_demo.ofs
+./packages/uninstall_library.sh window
 ```
+
+Windows PowerShell:
+
+```powershell
+./packages/uninstall_library.ps1 -LibraryName window
+```
+
+### Usar no código
+
+```ofs
+attach {window}
+attach {fmt}
+```
+
+### Observações
+
+- O diretório padrão de pacotes do usuário já entra na busca automaticamente.
+- `OFS_LIB_PATH` só é necessário se você quiser adicionar diretórios extras.
+
+### Pacotes atuais no repositório
+
+- `canvas` (nativo, instável)
+- `bedrock`
+- `bedrock-packet`
+- `core`
+- `fmt`
+- `io`
+- `math`
+- `memory-modes`
+- `rift`
+- `string`
+- `terminal-colors`
+- `test-lib`
+- `webserver`
+- `window`

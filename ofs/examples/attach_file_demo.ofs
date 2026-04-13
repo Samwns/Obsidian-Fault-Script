@@ -1,0 +1,7 @@
+attach {F:attach_local_lib.ofs}
+
+core main() {
+    echo(local_banner())
+    echo(localmath.dobro(21))
+    echo(localmath.triplo(14))
+}

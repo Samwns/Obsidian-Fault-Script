@@ -28,6 +28,8 @@ Language / Idioma:
 - Built-in OFS theme: `Obsidian Fault Purple`
 - Embedded compiler support (`bin/<platform>/ofs`) with auto-install fallback
 
+This extension should be updated together with language changes. When OFS gains new syntax, stdlib modules, or package workflows, the extension grammar, snippets, hover docs, and README should be updated in the same change.
+
 ### Requirements
 
 - VS Code `^1.85.0`
@@ -56,11 +58,16 @@ The extension follows the current OFS direction: high-level and low-level OFS sh
 
 That includes:
 
+- small integer types such as `u8`, `u16`, `u32`, `u64`, `i8`, `i32`,
+- `impl` blocks for monolith methods,
+- `namespace` declarations,
+- function values and inline lambdas,
 - `bedrock { ... }` for typed low-level work,
 - `rift vein` for OFS-native interop boundaries,
 - `bind` and `abi` metadata for explicit external boundaries,
 - `monolith ... layout native|packed|c` for ABI-facing layout intent,
-- `fault_*` intrinsics for machine-like operations with OFS naming.
+- `fault_*` intrinsics for machine-like operations with OFS naming,
+- native graphics modules such as `window` and the unstable/native `canvas` package.
 
 Run/Debug now uses native VS Code debug configurations (`ofs-native`) instead of custom extension buttons.
 
@@ -119,6 +126,8 @@ npm run package
 - Tema integrado: `Obsidian Fault Purple`
 - Suporte a compilador embutido (`bin/<plataforma>/ofs`) com fallback de auto-instalacao
 
+Esta extensao deve ser atualizada junto com a linguagem. Quando a OFS ganhar nova sintaxe, novos modulos de stdlib ou novos fluxos de pacote, a gramática, os snippets, os hovers e este README da extensao devem ser atualizados no mesmo conjunto de mudanças.
+
 ### Requisitos
 
 - VS Code `^1.85.0`
@@ -147,11 +156,16 @@ A extensao segue a direcao atual da OFS: alto nivel e baixo nivel devem coexisti
 
 Isso inclui:
 
+- tipos pequenos como `u8`, `u16`, `u32`, `u64`, `i8`, `i32`,
+- blocos `impl` para métodos de `monolith`,
+- declarações `namespace`,
+- funções como valor e lambdas inline,
 - `bedrock { ... }` para trabalho low-level tipado,
 - `rift vein` para fronteiras de interoperabilidade nativas da OFS,
 - metadados `bind` e `abi` para fronteiras externas explicitas,
 - `monolith ... layout native|packed|c` para intencao de layout em tipos expostos por ABI,
-- intrinsics `fault_*` para operacoes machine-like com nomes da propria linguagem.
+- intrinsics `fault_*` para operacoes machine-like com nomes da propria linguagem,
+- modulos graficos nativos como `window` e o pacote `canvas`, que deve ser tratado como nativo/instavel.
 
 Executar/Depurar agora usa configuracoes nativas de debug do VS Code (`ofs-native`) no lugar de botoes customizados da extensao.
 

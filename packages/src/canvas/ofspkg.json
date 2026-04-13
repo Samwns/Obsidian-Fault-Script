@@ -1,0 +1,20 @@
+{
+  "name": "canvas",
+  "version": "1.0.0",
+  "description": "Unstable native pixel buffer helpers for OFS window rendering",
+  "author": "OFS Team",
+  "license": "MIT",
+  "main": "libs/canvas.ofs",
+  "tags": ["canvas", "graphics", "pixels", "window", "native", "unstable"],
+  "channels": {
+    "beta": "1.0.0",
+    "latest": "1.0.0"
+  },
+  "versions": {
+    "1.0.0": {
+      "date": "2026-04-12",
+      "channel": "beta",
+      "main": "libs/canvas.ofs"
+    }
+  }
+}

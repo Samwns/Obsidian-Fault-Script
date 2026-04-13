@@ -31,6 +31,38 @@
       "attach {$1}"
     ]
   },
+  "Attach File": {
+    "prefix": "attach-file",
+    "body": [
+      "attach {F:${1:module.ofs}}"
+    ]
+  },
+  "Lambda": {
+    "prefix": "lambda",
+    "body": [
+      "vein(${1:x: stone}) -> ${2:stone} {",
+      "    $0",
+      "}"
+    ]
+  },
+  "Namespace": {
+    "prefix": "namespace",
+    "body": [
+      "namespace ${1:name} {",
+      "    $0",
+      "}"
+    ]
+  },
+  "Impl Block": {
+    "prefix": "impl",
+    "body": [
+      "impl ${1:TypeName} {",
+      "    vein ${2:method}(self) -> ${3:void} {",
+      "        $0",
+      "    }",
+      "}"
+    ]
+  },
   "Bedrock Counter": {
     "prefix": "bedrock",
     "body": [
@@ -135,6 +167,26 @@
       "monolith ${1:Header} layout packed {",
       "    ${2:tag}: stone",
       "    ${3:flags}: stone",
+      "}"
+    ]
+  },
+  "Canvas Demo": {
+    "prefix": "canvas-demo",
+    "body": [
+      "attach {canvas}",
+      "",
+      "core main() {",
+      "    forge cv = canvas.create(${1:64}, ${2:48})",
+      "    window.create(${3:\"Canvas Demo\"}, ${1:64}, ${2:48})",
+      "",
+      "    while (window.poll()) {",
+      "        canvas.clear(cv, ${4:0x1A1A2E})",
+      "        canvas.set_pixel(cv, input.mouse_x(), input.mouse_y(), ${5:0xFF0000})",
+      "        canvas.present(cv)",
+      "    }",
+      "",
+      "    window.destroy()",
+      "    canvas.destroy(cv)",
       "}"
     ]
   }

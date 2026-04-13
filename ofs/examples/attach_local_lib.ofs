@@ -1,0 +1,13 @@
+namespace localmath {
+    vein dobro(x: stone) -> stone {
+        return x * 2
+    }
+
+    vein triplo(x: stone) -> stone {
+        return x * 3
+    }
+}
+
+vein local_banner() -> obsidian {
+    return "biblioteca local via attach F"
+}

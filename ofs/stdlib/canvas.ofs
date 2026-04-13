@@ -1,0 +1,70 @@
+attach {bedrock}
+attach {F:window.ofs}
+
+rift vein ofs_window_present_pixels(buf: *stone) -> void bind "ofs_window_present_stone_rgba" abi c
+
+monolith Canvas {
+    width: stone
+    height: stone
+    buffer: *stone
+}
+
+namespace canvas {
+    vein create(w: stone, h: stone) -> Canvas {
+        forge cv: Canvas
+        cv.width = w
+        cv.height = h
+        cv.buffer = bedrock_region_new(w * h)
+        clear(cv, 0)
+        return cv
+    }
+
+    vein destroy(cv: Canvas) -> void {
+        bedrock_region_drop(cv.buffer)
+    }
+
+    vein index_of(cv: Canvas, x: stone, y: stone) -> stone {
+        return y * cv.width + x
+    }
+
+    vein in_bounds(cv: Canvas, x: stone, y: stone) -> bool {
+        return x >= 0 && y >= 0 && x < cv.width && y < cv.height
+    }
+
+    vein clear(cv: Canvas, color: stone) -> void {
+        forge total: stone = cv.width * cv.height
+        cycle (forge i: stone = 0; i < total; i++) {
+            bedrock_region_write(cv.buffer, i, color)
+        }
+    }
+
+    vein set_pixel(cv: Canvas, x: stone, y: stone, color: stone) -> void {
+        if (!in_bounds(cv, x, y)) {
+            return
+        }
+
+        forge idx: stone = index_of(cv, x, y)
+        bedrock_region_write(cv.buffer, idx, color)
+    }
+
+    vein get_pixel(cv: Canvas, x: stone, y: stone) -> stone {
+        if (!in_bounds(cv, x, y)) {
+            return 0
+        }
+
+        forge idx: stone = index_of(cv, x, y)
+        return bedrock_region_read(cv.buffer, idx)
+    }
+
+    vein fill_rect(cv: Canvas, x: stone, y: stone, w: stone, h: stone, color: stone) -> void {
+        cycle (forge yy: stone = 0; yy < h; yy++) {
+            cycle (forge xx: stone = 0; xx < w; xx++) {
+                set_pixel(cv, x + xx, y + yy, color)
+            }
+        }
+    }
+
+    vein present(cv: Canvas) -> void {
+        ofs_window_present_pixels(cv.buffer)
+    }
+}

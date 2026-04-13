@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <vector>
 
 #if defined(OFS_HAS_SDL2) && __has_include(<SDL2/SDL.h>)
 #include <SDL2/SDL.h>
@@ -15,6 +16,7 @@
 static SDL_Window* g_window = nullptr;
 static SDL_Renderer* g_renderer = nullptr;
 static SDL_Texture* g_texture = nullptr;
+static std::vector<uint32_t> g_present_buffer;
 static int g_width = 0;
 static int g_height = 0;
 static int g_running = 0;
@@ -71,6 +73,7 @@ void ofs_window_create(const char* title, int w, int h) {
 
     g_width = w;
     g_height = h;
+    g_present_buffer.assign(static_cast<size_t>(w) * static_cast<size_t>(h), 0u);
     g_running = 1;
 }
 
@@ -88,6 +91,7 @@ void ofs_window_destroy() {
         g_window = nullptr;
     }
     SDL_Quit();
+    g_present_buffer.clear();
     g_running = 0;
     g_width = 0;
     g_height = 0;
@@ -97,6 +101,24 @@ void ofs_window_present(void* pixel_buffer) {
     if (!g_renderer || !g_texture || !pixel_buffer) return;
 
     SDL_UpdateTexture(g_texture, nullptr, pixel_buffer, g_width * 4);
+    SDL_RenderClear(g_renderer);
+    SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
+    SDL_RenderPresent(g_renderer);
+}
+
+void ofs_window_present_stone_rgba(const int64_t* pixel_buffer) {
+    if (!g_renderer || !g_texture || !pixel_buffer) return;
+
+    const size_t total = static_cast<size_t>(g_width) * static_cast<size_t>(g_height);
+    if (g_present_buffer.size() != total) {
+        g_present_buffer.assign(total, 0u);
+    }
+
+    for (size_t i = 0; i < total; ++i) {
+        g_present_buffer[i] = static_cast<uint32_t>(pixel_buffer[i]);
+    }
+
+    SDL_UpdateTexture(g_texture, nullptr, g_present_buffer.data(), g_width * 4);
     SDL_RenderClear(g_renderer);
     SDL_RenderCopy(g_renderer, g_texture, nullptr, nullptr);
     SDL_RenderPresent(g_renderer);
@@ -163,6 +185,7 @@ extern "C" {
 void ofs_window_create(const char* title, int w, int h) { (void)title; (void)w; (void)h; }
 void ofs_window_destroy() {}
 void ofs_window_present(void* pixel_buffer) { (void)pixel_buffer; }
+void ofs_window_present_stone_rgba(const int64_t* pixel_buffer) { (void)pixel_buffer; }
 int ofs_window_poll() { return 0; }
 int ofs_window_is_open() { return 0; }
 int ofs_window_width() { return 0; }

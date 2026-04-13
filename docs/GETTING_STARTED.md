@@ -1,14 +1,22 @@
-# Getting Started with Obsidian Fault Script
+# Guia de Início do OFS
 
-> Learn OFS in 10 minutes — from installation to your first program.
+Este guia mostra o fluxo real de uso da linguagem hoje: instalar, rodar, validar, compilar, importar módulos e usar os recursos principais.
 
 ---
 
-## 1. Install OFS
+## 1. Instalar ou compilar
 
-### Prerequisites
+### Instalar pela release
 
-You need CMake, a C++ compiler, and LLVM installed:
+Use a release mais recente do projeto:
+
+- Linux: extraia `ofs-linux-x64-installer.tar.gz` e rode `./install.sh`
+- macOS: rode `sudo installer -pkg ofs-macos-arm64-installer.pkg -target /`
+- Windows: execute `ofs-windows-x64-installer.exe`
+
+### Compilar a partir do código-fonte
+
+Dependências:
 
 ```bash
 # Ubuntu / Debian
@@ -22,207 +30,249 @@ brew install cmake llvm@17
 winget install Kitware.CMake LLVM.LLVM
 ```
 
-### Build the Compiler
+Build:
 
 ```bash
 git clone https://github.com/Samwns/Obsidian-Fault-Script.git
 cd Obsidian-Fault-Script/ofs
-
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 
-### Verify
+Verificação:
 
 ```bash
 ./build/ofs version
-# Output: ofs 0.2.0 — Obsidian Fault Script
 ```
 
 ---
 
-## 2. Hello World
-
-Create a file called `hello.ofs`:
+## 2. Primeiro programa
 
 ```ofs
 core main() {
-    echo("Hello, World!")
+    echo("OFS funcionando")
 }
 ```
 
-Run it:
+Executar:
+
+```bash
+ofs hello.ofs
+```
+
+Ou, se estiver usando o binário compilado localmente:
 
 ```bash
 ./build/ofs hello.ofs
-# Output: Hello, World!
 ```
 
-To inspect how OFS lowers to the native target without leaving the language model:
+---
+
+## 3. Comandos do dia a dia
 
 ```bash
-./build/ofs ir hello.ofs
-./build/ofs asm hello.ofs -o hello
+ofs arquivo.ofs              # executa
+ofs run arquivo.ofs          # compila e executa
+ofs build arquivo.ofs -o app # gera executável
+ofs check arquivo.ofs        # valida sem gerar saída
+ofs tokens arquivo.ofs       # debug léxico
+ofs ast arquivo.ofs          # debug sintático
+ofs ir arquivo.ofs           # debug LLVM IR
+ofs asm arquivo.ofs          # debug assembly nativo
+ofs update                   # atualiza pela release
 ```
 
-This emits `hello.ll` and `hello.s` for inspection while keeping OFS as the source of truth.
+---
 
-That's it! OFS works just like Python — point it at a file and it runs.
-
-### Hybrid High-Level + Low-Level OFS
-
-OFS was designed so high-level and low-level code can coexist in the same file.
+## 4. Tipos básicos
 
 ```ofs
-attach {bedrock}
+core main() {
+    forge nome = "Ana"      // obsidian
+    forge idade = 19         // stone
+    forge altura = 1.70      // crystal
+    forge ativo = true       // bool
 
-rift vein strlen(text: obsidian) -> stone
+    forge r: u8 = 255
+    forge g: u8 = 128
+    forge pixel: u32 = (r as u32 << 16) | (g as u32 << 8)
+
+    echo(nome)
+    echo(idade)
+    echo(altura)
+    echo(ativo)
+    echo(pixel)
+}
+```
+
+Tipos disponíveis no uso comum:
+
+- `stone`, `crystal`, `obsidian`, `bool`, `void`
+- `u8`, `u16`, `u32`, `u64`, `i8`, `i32`
+- `Array<T>`
+- `monolith` e tipos definidos pelo usuário
+- tipos de função: `vein(stone) -> stone`
+
+---
+
+## 5. Funções e lambdas
+
+```ofs
+vein dobro(x: stone) -> stone {
+    return x * 2
+}
+
+vein aplicar(x: stone, fn: vein(stone) -> stone) -> stone {
+    return fn(x)
+}
 
 core main() {
-    forge score = bedrock_cell_new(0)
-
-    bedrock {
-        bedrock_cell_add(score, fault_count(0x70F0))
+    forge quadrado = vein(n: stone) -> stone {
+        return n * n
     }
 
-    echo(strlen("fault-console"))
-    echo(bedrock_cell_read(score))
-    bedrock_cell_drop(score)
+    echo(aplicar(10, dobro))
+    echo(aplicar(10, quadrado))
 }
-```
-
-Use `rift vein` for external boundaries, `bedrock` for typed low-level work, and regular OFS for the rest of the program.
-
-For larger low-level state, use the region helpers in `bedrock.ofs`:
-
-```ofs
-forge region = bedrock_region_new(4)
-bedrock_region_write(region, 0, 10)
-bedrock_region_write(region, 1, 20)
-echo(bedrock_region_read(region, 1))
-bedrock_region_drop(region)
-```
-
-For machine-like field work with OFS names:
-
-```ofs
-bedrock {
-    forge header: stone = 0x70F0AA5500FF1133
-    forge opcode: stone = fault_cut(header, 8, 8)
-    forge patched: stone = fault_patch(header, 40, 8, 0x2A)
-    echo(opcode)
-    echo(patched)
-}
-```
-
-For endian-aware ABI-facing slices without cair em shifts manuais o tempo todo:
-
-```ofs
-bedrock {
-    forge header: stone = 0x70F0AA5500FF1133
-    echo(bedrock_lane16_le_get(header, 0))
-    echo(bedrock_lane16_be_get(header, 3))
-}
-```
-
-For synchronization-style machine hooks inside OFS low-level blocks:
-
-```ofs
-bedrock {
-    fault_fence()
-}
-```
-
-For cache-aware staging in hot low-level paths:
-
-```ofs
-forge region = bedrock_region_new(8)
-bedrock_prefetch(region, 0)
 ```
 
 ---
 
-## 3. Variables and Types
-
-OFS has **type inference** — you don't always need to write types:
+## 6. `monolith`, `impl` e `namespace`
 
 ```ofs
-core main() {
-    // Type is inferred automatically
-    forge name = "Rex"          // obsidian (string)
-    forge age = 25              // stone (integer)
-    forge height = 1.75         // crystal (float)
-    forge alive = true          // bool
-
-    echo(name)
-    echo(age)
-    echo(height)
-    echo(alive)
-}
-```
-
-You can also be explicit about types:
-
-```ofs
-forge count: stone = 0
-forge pi: crystal = 3.14159
-forge greeting: obsidian = "Hello"
-```
-
----
-
-## 4. Functions
-
-Use `vein` to define functions:
-
-```ofs
-vein add(a: stone, b: stone) -> stone {
-    return a + b
+monolith Rect {
+    w: stone
+    h: stone
 }
 
-vein greet(name: obsidian) -> void {
-    echo("Hello, " + name + "!")
+impl Rect {
+    vein area(self) -> stone {
+        return self.w * self.h
+    }
+}
+
+namespace mathx {
+    vein square(x: stone) -> stone {
+        return x * x
+    }
 }
 
 core main() {
-    forge sum = add(10, 20)
-    echo(sum)          // 30
-    greet("World")     // Hello, World!
+    forge r: Rect
+    r.w = 10
+    r.h = 20
+
+    echo(r.area())
+    echo(mathx.square(4))
 }
 ```
 
-**Key points:**
-- `vein` = regular function
-- `core` = program entry point (like `main` in C)
-- Parameters need explicit types: `name: type`
-- Return type goes after `->` arrow
+---
+
+## 7. Reuso com `attach`
+
+### Anexar stdlib ou pacote instalado
+
+```ofs
+attach {core}
+attach {terminal-colors}
+```
+
+### Anexar arquivo local
+
+```ofs
+attach {F:meu_modulo.ofs}
+```
+
+No Windows, também funciona com caminho absoluto:
+
+```ofs
+attach {F:G:\projeto\modulos\meu_modulo.ofs}
+```
+
+Exemplo real no repositório:
+
+- `ofs/examples/attach_local_lib.ofs`
+- `ofs/examples/attach_file_demo.ofs`
 
 ---
 
-## 5. New in v1.0.x
+## 8. Pacotes
 
-### Immutable variable (`const`)
+Buscar, instalar e atualizar:
 
-```ofs
-const retries: stone = 3
+```bash
+uncover fmt
+infuse fmt
+reinfuse fmt
 ```
 
-### Enum (`strata`)
+Depois, no código:
+
+```ofs
+attach {fmt}
+```
+
+Pacotes já publicados no repositório incluem, entre outros:
+
+- `canvas`
+- `core`
+- `fmt`
+- `io`
+- `math`
+- `string`
+- `bedrock`
+- `bedrock-packet`
+- `terminal-colors`
+- `memory-modes`
+- `rift`
+- `webserver`
+- `window`
+
+---
+
+## 9. Interop nativa
+
+Use `extern vein` ou `rift vein` para falar com código externo:
+
+```ofs
+rift vein ofs_window_create(title: obsidian, w: stone, h: stone) -> void abi c
+```
+
+Quando precisar controlar o nome de link:
+
+```ofs
+rift vein text_size(s: obsidian) -> stone bind "strlen" abi c
+```
+
+---
+
+## 10. Fluxo e recursos modernos
+
+### `const`
+
+```ofs
+const limite: stone = 10
+```
+
+### `strata`
 
 ```ofs
 strata Status { Idle, Running, Failed }
 ```
 
-### Pattern matching (`match/case/default`)
+### `match`
 
 ```ofs
 match code {
     case 200: { echo("ok") }
-    default: { echo("unknown") }
+    default: { echo("erro") }
 }
 ```
 
-### Error flow (`tremor/catch/throw`)
+### `tremor/catch/throw`
 
 ```ofs
 tremor {
@@ -234,29 +284,80 @@ tremor {
 
 ---
 
-## 5. Control Flow
+## 11. Blocos de baixo nível
 
-### If / Else
+OFS suporta código de mais baixo nível sem sair da linguagem.
+
+- `fracture`: camada tipada de ponteiros
+- `abyss`: camada crua e irrestrita
+- `fractal`: ponte de efeito/execução especial
+- `bedrock`: vocabulário OFS para estado e memória explícita
+
+Exemplo:
 
 ```ofs
-core main() {
-    forge score: stone = 85
+attach {bedrock}
 
-    if (score >= 90) {
-        echo("A")
-    } else if (score >= 80) {
-        echo("B")
-    } else if (score >= 70) {
-        echo("C")
-    } else {
-        echo("F")
+core main() {
+    forge cell = bedrock_cell_new(0)
+
+    bedrock {
+        bedrock_cell_add(cell, 10)
     }
+
+    echo(bedrock_cell_read(cell))
+    bedrock_cell_drop(cell)
 }
 ```
 
-### Loops (cycle)
+---
 
-**C-style loop:**
+## 12. Janela e input
+
+OFS já tem ponte nativa para janela/input em `window.ofs`.
+
+```ofs
+attach {window}
+
+core main() {
+    window.create("Teste", 640, 480)
+    while (window.poll()) {
+        echo(input.mouse_x())
+    }
+    window.destroy()
+}
+```
+
+Se SDL2 estiver disponível no build, a ponte nativa é ativada automaticamente.
+
+### Canvas em OFS puro
+
+Também existe `canvas`, com buffer de pixels e helpers prontos:
+
+```ofs
+attach {canvas}
+
+core main() {
+    forge cv = canvas.create(64, 48)
+    canvas.clear(cv, 0x1A1A2E)
+    canvas.set_pixel(cv, 10, 10, 0xFF0000)
+    canvas.destroy(cv)
+}
+```
+
+Exemplos no repositório:
+
+- `ofs/examples/canvas_window_demo.ofs`
+- `ofs/examples/canvas_package_demo.ofs`
+
+---
+
+## Próximos passos
+
+1. Leia a [Referência da Linguagem](LANGUAGE_REFERENCE.md)
+2. Rode os exemplos em `ofs/examples/`
+3. Veja os pacotes em [packages/README.md](../packages/README.md)
+4. Use a [Jornada Iniciante](../OFS_JORNADA_INICIANTE.md) se estiver começando
 
 ```ofs
 core main() {

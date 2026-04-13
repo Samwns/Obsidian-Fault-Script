@@ -1,322 +1,529 @@
-# Obsidian Fault Script — Language Reference
+# Obsidian Fault Script — Referência da Linguagem
 
-> Complete syntax and semantics reference for OFS v1.0
-
----
-
-## Table of Contents
-
-1. [Program Structure](#program-structure)
-2. [Types](#types)
-3. [Variables (forge)](#variables-forge)
-4. [Functions (vein / core)](#functions-vein--core)
-5. [Expressions](#expressions)
-6. [Operators](#operators)
-7. [Control Flow](#control-flow)
-8. [Structures (monolith)](#structures-monolith)
-9. [Pointers (shard / fracture)](#pointers-shard--fracture)
-10. [Collections (Arrays)](#collections-arrays)
-11. [Unsafe Memory (abyss)](#unsafe-memory-abyss)
-12. [Type Casting (as)](#type-casting-as)
-13. [Imports](#imports)
-14. [Extern Functions](#extern-functions)
-15. [Built-in Functions](#built-in-functions)
-16. [Inline Assembly (asm)](#asm-inline-assembly-escape-hatch)
-17. [Comments](#comments)
-17. [Statement Termination](#statement-termination)
-18. [Standard Library](#standard-library)
-19. [Keywords](#keywords)
-20. [Low-Level Direction](#low-level-direction)
+Referência prática da linguagem suportada hoje pelo compilador OFS.
 
 ---
 
-## Low-Level Direction
+## Índice
 
-OFS supports a hybrid style where high-level and low-level code can live in the same file and function.
+1. Estrutura de programa
+2. Tipos
+3. Variáveis e constantes
+4. Funções, intents e lambdas
+5. `monolith`, `impl` e layouts
+6. `namespace`
+7. Arrays e coleções
+8. Controle de fluxo
+9. Operadores e casts
+10. `attach`
+11. `extern vein` e `rift vein`
+12. Blocos de baixo nível
+13. Biblioteca padrão e pacotes
+14. Comandos do compilador
 
-This is a language goal, not just a temporary implementation detail.
+---
 
-### Design Rules
+## 1. Estrutura de programa
 
-- High-level OFS remains the default for application and domain logic.
-- Low-level OFS is opt-in and must stay explicit.
-- `fracture` is the preferred typed pointer layer.
-- `abyss` is the unrestricted raw layer.
-- `fractal` is the effect-lifted bridge.
-- `bedrock` is the emerging OFS-native vocabulary for explicit storage and memory-oriented building blocks.
-
-### Important Scope Note
-
-Current OFS can inspect LLVM IR and native assembly output, and it can call external functions.
-This does **not** mean the language is defined in terms of C or assembly.
-
-The long-term direction is:
-
-- OFS-native low-level primitives first,
-- foreign interop second,
-- foreign dependency never treated as the identity of the language.
-
-See `docs/LOW_LEVEL_ROADMAP.md` for the long-term plan.
-
-## Program Structure
-
-Every OFS program requires a `core main()` function as its entry point:
+Todo programa executável precisa de um `core main()`:
 
 ```ofs
 core main() {
-    // program starts here
+    echo("inicio")
 }
 ```
 
-A program file (`.ofs`) can contain:
-- **Attach declarations** (`attach`)
-- **Interop declarations** (`extern vein` or `rift vein`)
-- **Function declarations** (`vein` or `core`)
-- **Structure declarations** (`monolith`)
-- **Global variable declarations** (`forge` at top level)
+Um arquivo `.ofs` pode conter:
 
-Declarations can appear in any order. The compiler resolves forward references.
-
----
-
-## Types
-
-OFS is **statically typed** with type inference. Every value has a known type at compile time.
-
-### Primitive Types
-
-| Type        | Description            | Size     | LLVM   | Default Value |
-|-------------|------------------------|----------|--------|---------------|
-| `stone`     | Signed integer         | 64 bits  | `i64`  | `0`           |
-| `crystal`   | Floating point         | 64 bits  | `f64`  | `0.0`         |
-| `obsidian`  | String (UTF-8)         | pointer  | `i8*`  | `""`          |
-| `bool`      | Boolean                | 1 bit    | `i1`   | `false`       |
-| `void`      | No value (return only) | 0 bits   | `void` | —             |
-
-### Compound Types
-
-| Type          | Description              | Example               |
-|---------------|--------------------------|-----------------------|
-| `shard <T>`   | Pointer to type T        | `shard p: *stone`     |
-| `Array<T>`    | Dynamic array of type T  | `[1, 2, 3]`          |
-| `monolith`    | User-defined structure   | `monolith Player { }` |
-
-### Type Inference
-
-When you declare a variable without a type annotation, OFS infers the type from the initializer:
-
-```ofs
-forge x = 42        // inferred as stone
-forge y = 3.14      // inferred as crystal
-forge s = "hello"   // inferred as obsidian
-forge b = true      // inferred as bool
-forge a = [1, 2, 3] // inferred as Array<stone>
-```
-
-### Type Promotion
-
-When mixing `stone` and `crystal` in arithmetic, `stone` is promoted to `crystal`:
-
-```ofs
-forge x: stone = 10
-forge y: crystal = 3.14
-forge z = x + y   // z is crystal (10.0 + 3.14 = 13.14)
-```
+- `attach { ... }`
+- `extern vein` e `rift vein`
+- `vein` e `core`
+- `monolith`
+- `impl`
+- `namespace`
+- `strata`
+- `forge` global
 
 ---
 
-## Variables (forge)
+## 2. Tipos
 
-Variables are declared with the `forge` keyword:
+### Tipos primitivos
+
+| Tipo | Uso | Representação geral |
+|---|---|---|
+| `stone` | inteiro principal | 64 bits |
+| `crystal` | ponto flutuante | 64 bits |
+| `obsidian` | string | ponteiro |
+| `bool` | booleano | lógico |
+| `void` | sem retorno | retorno de função |
+
+### Tipos inteiros pequenos
+
+| Tipo | Sinal | Tamanho |
+|---|---|---|
+| `u8` | sem sinal | 8 bits |
+| `u16` | sem sinal | 16 bits |
+| `u32` | sem sinal | 32 bits |
+| `u64` | sem sinal | 64 bits |
+| `i8` | com sinal | 8 bits |
+| `i32` | com sinal | 32 bits |
+
+Exemplo:
 
 ```ofs
-// With type inference
-forge name = "Rex"
-forge count = 42
-
-// With explicit type annotation
-forge name: obsidian = "Rex"
-forge count: stone = 42
-forge pi: crystal = 3.14
-
-// Without initializer (default-initialized)
-forge x: stone       // x = 0
+forge r: u8 = 255
+forge g: u8 = 128
+forge pixel: u32 = (r as u32 << 16) | (g as u32 << 8)
 ```
 
-### Mutability
+### Tipos compostos
 
-All variables are mutable by default:
+| Tipo | Exemplo |
+|---|---|
+| `Array<T>` | `Array<stone>` |
+| tipo de função | `vein(stone) -> stone` |
+| `monolith` | `monolith Player { ... }` |
 
-```ofs
-forge x = 10
-x = 20        // OK
-x += 5        // OK — compound assignment
-```
-
-### Assignment Operators
-
-| Operator | Description       | Example     |
-|----------|-------------------|-------------|
-| `=`      | Assignment        | `x = 10`    |
-| `+=`     | Add-assign        | `x += 5`    |
-| `-=`     | Subtract-assign   | `x -= 3`    |
-| `*=`     | Multiply-assign   | `x *= 2`    |
-| `/=`     | Divide-assign     | `x /= 4`    |
-
-### Increment / Decrement
+### Inferência
 
 ```ofs
-x++     // post-increment
-x--     // post-decrement
-++x     // pre-increment
---x     // pre-decrement
+forge n = 42
+forge nome = "Ana"
+forge ativo = true
+forge nums = [1, 2, 3]
 ```
 
 ---
 
-## Functions (vein / core)
+## 3. Variáveis e constantes
 
-### Regular Functions (vein)
+### `forge`
 
 ```ofs
-vein add(a: stone, b: stone) -> stone {
+forge nome = "Rex"
+forge idade: stone = 20
+forge saldo: crystal = 42.5
+forge canal: u8 = 255
+```
+
+### `const`
+
+```ofs
+const limite: stone = 10
+```
+
+### Atribuições comuns
+
+```ofs
+x = 10
+x += 2
+x -= 1
+x *= 3
+x /= 2
+x++
+x--
+```
+
+---
+
+## 4. Funções, intents e lambdas
+
+### Funções normais
+
+```ofs
+vein soma(a: stone, b: stone) -> stone {
     return a + b
 }
-
-vein greet(name: obsidian) -> void {
-    echo("Hello, " + name)
-}
 ```
 
-**Syntax:**
-```
-vein <name>(<params>) -> <return_type> {
-    <body>
-}
-```
-
-Parameters: `name: type` separated by commas.
-
-Return type: specified after `->`. Use `void` for no return value.
-
-### Entry Point (core)
-
-The `core` keyword marks the program entry point. Every program needs exactly one:
+### Entrada do programa
 
 ```ofs
 core main() {
-    echo("Program starts here")
+    echo("ok")
 }
 ```
 
-`core` functions are implicitly `-> void` (return type is void by default).
-
-### Function Calls
+### Intent
 
 ```ofs
-forge result = add(10, 20)
-greet("World")
+vein square(x: stone) -> stone intent pure {
+    return x * x
+}
 ```
 
-### Recursion
+Intents aceitos:
 
-Functions can call themselves:
+- `pure`
+- `impure`
+- `fractal`
+
+### Funções como valores
 
 ```ofs
-vein factorial(n: stone) -> stone {
-    if (n <= 1) {
-        return 1
+vein aplicar(x: stone, fn: vein(stone) -> stone) -> stone {
+    return fn(x)
+}
+```
+
+### Lambda inline
+
+```ofs
+forge dobrar = vein(x: stone) -> stone {
+    return x * 2
+}
+```
+
+---
+
+## 5. `monolith`, `impl` e layouts
+
+### Estrutura
+
+```ofs
+monolith Rect {
+    w: stone
+    h: stone
+}
+```
+
+### Métodos com `impl`
+
+```ofs
+impl Rect {
+    vein area(self) -> stone {
+        return self.w * self.h
     }
-    return n * factorial(n - 1)
+}
+```
+
+Uso:
+
+```ofs
+forge r: Rect
+r.w = 10
+r.h = 5
+echo(r.area())
+```
+
+### Layout explícito
+
+```ofs
+monolith Header layout packed {
+    tag: stone
+    flags: stone
+}
+```
+
+Layouts suportados:
+
+- `native`
+- `packed`
+- `c`
+
+---
+
+## 6. `namespace`
+
+Use namespace para agrupar funções e evitar colisão de nomes.
+
+```ofs
+namespace mathx {
+    vein square(x: stone) -> stone {
+        return x * x
+    }
+}
+
+core main() {
+    echo(mathx.square(4))
 }
 ```
 
 ---
 
-## Expressions
-
-### Literals
+## 7. Arrays e coleções
 
 ```ofs
-42              // stone (integer)
-3.14            // crystal (float)
-"hello world"  // obsidian (string)
-true            // bool
-false           // bool
-null            // null
+forge nums = [1, 2, 3]
+echo(nums[0])
 ```
 
-### String Escape Sequences
+Exemplo com passagem de função:
 
-| Escape | Character     |
-|--------|---------------|
-| `\n`   | Newline       |
-| `\t`   | Tab           |
-| `\\`   | Backslash     |
-| `\"`   | Double quote  |
-
-### Identifiers
-
-Identifiers start with a letter or underscore, followed by letters, digits, or underscores:
-
-```
-[a-zA-Z_][a-zA-Z0-9_]*
+```ofs
+vein map_array(arr: Array<stone>, fn: vein(stone) -> stone) -> Array<stone> {
+    forge result: Array<stone> = []
+    cycle (n in arr) {
+        ofs_array_push(result, fn(n))
+    }
+    return result
+}
 ```
 
 ---
 
-## Operators
+## 8. Controle de fluxo
 
-### Arithmetic Operators
+### `if / else`
 
-| Operator | Description    | Types              | Result    |
-|----------|----------------|--------------------|-----------|
-| `+`      | Addition       | stone, crystal     | numeric   |
-| `-`      | Subtraction    | stone, crystal     | numeric   |
-| `*`      | Multiplication | stone, crystal     | numeric   |
-| `/`      | Division       | stone, crystal     | numeric   |
-| `%`      | Modulo         | stone              | stone     |
-| `<<`     | Shift left     | stone              | stone     |
-| `>>`     | Shift right    | stone              | stone     |
-| `+`      | Concatenation  | obsidian           | obsidian  |
+```ofs
+if (x > 10) {
+    echo("alto")
+} else {
+    echo("baixo")
+}
+```
 
-### Bitwise Operators
+### `while`
 
-| Operator | Description     | Types | Result |
-|----------|-----------------|-------|--------|
-| `&`      | Bitwise AND     | stone | stone  |
-| `|`      | Bitwise OR      | stone | stone  |
-| `^`      | Bitwise XOR     | stone | stone  |
+```ofs
+while (energia > 0) {
+    energia -= 1
+}
+```
 
-### Comparison Operators
+### `cycle`
 
-| Operator | Description       | Result |
-|----------|-------------------|--------|
-| `==`     | Equal             | bool   |
-| `!=`     | Not equal         | bool   |
-| `<`      | Less than         | bool   |
-| `<=`     | Less or equal     | bool   |
-| `>`      | Greater than      | bool   |
-| `>=`     | Greater or equal  | bool   |
+Forma C-like:
 
-### Logical Operators
+```ofs
+cycle (forge i = 0; i < 10; i++) {
+    echo(i)
+}
+```
 
-| Operator | Description | Types | Result |
-|----------|-------------|-------|--------|
-| `&&`     | Logical AND | bool  | bool   |
-| `\|\|`   | Logical OR  | bool  | bool   |
-| `!`      | Logical NOT | bool  | bool   |
+Forma iterativa:
 
-### Unary Operators
+```ofs
+cycle (n in nums) {
+    echo(n)
+}
+```
 
-| Operator | Description    | Example    |
-|----------|----------------|------------|
-| `-`      | Negation       | `-x`       |
-| `!`      | Logical NOT    | `!done`    |
-| `&`      | Address-of     | `&x`       |
-| `*`      | Dereference    | `*ptr`     |
-| `++`     | Increment      | `x++`/`++x` |
-| `--`     | Decrement      | `x--`/`--x` |
+### `match`
+
+```ofs
+match code {
+    case 200: { echo("ok") }
+    case 404: { echo("nao encontrado") }
+    default: { echo("erro") }
+}
+```
+
+### `tremor/catch/throw`
+
+```ofs
+tremor {
+    throw "boom"
+} catch (e: obsidian) {
+    echo(e)
+}
+```
+
+### `strata`
+
+```ofs
+strata Status { Idle, Running, Failed }
+```
+
+---
+
+## 9. Operadores e casts
+
+### Operadores principais
+
+- aritméticos: `+`, `-`, `*`, `/`, `%`
+- comparação: `==`, `!=`, `<`, `<=`, `>`, `>=`
+- lógicos: `&&`, `||`, `!`
+- bitwise: `&`, `|`, `^`, `<<`, `>>`
+
+### Cast com `as`
+
+```ofs
+forge r: u8 = 255
+forge x: u32 = r as u32
+forge y: stone = x as stone
+forge z: u8 = y as u8
+```
+
+Também funciona em conversões entre inteiro e float:
+
+```ofs
+forge c: crystal = 10.5
+forge n: u8 = c as u8
+```
+
+---
+
+## 10. `attach`
+
+### Biblioteca padrão ou pacote instalado
+
+```ofs
+attach {core}
+attach {window}
+attach {terminal-colors}
+```
+
+### Arquivo local
+
+```ofs
+attach {F:modulos/minha_lib.ofs}
+```
+
+No Windows também funciona com caminho absoluto:
+
+```ofs
+attach {F:G:\projeto\minha_lib.ofs}
+```
+
+O `attach` embute o código OFS do outro arquivo no processo de compilação. Ele não carrega DLL nativa.
+
+---
+
+## 11. `extern vein` e `rift vein`
+
+### `extern vein`
+
+```ofs
+extern vein puts(s: obsidian) -> stone
+```
+
+### `rift vein`
+
+```ofs
+rift vein ofs_window_create(title: obsidian, w: stone, h: stone) -> void abi c
+```
+
+### Metadados de link
+
+```ofs
+rift vein text_size(s: obsidian) -> stone bind "strlen" abi c
+```
+
+Campos importantes:
+
+- `bind "..."` define o símbolo nativo real
+- `abi c` define ABI C
+- `...` é aceito em função variádica nativa
+
+---
+
+## 12. Blocos de baixo nível
+
+### `fracture`
+
+Camada de baixo nível mais tipada.
+
+### `abyss`
+
+Camada crua e irrestrita.
+
+### `fractal`
+
+Camada especial ligada a intent/efeitos.
+
+### `bedrock`
+
+Vocabulário OFS para memória, regiões, lanes, packets e intrinsics `fault_*`.
+
+Exemplo:
+
+```ofs
+attach {bedrock}
+
+core main() {
+    forge region = bedrock_region_new(4)
+    bedrock_region_write(region, 0, 10)
+    bedrock_region_write(region, 1, 20)
+    echo(bedrock_region_read(region, 1))
+    bedrock_region_drop(region)
+}
+```
+
+### Alias `tectonic`
+
+O parser aceita aliases textuais como:
+
+- `tectonic fracture`
+- `tectonic abyss`
+- `tectonic fractal`
+- `tectonic safe`
+- `tectonic unsafe`
+- `tectonic bedrock`
+
+---
+
+## 13. Biblioteca padrão e pacotes
+
+Módulos e pacotes relevantes já presentes no projeto:
+
+- `canvas`
+- `core`
+- `fmt`
+- `io`
+- `math`
+- `string`
+- `rift`
+- `bedrock`
+- `bedrock-packet`
+- `memory-modes`
+- `terminal-colors`
+- `test-lib`
+- `webserver`
+- `window`
+
+Módulo `window` expõe:
+
+- `window.create`
+- `window.destroy`
+- `window.present`
+- `window.poll`
+- `window.is_open`
+- `window.width`
+- `window.height`
+- `window.set_title`
+- `input.mouse_x`
+- `input.mouse_y`
+- `input.is_down`
+- `input.key`
+
+Módulo `canvas` expõe:
+
+- `canvas.create`
+- `canvas.destroy`
+- `canvas.clear`
+- `canvas.set_pixel`
+- `canvas.get_pixel`
+- `canvas.fill_rect`
+- `canvas.present`
+
+---
+
+## 14. Comandos do compilador
+
+```bash
+ofs arquivo.ofs
+ofs run arquivo.ofs
+ofs build arquivo.ofs -o app
+ofs check arquivo.ofs
+ofs tokens arquivo.ofs
+ofs ast arquivo.ofs
+ofs ir arquivo.ofs
+ofs asm arquivo.ofs
+ofs version
+ofs update
+```
+
+Pacotes:
+
+```bash
+uncover fmt
+infuse fmt
+infuse {fmt:stable}
+reinfuse fmt
+```
 
 ### Operator Precedence (lowest to highest)
 
