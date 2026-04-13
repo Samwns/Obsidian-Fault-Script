@@ -12,9 +12,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-env:
-  GITHUB_REPO: Samwns/Obsidian-Fault-Script
-
 jobs:
   build-linux:
     name: Build & Test (Linux)
@@ -23,22 +20,23 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download seed compiler
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          ASSET=$(curl -sL "https://api.github.com/repos/$GITHUB_REPO/releases/latest" \
-            | grep -oP '"browser_download_url":\s*"\K[^"]*linux-x64-installer[^"]*\.tar\.gz')
-          echo "Downloading: $ASSET"
-          curl -sL "$ASSET" -o seed.tar.gz
-          tar xzf seed.tar.gz
+          gh release download --repo Samwns/Obsidian-Fault-Script \
+            --pattern "ofs-linux-x64-installer-*.tar.gz" --dir /tmp/seed
+          tar xzf /tmp/seed/ofs-linux-x64-installer-*.tar.gz -C /tmp/seed
           mkdir -p dist
-          cp ofs dist/ofscc || cp ./ofs dist/ofscc
+          cp /tmp/seed/ofs dist/ofscc
           chmod +x dist/ofscc
-          dist/ofscc --version || echo "Seed compiler ready"
+          echo "Seed compiler:"
+          dist/ofscc --version || echo "ready"
 
       - name: Run Examples
         run: |
           for ex in ofs/examples/*.ofs; do
-            echo "Testing $ex..."
-            timeout 5 ./dist/ofscc run "$ex" || true
+            echo "--- $ex ---"
+            timeout 5 ./dist/ofscc run "$ex" 2>&1 || true
           done
         continue-on-error: true
 
@@ -49,23 +47,19 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Download seed compiler
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          ASSET=$(curl -sL "https://api.github.com/repos/$GITHUB_REPO/releases/latest" \
-            | grep -oP '"browser_download_url":\s*"\K[^"]*macos.*\.(pkg|tar\.gz)"' | head -1)
-          if [ -z "$ASSET" ]; then
-            echo "No macOS asset found, skipping"
-            exit 0
-          fi
-          echo "Downloading: $ASSET"
-          curl -sL "$ASSET" -o seed-macos
+          gh release download --repo Samwns/Obsidian-Fault-Script \
+            --pattern "ofs-macos-arm64-installer-*.pkg" --dir /tmp/seed
+          sudo installer -pkg /tmp/seed/ofs-macos-arm64-installer-*.pkg -target /
           mkdir -p dist
-          # Handle .tar.gz or .pkg
-          if [[ "$ASSET" == *tar.gz ]]; then
-            tar xzf seed-macos
-            cp ofs dist/ofscc || true
-          fi
-          chmod +x dist/ofscc 2>/dev/null || true
-          dist/ofscc --version 2>/dev/null || echo "macOS build skipped (no seed)"
+          cp /usr/local/bin/ofs dist/ofscc 2>/dev/null \
+            || cp /opt/ofs/bin/ofs dist/ofscc 2>/dev/null \
+            || find / -maxdepth 4 -name "ofs" -type f 2>/dev/null | head -1 | xargs -I{} cp {} dist/ofscc
+          chmod +x dist/ofscc
+          echo "Seed compiler:"
+          dist/ofscc --version || echo "ready"
         continue-on-error: true
 
       - name: Run Examples
@@ -73,8 +67,8 @@ jobs:
         run: |
           if [ -x dist/ofscc ]; then
             for ex in ofs/examples/*.ofs; do
-              echo "Testing $ex..."
-              timeout 5 ./dist/ofscc run "$ex" || true
+              echo "--- $ex ---"
+              timeout 5 ./dist/ofscc run "$ex" 2>&1 || true
             done
           fi
         continue-on-error: true
@@ -87,35 +81,29 @@ jobs:
 
       - name: Download seed compiler
         shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          $release = Invoke-RestMethod "https://api.github.com/repos/$env:GITHUB_REPO/releases/latest"
-          $asset = $release.assets | Where-Object { $_.name -match "windows.*portable.*\.zip" } | Select-Object -First 1
-          if (-not $asset) {
-            $asset = $release.assets | Where-Object { $_.name -match "windows.*\.zip" } | Select-Object -First 1
+          gh release download --repo Samwns/Obsidian-Fault-Script `
+            --pattern "ofs-windows-x64-portable-*.zip" --dir seed-dl
+          $zip = Get-ChildItem seed-dl -Filter "*.zip" | Select-Object -First 1
+          Expand-Archive $zip.FullName -DestinationPath seed-extracted
+          New-Item -ItemType Directory -Path dist -Force | Out-Null
+          $ofsExe = Get-ChildItem seed-extracted -Recurse -Filter "ofs.exe" | Select-Object -First 1
+          if ($ofsExe) {
+            Copy-Item $ofsExe.FullName dist\ofscc.exe
+            Get-ChildItem $ofsExe.DirectoryName -Filter "*.dll" | Copy-Item -Destination dist\
           }
-          if ($asset) {
-            Write-Output "Downloading: $($asset.browser_download_url)"
-            Invoke-WebRequest $asset.browser_download_url -OutFile seed.zip
-            Expand-Archive seed.zip -DestinationPath seed-extracted
-            New-Item -ItemType Directory -Path dist -Force | Out-Null
-            $ofsExe = Get-ChildItem seed-extracted -Recurse -Filter "ofs.exe" | Select-Object -First 1
-            if ($ofsExe) {
-              Copy-Item $ofsExe.FullName dist/ofscc.exe
-              # Copy DLLs needed by the compiler
-              Get-ChildItem $ofsExe.DirectoryName -Filter "*.dll" | Copy-Item -Destination dist/
-            }
-            dist/ofscc.exe --version
-          } else {
-            Write-Output "No Windows asset found"
-          }
+          Write-Output "Seed compiler:"
+          dist\ofscc.exe --version
 
       - name: Run Examples
         shell: powershell
         run: |
-          if (Test-Path dist/ofscc.exe) {
-            Get-ChildItem "ofs/examples/*.ofs" | ForEach-Object {
-              Write-Output "Testing $_..."
-              & ./dist/ofscc.exe run "$_" 2>&1 | Out-Null
+          if (Test-Path dist\ofscc.exe) {
+            Get-ChildItem "ofs\examples\*.ofs" | ForEach-Object {
+              Write-Output "--- $_ ---"
+              & .\dist\ofscc.exe run $_.FullName 2>&1 | Out-Null
             }
           }
         continue-on-error: true

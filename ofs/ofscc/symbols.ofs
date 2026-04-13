@@ -3,13 +3,13 @@
 
 // ── Symbol Kind Constants ────────────────────────────────────────────
 
-const SYM_UNKNOWN: stone = 0
-const SYM_VAR:     stone = 1
-const SYM_CONST:   stone = 2
-const SYM_FN:      stone = 3
-const SYM_MONOLITH:stone = 4
-const SYM_PARAM:   stone = 5
-const SYM_FIELD:   stone = 6
+forge SYM_UNKNOWN: stone = 0
+forge SYM_VAR:     stone = 1
+forge SYM_CONST:   stone = 2
+forge SYM_FN:      stone = 3
+forge SYM_MONOLITH:stone = 4
+forge SYM_PARAM:   stone = 5
+forge SYM_FIELD:   stone = 6
 
 // ── Symbol Structure ────────────────────────────────────────────────
 
