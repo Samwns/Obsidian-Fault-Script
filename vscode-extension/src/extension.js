@@ -582,10 +582,16 @@ function getBundledCompilerPath() {
 
   const candidates = process.platform === 'win32'
     ? [
+        path.join(root, 'ofs', 'ofscc', 'ofscc_v2.exe'),
+        path.join(root, 'ofs', 'ofscc', 'ofscc.exe'),
         path.join(root, 'ofs', 'build', 'ofs.exe'),
         path.join(root, 'ofs', 'build', 'Release', 'ofs.exe')
       ]
-    : [path.join(root, 'ofs', 'build', 'ofs')];
+    : [
+        path.join(root, 'ofs', 'ofscc', 'ofscc_v2'),
+        path.join(root, 'ofs', 'ofscc', 'ofscc'),
+        path.join(root, 'ofs', 'build', 'ofs')
+      ];
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
@@ -1013,13 +1019,22 @@ function getShellCommand(ofsPath, filePath) {
 function getTerminalRunCommand(ofsPath, filePath) {
   const fileName = path.basename(filePath).replace(/"/g, '\\"');
   const compilerName = path.basename(ofsPath || 'ofs').toLowerCase();
+  const isOfscc = compilerName.startsWith('ofscc');
 
   if (process.platform === 'win32') {
+    if (isOfscc) {
+      return `& "${ofsPath.replace(/"/g, '\\"')}" "${fileName}" -o "${fileName}.exe"`;
+    }
+
     if (ofsPath === 'ofs' || compilerName === 'ofs.exe') {
       return `ofs run "${fileName}"`;
     }
 
     return `& "${ofsPath.replace(/"/g, '\\"')}" run "${fileName}"`;
+  }
+
+  if (isOfscc) {
+    return `"${ofsPath.replace(/"/g, '\\"')}" "${fileName}" -o "${fileName}.bin"`;
   }
 
   if (ofsPath === 'ofs' || compilerName === 'ofs') {

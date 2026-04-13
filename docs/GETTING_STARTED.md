@@ -169,6 +169,34 @@ ofs asm arquivo.ofs          # debug assembly nativo
 ofs update                   # atualiza pela release
 ```
 
+### Comandos do compilador self-hosted (ofscc)
+
+Enquanto o bridge de argv está em transição, o `ofscc` usa variáveis de ambiente:
+
+```bash
+# Linux/macOS
+export OFSCC_INPUT=ofs/examples/hello.ofs
+export OFSCC_OUTPUT=hello
+export OFSCC_OPT=-O3
+./ofscc_v1
+./hello
+```
+
+```powershell
+# Windows PowerShell
+$env:OFSCC_INPUT = "ofs/examples/hello.ofs"
+$env:OFSCC_OUTPUT = "hello.exe"
+$env:OFSCC_OPT = "-O2"
+.\ofscc_v1.exe
+.\hello.exe
+```
+
+Modos especiais:
+
+- `OFSCC_MODE=check` (somente validação)
+- `OFSCC_MODE=tokens` (imprime tokens)
+- `OFSCC_MODE=ast` (imprime raiz AST)
+
 ---
 
 ## 4. Tipos básicos

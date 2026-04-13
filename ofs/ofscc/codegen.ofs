@@ -1,9 +1,9 @@
 // OFS Compiler — Code Generator
 // Emits valid C code from AST
 
-attach {F:ofscc/fileio.ofs}
-attach {F:ofscc/ast.ofs}
-attach {F:ofscc/symbols.ofs}
+attach {F:fileio.ofs}
+attach {F:ast.ofs}
+attach {F:symbols.ofs}
 
 namespace codegen {
     // ── Type Mapping: OFS → C ──────────────────────────────────────────
@@ -39,48 +39,60 @@ namespace codegen {
     
     // ── Forward Declarations ───────────────────────────────────────────
     
+    vein emit_forward_for_decl(decl_id: stone) -> void {
+        if (decl_id < 0) { return }
+        forge n: Node = node_get(decl_id)
+
+        if (n.kind == NK_FN_DECL || n.kind == NK_CORE_DECL) {
+            forge ret_type_id = n.c1
+            forge ret_type_str = "void"
+            if (ret_type_id >= 0) {
+                forge ret_type: Node = node_get(ret_type_id)
+                ret_type_str = ret_type.val
+            }
+
+            cg_emit_raw(type_to_c(ret_type_str) + " " + n.val + "(")
+
+            forge params_id = n.c0
+            forge j = 0
+            while (j < node_extra_len(params_id)) {
+                if (j > 0) { cg_emit_raw(", ") }
+                forge param_id = node_get_extra(params_id, j)
+                forge param: Node = node_get(param_id)
+                forge param_type_id = param.c0
+                forge param_type_str = "unknown"
+                if (param_type_id >= 0) {
+                    forge param_type: Node = node_get(param_type_id)
+                    param_type_str = param_type.val
+                }
+                cg_emit_raw(type_to_c(param_type_str) + " " + param.val)
+                j++
+            }
+            cg_emit_raw(");")
+            cg_emit("")
+            return
+        }
+
+        if (n.kind == NK_NAMESPACE || n.kind == NK_IMPL) {
+            forge i = 0
+            while (i < node_extra_len(decl_id)) {
+                emit_forward_for_decl(node_get_extra(decl_id, i))
+                i++
+            }
+            return
+        }
+    }
+
     vein emit_forward_decls(root_id: stone) -> void {
         forge i = 0
         while (i < node_extra_len(root_id)) {
             forge decl_id = node_get_extra(root_id, i)
-            forge n: Node = node_get(decl_id)
-            
-            if (n.kind == NK_FN_DECL || n.kind == NK_CORE_DECL) {
-                forge ret_type_id = n.c1
-                forge ret_type_str = "void"
-                if (ret_type_id >= 0) {
-                    forge ret_type: Node = node_get(ret_type_id)
-                    ret_type_str = ret_type.val
-                }
-                
-                cg_emit_raw(type_to_c(ret_type_str) + " " + n.val + "(")
-                
-                forge params_id = n.c0
-                forge j = 0
-                while (j < node_extra_len(params_id)) {
-                    if (j > 0) { cg_emit_raw(", ") }
-                    forge param_id = node_get_extra(params_id, j)
-                    forge param: Node = node_get(param_id)
-                    forge param_type_id = param.c0
-                    forge param_type_str = "unknown"
-                    if (param_type_id >= 0) {
-                        forge param_type: Node = node_get(param_type_id)
-                        param_type_str = param_type.val
-                    }
-                    cg_emit_raw(type_to_c(param_type_str) + " " + param.val)
-                    j++
-                }
-                cg_emit_raw(");")
-                cg_emit("")
-            }
+            emit_forward_for_decl(decl_id)
             i++
         }
     }
     
     // ── Node Emission Core ─────────────────────────────────────────────
-    
-    vein emit_node(id: stone) -> void;
-    vein emit_type_node(id: stone) -> void;
     
     vein emit_type_node(id: stone) -> void {
         if (id < 0) { return }
@@ -255,6 +267,17 @@ namespace codegen {
             cg_emit(";")
             return
         }
+
+        if (n.kind == NK_TREMOR) {
+            cg_emit("{")
+            if (n.c0 >= 0) { emit_node(n.c0) }
+            if (n.c2 >= 0) {
+                cg_emit("// catch block lowered as direct block in Phase B")
+                emit_node(n.c2)
+            }
+            cg_emit("}")
+            return
+        }
         
         if (n.kind == NK_FN_DECL || n.kind == NK_CORE_DECL) {
             forge ret_type_id = n.c1
@@ -287,6 +310,49 @@ namespace codegen {
             if (body_id >= 0) {
                 emit_node(body_id)
             }
+            cg_emit("")
+            return
+        }
+
+        if (n.kind == NK_MONOLITH) {
+            cg_emit("typedef struct " + n.val + " {")
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                forge field_id = node_get_extra(id, i)
+                forge field: Node = node_get(field_id)
+                forge field_type = "int64_t"
+                if (field.c0 >= 0) {
+                    forge t: Node = node_get(field.c0)
+                    field_type = type_to_c(t.val)
+                }
+                cg_emit("  " + field_type + " " + field.val + ";")
+                i++
+            }
+            cg_emit("} " + n.val + ";")
+            cg_emit("")
+            return
+        }
+
+        if (n.kind == NK_IMPL || n.kind == NK_NAMESPACE) {
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                emit_node(node_get_extra(id, i))
+                i++
+            }
+            return
+        }
+
+        if (n.kind == NK_STRATA) {
+            cg_emit("typedef enum " + n.val + "_tag {")
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                forge v_id = node_get_extra(id, i)
+                forge v: Node = node_get(v_id)
+                forge comma = (i + 1 < node_extra_len(id)) ? "," : ""
+                cg_emit("  " + n.val + "__" + v.val + comma)
+                i++
+            }
+            cg_emit("} " + n.val + "_tag;")
             cg_emit("")
             return
         }

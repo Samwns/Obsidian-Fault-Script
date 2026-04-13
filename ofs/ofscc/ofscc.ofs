@@ -1,38 +1,116 @@
 // OFS Compiler — Main Driver
 // Complete compilation pipeline and bootstrap
 
-attach {F:ofscc/fileio.ofs}
-attach {F:ofscc/tokens.ofs}
-attach {F:ofscc/nodes.ofs}
-attach {F:ofscc/ast.ofs}
-attach {F:ofscc/symbols.ofs}
-attach {F:ofscc/lexer.ofs}
-attach {F:ofscc/parser.ofs}
-attach {F:ofscc/typeck.ofs}
-attach {F:ofscc/codegen.ofs}
+attach {F:fileio.ofs}
+attach {F:tokens.ofs}
+attach {F:nodes.ofs}
+attach {F:ast.ofs}
+attach {F:symbols.ofs}
+attach {F:lexer.ofs}
+attach {F:parser.ofs}
+attach {F:typeck.ofs}
+attach {F:codegen.ofs}
+
+extern vein getenv(name: obsidian) -> obsidian
 
 vein usage() -> void {
     echo("Usage: ofscc [options] <input.ofs>")
     echo("Options:")
     echo("  -o <output>      Output executable (default: a.out)")
+    echo("  -O0/-O2/-O3      C optimization level (default: -O2)")
+    echo("  --emit-c <file>  C output path (default: output.c)")
     echo("  --check          Type-check only (no codegen)")
     echo("  --tokens         Print tokens and exit")
     echo("  --ast            Print AST and exit")
     echo("  --help           Show this message")
+    echo("")
+    echo("Env fallback (Phase B):")
+    echo("  OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT")
+}
+
+vein apply_env_overrides(
+    input_file: obsidian,
+    output_file: obsidian,
+    c_output: obsidian,
+    check_only: bool,
+    print_tokens: bool,
+    print_ast: bool,
+    c_opt: obsidian
+) -> obsidian {
+    forge e_in = getenv("OFSCC_INPUT")
+    if (!ofs_str_eq(e_in, "")) { input_file = e_in }
+
+    forge e_out = getenv("OFSCC_OUTPUT")
+    if (!ofs_str_eq(e_out, "")) { output_file = e_out }
+
+    forge e_c = getenv("OFSCC_C_OUT")
+    if (!ofs_str_eq(e_c, "")) { c_output = e_c }
+
+    forge e_mode = getenv("OFSCC_MODE")
+    if (ofs_str_eq(e_mode, "check")) { check_only = true }
+    if (ofs_str_eq(e_mode, "tokens")) { print_tokens = true }
+    if (ofs_str_eq(e_mode, "ast")) { print_ast = true }
+
+    forge e_opt = getenv("OFSCC_OPT")
+    if (ofs_str_eq(e_opt, "-O0") || ofs_str_eq(e_opt, "-O2") || ofs_str_eq(e_opt, "-O3")) {
+        c_opt = e_opt
+    }
+
+    return input_file + "|" + output_file + "|" + c_output + "|" +
+        (check_only ? "1" : "0") + "|" +
+        (print_tokens ? "1" : "0") + "|" +
+        (print_ast ? "1" : "0") + "|" + c_opt
+}
+
+vein parse_state_field(state: obsidian, field_idx: stone) -> obsidian {
+    forge i = 0
+    forge start = 0
+    forge cur = 0
+    forge len = ofs_str_len(state)
+
+    while (i < len) {
+        if (ofs_str_char_at(state, i) == 124) {
+            if (cur == field_idx) {
+                return ofs_str_substr(state, start, i - start)
+            }
+            cur++
+            start = i + 1
+        }
+        i++
+    }
+
+    if (cur == field_idx) {
+        return ofs_str_substr(state, start, len - start)
+    }
+    return ""
 }
 
 core main() {
     echo("ofscc — OFS self-hosted compiler v0.1")
     echo("")
     
-    // For now, hardcoded input file + output
-    // TODO: parse arguments from command line via extern
     forge input_file = "input.ofs"
     forge output_file = "a.out"
     forge c_output = "output.c"
     forge check_only = false
     forge print_tokens = false
     forge print_ast = false
+    forge c_opt = "-O2"
+
+    // Phase B: environment-based CLI bridge until argv runtime lands
+    forge state = apply_env_overrides(input_file, output_file, c_output, check_only, print_tokens, print_ast, c_opt)
+    input_file = parse_state_field(state, 0)
+    output_file = parse_state_field(state, 1)
+    c_output = parse_state_field(state, 2)
+    check_only = ofs_str_eq(parse_state_field(state, 3), "1")
+    print_tokens = ofs_str_eq(parse_state_field(state, 4), "1")
+    print_ast = ofs_str_eq(parse_state_field(state, 5), "1")
+    c_opt = parse_state_field(state, 6)
+
+    if (ofs_str_eq(input_file, "") || ofs_str_eq(input_file, "--help")) {
+        usage()
+        return
+    }
     
     // Phase 1: Read source
     echo("[1/6] Reading source...")
@@ -50,17 +128,38 @@ core main() {
     forge tokens: Array<Token> = lexer.lex(src)
     forge token_count = ofs_array_len(tokens)
     echo("  OK — " + ofs_stone_to_obsidian(token_count) + " tokens")
+
+    if (print_tokens) {
+        forge ti = 0
+        while (ti < token_count) {
+            forge tk: Token = ofs_array_get(tokens, ti)
+            echo("tok(" + ofs_stone_to_obsidian(tk.kind) + ") '" + tk.val + "'")
+            ti++
+        }
+        return
+    }
     
     // Phase 3: Parsing
     echo("[3/6] Parsing...")
     forge root_id = parser.parse(tokens)
     forge node_count = node_pool_len()
     echo("  OK — " + ofs_stone_to_obsidian(node_count) + " AST nodes")
+
+    if (print_ast) {
+        echo("AST root kind: " + node_kind_name(node_get(root_id).kind))
+        return
+    }
     
     // Phase 4: Type checking
     echo("[4/6] Type checking...")
     typeck.check(root_id)
     echo("  OK")
+
+    if (check_only) {
+        echo("")
+        echo("CHECK OK: semantic validation complete")
+        return
+    }
     
     // Phase 5: Code generation
     echo("[5/6] Code generation...")
@@ -71,7 +170,7 @@ core main() {
     
     // Phase 6: C compilation
     echo("[6/6] C compilation...")
-    forge c_compiler_cmd = "gcc -O2 -o " + output_file + " " + c_output + " 2>&1"
+    forge c_compiler_cmd = "gcc " + c_opt + " -o " + output_file + " " + c_output + " 2>&1"
     forge compile_result = system(c_compiler_cmd)
     
     if (compile_result == 0) {

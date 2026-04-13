@@ -93,9 +93,6 @@ namespace parser {
     
     // ── Expression Parsing (Pratt) ──────────────────────────────────────
     
-    vein parse_expr(min_prec: stone) -> stone;
-    vein parse_primary() -> stone;
-    vein parse_type() -> stone;
     
     vein parse_primary() -> stone {
         forge t = _cur()
@@ -292,8 +289,6 @@ namespace parser {
     
     // ── Statement Parsing ──────────────────────────────────────────────
     
-    vein parse_block() -> stone;
-    vein parse_stmt() -> stone;
     
     vein parse_block() -> stone {
         forge line = _cur().line
@@ -392,6 +387,42 @@ namespace parser {
             forge n = node_new(NK_THROW, "", line, col)
             node_set_child(n, 0, expr)
             return n
+        }
+
+        // tremor { ... } catch (e: obsidian) { ... }
+        if (t.kind == TOK_TREMOR) {
+            _advance()
+            forge body = parse_block()
+
+            forge catch_ident: stone = -1
+            forge catch_body: stone = -1
+            if (_cur_kind() == TOK_CATCH) {
+                _advance()
+                if (!_expect(TOK_LPAREN)) { _error("expected '(' after catch") }
+
+                if (_cur_kind() == TOK_IDENT) {
+                    forge catch_name = _cur_val()
+                    forge c_line = _cur().line
+                    forge c_col = _cur().col
+                    _advance()
+                    catch_ident = node_new(NK_IDENT, catch_name, c_line, c_col)
+                } else {
+                    _error("expected catch variable")
+                }
+
+                if (_cur_kind() == TOK_COLON) {
+                    _advance()
+                    parse_type()
+                }
+                if (!_expect(TOK_RPAREN)) { _error("expected ')' after catch variable") }
+                catch_body = parse_block()
+            }
+
+            forge tr = node_new(NK_TREMOR, "", line, col)
+            node_set_child(tr, 0, body)
+            node_set_child(tr, 1, catch_ident)
+            node_set_child(tr, 2, catch_body)
+            return tr
         }
         
         // block
@@ -516,6 +547,207 @@ namespace parser {
         node_set_child(n, 2, body)
         return n
     }
+
+    vein parse_monolith_decl() -> stone {
+        forge t = _cur()
+        _advance()
+
+        if (_cur_kind() != TOK_IDENT) {
+            _error("expected monolith name")
+            return -1
+        }
+
+        forge type_name = _cur_val()
+        forge type_line = _cur().line
+        forge type_col = _cur().col
+        _advance()
+
+        if (!_expect(TOK_LBRACE)) {
+            _error("expected '{' after monolith name")
+            return -1
+        }
+
+        forge mono = node_new(NK_MONOLITH, type_name, type_line, type_col)
+        while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
+            if (_cur_kind() != TOK_IDENT) {
+                _error("expected field name")
+                _advance()
+                continue
+            }
+
+            forge field_name = _cur_val()
+            forge field_line = _cur().line
+            forge field_col = _cur().col
+            _advance()
+
+            if (!_expect(TOK_COLON)) {
+                _error("expected ':' in field declaration")
+                continue
+            }
+
+            forge field_type = parse_type()
+            forge field = node_new(NK_FIELD_DECL, field_name, field_line, field_col)
+            node_set_child(field, 0, field_type)
+            node_add_extra(mono, field)
+
+            if (_cur_kind() == TOK_SEMI || _cur_kind() == TOK_COMMA) {
+                _advance()
+            }
+        }
+
+        if (!_expect(TOK_RBRACE)) {
+            _error("expected '}' in monolith")
+        }
+
+        return mono
+    }
+
+    vein parse_impl_decl() -> stone {
+        forge t = _cur()
+        _advance()
+
+        if (_cur_kind() != TOK_IDENT) {
+            _error("expected impl target type")
+            return -1
+        }
+
+        forge type_name = _cur_val()
+        forge type_line = _cur().line
+        forge type_col = _cur().col
+        _advance()
+
+        if (!_expect(TOK_LBRACE)) {
+            _error("expected '{' after impl type")
+            return -1
+        }
+
+        forge imp = node_new(NK_IMPL, type_name, type_line, type_col)
+        while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
+            if (_cur_kind() == TOK_VEIN || _cur_kind() == TOK_CORE) {
+                forge method_id = parse_fn_decl()
+                if (method_id >= 0) {
+                    // flatten method names in Phase B: Type__method
+                    forge m: Node = node_get(method_id)
+                    m.val = type_name + "__" + m.val
+                    node_set(method_id, m)
+                    node_add_extra(imp, method_id)
+                }
+            } else {
+                _error("expected method declaration in impl")
+                _advance()
+            }
+        }
+
+        if (!_expect(TOK_RBRACE)) {
+            _error("expected '}' in impl")
+        }
+
+        return imp
+    }
+
+    vein parse_namespace_decl() -> stone {
+        forge t = _cur()
+        _advance()
+
+        if (_cur_kind() != TOK_IDENT) {
+            _error("expected namespace name")
+            return -1
+        }
+
+        forge ns_name = _cur_val()
+        forge ns_line = _cur().line
+        forge ns_col = _cur().col
+        _advance()
+
+        if (!_expect(TOK_LBRACE)) {
+            _error("expected '{' after namespace name")
+            return -1
+        }
+
+        forge ns = node_new(NK_NAMESPACE, ns_name, ns_line, ns_col)
+        while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
+            forge member: stone = -1
+            if (_cur_kind() == TOK_VEIN || _cur_kind() == TOK_CORE) {
+                member = parse_fn_decl()
+            } else if (_cur_kind() == TOK_FORGE || _cur_kind() == TOK_CONST) {
+                member = parse_stmt()
+            } else if (_cur_kind() == TOK_MONOLITH) {
+                member = parse_monolith_decl()
+            } else if (_cur_kind() == TOK_IMPL) {
+                member = parse_impl_decl()
+            } else if (_cur_kind() == TOK_STRATA) {
+                member = parse_strata_decl()
+            } else {
+                _error("unexpected token inside namespace")
+                _advance()
+            }
+
+            if (member >= 0) {
+                node_add_extra(ns, member)
+            }
+        }
+
+        if (!_expect(TOK_RBRACE)) {
+            _error("expected '}' in namespace")
+        }
+
+        return ns
+    }
+
+    vein parse_strata_decl() -> stone {
+        forge t = _cur()
+        _advance()
+
+        if (_cur_kind() != TOK_IDENT) {
+            _error("expected strata name")
+            return -1
+        }
+
+        forge strata_name = _cur_val()
+        forge s_line = _cur().line
+        forge s_col = _cur().col
+        _advance()
+
+        if (!_expect(TOK_LBRACE)) {
+            _error("expected '{' after strata name")
+            return -1
+        }
+
+        forge st = node_new(NK_STRATA, strata_name, s_line, s_col)
+        while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
+            if (_cur_kind() != TOK_IDENT) {
+                _error("expected variant name")
+                _advance()
+                continue
+            }
+
+            forge v_name = _cur_val()
+            forge v_line = _cur().line
+            forge v_col = _cur().col
+            _advance()
+
+            forge variant = node_new(NK_VARIANT, v_name, v_line, v_col)
+            if (_cur_kind() == TOK_LPAREN) {
+                _advance()
+                forge v_type = parse_type()
+                node_set_child(variant, 0, v_type)
+                if (!_expect(TOK_RPAREN)) {
+                    _error("expected ')' in variant")
+                }
+            }
+
+            node_add_extra(st, variant)
+            if (_cur_kind() == TOK_COMMA || _cur_kind() == TOK_SEMI) {
+                _advance()
+            }
+        }
+
+        if (!_expect(TOK_RBRACE)) {
+            _error("expected '}' in strata")
+        }
+
+        return st
+    }
     
     vein parse_program() -> stone {
         forge program = node_new(NK_PROGRAM, "", 1, 1)
@@ -525,6 +757,26 @@ namespace parser {
             
             if (t.kind == TOK_VEIN || t.kind == TOK_CORE) {
                 forge decl = parse_fn_decl()
+                if (decl >= 0) {
+                    node_add_extra(program, decl)
+                }
+            } else if (t.kind == TOK_MONOLITH) {
+                forge decl = parse_monolith_decl()
+                if (decl >= 0) {
+                    node_add_extra(program, decl)
+                }
+            } else if (t.kind == TOK_IMPL) {
+                forge decl = parse_impl_decl()
+                if (decl >= 0) {
+                    node_add_extra(program, decl)
+                }
+            } else if (t.kind == TOK_NAMESPACE) {
+                forge decl = parse_namespace_decl()
+                if (decl >= 0) {
+                    node_add_extra(program, decl)
+                }
+            } else if (t.kind == TOK_STRATA) {
+                forge decl = parse_strata_decl()
                 if (decl >= 0) {
                     node_add_extra(program, decl)
                 }

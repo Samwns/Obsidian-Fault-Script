@@ -3,6 +3,19 @@
 **Versão Atual**: v1.1.0-alpha (Bootstrap pronto)  
 **Objetivo Final**: v2.0.0 (Production-ready, sem C++ dependency)
 
+## Critério de 100% (Gate)
+
+O roadmap só é considerado 100% completo quando:
+
+- todos os itens de checklist estiverem em `[x]`
+- nenhum item estiver em `[ ]` ou `[~]`
+- pipeline de release passar no gate de 100%
+
+Gate automático implementado em:
+
+- `.github/workflows/roadmap-gate.yml`
+- `scripts/roadmap_completion.ps1`
+
 ---
 
 ## Timeline & Versões
@@ -24,15 +37,15 @@
 ├─────────────────────────────────────────────────────────────────────┤
 │ Duration: 2 weeks                                                   │
 │ Deliverables:                                                       │
-│ - [✓] Bootstrap test (Windows + Linux verified)                     │
-│ - [✓] Determinism check (v2 === v3)                                │
-│ - [ ] Full CLI argument parsing                                     │
-│ - [ ] impl/namespace/strata codegen support                         │
-│ - [ ] tremor/catch error handling                                   │
-│ - [ ] Compiler optimization (-O0, -O2, -O3)                        │
-│ - [ ] Cross-platform testing (Linux, macOS, Windows)               │
+│ - [ ] Bootstrap test (Windows + Linux verified)                     │
+│ - [ ] Determinism check (v2 === v3)                                │
+│ - [~] CLI bridge via env + mode flags                              │
+│ - [~] impl/namespace/strata parser + codegen base                   │
+│ - [~] tremor/catch parser + lowered block                           │
+│ - [~] Compiler optimization flags (-O0, -O2, -O3)                  │
+│ - [~] Cross-platform CI (Linux, macOS, Windows)                     │
 │ - [ ] Documentation updates                                        │
-│ - [ ] GitHub Actions workflow (C++ ofs only)                       │
+│ - [~] GitHub Actions workflow (C++ + self-hosted experimental)      │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -130,9 +143,9 @@ Options:
 ```
 
 **Language Features**:
-- [ ] impl blocks (struct methods codegen)
-- [ ] namespace declarations (symbol qualification)
-- [ ] strata (inheritance simulation)
+- [~] impl blocks (struct methods codegen base)
+- [~] namespace declarations (flattened emission)
+- [~] strata (enum-tag base generation)
 - [ ] Default parameters
 - [ ] Named arguments
 

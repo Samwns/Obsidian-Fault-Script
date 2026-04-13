@@ -27,6 +27,7 @@ Language / Idioma:
 - Command palette action: `OFS: Emit Native Assembly`
 - Built-in OFS theme: `Obsidian Fault Purple`
 - Embedded compiler support (`bin/<platform>/ofs`) with auto-install fallback
+- Self-hosted compiler discovery in workspace (`ofs/ofscc/ofscc`, `ofs/ofscc/ofscc_v2`)
 
 This extension should be updated together with language changes. When OFS gains new syntax, stdlib modules, or package workflows, the extension grammar, snippets, hover docs, and README should be updated in the same change.
 
@@ -39,6 +40,8 @@ This extension should be updated together with language changes. When OFS gains 
 
 - `ofs.path`
 : Path to OFS executable. Default: `ofs`.
+
+You can also set `ofs.path` to `ofscc`/`ofscc_v2` during self-hosted compiler testing.
 
 - `ofs.diagnosticsOnType`
 : Run diagnostics while typing (debounced). Default: `true`.
@@ -125,6 +128,7 @@ npm run package
 - Acao na paleta de comandos: `OFS: Emit Native Assembly`
 - Tema integrado: `Obsidian Fault Purple`
 - Suporte a compilador embutido (`bin/<plataforma>/ofs`) com fallback de auto-instalacao
+- Descoberta do compilador self-hosted no workspace (`ofs/ofscc/ofscc`, `ofs/ofscc/ofscc_v2`)
 
 Esta extensao deve ser atualizada junto com a linguagem. Quando a OFS ganhar nova sintaxe, novos modulos de stdlib ou novos fluxos de pacote, a gramática, os snippets, os hovers e este README da extensao devem ser atualizados no mesmo conjunto de mudanças.
 
@@ -137,6 +141,8 @@ Esta extensao deve ser atualizada junto com a linguagem. Quando a OFS ganhar nov
 
 - `ofs.path`
 : Caminho para o executavel OFS. Padrao: `ofs`.
+
+Voce tambem pode configurar `ofs.path` para `ofscc`/`ofscc_v2` durante os testes do compilador self-hosted.
 
 - `ofs.diagnosticsOnType`
 : Executa diagnosticos enquanto digita (com debounce). Padrao: `true`.

@@ -57,8 +57,6 @@ namespace typeck {
     
     // ── Type Checking Core ───────────────────────────────────────────
     
-    vein check_node(id: stone) -> obsidian;
-    
     vein check_type_string(type_str: obsidian) -> bool {
         if (ofs_str_eq(type_str, "stone")) { return true }
         if (ofs_str_eq(type_str, "crystal")) { return true }
@@ -162,6 +160,11 @@ namespace typeck {
                 check_node(arg_id)
                 i++
             }
+            forge fn_sym: Symbol = resolve(n.val)
+            if (!ofs_str_eq(fn_sym.name, "")) {
+                node_set_type(id, fn_sym.type_str)
+                return fn_sym.type_str
+            }
             node_set_type(id, "unknown")
             return "unknown"
         }
@@ -228,6 +231,27 @@ namespace typeck {
             }
             return "void"
         }
+
+        if (n.kind == NK_TREMOR) {
+            push_scope()
+            if (n.c0 >= 0) { check_node(n.c0) }
+            pop_scope()
+
+            if (n.c2 >= 0) {
+                push_scope()
+                if (n.c1 >= 0) {
+                    forge cident: Node = node_get(n.c1)
+                    forge csym: Symbol
+                    csym.name = cident.val
+                    csym.type_str = "obsidian"
+                    csym.kind = SYM_VAR
+                    declare(csym)
+                }
+                check_node(n.c2)
+                pop_scope()
+            }
+            return "void"
+        }
         
         if (n.kind == NK_FN_DECL || n.kind == NK_CORE_DECL) {
             push_scope()
@@ -263,8 +287,84 @@ namespace typeck {
             pop_scope()
             return "void"
         }
+
+        if (n.kind == NK_MONOLITH) {
+            forge type_sym: Symbol
+            type_sym.name = n.val
+            type_sym.type_str = n.val
+            type_sym.kind = SYM_MONOLITH
+            declare(type_sym)
+
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                forge field_id = node_get_extra(id, i)
+                forge field: Node = node_get(field_id)
+                if (field.c0 >= 0) {
+                    forge t: Node = node_get(field.c0)
+                    if (!check_type_string(t.val)) {
+                        echo("[typeck warn] unknown field type '" + t.val + "' in monolith " + n.val)
+                    }
+                }
+                i++
+            }
+            return "void"
+        }
+
+        if (n.kind == NK_IMPL) {
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                forge method_id = node_get_extra(id, i)
+                check_node(method_id)
+                i++
+            }
+            return "void"
+        }
+
+        if (n.kind == NK_NAMESPACE) {
+            push_scope()
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                forge member_id = node_get_extra(id, i)
+                check_node(member_id)
+                i++
+            }
+            pop_scope()
+            return "void"
+        }
+
+        if (n.kind == NK_STRATA) {
+            forge type_sym: Symbol
+            type_sym.name = n.val
+            type_sym.type_str = n.val
+            type_sym.kind = SYM_MONOLITH
+            declare(type_sym)
+            return "void"
+        }
+
+        if (n.kind == NK_ATTACH) {
+            return "void"
+        }
         
         if (n.kind == NK_PROGRAM) {
+            // predeclare top-level functions for call resolution
+            forge d = 0
+            while (d < node_extra_len(id)) {
+                forge decl_id = node_get_extra(id, d)
+                forge decl: Node = node_get(decl_id)
+                if (decl.kind == NK_FN_DECL || decl.kind == NK_CORE_DECL) {
+                    forge fn_sym: Symbol
+                    fn_sym.name = decl.val
+                    fn_sym.type_str = "unknown"
+                    if (decl.c1 >= 0) {
+                        forge ret: Node = node_get(decl.c1)
+                        fn_sym.type_str = ret.val
+                    }
+                    fn_sym.kind = SYM_FN
+                    declare(fn_sym)
+                }
+                d++
+            }
+
             forge i = 0
             while (i < node_extra_len(id)) {
                 forge decl_id = node_get_extra(id, i)

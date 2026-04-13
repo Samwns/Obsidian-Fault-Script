@@ -12,7 +12,7 @@ extern vein fseek(f: stone, offset: stone, whence: stone) -> stone
 extern vein ftell(f: stone) -> stone
 extern vein system(cmd: obsidian) -> stone
 extern vein ofs_alloc(size: stone) -> stone
-extern vein ofs_free(ptr: stone) -> void
+extern vein ofs_free(p: stone) -> void
 extern vein exit(code: stone) -> void
 
 // ── File Reading ────────────────────────────────────────────────────────

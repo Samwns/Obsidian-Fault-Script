@@ -44,7 +44,7 @@ jobs:
         if: steps.cache-llvm.outputs.cache-hit != 'true'
         shell: powershell
         run: |
-          choco install llvm --version=17.0.2 -y
+          choco install llvm -y
 
       - name: Setup CMake
         uses: cmake-actions/setup-cmake@v2
@@ -110,6 +110,36 @@ jobs:
             build-linux/ofs
             ofs/stdlib/
 
+  build-cpp-macos:
+    name: Build C++ OFS (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Dependencies
+        run: |
+          brew update
+          brew install llvm cmake
+
+      - name: Configure CMake
+        run: |
+          mkdir -p build-macos
+          cd build-macos
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR="$(brew --prefix llvm)/lib/cmake/llvm"
+
+      - name: Build
+        run: |
+          cd build-macos
+          cmake --build . -- -j$(sysctl -n hw.ncpu)
+
+      - name: Upload macOS Executable
+        uses: actions/upload-artifact@v3
+        with:
+          name: ofs-macos-arm64
+          path: |
+            build-macos/ofs
+            ofs/stdlib/
+
   # =========================================================================
   # BOOTSTRAP TEST
   # =========================================================================
@@ -161,8 +191,8 @@ jobs:
         run: |
           cd bootstrap-test
           if [ -f ofscc_v2 ] && [ -f ofscc_v3 ]; then
-            SIZE2=$(stat -f%z ofscc_v2)
-            SIZE3=$(stat -f%z ofscc_v3)
+            SIZE2=$(stat -c%s ofscc_v2)
+            SIZE3=$(stat -c%s ofscc_v3)
             HASH2=$(sha256sum ofscc_v2 | awk '{print $1}')
             HASH3=$(sha256sum ofscc_v3 | awk '{print $1}')
             echo "Size v2: $SIZE2"

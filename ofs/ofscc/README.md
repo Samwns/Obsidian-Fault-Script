@@ -108,18 +108,23 @@ bash ofs/ofscc/test_bootstrap.sh [compiler_path]
 ### Partially Working / TODO
 - ⚠️  Type inference (basic support)
 - ⚠️  Error recovery (needs improvement)
-- ❌ impl (methods) — parsing only
-- ❌ namespace — parsing only
-- ❌ strata (enum-like) — parsing only
-- ❌ tremor/catch (error handling) — parsing only
+- ⚠️  impl (methods) — parsing + codegen base (flatten `Type__method`)
+- ⚠️  namespace — parsing + flatten codegen base
+- ⚠️  strata (enum-like) — parsing + enum tag codegen base
+- ⚠️  tremor/catch — parsing + lowered block codegen base
 
 ## Known Limitations
 
-1. **No argv support** — Cannot parse command-line arguments yet
-   - Workaround: hardcode input file in driver
+1. **argv runtime bridge pending** — direct argv parsing is not exposed yet
+    - Workaround (Phase B): env bridge via `OFSCC_INPUT`, `OFSCC_OUTPUT`, `OFSCC_C_OUT`, `OFSCC_MODE`, `OFSCC_OPT`
 2. **Single-pass type checking** — No forward declarations
 3. **Deterministic output** — Must verify with bootstrap test
-4. **No optimizations** — Generates straightforward C
+4. **No backend optimizations yet** — Generates straightforward C and delegates optimization to gcc (`-O0/-O2/-O3`)
+
+## Phase D/E Prep in Repo
+
+- `/.github/workflows/selfhosted-release.yml` — experimental self-hosted pipeline without C++ build stage
+- `/packaging/installer_generator.ofs` — installer artifact generation in OFS (Windows/Linux/macOS stubs)
 
 ## Next Steps
 

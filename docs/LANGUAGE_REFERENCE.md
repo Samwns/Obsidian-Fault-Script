@@ -503,6 +503,39 @@ Módulo `canvas` expõe:
 
 ## 14. Comandos do compilador
 
+### Compilador principal (`ofs`)
+
+```bash
+ofs run arquivo.ofs
+ofs build arquivo.ofs -o app
+ofs check arquivo.ofs
+ofs tokens arquivo.ofs
+ofs ast arquivo.ofs
+ofs ir arquivo.ofs
+ofs asm arquivo.ofs
+```
+
+### Compilador self-hosted (`ofscc`) no estado atual
+
+`ofscc` já suporta otimização e modos de inspeção via bridge de ambiente:
+
+Variáveis:
+
+- `OFSCC_INPUT`
+- `OFSCC_OUTPUT`
+- `OFSCC_C_OUT`
+- `OFSCC_OPT` (`-O0`, `-O2`, `-O3`)
+- `OFSCC_MODE` (`check`, `tokens`, `ast`)
+
+Exemplo:
+
+```bash
+export OFSCC_INPUT=programa.ofs
+export OFSCC_OUTPUT=programa
+export OFSCC_OPT=-O3
+./ofscc_v1
+```
+
 ```bash
 ofs arquivo.ofs
 ofs run arquivo.ofs

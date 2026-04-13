@@ -50,6 +50,33 @@ After implementing a complete compiler pipeline in pure OFS (lexer, parser, type
   - New path: `ofscc input.ofs -o output`
   - Both compilers work in parallel (for now)
 
+### Added - Phase B implementation increment (2026-04-12)
+
+- **Parser/Type Checker/Codegen upgrades in `ofs/ofscc/`**
+  - `tremor/catch` parsing and lowered codegen block
+  - `monolith` parsing + C struct emission
+  - `impl` parsing + method flattening (`Type__method`)
+  - `namespace` parsing + nested member emission
+  - `strata` parsing + enum-tag codegen base
+
+- **CLI bridge for `ofscc`**
+  - `OFSCC_INPUT`, `OFSCC_OUTPUT`, `OFSCC_C_OUT`, `OFSCC_MODE`, `OFSCC_OPT`
+  - support for build optimization levels `-O0`, `-O2`, `-O3`
+
+- **CI/CD expansion**
+  - `build.yml` now includes macOS build
+  - fixed Linux determinism stat command (`stat -c%s`)
+  - Windows LLVM install no longer pins exact Chocolatey version
+
+- **Self-hosted release workflow (Phase D/E prep)**
+  - `.github/workflows/selfhosted-release.yml`
+  - downloads bootstrap compiler from Releases
+  - compiles `ofscc.ofs` and generates installer assets with OFS tooling
+
+- **VS Code extension update**
+  - autodetects self-hosted binaries (`ofscc`, `ofscc_v2`) in workspace
+  - run command adapts when compiler is `ofscc`
+
 ### Technical Details
 
 **Compiler Architecture**:
