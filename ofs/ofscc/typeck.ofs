@@ -1,16 +1,16 @@
-// OFS Compiler — Type Checker
+// OFS Compiler  Type Checker
 // Symbol table, scope management, and type validation
 
 attach {F:symbols.ofs}
 attach {F:ast.ofs}
 
 namespace typeck {
-    // ── Scope Stack ──────────────────────────────────────────────────
+    //  Scope Stack 
     
-    forge _scopes: Array<Array<Symbol>> = []
+    forge _scopes = []
     
     vein push_scope() -> void {
-        forge new_scope: Array<Symbol> = []
+        forge new_scope = []
         ofs_array_push(_scopes, new_scope)
     }
     
@@ -26,7 +26,7 @@ namespace typeck {
         if (len == 0) { return }
         
         forge scope_idx = len - 1
-        forge scope: Array<Symbol> = ofs_array_get(_scopes, scope_idx)
+        forge scope = ofs_array_get(_scopes, scope_idx)
         ofs_array_push(scope, sym)
         ofs_array_set(_scopes, scope_idx, scope)
     }
@@ -36,10 +36,10 @@ namespace typeck {
         forge si = len - 1
         
         while (si >= 0) {
-            forge scope: Array<Symbol> = ofs_array_get(_scopes, si)
+            forge scope = ofs_array_get(_scopes, si)
             forge i = 0
             while (i < ofs_array_len(scope)) {
-                forge sym: Symbol = ofs_array_get(scope, i)
+                forge sym = ofs_array_get(scope, i)
                 if (ofs_str_eq(sym.name, name)) {
                     return sym
                 }
@@ -55,7 +55,7 @@ namespace typeck {
         return dummy
     }
     
-    // ── Type Checking Core ───────────────────────────────────────────
+    //  Type Checking Core 
     
     vein check_type_string(type_str: obsidian) -> bool {
         if (ofs_str_eq(type_str, "stone")) { return true }
@@ -81,7 +81,7 @@ namespace typeck {
     vein check_node(id: stone) -> obsidian {
         if (id < 0) { return "void" }
         
-        forge n: Node = node_get(id)
+        forge n = node_get(id)
         
         if (n.kind == NK_LIT_INT) {
             node_set_type(id, "stone")
@@ -109,7 +109,7 @@ namespace typeck {
         }
         
         if (n.kind == NK_IDENT) {
-            forge sym: Symbol = resolve(n.val)
+            forge sym = resolve(n.val)
             if (ofs_str_eq(sym.name, "")) {
                 echo("[typeck warn " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "] unknown identifier '" + n.val + "'")
                 return "unknown"
@@ -160,8 +160,11 @@ namespace typeck {
                 check_node(arg_id)
                 i++
             }
-            forge fn_sym: Symbol = resolve(n.val)
-            if (!ofs_str_eq(fn_sym.name, "")) {
+            if (n.c0 >= 0) {
+                check_node(n.c0)
+            }
+            forge fn_sym = resolve(n.val)
+            if (!ofs_str_eq(n.val, "") && !ofs_str_eq(fn_sym.name, "")) {
                 node_set_type(id, fn_sym.type_str)
                 return fn_sym.type_str
             }
@@ -176,7 +179,7 @@ namespace typeck {
             forge type_str = "unknown"
             
             if (type_node_id >= 0) {
-                forge type_node: Node = node_get(type_node_id)
+                forge type_node = node_get(type_node_id)
                 type_str = type_node.val
             } else if (init_id >= 0) {
                 // Infer from initializer
@@ -187,7 +190,10 @@ namespace typeck {
             forge sym: Symbol
             sym.name = n.val
             sym.type_str = type_str
-            sym.kind = (n.kind == NK_CONST_DECL) ? SYM_CONST : SYM_VAR
+            sym.kind = SYM_VAR
+            if (n.kind == NK_CONST_DECL) {
+                sym.kind = SYM_CONST
+            }
             declare(sym)
             
             node_set_type(id, type_str)
@@ -221,6 +227,54 @@ namespace typeck {
             pop_scope()
             return "void"
         }
+
+        if (n.kind == NK_CYCLE_C) {
+            push_scope()
+            if (n.c0 >= 0) { check_node(n.c0) }
+            if (n.c1 >= 0) { check_node(n.c1) }
+            if (n.c3 >= 0) { check_node(n.c3) }
+            if (n.c2 >= 0) { check_node(n.c2) }
+            pop_scope()
+            return "void"
+        }
+
+        if (n.kind == NK_CYCLE_RANGE) {
+            check_node(n.c0)
+            push_scope()
+            forge it_sym: Symbol
+            it_sym.name = n.val
+            it_sym.type_str = "stone"
+            it_sym.kind = SYM_VAR
+            declare(it_sym)
+            if (n.c1 >= 0) { check_node(n.c1) }
+            pop_scope()
+            return "void"
+        }
+
+        if (n.kind == NK_MATCH) {
+            check_node(n.c0)
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                check_node(node_get_extra(id, i))
+                i++
+            }
+            return "void"
+        }
+
+        if (n.kind == NK_CASE) {
+            if (n.c0 >= 0) { check_node(n.c0) }
+            push_scope()
+            if (n.c1 >= 0) { check_node(n.c1) }
+            pop_scope()
+            return "void"
+        }
+
+        if (n.kind == NK_DEFAULT) {
+            push_scope()
+            if (n.c0 >= 0) { check_node(n.c0) }
+            pop_scope()
+            return "void"
+        }
         
         if (n.kind == NK_BLOCK) {
             forge i = 0
@@ -240,7 +294,7 @@ namespace typeck {
             if (n.c2 >= 0) {
                 push_scope()
                 if (n.c1 >= 0) {
-                    forge cident: Node = node_get(n.c1)
+                    forge cident = node_get(n.c1)
                     forge csym: Symbol
                     csym.name = cident.val
                     csym.type_str = "obsidian"
@@ -262,11 +316,11 @@ namespace typeck {
                 forge i = 0
                 while (i < node_extra_len(params_id)) {
                     forge param_id = node_get_extra(params_id, i)
-                    forge param: Node = node_get(param_id)
+                    forge param = node_get(param_id)
                     forge param_type_id = param.c0
                     forge param_type_str = "unknown"
                     if (param_type_id >= 0) {
-                        forge param_type: Node = node_get(param_type_id)
+                        forge param_type = node_get(param_type_id)
                         param_type_str = param_type.val
                     }
                     forge sym: Symbol
@@ -298,15 +352,32 @@ namespace typeck {
             forge i = 0
             while (i < node_extra_len(id)) {
                 forge field_id = node_get_extra(id, i)
-                forge field: Node = node_get(field_id)
+                forge field = node_get(field_id)
                 if (field.c0 >= 0) {
-                    forge t: Node = node_get(field.c0)
+                    forge t = node_get(field.c0)
                     if (!check_type_string(t.val)) {
                         echo("[typeck warn] unknown field type '" + t.val + "' in monolith " + n.val)
                     }
                 }
                 i++
             }
+            return "void"
+        }
+
+        if (n.kind == NK_EXTERN_VN || n.kind == NK_RIFT_VN) {
+            forge fsym: Symbol
+            fsym.name = n.val
+            fsym.type_str = "unknown"
+            if (n.c1 >= 0) {
+                forge rt = node_get(n.c1)
+                fsym.type_str = rt.val
+            }
+            fsym.kind = SYM_FN
+            fsym.fn_arity = 0
+            if (n.c0 >= 0) {
+                fsym.fn_arity = node_extra_len(n.c0)
+            }
+            declare(fsym)
             return "void"
         }
 
@@ -350,13 +421,14 @@ namespace typeck {
             forge d = 0
             while (d < node_extra_len(id)) {
                 forge decl_id = node_get_extra(id, d)
-                forge decl: Node = node_get(decl_id)
-                if (decl.kind == NK_FN_DECL || decl.kind == NK_CORE_DECL) {
+                forge decl = node_get(decl_id)
+                if (decl.kind == NK_FN_DECL || decl.kind == NK_CORE_DECL ||
+                    decl.kind == NK_EXTERN_VN || decl.kind == NK_RIFT_VN) {
                     forge fn_sym: Symbol
                     fn_sym.name = decl.val
                     fn_sym.type_str = "unknown"
                     if (decl.c1 >= 0) {
-                        forge ret: Node = node_get(decl.c1)
+                        forge ret = node_get(decl.c1)
                         fn_sym.type_str = ret.val
                     }
                     fn_sym.kind = SYM_FN
@@ -383,3 +455,6 @@ namespace typeck {
         pop_scope()
     }
 }
+
+
+

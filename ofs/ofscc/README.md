@@ -1,153 +1,52 @@
-# OFS Self-Hosted Compiler (`ofscc`)
+# OFS Self-Hosted Compiler (ofscc)
 
-The complete OFS compiler written in pure OFS. This is the self-hosting milestone.
+Compilador completo escrito em OFS e usado como caminho principal do projeto.
 
-## Architecture
+## Arquitetura
 
-```
-ofscc/
-├── chars.ofs          — ASCII character constants + helpers
-├── tokens.ofs         — Token types (80+) + keyword lookup
-├── lexer.ofs          — Lexical analyzer (tokenizer)
-├── nodes.ofs          — AST node kinds (60+)
-├── ast.ofs            — AST pool + node management
-├── symbols.ofs        — Symbol table structures
-├── parser.ofs         — Recursive descent + Pratt parser
-├── typeck.ofs         — Type checker + scope stack
-├── codegen.ofs        — C code generator
-├── fileio.ofs         — File I/O + FFI declarations
-├── ofscc.ofs          — Main driver (6-phase pipeline)
-├── test_*.ofs         — Unit + integration tests
-└── test_bootstrap.sh  — Bootstrap validation script
-```
+- chars.ofs
+- tokens.ofs
+- lexer.ofs
+- nodes.ofs
+- ast.ofs
+- symbols.ofs
+- parser.ofs
+- typeck.ofs
+- codegen.ofs
+- fileio.ofs
+- ofscc.ofs
 
-## Compilation Pipeline
+## Pipeline
 
-```
-input.ofs
-    ↓
-[1. Lexer]       → tokens
-    ↓
-[2. Parser]      → AST nodes
-    ↓
-[3. Type Checker] → annotated AST
-    ↓
-[4. Codegen]     → output.c
-    ↓
-[5. C Compiler]  → executable
-    ↓
-output.exe/output (binary)
-```
+input.ofs -> lexer -> parser -> typeck -> codegen C -> gcc/clang -> binario
 
-## Building
-
-### With C++ Compiler (Bootstrap)
+## Build
 
 ```bash
-ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
+ofs build ofs/ofscc/ofscc.ofs -o ofscc
 ```
 
-### Self-Hosting (OFS → OFS)
+## Bootstrap e determinismo
 
 ```bash
-./ofscc_v1 ofs/ofscc/ofscc.ofs -o ofscc_v2
-./ofscc_v2 ofs/ofscc/ofscc.ofs -o ofscc_v3
+bash ofs/ofscc/test_bootstrap.sh [bootstrap_compiler]
 ```
 
-### Verify Determinism
+Padrao de bootstrap_compiler: ofs
+
+## Testes
 
 ```bash
-diff ofscc_v2 ofscc_v3
-# If empty → bootstrap complete!
+ofs build ofs/ofscc/test_lexer_units.ofs -o test_lex
+./test_lex
+
+ofs build ofs/ofscc/test_lexer_parser.ofs -o test_parse
+./test_parse
 ```
 
-## Testing
+## Distribuicao
 
-### Unit Tests
+Instaladores sao gerados pela propria linguagem em:
 
-```bash
-# Test lexer components
-ofs build ofs/ofscc/test_lexer_units.ofs -o test_lex && ./test_lex
-
-# Test lexer + parser integration
-ofs build ofs/ofscc/test_lexer_parser.ofs -o test_parse && ./test_parse
-```
-
-### Bootstrap Test (Automated)
-
-```bash
-bash ofs/ofscc/test_bootstrap.sh [compiler_path]
-# Default compiler_path: 'ofs'
-```
-
-## Statistics
-
-| Metric | Value |
-|---|---|
-| Total LOC (OFS) | ~4,500+ |
-| Files | 13 |
-| Token kinds | 80+ |
-| AST nodes | 60+ |
-| Parser rules | 15+ |
-
-## Language Features Supported
-
-### Fully Working
-- ✅ All primitive types (stone, crystal, obsidian, bool, u8-u64, i32)
-- ✅ Array<T> (dynamic arrays)
-- ✅ forge/const/vein/core
-- ✅ Functions with type annotations
-- ✅ All operators (arithmetic, logical, bitwise, comparison)
-- ✅ Control flow (if/else, while, cycle, match, return, break, continue)
-- ✅ monolith (struct) with fields
-- ✅ Array indexing + field access
-- ✅ String literals with escapes
-- ✅ Integer/float literals
-- ✅ Comments (// and /* */)
-
-### Partially Working / TODO
-- ⚠️  Type inference (basic support)
-- ⚠️  Error recovery (needs improvement)
-- ⚠️  impl (methods) — parsing + codegen base (flatten `Type__method`)
-- ⚠️  namespace — parsing + flatten codegen base
-- ⚠️  strata (enum-like) — parsing + enum tag codegen base
-- ⚠️  tremor/catch — parsing + lowered block codegen base
-
-## Known Limitations
-
-1. **argv runtime bridge pending** — direct argv parsing is not exposed yet
-    - Workaround (Phase B): env bridge via `OFSCC_INPUT`, `OFSCC_OUTPUT`, `OFSCC_C_OUT`, `OFSCC_MODE`, `OFSCC_OPT`
-2. **Single-pass type checking** — No forward declarations
-3. **Deterministic output** — Must verify with bootstrap test
-4. **No backend optimizations yet** — Generates straightforward C and delegates optimization to gcc (`-O0/-O2/-O3`)
-
-## Phase D/E Prep in Repo
-
-- `/.github/workflows/selfhosted-release.yml` — experimental self-hosted pipeline without C++ build stage
-- `/packaging/installer_generator.ofs` — installer artifact generation in OFS (Windows/Linux/macOS stubs)
-
-## Next Steps
-
-1. Add argv support via extern
-2. Implement full error handling
-3. Add impl/namespace/strata support
-4. Optimize generated C code
-5. Port to Linux/macOS/Windows
-
-## Example
-
-```ofs
-// hello.ofs
-core main() {
-    echo("Hello from OFS!")
-}
-
-// Compile with ofscc
-// $ ./ofscc hello.ofs -o hello
-// $ ./hello
-// Hello from OFS!
-```
-
----
-
-**Self-hosted compiler milestone reached!** 🎉
+- packaging/installer_generator.ofs
+- saida em packaging/generated/

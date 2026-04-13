@@ -1,523 +1,108 @@
-name: Auto Release
+name: Self-Hosted Release
 
-# Dispara a cada push na main — cria tag v1.0.x automaticamente e publica release
 on:
   push:
-    branches: [main]
+    tags:
+      - 'v*'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  REPO: Samwns/Obsidian-Fault-Script
 
 jobs:
-  # ── 1. Incrementa a versão patch e cria a tag ─────────────────────────────
-  version:
-    name: Bump patch version
+  build-and-package:
+    name: Build and Package (Self-Hosted)
     runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.bump.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0   # necessário para listar todas as tags
 
-      - name: Bump patch (1.0.x → 1.0.x+1)
-        id: bump
+      - name: Install dependencies
         run: |
-          LATEST=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
-          if [ -z "$LATEST" ]; then
-            NEW="v1.0.0"
+          sudo apt-get update
+          sudo apt-get install -y curl jq tar zip gcc make
+
+      - name: Resolve release version
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            echo "OFS_RELEASE_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+            echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
           else
-            MAJOR=$(echo "$LATEST" | sed 's/v//' | cut -d. -f1)
-            MINOR=$(echo "$LATEST" | cut -d. -f2)
-            PATCH=$(echo "$LATEST" | cut -d. -f3)
-            NEW="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+            echo "OFS_RELEASE_VERSION=2.0.0" >> $GITHUB_ENV
+            echo "RELEASE_TAG=v2.0.0" >> $GITHUB_ENV
           fi
-          echo "tag=$NEW" >> "$GITHUB_OUTPUT"
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag "$NEW"
-          git push origin "$NEW"
 
-  # ── 2. Build nas 3 plataformas ────────────────────────────────────────────
-  build:
-    name: Build (${{ matrix.os }})
-    needs: version
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-22.04
-            binary: ofs
-            artifact: ofs-linux-x64-installer.tar.gz
-          - os: windows-2022
-            binary: ofs.exe
-            artifact: ofs-windows-x64-installer.exe
-          - os: macos-14
-            binary: ofs
-            artifact: ofs-macos-arm64-installer.pkg
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Sync version in source
-        shell: bash
+      - name: Download latest bootstrap compiler
         run: |
-          TAG="${{ needs.version.outputs.tag }}"
-          VERSION="${TAG#v}"
-
-          # Keep compiler-reported version aligned with release tag.
-          sed -i -E "s/static const char\* OFS_VERSION = \"[0-9]+\.[0-9]+\.[0-9]+\";/static const char* OFS_VERSION = \"${VERSION}\";/" ofs/src/main.cpp
-
-          # Keep VS Code extension manifest version aligned with release tag.
-          node -e "const fs=require('fs');const p='vscode-extension/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
-
-          # Sync library package versions
-          for lib_dir in .pkg-publish/*/; do
-            if [ -f "$lib_dir/package.json" ]; then
-              node -e "const fs=require('fs');const p='$lib_dir/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
-            fi
-            if [ -f "$lib_dir/ofspkg.json" ]; then
-              node -e "const fs=require('fs');const p='$lib_dir/ofspkg.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
-            fi
-          done
-
-      - name: Guard updater PowerShell variable usage (Windows)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          $source = Get-Content "ofs/src/main.cpp" -Raw
-          if ($source -match '\$pid\s*=') {
-            Write-Error "Updater script must not assign to `$pid (reserved PowerShell variable)."
+          api="https://api.github.com/repos/${REPO}/releases/latest"
+          asset=$(curl -fsSL "$api" | jq -r '.assets[].browser_download_url | select(test("ofs-linux-x64-installer.*\\.tar\\.gz$"))' | head -n 1)
+          if [ -z "$asset" ]; then
+            echo "Linux bootstrap asset not found in latest release"
             exit 1
-          }
+          fi
+          mkdir -p .toolchain
+          curl -fL "$asset" -o .toolchain/ofs-linux.tar.gz
+          tar -xzf .toolchain/ofs-linux.tar.gz -C .toolchain
+          chmod +x .toolchain/ofs
 
-      - name: Install LLVM (Linux)
-        if: runner.os == 'Linux'
+      - name: Build self-hosted compiler
         run: |
-          wget -qO- https://apt.llvm.org/llvm.sh | sudo bash -s -- 17
-          sudo apt-get install -y llvm-17-dev ruby ruby-dev build-essential rpm
-          sudo gem install --no-document fpm
-          echo "LLVM_DIR=/usr/lib/llvm-17/lib/cmake/llvm" >> "$GITHUB_ENV"
+          .toolchain/ofs build ofs/ofscc/ofscc.ofs -o ofs
+          ./ofs --help || true
 
-      - name: Install LLVM (macOS)
-        if: runner.os == 'macOS'
+      - name: Generate installers using OFS
         run: |
-          brew install llvm@17
-          brew unlink llvm@15 || true
-          brew link --overwrite llvm@17 || true
-          echo "LLVM_DIR=$(brew --prefix llvm@17)/lib/cmake/llvm" >> "$GITHUB_ENV"
-          echo "$(brew --prefix llvm@17)/bin" >> "$GITHUB_PATH"
+          ./ofs run packaging/installer_generator.ofs
 
-      - name: Setup LLVM Toolchain (Windows)
-        if: runner.os == 'Windows'
-        shell: powershell
+      - name: Build release bundles
         run: |
-          # The hosted LLVM on Windows runners ships clang, but not the
-          # development CMake package nor the C++ libraries required by this project.
-          # Use MSYS2 UCRT packages instead, which provide a complete LLVM dev setup.
-          C:\msys64\usr\bin\bash.exe -lc "pacman -Sy --noconfirm"
-          C:\msys64\usr\bin\bash.exe -lc "pacman -S --needed --noconfirm mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja mingw-w64-ucrt-x86_64-llvm"
+          mkdir -p dist
+          cp ofs dist/ofs
+          cp LICENSE dist/
+          cp README.md dist/
+          mkdir -p dist/stdlib
+          cp ofs/stdlib/*.ofs dist/stdlib/
 
-          $ucrtBin = "C:\msys64\ucrt64\bin"
-          $llvmCmake = "C:\msys64\ucrt64\lib\cmake\llvm"
+          tar -czf ofs-linux-x64-selfhosted-${RELEASE_TAG}.tar.gz -C dist .
 
-          if (-not (Test-Path (Join-Path $llvmCmake "LLVMConfig.cmake"))) {
-            Write-Error "MSYS2 LLVMConfig.cmake was not installed as expected."
-            exit 1
-          }
+          cp packaging/generated-ofs-2.0.0-installer.nsi ofs-windows-installer-script-${RELEASE_TAG}.nsi
+          cp packaging/generated-ofs-2.0.0-install.sh ofs-linux-install-${RELEASE_TAG}.sh
+          cp packaging/generated-DEBIAN.control ofs-linux-control-${RELEASE_TAG}.txt
+          cp packaging/generated-ofs.rb ofs-homebrew-formula-${RELEASE_TAG}.rb
+          cp packaging/generated-ofs-2.0.0-macos-install.sh ofs-macos-install-${RELEASE_TAG}.sh
 
-          Write-Host "Using MSYS2 UCRT LLVM toolchain"
-          Write-Host "LLVM_DIR: $llvmCmake"
-          Get-ChildItem $ucrtBin -Filter "clang*.exe" -ErrorAction SilentlyContinue | Select-Object Name | Format-Table -HideTableHeaders
-
-          $ucrtBin | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-          "LLVM_DIR=$llvmCmake" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "CC=C:/msys64/ucrt64/bin/gcc.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          "CXX=C:/msys64/ucrt64/bin/g++.exe" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-
-      - name: Install NSIS (Windows)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: choco install nsis -y
-
-      - name: Configure (Linux / macOS)
-        if: runner.os != 'Windows'
-        run: cmake -B build -S ofs -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR="$LLVM_DIR"
-
-      - name: Configure (Windows)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: cmake -B build -S ofs -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER="$env:CC" -DCMAKE_CXX_COMPILER="$env:CXX" "-DLLVM_DIR=$env:LLVM_DIR"
-
-      - name: Build
-        run: cmake --build build --config Release
-
-      - name: Stage installer (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          mkdir -p dist-installer
-          cp build/${{ matrix.binary }} dist-installer/ofs
-          cp build/libofs_runtime.a dist-installer/libofs_runtime.a
-          cp packaging/linux/install.sh dist-installer/install.sh
-          cp packaging/assets/ofs-256.png dist-installer/ofs.png
-          cp LICENSE dist-installer/LICENSE
-          mkdir -p dist-installer/stdlib
-          cp ofs/stdlib/*.ofs dist-installer/stdlib/
-          chmod +x dist-installer/ofs dist-installer/install.sh
-          tar -czf ${{ matrix.artifact }} -C dist-installer .
-
-          # Build .deb and .rpm for major Linux distro families.
-          rm -rf pkgroot
-          mkdir -p pkgroot/usr/local/bin
-          mkdir -p pkgroot/usr/local/lib
-          mkdir -p pkgroot/usr/local/share/doc/ofs
-          mkdir -p pkgroot/usr/local/share/ofs/stdlib
-          cp build/${{ matrix.binary }} pkgroot/usr/local/bin/ofs
-          cp build/libofs_runtime.a pkgroot/usr/local/lib/libofs_runtime.a
-          cp LICENSE pkgroot/usr/local/share/doc/ofs/LICENSE
-          cp ofs/stdlib/*.ofs pkgroot/usr/local/share/ofs/stdlib/
-          chmod +x pkgroot/usr/local/bin/ofs
-
-          VERSION_RAW="${{ needs.version.outputs.tag }}"
-          VERSION="${VERSION_RAW#v}"
-
-          fpm -s dir -t deb -n ofs -v "$VERSION" \
-            --description "Obsidian Fault Script compiler" \
-            --license "BSL-1.0" \
-            --url "https://github.com/${{ github.repository }}" \
-            --maintainer "Obsidian Fault Script" \
-            -C pkgroot .
-
-          fpm -s dir -t rpm -n ofs -v "$VERSION" \
-            --description "Obsidian Fault Script compiler" \
-            --license "BSL-1.0" \
-            --url "https://github.com/${{ github.repository }}" \
-            --maintainer "Obsidian Fault Script" \
-            -C pkgroot .
-
-          mv ofs_*.deb ofs-linux-x64.deb
-          mv ofs-*.x86_64.rpm ofs-linux-x64.rpm
-
-
-      - name: Stage installer (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          VERSION_RAW="${{ needs.version.outputs.tag }}"
-          VERSION="${VERSION_RAW#v}"
-          rm -rf pkgroot
-          mkdir -p pkgroot/usr/local/bin
-          cp build/${{ matrix.binary }} pkgroot/usr/local/bin/ofs
-          chmod +x pkgroot/usr/local/bin/ofs
-          pkgbuild \
-            --root pkgroot \
-            --identifier io.obsidianfaultscript.ofs \
-            --version "${VERSION}" \
-            "${{ matrix.artifact }}"
-
-      - name: Stage installer (Windows)
-        if: runner.os == 'Windows'
-        shell: powershell
-        run: |
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-
-          if (Test-Path "build\${{ matrix.binary }}") {
-            Copy-Item "build\${{ matrix.binary }}" "dist\ofs.exe"
-          } elseif (Test-Path "build\Release\${{ matrix.binary }}") {
-            Copy-Item "build\Release\${{ matrix.binary }}" "dist\ofs.exe"
-          } else {
-            Write-Error "Windows binary not found after build."
-            exit 1
-          }
-
-          # Bundle required MinGW runtime DLLs to avoid missing-entrypoint errors on user machines.
-          $dlls = @(
-            "C:\msys64\ucrt64\bin\libstdc++-6.dll",
-            "C:\msys64\ucrt64\bin\libgcc_s_seh-1.dll",
-            "C:\msys64\ucrt64\bin\libwinpthread-1.dll"
-          )
-
-          foreach ($dll in $dlls) {
-            if (Test-Path $dll) {
-              Copy-Item $dll dist\
-            } else {
-              Write-Error "Required runtime DLL not found: $dll"
-              exit 1
-            }
-          }
-
-          # Bundle LLVM and compression/runtime DLLs when present. Windows builds
-          # can resolve LLVM from different toolchains, and some packages depend on
-          # libzstd.dll transitively.
-          $dllSources = @(
-            "C:\msys64\ucrt64\bin",
-            "C:\Program Files\LLVM\bin",
-            "C:\Program Files\Git\mingw64\bin"
-          )
-
-          foreach ($source in $dllSources) {
-            if (-not (Test-Path $source)) { continue }
-
-            Get-ChildItem $source -Filter *.dll | Where-Object {
-              $_.Name -match '^(LLVM|libclang|LTO|Remarks|libzstd|zlib1|libxml2)'
-            } | ForEach-Object {
-              Copy-Item $_.FullName dist\ -Force
-            }
-          }
-
-          if (Test-Path "build\libofs_runtime.a") {
-            Copy-Item "build\libofs_runtime.a" "dist\libofs_runtime.a"
-          } elseif (Test-Path "build\Release\ofs_runtime.lib") {
-            Copy-Item "build\Release\ofs_runtime.lib" "dist\ofs_runtime.lib"
-          } else {
-            Write-Error "Runtime static library not found (expected build\\libofs_runtime.a or build\\Release\\ofs_runtime.lib)."
-            exit 1
-          }
-
-          Copy-Item "packaging\windows\infuse.cmd" "dist\infuse.cmd"
-          Copy-Item "packaging\windows\uncover.cmd" "dist\uncover.cmd"
-          Copy-Item "packaging\windows\reinfuse.cmd" "dist\reinfuse.cmd"
-          Copy-Item "packaging\windows\ofs.ps1" "dist\ofs.ps1"
-          Copy-Item "packaging\windows\infuse.ps1" "dist\infuse.ps1"
-          Copy-Item "packaging\windows\uncover.ps1" "dist\uncover.ps1"
-          Copy-Item "packaging\windows\reinfuse.ps1" "dist\reinfuse.ps1"
-
-          New-Item -ItemType Directory -Force -Path "dist\stdlib" | Out-Null
-          Copy-Item "ofs\stdlib\*.ofs" "dist\stdlib\"
-
-          Copy-Item "LICENSE" "dist\LICENSE.txt"
-
-          # Portable package used by `ofs update` on Windows (no installer flow).
-          if (Test-Path "ofs-windows-x64-portable.zip") { Remove-Item "ofs-windows-x64-portable.zip" -Force }
-          Compress-Archive -Path dist\* -DestinationPath "ofs-windows-x64-portable.zip" -Force
-
-          if (Test-Path "${{ matrix.artifact }}") { Remove-Item "${{ matrix.artifact }}" -Force }
-          & "C:\Program Files (x86)\NSIS\makensis.exe" /V2 /NOCD /DOUTPUT="${{ matrix.artifact }}" packaging\windows\installer.nsi
-
-      - name: Upload artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.artifact }}
-          path: ${{ matrix.artifact }}
-
-      - name: Upload Windows portable artifact
-        if: runner.os == 'Windows'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ofs-windows-x64-portable.zip
-          path: ofs-windows-x64-portable.zip
-
-      - name: Upload Linux extra artifacts
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v4
-        with:
-          name: ofs-linux-extra-packages
+          name: selfhosted-release
           path: |
-            ofs-linux-x64.deb
-            ofs-linux-x64.rpm
+            ofs-linux-x64-selfhosted-*.tar.gz
+            ofs-windows-installer-script-*.nsi
+            ofs-linux-install-*.sh
+            ofs-linux-control-*.txt
+            ofs-homebrew-formula-*.rb
+            ofs-macos-install-*.sh
 
-  vscode_extension:
-    name: Build VS Code Extension
-    needs: [version, build]
+  publish-release:
+    name: Publish Release Assets
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-and-package
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Sync extension version
-        run: |
-          TAG="${{ needs.version.outputs.tag }}"
-          VERSION="${TAG#v}"
-          node -e "const fs=require('fs');const p='vscode-extension/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
-
-      - name: Download Linux build artifact
+      - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: ofs-linux-x64-installer.tar.gz
-          path: linux-artifact
+          name: selfhosted-release
 
-      - name: Extract Linux binary and runtime for extension
-        run: |
-          mkdir -p linux-unpack
-          tar -xzf linux-artifact/ofs-linux-x64-installer.tar.gz -C linux-unpack
-          mkdir -p vscode-extension/bin/linux-x64
-          cp linux-unpack/ofs vscode-extension/bin/linux-x64/ofs
-          chmod +x vscode-extension/bin/linux-x64/ofs
-          if [ -f linux-unpack/libofs_runtime.a ]; then
-            cp linux-unpack/libofs_runtime.a vscode-extension/bin/linux-x64/libofs_runtime.a
-          fi
-          if [ -d linux-unpack/stdlib ]; then
-            mkdir -p vscode-extension/bin/linux-x64/stdlib
-            cp linux-unpack/stdlib/*.ofs vscode-extension/bin/linux-x64/stdlib/
-          fi
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Package extension (.vsix)
-        run: |
-          cd vscode-extension
-          npm ci
-          node ./node_modules/@vscode/vsce/vsce package --out ../ofs-vscode-extension.vsix
-
-      - name: Upload extension artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ofs-vscode-extension.vsix
-          path: ofs-vscode-extension.vsix
-
-  # ── 3. Publica a Release com changelog automático ────────────────────────
-  release:
-    name: Publish Release
-    needs: [version, build, vscode_extension]
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Build changelog desde a tag anterior
-        id: changelog
-        run: |
-          TAG="${{ needs.version.outputs.tag }}"
-          PREV=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p')
-          if [ -z "$PREV" ]; then
-            LOG=$(git log --pretty="- %s (%h)" HEAD)
-          else
-            LOG=$(git log --pretty="- %s (%h)" ${PREV}..HEAD)
-          fi
-          printf "## O que mudou em %s\n\n%s\n" "$TAG" "$LOG" > changelog.md
-
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          merge-multiple: true
-
-      - name: Add version to release asset filenames
-        run: |
-          TAG="${{ needs.version.outputs.tag }}"
-
-          [ -f "dist/ofs-linux-x64-installer.tar.gz" ] && mv "dist/ofs-linux-x64-installer.tar.gz" "dist/ofs-linux-x64-installer-${TAG}.tar.gz"
-          [ -f "dist/ofs-linux-x64.deb" ] && mv "dist/ofs-linux-x64.deb" "dist/ofs-linux-x64-${TAG}.deb"
-          [ -f "dist/ofs-linux-x64.rpm" ] && mv "dist/ofs-linux-x64.rpm" "dist/ofs-linux-x64-${TAG}.rpm"
-          [ -f "dist/ofs-windows-x64-installer.exe" ] && mv "dist/ofs-windows-x64-installer.exe" "dist/ofs-windows-x64-installer-${TAG}.exe"
-          [ -f "dist/ofs-windows-x64-portable.zip" ] && mv "dist/ofs-windows-x64-portable.zip" "dist/ofs-windows-x64-portable-${TAG}.zip"
-          [ -f "dist/ofs-macos-arm64-installer.pkg" ] && mv "dist/ofs-macos-arm64-installer.pkg" "dist/ofs-macos-arm64-installer-${TAG}.pkg"
-          [ -f "dist/ofs-vscode-extension.vsix" ] && mv "dist/ofs-vscode-extension.vsix" "dist/ofs-vscode-extension-${TAG}.vsix"
-
-      - name: Build release notes (licença, log, docs, agradecimentos)
-        run: |
-          TAG="${{ needs.version.outputs.tag }}"
-
-          LINUX_TAR="dist/ofs-linux-x64-installer-${TAG}.tar.gz"
-          [ ! -f "$LINUX_TAR" ] && LINUX_TAR="dist/ofs-linux-x64-installer.tar.gz"
-
-          WIN_EXE="dist/ofs-windows-x64-installer-${TAG}.exe"
-          [ ! -f "$WIN_EXE" ] && WIN_EXE="dist/ofs-windows-x64-installer.exe"
-
-          WIN_PORTABLE="dist/ofs-windows-x64-portable-${TAG}.zip"
-          [ ! -f "$WIN_PORTABLE" ] && WIN_PORTABLE="dist/ofs-windows-x64-portable.zip"
-
-          VSIX_FILE="dist/ofs-vscode-extension-${TAG}.vsix"
-          [ ! -f "$VSIX_FILE" ] && VSIX_FILE="dist/ofs-vscode-extension.vsix"
-
-          LINUX_CONTENTS="(artifact not found)"
-          if [ -f "$LINUX_TAR" ]; then
-            LINUX_CONTENTS=$(tar -tzf "$LINUX_TAR" | sed 's/^/- /')
-          fi
-
-          LINUX_EXTRA="- $(basename "$LINUX_TAR") (tar.gz)"
-          [ -f "dist/ofs-linux-x64-${TAG}.deb" ] && LINUX_EXTRA="${LINUX_EXTRA}\n- ofs-linux-x64-${TAG}.deb"
-          [ -f "dist/ofs-linux-x64-${TAG}.rpm" ] && LINUX_EXTRA="${LINUX_EXTRA}\n- ofs-linux-x64-${TAG}.rpm"
-
-          VSIX_CONTENTS="(artifact not found)"
-          if [ -f "$VSIX_FILE" ]; then
-            VSIX_CONTENTS=$(unzip -l "$VSIX_FILE" | tail -n +4 | head -n -2 | awk '{print "- "$4}')
-          fi
-
-          cat > release_notes.md <<EOF
-          # Obsidian Fault Script ${TAG}
-
-          > Release generated automatically from main.
-
-          ## Quick Start
-
-          1. Download the asset for your platform below.
-          2. Install OFS.
-          3. Run `ofs version` to confirm.
-
-          ## Quick Update
-
-          If OFS is already installed, run:
-
-          ```bash
-          ofs update
-          ```
-
-          This command checks the latest GitHub Release, downloads the correct installer for your OS, and updates automatically.
-
-          ## Changelog
-
-          $(cat changelog.md)
-
-          ## Logs de conteúdo dos instaladores
-
-          ### Linux ($(basename "$LINUX_TAR"))
-          ${LINUX_CONTENTS}
-
-          ### Linux packages (main distros)
-          ${LINUX_EXTRA}
-
-          ### Windows ($(basename "$WIN_EXE"))
-          - Instala: ofs.exe
-          - Instala: libstdc++-6.dll
-          - Instala: libgcc_s_seh-1.dll
-          - Instala: libwinpthread-1.dll
-          - Instala: ofs.ico (ícone do app)
-          - Instala: LICENSE.txt (termos de licença)
-          - Portable update package: $(basename "$WIN_PORTABLE")
-
-          ### VS Code Extension ($(basename "$VSIX_FILE"))
-          ${VSIX_CONTENTS}
-
-          ## Install Notes by Platform
-
-          - Linux: extract tar.gz and run `install.sh`, or use DEB/RPM.
-          - Windows: run installer exe as administrator.
-          - Windows update (`ofs update`): uses the portable zip package to replace old files in place.
-          - macOS: install pkg and allow permissions if prompted.
-          - VS Code: install the VSIX from Extensions > Install from VSIX.
-
-          ## Termos de licença
-
-          - Projeto licenciado sob BSL-1.0
-          - Texto completo: https://github.com/${{ github.repository }}/blob/main/LICENSE
-
-          ## Documentação
-
-          - README: https://github.com/${{ github.repository }}/blob/main/README.md
-          - Getting Started: https://github.com/${{ github.repository }}/blob/main/docs/GETTING_STARTED.md
-          - Language Reference: https://github.com/${{ github.repository }}/blob/main/docs/LANGUAGE_REFERENCE.md
-          - Changelog: https://github.com/${{ github.repository }}/blob/main/docs/CHANGELOG.md
-
-          ## Agradecimentos
-
-          Obrigado a todas as pessoas que abriram issues, enviaram feedback e testaram os instaladores e a extensão VS Code.
-          EOF
-
-          cat release_notes.md
-
-      - name: Create GitHub Release
+      - name: Publish GitHub release assets
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.version.outputs.tag }}
-          name: ${{ needs.version.outputs.tag }}
-          body_path: release_notes.md
-          files: dist/*
-
+          files: |
+            ofs-linux-x64-selfhosted-*.tar.gz
+            ofs-windows-installer-script-*.nsi
+            ofs-linux-install-*.sh
+            ofs-linux-control-*.txt
+            ofs-homebrew-formula-*.rb
+            ofs-macos-install-*.sh

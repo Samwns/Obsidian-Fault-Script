@@ -1,9 +1,9 @@
-// OFS Compiler — Abstract Syntax Tree
+// OFS Compiler  Abstract Syntax Tree
 // Pool of AST nodes and helper functions
 
 attach {F:nodes.ofs}
 
-// ── AST Node Structure ──────────────────────────────────────────────────
+//  AST Node Structure 
 
 monolith Node {
     kind:     stone      // NodeKind (NK_*)
@@ -18,15 +18,16 @@ monolith Node {
     c2: stone
     c3: stone
     
-    // For nodes with many children (blocks, calls, etc)
-    extra: Array<stone>
+    // Index into global extras pool (children list for blocks/calls/etc)
+    extra_id: stone
 }
 
-// ── Global Node Pool ───────────────────────────────────────────────────
+//  Global Node Pool 
 
-forge _node_pool: Array<Node> = []
+forge _node_pool = []
+forge _node_extras = []
 
-// ── Node Pool Operations ────────────────────────────────────────────────
+//  Node Pool Operations 
 
 vein node_new(kind: stone, val: obsidian, line: stone, col: stone) -> stone {
     forge n: Node
@@ -39,7 +40,9 @@ vein node_new(kind: stone, val: obsidian, line: stone, col: stone) -> stone {
     n.c1 = -1
     n.c2 = -1
     n.c3 = -1
-    n.extra = []
+    forge extras = []
+    ofs_array_push(_node_extras, extras)
+    n.extra_id = ofs_array_len(_node_extras) - 1
     
     ofs_array_push(_node_pool, n)
     return ofs_array_len(_node_pool) - 1
@@ -49,6 +52,7 @@ vein node_get(id: stone) -> Node {
     if (id < 0 || id >= ofs_array_len(_node_pool)) {
         forge dummy: Node
         dummy.kind = -1
+        dummy.extra_id = -1
         return dummy
     }
     return ofs_array_get(_node_pool, id)
@@ -64,7 +68,7 @@ vein node_set(id: stone, n: Node) -> void {
 vein node_set_child(parent_id: stone, slot: stone, child_id: stone) -> void {
     if (parent_id < 0) { return }
     
-    forge n: Node = node_get(parent_id)
+    forge n = node_get(parent_id)
     
     if (slot == 0) { n.c0 = child_id }
     else if (slot == 1) { n.c1 = child_id }
@@ -77,26 +81,32 @@ vein node_set_child(parent_id: stone, slot: stone, child_id: stone) -> void {
 vein node_add_extra(parent_id: stone, child_id: stone) -> void {
     if (parent_id < 0) { return }
     
-    forge n: Node = node_get(parent_id)
-    ofs_array_push(n.extra, child_id)
-    node_set(parent_id, n)
+    forge n = node_get(parent_id)
+    if (n.extra_id < 0) { return }
+    forge extras = ofs_array_get(_node_extras, n.extra_id)
+    ofs_array_push(extras, child_id)
+    ofs_array_set(_node_extras, n.extra_id, extras)
 }
 
 vein node_get_extra(parent_id: stone, index: stone) -> stone {
-    forge n: Node = node_get(parent_id)
-    if (index < 0 || index >= ofs_array_len(n.extra)) {
+    forge n = node_get(parent_id)
+    if (n.extra_id < 0) { return -1 }
+    forge extras = ofs_array_get(_node_extras, n.extra_id)
+    if (index < 0 || index >= ofs_array_len(extras)) {
         return -1
     }
-    return ofs_array_get(n.extra, index)
+    return ofs_array_get(extras, index)
 }
 
 vein node_extra_len(parent_id: stone) -> stone {
-    forge n: Node = node_get(parent_id)
-    return ofs_array_len(n.extra)
+    forge n = node_get(parent_id)
+    if (n.extra_id < 0) { return 0 }
+    forge extras = ofs_array_get(_node_extras, n.extra_id)
+    return ofs_array_len(extras)
 }
 
 vein node_set_type(id: stone, type_str: obsidian) -> void {
-    forge n: Node = node_get(id)
+    forge n = node_get(id)
     n.type_str = type_str
     node_set(id, n)
 }
@@ -105,7 +115,7 @@ vein node_pool_len() -> stone {
     return ofs_array_len(_node_pool)
 }
 
-// ── Debug/Display ──────────────────────────────────────────────────────
+//  Debug/Display 
 
 vein node_kind_name(kind: stone) -> obsidian {
     if (kind == NK_PROGRAM)    { return "PROGRAM" }
@@ -146,8 +156,11 @@ vein node_kind_name(kind: stone) -> obsidian {
 }
 
 vein node_print_simple(id: stone) -> void {
-    forge n: Node = node_get(id)
+    forge n = node_get(id)
     forge line_str = ofs_stone_to_obsidian(n.line)
     forge col_str = ofs_stone_to_obsidian(n.col)
     echo("[" + line_str + ":" + col_str + "] " + node_kind_name(n.kind) + " (val=\"" + n.val + "\")")
 }
+
+
+

@@ -1,13 +1,13 @@
 #!/bin/bash
-# OFS Bootstrap Test Script
-# Executa as 3 passagens do bootstrap e verifica determinismo
+# OFS Bootstrap Test Script (self-hosted only)
+# Executa as passagens do bootstrap e verifica determinismo sem C++.
 
 set -e
 
 echo "=== OFS Bootstrap Test ==="
 echo ""
 
-COMPILER_CPP="${1:-ofs}"
+BOOTSTRAP_COMPILER="${1:-ofs}"
 OFSCC_SRC="ofs/ofscc/ofscc.ofs"
 TEST_PROG="ofs/examples/hello.ofs"
 
@@ -21,10 +21,10 @@ if [ ! -f "$TEST_PROG" ]; then
     exit 1
 fi
 
-# Passo 1: Compilar ofscc com o compilador C++
-echo "[1/4] Building ofscc_v1 with C++ compiler..."
-$COMPILER_CPP build $OFSCC_SRC -o ofscc_v1 2>/dev/null || {
-    echo "ERROR: Failed to compile with C++ compiler"
+# Passo 1: Compilar ofscc com compilador OFS bootstrap
+echo "[1/4] Building ofscc_v1 with bootstrap OFS compiler..."
+$BOOTSTRAP_COMPILER build $OFSCC_SRC -o ofscc_v1 2>/dev/null || {
+    echo "ERROR: Failed to compile with bootstrap compiler"
     exit 1
 }
 echo "  ✓ ofscc_v1 created"

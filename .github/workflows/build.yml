@@ -1,320 +1,103 @@
-name: OFS Compiler Build & Test
+name: OFS Self-Hosted Build & Test
 
 on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'ofs/src/**'
       - 'ofs/ofscc/**'
       - 'ofs/examples/**'
       - 'ofs/stdlib/**'
+      - 'packaging/**'
       - '.github/workflows/build.yml'
   pull_request:
     branches: [ main ]
   workflow_dispatch:
 
+env:
+  REPO: Samwns/Obsidian-Fault-Script
+
 jobs:
-  # =========================================================================
-  # PHASE B: Compilador C++
-  # TODO: Phase D: Trocar para OFS puro (quando sem C++ dependency)
-  # =========================================================================
-
-  build-cpp-windows:
-    name: Build C++ OFS (Windows)
-    runs-on: windows-latest
-    strategy:
-      matrix:
-        include:
-          - arch: x64
-            cmake_arch: x64
-            llvm_version: 17
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Cache LLVM
-        uses: actions/cache@v3
-        id: cache-llvm
-        with:
-          path: C:\llvm
-          key: llvm-17-windows-x64
-
-      - name: Install LLVM
-        if: steps.cache-llvm.outputs.cache-hit != 'true'
-        shell: powershell
-        run: |
-          choco install llvm -y
-
-      - name: Setup CMake
-        uses: cmake-actions/setup-cmake@v2
-        with:
-          cmake-version: '3.27'
-
-      - name: Create Build Directory
-        shell: powershell
-        run: mkdir -Force build-windows
-
-      - name: Configure CMake
-        shell: cmd
-        run: |
-          cd build-windows
-          cmake .. -G "Visual Studio 17 2022" -A x64 ^
-            -DLLVM_DIR="C:\Program Files\LLVM\lib\cmake\llvm"
-        env:
-          LLVM_DIR: C:\Program Files\LLVM\lib\cmake\llvm
-
-      - name: Build
-        shell: cmd
-        run: |
-          cd build-windows
-          cmake --build . --config Release -j%NUMBER_OF_PROCESSORS%
-
-      - name: Upload Windows Executable
-        uses: actions/upload-artifact@v3
-        with:
-          name: ofs-windows-x64
-          path: |
-            build-windows/Release/ofs.exe
-            ofs/stdlib/
-
-  build-cpp-linux:
-    name: Build C++ OFS (Linux)
+  build-selfhosted-linux:
+    name: Build Self-Hosted (Linux)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y llvm-17-dev cmake g++ make
+          sudo apt-get install -y curl tar jq gcc make
 
-      - name: Create Build Directory
-        run: mkdir -p build-linux
-
-      - name: Configure CMake
+      - name: Download latest bootstrap compiler
         run: |
-          cd build-linux
-          cmake .. -DCMAKE_BUILD_TYPE=Release
-
-      - name: Build
-        run: |
-          cd build-linux
-          cmake --build . -- -j$(nproc)
-
-      - name: Upload Linux Executable
-        uses: actions/upload-artifact@v3
-        with:
-          name: ofs-linux-x64
-          path: |
-            build-linux/ofs
-            ofs/stdlib/
-
-  build-cpp-macos:
-    name: Build C++ OFS (macOS)
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Dependencies
-        run: |
-          brew update
-          brew install llvm cmake
-
-      - name: Configure CMake
-        run: |
-          mkdir -p build-macos
-          cd build-macos
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DLLVM_DIR="$(brew --prefix llvm)/lib/cmake/llvm"
-
-      - name: Build
-        run: |
-          cd build-macos
-          cmake --build . -- -j$(sysctl -n hw.ncpu)
-
-      - name: Upload macOS Executable
-        uses: actions/upload-artifact@v3
-        with:
-          name: ofs-macos-arm64
-          path: |
-            build-macos/ofs
-            ofs/stdlib/
-
-  # =========================================================================
-  # BOOTSTRAP TEST
-  # =========================================================================
-
-  bootstrap-test-linux:
-    name: Bootstrap Test (Determinism)
-    needs: build-cpp-linux
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download C++ Compiler
-        uses: actions/download-artifact@v3
-        with:
-          name: ofs-linux-x64
-
-      - name: Prepare Bootstrap
-        run: |
-          chmod +x ofs
-          mkdir -p bootstrap-test
-          cp ofs bootstrap-test/ofscc_v1
-
-      - name: Phase 1: Generate ofscc.c with v1
-        run: |
-          cd bootstrap-test
-          ./ofscc_v1 ../ofs/ofscc/ofscc.ofs -o ofscc_v2.c
-        continue-on-error: true
-
-      - name: Compile ofscc_v2 with GCC
-        run: |
-          cd bootstrap-test
-          gcc -O2 ofscc_v2.c -o ofscc_v2
-        if: hashFiles('bootstrap-test/ofscc_v2.c') != ''
-
-      - name: Phase 2: Generate ofscc.c with v2
-        run: |
-          cd bootstrap-test
-          ./ofscc_v2 ../ofs/ofscc/ofscc.ofs -o ofscc_v3.c
-        if: hashFiles('bootstrap-test/ofscc_v2') != ''
-        continue-on-error: true
-
-      - name: Compile ofscc_v3 with GCC
-        run: |
-          cd bootstrap-test
-          gcc -O2 ofscc_v3.c -o ofscc_v3
-        if: hashFiles('bootstrap-test/ofscc_v3.c') != ''
-
-      - name: Check Determinism
-        run: |
-          cd bootstrap-test
-          if [ -f ofscc_v2 ] && [ -f ofscc_v3 ]; then
-            SIZE2=$(stat -c%s ofscc_v2)
-            SIZE3=$(stat -c%s ofscc_v3)
-            HASH2=$(sha256sum ofscc_v2 | awk '{print $1}')
-            HASH3=$(sha256sum ofscc_v3 | awk '{print $1}')
-            echo "Size v2: $SIZE2"
-            echo "Size v3: $SIZE3"
-            echo "Hash v2: $HASH2"
-            echo "Hash v3: $HASH3"
-            if [ "$HASH2" = "$HASH3" ]; then
-              echo "✅ DETERMINISM VERIFIED!"
-            else
-              echo "⚠️ Different hashes - investigating..."
-            fi
-          else
-            echo "⚠️ Could not complete bootstrap test"
+          api="https://api.github.com/repos/${REPO}/releases/latest"
+          asset=$(curl -fsSL "$api" | jq -r '.assets[].browser_download_url | select(test("ofs-linux-x64-installer.*\\.tar\\.gz$"))' | head -n 1)
+          if [ -z "$asset" ]; then
+            echo "Linux bootstrap asset not found in latest release"
+            exit 1
           fi
+          mkdir -p .toolchain
+          curl -fL "$asset" -o .toolchain/ofs-linux.tar.gz
+          tar -xzf .toolchain/ofs-linux.tar.gz -C .toolchain
+          chmod +x .toolchain/ofs
 
-  # =========================================================================
-  # CODE VALIDATION
-  # =========================================================================
+      - name: Build ofscc from OFS source
+        run: |
+          .toolchain/ofs build ofs/ofscc/ofscc.ofs -o ofscc
+          ./ofscc --help || true
 
-  examples-test:
-    name: Test Examples
-    needs: build-cpp-linux
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+      - name: Validate examples with self-hosted compiler
+        run: |
+          ./ofscc ofs/examples/hello.ofs -o hello
+          ./hello
+          ./ofscc ofs/examples/factorial.ofs -o factorial
+          ./factorial || true
 
-      - name: Download C++ Compiler
-        uses: actions/download-artifact@v3
+      - name: Generate installers with OFS
+        run: |
+          .toolchain/ofs run packaging/installer_generator.ofs
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: ofs-linux-x64
+          name: ofs-selfhosted-linux
+          path: |
+            ofscc
+            packaging/generated-*
 
-      - name: Run Examples
-        run: |
-          chmod +x ofs
-          for example in ofs/examples/*.ofs; do
-            echo "Testing $example..."
-            timeout 5 ./ofs "$example" -o /tmp/test || echo "⚠️ $example failed"
-          done
-
-  # =========================================================================
-  # DOCUMENTATION & RELEASE PREP
-  # =========================================================================
-
-  docs-check:
-    name: Check Documentation
-    runs-on: ubuntu-latest
+  build-selfhosted-windows:
+    name: Build Self-Hosted (Windows)
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify Key Docs Exist
+      - name: Download latest bootstrap compiler
+        shell: powershell
         run: |
-          files_required=(
-            "README.md"
-            "docs/GETTING_STARTED.md"
-            "docs/LANGUAGE_REFERENCE.md"
-            "docs/COMPILED_LANGUAGE.md"
-            "ROADMAP.md"
-            "docs/CHANGELOG.md"
-            "docs/BOOTSTRAP.md"
-            "docs/COMPILER_ARCHITECTURE.md"
-          )
-          for file in "${files_required[@]}"; do
-            if [ ! -f "$file" ]; then
-              echo "❌ Missing: $file"
-              exit 1
-            fi
-            echo "✓ $file"
-          done
+          $api = "https://api.github.com/repos/${{ env.REPO }}/releases/latest"
+          $release = Invoke-RestMethod -Uri $api
+          $asset = $release.assets | Where-Object { $_.name -match 'ofs-windows-x64-portable.*\.zip$' } | Select-Object -First 1
+          if (-not $asset) {
+            throw "Windows bootstrap asset not found in latest release"
+          }
+          New-Item -ItemType Directory -Force -Path .toolchain | Out-Null
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile .toolchain\ofs-windows.zip
+          Expand-Archive -Path .toolchain\ofs-windows.zip -DestinationPath .toolchain -Force
 
-  # =========================================================================
-  # TODO: PHASE D
-  # When ready to remove C++ dependency, replace build-cpp-* jobs with:
-  #
-  # build-ofs-windows:
-  #   name: Build OFS (Windows) - Using OFS Compiler
-  #   runs-on: windows-latest
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - name: Download OFS v1.3.0
-  #       run: |
-  #         curl -L https://releases.ofs.lang/v1.3.0/ofs-windows.zip -o ofs.zip
-  #         unzip ofs.zip
-  #     - name: Compile with OFS
-  #       run: ./ofs ofs/ofscc/ofscc.ofs -o ofscc.exe
-  #
-  # =========================================================================
-
-  release:
-    name: Create Release Artifacts
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [build-cpp-windows, build-cpp-linux, bootstrap-test-linux, examples-test]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Download Artifacts
-        uses: actions/download-artifact@v3
-
-      - name: Create Release Package
+      - name: Build ofscc from OFS source
+        shell: powershell
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          
-          # Package Windows
-          mkdir -p ofs-${VERSION}-windows-x64
-          cp ofs-windows-x64/ofs.exe ofs-${VERSION}-windows-x64/
-          cp -r ofs-windows-x64/stdlib ofs-${VERSION}-windows-x64/
-          zip -r ofs-${VERSION}-windows-x64.zip ofs-${VERSION}-windows-x64/
-          
-          # Package Linux
-          mkdir -p ofs-${VERSION}-linux-x64
-          cp ofs-linux-x64/ofs ofs-${VERSION}-linux-x64/
-          cp -r ofs-linux-x64/stdlib ofs-${VERSION}-linux-x64/
-          tar czf ofs-${VERSION}-linux-x64.tar.gz ofs-${VERSION}-linux-x64/
-          
-          # Generate installer (using OFS in Phase E)
-          echo "Phase E: Installer generation with OFS (not yet implemented)"
+          .\.toolchain\ofs.exe build ofs\ofscc\ofscc.ofs -o ofscc.exe
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+      - name: Run hello with self-hosted compiler
+        shell: powershell
+        run: |
+          .\ofscc.exe ofs\examples\hello.ofs -o hello.exe
+          .\hello.exe
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
-          files: |
-            ofs-*-windows-x64.zip
-            ofs-*-linux-x64.tar.gz
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: ofs-selfhosted-windows
+          path: |
+            ofscc.exe

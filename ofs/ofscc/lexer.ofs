@@ -1,20 +1,20 @@
-// OFS Compiler — Lexical Analyzer
+// OFS Compiler  Lexical Analyzer
 // Converts source code into a stream of tokens
 
 attach {F:chars.ofs}
 attach {F:tokens.ofs}
 
 namespace lexer {
-    // ── Lexer State ─────────────────────────────────────────────────────
+    //  Lexer State 
     
-    forge _src: obsidian = ""
-    forge _pos: stone = 0
-    forge _len: stone = 0
-    forge _line: stone = 1
-    forge _col: stone = 1
-    forge _tokens: Array<Token> = []
+    forge _src = ""
+    forge _pos = 0
+    forge _len = 0
+    forge _line = 1
+    forge _col = 1
+    forge _tokens = []
     
-    // ── Low-level Scanning ──────────────────────────────────────────────
+    //  Low-level Scanning 
     
     vein _peek() -> stone {
         if (_pos >= _len) { return -1 }
@@ -47,7 +47,7 @@ namespace lexer {
         ofs_array_push(_tokens, t)
     }
     
-    // ── Identifier and Keyword Scanning ─────────────────────────────────
+    //  Identifier and Keyword Scanning 
     
     vein _scan_ident() -> void {
         forge start = _pos - 1
@@ -59,7 +59,7 @@ namespace lexer {
         _push(kind, word)
     }
     
-    // ── Number Scanning ────────────────────────────────────────────────
+    //  Number Scanning 
     
     vein _scan_number() -> void {
         forge start = _pos - 1
@@ -110,15 +110,15 @@ namespace lexer {
         }
     }
     
-    // ── String Scanning ────────────────────────────────────────────────
+    //  String Scanning 
     
     vein _scan_string() -> void {
-        forge buf: obsidian = ""
+        forge buf = ""
         
         while (_peek() != CH_QUOTE && _peek() != -1) {
             forge c = _advance()
             
-            if (c == 92) {  // backslash — escape sequence
+            if (c == 92) {  // backslash  escape sequence
                 forge esc = _advance()
                 if (esc == 110) {           // \n
                     buf = ofs_str_concat(buf, "\n")
@@ -133,7 +133,7 @@ namespace lexer {
                 } else if (esc == 48) {    // \0
                     buf = ofs_str_concat(buf, "\0")
                 } else {
-                    // Unknown escape — include as-is
+                    // Unknown escape  include as-is
                     buf = ofs_str_concat(buf, ofs_str_substr(_src, _pos - 1, 1))
                 }
             } else {
@@ -148,7 +148,7 @@ namespace lexer {
         _push(TOK_STRING, buf)
     }
     
-    // ── Comment Handling ───────────────────────────────────────────────
+    //  Comment Handling 
     
     vein _skip_line_comment() -> void {
         while (_peek() != CH_NEWLINE && _peek() != -1) {
@@ -167,7 +167,7 @@ namespace lexer {
         }
     }
     
-    // ── Multi-character Operator Handling ───────────────────────────────
+    //  Multi-character Operator Handling 
     
     vein _scan_operators() -> void {
         forge c = _advance()
@@ -266,9 +266,9 @@ namespace lexer {
         }
     }
     
-    // ── Main Lexer Loop ────────────────────────────────────────────────
+    //  Main Lexer Loop 
     
-    vein lex(src: obsidian) -> Array<Token> {
+    vein lex(src: obsidian) -> Array {
         _src = src
         _pos = 0
         _len = ofs_str_len(src)
@@ -401,3 +401,6 @@ namespace lexer {
         return _tokens
     }
 }
+
+
+

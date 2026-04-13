@@ -1,0 +1,63 @@
+// OFS Compiler  Symbol Table (scope stack)
+// Shared utility to resolve names in nested scopes.
+
+attach {F:symbols.ofs}
+
+namespace symtable {
+    forge _scopes = []
+
+    vein push_scope() -> void {
+        forge s = []
+        ofs_array_push(_scopes, s)
+    }
+
+    vein pop_scope() -> void {
+        if (ofs_array_len(_scopes) > 0) {
+            ofs_array_pop(_scopes)
+        }
+    }
+
+    vein declare(sym: Symbol) -> void {
+        forge n = ofs_array_len(_scopes)
+        if (n == 0) {
+            push_scope()
+            n = 1
+        }
+
+        forge idx = n - 1
+        forge scope = ofs_array_get(_scopes, idx)
+        ofs_array_push(scope, sym)
+        ofs_array_set(_scopes, idx, scope)
+    }
+
+    vein resolve(name: obsidian) -> stone {
+        forge si = ofs_array_len(_scopes) - 1
+        while (si >= 0) {
+            forge scope = ofs_array_get(_scopes, si)
+            forge i = 0
+            while (i < ofs_array_len(scope)) {
+                forge sym = ofs_array_get(scope, i)
+                if (ofs_str_eq(sym.name, name)) {
+                    return si * 10000 + i
+                }
+                i++
+            }
+            si--
+        }
+        return -1
+    }
+
+    vein get_by_ref(ref: stone) -> Symbol {
+        forge sidx = ref / 10000
+        forge iidx = ref % 10000
+        forge scope = ofs_array_get(_scopes, sidx)
+        return ofs_array_get(scope, iidx)
+    }
+
+    vein clear() -> void {
+        _scopes = []
+    }
+}
+
+
+

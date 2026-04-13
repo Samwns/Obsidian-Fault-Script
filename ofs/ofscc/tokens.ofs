@@ -1,102 +1,102 @@
-// OFS Compiler — Token Types and Constants
+// OFS Compiler  Token Types and Constants
 
-// ── Token Kind Constants ─────────────────────────────────────────────────
+//  Token Kind Constants 
 
 // Keywords (34)
-const TOK_FORGE:    stone = 1
-const TOK_VEIN:     stone = 2
-const TOK_MONOLITH: stone = 3
-const TOK_IF:       stone = 4
-const TOK_ELSE:     stone = 5
-const TOK_WHILE:    stone = 6
-const TOK_CYCLE:    stone = 7
-const TOK_RETURN:   stone = 8
-const TOK_CONST:    stone = 9
-const TOK_STRATA:   stone = 10
-const TOK_MATCH:    stone = 11
-const TOK_CASE:     stone = 12
-const TOK_DEFAULT:  stone = 13
-const TOK_TREMOR:   stone = 14
-const TOK_CATCH:    stone = 15
-const TOK_THROW:    stone = 16
-const TOK_ATTACH:   stone = 17
-const TOK_EXTERN:   stone = 18
-const TOK_RIFT:     stone = 19
-const TOK_ABYSS:    stone = 20
-const TOK_FRACTURE: stone = 21
-const TOK_BEDROCK:  stone = 22
-const TOK_NAMESPACE:stone = 23
-const TOK_IMPL:     stone = 24
-const TOK_CORE:     stone = 25
-const TOK_ECHO:     stone = 26
-const TOK_BREAK:    stone = 27
-const TOK_CONTINUE: stone = 28
-const TOK_AS:       stone = 29
-const TOK_IN:       stone = 30
-const TOK_SHARD:    stone = 31
-const TOK_TECTONIC: stone = 32
-const TOK_INTENT:   stone = 33
-const TOK_LAYOUT:   stone = 34
+forge TOK_FORGE = 1
+forge TOK_VEIN = 2
+forge TOK_MONOLITH = 3
+forge TOK_IF = 4
+forge TOK_ELSE = 5
+forge TOK_WHILE = 6
+forge TOK_CYCLE = 7
+forge TOK_RETURN = 8
+forge TOK_CONST = 9
+forge TOK_STRATA = 10
+forge TOK_MATCH = 11
+forge TOK_CASE = 12
+forge TOK_DEFAULT = 13
+forge TOK_TREMOR = 14
+forge TOK_CATCH = 15
+forge TOK_THROW = 16
+forge TOK_ATTACH = 17
+forge TOK_EXTERN = 18
+forge TOK_RIFT = 19
+forge TOK_ABYSS = 20
+forge TOK_FRACTURE = 21
+forge TOK_BEDROCK = 22
+forge TOK_NAMESPACE = 23
+forge TOK_IMPL = 24
+forge TOK_CORE = 25
+forge TOK_ECHO = 26
+forge TOK_BREAK = 27
+forge TOK_CONTINUE = 28
+forge TOK_AS = 29
+forge TOK_IN = 30
+forge TOK_SHARD = 31
+forge TOK_TECTONIC = 32
+forge TOK_INTENT = 33
+forge TOK_LAYOUT = 34
 
 // Literals
-const TOK_IDENT:    stone = 50
-const TOK_INT:      stone = 51
-const TOK_FLOAT:    stone = 52
-const TOK_STRING:   stone = 53
-const TOK_TRUE:     stone = 54
-const TOK_FALSE:    stone = 55
-const TOK_NULL:     stone = 56
+forge TOK_IDENT = 50
+forge TOK_INT = 51
+forge TOK_FLOAT = 52
+forge TOK_STRING = 53
+forge TOK_TRUE = 54
+forge TOK_FALSE = 55
+forge TOK_NULL = 56
 
 // Operators (single-char)
-const TOK_PLUS:     stone = 60
-const TOK_MINUS:    stone = 61
-const TOK_STAR:     stone = 62
-const TOK_SLASH:    stone = 63
-const TOK_PERCENT:  stone = 64
-const TOK_EQ:       stone = 65
-const TOK_BANG:     stone = 66
-const TOK_LT:       stone = 67
-const TOK_GT:       stone = 68
-const TOK_AMP:      stone = 69
-const TOK_PIPE:     stone = 70
-const TOK_CARET:    stone = 71
-const TOK_TILDE:    stone = 72
+forge TOK_PLUS = 60
+forge TOK_MINUS = 61
+forge TOK_STAR = 62
+forge TOK_SLASH = 63
+forge TOK_PERCENT = 64
+forge TOK_EQ = 65
+forge TOK_BANG = 66
+forge TOK_LT = 67
+forge TOK_GT = 68
+forge TOK_AMP = 69
+forge TOK_PIPE = 70
+forge TOK_CARET = 71
+forge TOK_TILDE = 72
 
 // Operators (multi-char)
-const TOK_PLUSPLUS:     stone = 73
-const TOK_MINUSMINUS:   stone = 74
-const TOK_PLUS_ASSIGN:  stone = 75
-const TOK_MINUS_ASSIGN: stone = 76
-const TOK_STAR_ASSIGN:  stone = 77
-const TOK_SLASH_ASSIGN: stone = 78
-const TOK_EQEQ:         stone = 79
-const TOK_NEQ:          stone = 80
-const TOK_LTE:          stone = 81
-const TOK_GTE:          stone = 82
-const TOK_LSHIFT:       stone = 83
-const TOK_RSHIFT:       stone = 84
-const TOK_ANDAND:       stone = 85
-const TOK_OROR:         stone = 86
-const TOK_ARROW:        stone = 87
+forge TOK_PLUSPLUS = 73
+forge TOK_MINUSMINUS = 74
+forge TOK_PLUS_ASSIGN = 75
+forge TOK_MINUS_ASSIGN = 76
+forge TOK_STAR_ASSIGN = 77
+forge TOK_SLASH_ASSIGN = 78
+forge TOK_EQEQ = 79
+forge TOK_NEQ = 80
+forge TOK_LTE = 81
+forge TOK_GTE = 82
+forge TOK_LSHIFT = 83
+forge TOK_RSHIFT = 84
+forge TOK_ANDAND = 85
+forge TOK_OROR = 86
+forge TOK_ARROW = 87
 
 // Punctuation
-const TOK_LPAREN:    stone = 100
-const TOK_RPAREN:    stone = 101
-const TOK_LBRACKET:  stone = 102
-const TOK_RBRACKET:  stone = 103
-const TOK_LBRACE:    stone = 104
-const TOK_RBRACE:    stone = 105
-const TOK_COLON:     stone = 106
-const TOK_COLONCOLON:stone = 107
-const TOK_SEMI:      stone = 108
-const TOK_COMMA:     stone = 109
-const TOK_DOT:       stone = 110
+forge TOK_LPAREN = 100
+forge TOK_RPAREN = 101
+forge TOK_LBRACKET = 102
+forge TOK_RBRACKET = 103
+forge TOK_LBRACE = 104
+forge TOK_RBRACE = 105
+forge TOK_COLON = 106
+forge TOK_COLONCOLON = 107
+forge TOK_SEMI = 108
+forge TOK_COMMA = 109
+forge TOK_DOT = 110
 
 // Special
-const TOK_EOF:       stone = 200
-const TOK_ERROR:     stone = 201
+forge TOK_EOF = 200
+forge TOK_ERROR = 201
 
-// ── Token Structure ─────────────────────────────────────────────────────
+//  Token Structure 
 
 monolith Token {
     kind:  stone      // token kind (TOK_*)
@@ -105,7 +105,7 @@ monolith Token {
     col:   stone      // column in source
 }
 
-// ── Keyword Lookup ──────────────────────────────────────────────────────
+//  Keyword Lookup 
 
 vein keyword_to_kind(s: obsidian) -> stone {
     if (ofs_str_eq(s, "forge"))     { return TOK_FORGE }
@@ -172,3 +172,5 @@ vein kind_to_name(k: stone) -> obsidian {
     if (k == TOK_ERROR)    { return "ERROR" }
     return "?"
 }
+
+

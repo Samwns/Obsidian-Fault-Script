@@ -1,4 +1,4 @@
-// OFS Compiler — Main Driver
+// OFS Compiler - Main Driver
 // Complete compilation pipeline and bootstrap
 
 attach {F:fileio.ofs}
@@ -28,15 +28,19 @@ vein usage() -> void {
     echo("  OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT")
 }
 
-vein apply_env_overrides(
-    input_file: obsidian,
-    output_file: obsidian,
-    c_output: obsidian,
-    check_only: bool,
-    print_tokens: bool,
-    print_ast: bool,
-    c_opt: obsidian
-) -> obsidian {
+core main() {
+    echo("ofscc - OFS self-hosted compiler v0.1")
+    echo("")
+    
+    forge input_file = "input.ofs"
+    forge output_file = "a.out"
+    forge c_output = "output.c"
+    forge check_only = false
+    forge print_tokens = false
+    forge print_ast = false
+    forge c_opt = "-O2"
+
+    // Phase B: environment-based CLI bridge until argv runtime lands
     forge e_in = getenv("OFSCC_INPUT")
     if (!ofs_str_eq(e_in, "")) { input_file = e_in }
 
@@ -56,57 +60,6 @@ vein apply_env_overrides(
         c_opt = e_opt
     }
 
-    return input_file + "|" + output_file + "|" + c_output + "|" +
-        (check_only ? "1" : "0") + "|" +
-        (print_tokens ? "1" : "0") + "|" +
-        (print_ast ? "1" : "0") + "|" + c_opt
-}
-
-vein parse_state_field(state: obsidian, field_idx: stone) -> obsidian {
-    forge i = 0
-    forge start = 0
-    forge cur = 0
-    forge len = ofs_str_len(state)
-
-    while (i < len) {
-        if (ofs_str_char_at(state, i) == 124) {
-            if (cur == field_idx) {
-                return ofs_str_substr(state, start, i - start)
-            }
-            cur++
-            start = i + 1
-        }
-        i++
-    }
-
-    if (cur == field_idx) {
-        return ofs_str_substr(state, start, len - start)
-    }
-    return ""
-}
-
-core main() {
-    echo("ofscc — OFS self-hosted compiler v0.1")
-    echo("")
-    
-    forge input_file = "input.ofs"
-    forge output_file = "a.out"
-    forge c_output = "output.c"
-    forge check_only = false
-    forge print_tokens = false
-    forge print_ast = false
-    forge c_opt = "-O2"
-
-    // Phase B: environment-based CLI bridge until argv runtime lands
-    forge state = apply_env_overrides(input_file, output_file, c_output, check_only, print_tokens, print_ast, c_opt)
-    input_file = parse_state_field(state, 0)
-    output_file = parse_state_field(state, 1)
-    c_output = parse_state_field(state, 2)
-    check_only = ofs_str_eq(parse_state_field(state, 3), "1")
-    print_tokens = ofs_str_eq(parse_state_field(state, 4), "1")
-    print_ast = ofs_str_eq(parse_state_field(state, 5), "1")
-    c_opt = parse_state_field(state, 6)
-
     if (ofs_str_eq(input_file, "") || ofs_str_eq(input_file, "--help")) {
         usage()
         return
@@ -114,25 +67,19 @@ core main() {
     
     // Phase 1: Read source
     echo("[1/6] Reading source...")
-    forge src: obsidian = ""
-    tremor {
-        src = read_file(input_file)
-    } catch (e: obsidian) {
-        echo("ERROR: " + e)
-        exit(1)
-    }
-    echo("  OK — " + ofs_stone_to_obsidian(ofs_str_len(src)) + " bytes")
+    forge src = read_file(input_file)
+    echo("  OK - " + ofs_stone_to_obsidian(ofs_str_len(src)) + " bytes")
     
     // Phase 2: Lexical analysis
     echo("[2/6] Lexical analysis...")
-    forge tokens: Array<Token> = lexer.lex(src)
+    forge tokens = lexer.lex(src)
     forge token_count = ofs_array_len(tokens)
-    echo("  OK — " + ofs_stone_to_obsidian(token_count) + " tokens")
+    echo("  OK - " + ofs_stone_to_obsidian(token_count) + " tokens")
 
     if (print_tokens) {
         forge ti = 0
         while (ti < token_count) {
-            forge tk: Token = ofs_array_get(tokens, ti)
+            forge tk = ofs_array_get(tokens, ti)
             echo("tok(" + ofs_stone_to_obsidian(tk.kind) + ") '" + tk.val + "'")
             ti++
         }
@@ -143,7 +90,7 @@ core main() {
     echo("[3/6] Parsing...")
     forge root_id = parser.parse(tokens)
     forge node_count = node_pool_len()
-    echo("  OK — " + ofs_stone_to_obsidian(node_count) + " AST nodes")
+    echo("  OK - " + ofs_stone_to_obsidian(node_count) + " AST nodes")
 
     if (print_ast) {
         echo("AST root kind: " + node_kind_name(node_get(root_id).kind))
@@ -166,7 +113,7 @@ core main() {
     cg_open(c_output)
     codegen.generate(root_id)
     cg_close()
-    echo("  OK — " + c_output + " generated")
+    echo("  OK - " + c_output + " generated")
     
     // Phase 6: C compilation
     echo("[6/6] C compilation...")
@@ -178,9 +125,10 @@ core main() {
         echo("")
         echo("SUCCESS: " + output_file + " ready")
     } else {
-        echo("  FAILED — check " + c_output)
+        echo("  FAILED  check " + c_output)
         echo("")
         echo("COMPILATION ERROR: C compiler returned " + ofs_stone_to_obsidian(compile_result))
         exit(1)
     }
 }
+

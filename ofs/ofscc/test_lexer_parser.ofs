@@ -1,4 +1,4 @@
-// OFS Compiler — Lexer + Parser Integration Test
+// OFS Compiler  Lexer + Parser Integration Test
 
 attach {F:ofscc/fileio.ofs}
 attach {F:ofscc/tokens.ofs}
@@ -23,12 +23,12 @@ core main() {
     echo("AST root: " + ofs_stone_to_obsidian(ast1))
     echo("AST pool size: " + ofs_stone_to_obsidian(node_pool_len()))
     
-    forge root1: Node = node_get(ast1)
+    forge root1 = node_get(ast1)
     echo("Root kind: " + node_kind_name(root1.kind))
     echo("Root children: " + ofs_stone_to_obsidian(node_extra_len(ast1)))
     
     // Test 2: Variable with type annotation
-    forge src2 = "forge x: stone = 42"
+    forge src2 = "forge x = 42"
     echo("\n[Test 2] Variable declaration with type")
     echo("Source: " + src2)
     
@@ -67,3 +67,5 @@ core main() {
     echo("\n=== Integration test completed ===")
     echo("Total nodes in pool: " + ofs_stone_to_obsidian(node_pool_len()))
 }
+
+
