@@ -1,0 +1,403 @@
+// OFS Compiler — Lexical Analyzer
+// Converts source code into a stream of tokens
+
+attach {F:chars.ofs}
+attach {F:tokens.ofs}
+
+namespace lexer {
+    // ── Lexer State ─────────────────────────────────────────────────────
+    
+    forge _src: obsidian = ""
+    forge _pos: stone = 0
+    forge _len: stone = 0
+    forge _line: stone = 1
+    forge _col: stone = 1
+    forge _tokens: Array<Token> = []
+    
+    // ── Low-level Scanning ──────────────────────────────────────────────
+    
+    vein _peek() -> stone {
+        if (_pos >= _len) { return -1 }
+        return ofs_str_char_at(_src, _pos)
+    }
+    
+    vein _peek2() -> stone {
+        if (_pos + 1 >= _len) { return -1 }
+        return ofs_str_char_at(_src, _pos + 1)
+    }
+    
+    vein _advance() -> stone {
+        forge c = _peek()
+        _pos++
+        if (c == CH_NEWLINE) {
+            _line++
+            _col = 1
+        } else {
+            _col++
+        }
+        return c
+    }
+    
+    vein _push(kind: stone, val: obsidian) -> void {
+        forge t: Token
+        t.kind = kind
+        t.val = val
+        t.line = _line
+        t.col = _col
+        ofs_array_push(_tokens, t)
+    }
+    
+    // ── Identifier and Keyword Scanning ─────────────────────────────────
+    
+    vein _scan_ident() -> void {
+        forge start = _pos - 1
+        while (is_alnum(_peek())) {
+            _advance()
+        }
+        forge word = ofs_str_substr(_src, start, _pos - start)
+        forge kind = keyword_to_kind(word)
+        _push(kind, word)
+    }
+    
+    // ── Number Scanning ────────────────────────────────────────────────
+    
+    vein _scan_number() -> void {
+        forge start = _pos - 1
+        forge is_float = false
+        
+        // Check for hex prefix (0x)
+        if (_peek() == CH_x || _peek() == CH_X) {
+            _advance()
+            while (is_hex_digit(_peek())) {
+                _advance()
+            }
+            forge s = ofs_str_substr(_src, start, _pos - start)
+            _push(TOK_INT, s)
+            return
+        }
+        
+        // Consume digits
+        while (is_digit(_peek())) {
+            _advance()
+        }
+        
+        // Check for decimal point
+        if (_peek() == CH_DOT && is_digit(_peek2())) {
+            is_float = true
+            _advance()
+            while (is_digit(_peek())) {
+                _advance()
+            }
+        }
+        
+        // Check for exponent (e or E)
+        if (_peek() == CH_e || _peek() == CH_E) {
+            is_float = true
+            _advance()
+            if (_peek() == CH_PLUS || _peek() == CH_MINUS) {
+                _advance()
+            }
+            while (is_digit(_peek())) {
+                _advance()
+            }
+        }
+        
+        forge s = ofs_str_substr(_src, start, _pos - start)
+        if (is_float) {
+            _push(TOK_FLOAT, s)
+        } else {
+            _push(TOK_INT, s)
+        }
+    }
+    
+    // ── String Scanning ────────────────────────────────────────────────
+    
+    vein _scan_string() -> void {
+        forge buf: obsidian = ""
+        
+        while (_peek() != CH_QUOTE && _peek() != -1) {
+            forge c = _advance()
+            
+            if (c == 92) {  // backslash — escape sequence
+                forge esc = _advance()
+                if (esc == 110) {           // \n
+                    buf = ofs_str_concat(buf, "\n")
+                } else if (esc == 116) {   // \t
+                    buf = ofs_str_concat(buf, "\t")
+                } else if (esc == 114) {   // \r
+                    buf = ofs_str_concat(buf, "\r")
+                } else if (esc == 34) {    // \"
+                    buf = ofs_str_concat(buf, "\"")
+                } else if (esc == 92) {    // \\
+                    buf = ofs_str_concat(buf, "\\")
+                } else if (esc == 48) {    // \0
+                    buf = ofs_str_concat(buf, "\0")
+                } else {
+                    // Unknown escape — include as-is
+                    buf = ofs_str_concat(buf, ofs_str_substr(_src, _pos - 1, 1))
+                }
+            } else {
+                buf = ofs_str_concat(buf, ofs_str_substr(_src, _pos - 1, 1))
+            }
+        }
+        
+        if (_peek() == CH_QUOTE) {
+            _advance()  // closing quote
+        }
+        
+        _push(TOK_STRING, buf)
+    }
+    
+    // ── Comment Handling ───────────────────────────────────────────────
+    
+    vein _skip_line_comment() -> void {
+        while (_peek() != CH_NEWLINE && _peek() != -1) {
+            _advance()
+        }
+    }
+    
+    vein _skip_block_comment() -> void {
+        while (_peek() != -1) {
+            if (_peek() == CH_STAR && _peek2() == CH_SLASH) {
+                _advance()
+                _advance()
+                return
+            }
+            _advance()
+        }
+    }
+    
+    // ── Multi-character Operator Handling ───────────────────────────────
+    
+    vein _scan_operators() -> void {
+        forge c = _advance()
+        
+        if (c == CH_PLUS) {
+            if (_peek() == CH_PLUS) {
+                _advance()
+                _push(TOK_PLUSPLUS, "++")
+            } else if (_peek() == CH_EQ) {
+                _advance()
+                _push(TOK_PLUS_ASSIGN, "+=")
+            } else {
+                _push(TOK_PLUS, "+")
+            }
+        } else if (c == CH_MINUS) {
+            if (_peek() == CH_MINUS) {
+                _advance()
+                _push(TOK_MINUSMINUS, "--")
+            } else if (_peek() == CH_EQ) {
+                _advance()
+                _push(TOK_MINUS_ASSIGN, "-=")
+            } else if (_peek() == CH_GT) {
+                _advance()
+                _push(TOK_ARROW, "->")
+            } else {
+                _push(TOK_MINUS, "-")
+            }
+        } else if (c == CH_STAR) {
+            if (_peek() == CH_EQ) {
+                _advance()
+                _push(TOK_STAR_ASSIGN, "*=")
+            } else {
+                _push(TOK_STAR, "*")
+            }
+        } else if (c == CH_SLASH) {
+            if (_peek() == CH_EQ) {
+                _advance()
+                _push(TOK_SLASH_ASSIGN, "/=")
+            } else {
+                _push(TOK_SLASH, "/")
+            }
+        } else if (c == CH_PERCENT) {
+            _push(TOK_PERCENT, "%")
+        } else if (c == CH_EQ) {
+            if (_peek() == CH_EQ) {
+                _advance()
+                _push(TOK_EQEQ, "==")
+            } else {
+                _push(TOK_EQ, "=")
+            }
+        } else if (c == CH_BANG) {
+            if (_peek() == CH_EQ) {
+                _advance()
+                _push(TOK_NEQ, "!=")
+            } else {
+                _push(TOK_BANG, "!")
+            }
+        } else if (c == CH_LT) {
+            if (_peek() == CH_EQ) {
+                _advance()
+                _push(TOK_LTE, "<=")
+            } else if (_peek() == CH_LT) {
+                _advance()
+                _push(TOK_LSHIFT, "<<")
+            } else {
+                _push(TOK_LT, "<")
+            }
+        } else if (c == CH_GT) {
+            if (_peek() == CH_EQ) {
+                _advance()
+                _push(TOK_GTE, ">=")
+            } else if (_peek() == CH_GT) {
+                _advance()
+                _push(TOK_RSHIFT, ">>")
+            } else {
+                _push(TOK_GT, ">")
+            }
+        } else if (c == CH_AMP) {
+            if (_peek() == CH_AMP) {
+                _advance()
+                _push(TOK_ANDAND, "&&")
+            } else {
+                _push(TOK_AMP, "&")
+            }
+        } else if (c == CH_PIPE) {
+            if (_peek() == CH_PIPE) {
+                _advance()
+                _push(TOK_OROR, "||")
+            } else {
+                _push(TOK_PIPE, "|")
+            }
+        } else if (c == CH_CARET) {
+            _push(TOK_CARET, "^")
+        } else if (c == CH_TILDE) {
+            _push(TOK_TILDE, "~")
+        }
+    }
+    
+    // ── Main Lexer Loop ────────────────────────────────────────────────
+    
+    vein lex(src: obsidian) -> Array<Token> {
+        _src = src
+        _pos = 0
+        _len = ofs_str_len(src)
+        _line = 1
+        _col = 1
+        _tokens = []
+        
+        while (_pos < _len) {
+            forge c = _peek()
+            
+            // Skip whitespace (except tracking newlines)
+            if (is_space(c)) {
+                _advance()
+                continue
+            }
+            
+            // Skip comments
+            if (c == CH_SLASH) {
+                if (_peek2() == CH_SLASH) {
+                    _advance()
+                    _advance()
+                    _skip_line_comment()
+                    continue
+                }
+                if (_peek2() == CH_STAR) {
+                    _advance()
+                    _advance()
+                    _skip_block_comment()
+                    continue
+                }
+            }
+            
+            // Identifiers and keywords
+            if (is_id_start(c)) {
+                _advance()
+                _scan_ident()
+                continue
+            }
+            
+            // Numbers
+            if (is_digit(c)) {
+                _advance()
+                _scan_number()
+                continue
+            }
+            
+            // Strings
+            if (c == CH_QUOTE) {
+                _advance()
+                _scan_string()
+                continue
+            }
+            
+            // Single-char punctuation
+            if (c == CH_LPAREN) {
+                _advance()
+                _push(TOK_LPAREN, "(")
+                continue
+            }
+            if (c == CH_RPAREN) {
+                _advance()
+                _push(TOK_RPAREN, ")")
+                continue
+            }
+            if (c == CH_LBRACK) {
+                _advance()
+                _push(TOK_LBRACKET, "[")
+                continue
+            }
+            if (c == CH_RBRACK) {
+                _advance()
+                _push(TOK_RBRACKET, "]")
+                continue
+            }
+            if (c == CH_LBRACE) {
+                _advance()
+                _push(TOK_LBRACE, "{")
+                continue
+            }
+            if (c == CH_RBRACE) {
+                _advance()
+                _push(TOK_RBRACE, "}")
+                continue
+            }
+            if (c == CH_SEMI) {
+                _advance()
+                _push(TOK_SEMI, ";")
+                continue
+            }
+            if (c == CH_COMMA) {
+                _advance()
+                _push(TOK_COMMA, ",")
+                continue
+            }
+            if (c == CH_COLON) {
+                if (_peek2() == CH_COLON) {
+                    _advance()
+                    _advance()
+                    _push(TOK_COLONCOLON, "::")
+                } else {
+                    _advance()
+                    _push(TOK_COLON, ":")
+                }
+                continue
+            }
+            if (c == CH_DOT) {
+                _advance()
+                _push(TOK_DOT, ".")
+                continue
+            }
+            
+            // Multi-char operators
+            if (c == CH_PLUS || c == CH_MINUS || c == CH_STAR ||
+                c == CH_SLASH || c == CH_EQ || c == CH_BANG ||
+                c == CH_LT || c == CH_GT || c == CH_AMP ||
+                c == CH_PIPE || c == CH_CARET || c == CH_TILDE ||
+                c == CH_PERCENT) {
+                _scan_operators()
+                continue
+            }
+            
+            // Unknown character
+            _advance()
+            _push(TOK_ERROR, ofs_str_substr(_src, _pos - 1, 1))
+        }
+        
+        // EOF token
+        _push(TOK_EOF, "")
+        
+        return _tokens
+    }
+}

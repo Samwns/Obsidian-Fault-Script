@@ -1,0 +1,58 @@
+// OFS Compiler — Lexer Test
+// Tests tokenization of a simple program
+
+attach {F:ofscc/fileio.ofs}
+attach {F:ofscc/tokens.ofs}
+attach {F:ofscc/lexer.ofs}
+
+core main() {
+    echo("=== OFS Lexer Test ===")
+    
+    // Test 1: Simple program
+    forge src1 = "core main() { echo(\"hello\") }"
+    forge tokens1 = lexer.lex(src1)
+    
+    echo("\nTest 1: hello program")
+    echo("Source: " + src1)
+    echo("Tokens: " + ofs_stone_to_obsidian(ofs_array_len(tokens1)))
+    
+    forge i = 0
+    while (i < ofs_array_len(tokens1)) {
+        forge t: Token = ofs_array_get(tokens1, i)
+        forge line_str = ofs_stone_to_obsidian(t.line)
+        forge col_str = ofs_stone_to_obsidian(t.col)
+        echo("  [" + line_str + ":" + col_str + "] " + kind_to_name(t.kind) + " = " + t.val)
+        i++
+    }
+    
+    // Test 2: Variable declaration
+    forge src2 = "forge x: stone = 42"
+    forge tokens2 = lexer.lex(src2)
+    
+    echo("\nTest 2: variable declaration")
+    echo("Source: " + src2)
+    echo("Tokens: " + ofs_stone_to_obsidian(ofs_array_len(tokens2)))
+    
+    i = 0
+    while (i < ofs_array_len(tokens2)) {
+        forge t: Token = ofs_array_get(tokens2, i)
+        echo("  " + kind_to_name(t.kind) + " = " + t.val)
+        i++
+    }
+    
+    // Test 3: Comments and strings
+    forge src3 = "// comment\nforge s = \"hello\nworld\""
+    forge tokens3 = lexer.lex(src3)
+    
+    echo("\nTest 3: comments and strings")
+    echo("Tokens: " + ofs_stone_to_obsidian(ofs_array_len(tokens3)))
+    
+    i = 0
+    while (i < ofs_array_len(tokens3)) {
+        forge t: Token = ofs_array_get(tokens3, i)
+        echo("  [" + ofs_stone_to_obsidian(t.line) + "] " + kind_to_name(t.kind) + " = \"" + t.val + "\"")
+        i++
+    }
+    
+    echo("\n=== All tests completed ===")
+}
