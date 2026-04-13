@@ -1,21 +1,21 @@
 # OFS Self-Hosting Bootstrap Guide
 
 > **Nova Realidade**: O compilador OFS é completamente self-hosted e determinístico.
-> Use `bootstrap-minimal.sh` para compilar em ~2 segundos **sem dependências de C++**.
+> Use `bootstrap-minimal.sh` para compilar em ~2 segundos.
 
 ---
 
 ## ⚡ Quick Start (Recomendado)
 
 ```bash
-# Tudo em um comando - ~2 segundos, sem C++!
+# Tudo em um comando - ~2 segundos!
 bash ofscc/scripts/bootstrap-minimal.sh
 
 # Pronto! Seu compilador nativo está em dist/ofscc
 dist/ofscc build seu_programa.ofs -o programa
 ```
 
-Pronto! Sem CMake, sem LLVM, sem C++. Apenas OFS compilando OFS.
+Pronto! Apenas OFS compilando OFS.
 
 ## O que é Bootstrap?
 

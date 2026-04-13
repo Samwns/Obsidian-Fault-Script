@@ -2,6 +2,40 @@
 
 All notable changes to this project are recorded here.
 
+## [1.2.0] - 2026-04-13 — C++ Compiler Removed 
+
+### Major Milestone: Pure OFS Implementation
+
+**C++ compiler source code removed from repository. Language is now 100% self-hosted.**
+
+All language implementation and compilation pipeline now solely uses OFS.
+
+### Removed
+
+- ❌ `ofs/src/` - Legacy C++ compiler source (main.cpp, lexer, parser, codegen, semantic, runtime, ast)
+- ❌ `ofs/CMakeLists.txt` - CMake build configuration
+- ❌ All C++ dependencies from codebase
+
+### Repository Structure (Simplified)
+
+```
+ofs/
+  ├── ofscc/           # OFS compiler written in OFS (~4500 LOC)
+  ├── stdlib/          # OFS standard library
+  ├── examples/        # Example programs
+  ├── tests/           # Test suite
+  └── docs/            # Documentation
+```
+
+### Notes
+
+- Compiler distributed via releases as `ofs` binary
+- Users install via: `sudo mv ofs/bin/ofscc /usr/local/bin/ofs`
+- Language bootstrapping: `bash ofscc/scripts/bootstrap-minimal.sh`
+- No C++ runtime or compiler needed to build OFS
+
+---
+
 ## [1.1.1] - 2024-12-XX — Automated Native-Only Releases 🚀
 
 ### Major Milestone: CI/CD Automation & Zero C++ Dependencies
