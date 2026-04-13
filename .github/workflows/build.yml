@@ -4,8 +4,7 @@ on:
   push:
     branches: [ main, develop ]
     paths:
-      - 'ofs/src/**'
-      - 'ofs/ofscc/**'
+      - 'ofscc/**'
       - 'ofs/examples/**'
       - 'ofs/stdlib/**'
       - '.github/workflows/build.yml'
