@@ -9,12 +9,10 @@ InstallDir "$PROGRAMFILES64\Obsidian Fault Script"
 InstallDirRegKey HKLM "Software\ObsidianFaultScript" "InstallDir"
 RequestExecutionLevel admin
 
-!define ASSETS_DIR "${__FILEDIR__}\..\assets"
-
-!define MUI_ICON "${ASSETS_DIR}\ofs.ico"
-!define MUI_UNICON "${ASSETS_DIR}\ofs.ico"
-Icon "${ASSETS_DIR}\ofs.ico"
-UninstallIcon "${ASSETS_DIR}\ofs.ico"
+!define MUI_ICON "..\assets\ofs.ico"
+!define MUI_UNICON "..\assets\ofs.ico"
+Icon "..\assets\ofs.ico"
+UninstallIcon "..\assets\ofs.ico"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
@@ -42,7 +40,7 @@ Section "Install"
 	File /nonfatal "dist\libofs_runtime.a"
 	File /nonfatal "dist\ofs_runtime.lib"
 	DetailPrint "Installing application icon"
-	File /oname=ofs.ico "${ASSETS_DIR}\ofs.ico"
+	File /oname=ofs.ico "..\assets\ofs.ico"
 	DetailPrint "Installing license terms"
 	File /oname=LICENSE.txt "dist\LICENSE.txt"
 	DetailPrint "Installing standard library files"
