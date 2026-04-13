@@ -27,7 +27,22 @@ echo ""
 print_step "Fase 1: Validar compilador OFS existente"
 
 if [ ! -f "$EXISTING_COMPILER" ]; then
-    print_error "Compilador não encontrado: $EXISTING_COMPILER"
+    print_info "Compilador não encontrado localmente. Tentando baixar da última release..."
+    REPO="${GITHUB_REPO:-Samwns/Obsidian-Fault-Script}"
+    ASSET=$(curl -sL "https://api.github.com/repos/$REPO/releases/latest" \
+      | grep -oP '"browser_download_url":\s*"\K[^"]*linux-x64-installer[^"]*\.tar\.gz' | head -1)
+    if [ -n "$ASSET" ]; then
+        print_info "Baixando: $ASSET"
+        curl -sL "$ASSET" -o /tmp/ofs-seed.tar.gz
+        tar xzf /tmp/ofs-seed.tar.gz -C /tmp/
+        mkdir -p "$(dirname "$EXISTING_COMPILER")"
+        find /tmp -maxdepth 2 -name "ofs" -type f -exec cp {} "$EXISTING_COMPILER" \;
+        chmod +x "$EXISTING_COMPILER"
+        rm -f /tmp/ofs-seed.tar.gz
+        print_success "Seed compiler baixado com sucesso"
+    else
+        print_error "Compilador não encontrado: $EXISTING_COMPILER (e nenhum seed disponível)"
+    fi
 fi
 
 if [ ! -x "$EXISTING_COMPILER" ]; then
