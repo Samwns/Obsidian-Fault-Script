@@ -39,7 +39,7 @@ ofs tokens file.ofs          # lexer output
 ofs ast file.ofs             # parser output
 ofs ir file.ofs              # LLVM IR output
 ofs asm file.ofs             # native assembly output
-ofs update                   # update to latest
+ofs update                   # update to latest release
 ```
 
 ### Example

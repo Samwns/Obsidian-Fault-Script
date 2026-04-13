@@ -1,0 +1,59 @@
+// OFS Compiler — AST Node Kinds
+// Constants for all node types in the abstract syntax tree
+
+// ── Declaration Nodes ───────────────────────────────────────────────────
+const NK_PROGRAM:    stone = 1    // root: extra = top-level statements
+const NK_FN_DECL:    stone = 2    // val=name, c0=params(block), c1=ret_type, c2=body
+const NK_CORE_DECL:  stone = 3    // same as NK_FN_DECL
+const NK_VAR_DECL:   stone = 4    // val=name, c0=type_node, c1=init_expr
+const NK_CONST_DECL: stone = 5    // val=name, c0=type_node, c1=init_expr
+const NK_MONOLITH:   stone = 6    // val=name, extra=field_decls
+const NK_FIELD_DECL: stone = 7    // val=name, c0=type_node
+const NK_IMPL:       stone = 8    // val=type_name, extra=methods
+const NK_NAMESPACE:  stone = 9    // val=name, extra=members
+const NK_STRATA:     stone = 10   // val=name, extra=variants
+const NK_VARIANT:    stone = 11   // val=name, c0=associated_type (or -1)
+const NK_EXTERN_VN:  stone = 12   // val=name, c0=params, c1=ret_type
+const NK_RIFT_VN:    stone = 13   // val=name, c0=params, c1=ret_type
+const NK_ATTACH:     stone = 14   // val=path
+const NK_PARAM:      stone = 15   // val=name, c0=type_node
+
+// ── Control Flow ────────────────────────────────────────────────────────
+const NK_IF:         stone = 20   // c0=cond, c1=then_block, c2=else_block (or -1)
+const NK_WHILE:      stone = 21   // c0=cond, c1=body
+const NK_CYCLE_C:    stone = 22   // c0=init, c1=cond, c2=step, c3=body
+const NK_CYCLE_RANGE:stone = 23   // val=var_name, c0=iterable, c1=body
+const NK_MATCH:      stone = 24   // c0=expr, extra=cases(Case nodes)
+const NK_CASE:       stone = 25   // c0=value, c1=body
+const NK_DEFAULT:    stone = 26   // c0=body
+const NK_RETURN:     stone = 27   // c0=expr (or -1 for void)
+const NK_BREAK:      stone = 28
+const NK_CONTINUE:   stone = 29
+const NK_THROW:      stone = 30   // c0=expr
+const NK_TREMOR:     stone = 31   // c0=body, c1=catch_var(ident), c2=catch_body
+
+// ── Expressions ─────────────────────────────────────────────────────────
+const NK_BLOCK:      stone = 40   // extra=statements
+const NK_ASSIGN:     stone = 41   // val=op (=, +=, -=, etc), c0=target, c1=value
+const NK_CALL:       stone = 42   // val=fn_name, extra=arguments
+const NK_BIN_OP:     stone = 43   // val=op, c0=left, c1=right
+const NK_UNARY_OP:   stone = 44   // val=op, c0=operand
+const NK_POST_OP:    stone = 45   // val=op (++, --), c0=operand
+const NK_CAST:       stone = 46   // val=target_type, c0=expr
+const NK_INDEX:      stone = 47   // c0=array, c1=index
+const NK_FIELD:      stone = 48   // val=field_name, c0=object
+const NK_IDENT:      stone = 49   // val=name
+
+// ── Literals ────────────────────────────────────────────────────────────
+const NK_LIT_INT:    stone = 50   // val=text
+const NK_LIT_FLOAT:  stone = 51   // val=text
+const NK_LIT_STRING: stone = 52   // val=text (with escapes already parsed)
+const NK_LIT_BOOL:   stone = 53   // val="true" or "false"
+const NK_LIT_NULL:   stone = 54
+const NK_ARRAY_LIT:  stone = 55   // extra=elements
+const NK_LAMBDA:     stone = 56   // c0=params, c1=ret_type, c2=body
+
+// ── Types ───────────────────────────────────────────────────────────────
+const NK_TYPE:       stone = 60   // val=name ("stone", "Array<stone>", etc)
+const NK_TYPE_ARRAY: stone = 61   // c0=element_type
+const NK_TYPE_FN:    stone = 62   // c0=params, c1=ret_type
