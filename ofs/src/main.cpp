@@ -176,12 +176,29 @@ static std::string fetch_latest_tag() {
         "powershell -NoProfile -ExecutionPolicy Bypass -Command "
         "\"$ProgressPreference='SilentlyContinue'; "
         "try { "
-        "  $r = Invoke-WebRequest -UseBasicParsing -Uri " + quote_ps_single(release_url) + " -MaximumRedirection 0 -ErrorAction Stop; "
-        "  '' "
+        "  $r = Invoke-WebRequest -UseBasicParsing -Uri " + quote_ps_single(release_url) + " -MaximumRedirection 5 -ErrorAction Stop; "
+        "  $u = $r.BaseResponse.ResponseUri.AbsoluteUri; "
+        "  if ($u) { $u } else { '' } "
         "} catch { "
-        "  $loc = $_.Exception.Response.Headers['Location']; "
-        "  if ($loc) { $loc.Split('/')[-1] } else { '' } "
+        "  '' "
         "}\"");
+
+    // Fallback to GitHub API if redirect extraction fails.
+    if (trim_copy(raw).empty()) {
+        raw = run_capture(
+            "powershell -NoProfile -ExecutionPolicy Bypass -Command "
+            "\"$ProgressPreference='SilentlyContinue'; "
+            "try { "
+            "  $h = @{ 'User-Agent' = 'ofs-updater' }; "
+            "  $j = Invoke-WebRequest -UseBasicParsing -Uri "
+                + quote_ps_single("https://api.github.com/repos/" + std::string(OFS_REPO_OWNER) + "/" + OFS_REPO_NAME + "/releases/latest")
+                + " -Headers $h -ErrorAction Stop; "
+            "  $tag = ($j.Content | ConvertFrom-Json).tag_name; "
+            "  if ($tag) { $tag } else { '' } "
+            "} catch { "
+            "  '' "
+            "}\"");
+    }
 #else
     // -I = HEAD only, -s = silent, follow up to 0 redirects but grab Location
     std::string raw = run_capture(
@@ -203,8 +220,7 @@ static std::string fetch_latest_tag() {
         raw = raw.substr(slash + 1);
     }
     raw = trim_copy(raw);
-    if (!raw.empty() && raw[0] == 'v') return raw;
-    return "";
+    return raw;
 }
 
 static int run_self_update(bool force_repair = false) {
