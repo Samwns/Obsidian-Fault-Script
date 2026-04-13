@@ -248,6 +248,9 @@ jobs:
           Copy-Item "ofs\stdlib\*.ofs" "$Dist\stdlib\" -ErrorAction SilentlyContinue
           Copy-Item "LICENSE" "$Dist\LICENSE.txt" -ErrorAction SilentlyContinue
 
+          # Copiar o ícone para o dist/ para garantir que o NSIS encontre
+          Copy-Item "packaging\assets\ofs.ico" "$Dist\ofs.ico" -ErrorAction SilentlyContinue
+
           # Build installer with NSIS
           $InstallerName = "ofs-windows-x64-installer-${TAG}.exe"
           $nsis = Get-Command makensis -ErrorAction SilentlyContinue
