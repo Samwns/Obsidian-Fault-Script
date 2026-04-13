@@ -8,3 +8,5 @@ build-debug/
 /tmp/
 *.exe
 vscode-extension/node_modules/
+# vscode-extension/.gitignore
+*.vsix

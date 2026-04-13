@@ -270,6 +270,7 @@ jobs:
       - name: Package extension
         run: |
           cd vscode-extension
+          rm -f *.vsix  
           npm ci
           npm run package
 
