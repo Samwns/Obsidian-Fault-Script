@@ -71,31 +71,19 @@ jobs:
           STAGING="staging"
           mkdir -p "$STAGING"
 
-          # Copy ofs binary from installed location
           cp /usr/local/bin/ofs "$STAGING/ofs"
           chmod +x "$STAGING/ofs"
-
-          # Copy stdlib
           cp -r ofs/stdlib "$STAGING/stdlib"
-
-          # Copy ofscc source (self-hosted compiler)
           cp -r ofscc "$STAGING/ofscc"
-
-          # Copy install script and packaging extras
           cp packaging/linux/install.sh "$STAGING/"
           chmod +x "$STAGING/install.sh"
           for cmd in infuse uncover reinfuse; do
             [ -f "packaging/linux/$cmd" ] && cp "packaging/linux/$cmd" "$STAGING/" && chmod +x "$STAGING/$cmd"
           done
-
-          # Copy runtime lib if present
           [ -f /usr/local/lib/libofs_runtime.a ] && cp /usr/local/lib/libofs_runtime.a "$STAGING/"
-
-          # Copy assets
           [ -f packaging/assets/ofs-256.png ] && cp packaging/assets/ofs-256.png "$STAGING/ofs.png"
           cp LICENSE "$STAGING/" 2>/dev/null || true
 
-          # Create tarball
           ARCHIVE="ofs-linux-x64-installer-${TAG}.tar.gz"
           tar czf "$ARCHIVE" -C "$STAGING" .
           echo "archive=$ARCHIVE" >> "$GITHUB_ENV"
@@ -134,22 +122,16 @@ jobs:
           mkdir -p "$ROOT/usr/local/share/ofs/stdlib"
           mkdir -p "$ROOT/usr/local/share/ofs/ofscc"
 
-          # Copy ofs binary
           OFS_BIN=$(command -v ofs || echo /usr/local/bin/ofs)
           cp "$OFS_BIN" "$ROOT/usr/local/bin/ofs"
           chmod +x "$ROOT/usr/local/bin/ofs"
-
-          # Copy stdlib and ofscc source
           cp ofs/stdlib/*.ofs "$ROOT/usr/local/share/ofs/stdlib/" 2>/dev/null || true
           cp -r ofscc/* "$ROOT/usr/local/share/ofs/ofscc/" 2>/dev/null || true
-
-          # Copy runtime lib if present
           if [ -f /usr/local/lib/libofs_runtime.a ]; then
             mkdir -p "$ROOT/usr/local/lib"
             cp /usr/local/lib/libofs_runtime.a "$ROOT/usr/local/lib/"
           fi
 
-          # Build .pkg
           PKG="ofs-macos-arm64-installer-${TAG}.pkg"
           pkgbuild --root "$ROOT" \
             --identifier com.obsidian-fault-script.ofs \
@@ -195,32 +177,22 @@ jobs:
           $Staging = "portable-staging"
           New-Item -ItemType Directory -Path $Staging -Force | Out-Null
 
-          # Copy ofs.exe + DLLs from seed
           Copy-Item "$SeedDir\ofs.exe" "$Staging\"
           Get-ChildItem "$SeedDir" -Filter "*.dll" | Copy-Item -Destination "$Staging\"
           Copy-Item "$SeedDir\libofs_runtime.a" "$Staging\" -ErrorAction SilentlyContinue
           Copy-Item "$SeedDir\ofs_runtime.lib" "$Staging\" -ErrorAction SilentlyContinue
-
-          # Copy wrapper scripts
           Copy-Item "packaging\windows\ofs.ps1" "$Staging\" -ErrorAction SilentlyContinue
           foreach ($cmd in @("infuse", "uncover", "reinfuse")) {
             Copy-Item "packaging\windows\$cmd.ps1" "$Staging\" -ErrorAction SilentlyContinue
             Copy-Item "packaging\windows\$cmd.cmd" "$Staging\" -ErrorAction SilentlyContinue
           }
-
-          # Copy stdlib
           New-Item -ItemType Directory -Path "$Staging\stdlib" -Force | Out-Null
           Copy-Item "ofs\stdlib\*.ofs" "$Staging\stdlib\" -ErrorAction SilentlyContinue
-
-          # Copy ofscc source
           New-Item -ItemType Directory -Path "$Staging\ofscc" -Force | Out-Null
           Copy-Item "ofscc\*.ofs" "$Staging\ofscc\" -ErrorAction SilentlyContinue
           Copy-Item "ofscc\README.md" "$Staging\ofscc\" -ErrorAction SilentlyContinue
-
-          # Copy LICENSE
           Copy-Item "LICENSE" "$Staging\LICENSE.txt" -ErrorAction SilentlyContinue
 
-          # Create portable zip
           $ZipName = "ofs-windows-x64-portable-${TAG}.zip"
           Compress-Archive -Path "$Staging\*" -DestinationPath $ZipName -Force
           Write-Output "portable_zip=$ZipName" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
@@ -236,7 +208,6 @@ jobs:
           $AssetsDir = "$RepoRoot\packaging\windows"
           New-Item -ItemType Directory -Path $Dist -Force | Out-Null
 
-          # Copy all needed files into dist/
           Copy-Item "$SeedDir\ofs.exe" "$Dist\"
           Get-ChildItem "$SeedDir" -Filter "*.dll" | Copy-Item -Destination "$Dist\"
           Copy-Item "$SeedDir\libofs_runtime.a" "$Dist\" -ErrorAction SilentlyContinue
@@ -250,16 +221,16 @@ jobs:
           Copy-Item "ofs\stdlib\*.ofs" "$Dist\stdlib\" -ErrorAction SilentlyContinue
           Copy-Item "LICENSE" "$Dist\LICENSE.txt" -ErrorAction SilentlyContinue
 
-          # Build installer with NSIS passing absolute paths as defines
           $InstallerName = "ofs-windows-x64-installer-${TAG}.exe"
+          $InstallerPath = "$RepoRoot\$InstallerName"
           $nsis = Get-Command makensis -ErrorAction SilentlyContinue
           if ($nsis) {
             & makensis `
-              "/DOUTPUT=$InstallerName" `
+              "/DOUTPUT=$InstallerPath" `
               "/DDIST_DIR=$Dist" `
               "/DASSETS_DIR=$AssetsDir" `
               packaging\windows\installer.nsi
-            Write-Output "installer_exe=$InstallerName" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+            Write-Output "installer_exe=$InstallerPath" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           } else {
             Write-Output "::warning::NSIS not found, skipping .exe installer"
             Write-Output "installer_exe=" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
