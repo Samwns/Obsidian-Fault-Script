@@ -1,6 +1,8 @@
-# Obsidian Fault Script - VS Code Extension
+# Obsidian Fault Script - VS Code Extension (Native)
 
 Dedicated documentation for the VS Code extension of Obsidian Fault Script (OFS).
+
+**Now powered by the self-hosted native OFS compiler (C++-free)** ✅
 
 Language / Idioma:
 
@@ -26,8 +28,10 @@ Language / Idioma:
 - Command palette action: `OFS: Check`
 - Command palette action: `OFS: Emit Native Assembly`
 - Built-in OFS theme: `Obsidian Fault Purple`
-- Embedded compiler support (`bin/<platform>/ofs`) with auto-install fallback
-- Self-hosted compiler discovery in workspace (`ofs/ofscc/ofscc`, `ofs/ofscc/ofscc_v2`)
+- **NEW:** Native compiler bundled (self-hosted OFS, no C++ dependencies)
+- Embedded compiler support (`bin/<platform>/ofscc`) with auto-install fallback
+- Self-hosted compiler discovery in workspace (`dist/ofscc`, `ofs/ofscc/ofscc.ofs`)
+- Ultra-fast compile times (no C++ overhead)
 
 This extension should be updated together with language changes. When OFS gains new syntax, stdlib modules, or package workflows, the extension grammar, snippets, hover docs, and README should be updated in the same change.
 
@@ -35,6 +39,7 @@ This extension should be updated together with language changes. When OFS gains 
 
 - VS Code `^1.85.0`
 - OFS compiler in PATH or configured with `ofs.path`
+- **NEW:** Auto-discovers native OFS compiler (self-hosted, C++-free)
 
 ### Settings
 

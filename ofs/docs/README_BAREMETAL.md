@@ -4,24 +4,26 @@ O perfil bare-metal/freestanding permite compilar programas OFS sem dependência
 
 ## Como ativar
 
-1. Gere o build do compilador OFS com o perfil bare-metal:
+1. Prepare o compilador OFS nativo:
 
-   ```sh
+   ```bash
+   # Do diretório raiz do repositório
+   cd ..
+   bash ofscc/scripts/bootstrap-minimal.sh
    cd ofs
-   cmake -B build -DOFS_FREESTANDING=ON
-   cmake --build build
    ```
 
 2. Compile seu programa normalmente:
 
-   ```sh
-   ./build/ofs check examples/baremetal_minimal.ofs
-   ./build/ofs run examples/baremetal_minimal.ofs
+   ```bash
+   ../dist/ofscc check examples/baremetal_minimal.ofs
+   ../dist/ofscc build examples/baremetal_minimal.ofs -o baremetal_minimal
+   ./baremetal_minimal
    ```
 
 ## Exemplo mínimo
 
-Veja `ofs/examples/baremetal_minimal.ofs` para um exemplo de programa sem dependência de libc.
+Veja [examples/baremetal_minimal.ofs](examples/baremetal_minimal.ofs) para um exemplo de programa sem dependência de libc.
 
 ## Limitações atuais
 - Ainda depende do runtime mínimo da OFS.

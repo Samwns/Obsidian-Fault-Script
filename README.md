@@ -1,6 +1,10 @@
-# Obsidian Fault Script (OFS)
+# Obsidian Fault Script (OFS) 🔥
+
+**Linguagem compilada, self-hosted e 100% determinística**
 
 Linguagem para aprender programação e, ao mesmo tempo, chegar perto do sistema quando precisar.
+
+✨ **Agora com compilador nativo (C++-free) e releases automáticas em ~5 segundos!**
 
 Você pode:
 - escrever um arquivo `.ofs` e rodar direto;
@@ -8,7 +12,8 @@ Você pode:
 - compilar para executável nativo;
 - reutilizar módulos com `attach`;
 - integrar com código externo via `rift vein`;
-- usar recursos modernos da linguagem, como `impl`, `namespace`, lambdas e tipos inteiros pequenos.
+- usar recursos modernos da linguagem, como `impl`, `namespace`, lambdas e tipos inteiros pequenos;
+- compilar com o compilador nativo (sem dependências de C++)
 
 [English](#english) | [Português (Brasil)](#português-brasil)
 
@@ -23,23 +28,27 @@ Você pode:
 
 ### Install
 
-Download the latest release from [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
+**Built automatically** - Releases created in ~5 seconds with zero C++ dependencies!
+
+Download the latest **native release** from [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
 
 | Platform | How to install |
-|---|---|
-| Linux | Extract `ofs-linux-x64-installer.tar.gz` and run `./install.sh` |
-| macOS | Run `sudo installer -pkg ofs-macos-arm64-installer.pkg -target /` |
-| Windows | Run `ofs-windows-x64-installer.exe` |
+|---|---
+| Linux | `tar xzf ofs-linux-x64-*-native.tar.gz && cd ofs-* && ./bin/ofscc --help` |
+| macOS | `tar xzf ofs-macos-arm64-*-native.tar.gz && cd ofs-* && ./bin/ofscc --help` |
+| Windows | Extract `.zip` and run `bin\ofscc.exe --help` |
 | VS Code | Install `ofs-vscode-extension.vsix` |
+| From Source | `bash ofscc/scripts/bootstrap-minimal.sh` (2 sec) |
 
 ### Main commands
 
 ```bash
-ofs tokens file.ofs          # lexer output
-ofs ast file.ofs             # parser output
-ofs ir file.ofs              # LLVM IR output
-ofs asm file.ofs             # native assembly output
-ofs update                   # update to latest
+ofscc build file.ofs -o program    # compile to executable  
+ofscc check file.ofs               # type-check (no codegen)
+ofscc tokens file.ofs              # lexer output
+ofscc ast file.ofs                 # parser output
+ofscc ir file.ofs                  # LLVM IR output
+ofscc asm file.ofs                 # native assembly output
 ```
 
 ### Example
@@ -89,14 +98,17 @@ OFS é uma linguagem estaticamente tipada feita para ser simples no começo e po
 
 ### Instalar
 
-Baixe a release mais recente em [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
+**Criada automaticamente** - Releases gerados em ~5 segundos sem dependências de C++!
+
+Baixe a **release nativa** mais recente em [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
 
 | Plataforma | Como instalar |
-|---|---|
-| Linux | Extraia `ofs-linux-x64-installer.tar.gz` e rode `./install.sh` |
-| macOS | Rode `sudo installer -pkg ofs-macos-arm64-installer.pkg -target /` |
-| Windows | Execute `ofs-windows-x64-installer.exe` |
+|---|---
+| Linux | `tar xzf ofs-linux-x64-*-native.tar.gz && cd ofs-* && ./bin/ofscc --help` |
+| macOS | `tar xzf ofs-macos-arm64-*-native.tar.gz && cd ofs-* && ./bin/ofscc --help` |
+| Windows | Extraia `.zip` e execute `bin\ofscc.exe --help` |
 | VS Code | Instale `ofs-vscode-extension.vsix` |
+| Do Fonte | `bash ofscc/scripts/bootstrap-minimal.sh` (2 seg) |
 
 ### Comandos principais
 

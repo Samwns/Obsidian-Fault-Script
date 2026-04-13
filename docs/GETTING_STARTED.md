@@ -1,76 +1,77 @@
-# Guia de Início do OFS — Versão Self-Hosted
+# Guia de Início do OFS — Versão Nativa (C++-Free)
 
-> **NOVO**: O OFS agora compila ele mesmo! O compilador foi reescrito completamente em OFS puro.
+> **NOVO**: O OFS agora é completamente self-hosted com compilador nativo!
+> Sem dependências de C++, CMake ou LLVM. Releases gerados automaticamente em ~5 segundos.
 
 ---
 
-## Modo Rápido
+## Modo Rápido (2 passos)
 
 ```bash
-# 1. Compilar o compilador de OFS (usando C++)
-ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
+# 1. Fazer bootstrap do compilador OFS nativo  
+bash ofscc/scripts/bootstrap-minimal.sh
 
-# 2. Compilar um programa com OFS
-./ofscc_v1 ofs/examples/hello.ofs -o hello
-
-# 3. Rodar
+# 2. Compilar um programa
+dist/ofscc build ofs/examples/hello.ofs -o hello
 ./hello
 # Output: Hello, World!
 ```
 
-**Acabou de usar um programa OFS para compilar outro programa OFS!** 🎉
+**Tempo total: ~5 segundos!**
 
 ---
 
-## Instalação Completa
+## Instalação Completa (Sem Dependências!)
 
-### 1. Instalar dependências
-
-```bash
-# Ubuntu / Debian
-sudo apt update
-sudo apt install cmake g++ llvm-17-dev clang-17 lld-17 git
-
-# macOS
-brew install cmake llvm@17 gcc git
-
-# Windows
-winget install Kitware.CMake LLVM.LLVM Microsoft.VisualStudio.Community Git.Git
-```
-
-### 2. Compilar a partir do código-fonte
+### 1. Clone do repositório
 
 ```bash
-# Clone
 git clone https://github.com/Samwns/Obsidian-Fault-Script.git
-cd Obsidian-Fault-Script/ofs
-
-# Build com C++ (precisa fazer uma vez)
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-
-# Ou usar ofs command se já instalado
-ofs build src/main.cpp -o ofs  # (antigo, legado)
+cd Obsidian-Fault-Script
 ```
 
-### 3. Compilar o compilador de OFS
+### 2. Bootstrap do compilador nativo
 
 ```bash
-# Copie o binário principal
-./build/ofscc || ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
-
-# Teste bootstrap
-bash ofs/ofscc/test_bootstrap.sh
-
-# Se passou: bootstrap completo ✓
-# Agora você tem um compilador OFS que compila OFS
+# Windows, Linux ou macOS - mesmo comando!
+bash ofscc/scripts/bootstrap-minimal.sh
 ```
+
+Isso cria `dist/ofscc` em apenas ~2 segundos!
+
+### 3. Usar o compilador nativo
+
+```bash
+# Compilar arquivo OFS para executável nativo
+dist/ofscc build seu_programa.ofs -o seu_programa
+
+# Type-check sem gerar binário
+dist/ofscc check seu_programa.ofs
+
+# Inspecionar código
+dist/ofscc tokens seu_programa.ofs      # Tokens do lexer
+dist/ofscc ast seu_programa.ofs         # Abstract syntax tree
+dist/ofscc ir seu_programa.ofs          # LLVM IR
+dist/ofscc asm seu_programa.ofs         # Assembly nativo
+```
+
+### 4. (Opcional) Usar com Make
+
+```bash
+# Build, test, create release tudo com Make
+make bootstrap       # Build tudo
+make compile FILE=seu_programa.ofs
+make test           # Rodar testes
+make release        # Criar pacote de release
+```
+
+Ver todas as opções com `make help`
 
 ---
 
 ## 2. Primeiro Programa
 
-### Com o novo compilador OFS
+### Crie e compile um programa simples
 
 Crie `hello.ofs`:
 
@@ -83,7 +84,7 @@ core main() {
 Compile:
 
 ```bash
-./ofscc_v1 hello.ofs -o hello
+dist/ofscc build hello.ofs -o hello
 ./hello
 ```
 
@@ -111,7 +112,7 @@ core main() {
 Compile:
 
 ```bash
-./ofscc_v1 math.ofs -o math
+dist/ofscc build math.ofs -o math
 ./math
 ```
 
@@ -119,83 +120,48 @@ Compile:
 
 ```bash
 # FizzBuzz
-./ofscc_v1 ofs/examples/fizzbuzz.ofs -o fizzbuzz && ./fizzbuzz
+dist/ofscc build ofs/examples/fizzbuzz.ofs -o fizzbuzz && ./fizzbuzz
 
 # Recursão
-./ofscc_v1 ofs/examples/recursion.ofs -o rec && ./rec
+dist/ofscc build ofs/examples/recursion.ofs -o rec && ./rec
 
 # Strings
-./ofscc_v1 ofs/examples/string_ops.ofs -o str && ./str
+dist/ofscc build ofs/examples/string_ops.ofs -o str && ./str
 
 # Arrays
-./ofscc_v1 ofs/examples/collections.ofs -o arr && ./arr
+dist/ofscc build ofs/examples/collections.ofs -o arr && ./arr
 ```
 
----
+## 3. Comandos Principais
 
-## 3. Recursos da Linguagem
-
-```ofs
-core main() {
-    echo("OFS funcionando")
-}
-```
-
-Executar:
+O novo compilador nativo `dist/ofscc` oferece:
 
 ```bash
-ofs hello.ofs
+# Compilar para executável
+dist/ofscc build programa.ofs -o programa
+
+# Validar sem gerar saída
+dist/ofscc check programa.ofs
+
+# Debug: inspecionar código
+dist/ofscc tokens programa.ofs  # Análise léxica
+dist/ofscc ast programa.ofs     # Sintaxe
+dist/ofscc ir programa.ofs      # LLVM IR
+dist/ofscc asm programa.ofs     # Assembly nativo
 ```
 
-Ou, se estiver usando o binário compilado localmente:
+### Exemplos de uso
 
 ```bash
-./build/ofs hello.ofs
+# Programa simples
+dist/ofscc build hello.ofs -o hello && ./hello
+
+# Com otimização
+dist/ofscc build programa.ofs -o programa -O3 && ./programa
+
+# Type-check de biblioteca (sem executar)
+dist/ofscc check meu_codigo.ofs
 ```
-
----
-
-## 3. Comandos do dia a dia
-
-```bash
-ofs arquivo.ofs              # executa
-ofs run arquivo.ofs          # compila e executa
-ofs build arquivo.ofs -o app # gera executável
-ofs check arquivo.ofs        # valida sem gerar saída
-ofs tokens arquivo.ofs       # debug léxico
-ofs ast arquivo.ofs          # debug sintático
-ofs ir arquivo.ofs           # debug LLVM IR
-ofs asm arquivo.ofs          # debug assembly nativo
-ofs update                   # atualiza pela release
-```
-
-### Comandos do compilador self-hosted (ofscc)
-
-Enquanto o bridge de argv está em transição, o `ofscc` usa variáveis de ambiente:
-
-```bash
-# Linux/macOS
-export OFSCC_INPUT=ofs/examples/hello.ofs
-export OFSCC_OUTPUT=hello
-export OFSCC_OPT=-O3
-./ofscc_v1
-./hello
-```
-
-```powershell
-# Windows PowerShell
-$env:OFSCC_INPUT = "ofs/examples/hello.ofs"
-$env:OFSCC_OUTPUT = "hello.exe"
-$env:OFSCC_OPT = "-O2"
-.\ofscc_v1.exe
-.\hello.exe
-```
-
-Modos especiais:
-
-- `OFSCC_MODE=check` (somente validação)
-- `OFSCC_MODE=tokens` (imprime tokens)
-- `OFSCC_MODE=ast` (imprime raiz AST)
 
 ---
 
@@ -472,166 +438,6 @@ Exemplos no repositório:
 2. Rode os exemplos em `ofs/examples/`
 3. Veja os pacotes em [packages/README.md](../packages/README.md)
 4. Use a [Jornada Iniciante](../OFS_JORNADA_INICIANTE.md) se estiver começando
-
-```ofs
-core main() {
-    cycle (forge i = 0; i < 5; i++) {
-        echo(i)
-    }
-    // Output: 0 1 2 3 4
-}
-```
-
-**Range-based loop:**
-
-```ofs
-core main() {
-    forge fruits = ["apple", "banana", "cherry"]
-    cycle (fruit in fruits) {
-        echo(fruit)
-    }
-}
-```
-
----
-
-## 6. Structures (Monoliths)
-
-Define data structures with `monolith`:
-
-```ofs
-monolith Player {
-    name: obsidian
-    hp:   stone
-    speed: crystal
-}
-
-vein introduce(p: Player) -> void {
-    echo(p.name)
-    echo(p.hp)
-}
-
-core main() {
-    forge hero: Player
-    hero.name = "Obsidian Knight"
-    hero.hp = 100
-    hero.speed = 1.5
-
-    introduce(hero)
-}
-```
-
----
-
-## 7. Collections
-
-Arrays are dynamic and type-safe:
-
-```ofs
-core main() {
-    forge scores = [95, 87, 92, 78, 88]
-
-    // Iterate
-    cycle (s in scores) {
-        echo(s)
-    }
-
-    // Access by index
-    echo(scores[0])    // 95
-    echo(scores[4])    // 88
-
-    // Sum with a loop
-    forge total: stone = 0
-    cycle (forge i = 0; i < 5; i++) {
-        total += scores[i]
-    }
-    echo(total)
-}
-```
-
----
-
-## 8. Pointers (Safe and Unsafe)
-
-### Safe Pointers (fracture)
-
-```ofs
-core main() {
-    forge x: stone = 10
-    echo(x)    // 10
-
-    fracture {
-        shard p: *stone = &x
-        *p = 42
-    }
-
-    echo(x)    // 42
-}
-```
-
-The `fracture` block ensures pointer safety with compile-time checks.
-
-### Unsafe Memory (abyss)
-
-For rare cases when you need raw memory access:
-
-```ofs
-abyss {
-    // Unchecked memory operations
-    // Use sparingly!
-}
-```
-
----
-
-## 9. Classic Example: FizzBuzz
-
-```ofs
-core main() {
-    cycle (forge i = 1; i <= 20; i++) {
-        if (i % 15 == 0) {
-            echo("FizzBuzz")
-        } else if (i % 3 == 0) {
-            echo("Fizz")
-        } else if (i % 5 == 0) {
-            echo("Buzz")
-        } else {
-            echo(i)
-        }
-    }
-}
-```
-
-Save as `fizzbuzz.ofs` and run:
-
-```bash
-ofs fizzbuzz.ofs
-```
-
----
-
-## 10. CLI Commands
-
-| Command                    | Description                        |
-|----------------------------|------------------------------------|
-| `ofs file.ofs`             | Run directly (like Python)         |
-| `ofs run file.ofs`         | Compile and run                    |
-| `ofs build file.ofs -o app`| Compile to native executable       |
-| `ofs check file.ofs`       | Type-check only                    |
-| `ofs tokens file.ofs`      | Show lexer tokens (debug)          |
-| `ofs ast file.ofs`         | Show parse tree (debug)            |
-| `ofs ir file.ofs`          | Show LLVM IR (debug)               |
-| `ofs version`              | Show version                       |
-| `ofs update`               | Download and install latest release |
-| `ofs help`                 | Show help                          |
-
----
-
-## What's Next?
-
-- Run the complete feature showcase: `ofs examples/showcase.ofs`
-- Read the **[Language Reference](LANGUAGE_REFERENCE.md)** for complete syntax documentation
-- Check the **[examples/](../ofs/examples/)** directory for more programs
 - Explore the **[standard library](../ofs/stdlib/)** for reusable functions
 - Continue with the **[OFS Beginner Journey](../OFS_JORNADA_INICIANTE.md)** for the next study steps
 

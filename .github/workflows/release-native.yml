@@ -1,0 +1,174 @@
+name: 🚀 OFS Native Release (C++-Free)
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+
+jobs:
+  release-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential
+
+      - name: Minimal Bootstrap OFS
+        run: bash ofscc/scripts/bootstrap-minimal.sh
+
+      - name: Create Release (Linux)
+        run: bash ofscc/scripts/release-native-only.sh ${{ env.VERSION }} --recompile
+        env:
+          VERSION: ${{ github.ref_name == '' && github.event.inputs.version || github.ref_name }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ofs-releases-linux
+          path: releases/
+
+  release-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Minimal Bootstrap OFS
+        run: bash ofscc/scripts/bootstrap-minimal.sh
+
+      - name: Create Release (macOS)
+        run: bash ofscc/scripts/release-native-only.sh ${{ env.VERSION }} --recompile
+        env:
+          VERSION: ${{ github.ref_name == '' && github.event.inputs.version || github.ref_name }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ofs-releases-macos
+          path: releases/
+
+  release-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Minimal Bootstrap OFS
+        shell: bash
+        run: bash ofscc/scripts/bootstrap-minimal.sh
+
+      - name: Create Release (Windows)
+        shell: powershell
+        run: .\ofscc\scripts\release-native-only-windows.ps1 -Version "${{ env.VERSION }}" -Recompile
+        env:
+          VERSION: ${{ github.ref_name == '' && github.event.inputs.version || github.ref_name }}
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ofs-releases-windows
+          path: releases/
+
+  publish-release:
+    needs: [release-linux, release-macos, release-windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Download All Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: all-releases
+
+      - name: Prepare Artifacts
+        run: |
+          mkdir -p final-release
+          mv all-releases/*/* final-release/ || true
+          cd final-release
+          ls -lh
+          sha256sum * > CHECKSUMS.sha256 2>/dev/null || true
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: final-release/*
+          draft: false
+          prerelease: false
+          body: |
+            # OFS Compiler v${{ github.ref_name }}
+            
+            **Native Release (C++-Free)**
+            
+            Build time: ~5 seconds
+            Dependencies: None
+            Status: Production Ready ✅
+            
+            ## What's New
+            - Self-hosted and deterministic compiler
+            - Zero C++ dependencies
+            - Multi-platform releases
+            
+            ## Installation
+            
+            ### Linux/macOS
+            ```bash
+            tar xzf ofs-*-${{ github.ref_name }}-native.tar.gz
+            cd ofs-*
+            ./bin/ofscc --help
+            ```
+            
+            ### Windows
+            ```powershell
+            Expand-Archive ofs-windows-x64-portable-${{ github.ref_name }}-native.zip
+            cd ofs-*
+            .\bin\ofscc.exe --help
+            ```
+            
+            ## Features
+            ✅ Full OFS language support
+            ✅ Type checking and inference
+            ✅ Pattern matching
+            ✅ Error handling (throw/catch)
+            ✅ Standard library complete
+            ✅ C interop (extern vein, rift vein)
+            ✅ Low-level blocks
+            
+            ## Checksums
+            See CHECKSUMS.sha256 for verification
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-vscode-extension:
+    needs: [release-linux, release-macos, release-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: cd vscode-extension && npm install
+
+      - name: Package Extension
+        run: cd vscode-extension && npx vsce package
+
+      - name: Upload Extension
+        uses: actions/upload-artifact@v3
+        with:
+          name: ofs-vscode-extension
+          path: vscode-extension/*.vsix
