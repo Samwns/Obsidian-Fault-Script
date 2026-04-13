@@ -162,6 +162,170 @@ jobs:
           files: dist/**/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+name: Auto Release Nativo
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # ── 1. Bump version and create tag ──────────────────────────────────────
+  version:
+    name: Bump version
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.bump.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump patch version
+        id: bump
+        run: |
+          LATEST=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          if [ -z "$LATEST" ]; then
+            NEW="v1.0.0"
+          else
+            MAJOR=$(echo "$LATEST" | sed 's/v//' | cut -d. -f1)
+            MINOR=$(echo "$LATEST" | cut -d. -f2)
+            PATCH=$(echo "$LATEST" | cut -d. -f3)
+            NEW="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+          fi
+          echo "tag=$NEW" >> "$GITHUB_OUTPUT"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag "$NEW"
+          git push origin "$NEW"
+
+  # ── 2. Build native releases (Linux, macOS, Windows) ───────────────────
+  build:
+    name: Build Release (${{ matrix.name }})
+    needs: version
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            name: linux-x64
+            script: bash ofscc/scripts/release-native-only.sh
+
+          - os: macos-14
+            name: macos-arm64
+            script: bash ofscc/scripts/release-native-only.sh
+
+          - os: windows-2022
+            name: windows-x64
+            script: powershell -Command '.\ofscc\scripts\release-native-only-windows.ps1'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update extension version
+        shell: bash
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+          VERSION="${TAG#v}"
+          node -e "const fs=require('fs');const p='vscode-extension/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
+
+      - name: Bootstrap OFS compiler
+        shell: bash
+        run: bash ofscc/scripts/bootstrap-minimal.sh
+
+      - name: Generate release artifacts
+        shell: bash
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+          VERSION="${TAG#v}"
+          ${{ matrix.script }} --version "$VERSION"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.name }}-${{ needs.version.outputs.tag }}
+          path: |
+            dist/ofs-*
+            CHECKSUMS.sha256
+
+  # ── 3. Build VS Code Extension ─────────────────────────────────────────
+  vscode_extension:
+    name: Package VS Code Extension
+    needs: version
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update extension version
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+          VERSION="${TAG#v}"
+          node -e "const fs=require('fs');const p='vscode-extension/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\\n');"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Package extension
+        run: |
+          cd vscode-extension
+          npm ci
+          npm run package
+
+      - name: Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-${{ needs.version.outputs.tag }}
+          path: "vscode-extension/*.vsix"
+
+  # ── 4. Publish release on GitHub ───────────────────────────────────────
+  publish:
+    name: Publish Release
+    needs: [version, build, vscode_extension]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build changelog
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+          PREV=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sed -n '2p')
+          
+          if [ -z "$PREV" ]; then
+            LOG=$(git log --pretty="- %s (%h)" HEAD)
+          else
+            LOG=$(git log --pretty="- %s (%h)" ${PREV}..HEAD)
+          fi
+          
+          printf "## Mudanças\n\n%s\n" "$LOG" > RELEASE.md
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.version.outputs.tag }}
+          name: OFS ${{ needs.version.outputs.tag }}
+          body_path: RELEASE.md
+          files: dist/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 name: Auto Release
 
 # Dispara a cada push na main — cria tag v1.0.x automaticamente e publica release
