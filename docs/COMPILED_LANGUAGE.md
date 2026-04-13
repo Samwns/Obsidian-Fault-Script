@@ -60,7 +60,7 @@ Mais especificamente, OFS é uma linguagem **compilada com front-end em C como l
 
 Uma linguagem é compilada quando:
 
-1. ✅ **Tem um compilador** — OFS tem compilador (`ofs` em C++, `ofscc` em OFS)
+1. ✅ **Tem um compilador** — OFS tem toolchain self-hosted (`ofs` bootstrap + `ofscc` em OFS)
 2. ✅ **Produz executável nativo** — Não interpreta em runtime, executa bytecode ou máquina virtual
 3. ✅ **Fase de compilação separada** — `ofs programa.ofs` gera executável, depois roda
 4. ✅ **Sem overhead de interpretação** — Executa direto como código de máquina
@@ -97,13 +97,12 @@ OFS **não compila diretamente para máquina**. Em vez disso:
 
 ## As 3 Gerações de Compiladores OFS
 
-### Geração v1: Compilador em C++ 
+### Geracao v1: Compilador bootstrap OFS
 
 ```
 ┌──────────────────────────────┐
-│ ofs.exe (C++ + LLVM)         │
-│ ~3,000 linhas C++            │
-│ Compila .ofs → .c            │
+│ ofs.exe (bootstrap)          │
+│ Compila .ofs -> .c           │
 └──────────────┬───────────────┘
                │
                ▼
@@ -116,7 +115,7 @@ OFS **não compila diretamente para máquina**. Em vez disso:
         gcc -O2 → programa.exe
 ```
 
-**Status**: ✅ Funcional, compila OFS código
+**Status**: ✅ Funcional, gera ofscc_v1
 
 ---
 
@@ -169,12 +168,12 @@ OFS **não compila diretamente para máquina**. Em vez disso:
 ## Mudança Implementada: Compilador
 
 Antes (Phase A-0):
-- Só tinha stdlib em OFS
-- Compilador era só C++
+- stdlib em OFS
+- cadeia self-hosted incompleta
 
 Depois (Phase A-1):
-- Compilador agora em OFS também (~4,500 LOC)
-- Pode se recompilar (v1 → v2 → v3)
+- Compilador em OFS (~4,500 LOC)
+- Recompilacao deterministica (v1 -> v2 -> v3)
 - Auto-hosting pronto
 
 ---
@@ -221,9 +220,9 @@ Node.js:        ~10x mais lento
 - [ ] Suporte a LTO (Link-Time Optimization)
 
 ### Phase D: Auto-Hospedagem Completa (v1.3.0)
-- [ ] Remover C++ como dependency
-- [ ] Apenas OFS + LLVM SDK
-- [ ] Bootstrap verificado em CI/CD
+- [x] Eliminar dependencia primaria de C++
+- [x] Fluxo principal OFS self-hosted
+- [x] Bootstrap verificado em CI/CD
 
 ### Phase E: Distribuição (v1.4.0+)
 - [ ] Instalador gerado por OFS

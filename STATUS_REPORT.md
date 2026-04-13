@@ -7,7 +7,7 @@
 
 ## 🎯 Objetivo Alcançado
 
-O compilador OFS agora é **puramente escrito em OFS**. Quando `ofscc_v2` e `ofscc_v3` produzirem binários idênticos, o compilador C++ se torna opcional.
+O compilador OFS agora é **puramente escrito em OFS**. Quando `ofscc_v2` e `ofscc_v3` produzem binarios identicos, o bootstrap esta validado de ponta a ponta.
 
 | Linguagem | Ano | Milestone |
 |---|---|---|
@@ -128,15 +128,13 @@ Entrada: input.ofs (código-fonte)
 
 ## 🚀 Como Testar o Bootstrap
 
-### 1. Build da v1 (com C++)
+### 1. Build da v1 (bootstrap OFS)
 
 ```bash
 ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
-# ou
-cmake -B build && ./build/ofscc > ofscc_v1
 ```
 
-**Resultado**: `ofscc_v1` — compilador OFS (compilado em C++)
+**Resultado**: `ofscc_v1` - compilador OFS gerado pelo bootstrap
 
 ### 2. Build da v2 (OFS → OFS)
 
@@ -210,7 +208,7 @@ bash ofs/ofscc/test_bootstrap.sh
 - [ ] Atualizar package managers
 - [ ] VS Code extension integration
 - [ ] Release v1.1.0
-- [ ] Remover C++ como dependência primária
+- [x] Remover C++ como dependência primária
 
 ### Fase D: Evolução
 
@@ -251,7 +249,7 @@ ofs/ofscc/
 Isso significa:
 - ✅ A linguagem é Turing-completa
 - ✅ Prova que é expressiva o suficiente para compiladores
-- ✅ Bootstrap completo (C++ → OFS → OFS)
+- ✅ Bootstrap completo (bootstrap OFS -> OFS -> OFS)
 - ✅ Qualificada para produção
 - ✅ Apta para compiler development
 

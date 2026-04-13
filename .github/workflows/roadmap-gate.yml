@@ -17,9 +17,9 @@ jobs:
       - name: Show roadmap completion report
         shell: bash
         run: |
-          done=$(grep -E "- \[[xX✓]\]" ROADMAP.md | wc -l)
-          partial=$(grep -E "- \[~\]" ROADMAP.md | wc -l)
-          todo=$(grep -E "- \[ \]" ROADMAP.md | wc -l)
+          done=$(grep -cE -- "- \[[xX✓]\]" ROADMAP.md || true)
+          partial=$(grep -cE -- "- \[~\]" ROADMAP.md || true)
+          todo=$(grep -cE -- "- \[ \]" ROADMAP.md || true)
           total=$((done + partial + todo))
           if [ "$total" -eq 0 ]; then
             echo "No checklist items found in ROADMAP.md"
@@ -44,7 +44,7 @@ jobs:
       - name: Require roadmap 100% for tagged release
         shell: bash
         run: |
-          if grep -E "- \[[ ~]\]" ROADMAP.md; then
+          if grep -qE -- "- \[[ ~]\]" ROADMAP.md; then
             echo "Roadmap is not 100 percent complete yet."
             exit 1
           fi

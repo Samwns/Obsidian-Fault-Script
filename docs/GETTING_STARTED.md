@@ -7,7 +7,7 @@
 ## Modo Rápido
 
 ```bash
-# 1. Compilar o compilador de OFS (usando C++)
+# 1. Gerar ofscc_v1 a partir do compilador bootstrap (ofs)
 ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
 
 # 2. Compilar um programa com OFS
@@ -29,13 +29,13 @@ ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
 ```bash
 # Ubuntu / Debian
 sudo apt update
-sudo apt install cmake g++ llvm-17-dev clang-17 lld-17 git
+sudo apt install git build-essential
 
 # macOS
-brew install cmake llvm@17 gcc git
+brew install git llvm gcc
 
 # Windows
-winget install Kitware.CMake LLVM.LLVM Microsoft.VisualStudio.Community Git.Git
+winget install LLVM.LLVM Git.Git
 ```
 
 ### 2. Compilar a partir do código-fonte
@@ -43,21 +43,17 @@ winget install Kitware.CMake LLVM.LLVM Microsoft.VisualStudio.Community Git.Git
 ```bash
 # Clone
 git clone https://github.com/Samwns/Obsidian-Fault-Script.git
-cd Obsidian-Fault-Script/ofs
+cd Obsidian-Fault-Script
 
-# Build com C++ (precisa fazer uma vez)
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-
-# Ou usar ofs command se já instalado
-ofs build src/main.cpp -o ofs  # (antigo, legado)
+# Com compilador bootstrap ja instalado, gere o compilador self-hosted
+ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
 ```
 
 ### 3. Compilar o compilador de OFS
 
 ```bash
-# Copie o binário principal
-./build/ofscc || ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
+# Binario bootstrap -> ofscc_v1
+ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
 
 # Teste bootstrap
 bash ofs/ofscc/test_bootstrap.sh
