@@ -12,6 +12,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+env:
+  GITHUB_REPO: Samwns/Obsidian-Fault-Script
+
 jobs:
   build-linux:
     name: Build & Test (Linux)
@@ -19,24 +22,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download seed compiler
+      - name: Install OFS via official installer
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download --repo Samwns/Obsidian-Fault-Script \
-            --pattern "ofs-linux-x64-installer-*.tar.gz" --dir /tmp/seed
-          tar xzf /tmp/seed/ofs-linux-x64-installer-*.tar.gz -C /tmp/seed
-          mkdir -p dist
-          cp /tmp/seed/ofs dist/ofscc
-          chmod +x dist/ofscc
-          echo "Seed compiler:"
-          dist/ofscc --version || echo "ready"
+          gh release download --repo $GITHUB_REPO \
+            --pattern "ofs-linux-x64-installer-*.tar.gz" --dir /tmp/ofs-dl
+          mkdir -p /tmp/ofs-install
+          tar xzf /tmp/ofs-dl/ofs-linux-x64-installer-*.tar.gz -C /tmp/ofs-install
+          cd /tmp/ofs-install
+          if [ -f install.sh ]; then
+            sudo bash install.sh
+          else
+            sudo install -m 0755 ofs /usr/local/bin/ofs
+          fi
+          echo "Installed:"
+          ofs version || ofs --version || echo "ofs ready"
 
       - name: Run Examples
         run: |
           for ex in ofs/examples/*.ofs; do
             echo "--- $ex ---"
-            timeout 5 ./dist/ofscc run "$ex" 2>&1 || true
+            timeout 5 ofs run "$ex" 2>&1 || true
           done
         continue-on-error: true
 
@@ -46,31 +53,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download seed compiler
+      - name: Install OFS via official installer
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download --repo Samwns/Obsidian-Fault-Script \
-            --pattern "ofs-macos-arm64-installer-*.pkg" --dir /tmp/seed
-          sudo installer -pkg /tmp/seed/ofs-macos-arm64-installer-*.pkg -target /
-          mkdir -p dist
-          cp /usr/local/bin/ofs dist/ofscc 2>/dev/null \
-            || cp /opt/ofs/bin/ofs dist/ofscc 2>/dev/null \
-            || find / -maxdepth 4 -name "ofs" -type f 2>/dev/null | head -1 | xargs -I{} cp {} dist/ofscc
-          chmod +x dist/ofscc
-          echo "Seed compiler:"
-          dist/ofscc --version || echo "ready"
-        continue-on-error: true
+          gh release download --repo $GITHUB_REPO \
+            --pattern "ofs-macos-arm64-installer-*.pkg" --dir /tmp/ofs-dl
+          sudo installer -pkg /tmp/ofs-dl/ofs-macos-arm64-installer-*.pkg -target /
+          echo "Installed:"
+          ofs version || ofs --version || echo "ofs ready"
 
       - name: Run Examples
-        if: success()
         run: |
-          if [ -x dist/ofscc ]; then
-            for ex in ofs/examples/*.ofs; do
-              echo "--- $ex ---"
-              timeout 5 ./dist/ofscc run "$ex" 2>&1 || true
-            done
-          fi
+          for ex in ofs/examples/*.ofs; do
+            echo "--- $ex ---"
+            gtimeout 5 ofs run "$ex" 2>&1 || timeout 5 ofs run "$ex" 2>&1 || true
+          done
         continue-on-error: true
 
   build-windows:
@@ -79,32 +77,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download seed compiler
+      - name: Install OFS via portable zip
         shell: powershell
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download --repo Samwns/Obsidian-Fault-Script `
+          gh release download --repo $env:GITHUB_REPO `
             --pattern "ofs-windows-x64-portable-*.zip" --dir seed-dl
           $zip = Get-ChildItem seed-dl -Filter "*.zip" | Select-Object -First 1
-          Expand-Archive $zip.FullName -DestinationPath seed-extracted
-          New-Item -ItemType Directory -Path dist -Force | Out-Null
-          $ofsExe = Get-ChildItem seed-extracted -Recurse -Filter "ofs.exe" | Select-Object -First 1
-          if ($ofsExe) {
-            Copy-Item $ofsExe.FullName dist\ofscc.exe
-            Get-ChildItem $ofsExe.DirectoryName -Filter "*.dll" | Copy-Item -Destination dist\
-          }
-          Write-Output "Seed compiler:"
-          dist\ofscc.exe --version
+          Expand-Archive $zip.FullName -DestinationPath "$env:LOCALAPPDATA\ofs"
+          $ofsDir = Get-ChildItem "$env:LOCALAPPDATA\ofs" -Recurse -Filter "ofs.exe" |
+            Select-Object -First 1 | Split-Path -Parent
+          echo "$ofsDir" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          Write-Output "Installed from: $ofsDir"
+
+      - name: Verify install
+        shell: powershell
+        run: ofs version
 
       - name: Run Examples
         shell: powershell
         run: |
-          if (Test-Path dist\ofscc.exe) {
-            Get-ChildItem "ofs\examples\*.ofs" | ForEach-Object {
-              Write-Output "--- $_ ---"
-              & .\dist\ofscc.exe run $_.FullName 2>&1 | Out-Null
-            }
+          Get-ChildItem "ofs\examples\*.ofs" | ForEach-Object {
+            Write-Output "--- $($_.Name) ---"
+            & ofs run $_.FullName 2>&1 | Out-String | Write-Output
           }
         continue-on-error: true
 

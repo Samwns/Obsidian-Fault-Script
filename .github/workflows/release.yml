@@ -40,101 +40,239 @@ jobs:
           git tag "$NEW"
           git push origin "$NEW"
 
-  build:
-    name: Build (${{ matrix.name }})
+  # ── Linux ────────────────────────────────────────────────────────────
+  build-linux:
+    name: Build (linux-x64)
     needs: version
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-22.04
-            name: linux-x64
-            asset_pattern: linux-x64-installer.*\.tar\.gz
-            seed_type: tar
-
-          - os: macos-14
-            name: macos-arm64
-            asset_pattern: macos.*(\.pkg|\.tar\.gz)
-            seed_type: pkg
-
-          - os: windows-2022
-            name: windows-x64
-            asset_pattern: windows.*portable.*\.zip
-            seed_type: zip
-
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download seed compiler (Linux/macOS)
-        if: runner.os != 'Windows'
-        shell: bash
+      - name: Install OFS from latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          ASSET=$(curl -sL "https://api.github.com/repos/$GITHUB_REPO/releases/latest" \
-            | grep -oP '"browser_download_url":\s*"\K[^"]*${{ matrix.asset_pattern }}[^"]*' | head -1)
-          if [ -z "$ASSET" ]; then
-            echo "::warning::No seed asset found for ${{ matrix.name }}"
-            exit 1
+          gh release download --repo $GITHUB_REPO \
+            --pattern "ofs-linux-x64-installer-*.tar.gz" --dir /tmp/ofs-dl
+          mkdir -p /tmp/ofs-seed
+          tar xzf /tmp/ofs-dl/ofs-linux-x64-installer-*.tar.gz -C /tmp/ofs-seed
+          cd /tmp/ofs-seed
+          if [ -f install.sh ]; then
+            sudo bash install.sh
+          else
+            sudo install -m 0755 ofs /usr/local/bin/ofs
           fi
-          echo "Downloading: $ASSET"
-          curl -sL "$ASSET" -o seed-archive
-          mkdir -p dist
-          if [[ "$ASSET" == *tar.gz ]]; then
-            tar xzf seed-archive
-            find . -maxdepth 2 -name "ofs" -type f -exec cp {} dist/ofscc \;
-          fi
-          chmod +x dist/ofscc 2>/dev/null || true
-          ls -la dist/
+          echo "Seed installed:"
+          ofs version || ofs --version || echo "ofs ready"
 
-      - name: Download seed compiler (Windows)
-        if: runner.os == 'Windows'
-        shell: powershell
+      - name: Build installer tarball
         run: |
-          $release = Invoke-RestMethod "https://api.github.com/repos/$env:GITHUB_REPO/releases/latest"
-          $asset = $release.assets | Where-Object { $_.name -match "windows.*portable.*\.zip" } | Select-Object -First 1
-          if (-not $asset) {
-            $asset = $release.assets | Where-Object { $_.name -match "windows.*\.zip" } | Select-Object -First 1
-          }
-          if ($asset) {
-            Write-Output "Downloading: $($asset.browser_download_url)"
-            Invoke-WebRequest $asset.browser_download_url -OutFile seed.zip
-            Expand-Archive seed.zip -DestinationPath seed-extracted
-            New-Item -ItemType Directory -Path dist -Force | Out-Null
-            $ofsExe = Get-ChildItem seed-extracted -Recurse -Filter "ofs.exe" | Select-Object -First 1
-            if ($ofsExe) {
-              Copy-Item $ofsExe.FullName dist/ofscc.exe
-              Get-ChildItem $ofsExe.DirectoryName -Filter "*.dll" | Copy-Item -Destination dist/
-            }
-          }
+          TAG="${{ needs.version.outputs.tag }}"
+          STAGING="staging"
+          mkdir -p "$STAGING"
 
-      - name: Copy stdlib
-        shell: bash
+          # Copy ofs binary from installed location
+          cp /usr/local/bin/ofs "$STAGING/ofs"
+          chmod +x "$STAGING/ofs"
+
+          # Copy stdlib
+          cp -r ofs/stdlib "$STAGING/stdlib"
+
+          # Copy ofscc source (self-hosted compiler)
+          cp -r ofscc "$STAGING/ofscc"
+
+          # Copy install script and packaging extras
+          cp packaging/linux/install.sh "$STAGING/"
+          chmod +x "$STAGING/install.sh"
+          for cmd in infuse uncover reinfuse; do
+            [ -f "packaging/linux/$cmd" ] && cp "packaging/linux/$cmd" "$STAGING/" && chmod +x "$STAGING/$cmd"
+          done
+
+          # Copy runtime lib if present
+          [ -f /usr/local/lib/libofs_runtime.a ] && cp /usr/local/lib/libofs_runtime.a "$STAGING/"
+
+          # Copy assets
+          [ -f packaging/assets/ofs-256.png ] && cp packaging/assets/ofs-256.png "$STAGING/ofs.png"
+          cp LICENSE "$STAGING/" 2>/dev/null || true
+
+          # Create tarball
+          ARCHIVE="ofs-linux-x64-installer-${TAG}.tar.gz"
+          tar czf "$ARCHIVE" -C "$STAGING" .
+          echo "archive=$ARCHIVE" >> "$GITHUB_ENV"
+          ls -lh "$ARCHIVE"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-linux-x64-${{ needs.version.outputs.tag }}
+          path: ${{ env.archive }}
+
+  # ── macOS ────────────────────────────────────────────────────────────
+  build-macos:
+    name: Build (macos-arm64)
+    needs: version
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OFS from latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          mkdir -p dist/stdlib
-          cp -r ofs/stdlib/* dist/stdlib/ 2>/dev/null || true
+          gh release download --repo $GITHUB_REPO \
+            --pattern "ofs-macos-arm64-installer-*.pkg" --dir /tmp/ofs-dl
+          sudo installer -pkg /tmp/ofs-dl/ofs-macos-arm64-installer-*.pkg -target /
+          echo "Seed installed:"
+          ofs version || ofs --version || echo "ofs ready"
 
-      - name: Generate release artifacts
-        shell: bash
+      - name: Build installer pkg
         run: |
           TAG="${{ needs.version.outputs.tag }}"
           VERSION="${TAG#v}"
-          if [ "${{ runner.os }}" = "Windows" ]; then
-            powershell -Command ".\ofscc\scripts\release-native-only-windows.ps1 -Version '$VERSION'"
-          else
-            bash ofscc/scripts/release-native-only.sh "$VERSION"
-          fi
-        env:
-          EXISTING_COMPILER: dist/ofscc
+          ROOT="pkg-root"
+          mkdir -p "$ROOT/usr/local/bin"
+          mkdir -p "$ROOT/usr/local/share/ofs/stdlib"
+          mkdir -p "$ROOT/usr/local/share/ofs/ofscc"
 
-      - name: Upload artifacts
+          # Copy ofs binary
+          OFS_BIN=$(command -v ofs || echo /usr/local/bin/ofs)
+          cp "$OFS_BIN" "$ROOT/usr/local/bin/ofs"
+          chmod +x "$ROOT/usr/local/bin/ofs"
+
+          # Copy stdlib and ofscc source
+          cp ofs/stdlib/*.ofs "$ROOT/usr/local/share/ofs/stdlib/" 2>/dev/null || true
+          cp -r ofscc/* "$ROOT/usr/local/share/ofs/ofscc/" 2>/dev/null || true
+
+          # Copy runtime lib if present
+          if [ -f /usr/local/lib/libofs_runtime.a ]; then
+            mkdir -p "$ROOT/usr/local/lib"
+            cp /usr/local/lib/libofs_runtime.a "$ROOT/usr/local/lib/"
+          fi
+
+          # Build .pkg
+          PKG="ofs-macos-arm64-installer-${TAG}.pkg"
+          pkgbuild --root "$ROOT" \
+            --identifier com.obsidian-fault-script.ofs \
+            --version "$VERSION" \
+            --install-location / \
+            "$PKG"
+          echo "pkg=$PKG" >> "$GITHUB_ENV"
+          ls -lh "$PKG"
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: release-${{ matrix.name }}-${{ needs.version.outputs.tag }}
-          path: |
-            dist/ofs-*
-            release-staging-native/
-            CHECKSUMS.sha256
+          name: release-macos-arm64-${{ needs.version.outputs.tag }}
+          path: ${{ env.pkg }}
 
+  # ── Windows ──────────────────────────────────────────────────────────
+  build-windows:
+    name: Build (windows-x64)
+    needs: version
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install OFS from latest release
+        shell: powershell
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download --repo $env:GITHUB_REPO `
+            --pattern "ofs-windows-x64-portable-*.zip" --dir seed-dl
+          $zip = Get-ChildItem seed-dl -Filter "*.zip" | Select-Object -First 1
+          Expand-Archive $zip.FullName -DestinationPath seed-extracted
+          $ofsExe = Get-ChildItem seed-extracted -Recurse -Filter "ofs.exe" | Select-Object -First 1
+          $seedDir = $ofsExe.DirectoryName
+          Write-Output "Seed dir: $seedDir"
+          echo "SEED_DIR=$seedDir" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: Build portable zip
+        shell: powershell
+        run: |
+          $TAG = "${{ needs.version.outputs.tag }}"
+          $SeedDir = $env:SEED_DIR
+          $Staging = "portable-staging"
+          New-Item -ItemType Directory -Path $Staging -Force | Out-Null
+
+          # Copy ofs.exe + DLLs from seed
+          Copy-Item "$SeedDir\ofs.exe" "$Staging\"
+          Get-ChildItem "$SeedDir" -Filter "*.dll" | Copy-Item -Destination "$Staging\"
+          Copy-Item "$SeedDir\libofs_runtime.a" "$Staging\" -ErrorAction SilentlyContinue
+          Copy-Item "$SeedDir\ofs_runtime.lib" "$Staging\" -ErrorAction SilentlyContinue
+
+          # Copy wrapper scripts
+          Copy-Item "packaging\windows\ofs.ps1" "$Staging\" -ErrorAction SilentlyContinue
+          foreach ($cmd in @("infuse", "uncover", "reinfuse")) {
+            Copy-Item "packaging\windows\$cmd.ps1" "$Staging\" -ErrorAction SilentlyContinue
+            Copy-Item "packaging\windows\$cmd.cmd" "$Staging\" -ErrorAction SilentlyContinue
+          }
+
+          # Copy stdlib
+          New-Item -ItemType Directory -Path "$Staging\stdlib" -Force | Out-Null
+          Copy-Item "ofs\stdlib\*.ofs" "$Staging\stdlib\" -ErrorAction SilentlyContinue
+
+          # Copy ofscc source
+          New-Item -ItemType Directory -Path "$Staging\ofscc" -Force | Out-Null
+          Copy-Item "ofscc\*.ofs" "$Staging\ofscc\" -ErrorAction SilentlyContinue
+          Copy-Item "ofscc\README.md" "$Staging\ofscc\" -ErrorAction SilentlyContinue
+
+          # Copy LICENSE
+          Copy-Item "LICENSE" "$Staging\LICENSE.txt" -ErrorAction SilentlyContinue
+
+          # Create portable zip
+          $ZipName = "ofs-windows-x64-portable-${TAG}.zip"
+          Compress-Archive -Path "$Staging\*" -DestinationPath $ZipName -Force
+          Write-Output "portable_zip=$ZipName" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          Get-ChildItem $ZipName
+
+      - name: Build NSIS installer
+        shell: powershell
+        run: |
+          $TAG = "${{ needs.version.outputs.tag }}"
+          $SeedDir = $env:SEED_DIR
+          $Dist = "dist"
+          New-Item -ItemType Directory -Path $Dist -Force | Out-Null
+
+          # Copy all needed files into dist/ (NSIS expects them there)
+          Copy-Item "$SeedDir\ofs.exe" "$Dist\"
+          Get-ChildItem "$SeedDir" -Filter "*.dll" | Copy-Item -Destination "$Dist\"
+          Copy-Item "$SeedDir\libofs_runtime.a" "$Dist\" -ErrorAction SilentlyContinue
+          Copy-Item "$SeedDir\ofs_runtime.lib" "$Dist\" -ErrorAction SilentlyContinue
+          Copy-Item "packaging\windows\ofs.ps1" "$Dist\" -ErrorAction SilentlyContinue
+          foreach ($cmd in @("infuse", "uncover", "reinfuse")) {
+            Copy-Item "packaging\windows\$cmd.ps1" "$Dist\" -ErrorAction SilentlyContinue
+            Copy-Item "packaging\windows\$cmd.cmd" "$Dist\" -ErrorAction SilentlyContinue
+          }
+          New-Item -ItemType Directory -Path "$Dist\stdlib" -Force | Out-Null
+          Copy-Item "ofs\stdlib\*.ofs" "$Dist\stdlib\" -ErrorAction SilentlyContinue
+          Copy-Item "LICENSE" "$Dist\LICENSE.txt" -ErrorAction SilentlyContinue
+
+          # Build installer with NSIS
+          $InstallerName = "ofs-windows-x64-installer-${TAG}.exe"
+          $nsis = Get-Command makensis -ErrorAction SilentlyContinue
+          if ($nsis) {
+            & makensis /DOUTPUT="$InstallerName" packaging\windows\installer.nsi
+            Write-Output "installer_exe=$InstallerName" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          } else {
+            Write-Output "::warning::NSIS not found, skipping .exe installer"
+            Write-Output "installer_exe=" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          }
+
+      - name: Upload portable zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows-portable-${{ needs.version.outputs.tag }}
+          path: ${{ env.portable_zip }}
+
+      - name: Upload installer exe
+        if: env.installer_exe != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows-installer-${{ needs.version.outputs.tag }}
+          path: ${{ env.installer_exe }}
+
+  # ── VS Code Extension ───────────────────────────────────────────────
   vscode_extension:
     name: Package VS Code Extension
     needs: version
@@ -164,9 +302,10 @@ jobs:
           name: extension-${{ needs.version.outputs.tag }}
           path: "vscode-extension/*.vsix"
 
+  # ── Publish ─────────────────────────────────────────────────────────
   publish:
     name: Publish Release
-    needs: [version, build, vscode_extension]
+    needs: [version, build-linux, build-macos, build-windows, vscode_extension]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -187,8 +326,14 @@ jobs:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
-          path: dist
+          path: artifacts
           merge-multiple: true
+
+      - name: Generate checksums
+        run: |
+          cd artifacts
+          sha256sum *.tar.gz *.pkg *.zip *.exe *.vsix 2>/dev/null > CHECKSUMS.sha256 || true
+          cat CHECKSUMS.sha256
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -196,6 +341,12 @@ jobs:
           tag_name: ${{ needs.version.outputs.tag }}
           name: OFS ${{ needs.version.outputs.tag }}
           body_path: RELEASE.md
-          files: dist/**/*
+          files: |
+            artifacts/*.tar.gz
+            artifacts/*.pkg
+            artifacts/*.zip
+            artifacts/*.exe
+            artifacts/*.vsix
+            artifacts/CHECKSUMS.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
