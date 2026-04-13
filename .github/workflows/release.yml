@@ -5,6 +5,11 @@ on:
     tags:
       - 'v*'
   workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Tag de release (ex: v2.0.0) para execucao manual'
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -29,6 +34,11 @@ jobs:
           if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
             echo "OFS_RELEASE_VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
             echo "RELEASE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+          elif [[ -n "${{ github.event.inputs.release_tag }}" ]]; then
+            manual_tag="${{ github.event.inputs.release_tag }}"
+            manual_version="${manual_tag#v}"
+            echo "OFS_RELEASE_VERSION=${manual_version}" >> $GITHUB_ENV
+            echo "RELEASE_TAG=${manual_tag}" >> $GITHUB_ENV
           else
             echo "OFS_RELEASE_VERSION=2.0.0" >> $GITHUB_ENV
             echo "RELEASE_TAG=v2.0.0" >> $GITHUB_ENV
@@ -37,9 +47,9 @@ jobs:
       - name: Download latest bootstrap compiler
         run: |
           api="https://api.github.com/repos/${REPO}/releases/latest"
-          asset=$(curl -fsSL "$api" | jq -r '.assets[].browser_download_url | select(test("ofs-linux-x64-installer.*\\.tar\\.gz$"))' | head -n 1)
+          asset=$(curl -fsSL "$api" | jq -r '.assets[].browser_download_url | select(test("ofs-linux-x64-(selfhosted|installer).*(\\.tar\\.gz)$"))' | head -n 1)
           if [ -z "$asset" ]; then
-            echo "Linux bootstrap asset not found in latest release"
+            echo "Linux bootstrap asset not found in latest release (expected selfhosted/installer tar.gz)"
             exit 1
           fi
           mkdir -p .toolchain
@@ -67,11 +77,11 @@ jobs:
 
           tar -czf ofs-linux-x64-selfhosted-${RELEASE_TAG}.tar.gz -C dist .
 
-          cp packaging/generated-ofs-2.0.0-installer.nsi ofs-windows-installer-script-${RELEASE_TAG}.nsi
-          cp packaging/generated-ofs-2.0.0-install.sh ofs-linux-install-${RELEASE_TAG}.sh
+          cp "$(ls packaging/generated-ofs-*-installer.nsi | head -n 1)" ofs-windows-installer-script-${RELEASE_TAG}.nsi
+          cp "$(ls packaging/generated-ofs-*-install.sh | head -n 1)" ofs-linux-install-${RELEASE_TAG}.sh
           cp packaging/generated-DEBIAN.control ofs-linux-control-${RELEASE_TAG}.txt
           cp packaging/generated-ofs.rb ofs-homebrew-formula-${RELEASE_TAG}.rb
-          cp packaging/generated-ofs-2.0.0-macos-install.sh ofs-macos-install-${RELEASE_TAG}.sh
+          cp "$(ls packaging/generated-ofs-*-macos-install.sh | head -n 1)" ofs-macos-install-${RELEASE_TAG}.sh
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -87,7 +97,7 @@ jobs:
 
   publish-release:
     name: Publish Release Assets
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: build-and-package
     runs-on: ubuntu-latest
     steps:
@@ -99,6 +109,7 @@ jobs:
       - name: Publish GitHub release assets
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || github.event.inputs.release_tag || 'v2.0.0' }}
           files: |
             ofs-linux-x64-selfhosted-*.tar.gz
             ofs-windows-installer-script-*.nsi

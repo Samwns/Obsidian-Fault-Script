@@ -31,9 +31,9 @@ jobs:
       - name: Download latest bootstrap compiler
         run: |
           api="https://api.github.com/repos/${REPO}/releases/latest"
-          asset=$(curl -fsSL "$api" | jq -r '.assets[].browser_download_url | select(test("ofs-linux-x64-installer.*\\.tar\\.gz$"))' | head -n 1)
+          asset=$(curl -fsSL "$api" | jq -r '.assets[].browser_download_url | select(test("ofs-linux-x64-(selfhosted|installer).*(\\.tar\\.gz)$"))' | head -n 1)
           if [ -z "$asset" ]; then
-            echo "Linux bootstrap asset not found in latest release"
+            echo "Linux bootstrap asset not found in latest release (expected selfhosted/installer tar.gz)"
             exit 1
           fi
           mkdir -p .toolchain
