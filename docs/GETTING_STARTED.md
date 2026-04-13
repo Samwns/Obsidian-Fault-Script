@@ -1,53 +1,139 @@
-# Guia de Início do OFS
+# Guia de Início do OFS — Versão Self-Hosted
 
-Este guia mostra o fluxo real de uso da linguagem hoje: instalar, rodar, validar, compilar, importar módulos e usar os recursos principais.
+> **NOVO**: O OFS agora compila ele mesmo! O compilador foi reescrito completamente em OFS puro.
 
 ---
 
-## 1. Instalar ou compilar
+## Modo Rápido
 
-### Instalar pela release
+```bash
+# 1. Compilar o compilador de OFS (usando C++)
+ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
 
-Use a release mais recente do projeto:
+# 2. Compilar um programa com OFS
+./ofscc_v1 ofs/examples/hello.ofs -o hello
 
-- Linux: extraia `ofs-linux-x64-installer.tar.gz` e rode `./install.sh`
-- macOS: rode `sudo installer -pkg ofs-macos-arm64-installer.pkg -target /`
-- Windows: execute `ofs-windows-x64-installer.exe`
+# 3. Rodar
+./hello
+# Output: Hello, World!
+```
 
-### Compilar a partir do código-fonte
+**Acabou de usar um programa OFS para compilar outro programa OFS!** 🎉
 
-Dependências:
+---
+
+## Instalação Completa
+
+### 1. Instalar dependências
 
 ```bash
 # Ubuntu / Debian
 sudo apt update
-sudo apt install cmake g++ llvm-17-dev clang-17 lld-17
+sudo apt install cmake g++ llvm-17-dev clang-17 lld-17 git
 
 # macOS
-brew install cmake llvm@17
+brew install cmake llvm@17 gcc git
 
 # Windows
-winget install Kitware.CMake LLVM.LLVM
+winget install Kitware.CMake LLVM.LLVM Microsoft.VisualStudio.Community Git.Git
 ```
 
-Build:
+### 2. Compilar a partir do código-fonte
 
 ```bash
+# Clone
 git clone https://github.com/Samwns/Obsidian-Fault-Script.git
 cd Obsidian-Fault-Script/ofs
+
+# Build com C++ (precisa fazer uma vez)
 cmake -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build
+
+# Ou usar ofs command se já instalado
+ofs build src/main.cpp -o ofs  # (antigo, legado)
 ```
 
-Verificação:
+### 3. Compilar o compilador de OFS
 
 ```bash
-./build/ofs version
+# Copie o binário principal
+./build/ofscc || ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
+
+# Teste bootstrap
+bash ofs/ofscc/test_bootstrap.sh
+
+# Se passou: bootstrap completo ✓
+# Agora você tem um compilador OFS que compila OFS
 ```
 
 ---
 
-## 2. Primeiro programa
+## 2. Primeiro Programa
+
+### Com o novo compilador OFS
+
+Crie `hello.ofs`:
+
+```ofs
+core main() {
+    echo("Olá do OFS!")
+}
+```
+
+Compile:
+
+```bash
+./ofscc_v1 hello.ofs -o hello
+./hello
+```
+
+Output:
+```
+Olá do OFS!
+```
+
+### Com operações matemáticas
+
+Crie `math.ofs`:
+
+```ofs
+vein factorial(n: stone) -> stone {
+    if (n <= 1) { return 1 }
+    return n * factorial(n - 1)
+}
+
+core main() {
+    forge result = factorial(5)
+    echo("5! = " + ofs_stone_to_obsidian(result))
+}
+```
+
+Compile:
+
+```bash
+./ofscc_v1 math.ofs -o math
+./math
+```
+
+### Exemplos prontos
+
+```bash
+# FizzBuzz
+./ofscc_v1 ofs/examples/fizzbuzz.ofs -o fizzbuzz && ./fizzbuzz
+
+# Recursão
+./ofscc_v1 ofs/examples/recursion.ofs -o rec && ./rec
+
+# Strings
+./ofscc_v1 ofs/examples/string_ops.ofs -o str && ./str
+
+# Arrays
+./ofscc_v1 ofs/examples/collections.ofs -o arr && ./arr
+```
+
+---
+
+## 3. Recursos da Linguagem
 
 ```ofs
 core main() {

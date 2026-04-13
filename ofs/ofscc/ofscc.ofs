@@ -1,0 +1,87 @@
+// OFS Compiler — Main Driver
+// Complete compilation pipeline and bootstrap
+
+attach {F:ofscc/fileio.ofs}
+attach {F:ofscc/tokens.ofs}
+attach {F:ofscc/nodes.ofs}
+attach {F:ofscc/ast.ofs}
+attach {F:ofscc/symbols.ofs}
+attach {F:ofscc/lexer.ofs}
+attach {F:ofscc/parser.ofs}
+attach {F:ofscc/typeck.ofs}
+attach {F:ofscc/codegen.ofs}
+
+vein usage() -> void {
+    echo("Usage: ofscc [options] <input.ofs>")
+    echo("Options:")
+    echo("  -o <output>      Output executable (default: a.out)")
+    echo("  --check          Type-check only (no codegen)")
+    echo("  --tokens         Print tokens and exit")
+    echo("  --ast            Print AST and exit")
+    echo("  --help           Show this message")
+}
+
+core main() {
+    echo("ofscc — OFS self-hosted compiler v0.1")
+    echo("")
+    
+    // For now, hardcoded input file + output
+    // TODO: parse arguments from command line via extern
+    forge input_file = "input.ofs"
+    forge output_file = "a.out"
+    forge c_output = "output.c"
+    forge check_only = false
+    forge print_tokens = false
+    forge print_ast = false
+    
+    // Phase 1: Read source
+    echo("[1/6] Reading source...")
+    forge src: obsidian = ""
+    tremor {
+        src = read_file(input_file)
+    } catch (e: obsidian) {
+        echo("ERROR: " + e)
+        exit(1)
+    }
+    echo("  OK — " + ofs_stone_to_obsidian(ofs_str_len(src)) + " bytes")
+    
+    // Phase 2: Lexical analysis
+    echo("[2/6] Lexical analysis...")
+    forge tokens: Array<Token> = lexer.lex(src)
+    forge token_count = ofs_array_len(tokens)
+    echo("  OK — " + ofs_stone_to_obsidian(token_count) + " tokens")
+    
+    // Phase 3: Parsing
+    echo("[3/6] Parsing...")
+    forge root_id = parser.parse(tokens)
+    forge node_count = node_pool_len()
+    echo("  OK — " + ofs_stone_to_obsidian(node_count) + " AST nodes")
+    
+    // Phase 4: Type checking
+    echo("[4/6] Type checking...")
+    typeck.check(root_id)
+    echo("  OK")
+    
+    // Phase 5: Code generation
+    echo("[5/6] Code generation...")
+    cg_open(c_output)
+    codegen.generate(root_id)
+    cg_close()
+    echo("  OK — " + c_output + " generated")
+    
+    // Phase 6: C compilation
+    echo("[6/6] C compilation...")
+    forge c_compiler_cmd = "gcc -O2 -o " + output_file + " " + c_output + " 2>&1"
+    forge compile_result = system(c_compiler_cmd)
+    
+    if (compile_result == 0) {
+        echo("  OK")
+        echo("")
+        echo("SUCCESS: " + output_file + " ready")
+    } else {
+        echo("  FAILED — check " + c_output)
+        echo("")
+        echo("COMPILATION ERROR: C compiler returned " + ofs_stone_to_obsidian(compile_result))
+        exit(1)
+    }
+}

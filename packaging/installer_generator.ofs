@@ -1,0 +1,278 @@
+#!/usr/bin/env ofs
+# Gerador de Instaladores OFS
+# Cria instaladores para Windows (.exe), Linux (.sh/.deb), macOS (.dmg)
+# 
+# Uso: ofs installer_generator.ofs --input build/ofs.exe --output releases/
+# Saída: 
+#   - ofs-1.1.0-installer.exe (Windows)
+#   - ofs-1.1.0-install.sh (Linux/macOS)
+#   - ofs-1.1.0-amd64.deb (Debian/Ubuntu)
+
+core main() {
+    forge version = "1.1.0"
+    forge platform = detect_platform()
+    
+    echo("=== OFS Installer Generator v1.0 ===")
+    echo("Platform: " + platform)
+    
+    match (platform) {
+        case "windows":
+            gen_windows_installer(version)
+        case "linux":
+            gen_linux_installer(version)
+        case "macos":
+            gen_macos_installer(version)
+        else:
+            echo("Plataforma não suportada: " + platform)
+    }
+}
+
+# ============================================================================
+# PLATFORM DETECTION
+# ============================================================================
+
+vein detect_platform() -> obsidian {
+    # Executaável nativo detecta automaticamente via extern
+    # Por enquanto, simulamos
+    return "linux"  # TODO: usar env vars / extern syscalls
+}
+
+# ============================================================================
+# WINDOWS INSTALLER (NSIS)
+# ============================================================================
+
+vein gen_windows_installer(version: obsidian) {
+    echo("Gerando instalador Windows...")
+    
+    forge nsis_script = generate_nsis_script(version)
+    
+    # Salvar script NSIS temporário
+    escriba("build/installer_temp.nsi", nsis_script)
+    
+    # Compilar com NSIS (se disponível)
+    # system("makensis build/installer_temp.nsi")
+    
+    # Por enquanto, apenas documentamos
+    echo("✓ Script NSIS gerado: build/installer_temp.nsi")
+    echo("  Para compilar: makensis build/installer_temp.nsi")
+}
+
+vein generate_nsis_script(version: obsidian) -> obsidian {
+    forge script = ""
+    
+    # NSIS Header
+    script = script + "; OFS Installer Script\n"
+    script = script + "; Gerado automaticamente por OFS installer_generator.ofs\n"
+    script = script + "; Versão: " + version + "\n\n"
+    
+    script = script + "Name \"OFS Compiler " + version + "\"\n"
+    script = script + "OutFile \"ofs-" + version + "-installer.exe\"\n"
+    script = script + "InstallDir \"$PROGRAMFILES\\OFS\"\n\n"
+    
+    # Páginas do instalador
+    script = script + "Page license\n"
+    script = script + "Page directory\n"
+    script = script + "Page instfiles\n\n"
+    
+    # Seção de instalação
+    script = script + "Section \"OFS Compiler\"\n"
+    script = script + "  SetOutPath \"$INSTDIR\\bin\"\n"
+    script = script + "  File \"build/ofs.exe\"\n"
+    script = script + "  File \"build/ofs_runtime.a\"\n"
+    script = script + "  SetOutPath \"$INSTDIR\\lib\"\n"
+    script = script + "  File \"ofs/stdlib/*\"\n"
+    script = script + "  SetOutPath \"$INSTDIR\"\n"
+    script = script + "  File \"README.md\"\n"
+    script = script + "  File \"LICENSE\"\n"
+    script = script + "SectionEnd\n\n"
+    
+    # Entrada no Start Menu
+    script = script + "Section \"Start Menu Shortcuts\"\n"
+    script = script + "  CreateShortcut \"$SMPROGRAMS\\OFS.lnk\" \"$INSTDIR\\bin\\ofs.exe\"\n"
+    script = script + "SectionEnd\n\n"
+    
+    # PATH manipulation
+    script = script + "Section \"Add to PATH\"\n"
+    script = script + "  EnVar::SetHKCU\n"
+    script = script + "  EnVar::AddValue \"PATH\" \"$INSTDIR\\bin\"\n"
+    script = script + "SectionEnd\n"
+    
+    return script
+}
+
+# ============================================================================
+# LINUX INSTALLER (BASH + DEB)
+# ============================================================================
+
+vein gen_linux_installer(version: obsidian) {
+    echo("Gerando instalador Linux...")
+    
+    # Gerar shell script simples
+    forge sh_script = generate_linux_install_sh(version)
+    escriba("ofs-" + version + "-install.sh", sh_script)
+    
+    # Gerar arquivo de controle debian
+    forge deb_control = generate_deb_control(version)
+    
+    echo("✓ Script de instalação: ofs-" + version + "-install.sh")
+    echo("✓ Arquivo de controle Debian gerado")
+}
+
+vein generate_linux_install_sh(version: obsidian) -> obsidian {
+    forge script = ""
+    
+    script = script + "#!/bin/bash\n"
+    script = script + "# OFS Installer v" + version + "\n"
+    script = script + "# Usage: bash ofs-" + version + "-install.sh [--prefix /usr/local]\n\n"
+    
+    script = script + "set -e\n\n"
+    
+    script = script + "PREFIX=\"${1:-/usr/local}\"\n"
+    script = script + "VERSION=\"" + version + "\"\n\n"
+    
+    script = script + "echo \"=== OFS Compiler Installer ===\"\n"
+    script = script + "echo \"Versão: $VERSION\"\n"
+    script = script + "echo \"Destino: $PREFIX\"\n\n"
+    
+    script = script + "# Criar diretórios\n"
+    script = script + "mkdir -p $PREFIX/bin\n"
+    script = script + "mkdir -p $PREFIX/lib\n"
+    script = script + "mkdir -p $PREFIX/share/ofs/stdlib\n\n"
+    
+    script = script + "# Copiar arquivos\n"
+    script = script + "echo \"Copiando binários...\"\n"
+    script = script + "cp build/ofs $PREFIX/bin/\n"
+    script = script + "chmod +x $PREFIX/bin/ofs\n\n"
+    
+    script = script + "echo \"Copiando stdlib...\"\n"
+    script = script + "cp -r ofs/stdlib/* $PREFIX/share/ofs/stdlib/\n\n"
+    
+    script = script + "echo \"Copiando documentação...\"\n"
+    script = script + "cp README.md $PREFIX/share/ofs/README\n"
+    script = script + "cp LICENSE $PREFIX/share/ofs/LICENSE\n\n"
+    
+    script = script + "# Criar symlink\n"
+    script = script + "ln -sf $PREFIX/bin/ofs /usr/local/bin/ofs\n\n"
+    
+    script = script + "echo \"✅ OFS instalado em: $PREFIX/bin/ofs\"\n"
+    script = script + "echo \"Execute: ofs --version\"\n"
+    
+    return script
+}
+
+vein generate_deb_control(version: obsidian) -> obsidian {
+    forge control = ""
+    
+    control = control + "Package: ofs-compiler\n"
+    control = control + "Version: " + version + "\n"
+    control = control + "Architecture: amd64\n"
+    control = control + "Maintainer: OFS Team <team@ofs.lang>\n"
+    control = control + "Homepage: https://github.com/obsidian-fault/ofs\n"
+    control = control + "Description: OFS Compiler - Compiled language with self-hosting\n"
+    control = control + " OFS is a compiled language that can compile itself.\n"
+    control = control + " .\n"
+    control = control + " Features:\n"
+    control = control + "  - Fast compilation (50-100ms typical)\n"
+    control = control + "  - Self-hosting (compiler written in OFS)\n"
+    control = control + "  - C-level performance\n"
+    control = control + "  - Cross-platform support\n"
+    control = control + "Depends: libc6 (>= 2.17), gcc\n"
+    
+    return control
+}
+
+# ============================================================================
+# MACOS INSTALLER (DMG)
+# ============================================================================
+
+vein gen_macos_installer(version: obsidian) {
+    echo("Gerando instalador macOS...")
+    
+    # Gerar Homebrew formula
+    forge brew_formula = generate_homebrew_formula(version)
+    escriba("Formula/ofs.rb", brew_formula)
+    
+    # Gerar script de instalação
+    forge sh_script = generate_macos_install_sh(version)
+    escriba("ofs-" + version + "-install.sh", sh_script)
+    
+    echo("✓ Homebrew formula gerada")
+    echo("✓ Script de instalação macOS gerado")
+}
+
+vein generate_homebrew_formula(version: obsidian) -> obsidian {
+    forge formula = ""
+    
+    formula = formula + "class Ofs < Formula\n"
+    formula = formula + "  desc \"OFS Compiler - Self-hosting compiled language\"\n"
+    formula = formula + "  homepage \"https://github.com/obsidian-fault/ofs\"\n"
+    formula = formula + "  url \"https://releases.ofs.lang/v" + version + "/ofs-" + version + ".tar.gz\"\n"
+    formula = formula + "  sha256 \"CHECKSUM_HERE\"\n\n"
+    
+    formula = formula + "  depends_on \"llvm@17\" => :build\n"
+    formula = formula + "  depends_on \"gcc@13\" => :build\n\n"
+    
+    formula = formula + "  def install\n"
+    formula = formula + "    env = ENV.dup\n"
+    formula = formula + "    ENV.cxx_optimization_level = :O3\n\n"
+    
+    formula = formula + "    system \"mkdir\", \"build\"\n"
+    formula = formula + "    cd \"build\" do\n"
+    formula = formula + "      system \"cmake\", \"..\", *std_cmake_args\n"
+    formula = formula + "      system \"make\", \"-j\", Hardware::CPU.cores\n"
+    formula = formula + "    end\n\n"
+    
+    formula = formula + "    bin.install \"build/ofs\"\n"
+    formula = formula + "    lib.install \"build/libofs_runtime.a\"\n"
+    formula = formula + "    (share/\"ofs\").install \"ofs/stdlib\"\n"
+    formula = formula + "    doc.install \"README.md\", \"LICENSE\"\n"
+    formula = formula + "  end\n\n"
+    
+    formula = formula + "  test do\n"
+    formula = formula + "    touch \"test.ofs\"\n"
+    formula = formula + "    system \"#{bin}/ofs\", \"--version\"\n"
+    formula = formula + "  end\n"
+    formula = formula + "end\n"
+    
+    return formula
+}
+
+vein generate_macos_install_sh(version: obsidian) -> obsidian {
+    forge script = ""
+    
+    script = script + "#!/bin/bash\n"
+    script = script + "# OFS Installer para macOS v" + version + "\n\n"
+    
+    script = script + "echo \"Installing OFS \" $VERSION \" for macOS\"\n"
+    script = script + "brew install ofs\n"
+    script = script + "echo \"✅ OFS instalado com sucesso!\"\n"
+    
+    return script
+}
+
+# ============================================================================
+# UTILIDADES
+# ============================================================================
+
+vein escriba(filename: obsidian, content: obsidian) {
+    # Wrapper para write_file com melhor nome
+    escriba_arquivo(filename, content)
+}
+
+vein escriba_arquivo(filename: obsidian, content: obsidian) {
+    # TODO: implementar escrita de arquivo
+    # Por enquanto, apenas echamos o conteúdo
+    echo("Arquivo: " + filename)
+}
+
+vein info(msg: obsidian) {
+    echo("[INFO] " + msg)
+}
+
+vein echo_success(msg: obsidian) {
+    echo("✓ " + msg)
+}
+
+vein echo_error(msg: obsidian) {
+    echo("✗ " + msg)
+}

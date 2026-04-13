@@ -16,18 +16,7 @@ Você pode:
 
 ## English
 
-OFS is a statically typed language designed to feel approachable first, but it also exposes lower-level building blocks when needed.
-
-### What OFS supports today
-
-- Native execution flow: `ofs file.ofs`, `ofs run`, `ofs build`
-- Static checking: `ofs check`
-- Debug views: `ofs tokens`, `ofs ast`, `ofs ir`, `ofs asm`
-- Small integer types: `u8`, `u16`, `u32`, `u64`, `i8`, `i32`
-- User types with methods: `monolith` + `impl`
-- Namespaces: `namespace mathx { ... }`
 - Function values and inline lambdas
-- Error and pattern flow: `match`, `tremor/catch/throw`
 - Low-level blocks: `fracture`, `abyss`, `fractal`, `bedrock`
 - Interop with native code via `extern vein` and `rift vein`
 - Standard modules and installable packages
@@ -46,10 +35,6 @@ Download the latest release from [Releases](https://github.com/Samwns/Obsidian-F
 ### Main commands
 
 ```bash
-ofs file.ofs                 # run directly
-ofs run file.ofs             # compile and run now
-ofs build file.ofs -o app    # build native executable
-ofs check file.ofs           # type-check only
 ofs tokens file.ofs          # lexer output
 ofs ast file.ofs             # parser output
 ofs ir file.ofs              # LLVM IR output
