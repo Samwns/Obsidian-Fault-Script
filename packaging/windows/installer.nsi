@@ -4,15 +4,22 @@ Name "Obsidian Fault Script"
 !ifndef OUTPUT
 	!define OUTPUT "ofs-windows-x64-installer.exe"
 !endif
+!ifndef DIST_DIR
+	!define DIST_DIR "..\..\dist"
+!endif
+!ifndef ASSETS_DIR
+	!define ASSETS_DIR "."
+!endif
+
 OutFile "${OUTPUT}"
 InstallDir "$PROGRAMFILES64\Obsidian Fault Script"
 InstallDirRegKey HKLM "Software\ObsidianFaultScript" "InstallDir"
 RequestExecutionLevel admin
 
-!define MUI_ICON "ofs.ico"
-!define MUI_UNICON "ofs.ico"
-Icon "ofs.ico"
-UninstallIcon "ofs.ico"
+!define MUI_ICON "${ASSETS_DIR}\ofs.ico"
+!define MUI_UNICON "${ASSETS_DIR}\ofs.ico"
+Icon "${ASSETS_DIR}\ofs.ico"
+UninstallIcon "${ASSETS_DIR}\ofs.ico"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
@@ -26,26 +33,26 @@ UninstallIcon "ofs.ico"
 Section "Install"
 	SetOutPath "$INSTDIR"
 	DetailPrint "Installing OFS compiler executable"
-	File "portable-staging\ofs.exe"
+	File "${DIST_DIR}\ofs.exe"
 	DetailPrint "Installing command wrappers"
-	File /nonfatal "portable-staging\infuse.cmd"
-	File /nonfatal "portable-staging\uncover.cmd"
-	File /nonfatal "portable-staging\reinfuse.cmd"
-	File /nonfatal "portable-staging\ofs.ps1"
-	File /nonfatal "portable-staging\infuse.ps1"
-	File /nonfatal "portable-staging\uncover.ps1"
-	File /nonfatal "portable-staging\reinfuse.ps1"
+	File /nonfatal "${DIST_DIR}\infuse.cmd"
+	File /nonfatal "${DIST_DIR}\uncover.cmd"
+	File /nonfatal "${DIST_DIR}\reinfuse.cmd"
+	File /nonfatal "${DIST_DIR}\ofs.ps1"
+	File /nonfatal "${DIST_DIR}\infuse.ps1"
+	File /nonfatal "${DIST_DIR}\uncover.ps1"
+	File /nonfatal "${DIST_DIR}\reinfuse.ps1"
 	DetailPrint "Installing runtime dependencies"
-	File /nonfatal "portable-staging\*.dll"
-	File /nonfatal "portable-staging\libofs_runtime.a"
-	File /nonfatal "portable-staging\ofs_runtime.lib"
+	File /nonfatal "${DIST_DIR}\*.dll"
+	File /nonfatal "${DIST_DIR}\libofs_runtime.a"
+	File /nonfatal "${DIST_DIR}\ofs_runtime.lib"
 	DetailPrint "Installing application icon"
-	File /oname=ofs.ico "ofs.ico"
+	File /oname=ofs.ico "${ASSETS_DIR}\ofs.ico"
 	DetailPrint "Installing license terms"
-	File /oname=LICENSE.txt "portable-staging\LICENSE.txt"
+	File /oname=LICENSE.txt "${DIST_DIR}\LICENSE.txt"
 	DetailPrint "Installing standard library files"
 	SetOutPath "$INSTDIR\stdlib"
-	File /nonfatal "portable-staging\stdlib\*.ofs"
+	File /nonfatal "${DIST_DIR}\stdlib\*.ofs"
 	SetOutPath "$INSTDIR"
 
 	WriteRegStr HKLM "Software\ObsidianFaultScript" "InstallDir" "$INSTDIR"

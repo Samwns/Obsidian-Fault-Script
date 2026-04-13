@@ -231,10 +231,12 @@ jobs:
         run: |
           $TAG = "${{ needs.version.outputs.tag }}"
           $SeedDir = $env:SEED_DIR
-          $Dist = "dist"
+          $RepoRoot = (Get-Location).Path
+          $Dist = "$RepoRoot\dist"
+          $AssetsDir = "$RepoRoot\packaging\windows"
           New-Item -ItemType Directory -Path $Dist -Force | Out-Null
 
-          # Copy all needed files into dist/ (NSIS expects them there)
+          # Copy all needed files into dist/
           Copy-Item "$SeedDir\ofs.exe" "$Dist\"
           Get-ChildItem "$SeedDir" -Filter "*.dll" | Copy-Item -Destination "$Dist\"
           Copy-Item "$SeedDir\libofs_runtime.a" "$Dist\" -ErrorAction SilentlyContinue
@@ -248,14 +250,15 @@ jobs:
           Copy-Item "ofs\stdlib\*.ofs" "$Dist\stdlib\" -ErrorAction SilentlyContinue
           Copy-Item "LICENSE" "$Dist\LICENSE.txt" -ErrorAction SilentlyContinue
 
-          # Copiar o ícone para o dist/ para garantir que o NSIS encontre
-          Copy-Item "packaging\assets\ofs.ico" "$Dist\ofs.ico" -ErrorAction SilentlyContinue
-
-          # Build installer with NSIS
+          # Build installer with NSIS passing absolute paths as defines
           $InstallerName = "ofs-windows-x64-installer-${TAG}.exe"
           $nsis = Get-Command makensis -ErrorAction SilentlyContinue
           if ($nsis) {
-            & makensis /DOUTPUT="$InstallerName" packaging\windows\installer.nsi
+            & makensis `
+              "/DOUTPUT=$InstallerName" `
+              "/DDIST_DIR=$Dist" `
+              "/DASSETS_DIR=$AssetsDir" `
+              packaging\windows\installer.nsi
             Write-Output "installer_exe=$InstallerName" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           } else {
             Write-Output "::warning::NSIS not found, skipping .exe installer"
