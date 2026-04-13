@@ -9,10 +9,10 @@ InstallDir "$PROGRAMFILES64\Obsidian Fault Script"
 InstallDirRegKey HKLM "Software\ObsidianFaultScript" "InstallDir"
 RequestExecutionLevel admin
 
-!define MUI_ICON "packaging\assets\ofs.ico"
-!define MUI_UNICON "packaging\assets\ofs.ico"
-Icon "packaging\assets\ofs.ico"
-UninstallIcon "packaging\assets\ofs.ico"
+!define MUI_ICON "dist\ofs.ico"
+!define MUI_UNICON "dist\ofs.ico"
+Icon "dist\ofs.ico"
+UninstallIcon "dist\ofs.ico"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_DIRECTORY
