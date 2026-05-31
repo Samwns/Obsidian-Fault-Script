@@ -2,6 +2,23 @@
 
 All notable changes to this project are recorded here.
 
+## [1.0.101] - 2026-05-31 — Native Installers Release Hardening
+
+### Fixed
+
+- Fixed LLVM 14 opaque pointer handling in CI and release builds.
+- Fixed Bash 3/macOS wrapper behavior when LLVM IR flags are empty.
+- Fixed example checks so relative `attach {F:...}` paths run from each example directory.
+- Fixed Windows release packaging collision by using a dedicated `windows-dist` staging directory.
+
+### Release
+
+- Release automation now produces native installers for Debian/Ubuntu, Fedora, Arch, macOS, and Windows.
+- VS Code extension packaging is included in the release assets.
+- Windows CI validates the native compiler binary and installer package; Linux/macOS continue to run full example and stdlib smoke checks.
+
+---
+
 ## [1.2.0] - 2026-04-13 — C++ Compiler Removed 
 
 ### Major Milestone: Pure OFS Implementation

@@ -1,7 +1,19 @@
 # OFS Self-Hosting — Status Report
 
 **Data**: 31 de Maio de 2026  
-**Status**: ✅ **SELF-HOST LINUX COMPLETO COM BACKEND LLVM IR**
+**Status**: ✅ **RELEASES NATIVOS AUTOMATIZADOS COM BACKEND LLVM IR**
+
+---
+
+## Resultado Release Nativo - 2026-05-31
+
+Release validado pelo GitHub Actions:
+
+- `OFS Build & Test`: Linux, macOS e Windows com sucesso.
+- `Auto Release`: geracao de instaladores com sucesso.
+- Assets publicados: Debian/Ubuntu `.deb`, Fedora `.rpm`, Arch `.pkg.tar.zst`, macOS `.pkg`, Windows `.exe`, VS Code `.vsix` e `CHECKSUMS.sha256`.
+
+Observacao importante: Linux e macOS executam exemplos e smoke real da stdlib no CI. Windows valida compilador nativo e instalador; o bridge `OFSCC_INPUT/OFSCC_MODE` no Windows ainda nao e tratado como contrato final para bootstrap completo.
 
 ---
 
