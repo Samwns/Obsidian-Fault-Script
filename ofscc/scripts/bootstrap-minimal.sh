@@ -26,6 +26,10 @@ echo ""
 
 print_step "Fase 1: Validar compilador OFS existente"
 
+if [ ! -f "$EXISTING_COMPILER" ] && command -v "$EXISTING_COMPILER" > /dev/null 2>&1; then
+    EXISTING_COMPILER="$(command -v "$EXISTING_COMPILER")"
+fi
+
 if [ ! -f "$EXISTING_COMPILER" ]; then
     print_info "Compilador não encontrado localmente. Tentando baixar da última release..."
     REPO="${GITHUB_REPO:-Samwns/Obsidian-Fault-Script}"
@@ -33,12 +37,13 @@ if [ ! -f "$EXISTING_COMPILER" ]; then
       | grep -oP '"browser_download_url":\s*"\K[^"]*linux-x64-installer[^"]*\.tar\.gz' | head -1)
     if [ -n "$ASSET" ]; then
         print_info "Baixando: $ASSET"
-        curl -sL "$ASSET" -o /tmp/ofs-seed.tar.gz
-        tar xzf /tmp/ofs-seed.tar.gz -C /tmp/
+        TMP_SEED_DIR=$(mktemp -d)
+        curl -sL "$ASSET" -o "$TMP_SEED_DIR/ofs-seed.tar.gz"
+        tar --no-same-owner --no-same-permissions -xzf "$TMP_SEED_DIR/ofs-seed.tar.gz" -C "$TMP_SEED_DIR"
         mkdir -p "$(dirname "$EXISTING_COMPILER")"
-        find /tmp -maxdepth 2 -name "ofs" -type f -exec cp {} "$EXISTING_COMPILER" \;
+        find "$TMP_SEED_DIR" -maxdepth 2 -name "ofs" -type f -exec cp {} "$EXISTING_COMPILER" \;
         chmod +x "$EXISTING_COMPILER"
-        rm -f /tmp/ofs-seed.tar.gz
+        rm -rf "$TMP_SEED_DIR"
         print_success "Seed compiler baixado com sucesso"
     else
         print_error "Compilador não encontrado: $EXISTING_COMPILER (e nenhum seed disponível)"

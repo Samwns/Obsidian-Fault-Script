@@ -1,8 +1,8 @@
 {
   "name": "obsidian-fault-script",
   "displayName": "Obsidian Fault Script",
-  "description": "Language support, diagnostics, autocomplete, native run/debug and assembly inspection for OFS",
-  "version": "1.0.8",
+  "description": "Language support, diagnostics, autocomplete and embedded self-hosted LLVM compiler for OFS",
+  "version": "1.0.9",
   "publisher": "Obsidian-Fault",
   "icon": "media/ofs.png",
   "license": "BSL-1.0",

@@ -10,21 +10,100 @@ attach {F:lexer.ofs}
 attach {F:parser.ofs}
 attach {F:typeck.ofs}
 attach {F:codegen.ofs}
+attach {F:llvmgen.ofs}
 
 extern vein getenv(name: obsidian) -> obsidian
+
+forge _expanded_paths: Array<obsidian> = []
+
+vein path_seen(path: obsidian) -> bool {
+    forge i = 0
+    while (i < ofs_array_len(_expanded_paths)) {
+        forge p: obsidian = ofs_array_get(_expanded_paths, i)
+        if (ofs_str_eq(p, path)) { return true }
+        i++
+    }
+    return false
+}
+
+vein remember_path(path: obsidian) -> void {
+    if (!path_seen(path)) {
+        ofs_array_push(_expanded_paths, path)
+    }
+}
+
+vein dirname(path: obsidian) -> obsidian {
+    forge i = 0
+    forge last = -1
+    forge len = ofs_str_len(path)
+    while (i < len) {
+        if (ofs_str_char_at(path, i) == 47) {
+            last = i
+        }
+        i++
+    }
+    if (last < 0) { return "" }
+    return ofs_str_substr(path, 0, last + 1)
+}
+
+vein is_attach_line(line: obsidian) -> bool {
+    if (ofs_str_len(line) < 11) { return false }
+    return ofs_str_eq(ofs_str_substr(line, 0, 10), "attach {F:")
+}
+
+vein attach_path_from_line(line: obsidian) -> obsidian {
+    forge i = 10
+    forge len = ofs_str_len(line)
+    while (i < len) {
+        if (ofs_str_char_at(line, i) == 125) {
+            return ofs_str_substr(line, 10, i - 10)
+        }
+        i++
+    }
+    return ""
+}
+
+vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
+    if (path_seen(path)) { return "" }
+    remember_path(path)
+
+    forge base = dirname(path)
+    forge out = ""
+    forge start = 0
+    forge i = 0
+    forge len = ofs_str_len(src)
+
+    while (i <= len) {
+        if (i == len || ofs_str_char_at(src, i) == 10) {
+            forge line = ofs_str_substr(src, start, i - start)
+            if (is_attach_line(line)) {
+                forge rel = attach_path_from_line(line)
+                forge child_path = base + rel
+                forge child_src = read_file(child_path)
+                out = out + expand_attaches(child_path, child_src)
+            } else {
+                out = out + line + "\n"
+            }
+            start = i + 1
+        }
+        i++
+    }
+
+    return out
+}
 
 vein usage() -> void {
     echo("Usage: ofscc [options] <input.ofs>")
     echo("Options:")
     echo("  -o <output>      Output executable (default: a.out)")
-    echo("  -O0/-O2/-O3      C optimization level (default: -O2)")
-    echo("  --emit-c <file>  C output path (default: output.c)")
+    echo("  -O0/-O2/-O3      LLVM optimization level (default: -O2)")
+    echo("  --emit-ir <file> LLVM IR output path (default: output.ll)")
     echo("  --check          Type-check only (no codegen)")
     echo("  --tokens         Print tokens and exit")
     echo("  --ast            Print AST and exit")
     echo("  --help           Show this message")
     echo("")
-    echo("Env fallback (Phase B):")
+    echo("Env fallback:")
     echo("  OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT")
 }
 
@@ -50,16 +129,22 @@ vein apply_env_overrides(
     if (ofs_str_eq(e_mode, "check")) { check_only = true }
     if (ofs_str_eq(e_mode, "tokens")) { print_tokens = true }
     if (ofs_str_eq(e_mode, "ast")) { print_ast = true }
+    if (ofs_str_eq(e_mode, "ir")) { c_opt = c_opt }
 
     forge e_opt = getenv("OFSCC_OPT")
     if (ofs_str_eq(e_opt, "-O0") || ofs_str_eq(e_opt, "-O2") || ofs_str_eq(e_opt, "-O3")) {
         c_opt = e_opt
     }
 
+    forge check_flag = "0"
+    forge tokens_flag = "0"
+    forge ast_flag = "0"
+    if (check_only) { check_flag = "1" }
+    if (print_tokens) { tokens_flag = "1" }
+    if (print_ast) { ast_flag = "1" }
+
     return input_file + "|" + output_file + "|" + c_output + "|" +
-        (check_only ? "1" : "0") + "|" +
-        (print_tokens ? "1" : "0") + "|" +
-        (print_ast ? "1" : "0") + "|" + c_opt
+        check_flag + "|" + tokens_flag + "|" + ast_flag + "|" + c_opt
 }
 
 vein parse_state_field(state: obsidian, field_idx: stone) -> obsidian {
@@ -91,7 +176,7 @@ core main() {
     
     forge input_file = "input.ofs"
     forge output_file = "a.out"
-    forge c_output = "output.c"
+    forge c_output = "output.ll"
     forge check_only = false
     forge print_tokens = false
     forge print_ast = false
@@ -106,6 +191,10 @@ core main() {
     print_tokens = ofs_str_eq(parse_state_field(state, 4), "1")
     print_ast = ofs_str_eq(parse_state_field(state, 5), "1")
     c_opt = parse_state_field(state, 6)
+    forge compile_mode = getenv("OFSCC_MODE")
+    if (ofs_str_eq(compile_mode, "")) {
+        compile_mode = "build-ir"
+    }
 
     if (ofs_str_eq(input_file, "") || ofs_str_eq(input_file, "--help")) {
         usage()
@@ -115,12 +204,8 @@ core main() {
     // Phase 1: Read source
     echo("[1/6] Reading source...")
     forge src: obsidian = ""
-    tremor {
-        src = read_file(input_file)
-    } catch (e: obsidian) {
-        echo("ERROR: " + e)
-        exit(1)
-    }
+    src = read_file(input_file)
+    src = expand_attaches(input_file, src)
     echo("  OK — " + ofs_stone_to_obsidian(ofs_str_len(src)) + " bytes")
     
     // Phase 2: Lexical analysis
@@ -146,7 +231,8 @@ core main() {
     echo("  OK — " + ofs_stone_to_obsidian(node_count) + " AST nodes")
 
     if (print_ast) {
-        echo("AST root kind: " + node_kind_name(node_get(root_id).kind))
+        forge root_node: Node = node_get(root_id)
+        echo("AST root kind: " + node_kind_name(root_node.kind))
         return
     }
     
@@ -164,14 +250,27 @@ core main() {
     // Phase 5: Code generation
     echo("[5/6] Code generation...")
     cg_open(c_output)
-    codegen.generate(root_id)
+    if (ofs_str_eq(compile_mode, "c")) {
+        codegen.generate(root_id)
+    } else {
+        llvmgen.generate(root_id)
+    }
     cg_close()
     echo("  OK — " + c_output + " generated")
+
+    if (ofs_str_eq(compile_mode, "ir")) {
+        return
+    }
     
-    // Phase 6: C compilation
-    echo("[6/6] C compilation...")
-    forge c_compiler_cmd = "gcc " + c_opt + " -o " + output_file + " " + c_output + " 2>&1"
-    forge compile_result = system(c_compiler_cmd)
+    // Phase 6: Native link from LLVM IR. The C backend is kept only behind OFSCC_MODE=c.
+    echo("[6/6] Native link...")
+    forge compile_cmd = ""
+    if (ofs_str_eq(compile_mode, "c")) {
+        compile_cmd = "gcc " + c_opt + " -o " + output_file + " " + c_output + " 2>&1"
+    } else {
+        compile_cmd = "llvm-as " + c_output + " -o " + c_output + ".bc && clang " + c_opt + " " + c_output + " /usr/local/lib/libofs_runtime.a -lm -o " + output_file + " 2>&1"
+    }
+    forge compile_result = system(compile_cmd)
     
     if (compile_result == 0) {
         echo("  OK")
@@ -180,7 +279,7 @@ core main() {
     } else {
         echo("  FAILED — check " + c_output)
         echo("")
-        echo("COMPILATION ERROR: C compiler returned " + ofs_stone_to_obsidian(compile_result))
+        echo("COMPILATION ERROR: native linker returned " + ofs_stone_to_obsidian(compile_result))
         exit(1)
     }
 }

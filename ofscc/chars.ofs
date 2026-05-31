@@ -44,6 +44,8 @@ forge CH_x:       stone = 120
 forge CH_X:       stone = 88
 forge CH_e:       stone = 101
 forge CH_E:       stone = 69
+forge CH_f:       stone = 102
+forge CH_F:       stone = 70
 
 // ── Character Classification ───────────────────────────────────────────
 

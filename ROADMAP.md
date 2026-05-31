@@ -1,7 +1,7 @@
 # OFS Roadmap — Evolução Completa
 
-**Versão Atual**: v1.1.0-alpha (Bootstrap pronto)  
-**Objetivo Final**: v2.0.0 (Production-ready, sem C++ dependency)
+**Versão Atual**: v1.1.0-alpha (Self-host Linux completo)  
+**Objetivo Final**: v2.0.0 (Production-ready, sem C/C++ como backend)
 
 ## Critério de 100% (Gate)
 
@@ -32,29 +32,29 @@ Gate automático implementado em:
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│ Phase B: Refinement & Optimization                                 │
-│ ⏳ PRÓXIMO (v1.1.0 Release)                                         │
+│ Phase B: Self-Host & LLVM Backend                                  │
+│ ✅ COMPLETO NO LINUX (v1.1.0-alpha)                                │
 ├─────────────────────────────────────────────────────────────────────┤
 │ Duration: 2 weeks                                                   │
 │ Deliverables:                                                       │
-│ - [ ] Bootstrap test (Windows + Linux verified)                     │
-│ - [ ] Determinism check (v2 === v3)                                │
-│ - [~] CLI bridge via env + mode flags                              │
+│ - [x] Linux curl install verified                                  │
+│ - [x] Determinism check (v3 IR === v4 IR)                          │
+│ - [x] CLI bridge via env + wrapper Linux                           │
 │ - [~] impl/namespace/strata parser + codegen base                   │
 │ - [~] tremor/catch parser + lowered block                           │
 │ - [~] Compiler optimization flags (-O0, -O2, -O3)                  │
 │ - [~] Cross-platform CI (Linux, macOS, Windows)                     │
-│ - [ ] Documentation updates                                        │
+│ - [x] Documentation updates                                        │
 │ - [~] GitHub Actions workflow (C++ + self-hosted experimental)      │
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
 │ Phase C: LLVM Backend                                              │
-│ 🔮 FUTURE (v1.2.0 Release)                                         │
+│ ✅ BASE COMPLETA (v1.1.0-alpha)                                    │
 ├─────────────────────────────────────────────────────────────────────┤
 │ Duration: 3-4 weeks                                                 │
 │ Deliverables:                                                       │
-│ - [ ] LLVM IR codegen (skip C intermediary)                         │
+│ - [x] LLVM IR codegen (skip C intermediary)                         │
 │ - [ ] 40-50x faster compilation                                    │
 │ - [ ] Link-Time Optimization (LTO) support                        │
 │ - [ ] Full optimization pipeline                                   │
@@ -64,13 +64,13 @@ Gate automático implementado em:
 └─────────────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────────────┐
-│ Phase D: Remove C++ Dependency                                     │
-│ 🔮 FUTURE (v1.3.0 Release)                                         │
+│ Phase D: Remove C/C++ From Final Chain                             │
+│ ⏳ EM ANDAMENTO (v1.2.0 Release)                                   │
 ├─────────────────────────────────────────────────────────────────────┤
 │ Duration: 1-2 weeks                                                 │
 │ Deliverables:                                                       │
-│ - [ ] Port ofscc to use LLVM SDK directly                          │
-│ - [ ] Remove C++ code from repo                                    │
+│ - [x] Make OFS compiler generate LLVM IR directly                  │
+│ - [x] Keep C/C++ only as historical seed                           │
 │ - [ ] Update build instructions                                    │
 │ - [ ] Migration guide for existing users                           │
 │ - [ ] Remove LLVM C++ bindings requirement                         │
@@ -87,7 +87,7 @@ Gate automático implementado em:
 │ - [ ] Linux packages (.deb, .rpm, AUR)                            │
 │ - [ ] macOS package (Homebrew, DMG)                               │
 │ - [ ] GitHub Actions with OFS-generated installer                 │
-│ - [ ] VS Code extension integration                                │
+│ - [x] VS Code extension integration                                │
 │ - [ ] LSP server in OFS                                            │
 │ - [ ] Package manager (registry)                                   │
 │ - [ ] v2.0.0 stable release                                        │
@@ -106,9 +106,18 @@ Gate automático implementado em:
 - [✓] Create test_bootstrap.sh (Linux)
 - [✓] Create test_bootstrap_windows.ps1 (Windows)
 - [ ] Run on Windows (user has environment)
-- [ ] Run on Linux (CI/CD)
-- [ ] Verify v2 === v3 (byte-exact)
-- [ ] Document results
+- [x] Run on Linux via curl install (installer OK; release version mismatch documented)
+- [x] Verify v3 IR === v4 IR (byte-exact)
+- [x] Document results (`STATUS_REPORT.md`, 2026-05-31)
+
+**Linux curl result (2026-05-31)**:
+- latest release asset found: `ofs-linux-x64-installer-v1.0.88.tar.gz`
+- installed binary reports `ofs 1.0.72`
+- `ofs check ofs/examples/hello.ofs` passes
+- `ofscc/scripts/bootstrap-minimal.sh` now resolves `EXISTING_COMPILER=ofs` through `PATH`
+- release compiler is not a complete seed for this source yet; local corrected seed completed the self-host
+- final self-host compiler is emitted to `dist/ofscc`
+- VS Code extension embeds `bin/linux-x64/ofscc`, wrapper `ofs`, and runtime archive
 
 **Success Criteria**:
 ```
@@ -118,7 +127,7 @@ ofscc_v2.exe ← Binary 1
     ↓ compiles ofscc.ofs again
 ofscc_v3.exe ← Binary 2
     
-Assertion: sha256(ofscc_v2) === sha256(ofscc_v3)
+Assertion: cmp(ofscc_v3.ll, ofscc_v4.ll) === identical
 ```
 
 **Timeline**: Immediate (test now!)

@@ -25,6 +25,44 @@
       "}"
     ]
   },
+  "Extern Function": {
+    "prefix": "extern",
+    "body": [
+      "extern vein ${1:name}(${2:arg: obsidian}) -> ${3:stone}"
+    ]
+  },
+  "Monolith": {
+    "prefix": "monolith",
+    "body": [
+      "monolith ${1:TypeName} {",
+      "    ${2:field}: ${3:stone}",
+      "}",
+      "",
+      "$0"
+    ]
+  },
+  "Array Stone": {
+    "prefix": "array",
+    "body": [
+      "forge ${1:items}: Array<${2:stone}> = [${3:1, 2, 3}]"
+    ]
+  },
+  "Cycle C Style": {
+    "prefix": "cycle-c",
+    "body": [
+      "cycle (forge ${1:i} = ${2:0}; ${1:i} < ${3:10}; ${1:i}++) {",
+      "    $0",
+      "}"
+    ]
+  },
+  "Else If": {
+    "prefix": "elseif",
+    "body": [
+      "else if (${1:condition}) {",
+      "    $0",
+      "}"
+    ]
+  },
   "Attach": {
     "prefix": "attach",
     "body": [

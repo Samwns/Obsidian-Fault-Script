@@ -73,8 +73,12 @@
     "types": {
       "patterns": [
         {
+          "name": "storage.type.array.ofs",
+          "match": "\\bArray\\s*<\\s*[A-Za-z_][A-Za-z0-9_]*\\s*>"
+        },
+        {
           "name": "storage.type.ofs",
-          "match": "\\b(stone|u8|u16|u32|u64|i8|i32|crystal|obsidian|bool|void|glyph|flow|truth|ptr|shard)\\b"
+          "match": "\\b(Array|stone|u8|u16|u32|u64|i8|i32|crystal|obsidian|bool|void|glyph|flow|truth|ptr|shard)\\b"
         }
       ]
     },

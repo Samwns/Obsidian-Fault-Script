@@ -3,6 +3,8 @@ build-mingw/
 build-debug/
 *.o
 *.a
+!dist/libofs_runtime.a
+!vscode-extension/bin/linux-x64/libofs_runtime.a
 *.ll
 *.out
 /tmp/
@@ -10,3 +12,4 @@ build-debug/
 vscode-extension/node_modules/
 # vscode-extension/.gitignore
 *.vsix
+ROADMAP.

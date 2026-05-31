@@ -40,7 +40,6 @@ vein node_new(kind: stone, val: obsidian, line: stone, col: stone) -> stone {
     n.c2 = -1
     n.c3 = -1
     n.extra = []
-    
     ofs_array_push(_node_pool, n)
     return ofs_array_len(_node_pool) - 1
 }
@@ -49,6 +48,15 @@ vein node_get(id: stone) -> Node {
     if (id < 0 || id >= ofs_array_len(_node_pool)) {
         forge dummy: Node
         dummy.kind = -1
+        dummy.val = ""
+        dummy.type_str = ""
+        dummy.line = 0
+        dummy.col = 0
+        dummy.c0 = -1
+        dummy.c1 = -1
+        dummy.c2 = -1
+        dummy.c3 = -1
+        dummy.extra = []
         return dummy
     }
     return ofs_array_get(_node_pool, id)

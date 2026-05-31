@@ -1,7 +1,49 @@
 # OFS Self-Hosting — Status Report
 
-**Data**: 12 de Abril de 2026  
-**Status**: ✅ **COMPILADOR OFS IMPLEMENTADO E PRONTO PARA BOOTSTRAP**
+**Data**: 31 de Maio de 2026  
+**Status**: ✅ **SELF-HOST LINUX COMPLETO COM BACKEND LLVM IR**
+
+---
+
+## Resultado Linux via curl - 2026-05-31
+
+Instalação validada com o asset oficial mais recente:
+
+```bash
+curl -fL https://github.com/Samwns/Obsidian-Fault-Script/releases/download/v1.0.88/ofs-linux-x64-installer-v1.0.88.tar.gz -o ofs-linux-x64-installer.tar.gz
+tar xzf ofs-linux-x64-installer.tar.gz
+./install.sh
+ofs version
+ofs check ofs/examples/hello.ofs
+```
+
+Resultado:
+
+- `ofs` instalado em `/usr/local/bin/ofs`
+- runtime instalado em `/usr/local/lib/libofs_runtime.a`
+- stdlib instalada em `/usr/local/share/ofs/stdlib`
+- `ofs check ofs/examples/hello.ofs` passa
+- o asset `v1.0.88` instala um binário que reporta `ofs 1.0.72`
+
+Bootstrap self-host validado nesta workspace:
+
+```bash
+/tmp/ofs-bootstrap-build/ofs build ofs/ofscc/ofscc.ofs -o /tmp/ofscc_v2_candidate -O2
+OFSCC_INPUT=ofs/ofscc/ofscc.ofs OFSCC_MODE=ir OFSCC_C_OUT=/tmp/ofscc_self_final_v3.ll /tmp/ofscc_native_final_v3
+OFSCC_INPUT=ofs/ofscc/ofscc.ofs OFSCC_MODE=ir OFSCC_C_OUT=/tmp/ofscc_self_final_v4.ll /tmp/ofscc_native_final_v4
+cmp -s /tmp/ofscc_self_final_v3.ll /tmp/ofscc_self_final_v4.ll
+```
+
+Resultado:
+
+- `v3` e `v4` geram LLVM IR idêntico (`cmp` = 0)
+- `llvm-as` aceita o IR gerado pelo compilador OFS
+- o caminho padrão agora gera LLVM IR e linka nativo, sem C como intermediário
+- C/C++ permanece somente como seed histórico/temporário, não como backend final da linguagem
+- binário final copiado para `dist/ofscc`
+- extensão VS Code recebeu `bin/linux-x64/ofscc`, wrapper `bin/linux-x64/ofs` e runtime local
+
+Observação: a release pública `v1.0.88` ainda reporta `ofs 1.0.72` e não é suficiente sozinha para este bootstrap; ela foi usada para validar instalação Linux por curl. A cadeia self-host final foi concluída a partir do seed local corrigido.
 
 ---
 
@@ -33,7 +75,8 @@ O compilador OFS agora é **puramente escrito em OFS**. Quando `ofscc_v2` e `ofs
 | Símbolos | `symbols.ofs` | 30 | ✅ Completo |
 | Parser | `parser.ofs` | 650 | ✅ Completo |
 | Type Checker | `typeck.ofs` | 350 | ✅ Completo |
-| Codegen | `codegen.ofs` | 400 | ✅ Completo |
+| LLVM Codegen | `llvmgen.ofs` | 1,300+ | ✅ Completo |
+| C Codegen legado | `codegen.ofs` | 400 | ✅ Diagnóstico |
 | File I/O | `fileio.ofs` | 50 | ✅ Completo |
 | Driver | `ofscc.ofs` | 80 | ✅ Completo |
 | Testes | vários | 200+ | ✅ Completo |
@@ -67,11 +110,11 @@ Entrada: input.ofs (código-fonte)
     ↓
     Annotated AST
     ↓
-[4] CODEGEN (codegen.ofs)
+[4] LLVM CODEGEN (llvmgen.ofs)
     ↓
-    C Code (output.c)
+    LLVM IR (output.ll)
     ↓
-[5] C COMPILER (gcc -O2)
+[5] LLVM ASSEMBLER/LINKER
     ↓
     Saída: executable (binário nativo)
 ```
@@ -108,8 +151,8 @@ Entrada: input.ofs (código-fonte)
 - [x] SYM_* kinds (VAR, CONST, FN, PARAM)
 - [x] Error messages com linha/col
 
-### Codegen ✅
-- [x] Type mapping OFS→C
+### LLVM Codegen ✅
+- [x] Type mapping OFS→LLVM IR
 - [x] Forward declarations
 - [x] Binary operators
 - [x] Function definitions
@@ -117,6 +160,7 @@ Entrada: input.ofs (código-fonte)
 - [x] Control flow (if/while/return)
 - [x] String/int/float literals
 - [x] Function calls
+- [x] Monoliths, fields, arrays, `cycle`, `else if`, namespace lowering
 
 ### Tests & Infrastructure ✅
 - [x] `test_lexer_units.ofs` — unit tests lexer
@@ -128,39 +172,39 @@ Entrada: input.ofs (código-fonte)
 
 ## 🚀 Como Testar o Bootstrap
 
-### 1. Build da v1 (com C++)
+### 1. Build da primeira geração com seed temporário
 
 ```bash
-ofs build ofs/ofscc/ofscc.ofs -o ofscc_v1
-# ou
-cmake -B build && ./build/ofscc > ofscc_v1
+/tmp/ofs-bootstrap-build/ofs build ofs/ofscc/ofscc.ofs -o /tmp/ofscc_v2_candidate -O2
 ```
 
-**Resultado**: `ofscc_v1` — compilador OFS (compilado em C++)
+**Resultado**: `/tmp/ofscc_v2_candidate`
 
-### 2. Build da v2 (OFS → OFS)
+### 2. Gerar compilador nativo v3 via LLVM IR
 
 ```bash
-./ofscc_v1 ofs/ofscc/ofscc.ofs -o ofscc_v2
+OFSCC_INPUT=ofs/ofscc/ofscc.ofs OFSCC_MODE=ir OFSCC_C_OUT=/tmp/ofscc_self_final_v3.ll /tmp/ofscc_v2_candidate
+llvm-as /tmp/ofscc_self_final_v3.ll -o /tmp/ofscc_self_final_v3.bc
+clang -O2 /tmp/ofscc_self_final_v3.ll /tmp/ofs-bootstrap-build/libofs_runtime.a -lm -o /tmp/ofscc_native_final_v3
 ```
 
-**Resultado**: `ofscc_v2` — compilador OFS (compilado por ofscc_v1)
+**Resultado**: `/tmp/ofscc_native_final_v3`
 
-### 3. Build da v3 (OFS → OFS)
+### 3. Gerar v4 com o compilador OFS nativo
 
 ```bash
-./ofscc_v2 ofs/ofscc/ofscc.ofs -o ofscc_v3
+OFSCC_INPUT=ofs/ofscc/ofscc.ofs OFSCC_MODE=ir OFSCC_C_OUT=/tmp/ofscc_self_final_v4.ll /tmp/ofscc_native_final_v3
 ```
 
-**Resultado**: `ofscc_v3` — compilador OFS (compilado por ofscc_v2)
+**Resultado**: `/tmp/ofscc_self_final_v4.ll`
 
 ### 4. Verificar Determinismo
 
 ```bash
-cmp -s ofscc_v2 ofscc_v3 && echo "✓ BOOTSTRAP SUCCESS"
+cmp -s /tmp/ofscc_self_final_v3.ll /tmp/ofscc_self_final_v4.ll && echo "BOOTSTRAP SUCCESS"
 ```
 
-**Esperado**: Arquivos são idênticos byte-a-byte
+**Esperado**: IR idêntico byte-a-byte
 
 ### Modo Automático
 
@@ -272,4 +316,3 @@ Isso significa:
 **Status Final**: OFS Compiler Self-Hosted v0.1 ✅  
 **Próximo Release**: v1.1.0 (Verified Bootstrap)  
 **Timeline**: 2 semanas para verificação + release
-

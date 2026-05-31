@@ -23,6 +23,7 @@ Language / Idioma:
 - Diagnostics using `ofs check`
 - Native assembly emission using `ofs asm`
 - Native VS Code Run and Debug integration (F5 / Run and Debug panel)
+- Embedded Linux x64 self-hosted compiler (`bin/linux-x64/ofscc`) with an `ofs` wrapper
 - Command palette action: `OFS: Check`
 - Command palette action: `OFS: Emit Native Assembly`
 - Built-in OFS theme: `Obsidian Fault Purple`
@@ -32,7 +33,7 @@ This extension should be updated together with language changes. When OFS gains 
 ### Requirements
 
 - VS Code `^1.85.0`
-- OFS compiler (`ofs`) em PATH ou configurado em `ofs.path`
+- OFS compiler (`ofs`) in PATH, configured in `ofs.path`, or the embedded Linux x64 compiler shipped with the extension
 
 ### Settings
 
@@ -47,6 +48,8 @@ This extension should be updated together with language changes. When OFS gains 
 
 - `ofs.preferEmbeddedCompiler`
 : Prefer compiler embedded in extension (`bin/<platform>/ofs`) before workspace/system compiler. Default: `true`.
+
+The Linux x64 package includes the self-hosted compiler and emits LLVM IR directly. C/C++ is not used as the language backend; LLVM tools are used to assemble/link native output.
 
 ### Commands
 
@@ -120,6 +123,7 @@ npm run package
 - Diagnosticos usando `ofs check`
 - Emissao de assembly nativo usando `ofs asm`
 - Integracao nativa com Executar/Depurar do VS Code (F5 / painel Run and Debug)
+- Compilador self-hosted Linux x64 embutido (`bin/linux-x64/ofscc`) com wrapper `ofs`
 - Acao na paleta de comandos: `OFS: Check`
 - Acao na paleta de comandos: `OFS: Emit Native Assembly`
 - Tema integrado: `Obsidian Fault Purple`
@@ -131,7 +135,7 @@ Esta extensao deve ser atualizada junto com a linguagem. Quando a OFS ganhar nov
 ### Requisitos
 
 - VS Code `^1.85.0`
-- Compilador OFS no PATH ou configurado em `ofs.path`
+- Compilador OFS no PATH, configurado em `ofs.path`, ou o compilador Linux x64 embutido na extensao
 
 ### Configuracoes
 
@@ -148,6 +152,8 @@ Voce tambem pode configurar `ofs.path` para `ofscc`/`ofscc_v2` durante os testes
 
 - `ofs.preferEmbeddedCompiler`
 : Prioriza o compilador embutido na extensao (`bin/<plataforma>/ofs`) antes do compilador do workspace/sistema. Padrao: `true`.
+
+O pacote Linux x64 inclui o compilador self-hosted e emite LLVM IR diretamente. C/C++ nao e usado como backend da linguagem; as ferramentas LLVM sao usadas para montar/linkar a saida nativa.
 
 ### Comandos
 

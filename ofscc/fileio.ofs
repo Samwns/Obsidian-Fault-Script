@@ -3,23 +3,34 @@
 
 // ── C FFI Declarations ──────────────────────────────────────────────────
 
-extern vein fopen(path: obsidian, mode: obsidian) -> stone
-extern vein fclose(f: stone) -> stone
-extern vein fread(buf: stone, sz: stone, n: stone, f: stone) -> stone
-extern vein fwrite(buf: obsidian, sz: stone, n: stone, f: stone) -> stone
-extern vein fputs(s: obsidian, f: stone) -> stone
-extern vein fseek(f: stone, offset: stone, whence: stone) -> stone
-extern vein ftell(f: stone) -> stone
+extern vein fopen(path: obsidian, mode: obsidian) -> obsidian
+extern vein fclose(f: obsidian) -> stone
+extern vein fread(buf: obsidian, sz: stone, n: stone, f: obsidian) -> stone
+extern vein fwrite(buf: obsidian, sz: stone, n: stone, f: obsidian) -> stone
+extern vein fputs(s: obsidian, f: obsidian) -> stone
+extern vein fseek(f: obsidian, offset: stone, whence: stone) -> stone
+extern vein ftell(f: obsidian) -> stone
 extern vein system(cmd: obsidian) -> stone
-extern vein ofs_alloc(size: stone) -> stone
-extern vein ofs_free(p: stone) -> void
+extern vein ofs_alloc(size: stone) -> obsidian
+extern vein ofs_free(p: obsidian) -> void
 extern vein exit(code: stone) -> void
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_str_concat(a: obsidian, b: obsidian) -> obsidian
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_stone_to_obsidian(value: stone) -> obsidian
+extern vein ofs_array_len(a: Array) -> stone
+extern vein ofs_array_get(a: Array, index: stone) -> stone
+extern vein ofs_array_push(a: Array, value: stone) -> void
+extern vein ofs_array_set(a: Array, index: stone, value: stone) -> void
+extern vein ofs_array_pop(a: Array) -> stone
 
 // ── File Reading ────────────────────────────────────────────────────────
 
 vein read_file(path: obsidian) -> obsidian {
     forge f = fopen(path, "r")
-    if (f == 0) {
+    if (f == null) {
         throw "erro: nao foi possivel abrir " + path
     }
     
@@ -33,14 +44,14 @@ vein read_file(path: obsidian) -> obsidian {
     fread(buf, 1, size, f)
     fclose(f)
     
-    return buf as obsidian
+    return buf
 }
 
 // ── File Writing ────────────────────────────────────────────────────────
 
 vein write_file(path: obsidian, content: obsidian) -> bool {
     forge f = fopen(path, "w")
-    if (f == 0) {
+    if (f == null) {
         return false
     }
     fputs(content, f)
@@ -50,7 +61,7 @@ vein write_file(path: obsidian, content: obsidian) -> bool {
 
 // ── Codegen Output ──────────────────────────────────────────────────────
 
-forge _out_file: stone = 0
+forge _out_file: obsidian = null
 
 vein cg_open(path: obsidian) -> void {
     _out_file = fopen(path, "w")
