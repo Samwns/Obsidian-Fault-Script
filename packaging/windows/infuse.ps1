@@ -15,7 +15,7 @@ if ($dllDirs.Count -gt 0) {
     $env:PATH = (($dllDirs -join ';') + ';' + $env:PATH)
 }
 
-$ofsExe = Join-Path $PSScriptRoot 'ofs.exe'
+$ofsExe = Join-Path $PSScriptRoot 'ofs.cmd'
 if (-not (Test-Path $ofsExe)) {
     $localWrapper = Join-Path $PSScriptRoot 'ofs.ps1'
     $resolvedOfs = Get-Command 'ofs' -All -ErrorAction SilentlyContinue |

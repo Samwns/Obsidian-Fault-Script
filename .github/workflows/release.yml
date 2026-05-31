@@ -65,16 +65,26 @@ jobs:
           echo "Seed installed:"
           ofs version || ofs --version || echo "ofs ready"
 
+      - name: Build current self-hosted compiler
+        run: |
+          mkdir -p selfhost
+          ofs build ofscc/ofscc.ofs -o selfhost/ofscc
+          chmod +x selfhost/ofscc
+          ./selfhost/ofscc --help
+
       - name: Build installer tarball
         run: |
           TAG="${{ needs.version.outputs.tag }}"
+          VERSION="${TAG#v}"
           STAGING="staging"
           mkdir -p "$STAGING"
 
-          cp /usr/local/bin/ofs "$STAGING/ofs"
+          sed "s/__OFS_VERSION__/${VERSION}/g" packaging/linux/ofs > "$STAGING/ofs"
+          cp selfhost/ofscc "$STAGING/ofscc"
           chmod +x "$STAGING/ofs"
           cp -r ofs/stdlib "$STAGING/stdlib"
-          cp -r ofscc "$STAGING/ofscc"
+          mkdir -p "$STAGING/ofscc-src"
+          cp -r ofscc/* "$STAGING/ofscc-src/"
           cp packaging/linux/install.sh "$STAGING/"
           chmod +x "$STAGING/install.sh"
           for cmd in infuse uncover reinfuse; do
@@ -83,6 +93,8 @@ jobs:
           [ -f /usr/local/lib/libofs_runtime.a ] && cp /usr/local/lib/libofs_runtime.a "$STAGING/"
           [ -f packaging/assets/ofs-256.png ] && cp packaging/assets/ofs-256.png "$STAGING/ofs.png"
           cp LICENSE "$STAGING/" 2>/dev/null || true
+
+          "$STAGING/ofs" version | grep -F "ofs ${VERSION} - Obsidian Fault Script"
 
           ARCHIVE="ofs-linux-x64-installer-${TAG}.tar.gz"
           tar czf "$ARCHIVE" -C "$STAGING" .
@@ -113,6 +125,13 @@ jobs:
           echo "Seed installed:"
           ofs version || ofs --version || echo "ofs ready"
 
+      - name: Build current self-hosted compiler
+        run: |
+          mkdir -p selfhost
+          ofs build ofscc/ofscc.ofs -o selfhost/ofscc
+          chmod +x selfhost/ofscc
+          ./selfhost/ofscc --help
+
       - name: Build installer pkg
         run: |
           TAG="${{ needs.version.outputs.tag }}"
@@ -120,17 +139,20 @@ jobs:
           ROOT="pkg-root"
           mkdir -p "$ROOT/usr/local/bin"
           mkdir -p "$ROOT/usr/local/share/ofs/stdlib"
-          mkdir -p "$ROOT/usr/local/share/ofs/ofscc"
+          mkdir -p "$ROOT/usr/local/share/ofs/ofscc-src"
 
-          OFS_BIN=$(command -v ofs || echo /usr/local/bin/ofs)
-          cp "$OFS_BIN" "$ROOT/usr/local/bin/ofs"
+          sed "s/__OFS_VERSION__/${VERSION}/g" packaging/linux/ofs > "$ROOT/usr/local/bin/ofs"
+          cp selfhost/ofscc "$ROOT/usr/local/bin/ofscc"
           chmod +x "$ROOT/usr/local/bin/ofs"
+          chmod +x "$ROOT/usr/local/bin/ofscc"
           cp ofs/stdlib/*.ofs "$ROOT/usr/local/share/ofs/stdlib/" 2>/dev/null || true
-          cp -r ofscc/* "$ROOT/usr/local/share/ofs/ofscc/" 2>/dev/null || true
+          cp -r ofscc/* "$ROOT/usr/local/share/ofs/ofscc-src/" 2>/dev/null || true
           if [ -f /usr/local/lib/libofs_runtime.a ]; then
             mkdir -p "$ROOT/usr/local/lib"
             cp /usr/local/lib/libofs_runtime.a "$ROOT/usr/local/lib/"
           fi
+
+          "$ROOT/usr/local/bin/ofs" version | grep -F "ofs ${VERSION} - Obsidian Fault Script"
 
           PKG="ofs-macos-arm64-installer-${TAG}.pkg"
           pkgbuild --root "$ROOT" \
@@ -164,24 +186,44 @@ jobs:
             --pattern "ofs-windows-x64-portable-*.zip" --dir seed-dl
           $zip = Get-ChildItem seed-dl -Filter "*.zip" | Select-Object -First 1
           Expand-Archive $zip.FullName -DestinationPath seed-extracted
-          $ofsExe = Get-ChildItem seed-extracted -Recurse -Filter "ofs.exe" | Select-Object -First 1
-          $seedDir = $ofsExe.DirectoryName
+          $ofsCommand = Get-ChildItem seed-extracted -Recurse -Include "ofs.exe","ofs.cmd" | Select-Object -First 1
+          if (-not $ofsCommand) {
+            Write-Error "Seed OFS command not found in portable package."
+            exit 1
+          }
+          $seedDir = $ofsCommand.DirectoryName
           Write-Output "Seed dir: $seedDir"
+          echo "SEED_OFS=$($ofsCommand.FullName)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           echo "SEED_DIR=$seedDir" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: Build current self-hosted compiler
+        shell: powershell
+        run: |
+          $SeedDir = $env:SEED_DIR
+          $env:PATH = "$SeedDir;$env:PATH"
+          New-Item -ItemType Directory -Path selfhost -Force | Out-Null
+          & "$env:SEED_OFS" build "ofscc\ofscc.ofs" -o "selfhost\ofscc.exe"
+          if (-not (Test-Path "selfhost\ofscc.exe")) {
+            Write-Error "Self-hosted compiler was not produced."
+            exit 1
+          }
+          & "selfhost\ofscc.exe" --help
 
       - name: Build portable zip
         shell: powershell
         run: |
           $TAG = "${{ needs.version.outputs.tag }}"
+          $Version = $TAG.TrimStart("v")
           $SeedDir = $env:SEED_DIR
           $Staging = "portable-staging"
           New-Item -ItemType Directory -Path $Staging -Force | Out-Null
 
-          Copy-Item "$SeedDir\ofs.exe" "$Staging\"
+          Copy-Item "selfhost\ofscc.exe" "$Staging\ofscc.exe"
           Get-ChildItem "$SeedDir" -Filter "*.dll" | Copy-Item -Destination "$Staging\"
           Copy-Item "$SeedDir\libofs_runtime.a" "$Staging\" -ErrorAction SilentlyContinue
           Copy-Item "$SeedDir\ofs_runtime.lib" "$Staging\" -ErrorAction SilentlyContinue
-          Copy-Item "packaging\windows\ofs.ps1" "$Staging\" -ErrorAction SilentlyContinue
+          Copy-Item "packaging\windows\ofs.cmd" "$Staging\ofs.cmd"
+          (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", $Version) | Set-Content "$Staging\ofs.ps1"
           foreach ($cmd in @("infuse", "uncover", "reinfuse")) {
             Copy-Item "packaging\windows\$cmd.ps1" "$Staging\" -ErrorAction SilentlyContinue
             Copy-Item "packaging\windows\$cmd.cmd" "$Staging\" -ErrorAction SilentlyContinue
@@ -192,6 +234,7 @@ jobs:
           Copy-Item "ofscc\*.ofs" "$Staging\ofscc\" -ErrorAction SilentlyContinue
           Copy-Item "ofscc\README.md" "$Staging\ofscc\" -ErrorAction SilentlyContinue
           Copy-Item "LICENSE" "$Staging\LICENSE.txt" -ErrorAction SilentlyContinue
+          & "$Staging\ofs.cmd" version | Select-String "ofs $Version - Obsidian Fault Script"
 
           $ZipName = "ofs-windows-x64-portable-${TAG}.zip"
           Compress-Archive -Path "$Staging\*" -DestinationPath $ZipName -Force
@@ -202,17 +245,19 @@ jobs:
         shell: powershell
         run: |
           $TAG = "${{ needs.version.outputs.tag }}"
+          $Version = $TAG.TrimStart("v")
           $SeedDir = $env:SEED_DIR
           $RepoRoot = (Get-Location).Path
           $Dist = "$RepoRoot\dist"
           $AssetsDir = "$RepoRoot\packaging\windows"
           New-Item -ItemType Directory -Path $Dist -Force | Out-Null
 
-          Copy-Item "$SeedDir\ofs.exe" "$Dist\"
+          Copy-Item "selfhost\ofscc.exe" "$Dist\ofscc.exe"
           Get-ChildItem "$SeedDir" -Filter "*.dll" | Copy-Item -Destination "$Dist\"
           Copy-Item "$SeedDir\libofs_runtime.a" "$Dist\" -ErrorAction SilentlyContinue
           Copy-Item "$SeedDir\ofs_runtime.lib" "$Dist\" -ErrorAction SilentlyContinue
-          Copy-Item "packaging\windows\ofs.ps1" "$Dist\" -ErrorAction SilentlyContinue
+          Copy-Item "packaging\windows\ofs.cmd" "$Dist\ofs.cmd"
+          (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", $Version) | Set-Content "$Dist\ofs.ps1"
           foreach ($cmd in @("infuse", "uncover", "reinfuse")) {
             Copy-Item "packaging\windows\$cmd.ps1" "$Dist\" -ErrorAction SilentlyContinue
             Copy-Item "packaging\windows\$cmd.cmd" "$Dist\" -ErrorAction SilentlyContinue

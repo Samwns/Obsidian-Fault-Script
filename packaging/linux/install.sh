@@ -4,6 +4,8 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BIN="$SCRIPT_DIR/ofs"
 TARGET="/usr/local/bin/ofs"
+OFSCC_SRC="$SCRIPT_DIR/ofscc"
+OFSCC_TARGET="/usr/local/bin/ofscc"
 RUNTIME_SRC="$SCRIPT_DIR/libofs_runtime.a"
 RUNTIME_TARGET_DIR="/usr/local/lib"
 RUNTIME_TARGET="$RUNTIME_TARGET_DIR/libofs_runtime.a"
@@ -16,12 +18,20 @@ STDLIB_SRC="$SCRIPT_DIR/stdlib"
 STDLIB_TARGET="/usr/local/share/ofs/stdlib"
 
 if [ ! -f "$BIN" ]; then
-  echo "ofs binary not found next to installer script"
+  echo "ofs wrapper not found next to installer script"
   exit 1
 fi
 
-echo "[OFS] Installing compiler binary..."
+if [ ! -f "$OFSCC_SRC" ]; then
+  echo "ofscc compiler not found next to installer script"
+  exit 1
+fi
+
+echo "[OFS] Installing command wrapper..."
 sudo install -m 0755 "$BIN" "$TARGET"
+
+echo "[OFS] Installing self-hosted compiler..."
+sudo install -m 0755 "$OFSCC_SRC" "$OFSCC_TARGET"
 
 if [ -f "$RUNTIME_SRC" ]; then
   echo "[OFS] Installing native runtime library..."
