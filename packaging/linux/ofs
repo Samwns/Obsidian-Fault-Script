@@ -6,6 +6,7 @@ OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OFSCC="${OFSCC:-$ROOT/ofscc}"
 RUNTIME="${OFS_RUNTIME:-$ROOT/libofs_runtime.a}"
+read -r -a OFS_LLVM_IR_FLAGS <<< "${OFS_LLVM_IR_FLAGS:--Xclang -opaque-pointers}"
 
 if [ ! -x "$OFSCC" ] && command -v ofscc >/dev/null 2>&1; then
   OFSCC="$(command -v ofscc)"
@@ -179,14 +180,14 @@ case "$mode" in
     [ -n "$output" ] || output="$name.s"
     case "$output" in *.s) ;; *) output="$output.s" ;; esac
     OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
-    clang -Wno-override-module -S "$ll" -o "$output"
+    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" -S "$ll" -o "$output"
     rm -f "$ll"
     echo "ASM: $output"
     ;;
   build|run)
     [ -n "$output" ] || output="$name"
     OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
-    clang -Wno-override-module -O2 "$ll" "$RUNTIME" -lm -o "$output"
+    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" -O2 "$ll" "$RUNTIME" -lm -o "$output"
     chmod +x "$output"
     rm -f "$ll"
     if [ "$mode" = "run" ]; then

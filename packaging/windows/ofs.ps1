@@ -24,6 +24,11 @@ if (-not (Test-Path $Ofscc)) {
     $resolved = Get-Command 'ofscc.exe' -ErrorAction SilentlyContinue
     if ($resolved) { $Ofscc = $resolved.Path }
 }
+$LlvmIrFlags = if ($env:OFS_LLVM_IR_FLAGS) {
+    $env:OFS_LLVM_IR_FLAGS -split '\s+'
+} else {
+    @("-Xclang", "-opaque-pointers")
+}
 
 function Show-Banner {
 @"
@@ -173,7 +178,7 @@ if ($mode -eq "asm") {
     $env:OFSCC_C_OUT = $ll
     & $Ofscc
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & clang -Wno-override-module -S $ll -o $output
+    & clang -Wno-override-module @LlvmIrFlags -S $ll -o $output
     Remove-Item $ll -ErrorAction SilentlyContinue
     Write-Output "ASM: $output"
     exit $LASTEXITCODE
@@ -188,7 +193,7 @@ if ($mode -in @("build", "run")) {
     $env:OFSCC_C_OUT = $ll
     & $Ofscc
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & clang -Wno-override-module -O2 $ll $runtime -lm -o $output
+    & clang -Wno-override-module @LlvmIrFlags -O2 $ll $runtime -lm -o $output
     Remove-Item $ll -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     if ($mode -eq "run") {
