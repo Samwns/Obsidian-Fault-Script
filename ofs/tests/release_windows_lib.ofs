@@ -1,0 +1,9 @@
+namespace releaseprobe {
+    vein banner() -> obsidian {
+        return "OFS Windows release probe"
+    }
+
+    vein exit_code() -> stone {
+        return 42
+    }
+}

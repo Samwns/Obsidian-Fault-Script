@@ -11,18 +11,24 @@ read -r -a OFS_LLVM_IR_FLAGS <<< "${OFS_LLVM_IR_FLAGS:--Xclang -opaque-pointers}
 if [ ! -x "$OFSCC" ] && command -v ofscc >/dev/null 2>&1; then
   OFSCC="$(command -v ofscc)"
 fi
+if [ ! -x "$OFSCC" ] && [ -x /usr/lib/ofs/ofscc ]; then
+  OFSCC="/usr/lib/ofs/ofscc"
+fi
 if [ ! -f "$RUNTIME" ] && [ -f /usr/local/lib/libofs_runtime.a ]; then
   RUNTIME="/usr/local/lib/libofs_runtime.a"
+fi
+if [ ! -f "$RUNTIME" ] && [ -f /usr/lib/ofs/libofs_runtime.a ]; then
+  RUNTIME="/usr/lib/ofs/libofs_runtime.a"
 fi
 
 banner() {
   cat <<'BANNER'
 
- ______        ______      ______    
-/\  __ \      /\  ___\    /\  ___\   
-\ \ \/\ \     \ \  __\    \ \___  \  
- \ \_____\     \ \_\       \/\_____\ 
-  \/_____/      \/_/        \/_____/ 
+ ______        ______      ______
+/\  __ \      /\  ___\    /\  ___\
+\ \ \/\ \     \ \  __\    \ \___  \
+ \ \_____\     \ \_\       \/\_____\
+  \/_____/      \/_/        \/_____/
 
 BANNER
 }
@@ -59,7 +65,7 @@ latest_tag() {
 }
 
 run_update() {
-  local latest asset tmp platform
+  local latest asset tmp platform os_id os_like package
   latest="$(latest_tag)"
   if [ -z "$latest" ]; then
     echo "ofs update: failed to fetch latest release tag" >&2
@@ -86,17 +92,53 @@ run_update() {
     return 0
   fi
 
-  asset="ofs-linux-x64-installer-$latest.tar.gz"
-  echo "Downloading $asset..."
-  curl -fL "https://github.com/$OFS_REPO/releases/download/$latest/$asset" -o "$tmp/ofs.tar.gz"
-  tar xzf "$tmp/ofs.tar.gz" -C "$tmp"
-  if [ ! -f "$tmp/install.sh" ]; then
-    echo "ofs update: installer package missing install.sh" >&2
-    return 1
+  os_id=""
+  os_like=""
+  if [ -f /etc/os-release ]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    os_id="${ID:-}"
+    os_like="${ID_LIKE:-}"
   fi
-  bash "$tmp/install.sh"
-  rm -rf "$tmp"
 
+  case " $os_id $os_like " in
+    *" arch "*)
+      asset="ofs-arch-x64-installer-$latest.pkg.tar.zst"
+      package="$tmp/$asset"
+      echo "Downloading $asset..."
+      curl -fL "https://github.com/$OFS_REPO/releases/download/$latest/$asset" -o "$package"
+      sudo pacman -U --noconfirm "$package"
+      ;;
+    *" fedora "*|*" rhel "*|*" centos "*)
+      asset="ofs-fedora-x64-installer-$latest.rpm"
+      package="$tmp/$asset"
+      echo "Downloading $asset..."
+      curl -fL "https://github.com/$OFS_REPO/releases/download/$latest/$asset" -o "$package"
+      if command -v dnf >/dev/null 2>&1; then
+        sudo dnf install -y "$package"
+      else
+        sudo rpm -Uvh "$package"
+      fi
+      ;;
+    *" debian "*|*" ubuntu "*)
+      asset="ofs-debian-ubuntu-x64-installer-$latest.deb"
+      package="$tmp/$asset"
+      echo "Downloading $asset..."
+      curl -fL "https://github.com/$OFS_REPO/releases/download/$latest/$asset" -o "$package"
+      if command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get install -y "$package"
+      else
+        sudo dpkg -i "$package"
+      fi
+      ;;
+    *)
+      echo "ofs update: unsupported Linux distribution ($os_id $os_like)." >&2
+      echo "Download the .deb, .rpm, or .pkg.tar.zst release manually." >&2
+      return 1
+      ;;
+  esac
+
+  rm -rf "$tmp"
   if ! ofs version | grep -F "ofs ${latest#v} - Obsidian Fault Script" >/dev/null; then
     echo "ofs update: installed version did not match $latest" >&2
     return 1

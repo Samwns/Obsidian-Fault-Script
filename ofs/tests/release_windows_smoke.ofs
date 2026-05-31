@@ -1,0 +1,6 @@
+attach {F:release_windows_lib.ofs}
+
+core main() {
+    echo(releaseprobe.banner())
+    echo(releaseprobe.exit_code())
+}

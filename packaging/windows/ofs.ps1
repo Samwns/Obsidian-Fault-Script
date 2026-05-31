@@ -87,16 +87,20 @@ function Invoke-Update {
 
     $tmp = Join-Path ([IO.Path]::GetTempPath()) ("ofs-update-" + [Guid]::NewGuid().ToString("N"))
     New-Item -ItemType Directory -Path $tmp | Out-Null
-    $asset = "ofs-windows-x64-portable-$latest.zip"
-    $zip = Join-Path $tmp $asset
+    $asset = "ofs-windows-x64-installer-$latest.exe"
+    $installer = Join-Path $tmp $asset
     $url = "https://github.com/$Repo/releases/download/$latest/$asset"
     Write-Output "Downloading $asset..."
-    Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $zip
-    Expand-Archive -LiteralPath $zip -DestinationPath (Join-Path $tmp "unpack") -Force
-    Copy-Item (Join-Path $tmp "unpack\*") -Destination $PSScriptRoot -Recurse -Force
+    Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $installer
+    $process = Start-Process -FilePath $installer -ArgumentList "/S" -Wait -PassThru
+    if ($process.ExitCode -ne 0) {
+        throw "ofs update: installer failed with exit code $($process.ExitCode)"
+    }
     Remove-Item $tmp -Recurse -Force
 
-    $output = & (Join-Path $PSScriptRoot 'ofs.cmd') version | Out-String
+    $resolvedOfs = Get-Command 'ofs.cmd' -ErrorAction SilentlyContinue
+    $ofsCmd = if ($resolvedOfs) { $resolvedOfs.Path } else { Join-Path $PSScriptRoot 'ofs.cmd' }
+    $output = & $ofsCmd version | Out-String
     if ($output -notmatch "ofs $($latest.TrimStart('v')) - Obsidian Fault Script") {
         throw "ofs update: installed version did not match $latest"
     }

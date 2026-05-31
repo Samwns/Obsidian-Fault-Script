@@ -16,6 +16,75 @@ LICENSE_TARGET_DIR="/usr/local/share/doc/ofs"
 LICENSE_TARGET="$LICENSE_TARGET_DIR/LICENSE"
 STDLIB_SRC="$SCRIPT_DIR/stdlib"
 STDLIB_TARGET="/usr/local/share/ofs/stdlib"
+ACCEPT_LICENSE="${OFS_ACCEPT_LICENSE:-}"
+
+for arg in "$@"; do
+  case "$arg" in
+    --accept-license|--yes|-y)
+      ACCEPT_LICENSE=1
+      ;;
+    --help|-h)
+      cat <<'EOF'
+OFS installer
+
+Usage:
+  ./install.sh
+  ./install.sh --accept-license
+
+Options:
+  --accept-license, --yes, -y   Accept the bundled license non-interactively.
+  --help, -h                    Show this help.
+EOF
+      exit 0
+      ;;
+  esac
+done
+
+banner() {
+  cat <<'EOF'
+
+========================================
+ Obsidian Fault Script Installer
+========================================
+
+EOF
+}
+
+require_license_acceptance() {
+  banner
+  if [ -f "$LICENSE_SRC" ]; then
+    echo "License: Boost Software License 1.0"
+    echo "License file: $LICENSE_SRC"
+  else
+    echo "License file was not found in this package."
+  fi
+  echo
+  echo "This installer will install OFS command-line tools, the self-hosted"
+  echo "compiler, standard library files, and native runtime files."
+  echo
+
+  if [ "$ACCEPT_LICENSE" = "1" ] || [ "$ACCEPT_LICENSE" = "true" ]; then
+    echo "[OFS] License accepted non-interactively."
+    return
+  fi
+
+  if [ ! -t 0 ]; then
+    echo "[OFS] License acceptance is required. Re-run with --accept-license." >&2
+    exit 2
+  fi
+
+  printf "Do you accept the license terms and continue? [y/N] "
+  read -r answer
+  case "$answer" in
+    y|Y|yes|YES|Yes)
+      echo "[OFS] License accepted."
+      ;;
+    *)
+      echo "[OFS] Installation cancelled."
+      exit 2
+      ;;
+  esac
+}
 
 if [ ! -f "$BIN" ]; then
   echo "ofs wrapper not found next to installer script"
@@ -26,6 +95,8 @@ if [ ! -f "$OFSCC_SRC" ]; then
   echo "ofscc compiler not found next to installer script"
   exit 1
 fi
+
+require_license_acceptance
 
 echo "[OFS] Installing command wrapper..."
 sudo install -m 0755 "$BIN" "$TARGET"

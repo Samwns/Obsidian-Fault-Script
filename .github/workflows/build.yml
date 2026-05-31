@@ -107,7 +107,7 @@ jobs:
           "OFS_CMD=$((Resolve-Path 'selfhost\ofs.cmd').Path)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           & "selfhost\ofs.cmd" version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $env:OFSCC_INPUT = "ofscc\ofscc.ofs"
+          $env:OFSCC_INPUT = "ofscc/ofscc.ofs"
           $env:OFSCC_MODE = "check"
           & "selfhost\ofscc.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

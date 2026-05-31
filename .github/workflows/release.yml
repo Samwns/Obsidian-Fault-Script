@@ -50,8 +50,13 @@ jobs:
 
       - name: Verify toolchain
         run: |
+          sudo apt-get update
+          sudo apt-get install -y rpm libarchive-tools zstd
           clang --version
           ar --version
+          rpmbuild --version
+          bsdtar --version
+          zstd --version
 
       - name: Build current self-hosted compiler
         run: |
@@ -64,44 +69,27 @@ jobs:
           ./selfhost/ofscc --help
           OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=check ./selfhost/ofscc
 
-      - name: Build installer tarball
+      - name: Build native Linux installers
         run: |
           TAG="${{ needs.version.outputs.tag }}"
           VERSION="${TAG#v}"
-          STAGING="staging"
-          mkdir -p "$STAGING"
+          chmod +x packaging/linux/build-native-packages.sh
+          packaging/linux/build-native-packages.sh "$VERSION" "$TAG" selfhost/ofscc selfhost/libofs_runtime.a native-installers
 
-          sed "s/__OFS_VERSION__/${VERSION}/g" packaging/linux/ofs > "$STAGING/ofs"
-          cp selfhost/ofscc "$STAGING/ofscc"
-          chmod +x "$STAGING/ofs"
-          cp -r ofs/stdlib "$STAGING/stdlib"
-          mkdir -p "$STAGING/ofscc-src"
-          cp -r ofscc/* "$STAGING/ofscc-src/"
-          cp packaging/linux/install.sh "$STAGING/"
-          chmod +x "$STAGING/install.sh"
-          for cmd in infuse uncover reinfuse; do
-            [ -f "packaging/linux/$cmd" ] && cp "packaging/linux/$cmd" "$STAGING/" && chmod +x "$STAGING/$cmd"
-          done
-          cp selfhost/libofs_runtime.a "$STAGING/"
-          [ -f packaging/assets/ofs-256.png ] && cp packaging/assets/ofs-256.png "$STAGING/ofs.png"
-          cp LICENSE "$STAGING/" 2>/dev/null || true
+          mkdir -p deb-test
+          dpkg-deb -x "native-installers/ofs-debian-ubuntu-x64-installer-${TAG}.deb" deb-test
+          deb-test/usr/bin/ofs version | grep -F "ofs ${VERSION} - Obsidian Fault Script"
+          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs check ofs/examples/webserver_demo.ofs
+          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o deb-test/stdlib-smoke
+          deb-test/stdlib-smoke
 
-          "$STAGING/ofs" version | grep -F "ofs ${VERSION} - Obsidian Fault Script"
-          "$STAGING/ofs" check ofs/examples/webserver_demo.ofs
-          "$STAGING/ofs" build ofs/tests/selfhost_stdlib_smoke.ofs -o "$STAGING/stdlib-smoke"
-          "$STAGING/stdlib-smoke"
-          rm -f "$STAGING/stdlib-smoke"
-
-          ARCHIVE="ofs-linux-x64-installer-${TAG}.tar.gz"
-          tar czf "$ARCHIVE" -C "$STAGING" .
-          echo "archive=$ARCHIVE" >> "$GITHUB_ENV"
-          ls -lh "$ARCHIVE"
+          echo "linux_installers=native-installers/*${TAG}*" >> "$GITHUB_ENV"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: release-linux-x64-${{ needs.version.outputs.tag }}
-          path: ${{ env.archive }}
+          path: ${{ env.linux_installers }}
 
   # ── macOS ────────────────────────────────────────────────────────────
   build-macos:
@@ -149,12 +137,34 @@ jobs:
           "$ROOT/usr/local/bin/stdlib-smoke"
           rm -f "$ROOT/usr/local/bin/stdlib-smoke"
 
-          PKG="ofs-macos-arm64-installer-${TAG}.pkg"
+          COMPONENT_PKG="ofs-macos-arm64-component-${TAG}.pkg"
           pkgbuild --root "$ROOT" \
             --identifier com.obsidian-fault-script.ofs \
             --version "$VERSION" \
             --install-location / \
-            "$PKG"
+            "$COMPONENT_PKG"
+
+          mkdir -p pkg-resources
+          cp LICENSE pkg-resources/LICENSE.txt
+          cat > distribution.xml <<EOF
+          <?xml version="1.0" encoding="utf-8"?>
+          <installer-gui-script minSpecVersion="1">
+            <title>Obsidian Fault Script</title>
+            <license file="LICENSE.txt"/>
+            <options customize="never" require-scripts="false"/>
+            <domains enable_anywhere="false" enable_currentUserHome="false" enable_localSystem="true"/>
+            <choices-outline>
+              <line choice="ofs"/>
+            </choices-outline>
+            <choice id="ofs" title="Obsidian Fault Script">
+              <pkg-ref id="com.obsidian-fault-script.ofs"/>
+            </choice>
+            <pkg-ref id="com.obsidian-fault-script.ofs" version="$VERSION" onConclusion="none">$COMPONENT_PKG</pkg-ref>
+          </installer-gui-script>
+          EOF
+
+          PKG="ofs-macos-arm64-installer-${TAG}.pkg"
+          productbuild --distribution distribution.xml --resources pkg-resources --package-path . "$PKG"
           echo "pkg=$PKG" >> "$GITHUB_ENV"
           ls -lh "$PKG"
 
@@ -178,7 +188,11 @@ jobs:
           if (-not (Test-Path "C:\Program Files\LLVM\bin\clang.exe")) {
             choco install llvm -y
           }
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            choco install nsis -y
+          }
           "C:\Program Files\LLVM\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          "C:\Program Files (x86)\NSIS" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
 
       - name: Build current self-hosted compiler
         shell: powershell
@@ -207,52 +221,10 @@ jobs:
           }
           & "selfhost\ofscc.exe" --help
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $env:OFSCC_INPUT = "ofscc\ofscc.ofs"
+          $env:OFSCC_INPUT = "ofscc/ofscc.ofs"
           $env:OFSCC_MODE = "check"
           & "selfhost\ofscc.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Build portable zip
-        shell: powershell
-        run: |
-          $TAG = "${{ needs.version.outputs.tag }}"
-          $Version = $TAG.TrimStart("v")
-          $Staging = "portable-staging"
-          New-Item -ItemType Directory -Path $Staging -Force | Out-Null
-
-          Copy-Item "selfhost\ofscc.exe" "$Staging\ofscc.exe"
-          Copy-Item "selfhost\libofs_runtime.a" "$Staging\libofs_runtime.a"
-          Copy-Item "packaging\windows\ofs.cmd" "$Staging\ofs.cmd"
-          (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", $Version) | Set-Content "$Staging\ofs.ps1"
-          foreach ($cmd in @("infuse", "uncover", "reinfuse")) {
-            Copy-Item "packaging\windows\$cmd.ps1" "$Staging\" -ErrorAction SilentlyContinue
-            Copy-Item "packaging\windows\$cmd.cmd" "$Staging\" -ErrorAction SilentlyContinue
-          }
-          New-Item -ItemType Directory -Path "$Staging\stdlib" -Force | Out-Null
-          Copy-Item "ofs\stdlib\*.ofs" "$Staging\stdlib\" -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Path "$Staging\ofscc" -Force | Out-Null
-          Copy-Item "ofscc\*.ofs" "$Staging\ofscc\" -ErrorAction SilentlyContinue
-          Copy-Item "ofscc\README.md" "$Staging\ofscc\" -ErrorAction SilentlyContinue
-          Copy-Item "LICENSE" "$Staging\LICENSE.txt" -ErrorAction SilentlyContinue
-          $VersionOutput = & "$Staging\ofs.cmd" version | Out-String
-          if ($VersionOutput -notmatch [regex]::Escape("ofs $Version - Obsidian Fault Script")) {
-            Write-Error "Packaged ofs version did not match $Version"
-            exit 1
-          }
-          Write-Output $VersionOutput
-          & "$Staging\ofs.cmd" check "ofs\examples\webserver_demo.ofs"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $Smoke = (Resolve-Path $Staging).Path + "\stdlib-smoke.exe"
-          & "$Staging\ofs.cmd" build "ofs\tests\selfhost_stdlib_smoke.ofs" -o $Smoke
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $Smoke
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Remove-Item $Smoke -ErrorAction SilentlyContinue
-
-          $ZipName = "ofs-windows-x64-portable-${TAG}.zip"
-          Compress-Archive -Path "$Staging\*" -DestinationPath $ZipName -Force
-          Write-Output "portable_zip=$ZipName" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
-          Get-ChildItem $ZipName
 
       - name: Build NSIS installer
         shell: powershell
@@ -268,37 +240,51 @@ jobs:
           Copy-Item "selfhost\libofs_runtime.a" "$Dist\libofs_runtime.a"
           Copy-Item "packaging\windows\ofs.cmd" "$Dist\ofs.cmd"
           (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", $Version) | Set-Content "$Dist\ofs.ps1"
+          Copy-Item "packaging\windows\install.cmd" "$Dist\install.cmd"
+          Copy-Item "packaging\windows\install.ps1" "$Dist\install.ps1"
           foreach ($cmd in @("infuse", "uncover", "reinfuse")) {
             Copy-Item "packaging\windows\$cmd.ps1" "$Dist\" -ErrorAction SilentlyContinue
             Copy-Item "packaging\windows\$cmd.cmd" "$Dist\" -ErrorAction SilentlyContinue
           }
           New-Item -ItemType Directory -Path "$Dist\stdlib" -Force | Out-Null
           Copy-Item "ofs\stdlib\*.ofs" "$Dist\stdlib\" -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path "$Dist\ofscc" -Force | Out-Null
+          Copy-Item "ofscc\*.ofs" "$Dist\ofscc\" -ErrorAction SilentlyContinue
+          Copy-Item "ofscc\README.md" "$Dist\ofscc\" -ErrorAction SilentlyContinue
           Copy-Item "LICENSE" "$Dist\LICENSE.txt" -ErrorAction SilentlyContinue
+
+          $VersionOutput = & "$Dist\ofs.cmd" version | Out-String
+          if ($VersionOutput -notmatch [regex]::Escape("ofs $Version - Obsidian Fault Script")) {
+            Write-Error "Packaged ofs version did not match $Version"
+            exit 1
+          }
+          Write-Output $VersionOutput
+          & "$Dist\ofs.cmd" check "ofs\examples\webserver_demo.ofs"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $Smoke = (Resolve-Path $Dist).Path + "\stdlib-smoke.exe"
+          & "$Dist\ofs.cmd" build "ofs\tests\selfhost_stdlib_smoke.ofs" -o $Smoke
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $Smoke
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item $Smoke -ErrorAction SilentlyContinue
 
           $InstallerName = "ofs-windows-x64-installer-${TAG}.exe"
           $InstallerPath = "$RepoRoot\$InstallerName"
           $nsis = Get-Command makensis -ErrorAction SilentlyContinue
-          if ($nsis) {
-            & makensis `
-              "/DOUTPUT=$InstallerPath" `
-              "/DDIST_DIR=$Dist" `
-              "/DASSETS_DIR=$AssetsDir" `
-              packaging\windows\installer.nsi
-            Write-Output "installer_exe=$InstallerPath" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
-          } else {
-            Write-Output "::warning::NSIS not found, skipping .exe installer"
-            Write-Output "installer_exe=" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          if (-not $nsis) {
+            Write-Error "NSIS makensis was not found; Windows release must produce an installer exe."
+            exit 1
           }
-
-      - name: Upload portable zip
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-windows-portable-${{ needs.version.outputs.tag }}
-          path: ${{ env.portable_zip }}
+          & makensis `
+            "/DOUTPUT=$InstallerPath" `
+            "/DDIST_DIR=$Dist" `
+            "/DASSETS_DIR=$AssetsDir" `
+            packaging\windows\installer.nsi
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Write-Output "installer_exe=$InstallerPath" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          Get-ChildItem $InstallerPath
 
       - name: Upload installer exe
-        if: env.installer_exe != ''
         uses: actions/upload-artifact@v4
         with:
           name: release-windows-installer-${{ needs.version.outputs.tag }}
@@ -365,7 +351,7 @@ jobs:
       - name: Generate checksums
         run: |
           cd artifacts
-          sha256sum *.tar.gz *.pkg *.zip *.exe *.vsix 2>/dev/null > CHECKSUMS.sha256 || true
+          sha256sum *.deb *.rpm *.pkg *.pkg.tar.zst *.exe *.vsix 2>/dev/null > CHECKSUMS.sha256 || true
           cat CHECKSUMS.sha256
 
       - name: Create GitHub Release
@@ -375,9 +361,10 @@ jobs:
           name: OFS ${{ needs.version.outputs.tag }}
           body_path: RELEASE.md
           files: |
-            artifacts/*.tar.gz
+            artifacts/*.deb
+            artifacts/*.rpm
             artifacts/*.pkg
-            artifacts/*.zip
+            artifacts/*.pkg.tar.zst
             artifacts/*.exe
             artifacts/*.vsix
             artifacts/CHECKSUMS.sha256
