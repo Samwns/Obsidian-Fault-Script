@@ -21,7 +21,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
 
       - name: Install dependencies
         run: |
@@ -34,8 +34,8 @@ jobs:
         run: |
           if [ -z "$VSCE_PAT" ]; then
             echo "VSCE_PAT secret is missing."
-            echo "Create it in repo settings before publishing."
-            exit 1
+            echo "Skipping Marketplace publish; create the secret in repo settings to enable it."
+            exit 0
           fi
           cd vscode-extension
           node ./node_modules/@vscode/vsce/vsce publish --pat "$VSCE_PAT"
