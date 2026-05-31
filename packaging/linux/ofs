@@ -17,7 +17,11 @@ detect_llvm_ir_flags() {
   fi
 }
 
-read -r -a OFS_LLVM_IR_FLAGS <<< "$(detect_llvm_ir_flags)"
+OFS_LLVM_IR_FLAGS=()
+detected_llvm_ir_flags="$(detect_llvm_ir_flags)"
+if [ -n "$detected_llvm_ir_flags" ]; then
+  read -r -a OFS_LLVM_IR_FLAGS <<< "$detected_llvm_ir_flags"
+fi
 
 if [ ! -x "$OFSCC" ] && command -v ofscc >/dev/null 2>&1; then
   OFSCC="$(command -v ofscc)"

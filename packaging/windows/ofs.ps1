@@ -37,6 +37,21 @@ function Get-LlvmIrFlags {
 
 $LlvmIrFlags = Get-LlvmIrFlags
 
+function Invoke-OfsccEnv {
+    param(
+        [Parameter(Mandatory = $true)][string] $InputPath,
+        [Parameter(Mandatory = $true)][string] $Mode,
+        [string] $IrOutput
+    )
+
+    $cmdLine = "set OFSCC_INPUT=$InputPath&& set OFSCC_MODE=$Mode&& "
+    if ($IrOutput) {
+        $cmdLine += "set OFSCC_C_OUT=$IrOutput&& "
+    }
+    $cmdLine += "`"$Ofscc`""
+    & cmd.exe /c $cmdLine
+}
+
 function Show-Banner {
 @"
 
@@ -166,28 +181,20 @@ $work = Join-Path ([IO.Path]::GetTempPath()) "ofs-$name-$PID"
 $ll = "$work.ll"
 
 if ($mode -in @("check", "tokens", "ast")) {
-    $env:OFSCC_INPUT = $inputFile
-    $env:OFSCC_MODE = $mode
-    & $Ofscc
+    Invoke-OfsccEnv -InputPath $inputFile -Mode $mode
     exit $LASTEXITCODE
 }
 
 if ($mode -eq "ir") {
     if (-not $output) { $output = "$name.ll" }
-    $env:OFSCC_INPUT = $inputFile
-    $env:OFSCC_MODE = "ir"
-    $env:OFSCC_C_OUT = $output
-    & $Ofscc
+    Invoke-OfsccEnv -InputPath $inputFile -Mode "ir" -IrOutput $output
     exit $LASTEXITCODE
 }
 
 if ($mode -eq "asm") {
     if (-not $output) { $output = "$name.s" }
     if (-not $output.EndsWith(".s")) { $output = "$output.s" }
-    $env:OFSCC_INPUT = $inputFile
-    $env:OFSCC_MODE = "ir"
-    $env:OFSCC_C_OUT = $ll
-    & $Ofscc
+    Invoke-OfsccEnv -InputPath $inputFile -Mode "ir" -IrOutput $ll
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & clang -Wno-override-module @LlvmIrFlags -S $ll -o $output
     Remove-Item $ll -ErrorAction SilentlyContinue
@@ -199,10 +206,7 @@ if ($mode -in @("build", "run")) {
     if (-not $output) { $output = $name }
     $runtime = Join-Path $PSScriptRoot "libofs_runtime.a"
     if (-not (Test-Path $runtime)) { $runtime = Join-Path $PSScriptRoot "ofs_runtime.lib" }
-    $env:OFSCC_INPUT = $inputFile
-    $env:OFSCC_MODE = "ir"
-    $env:OFSCC_C_OUT = $ll
-    & $Ofscc
+    Invoke-OfsccEnv -InputPath $inputFile -Mode "ir" -IrOutput $ll
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & clang -Wno-override-module @LlvmIrFlags -O2 $ll $runtime -lm -o $output
     Remove-Item $ll -ErrorAction SilentlyContinue

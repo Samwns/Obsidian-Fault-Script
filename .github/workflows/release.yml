@@ -228,9 +228,9 @@ jobs:
           }
           & "selfhost\ofscc.exe" --help
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $env:OFSCC_INPUT = "ofs\tests\selfhost_stdlib_smoke.ofs"
-          $env:OFSCC_MODE = "check"
-          & "selfhost\ofscc.exe"
+          $checkInput = (Resolve-Path "ofs\tests\selfhost_stdlib_smoke.ofs").Path
+          $checkExe = (Resolve-Path "selfhost\ofscc.exe").Path
+          & cmd.exe /c "set OFSCC_INPUT=$checkInput&& set OFSCC_MODE=check&& ""$checkExe"""
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build NSIS installer
