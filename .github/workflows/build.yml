@@ -6,8 +6,10 @@ on:
     paths:
       - 'ofscc/**'
       - 'ofs/examples/**'
+      - 'ofs/runtime/**'
       - 'ofs/stdlib/**'
       - 'packaging/**'
+      - 'dist/ofscc.ll'
       - '.github/workflows/build.yml'
   pull_request:
     branches: [main]
@@ -23,30 +25,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install OFS via official installer
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Build OFS from repository sources
         run: |
-          gh release download --repo $GITHUB_REPO \
-            --pattern "ofs-linux-x64-installer-*.tar.gz" --dir /tmp/ofs-dl
-          mkdir -p /tmp/ofs-install
-          tar xzf /tmp/ofs-dl/ofs-linux-x64-installer-*.tar.gz -C /tmp/ofs-install
-          cd /tmp/ofs-install
-          if [ -f install.sh ]; then
-            sudo bash install.sh
-          else
-            sudo install -m 0755 ofs /usr/local/bin/ofs
-          fi
-          echo "Installed:"
-          ofs version || ofs --version || echo "ofs ready"
+          mkdir -p selfhost
+          clang -O2 -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
+          ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
+          clang -Wno-override-module -O2 dist/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
+          sed 's/__OFS_VERSION__/ci/g' packaging/linux/ofs > selfhost/ofs
+          chmod +x selfhost/ofs selfhost/ofscc
+          selfhost/ofs version
+          OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=check selfhost/ofscc
 
       - name: Run Examples
         run: |
           for ex in ofs/examples/*.ofs; do
             echo "--- $ex ---"
-            timeout 5 ofs run "$ex" 2>&1 || true
+            timeout 5 selfhost/ofs check "$ex" 2>&1
           done
-        continue-on-error: true
+
+      - name: Run stdlib smoke program
+        run: |
+          selfhost/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o selfhost/stdlib-smoke
+          selfhost/stdlib-smoke
 
   build-macos:
     name: Build & Test (macOS)
@@ -54,23 +54,28 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install OFS via official installer
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Build OFS from repository sources
         run: |
-          gh release download --repo $GITHUB_REPO \
-            --pattern "ofs-macos-arm64-installer-*.pkg" --dir /tmp/ofs-dl
-          sudo installer -pkg /tmp/ofs-dl/ofs-macos-arm64-installer-*.pkg -target /
-          echo "Installed:"
-          ofs version || ofs --version || echo "ofs ready"
+          mkdir -p selfhost
+          clang -O2 -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
+          ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
+          clang -Wno-override-module -O2 dist/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
+          sed 's/__OFS_VERSION__/ci/g' packaging/linux/ofs > selfhost/ofs
+          chmod +x selfhost/ofs selfhost/ofscc
+          selfhost/ofs version
+          OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=check selfhost/ofscc
 
       - name: Run Examples
         run: |
           for ex in ofs/examples/*.ofs; do
             echo "--- $ex ---"
-            gtimeout 5 ofs run "$ex" 2>&1 || timeout 5 ofs run "$ex" 2>&1 || true
+            selfhost/ofs check "$ex" 2>&1
           done
-        continue-on-error: true
+
+      - name: Run stdlib smoke program
+        run: |
+          selfhost/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o selfhost/stdlib-smoke
+          selfhost/stdlib-smoke
 
   build-windows:
     name: Build & Test (Windows)
@@ -78,28 +83,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install OFS via portable zip
+      - name: Install LLVM
         shell: powershell
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download --repo $env:GITHUB_REPO `
-            --pattern "ofs-windows-x64-portable-*.zip" --dir seed-dl
-          $zip = Get-ChildItem seed-dl -Filter "*.zip" | Select-Object -First 1
-          Expand-Archive $zip.FullName -DestinationPath "$env:LOCALAPPDATA\ofs"
-          $ofsCommand = Get-ChildItem "$env:LOCALAPPDATA\ofs" -Recurse -File |
-            Where-Object { $_.Name -in @("ofs.cmd", "ofs.exe") } |
-            Sort-Object @{ Expression = { if ($_.Name -eq "ofs.cmd") { 0 } else { 1 } } } |
-            Select-Object -First 1
-          if (-not $ofsCommand) {
-            Write-Error "OFS command not found in portable zip."
-            exit 1
+          if (-not (Test-Path "C:\Program Files\LLVM\bin\clang.exe")) {
+            choco install llvm -y
           }
-          $ofsDir = $ofsCommand.DirectoryName
-          $ofsDir | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
-          "OFS_CMD=$($ofsCommand.FullName)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
-          Write-Output "Installed from: $ofsDir"
-          Write-Output "OFS command: $($ofsCommand.FullName)"
+          "C:\Program Files\LLVM\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+
+      - name: Build OFS from repository sources
+        shell: powershell
+        run: |
+          $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
+          New-Item -ItemType Directory -Path selfhost -Force | Out-Null
+          & clang -O2 -c "ofs\runtime\ofs_runtime.c" -o "selfhost\ofs_runtime.obj"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & llvm-ar rcs "selfhost\libofs_runtime.a" "selfhost\ofs_runtime.obj"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & clang -Wno-override-module -O2 "dist\ofscc.ll" "selfhost\libofs_runtime.a" -o "selfhost\ofscc.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item "packaging\windows\ofs.cmd" "selfhost\ofs.cmd"
+          (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", "ci") | Set-Content "selfhost\ofs.ps1"
+          "OFS_CMD=$((Resolve-Path 'selfhost\ofs.cmd').Path)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          & "selfhost\ofs.cmd" version
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:OFSCC_INPUT = "ofscc\ofscc.ofs"
+          $env:OFSCC_MODE = "check"
+          & "selfhost\ofscc.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Verify install
         shell: powershell
@@ -111,9 +122,18 @@ jobs:
         run: |
           Get-ChildItem "ofs\examples\*.ofs" | ForEach-Object {
             Write-Output "--- $($_.Name) ---"
-            & "$env:OFS_CMD" check $_.FullName 2>&1 | Out-String | Write-Output
+            & "$env:OFS_CMD" check $_.FullName
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           }
-        continue-on-error: true
+
+      - name: Run stdlib smoke program
+        shell: powershell
+        run: |
+          $smoke = (Resolve-Path "selfhost").Path + "\stdlib-smoke.exe"
+          & "$env:OFS_CMD" build "ofs\tests\selfhost_stdlib_smoke.ofs" -o $smoke
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $smoke
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
   docs-check:
     name: Docs

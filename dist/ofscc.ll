@@ -498,13 +498,12 @@ source_filename = "ofs_module"
 @str.490 = private unnamed_addr constant [5 x i8] c"gcc \00", align 1
 @str.491 = private unnamed_addr constant [5 x i8] c" -o \00", align 1
 @str.492 = private unnamed_addr constant [6 x i8] c" 2>&1\00", align 1
-@str.493 = private unnamed_addr constant [9 x i8] c"llvm-as \00", align 1
-@str.494 = private unnamed_addr constant [14 x i8] c".bc && clang \00", align 1
-@str.495 = private unnamed_addr constant [41 x i8] c" /usr/local/lib/libofs_runtime.a -lm -o \00", align 1
-@str.496 = private unnamed_addr constant [10 x i8] c"SUCCESS: \00", align 1
-@str.497 = private unnamed_addr constant [7 x i8] c" ready\00", align 1
-@str.498 = private unnamed_addr constant [20 x i8] c"  FAILED — check \00", align 1
-@str.499 = private unnamed_addr constant [43 x i8] c"COMPILATION ERROR: native linker returned \00", align 1
+@str.493 = private unnamed_addr constant [28 x i8] c"clang -Wno-override-module \00", align 1
+@str.494 = private unnamed_addr constant [41 x i8] c" /usr/local/lib/libofs_runtime.a -lm -o \00", align 1
+@str.495 = private unnamed_addr constant [10 x i8] c"SUCCESS: \00", align 1
+@str.496 = private unnamed_addr constant [7 x i8] c" ready\00", align 1
+@str.497 = private unnamed_addr constant [20 x i8] c"  FAILED — check \00", align 1
+@str.498 = private unnamed_addr constant [43 x i8] c"COMPILATION ERROR: native linker returned \00", align 1
 @_out_file = global ptr null
 @TOK_FORGE = global i64 1
 @TOK_VEIN = global i64 2
@@ -18065,51 +18064,45 @@ if_then2382:
   br label %if_end2384
 
 if_else2383:
-  %c_output_val7703 = load ptr, ptr %c_output7567
-  %concat7704 = call ptr @ofs_str_concat(ptr @str.493, ptr %c_output_val7703)
-  %concat7705 = call ptr @ofs_str_concat(ptr %concat7704, ptr @str.491)
+  %c_opt_val7703 = load ptr, ptr %c_opt7571
+  %concat7704 = call ptr @ofs_str_concat(ptr @str.493, ptr %c_opt_val7703)
+  %concat7705 = call ptr @ofs_str_concat(ptr %concat7704, ptr @str.214)
   %c_output_val7706 = load ptr, ptr %c_output7567
   %concat7707 = call ptr @ofs_str_concat(ptr %concat7705, ptr %c_output_val7706)
   %concat7708 = call ptr @ofs_str_concat(ptr %concat7707, ptr @str.494)
-  %c_opt_val7709 = load ptr, ptr %c_opt7571
-  %concat7710 = call ptr @ofs_str_concat(ptr %concat7708, ptr %c_opt_val7709)
-  %concat7711 = call ptr @ofs_str_concat(ptr %concat7710, ptr @str.214)
-  %c_output_val7712 = load ptr, ptr %c_output7567
-  %concat7713 = call ptr @ofs_str_concat(ptr %concat7711, ptr %c_output_val7712)
-  %concat7714 = call ptr @ofs_str_concat(ptr %concat7713, ptr @str.495)
-  %output_file_val7715 = load ptr, ptr %output_file7566
-  %concat7716 = call ptr @ofs_str_concat(ptr %concat7714, ptr %output_file_val7715)
-  %concat7717 = call ptr @ofs_str_concat(ptr %concat7716, ptr @str.492)
-  store ptr %concat7717, ptr %compile_cmd7690
+  %output_file_val7709 = load ptr, ptr %output_file7566
+  %concat7710 = call ptr @ofs_str_concat(ptr %concat7708, ptr %output_file_val7709)
+  %concat7711 = call ptr @ofs_str_concat(ptr %concat7710, ptr @str.492)
+  store ptr %concat7711, ptr %compile_cmd7690
   br label %if_end2384
 
 if_end2384:
-  %compile_result7718 = alloca i64, align 8
-  %compile_cmd_val7719 = load ptr, ptr %compile_cmd7690
-  %call7720 = call i64 @system(ptr %compile_cmd_val7719)
-  store i64 %call7720, ptr %compile_result7718
-  %compile_result_val7721 = load i64, ptr %compile_result7718
-  %cmp7722 = icmp eq i64 %compile_result_val7721, 0
-  br i1 %cmp7722, label %if_then2385, label %if_else2386
+  %compile_result7712 = alloca i64, align 8
+  %compile_cmd_val7713 = load ptr, ptr %compile_cmd7690
+  %call7714 = call i64 @system(ptr %compile_cmd_val7713)
+  store i64 %call7714, ptr %compile_result7712
+  %compile_result_val7715 = load i64, ptr %compile_result7712
+  %cmp7716 = icmp eq i64 %compile_result_val7715, 0
+  br i1 %cmp7716, label %if_then2385, label %if_else2386
 
 if_then2385:
   call void @echo_obsidian(ptr @str.484)
   call void @echo_obsidian(ptr @str.63)
-  %output_file_val7723 = load ptr, ptr %output_file7566
-  %concat7724 = call ptr @ofs_str_concat(ptr @str.496, ptr %output_file_val7723)
-  %concat7725 = call ptr @ofs_str_concat(ptr %concat7724, ptr @str.497)
-  call void @echo_obsidian(ptr %concat7725)
+  %output_file_val7717 = load ptr, ptr %output_file7566
+  %concat7718 = call ptr @ofs_str_concat(ptr @str.495, ptr %output_file_val7717)
+  %concat7719 = call ptr @ofs_str_concat(ptr %concat7718, ptr @str.496)
+  call void @echo_obsidian(ptr %concat7719)
   br label %if_end2387
 
 if_else2386:
-  %c_output_val7726 = load ptr, ptr %c_output7567
-  %concat7727 = call ptr @ofs_str_concat(ptr @str.498, ptr %c_output_val7726)
-  call void @echo_obsidian(ptr %concat7727)
+  %c_output_val7720 = load ptr, ptr %c_output7567
+  %concat7721 = call ptr @ofs_str_concat(ptr @str.497, ptr %c_output_val7720)
+  call void @echo_obsidian(ptr %concat7721)
   call void @echo_obsidian(ptr @str.63)
-  %compile_result_val7728 = load i64, ptr %compile_result7718
-  %stone_to_str7729 = call ptr @ofs_stone_to_obsidian(i64 %compile_result_val7728)
-  %concat7730 = call ptr @ofs_str_concat(ptr @str.499, ptr %stone_to_str7729)
-  call void @echo_obsidian(ptr %concat7730)
+  %compile_result_val7722 = load i64, ptr %compile_result7712
+  %stone_to_str7723 = call ptr @ofs_stone_to_obsidian(i64 %compile_result_val7722)
+  %concat7724 = call ptr @ofs_str_concat(ptr @str.498, ptr %stone_to_str7723)
+  call void @echo_obsidian(ptr %concat7724)
   call void @exit(i64 1)
   br label %if_end2387
 

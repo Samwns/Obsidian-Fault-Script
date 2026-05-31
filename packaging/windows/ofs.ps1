@@ -148,7 +148,6 @@ if (-not $inputFile) {
 $name = [IO.Path]::GetFileNameWithoutExtension($inputFile)
 $work = Join-Path ([IO.Path]::GetTempPath()) "ofs-$name-$PID"
 $ll = "$work.ll"
-$bc = "$work.bc"
 
 if ($mode -in @("check", "tokens", "ast")) {
     $env:OFSCC_INPUT = $inputFile
@@ -174,9 +173,8 @@ if ($mode -eq "asm") {
     $env:OFSCC_C_OUT = $ll
     & $Ofscc
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & llvm-as $ll -o $bc
-    & llc $bc -o $output
-    Remove-Item $ll, $bc -ErrorAction SilentlyContinue
+    & clang -Wno-override-module -S $ll -o $output
+    Remove-Item $ll -ErrorAction SilentlyContinue
     Write-Output "ASM: $output"
     exit $LASTEXITCODE
 }
@@ -190,9 +188,8 @@ if ($mode -in @("build", "run")) {
     $env:OFSCC_C_OUT = $ll
     & $Ofscc
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & llvm-as $ll -o $bc
-    & clang -O2 $ll $runtime -lm -o $output
-    Remove-Item $ll, $bc -ErrorAction SilentlyContinue
+    & clang -Wno-override-module -O2 $ll $runtime -lm -o $output
+    Remove-Item $ll -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     if ($mode -eq "run") {
         & ".\$output"

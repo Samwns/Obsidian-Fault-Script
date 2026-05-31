@@ -179,18 +179,16 @@ case "$mode" in
     [ -n "$output" ] || output="$name.s"
     case "$output" in *.s) ;; *) output="$output.s" ;; esac
     OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
-    llvm-as "$ll" -o "$bc"
-    llc "$bc" -o "$output"
-    rm -f "$ll" "$bc"
+    clang -Wno-override-module -S "$ll" -o "$output"
+    rm -f "$ll"
     echo "ASM: $output"
     ;;
   build|run)
     [ -n "$output" ] || output="$name"
     OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
-    llvm-as "$ll" -o "$bc"
-    clang -O2 "$ll" "$RUNTIME" -lm -o "$output"
+    clang -Wno-override-module -O2 "$ll" "$RUNTIME" -lm -o "$output"
     chmod +x "$output"
-    rm -f "$ll" "$bc"
+    rm -f "$ll"
     if [ "$mode" = "run" ]; then
       "$output"
     else

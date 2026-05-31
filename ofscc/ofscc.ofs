@@ -268,7 +268,7 @@ core main() {
     if (ofs_str_eq(compile_mode, "c")) {
         compile_cmd = "gcc " + c_opt + " -o " + output_file + " " + c_output + " 2>&1"
     } else {
-        compile_cmd = "llvm-as " + c_output + " -o " + c_output + ".bc && clang " + c_opt + " " + c_output + " /usr/local/lib/libofs_runtime.a -lm -o " + output_file + " 2>&1"
+        compile_cmd = "clang -Wno-override-module " + c_opt + " " + c_output + " /usr/local/lib/libofs_runtime.a -lm -o " + output_file + " 2>&1"
     }
     forge compile_result = system(compile_cmd)
     

@@ -60,7 +60,6 @@ base="${input##*/}"
 name="${base%.*}"
 work="${TMPDIR:-/tmp}/ofs-${name}-$$"
 ll="$work.ll"
-bc="$work.bc"
 
 case "$mode" in
   check|tokens|ast)
@@ -79,9 +78,8 @@ case "$mode" in
       output="$output.s"
     fi
     OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
-    llvm-as "$ll" -o "$bc"
-    llc "$bc" -o "$output"
-    rm -f "$ll" "$bc"
+    clang -Wno-override-module -S "$ll" -o "$output"
+    rm -f "$ll"
     echo "ASM: $output"
     ;;
   build|run)
@@ -89,10 +87,9 @@ case "$mode" in
       output="$name"
     fi
     OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
-    llvm-as "$ll" -o "$bc"
-    clang -O2 "$ll" "$RUNTIME" -lm -o "$output"
+    clang -Wno-override-module -O2 "$ll" "$RUNTIME" -lm -o "$output"
     chmod +x "$output"
-    rm -f "$ll" "$bc"
+    rm -f "$ll"
     if [[ "$mode" == "run" ]]; then
       "$output"
     else

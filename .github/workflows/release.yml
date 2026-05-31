@@ -48,29 +48,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install OFS from latest release
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Verify toolchain
         run: |
-          gh release download --repo $GITHUB_REPO \
-            --pattern "ofs-linux-x64-installer-*.tar.gz" --dir /tmp/ofs-dl
-          mkdir -p /tmp/ofs-seed
-          tar xzf /tmp/ofs-dl/ofs-linux-x64-installer-*.tar.gz -C /tmp/ofs-seed
-          cd /tmp/ofs-seed
-          if [ -f install.sh ]; then
-            sudo bash install.sh
-          else
-            sudo install -m 0755 ofs /usr/local/bin/ofs
-          fi
-          echo "Seed installed:"
-          ofs version || ofs --version || echo "ofs ready"
+          clang --version
+          ar --version
 
       - name: Build current self-hosted compiler
         run: |
           mkdir -p selfhost
           cp dist/ofscc.ll selfhost/ofscc.ll
-          llvm-as selfhost/ofscc.ll -o selfhost/ofscc.bc
-          clang -O2 selfhost/ofscc.ll dist/libofs_runtime.a -lm -o selfhost/ofscc
+          clang -O2 -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
+          ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
+          clang -Wno-override-module -O2 selfhost/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
           chmod +x selfhost/ofscc
           ./selfhost/ofscc --help
           OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=check ./selfhost/ofscc
@@ -93,11 +82,15 @@ jobs:
           for cmd in infuse uncover reinfuse; do
             [ -f "packaging/linux/$cmd" ] && cp "packaging/linux/$cmd" "$STAGING/" && chmod +x "$STAGING/$cmd"
           done
-          cp dist/libofs_runtime.a "$STAGING/"
+          cp selfhost/libofs_runtime.a "$STAGING/"
           [ -f packaging/assets/ofs-256.png ] && cp packaging/assets/ofs-256.png "$STAGING/ofs.png"
           cp LICENSE "$STAGING/" 2>/dev/null || true
 
           "$STAGING/ofs" version | grep -F "ofs ${VERSION} - Obsidian Fault Script"
+          "$STAGING/ofs" check ofs/examples/webserver_demo.ofs
+          "$STAGING/ofs" build ofs/tests/selfhost_stdlib_smoke.ofs -o "$STAGING/stdlib-smoke"
+          "$STAGING/stdlib-smoke"
+          rm -f "$STAGING/stdlib-smoke"
 
           ARCHIVE="ofs-linux-x64-installer-${TAG}.tar.gz"
           tar czf "$ARCHIVE" -C "$STAGING" .
@@ -110,39 +103,24 @@ jobs:
           name: release-linux-x64-${{ needs.version.outputs.tag }}
           path: ${{ env.archive }}
 
-      - name: Upload self-hosted compiler IR
-        uses: actions/upload-artifact@v4
-        with:
-          name: ofscc-selfhost-ir-${{ needs.version.outputs.tag }}
-          path: selfhost/ofscc.ll
-
   # ── macOS ────────────────────────────────────────────────────────────
   build-macos:
     name: Build (macos-arm64)
-    needs: [version, build-linux]
+    needs: version
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install OFS from latest release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          gh release download --repo $GITHUB_REPO \
-            --pattern "ofs-macos-arm64-installer-*.pkg" --dir /tmp/ofs-dl
-          sudo installer -pkg /tmp/ofs-dl/ofs-macos-arm64-installer-*.pkg -target /
-          echo "Seed installed:"
-          ofs version || ofs --version || echo "ofs ready"
-
-      - name: Download self-hosted compiler IR
-        uses: actions/download-artifact@v4
-        with:
-          name: ofscc-selfhost-ir-${{ needs.version.outputs.tag }}
-          path: selfhost
+      - name: Verify toolchain
+        run: clang --version
 
       - name: Build current self-hosted compiler
         run: |
-          clang -O2 selfhost/ofscc.ll /usr/local/lib/libofs_runtime.a -lm -o selfhost/ofscc
+          mkdir -p selfhost
+          cp dist/ofscc.ll selfhost/ofscc.ll
+          clang -O2 -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
+          ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
+          clang -Wno-override-module -O2 selfhost/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
           chmod +x selfhost/ofscc
           ./selfhost/ofscc --help
           OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=check ./selfhost/ofscc
@@ -162,12 +140,14 @@ jobs:
           chmod +x "$ROOT/usr/local/bin/ofscc"
           cp ofs/stdlib/*.ofs "$ROOT/usr/local/share/ofs/stdlib/" 2>/dev/null || true
           cp -r ofscc/* "$ROOT/usr/local/share/ofs/ofscc-src/" 2>/dev/null || true
-          if [ -f /usr/local/lib/libofs_runtime.a ]; then
-            mkdir -p "$ROOT/usr/local/lib"
-            cp /usr/local/lib/libofs_runtime.a "$ROOT/usr/local/lib/"
-          fi
+          mkdir -p "$ROOT/usr/local/lib"
+          cp selfhost/libofs_runtime.a "$ROOT/usr/local/lib/"
 
           "$ROOT/usr/local/bin/ofs" version | grep -F "ofs ${VERSION} - Obsidian Fault Script"
+          OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" check ofs/examples/webserver_demo.ofs
+          OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" build ofs/tests/selfhost_stdlib_smoke.ofs -o "$ROOT/usr/local/bin/stdlib-smoke"
+          "$ROOT/usr/local/bin/stdlib-smoke"
+          rm -f "$ROOT/usr/local/bin/stdlib-smoke"
 
           PKG="ofs-macos-arm64-installer-${TAG}.pkg"
           pkgbuild --root "$ROOT" \
@@ -187,42 +167,23 @@ jobs:
   # ── Windows ──────────────────────────────────────────────────────────
   build-windows:
     name: Build (windows-x64)
-    needs: [version, build-linux]
+    needs: version
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install OFS from latest release
+      - name: Install LLVM
         shell: powershell
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          gh release download --repo $env:GITHUB_REPO `
-            --pattern "ofs-windows-x64-portable-*.zip" --dir seed-dl
-          $zip = Get-ChildItem seed-dl -Filter "*.zip" | Select-Object -First 1
-          Expand-Archive $zip.FullName -DestinationPath seed-extracted
-          $ofsCommand = Get-ChildItem seed-extracted -Recurse -Include "ofs.exe","ofs.cmd" | Select-Object -First 1
-          if (-not $ofsCommand) {
-            Write-Error "Seed OFS command not found in portable package."
-            exit 1
+          if (-not (Test-Path "C:\Program Files\LLVM\bin\clang.exe")) {
+            choco install llvm -y
           }
-          $seedDir = $ofsCommand.DirectoryName
-          Write-Output "Seed dir: $seedDir"
-          echo "SEED_OFS=$($ofsCommand.FullName)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
-          echo "SEED_DIR=$seedDir" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
-
-      - name: Download self-hosted compiler IR
-        uses: actions/download-artifact@v4
-        with:
-          name: ofscc-selfhost-ir-${{ needs.version.outputs.tag }}
-          path: selfhost
+          "C:\Program Files\LLVM\bin" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
 
       - name: Build current self-hosted compiler
         shell: powershell
         run: |
-          $SeedDir = $env:SEED_DIR
           $toolDirs = @(
-            $SeedDir,
             "C:\Program Files\LLVM\bin",
             "C:\msys64\ucrt64\bin",
             "C:\Program Files\Git\mingw64\bin"
@@ -232,37 +193,35 @@ jobs:
             Write-Error "clang was not found; required to link self-hosted LLVM IR on Windows."
             exit 1
           }
-          $Runtime = Join-Path $SeedDir "libofs_runtime.a"
-          if (-not (Test-Path $Runtime)) {
-            $Runtime = Join-Path $SeedDir "ofs_runtime.lib"
-          }
-          if (-not (Test-Path $Runtime)) {
-            Write-Error "Seed runtime library was not found."
-            exit 1
-          }
-          & clang -O2 "selfhost\ofscc.ll" $Runtime -lm -o "selfhost\ofscc.exe"
+          New-Item -ItemType Directory -Path selfhost -Force | Out-Null
+          Copy-Item "dist\ofscc.ll" "selfhost\ofscc.ll"
+          & clang -O2 -c "ofs\runtime\ofs_runtime.c" -o "selfhost\ofs_runtime.obj"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & llvm-ar rcs "selfhost\libofs_runtime.a" "selfhost\ofs_runtime.obj"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & clang -Wno-override-module -O2 "selfhost\ofscc.ll" "selfhost\libofs_runtime.a" -o "selfhost\ofscc.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if (-not (Test-Path "selfhost\ofscc.exe")) {
             Write-Error "Self-hosted compiler was not produced."
             exit 1
           }
           & "selfhost\ofscc.exe" --help
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $env:OFSCC_INPUT = "ofscc\ofscc.ofs"
           $env:OFSCC_MODE = "check"
           & "selfhost\ofscc.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build portable zip
         shell: powershell
         run: |
           $TAG = "${{ needs.version.outputs.tag }}"
           $Version = $TAG.TrimStart("v")
-          $SeedDir = $env:SEED_DIR
           $Staging = "portable-staging"
           New-Item -ItemType Directory -Path $Staging -Force | Out-Null
 
           Copy-Item "selfhost\ofscc.exe" "$Staging\ofscc.exe"
-          Get-ChildItem "$SeedDir" -Filter "*.dll" | Copy-Item -Destination "$Staging\"
-          Copy-Item "$SeedDir\libofs_runtime.a" "$Staging\" -ErrorAction SilentlyContinue
-          Copy-Item "$SeedDir\ofs_runtime.lib" "$Staging\" -ErrorAction SilentlyContinue
+          Copy-Item "selfhost\libofs_runtime.a" "$Staging\libofs_runtime.a"
           Copy-Item "packaging\windows\ofs.cmd" "$Staging\ofs.cmd"
           (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", $Version) | Set-Content "$Staging\ofs.ps1"
           foreach ($cmd in @("infuse", "uncover", "reinfuse")) {
@@ -275,7 +234,20 @@ jobs:
           Copy-Item "ofscc\*.ofs" "$Staging\ofscc\" -ErrorAction SilentlyContinue
           Copy-Item "ofscc\README.md" "$Staging\ofscc\" -ErrorAction SilentlyContinue
           Copy-Item "LICENSE" "$Staging\LICENSE.txt" -ErrorAction SilentlyContinue
-          & "$Staging\ofs.cmd" version | Select-String "ofs $Version - Obsidian Fault Script"
+          $VersionOutput = & "$Staging\ofs.cmd" version | Out-String
+          if ($VersionOutput -notmatch [regex]::Escape("ofs $Version - Obsidian Fault Script")) {
+            Write-Error "Packaged ofs version did not match $Version"
+            exit 1
+          }
+          Write-Output $VersionOutput
+          & "$Staging\ofs.cmd" check "ofs\examples\webserver_demo.ofs"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $Smoke = (Resolve-Path $Staging).Path + "\stdlib-smoke.exe"
+          & "$Staging\ofs.cmd" build "ofs\tests\selfhost_stdlib_smoke.ofs" -o $Smoke
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $Smoke
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Remove-Item $Smoke -ErrorAction SilentlyContinue
 
           $ZipName = "ofs-windows-x64-portable-${TAG}.zip"
           Compress-Archive -Path "$Staging\*" -DestinationPath $ZipName -Force
@@ -287,16 +259,13 @@ jobs:
         run: |
           $TAG = "${{ needs.version.outputs.tag }}"
           $Version = $TAG.TrimStart("v")
-          $SeedDir = $env:SEED_DIR
           $RepoRoot = (Get-Location).Path
           $Dist = "$RepoRoot\dist"
           $AssetsDir = "$RepoRoot\packaging\windows"
           New-Item -ItemType Directory -Path $Dist -Force | Out-Null
 
           Copy-Item "selfhost\ofscc.exe" "$Dist\ofscc.exe"
-          Get-ChildItem "$SeedDir" -Filter "*.dll" | Copy-Item -Destination "$Dist\"
-          Copy-Item "$SeedDir\libofs_runtime.a" "$Dist\" -ErrorAction SilentlyContinue
-          Copy-Item "$SeedDir\ofs_runtime.lib" "$Dist\" -ErrorAction SilentlyContinue
+          Copy-Item "selfhost\libofs_runtime.a" "$Dist\libofs_runtime.a"
           Copy-Item "packaging\windows\ofs.cmd" "$Dist\ofs.cmd"
           (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", $Version) | Set-Content "$Dist\ofs.ps1"
           foreach ($cmd in @("infuse", "uncover", "reinfuse")) {
