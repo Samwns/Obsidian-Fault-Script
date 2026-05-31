@@ -1,7 +1,7 @@
 // Example: Simple HTTP Server Utilities (webserver library showcase)
 // This demonstrates what's available before socket support is added
 
-attach {webserver}
+attach {F:../stdlib/webserver.ofs}
 
 core main() {
     echo("=== OFS Webserver Library Demo ===\n")

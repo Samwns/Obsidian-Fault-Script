@@ -68,9 +68,13 @@ jobs:
       - name: Build current self-hosted compiler
         run: |
           mkdir -p selfhost
-          ofs build ofscc/ofscc.ofs -o selfhost/ofscc
+          chmod +x dist/ofscc
+          OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=ir OFSCC_C_OUT=selfhost/ofscc.ll ./dist/ofscc
+          llvm-as selfhost/ofscc.ll -o selfhost/ofscc.bc
+          clang -O2 selfhost/ofscc.ll dist/libofs_runtime.a -lm -o selfhost/ofscc
           chmod +x selfhost/ofscc
           ./selfhost/ofscc --help
+          OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=check ./selfhost/ofscc
 
       - name: Build installer tarball
         run: |
@@ -90,7 +94,7 @@ jobs:
           for cmd in infuse uncover reinfuse; do
             [ -f "packaging/linux/$cmd" ] && cp "packaging/linux/$cmd" "$STAGING/" && chmod +x "$STAGING/$cmd"
           done
-          [ -f /usr/local/lib/libofs_runtime.a ] && cp /usr/local/lib/libofs_runtime.a "$STAGING/"
+          cp dist/libofs_runtime.a "$STAGING/"
           [ -f packaging/assets/ofs-256.png ] && cp packaging/assets/ofs-256.png "$STAGING/ofs.png"
           cp LICENSE "$STAGING/" 2>/dev/null || true
 
@@ -107,10 +111,16 @@ jobs:
           name: release-linux-x64-${{ needs.version.outputs.tag }}
           path: ${{ env.archive }}
 
+      - name: Upload self-hosted compiler IR
+        uses: actions/upload-artifact@v4
+        with:
+          name: ofscc-selfhost-ir-${{ needs.version.outputs.tag }}
+          path: selfhost/ofscc.ll
+
   # ── macOS ────────────────────────────────────────────────────────────
   build-macos:
     name: Build (macos-arm64)
-    needs: version
+    needs: [version, build-linux]
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
@@ -125,12 +135,18 @@ jobs:
           echo "Seed installed:"
           ofs version || ofs --version || echo "ofs ready"
 
+      - name: Download self-hosted compiler IR
+        uses: actions/download-artifact@v4
+        with:
+          name: ofscc-selfhost-ir-${{ needs.version.outputs.tag }}
+          path: selfhost
+
       - name: Build current self-hosted compiler
         run: |
-          mkdir -p selfhost
-          ofs build ofscc/ofscc.ofs -o selfhost/ofscc
+          clang -O2 selfhost/ofscc.ll /usr/local/lib/libofs_runtime.a -lm -o selfhost/ofscc
           chmod +x selfhost/ofscc
           ./selfhost/ofscc --help
+          OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=check ./selfhost/ofscc
 
       - name: Build installer pkg
         run: |
@@ -172,7 +188,7 @@ jobs:
   # ── Windows ──────────────────────────────────────────────────────────
   build-windows:
     name: Build (windows-x64)
-    needs: version
+    needs: [version, build-linux]
     runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
@@ -196,18 +212,44 @@ jobs:
           echo "SEED_OFS=$($ofsCommand.FullName)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           echo "SEED_DIR=$seedDir" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
 
+      - name: Download self-hosted compiler IR
+        uses: actions/download-artifact@v4
+        with:
+          name: ofscc-selfhost-ir-${{ needs.version.outputs.tag }}
+          path: selfhost
+
       - name: Build current self-hosted compiler
         shell: powershell
         run: |
           $SeedDir = $env:SEED_DIR
-          $env:PATH = "$SeedDir;$env:PATH"
-          New-Item -ItemType Directory -Path selfhost -Force | Out-Null
-          & "$env:SEED_OFS" build "ofscc\ofscc.ofs" -o "selfhost\ofscc.exe"
+          $toolDirs = @(
+            $SeedDir,
+            "C:\Program Files\LLVM\bin",
+            "C:\msys64\ucrt64\bin",
+            "C:\Program Files\Git\mingw64\bin"
+          ) | Where-Object { $_ -and (Test-Path $_) }
+          $env:PATH = (($toolDirs -join ";") + ";" + $env:PATH)
+          if (-not (Get-Command clang -ErrorAction SilentlyContinue)) {
+            Write-Error "clang was not found; required to link self-hosted LLVM IR on Windows."
+            exit 1
+          }
+          $Runtime = Join-Path $SeedDir "libofs_runtime.a"
+          if (-not (Test-Path $Runtime)) {
+            $Runtime = Join-Path $SeedDir "ofs_runtime.lib"
+          }
+          if (-not (Test-Path $Runtime)) {
+            Write-Error "Seed runtime library was not found."
+            exit 1
+          }
+          & clang -O2 "selfhost\ofscc.ll" $Runtime -lm -o "selfhost\ofscc.exe"
           if (-not (Test-Path "selfhost\ofscc.exe")) {
             Write-Error "Self-hosted compiler was not produced."
             exit 1
           }
           & "selfhost\ofscc.exe" --help
+          $env:OFSCC_INPUT = "ofscc\ofscc.ofs"
+          $env:OFSCC_MODE = "check"
+          & "selfhost\ofscc.exe"
 
       - name: Build portable zip
         shell: powershell

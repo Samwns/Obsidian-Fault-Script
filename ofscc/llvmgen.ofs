@@ -446,6 +446,7 @@ namespace llvmgen {
         cg_emit("declare void @echo_bool(i32)")
         cg_emit("declare ptr @ofs_str_concat(ptr, ptr)")
         cg_emit("declare i32 @ofs_str_eq(ptr, ptr)")
+        cg_emit("declare i32 @ofs_str_contains(ptr, ptr)")
         cg_emit("declare i64 @ofs_str_len(ptr)")
         cg_emit("declare i64 @ofs_str_char_at(ptr, i64)")
         cg_emit("declare ptr @ofs_str_substr(ptr, i64, i64)")

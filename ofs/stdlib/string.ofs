@@ -4,6 +4,9 @@
 // Note: ofs_str_len, ofs_str_char_at, ofs_str_substr, ofs_str_concat
 // are available as runtime builtins.
 
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
+
 vein repeat_str(s: obsidian, n: stone) -> obsidian {
     forge result: obsidian = ""
     cycle (forge i = 0; i < n; i++) {

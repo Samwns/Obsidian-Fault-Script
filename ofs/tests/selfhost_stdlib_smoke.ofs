@@ -1,0 +1,63 @@
+attach {F:../stdlib/core.ofs}
+attach {F:../stdlib/math.ofs}
+attach {F:../stdlib/string.ofs}
+attach {F:../stdlib/webserver.ofs}
+
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+vein assert_stone(label: obsidian, actual: stone, expected: stone) -> void {
+    if (actual != expected) {
+        echo("FAIL " + label + " got=" + ofs_stone_to_obsidian(actual) + " expected=" + ofs_stone_to_obsidian(expected))
+        exit(1)
+    }
+    echo("OK " + label)
+}
+
+vein assert_text(label: obsidian, actual: obsidian, expected: obsidian) -> void {
+    if (!ofs_str_eq(actual, expected)) {
+        echo("FAIL " + label + " got=" + actual + " expected=" + expected)
+        exit(1)
+    }
+    echo("OK " + label)
+}
+
+core main() {
+    echo("selfhost stdlib smoke")
+
+    assert_stone("abs", abs(-8), 8)
+    assert_stone("max", max(4, 9), 9)
+    assert_stone("min", min(4, 9), 4)
+    assert_stone("clamp-low", clamp(-3, 0, 10), 0)
+    assert_stone("clamp-high", clamp(13, 0, 10), 10)
+    assert_stone("factorial", factorial(5), 120)
+    assert_stone("fibonacci", fibonacci(8), 21)
+    assert_stone("gcd", gcd(54, 24), 6)
+    assert_stone("lcm", lcm(6, 8), 24)
+    assert_stone("power", power(3, 4), 81)
+
+    assert_stone("square", square(7), 49)
+    assert_stone("cube", cube(3), 27)
+    assert_stone("sum-range", sum_range(1, 10), 55)
+    assert_stone("digits", count_digits(12345), 5)
+    assert_stone("sum-digits", sum_digits(12345), 15)
+    assert_stone("reverse-number", reverse_number(123), 321)
+
+    assert_text("repeat-str", repeat_str("ab", 3), "ababab")
+    assert_stone("str-len", ofs_str_len(repeat_str("x", 5)), 5)
+
+    assert_text("status-200", status_text(HTTP_200), "OK")
+    assert_text("mime-json", get_mime_type("data.json"), MIME_JSON)
+    assert_text("mime-html", get_mime_type("index.html"), MIME_HTML)
+
+    forge body = "{\"status\":\"ok\"}"
+    forge response = http_response(HTTP_200, MIME_JSON, body)
+    forge expected_len = ofs_str_len("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: 15\r\nConnection: close\r\n\r\n{\"status\":\"ok\"}")
+    assert_stone("http-response-len", ofs_str_len(response), expected_len)
+
+    forge html = html_page("Hello", "<h1>OFS</h1>")
+    assert_stone("html-nonempty", ofs_str_len(html), ofs_str_len("<html><head><title>Hello</title></head><body><h1>OFS</h1></body></html>"))
+
+    log_request(HTTP_GET, "/health", HTTP_200)
+    echo("selfhost stdlib smoke complete")
+}
