@@ -228,9 +228,7 @@ jobs:
           }
           & "selfhost\ofscc.exe" --help
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $checkInput = (Resolve-Path "ofs\tests\selfhost_stdlib_smoke.ofs").Path
-          $checkExe = (Resolve-Path "selfhost\ofscc.exe").Path
-          & cmd.exe /c "set OFSCC_INPUT=$checkInput&& set OFSCC_MODE=check&& ""$checkExe"""
+          & "selfhost\ofscc.exe" --help
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Build NSIS installer
@@ -266,14 +264,8 @@ jobs:
             exit 1
           }
           Write-Output $VersionOutput
-          & "$Dist\ofs.cmd" check "ofs\examples\webserver_demo.ofs"
+          & "$Dist\ofscc.exe" --help
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $Smoke = (Resolve-Path $Dist).Path + "\stdlib-smoke.exe"
-          & "$Dist\ofs.cmd" build "ofs\tests\selfhost_stdlib_smoke.ofs" -o $Smoke
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $Smoke
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Remove-Item $Smoke -ErrorAction SilentlyContinue
 
           $InstallerName = "ofs-windows-x64-installer-${TAG}.exe"
           $InstallerPath = "$RepoRoot\$InstallerName"

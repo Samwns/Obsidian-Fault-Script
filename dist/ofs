@@ -23,6 +23,14 @@ if [ -n "$detected_llvm_ir_flags" ]; then
   read -r -a OFS_LLVM_IR_FLAGS <<< "$detected_llvm_ir_flags"
 fi
 
+clang_ir() {
+  if [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ]; then
+    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" "$@"
+  else
+    clang -Wno-override-module "$@"
+  fi
+}
+
 if [ ! -x "$OFSCC" ] && command -v ofscc >/dev/null 2>&1; then
   OFSCC="$(command -v ofscc)"
 fi
@@ -237,14 +245,14 @@ case "$mode" in
     [ -n "$output" ] || output="$name.s"
     case "$output" in *.s) ;; *) output="$output.s" ;; esac
     OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
-    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" -S "$ll" -o "$output"
+    clang_ir -S "$ll" -o "$output"
     rm -f "$ll"
     echo "ASM: $output"
     ;;
   build|run)
     [ -n "$output" ] || output="$name"
     OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
-    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" -O2 "$ll" "$RUNTIME" -lm -o "$output"
+    clang_ir -O2 "$ll" "$RUNTIME" -lm -o "$output"
     chmod +x "$output"
     rm -f "$ll"
     if [ "$mode" = "run" ]; then
