@@ -6,6 +6,7 @@ build-debug/
 !dist/libofs_runtime.a
 !vscode-extension/bin/linux-x64/libofs_runtime.a
 *.ll
+!dist/ofscc.ll
 *.out
 /tmp/
 *.exe

@@ -68,8 +68,7 @@ jobs:
       - name: Build current self-hosted compiler
         run: |
           mkdir -p selfhost
-          chmod +x dist/ofscc
-          OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=ir OFSCC_C_OUT=selfhost/ofscc.ll ./dist/ofscc
+          cp dist/ofscc.ll selfhost/ofscc.ll
           llvm-as selfhost/ofscc.ll -o selfhost/ofscc.bc
           clang -O2 selfhost/ofscc.ll dist/libofs_runtime.a -lm -o selfhost/ofscc
           chmod +x selfhost/ofscc
