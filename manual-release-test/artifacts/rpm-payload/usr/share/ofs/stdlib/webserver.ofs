@@ -1,0 +1,101 @@
+// OFS Standard Library — Webserver Module
+// HTTP utilities and helpers for building web applications
+
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_contains(haystack: obsidian, needle: obsidian) -> bool
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+// HTTP Methods
+forge HTTP_GET    = "GET"
+forge HTTP_POST   = "POST"
+forge HTTP_PUT    = "PUT"
+forge HTTP_DELETE = "DELETE"
+forge HTTP_PATCH  = "PATCH"
+
+// HTTP Status Codes
+forge HTTP_200 = 200
+forge HTTP_201 = 201
+forge HTTP_400 = 400
+forge HTTP_404 = 404
+forge HTTP_500 = 500
+
+// Content Types
+forge MIME_JSON = "application/json"
+forge MIME_HTML = "text/html; charset=utf-8"
+forge MIME_TEXT = "text/plain; charset=utf-8"
+forge MIME_CSS  = "text/css"
+forge MIME_JS   = "application/javascript"
+
+// Get status message
+vein status_text(code: stone) -> obsidian {
+    if (code == 200) {
+        return "OK"
+    } else if (code == 201) {
+        return "Created"
+    } else if (code == 400) {
+        return "Bad Request"
+    } else if (code == 404) {
+        return "Not Found"
+    } else if (code == 500) {
+        return "Internal Server Error"
+    } else {
+        return "Unknown"
+    }
+}
+
+// Build HTTP response
+vein http_response(status: stone, content_type: obsidian, body: obsidian) -> obsidian {
+    forge response = "HTTP/1.1 " + ofs_stone_to_obsidian(status) + " " + status_text(status)
+    response = response + "\r\nContent-Type: " + content_type
+    response = response + "\r\nContent-Length: " + ofs_stone_to_obsidian(ofs_str_len(body))
+    response = response + "\r\nConnection: close\r\n\r\n" + body
+    return response
+}
+
+// Simple JSON builders
+vein json_string(key: obsidian, value: obsidian) -> obsidian {
+    return "\"" + key + "\":\"" + value + "\""
+}
+
+vein json_number(key: obsidian, value: stone) -> obsidian {
+    return "\"" + key + "\":" + ofs_stone_to_obsidian(value)
+}
+
+// MIME type for common files
+vein get_mime_type(filename: obsidian) -> obsidian {
+    if (ofs_str_contains(filename, ".json")) {
+        return MIME_JSON
+    } else if (ofs_str_contains(filename, ".html")) {
+        return MIME_HTML
+    } else if (ofs_str_contains(filename, ".css")) {
+        return MIME_CSS
+    } else if (ofs_str_contains(filename, ".js")) {
+        return MIME_JS
+    } else {
+        return MIME_TEXT
+    }
+}
+
+// Log an HTTP request
+vein log_request(method: obsidian, path: obsidian, status: stone) {
+    echo("[" + method + "] " + path + " -> " + ofs_stone_to_obsidian(status))
+}
+
+// Simple HTML page builder
+vein html_page(title: obsidian, body: obsidian) -> obsidian {
+    forge html = "<html><head><title>" + title + "</title></head>"
+    html = html + "<body>" + body + "</body></html>"
+    return html
+}
+
+// 404 Error page
+vein not_found_page() -> obsidian {
+    forge body = html_page("Not Found", "<h1>404 Not Found</h1>")
+    return http_response(404, MIME_HTML, body)
+}
+
+// 500 Error page
+vein server_error_page(error: obsidian) -> obsidian {
+    forge body = html_page("Server Error", "<h1>500 Server Error</h1><p>" + error + "</p>")
+    return http_response(500, MIME_HTML, body)
+}

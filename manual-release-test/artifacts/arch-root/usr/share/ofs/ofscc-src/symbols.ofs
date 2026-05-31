@@ -1,0 +1,22 @@
+// OFS Compiler — Symbol Table
+// Symbol definition and lookup utilities
+
+// ── Symbol Kind Constants ────────────────────────────────────────────
+
+forge SYM_UNKNOWN: stone = 0
+forge SYM_VAR:     stone = 1
+forge SYM_CONST:   stone = 2
+forge SYM_FN:      stone = 3
+forge SYM_MONOLITH:stone = 4
+forge SYM_PARAM:   stone = 5
+forge SYM_FIELD:   stone = 6
+
+// ── Symbol Structure ────────────────────────────────────────────────
+
+monolith Symbol {
+    name:      obsidian   // identifier name
+    type_str:  obsidian   // type ("stone", "obsidian", etc)
+    kind:      stone      // SYM_* kind
+    fn_arity:  stone      // number of parameters (if SYM_FN)
+    is_const:  bool       // is immutable
+}

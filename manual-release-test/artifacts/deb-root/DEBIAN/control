@@ -1,0 +1,9 @@
+Package: obsidian-fault-script
+Version: 1.0.97
+Section: devel
+Priority: optional
+Architecture: amd64
+Maintainer: Obsidian Fault Script <noreply@github.com>
+Depends: clang, libc6
+Description: Obsidian Fault Script self-hosted compiler and standard library
+ Obsidian Fault Script (OFS) language toolchain: command wrapper, self-hosted native compiler, runtime library, standard library, and compiler sources.

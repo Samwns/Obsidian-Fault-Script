@@ -1,0 +1,64 @@
+rift vein ofs_window_create(title: obsidian, w: stone, h: stone) -> void abi c
+rift vein ofs_window_destroy() -> void abi c
+rift vein ofs_window_present(buf: stone) -> void abi c
+rift vein ofs_window_poll() -> stone abi c
+rift vein ofs_window_is_open() -> stone abi c
+rift vein ofs_window_width() -> stone abi c
+rift vein ofs_window_height() -> stone abi c
+rift vein ofs_window_set_title(t: obsidian) -> void abi c
+rift vein ofs_mouse_x() -> stone abi c
+rift vein ofs_mouse_y() -> stone abi c
+rift vein ofs_mouse_btn(b: stone) -> stone abi c
+rift vein ofs_key_down(scancode: stone) -> stone abi c
+
+namespace window {
+    vein create(title: obsidian, w: stone, h: stone) -> void {
+        ofs_window_create(title, w, h)
+    }
+
+    vein destroy() -> void {
+        ofs_window_destroy()
+    }
+
+    vein present(buf: stone) -> void {
+        ofs_window_present(buf)
+    }
+
+    vein poll() -> bool {
+        return ofs_window_poll() != 0
+    }
+
+    vein is_open() -> bool {
+        return ofs_window_is_open() != 0
+    }
+
+    vein width() -> stone {
+        return ofs_window_width()
+    }
+
+    vein height() -> stone {
+        return ofs_window_height()
+    }
+
+    vein set_title(t: obsidian) -> void {
+        ofs_window_set_title(t)
+    }
+}
+
+namespace input {
+    vein mouse_x() -> stone {
+        return ofs_mouse_x()
+    }
+
+    vein mouse_y() -> stone {
+        return ofs_mouse_y()
+    }
+
+    vein is_down(btn: stone) -> bool {
+        return ofs_mouse_btn(btn) != 0
+    }
+
+    vein key(sc: stone) -> bool {
+        return ofs_key_down(sc) != 0
+    }
+}

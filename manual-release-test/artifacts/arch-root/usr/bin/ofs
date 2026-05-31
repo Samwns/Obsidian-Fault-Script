@@ -1,0 +1,252 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+OFS_VERSION="1.0.97"
+OFS_REPO="Samwns/Obsidian-Fault-Script"
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OFSCC="${OFSCC:-$ROOT/ofscc}"
+RUNTIME="${OFS_RUNTIME:-$ROOT/libofs_runtime.a}"
+
+detect_llvm_ir_flags() {
+  if [ -n "${OFS_LLVM_IR_FLAGS:-}" ]; then
+    printf '%s\n' "$OFS_LLVM_IR_FLAGS"
+    return
+  fi
+  if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
+    printf '%s\n' "-mllvm -opaque-pointers"
+  fi
+}
+
+read -r -a OFS_LLVM_IR_FLAGS <<< "$(detect_llvm_ir_flags)"
+
+if [ ! -x "$OFSCC" ] && command -v ofscc >/dev/null 2>&1; then
+  OFSCC="$(command -v ofscc)"
+fi
+if [ ! -x "$OFSCC" ] && [ -x /usr/lib/ofs/ofscc ]; then
+  OFSCC="/usr/lib/ofs/ofscc"
+fi
+if [ ! -f "$RUNTIME" ] && [ -f /usr/local/lib/libofs_runtime.a ]; then
+  RUNTIME="/usr/local/lib/libofs_runtime.a"
+fi
+if [ ! -f "$RUNTIME" ] && [ -f /usr/lib/ofs/libofs_runtime.a ]; then
+  RUNTIME="/usr/lib/ofs/libofs_runtime.a"
+fi
+
+banner() {
+  cat <<'BANNER'
+
+ ______        ______      ______
+/\  __ \      /\  ___\    /\  ___\
+\ \ \/\ \     \ \  __\    \ \___  \
+ \ \_____\     \ \_\       \/\_____\
+  \/_____/      \/_/        \/_____/
+
+BANNER
+}
+
+show_version() {
+  banner
+  printf 'ofs %s - Obsidian Fault Script\n' "$OFS_VERSION"
+  printf 'status: stable\n'
+}
+
+usage() {
+  banner
+  cat <<EOF
+ofs - Obsidian Fault Script compiler v$OFS_VERSION
+
+Usage:
+  ofs <file.ofs>                        Run a script directly
+  ofs run    <file.ofs>                 Compile and run immediately
+  ofs build  <file.ofs> [-o output]     Compile to native executable
+  ofs check  <file.ofs>                 Type-check only (no output)
+  ofs tokens <file.ofs>                 Print token stream (debug)
+  ofs ast    <file.ofs>                 Print AST (debug)
+  ofs ir     <file.ofs>                 Emit LLVM IR (debug)
+  ofs asm    <file.ofs>                 Emit target-native assembly
+  ofs version                           Print compiler version
+  ofs update                            Update to the latest release
+  ofs help                              Show this help message
+EOF
+}
+
+latest_tag() {
+  curl -fsSIL -o /dev/null -w '%{url_effective}' "https://github.com/$OFS_REPO/releases/latest" |
+    sed 's#.*/tag/##'
+}
+
+run_update() {
+  local latest asset tmp platform os_id os_like package
+  latest="$(latest_tag)"
+  if [ -z "$latest" ]; then
+    echo "ofs update: failed to fetch latest release tag" >&2
+    return 1
+  fi
+  if [ "v$OFS_VERSION" = "$latest" ]; then
+    echo "OFS is already up to date ($latest)"
+    return 0
+  fi
+
+  tmp="$(mktemp -d)"
+  platform="$(uname -s)"
+  if [ "$platform" = "Darwin" ]; then
+    asset="ofs-macos-arm64-installer-$latest.pkg"
+    echo "Downloading $asset..."
+    curl -fL "https://github.com/$OFS_REPO/releases/download/$latest/$asset" -o "$tmp/ofs.pkg"
+    sudo installer -pkg "$tmp/ofs.pkg" -target /
+    rm -rf "$tmp"
+    if ! ofs version | grep -F "ofs ${latest#v} - Obsidian Fault Script" >/dev/null; then
+      echo "ofs update: installed version did not match $latest" >&2
+      return 1
+    fi
+    echo "Update completed to $latest"
+    return 0
+  fi
+
+  os_id=""
+  os_like=""
+  if [ -f /etc/os-release ]; then
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    os_id="${ID:-}"
+    os_like="${ID_LIKE:-}"
+  fi
+
+  case " $os_id $os_like " in
+    *" arch "*)
+      asset="ofs-arch-x64-installer-$latest.pkg.tar.zst"
+      package="$tmp/$asset"
+      echo "Downloading $asset..."
+      curl -fL "https://github.com/$OFS_REPO/releases/download/$latest/$asset" -o "$package"
+      sudo pacman -U --noconfirm "$package"
+      ;;
+    *" fedora "*|*" rhel "*|*" centos "*)
+      asset="ofs-fedora-x64-installer-$latest.rpm"
+      package="$tmp/$asset"
+      echo "Downloading $asset..."
+      curl -fL "https://github.com/$OFS_REPO/releases/download/$latest/$asset" -o "$package"
+      if command -v dnf >/dev/null 2>&1; then
+        sudo dnf install -y "$package"
+      else
+        sudo rpm -Uvh "$package"
+      fi
+      ;;
+    *" debian "*|*" ubuntu "*)
+      asset="ofs-debian-ubuntu-x64-installer-$latest.deb"
+      package="$tmp/$asset"
+      echo "Downloading $asset..."
+      curl -fL "https://github.com/$OFS_REPO/releases/download/$latest/$asset" -o "$package"
+      if command -v apt-get >/dev/null 2>&1; then
+        sudo apt-get install -y "$package"
+      else
+        sudo dpkg -i "$package"
+      fi
+      ;;
+    *)
+      echo "ofs update: unsupported Linux distribution ($os_id $os_like)." >&2
+      echo "Download the .deb, .rpm, or .pkg.tar.zst release manually." >&2
+      return 1
+      ;;
+  esac
+
+  rm -rf "$tmp"
+  if ! ofs version | grep -F "ofs ${latest#v} - Obsidian Fault Script" >/dev/null; then
+    echo "ofs update: installed version did not match $latest" >&2
+    return 1
+  fi
+  echo "Update completed to $latest"
+}
+
+need_ofscc() {
+  if [ ! -x "$OFSCC" ]; then
+    echo "ofs: self-hosted compiler not found next to wrapper: $OFSCC" >&2
+    exit 1
+  fi
+}
+
+cmd="${1:-help}"
+case "$cmd" in
+  version|--version|-v)
+    show_version
+    exit 0
+    ;;
+  help|--help|-h)
+    usage
+    exit 0
+    ;;
+  update)
+    run_update
+    exit $?
+    ;;
+esac
+
+need_ofscc
+shift || true
+
+mode="$cmd"
+input=""
+output=""
+
+case "$mode" in
+  check|tokens|ast|ir|asm|build|run) ;;
+  *)
+    input="$mode"
+    mode="run"
+    ;;
+esac
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -o|--output)
+      output="${2:-}"
+      shift 2
+      ;;
+    *)
+      if [ -z "$input" ]; then
+        input="$1"
+      fi
+      shift
+      ;;
+  esac
+done
+
+if [ -z "$input" ]; then
+  usage
+  exit 2
+fi
+
+base="${input##*/}"
+name="${base%.*}"
+work="${TMPDIR:-/tmp}/ofs-${name}-$$"
+ll="$work.ll"
+bc="$work.bc"
+
+case "$mode" in
+  check|tokens|ast)
+    OFSCC_INPUT="$input" OFSCC_MODE="$mode" "$OFSCC"
+    ;;
+  ir)
+    [ -n "$output" ] || output="$name.ll"
+    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$output" "$OFSCC"
+    ;;
+  asm)
+    [ -n "$output" ] || output="$name.s"
+    case "$output" in *.s) ;; *) output="$output.s" ;; esac
+    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
+    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" -S "$ll" -o "$output"
+    rm -f "$ll"
+    echo "ASM: $output"
+    ;;
+  build|run)
+    [ -n "$output" ] || output="$name"
+    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
+    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" -O2 "$ll" "$RUNTIME" -lm -o "$output"
+    chmod +x "$output"
+    rm -f "$ll"
+    if [ "$mode" = "run" ]; then
+      "$output"
+    else
+      echo "Built: $output"
+    fi
+    ;;
+esac

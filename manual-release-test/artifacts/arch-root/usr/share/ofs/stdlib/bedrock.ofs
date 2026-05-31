@@ -1,0 +1,174 @@
+// OFS Standard Library — Bedrock Module
+// OFS-native low-level helpers for explicit heap-backed state.
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(cell_ptr: *stone) -> void
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+vein bedrock_cell_new(initial: stone) -> *stone {
+    forge cell: *stone = ofs_alloc(8)
+    fracture {
+        *cell = initial
+    }
+    return cell
+}
+
+vein bedrock_cell_read(cell: *stone) -> stone {
+    fracture {
+        return *cell
+    }
+}
+
+vein bedrock_cell_write(cell: *stone, value: stone) -> void {
+    fracture {
+        *cell = value
+    }
+}
+
+vein bedrock_cell_add(cell: *stone, delta: stone) -> stone {
+    fracture {
+        *cell = *cell + delta
+        return *cell
+    }
+}
+
+vein bedrock_cell_sub(cell: *stone, delta: stone) -> stone {
+    fracture {
+        *cell = *cell - delta
+        return *cell
+    }
+}
+
+vein bedrock_cell_reset(cell: *stone) -> void {
+    fracture {
+        *cell = 0
+    }
+}
+
+vein bedrock_cell_drop(cell: *stone) -> void {
+    ofs_free(cell)
+}
+
+vein bedrock_region_new(len: stone) -> *stone {
+    forge region: *stone = ofs_alloc(len * 8)
+    cycle (forge i: stone = 0; i < len; i++) {
+        bedrock_region_write(region, i, 0)
+    }
+    return region
+}
+
+vein bedrock_region_at(region: *stone, index: stone) -> *stone {
+    bedrock {
+        return fault_step(region, index)
+    }
+}
+
+vein bedrock_region_read(region: *stone, index: stone) -> stone {
+    return bedrock_cell_read(bedrock_region_at(region, index))
+}
+
+vein bedrock_region_write(region: *stone, index: stone, value: stone) -> void {
+    bedrock_cell_write(bedrock_region_at(region, index), value)
+}
+
+vein bedrock_region_add(region: *stone, index: stone, delta: stone) -> stone {
+    return bedrock_cell_add(bedrock_region_at(region, index), delta)
+}
+
+vein bedrock_prefetch(region: *stone, index: stone) -> void {
+    bedrock {
+        fault_prefetch(bedrock_region_at(region, index))
+    }
+}
+
+vein bedrock_region_drop(region: *stone) -> void {
+    ofs_free(region)
+}
+
+vein bedrock_view_at(region: *stone, start: stone, offset: stone) -> *stone {
+    return bedrock_region_at(region, start + offset)
+}
+
+vein bedrock_view_read(region: *stone, start: stone, offset: stone) -> stone {
+    return bedrock_cell_read(bedrock_view_at(region, start, offset))
+}
+
+vein bedrock_view_write(region: *stone, start: stone, offset: stone, value: stone) -> void {
+    bedrock_cell_write(bedrock_view_at(region, start, offset), value)
+}
+
+vein bedrock_field_cut(value: stone, shift: stone, width: stone) -> stone {
+    bedrock {
+        return fault_cut(value, shift, width)
+    }
+}
+
+vein bedrock_field_patch(base: stone, shift: stone, width: stone, insert: stone) -> stone {
+    bedrock {
+        return fault_patch(base, shift, width, insert)
+    }
+}
+
+vein bedrock_lane8_get(value: stone, lane: stone) -> stone {
+    return bedrock_field_cut(value, lane * 8, 8)
+}
+
+vein bedrock_lane8_set(value: stone, lane: stone, insert: stone) -> stone {
+    return bedrock_field_patch(value, lane * 8, 8, insert)
+}
+
+vein bedrock_lane16_le_get(value: stone, lane: stone) -> stone {
+    return bedrock_field_cut(value, lane * 16, 16)
+}
+
+vein bedrock_lane16_be_get(value: stone, lane: stone) -> stone {
+    bedrock {
+        return bedrock_lane16_le_get(fault_swap(value), lane)
+    }
+}
+
+vein bedrock_lane16_le_set(value: stone, lane: stone, insert: stone) -> stone {
+    return bedrock_field_patch(value, lane * 16, 16, insert)
+}
+
+vein bedrock_lane16_be_set(value: stone, lane: stone, insert: stone) -> stone {
+    bedrock {
+        return fault_swap(bedrock_lane16_le_set(fault_swap(value), lane, insert))
+    }
+}
+
+vein bedrock_lane32_le_get(value: stone, lane: stone) -> stone {
+    return bedrock_field_cut(value, lane * 32, 32)
+}
+
+vein bedrock_lane32_be_get(value: stone, lane: stone) -> stone {
+    bedrock {
+        return bedrock_lane32_le_get(fault_swap(value), lane)
+    }
+}
+
+vein bedrock_lane32_le_set(value: stone, lane: stone, insert: stone) -> stone {
+    return bedrock_field_patch(value, lane * 32, 32, insert)
+}
+
+vein bedrock_lane32_be_set(value: stone, lane: stone, insert: stone) -> stone {
+    bedrock {
+        return fault_swap(bedrock_lane32_le_set(fault_swap(value), lane, insert))
+    }
+}
+
+vein bedrock_barrier() -> void {
+    bedrock {
+        fault_fence()
+    }
+}
+
+vein bedrock_pair(label: obsidian, value: stone) -> obsidian {
+    return label + "=" + ofs_stone_to_obsidian(value)
+}
+
+vein bedrock_snapshot(a_name: obsidian, a: *stone, b_name: obsidian, b: *stone, c_name: obsidian, c: *stone) -> obsidian {
+    return bedrock_pair(a_name, bedrock_cell_read(a))
+        + " | " + bedrock_pair(b_name, bedrock_cell_read(b))
+        + " | " + bedrock_pair(c_name, bedrock_cell_read(c))
+}

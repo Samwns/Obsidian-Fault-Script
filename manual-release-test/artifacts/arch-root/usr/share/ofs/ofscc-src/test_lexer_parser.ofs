@@ -1,0 +1,69 @@
+// OFS Compiler — Lexer + Parser Integration Test
+
+attach {F:ofscc/fileio.ofs}
+attach {F:ofscc/tokens.ofs}
+attach {F:ofscc/nodes.ofs}
+attach {F:ofscc/ast.ofs}
+attach {F:ofscc/lexer.ofs}
+attach {F:ofscc/parser.ofs}
+
+core main() {
+    echo("=== OFS Lexer + Parser Integration Test ===")
+    
+    // Test 1: Simple function with variables
+    forge src1 = "vein add(a: stone, b: stone) -> stone { return a + b }"
+    
+    echo("\n[Test 1] Function declaration")
+    echo("Source: " + src1)
+    
+    forge tokens1 = lexer.lex(src1)
+    echo("Tokens: " + ofs_stone_to_obsidian(ofs_array_len(tokens1)))
+    
+    forge ast1 = parser.parse(tokens1)
+    echo("AST root: " + ofs_stone_to_obsidian(ast1))
+    echo("AST pool size: " + ofs_stone_to_obsidian(node_pool_len()))
+    
+    forge root1: Node = node_get(ast1)
+    echo("Root kind: " + node_kind_name(root1.kind))
+    echo("Root children: " + ofs_stone_to_obsidian(node_extra_len(ast1)))
+    
+    // Test 2: Variable with type annotation
+    forge src2 = "forge x: stone = 42"
+    echo("\n[Test 2] Variable declaration with type")
+    echo("Source: " + src2)
+    
+    forge tokens2 = lexer.lex(src2)
+    forge ast2 = parser.parse(tokens2)
+    echo("AST root: " + ofs_stone_to_obsidian(ast2))
+    
+    // Test 3: If statement
+    forge src3 = "if (x > 0) { forge y = 1 } else { forge y = -1 }"
+    echo("\n[Test 3] If-else statement")
+    echo("Source: " + src3)
+    
+    forge tokens3 = lexer.lex(src3)
+    forge ast3 = parser.parse(tokens3)
+    echo("AST created, pool size: " + ofs_stone_to_obsidian(node_pool_len()))
+    
+    // Test 4: Function call
+    forge src4 = "echo(\"hello\" + name)"
+    echo("\n[Test 4] Function call with expression")
+    echo("Source: " + src4)
+    
+    forge tokens4 = lexer.lex(src4)
+    forge ast4 = parser.parse(tokens4)
+    echo("AST created")
+    
+    // Test 5: Complex expression
+    forge src5 = "(a && b) || (c > d)"
+    echo("\n[Test 5] Complex boolean expression")
+    echo("Source: " + src5)
+    
+    forge tokens5 = lexer.lex(src5)
+    echo("Tokens: " + ofs_stone_to_obsidian(ofs_array_len(tokens5)))
+    forge ast5 = parser.parse(tokens5)
+    echo("AST created")
+    
+    echo("\n=== Integration test completed ===")
+    echo("Total nodes in pool: " + ofs_stone_to_obsidian(node_pool_len()))
+}

@@ -1,0 +1,85 @@
+// OFS Compiler — Lexer Unit Tests
+// Test individual lexer components
+
+attach {F:ofscc/fileio.ofs}
+attach {F:ofscc/tokens.ofs}
+attach {F:ofscc/chars.ofs}
+attach {F:ofscc/lexer.ofs}
+
+vein test_is_digit() -> void {
+    echo("Test: is_digit()")
+    if (is_digit(48)) { echo("  ✓ '0' is digit") }
+    if (is_digit(57)) { echo("  ✓ '9' is digit") }
+    if (!is_digit(65)) { echo("  ✓ 'A' is not digit") }
+}
+
+vein test_is_alpha() -> void {
+    echo("Test: is_alpha()")
+    if (is_alpha(97)) { echo("  ✓ 'a' is alpha") }
+    if (is_alpha(65)) { echo("  ✓ 'A' is alpha") }
+    if (is_alpha(95)) { echo("  ✓ '_' is alpha") }
+    if (!is_alpha(48)) { echo("  ✓ '0' is not alpha") }
+}
+
+vein test_keyword_to_kind() -> void {
+    echo("Test: keyword_to_kind()")
+    if (keyword_to_kind("forge") == TOK_FORGE) { echo("  ✓ 'forge' → TOK_FORGE") }
+    if (keyword_to_kind("vein") == TOK_VEIN) { echo("  ✓ 'vein' → TOK_VEIN") }
+    if (keyword_to_kind("if") == TOK_IF) { echo("  ✓ 'if' → TOK_IF") }
+    if (keyword_to_kind("hello") == TOK_IDENT) { echo("  ✓ 'hello' → TOK_IDENT") }
+}
+
+vein test_lexer_simple() -> void {
+    echo("Test: lexer basic")
+    forge src = "forge x = 42"
+    forge tokens = lexer.lex(src)
+    forge count = ofs_array_len(tokens)
+    echo("  Input: " + src)
+    echo("  Tokens: " + ofs_stone_to_obsidian(count))
+    if (count > 0) { echo("  ✓ Lexer produced tokens") }
+}
+
+vein test_lexer_operators() -> void {
+    echo("Test: lexer operators")
+    forge src = "a + b * c == d"
+    forge tokens = lexer.lex(src)
+    echo("  Input: " + src)
+    echo("  Token count: " + ofs_stone_to_obsidian(ofs_array_len(tokens)))
+}
+
+vein test_lexer_strings() -> void {
+    echo("Test: lexer strings")
+    forge src = "\"hello\\nworld\""
+    forge tokens = lexer.lex(src)
+    if (ofs_array_len(tokens) > 2) {
+        forge t: Token = ofs_array_get(tokens, 0)
+        if (t.kind == TOK_STRING) {
+            echo("  ✓ String recognized")
+            echo("  Value: \"" + t.val + "\"")
+        }
+    }
+}
+
+core main() {
+    echo("=== OFS Lexer Unit Tests ===\n")
+    
+    test_is_digit()
+    echo("")
+    
+    test_is_alpha()
+    echo("")
+    
+    test_keyword_to_kind()
+    echo("")
+    
+    test_lexer_simple()
+    echo("")
+    
+    test_lexer_operators()
+    echo("")
+    
+    test_lexer_strings()
+    echo("")
+    
+    echo("=== Tests completed ===")
+}

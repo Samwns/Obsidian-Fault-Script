@@ -1,0 +1,81 @@
+// OFS Compiler — File I/O Wrapper
+// FFI declarations and file utilities
+
+// ── C FFI Declarations ──────────────────────────────────────────────────
+
+extern vein fopen(path: obsidian, mode: obsidian) -> obsidian
+extern vein fclose(f: obsidian) -> stone
+extern vein fread(buf: obsidian, sz: stone, n: stone, f: obsidian) -> stone
+extern vein fwrite(buf: obsidian, sz: stone, n: stone, f: obsidian) -> stone
+extern vein fputs(s: obsidian, f: obsidian) -> stone
+extern vein fseek(f: obsidian, offset: stone, whence: stone) -> stone
+extern vein ftell(f: obsidian) -> stone
+extern vein system(cmd: obsidian) -> stone
+extern vein ofs_alloc(size: stone) -> obsidian
+extern vein ofs_free(p: obsidian) -> void
+extern vein exit(code: stone) -> void
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_str_concat(a: obsidian, b: obsidian) -> obsidian
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_stone_to_obsidian(value: stone) -> obsidian
+extern vein ofs_array_len(a: Array) -> stone
+extern vein ofs_array_get(a: Array, index: stone) -> stone
+extern vein ofs_array_push(a: Array, value: stone) -> void
+extern vein ofs_array_set(a: Array, index: stone, value: stone) -> void
+extern vein ofs_array_pop(a: Array) -> stone
+
+// ── File Reading ────────────────────────────────────────────────────────
+
+vein read_file(path: obsidian) -> obsidian {
+    forge f = fopen(path, "r")
+    if (f == null) {
+        throw "erro: nao foi possivel abrir " + path
+    }
+    
+    // seek to end to get size
+    fseek(f, 0, 2)
+    forge size = ftell(f)
+    fseek(f, 0, 0)
+    
+    // allocate buffer
+    forge buf = ofs_alloc(size + 1)
+    fread(buf, 1, size, f)
+    fclose(f)
+    
+    return buf
+}
+
+// ── File Writing ────────────────────────────────────────────────────────
+
+vein write_file(path: obsidian, content: obsidian) -> bool {
+    forge f = fopen(path, "w")
+    if (f == null) {
+        return false
+    }
+    fputs(content, f)
+    fclose(f)
+    return true
+}
+
+// ── Codegen Output ──────────────────────────────────────────────────────
+
+forge _out_file: obsidian = null
+
+vein cg_open(path: obsidian) -> void {
+    _out_file = fopen(path, "w")
+}
+
+vein cg_emit(line: obsidian) -> void {
+    fputs(line, _out_file)
+    fputs("\n", _out_file)
+}
+
+vein cg_emit_raw(s: obsidian) -> void {
+    fputs(s, _out_file)
+}
+
+vein cg_close() -> void {
+    fclose(_out_file)
+}

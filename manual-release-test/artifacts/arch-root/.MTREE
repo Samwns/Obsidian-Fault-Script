@@ -1,0 +1,73 @@
+#mtree
+/set type=file uid=1000 gid=1000 mode=755
+./usr time=1780241741.780439847 type=dir
+./usr/bin time=1780241741.826439843 type=dir
+./usr/bin/ofs time=1780241741.811439844 size=6546 sha256digest=ea17724f7327b20885229d9bd87be40c02bb88e71bd9d1d74f28c97f74f6e79b
+./usr/bin/ofscc time=1780241741.826439843 mode=777 type=link link=../lib/ofs/ofscc
+./usr/lib time=1780241741.775439847 type=dir
+./usr/lib/ofs time=1780241741.822439844 type=dir
+./usr/lib/ofs/libofs_runtime.a time=1780241741.822439844 mode=644 size=12590 sha256digest=de369f763651025d62560212f96b1e86f6dc14f190a0b6d90970ff4f78588922
+./usr/lib/ofs/ofscc time=1780241741.816439844 size=144528 sha256digest=5581a1d8b95bedc02938a90ff793f30d4119d9be824eafdf170d59edab8bfeb3
+./usr/share time=1780241741.805439845 type=dir
+./usr/share/doc time=1780241741.801439845 type=dir
+./usr/share/doc/obsidian-fault-script time=1780241741.853439841 type=dir
+./usr/share/doc/obsidian-fault-script/README.md time=1780241741.854439841 mode=644 size=4506 sha256digest=e36a86f4c7685b81d4f07f3c7681f51abc313ea759c247bff06eeaf3d38050d4
+./usr/share/licenses time=1780241741.805439845 type=dir
+./usr/share/licenses/obsidian-fault-script time=1780241741.850439842 type=dir
+./usr/share/licenses/obsidian-fault-script/LICENSE time=1780241741.850439842 mode=644 size=1338 sha256digest=c9bff75738922193e67fa726fa225535870d2aa1059f91452c411736284ad566
+./usr/share/ofs time=1780241741.790439846 type=dir
+/set mode=666
+./usr/share/ofs/ofscc-src time=1780241741.846439842 mode=755 type=dir
+./usr/share/ofs/ofscc-src/README.md time=1780241741.840439842 size=3981 sha256digest=6c4bf341675ab94e0ffd193cc8024ca03b9aea0dd9a659b188df3bef1f4e48e7
+./usr/share/ofs/ofscc-src/ROADMAP.md time=1780241741.840439842 size=16441 sha256digest=0d63fbba0d9f2f88d832f12a8dff5cecf69a75652a0f525c2d5044d5a82f1328
+./usr/share/ofs/ofscc-src/ast.ofs time=1780241741.840439842 size=5480 sha256digest=5f929896b81c83c78302902562431f080658ab86d4add98df401eb87dfbd15bd
+./usr/share/ofs/ofscc-src/chars.ofs time=1780241741.841439842 size=2374 sha256digest=b9e55eda28abbdfae71f914826f4f2b42c1f183d3da231b023f2c6cf59ee2ee2
+./usr/share/ofs/ofscc-src/codegen.ofs time=1780241741.841439842 size=13002 sha256digest=3e5867b1e4ffa4c3fc6684692573087ddbb424c935b472cd2913f136c2ef25ec
+./usr/share/ofs/ofscc-src/fileio.ofs time=1780241741.841439842 size=2974 sha256digest=0c1c4d0324f64e8361928c6084849317058c54de8904b50ba19250379865f5d6
+./usr/share/ofs/ofscc-src/lexer.ofs time=1780241741.841439842 size=12359 sha256digest=4ef18342a00f0891d58fc807b72663440a7a55b68928fb30bdc4bfc79c40df6c
+./usr/share/ofs/ofscc-src/llvmgen.ofs time=1780241741.841439842 size=51580 sha256digest=85bdc9e214cab64253601779bcb16754950b7eed5d9ddbe2effdccbf2649ce9b
+./usr/share/ofs/ofscc-src/nodes.ofs time=1780241741.841439842 size=3956 sha256digest=229ae44d3fe5a1ab3d61c2ae131128d36fc36c3dfb1b6b53133b1c00ac4534c7
+./usr/share/ofs/ofscc-src/ofscc.ofs time=1780241741.842439842 size=8360 sha256digest=9b3e2e6c528364f79d5781b713c6d0f31e3426bcb8fc822eb7fc2d5baa6b85f3
+./usr/share/ofs/ofscc-src/parser.ofs time=1780241741.842439842 size=33018 sha256digest=45ce38e488635635eb74fed3b95646b280523074798832a4d2eafe03b37595e5
+./usr/share/ofs/ofscc-src/symbols.ofs time=1780241741.846439842 size=889 sha256digest=73f806c11a5cbc0b6052dd57cb46257c133eaa14227563f4d58b6c9b85e7fd14
+./usr/share/ofs/ofscc-src/test_lexer_basic.ofs time=1780241741.846439842 size=1776 sha256digest=f829728597c04f183c9130d61e66a084468e7b96a72a84db6e7cd9e797c20e19
+./usr/share/ofs/ofscc-src/test_lexer_parser.ofs time=1780241741.846439842 size=2289 sha256digest=7305f0927a8ab0c42722dede7650cbf6921113a7271cfa104e619d901bbddb48
+./usr/share/ofs/ofscc-src/test_lexer_units.ofs time=1780241741.846439842 size=2382 sha256digest=5c5c8034d3174fea86ade6d2e9d7c6afc96e012afdd1f33576fe85ac485a8d89
+./usr/share/ofs/ofscc-src/tokens.ofs time=1780241741.846439842 size=6722 sha256digest=c4370ee1bf1f1ad57ce284d1095d4ab19e87704cc049882f3f92476c9999aaaa
+./usr/share/ofs/ofscc-src/typeck.ofs time=1780241741.846439842 size=15872 sha256digest=fce410d2448e3399d7fd9fde7307c7b3f0bc283763f4595c8934a214935fa7c1
+./usr/share/ofs/ofscc-src/scripts time=1780241741.846439842 mode=755 type=dir
+./usr/share/ofs/ofscc-src/scripts/COMECE_AQUI.md time=1780241741.843439842 size=9715 sha256digest=31359cfc3249040b0f63b4b8b718787352f90f7504dbfd755ba8c3ec63c40cca
+./usr/share/ofs/ofscc-src/scripts/INDEX.md time=1780241741.843439842 size=8601 sha256digest=65460ce71bf80b703f6a8b21bb52266137cea9bd4e39f42a954837a075fbc682
+./usr/share/ofs/ofscc-src/scripts/MIGRATION_SUMMARY.md time=1780241741.843439842 size=8887 sha256digest=347c611b0aa6dbc1b4acc7757afd81e3aab6757fbc6d84707ca12078ff284614
+./usr/share/ofs/ofscc-src/scripts/Makefile time=1780241741.843439842 size=11463 sha256digest=2d2ce6f953a82e47c645407079e4b1ff5d13a96cf08d5a82d31c7ed13963e1fe
+./usr/share/ofs/ofscc-src/scripts/QUICKSTART.md time=1780241741.843439842 size=4717 sha256digest=6f1d346736a0187b783fcfcbdb7de24161a98f152d43e2edbf5feb86d609f6dd
+./usr/share/ofs/ofscc-src/scripts/README.md time=1780241741.843439842 size=9369 sha256digest=c1bce5e02fcf692582ad77d7ee7bbe67b9adc4387aa4aa23d6b327b4e9849893
+./usr/share/ofs/ofscc-src/scripts/RELEASES_STATUS_FINAL.md time=1780241741.844439842 size=7915 sha256digest=9e90ed5b471240c4d7015061bb75285afc41a0039d9f4ac75e23d59e3194050a
+./usr/share/ofs/ofscc-src/scripts/RELEASES_SUMMARY.md time=1780241741.844439842 size=4339 sha256digest=68a93fc9febb5d684b83f4efc02a71aa4ed5fa9125cccd8712f6e3b17d2939df
+./usr/share/ofs/ofscc-src/scripts/RELEASES_WITHOUT_CPP.md time=1780241741.844439842 size=8315 sha256digest=dfa19b5bf7e31fb3e90afbcdb138e6430c796d5bd359ace80bacdb2878340133
+./usr/share/ofs/ofscc-src/scripts/STATUS_FINAL.md time=1780241741.844439842 size=8186 sha256digest=6a3913b00d0985acf2cd82ead7f884ef727f253b012e46c3fe8af206a9c9b6a9
+./usr/share/ofs/ofscc-src/scripts/bootstrap-linux.sh time=1780241741.844439842 size=11165 sha256digest=070dfa1c2113d7fcc376313b245d638b274f2b91d1b07c47474ba5b0712f40b1
+./usr/share/ofs/ofscc-src/scripts/bootstrap-minimal.sh time=1780241741.844439842 size=7770 sha256digest=9514ca22ac419e202c073f657374fb906923a148109bcd8fc971f027634d7889
+./usr/share/ofs/ofscc-src/scripts/bootstrap-windows.ps1 time=1780241741.845439842 size=9846 sha256digest=113e33b82fa8cbcdf4990097fbfaea6aa346b23dfa27e1c3897e184199a28acd
+./usr/share/ofs/ofscc-src/scripts/ci-build.sh time=1780241741.845439842 size=6612 sha256digest=1e326bc15d38e2a8abcc43b95c6351e71a424bc2bf32236476dbef36d9bf3a45
+./usr/share/ofs/ofscc-src/scripts/create-release.sh time=1780241741.845439842 size=8354 sha256digest=c2f316926ea9fb237536d1253d2e9d4154b89f72551f8d6dc19d7e6c348d18e8
+./usr/share/ofs/ofscc-src/scripts/release-native-only-windows.ps1 time=1780241741.845439842 size=9039 sha256digest=eb388629fd48b1033c4aec674c9fb305851a68e4d7b592263eed543cbd01515d
+./usr/share/ofs/ofscc-src/scripts/release-native-only.sh time=1780241741.845439842 size=12656 sha256digest=ce6dbc5bbbd64be5b912d12d6b15b2bafa2314c4048fc758ac6695439a9a5274
+./usr/share/ofs/ofscc-src/scripts/setup-permissions.sh time=1780241741.846439842 size=821 sha256digest=2d0df9b7b3da469208e310f98354666b435b0e6fd151cead67c95f9ed24d2402
+./usr/share/ofs/ofscc-src/scripts/utils.ps1 time=1780241741.846439842 size=9553 sha256digest=8db3d925ccf224e90d7719c6f26488c1be5e8c4effff60546967232bba4ae26d
+./usr/share/ofs/ofscc-src/scripts/utils.sh time=1780241741.846439842 size=8210 sha256digest=c06d0a7e92fb305447f437e2b3ced0051064d6c06e51c616cedd7ce6f3295724
+./usr/share/ofs/ofscc-src/scripts/validate.sh time=1780241741.846439842 size=8262 sha256digest=db002ab7b0c948650bddf5d70b432fb5d24f3191b59d5e2d32555606977a2368
+./usr/share/ofs/stdlib time=1780241741.835439843 mode=755 type=dir
+./usr/share/ofs/stdlib/bedrock.ofs time=1780241741.834439843 size=4739 sha256digest=fe35300cdf02d10e9f38c81340268e8973a9c8fd8ea364b0a3547ec26f9b5342
+./usr/share/ofs/stdlib/bedrock_packet.ofs time=1780241741.834439843 size=1367 sha256digest=dbe742f0d5408e3e11830d76d7bc6af2d0467c786a6aaabd965b2a23c4493263
+./usr/share/ofs/stdlib/canvas.ofs time=1780241741.834439843 size=1844 sha256digest=55e986f48cd1c9e0633eb6a989c7fc6b4609268c9f44ae6c96545e7bd0176be3
+./usr/share/ofs/stdlib/core.ofs time=1780241741.834439843 size=2523 sha256digest=a782a00f40b8ed73c7381f749cd6eef9c65d21526615038f5a25af793fc67352
+./usr/share/ofs/stdlib/io.ofs time=1780241741.834439843 size=482 sha256digest=c2affddeb764369ceafe552367aaca29be126a7564826da3289153fd984a4630
+./usr/share/ofs/stdlib/math.ofs time=1780241741.834439843 size=1533 sha256digest=bf401034bea79dff2c201bbe1d35183909a53fac171e95cba5c28738ff76859d
+./usr/share/ofs/stdlib/memory_modes.ofs time=1780241741.834439843 size=333 sha256digest=8dc8ad15c86b118c16c834dbad319cf61845761e423ba47a379d148ae033a929
+./usr/share/ofs/stdlib/rift.ofs time=1780241741.834439843 size=551 sha256digest=3788c554b2ea3fad7311230181aee8cb3497b0b1f7d466c14387230a79cc9cfc
+./usr/share/ofs/stdlib/string.ofs time=1780241741.834439843 size=635 sha256digest=b5b50ae98534fdff2a0b1e2751119f770804db26cb2e3ec2b9595a837bff63e1
+./usr/share/ofs/stdlib/terminal_colors.ofs time=1780241741.835439843 size=2327 sha256digest=e469c655a0c22768dc8ef6f6e3985913be8f61e508eed0099068b320d26e22b3
+./usr/share/ofs/stdlib/test_lib.ofs time=1780241741.835439843 size=49 sha256digest=246d8b8de1516a3a353d3f56f3f3ab9ef04173a5b8b7b9e5837508a37316445e
+./usr/share/ofs/stdlib/webserver.ofs time=1780241741.835439843 size=3102 sha256digest=be527f0d4a1c38c782169dc5539f64e413997ae981434d030deaac32aabd41d1
+./usr/share/ofs/stdlib/window.ofs time=1780241741.835439843 size=1554 sha256digest=5823a61734cbb0c2dc58ba8fc9efdf1d860903158bcf191ae586b893c28c919f

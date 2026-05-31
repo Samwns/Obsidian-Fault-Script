@@ -1,0 +1,82 @@
+// OFS Compiler — Character Utilities
+// ASCII constants and classification helpers
+
+// ── ASCII Constants ─────────────────────────────────────────────────────
+
+forge CH_0:       stone = 48
+forge CH_9:       stone = 57
+forge CH_a:       stone = 97
+forge CH_z:       stone = 122
+forge CH_A:       stone = 65
+forge CH_Z:       stone = 90
+forge CH_UNDER:   stone = 95
+forge CH_DOT:     stone = 46
+forge CH_SPACE:   stone = 32
+forge CH_TAB:     stone = 9
+forge CH_NEWLINE: stone = 10
+forge CH_CR:      stone = 13
+forge CH_SLASH:   stone = 47
+forge CH_STAR:    stone = 42
+forge CH_QUOTE:   stone = 34
+forge CH_TICK:    stone = 39
+forge CH_PLUS:    stone = 43
+forge CH_MINUS:   stone = 45
+forge CH_LPAREN:  stone = 40
+forge CH_RPAREN:  stone = 41
+forge CH_LBRACK:  stone = 91
+forge CH_RBRACK:  stone = 93
+forge CH_LBRACE:  stone = 123
+forge CH_RBRACE:  stone = 125
+forge CH_COLON:   stone = 58
+forge CH_SEMI:    stone = 59
+forge CH_COMMA:   stone = 44
+forge CH_LT:      stone = 60
+forge CH_GT:      stone = 62
+forge CH_EQ:      stone = 61
+forge CH_BANG:    stone = 33
+forge CH_AMP:     stone = 38
+forge CH_PIPE:    stone = 124
+forge CH_CARET:   stone = 94
+forge CH_PERCENT: stone = 37
+forge CH_TILDE:   stone = 126
+forge CH_QUESTION:stone = 63
+forge CH_x:       stone = 120
+forge CH_X:       stone = 88
+forge CH_e:       stone = 101
+forge CH_E:       stone = 69
+forge CH_f:       stone = 102
+forge CH_F:       stone = 70
+
+// ── Character Classification ───────────────────────────────────────────
+
+vein is_digit(c: stone) -> bool {
+    return c >= CH_0 && c <= CH_9
+}
+
+vein is_hex_digit(c: stone) -> bool {
+    return (c >= CH_0 && c <= CH_9) ||
+           (c >= CH_a && c <= CH_f) ||
+           (c >= CH_A && c <= CH_F)
+}
+
+vein is_alpha(c: stone) -> bool {
+    return (c >= CH_a && c <= CH_z) ||
+           (c >= CH_A && c <= CH_Z) ||
+           c == CH_UNDER
+}
+
+vein is_alnum(c: stone) -> bool {
+    return is_digit(c) || is_alpha(c)
+}
+
+vein is_space(c: stone) -> bool {
+    return c == CH_SPACE || c == CH_NEWLINE || c == CH_TAB || c == CH_CR
+}
+
+vein is_id_start(c: stone) -> bool {
+    return is_alpha(c)
+}
+
+vein is_id_continue(c: stone) -> bool {
+    return is_alnum(c)
+}

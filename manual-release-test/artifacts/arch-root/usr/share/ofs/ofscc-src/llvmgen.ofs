@@ -1,0 +1,1326 @@
+// OFS Compiler - LLVM IR backend
+
+attach {F:fileio.ofs}
+attach {F:ast.ofs}
+
+namespace llvmgen {
+    forge _tmp_counter: stone = 0
+    forge _label_counter: stone = 0
+    forge _str_counter: stone = 0
+    forge _string_vals: Array<obsidian> = []
+    forge _string_names: Array<obsidian> = []
+    forge _var_names: Array<obsidian> = []
+    forge _var_types: Array<obsidian> = []
+    forge _var_ptrs: Array<obsidian> = []
+    forge _var_depths: Array<stone> = []
+    forge _global_names: Array<obsidian> = []
+    forge _global_types: Array<obsidian> = []
+    forge _global_inits: Array<stone> = []
+    forge _break_labels: Array<obsidian> = []
+    forge _continue_labels: Array<obsidian> = []
+    forge _visited_nodes: Array<stone> = []
+    forge _mono_names: Array<obsidian> = []
+    forge _field_owners: Array<obsidian> = []
+    forge _field_names: Array<obsidian> = []
+    forge _field_types: Array<obsidian> = []
+    forge _field_indices: Array<stone> = []
+    forge _scope_depth: stone = 0
+    forge _expr_val: obsidian = ""
+    forge _expr_type: obsidian = "void"
+    forge _current_ret_type: obsidian = "void"
+    forge _terminated: bool = false
+
+    vein next_tmp(prefix: obsidian) -> obsidian {
+        forge name = "%" + prefix + ofs_stone_to_obsidian(_tmp_counter)
+        _tmp_counter++
+        return name
+    }
+
+    vein next_label(prefix: obsidian) -> obsidian {
+        forge name = prefix + ofs_stone_to_obsidian(_label_counter)
+        _label_counter++
+        return name
+    }
+
+    vein llvm_type(type_str: obsidian) -> obsidian {
+        if (is_named_type(type_str)) { return "ptr" }
+        if (ofs_str_eq(type_str, "stone")) { return "i64" }
+        if (ofs_str_eq(type_str, "crystal")) { return "double" }
+        if (ofs_str_eq(type_str, "obsidian")) { return "ptr" }
+        if (ofs_str_eq(type_str, "bool")) { return "i32" }
+        if (ofs_str_eq(type_str, "void")) { return "void" }
+        if (ofs_str_eq(type_str, "Array")) { return "ptr" }
+        return "ptr"
+    }
+
+    vein storage_type(type_str: obsidian) -> obsidian {
+        if (is_named_type(type_str)) { return "%" + type_str }
+        return llvm_type(type_str)
+    }
+
+    vein is_named_type(type_str: obsidian) -> bool {
+        forge i = 0
+        while (i < ofs_array_len(_mono_names)) {
+            forge name: obsidian = ofs_array_get(_mono_names, i)
+            if (ofs_str_eq(name, type_str)) { return true }
+            i++
+        }
+        return false
+    }
+
+    vein field_index(owner: obsidian, name: obsidian) -> stone {
+        forge i = 0
+        while (i < ofs_array_len(_field_names)) {
+            forge o: obsidian = ofs_array_get(_field_owners, i)
+            forge n: obsidian = ofs_array_get(_field_names, i)
+            if (ofs_str_eq(o, owner) && ofs_str_eq(n, name)) {
+                return ofs_array_get(_field_indices, i)
+            }
+            i++
+        }
+        return 0
+    }
+
+    vein field_type(owner: obsidian, name: obsidian) -> obsidian {
+        forge i = 0
+        while (i < ofs_array_len(_field_names)) {
+            forge o: obsidian = ofs_array_get(_field_owners, i)
+            forge n: obsidian = ofs_array_get(_field_names, i)
+            if (ofs_str_eq(o, owner) && ofs_str_eq(n, name)) {
+                return ofs_array_get(_field_types, i)
+            }
+            i++
+        }
+        return "stone"
+    }
+
+    vein type_node_name(id: stone) -> obsidian {
+        if (id < 0) { return "void" }
+        forge n: Node = node_get(id)
+        if (n.kind == NK_TYPE_ARRAY) { return "Array" }
+        return n.val
+    }
+
+    vein collect_types(id: stone) -> void {
+        if (id < 0) { return }
+        forge n: Node = node_get(id)
+        if (n.kind == NK_MONOLITH) {
+            ofs_array_push(_mono_names, n.val)
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                forge field_id = node_get_extra(id, i)
+                forge f: Node = node_get(field_id)
+                ofs_array_push(_field_owners, n.val)
+                ofs_array_push(_field_names, f.val)
+                ofs_array_push(_field_types, type_node_name(f.c0))
+                ofs_array_push(_field_indices, i)
+                i++
+            }
+        }
+        forge j = 0
+        while (j < node_extra_len(id)) {
+            collect_types(node_get_extra(id, j))
+            j++
+        }
+    }
+
+    vein collect_globals(root_id: stone) -> void {
+        forge i = 0
+        while (i < node_extra_len(root_id)) {
+            forge id = node_get_extra(root_id, i)
+            forge n: Node = node_get(id)
+            if (n.kind == NK_VAR_DECL || n.kind == NK_CONST_DECL) {
+                forge t = n.type_str
+                if (ofs_str_eq(t, "")) { t = "stone" }
+                ofs_array_push(_global_names, n.val)
+                ofs_array_push(_global_types, t)
+                ofs_array_push(_global_inits, n.c1)
+            } else if (n.kind == NK_NAMESPACE || n.kind == NK_IMPL) {
+                collect_globals(id)
+            }
+            i++
+        }
+    }
+
+    vein seen_node(id: stone) -> bool {
+        forge i = 0
+        while (i < ofs_array_len(_visited_nodes)) {
+            forge v = ofs_array_get(_visited_nodes, i)
+            if (v == id) { return true }
+            i++
+        }
+        return false
+    }
+
+    vein mark_node(id: stone) -> void {
+        ofs_array_push(_visited_nodes, id)
+    }
+
+    vein const_init_value(id: stone, type_str: obsidian) -> obsidian {
+        if (id < 0) {
+            if (ofs_str_eq(type_str, "obsidian") || ofs_str_eq(type_str, "Array") || is_named_type(type_str)) { return "null" }
+            if (ofs_str_eq(type_str, "crystal")) { return "0.0" }
+            return "0"
+        }
+        forge n: Node = node_get(id)
+        if (n.kind == NK_LIT_INT) { return n.val }
+        if (n.kind == NK_LIT_FLOAT) { return n.val }
+        if (n.kind == NK_LIT_BOOL) {
+            if (ofs_str_eq(n.val, "true")) { return "1" }
+            return "0"
+        }
+        if (n.kind == NK_LIT_STRING) { return string_name_for(n.val) }
+        if (ofs_str_eq(type_str, "obsidian") || ofs_str_eq(type_str, "Array") || is_named_type(type_str)) { return "null" }
+        return "0"
+    }
+
+    vein push_scope() -> void {
+        _scope_depth++
+    }
+
+    vein pop_scope() -> void {
+        forge len = ofs_array_len(_var_names)
+        while (len > 0) {
+            forge depth = ofs_array_get(_var_depths, len - 1)
+            if (depth < _scope_depth) { break }
+            ofs_array_pop(_var_names)
+            ofs_array_pop(_var_types)
+            ofs_array_pop(_var_ptrs)
+            ofs_array_pop(_var_depths)
+            len = ofs_array_len(_var_names)
+        }
+        if (_scope_depth > 0) { _scope_depth-- }
+    }
+
+    vein declare_var(name: obsidian, type_str: obsidian, ptr_name: obsidian) -> void {
+        ofs_array_push(_var_names, name)
+        ofs_array_push(_var_types, type_str)
+        ofs_array_push(_var_ptrs, ptr_name)
+        ofs_array_push(_var_depths, _scope_depth)
+    }
+
+    vein push_loop(break_label: obsidian, continue_label: obsidian) -> void {
+        ofs_array_push(_break_labels, break_label)
+        ofs_array_push(_continue_labels, continue_label)
+    }
+
+    vein pop_loop() -> void {
+        ofs_array_pop(_break_labels)
+        ofs_array_pop(_continue_labels)
+    }
+
+    vein current_break_label() -> obsidian {
+        return ofs_array_get(_break_labels, ofs_array_len(_break_labels) - 1)
+    }
+
+    vein current_continue_label() -> obsidian {
+        return ofs_array_get(_continue_labels, ofs_array_len(_continue_labels) - 1)
+    }
+
+    vein var_index(name: obsidian) -> stone {
+        forge i = ofs_array_len(_var_names) - 1
+        while (i >= 0) {
+            forge n: obsidian = ofs_array_get(_var_names, i)
+            if (ofs_str_eq(n, name)) { return i }
+            i--
+        }
+        return -1
+    }
+
+    vein global_index(name: obsidian) -> stone {
+        forge i = ofs_array_len(_global_names) - 1
+        while (i >= 0) {
+            forge n: obsidian = ofs_array_get(_global_names, i)
+            if (ofs_str_eq(n, name)) { return i }
+            i--
+        }
+        return -1
+    }
+
+    vein var_type(name: obsidian) -> obsidian {
+        forge i = var_index(name)
+        if (i < 0) {
+            forge gi = global_index(name)
+            if (gi >= 0) { return ofs_array_get(_global_types, gi) }
+            return "unknown"
+        }
+        return ofs_array_get(_var_types, i)
+    }
+
+    vein var_ptr(name: obsidian) -> obsidian {
+        forge i = var_index(name)
+        if (i < 0) {
+            forge gi = global_index(name)
+            if (gi >= 0) { return "@" + name }
+            return "%" + name
+        }
+        return ofs_array_get(_var_ptrs, i)
+    }
+
+    vein expr_as_i1() -> obsidian {
+        if (ofs_str_eq(_expr_type, "bool1")) { return _expr_val }
+        forge tmp = next_tmp("cond")
+        if (ofs_str_eq(_expr_type, "obsidian") || ofs_str_eq(_expr_type, "Array")) {
+            cg_emit("  " + tmp + " = icmp ne ptr " + _expr_val + ", null")
+        } else {
+            cg_emit("  " + tmp + " = icmp ne " + llvm_type(_expr_type) + " " + _expr_val + ", 0")
+        }
+        return tmp
+    }
+
+    vein coerce_for_store(value: obsidian, from_type: obsidian, to_type: obsidian) -> obsidian {
+        if (ofs_str_eq(from_type, "bool1") && ofs_str_eq(to_type, "bool")) {
+            forge z = next_tmp("zext")
+            cg_emit("  " + z + " = zext i1 " + value + " to i32")
+            return z
+        }
+        if (ofs_str_eq(from_type, "stone") && ofs_str_eq(to_type, "obsidian")) {
+            forge s = next_tmp("stone_str")
+            cg_emit("  " + s + " = call ptr @ofs_stone_to_obsidian(i64 " + value + ")")
+            return s
+        }
+        if (ofs_str_eq(from_type, "null") && (ofs_str_eq(to_type, "obsidian") || ofs_str_eq(to_type, "Array") || is_named_type(to_type))) {
+            return "null"
+        }
+        return value
+    }
+
+    vein is_call_name(id: stone, name: obsidian) -> bool {
+        if (id < 0) { return false }
+        forge n: Node = node_get(id)
+        if (n.kind != NK_CALL) { return false }
+        return ofs_str_eq(n.val, name)
+    }
+
+    vein emit_array_get(id: stone, expected_type: obsidian) -> void {
+        forge n: Node = node_get(id)
+        forge arr_id = node_get_extra(id, 0)
+        forge idx_id = node_get_extra(id, 1)
+        if (n.kind == NK_INDEX) {
+            arr_id = n.c0
+            idx_id = n.c1
+        }
+        emit_expr(arr_id)
+        forge arr = _expr_val
+        emit_expr(idx_id)
+        forge idx = _expr_val
+        forge raw = next_tmp("arr_get")
+        cg_emit("  " + raw + " = call ptr @ofs_array_get(ptr " + arr + ", i64 " + idx + ")")
+        if (is_named_type(expected_type) || ofs_str_eq(expected_type, "obsidian") || ofs_str_eq(expected_type, "Array")) {
+            forge loaded_ptr = next_tmp("arr_item")
+            cg_emit("  " + loaded_ptr + " = load ptr, ptr " + raw)
+            _expr_val = loaded_ptr
+            _expr_type = expected_type
+        } else {
+            forge loaded = next_tmp("arr_item")
+            cg_emit("  " + loaded + " = load " + llvm_type(expected_type) + ", ptr " + raw)
+            _expr_val = loaded
+            _expr_type = expected_type
+        }
+    }
+
+    vein llvm_escape_byte(c: stone) -> obsidian {
+        if (c == 10) { return "\\0A" }
+        if (c == 9) { return "\\09" }
+        if (c == 13) { return "\\0D" }
+        if (c == 34) { return "\\22" }
+        if (c == 92) { return "\\5C" }
+        if (c == 0) { return "\\00" }
+        return ofs_str_substr(ofs_stone_to_obsidian(c), 0, 0)
+    }
+
+    vein llvm_escape_string(s: obsidian) -> obsidian {
+        forge out = ""
+        forge i = 0
+        forge len = ofs_str_len(s)
+        while (i < len) {
+            forge c = ofs_str_char_at(s, i)
+            if (c == 10 || c == 9 || c == 13 || c == 34 || c == 92 || c == 0) {
+                out = out + llvm_escape_byte(c)
+            } else {
+                out = out + ofs_str_substr(s, i, 1)
+            }
+            i++
+        }
+        return out + "\\00"
+    }
+
+    vein string_name_for(value: obsidian) -> obsidian {
+        forge i = 0
+        while (i < ofs_array_len(_string_vals)) {
+            forge v: obsidian = ofs_array_get(_string_vals, i)
+            if (ofs_str_eq(v, value)) {
+                return ofs_array_get(_string_names, i)
+            }
+            i++
+        }
+
+        forge name = "@str." + ofs_stone_to_obsidian(_str_counter)
+        _str_counter++
+        ofs_array_push(_string_vals, value)
+        ofs_array_push(_string_names, name)
+        return name
+    }
+
+    vein collect_strings(id: stone) -> void {
+        if (id < 0) { return }
+        if (seen_node(id)) { return }
+        mark_node(id)
+        forge n: Node = node_get(id)
+        if (n.kind == NK_LIT_STRING) {
+            string_name_for(n.val)
+        }
+        collect_strings(n.c0)
+        collect_strings(n.c1)
+        collect_strings(n.c2)
+        collect_strings(n.c3)
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            collect_strings(node_get_extra(id, i))
+            i++
+        }
+    }
+
+    vein collect_all_strings() -> void {
+        forge i = 0
+        while (i < node_pool_len()) {
+            forge n: Node = node_get(i)
+            if (n.kind == NK_LIT_STRING) {
+                string_name_for(n.val)
+            }
+            i++
+        }
+    }
+
+    vein emit_header() -> void {
+        cg_emit("; Generated by ofscc - native LLVM IR backend")
+        cg_emit("source_filename = \"ofs_module\"")
+        cg_emit("")
+
+        forge mi = 0
+        while (mi < ofs_array_len(_mono_names)) {
+            forge mono: obsidian = ofs_array_get(_mono_names, mi)
+            cg_emit_raw("%" + mono + " = type { ")
+            forge first = true
+            forge fi = 0
+            while (fi < ofs_array_len(_field_names)) {
+                forge owner: obsidian = ofs_array_get(_field_owners, fi)
+                if (ofs_str_eq(owner, mono)) {
+                    if (!first) { cg_emit_raw(", ") }
+                    forge ft: obsidian = ofs_array_get(_field_types, fi)
+                    cg_emit_raw(llvm_type(ft))
+                    first = false
+                }
+                fi++
+            }
+            cg_emit_raw(" }")
+            cg_emit("")
+            mi++
+        }
+
+        if (ofs_array_len(_mono_names) > 0) { cg_emit("") }
+
+        forge i = 0
+        while (i < ofs_array_len(_string_vals)) {
+            forge value: obsidian = ofs_array_get(_string_vals, i)
+            forge name: obsidian = ofs_array_get(_string_names, i)
+            forge nbytes = ofs_str_len(value) + 1
+            cg_emit(name + " = private unnamed_addr constant [" + ofs_stone_to_obsidian(nbytes) + " x i8] c\"" + llvm_escape_string(value) + "\", align 1")
+            i++
+        }
+
+        forge gi = 0
+        while (gi < ofs_array_len(_global_names)) {
+            forge gname: obsidian = ofs_array_get(_global_names, gi)
+            forge gt: obsidian = ofs_array_get(_global_types, gi)
+            forge gid: stone = ofs_array_get(_global_inits, gi)
+            cg_emit("@" + gname + " = global " + llvm_type(gt) + " " + const_init_value(gid, gt))
+            gi++
+        }
+
+        cg_emit("")
+        cg_emit("declare void @echo_stone(i64)")
+        cg_emit("declare void @echo_crystal(double)")
+        cg_emit("declare void @echo_obsidian(ptr)")
+        cg_emit("declare void @echo_bool(i32)")
+        cg_emit("declare ptr @ofs_str_concat(ptr, ptr)")
+        cg_emit("declare i32 @ofs_str_eq(ptr, ptr)")
+        cg_emit("declare i32 @ofs_str_contains(ptr, ptr)")
+        cg_emit("declare i64 @ofs_str_len(ptr)")
+        cg_emit("declare i64 @ofs_str_char_at(ptr, i64)")
+        cg_emit("declare ptr @ofs_str_substr(ptr, i64, i64)")
+        cg_emit("declare ptr @ofs_stone_to_obsidian(i64)")
+        cg_emit("declare ptr @ofs_alloc(i64)")
+        cg_emit("declare ptr @ofs_array_new(i64, i64)")
+        cg_emit("declare void @ofs_array_push(ptr, ptr)")
+        cg_emit("declare ptr @ofs_array_get(ptr, i64)")
+        cg_emit("declare i64 @ofs_array_len(ptr)")
+        cg_emit("declare void @ofs_array_set(ptr, i64, ptr)")
+        cg_emit("declare ptr @ofs_array_pop(ptr)")
+        cg_emit("declare double @ofs_pow(double, double)")
+        cg_emit("declare double @ofs_sqrt(double)")
+        cg_emit("declare ptr @fopen(ptr, ptr)")
+        cg_emit("declare i64 @fclose(ptr)")
+        cg_emit("declare i64 @fread(ptr, i64, i64, ptr)")
+        cg_emit("declare i64 @fwrite(ptr, i64, i64, ptr)")
+        cg_emit("declare i64 @fputs(ptr, ptr)")
+        cg_emit("declare i64 @fseek(ptr, i64, i64)")
+        cg_emit("declare i64 @ftell(ptr)")
+        cg_emit("declare i64 @system(ptr)")
+        cg_emit("declare void @exit(i64)")
+        cg_emit("declare ptr @getenv(ptr)")
+        cg_emit("")
+    }
+
+    vein emit_global_init() -> void {
+        cg_emit("define void @__ofs_init_globals() {")
+        cg_emit("entry:")
+        forge gi = 0
+        while (gi < ofs_array_len(_global_names)) {
+            forge gname: obsidian = ofs_array_get(_global_names, gi)
+            forge gt: obsidian = ofs_array_get(_global_types, gi)
+            forge gid: stone = ofs_array_get(_global_inits, gi)
+            forge init: Node = node_get(gid)
+            if (ofs_str_eq(gt, "Array") && gid >= 0 && init.kind == NK_ARRAY_LIT) {
+                forge arr = next_tmp("garr")
+                cg_emit("  " + arr + " = call ptr @ofs_array_new(i64 " + ofs_stone_to_obsidian(node_extra_len(gid)) + ", i64 8)")
+                cg_emit("  store ptr " + arr + ", ptr @" + gname)
+            } else if (is_named_type(gt)) {
+                forge obj = next_tmp("gobj")
+                cg_emit("  " + obj + " = call ptr @ofs_alloc(i64 4096)")
+                cg_emit("  store ptr " + obj + ", ptr @" + gname)
+            }
+            gi++
+        }
+        cg_emit("  ret void")
+        cg_emit("}")
+        cg_emit("")
+    }
+
+    vein emit_expr(id: stone) -> void {
+        forge n: Node = node_get(id)
+
+        if (n.kind == NK_LIT_INT) {
+            _expr_val = n.val
+            _expr_type = "stone"
+            return
+        }
+
+        if (n.kind == NK_LIT_FLOAT) {
+            _expr_val = n.val
+            _expr_type = "crystal"
+            return
+        }
+
+        if (n.kind == NK_LIT_STRING) {
+            _expr_val = string_name_for(n.val)
+            _expr_type = "obsidian"
+            return
+        }
+
+        if (n.kind == NK_LIT_BOOL) {
+            if (ofs_str_eq(n.val, "true")) {
+                _expr_val = "1"
+            } else {
+                _expr_val = "0"
+            }
+            _expr_type = "bool"
+            return
+        }
+
+        if (n.kind == NK_LIT_NULL) {
+            _expr_val = "null"
+            _expr_type = "null"
+            return
+        }
+
+        if (n.kind == NK_ARRAY_LIT) {
+            forge arr = next_tmp("arr")
+            forge count = node_extra_len(id)
+            cg_emit("  " + arr + " = call ptr @ofs_array_new(i64 " + ofs_stone_to_obsidian(count) + ", i64 8)")
+            forge ai = 0
+            while (ai < count) {
+                forge elem_id = node_get_extra(id, ai)
+                emit_expr(elem_id)
+                forge slot = next_tmp("arr_elem")
+                cg_emit("  " + slot + " = alloca " + llvm_type(_expr_type) + ", align 8")
+                cg_emit("  store " + llvm_type(_expr_type) + " " + _expr_val + ", ptr " + slot)
+                cg_emit("  call void @ofs_array_push(ptr " + arr + ", ptr " + slot + ")")
+                ai++
+            }
+            _expr_val = arr
+            _expr_type = "Array"
+            return
+        }
+
+        if (n.kind == NK_IDENT) {
+            forge t = var_type(n.val)
+            forge p = var_ptr(n.val)
+            if (is_named_type(t)) {
+                if (var_index(n.val) < 0 && global_index(n.val) >= 0) {
+                    forge gp = next_tmp("gobj_val")
+                    cg_emit("  " + gp + " = load ptr, ptr " + p)
+                    _expr_val = gp
+                } else {
+                    _expr_val = p
+                }
+                _expr_type = t
+                return
+            }
+            forge tmp = next_tmp(n.val + "_val")
+            cg_emit("  " + tmp + " = load " + llvm_type(t) + ", ptr " + p)
+            _expr_val = tmp
+            _expr_type = t
+            return
+        }
+
+        if (n.kind == NK_INDEX) {
+            emit_array_get(id, "stone")
+            return
+        }
+
+        if (n.kind == NK_BIN_OP) {
+            if (ofs_str_eq(n.val, "=") || ofs_str_eq(n.val, "+=") || ofs_str_eq(n.val, "-=") || ofs_str_eq(n.val, "*=") || ofs_str_eq(n.val, "/=") || ofs_str_eq(n.val, "%=")) {
+                forge assign_target: Node = node_get(n.c0)
+                if (assign_target.kind == NK_IDENT) {
+                    forge at = var_type(assign_target.val)
+                    forge ap = var_ptr(assign_target.val)
+                    emit_expr(n.c1)
+                    forge av = coerce_for_store(_expr_val, _expr_type, at)
+                    if (!ofs_str_eq(n.val, "=")) {
+                        forge olda = next_tmp("assign_old")
+                        forge newa = next_tmp("assign_new")
+                        cg_emit("  " + olda + " = load " + llvm_type(at) + ", ptr " + ap)
+                        if (ofs_str_eq(at, "obsidian") && ofs_str_eq(n.val, "+=")) {
+                            cg_emit("  " + newa + " = call ptr @ofs_str_concat(ptr " + olda + ", ptr " + av + ")")
+                        } else {
+                            forge aop = "add"
+                            if (ofs_str_eq(n.val, "-=")) { aop = "sub" }
+                            if (ofs_str_eq(n.val, "*=")) { aop = "mul" }
+                            if (ofs_str_eq(n.val, "/=")) { aop = "sdiv" }
+                            if (ofs_str_eq(n.val, "%=")) { aop = "srem" }
+                            cg_emit("  " + newa + " = " + aop + " " + llvm_type(at) + " " + olda + ", " + av)
+                        }
+                        av = newa
+                    }
+                    cg_emit("  store " + llvm_type(at) + " " + av + ", ptr " + ap)
+                    _expr_val = av
+                    _expr_type = at
+                    return
+                }
+                if (assign_target.kind == NK_FIELD) {
+                    emit_expr(assign_target.c0)
+                    forge bp = _expr_val
+                    forge bt = _expr_type
+                    forge ft_assign = field_type(bt, assign_target.val)
+                    forge idx_assign = field_index(bt, assign_target.val)
+                    forge fp_assign = next_tmp("field_ptr")
+                    cg_emit("  " + fp_assign + " = getelementptr inbounds %" + bt + ", ptr " + bp + ", i32 0, i32 " + ofs_stone_to_obsidian(idx_assign))
+                    emit_expr(n.c1)
+                    forge fv_assign = coerce_for_store(_expr_val, _expr_type, ft_assign)
+                    cg_emit("  store " + llvm_type(ft_assign) + " " + fv_assign + ", ptr " + fp_assign)
+                    _expr_val = fv_assign
+                    _expr_type = ft_assign
+                    return
+                }
+            }
+
+            emit_expr(n.c0)
+            forge left = _expr_val
+            forge left_type = _expr_type
+            emit_expr(n.c1)
+            forge right = _expr_val
+            forge right_type = _expr_type
+
+            if (ofs_str_eq(n.val, "+") && (ofs_str_eq(left_type, "obsidian") || ofs_str_eq(right_type, "obsidian"))) {
+                if (!ofs_str_eq(left_type, "obsidian")) {
+                    left = coerce_for_store(left, left_type, "obsidian")
+                }
+                if (!ofs_str_eq(right_type, "obsidian")) {
+                    right = coerce_for_store(right, right_type, "obsidian")
+                }
+                forge tmp = next_tmp("concat")
+                cg_emit("  " + tmp + " = call ptr @ofs_str_concat(ptr " + left + ", ptr " + right + ")")
+                _expr_val = tmp
+                _expr_type = "obsidian"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "+") || ofs_str_eq(n.val, "-") || ofs_str_eq(n.val, "*") || ofs_str_eq(n.val, "/") || ofs_str_eq(n.val, "%")) {
+                if (ofs_str_eq(left_type, "crystal") || ofs_str_eq(right_type, "crystal")) {
+                    forge fop = "fadd"
+                    if (ofs_str_eq(n.val, "-")) { fop = "fsub" }
+                    if (ofs_str_eq(n.val, "*")) { fop = "fmul" }
+                    if (ofs_str_eq(n.val, "/")) { fop = "fdiv" }
+                    forge ftmp = next_tmp("fop")
+                    cg_emit("  " + ftmp + " = " + fop + " double " + left + ", " + right)
+                    _expr_val = ftmp
+                    _expr_type = "crystal"
+                    return
+                }
+                forge op = "add"
+                if (ofs_str_eq(n.val, "-")) { op = "sub" }
+                if (ofs_str_eq(n.val, "*")) { op = "mul" }
+                if (ofs_str_eq(n.val, "/")) { op = "sdiv" }
+                if (ofs_str_eq(n.val, "%")) { op = "srem" }
+                forge arith_tmp = next_tmp("op")
+                cg_emit("  " + arith_tmp + " = " + op + " i64 " + left + ", " + right)
+                _expr_val = arith_tmp
+                _expr_type = "stone"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "==") || ofs_str_eq(n.val, "!=") || ofs_str_eq(n.val, "<") || ofs_str_eq(n.val, "<=") || ofs_str_eq(n.val, ">") || ofs_str_eq(n.val, ">=")) {
+                forge pred = "eq"
+                if (ofs_str_eq(n.val, "!=")) { pred = "ne" }
+                if (ofs_str_eq(n.val, "<")) { pred = "slt" }
+                if (ofs_str_eq(n.val, "<=")) { pred = "sle" }
+                if (ofs_str_eq(n.val, ">")) { pred = "sgt" }
+                if (ofs_str_eq(n.val, ">=")) { pred = "sge" }
+                forge cmp_tmp = next_tmp("cmp")
+                if (ofs_str_eq(left_type, "null") || ofs_str_eq(right_type, "null")) {
+                    forge ptr_val = left
+                    if (ofs_str_eq(left_type, "null")) { ptr_val = right }
+                    if (ofs_str_eq(n.val, "!=")) {
+                        cg_emit("  " + cmp_tmp + " = icmp ne ptr " + ptr_val + ", null")
+                    } else {
+                        cg_emit("  " + cmp_tmp + " = icmp eq ptr " + ptr_val + ", null")
+                    }
+                    _expr_val = cmp_tmp
+                    _expr_type = "bool1"
+                } else if (ofs_str_eq(left_type, "obsidian") || ofs_str_eq(right_type, "obsidian")) {
+                    cg_emit("  " + cmp_tmp + " = call i32 @ofs_str_eq(ptr " + left + ", ptr " + right + ")")
+                    forge bool_tmp = next_tmp("str_cmp")
+                    if (ofs_str_eq(n.val, "!=")) {
+                        cg_emit("  " + bool_tmp + " = icmp eq i32 " + cmp_tmp + ", 0")
+                    } else {
+                        cg_emit("  " + bool_tmp + " = icmp ne i32 " + cmp_tmp + ", 0")
+                    }
+                    _expr_val = bool_tmp
+                    _expr_type = "bool1"
+                } else {
+                    if (ofs_str_eq(left_type, "crystal") || ofs_str_eq(right_type, "crystal")) {
+                        forge fpred = "oeq"
+                        if (ofs_str_eq(n.val, "!=")) { fpred = "one" }
+                        if (ofs_str_eq(n.val, "<")) { fpred = "olt" }
+                        if (ofs_str_eq(n.val, "<=")) { fpred = "ole" }
+                        if (ofs_str_eq(n.val, ">")) { fpred = "ogt" }
+                        if (ofs_str_eq(n.val, ">=")) { fpred = "oge" }
+                        cg_emit("  " + cmp_tmp + " = fcmp " + fpred + " double " + left + ", " + right)
+                    } else {
+                        cg_emit("  " + cmp_tmp + " = icmp " + pred + " i64 " + left + ", " + right)
+                    }
+                    _expr_val = cmp_tmp
+                    _expr_type = "bool1"
+                }
+                return
+            }
+
+            if (ofs_str_eq(n.val, "&&") || ofs_str_eq(n.val, "||")) {
+                forge left_bool = left
+                if (!ofs_str_eq(left_type, "bool1")) {
+                    _expr_val = left
+                    _expr_type = left_type
+                    left_bool = expr_as_i1()
+                }
+                forge right_bool = right
+                if (!ofs_str_eq(right_type, "bool1")) {
+                    _expr_val = right
+                    _expr_type = right_type
+                    right_bool = expr_as_i1()
+                }
+                forge logic_tmp = next_tmp("logic")
+                if (ofs_str_eq(n.val, "&&")) {
+                    cg_emit("  " + logic_tmp + " = and i1 " + left_bool + ", " + right_bool)
+                } else {
+                    cg_emit("  " + logic_tmp + " = or i1 " + left_bool + ", " + right_bool)
+                }
+                _expr_val = logic_tmp
+                _expr_type = "bool1"
+                return
+            }
+        }
+
+        if (n.kind == NK_UNARY_OP) {
+            emit_expr(n.c0)
+            if (ofs_str_eq(n.val, "!")) {
+                forge b = expr_as_i1()
+                forge tmp = next_tmp("not")
+                cg_emit("  " + tmp + " = xor i1 " + b + ", true")
+                _expr_val = tmp
+                _expr_type = "bool1"
+                return
+            }
+            if (ofs_str_eq(n.val, "-")) {
+                forge tmp = next_tmp("neg")
+                cg_emit("  " + tmp + " = sub i64 0, " + _expr_val)
+                _expr_val = tmp
+                _expr_type = "stone"
+                return
+            }
+        }
+
+        if (n.kind == NK_ASSIGN) {
+            forge target: Node = node_get(n.c0)
+            if (target.kind == NK_IDENT) {
+                forge t = var_type(target.val)
+                forge p = var_ptr(target.val)
+                emit_expr(n.c1)
+                forge v = coerce_for_store(_expr_val, _expr_type, t)
+                if (!ofs_str_eq(n.val, "=")) {
+                    forge oldv = next_tmp("assign_old")
+                    forge newv = next_tmp("assign_new")
+                    cg_emit("  " + oldv + " = load " + llvm_type(t) + ", ptr " + p)
+                    if (ofs_str_eq(t, "obsidian") && ofs_str_eq(n.val, "+=")) {
+                        cg_emit("  " + newv + " = call ptr @ofs_str_concat(ptr " + oldv + ", ptr " + v + ")")
+                    } else {
+                        forge op = "add"
+                        if (ofs_str_eq(n.val, "-=")) { op = "sub" }
+                        if (ofs_str_eq(n.val, "*=")) { op = "mul" }
+                        if (ofs_str_eq(n.val, "/=")) { op = "sdiv" }
+                        if (ofs_str_eq(n.val, "%=")) { op = "srem" }
+                        cg_emit("  " + newv + " = " + op + " " + llvm_type(t) + " " + oldv + ", " + v)
+                    }
+                    v = newv
+                }
+                cg_emit("  store " + llvm_type(t) + " " + v + ", ptr " + p)
+                _expr_val = v
+                _expr_type = t
+                return
+            }
+            if (target.kind == NK_FIELD) {
+                forge base: Node = node_get(target.c0)
+                emit_expr(target.c0)
+                forge base_ptr = _expr_val
+                forge base_type = _expr_type
+                forge ft = field_type(base_type, target.val)
+                forge idx = field_index(base_type, target.val)
+                forge gep = next_tmp("field_ptr")
+                cg_emit("  " + gep + " = getelementptr inbounds %" + base_type + ", ptr " + base_ptr + ", i32 0, i32 " + ofs_stone_to_obsidian(idx))
+                emit_expr(n.c1)
+                forge fv = coerce_for_store(_expr_val, _expr_type, ft)
+                cg_emit("  store " + llvm_type(ft) + " " + fv + ", ptr " + gep)
+                _expr_val = fv
+                _expr_type = ft
+                return
+            }
+        }
+
+        if (n.kind == NK_FIELD) {
+            emit_expr(n.c0)
+            forge base_ptr2 = _expr_val
+            forge base_type2 = _expr_type
+            forge ft2 = field_type(base_type2, n.val)
+            forge idx2 = field_index(base_type2, n.val)
+            forge gep2 = next_tmp("field_ptr")
+            cg_emit("  " + gep2 + " = getelementptr inbounds %" + base_type2 + ", ptr " + base_ptr2 + ", i32 0, i32 " + ofs_stone_to_obsidian(idx2))
+            if (is_named_type(ft2)) {
+                _expr_val = gep2
+                _expr_type = ft2
+            } else {
+                forge lv = next_tmp("field")
+                cg_emit("  " + lv + " = load " + llvm_type(ft2) + ", ptr " + gep2)
+                _expr_val = lv
+                _expr_type = ft2
+            }
+            return
+        }
+
+        if (n.kind == NK_POST_OP) {
+            forge target: Node = node_get(n.c0)
+            if (target.kind == NK_IDENT) {
+                forge p = var_ptr(target.val)
+                forge old = next_tmp("post_old")
+                forge nv = next_tmp("post_new")
+                cg_emit("  " + old + " = load i64, ptr " + p)
+                if (ofs_str_eq(n.val, "++")) {
+                    cg_emit("  " + nv + " = add i64 " + old + ", 1")
+                } else {
+                    cg_emit("  " + nv + " = sub i64 " + old + ", 1")
+                }
+                cg_emit("  store i64 " + nv + ", ptr " + p)
+                _expr_val = old
+                _expr_type = "stone"
+                return
+            }
+        }
+
+        if (n.kind == NK_CALL) {
+            if (ofs_str_eq(n.val, "ofs_stone_to_obsidian")) {
+                forge arg_id0 = node_get_extra(id, 0)
+                emit_expr(arg_id0)
+                forge tmp0 = next_tmp("stone_to_str")
+                cg_emit("  " + tmp0 + " = call ptr @ofs_stone_to_obsidian(i64 " + _expr_val + ")")
+                _expr_val = tmp0
+                _expr_type = "obsidian"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "ofs_str_len")) {
+                forge arg_id1 = node_get_extra(id, 0)
+                emit_expr(arg_id1)
+                forge tmp1 = next_tmp("strlen")
+                cg_emit("  " + tmp1 + " = call i64 @ofs_str_len(ptr " + _expr_val + ")")
+                _expr_val = tmp1
+                _expr_type = "stone"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "ofs_str_eq")) {
+                forge a_id = node_get_extra(id, 0)
+                emit_expr(a_id)
+                forge a = _expr_val
+                forge b_id = node_get_extra(id, 1)
+                emit_expr(b_id)
+                forge b = _expr_val
+                forge tmp2 = next_tmp("streq")
+                cg_emit("  " + tmp2 + " = call i32 @ofs_str_eq(ptr " + a + ", ptr " + b + ")")
+                _expr_val = tmp2
+                _expr_type = "bool"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "ofs_pow") || ofs_str_eq(n.val, "ofs_sqrt")) {
+                forge args2 = ""
+                forge ai = 0
+                while (ai < node_extra_len(id)) {
+                    if (ai > 0) { args2 = args2 + ", " }
+                    forge aid = node_get_extra(id, ai)
+                    emit_expr(aid)
+                    args2 = args2 + "double " + _expr_val
+                    ai++
+                }
+                forge dt = next_tmp("math")
+                cg_emit("  " + dt + " = call double @" + n.val + "(" + args2 + ")")
+                _expr_val = dt
+                _expr_type = "crystal"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "echo")) {
+                forge arg_id = node_get_extra(id, 0)
+                emit_expr(arg_id)
+                if (ofs_str_eq(_expr_type, "stone")) {
+                    cg_emit("  call void @echo_stone(i64 " + _expr_val + ")")
+                } else if (ofs_str_eq(_expr_type, "crystal")) {
+                    cg_emit("  call void @echo_crystal(double " + _expr_val + ")")
+                } else if (ofs_str_eq(_expr_type, "bool1")) {
+                    forge eb = next_tmp("echo_bool")
+                    cg_emit("  " + eb + " = zext i1 " + _expr_val + " to i32")
+                    cg_emit("  call void @echo_bool(i32 " + eb + ")")
+                } else if (ofs_str_eq(_expr_type, "bool")) {
+                    cg_emit("  call void @echo_bool(i32 " + _expr_val + ")")
+                } else {
+                    cg_emit("  call void @echo_obsidian(ptr " + _expr_val + ")")
+                }
+                _expr_val = "0"
+                _expr_type = "void"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "ofs_array_len")) {
+                forge arr_id = node_get_extra(id, 0)
+                emit_expr(arr_id)
+                forge alen = next_tmp("arr_len")
+                cg_emit("  " + alen + " = call i64 @ofs_array_len(ptr " + _expr_val + ")")
+                _expr_val = alen
+                _expr_type = "stone"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "ofs_array_get")) {
+                emit_array_get(id, "stone")
+                return
+            }
+
+            if (ofs_str_eq(n.val, "ofs_array_push")) {
+                forge arr_id2 = node_get_extra(id, 0)
+                emit_expr(arr_id2)
+                forge arr2 = _expr_val
+                forge val_id2 = node_get_extra(id, 1)
+                emit_expr(val_id2)
+                forge slot2 = next_tmp("arr_push")
+                cg_emit("  " + slot2 + " = alloca " + llvm_type(_expr_type) + ", align 8")
+                cg_emit("  store " + llvm_type(_expr_type) + " " + _expr_val + ", ptr " + slot2)
+                cg_emit("  call void @ofs_array_push(ptr " + arr2 + ", ptr " + slot2 + ")")
+                _expr_val = "0"
+                _expr_type = "void"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "ofs_array_set")) {
+                forge arr_id3 = node_get_extra(id, 0)
+                emit_expr(arr_id3)
+                forge arr3 = _expr_val
+                forge idx_id3 = node_get_extra(id, 1)
+                emit_expr(idx_id3)
+                forge idx3 = _expr_val
+                forge val_id3 = node_get_extra(id, 2)
+                emit_expr(val_id3)
+                forge slot3 = next_tmp("arr_set")
+                cg_emit("  " + slot3 + " = alloca " + llvm_type(_expr_type) + ", align 8")
+                cg_emit("  store " + llvm_type(_expr_type) + " " + _expr_val + ", ptr " + slot3)
+                cg_emit("  call void @ofs_array_set(ptr " + arr3 + ", i64 " + idx3 + ", ptr " + slot3 + ")")
+                _expr_val = "0"
+                _expr_type = "void"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "ofs_array_pop")) {
+                forge arr_id4 = node_get_extra(id, 0)
+                emit_expr(arr_id4)
+                forge pop_raw = next_tmp("arr_pop")
+                cg_emit("  " + pop_raw + " = call ptr @ofs_array_pop(ptr " + _expr_val + ")")
+                _expr_val = pop_raw
+                _expr_type = "ptr"
+                return
+            }
+
+            forge args = ""
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                if (i > 0) { args = args + ", " }
+                forge arg_id = node_get_extra(id, i)
+                emit_expr(arg_id)
+                args = args + llvm_type(_expr_type) + " " + _expr_val
+                i++
+            }
+            forge ret_type = n.type_str
+            if (ofs_str_eq(ret_type, "")) { ret_type = "stone" }
+            forge ret_llvm = llvm_type(ret_type)
+            if (ofs_str_eq(ret_llvm, "void")) {
+                cg_emit("  call void @" + n.val + "(" + args + ")")
+                _expr_val = "0"
+                _expr_type = "void"
+            } else {
+                forge call_tmp = next_tmp("call")
+                cg_emit("  " + call_tmp + " = call " + ret_llvm + " @" + n.val + "(" + args + ")")
+                _expr_val = call_tmp
+                _expr_type = ret_type
+            }
+            return
+        }
+
+        _expr_val = "0"
+        _expr_type = "stone"
+    }
+
+    vein emit_stmt(id: stone) -> void {
+        if (id < 0) { return }
+        if (_terminated) { return }
+        forge n: Node = node_get(id)
+
+        if (n.kind == NK_VAR_DECL || n.kind == NK_CONST_DECL) {
+            forge t = n.type_str
+            if (ofs_str_eq(t, "")) { t = "stone" }
+            forge p = next_tmp(n.val)
+            if (is_named_type(t)) {
+                forge mem = next_tmp("obj")
+                cg_emit("  " + mem + " = call ptr @ofs_alloc(i64 4096)")
+                p = mem
+            } else {
+                cg_emit("  " + p + " = alloca " + storage_type(t) + ", align 8")
+            }
+            declare_var(n.val, t, p)
+            if (n.c1 >= 0) {
+                if (is_call_name(n.c1, "ofs_array_get")) {
+                    emit_array_get(n.c1, t)
+                } else {
+                    emit_expr(n.c1)
+                }
+                if (is_named_type(t)) {
+                    forge named_val = next_tmp("named_val")
+                    cg_emit("  " + named_val + " = load %" + t + ", ptr " + _expr_val)
+                    cg_emit("  store %" + t + " " + named_val + ", ptr " + p)
+                } else {
+                    forge v = coerce_for_store(_expr_val, _expr_type, t)
+                    cg_emit("  store " + llvm_type(t) + " " + v + ", ptr " + p)
+                }
+            } else if (is_named_type(t)) {
+                return
+            } else if (ofs_str_eq(t, "obsidian") || ofs_str_eq(t, "Array")) {
+                cg_emit("  store ptr null, ptr " + p)
+            } else if (ofs_str_eq(t, "crystal")) {
+                cg_emit("  store double 0.0, ptr " + p)
+            } else {
+                cg_emit("  store " + llvm_type(t) + " 0, ptr " + p)
+            }
+            return
+        }
+
+        if (n.kind == NK_CALL || n.kind == NK_BIN_OP || n.kind == NK_UNARY_OP || n.kind == NK_ASSIGN || n.kind == NK_POST_OP || n.kind == NK_LIT_STRING || n.kind == NK_LIT_INT) {
+            emit_expr(id)
+            return
+        }
+
+        if (n.kind == NK_RETURN) {
+            if (ofs_str_eq(_current_ret_type, "void")) {
+                cg_emit("  ret void")
+            } else if (ofs_str_eq(_current_ret_type, "main")) {
+                cg_emit("  ret i32 0")
+            } else {
+                if (is_call_name(n.c0, "ofs_array_get")) {
+                    emit_array_get(n.c0, _current_ret_type)
+                } else {
+                    emit_expr(n.c0)
+                }
+                forge v = coerce_for_store(_expr_val, _expr_type, _current_ret_type)
+                cg_emit("  ret " + llvm_type(_current_ret_type) + " " + v)
+            }
+            _terminated = true
+            return
+        }
+
+        if (n.kind == NK_BREAK) {
+            cg_emit("  br label %" + current_break_label())
+            _terminated = true
+            return
+        }
+
+        if (n.kind == NK_CONTINUE) {
+            cg_emit("  br label %" + current_continue_label())
+            _terminated = true
+            return
+        }
+
+        if (n.kind == NK_BLOCK) {
+            push_scope()
+            forge bi = 0
+            while (bi < node_extra_len(id)) {
+                emit_stmt(node_get_extra(id, bi))
+                bi++
+            }
+            pop_scope()
+            return
+        }
+
+        if (n.kind == NK_IF) {
+            emit_expr(n.c0)
+            forge cond = expr_as_i1()
+            forge then_label = next_label("if_then")
+            forge else_label = next_label("if_else")
+            forge end_label = next_label("if_end")
+            cg_emit("  br i1 " + cond + ", label %" + then_label + ", label %" + else_label)
+            cg_emit("")
+            cg_emit(then_label + ":")
+            _terminated = false
+            emit_stmt(n.c1)
+            forge then_term = _terminated
+            if (!then_term) { cg_emit("  br label %" + end_label) }
+            cg_emit("")
+            cg_emit(else_label + ":")
+            _terminated = false
+            if (n.c2 >= 0) { emit_stmt(n.c2) }
+            forge else_term = _terminated
+            if (!else_term) { cg_emit("  br label %" + end_label) }
+            cg_emit("")
+            cg_emit(end_label + ":")
+            if (then_term && else_term) {
+                cg_emit("  unreachable")
+            }
+            _terminated = then_term && else_term
+            return
+        }
+
+        if (n.kind == NK_WHILE) {
+            forge cond_label = next_label("while_cond")
+            forge body_label = next_label("while_body")
+            forge end_label2 = next_label("while_end")
+            push_loop(end_label2, cond_label)
+            cg_emit("  br label %" + cond_label)
+            cg_emit("")
+            cg_emit(cond_label + ":")
+            emit_expr(n.c0)
+            forge cond2 = expr_as_i1()
+            cg_emit("  br i1 " + cond2 + ", label %" + body_label + ", label %" + end_label2)
+            cg_emit("")
+            cg_emit(body_label + ":")
+            _terminated = false
+            emit_stmt(n.c1)
+            if (!_terminated) { cg_emit("  br label %" + cond_label) }
+            cg_emit("")
+            cg_emit(end_label2 + ":")
+            _terminated = false
+            pop_loop()
+            return
+        }
+
+        if (n.kind == NK_CYCLE_C) {
+            push_scope()
+            if (n.c0 >= 0) { emit_stmt(n.c0) }
+            forge cond_label2 = next_label("cycle_cond")
+            forge body_label2 = next_label("cycle_body")
+            forge step_label2 = next_label("cycle_step")
+            forge end_label3 = next_label("cycle_end")
+            push_loop(end_label3, step_label2)
+            cg_emit("  br label %" + cond_label2)
+            cg_emit("")
+            cg_emit(cond_label2 + ":")
+            if (n.c1 >= 0) {
+                emit_expr(n.c1)
+                forge c = expr_as_i1()
+                cg_emit("  br i1 " + c + ", label %" + body_label2 + ", label %" + end_label3)
+            } else {
+                cg_emit("  br label %" + body_label2)
+            }
+            cg_emit("")
+            cg_emit(body_label2 + ":")
+            _terminated = false
+            if (n.c3 >= 0) { emit_stmt(n.c3) }
+            if (!_terminated) { cg_emit("  br label %" + step_label2) }
+            cg_emit("")
+            cg_emit(step_label2 + ":")
+            _terminated = false
+            if (n.c2 >= 0) { emit_expr(n.c2) }
+            if (!_terminated) { cg_emit("  br label %" + cond_label2) }
+            cg_emit("")
+            cg_emit(end_label3 + ":")
+            _terminated = false
+            pop_loop()
+            pop_scope()
+            return
+        }
+    }
+
+    vein emit_function(id: stone) -> void {
+        forge n: Node = node_get(id)
+        if (n.kind == NK_CORE_DECL) {
+            _var_names = []
+            _var_types = []
+            _var_ptrs = []
+            _var_depths = []
+            _scope_depth = 0
+            _current_ret_type = "main"
+            _terminated = false
+            cg_emit("define i32 @main() {")
+            cg_emit("entry:")
+            cg_emit("  call void @__ofs_init_globals()")
+            forge body_id = n.c2
+            forge i = 0
+            while (i < node_extra_len(body_id)) {
+                emit_stmt(node_get_extra(body_id, i))
+                i++
+            }
+            if (!_terminated) { cg_emit("  ret i32 0") }
+            cg_emit("}")
+            cg_emit("")
+            return
+        }
+
+        if (n.kind == NK_FN_DECL) {
+            _var_names = []
+            _var_types = []
+            _var_ptrs = []
+            _var_depths = []
+            _scope_depth = 0
+            _terminated = false
+            _current_ret_type = "void"
+            if (n.c1 >= 0) {
+                forge ret_node: Node = node_get(n.c1)
+                _current_ret_type = ret_node.val
+                if (ret_node.kind == NK_TYPE_ARRAY) { _current_ret_type = "Array" }
+            }
+
+            cg_emit_raw("define " + llvm_type(_current_ret_type) + " @" + n.val + "(")
+            forge params_id = n.c0
+            forge pi = 0
+            while (pi < node_extra_len(params_id)) {
+                if (pi > 0) { cg_emit_raw(", ") }
+                forge param_id = node_get_extra(params_id, pi)
+                forge param: Node = node_get(param_id)
+                forge pt = "stone"
+                if (param.c0 >= 0) {
+                    forge ptn: Node = node_get(param.c0)
+                    pt = ptn.val
+                    if (ptn.kind == NK_TYPE_ARRAY) { pt = "Array" }
+                }
+                cg_emit_raw(llvm_type(pt) + " %" + param.val)
+                pi++
+            }
+            cg_emit_raw(") {")
+            cg_emit("")
+            cg_emit("entry:")
+
+            pi = 0
+            while (pi < node_extra_len(params_id)) {
+                forge param_id2 = node_get_extra(params_id, pi)
+                forge param2: Node = node_get(param_id2)
+                forge pt2 = "stone"
+                if (param2.c0 >= 0) {
+                    forge ptn2: Node = node_get(param2.c0)
+                    pt2 = ptn2.val
+                    if (ptn2.kind == NK_TYPE_ARRAY) { pt2 = "Array" }
+                }
+                if (is_named_type(pt2)) {
+                    declare_var(param2.val, pt2, "%" + param2.val)
+                } else {
+                    forge pp = "%" + param2.val + ".addr"
+                    cg_emit("  " + pp + " = alloca " + llvm_type(pt2) + ", align 8")
+                    cg_emit("  store " + llvm_type(pt2) + " %" + param2.val + ", ptr " + pp)
+                    declare_var(param2.val, pt2, pp)
+                }
+                pi++
+            }
+
+            forge fbody = n.c2
+            forge si = 0
+            while (si < node_extra_len(fbody)) {
+                emit_stmt(node_get_extra(fbody, si))
+                si++
+            }
+            if (!_terminated) {
+                if (ofs_str_eq(_current_ret_type, "void")) {
+                    cg_emit("  ret void")
+                } else {
+                    cg_emit("  ret " + llvm_type(_current_ret_type) + " 0")
+                }
+            }
+            cg_emit("}")
+            cg_emit("")
+        }
+    }
+
+    vein generate(root_id: stone) -> void {
+        _tmp_counter = 0
+        _label_counter = 0
+        _str_counter = 0
+        _mono_names = []
+        _field_owners = []
+        _field_names = []
+        _field_types = []
+        _field_indices = []
+        _global_names = []
+        _global_types = []
+        _global_inits = []
+        _break_labels = []
+        _continue_labels = []
+        _visited_nodes = []
+        _string_vals = []
+        _string_names = []
+        collect_types(root_id)
+        collect_all_strings()
+        collect_globals(root_id)
+        emit_header()
+        emit_global_init()
+
+        forge i = 0
+        while (i < node_extra_len(root_id)) {
+            forge decl_id = node_get_extra(root_id, i)
+            forge n: Node = node_get(decl_id)
+            if (n.kind == NK_CORE_DECL || n.kind == NK_FN_DECL) {
+                emit_function(decl_id)
+            } else if (n.kind == NK_NAMESPACE || n.kind == NK_IMPL) {
+                forge j = 0
+                while (j < node_extra_len(decl_id)) {
+                    forge member_id = node_get_extra(decl_id, j)
+                    forge m: Node = node_get(member_id)
+                    if (m.kind == NK_CORE_DECL || m.kind == NK_FN_DECL) {
+                        emit_function(member_id)
+                    }
+                    j++
+                }
+            }
+            i++
+        }
+    }
+}

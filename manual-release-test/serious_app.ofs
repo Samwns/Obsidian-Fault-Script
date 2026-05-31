@@ -1,0 +1,29 @@
+attach {F:../ofs/stdlib/core.ofs}
+attach {F:../ofs/stdlib/math.ofs}
+attach {F:../ofs/stdlib/string.ofs}
+attach {F:../ofs/stdlib/webserver.ofs}
+
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+vein require_stone(name: obsidian, actual: stone, expected: stone) -> void {
+    if (actual != expected) {
+        echo("FAIL " + name + " got=" + ofs_stone_to_obsidian(actual) + " expected=" + ofs_stone_to_obsidian(expected))
+        exit(1)
+    }
+}
+
+core main() {
+    echo("OFS serious release app")
+
+    forge score = sum_range(1, 100)
+    require_stone("sum_range", score, 5050)
+    require_stone("fibonacci", fibonacci(10), 55)
+    require_stone("gcd", gcd(252, 105), 21)
+
+    forge body = "{\"release\":\"ok\",\"score\":5050}"
+    forge response = http_response(HTTP_200, MIME_JSON, body)
+    require_stone("response-size", ofs_str_len(response), 124)
+
+    echo("release checks passed")
+}

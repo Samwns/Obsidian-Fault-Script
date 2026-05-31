@@ -1,0 +1,11 @@
+pkgname = obsidian-fault-script
+pkgbase = obsidian-fault-script
+pkgver = 1.0.97-1
+pkgdesc = Obsidian Fault Script self-hosted compiler and standard library
+url = https://github.com/Samwns/Obsidian-Fault-Script
+builddate = 1780241741
+packager = Obsidian Fault Script CI
+size = 547813
+arch = x86_64
+license = BSL-1.0
+depend = clang
