@@ -7,6 +7,7 @@ on:
       - 'ofscc/**'
       - 'ofs/examples/**'
       - 'ofs/stdlib/**'
+      - 'packaging/**'
       - '.github/workflows/build.yml'
   pull_request:
     branches: [main]
@@ -86,21 +87,31 @@ jobs:
             --pattern "ofs-windows-x64-portable-*.zip" --dir seed-dl
           $zip = Get-ChildItem seed-dl -Filter "*.zip" | Select-Object -First 1
           Expand-Archive $zip.FullName -DestinationPath "$env:LOCALAPPDATA\ofs"
-          $ofsDir = Get-ChildItem "$env:LOCALAPPDATA\ofs" -Recurse -Filter "ofs.exe" |
-            Select-Object -First 1 | Split-Path -Parent
-          echo "$ofsDir" | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          $ofsCommand = Get-ChildItem "$env:LOCALAPPDATA\ofs" -Recurse -File |
+            Where-Object { $_.Name -in @("ofs.cmd", "ofs.exe") } |
+            Sort-Object @{ Expression = { if ($_.Name -eq "ofs.cmd") { 0 } else { 1 } } } |
+            Select-Object -First 1
+          if (-not $ofsCommand) {
+            Write-Error "OFS command not found in portable zip."
+            exit 1
+          }
+          $ofsDir = $ofsCommand.DirectoryName
+          $ofsDir | Out-File -Append -Encoding utf8 $env:GITHUB_PATH
+          "OFS_CMD=$($ofsCommand.FullName)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           Write-Output "Installed from: $ofsDir"
+          Write-Output "OFS command: $($ofsCommand.FullName)"
 
       - name: Verify install
         shell: powershell
-        run: ofs version
+        run: |
+          & "$env:OFS_CMD" version
 
       - name: Run Examples
         shell: powershell
         run: |
           Get-ChildItem "ofs\examples\*.ofs" | ForEach-Object {
             Write-Output "--- $($_.Name) ---"
-            & ofs run $_.FullName 2>&1 | Out-String | Write-Output
+            & "$env:OFS_CMD" check $_.FullName 2>&1 | Out-String | Write-Output
           }
         continue-on-error: true
 
