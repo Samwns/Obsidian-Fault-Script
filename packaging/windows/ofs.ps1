@@ -24,11 +24,18 @@ if (-not (Test-Path $Ofscc)) {
     $resolved = Get-Command 'ofscc.exe' -ErrorAction SilentlyContinue
     if ($resolved) { $Ofscc = $resolved.Path }
 }
-$LlvmIrFlags = if ($env:OFS_LLVM_IR_FLAGS) {
-    $env:OFS_LLVM_IR_FLAGS -split '\s+'
-} else {
-    @("-Xclang", "-opaque-pointers")
+function Get-LlvmIrFlags {
+    if ($env:OFS_LLVM_IR_FLAGS) {
+        return @($env:OFS_LLVM_IR_FLAGS -split '\s+')
+    }
+    $clangVersion = (& clang --version 2>$null | Out-String)
+    if ($clangVersion -match 'version 14\.') {
+        return @("-mllvm", "-opaque-pointers")
+    }
+    return @()
 }
+
+$LlvmIrFlags = Get-LlvmIrFlags
 
 function Show-Banner {
 @"

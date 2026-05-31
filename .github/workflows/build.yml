@@ -30,17 +30,19 @@ jobs:
           mkdir -p selfhost
           clang -O2 -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
           ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
-          clang -Wno-override-module -Xclang -opaque-pointers -O2 dist/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
+          LLVM_IR_FLAGS=()
+          clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -O2 dist/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
           sed 's/__OFS_VERSION__/ci/g' packaging/linux/ofs > selfhost/ofs
           chmod +x selfhost/ofs selfhost/ofscc
           selfhost/ofs version
-          OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=check selfhost/ofscc
+          OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check selfhost/ofscc
 
       - name: Run Examples
         run: |
           for ex in ofs/examples/*.ofs; do
             echo "--- $ex ---"
-            timeout 5 selfhost/ofs check "$ex" 2>&1
+            (cd "$(dirname "$ex")" && timeout 5 "$GITHUB_WORKSPACE/selfhost/ofs" check "$(basename "$ex")" 2>&1)
           done
 
       - name: Run stdlib smoke program
@@ -59,17 +61,19 @@ jobs:
           mkdir -p selfhost
           clang -O2 -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
           ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
-          clang -Wno-override-module -Xclang -opaque-pointers -O2 dist/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
+          LLVM_IR_FLAGS=()
+          clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -O2 dist/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
           sed 's/__OFS_VERSION__/ci/g' packaging/linux/ofs > selfhost/ofs
           chmod +x selfhost/ofs selfhost/ofscc
           selfhost/ofs version
-          OFSCC_INPUT=ofscc/ofscc.ofs OFSCC_MODE=check selfhost/ofscc
+          OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check selfhost/ofscc
 
       - name: Run Examples
         run: |
           for ex in ofs/examples/*.ofs; do
             echo "--- $ex ---"
-            selfhost/ofs check "$ex" 2>&1
+            (cd "$(dirname "$ex")" && "$GITHUB_WORKSPACE/selfhost/ofs" check "$(basename "$ex")" 2>&1)
           done
 
       - name: Run stdlib smoke program
@@ -100,14 +104,17 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & llvm-ar rcs "selfhost\libofs_runtime.a" "selfhost\ofs_runtime.obj"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & clang -Wno-override-module -Xclang -opaque-pointers -O2 "dist\ofscc.ll" "selfhost\libofs_runtime.a" -o "selfhost\ofscc.exe"
+          $llvmIrFlags = @()
+          $clangVersion = (& clang --version | Out-String)
+          if ($clangVersion -match 'version 14\.') { $llvmIrFlags = @("-mllvm", "-opaque-pointers") }
+          & clang -Wno-override-module @llvmIrFlags -O2 "dist\ofscc.ll" "selfhost\libofs_runtime.a" -o "selfhost\ofscc.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Copy-Item "packaging\windows\ofs.cmd" "selfhost\ofs.cmd"
           (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", "ci") | Set-Content "selfhost\ofs.ps1"
           "OFS_CMD=$((Resolve-Path 'selfhost\ofs.cmd').Path)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           & "selfhost\ofs.cmd" version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $env:OFSCC_INPUT = "ofscc/ofscc.ofs"
+          $env:OFSCC_INPUT = "ofs\tests\selfhost_stdlib_smoke.ofs"
           $env:OFSCC_MODE = "check"
           & "selfhost\ofscc.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -122,8 +129,13 @@ jobs:
         run: |
           Get-ChildItem "ofs\examples\*.ofs" | ForEach-Object {
             Write-Output "--- $($_.Name) ---"
-            & "$env:OFS_CMD" check $_.FullName
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            Push-Location $_.DirectoryName
+            try {
+              & "$env:OFS_CMD" check $_.Name
+              if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            } finally {
+              Pop-Location
+            }
           }
 
       - name: Run stdlib smoke program

@@ -6,7 +6,18 @@ OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OFSCC="${OFSCC:-$ROOT/ofscc}"
 RUNTIME="${OFS_RUNTIME:-$ROOT/libofs_runtime.a}"
-read -r -a OFS_LLVM_IR_FLAGS <<< "${OFS_LLVM_IR_FLAGS:--Xclang -opaque-pointers}"
+
+detect_llvm_ir_flags() {
+  if [ -n "${OFS_LLVM_IR_FLAGS:-}" ]; then
+    printf '%s\n' "$OFS_LLVM_IR_FLAGS"
+    return
+  fi
+  if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
+    printf '%s\n' "-mllvm -opaque-pointers"
+  fi
+}
+
+read -r -a OFS_LLVM_IR_FLAGS <<< "$(detect_llvm_ir_flags)"
 
 if [ ! -x "$OFSCC" ] && command -v ofscc >/dev/null 2>&1; then
   OFSCC="$(command -v ofscc)"
