@@ -132,7 +132,7 @@ jobs:
         run: |
           Push-Location "ofs\examples"
           try {
-            & "$env:OFS_CMD" check "bedrock_gateway.ofs"
+            & "$env:OFS_CMD" check "hello.ofs"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           } finally {
             Pop-Location

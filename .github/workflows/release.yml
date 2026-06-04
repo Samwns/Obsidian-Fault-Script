@@ -270,7 +270,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Push-Location "ofs\examples"
           try {
-            & "$Dist\ofs.cmd" check "bedrock_gateway.ofs"
+            & "$Dist\ofs.cmd" check "hello.ofs"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           } finally {
             Pop-Location
