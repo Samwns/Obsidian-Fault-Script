@@ -39,6 +39,8 @@ jobs:
           OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check selfhost/ofscc
 
       - name: Run Examples
+        env:
+          OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
         run: |
           for ex in ofs/examples/*.ofs; do
             echo "--- $ex ---"
@@ -70,6 +72,8 @@ jobs:
           OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check selfhost/ofscc
 
       - name: Run Examples
+        env:
+          OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
         run: |
           for ex in ofs/examples/*.ofs; do
             echo "--- $ex ---"
@@ -125,7 +129,13 @@ jobs:
       - name: Run Examples
         shell: powershell
         run: |
-          Write-Output "Windows ofscc argv/env bridge is not used in CI yet; examples are validated on Linux and macOS."
+          Push-Location "ofs\examples"
+          try {
+            & "$env:OFS_CMD" check "bedrock_gateway.ofs"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } finally {
+            Pop-Location
+          }
 
       - name: Run stdlib smoke program
         shell: powershell

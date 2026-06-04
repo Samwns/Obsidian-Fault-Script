@@ -7,6 +7,13 @@ $ErrorActionPreference = "Stop"
 $OfsVersion = "__OFS_VERSION__"
 $Repo = "Samwns/Obsidian-Fault-Script"
 
+if (-not $env:OFS_STDLIB) {
+    $bundledStdlib = Join-Path $PSScriptRoot 'stdlib'
+    if (Test-Path $bundledStdlib) {
+        $env:OFS_STDLIB = $bundledStdlib
+    }
+}
+
 $dllDirs = @(
     $PSScriptRoot,
     $env:OFS_DLL_DIR,

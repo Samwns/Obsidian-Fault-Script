@@ -71,6 +71,14 @@ vein package_file_name(name: obsidian) -> obsidian {
     return name
 }
 
+vein stdlib_path(file_name: obsidian) -> obsidian {
+    forge root = getenv("OFS_STDLIB")
+    if (!ofs_str_eq(root, "")) {
+        return root + "/" + file_name + ".ofs"
+    }
+    return "ofs/stdlib/" + file_name + ".ofs"
+}
+
 vein resolve_attach_path(base: obsidian, spec: obsidian) -> obsidian {
     if (ofs_str_len(spec) > 2 && ofs_str_eq(ofs_str_substr(spec, 0, 2), "F:")) {
         forge rel = ofs_str_substr(spec, 2, ofs_str_len(spec) - 2)
@@ -88,7 +96,7 @@ vein resolve_attach_path(base: obsidian, spec: obsidian) -> obsidian {
         ofs_str_eq(spec, "string") || ofs_str_eq(spec, "terminal-colors") ||
         ofs_str_eq(spec, "test-lib") || ofs_str_eq(spec, "webserver") ||
         ofs_str_eq(spec, "window")) {
-        return "ofs/stdlib/" + file_name + ".ofs"
+        return stdlib_path(file_name)
     }
 
     return "packages/src/" + spec + "/libs/" + file_name + ".ofs"

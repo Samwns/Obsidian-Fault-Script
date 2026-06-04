@@ -82,6 +82,7 @@ jobs:
           dpkg-deb -x "native-installers/ofs-debian-ubuntu-x64-installer-${TAG}.deb" deb-test
           deb-test/usr/bin/ofs version | grep -F "ofs ${VERSION} - Obsidian Fault Script"
           OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs check ofs/examples/webserver_demo.ofs
+          (cd ofs/examples && "$GITHUB_WORKSPACE/deb-test/usr/bin/ofs" check bedrock_gateway.ofs)
           OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o deb-test/stdlib-smoke
           deb-test/stdlib-smoke
 
@@ -137,6 +138,7 @@ jobs:
 
           "$ROOT/usr/local/bin/ofs" version | grep -F "ofs ${VERSION} - Obsidian Fault Script"
           OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" check ofs/examples/webserver_demo.ofs
+          (cd ofs/examples && "$GITHUB_WORKSPACE/$ROOT/usr/local/bin/ofs" check bedrock_gateway.ofs)
           OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" build ofs/tests/selfhost_stdlib_smoke.ofs -o "$ROOT/usr/local/bin/stdlib-smoke"
           "$ROOT/usr/local/bin/stdlib-smoke"
           rm -f "$ROOT/usr/local/bin/stdlib-smoke"
@@ -266,6 +268,13 @@ jobs:
           Write-Output $VersionOutput
           & "$Dist\ofscc.exe" --help
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Push-Location "ofs\examples"
+          try {
+            & "$Dist\ofs.cmd" check "bedrock_gateway.ofs"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          } finally {
+            Pop-Location
+          }
 
           $InstallerName = "ofs-windows-x64-installer-${TAG}.exe"
           $InstallerPath = "$RepoRoot\$InstallerName"

@@ -6,6 +6,19 @@ OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OFSCC="${OFSCC:-$ROOT/ofscc}"
 RUNTIME="${OFS_RUNTIME:-$ROOT/libofs_runtime.a}"
+STDLIB="${OFS_STDLIB:-}"
+
+if [ -z "$STDLIB" ]; then
+  for candidate in "$ROOT/stdlib" "$ROOT/../share/ofs/stdlib" /usr/local/share/ofs/stdlib /usr/share/ofs/stdlib; do
+    if [ -d "$candidate" ]; then
+      STDLIB="$candidate"
+      break
+    fi
+  done
+fi
+if [ -n "$STDLIB" ]; then
+  export OFS_STDLIB="$STDLIB"
+fi
 
 detect_llvm_ir_flags() {
   if [ -n "${OFS_LLVM_IR_FLAGS:-}" ]; then
