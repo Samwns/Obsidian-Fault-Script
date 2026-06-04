@@ -116,6 +116,7 @@ jobs:
           Copy-Item "packaging\windows\ofs.cmd" "selfhost\ofs.cmd"
           (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", "ci") | Set-Content "selfhost\ofs.ps1"
           "OFS_CMD=$((Resolve-Path 'selfhost\ofs.cmd').Path)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "OFS_STDLIB=$(((Resolve-Path 'ofs\stdlib').Path).Replace('\', '/'))" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           & "selfhost\ofs.cmd" version
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & "selfhost\ofscc.exe" --help

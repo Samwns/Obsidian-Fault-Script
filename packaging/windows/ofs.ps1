@@ -10,7 +10,7 @@ $Repo = "Samwns/Obsidian-Fault-Script"
 if (-not $env:OFS_STDLIB) {
     $bundledStdlib = Join-Path $PSScriptRoot 'stdlib'
     if (Test-Path $bundledStdlib) {
-        $env:OFS_STDLIB = $bundledStdlib
+        $env:OFS_STDLIB = $bundledStdlib.Replace('\', '/')
     }
 }
 
