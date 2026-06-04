@@ -15,13 +15,12 @@ Language / Idioma:
 
 - Syntax highlighting for `.ofs` files
 - Snippets for faster authoring
-- Hover documentation for OFS keywords and commands
-- Hover documentation for low-level OFS surfaces such as `bedrock`, `rift`, and `fault_*`
-- Hover/completion support for interop and layout metadata such as `bind`, `abi`, and `monolith ... layout packed`
-- Autocomplete for core language symbols
-- Autocomplete for attached libraries resolved from `attach` and `OFS_LIB_PATH`
-- Diagnostics using `ofs check`
-- Native assembly emission using `ofs asm`
+- Hover documentation for OFS keywords, CLI commands, stdlib helpers, `bedrock`, `rift`, and `fault_*`
+- Hover/completion support for interop metadata such as `bind` and `abi`
+- Autocomplete for keywords, types, stdlib/package names, builtins, low-level intrinsics, and symbols from attached libraries
+- Attach resolution for `attach {name}`, `attach {F:relative.ofs}`, `attach {F:/absolute/path.ofs}`, `ofs/stdlib`, `packages/src`, and `OFS_LIB_PATH`
+- Diagnostics using quiet `ofs check`
+- LLVM IR and native assembly emission using `ofs ir` and `ofs asm`
 - Native VS Code Run and Debug integration (F5 / Run and Debug panel)
 - Embedded Linux x64 self-hosted compiler (`bin/linux-x64/ofscc`) with an `ofs` wrapper
 - Command palette action: `OFS: Check`
@@ -49,7 +48,7 @@ This extension should be updated together with language changes. When OFS gains 
 - `ofs.preferEmbeddedCompiler`
 : Prefer compiler embedded in extension (`bin/<platform>/ofs`) before workspace/system compiler. Default: `true`.
 
-The Linux x64 package includes the self-hosted compiler and emits LLVM IR directly. C/C++ is not used as the language backend; LLVM tools are used to assemble/link native output.
+The Linux x64 package includes the self-hosted compiler and emits LLVM IR directly. The `ofs` wrapper uses LLVM/clang tools to assemble/link native output.
 
 ### Commands
 
@@ -60,16 +59,19 @@ The extension follows the current OFS direction: high-level and low-level OFS sh
 
 That includes:
 
-- small integer types such as `u8`, `u16`, `u32`, `u64`, `i8`, `i32`,
+- small integer types such as `u8`, `u16`, `u32`, `u64`, `i8`, `i16`, `i32`,
 - `impl` blocks for monolith methods,
 - `namespace` declarations,
-- function values and inline lambdas,
-- `bedrock { ... }` for typed low-level work,
+- `cycle (value in array)` and C-style `cycle (forge i = 0; i < n; i++)`,
+- explicit casts with `as`,
+- typed pointer work with `shard p: *stone = &x` and `*p = ...`,
+- `bedrock { ... }`, `fracture { ... }`, and `abyss { ... }` for low-level regions,
 - `rift vein` for OFS-native interop boundaries,
 - `bind` and `abi` metadata for explicit external boundaries,
-- `monolith ... layout native|packed|c` for ABI-facing layout intent,
 - `fault_*` intrinsics for machine-like operations with OFS naming,
-- native graphics modules such as `window` and the unstable/native `canvas` package.
+- stdlib/package modules such as `bedrock`, `bedrock-packet`, `fmt`, `terminal-colors`, `memory-modes`, `rift`, `canvas`, and `window`.
+
+The current compiler/runtime test matrix passes all examples in `ofs/examples/*.ofs`, package attach smokes, and CLI smoke checks for `check`, `ir`, `asm`, `build`, and `run`. `canvas`/`window` have headless runtime stubs on Linux x64 so examples compile and run in Codespaces/CI; real interactive presentation remains platform/runtime work.
 
 Run/Debug now uses native VS Code debug configurations (`ofs-native`) instead of custom extension buttons.
 
@@ -100,7 +102,7 @@ npm run package
 : Ensure `ofs.diagnosticsOnType` is enabled and the file is saved as `.ofs`.
 
 - Attach/autocomplete for libraries not appearing
-: Verify `attach` paths and `OFS_LIB_PATH` configuration.
+: Verify `attach` paths, `OFS_LIB_PATH`, or that the workspace contains `ofs/stdlib` / `packages/src`.
 
 ### Repository Links
 
@@ -115,13 +117,12 @@ npm run package
 
 - Highlight de sintaxe para arquivos `.ofs`
 - Snippets para acelerar a escrita
-- Hover docs para palavras-chave e comandos OFS
-- Hover docs para superficies low-level da OFS como `bedrock`, `rift` e `fault_*`
-- Suporte de hover/autocomplete para metadados de interop e layout como `bind`, `abi` e `monolith ... layout packed`
-- Autocomplete para simbolos da linguagem
-- Autocomplete para bibliotecas anexadas via `attach` e `OFS_LIB_PATH`
-- Diagnosticos usando `ofs check`
-- Emissao de assembly nativo usando `ofs asm`
+- Hover docs para palavras-chave, comandos CLI, helpers de stdlib, `bedrock`, `rift` e `fault_*`
+- Suporte de hover/autocomplete para metadados de interop como `bind` e `abi`
+- Autocomplete para keywords, tipos, nomes de stdlib/pacotes, builtins, intrinsics low-level e símbolos de bibliotecas anexadas
+- Resolução de attach para `attach {name}`, `attach {F:relativo.ofs}`, `attach {F:/absoluto/ofs}`, `ofs/stdlib`, `packages/src` e `OFS_LIB_PATH`
+- Diagnosticos usando `ofs check` silencioso em sucesso
+- Emissao de LLVM IR e assembly nativo usando `ofs ir` e `ofs asm`
 - Integracao nativa com Executar/Depurar do VS Code (F5 / painel Run and Debug)
 - Compilador self-hosted Linux x64 embutido (`bin/linux-x64/ofscc`) com wrapper `ofs`
 - Acao na paleta de comandos: `OFS: Check`
@@ -153,7 +154,7 @@ Voce tambem pode configurar `ofs.path` para `ofscc`/`ofscc_v2` durante os testes
 - `ofs.preferEmbeddedCompiler`
 : Prioriza o compilador embutido na extensao (`bin/<plataforma>/ofs`) antes do compilador do workspace/sistema. Padrao: `true`.
 
-O pacote Linux x64 inclui o compilador self-hosted e emite LLVM IR diretamente. C/C++ nao e usado como backend da linguagem; as ferramentas LLVM sao usadas para montar/linkar a saida nativa.
+O pacote Linux x64 inclui o compilador self-hosted e emite LLVM IR diretamente. O wrapper `ofs` usa ferramentas LLVM/clang para montar/linkar a saida nativa.
 
 ### Comandos
 
@@ -164,16 +165,19 @@ A extensao segue a direcao atual da OFS: alto nivel e baixo nivel devem coexisti
 
 Isso inclui:
 
-- tipos pequenos como `u8`, `u16`, `u32`, `u64`, `i8`, `i32`,
+- tipos pequenos como `u8`, `u16`, `u32`, `u64`, `i8`, `i16`, `i32`,
 - blocos `impl` para métodos de `monolith`,
 - declarações `namespace`,
-- funções como valor e lambdas inline,
-- `bedrock { ... }` para trabalho low-level tipado,
+- `cycle (valor in array)` e `cycle` estilo C,
+- casts explicitos com `as`,
+- ponteiros tipados com `shard p: *stone = &x` e `*p = ...`,
+- `bedrock { ... }`, `fracture { ... }` e `abyss { ... }` para regioes low-level,
 - `rift vein` para fronteiras de interoperabilidade nativas da OFS,
 - metadados `bind` e `abi` para fronteiras externas explicitas,
-- `monolith ... layout native|packed|c` para intencao de layout em tipos expostos por ABI,
 - intrinsics `fault_*` para operacoes machine-like com nomes da propria linguagem,
-- modulos graficos nativos como `window` e o pacote `canvas`, que deve ser tratado como nativo/instavel.
+- modulos stdlib/pacote como `bedrock`, `bedrock-packet`, `fmt`, `terminal-colors`, `memory-modes`, `rift`, `canvas` e `window`.
+
+A matriz atual do compilador/runtime passa todos os exemplos em `ofs/examples/*.ofs`, smokes de attach/pacotes e comandos `check`, `ir`, `asm`, `build` e `run`. `canvas`/`window` têm stubs headless no runtime Linux x64 para compilar/rodar em Codespaces/CI; apresentacao interativa real ainda e trabalho de runtime/plataforma.
 
 Executar/Depurar agora usa configuracoes nativas de debug do VS Code (`ofs-native`) no lugar de botoes customizados da extensao.
 
@@ -204,7 +208,7 @@ npm run package
 : Verifique se `ofs.diagnosticsOnType` esta ativo e se o arquivo e `.ofs`.
 
 - Sem autocomplete para bibliotecas
-: Confira caminhos de `attach` e a variavel `OFS_LIB_PATH`.
+: Confira caminhos de `attach`, `OFS_LIB_PATH`, ou se o workspace contem `ofs/stdlib` / `packages/src`.
 
 ### Links
 

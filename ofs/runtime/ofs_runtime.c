@@ -204,3 +204,23 @@ int64_t ofs_webserver_serve_forever(int64_t port, const char* content_type, cons
     (void)body;
     return 0;
 }
+
+void ofs_window_create(const char* title, int64_t w, int64_t h) {
+    (void)title;
+    (void)w;
+    (void)h;
+}
+
+void ofs_window_destroy(void) {}
+void ofs_window_present(void* buf) { (void)buf; }
+void ofs_window_present_pixels(void* buf) { (void)buf; }
+void ofs_window_present_stone_rgba(void* buf) { (void)buf; }
+int64_t ofs_window_poll(void) { return 0; }
+int64_t ofs_window_is_open(void) { return 0; }
+int64_t ofs_window_width(void) { return 0; }
+int64_t ofs_window_height(void) { return 0; }
+void ofs_window_set_title(const char* title) { (void)title; }
+int64_t ofs_mouse_x(void) { return 0; }
+int64_t ofs_mouse_y(void) { return 0; }
+int64_t ofs_mouse_btn(int64_t btn) { (void)btn; return 0; }
+int64_t ofs_key_down(int64_t scancode) { (void)scancode; return 0; }

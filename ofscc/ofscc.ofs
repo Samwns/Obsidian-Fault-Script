@@ -47,20 +47,51 @@ vein dirname(path: obsidian) -> obsidian {
 }
 
 vein is_attach_line(line: obsidian) -> bool {
-    if (ofs_str_len(line) < 11) { return false }
-    return ofs_str_eq(ofs_str_substr(line, 0, 10), "attach {F:")
+    if (ofs_str_len(line) < 9) { return false }
+    return ofs_str_eq(ofs_str_substr(line, 0, 8), "attach {")
 }
 
 vein attach_path_from_line(line: obsidian) -> obsidian {
-    forge i = 10
+    forge i = 8
     forge len = ofs_str_len(line)
     while (i < len) {
         if (ofs_str_char_at(line, i) == 125) {
-            return ofs_str_substr(line, 10, i - 10)
+            return ofs_str_substr(line, 8, i - 8)
         }
         i++
     }
     return ""
+}
+
+vein package_file_name(name: obsidian) -> obsidian {
+    if (ofs_str_eq(name, "terminal-colors")) { return "terminal_colors" }
+    if (ofs_str_eq(name, "memory-modes")) { return "memory_modes" }
+    if (ofs_str_eq(name, "bedrock-packet")) { return "bedrock_packet" }
+    if (ofs_str_eq(name, "test-lib")) { return "test_lib" }
+    return name
+}
+
+vein resolve_attach_path(base: obsidian, spec: obsidian) -> obsidian {
+    if (ofs_str_len(spec) > 2 && ofs_str_eq(ofs_str_substr(spec, 0, 2), "F:")) {
+        forge rel = ofs_str_substr(spec, 2, ofs_str_len(spec) - 2)
+        if (ofs_str_len(rel) > 0 && ofs_str_eq(ofs_str_substr(rel, 0, 1), "/")) {
+            return rel
+        }
+        return base + rel
+    }
+
+    forge file_name = package_file_name(spec)
+    if (ofs_str_eq(spec, "bedrock") || ofs_str_eq(spec, "bedrock-packet") ||
+        ofs_str_eq(spec, "canvas") || ofs_str_eq(spec, "core") ||
+        ofs_str_eq(spec, "io") || ofs_str_eq(spec, "math") ||
+        ofs_str_eq(spec, "memory-modes") || ofs_str_eq(spec, "rift") ||
+        ofs_str_eq(spec, "string") || ofs_str_eq(spec, "terminal-colors") ||
+        ofs_str_eq(spec, "test-lib") || ofs_str_eq(spec, "webserver") ||
+        ofs_str_eq(spec, "window")) {
+        return "ofs/stdlib/" + file_name + ".ofs"
+    }
+
+    return "packages/src/" + spec + "/libs/" + file_name + ".ofs"
 }
 
 vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
@@ -77,8 +108,8 @@ vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
         if (i == len || ofs_str_char_at(src, i) == 10) {
             forge line = ofs_str_substr(src, start, i - start)
             if (is_attach_line(line)) {
-                forge rel = attach_path_from_line(line)
-                forge child_path = base + rel
+                forge spec = attach_path_from_line(line)
+                forge child_path = resolve_attach_path(base, spec)
                 forge child_src = read_file(child_path)
                 out = out + expand_attaches(child_path, child_src)
             } else {

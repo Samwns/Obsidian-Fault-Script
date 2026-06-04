@@ -67,6 +67,7 @@ Um arquivo `.ofs` pode conter:
 | `u32` | sem sinal | 32 bits |
 | `u64` | sem sinal | 64 bits |
 | `i8` | com sinal | 8 bits |
+| `i16` | com sinal | 16 bits |
 | `i32` | com sinal | 32 bits |
 
 Exemplo:
@@ -718,9 +719,10 @@ The name inside `{}` maps to a known stdlib module or an installed package. The 
 ```ofs
 attach {F:helpers.ofs}
 attach {F:../shared/utils.ofs}
+attach {F:/absolute/path/to/helpers.ofs}
 ```
 
-Use the `F:` prefix to reference a specific `.ofs` file by path relative to the current file.
+Use the `F:` prefix to reference a specific `.ofs` file by path relative to the current file, or by absolute path.
 
 Attach declarations must appear at the top level, before or between other declarations. The preprocessor resolves them before the lexer and parser run, so each module is inlined exactly once (deduplication is automatic).
 
@@ -738,6 +740,9 @@ Attach declarations must appear at the top level, before or between other declar
 | `rift` | Foreign runtime wrappers (C ABI helpers) |
 | `terminal-colors` | ANSI terminal color output |
 | `memory-modes` | Docs and helpers for fracture/abyss/fractal modes |
+| `canvas` | Headless-safe pixel buffer helpers; integrates with `window` |
+| `window` | Window/input API surface with Linux x64 headless runtime stubs |
+| `fmt` | Padding, trimming, table rows, case conversion |
 | `test-lib` | Unit test utilities |
 
 ---
@@ -1060,9 +1065,6 @@ bedrock {
 Available intrinsics:
 
 - `fault_count(stone)` -> population count
-- `fault_fence()` -> emit a machine-level memory barrier
-- `fault_prefetch(*stone)` -> request a machine-level prefetch for a pointer target
-- `fault_trap()` -> emit a machine-level trap
 - `fault_lead(stone)` -> count leading zeros
 - `fault_trail(stone)` -> count trailing zeros
 - `fault_swap(stone)` -> byte swap
@@ -1072,9 +1074,15 @@ Available intrinsics:
 - `fault_cut(value, shift, width)` -> extract a bit field
 - `fault_patch(base, shift, width, insert)` -> replace a bit field
 - `fault_weave(mask, left, right)` -> blend bits from `left` and `right` using `mask`
-- `fault_unreachable()` -> marks the current path as unreachable, lowers to `llvm.trap` + `unreachable` IR
-- `fault_memcpy(dst, src, len)` -> bulk memory copy (lowers to `llvm.memcpy`); `dst` and `src` must be pointers
-- `fault_memset(dst, val, len)` -> bulk memory fill with `val` byte (lowers to `llvm.memset`); `dst` must be a pointer
+- `fault_fence()` -> accepted by the current self-hosted compiler as a low-level synchronization hook
+- `fault_prefetch(*stone)` -> accepted by the current self-hosted compiler as a low-level prefetch hook
+
+Roadmap intrinsics documented for the low-level surface but not yet fully lowered in the current self-hosted compiler:
+
+- `fault_trap()`
+- `fault_unreachable()`
+- `fault_memcpy(dst, src, len)`
+- `fault_memset(dst, val, len)`
 
 These functions are designed to cover operations assembly already has, while also giving OFS room for its own machine-oriented vocabulary.
 

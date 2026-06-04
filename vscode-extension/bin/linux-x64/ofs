@@ -233,30 +233,63 @@ work="${TMPDIR:-/tmp}/ofs-${name}-$$"
 ll="$work.ll"
 bc="$work.bc"
 
+run_ofscc_quiet() {
+  local log
+  log="$(mktemp "${TMPDIR:-/tmp}/ofscc-log-XXXXXX")"
+  if "$@" >"$log" 2>&1; then
+    rm -f "$log"
+    return 0
+  fi
+  cat "$log" >&2
+  rm -f "$log"
+  return 1
+}
+
+run_executable() {
+  case "$1" in
+    */*|/*) "$1" ;;
+    *) "./$1" ;;
+  esac
+}
+
 case "$mode" in
-  check|tokens|ast)
+  check)
+    OFSCC_INPUT="$input" OFSCC_MODE="$mode" run_ofscc_quiet "$OFSCC"
+    ;;
+  tokens|ast)
     OFSCC_INPUT="$input" OFSCC_MODE="$mode" "$OFSCC"
     ;;
   ir)
     [ -n "$output" ] || output="$name.ll"
-    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$output" "$OFSCC"
+    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$output" run_ofscc_quiet "$OFSCC"
     ;;
   asm)
     [ -n "$output" ] || output="$name.s"
     case "$output" in *.s) ;; *) output="$output.s" ;; esac
-    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
+    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" run_ofscc_quiet "$OFSCC"
     clang_ir -S "$ll" -o "$output"
     rm -f "$ll"
     echo "ASM: $output"
     ;;
   build|run)
-    [ -n "$output" ] || output="$name"
-    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
+    if [ -z "$output" ]; then
+      if [ "$mode" = "run" ]; then
+        output="$work"
+      else
+        output="$name"
+      fi
+    fi
+    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" run_ofscc_quiet "$OFSCC"
+    if [ "$mode" = "run" ] && ! grep -q '^define i32 @main(' "$ll"; then
+      rm -f "$ll"
+      exit 0
+    fi
     clang_ir -O2 "$ll" "$RUNTIME" -lm -o "$output"
     chmod +x "$output"
     rm -f "$ll"
     if [ "$mode" = "run" ]; then
-      "$output"
+      run_executable "$output"
+      rm -f "$output"
     else
       echo "Built: $output"
     fi

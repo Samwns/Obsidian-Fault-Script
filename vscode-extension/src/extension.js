@@ -12,8 +12,54 @@ const KEYWORDS = [
   'fracture', 'abyss', 'bedrock', 'obsid', 'attach', 'import', 'intent', 'tectonic', 'pure', 'impure', 'fractal',
   'layout', 'bind', 'abi', 'packed', 'native', 'system',
   'asm', 'echo', 'in', 'shard',
-  'u8', 'u16', 'u32', 'u64', 'i8', 'i32',
+  'u8', 'u16', 'u32', 'u64', 'i8', 'i16', 'i32',
   'true', 'false', 'null', 'as'
+];
+
+const TYPES = ['stone', 'crystal', 'obsidian', 'bool', 'void', 'Array', 'u8', 'u16', 'u32', 'u64', 'i8', 'i16', 'i32'];
+
+const MODULES = [
+  'core', 'math', 'string', 'io', 'webserver', 'bedrock', 'bedrock-packet',
+  'terminal-colors', 'memory-modes', 'rift', 'canvas', 'window', 'fmt', 'test-lib'
+];
+
+const BUILTINS = [
+  'echo', 'ofs_stone_to_obsidian', 'ofs_crystal_to_obsidian', 'ofs_read_line',
+  'ofs_str_len', 'ofs_str_char_at', 'ofs_str_substr', 'ofs_str_eq', 'ofs_str_contains',
+  'ofs_str_upper', 'ofs_str_lower', 'ofs_pow', 'ofs_sqrt'
+];
+
+const LOW_LEVEL_INTRINSICS = [
+  'fault_count', 'fault_lead', 'fault_trail', 'fault_swap',
+  'fault_spin_left', 'fault_spin_right', 'fault_step',
+  'fault_cut', 'fault_patch', 'fault_weave',
+  'fault_fence', 'fault_prefetch', 'fault_trap',
+  'fault_unreachable', 'fault_memcpy', 'fault_memset'
+];
+
+const STDLIB_COMPLETIONS = [
+  'abs', 'max', 'min', 'clamp', 'is_even', 'is_odd', 'factorial', 'fibonacci',
+  'square', 'cube', 'sum_range', 'is_prime',
+  'repeat_str', 'starts_with_char', 'is_empty',
+  'prompt', 'print_separator', 'print_header',
+  'status_text', 'http_response', 'not_found_response', 'error_response',
+  'fmt_pad_right', 'fmt_pad_left', 'fmt_center', 'fmt_zero_pad', 'fmt_sign',
+  'fmt_truncate', 'fmt_repeat', 'fmt_separator', 'fmt_upper', 'fmt_lower', 'fmt_trim',
+  'echo_red', 'echo_green', 'echo_yellow', 'echo_blue', 'echo_purple', 'echo_cyan',
+  'explain_memory_modes', 'memory_mode_mid_name',
+  'rift_text_size', 'rift_line', 'rift_banner', 'rift_report_line',
+  'bedrock_cell_new', 'bedrock_cell_read', 'bedrock_cell_write', 'bedrock_cell_add',
+  'bedrock_cell_sub', 'bedrock_cell_drop', 'bedrock_region_new', 'bedrock_region_at',
+  'bedrock_region_read', 'bedrock_region_write', 'bedrock_region_drop',
+  'bedrock_prefetch', 'bedrock_field_cut', 'bedrock_field_patch',
+  'bedrock_lane8_get', 'bedrock_lane8_set', 'bedrock_lane16_le_get', 'bedrock_lane16_be_get',
+  'bedrock_packet_store', 'bedrock_packet_header', 'bedrock_packet_payload',
+  'bedrock_packet_opcode', 'bedrock_packet_lane', 'bedrock_packet_opcode_be16',
+  'canvas.create', 'canvas.destroy', 'canvas.clear', 'canvas.set_pixel',
+  'canvas.get_pixel', 'canvas.fill_rect', 'canvas.present',
+  'window.create', 'window.destroy', 'window.poll', 'window.is_open',
+  'window.width', 'window.height', 'window.set_title',
+  'input.mouse_x', 'input.mouse_y', 'input.is_down', 'input.key'
 ];
 
 const HOVER_DOCS = {
@@ -99,7 +145,7 @@ const HOVER_DOCS = {
   },
   fractal: {
     description: 'Bloco intermediario de efeitos.',
-    context: 'Use para fluxo intermediario entre modos estritos e irrestritos.',
+    context: 'Sintaxe planejada/documentada; no compilador atual, `tectonic fractal` ainda e tratado como bloco comum.',
     example: 'fractal {\n    echo("effect-lifted block")\n}'
   },
   bedrock: {
@@ -134,8 +180,8 @@ const HOVER_DOCS = {
   },
   tectonic: {
     description: 'Diretiva prefixo para modos: fracture, abyss ou fractal.',
-    context: 'Use para selecionar explicitamente o modo de memoria do bloco.',
-    example: 'tectonic fracture {\n    shard p: *stone = &x\n}\ntectonic safe {\n    shard q: *stone = &x\n}\ntectonic unsafe {\n    // alias de abyss\n}\ntectonic bedrock {\n    // alias de fractal\n}'
+    context: 'Use para selecionar explicitamente o modo de memoria do bloco. Hoje o compiler aceita fracture, abyss e bedrock como blocos equivalentes para codegen.',
+    example: 'tectonic fracture {\n    shard p: *stone = &x\n}\ntectonic bedrock {\n    fault_fence()\n}'
   },
   obsid: {
     description: 'Fechamento de bloco no estilo ": ... obsid".',
@@ -249,17 +295,17 @@ const HOVER_DOCS = {
   },
   fault_fence: {
     description: 'Intrinsic low-level: emite barreira de memoria.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss para sincronizacao machine-like.',
+    context: 'Aceito pelo compilador atual como intrinsic no-op/headless; reservado para barreira real no backend.',
     example: 'bedrock {\n    fault_fence()\n}'
   },
   fault_prefetch: {
     description: 'Intrinsic low-level: solicita prefetch de um alvo em memoria.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss para preparar leituras de ponteiros em caminhos quentes.',
+    context: 'Aceito pelo compilador atual como intrinsic no-op/headless; reservado para prefetch real no backend.',
     example: 'bedrock {\n    fault_prefetch(ptr)\n}'
   },
   fault_trap: {
     description: 'Intrinsic low-level: emite trap de maquina.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss para interrupcao hard-fail.',
+    context: 'Documentado como roadmap; use com cuidado ate o lowering hard-fail ser exposto no compilador self-hosted.',
     example: 'bedrock {\n    fault_trap()\n}'
   },
   fault_weave: {
@@ -857,7 +903,19 @@ async function waitForShellIntegration(terminal, timeoutMs = 1500) {
   });
 }
 
-function getOrCreateExecutionTerminal() {
+function getOrCreateExecutionTerminal(cwd, ofsPath) {
+  if (cwd) {
+    const env = {};
+    const compilerDir = ofsPath && ofsPath !== 'ofs' ? path.dirname(ofsPath) : '';
+    if (compilerDir && fs.existsSync(compilerDir)) {
+      const pathKey = process.platform === 'win32' ? 'Path' : 'PATH';
+      env[pathKey] = `${compilerDir}${path.delimiter}${process.env[pathKey] || process.env.PATH || ''}`;
+    }
+    const terminal = vscode.window.createTerminal({ name: 'OFS', cwd, env });
+    terminal.show(true);
+    return terminal;
+  }
+
   const existingTerminal = vscode.window.activeTerminal;
   if (existingTerminal) {
     return existingTerminal;
@@ -1041,7 +1099,7 @@ function getTerminalRunCommand(ofsPath, filePath) {
     return `ofs run "${fileName}"`;
   }
 
-  return `"${ofsPath.replace(/"/g, '\\"')}" run "${fileName}"`;
+  return `ofs run "${fileName}"`;
 }
 
 function createRangeFromLineCol(document, line, col) {
@@ -1066,6 +1124,10 @@ const STDLIB_NAMES = {
   'bedrock-packet':  'bedrock_packet.ofs',
   'terminal-colors': 'terminal_colors.ofs',
   'memory-modes':    'memory_modes.ofs',
+  'rift':            'rift.ofs',
+  'canvas':          'canvas.ofs',
+  'window':          'window.ofs',
+  'fmt':             'fmt.ofs',
   'test-lib':        'test_lib.ofs',
 };
 
@@ -1077,6 +1139,8 @@ function getStdlibSearchDirs(docDir) {
   for (let i = 0; i < 6 && d; i++) {
     const candidate = path.join(d, 'stdlib');
     if (fs.existsSync(candidate)) dirs.push(candidate);
+    const repoCandidate = path.join(d, 'ofs', 'stdlib');
+    if (fs.existsSync(repoCandidate)) dirs.push(repoCandidate);
     const parent = path.dirname(d);
     if (parent === d) break;
     d = parent;
@@ -1096,6 +1160,15 @@ function resolveLibraryPath(libName, docDir) {
     if (fs.existsSync(pkg)) return pkg;
     const direct = path.join(base, filename);
     if (fs.existsSync(direct)) return direct;
+  }
+
+  let repo = docDir || '';
+  for (let i = 0; i < 8 && repo; i++) {
+    const pkg = path.join(repo, 'packages', 'src', libName, 'libs', filename);
+    if (fs.existsSync(pkg)) return pkg;
+    const parent = path.dirname(repo);
+    if (parent === repo) break;
+    repo = parent;
   }
   return null;
 }
@@ -1313,7 +1386,7 @@ function runCurrentFile() {
 
     const file = document.fileName;
     const cwd = path.dirname(file);
-    const terminal = getOrCreateExecutionTerminal();
+    const terminal = getOrCreateExecutionTerminal(cwd, ofsPath);
 
     const checkResult = await runExecFile(ofsPath, ['check', file], { cwd });
     if (checkResult.error) {
@@ -1351,7 +1424,7 @@ function runCurrentFile() {
     const commandLine = getTerminalRunCommand(ofsPath, file);
     const shellIntegration = await waitForShellIntegration(terminal);
     if (shellIntegration) {
-      const execution = shellIntegration.executeCommand(ofsPath, ['run', file]);
+      const execution = shellIntegration.executeCommand('ofs', ['run', path.basename(file)]);
       activeExecution.shellExecution = execution;
       execution.exitCode.then(async () => {
         await clearActiveExecution();
@@ -1663,10 +1736,38 @@ function checkCurrentFile(diagnosticCollection) {
 
 function registerCompletionProvider(context) {
   const provider = vscode.languages.registerCompletionItemProvider('ofs', {
-    provideCompletionItems(document) {
+    provideCompletionItems(document, position) {
       const keywordItems = KEYWORDS.map((keyword) => {
         const item = new vscode.CompletionItem(keyword, vscode.CompletionItemKind.Keyword);
         item.insertText = keyword;
+        return item;
+      });
+
+      const linePrefix = document.lineAt(position).text.slice(0, position.character);
+      const inAttach = /\b(?:attach|import)\s*\{\s*[\w.-]*$/.test(linePrefix);
+
+      const moduleItems = MODULES.map((moduleName) => {
+        const item = new vscode.CompletionItem(moduleName, vscode.CompletionItemKind.Module);
+        item.insertText = moduleName;
+        item.detail = 'OFS stdlib/package module';
+        return item;
+      });
+
+      if (inAttach) {
+        return moduleItems;
+      }
+
+      const typeItems = TYPES.map((typeName) => {
+        const item = new vscode.CompletionItem(typeName, vscode.CompletionItemKind.TypeParameter);
+        item.insertText = typeName;
+        item.detail = 'OFS type';
+        return item;
+      });
+
+      const builtinItems = [...BUILTINS, ...LOW_LEVEL_INTRINSICS, ...STDLIB_COMPLETIONS].map((name) => {
+        const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Function);
+        item.insertText = name;
+        item.detail = LOW_LEVEL_INTRINSICS.includes(name) ? 'OFS fault intrinsic' : 'OFS function/helper';
         return item;
       });
 
@@ -1677,9 +1778,9 @@ function registerCompletionProvider(context) {
         return item;
       });
 
-      return [...keywordItems, ...attachItems];
+      return [...keywordItems, ...typeItems, ...moduleItems, ...builtinItems, ...attachItems];
     }
-  });
+  }, '.', '{');
 
   context.subscriptions.push(provider);
 }

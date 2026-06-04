@@ -91,6 +91,7 @@ namespace parser {
         if (kind == TOK_LSHIFT || kind == TOK_RSHIFT) { return 90 }
         if (kind == TOK_PLUS || kind == TOK_MINUS) { return 100 }
         if (kind == TOK_STAR || kind == TOK_SLASH || kind == TOK_PERCENT) { return 110 }
+        if (kind == TOK_AS) { return 120 }
         return 0
     }
     
@@ -310,6 +311,13 @@ namespace parser {
             if (prec == 0 || prec < min_prec) { break }
             
             forge op = _advance()
+            if (op.kind == TOK_AS) {
+                forge cast_type = parse_type()
+                forge cast = node_new(NK_CAST, node_get(cast_type).val, op.line, op.col)
+                node_set_child(cast, 0, left)
+                left = cast
+                continue
+            }
             forge right = parse_expr(prec + 1)
             
             forge n = node_new(NK_BIN_OP, op.val, op.line, op.col)
@@ -323,6 +331,12 @@ namespace parser {
     
     vein parse_type() -> stone {
         forge t = _cur()
+        if (t.kind == TOK_STAR) {
+            _advance()
+            forge inner = parse_type()
+            forge inner_node: Node = node_get(inner)
+            return node_new(NK_TYPE, "*" + inner_node.val, t.line, t.col)
+        }
         if (t.kind != TOK_IDENT) {
             _error("expected type")
             return -1
@@ -421,6 +435,20 @@ namespace parser {
         if (t.kind == TOK_CYCLE) {
             _advance()
             if (!_expect(TOK_LPAREN)) { _error("expected '('") return -1 }
+            if (_cur_kind() == TOK_IDENT && _peek_kind() == TOK_IN) {
+                forge var_name = _cur_val()
+                forge var_line = _cur().line
+                forge var_col = _cur().col
+                _advance()
+                _advance()
+                forge iterable = parse_expr(0)
+                if (!_expect(TOK_RPAREN)) { _error("expected ')'") return -1 }
+                forge body_range = parse_block()
+                forge range = node_new(NK_CYCLE_RANGE, var_name, var_line, var_col)
+                node_set_child(range, 0, iterable)
+                node_set_child(range, 1, body_range)
+                return range
+            }
             forge init: stone = -1
             if (_cur_kind() != TOK_SEMI) {
                 init = parse_stmt()
@@ -523,9 +551,22 @@ namespace parser {
         if (t.kind == TOK_LBRACE) {
             return parse_block()
         }
+
+        if (t.kind == TOK_FRACTURE || t.kind == TOK_BEDROCK || t.kind == TOK_ABYSS) {
+            _advance()
+            return parse_block()
+        }
+
+        if (t.kind == TOK_TECTONIC) {
+            _advance()
+            if (_cur_kind() == TOK_FRACTURE || _cur_kind() == TOK_BEDROCK || _cur_kind() == TOK_ABYSS) {
+                _advance()
+            }
+            return parse_block()
+        }
         
         // Variable/const declaration or expression statement
-        if (t.kind == TOK_FORGE || t.kind == TOK_CONST) {
+        if (t.kind == TOK_FORGE || t.kind == TOK_CONST || t.kind == TOK_SHARD) {
             forge is_const = (t.kind == TOK_CONST)
             _advance()
             
@@ -674,9 +715,24 @@ namespace parser {
             ret_type = parse_type()
         }
 
+        while (_cur_kind() == TOK_IDENT && (ofs_str_eq(_cur_val(), "bind") || ofs_str_eq(_cur_val(), "abi"))) {
+            _advance()
+            if (_cur_kind() == TOK_IDENT || _cur_kind() == TOK_STRING) {
+                _advance()
+            }
+        }
+
         forge n = node_new(NK_EXTERN_VN, fn_name, fn_line, fn_col)
         node_set_child(n, 0, params)
         node_set_child(n, 1, ret_type)
+        return n
+    }
+
+    vein parse_rift_decl() -> stone {
+        forge n = parse_extern_decl()
+        forge r: Node = node_get(n)
+        r.kind = NK_RIFT_VN
+        node_set(n, r)
         return n
     }
 
@@ -860,6 +916,8 @@ namespace parser {
                 member = parse_monolith_decl()
             } else if (_cur_kind() == TOK_EXTERN) {
                 member = parse_extern_decl()
+            } else if (_cur_kind() == TOK_RIFT) {
+                member = parse_rift_decl()
             } else if (_cur_kind() == TOK_IMPL) {
                 member = parse_impl_decl()
             } else if (_cur_kind() == TOK_STRATA) {
@@ -975,6 +1033,11 @@ namespace parser {
                 }
             } else if (t.kind == TOK_EXTERN) {
                 forge decl = parse_extern_decl()
+                if (decl >= 0) {
+                    node_add_extra(program, decl)
+                }
+            } else if (t.kind == TOK_RIFT) {
+                forge decl = parse_rift_decl()
                 if (decl >= 0) {
                     node_add_extra(program, decl)
                 }

@@ -1,3 +1,4 @@
 core main() {
     echo("Hello, World!")
+    echo("Hello, dinosaur!")
 }

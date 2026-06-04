@@ -1,7 +1,7 @@
-# Guia de Início do OFS — Versão Nativa (C++-Free)
+# Guia de Início do OFS — Versão Nativa Self-Hosted
 
-> **NOVO**: O OFS agora é completamente self-hosted com compilador nativo!
-> Sem dependências de C++, CMake ou LLVM. Releases gerados automaticamente em ~5 segundos.
+> OFS usa um compilador self-hosted (`ofscc`) e um wrapper `ofs` para o fluxo diário.
+> O compilador emite LLVM IR diretamente; o wrapper usa ferramentas LLVM/clang para montar e linkar executáveis nativos.
 
 ---
 
@@ -11,9 +11,8 @@
 # 1. Fazer bootstrap do compilador OFS nativo  
 bash ofscc/scripts/bootstrap-minimal.sh
 
-# 2. Compilar um programa
-dist/ofscc build ofs/examples/hello.ofs -o hello
-./hello
+# 2. Rodar um programa
+dist/ofs run ofs/examples/hello.ofs
 # Output: Hello, World!
 ```
 
@@ -37,22 +36,25 @@ cd Obsidian-Fault-Script
 bash ofscc/scripts/bootstrap-minimal.sh
 ```
 
-Isso cria `dist/ofscc` em apenas ~2 segundos!
+Isso cria/atualiza o compilador self-hosted em `dist/ofscc`.
 
 ### 3. Usar o compilador nativo
 
 ```bash
+# Rodar direto, com saida limpa do seu programa
+dist/ofs run seu_programa.ofs
+
 # Compilar arquivo OFS para executável nativo
-dist/ofscc build seu_programa.ofs -o seu_programa
+dist/ofs build seu_programa.ofs -o seu_programa
 
 # Type-check sem gerar binário
-dist/ofscc check seu_programa.ofs
+dist/ofs check seu_programa.ofs
 
 # Inspecionar código
-dist/ofscc tokens seu_programa.ofs      # Tokens do lexer
-dist/ofscc ast seu_programa.ofs         # Abstract syntax tree
-dist/ofscc ir seu_programa.ofs          # LLVM IR
-dist/ofscc asm seu_programa.ofs         # Assembly nativo
+dist/ofs tokens seu_programa.ofs      # Tokens do lexer
+dist/ofs ast seu_programa.ofs         # Abstract syntax tree
+dist/ofs ir seu_programa.ofs          # LLVM IR
+dist/ofs asm seu_programa.ofs         # Assembly nativo
 ```
 
 ### 4. (Opcional) Usar com Make
@@ -81,11 +83,10 @@ core main() {
 }
 ```
 
-Compile:
+Rode:
 
 ```bash
-dist/ofscc build hello.ofs -o hello
-./hello
+dist/ofs run hello.ofs
 ```
 
 Output:
@@ -109,58 +110,60 @@ core main() {
 }
 ```
 
-Compile:
+Rode:
 
 ```bash
-dist/ofscc build math.ofs -o math
-./math
+dist/ofs run math.ofs
 ```
 
 ### Exemplos prontos
 
 ```bash
 # FizzBuzz
-dist/ofscc build ofs/examples/fizzbuzz.ofs -o fizzbuzz && ./fizzbuzz
+dist/ofs run ofs/examples/fizzbuzz.ofs
 
 # Recursão
-dist/ofscc build ofs/examples/recursion.ofs -o rec && ./rec
+dist/ofs run ofs/examples/recursion.ofs
 
 # Strings
-dist/ofscc build ofs/examples/string_ops.ofs -o str && ./str
+dist/ofs run ofs/examples/string_ops.ofs
 
 # Arrays
-dist/ofscc build ofs/examples/collections.ofs -o arr && ./arr
+dist/ofs run ofs/examples/collections.ofs
 ```
 
 ## 3. Comandos Principais
 
-O novo compilador nativo `dist/ofscc` oferece:
+O wrapper `dist/ofs` oferece:
 
 ```bash
+# Rodar direto
+dist/ofs run programa.ofs
+
 # Compilar para executável
-dist/ofscc build programa.ofs -o programa
+dist/ofs build programa.ofs -o programa
 
 # Validar sem gerar saída
-dist/ofscc check programa.ofs
+dist/ofs check programa.ofs
 
 # Debug: inspecionar código
-dist/ofscc tokens programa.ofs  # Análise léxica
-dist/ofscc ast programa.ofs     # Sintaxe
-dist/ofscc ir programa.ofs      # LLVM IR
-dist/ofscc asm programa.ofs     # Assembly nativo
+dist/ofs tokens programa.ofs  # Análise léxica
+dist/ofs ast programa.ofs     # Sintaxe
+dist/ofs ir programa.ofs      # LLVM IR
+dist/ofs asm programa.ofs     # Assembly nativo
 ```
 
 ### Exemplos de uso
 
 ```bash
 # Programa simples
-dist/ofscc build hello.ofs -o hello && ./hello
+dist/ofs run hello.ofs
 
 # Com otimização
-dist/ofscc build programa.ofs -o programa -O3 && ./programa
+dist/ofs build programa.ofs -o programa && ./programa
 
 # Type-check de biblioteca (sem executar)
-dist/ofscc check meu_codigo.ofs
+dist/ofs check meu_codigo.ofs
 ```
 
 ---
@@ -189,7 +192,7 @@ core main() {
 Tipos disponíveis no uso comum:
 
 - `stone`, `crystal`, `obsidian`, `bool`, `void`
-- `u8`, `u16`, `u32`, `u64`, `i8`, `i32`
+- `u8`, `u16`, `u32`, `u64`, `i8`, `i16`, `i32`
 - `Array<T>`
 - `monolith` e tipos definidos pelo usuário
 - tipos de função: `vein(stone) -> stone`

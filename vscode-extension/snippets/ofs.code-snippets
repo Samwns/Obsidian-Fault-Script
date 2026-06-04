@@ -55,6 +55,14 @@
       "}"
     ]
   },
+  "Cycle In Array": {
+    "prefix": "cycle-in",
+    "body": [
+      "cycle (${1:item} in ${2:items}) {",
+      "    $0",
+      "}"
+    ]
+  },
   "Else If": {
     "prefix": "elseif",
     "body": [
@@ -67,6 +75,12 @@
     "prefix": "attach",
     "body": [
       "attach {$1}"
+    ]
+  },
+  "Attach Stdlib": {
+    "prefix": "attach-stdlib",
+    "body": [
+      "attach {${1|core,math,string,io,webserver,bedrock,bedrock-packet,terminal-colors,memory-modes,rift,canvas,window,fmt,test-lib|}}"
     ]
   },
   "Attach File": {
@@ -128,6 +142,21 @@
       "rift vein ${1:symbol}(${2:arg: obsidian}) -> ${3:stone}"
     ]
   },
+  "Small Int Pixel": {
+    "prefix": "pixel-u32",
+    "body": [
+      "forge ${1:r}: u8 = ${2:255}",
+      "forge ${3:g}: u8 = ${4:128}",
+      "forge ${5:b}: u8 = ${6:0}",
+      "forge ${7:pixel}: u32 = (${1:r} as u32 << 16) | (${3:g} as u32 << 8) | (${5:b} as u32)"
+    ]
+  },
+  "Cast": {
+    "prefix": "cast",
+    "body": [
+      "${1:value} as ${2|stone,crystal,obsidian,bool,u8,u16,u32,u64,i8,i16,i32|}"
+    ]
+  },
   "Bedrock Region": {
     "prefix": "bedrock-region",
     "body": [
@@ -160,6 +189,18 @@
       "}"
     ]
   },
+  "Fault Packet Header": {
+    "prefix": "fault-packet",
+    "body": [
+      "bedrock {",
+      "    forge ${1:opcode}: stone = fault_cut(${2:header}, ${3:8}, ${4:8})",
+      "    forge ${5:lane}: stone = fault_cut(${2:header}, ${6:24}, ${7:8})",
+      "    forge ${8:patched}: stone = fault_patch(${2:header}, ${9:40}, ${10:8}, ${11:0x2A})",
+      "    forge ${12:mixed}: stone = fault_weave(${13:0x00FF00FF00FF00FF}, fault_swap(${2:header}), fault_spin_left(${2:header}, ${14:5}))",
+      "    $0",
+      "}"
+    ]
+  },
   "Fault Barrier": {
     "prefix": "fault-fence",
     "body": [
@@ -180,6 +221,15 @@
       "fracture {",
       "    shard ${1:p}: *${2:stone} = &${3:x}",
       "    $0",
+      "}"
+    ]
+  },
+  "Pointer Update": {
+    "prefix": "ptr-update",
+    "body": [
+      "fracture {",
+      "    shard ${1:p}: *${2:stone} = &${3:value};",
+      "    *${1:p} = *${1:p} + ${4:1}",
       "}"
     ]
   },
@@ -225,6 +275,17 @@
       "",
       "    window.destroy()",
       "    canvas.destroy(cv)",
+      "}"
+    ]
+  }
+  ,
+  "Library Smoke": {
+    "prefix": "lib-smoke",
+    "body": [
+      "attach {${1:bedrock}}",
+      "",
+      "core main() {",
+      "    $0",
       "}"
     ]
   }
