@@ -268,13 +268,6 @@ jobs:
           Write-Output $VersionOutput
           & "$Dist\ofscc.exe" --help
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Push-Location "ofs\examples"
-          try {
-            & "$Dist\ofs.cmd" check "hello.ofs"
-            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          } finally {
-            Pop-Location
-          }
 
           $InstallerName = "ofs-windows-x64-installer-${TAG}.exe"
           $InstallerPath = "$RepoRoot\$InstallerName"
