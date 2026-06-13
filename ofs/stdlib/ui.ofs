@@ -1,0 +1,143 @@
+attach {F:canvas.ofs}
+
+monolith UiRect {
+    x: stone
+    y: stone
+    w: stone
+    h: stone
+}
+
+monolith UiStyle {
+    bg: stone
+    surface: stone
+    surface_hover: stone
+    border: stone
+    text: stone
+    accent: stone
+    danger: stone
+    radius: stone
+    gap: stone
+}
+
+namespace ui {
+    vein rgb(r: stone, g: stone, b: stone) -> stone {
+        return r * 65536 + g * 256 + b
+    }
+
+    vein rect(x: stone, y: stone, w: stone, h: stone) -> UiRect {
+        forge r: UiRect
+        r.x = x
+        r.y = y
+        r.w = w
+        r.h = h
+        return r
+    }
+
+    vein dark() -> UiStyle {
+        forge s: UiStyle
+        s.bg = rgb(18, 20, 24)
+        s.surface = rgb(36, 40, 48)
+        s.surface_hover = rgb(50, 56, 66)
+        s.border = rgb(91, 99, 112)
+        s.text = rgb(238, 242, 246)
+        s.accent = rgb(0, 185, 150)
+        s.danger = rgb(230, 76, 86)
+        s.radius = 4
+        s.gap = 8
+        return s
+    }
+
+    vein light() -> UiStyle {
+        forge s: UiStyle
+        s.bg = rgb(246, 247, 249)
+        s.surface = rgb(255, 255, 255)
+        s.surface_hover = rgb(232, 237, 242)
+        s.border = rgb(130, 140, 153)
+        s.text = rgb(18, 22, 28)
+        s.accent = rgb(0, 128, 112)
+        s.danger = rgb(190, 48, 60)
+        s.radius = 4
+        s.gap = 8
+        return s
+    }
+
+    vein contains(r: UiRect, x: stone, y: stone) -> bool {
+        return x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h
+    }
+
+    vein draw_border(cv: Canvas, r: UiRect, color: stone) -> void {
+        canvas.fill_rect(cv, r.x, r.y, r.w, 1, color)
+        canvas.fill_rect(cv, r.x, r.y + r.h - 1, r.w, 1, color)
+        canvas.fill_rect(cv, r.x, r.y, 1, r.h, color)
+        canvas.fill_rect(cv, r.x + r.w - 1, r.y, 1, r.h, color)
+    }
+
+    vein draw_panel(cv: Canvas, r: UiRect, s: UiStyle) -> void {
+        canvas.fill_rect(cv, r.x, r.y, r.w, r.h, s.surface)
+        draw_border(cv, r, s.border)
+    }
+
+    vein draw_button(cv: Canvas, r: UiRect, s: UiStyle, hovered: bool, active: bool) -> void {
+        forge fill: stone = s.surface
+        if (hovered) {
+            fill = s.surface_hover
+        }
+        if (active) {
+            fill = s.accent
+        }
+        canvas.fill_rect(cv, r.x, r.y, r.w, r.h, fill)
+        draw_border(cv, r, s.border)
+    }
+
+    vein button_pressed(r: UiRect) -> bool {
+        return contains(r, input.mouse_x(), input.mouse_y()) && input.is_down(0)
+    }
+
+    vein draw_checkbox(cv: Canvas, r: UiRect, s: UiStyle, checked: bool) -> void {
+        canvas.fill_rect(cv, r.x, r.y, r.w, r.h, s.surface)
+        draw_border(cv, r, s.border)
+        if (checked) {
+            draw_check_icon(cv, r.x + 3, r.y + 3, s.accent)
+        }
+    }
+
+    vein draw_slider(cv: Canvas, r: UiRect, s: UiStyle, value: stone, min_value: stone, max_value: stone) -> void {
+        forge span: stone = max_value - min_value
+        if (span <= 0) {
+            span = 1
+        }
+        forge pos: stone = (value - min_value) * (r.w - 6) / span
+        if (pos < 0) { pos = 0 }
+        if (pos > r.w - 6) { pos = r.w - 6 }
+        canvas.fill_rect(cv, r.x, r.y + r.h / 2 - 1, r.w, 2, s.border)
+        canvas.fill_rect(cv, r.x + pos, r.y, 6, r.h, s.accent)
+    }
+
+    vein draw_plus_icon(cv: Canvas, x: stone, y: stone, color: stone) -> void {
+        canvas.fill_rect(cv, x + 3, y, 2, 8, color)
+        canvas.fill_rect(cv, x, y + 3, 8, 2, color)
+    }
+
+    vein draw_close_icon(cv: Canvas, x: stone, y: stone, color: stone) -> void {
+        cycle (forge i: stone = 0; i < 8; i++) {
+            canvas.set_pixel(cv, x + i, y + i, color)
+            canvas.set_pixel(cv, x + 7 - i, y + i, color)
+        }
+    }
+
+    vein draw_check_icon(cv: Canvas, x: stone, y: stone, color: stone) -> void {
+        canvas.set_pixel(cv, x, y + 3, color)
+        canvas.set_pixel(cv, x + 1, y + 4, color)
+        canvas.set_pixel(cv, x + 2, y + 5, color)
+        canvas.set_pixel(cv, x + 3, y + 4, color)
+        canvas.set_pixel(cv, x + 4, y + 3, color)
+        canvas.set_pixel(cv, x + 5, y + 2, color)
+        canvas.set_pixel(cv, x + 6, y + 1, color)
+    }
+
+    vein draw_menu_icon(cv: Canvas, x: stone, y: stone, color: stone) -> void {
+        canvas.fill_rect(cv, x, y, 10, 1, color)
+        canvas.fill_rect(cv, x, y + 4, 10, 1, color)
+        canvas.fill_rect(cv, x, y + 8, 10, 1, color)
+    }
+}

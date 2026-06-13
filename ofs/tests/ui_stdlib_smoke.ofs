@@ -1,0 +1,40 @@
+attach {F:../stdlib/ui.ofs}
+
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+vein assert_stone(label: obsidian, actual: stone, expected: stone) -> void {
+    if (actual != expected) {
+        echo("FAIL " + label + " got=" + ofs_stone_to_obsidian(actual) + " expected=" + ofs_stone_to_obsidian(expected))
+        exit(1)
+    }
+    echo("OK " + label)
+}
+
+vein assert_bool(label: obsidian, actual: bool, expected: bool) -> void {
+    if (actual != expected) {
+        echo("FAIL " + label)
+        exit(1)
+    }
+    echo("OK " + label)
+}
+
+core main() {
+    forge style = ui.dark()
+    forge r = ui.rect(4, 5, 20, 10)
+
+    assert_stone("rgb", ui.rgb(1, 2, 3), 66051)
+    assert_stone("rect-x", r.x, 4)
+    assert_stone("style-radius", style.radius, 4)
+    assert_bool("contains-inside", ui.contains(r, 10, 8), true)
+    assert_bool("contains-left-edge", ui.contains(r, 4, 5), true)
+    assert_bool("contains-right-outside", ui.contains(r, 24, 8), false)
+
+    forge cv = canvas.create(16, 16)
+    ui.draw_plus_icon(cv, 2, 2, style.accent)
+    assert_stone("plus-pixel", canvas.get_pixel(cv, 5, 2), style.accent)
+    ui.draw_check_icon(cv, 2, 8, style.accent)
+    assert_stone("check-pixel", canvas.get_pixel(cv, 8, 9), style.accent)
+    canvas.destroy(cv)
+
+    echo("ui stdlib smoke complete")
+}

@@ -1,0 +1,35 @@
+attach {F:../stdlib/ui.ofs}
+
+core main() {
+    forge cv = canvas.create(96, 64)
+    forge style = ui.dark()
+    forge panel = ui.rect(6, 6, 84, 52)
+    forge add_button = ui.rect(12, 14, 22, 16)
+    forge close_button = ui.rect(38, 14, 22, 16)
+    forge check_box = ui.rect(14, 38, 12, 12)
+    forge slider = ui.rect(34, 39, 44, 10)
+
+    window.create("OFS UI Demo", 96, 64)
+
+    while (window.poll()) {
+        canvas.clear(cv, style.bg)
+        ui.draw_panel(cv, panel, style)
+
+        forge add_hover = ui.contains(add_button, input.mouse_x(), input.mouse_y())
+        forge close_hover = ui.contains(close_button, input.mouse_x(), input.mouse_y())
+
+        ui.draw_button(cv, add_button, style, add_hover, false)
+        ui.draw_plus_icon(cv, add_button.x + 7, add_button.y + 4, style.text)
+
+        ui.draw_button(cv, close_button, style, close_hover, false)
+        ui.draw_close_icon(cv, close_button.x + 7, close_button.y + 4, style.danger)
+
+        ui.draw_checkbox(cv, check_box, style, true)
+        ui.draw_slider(cv, slider, style, 65, 0, 100)
+
+        canvas.present(cv)
+    }
+
+    window.destroy()
+    canvas.destroy(cv)
+}

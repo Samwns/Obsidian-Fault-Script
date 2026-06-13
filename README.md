@@ -1,5 +1,7 @@
 # Obsidian Fault Script (OFS) 🔥
 
+[![OFS Badge](https://img.shields.io/badge/Language-OFS-2A0845)](https://github.com/Samwns/Obsidian-Fault-Script)
+
 **Linguagem compilada, self-hosted e determinística**
 
 Linguagem para aprender programação e, ao mesmo tempo, chegar perto do sistema quando precisar.
@@ -22,6 +24,7 @@ Você pode:
 - Low-level blocks: `fracture`, `abyss`, `fractal`, `bedrock`
 - Interop with native code via `extern vein` and `rift vein`
 - Standard modules and installable packages
+- Native visual layer with `window`, `canvas`, and the new `ui` library
 
 ### Install
 
@@ -67,6 +70,8 @@ core main() {
 - [Language reference](docs/LANGUAGE_REFERENCE.md)
 - [Beginner guide](OFS_JORNADA_INICIANTE.md)
 - [Packages](packages/README.md)
+- [Native visual UI](docs/VISUAL_UI.md)
+- [External install test](docs/EXTERNAL_INSTALL_TEST.md)
 - [Changelog](docs/CHANGELOG.md)
 
 ---
@@ -91,6 +96,7 @@ OFS é uma linguagem estaticamente tipada feita para ser simples no começo e po
 - Faz integração nativa com `extern vein` e `rift vein`
 - Reutiliza módulos por `attach {nome}` ou `attach {F:arquivo.ofs}`
 - Já tem `window` e `canvas` para fluxo gráfico básico em OFS
+- Agora tem `ui` para painel, botões, checkbox, slider, estilos e ícones desenhados em OFS
 
 ### Instalar
 
@@ -140,4 +146,6 @@ core main() {
 - [Referência da Linguagem](docs/LANGUAGE_REFERENCE.md)
 - [Jornada Iniciante](OFS_JORNADA_INICIANTE.md)
 - [Pacotes](packages/README.md)
+- [UI visual nativa](docs/VISUAL_UI.md)
+- [Teste de instalação externa](docs/EXTERNAL_INSTALL_TEST.md)
 - [Changelog](docs/CHANGELOG.md)

@@ -78,6 +78,7 @@ attach {fmt}
 - `string`
 - `terminal-colors`
 - `test-lib`
+- `ui` (visual, native)
 - `webserver`
 - `window`
 
@@ -155,5 +156,6 @@ attach {fmt}
 - `string`
 - `terminal-colors`
 - `test-lib`
+- `ui` (visual, nativo)
 - `webserver`
 - `window`

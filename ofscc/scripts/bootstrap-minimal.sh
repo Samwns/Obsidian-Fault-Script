@@ -12,6 +12,7 @@ print_info() { echo -e "\033[0;37mℹ️  $1\033[0m"; }
 
 EXISTING_COMPILER="${EXISTING_COMPILER:-dist/ofscc}"
 BUILD_OUTPUT="${BUILD_OUTPUT:-dist}"
+RUNTIME="${OFS_RUNTIME:-dist/libofs_runtime.a}"
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
@@ -61,6 +62,46 @@ fi
 COMPILER_SIZE=$(du -h "$EXISTING_COMPILER" | cut -f1)
 print_success "Compilador pronto: $EXISTING_COMPILER ($COMPILER_SIZE)"
 
+if [ ! -f "$RUNTIME" ]; then
+    print_info "Runtime não encontrado em $RUNTIME. Compilando runtime C..."
+    mkdir -p "$(dirname "$RUNTIME")"
+    clang -O2 -c ofs/runtime/ofs_runtime.c -o "$BUILD_OUTPUT/ofs_runtime.o"
+    ar rcs "$RUNTIME" "$BUILD_OUTPUT/ofs_runtime.o"
+fi
+
+detect_llvm_ir_flags() {
+    if [ -n "${OFS_LLVM_IR_FLAGS:-}" ]; then
+        printf '%s\n' "$OFS_LLVM_IR_FLAGS"
+        return
+    fi
+    if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
+        printf '%s\n' "-mllvm -opaque-pointers"
+    fi
+}
+
+compile_ofs_program() {
+    local input="$1"
+    local output="$2"
+    local opt="${3:--O3}"
+    local ir="${output}.ll"
+    local detected_flags
+    local llvm_flags=()
+
+    detected_flags="$(detect_llvm_ir_flags)"
+    if [ -n "$detected_flags" ]; then
+        read -r -a llvm_flags <<< "$detected_flags"
+    fi
+
+    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ir" OFSCC_OPT="$opt" "$EXISTING_COMPILER"
+    if [ "${#llvm_flags[@]}" -gt 0 ]; then
+        clang -Wno-override-module "${llvm_flags[@]}" -O2 "$ir" "$RUNTIME" -lm -o "$output"
+    else
+        clang -Wno-override-module -O2 "$ir" "$RUNTIME" -lm -o "$output"
+    fi
+    rm -f "$ir"
+    chmod +x "$output"
+}
+
 # ──────────────────────────────────────────────────────────────────────────
 # Recompile OFS compiler (optional but recommended)
 # ──────────────────────────────────────────────────────────────────────────
@@ -73,8 +114,7 @@ if [ ! -f "$OFSCC_SRC" ]; then
 fi
 
 print_info "Compilando ofscc_fresh com otimização -O3..."
-"$EXISTING_COMPILER" build "$OFSCC_SRC" -o ofscc_fresh -O3
-chmod +x ofscc_fresh
+compile_ofs_program "$OFSCC_SRC" ofscc_fresh -O3
 print_success "ofscc_fresh criado"
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -84,8 +124,7 @@ print_success "ofscc_fresh criado"
 print_step "Fase 3: Validar determinismo"
 
 print_info "Compilando segunda vez para validação..."
-"$EXISTING_COMPILER" build "$OFSCC_SRC" -o ofscc_verify -O3
-chmod +x ofscc_verify
+compile_ofs_program "$OFSCC_SRC" ofscc_verify -O3
 
 FRESH_HASH=$(sha256sum ofscc_fresh | cut -d' ' -f1)
 VERIFY_HASH=$(sha256sum ofscc_verify | cut -d' ' -f1)
@@ -119,12 +158,13 @@ if [ ! -d "$BUILD_OUTPUT/stdlib" ]; then
 fi
 
 # Update version file
-cat > "$BUILD_OUTPUT/version.json" << 'EOF'
+BUILD_TIMESTAMP="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+cat > "$BUILD_OUTPUT/version.json" << EOF
 {
   "version": "1.0.0-native",
   "buildType": "native-only",
   "compiler": "OFS (Self-Hosted, C++-Free)",
-  "timestamp": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+  "timestamp": "$BUILD_TIMESTAMP",
   "buildProcess": "minimal-bootstrap",
   "dependencies": {
     "cpp": false,
@@ -160,6 +200,6 @@ echo "📦 Localização: $BUILD_OUTPUT/ofscc"
 echo "⏱️  Tempo: ~1-2 segundos (vs 5-15 min com C++)"
 echo ""
 echo "Próximos passos:"
-echo "   • Compilar programa: $BUILD_OUTPUT/ofscc build program.ofs"
+echo "   • Compilar programa: $BUILD_OUTPUT/ofs build program.ofs"
 echo "   • Criar release: bash scripts/release-native-only.sh 1.0.0"
 echo ""
