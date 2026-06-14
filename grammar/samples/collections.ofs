@@ -1,0 +1,13 @@
+core main() {
+    forge nums = [10, 20, 30, 40, 50]
+
+    cycle (i in nums) {
+        echo(i)
+    }
+
+    forge sum: stone = 0
+    cycle (forge i = 0; i < 5; i++) {
+        sum += nums[i]
+    }
+    echo(sum)
+}

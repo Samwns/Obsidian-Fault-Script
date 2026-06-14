@@ -5,6 +5,5 @@ OFS:
     - ".ofs"
   tm_scope: source.ofs
   ace_mode: text
-  language_id: 999999
   aliases:
     - obsidian-fault-script

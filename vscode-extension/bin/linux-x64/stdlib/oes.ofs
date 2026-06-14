@@ -1,0 +1,52 @@
+// OFS Obsidian Effect Scripts Style DSL
+// Obsidian Effect Scripts is the style layer paired with Obsidian Document Language markup.
+
+namespace oes {
+    vein prop(name: obsidian, value: obsidian) -> obsidian {
+        return name + ":" + value + ";"
+    }
+
+    vein rule(selector: obsidian, body: obsidian) -> obsidian {
+        return selector + "{" + body + "}"
+    }
+
+    vein media(query: obsidian, body: obsidian) -> obsidian {
+        return "@media " + query + "{" + body + "}"
+    }
+
+    vein supports(query: obsidian, body: obsidian) -> obsidian {
+        return "@supports " + query + "{" + body + "}"
+    }
+
+    vein layer(name: obsidian, body: obsidian) -> obsidian {
+        return "@layer " + name + "{" + body + "}"
+    }
+
+    vein font_face(body: obsidian) -> obsidian {
+        return "@font-face{" + body + "}"
+    }
+
+    vein keyframes(name: obsidian, frames: obsidian) -> obsidian {
+        return "@keyframes " + name + "{" + frames + "}"
+    }
+
+    vein frame(step: obsidian, body: obsidian) -> obsidian {
+        return step + "{" + body + "}"
+    }
+
+    vein var(name: obsidian, value: obsidian) -> obsidian {
+        return "--" + name + ":" + value + ";"
+    }
+
+    vein use(name: obsidian) -> obsidian {
+        return "var(--" + name + ")"
+    }
+
+    vein transition(property: obsidian, duration: obsidian, easing: obsidian) -> obsidian {
+        return prop("transition", property + " " + duration + " " + easing)
+    }
+
+    vein animation(name: obsidian, duration: obsidian, easing: obsidian) -> obsidian {
+        return prop("animation", name + " " + duration + " " + easing)
+    }
+}

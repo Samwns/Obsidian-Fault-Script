@@ -19,7 +19,7 @@ const KEYWORDS = [
 const TYPES = ['stone', 'crystal', 'obsidian', 'bool', 'void', 'Array', 'u8', 'u16', 'u32', 'u64', 'i8', 'i16', 'i32'];
 
 const MODULES = [
-  'core', 'math', 'string', 'io', 'serpentine', 'ofshtml', 'benitoite', 'webserver', 'webui', 'bedrock', 'bedrock-packet',
+  'core', 'math', 'string', 'io', 'oes', 'ofshtml', 'odl', 'webserver', 'webui', 'bedrock', 'bedrock-packet',
   'terminal-colors', 'memory-modes', 'rift', 'canvas', 'window', 'fmt', 'test-lib'
 ];
 
@@ -1125,9 +1125,9 @@ const STDLIB_NAMES = {
   'string':          'string.ofs',
   'io':              'io.ofs',
   'webserver':       'webserver.ofs',
-  'serpentine':          'serpentine.ofs',
+  'oes':          'oes.ofs',
   'ofshtml':         'ofshtml.ofs',
-  'benitoite':       'benitoite.ofs',
+  'odl':       'odl.ofs',
   'webui':           'webui.ofs',
   'serve':           'webserver.ofs',
   'bedrock':         'bedrock.ofs',

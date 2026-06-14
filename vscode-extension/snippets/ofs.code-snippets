@@ -80,7 +80,7 @@
   "Attach Stdlib": {
     "prefix": "attach-stdlib",
     "body": [
-      "attach {${1|core,math,string,io,benitoite,serpentine,ofshtml,webserver,webui,bedrock,bedrock-packet,terminal-colors,memory-modes,rift,canvas,window,fmt,test-lib|}}"
+      "attach {${1|core,math,string,io,odl,oes,ofshtml,webserver,webui,bedrock,bedrock-packet,terminal-colors,memory-modes,rift,canvas,window,fmt,test-lib|}}"
     ]
   },
   "Web UI Site": {

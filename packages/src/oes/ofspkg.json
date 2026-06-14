@@ -1,0 +1,20 @@
+{
+  "name": "oes",
+  "version": "0.1.0",
+  "description": "Obsidian Effect Scripts for style rules, responsive behavior, and motion",
+  "author": "OFS Team",
+  "license": "MIT",
+  "main": "libs/oes.ofs",
+  "tags": ["web", "style", "css", "dsl", "oes"],
+  "channels": {
+    "alpha": "0.1.0",
+    "latest": "0.1.0"
+  },
+  "versions": {
+    "0.1.0": {
+      "date": "2026-06-14",
+      "channel": "alpha",
+      "main": "libs/oes.ofs"
+    }
+  }
+}

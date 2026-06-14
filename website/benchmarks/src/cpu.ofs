@@ -1,0 +1,26 @@
+vein fibonacci(n: stone) -> stone {
+    if (n <= 1) {
+        return n
+    }
+    forge a: stone = 0
+    forge b: stone = 1
+    forge i: stone = 2
+    while (i <= n) {
+        forge next: stone = a + b
+        a = b
+        b = next
+        i += 1
+    }
+    return b
+}
+
+core main() {
+    forge total: stone = 0
+    forge run: stone = 0
+    while (run < 5000000) {
+        forge n: stone = 25 + (run % 8)
+        total += fibonacci(n)
+        run += 1
+    }
+    echo(total)
+}

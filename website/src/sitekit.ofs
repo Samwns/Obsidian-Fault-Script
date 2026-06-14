@@ -1,0 +1,339 @@
+attach {odl}
+attach {oes}
+
+vein site_css() -> obsidian {
+    forge s = ""
+    s = s + oes.rule(":root", "color-scheme:dark;" + oes.var("ink", "#eef6ff") + oes.var("muted", "#9fb1c8") + oes.var("paper", "#070a0f") + oes.var("surface", "#101722") + oes.var("line", "#263244") + oes.var("accent", "#29e0bd") + oes.var("accent2", "#7c5cff") + oes.var("hot", "#ffcc66") + oes.var("code", "#070a0f") + oes.var("code-ink", "#dff8ff"))
+    s = s + oes.rule("*", "box-sizing:border-box")
+    s = s + oes.rule("html", "scroll-behavior:smooth")
+    s = s + oes.rule("body", "margin:0;background:radial-gradient(circle at 20% 0%,rgba(41,224,189,.18),transparent 32%),radial-gradient(circle at 86% 12%,rgba(124,92,255,.22),transparent 34%),var(--paper);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;line-height:1.55;overflow-x:hidden")
+    s = s + oes.rule("body:before", "content:\"\";position:fixed;inset:0;background:linear-gradient(transparent 0 23px,rgba(255,255,255,.035) 24px),linear-gradient(90deg,transparent 0 23px,rgba(255,255,255,.03) 24px);background-size:24px 24px;mask-image:linear-gradient(to bottom,black,transparent 72%);pointer-events:none")
+    s = s + oes.rule("a", "color:inherit")
+    s = s + oes.rule(".wrap", "width:min(1180px,calc(100% - 32px));margin:0 auto")
+    s = s + oes.rule(".topbar", "position:sticky;top:0;z-index:10;background:rgba(7,10,15,.76);border-bottom:1px solid var(--line);backdrop-filter:blur(18px)")
+    s = s + oes.rule(".nav", "min-height:70px;display:flex;align-items:center;justify-content:space-between;gap:16px")
+    s = s + oes.rule(".brand", "display:inline-flex;align-items:center;gap:10px;font-weight:900;text-decoration:none")
+    s = s + oes.rule(".brand img", "width:36px;height:36px")
+    s = s + oes.rule(".links", "display:flex;align-items:center;gap:18px;color:var(--muted);font-size:14px")
+    s = s + oes.rule(".links a", "text-decoration:none")
+    s = s + oes.rule(".links a:hover", "color:var(--accent)")
+    s = s + oes.rule(".lang", "display:inline-flex;gap:4px;padding:4px;border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:8px")
+    s = s + oes.rule(".lang button", "border:0;background:transparent;min-width:38px;height:30px;border-radius:6px;color:var(--muted);font-weight:800;cursor:pointer")
+    s = s + oes.rule(".lang button.active", "background:var(--accent);color:#06100e")
+    s = s + oes.rule(".hero", "min-height:82vh;display:grid;align-items:center;padding:58px 0 36px")
+    s = s + oes.rule(".hero-grid", "display:grid;grid-template-columns:minmax(0,1.08fr) minmax(340px,.92fr);gap:44px;align-items:center")
+    s = s + oes.rule(".kicker", "margin:0 0 14px;color:var(--accent);font-weight:900;text-transform:uppercase;font-size:13px;letter-spacing:.12em")
+    s = s + oes.rule("h1", "margin:0;font-size:clamp(50px,8vw,104px);line-height:.88;letter-spacing:0")
+    s = s + oes.rule(".lead", "max-width:760px;margin:24px 0 0;color:var(--muted);font-size:clamp(18px,2.2vw,22px)")
+    s = s + oes.rule(".actions", "display:flex;flex-wrap:wrap;gap:12px;margin-top:30px")
+    s = s + oes.rule(".btn", "min-height:46px;display:inline-flex;align-items:center;justify-content:center;padding:0 18px;border-radius:8px;border:1px solid rgba(41,224,189,.55);background:linear-gradient(135deg,var(--accent),#7fffe4);color:#06100e;text-decoration:none;font-weight:900;box-shadow:0 12px 34px rgba(41,224,189,.18)")
+    s = s + oes.rule(".btn.secondary", "background:rgba(255,255,255,.04);color:var(--ink);border-color:var(--line);box-shadow:none")
+    s = s + oes.rule(".terminal,.showcase", "background:linear-gradient(180deg,rgba(16,23,34,.96),rgba(8,12,18,.96));color:var(--code-ink);border-radius:8px;box-shadow:0 24px 70px rgba(0,0,0,.36);overflow:hidden;border:1px solid var(--line)")
+    s = s + oes.rule(".terminal-head", "height:40px;display:flex;align-items:center;padding:0 14px;border-bottom:1px solid var(--line);color:#9fb0c0;font-size:13px")
+    s = s + oes.rule("pre", "margin:0;padding:18px;overflow:auto;font-size:13px;line-height:1.6")
+    s = s + oes.rule("code", "font-family:SFMono-Regular,Consolas,Liberation Mono,monospace")
+    s = s + oes.rule(".band", "padding:76px 0;border-top:1px solid var(--line);position:relative")
+    s = s + oes.rule(".section-head", "display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:26px")
+    s = s + oes.rule("h2", "margin:0;font-size:clamp(32px,4vw,54px);line-height:1;letter-spacing:0")
+    s = s + oes.rule(".section-head p", "max-width:650px;margin:0;color:var(--muted)")
+    s = s + oes.rule(".grid", "display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px")
+    s = s + oes.rule(".card,.doc-link,.mini-page", "background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:8px;padding:20px;backdrop-filter:blur(8px)")
+    s = s + oes.rule(".card,.step,.terminal,.doc-link", "opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease,border-color .2s ease")
+    s = s + oes.rule(".card.seen,.step.seen,.terminal.seen,.doc-link.seen", "opacity:1;transform:translateY(0)")
+    s = s + oes.rule(".card:hover,.doc-link:hover", "border-color:rgba(41,224,189,.55);transform:translateY(-2px)")
+    s = s + oes.rule(".card h3", "margin:0 0 8px;font-size:18px")
+    s = s + oes.rule(".card p", "margin:0;color:var(--muted)")
+    s = s + oes.rule(".table-wrap", "overflow:auto;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.045)")
+    s = s + oes.rule("table", "width:100%;border-collapse:collapse;min-width:760px")
+    s = s + oes.rule("th,td", "padding:13px 14px;border-bottom:1px solid var(--line);text-align:left")
+    s = s + oes.rule("th", "font-size:13px;color:var(--muted);background:rgba(255,255,255,.06)")
+    s = s + oes.rule("tr:last-child td", "border-bottom:0")
+    s = s + oes.rule(".bars", "display:grid;gap:10px")
+    s = s + oes.rule(".bar-row", "display:grid;grid-template-columns:82px 1fr 88px;align-items:center;gap:12px")
+    s = s + oes.rule(".bar", "height:15px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden")
+    s = s + oes.rule(".bar span", "display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px;animation:grow .85s ease both")
+    s = s + oes.rule(".metric-tabs", "display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px")
+    s = s + oes.rule(".metric-tabs button", "min-height:38px;padding:0 14px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);color:var(--muted);font-weight:800;cursor:pointer")
+    s = s + oes.rule(".metric-tabs button.active", "background:var(--accent);border-color:var(--accent);color:#06100e")
+    s = s + oes.rule(".benchmark-note", "margin:0 0 18px;color:var(--muted)")
+    s = s + oes.rule(".metric-summary", "display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px")
+    s = s + oes.rule(".metric-stat", "padding:16px;border-left:3px solid var(--accent);background:rgba(255,255,255,.04)")
+    s = s + oes.rule(".metric-stat strong", "display:block;font-size:22px")
+    s = s + oes.rule(".metric-stat span", "color:var(--muted);font-size:13px")
+    s = s + oes.rule(".docs-list", "display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px")
+    s = s + oes.rule(".doc-link", "text-decoration:none")
+    s = s + oes.rule(".doc-link strong", "display:block")
+    s = s + oes.rule(".doc-link span", "color:var(--muted);font-size:14px")
+    s = s + oes.rule(".workflow", "display:grid;grid-template-columns:repeat(4,1fr);gap:12px")
+    s = s + oes.rule(".step", "padding:18px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04)")
+    s = s + oes.rule(".footer", "padding:34px 0;color:var(--muted);border-top:1px solid var(--line)")
+    s = s + oes.keyframes("grow", oes.frame("from", "width:0") + oes.frame("to", ""))
+    s = s + oes.keyframes("float", oes.frame("0%,100%", "transform:translateY(0)") + oes.frame("50%", "transform:translateY(-10px)"))
+    s = s + oes.rule(".showcase", "animation:float 6s ease-in-out infinite")
+    s = s + oes.media("(max-width:900px)", ".links a{display:none}.hero-grid,.grid,.docs-list,.workflow,.metric-summary{grid-template-columns:1fr}.hero{min-height:auto;padding-top:36px}.section-head{display:block}.section-head p{margin-top:12px}.bar-row{grid-template-columns:72px 1fr 76px}")
+    return s
+}
+
+vein site_js() -> obsidian {
+    forge s = ""
+    s = s + "const translations={pt:{navDocs:'Documentacao',navBench:'Benchmark',navRelease:'Releases',kicker:'Linguagem compilada hibrida',title:'OFS compila, roda nativo e constroi a Web.',lead:'Uma linguagem self-hosted com LLVM, runtime nativo, ODL para documentos e OES para estilo, efeitos e movimento.',ctaStart:'Comecar',ctaGitHub:'GitHub',terminalTitle:'exemplo.ofs',pillarsTitle:'O que e a OFS',pillarsLead:'Uma linguagem para aprender, compilar e descer perto do sistema quando precisar.',p1Title:'Self-hosted',p1Body:'Lexer, parser, type checker e geracao LLVM vivem no compilador OFS.',p2Title:'Nativa',p2Body:'A saida e LLVM IR linkada com libofs_runtime.a para gerar executaveis.',p3Title:'Hibrida',p3Body:'Console, canvas/window nativo e sites via webserver/webui no mesmo ecossistema.',webTitle:'ODL + OES',webLead:'ODL descreve documentos; OES define estilo, efeitos, responsividade e animacoes.',benchTitle:'Benchmark reproduzivel',benchLead:'CPU, memoria, startup, compilacao e tamanho de artefato medidos com processos reais.',docsTitle:'Documentacao',docsLead:'Guias tecnicos para linguagem, compilador, bootstrap, UI e publicacao.',releaseTitle:'Release atual',releaseLead:'A release publica mais recente fica em /releases/latest e e gerada por GitHub Actions com assets Linux, macOS, Windows, VS Code e checksums.',footer:'OFS e um projeto experimental de linguagem compilada. Site gerado pela propria OFS para GitHub Pages.'},en:{navDocs:'Documentation',navBench:'Benchmark',navRelease:'Releases',kicker:'Hybrid compiled language',title:'OFS compiles, runs native, and builds the Web.',lead:'Obsidian Fault Script is a self-hosted language with an LLVM pipeline, modular standard library, low-level modes, and an experimental Web UI layer for building sites with OFS.',ctaStart:'Get started',ctaGitHub:'GitHub',terminalTitle:'example.ofs',pillarsTitle:'What OFS is',pillarsLead:'A language for learning, compiling, and moving close to the system when needed.',p1Title:'Self-hosted',p1Body:'Lexer, parser, type checker, and LLVM generation live in the OFS compiler.',p2Title:'Native',p2Body:'The output is LLVM IR linked with libofs_runtime.a to produce executables.',p3Title:'Hybrid',p3Body:'Console apps, native canvas/window apps, and sites via webserver/webui in one ecosystem.',webTitle:'ODL + OES',webLead:'Web files are explicit: the extension only uses Go Live when it sees attach {webui} or web calls.',benchTitle:'Reproducible benchmark',benchLead:'Iterative fib(25..32) repeated 5,000,000 times. Local measurement, not a complete performance study.',docsTitle:'Documentation',docsLead:'Technical guides for the language, compiler, bootstrap, UI, and publishing.',releaseTitle:'Current release',releaseLead:'The latest public release is available at /releases/latest and is generated by GitHub Actions with Linux, macOS, Windows, VS Code, and checksum assets.',footer:'OFS is an experimental compiled language project. Site generated by OFS itself for GitHub Pages.'},es:{navDocs:'Documentacion',navBench:'Benchmark',navRelease:'Releases',kicker:'Lenguaje compilado hibrido',title:'OFS compila, ejecuta nativo y construye la Web.',lead:'Obsidian Fault Script es un lenguaje self-hosted con pipeline LLVM, libreria estandar modular, modos low-level y una capa Web UI experimental para crear sitios con OFS.',ctaStart:'Empezar',ctaGitHub:'GitHub',terminalTitle:'ejemplo.ofs',pillarsTitle:'Que es OFS',pillarsLead:'Un lenguaje para aprender, compilar y acercarse al sistema cuando haga falta.',p1Title:'Self-hosted',p1Body:'Lexer, parser, type checker y generacion LLVM viven en el compilador OFS.',p2Title:'Nativo',p2Body:'La salida es LLVM IR enlazada con libofs_runtime.a para generar ejecutables.',p3Title:'Hibrido',p3Body:'Consola, canvas/window nativo y sitios via webserver/webui en el mismo ecosistema.',webTitle:'ODL + OES',webLead:'Los archivos web son explicitos: la extension solo usa Go Live cuando ve attach {webui} o llamadas web.',benchTitle:'Benchmark reproduzivel',benchLead:'fib(25..32) iterativo repetido 5.000.000 veces. Medicion local, no un estudio completo de rendimiento.',docsTitle:'Documentacion',docsLead:'Guias tecnicas para lenguaje, compilador, bootstrap, UI y publicacion.',releaseTitle:'Release actual',releaseLead:'La release publica mas reciente esta en /releases/latest y se genera por GitHub Actions con assets Linux, macOS, Windows, VS Code y checksums.',footer:'OFS es un proyecto experimental de lenguaje compilado. Sitio generado por la propia OFS para GitHub Pages.'}};"
+    s = s + "function applyLanguage(lang){const dict=translations[lang]||translations.pt;document.documentElement.lang=lang;document.querySelectorAll('[data-i18n]').forEach((node)=>{const key=node.getAttribute('data-i18n');if(dict[key])node.textContent=dict[key];});document.querySelectorAll('[data-lang]').forEach((button)=>button.classList.toggle('active',button.getAttribute('data-lang')===lang));localStorage.setItem('ofs-lang',lang)}"
+    s = s + "async function loadLegacyBenchmark(){let response=await fetch('assets/benchmark.json');if(!response.ok){response=await fetch('benchmark.json')}const data=await response.json();const results=data.results.filter((r)=>r.best_seconds!==null);const max=Math.max(...results.map((r)=>r.best_seconds));const bars=document.getElementById('benchmark-bars');const rows=document.getElementById('benchmark-rows');const suites=document.getElementById('benchmark-suites');bars.innerHTML='';rows.innerHTML='';if(suites)suites.innerHTML='';data.results.forEach((result)=>{const value=result.best_seconds;const width=value===null?0:Math.max(4,(value/max)*100);const label=value===null?'n/a':`${value.toFixed(4)}s`;const factor=value===null?'n/a':`${(value/data.results[0].best_seconds).toFixed(1)}x`;bars.insertAdjacentHTML('beforeend',`<div class=\"bar-row\"><strong>${result.language}</strong><div class=\"bar\"><span style=\"width:${width}%\"></span></div><span>${label}</span></div>`);rows.insertAdjacentHTML('beforeend',`<tr><td>${result.language}</td><td>${label}</td><td>${factor}</td><td>${result.output}</td></tr>`)});if(suites&&data.suites){data.suites.forEach((suite)=>{suites.insertAdjacentHTML('beforeend',`<article class=\"card\"><h3>${suite.name}</h3><p>${suite.summary}</p><p><strong>${suite.best_seconds}s</strong> best - ${suite.status}</p></article>`)})}document.getElementById('benchmark-meta').textContent=`${data.benchmark} - menor e melhor - ${data.runs_per_language} runs - ${data.date_utc}`}"
+    s = s + "document.querySelectorAll('[data-lang]').forEach((button)=>button.addEventListener('click',()=>applyLanguage(button.getAttribute('data-lang'))));applyLanguage(localStorage.getItem('ofs-lang')||'pt');if(document.getElementById('benchmark-bars'))loadBenchmark().catch(()=>{const meta=document.getElementById('benchmark-meta');if(meta)meta.textContent='Benchmark data unavailable.'});"
+    return s
+}
+
+vein site_runtime_js() -> obsidian {
+    forge s = site_js()
+    s = s + "const benchmarkMetrics={cpu:{field:'cpu_ms',unit:'ms',label:'CPU median'},memory:{field:'memory_rss_kb',unit:'KiB',label:'Peak RSS'},startup:{field:'startup_ms',unit:'ms',label:'Startup median'},compile:{field:'compile_ms',unit:'ms',label:'Build median'},artifact:{field:'artifact_bytes',unit:'bytes',label:'Artifact size'}};"
+    s = s + "function metricValue(result,metric){const raw=result[metric.field];return raw&&typeof raw==='object'?raw.median:raw}function metricNumber(value){return value>=1000?value.toLocaleString(undefined,{maximumFractionDigits:1}):value.toFixed(value<10?2:1)}"
+    s = s + "function renderMetric(data,key){const metric=benchmarkMetrics[key];const values=data.results.filter((r)=>r.available&&r.correct&&metricValue(r,metric)!==null);const max=Math.max(...values.map((r)=>metricValue(r,metric)));const min=Math.min(...values.map((r)=>metricValue(r,metric)));const bars=document.getElementById('benchmark-bars');const rows=document.getElementById('benchmark-rows');bars.innerHTML='';rows.innerHTML='';values.forEach((result)=>{const value=metricValue(result,metric);const width=Math.max(4,value/max*100);bars.insertAdjacentHTML('beforeend',`<div class=\"bar-row\"><strong>${result.language}</strong><div class=\"bar\"><span style=\"width:${width}%\"></span></div><span>${metricNumber(value)} ${metric.unit}</span></div>`);rows.insertAdjacentHTML('beforeend',`<tr><td>${result.language}</td><td>${metricNumber(value)} ${metric.unit}</td><td>${(value/min).toFixed(2)}x</td><td>${result.correct?'pass':'fail'}</td></tr>`)});document.getElementById('metric-label').textContent=`${metric.label}. Menor e melhor.`;document.querySelectorAll('[data-metric]').forEach((button)=>button.classList.toggle('active',button.dataset.metric===key))}"
+    s = s + "async function loadBenchmark(){let response=await fetch('assets/benchmark.json');if(!response.ok)response=await fetch('benchmark.json');const data=await response.json();document.getElementById('benchmark-meta').textContent=`${data.machine.cpu} - ${data.machine.logical_cores} logical cores - ${data.generated_at_utc}`;document.getElementById('benchmark-note').textContent=data.methodology.warning;document.querySelectorAll('[data-metric]').forEach((button)=>button.addEventListener('click',()=>renderMetric(data,button.dataset.metric)));renderMetric(data,'cpu')}"
+    s = s + "document.querySelectorAll('[data-copy]').forEach((b)=>b.addEventListener('click',()=>navigator.clipboard&&navigator.clipboard.writeText(b.getAttribute('data-copy'))));"
+    s = s + "const reveal=new IntersectionObserver((items)=>items.forEach((i)=>{if(i.isIntersecting)i.target.classList.add('seen')}),{threshold:.15});document.querySelectorAll('.card,.step,.terminal,.doc-link').forEach((n)=>reveal.observe(n));"
+    return s
+}
+
+vein site_button(label: obsidian, href: obsidian, secondary: bool) -> obsidian {
+    if (secondary) {
+        return odl.a("btn secondary", href, label)
+    }
+    return odl.a("btn", href, label)
+}
+
+vein site_terminal(title: obsidian, code: obsidian) -> obsidian {
+    return odl.div("terminal", odl.div("terminal-head", title) + odl.code_block(code))
+}
+
+vein site_card(title: obsidian, body: obsidian, key: obsidian) -> obsidian {
+    forge h = odl.h3(title)
+    forge p = odl.p("", body)
+    if (key != "") {
+        h = "<h3 data-i18n=\"" + key + "Title\">" + title + "</h3>"
+        p = "<p data-i18n=\"" + key + "Body\">" + body + "</p>"
+    }
+    return odl.article("card", h + p)
+}
+
+vein site_section_head(title_key: obsidian, title: obsidian, lead_key: obsidian, lead: obsidian) -> obsidian {
+    return odl.div("section-head", "<h2 data-i18n=\"" + title_key + "\">" + title + "</h2>" + "<p data-i18n=\"" + lead_key + "\">" + lead + "</p>")
+}
+
+vein site_doc_link(href: obsidian, title: obsidian, text: obsidian) -> obsidian {
+    return odl.a("doc-link", href, odl.strong(title) + odl.span("", text))
+}
+
+vein site_topbar() -> obsidian {
+    forge brand = odl.a("brand", "#top", odl.img("assets/ofs-256.png", "OFS logo") + odl.span("", "Obsidian Fault Script"))
+    forge langs = odl.div("lang", "<button type=\"button\" data-lang=\"pt\">PT</button><button type=\"button\" data-lang=\"en\">EN</button><button type=\"button\" data-lang=\"es\">ES</button>")
+    forge links = odl.div("links", "<a href=\"#docs\" data-i18n=\"navDocs\">Documentacao</a><a href=\"#benchmark\" data-i18n=\"navBench\">Benchmark</a><a href=\"#release\" data-i18n=\"navRelease\">Releases</a>" + langs)
+    return odl.header("topbar", odl.nav("wrap nav", brand + links))
+}
+
+vein site_hero() -> obsidian {
+    forge left = "<p class=\"kicker\" data-i18n=\"kicker\">Linguagem compilada hibrida</p>"
+    left = left + "<h1 data-i18n=\"title\">OFS compila, roda nativo e constroi a Web.</h1>"
+    left = left + "<p class=\"lead\" data-i18n=\"lead\">Uma linguagem self-hosted com LLVM, runtime nativo, ODL para documentos e OES para estilo, efeitos e movimento.</p>"
+    left = left + odl.div("actions", site_button("Comecar", "GETTING_STARTED.md", false) + site_button("GitHub", "https://github.com/Samwns/Obsidian-Fault-Script", true))
+    forge code = "attach {webui}\n\ncore main() {\n    forge body = webui.hero(\n        \"OFS Web\",\n        \"site oficial em OFS\",\n        webui.button(\"Docs\", \"#docs\")\n    )\n\n    webui.serve(8080, \"OFS\", body)\n}"
+    return odl.section("", "hero", odl.div("wrap hero-grid", odl.div("", left) + site_terminal("exemplo.ofs", code)))
+}
+
+vein site_pillars() -> obsidian {
+    forge cards = site_card("Self-hosted", "Lexer, parser, type checker e geracao LLVM vivem no compilador OFS.", "p1")
+    cards = cards + site_card("Nativa", "A saida e LLVM IR linkada com libofs_runtime.a para gerar executaveis.", "p2")
+    cards = cards + site_card("Hibrida", "Console, canvas/window nativo e sites via webserver/webui no mesmo ecossistema.", "p3")
+    forge body = site_section_head("pillarsTitle", "O que e a OFS", "pillarsLead", "Uma linguagem para aprender, compilar e descer perto do sistema quando precisar.") + odl.div("grid", cards)
+    return odl.section("", "band", odl.div("wrap", body))
+}
+
+vein site_web() -> obsidian {
+    forge code = "attach {odl}\nattach {oes}\nattach {webserver}\n\ncore main() {\n    forge head = odl.css(\"site.css\")\n    forge body = odl.main(\"app\", odl.h1(\"OFS Web\"))\n    webserver.serve_html_forever(8080, odl.document(\"pt\", \"OFS\", \"site\", head, body))\n}"
+    forge body = site_section_head("webTitle", "ODL + OES", "webLead", "ODL descreve documentos; OES define estilo, efeitos, responsividade e animacoes.") + site_terminal("site.ofs", code)
+    return odl.section("web", "band", odl.div("wrap", body))
+}
+
+vein site_benchmark() -> obsidian {
+    forge body = site_section_head("benchTitle", "Benchmark reproduzivel", "benchLead", "CPU, memoria, startup, compilacao e tamanho de artefato medidos com processos reais.")
+    body = body + "<div class=\"metric-tabs\"><button type=\"button\" data-metric=\"cpu\">CPU</button><button type=\"button\" data-metric=\"memory\">Memory</button><button type=\"button\" data-metric=\"startup\">Startup</button><button type=\"button\" data-metric=\"compile\">Build</button><button type=\"button\" data-metric=\"artifact\">Artifact</button></div>"
+    body = body + odl.div("card", "<p id=\"benchmark-meta\" class=\"kicker\">Loading benchmark...</p><p id=\"benchmark-note\" class=\"benchmark-note\"></p><strong id=\"metric-label\">CPU median</strong><div class=\"bars\" id=\"benchmark-bars\"></div>")
+    body = body + odl.div("table-wrap", odl.table("<tr><th>Language</th><th>Median</th><th>Relative</th><th>Checksum</th></tr>", ""))
+    return odl.section("benchmark", "band", odl.div("wrap", body))
+}
+
+vein site_docs() -> obsidian {
+    forge links = site_doc_link("GETTING_STARTED.md", "Getting Started", "Install, run, build and check OFS files.")
+    links = links + site_doc_link("LANGUAGE_REFERENCE.md", "Language Reference", "Syntax, types, control flow and modules.")
+    links = links + site_doc_link("COMPILER_ARCHITECTURE.md", "Compiler Architecture", "Self-hosted frontend and LLVM backend.")
+    links = links + site_doc_link("WEB_UI.md", "Web UI", "Build OFS-powered static web pages.")
+    links = links + site_doc_link("VISUAL_UI.md", "Native Visual UI", "Canvas, window and immediate UI helpers.")
+    links = links + site_doc_link("GITHUB_REGISTRATION.md", "GitHub Registration", "Linguist and repository language recognition.")
+    forge body = site_section_head("docsTitle", "Documentacao", "docsLead", "Guias tecnicos para linguagem, compilador, bootstrap, UI e publicacao.") + odl.div("docs-list", links)
+    return odl.section("docs", "band", odl.div("wrap", body))
+}
+
+vein site_release() -> obsidian {
+    forge body = site_section_head("releaseTitle", "Release atual", "releaseLead", "A release publica mais recente fica em /releases/latest e e gerada por GitHub Actions com assets Linux, macOS, Windows, VS Code e checksums.")
+    body = body + odl.div("actions", site_button("Latest release", "https://github.com/Samwns/Obsidian-Fault-Script/releases/latest", false) + site_button("GitHub Actions", "https://github.com/Samwns/Obsidian-Fault-Script/actions", true))
+    return odl.section("release", "band", odl.div("wrap", body))
+}
+
+vein site_page() -> obsidian {
+    forge head = odl.icon("assets/ofs-256.png") + odl.css("assets/site.css")
+    forge body = site_topbar()
+    body = body + odl.main("top", site_hero() + site_pillars() + site_web() + site_benchmark() + site_docs() + site_release())
+    body = body + odl.footer("footer", "<div class=\"wrap\" data-i18n=\"footer\">OFS e um projeto experimental de linguagem compilada. Site gerado pela propria OFS para GitHub Pages.</div>") + odl.script("assets/site.js")
+    return odl.document("pt", "Obsidian Fault Script", "Official site and documentation for Obsidian Fault Script.", head, body)
+}
+
+vein site_page_root() -> obsidian {
+    forge head = odl.icon("ofs-256.png") + odl.css("site.css")
+    forge body = site_topbar_root()
+    body = body + odl.main("top", site_hero_root() + site_pillars() + site_web() + site_benchmark() + site_docs_root() + site_release())
+    body = body + odl.footer("footer", "<div class=\"wrap\" data-i18n=\"footer\">OFS e um projeto experimental de linguagem compilada. Site gerado pela propria OFS para GitHub Pages.</div>") + odl.script("site.js")
+    return odl.document("pt", "Obsidian Fault Script", "Official site and documentation for Obsidian Fault Script.", head, body)
+}
+
+vein site_topbar_root() -> obsidian {
+    forge brand = odl.a("brand", "#top", odl.img("ofs-256.png", "OFS logo") + odl.span("", "Obsidian Fault Script"))
+    forge langs = odl.div("lang", "<button type=\"button\" data-lang=\"pt\">PT</button><button type=\"button\" data-lang=\"en\">EN</button><button type=\"button\" data-lang=\"es\">ES</button>")
+    forge links = odl.div("links", "<a href=\"#docs\" data-i18n=\"navDocs\">Documentacao</a><a href=\"#benchmark\" data-i18n=\"navBench\">Benchmark</a><a href=\"#release\" data-i18n=\"navRelease\">Releases</a>" + langs)
+    return odl.header("topbar", odl.nav("wrap nav", brand + links))
+}
+
+vein site_hero_root() -> obsidian {
+    forge left = "<p class=\"kicker\" data-i18n=\"kicker\">Linguagem compilada hibrida</p>"
+    left = left + "<h1 data-i18n=\"title\">OFS compila, roda nativo e constroi a Web.</h1>"
+    left = left + "<p class=\"lead\" data-i18n=\"lead\">Uma linguagem self-hosted com LLVM, runtime nativo, ODL para documentos e OES para estilo, efeitos e movimento.</p>"
+    left = left + odl.div("actions", site_button("Comecar", "getting-started.html", false) + site_button("GitHub", "https://github.com/Samwns/Obsidian-Fault-Script", true))
+    forge code = "attach {odl}\nattach {oes}\n\nvein page() -> obsidian {\n    forge head = odl.css(\"site.css\")\n    forge body = odl.h1(\"OFS Web\")\n    return odl.document(\"pt\", \"OFS\", \"site oficial\", head, body)\n}"
+    return odl.section("", "hero", odl.div("wrap hero-grid", odl.div("", left) + site_terminal("exemplo.ofs", code)))
+}
+
+vein site_docs_root() -> obsidian {
+    forge links = site_doc_link("getting-started.html", "Getting Started", "Install, check, run, build and publish.")
+    links = links + site_doc_link("language.html", "OFS Language", "Syntax, types, modules and low-level modes.")
+    links = links + site_doc_link("compiler.html", "Compiler", "Self-hosting pipeline, LLVM IR and native linking.")
+    links = links + site_doc_link("odl.html", "ODL", "Obsidian Document Language reference.")
+    links = links + site_doc_link("oes.html", "OES", "Obsidian Effect Scripts reference.")
+    links = links + site_doc_link("webserver.html", "Web Server", "Serve OFS-generated sites over HTTP.")
+    links = links + site_doc_link("webui.html", "Web UI", "Components, pages and site composition.")
+    links = links + site_doc_link("stdlib.html", "Standard Library", "Modules distributed with OFS.")
+    links = links + site_doc_link("packages.html", "Packages", "Registry, install and publishing workflow.")
+    links = links + site_doc_link("vscode.html", "VS Code", "Syntax, commands and Go Live.")
+    links = links + site_doc_link("commands.html", "CLI Commands", "Check, run, build, IR and assembly.")
+    links = links + site_doc_link("benchmark.html", "Benchmark", "CPU, memory, startup, build and size.")
+    links = links + site_doc_link("github.html", "GitHub Recognition", "Linguist grammar, samples and registration.")
+    forge body = site_section_head("docsTitle", "Documentacao", "docsLead", "Guias tecnicos para linguagem, compilador, bootstrap, UI e publicacao.") + odl.div("docs-list", links)
+    return odl.section("docs", "band", odl.div("wrap", body))
+}
+
+vein page_nav() -> obsidian {
+    forge brand = odl.a("brand", "index.html", odl.img("ofs-256.png", "OFS logo") + odl.span("", "OFS"))
+    forge links = odl.div("links", "<a href=\"language.html\">Language</a><a href=\"odl.html\">ODL</a><a href=\"oes.html\">OES</a><a href=\"webui.html\">Web UI</a><a href=\"commands.html\">CLI</a><a href=\"benchmark.html\">Benchmark</a>")
+    return odl.header("topbar", odl.nav("wrap nav", brand + links))
+}
+
+vein page_shell(title: obsidian, subtitle: obsidian, content: obsidian) -> obsidian {
+    forge head = odl.icon("ofs-256.png") + odl.css("site.css")
+    forge hero = odl.section("", "band", odl.div("wrap", odl.p("kicker", "OFS documentation") + odl.h1(title) + odl.p("lead", subtitle)))
+    forge body = page_nav() + odl.main("top", hero + content) + odl.footer("footer", "<div class=\"wrap\">Generated by ODL and OES in OFS.</div>") + odl.script("site.js")
+    return odl.document("en", title + " - OFS", subtitle, head, body)
+}
+
+vein page_language() -> obsidian {
+    forge cards = site_card("Compiler", "Self-hosted frontend, LLVM IR output and native linking.", "")
+    cards = cards + site_card("Types", "stone, crystal, obsidian, bool, small integers, arrays and monoliths.", "")
+    cards = cards + site_card("Low-level", "fracture, abyss, fractal and bedrock blocks for explicit systems work.", "")
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", cards) + site_terminal("hello.ofs", "core main() {\n    echo(\"hello from OFS\")\n}")))
+    return page_shell("Language", "The technical core of Obsidian Fault Script.", content)
+}
+
+vein page_getting_started() -> obsidian {
+    forge code = "dist/ofs check app.ofs\ndist/ofs run app.ofs\ndist/ofs build app.ofs -o app\n./app"
+    forge cards = site_card("1. Install", "Download the latest release for Linux, macOS or Windows.", "")
+    cards = cards + site_card("2. Create", "Write a .ofs file with core main() as the entry point.", "")
+    cards = cards + site_card("3. Verify", "Use check before run or build to validate the program.", "")
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", cards) + site_terminal("terminal", code)))
+    return page_shell("Getting Started", "From installation to the first native OFS executable.", content)
+}
+
+vein page_compiler() -> obsidian {
+    forge flow = odl.div("workflow", odl.div("step", "<strong>Lexer</strong><br>Source to tokens.") + odl.div("step", "<strong>Parser</strong><br>Tokens to AST.") + odl.div("step", "<strong>Semantic</strong><br>Types and symbols.") + odl.div("step", "<strong>LLVM</strong><br>IR and native linking."))
+    forge content = odl.section("", "band", odl.div("wrap", flow + site_terminal("pipeline", "source.ofs -> tokens -> AST -> semantic model -> LLVM IR -> native executable")))
+    return page_shell("Compiler", "The self-hosted OFS frontend and LLVM native backend.", content)
+}
+
+vein page_odl() -> obsidian {
+    forge code = "attach {odl}\n\nvein page() -> obsidian {\n    forge head = odl.css(\"site.css\")\n    forge body = odl.header(\"topbar\", odl.h1(\"OFS Web\"))\n    body = body + odl.main(\"content\", odl.section(\"docs\", \"band\", odl.p(\"lead\", \"Built with ODL\")))\n    return odl.document(\"en\", \"OFS Web\", \"ODL document\", head, body)\n}"
+    forge api = "<table class=\"api-table\"><thead><tr><th>Function</th><th>Purpose</th></tr></thead><tbody><tr><td><code>document</code></td><td>Complete browser document</td></tr><tr><td><code>tag / void_tag</code></td><td>Generic element construction</td></tr><tr><td><code>section / article / nav</code></td><td>Semantic structure</td></tr><tr><td><code>a / img / code_block</code></td><td>Content helpers</td></tr></tbody></table>"
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Documents", "ODL generates browser documents from typed OFS functions.", "") + site_card("Components", "Any vein returning obsidian can be reused as a component.", "") + site_card("Output", "HTML is a generated artifact, not the authored language.", "")) + site_terminal("page.ofs", code) + odl.div("table-wrap", api)))
+    return page_shell("ODL", "Obsidian Document Language: the structural document layer for OFS sites.", content)
+}
+
+vein page_oes() -> obsidian {
+    forge code = "attach {oes}\n\nvein theme() -> obsidian {\n    forge s = oes.rule(\":root\", oes.var(\"accent\", \"#29e0bd\"))\n    s = s + oes.rule(\".button\", oes.prop(\"background\", oes.use(\"accent\")))\n    s = s + oes.media(\"(max-width:700px)\", \".grid{grid-template-columns:1fr}\")\n    s = s + oes.keyframes(\"enter\", oes.frame(\"from\", \"opacity:0\") + oes.frame(\"to\", \"opacity:1\"))\n    return s\n}"
+    forge api = "<table class=\"api-table\"><thead><tr><th>Function</th><th>Purpose</th></tr></thead><tbody><tr><td><code>prop</code></td><td>Typed style property fragment</td></tr><tr><td><code>rule</code></td><td>Selector and declaration block</td></tr><tr><td><code>var / use</code></td><td>Design token declaration and reference</td></tr><tr><td><code>media</code></td><td>Responsive rule group</td></tr><tr><td><code>keyframes / frame</code></td><td>Animation definitions</td></tr></tbody></table>"
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Tokens", "Colors, spacing and motion values remain in OFS source.", "") + site_card("Responsive", "Media rules are generated through OES functions.", "") + site_card("Effects", "Transitions and keyframes form the effect layer.", "")) + site_terminal("theme.ofs", code) + odl.div("table-wrap", api)))
+    return page_shell("OES", "Obsidian Effect Scripts: style, responsive behavior, and motion for ODL documents.", content)
+}
+
+vein page_webserver() -> obsidian {
+    forge code = "attach {webserver}\n\ncore main() {\n    webserver.serve_html_forever(8080, \"<h1>OFS server</h1>\")\n}"
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("serve_once", "Accept one HTTP request and exit.", "") + site_card("serve_forever", "Keep the native server process active.", "") + site_card("HTML helpers", "Send generated ODL output with a text/html response.", "")) + site_terminal("server.ofs", code)))
+    return page_shell("Web Server", "Native HTTP serving from an OFS executable.", content)
+}
+
+vein page_webui() -> obsidian {
+    forge code = "attach {webui}\n\ncore main() {\n    forge body = webui.nav(\"OFS\", webui.button(\"Docs\", \"#docs\"))\n    body = body + webui.grid(webui.card(\"ODL\", \"Documents\") + webui.card(\"OES\", \"Effects\"))\n    webui.serve(8080, \"OFS Web\", body)\n}"
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Components", "Navigation, hero, button, panel, grid and card helpers.", "") + site_card("Composition", "Components are ordinary OFS functions returning obsidian.", "") + site_card("Go Live", "The extension starts only explicit OFS web programs.", "")) + site_terminal("webui.ofs", code)))
+    return page_shell("Web UI", "The component layer built on ODL, OES, and the native web server.", content)
+}
+
+vein page_stdlib() -> obsidian {
+    forge modules = site_card("Core", "core, math, string, io and fmt.", "")
+    modules = modules + site_card("Systems", "bedrock, memory-modes, rift and low-level runtime helpers.", "")
+    modules = modules + site_card("Visual", "canvas, window, ui, ODL, OES, webui and webserver.", "")
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", modules) + site_terminal("attach", "attach {math}\nattach {string}\nattach {odl}\nattach {oes}\nattach {webui}")))
+    return page_shell("Standard Library", "Modules distributed with the OFS compiler and installers.", content)
+}
+
+vein page_packages() -> obsidian {
+    forge code = "bash packages/install_library.sh odl\nbash packages/install_library.sh oes\nbash packages/build_packages.sh"
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Registry", "packages/registry.json indexes published OFS libraries.", "") + site_card("Archives", "Each package is distributed as a versioned tar.gz artifact.", "") + site_card("Channels", "Packages may expose alpha, stable and latest channels.", "")) + site_terminal("packages", code)))
+    return page_shell("Packages", "Install, build, publish, and version OFS libraries.", content)
+}
+
+vein page_vscode() -> obsidian {
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Syntax", "TextMate grammar for .ofs source files.", "") + site_card("Commands", "Check, run, build, IR, assembly and format actions.", "") + site_card("Go Live", "Starts explicit webui/webserver projects using the OFS compiler.", "")) + site_terminal("settings.json", "\"ofs.goLivePort\": 8080\n\"ofs.compilerPath\": \"dist/ofs\"")))
+    return page_shell("VS Code", "Language support, diagnostics, commands, snippets, and Go Live.", content)
+}
+
+vein page_github() -> obsidian {
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Repository override", "*.ofs is marked as OFS through .gitattributes.", "") + site_card("Grammar", "source.ofs TextMate grammar is shipped by the VS Code extension.", "") + site_card("Global recognition", "A GitHub Linguist contribution contains metadata, grammar and samples.", "")) + site_terminal("languages.yml", "OFS:\n  type: programming\n  color: \"#2A0845\"\n  extensions:\n    - \".ofs\"\n  tm_scope: source.ofs")))
+    return page_shell("GitHub Recognition", "How OFS source detection and syntax highlighting are registered.", content)
+}
+
+vein page_web() -> obsidian {
+    forge flow = odl.div("workflow", odl.div("step", "<strong>1. ODL</strong><br>Declare document structure in OFS.") + odl.div("step", "<strong>2. OES</strong><br>Generate style tokens, rules and animation.") + odl.div("step", "<strong>3. Webserver</strong><br>Serve generated output locally.") + odl.div("step", "<strong>4. Pages</strong><br>Publish generated artifacts."))
+    forge code = "attach {odl}\nattach {oes}\n\nvein page() -> obsidian {\n    return odl.document(\"pt\", \"Site\", \"feito em OFS\", \"\", odl.h1(\"OFS Web\"))\n}"
+    forge content = odl.section("", "band", odl.div("wrap", flow + site_terminal("odl.ofs", code)))
+    return page_shell("ODL + OES", "The OFS-native answer to HTML, CSS, PHP templates and React-style components.", content)
+}
+
+vein page_commands() -> obsidian {
+    forge code = "dist/ofs check app.ofs\ndist/ofs run app.ofs\ndist/ofs build app.ofs -o app\ndist/ofs ir app.ofs -o app.ll\ndist/ofs asm app.ofs -o app.s"
+    forge content = odl.section("", "band", odl.div("wrap", site_terminal("commands", code) + odl.div("grid", site_card("check", "Validate syntax and semantics without native output.", "") + site_card("run", "Compile and execute immediately.", "") + site_card("build", "Produce a native executable linked with the runtime.", ""))))
+    return page_shell("Commands", "Daily commands for OFS development.", content)
+}
+
+vein page_design() -> obsidian {
+    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Tokens", "OES keeps colors, spacing and motion as OFS-generated style tokens.", "") + site_card("Components", "Site pieces are functions returning ODL fragments.", "") + site_card("Motion", "Bars, cards and terminal surfaces use OES keyframes.", "")) + site_terminal("oes.ofs", "s = s + oes.rule(\".btn\", oes.prop(\"border-radius\", \"8px\"))\ns = s + oes.keyframes(\"grow\", oes.frame(\"from\", \"width:0\"))")))
+    return page_shell("Design System", "How the official site is styled without authoring plain CSS as source.", content)
+}
+
+vein page_benchmark() -> obsidian {
+    forge summary = "<div class=\"metric-summary\"><div class=\"metric-stat\"><strong>3 runs</strong><span>CPU, RSS and build</span></div><div class=\"metric-stat\"><strong>10 runs</strong><span>Process startup</span></div><div class=\"metric-stat\"><strong>wait4</strong><span>Native process measurement</span></div><div class=\"metric-stat\"><strong>checksum</strong><span>Identical output required</span></div></div>"
+    forge content = odl.section("benchmark", "band", odl.div("wrap", summary + site_benchmark() + odl.div("card", "<p>The benchmark source and runner live in <code>website/benchmarks</code>. Lower values are better. Runtime dependencies are excluded from artifact size, and measurements describe only the documented machine and workload.</p>")))
+    return page_shell("Benchmark", "Reproducible CPU, memory, startup, build-time, and artifact-size measurements.", content)
+}

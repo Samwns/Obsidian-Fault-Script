@@ -92,25 +92,25 @@
       }
     },
     {
-      "name": "benitoite",
-      "description": "OFS-native markup DSL for generating browser documents without authoring HTML directly",
+      "name": "odl",
+      "description": "Obsidian Document Language for generating browser documents from OFS source",
       "author": "OFS Team",
       "license": "MIT",
-      "tags": ["web", "markup", "html", "dsl", "benitoite"],
+      "tags": ["web", "markup", "html", "dsl", "odl"],
       "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
       "versions": {
-        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/benitoite.ofs" }
+        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/odl.ofs" }
       }
     },
     {
-      "name": "serpentine",
-      "description": "OFS-native style DSL paired with Benitoite for generating CSS-like browser styles",
+      "name": "oes",
+      "description": "Obsidian Effect Scripts for style rules, responsive behavior, and motion",
       "author": "OFS Team",
       "license": "MIT",
-      "tags": ["web", "style", "css", "dsl", "serpentine"],
+      "tags": ["web", "style", "css", "dsl", "oes"],
       "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
       "versions": {
-        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/serpentine.ofs" }
+        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/oes.ofs" }
       }
     },
     {

@@ -1,0 +1,10 @@
+{
+  "name": "language-ofs",
+  "version": "1.0.0",
+  "description": "TextMate grammar for Obsidian Fault Script",
+  "license": "MIT",
+  "repository": "https://github.com/Samwns/obsidian-fault-script-grammar",
+  "files": [
+    "syntaxes/ofs.tmLanguage.json"
+  ]
+}

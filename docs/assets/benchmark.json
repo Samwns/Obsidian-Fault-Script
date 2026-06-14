@@ -1,1 +1,215 @@
-{"benchmark":"fib(25..32) iterative repeated 5,000,000 times","runs_per_language":3,"date_utc":"2026-06-14","machine":"Linux-6.8.0-1052-azure-x86_64-with-glibc2.39","note":"Local documentation benchmark. Smaller time is better. Python is slower here because 8.2346s is much greater than 0.0239s. These numbers are smoke measurements, not universal language rankings.","results":[{"language":"OFS","best_seconds":0.0239,"mean_seconds":0.0254,"max_seconds":0.0279,"output":"3488433750000"},{"language":"C","best_seconds":0.0238,"mean_seconds":0.0278,"max_seconds":0.0344,"output":"3488433750000"},{"language":"C++","best_seconds":0.0645,"mean_seconds":0.0801,"max_seconds":0.0966,"output":"3488433750000"},{"language":"Java","best_seconds":0.113,"mean_seconds":0.1441,"max_seconds":0.2023,"output":"3488433750000"},{"language":"C#","best_seconds":0.1031,"mean_seconds":0.1145,"max_seconds":0.1362,"output":"3488433750000"},{"language":"Python","best_seconds":8.2346,"mean_seconds":8.4333,"max_seconds":8.6425,"output":"3488433750000"},{"language":"Rust","best_seconds":null,"mean_seconds":null,"max_seconds":null,"output":"rustc not installed in this workspace"}],"suites":[{"name":"OFS semantic check: official site","summary":"dist/ofs check ofs/site/build_site.ofs","best_seconds":0.3541,"status":"pass"},{"name":"OFS native build: site generator","summary":"dist/ofs build ofs/site/build_site.ofs -o /tmp/ofs_build_site_bench","best_seconds":0.6337,"status":"pass"},{"name":"OFS generated site emit","summary":"Runs the compiled site generator and writes Pages artifacts","best_seconds":0.0131,"status":"pass"},{"name":"OFS web example check","summary":"dist/ofs check ofs/examples/webui_site.ofs","best_seconds":0.1247,"status":"pass"},{"name":"Web server/page smoke","summary":"Local HTTP checks for index, docs pages, style, script and benchmark JSON","best_seconds":0.0100,"status":"pass"}]}
+{
+  "schema": 2,
+  "generated_at_utc": "2026-06-14T02:38:48.325Z",
+  "machine": {
+    "platform": "linux",
+    "release": "6.8.0-1052-azure",
+    "architecture": "x64",
+    "cpu": "AMD EPYC 9V74 80-Core Processor",
+    "logical_cores": 2,
+    "total_memory_bytes": 8330440704,
+    "node": "v24.14.0"
+  },
+  "methodology": {
+    "cpu": "Iterative Fibonacci with n varying from 25 to 32 across 5,000,000 iterations. Three process runs; lower is better.",
+    "memory": "Peak resident set size reported by wait4/getrusage for the CPU process. Three runs; lower is better.",
+    "startup": "Minimal hello-world process, ten runs. Includes runtime/VM startup; lower is better.",
+    "compile": "Optimized build of the CPU source, three runs. Python measures bytecode compilation; lower is better.",
+    "artifact": "Bytes of the primary executable, class, DLL, or bytecode artifact. Runtime dependencies are not included.",
+    "warning": "Local measurements describe this machine and workload only. They are not universal language rankings."
+  },
+  "expected_checksum": "3488433750000",
+  "results": [
+    {
+      "language": "OFS",
+      "available": true,
+      "correct": true,
+      "checksum": "3488433750000",
+      "cpu_ms": {
+        "best": 35.7469,
+        "median": 36.5367,
+        "mean": 36.9551,
+        "max": 38.5817
+      },
+      "memory_rss_kb": {
+        "best": 1792,
+        "median": 1792,
+        "mean": 1792,
+        "max": 1792
+      },
+      "startup_ms": {
+        "best": 1.1854,
+        "median": 1.7312,
+        "mean": 2.1035,
+        "max": 5.3813
+      },
+      "compile_ms": {
+        "best": 194.6525,
+        "median": 240.9423,
+        "mean": 246.8147,
+        "max": 304.8494
+      },
+      "artifact_bytes": 28224
+    },
+    {
+      "language": "C",
+      "available": true,
+      "correct": true,
+      "checksum": "3488433750000",
+      "cpu_ms": {
+        "best": 104.5494,
+        "median": 117.6114,
+        "mean": 127.7841,
+        "max": 161.1914
+      },
+      "memory_rss_kb": {
+        "best": 1408,
+        "median": 1408,
+        "mean": 1450.6667,
+        "max": 1536
+      },
+      "startup_ms": {
+        "best": 1.2007,
+        "median": 1.301,
+        "mean": 1.3357,
+        "max": 1.645
+      },
+      "compile_ms": {
+        "best": 77.4465,
+        "median": 79.7164,
+        "mean": 83.4948,
+        "max": 93.3214
+      },
+      "artifact_bytes": 15968
+    },
+    {
+      "language": "C++",
+      "available": true,
+      "correct": true,
+      "checksum": "3488433750000",
+      "cpu_ms": {
+        "best": 62.2342,
+        "median": 64.0679,
+        "mean": 68.6694,
+        "max": 79.7062
+      },
+      "memory_rss_kb": {
+        "best": 3456,
+        "median": 3584,
+        "mean": 3584,
+        "max": 3712
+      },
+      "startup_ms": {
+        "best": 2.164,
+        "median": 2.7503,
+        "mean": 2.6129,
+        "max": 3.0797
+      },
+      "compile_ms": {
+        "best": 479.5996,
+        "median": 485.1606,
+        "mean": 518.3198,
+        "max": 590.1993
+      },
+      "artifact_bytes": 16312
+    },
+    {
+      "language": "Java",
+      "available": true,
+      "correct": true,
+      "checksum": "3488433750000",
+      "cpu_ms": {
+        "best": 108.7011,
+        "median": 109.8018,
+        "mean": 110.9073,
+        "max": 114.219
+      },
+      "memory_rss_kb": {
+        "best": 44236,
+        "median": 44336,
+        "mean": 44345.3333,
+        "max": 44464
+      },
+      "startup_ms": {
+        "best": 49.873,
+        "median": 55.246,
+        "mean": 61.4508,
+        "max": 90.4845
+      },
+      "compile_ms": {
+        "best": 695.2652,
+        "median": 738.0366,
+        "mean": 747.8971,
+        "max": 810.3894
+      },
+      "artifact_bytes": 671
+    },
+    {
+      "language": "C#",
+      "available": true,
+      "correct": true,
+      "checksum": "3488433750000",
+      "cpu_ms": {
+        "best": 152.9146,
+        "median": 158.6676,
+        "mean": 173.4176,
+        "max": 208.6707
+      },
+      "memory_rss_kb": {
+        "best": 28032,
+        "median": 28084,
+        "mean": 28133.3333,
+        "max": 28284
+      },
+      "startup_ms": {
+        "best": 49.2018,
+        "median": 52.1961,
+        "mean": 55.1473,
+        "max": 75.2989
+      },
+      "compile_ms": {
+        "best": 1818.1928,
+        "median": 1868.3101,
+        "mean": 2886.6667,
+        "max": 4973.4972
+      },
+      "artifact_bytes": 4608
+    },
+    {
+      "language": "Python",
+      "available": true,
+      "correct": true,
+      "checksum": "3488433750000",
+      "cpu_ms": {
+        "best": 4505.6936,
+        "median": 4751.9229,
+        "mean": 4691.1554,
+        "max": 4815.8496
+      },
+      "memory_rss_kb": {
+        "best": 9856,
+        "median": 9856,
+        "mean": 9898.6667,
+        "max": 9984
+      },
+      "startup_ms": {
+        "best": 20.3624,
+        "median": 23.0975,
+        "mean": 24.6923,
+        "max": 39.7727
+      },
+      "compile_ms": {
+        "best": 54.4535,
+        "median": 55.2046,
+        "mean": 55.3387,
+        "max": 56.3579
+      },
+      "artifact_bytes": 624
+    },
+    {
+      "language": "Rust",
+      "available": false,
+      "reason": "toolchain not installed"
+    }
+  ]
+}
