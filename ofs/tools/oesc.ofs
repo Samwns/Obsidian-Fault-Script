@@ -24,6 +24,71 @@ vein oes_property_name(name: obsidian) -> obsidian {
     return name
 }
 
+vein oes_has_colon(value: obsidian) -> bool {
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        if (ofs_str_char_at(value, i) == 58) { return true }
+        i++
+    }
+    return false
+}
+
+vein oes_has_equals(value: obsidian) -> bool {
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        if (ofs_str_char_at(value, i) == 61) { return true }
+        i++
+    }
+    return false
+}
+
+vein oes_colon_before_space(value: obsidian) -> bool {
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        forge c = ofs_str_char_at(value, i)
+        if (c == 58) { return true }
+        if (c == 32 || c == 9 || c == 34) { return false }
+        i++
+    }
+    return false
+}
+
+vein oes_before_char(value: obsidian, marker: stone) -> obsidian {
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        if (ofs_str_char_at(value, i) == marker) {
+            return wl_trim(ofs_str_substr(value, 0, i))
+        }
+        i++
+    }
+    return wl_trim(value)
+}
+
+vein oes_after_char(value: obsidian, marker: stone) -> obsidian {
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        if (ofs_str_char_at(value, i) == marker) {
+            return wl_trim(ofs_str_substr(value, i + 1, ofs_str_len(value) - i - 1))
+        }
+        i++
+    }
+    return ""
+}
+
+vein oes_unquoted_value(clean: obsidian) -> obsidian {
+    forge quoted = wl_quoted_at(clean, 0)
+    if (!ofs_str_eq(quoted, "")) { return quoted }
+    if (oes_has_equals(clean)) { return oes_after_char(clean, 61) }
+    if (oes_colon_before_space(clean)) { return oes_after_char(clean, 58) }
+    return wl_after_first_word(clean)
+}
+
+vein oes_gem_name(clean: obsidian) -> obsidian {
+    forge rest = wl_after_first_word(clean)
+    if (oes_has_colon(rest)) { return oes_before_char(rest, 58) }
+    return wl_first_word(rest)
+}
+
 vein oes_value(value: obsidian) -> obsidian {
     forge out = wl_unescape(value)
     forge result = ""
@@ -69,11 +134,14 @@ vein oes_compile(source: obsidian) -> obsidian {
             ofs_array_pop(indents)
         }
         forge command = wl_first_word(clean)
-        forge content = wl_quoted_at(clean, 0)
+        forge content = oes_unquoted_value(clean)
+        if (oes_colon_before_space(clean) && !ofs_str_eq(command, "gem") && !ofs_str_eq(command, "token") && !ofs_str_eq(command, "tone")) {
+            command = oes_before_char(clean, 58)
+        }
         if (ofs_str_eq(command, "raw") || ofs_str_eq(command, "css")) {
             out = out + wl_unescape(content)
         } else if (ofs_str_eq(command, "token") || ofs_str_eq(command, "gem") || ofs_str_eq(command, "tone")) {
-            forge name = wl_first_word(wl_after_first_word(clean))
+            forge name = oes_gem_name(clean)
             out = out + ":root{--" + name + ":" + oes_value(content) + ";}"
         } else if (ofs_str_eq(command, "media") || ofs_str_eq(command, "veil")) {
             out = out + "@media " + content + "{"

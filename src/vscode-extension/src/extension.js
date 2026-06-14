@@ -1355,6 +1355,9 @@ function runExecFile(command, args, options = {}) {
 }
 
 function isWebSiteDocument(document) {
+  if (document.languageId === 'html' || document.fileName.toLowerCase().endsWith('.html')) {
+    return true;
+  }
   if (document.languageId === 'odl' || document.fileName.toLowerCase().endsWith('.odl')) {
     return true;
   }
@@ -1367,8 +1370,10 @@ function isWebSiteDocument(document) {
 
 async function goLiveCurrentFile() {
   const editor = vscode.window.activeTextEditor;
-  if (!editor || !['ofs', 'odl'].includes(editor.document.languageId)) {
-    vscode.window.showErrorMessage('Open an OFS web program or an .odl document to Go Live.');
+  const activeFile = editor?.document?.fileName?.toLowerCase() || '';
+  const isHtmlTarget = Boolean(editor) && (editor.document.languageId === 'html' || activeFile.endsWith('.html'));
+  if (!editor || (!['ofs', 'odl'].includes(editor.document.languageId) && !isHtmlTarget)) {
+    vscode.window.showErrorMessage('Open an OFS web program, an .odl document, or a generated .html target to Go Live.');
     return;
   }
 
@@ -1387,6 +1392,55 @@ async function goLiveCurrentFile() {
   const file = editor.document.fileName;
   const cwd = path.dirname(file);
   const port = vscode.workspace.getConfiguration().get('ofs.goLivePort', 8080);
+  if (isHtmlTarget) {
+    let liveVersion = Date.now();
+    await terminateActiveExecution({ silent: true });
+
+    const liveReloadScript = () => `<script>(()=>{let v=${liveVersion};setInterval(async()=>{try{const n=Number(await (await fetch('/__ofs_live')).text());if(n&&n!==v)location.reload()}catch{}},450)})();</script>`;
+    const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp', '.ico': 'image/x-icon' };
+    const rootDir = path.resolve(cwd);
+    const liveServer = http.createServer((request, response) => {
+      const requested = decodeURIComponent((request.url || '/').split('?')[0]);
+      if (requested === '/__ofs_live') {
+        response.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+        response.end(String(liveVersion));
+        return;
+      }
+      const relative = requested === '/' ? path.basename(file) : requested.replace(/^\/+/, '');
+      const target = path.resolve(rootDir, relative);
+      if (!target.startsWith(rootDir + path.sep) && target !== rootDir) {
+        response.writeHead(403).end('Forbidden');
+        return;
+      }
+      fs.readFile(target, (error, data) => {
+        if (error) {
+          response.writeHead(404).end('Not found');
+          return;
+        }
+        const ext = path.extname(target).toLowerCase();
+        if (ext === '.html') {
+          data = Buffer.from(String(data).replace('</body>', `${liveReloadScript()}</body>`));
+        }
+        response.writeHead(200, { 'Content-Type': mime[ext] || 'application/octet-stream', 'Cache-Control': 'no-store' });
+        response.end(data);
+      });
+    });
+    await new Promise((resolve, reject) => liveServer.once('error', reject).listen(port, '127.0.0.1', resolve));
+    const watchers = [fs.watch(file, () => { liveVersion = Date.now(); })];
+    for (const entry of fs.readdirSync(cwd)) {
+      if (/\.(css|js|mjs|png|jpe?g|gif|svg|webp|ico)$/i.test(entry)) {
+        watchers.push(fs.watch(path.join(cwd, entry), () => { liveVersion = Date.now(); }));
+      }
+    }
+    activeExecution = { paused: false, terminal: null, childProcess: null, shellExecution: null, sourceFile: file, liveServer, watchers };
+    await setExecutionContext(true, false);
+    const url = `http://127.0.0.1:${port}`;
+    vscode.window.showInformationMessage(`HTML Go Live running with live reload at ${url}`, 'Open Browser').then((choice) => {
+      if (choice === 'Open Browser') vscode.env.openExternal(vscode.Uri.parse(url));
+    });
+    return;
+  }
+
   if (editor.document.languageId === 'odl') {
     const outputDir = path.join(cwd, '.ofs-live');
     const outputFile = path.join(outputDir, 'index.html');

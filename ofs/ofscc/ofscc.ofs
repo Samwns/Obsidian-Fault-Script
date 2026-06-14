@@ -18,7 +18,8 @@ forge _expanded_paths: Array<obsidian> = []
 
 vein path_seen(path: obsidian) -> bool {
     forge i = 0
-    while (i < ofs_array_len(_expanded_paths)) {
+    forge count = ofs_array_len(_expanded_paths)
+    while (i < count) {
         forge p: obsidian = ofs_array_get(_expanded_paths, i)
         if (ofs_str_eq(p, path)) { return true }
         i++

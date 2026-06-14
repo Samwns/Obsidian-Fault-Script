@@ -10,7 +10,6 @@ vein write_pages(prefix: obsidian) {
     write_file(prefix + "oes.html", page_oes())
     write_file(prefix + "playground.html", page_playground())
     write_file(prefix + "web.html", page_web())
-    write_file(prefix + "frontend.html", page_frontend())
     write_file(prefix + "webserver.html", page_webserver())
     write_file(prefix + "webui.html", page_webui())
     write_file(prefix + "stdlib.html", page_stdlib())

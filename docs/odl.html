@@ -1,41 +1,4 @@
-<!doctype html>
-<html lang="pt">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ODL - OFS</title>
-  <meta name="description" content="Linguagem de documentos da OFS, independente do formato usado para hospedagem.">
-  <link rel="icon" href="ofs-256.png">
-  <link rel="stylesheet" href="site.css">
-</head>
-<body>
-  <header class="topbar">
-    <nav class="wrap nav">
-      <a class="brand" href="index.html"><img src="ofs-256.png" alt="OFS logo"><span>OFS</span></a>
-      <div class="links">
-        <a href="language.html">Linguagem</a><a href="odl.html">ODL</a><a href="oes.html">OES</a><a href="web.html">Web</a><a href="downloads.html">Downloads</a><a href="playground.html">Tradutor</a><a href="commands.html">CLI</a><a href="benchmark.html">Benchmark</a>
-        <div class="nav-tools">
-          <select class="language-select" data-language-select aria-label="Idioma"><option data-href="index.html" value="pt" selected>Portugues</option><option data-href="en/index.html" value="en">English</option><option data-href="es/index.html" value="es">Espanol</option></select>
-          <span class="search-box"><button class="search-button" type="button" title="Buscar" aria-label="Buscar" aria-expanded="false">&#128269;</button><input data-site-search type="search" placeholder="Buscar" aria-label="Buscar"><span class="search-count" aria-live="polite"></span></span>
-        </div>
-      </div>
-    </nav>
-  </header>
-  <main id="top">
-    <section class="band"><div class="wrap"><h1>ODL</h1><p class="lead">Linguagem de documentos da OFS, independente do formato usado para hospedagem.</p></div></section>
-    <section class="band">
-      <div class="wrap doc-layout">
-        <aside class="toc"><strong>Nesta pagina</strong><a href="#identity">Identidade</a><a href="#grammar">Gramatica</a><a href="#components">Componentes</a><a href="#behavior">Comportamento</a><a href="#targets">Targets</a><a href="#api">Referencia</a></aside>
-        <div class="doc-main">
-          <section class="doc-section" id="identity">
-            <h2>ODL nao e HTML</h2>
-            <div class="doc-intro"><p>ODL e uma linguagem de documentos com tokens, componentes, Markdown e pontos de comportamento proprios. HTML e um target opcional do compilador para navegadores e hospedagens existentes; nao define a sintaxe nem o modelo da ODL.</p></div>
-            <div class="callout">Arquivos .odl continuam sendo a fonte oficial. A sintaxe indentada atual permanece valida; a forma com chaves e argumentos tipados e uma evolucao compativel para componentes mais fortes.</div>
-          </section>
-          <section class="doc-section" id="grammar">
-            <h2>Gramatica e estrutura</h2>
-            <div class="doc-intro"><p>Hoje cada linha possui uma forma, qualificadores opcionais de classe/id e argumentos entre aspas. A indentacao determina parentesco. A forma tipada tambem aceita blocos com chaves, chamadas com parenteses e fechamento principal com <code>end</code>, sem remover a gramatica atual.</p></div>
-            <div class="terminal"><div class="terminal-head">page.odl atual</div><pre><code>page "OFS Web" "pt"
+<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ODL - OFS</title><meta name="description" content="Linguagem de documentos da OFS, independente do formato usado para hospedagem."><link rel="icon" href="ofs-256.png"><link rel="stylesheet" href="site.css"></head><body><header class="topbar"><nav class="wrap nav"><a class="brand" href="index.html"><img src="ofs-256.png" alt="OFS logo"><span class="">OFS</span></a><div class="links"><a href="language.html">Linguagem</a><a href="odl.html">ODL</a><a href="oes.html">OES</a><a href="web.html">Web</a><a href="downloads.html">Downloads</a><a href="playground.html">Tradutor</a><a href="commands.html">CLI</a><a href="benchmark.html">Benchmark</a><div class="nav-tools"><select class="language-select" data-language-select aria-label="Idioma"><option data-href="index.html" value="pt" selected>Portugues</option><option data-href="en/index.html" value="en">English</option><option data-href="es/index.html" value="es">Espanol</option></select><span class="search-box"><button class="search-button" type="button" title="Buscar" aria-label="Buscar" aria-expanded="false">&#128269;</button><input data-site-search type="search" placeholder="Buscar" aria-label="Buscar"><span class="search-count" aria-live="polite"></span></span></div></div></nav></header><main id="top"><section class="band"><div class="wrap"><h1>ODL</h1><p class="lead">Linguagem de documentos da OFS, independente do formato usado para hospedagem.</p></div></section><section class="band"><div class="wrap doc-layout"><aside class="toc"><strong>Nesta pagina</strong><a href="#identity">Identidade</a><a href="#grammar">Gramatica</a><a href="#components">Componentes</a><a href="#behavior">Comportamento</a><a href="#targets">Targets</a><a href="#api">Referencia</a></aside><div class="doc-main"><section class="doc-section" id="identity"><h2>ODL nao e HTML</h2><div class="doc-intro"><p class="">ODL e uma linguagem de documentos com tokens, hierarquia por indentacao, componentes, Markdown e pontos de comportamento proprios. HTML e um target opcional do compilador para navegadores e hospedagens existentes; nao define a sintaxe nem o modelo da ODL.</p></div><div class="callout">Arquivos .odl continuam sendo a fonte oficial. Um projeto pode versionar somente ODL/OES e gerar artefatos no build.</div></section><section class="doc-section" id="grammar"><h2>Gramatica e estrutura</h2><div class="doc-intro"><p class="">Cada linha possui uma forma, qualificadores opcionais de classe/id e argumentos entre aspas. A indentacao determina parentesco. Texto comum e escapado; somente `raw` ignora essa protecao.</p></div><div class="terminal"><div class="terminal-head">page.odl</div><pre><code>page "OFS Web" "pt"
 skin "theme.oes"
 flow
   deck.topbar
@@ -46,61 +9,10 @@ flow
       mark "## Documento ODL\nConteudo com **Markdown**."
       tile.status
         text "Componente estrutural reutilizavel"
-  spark "app.js"</code></pre></div>
-            <div class="terminal"><div class="terminal-head">page.odl tipado</div><pre><code>page "OFS Web" "pt"
-  skin("theme.oes")
-
-  flow {
-    deck.topbar {
-      title1("OFS Web")
-      link.button("Docs", "#docs")
-    }
-
-    stage#content {
-      band.docs {
-        use Notice(title: "HMR Ativo", status: "success")
-      }
-    }
-  }
-end</code></pre></div>
-          </section>
-          <section class="doc-section" id="components">
-            <h2>Componentes ODL</h2>
-            <div class="doc-intro"><p><code>component nome</code> declara uma unidade reutilizavel e <code>use nome</code> cria um ponto de montagem. Quando a assinatura tipada estiver ativa, props como <code>title: String</code> e <code>status: String</code> viram contrato do componente. Se uma versao nova reduzir a forca da tipagem, a regra e manter a tipagem OFS atual.</p></div>
-            <div class="terminal"><div class="terminal-head">components.odl atual</div><pre><code>component notice
+  spark "app.js"</code></pre></div></section><section class="doc-section" id="components"><h2>Componentes ODL</h2><div class="doc-intro"><p class="">`component nome` declara uma unidade reutilizavel e `use nome` cria um ponto de montagem. No compilador atual, componentes sao preservados como templates no target web; composicao OFS tambem pode ser feita por funcoes que retornam `obsidian`.</p></div><div class="terminal"><div class="terminal-head">components.odl</div><pre><code>component notice
   tile.notice
     title2 "Aviso"
     text "Conteudo reutilizavel"
 
 flow
-  use notice</code></pre></div>
-            <div class="terminal"><div class="terminal-head">Notice tipado</div><pre><code>component Notice(title: String, status: String)
-  tile.notice(data-status: status) {
-    title2(title)
-    text("Componente injetado com tipagem forte e escopo fechado.")
-  }
-end</code></pre></div>
-          </section>
-          <section class="doc-section" id="behavior">
-            <h2>Estado, eventos e servidor</h2>
-            <div class="doc-intro"><p>ODL define onde comportamento entra. <code>wire</code> carrega script classico, <code>spark</code> carrega modulo, <code>pulse</code> insere comportamento inline e OFS/webserver executa logica nativa no servidor. A meta do target web e gerar componentes reativos pre-compilados que atualizam nos reais diretamente, sem diff de DOM virtual.</p></div>
-            <div class="grid"><article class="card"><h3>Browser</h3><p><code>wire</code>, <code>spark</code> e <code>pulse</code> conectam comportamento JS/WASM no build final.</p></article><article class="card"><h3>Servidor</h3><p>OFS e <code>webserver</code> tratam processo, HTTP e dados.</p></article><article class="card"><h3>Hot state</h3><p>O modo dev deve aplicar diff visual sem refresh e sem perder dados digitados.</p></article></div>
-          </section>
-          <section class="doc-section" id="targets">
-            <h2>Targets e hospedagem</h2>
-            <div class="doc-intro"><p>O compilador atual possui target web para interoperar com os navegadores existentes. ODL pode ser servido como fonte com MIME proprio, traduzido para inspecao ou compilado para um documento web.</p></div>
-            <div class="callout">Target e formato de distribuicao nao sao a linguagem. O mesmo principio permite adicionar targets nativos sem redesenhar a gramatica ODL.</div>
-          </section>
-          <section class="doc-section" id="api">
-            <h2>Referencia atual</h2>
-            <div class="doc-intro"><p>Esta tabela descreve a semantica ODL e, separadamente, como o target web atual a representa.</p></div>
-            <div class="table-wrap"><table class="api-table"><thead><tr><th>Forma</th><th>Semantica ODL</th><th>Target web atual</th></tr></thead><tbody><tr><td><code>page</code></td><td>Raiz, titulo e idioma. Pode fechar com <code>end</code> na forma tipada.</td><td>Documento navegavel.</td></tr><tr><td><code>skin</code></td><td>Vincula uma camada de efeitos OES.</td><td>Stylesheet compilado.</td></tr><tr><td><code>flow</code></td><td>Fluxo principal do documento.</td><td>Corpo do documento.</td></tr><tr><td><code>deck / stage / band / tile</code></td><td>Navegacao, palco principal, secao e unidade de conteudo.</td><td>Nos semanticos equivalentes.</td></tr><tr><td><code>mark</code></td><td>Conteudo Markdown integrado.</td><td>Nos de texto formatado.</td></tr><tr><td><code>component / use</code></td><td>Declaracao e montagem; props tipadas sao contratos quando declaradas.</td><td>Template e ponto de montagem.</td></tr><tr><td><code>wire / spark / pulse</code></td><td>Comportamento externo, modulo e pulso inline.</td><td>JavaScript classico, modulo ou inline.</td></tr><tr><td><code>raw</code></td><td>Escape de interoperabilidade, fora do modelo estruturado.</td><td>Trecho preservado.</td></tr><tr><td><code>studio / move</code></td><td>Edicao visual local e exportacao de posicionamento.</td><td>Ferramenta local, desativada em host publico.</td></tr></tbody></table></div>
-          </section>
-        </div>
-      </div>
-    </section>
-  </main>
-  <footer class="footer"><div class="wrap">Gerado por ODL e OES em OFS.</div></footer>
-  <script src="site.js"></script>
-</body>
-</html>
+  use notice</code></pre></div></section><section class="doc-section" id="behavior"><h2>Estado, eventos e servidor</h2><div class="doc-intro"><p class="">ODL define onde comportamento entra, mas nao finge que toda aplicacao ja possui um runtime reativo completo. `wire` carrega script classico, `spark` carrega modulo, `pulse` insere comportamento inline e OFS/webserver executa logica nativa no servidor. Estado reativo tipado e hidratacao de componentes ainda sao itens de evolucao.</p></div><div class="grid"><article class="card"><h3>Browser</h3><p class="">`wire`, `spark` e `pulse` conectam comportamento.</p></article><article class="card"><h3>Servidor</h3><p class="">OFS e `webserver` tratam processo, HTTP e dados.</p></article><article class="card"><h3>Conteudo</h3><p class="">`mark` integra Markdown sem converter a fonte ODL em HTML.</p></article></div></section><section class="doc-section" id="targets"><h2>Targets e hospedagem</h2><div class="doc-intro"><p class="">O compilador atual possui target web para interoperar com os navegadores existentes. ODL pode ser servido como fonte com MIME proprio, traduzido para inspecao ou compilado para um documento web. GitHub Pages, nginx e CDNs hospedam o target; eles nao transformam ODL em HTML nem mudam a identidade da linguagem.</p></div><div class="callout">Target e formato de distribuicao nao sao a linguagem. O mesmo principio permite adicionar targets futuros sem redesenhar a gramatica ODL.</div></section><section class="doc-section" id="api"><h2>Referencia atual</h2><div class="doc-intro"><p class="">Esta tabela descreve a semantica ODL e, separadamente, como o target web atual a representa.</p></div><div class="table-wrap"><table class="api-table"><thead><tr><th>Forma</th><th>Semantica ODL</th><th>Target web atual</th></tr></thead><tbody><tr><td><code>page</code></td><td>Raiz, titulo e idioma do documento.</td><td>Documento navegavel.</td></tr><tr><td><code>skin</code></td><td>Vincula uma camada de efeitos OES.</td><td>Stylesheet compilado.</td></tr><tr><td><code>flow</code></td><td>Fluxo principal do documento.</td><td>Corpo do documento.</td></tr><tr><td><code>deck / stage / band / tile</code></td><td>Navegacao, palco principal, secao e unidade de conteudo.</td><td>Nos semanticos equivalentes.</td></tr><tr><td><code>mark</code></td><td>Conteudo Markdown integrado.</td><td>Nos de texto formatado.</td></tr><tr><td><code>component / use</code></td><td>Declaracao e montagem de componentes ODL.</td><td>Template e ponto de montagem.</td></tr><tr><td><code>wire / spark / pulse</code></td><td>Comportamento externo, modulo e pulso inline.</td><td>JavaScript classico, modulo ou inline.</td></tr><tr><td><code>raw</code></td><td>Escape de interoperabilidade, fora do modelo estruturado.</td><td>Trecho preservado.</td></tr><tr><td><code>studio / move</code></td><td>Edicao visual local e exportacao de posicionamento.</td><td>Ferramenta local, desativada em host publico.</td></tr></tbody></table></div></section></div></div></section></main><footer class="footer"><div class="wrap">Gerado por ODL e OES em OFS.</div></footer><script src="site.js"></script></body></html>

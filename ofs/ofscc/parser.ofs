@@ -835,7 +835,8 @@ namespace parser {
 
     vein _name_in_list(name: obsidian, names: Array<obsidian>) -> bool {
         forge i = 0
-        while (i < ofs_array_len(names)) {
+        forge count = ofs_array_len(names)
+        while (i < count) {
             forge item: obsidian = ofs_array_get(names, i)
             if (ofs_str_eq(item, name)) { return true }
             i++

@@ -5,14 +5,88 @@ extern vein getenv(name: obsidian) -> obsidian
 
 vein oes_property_name(name: obsidian) -> obsidian {
     if (ofs_str_eq(name, "bg")) { return "background" }
+    if (ofs_str_eq(name, "fill")) { return "background" }
     if (ofs_str_eq(name, "radius")) { return "border-radius" }
+    if (ofs_str_eq(name, "curve")) { return "border-radius" }
     if (ofs_str_eq(name, "columns")) { return "grid-template-columns" }
+    if (ofs_str_eq(name, "grid-cols")) { return "grid-template-columns" }
     if (ofs_str_eq(name, "rows")) { return "grid-template-rows" }
+    if (ofs_str_eq(name, "grid-rows")) { return "grid-template-rows" }
     if (ofs_str_eq(name, "size")) { return "font-size" }
+    if (ofs_str_eq(name, "type-size")) { return "font-size" }
     if (ofs_str_eq(name, "weight")) { return "font-weight" }
     if (ofs_str_eq(name, "align")) { return "align-items" }
     if (ofs_str_eq(name, "justify")) { return "justify-content" }
+    if (ofs_str_eq(name, "space")) { return "gap" }
+    if (ofs_str_eq(name, "edge")) { return "border" }
+    if (ofs_str_eq(name, "ink")) { return "color" }
+    if (ofs_str_eq(name, "flow")) { return "display" }
     return name
+}
+
+vein oes_has_colon(value: obsidian) -> bool {
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        if (ofs_str_char_at(value, i) == 58) { return true }
+        i++
+    }
+    return false
+}
+
+vein oes_has_equals(value: obsidian) -> bool {
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        if (ofs_str_char_at(value, i) == 61) { return true }
+        i++
+    }
+    return false
+}
+
+vein oes_colon_before_space(value: obsidian) -> bool {
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        forge c = ofs_str_char_at(value, i)
+        if (c == 58) { return true }
+        if (c == 32 || c == 9 || c == 34) { return false }
+        i++
+    }
+    return false
+}
+
+vein oes_before_char(value: obsidian, marker: stone) -> obsidian {
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        if (ofs_str_char_at(value, i) == marker) {
+            return wl_trim(ofs_str_substr(value, 0, i))
+        }
+        i++
+    }
+    return wl_trim(value)
+}
+
+vein oes_after_char(value: obsidian, marker: stone) -> obsidian {
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        if (ofs_str_char_at(value, i) == marker) {
+            return wl_trim(ofs_str_substr(value, i + 1, ofs_str_len(value) - i - 1))
+        }
+        i++
+    }
+    return ""
+}
+
+vein oes_unquoted_value(clean: obsidian) -> obsidian {
+    forge quoted = wl_quoted_at(clean, 0)
+    if (!ofs_str_eq(quoted, "")) { return quoted }
+    if (oes_has_equals(clean)) { return oes_after_char(clean, 61) }
+    if (oes_colon_before_space(clean)) { return oes_after_char(clean, 58) }
+    return wl_after_first_word(clean)
+}
+
+vein oes_gem_name(clean: obsidian) -> obsidian {
+    forge rest = wl_after_first_word(clean)
+    if (oes_has_colon(rest)) { return oes_before_char(rest, 58) }
+    return wl_first_word(rest)
 }
 
 vein oes_value(value: obsidian) -> obsidian {
@@ -60,35 +134,44 @@ vein oes_compile(source: obsidian) -> obsidian {
             ofs_array_pop(indents)
         }
         forge command = wl_first_word(clean)
-        forge content = wl_quoted_at(clean, 0)
+        forge content = oes_unquoted_value(clean)
+        if (oes_colon_before_space(clean) && !ofs_str_eq(command, "gem") && !ofs_str_eq(command, "token") && !ofs_str_eq(command, "tone")) {
+            command = oes_before_char(clean, 58)
+        }
         if (ofs_str_eq(command, "raw") || ofs_str_eq(command, "css")) {
             out = out + wl_unescape(content)
-        } else if (ofs_str_eq(command, "token")) {
-            forge name = wl_first_word(wl_after_first_word(clean))
+        } else if (ofs_str_eq(command, "token") || ofs_str_eq(command, "gem") || ofs_str_eq(command, "tone")) {
+            forge name = oes_gem_name(clean)
             out = out + ":root{--" + name + ":" + oes_value(content) + ";}"
-        } else if (ofs_str_eq(command, "media")) {
+        } else if (ofs_str_eq(command, "media") || ofs_str_eq(command, "veil")) {
             out = out + "@media " + content + "{"
             ofs_array_push(blocks, "media")
             ofs_array_push(indents, indent)
-        } else if (ofs_str_eq(command, "supports")) {
+        } else if (ofs_str_eq(command, "supports") || ofs_str_eq(command, "guard")) {
             out = out + "@supports " + content + "{"
             ofs_array_push(blocks, "supports")
             ofs_array_push(indents, indent)
-        } else if (ofs_str_eq(command, "layer")) {
+        } else if (ofs_str_eq(command, "layer") || ofs_str_eq(command, "strata")) {
             out = out + "@layer " + content + "{"
             ofs_array_push(blocks, "layer")
             ofs_array_push(indents, indent)
-        } else if (ofs_str_eq(command, "keyframes") || ofs_str_eq(command, "motion")) {
+        } else if (ofs_str_eq(command, "keyframes") || ofs_str_eq(command, "motion") || ofs_str_eq(command, "pulse")) {
             out = out + "@keyframes " + content + "{"
             ofs_array_push(blocks, "keyframes")
             ofs_array_push(indents, indent)
-        } else if (ofs_str_eq(command, "from") || ofs_str_eq(command, "to") || wl_starts_with(command, "at")) {
+        } else if (ofs_str_eq(command, "from") || ofs_str_eq(command, "to") || ofs_str_eq(command, "rise") || ofs_str_eq(command, "rest") || wl_starts_with(command, "at")) {
             forge step = command
+            if (ofs_str_eq(command, "rise")) { step = "from" }
+            if (ofs_str_eq(command, "rest")) { step = "to" }
             if (wl_starts_with(command, "at")) {
                 step = ofs_str_substr(command, 2, ofs_str_len(command) - 2) + "%"
             }
             out = out + step + "{"
             ofs_array_push(blocks, "frame")
+            ofs_array_push(indents, indent)
+        } else if (ofs_str_eq(command, "paint")) {
+            out = out + wl_after_first_word(clean) + "{"
+            ofs_array_push(blocks, "selector")
             ofs_array_push(indents, indent)
         } else if (!ofs_str_eq(content, "")) {
             out = out + oes_property_name(command) + ":" + oes_value(content) + ";"

@@ -50,19 +50,20 @@ namespace llvmgen {
     }
 
     vein int_literal_value(text: obsidian) -> obsidian {
-        if (ofs_str_len(text) > 2 && ofs_str_eq(ofs_str_substr(text, 0, 2), "0x")) {
+        forge text_len = ofs_str_len(text)
+        if (text_len > 2 && ofs_str_eq(ofs_str_substr(text, 0, 2), "0x")) {
             forge v: stone = 0
             forge i = 2
-            while (i < ofs_str_len(text)) {
+            while (i < text_len) {
                 v = (v * 16) + hex_digit_value(ofs_str_char_at(text, i))
                 i++
             }
             return ofs_stone_to_obsidian(v)
         }
-        if (ofs_str_len(text) > 2 && ofs_str_eq(ofs_str_substr(text, 0, 2), "0X")) {
+        if (text_len > 2 && ofs_str_eq(ofs_str_substr(text, 0, 2), "0X")) {
             forge v2: stone = 0
             forge j = 2
-            while (j < ofs_str_len(text)) {
+            while (j < text_len) {
                 v2 = (v2 * 16) + hex_digit_value(ofs_str_char_at(text, j))
                 j++
             }
@@ -117,7 +118,8 @@ namespace llvmgen {
 
     vein is_named_type(type_str: obsidian) -> bool {
         forge i = 0
-        while (i < ofs_array_len(_mono_names)) {
+        forge count = ofs_array_len(_mono_names)
+        while (i < count) {
             forge name: obsidian = ofs_array_get(_mono_names, i)
             if (ofs_str_eq(name, type_str)) { return true }
             i++
@@ -127,7 +129,8 @@ namespace llvmgen {
 
     vein field_index(owner: obsidian, name: obsidian) -> stone {
         forge i = 0
-        while (i < ofs_array_len(_field_names)) {
+        forge count = ofs_array_len(_field_names)
+        while (i < count) {
             forge o: obsidian = ofs_array_get(_field_owners, i)
             forge n: obsidian = ofs_array_get(_field_names, i)
             if (ofs_str_eq(o, owner) && ofs_str_eq(n, name)) {
@@ -140,7 +143,8 @@ namespace llvmgen {
 
     vein field_type(owner: obsidian, name: obsidian) -> obsidian {
         forge i = 0
-        while (i < ofs_array_len(_field_names)) {
+        forge count = ofs_array_len(_field_names)
+        while (i < count) {
             forge o: obsidian = ofs_array_get(_field_owners, i)
             forge n: obsidian = ofs_array_get(_field_names, i)
             if (ofs_str_eq(o, owner) && ofs_str_eq(n, name)) {
@@ -201,7 +205,8 @@ namespace llvmgen {
 
     vein seen_node(id: stone) -> bool {
         forge i = 0
-        while (i < ofs_array_len(_visited_nodes)) {
+        forge count = ofs_array_len(_visited_nodes)
+        while (i < count) {
             forge v = ofs_array_get(_visited_nodes, i)
             if (v == id) { return true }
             i++
@@ -435,7 +440,8 @@ namespace llvmgen {
 
     vein string_name_for(value: obsidian) -> obsidian {
         forge i = 0
-        while (i < ofs_array_len(_string_vals)) {
+        forge count = ofs_array_len(_string_vals)
+        while (i < count) {
             forge v: obsidian = ofs_array_get(_string_vals, i)
             if (ofs_str_eq(v, value)) {
                 return ofs_array_get(_string_names, i)
@@ -486,12 +492,14 @@ namespace llvmgen {
         cg_emit("")
 
         forge mi = 0
-        while (mi < ofs_array_len(_mono_names)) {
+        forge mono_count = ofs_array_len(_mono_names)
+        forge field_count = ofs_array_len(_field_names)
+        while (mi < mono_count) {
             forge mono: obsidian = ofs_array_get(_mono_names, mi)
             cg_emit_raw("%" + mono + " = type { ")
             forge first = true
             forge fi = 0
-            while (fi < ofs_array_len(_field_names)) {
+            while (fi < field_count) {
                 forge owner: obsidian = ofs_array_get(_field_owners, fi)
                 if (ofs_str_eq(owner, mono)) {
                     if (!first) { cg_emit_raw(", ") }
@@ -509,7 +517,8 @@ namespace llvmgen {
         if (ofs_array_len(_mono_names) > 0) { cg_emit("") }
 
         forge i = 0
-        while (i < ofs_array_len(_string_vals)) {
+        forge string_count = ofs_array_len(_string_vals)
+        while (i < string_count) {
             forge value: obsidian = ofs_array_get(_string_vals, i)
             forge name: obsidian = ofs_array_get(_string_names, i)
             forge nbytes = ofs_str_len(value) + 1
@@ -518,7 +527,8 @@ namespace llvmgen {
         }
 
         forge gi = 0
-        while (gi < ofs_array_len(_global_names)) {
+        forge global_count = ofs_array_len(_global_names)
+        while (gi < global_count) {
             forge gname: obsidian = ofs_array_get(_global_names, gi)
             forge gt: obsidian = ofs_array_get(_global_types, gi)
             forge gid: stone = ofs_array_get(_global_inits, gi)
@@ -593,7 +603,8 @@ namespace llvmgen {
         cg_emit("define void @__ofs_init_globals() {")
         cg_emit("entry:")
         forge gi = 0
-        while (gi < ofs_array_len(_global_names)) {
+        forge global_count = ofs_array_len(_global_names)
+        while (gi < global_count) {
             forge gname: obsidian = ofs_array_get(_global_names, gi)
             forge gt: obsidian = ofs_array_get(_global_types, gi)
             forge gid: stone = ofs_array_get(_global_inits, gi)

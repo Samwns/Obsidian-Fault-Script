@@ -1,57 +1,11 @@
-<!doctype html>
-<html lang="pt">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Obsidian Fault Script</title>
-  <meta name="description" content="Official site and documentation for Obsidian Fault Script.">
-  <link rel="icon" href="ofs-256.png">
-  <link rel="stylesheet" href="site.css">
-</head>
-<body>
-  <header class="topbar">
-    <nav class="wrap nav">
-      <a class="brand" href="#top"><img src="ofs-256.png" alt="OFS logo"><span>Obsidian Fault Script</span></a>
-      <div class="links">
-        <a href="#docs" data-i18n="navDocs">Documentacao</a>
-        <a href="web.html">Web</a>
-        <a href="#benchmark" data-i18n="navBench">Benchmark</a>
-        <a href="downloads.html" data-i18n="navRelease">Downloads</a>
-        <div class="nav-tools">
-          <select class="language-select" data-language-select aria-label="Idioma"><option data-href="index.html" value="pt" selected>Portugues</option><option data-href="en/index.html" value="en">English</option><option data-href="es/index.html" value="es">Espanol</option></select>
-          <span class="search-box"><button class="search-button" type="button" title="Buscar" aria-label="Buscar" aria-expanded="false">&#128269;</button><input data-site-search type="search" placeholder="Buscar" aria-label="Buscar"><span class="search-count" aria-live="polite"></span></span>
-        </div>
-      </div>
-    </nav>
-  </header>
-  <main id="top">
-    <section class="hero">
-      <div class="wrap hero-grid">
-        <div>
-          <h1 data-i18n="title">OFS: linguagem compilada, runtime nativo e DSLs web proprias.</h1>
-          <p class="lead" data-i18n="lead">Obsidian Fault Script usa um compilador self-hosted, gera LLVM IR, linka uma runtime nativa e inclui ODL/OES como linguagens fonte para sites.</p>
-          <div class="actions"><a class="btn" href="getting-started.html">Comecar</a><a class="btn secondary" href="downloads.html">Downloads</a><a class="btn secondary" href="https://github.com/Samwns/Obsidian-Fault-Script">GitHub</a></div>
-        </div>
-        <div class="terminal"><div class="terminal-head">exemplo.ofs</div><pre><code>attach {odl}
+<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Obsidian Fault Script</title><meta name="description" content="Official site and documentation for Obsidian Fault Script."><link rel="icon" href="ofs-256.png"><link rel="stylesheet" href="site.css"></head><body><header class="topbar"><nav class="wrap nav"><a class="brand" href="#top"><img src="ofs-256.png" alt="OFS logo"><span class="">Obsidian Fault Script</span></a><div class="links"><a href="#docs" data-i18n="navDocs">Documentacao</a><a href="web.html">Web</a><a href="benchmark.html" data-i18n="navBench">Benchmark</a><a href="downloads.html" data-i18n="navRelease">Downloads</a><div class="nav-tools"><select class="language-select" data-language-select aria-label="Idioma"><option data-href="index.html" value="pt" selected>Portugues</option><option data-href="en/index.html" value="en">English</option><option data-href="es/index.html" value="es">Espanol</option></select><span class="search-box"><button class="search-button" type="button" title="Buscar" aria-label="Buscar" aria-expanded="false">&#128269;</button><input data-site-search type="search" placeholder="Buscar" aria-label="Buscar"><span class="search-count" aria-live="polite"></span></span></div></div></nav></header><main id="top"><section class="hero"><div class="wrap hero-grid"><div class=""><h1 data-i18n="title">OFS: linguagem compilada, runtime nativo e DSLs web proprias.</h1><p class="lead" data-i18n="lead">Obsidian Fault Script usa um compilador self-hosted, gera LLVM IR, linka uma runtime nativa e inclui ODL/OES como linguagens fonte para sites.</p><div class="actions"><a class="btn" href="getting-started.html">Comecar</a><a class="btn secondary" href="downloads.html">Downloads</a><a class="btn secondary" href="https://github.com/Samwns/Obsidian-Fault-Script">GitHub</a></div></div><div class="terminal"><div class="terminal-head">exemplo.ofs</div><pre><code>attach {odl}
 attach {oes}
 
 vein page() -> obsidian {
     forge head = odl.css("site.css")
     forge body = odl.h1("OFS Web")
     return odl.document("pt", "OFS", "site oficial", head, body)
-}</code></pre></div>
-      </div>
-    </section>
-    <section class="band">
-      <div class="wrap">
-        <div class="section-head"><h2 data-i18n="pillarsTitle">Componentes tecnicos</h2><p data-i18n="pillarsLead">O ecossistema separa compilador, runtime, biblioteca padrao, ferramentas web e empacotamento.</p></div>
-        <div class="grid"><article class="card"><h3 data-i18n="p1Title">Self-hosted</h3><p data-i18n="p1Body">Lexer, parser, type checker e geracao LLVM vivem no compilador OFS.</p></article><article class="card"><h3 data-i18n="p2Title">Nativa</h3><p data-i18n="p2Body">A saida e LLVM IR linkada com libofs_runtime.a para gerar executaveis.</p></article><article class="card"><h3 data-i18n="p3Title">Hibrida</h3><p data-i18n="p3Body">Console, canvas/window nativo e sites via webserver/webui no mesmo ecossistema.</p></article></div>
-      </div>
-    </section>
-    <section class="band" id="web">
-      <div class="wrap">
-        <div class="section-head"><h2 data-i18n="webTitle">ODL + OES</h2><p data-i18n="webLead">ODL define documento; OES define efeitos, tokens, layout e movimento. Ambos sao fontes OFS, nao HTML/CSS renomeados.</p></div>
-        <div class="terminal"><div class="terminal-head">site.ofs</div><pre><code>attach {odl}
+}</code></pre></div></div></section><section class="band"><div class="wrap"><div class="section-head"><h2 data-i18n="pillarsTitle">Componentes tecnicos</h2><p data-i18n="pillarsLead">O ecossistema separa compilador, runtime, biblioteca padrao, ferramentas web e empacotamento.</p></div><div class="grid"><article class="card"><h3 data-i18n="p1Title">Self-hosted</h3><p data-i18n="p1Body">Lexer, parser, type checker e geracao LLVM vivem no compilador OFS.</p></article><article class="card"><h3 data-i18n="p2Title">Nativa</h3><p data-i18n="p2Body">A saida e LLVM IR linkada com libofs_runtime.a para gerar executaveis.</p></article><article class="card"><h3 data-i18n="p3Title">Hibrida</h3><p data-i18n="p3Body">Console, canvas/window nativo e sites via webserver/webui no mesmo ecossistema.</p></article></div></div></section><section class="band" id="web"><div class="wrap"><div class="section-head"><h2 data-i18n="webTitle">ODL + OES</h2><p data-i18n="webLead">ODL descreve documentos; OES define estilo, efeitos, responsividade e animacoes.</p></div><div class="terminal"><div class="terminal-head">site.ofs</div><pre><code>attach {odl}
 attach {oes}
 attach {webserver}
 
@@ -59,50 +13,4 @@ core main() {
     forge head = odl.css("site.css")
     forge body = odl.main("app", odl.h1("OFS Web"))
     webserver.serve_html_forever(8080, odl.document("pt", "OFS", "site", head, body))
-}</code></pre></div>
-      </div>
-    </section>
-    <section class="band" id="benchmark">
-      <div class="wrap">
-        <div class="section-head"><h2 data-i18n="benchTitle">Benchmark reproduzivel</h2><p data-i18n="benchLead">CPU, memoria, startup, compilacao e tamanho de artefato medidos com processos reais.</p></div>
-        <div class="metric-tabs"><button type="button" data-metric="cpu">CPU</button><button type="button" data-metric="memory">Memoria</button><button type="button" data-metric="startup">Inicializacao</button><button type="button" data-metric="frontend">Compilador OFS</button><button type="button" data-metric="compile">Build completo</button><button type="button" data-metric="artifact">Artefato</button></div>
-        <div class="card"><p id="benchmark-meta" class="kicker">Carregando benchmark...</p><p id="benchmark-note" class="benchmark-note"></p><strong id="metric-label">CPU mediana</strong><div class="bars" id="benchmark-bars"></div></div>
-        <div class="table-wrap"><table><thead><tr><th>Linguagem</th><th>Mediana</th><th>Relativo</th><th>Checksum</th></tr></thead><tbody id="benchmark-rows"></tbody></table></div>
-        <div class="actions"><a class="btn" href="benchmark.html">Metodologia</a><a class="btn secondary" href="benchmark.html#compile-plan">Otimizacao de compilacao</a></div>
-      </div>
-    </section>
-    <section class="band" id="docs">
-      <div class="wrap">
-        <div class="section-head"><h2 data-i18n="docsTitle">Documentacao</h2><p data-i18n="docsLead">Referencia tecnica da linguagem, stdlib, compilador, ODL/OES, extensao e publicacao.</p></div>
-        <div class="docs-list">
-          <a class="doc-link" href="getting-started.html"><strong>Comecando</strong><span>Instale, verifique, rode, compile e publique.</span></a>
-          <a class="doc-link" href="language.html"><strong>Linguagem OFS</strong><span>Sintaxe, tipos, modulos e modos de baixo nivel.</span></a>
-          <a class="doc-link" href="compiler.html"><strong>Compilador</strong><span>Pipeline self-hosted, LLVM IR e linkagem nativa.</span></a>
-          <a class="doc-link" href="odl.html"><strong>ODL</strong><span>Referencia da Obsidian Document Language.</span></a>
-          <a class="doc-link" href="oes.html"><strong>OES</strong><span>Referencia da Obsidian Effect Scripts.</span></a>
-          <a class="doc-link" href="web.html"><strong>Web</strong><span>Stack web OFS com ODL, OES, webserver e targets HTML/CSS.</span></a>
-          <a class="doc-link" href="playground.html"><strong>Tradutor Web</strong><span>Traduza ODL, OES, HTML e CSS no navegador.</span></a>
-          <a class="doc-link" href="webserver.html"><strong>Web Server</strong><span>Sirva sites gerados por OFS via HTTP.</span></a>
-          <a class="doc-link" href="webui.html"><strong>Web UI</strong><span>Componentes, paginas e composicao de sites.</span></a>
-          <a class="doc-link" href="stdlib.html"><strong>Biblioteca Padrao</strong><span>Modulos distribuidos com OFS.</span></a>
-          <a class="doc-link" href="packages.html"><strong>Pacotes</strong><span>Registro, instalacao e fluxo de publicacao.</span></a>
-          <a class="doc-link" href="vscode.html"><strong>VS Code</strong><span>Sintaxe, comandos e Go Live.</span></a>
-          <a class="doc-link" href="commands.html"><strong>Comandos CLI</strong><span>Check, run, build, IR e assembly.</span></a>
-          <a class="doc-link" href="benchmark.html"><strong>Benchmark</strong><span>CPU, memoria, startup, build e tamanho.</span></a>
-          <a class="doc-link" href="benchmark.html#hotspots"><strong>Otimizacao</strong><span>Gargalos medidos e ordem segura de trabalho.</span></a>
-          <a class="doc-link" href="github.html"><strong>Reconhecimento GitHub</strong><span>Linguist, gramatica, exemplos e registro.</span></a>
-        </div>
-      </div>
-    </section>
-    <section class="band" id="release">
-      <div class="wrap">
-        <div class="section-head"><h2 data-i18n="releaseTitle">Downloads</h2><p data-i18n="releaseLead">Baixe instaladores oficiais, pacote VS Code e checksums gerados pelo GitHub Actions.</p></div>
-        <div class="download-grid"><a class="download-card" data-release-asset="debian-ubuntu" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Debian / Ubuntu</strong><span>.deb x64 com OFS, ODL, OES e stdlib.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="fedora" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Fedora / RHEL / openSUSE</strong><span>.rpm x64 para distros da familia Red Hat e compativeis.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="arch" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Arch / Manjaro</strong><span>Pacote pacman com ferramentas nativas.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="macos-arm64" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>macOS ARM64</strong><span>Instalador para Apple Silicon.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="windows-x64" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Windows x64</strong><span>Instalador com launcher e runtime.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset=".vsix" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>VS Code</strong><span>Extensao com OFS, ODL, OES, Go Live e tradutor.</span><code data-release-version>latest</code></a></div>
-        <div class="actions"><a class="btn" data-release-asset="CHECKSUMS" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest">Checksums</a><a class="btn secondary" href="https://github.com/Samwns/Obsidian-Fault-Script/releases">Todas as releases</a></div>
-      </div>
-    </section>
-  </main>
-  <footer class="footer"><div class="wrap" data-i18n="footer">Site gerado pela propria OFS para GitHub Pages.</div></footer>
-  <script src="site.js"></script>
-</body>
-</html>
+}</code></pre></div></div></section><section class="band" id="docs"><div class="wrap"><div class="section-head"><h2 data-i18n="docsTitle">Documentacao</h2><p data-i18n="docsLead">Guias tecnicos para linguagem, compilador, bootstrap, UI e publicacao.</p></div><div class="docs-list"><a class="doc-link" href="getting-started.html"><strong>Comecando</strong><span class="">Instale, verifique, rode, compile e publique.</span></a><a class="doc-link" href="language.html"><strong>Linguagem OFS</strong><span class="">Sintaxe, tipos, modulos e modos de baixo nivel.</span></a><a class="doc-link" href="compiler.html"><strong>Compilador</strong><span class="">Pipeline self-hosted, LLVM IR e linkagem nativa.</span></a><a class="doc-link" href="odl.html"><strong>ODL</strong><span class="">Referencia da Obsidian Document Language.</span></a><a class="doc-link" href="oes.html"><strong>OES</strong><span class="">Referencia da Obsidian Effect Scripts.</span></a><a class="doc-link" href="playground.html"><strong>Tradutor Web</strong><span class="">Traduza ODL, OES, HTML e CSS no navegador.</span></a><a class="doc-link" href="webserver.html"><strong>Web Server</strong><span class="">Sirva sites gerados por OFS via HTTP.</span></a><a class="doc-link" href="webui.html"><strong>Web UI</strong><span class="">Componentes, paginas e composicao de sites.</span></a><a class="doc-link" href="web.html"><strong>Web</strong><span class="">ODL, OES, targets gerados, webserver e interoperabilidade.</span></a><a class="doc-link" href="stdlib.html"><strong>Biblioteca Padrao</strong><span class="">Modulos distribuidos com OFS.</span></a><a class="doc-link" href="packages.html"><strong>Pacotes</strong><span class="">Registro, instalacao e fluxo de publicacao.</span></a><a class="doc-link" href="vscode.html"><strong>VS Code</strong><span class="">Sintaxe, comandos e Go Live.</span></a><a class="doc-link" href="commands.html"><strong>Comandos CLI</strong><span class="">Check, run, build, IR e assembly.</span></a><a class="doc-link" href="benchmark.html"><strong>Benchmark</strong><span class="">CPU, memoria, startup, build e tamanho.</span></a><a class="doc-link" href="benchmark.html#hotspots"><strong>Otimizacao</strong><span class="">Gargalos medidos e ordem segura de trabalho.</span></a><a class="doc-link" href="github.html"><strong>Reconhecimento GitHub</strong><span class="">Linguist, gramatica, exemplos e registro.</span></a></div></div></section><section class="band" id="release"><div class="wrap"><div class="section-head"><h2 data-i18n="releaseTitle">Downloads</h2><p data-i18n="releaseLead">Baixe instaladores oficiais, pacote VS Code e checksums publicados na release.</p></div><div class="download-grid"><a class="download-card" data-release-asset="debian-ubuntu" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Debian / Ubuntu</strong><span>.deb x64 com OFS, ODL, OES e stdlib.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="fedora" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Fedora / RHEL / openSUSE</strong><span>.rpm x64 para distros da familia Red Hat e compativeis.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="arch" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Arch / Manjaro</strong><span>Pacote pacman com ferramentas nativas.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="macos-arm64" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>macOS ARM64</strong><span>Instalador para Apple Silicon.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="windows-x64" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Windows x64</strong><span>Instalador com launcher e runtime.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset=".vsix" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>VS Code</strong><span>Extensao com OFS, ODL, OES, Go Live e tradutor.</span><code data-release-version>latest</code></a></div><div class="actions"><a class="btn" data-release-asset="CHECKSUMS" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest">Checksums</a><a class="btn secondary" href="https://github.com/Samwns/Obsidian-Fault-Script/releases">Todas as releases</a></div></div></section></main><footer class="footer"><div class="wrap" data-i18n="footer">OFS e um projeto experimental de linguagem compilada. Site gerado pela propria OFS para GitHub Pages.</div></footer><script src="site.js"></script></body></html>

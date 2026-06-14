@@ -76,6 +76,30 @@ function fileSize(file) {
   return fs.existsSync(file) ? fs.statSync(file).size : null;
 }
 
+function runWebBenchmark() {
+  const webDir = path.join(buildDir, 'web');
+  const htmlOut = path.join(webDir, 'index.html');
+  const cssOut = path.join(webDir, 'site.css');
+  const pageSource = path.join(root, 'ofs/examples/native_site/page.odl');
+  const styleSource = path.join(root, 'ofs/examples/native_site/site.oes');
+
+  fs.rmSync(webDir, { recursive: true, force: true });
+  fs.mkdirSync(webDir, { recursive: true });
+
+  const odlRuns = samples('ofs/dist/ofs', ['odl', 'ofs/examples/native_site/page.odl', '-o', 'src/site/benchmarks/build/web/index.html'], 5);
+  const oesRuns = samples('ofs/dist/ofs', ['oes', 'ofs/examples/native_site/site.oes', '-o', 'src/site/benchmarks/build/web/site.css'], 5);
+  const totalRuns = samples('/bin/sh', ['-c', 'ofs/dist/ofs odl ofs/examples/native_site/page.odl -o src/site/benchmarks/build/web/index.html >/dev/null && ofs/dist/ofs oes ofs/examples/native_site/site.oes -o src/site/benchmarks/build/web/site.css >/dev/null'], 5);
+
+  return {
+    odl_html_ms: summarize(odlRuns, 'wall_ms'),
+    oes_css_ms: summarize(oesRuns, 'wall_ms'),
+    total_ms: summarize(totalRuns, 'wall_ms'),
+    html_bytes: fileSize(htmlOut),
+    css_bytes: fileSize(cssOut),
+    source_bytes: fileSize(pageSource) + fileSize(styleSource),
+  };
+}
+
 const languages = [
   {
     name: 'OFS',
@@ -199,6 +223,8 @@ for (const language of languages) {
   });
 }
 
+const web = runWebBenchmark();
+
 const payload = {
   schema: 2,
   generated_at_utc: new Date().toISOString(),
@@ -218,9 +244,11 @@ const payload = {
     frontend: 'Para OFS, tempo do frontend self-hosted ate gerar LLVM IR, em cinco execucoes. O build completo tambem inclui otimizacao e link pelo Clang.',
     compile: 'Build otimizado do codigo de CPU, cinco execucoes. Python mede compilacao para bytecode; menor e melhor.',
     artifact: 'Bytes do executavel, class, DLL ou bytecode principal. Dependencias de runtime nao entram no tamanho.',
+    web: 'Geracao do exemplo native_site: .odl para HTML, .oes para CSS e build web total. Cinco execucoes; menor e melhor.',
     warning: 'Medicoes locais desta maquina e deste workload. Nao sao rankings universais de linguagens.',
   },
   expected_checksum: expectedOutput,
+  web,
   results,
 };
 

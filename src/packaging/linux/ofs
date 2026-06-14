@@ -7,6 +7,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OFSCC="${OFSCC:-$ROOT/ofscc}"
 RUNTIME="${OFS_RUNTIME:-$ROOT/libofs_runtime.a}"
 STDLIB="${OFS_STDLIB:-}"
+REQUESTED_MODE="${1:-help}"
 
 if [ -z "$STDLIB" ]; then
   for candidate in "$ROOT/stdlib" "$ROOT/../share/ofs/stdlib" /usr/local/share/ofs/stdlib /usr/share/ofs/stdlib; do
@@ -60,6 +61,10 @@ detect_llvm_ir_flags() {
 detect_clang_opt_level() {
   if [ -n "${OFS_CLANG_OPT:-}" ]; then
     printf '%s\n' "$OFS_CLANG_OPT"
+    return
+  fi
+  if [ "${OFS_DEV:-0}" = "1" ] || [ "$REQUESTED_MODE" = "run" ]; then
+    printf '%s\n' "-O0"
     return
   fi
   if [ "$CLANG_MAJOR" = "14" ]; then
@@ -240,6 +245,8 @@ need_ofscc() {
 find_web_tool() {
   local name="$1"
   for candidate in \
+    "$ROOT/tools/$name.ofs" \
+    "$ROOT/../tools/$name.ofs" \
     "$ROOT/../share/ofs/tools/$name.ofs" \
     "$ROOT/../lib/ofs/tools/$name.ofs" \
     "$ROOT/../ofs/tools/$name.ofs" \
@@ -294,7 +301,7 @@ run_web_tool() {
   local tool="$1" input="$2" output="$3" direction="${4:-}"
   local source tool_bin tool_tmp
   source="$(find_web_tool "$tool")" || {
-    echo "ofs: web language compiler source not found: $tool.ofs" >&2
+    echo "ofs: web language compiler source not found: $tool.ofs. Install/copy ofs/tools/$tool.ofs next to the OFS distribution." >&2
     exit 1
   }
   if ! tool_bin="$(cached_web_tool_bin "$tool" "$source")"; then
