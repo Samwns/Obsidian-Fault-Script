@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-O objetivo da otimizacao nao e produzir um unico numero menor que C ou Rust. O objetivo e reduzir custos concretos do compilador e do runtime sem mudar a semantica da linguagem, corromper memoria ou esconder regressao.
+O objetivo da otimizacao e reduzir custos concretos do compilador e do runtime sem mudar a semantica da linguagem, corromper memoria ou esconder regressao. O tempo total de build deve ficar competitivo com toolchains C em workloads equivalentes por reducao de trabalho repetido, nao por remocao de recursos da linguagem.
 
 ## Caminho de compilacao
 
@@ -81,7 +81,47 @@ Essa e uma otimizacao de baixo risco, mas cada alteracao precisa manter os teste
 4. Substituir substrings de tokens por slices ou uma arena.
 5. Criar string builder para geradores e DSLs.
 6. Medir tabelas de simbolos com projetos grandes.
-7. Avaliar LTO e flags LLVM depois que o frontend estiver medido.
+7. Avaliar LTO e flags LLVM depois que o compilador estiver medido.
+
+## Estrategia de compilacao
+
+### Memoria
+
+- O lexer deve preferir slices `(inicio, tamanho)` sobre o buffer original em vez
+  de alocar strings para cada token.
+- AST, simbolos e materializacoes temporarias devem usar arena por modulo ou por
+  compilacao. Ao terminar a unidade, a arena inteira e liberada de uma vez.
+- Literais e escapes so devem materializar string quando uma fase posterior
+  realmente precisar do texto copiado.
+
+### Indices
+
+- Consultas frequentes de campos, variaveis, simbolos e nodes devem migrar de
+  busca linear para hash flat pre-dimensionado quando o perfil mostrar ganho.
+- Loops sobre colecoes estaticas devem guardar o tamanho antes da iteracao
+  quando a colecao nao muda no corpo do loop.
+
+### Build incremental
+
+- Arquivos recebem hash de conteudo.
+- AST, metadados de tipos e objetos podem ser cacheados por hash.
+- Uma alteracao local recompila apenas o arquivo modificado e os dependentes
+  diretos.
+- O linker recebe somente objetos novos ou invalidados.
+
+### Modos de build
+
+- `dev`: gera LLVM IR e linka sem otimizacoes pesadas para feedback local.
+- `release`: mantem otimizacoes de LLVM e link de distribuicao.
+- `check` e `ir`: evitam invocar o linker quando o comando nao precisa de
+  executavel.
+
+## Benchmark web
+
+ODL/OES precisam de benchmark separado do benchmark nativo. As metricas web
+devem medir parse ODL, parse OES, emissao HTML, emissao CSS, tamanho do
+artefato e tempo de hot update. Esses numeros nao devem ser misturados com CPU
+do executavel nativo.
 
 ## Otimizacao de link e runtime
 

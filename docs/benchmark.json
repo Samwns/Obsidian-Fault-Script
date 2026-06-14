@@ -14,7 +14,7 @@
     "cpu": "Fibonacci iterativo com n variando de 25 a 32 por 5.000.000 iteracoes. Cinco processos; menor e melhor.",
     "memory": "Pico de memoria residente reportado por wait4/getrusage no processo de CPU. Cinco execucoes; menor e melhor.",
     "startup": "Processo hello-world minimo, quinze execucoes. Inclui startup de runtime/VM; menor e melhor.",
-    "frontend": "Para OFS, tempo do frontend self-hosted ate gerar LLVM IR, em cinco execucoes. O build completo tambem inclui otimizacao e link pelo Clang.",
+    "frontend": "Para OFS, tempo do compilador self-hosted ate gerar LLVM IR, em cinco execucoes. O build completo tambem inclui otimizacao e link pelo Clang.",
     "compile": "Build otimizado do codigo de CPU, cinco execucoes. Python mede compilacao para bytecode; menor e melhor.",
     "artifact": "Bytes do executavel, class, DLL ou bytecode principal. Dependencias de runtime nao entram no tamanho.",
     "warning": "Medicoes locais desta maquina e deste workload. Nao sao rankings universais de linguagens."

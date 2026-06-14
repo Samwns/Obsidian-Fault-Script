@@ -43,8 +43,8 @@ studio "safe-localhost"
 ## OES
 
 ```oes
-gem accent "#29e0bd"
-gem surface "#101722"
+gem accent "#a978ff"
+gem surface "#120d1f"
 
 paint .button
   fill "$accent"

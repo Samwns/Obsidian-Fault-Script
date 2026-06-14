@@ -1,6 +1,75 @@
-<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>ODL + OES - OFS</title><meta name="description" content="A resposta nativa da OFS para HTML, CSS, templates PHP e componentes estilo React."><link rel="icon" href="ofs-256.png"><link rel="stylesheet" href="site.css"></head><body><header class="topbar"><nav class="wrap nav"><a class="brand" href="index.html"><img src="ofs-256.png" alt="OFS logo"><span class="">OFS</span></a><div class="links"><a href="language.html">Linguagem</a><a href="odl.html">ODL</a><a href="oes.html">OES</a><a href="frontend.html">Frontend</a><a href="downloads.html">Downloads</a><a href="playground.html">Tradutor</a><a href="commands.html">CLI</a><a href="benchmark.html">Benchmark</a><div class="nav-tools"><select class="language-select" data-language-select aria-label="Idioma"><option data-href="index.html" value="pt" selected>Portugues</option><option data-href="en/index.html" value="en">English</option><option data-href="es/index.html" value="es">Espanol</option></select><span class="search-box"><button class="search-button" type="button" title="Buscar" aria-label="Buscar" aria-expanded="false">&#128269;</button><input data-site-search type="search" placeholder="Buscar" aria-label="Buscar"><span class="search-count" aria-live="polite"></span></span></div></div></nav></header><main id="top"><section class="band"><div class="wrap"><h1>ODL + OES</h1><p class="lead">A resposta nativa da OFS para HTML, CSS, templates PHP e componentes estilo React.</p></div></section><section class="band"><div class="wrap doc-layout"><aside class="toc"><strong>Nesta pagina</strong><a href="#stack">Stack</a><a href="#hosting">Hospedagem</a><a href="#interop">Interop</a></aside><div class="doc-main"><section class="doc-section" id="stack"><h2>Stack web OFS</h2><div class="doc-intro"><p class="">A stack separa logica OFS, documento ODL, efeito OES, servidor web e artefato gerado.</p></div><div class="workflow"><div class="step"><strong>1. ODL</strong><br>Declare estrutura de documento em OFS.</div><div class="step"><strong>2. OES</strong><br>Gere tokens, regras e animacao.</div><div class="step"><strong>3. Webserver</strong><br>Sirva a saida gerada localmente.</div><div class="step"><strong>4. Pages</strong><br>Publique os artefatos gerados.</div></div><div class="terminal"><div class="terminal-head">odl.ofs</div><pre><code>attach {odl}
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Web - OFS</title>
+  <meta name="description" content="Documentacao tecnica da stack web OFS com ODL, OES, webserver e targets HTML/CSS.">
+  <link rel="icon" href="ofs-256.png">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <header class="topbar">
+    <nav class="wrap nav">
+      <a class="brand" href="index.html"><img src="ofs-256.png" alt="OFS logo"><span>OFS</span></a>
+      <div class="links">
+        <a href="language.html">Linguagem</a><a href="odl.html">ODL</a><a href="oes.html">OES</a><a href="web.html">Web</a><a href="downloads.html">Downloads</a><a href="playground.html">Tradutor</a><a href="commands.html">CLI</a><a href="benchmark.html">Benchmark</a>
+        <div class="nav-tools">
+          <select class="language-select" data-language-select aria-label="Idioma"><option data-href="index.html" value="pt" selected>Portugues</option><option data-href="en/index.html" value="en">English</option><option data-href="es/index.html" value="es">Espanol</option></select>
+          <span class="search-box"><button class="search-button" type="button" title="Buscar" aria-label="Buscar" aria-expanded="false">&#128269;</button><input data-site-search type="search" placeholder="Buscar" aria-label="Buscar"><span class="search-count" aria-live="polite"></span></span>
+        </div>
+      </div>
+    </nav>
+  </header>
+  <main id="top">
+    <section class="band"><div class="wrap"><h1>Web</h1><p class="lead">Stack web da OFS: ODL para documento, OES para efeitos, webserver para entrega local e HTML/CSS como target de hospedagem.</p></div></section>
+    <section class="band">
+      <div class="wrap doc-layout">
+        <aside class="toc"><strong>Nesta pagina</strong><a href="#stack">Stack</a><a href="#target">Target web</a><a href="#components">Componentes</a><a href="#state">Estado</a><a href="#bench">Benchmark web</a><a href="#interop">Interop</a></aside>
+        <div class="doc-main">
+          <section class="doc-section" id="stack">
+            <h2>Stack web OFS</h2>
+            <div class="doc-intro"><p>A stack separa a fonte do projeto dos artefatos de distribuicao. ODL e OES sao versionados como linguagem; HTML, CSS e JS sao saidas geradas para navegadores atuais.</p></div>
+            <div class="workflow"><div class="step"><strong>1. ODL</strong><br>Documento, hierarquia e componentes.</div><div class="step"><strong>2. OES</strong><br>Gemas, layout, camadas e motion.</div><div class="step"><strong>3. OFS</strong><br>Servidor, dados e geracao de target.</div><div class="step"><strong>4. Host</strong><br>Pages, CDN, nginx ou webserver OFS.</div></div>
+          </section>
+          <section class="doc-section" id="target">
+            <h2>Target web</h2>
+            <div class="doc-intro"><p>Browsers executam HTML/CSS/JS. Por isso o build web gera uma arvore DOM limpa, stylesheet compilado e scripts conectados por <code>wire</code>, <code>spark</code> e <code>pulse</code>. O target nao muda a identidade da fonte.</p></div>
+            <div class="terminal"><div class="terminal-head">site.ofs</div><pre><code>attach {odl}
 attach {oes}
+attach {webserver}
 
-vein page() -> obsidian {
-    return odl.document("pt", "Site", "feito em OFS", "", odl.h1("OFS Web"))
-}</code></pre></div></section><section class="doc-section" id="hosting"><h2>Hospedagem real</h2><div class="doc-intro"><p class="">Browsers aceitam HTML/CSS/JS. OFS gera esses arquivos para GitHub Pages, CDN e servidores comuns.</p></div><div class="callout">ODL/OES podem ser hospedados como fonte tambem, mas quem executa no navegador e o artefato gerado.</div></section><section class="doc-section" id="interop"><h2>O que vem de React, Node, PHP e HTML</h2><div class="doc-intro"><p class="">ODL permite componentes, scripts modulares, Markdown e HTML bruto. OES organiza tokens e efeitos. webserver cobre a parte servidor local.</p></div><div class="grid"><article class="card"><h3>React-like</h3><p class="">Componentes como funcoes retornando texto/ODL.</p></article><article class="card"><h3>Node-like</h3><p class="">Modulo JS por `spark` quando precisar.</p></article><article class="card"><h3>PHP-like</h3><p class="">Templates preservados por `server`/raw em hospedagem compativel.</p></article></div></section></div></div></section></main><footer class="footer"><div class="wrap">Gerado por ODL e OES em OFS.</div></footer><script src="site.js"></script></body></html>
+core main() {
+    forge head = odl.css("site.css")
+    forge body = odl.main("app", odl.h1("Documento ODL"))
+    forge html = odl.document("pt", "OFS", "site", head, body)
+    webserver.serve_html_forever(8080, html)
+}</code></pre></div>
+          </section>
+          <section class="doc-section" id="components">
+            <h2>Componentes e escopo</h2>
+            <div class="doc-intro"><p>Componentes ODL devem ter contrato de props quando a forma tipada estiver ativa. OES usa <code>gem</code>, <code>paint</code>, <code>veil</code> e <code>strata</code> para evitar dependencia em cascata global.</p></div>
+            <div class="module-grid"><div class="module"><code>ODL</code><p>Estrutura, ids, classes, componentes e pontos de comportamento.</p></div><div class="module"><code>OES</code><p>Tokens visuais, regras encapsuladas, contextos responsivos e animacoes.</p></div><div class="module"><code>webui</code><p>Composicao de paginas e componentes por funcoes OFS.</p></div><div class="module"><code>webserver</code><p>Entrega HTTP simples para desenvolvimento e demos nativas.</p></div></div>
+          </section>
+          <section class="doc-section" id="state">
+            <h2>Estado e atualizacao</h2>
+            <div class="doc-intro"><p>A direcao tecnica e gerar atualizacoes diretas nos nos reais, sem DOM virtual obrigatorio. Em desenvolvimento, Hot State Replacement deve aplicar mudancas visuais sem recarregar a pagina e sem perder valores digitados.</p></div>
+            <div class="callout">A implementacao deve preservar a tipagem OFS existente. Se uma proposta de ODL/OES tipado ficar mais fraca que o type checker atual, ela nao substitui o modelo atual.</div>
+          </section>
+          <section class="doc-section" id="bench">
+            <h2>Benchmark web</h2>
+            <div class="doc-intro"><p>As metricas web devem medir etapas separadas: parse ODL, parse OES, emissao HTML, emissao CSS, tamanho final e tempo de hot update. Esses numeros nao devem ser misturados com CPU nativa do benchmark principal.</p></div>
+            <div class="table-wrap"><table class="api-table"><thead><tr><th>Metrica</th><th>Entrada</th><th>Saida</th></tr></thead><tbody><tr><td>ODL parse</td><td><code>.odl</code></td><td>AST de documento e diagnosticos.</td></tr><tr><td>OES parse</td><td><code>.oes</code></td><td>Gemas, paints, strata e pulsos.</td></tr><tr><td>Emissao web</td><td>AST + tokens</td><td>HTML/CSS/JS gerados.</td></tr><tr><td>Hot update</td><td>Alteracao local</td><td>Patch visual sem refresh completo.</td></tr><tr><td>Artefato</td><td>Build web</td><td>Bytes finais de HTML, CSS e JS.</td></tr></tbody></table></div>
+          </section>
+          <section class="doc-section" id="interop">
+            <h2>Interoperabilidade</h2>
+            <div class="doc-intro"><p>ODL permite Markdown, HTML bruto explicito e scripts. OES aceita propriedades do target quando nao existe alias proprio. Isso facilita migracao sem transformar HTML/CSS na fonte oficial.</p></div>
+          </section>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer"><div class="wrap">Gerado por ODL e OES em OFS.</div></footer>
+  <script src="site.js"></script>
+</body>
+</html>

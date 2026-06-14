@@ -68,7 +68,7 @@ flow
 ```
 
 ```oes
-gem accent "#29e0bd"
+gem accent "#a978ff"
 paint .button
   fill "$accent"
   curve "8px"

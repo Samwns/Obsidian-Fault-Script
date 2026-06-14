@@ -20,9 +20,43 @@ flow
   spark "app.js"
 ```
 
+## Forma tipada e escopo explicito
+
+A sintaxe indentada atual continua valida. A forma com chaves, chamadas e
+assinaturas tipadas e uma evolucao compativel para componentes com contrato
+mais forte.
+
+```odl
+page "OFS Web" "pt"
+  skin("theme.oes")
+
+  flow {
+    deck.topbar {
+      title1("OFS Web")
+      link.button("Docs", "#docs")
+    }
+
+    stage#content {
+      band.docs {
+        use Notice(title: "HMR Ativo", status: "success")
+      }
+    }
+  }
+end
+
+component Notice(title: String, status: String)
+  tile.notice(data-status: status) {
+    title2(title)
+    text("Componente injetado com tipagem forte e escopo fechado.")
+  }
+end
+```
+
 ## Regras de sintaxe
 
 - A indentacao abre e fecha elementos.
+- Blocos com `{}` e fechamento `end` podem ser usados na forma tipada.
+- Argumentos tipados usam `nome: Tipo` em assinaturas de componentes.
 - O nome pode receber classe com `.classe`.
 - O nome pode receber id com `#id`.
 - Texto entre aspas e escapado por padrao.
@@ -53,7 +87,7 @@ flow
 
 ## Compatibilidade
 
-As formas antigas `document`, `style`, `body`, `markdown`, `html`, `script`, `module`, `js` e `php` continuam aceitas para migracao gradual.
+As formas antigas `document`, `style`, `body`, `markdown`, `html`, `script`, `module`, `js` e `php` continuam aceitas para migracao gradual. Se a forma tipada ficar menos rigorosa que o type checker OFS atual, a tipagem atual deve ser mantida.
 
 Projetos novos devem preferir o vocabulario ODL.
 

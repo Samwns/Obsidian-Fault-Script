@@ -7,7 +7,7 @@ You write `.oes`, `ofs oes` compiles it to CSS, and the browser receives a stand
 ## Minimal Example
 
 ```oes
-gem accent "#29e0bd"
+gem accent "#a978ff"
 paint .button
   fill "$accent"
   curve "8px"
