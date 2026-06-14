@@ -36,7 +36,7 @@ Download the latest release from [Releases](https://github.com/Samwns/Obsidian-F
 | macOS | `tar xzf ofs-macos-arm64-*.tar.gz && sudo mv ofs/bin/ofscc /usr/local/bin/ofs` |
 | Windows | Extract `.zip` and add `ofs\bin\` to PATH |
 | VS Code | Install `ofs-vscode-extension.vsix` |
-| From Source | `bash ofscc/scripts/bootstrap-minimal.sh` |
+| From Source | `bash ofscc/scripts/bootstrap.sh` |
 
 ### Main commands
 
@@ -110,7 +110,7 @@ Baixe a **release nativa** mais recente em [Releases](https://github.com/Samwns/
 | macOS | `tar xzf ofs-macos-arm64-*.tar.gz && sudo mv ofs/bin/ofscc /usr/local/bin/ofs` |
 | Windows | Extraia `.zip` e adicione `ofs\bin\` ao PATH |
 | VS Code | Instale `ofs-vscode-extension.vsix` |
-| Do Fonte | `bash ofscc/scripts/bootstrap-minimal.sh` |
+| Do Fonte | `bash ofscc/scripts/bootstrap.sh` |
 
 ### Comandos principais
 

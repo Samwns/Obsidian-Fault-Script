@@ -1,7 +1,8 @@
 # OFS Self-Hosting Bootstrap Guide
 
 > **Nova Realidade**: O compilador OFS é completamente self-hosted e determinístico.
-> Use `bootstrap-minimal.sh` para compilar em ~2 segundos.
+> Use `bootstrap.sh` para instalar a linguagem inteira em modo rapido e sem C++.
+> `bootstrap-minimal.sh` continua existindo por compatibilidade com releases e docs antigas.
 
 ---
 
@@ -9,13 +10,16 @@
 
 ```bash
 # Tudo em um comando - ~2 segundos!
-bash ofscc/scripts/bootstrap-minimal.sh
+bash ofscc/scripts/bootstrap.sh
 
 # Pronto! Seu compilador nativo está em dist/ofscc
-dist/ofscc build seu_programa.ofs -o programa
+dist/ofs build seu_programa.ofs -o programa
 ```
 
 Pronto! Apenas OFS compilando OFS.
+
+`bootstrap-minimal.sh` continua existindo para compatibilidade com docs, scripts e usuarios antigos.
+O ponto de entrada recomendado para instalacao completa da linguagem e `bootstrap.sh`.
 
 ## O que é Bootstrap?
 
@@ -34,7 +38,16 @@ Pronto! Apenas OFS compilando OFS.
 ### Phase 1: Compilador inicial (uma vez)
 Quando o repositório é clonado, `dist/ofscc` já contém um compilador OFS pré-compilado.
 
-### Phase 2: Recompilação (bootstrap-minimal)
+### Phase 2: Recompilação self-hosted
+
+Por padrao, `bootstrap.sh` reconstrói o compilador a partir do IR versionado `dist/ofscc.ll`.
+Isso e o caminho certo para instalacao: rapido, previsivel e sem depender de C++/CMake.
+
+Para validar o ciclo OFS -> OFS explicitamente:
+
+```bash
+OFS_BOOTSTRAP_SELFHOST=1 bash ofscc/scripts/bootstrap.sh
+```
 ```bash
 # Compila ofscc.ofs (código-fonte do compilador)
 # usando dist/ofscc (compilador binário existente)
@@ -52,14 +65,14 @@ Quando o repositório é clonado, `dist/ofscc` já contém um compilador OFS pr�
 
 ## Como Usar
 
-### Método 1: Bootstrap Minimal (Recomendado) ⚡
+### Método 1: Bootstrap oficial (Recomendado) ⚡
 
 ```bash
 # Navega para o repositório
 cd Obsidian-Fault-Script
 
-# Roda bootstrap-minimal.sh (não precisa de C++)
-bash ofscc/scripts/bootstrap-minimal.sh
+# Roda bootstrap.sh (não precisa de C++/CMake)
+bash ofscc/scripts/bootstrap.sh
 
 # Saída esperada:
 # [✓] dist/ofscc criado com sucesso
@@ -68,7 +81,7 @@ bash ofscc/scripts/bootstrap-minimal.sh
 ```
 
 **Tempo**: ~2 segundos
-**Dependências**: Nenhuma (apenas bash)
+**Dependências**: bash, clang e ar
 **Saída**: `dist/ofscc` compilador nativo
 
 ### Método 2: Bootstrap com Validação (Legacy C++)

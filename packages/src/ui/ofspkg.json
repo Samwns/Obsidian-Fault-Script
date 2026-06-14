@@ -1,17 +1,22 @@
 {
   "name": "ui",
-  "version": "0.1.0",
-  "description": "Native OFS visual UI helpers: styles, panels, buttons, checkbox, slider, and icons",
+  "version": "0.2.0",
+  "description": "Native OFS visual UI helpers: styles, layout, bitmap text, panels, buttons, checkbox, slider, and icons",
   "author": "OFS Team",
   "license": "MIT",
   "main": "libs/ui.ofs",
   "tags": ["ui", "visual", "window", "canvas", "native", "icons"],
   "channels": {
-    "alpha": "0.1.0",
-    "latest": "0.1.0"
+    "alpha": "0.2.0",
+    "latest": "0.2.0"
   },
   "versions": {
     "0.1.0": {
+      "date": "2026-06-13",
+      "channel": "alpha",
+      "main": "libs/ui.ofs"
+    },
+    "0.2.0": {
       "date": "2026-06-13",
       "channel": "alpha",
       "main": "libs/ui.ofs"

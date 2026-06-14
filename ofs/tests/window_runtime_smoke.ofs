@@ -1,0 +1,22 @@
+attach {F:../stdlib/window.ofs}
+
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+vein assert_stone(label: obsidian, actual: stone, expected: stone) -> void {
+    if (actual != expected) {
+        echo("FAIL " + label + " got=" + ofs_stone_to_obsidian(actual) + " expected=" + ofs_stone_to_obsidian(expected))
+        exit(1)
+    }
+    echo("OK " + label)
+}
+
+core main() {
+    window.create("OFS Window Runtime Smoke", 32, 24)
+    assert_stone("width", window.width(), 32)
+    assert_stone("height", window.height(), 24)
+    assert_stone("mouse-x", input.mouse_x(), 0)
+    assert_stone("mouse-y", input.mouse_y(), 0)
+    window.poll()
+    window.destroy()
+    echo("window runtime smoke complete")
+}

@@ -51,6 +51,10 @@ jobs:
         run: |
           selfhost/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o selfhost/stdlib-smoke
           selfhost/stdlib-smoke
+          selfhost/ofs build ofs/tests/ui_stdlib_smoke.ofs -o selfhost/ui-smoke
+          selfhost/ui-smoke
+          selfhost/ofs build ofs/tests/window_runtime_smoke.ofs -o selfhost/window-smoke
+          DISPLAY= selfhost/window-smoke
 
   build-macos:
     name: Build & Test (macOS)
@@ -84,6 +88,10 @@ jobs:
         run: |
           selfhost/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o selfhost/stdlib-smoke
           selfhost/stdlib-smoke
+          selfhost/ofs build ofs/tests/ui_stdlib_smoke.ofs -o selfhost/ui-smoke
+          selfhost/ui-smoke
+          selfhost/ofs build ofs/tests/window_runtime_smoke.ofs -o selfhost/window-smoke
+          selfhost/window-smoke
 
   build-windows:
     name: Build & Test (Windows)

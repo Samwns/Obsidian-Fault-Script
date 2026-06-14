@@ -14,6 +14,7 @@ core main() {
     while (window.poll()) {
         canvas.clear(cv, style.bg)
         ui.draw_panel(cv, panel, style)
+        ui.draw_text(cv, panel.x + 8, panel.y + 5, "OFS UI", style.text, 1)
 
         forge add_hover = ui.contains(add_button, input.mouse_x(), input.mouse_y())
         forge close_hover = ui.contains(close_button, input.mouse_x(), input.mouse_y())
@@ -26,6 +27,7 @@ core main() {
 
         ui.draw_checkbox(cv, check_box, style, true)
         ui.draw_slider(cv, slider, style, 65, 0, 100)
+        ui.draw_text(cv, 14, 54, "NATIVE", style.accent, 1)
 
         canvas.present(cv)
     }

@@ -85,6 +85,10 @@ jobs:
           (cd ofs/examples && "$GITHUB_WORKSPACE/deb-test/usr/bin/ofs" check bedrock_gateway.ofs)
           OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o deb-test/stdlib-smoke
           deb-test/stdlib-smoke
+          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build ofs/tests/ui_stdlib_smoke.ofs -o deb-test/ui-smoke
+          deb-test/ui-smoke
+          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build ofs/tests/window_runtime_smoke.ofs -o deb-test/window-smoke
+          DISPLAY= deb-test/window-smoke
 
           echo "linux_installers=native-installers/*${TAG}*" >> "$GITHUB_ENV"
 
@@ -141,7 +145,12 @@ jobs:
           (cd ofs/examples && "$GITHUB_WORKSPACE/$ROOT/usr/local/bin/ofs" check bedrock_gateway.ofs)
           OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" build ofs/tests/selfhost_stdlib_smoke.ofs -o "$ROOT/usr/local/bin/stdlib-smoke"
           "$ROOT/usr/local/bin/stdlib-smoke"
+          OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" build ofs/tests/ui_stdlib_smoke.ofs -o "$ROOT/usr/local/bin/ui-smoke"
+          "$ROOT/usr/local/bin/ui-smoke"
+          OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" build ofs/tests/window_runtime_smoke.ofs -o "$ROOT/usr/local/bin/window-smoke"
+          "$ROOT/usr/local/bin/window-smoke"
           rm -f "$ROOT/usr/local/bin/stdlib-smoke"
+          rm -f "$ROOT/usr/local/bin/ui-smoke" "$ROOT/usr/local/bin/window-smoke"
 
           COMPONENT_PKG="ofs-macos-arm64-component-${TAG}.pkg"
           pkgbuild --root "$ROOT" \

@@ -9,7 +9,7 @@
 
 ```bash
 # 1. Fazer bootstrap do compilador OFS nativo  
-bash ofscc/scripts/bootstrap-minimal.sh
+bash ofscc/scripts/bootstrap.sh
 
 # 2. Rodar um programa
 dist/ofs run ofs/examples/hello.ofs
@@ -33,10 +33,13 @@ cd Obsidian-Fault-Script
 
 ```bash
 # Windows, Linux ou macOS - mesmo comando!
-bash ofscc/scripts/bootstrap-minimal.sh
+bash ofscc/scripts/bootstrap.sh
 ```
 
 Isso cria/atualiza o compilador self-hosted em `dist/ofscc`.
+
+`ofscc/scripts/bootstrap-minimal.sh` ainda existe, mas agora e apenas compatibilidade.
+Use `bootstrap.sh` para instalar a linguagem completa.
 
 ### 3. Usar o compilador nativo
 

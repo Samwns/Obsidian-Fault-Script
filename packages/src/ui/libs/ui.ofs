@@ -1,5 +1,8 @@
 attach {canvas}
 
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
+
 monolith UiRect {
     x: stone
     y: stone
@@ -63,6 +66,26 @@ namespace ui {
 
     vein contains(r: UiRect, x: stone, y: stone) -> bool {
         return x >= r.x && y >= r.y && x < r.x + r.w && y < r.y + r.h
+    }
+
+    vein inset(r: UiRect, amount: stone) -> UiRect {
+        return rect(r.x + amount, r.y + amount, r.w - amount * 2, r.h - amount * 2)
+    }
+
+    vein column_item(r: UiRect, index: stone, item_h: stone, gap: stone) -> UiRect {
+        return rect(r.x, r.y + index * (item_h + gap), r.w, item_h)
+    }
+
+    vein row_item(r: UiRect, index: stone, item_w: stone, gap: stone) -> UiRect {
+        return rect(r.x + index * (item_w + gap), r.y, item_w, r.h)
+    }
+
+    vein split_left(r: UiRect, w: stone) -> UiRect {
+        return rect(r.x, r.y, w, r.h)
+    }
+
+    vein split_right(r: UiRect, w: stone) -> UiRect {
+        return rect(r.x + r.w - w, r.y, w, r.h)
     }
 
     vein draw_border(cv: Canvas, r: UiRect, color: stone) -> void {
@@ -139,5 +162,86 @@ namespace ui {
         canvas.fill_rect(cv, x, y, 10, 1, color)
         canvas.fill_rect(cv, x, y + 4, 10, 1, color)
         canvas.fill_rect(cv, x, y + 8, 10, 1, color)
+    }
+
+    vein draw_glyph_rows(cv: Canvas, x: stone, y: stone, color: stone, scale: stone, r0: stone, r1: stone, r2: stone, r3: stone, r4: stone, r5: stone, r6: stone) -> void {
+        forge rows = [r0, r1, r2, r3, r4, r5, r6]
+        if (scale < 1) { scale = 1 }
+        cycle (forge yy: stone = 0; yy < 7; yy++) {
+            forge row = rows[yy]
+            cycle (forge xx: stone = 0; xx < 5; xx++) {
+                forge bit = 1 << (4 - xx)
+                if ((row & bit) != 0) {
+                    canvas.fill_rect(cv, x + xx * scale, y + yy * scale, scale, scale, color)
+                }
+            }
+        }
+    }
+
+    vein draw_char(cv: Canvas, x: stone, y: stone, code: stone, color: stone, scale: stone) -> void {
+        if (code >= 97 && code <= 122) { code = code - 32 }
+        if (code == 32) { return }
+        if (code == 33) { draw_glyph_rows(cv, x, y, color, scale, 4, 4, 4, 4, 4, 0, 4); return }
+        if (code == 45) { draw_glyph_rows(cv, x, y, color, scale, 0, 0, 0, 31, 0, 0, 0); return }
+        if (code == 46) { draw_glyph_rows(cv, x, y, color, scale, 0, 0, 0, 0, 0, 0, 4); return }
+        if (code == 47) { draw_glyph_rows(cv, x, y, color, scale, 1, 2, 4, 8, 16, 0, 0); return }
+        if (code == 58) { draw_glyph_rows(cv, x, y, color, scale, 0, 4, 4, 0, 4, 4, 0); return }
+        if (code == 95) { draw_glyph_rows(cv, x, y, color, scale, 0, 0, 0, 0, 0, 0, 31); return }
+
+        if (code == 48) { draw_glyph_rows(cv, x, y, color, scale, 14, 17, 19, 21, 25, 17, 14); return }
+        if (code == 49) { draw_glyph_rows(cv, x, y, color, scale, 4, 12, 4, 4, 4, 4, 14); return }
+        if (code == 50) { draw_glyph_rows(cv, x, y, color, scale, 14, 17, 1, 2, 4, 8, 31); return }
+        if (code == 51) { draw_glyph_rows(cv, x, y, color, scale, 30, 1, 1, 14, 1, 1, 30); return }
+        if (code == 52) { draw_glyph_rows(cv, x, y, color, scale, 2, 6, 10, 18, 31, 2, 2); return }
+        if (code == 53) { draw_glyph_rows(cv, x, y, color, scale, 31, 16, 16, 30, 1, 1, 30); return }
+        if (code == 54) { draw_glyph_rows(cv, x, y, color, scale, 14, 16, 16, 30, 17, 17, 14); return }
+        if (code == 55) { draw_glyph_rows(cv, x, y, color, scale, 31, 1, 2, 4, 8, 8, 8); return }
+        if (code == 56) { draw_glyph_rows(cv, x, y, color, scale, 14, 17, 17, 14, 17, 17, 14); return }
+        if (code == 57) { draw_glyph_rows(cv, x, y, color, scale, 14, 17, 17, 15, 1, 1, 14); return }
+
+        if (code == 65) { draw_glyph_rows(cv, x, y, color, scale, 14, 17, 17, 31, 17, 17, 17); return }
+        if (code == 66) { draw_glyph_rows(cv, x, y, color, scale, 30, 17, 17, 30, 17, 17, 30); return }
+        if (code == 67) { draw_glyph_rows(cv, x, y, color, scale, 14, 17, 16, 16, 16, 17, 14); return }
+        if (code == 68) { draw_glyph_rows(cv, x, y, color, scale, 30, 17, 17, 17, 17, 17, 30); return }
+        if (code == 69) { draw_glyph_rows(cv, x, y, color, scale, 31, 16, 16, 30, 16, 16, 31); return }
+        if (code == 70) { draw_glyph_rows(cv, x, y, color, scale, 31, 16, 16, 30, 16, 16, 16); return }
+        if (code == 71) { draw_glyph_rows(cv, x, y, color, scale, 14, 17, 16, 23, 17, 17, 15); return }
+        if (code == 72) { draw_glyph_rows(cv, x, y, color, scale, 17, 17, 17, 31, 17, 17, 17); return }
+        if (code == 73) { draw_glyph_rows(cv, x, y, color, scale, 14, 4, 4, 4, 4, 4, 14); return }
+        if (code == 74) { draw_glyph_rows(cv, x, y, color, scale, 7, 2, 2, 2, 18, 18, 12); return }
+        if (code == 75) { draw_glyph_rows(cv, x, y, color, scale, 17, 18, 20, 24, 20, 18, 17); return }
+        if (code == 76) { draw_glyph_rows(cv, x, y, color, scale, 16, 16, 16, 16, 16, 16, 31); return }
+        if (code == 77) { draw_glyph_rows(cv, x, y, color, scale, 17, 27, 21, 21, 17, 17, 17); return }
+        if (code == 78) { draw_glyph_rows(cv, x, y, color, scale, 17, 25, 21, 19, 17, 17, 17); return }
+        if (code == 79) { draw_glyph_rows(cv, x, y, color, scale, 14, 17, 17, 17, 17, 17, 14); return }
+        if (code == 80) { draw_glyph_rows(cv, x, y, color, scale, 30, 17, 17, 30, 16, 16, 16); return }
+        if (code == 81) { draw_glyph_rows(cv, x, y, color, scale, 14, 17, 17, 17, 21, 18, 13); return }
+        if (code == 82) { draw_glyph_rows(cv, x, y, color, scale, 30, 17, 17, 30, 20, 18, 17); return }
+        if (code == 83) { draw_glyph_rows(cv, x, y, color, scale, 15, 16, 16, 14, 1, 1, 30); return }
+        if (code == 84) { draw_glyph_rows(cv, x, y, color, scale, 31, 4, 4, 4, 4, 4, 4); return }
+        if (code == 85) { draw_glyph_rows(cv, x, y, color, scale, 17, 17, 17, 17, 17, 17, 14); return }
+        if (code == 86) { draw_glyph_rows(cv, x, y, color, scale, 17, 17, 17, 17, 17, 10, 4); return }
+        if (code == 87) { draw_glyph_rows(cv, x, y, color, scale, 17, 17, 17, 21, 21, 21, 10); return }
+        if (code == 88) { draw_glyph_rows(cv, x, y, color, scale, 17, 17, 10, 4, 10, 17, 17); return }
+        if (code == 89) { draw_glyph_rows(cv, x, y, color, scale, 17, 17, 10, 4, 4, 4, 4); return }
+        if (code == 90) { draw_glyph_rows(cv, x, y, color, scale, 31, 1, 2, 4, 8, 16, 31); return }
+
+        draw_glyph_rows(cv, x, y, color, scale, 14, 17, 1, 2, 4, 0, 4)
+    }
+
+    vein draw_text(cv: Canvas, x: stone, y: stone, text: obsidian, color: stone, scale: stone) -> void {
+        if (scale < 1) { scale = 1 }
+        forge len = ofs_str_len(text)
+        forge cursor = x
+        cycle (forge i: stone = 0; i < len; i++) {
+            forge code = ofs_str_char_at(text, i)
+            draw_char(cv, cursor, y, code, color, scale)
+            cursor = cursor + 6 * scale
+        }
+    }
+
+    vein measure_text(text: obsidian, scale: stone) -> stone {
+        if (scale < 1) { scale = 1 }
+        return ofs_str_len(text) * 6 * scale
     }
 }
