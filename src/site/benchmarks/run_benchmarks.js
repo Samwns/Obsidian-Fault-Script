@@ -41,8 +41,8 @@ function run(command, args, options = {}) {
 
 run('gcc', ['-O2', '-std=c11', path.join(benchDir, 'runner.c'), '-o', runner]);
 
-function measured(command, args) {
-  const result = run(runner, [command, ...args]);
+function measured(command, args, options = {}) {
+  const result = run(runner, [command, ...args], options);
   const lines = result.stdout.trim().split(/\r?\n/);
   const metrics = lines.pop().split(',');
   return {
@@ -80,6 +80,7 @@ const languages = [
   {
     name: 'OFS',
     available: () => fs.existsSync(path.join(root, 'ofs', 'dist', 'ofs')),
+    frontend: ['ofs/dist/ofscc', []],
     compile: ['ofs/dist/ofs', ['build', 'src/site/benchmarks/src/cpu.ofs', '-o', 'src/site/benchmarks/build/cpu-ofs']],
     compileHello: ['ofs/dist/ofs', ['build', 'src/site/benchmarks/src/hello.ofs', '-o', 'src/site/benchmarks/build/hello-ofs']],
     cpu: [path.join(buildDir, 'cpu-ofs'), []],
@@ -159,6 +160,23 @@ for (const language of languages) {
 
   if (language.prepare) language.prepare();
 
+  let frontendRuns = null;
+  if (language.frontend) {
+    frontendRuns = [];
+    for (let index = 0; index < 5; index += 1) {
+      const irPath = path.join(buildDir, `cpu-frontend-${index}.ll`);
+      frontendRuns.push(measured(language.frontend[0], language.frontend[1], {
+        env: {
+          ...process.env,
+          OFS_STDLIB: path.join(root, 'ofs', 'dist', 'stdlib'),
+          OFSCC_INPUT: path.join(sourceDir, 'cpu.ofs'),
+          OFSCC_MODE: 'ir',
+          OFSCC_C_OUT: irPath,
+        },
+      }));
+      fs.rmSync(irPath, { force: true });
+    }
+  }
   const compileRuns = samples(language.compile[0], language.compile[1], 5);
   run(language.compileHello[0], language.compileHello[1]);
   const cpuRuns = samples(language.cpu[0], language.cpu[1], 5);
@@ -175,6 +193,7 @@ for (const language of languages) {
     cpu_ms: summarize(cpuRuns, 'wall_ms'),
     memory_rss_kb: summarize(cpuRuns, 'max_rss_kb'),
     startup_ms: summarize(startupRuns, 'wall_ms'),
+    frontend_ms: frontendRuns ? summarize(frontendRuns, 'wall_ms') : null,
     compile_ms: summarize(compileRuns, 'wall_ms'),
     artifact_bytes: fileSize(language.artifact),
   });
@@ -196,6 +215,7 @@ const payload = {
     cpu: 'Fibonacci iterativo com n variando de 25 a 32 por 5.000.000 iteracoes. Cinco processos; menor e melhor.',
     memory: 'Pico de memoria residente reportado por wait4/getrusage no processo de CPU. Cinco execucoes; menor e melhor.',
     startup: 'Processo hello-world minimo, quinze execucoes. Inclui startup de runtime/VM; menor e melhor.',
+    frontend: 'Para OFS, tempo do frontend self-hosted ate gerar LLVM IR, em cinco execucoes. O build completo tambem inclui otimizacao e link pelo Clang.',
     compile: 'Build otimizado do codigo de CPU, cinco execucoes. Python mede compilacao para bytecode; menor e melhor.',
     artifact: 'Bytes do executavel, class, DLL ou bytecode principal. Dependencias de runtime nao entram no tamanho.',
     warning: 'Medicoes locais desta maquina e deste workload. Nao sao rankings universais de linguagens.',

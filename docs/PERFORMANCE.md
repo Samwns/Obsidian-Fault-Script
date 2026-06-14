@@ -25,11 +25,17 @@ Cada etapa deve ser medida separadamente. Melhorar o executavel gerado nao reduz
 
 ### 1. Leitura de caracteres
 
-`ofs_str_char_at` usa `strlen` para validar o indice. Essa interface e segura para chamadas gerais, mas o lexer ja conhece o tamanho total da fonte e chama a funcao para quase todo caractere.
+`ofs_str_char_at` usa `strlen` para validar o indice. Essa interface continua
+segura para chamadas gerais. O lexer, que ja valida `_pos` contra `_len`, usa
+`ofs_str_char_at_known` internamente para ler o byte sem repetir a varredura.
 
 Em uma string longa, repetir `strlen` pode transformar uma varredura que deveria ser linear em trabalho repetido.
 
-Uma API sem verificacao foi testada localmente apenas no lexer. Ela nao foi mantida porque o teste self-hosted `test_lexer_basic.ofs` atualmente sofre segmentation fault mesmo com o caminho original. A cobertura precisa ser consertada antes de publicar esse tipo de mudanca.
+Em 14 de junho de 2026, sete processos por versao mediram a geracao de IR do
+workload pequeno em 8,11 ms antes e 7,54 ms depois. Ao compilar o proprio
+`ofscc.ofs`, a mediana caiu de 4.610,40 ms para 3.694,08 ms. As passagens dois
+e tres do bootstrap produziram IR identico, e a API publica manteve a
+verificacao de limites.
 
 ### 2. Substrings
 
@@ -69,14 +75,13 @@ Essa e uma otimizacao de baixo risco, mas cada alteracao precisa manter os teste
 
 ## Ordem proposta
 
-1. Reparar o teste self-hosted do lexer.
-2. Adicionar medicao por fase do compilador.
+1. Reparar e ampliar os testes self-hosted do lexer.
+2. Adicionar medicao detalhada para lexer, parser, type checker e LLVM IR.
 3. Medir leitura de caracteres com fontes de 10 KB, 100 KB e 1 MB.
-4. Introduzir uma API de leitura conhecida pelo tamanho apenas dentro do compilador.
-5. Adicionar arena ou slices para tokens.
-6. Criar string builder para geradores e DSLs.
-7. Medir tabelas de simbolos com projetos grandes.
-8. Avaliar LTO e flags LLVM depois que o frontend estiver medido.
+4. Substituir substrings de tokens por slices ou uma arena.
+5. Criar string builder para geradores e DSLs.
+6. Medir tabelas de simbolos com projetos grandes.
+7. Avaliar LTO e flags LLVM depois que o frontend estiver medido.
 
 ## Otimizacao de link e runtime
 

@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "generated_at_utc": "2026-06-14T09:51:30.688Z",
+  "generated_at_utc": "2026-06-14T10:09:54.347Z",
   "machine": {
     "platform": "linux",
     "release": "6.8.0-1052-azure",
@@ -14,6 +14,7 @@
     "cpu": "Fibonacci iterativo com n variando de 25 a 32 por 5.000.000 iteracoes. Cinco processos; menor e melhor.",
     "memory": "Pico de memoria residente reportado por wait4/getrusage no processo de CPU. Cinco execucoes; menor e melhor.",
     "startup": "Processo hello-world minimo, quinze execucoes. Inclui startup de runtime/VM; menor e melhor.",
+    "frontend": "Para OFS, tempo do frontend self-hosted ate gerar LLVM IR, em cinco execucoes. O build completo tambem inclui otimizacao e link pelo Clang.",
     "compile": "Build otimizado do codigo de CPU, cinco execucoes. Python mede compilacao para bytecode; menor e melhor.",
     "artifact": "Bytes do executavel, class, DLL ou bytecode principal. Dependencias de runtime nao entram no tamanho.",
     "warning": "Medicoes locais desta maquina e deste workload. Nao sao rankings universais de linguagens."
@@ -26,28 +27,34 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 37.2871,
-        "median": 37.5134,
-        "mean": 37.5548,
-        "max": 37.8656
+        "best": 25.7574,
+        "median": 35.4078,
+        "mean": 32.9042,
+        "max": 36.5741
       },
       "memory_rss_kb": {
         "best": 1792,
-        "median": 1920,
-        "mean": 1868.8,
-        "max": 1920
+        "median": 1792,
+        "mean": 1792,
+        "max": 1792
       },
       "startup_ms": {
-        "best": 1.0675,
-        "median": 1.3085,
-        "mean": 1.4201,
-        "max": 2.4979
+        "best": 1.2176,
+        "median": 1.3957,
+        "mean": 1.5769,
+        "max": 2.4881
+      },
+      "frontend_ms": {
+        "best": 7.8017,
+        "median": 8.2348,
+        "mean": 8.2293,
+        "max": 8.7411
       },
       "compile_ms": {
-        "best": 180.4959,
-        "median": 208.7793,
-        "mean": 226.6767,
-        "max": 301.9961
+        "best": 165.4862,
+        "median": 210.9375,
+        "mean": 239.3776,
+        "max": 374.6998
       },
       "artifact_bytes": 16056
     },
@@ -57,28 +64,29 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 114.8245,
-        "median": 128.3928,
-        "mean": 133.3163,
-        "max": 166.9511
+        "best": 106.7378,
+        "median": 121.8637,
+        "mean": 126.6158,
+        "max": 156.4934
       },
       "memory_rss_kb": {
         "best": 1408,
         "median": 1536,
-        "mean": 1484.8,
-        "max": 1536
+        "mean": 1510.4,
+        "max": 1664
       },
       "startup_ms": {
-        "best": 0.9084,
-        "median": 1.7265,
-        "mean": 2.2311,
-        "max": 6.5448
+        "best": 0.9292,
+        "median": 1.8785,
+        "mean": 2.1492,
+        "max": 5.9856
       },
+      "frontend_ms": null,
       "compile_ms": {
-        "best": 100.444,
-        "median": 137.5445,
-        "mean": 137.2118,
-        "max": 171.5978
+        "best": 76.0029,
+        "median": 88.0034,
+        "mean": 85.3152,
+        "max": 93.4287
       },
       "artifact_bytes": 15968
     },
@@ -88,28 +96,29 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 61.5875,
-        "median": 65.0156,
-        "mean": 69.4006,
-        "max": 83.6541
+        "best": 61.7685,
+        "median": 66.0296,
+        "mean": 71.1351,
+        "max": 98.2699
       },
       "memory_rss_kb": {
-        "best": 3456,
-        "median": 3584,
-        "mean": 3609.6,
-        "max": 3712
+        "best": 3328,
+        "median": 3456,
+        "mean": 3430.4,
+        "max": 3584
       },
       "startup_ms": {
-        "best": 2.3794,
-        "median": 2.539,
-        "mean": 2.6936,
-        "max": 3.84
+        "best": 2.0624,
+        "median": 2.6852,
+        "mean": 2.68,
+        "max": 3.5418
       },
+      "frontend_ms": null,
       "compile_ms": {
-        "best": 417.985,
-        "median": 482.0189,
-        "mean": 942.4973,
-        "max": 2790.1636
+        "best": 484.5652,
+        "median": 743.7087,
+        "mean": 796.0837,
+        "max": 1066.1867
       },
       "artifact_bytes": 16312
     },
@@ -119,28 +128,29 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 108.5869,
-        "median": 112.6795,
-        "mean": 127.1557,
-        "max": 156.132
+        "best": 108.6385,
+        "median": 118.1716,
+        "mean": 142.31,
+        "max": 205.6
       },
       "memory_rss_kb": {
-        "best": 44316,
-        "median": 44488,
-        "mean": 44482.4,
-        "max": 44688
+        "best": 44156,
+        "median": 44268,
+        "mean": 44325.6,
+        "max": 44568
       },
       "startup_ms": {
-        "best": 52.6359,
-        "median": 59.429,
-        "mean": 67.6019,
-        "max": 109.3021
+        "best": 53.878,
+        "median": 59.4259,
+        "mean": 71.1567,
+        "max": 100.8329
       },
+      "frontend_ms": null,
       "compile_ms": {
-        "best": 673.1184,
-        "median": 715.65,
-        "mean": 1356.4327,
-        "max": 3936.096
+        "best": 710.781,
+        "median": 853.2498,
+        "mean": 925.7717,
+        "max": 1192.9446
       },
       "artifact_bytes": 671
     },
@@ -150,28 +160,29 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 156.3472,
-        "median": 164.3933,
-        "mean": 488.3286,
-        "max": 1757.1695
+        "best": 156.3666,
+        "median": 159.4906,
+        "mean": 233.7565,
+        "max": 470.3265
       },
       "memory_rss_kb": {
-        "best": 28032,
-        "median": 28100,
-        "mean": 28160.8,
-        "max": 28340
+        "best": 27904,
+        "median": 28052,
+        "mean": 28066.4,
+        "max": 28252
       },
       "startup_ms": {
-        "best": 50.0807,
-        "median": 52.0553,
-        "mean": 55.0107,
-        "max": 73.4231
+        "best": 52.2956,
+        "median": 55.4226,
+        "mean": 66.7512,
+        "max": 113.5968
       },
+      "frontend_ms": null,
       "compile_ms": {
-        "best": 1758.2966,
-        "median": 2245.7186,
-        "mean": 5415.9985,
-        "max": 18740.8929
+        "best": 1927.1843,
+        "median": 2218.54,
+        "mean": 3206.5707,
+        "max": 7243.9511
       },
       "artifact_bytes": 4608
     },
@@ -181,28 +192,29 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 4606.3898,
-        "median": 4824.5948,
-        "mean": 4811.9912,
-        "max": 5002.5732
+        "best": 4748.1543,
+        "median": 5909.8865,
+        "mean": 5753.8306,
+        "max": 7111.8195
       },
       "memory_rss_kb": {
-        "best": 9600,
+        "best": 9728,
         "median": 9856,
         "mean": 9830.4,
         "max": 9984
       },
       "startup_ms": {
-        "best": 20.3144,
-        "median": 23.9045,
-        "mean": 26.8883,
-        "max": 42.2853
+        "best": 21.439,
+        "median": 24.0861,
+        "mean": 28.3676,
+        "max": 72.9208
       },
+      "frontend_ms": null,
       "compile_ms": {
-        "best": 54.5139,
-        "median": 58.0801,
-        "mean": 323.7659,
-        "max": 1383.0308
+        "best": 63.6516,
+        "median": 76.8901,
+        "mean": 113.9097,
+        "max": 254.7057
       },
       "artifact_bytes": 625
     },
@@ -212,28 +224,29 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 113.4388,
-        "median": 149.6676,
-        "mean": 150.1012,
-        "max": 207.3064
+        "best": 110.1259,
+        "median": 112.0633,
+        "mean": 119.9663,
+        "max": 150.7282
       },
       "memory_rss_kb": {
-        "best": 1920,
+        "best": 1792,
         "median": 2048,
-        "mean": 2073.6,
+        "mean": 1996.8,
         "max": 2176
       },
       "startup_ms": {
-        "best": 1.4848,
-        "median": 1.5708,
-        "mean": 1.7055,
-        "max": 2.5006
+        "best": 1.4484,
+        "median": 1.7809,
+        "mean": 1.8189,
+        "max": 2.4033
       },
+      "frontend_ms": null,
       "compile_ms": {
-        "best": 145.2445,
-        "median": 189.7451,
-        "mean": 3597.1207,
-        "max": 17192.5582
+        "best": 151.9457,
+        "median": 238.764,
+        "mean": 521.7055,
+        "max": 1766.1637
       },
       "artifact_bytes": 4337512
     }

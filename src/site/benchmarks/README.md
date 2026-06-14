@@ -15,6 +15,7 @@ Measured dimensions:
 - CPU execution time
 - peak resident memory
 - process startup
+- OFS self-hosted frontend time through LLVM IR generation
 - compilation or bytecode generation
 - primary artifact size
 - checksum correctness

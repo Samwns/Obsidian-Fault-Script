@@ -18,6 +18,7 @@ extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
 extern vein ofs_str_concat(a: obsidian, b: obsidian) -> obsidian
 extern vein ofs_str_len(s: obsidian) -> stone
 extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
+extern vein ofs_str_char_at_known(s: obsidian, index: stone) -> stone
 extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
 extern vein ofs_stone_to_obsidian(value: stone) -> obsidian
 extern vein ofs_array_len(a: Array) -> stone

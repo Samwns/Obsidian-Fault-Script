@@ -144,6 +144,10 @@ int64_t ofs_str_char_at(const char* s, int64_t idx) {
     return (int64_t)(unsigned char)s[idx];
 }
 
+int64_t ofs_str_char_at_known(const char* s, int64_t idx) {
+    return (int64_t)(unsigned char)s[idx];
+}
+
 char* ofs_str_substr(const char* s, int64_t start, int64_t len) {
     if (!s) return ofs_str_concat("", "");
     int64_t slen = (int64_t)strlen(s);

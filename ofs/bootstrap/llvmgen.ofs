@@ -535,6 +535,7 @@ namespace llvmgen {
         cg_emit("declare i32 @ofs_str_eq(ptr, ptr)")
         cg_emit("declare i64 @ofs_str_len(ptr)")
         cg_emit("declare i64 @ofs_str_char_at(ptr, i64)")
+        cg_emit("declare i64 @ofs_str_char_at_known(ptr, i64)")
         cg_emit("declare ptr @ofs_str_substr(ptr, i64, i64)")
         cg_emit("declare ptr @ofs_str_upper(ptr)")
         cg_emit("declare ptr @ofs_str_lower(ptr)")

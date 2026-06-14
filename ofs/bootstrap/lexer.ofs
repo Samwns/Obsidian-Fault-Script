@@ -18,12 +18,12 @@ namespace lexer {
     
     vein _peek() -> stone {
         if (_pos >= _len) { return -1 }
-        return ofs_str_char_at(_src, _pos)
+        return ofs_str_char_at_known(_src, _pos)
     }
     
     vein _peek2() -> stone {
         if (_pos + 1 >= _len) { return -1 }
-        return ofs_str_char_at(_src, _pos + 1)
+        return ofs_str_char_at_known(_src, _pos + 1)
     }
     
     vein _advance() -> stone {
