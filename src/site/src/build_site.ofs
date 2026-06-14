@@ -25,15 +25,27 @@ vein write_pages(prefix: obsidian) {
     write_file(prefix + "benchmark.json", read_file("src/site/benchmarks/results.json"))
 }
 
+vein write_english_pages(prefix: obsidian) {
+    write_file(prefix + "en/index.html", page_en_index())
+    write_file(prefix + "en/language.html", page_language_en())
+    write_file(prefix + "en/odl.html", page_odl_en())
+    write_file(prefix + "en/oes.html", page_oes_en())
+    write_file(prefix + "en/web.html", page_web_en())
+    write_file(prefix + "en/stdlib.html", page_stdlib_en())
+    write_file(prefix + "en/downloads.html", page_downloads_en())
+}
+
 core main() {
-    system("mkdir -p src/site/public/assets docs/assets")
+    system("mkdir -p src/site/public/assets src/site/public/en docs/assets docs/en")
     write_pages("src/site/public/")
+    write_english_pages("src/site/public/")
     write_file("src/site/public/.nojekyll", "")
     write_file("src/site/public/assets/site.css", site_css())
     write_file("src/site/public/assets/site.js", site_runtime_js())
     write_file("src/site/public/assets/benchmark.json", read_file("src/site/benchmarks/results.json"))
 
     write_pages("docs/")
+    write_english_pages("docs/")
     write_file("docs/.nojekyll", "")
     write_file("docs/assets/site.css", site_css())
     write_file("docs/assets/site.js", site_runtime_js())

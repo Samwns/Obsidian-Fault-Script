@@ -1,46 +1,63 @@
-# ODL Reference / Referencia ODL
+# Referencia ODL
 
-ODL is the structural web language of OFS.
+ODL, Obsidian Document Language, e a linguagem estrutural de documentos da OFS.
 
-ODL e a linguagem estrutural de documentos da OFS. Voce escreve `.odl`, a ferramenta OFS compila para HTML, e o navegador recebe um artefato padrao.
+Voce escreve `.odl`, o comando `ofs odl` compila para HTML, e o navegador recebe um artefato padrao. O fonte continua sendo ODL; HTML e apenas a saida de hospedagem.
+
+## Exemplo minimo
 
 ```odl
-page "Title" "pt"
-skin "theme.css"
+page "Meu site" "pt"
+skin "site.css"
 flow
-  stage#app.shell
-    title1 "Hello"
-    mark "Markdown **nativo**."
+  deck.topbar
+    title1 "Meu site"
+    link.button "Docs" "#docs"
+  stage#content
+    band.docs
+      mark "## Conteudo\nTexto em **Markdown**."
+      raw "<small>HTML bruto quando precisar.</small>"
+  spark "app.js"
 ```
 
-Indentation opens and closes elements. A tag may include `.class` and `#id` shorthand.
+## Regras de sintaxe
 
-A indentacao abre e fecha elementos. Uma forma pode incluir `.classe` e `#id` no proprio nome.
+- A indentacao abre e fecha elementos.
+- O nome pode receber classe com `.classe`.
+- O nome pode receber id com `#id`.
+- Texto entre aspas e escapado por padrao.
+- `raw` existe para interoperabilidade explicita com HTML.
+- `mark` aceita Markdown nativo.
 
-| Form | Result |
+## Formas principais
+
+| Forma | Finalidade |
 |---|---|
-| `page "title" "lang"` | Complete browser document metadata |
-| `skin "href"` | Stylesheet link |
-| `flow` | Starts the document body |
-| `deck`, `stage`, `band`, `tile` | Semantic structure generated as nav, main, section, article |
-| `title1`, `title2`, `text`, `link`, `asset` | Common content nodes |
-| `tag.class#id "text"` | Element with escaped text |
-| `mark "source"` | Native Markdown fragment |
-| `raw "source"` | Explicit raw HTML fragment |
-| `wire "src"` | Classic browser script |
-| `spark "src"` | ES/Node-style module script |
-| `pulse "source"` | Inline JavaScript |
-| `server "source"` | PHP-compatible template block |
-| `move.class` | Locally draggable studio block |
-| `studio "safe-localhost"` | Local-only visual positioning overlay |
-| `vein name` | Reusable component template |
-| `mount name` | Component use marker |
+| `page "titulo" "idioma"` | Metadados do documento |
+| `skin "arquivo.css"` | Link de stylesheet |
+| `flow` | Inicio do corpo |
+| `deck` | Navegacao, gerada como `nav` |
+| `stage` | Area principal, gerada como `main` |
+| `band` | Secao semantica, gerada como `section` |
+| `tile` | Card/artigo, gerado como `article` |
+| `title1`, `title2`, `title3` | Titulos |
+| `text` | Paragrafo |
+| `link` | Ancora |
+| `asset` | Imagem |
+| `mark` | Markdown |
+| `raw` | HTML bruto |
+| `wire` | Script classico |
+| `spark` | Modulo JavaScript |
+| `pulse` | JavaScript inline |
+| `server` | Bloco compativel com template PHP |
 
-The older compatibility forms `document`, `style`, `body`, `markdown`, `html`, `script`, `module`, `js`, and `php` remain accepted so imported HTML-era code can migrate gradually. New OFS web sources should prefer the ODL vocabulary above.
+## Compatibilidade
 
-As formas antigas de compatibilidade continuam aceitas para migrar codigo existente. Fontes web novas devem preferir `page`, `skin`, `flow`, `deck`, `stage`, `band`, `tile`, `mark`, `raw`, `wire`, `spark`, `pulse` e `server`.
+As formas antigas `document`, `style`, `body`, `markdown`, `html`, `script`, `module`, `js` e `php` continuam aceitas para migracao gradual.
 
-Compile with / Compile com:
+Projetos novos devem preferir o vocabulario ODL.
+
+## Compilacao
 
 ```bash
 ofs odl page.odl -o index.html

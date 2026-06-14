@@ -1,37 +1,69 @@
-# OES Reference / Referencia OES
+# Referencia OES
 
-OES is the visual and effect language of OFS.
+OES, Obsidian Effect Scripts, e a linguagem visual e de efeitos da OFS.
 
-OES e a linguagem visual e de efeitos da OFS. Voce escreve `.oes`, a ferramenta OFS compila para CSS, e o navegador recebe um artefato padrao.
+Voce escreve `.oes`, o comando `ofs oes` compila para CSS, e o navegador recebe um artefato padrao. O fonte de design continua sendo OES.
+
+## Exemplo minimo
 
 ```oes
 gem accent "#29e0bd"
+gem surface "#101722"
+
 paint .button
   fill "$accent"
+  ink "#06100e"
   curve "8px"
+  transition "transform .2s ease"
+
+veil "(max-width: 700px)"
+  paint .grid
+    grid-cols "1fr"
+
+pulse "enter"
+  rise
+    opacity "0"
+  rest
+    opacity "1"
 ```
 
-| Form | Result |
+## Regras de sintaxe
+
+- `gem` cria tokens de design.
+- `paint` abre um bloco visual para um seletor.
+- Declaracoes ficam indentadas dentro do bloco.
+- `$nome` usa um token como `var(--nome)`.
+- `veil` cria regras responsivas.
+- `guard` cria regras de suporte.
+- `pulse` cria animacoes.
+
+## Formas principais
+
+| Forma | Finalidade |
 |---|---|
-| `gem name "value"` | CSS custom property |
-| `paint selector` | Rule block |
-| `property "value"` | Declaration |
-| `veil "query"` | Media group |
+| `gem nome "valor"` | Token de design |
+| `paint seletor` | Bloco de regra visual |
+| `fill` | Fundo |
+| `ink` | Cor de texto |
+| `curve` | Raio de borda |
+| `space` | Espacamento/gap |
+| `edge` | Borda |
+| `flow` | Display |
+| `grid-cols` | Colunas de grid |
+| `grid-rows` | Linhas de grid |
+| `type-size` | Tamanho de fonte |
+| `veil "query"` | Media query |
 | `guard "query"` | Feature query |
-| `strata "name"` | Cascade layer |
-| `pulse "name"` | Keyframes |
-| `rise`, `rest`, `at50` | Animation frame |
-| `raw "css"` | Explicit raw CSS |
+| `strata "nome"` | Cascade layer |
+| `pulse "nome"` | Keyframes |
+| `rise`, `rest`, `at50` | Frames de animacao |
+| `raw "css"` | CSS bruto explicito |
 
-OES keeps compatibility with CSS property names while adding its own easy vocabulary: `fill`, `ink`, `curve`, `space`, `edge`, `flow`, `grid-cols`, `grid-rows`, and `type-size`. `$name` references a token.
+## Compatibilidade
 
-OES preserva compatibilidade com propriedades CSS, mas adiciona vocabulario proprio e mais facil. Use `gem` para tokens, `paint` para blocos visuais, `veil` para responsividade e `pulse` para animacao.
+OES aceita nomes de propriedades CSS quando nao existe alias proprio. As formas antigas `token`, seletores planos, `media`, `supports`, `layer`, `motion`, `from` e `to` continuam aceitas para migracao.
 
-The older compatibility forms `token`, plain selectors, `media`, `supports`, `layer`, `motion`, `from`, and `to` remain accepted for migration.
-
-As formas antigas continuam aceitas para migracao gradual de CSS existente.
-
-Compile with / Compile com:
+## Compilacao
 
 ```bash
 ofs oes theme.oes -o theme.css
