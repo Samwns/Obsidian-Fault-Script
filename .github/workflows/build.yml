@@ -48,6 +48,8 @@ jobs:
           done
 
       - name: Run stdlib smoke program
+        env:
+          OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
         run: |
           selfhost/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o selfhost/stdlib-smoke
           selfhost/stdlib-smoke
@@ -85,6 +87,8 @@ jobs:
           done
 
       - name: Run stdlib smoke program
+        env:
+          OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
         run: |
           selfhost/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o selfhost/stdlib-smoke
           selfhost/stdlib-smoke
