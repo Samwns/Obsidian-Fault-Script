@@ -227,7 +227,7 @@ jobs:
             exit 1
           }
           New-Item -ItemType Directory -Path selfhost -Force | Out-Null
-          Copy-Item "dist\ofscc.ll" "selfhost\ofscc.ll"
+          Copy-Item "ofs\dist\ofscc.ll" "selfhost\ofscc.ll"
           & clang -O2 -c "ofs\runtime\ofs_runtime.c" -o "selfhost\ofs_runtime.obj"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & llvm-ar rcs "selfhost\libofs_runtime.a" "selfhost\ofs_runtime.obj"
