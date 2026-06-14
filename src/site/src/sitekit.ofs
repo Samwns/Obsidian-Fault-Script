@@ -76,13 +76,34 @@ vein site_css() -> obsidian {
     s = s + oes.rule(".doc-link", "text-decoration:none")
     s = s + oes.rule(".doc-link strong", "display:block")
     s = s + oes.rule(".doc-link span", "color:var(--muted);font-size:14px")
+    s = s + oes.rule(".doc-layout", "display:grid;grid-template-columns:260px minmax(0,1fr);gap:26px;align-items:start")
+    s = s + oes.rule(".toc", "position:sticky;top:94px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.045);padding:14px")
+    s = s + oes.rule(".toc strong", "display:block;margin-bottom:10px")
+    s = s + oes.rule(".toc a", "display:block;color:var(--muted);text-decoration:none;padding:7px 0;border-top:1px solid rgba(255,255,255,.05)")
+    s = s + oes.rule(".toc a:hover", "color:var(--accent)")
+    s = s + oes.rule(".doc-main", "display:grid;gap:18px")
+    s = s + oes.rule(".doc-section", "border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04);padding:22px")
+    s = s + oes.rule(".doc-section h2", "font-size:30px;margin-bottom:12px")
+    s = s + oes.rule(".doc-section h3", "margin:18px 0 8px")
+    s = s + oes.rule(".doc-section p", "color:var(--muted);margin:0 0 12px")
+    s = s + oes.rule(".dual", "display:grid;grid-template-columns:1fr 1fr;gap:14px")
+    s = s + oes.rule(".lang-card", "border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:16px;background:rgba(0,0,0,.14)")
+    s = s + oes.rule(".lang-card strong", "display:block;margin-bottom:8px;color:var(--accent)")
+    s = s + oes.rule(".callout", "border-left:3px solid var(--accent);background:rgba(41,224,189,.08);padding:14px 16px;border-radius:0 8px 8px 0;color:var(--muted)")
+    s = s + oes.rule(".pill-row", "display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0")
+    s = s + oes.rule(".pill", "display:inline-flex;align-items:center;min-height:30px;border:1px solid var(--line);border-radius:999px;padding:0 10px;color:var(--muted);background:rgba(255,255,255,.04);font-size:13px")
+    s = s + oes.rule(".module-grid", "display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px")
+    s = s + oes.rule(".module", "border:1px solid var(--line);border-radius:8px;padding:16px;background:rgba(255,255,255,.045)")
+    s = s + oes.rule(".module code", "display:inline-block;margin-bottom:8px;color:var(--hot)")
+    s = s + oes.rule(".module p", "margin:0;color:var(--muted)")
+    s = s + oes.rule(".api-table code", "color:var(--hot)")
     s = s + oes.rule(".workflow", "display:grid;grid-template-columns:repeat(4,1fr);gap:12px")
     s = s + oes.rule(".step", "padding:18px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.04)")
     s = s + oes.rule(".footer", "padding:34px 0;color:var(--muted);border-top:1px solid var(--line)")
     s = s + oes.keyframes("grow", oes.frame("from", "width:0") + oes.frame("to", ""))
     s = s + oes.keyframes("float", oes.frame("0%,100%", "transform:translateY(0)") + oes.frame("50%", "transform:translateY(-10px)"))
     s = s + oes.rule(".showcase", "animation:float 6s ease-in-out infinite")
-    s = s + oes.media("(max-width:900px)", ".links a{display:none}.hero-grid,.grid,.docs-list,.workflow,.metric-summary,.tool-layout,.download-grid{grid-template-columns:1fr}.hero{min-height:auto;padding-top:36px}.section-head{display:block}.section-head p{margin-top:12px}.bar-row{grid-template-columns:72px 1fr 76px}")
+    s = s + oes.media("(max-width:900px)", ".links a{display:none}.hero-grid,.grid,.docs-list,.workflow,.metric-summary,.tool-layout,.download-grid,.doc-layout,.dual,.module-grid{grid-template-columns:1fr}.toc{position:static}.hero{min-height:auto;padding-top:36px}.section-head{display:block}.section-head p{margin-top:12px}.bar-row{grid-template-columns:72px 1fr 76px}")
     return s
 }
 
@@ -139,6 +160,30 @@ vein site_section_head(title_key: obsidian, title: obsidian, lead_key: obsidian,
 
 vein site_doc_link(href: obsidian, title: obsidian, text: obsidian) -> obsidian {
     return odl.a("doc-link", href, odl.strong(title) + odl.span("", text))
+}
+
+vein doc_dual(pt: obsidian, en: obsidian) -> obsidian {
+    return odl.div("dual", odl.div("lang-card", odl.strong("PT") + odl.p("", pt)) + odl.div("lang-card", odl.strong("EN") + odl.p("", en)))
+}
+
+vein doc_section(id: obsidian, title: obsidian, pt: obsidian, en: obsidian, extra: obsidian) -> obsidian {
+    return odl.section(id, "doc-section", odl.h2(title) + doc_dual(pt, en) + extra)
+}
+
+vein doc_toc(items: obsidian) -> obsidian {
+    return "<aside class=\"toc\">" + odl.strong("Nesta pagina / On this page") + items + "</aside>"
+}
+
+vein doc_link(id: obsidian, title: obsidian) -> obsidian {
+    return "<a href=\"#" + id + "\">" + title + "</a>"
+}
+
+vein doc_page(title: obsidian, subtitle: obsidian, toc: obsidian, body: obsidian) -> obsidian {
+    return odl.section("", "band", odl.div("wrap doc-layout", doc_toc(toc) + odl.div("doc-main", body)))
+}
+
+vein module_card(name: obsidian, text: obsidian) -> obsidian {
+    return odl.div("module", "<code>" + name + "</code>" + odl.p("", text))
 }
 
 vein site_topbar() -> obsidian {
@@ -262,51 +307,80 @@ vein page_nav() -> obsidian {
 
 vein page_shell(title: obsidian, subtitle: obsidian, content: obsidian) -> obsidian {
     forge head = odl.icon("ofs-256.png") + odl.css("site.css")
-    forge hero = odl.section("", "band", odl.div("wrap", odl.p("kicker", "Documentacao OFS") + odl.h1(title) + odl.p("lead", subtitle)))
-    forge body = page_nav() + odl.main("top", hero + content) + odl.footer("footer", "<div class=\"wrap\">Gerado por ODL e OES em OFS.</div>") + odl.script("site.js")
+    forge hero = odl.section("", "band", odl.div("wrap", odl.p("kicker", "Documentacao OFS / OFS documentation") + odl.h1(title) + odl.p("lead", subtitle)))
+    forge body = page_nav() + odl.main("top", hero + content) + odl.footer("footer", "<div class=\"wrap\">Gerado por ODL e OES em OFS. Generated by ODL and OES in OFS.</div>") + odl.script("site.js")
     return odl.document("pt", title + " - OFS", subtitle, head, body)
 }
 
 vein page_language() -> obsidian {
-    forge cards = site_card("Compilador", "Frontend self-hosted, saida LLVM IR e linkagem nativa.", "")
-    cards = cards + site_card("Tipos", "stone, crystal, obsidian, bool, inteiros pequenos, arrays e monoliths.", "")
-    cards = cards + site_card("Baixo nivel", "Blocos fracture, abyss, fractal e bedrock para trabalho explicito de sistema.", "")
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", cards) + site_terminal("hello.ofs", "core main() {\n    echo(\"hello from OFS\")\n}")))
+    forge toc = doc_link("overview", "Visao geral") + doc_link("syntax", "Sintaxe") + doc_link("types", "Tipos") + doc_link("modules", "Modulos") + doc_link("low", "Baixo nivel")
+    forge syntax = site_terminal("hello.ofs", "// OFS source\nvein add(a: stone, b: stone) -> stone {\n    return a + b\n}\n\ncore main() {\n    forge result: stone = add(20, 2)\n    echo(result)\n}")
+    forge types = "<div class=\"pill-row\"><span class=\"pill\">stone: integer</span><span class=\"pill\">crystal: floating point</span><span class=\"pill\">obsidian: string</span><span class=\"pill\">bool</span><span class=\"pill\">rune</span><span class=\"pill\">arrays</span><span class=\"pill\">monolith structs</span></div>"
+    forge module_grid = odl.div("module-grid", module_card("attach {math}", "Importa funcoes da biblioteca padrao por nome.") + module_card("attach {F:path/file.ofs}", "Importa um arquivo OFS local explicitamente.") + module_card("extern vein", "Declara simbolos oferecidos pelo runtime ou por C.") + module_card("core main()", "Define o ponto de entrada do programa nativo."))
+    forge body = doc_section("overview", "O que e OFS", "OFS e uma linguagem compilada self-hosted. O compilador principal e escrito em OFS, gera LLVM IR e linka com um runtime nativo.", "OFS is a self-hosted compiled language. Its main compiler is written in OFS, emits LLVM IR, and links against a native runtime.", "")
+    body = body + doc_section("syntax", "Sintaxe", "A linguagem usa funcoes `vein`, variaveis `forge`, retorno explicito e `core main()` como entrada.", "The language uses `vein` functions, `forge` bindings, explicit returns, and `core main()` as the entry point.", syntax)
+    body = body + doc_section("types", "Tipos", "Os tipos basicos cobrem inteiros, ponto flutuante, texto, booleanos e estruturas para compor APIs maiores.", "The base types cover integers, floating point values, text, booleans, and structures for larger APIs.", types)
+    body = body + doc_section("modules", "Modulos", "Bibliotecas sao acopladas por `attach`, mantendo codigo nativo, stdlib e DSLs web no mesmo modelo.", "Libraries are attached with `attach`, keeping native code, the standard library, and web DSLs in the same model.", module_grid)
+    body = body + doc_section("low", "Modos de baixo nivel", "Blocos como fracture, abyss, fractal e bedrock existem para experimentos controlados perto do runtime.", "Blocks such as fracture, abyss, fractal, and bedrock exist for controlled experiments close to the runtime.", odl.div("callout", "Esses modos sao poderosos e devem ser usados quando a semantica normal da linguagem nao for suficiente."))
+    forge content = doc_page("Linguagem", "O nucleo tecnico da Obsidian Fault Script.", toc, body)
     return page_shell("Linguagem", "O nucleo tecnico da Obsidian Fault Script.", content)
 }
 
 vein page_getting_started() -> obsidian {
     forge code = "ofs/dist/ofs check app.ofs\nofs/dist/ofs run app.ofs\nofs/dist/ofs build app.ofs -o app\n./app\n\nofs/dist/ofs odl page.odl -o index.html\nofs/dist/ofs oes site.oes -o site.css"
-    forge cards = site_card("1. Baixe", "Use a pagina Downloads para escolher .deb, .rpm, pacman, macOS, Windows ou VS Code.", "")
-    cards = cards + site_card("2. Crie", "Use .ofs para logica nativa, .odl para documentos e .oes para efeitos.", "")
-    cards = cards + site_card("3. Verifique", "Rode check antes de run, build, odl ou oes para validar o projeto.", "")
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("actions", site_button("Abrir downloads", "downloads.html", false) + site_button("Ver CLI", "commands.html", true)) + odl.div("grid", cards) + site_terminal("terminal", code)))
+    forge toc = doc_link("install", "Instalar") + doc_link("native", "Programa nativo") + doc_link("web", "Site OFS") + doc_link("verify", "Verificar")
+    forge cards = site_card("1. Install", "Escolha o pacote da sua plataforma e instale o launcher `ofs`.", "")
+    cards = cards + site_card("2. Create", "Use .ofs para logica, .odl para documento e .oes para efeito visual.", "")
+    cards = cards + site_card("3. Verify", "Rode `check` antes de compilar ou publicar.", "")
+    forge body = doc_section("install", "Instalacao / Installation", "Use a pagina de downloads para Linux, macOS, Windows e VS Code.", "Use the downloads page for Linux, macOS, Windows, and VS Code.", odl.div("actions", site_button("Abrir downloads", "downloads.html", false) + site_button("CLI", "commands.html", true)))
+    body = body + doc_section("native", "Primeiro executavel", "Crie `app.ofs`, valide com `check`, rode com `run` e gere um binario com `build`.", "Create `app.ofs`, validate with `check`, run with `run`, and build a native binary with `build`.", site_terminal("terminal", code))
+    body = body + doc_section("web", "Primeiro site", "Crie `page.odl` e `site.oes`. A OFS gera HTML/CSS para qualquer hospedagem estatica.", "Create `page.odl` and `site.oes`. OFS generates HTML/CSS for any static host.", odl.div("grid", cards))
+    body = body + doc_section("verify", "Checklist", "Sempre teste sintaxe, geracao web, assets e release antes de publicar.", "Always test syntax, web generation, assets, and release packaging before publishing.", odl.div("callout", "O fluxo oficial usa GitHub Actions para Build & Test, Auto Release e GitHub Pages."))
+    forge content = doc_page("Comecando", "Da instalacao ao primeiro executavel e site nativo em OFS.", toc, body)
     return page_shell("Comecando", "Da instalacao ao primeiro executavel e site nativo em OFS.", content)
 }
 
 vein page_downloads() -> obsidian {
-    forge content = site_release()
-    content = content + odl.section("", "band", odl.div("wrap", site_terminal("install", "# Debian / Ubuntu\nsudo dpkg -i ofs-debian-ubuntu-x64-installer-v*.deb\n\n# Fedora / RHEL / openSUSE\nsudo rpm -Uvh ofs-fedora-x64-installer-v*.rpm\n\n# Arch / Manjaro\nsudo pacman -U ofs-arch-x64-installer-v*.pkg.tar.zst\n\n# VS Code\ncode --install-extension obsidian-fault-script-*.vsix")))
+    forge toc = doc_link("assets", "Assets") + doc_link("linux", "Linux") + doc_link("editor", "Editor") + doc_link("checks", "Checksums")
+    forge body = doc_section("assets", "Downloads oficiais", "Os cards buscam a ultima release no GitHub e apontam para os assets publicados.", "The cards fetch the latest GitHub release and point to published assets.", site_release())
+    body = body + doc_section("linux", "Linux", "Debian/Ubuntu usam .deb, Fedora/RHEL/openSUSE usam .rpm e Arch/Manjaro usam pacote pacman.", "Debian/Ubuntu use .deb, Fedora/RHEL/openSUSE use .rpm, and Arch/Manjaro use a pacman package.", site_terminal("install", "# Debian / Ubuntu\nsudo dpkg -i ofs-debian-ubuntu-x64-installer-v*.deb\n\n# Fedora / RHEL / openSUSE\nsudo rpm -Uvh ofs-fedora-x64-installer-v*.rpm\n\n# Arch / Manjaro\nsudo pacman -U ofs-arch-x64-installer-v*.pkg.tar.zst"))
+    body = body + doc_section("editor", "VS Code", "A extensao inclui syntax highlighting, diagnosticos, comandos, Go Live, ODL e OES.", "The extension includes syntax highlighting, diagnostics, commands, Go Live, ODL, and OES.", site_terminal("extension", "code --install-extension obsidian-fault-script-*.vsix"))
+    body = body + doc_section("checks", "Integridade", "Use o arquivo CHECKSUMS para conferir o download antes de instalar.", "Use the CHECKSUMS file to verify downloads before installing.", odl.div("callout", "Toda release oficial e produzida pelo workflow Auto Release."))
+    forge content = doc_page("Downloads", "Instaladores oficiais, pacote VS Code, checksums e comandos de instalacao.", toc, body)
     return page_shell("Downloads", "Instaladores oficiais, pacote VS Code, checksums e comandos de instalacao.", content)
 }
 
 vein page_compiler() -> obsidian {
     forge flow = odl.div("workflow", odl.div("step", "<strong>Lexer</strong><br>Fonte para tokens.") + odl.div("step", "<strong>Parser</strong><br>Tokens para AST.") + odl.div("step", "<strong>Semantica</strong><br>Tipos e simbolos.") + odl.div("step", "<strong>LLVM</strong><br>IR e linkagem nativa."))
-    forge content = odl.section("", "band", odl.div("wrap", flow + site_terminal("pipeline", "source.ofs -> tokens -> AST -> semantic model -> LLVM IR -> native executable")))
+    forge toc = doc_link("pipeline", "Pipeline") + doc_link("self", "Self-hosted") + doc_link("artifacts", "Artefatos")
+    forge body = doc_section("pipeline", "Pipeline", "O compilador le o fonte, tokeniza, monta AST, valida semantica, gera LLVM IR e linka com runtime.", "The compiler reads source, tokenizes, builds an AST, validates semantics, emits LLVM IR, and links with the runtime.", flow + site_terminal("pipeline", "source.ofs -> tokens -> AST -> semantic model -> LLVM IR -> native executable"))
+    body = body + doc_section("self", "Self-hosted", "O compilador principal fica em `ofs/ofscc`. Isso permite evoluir a linguagem usando a propria linguagem.", "The main compiler lives in `ofs/ofscc`. This lets the language evolve using itself.", odl.div("callout", "O bootstrap ainda preserva ferramentas de distribuicao para gerar instaladores limpos."))
+    body = body + doc_section("artifacts", "Artefatos", "`check` valida, `ir` mostra LLVM IR, `asm` gera assembly, `build` produz executavel.", "`check` validates, `ir` shows LLVM IR, `asm` emits assembly, and `build` produces an executable.", site_terminal("commands", "ofs check app.ofs\nofs ir app.ofs\nofs asm app.ofs -o app.s\nofs build app.ofs -o app"))
+    forge content = doc_page("Compilador", "O frontend self-hosted da OFS e o backend nativo LLVM.", toc, body)
     return page_shell("Compilador", "O frontend self-hosted da OFS e o backend nativo LLVM.", content)
 }
 
 vein page_odl() -> obsidian {
     forge code = "page \"OFS Web\" \"pt\"\nskin \"theme.css\"\nflow\n  deck.topbar\n    title1 \"OFS Web\"\n    link.button \"Documentacao\" \"#docs\"\n  stage#content\n    band.docs\n      mark \"## Documentos nativos\\nEscreva **ODL**, gere HTML.\"\n      raw \"<custom-element></custom-element>\"\n  spark \"app.js\""
     forge api = "<table class=\"api-table\"><thead><tr><th>Forma</th><th>Uso</th></tr></thead><tbody><tr><td><code>page / skin / flow</code></td><td>Documento, estilo e corpo com nomes proprios do OFS.</td></tr><tr><td><code>deck / stage / band / tile</code></td><td>Estrutura semantica gerada como nav, main, section e article.</td></tr><tr><td><code>mark</code></td><td>Markdown nativo dentro do documento.</td></tr><tr><td><code>raw</code></td><td>Interop explicita com HTML quando precisar.</td></tr><tr><td><code>wire / spark / pulse / server</code></td><td>Scripts de browser, modulo estilo Node, inline JS e templates PHP.</td></tr><tr><td><code>studio</code></td><td>Modo local para editar posicionamento visual e exportar OES.</td></tr></tbody></table>"
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Documentos", "ODL e uma fonte propria compilada nativamente pela OFS.", "") + site_card("Componentes", "Blocos indentados substituem fechamento repetitivo e podem virar funcoes OFS.", "") + site_card("Saida", "HTML e artefato gerado para navegador, GitHub Pages e hospedagem comum.", "")) + site_terminal("page.odl", code) + odl.div("table-wrap", api)))
+    forge toc = doc_link("model", "Modelo") + doc_link("syntax", "Sintaxe") + doc_link("interop", "Interop") + doc_link("api", "Referencia")
+    forge body = doc_section("model", "Modelo ODL", "ODL e a linguagem de documentos da OFS. Ela nao substitui o navegador: ela gera HTML padrao como artefato.", "ODL is the OFS document language. It does not replace the browser: it generates standard HTML as an artifact.", odl.div("grid", site_card("Documentos", "Fonte .odl compilada pelo launcher OFS.", "") + site_card("Componentes", "Blocos indentados podem virar funcoes reutilizaveis.", "") + site_card("Hospedagem", "HTML gerado roda em GitHub Pages, nginx, CDN ou webserver OFS.", "")))
+    body = body + doc_section("syntax", "Sintaxe propria", "ODL usa `page`, `skin`, `flow`, `deck`, `stage`, `band`, `tile`, `mark` e `raw` para ficar mais perto da tematica OFS.", "ODL uses `page`, `skin`, `flow`, `deck`, `stage`, `band`, `tile`, `mark`, and `raw` so the source feels native to OFS.", site_terminal("page.odl", code))
+    body = body + doc_section("interop", "Markdown, HTML, JS, PHP e Node", "`mark` aceita Markdown, `raw` aceita HTML, `spark` importa JS module, `pulse` injeta JS inline e `server` pode preservar templates PHP.", "`mark` accepts Markdown, `raw` accepts HTML, `spark` imports JS modules, `pulse` injects inline JS, and `server` can preserve PHP templates.", odl.div("callout", "O objetivo e autorar em ODL sem perder interoperabilidade quando um projeto precisar de codigo legado."))
+    body = body + doc_section("api", "Tabela de formas", "A tabela abaixo resume a superficie atual da linguagem.", "The table below summarizes the current language surface.", odl.div("table-wrap", api))
+    forge content = doc_page("ODL", "Obsidian Document Language: a camada estrutural de documentos para sites OFS.", toc, body)
     return page_shell("ODL", "Obsidian Document Language: a camada estrutural de documentos para sites OFS.", content)
 }
 
 vein page_oes() -> obsidian {
     forge code = "gem accent \"#29e0bd\"\ngem surface \"#101722\"\npaint .button\n  fill \"$accent\"\n  curve \"8px\"\n  transition \"transform .2s ease\"\nveil \"(max-width: 700px)\"\n  paint .grid\n    grid-cols \"1fr\"\npulse \"enter\"\n  rise\n    opacity \"0\"\n  rest\n    opacity \"1\""
     forge api = "<table class=\"api-table\"><thead><tr><th>Forma</th><th>Uso</th></tr></thead><tbody><tr><td><code>gem nome valor</code></td><td>Token de design compilado para variavel CSS.</td></tr><tr><td><code>paint seletor</code></td><td>Bloco indentado de declaracoes visuais.</td></tr><tr><td><code>veil / guard / strata</code></td><td>Responsividade, suporte de plataforma e camadas.</td></tr><tr><td><code>pulse / rise / rest / atNN</code></td><td>Linha do tempo de animacao.</td></tr><tr><td><code>fill / ink / curve / space</code></td><td>Vocabulario OES para propriedades comuns sem perder compatibilidade.</td></tr></tbody></table>"
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Gemas", "Cores, espacos e movimento ficam em fonte OES versionavel.", "") + site_card("Responsivo", "Blocos veil e guard compilam para regras aceitas por qualquer navegador.", "") + site_card("Efeitos", "Pulsos e transicoes formam uma camada propria de motion.", "")) + site_terminal("theme.oes", code) + odl.div("table-wrap", api)))
+    forge toc = doc_link("model", "Modelo") + doc_link("syntax", "Sintaxe") + doc_link("motion", "Motion") + doc_link("api", "Referencia")
+    forge body = doc_section("model", "Modelo OES", "OES e a camada de efeito: tokens, regras visuais, responsividade, animacao e comportamento visual seguro.", "OES is the effect layer: tokens, visual rules, responsiveness, animation, and safer visual behavior.", odl.div("grid", site_card("Gemas", "Tokens de design versionaveis.", "") + site_card("Pintura", "Blocos `paint` geram regras visuais.", "") + site_card("Veus", "`veil` e `guard` controlam responsividade e suporte.", "")))
+    body = body + doc_section("syntax", "Sintaxe propria", "OES preserva o poder do CSS, mas usa nomes como `gem`, `paint`, `fill`, `ink`, `curve`, `space`, `veil` e `pulse`.", "OES preserves CSS power while using names such as `gem`, `paint`, `fill`, `ink`, `curve`, `space`, `veil`, and `pulse`.", site_terminal("theme.oes", code))
+    body = body + doc_section("motion", "Motion e layout", "`pulse`, `rise`, `rest` e `atNN` organizam animacoes. O editor pode usar essa fonte para ajustes visuais e exportar OES.", "`pulse`, `rise`, `rest`, and `atNN` organize animations. The editor can use this source for visual adjustments and export OES.", odl.div("callout", "A saida continua CSS padrao para o navegador, mas a fonte oficial do projeto fica em OES."))
+    body = body + doc_section("api", "Tabela de formas", "A tabela abaixo mostra os blocos e aliases principais.", "The table below shows the main blocks and aliases.", odl.div("table-wrap", api))
+    forge content = doc_page("OES", "Obsidian Effect Scripts: estilo, responsividade e movimento para documentos ODL.", toc, body)
     return page_shell("OES", "Obsidian Effect Scripts: estilo, responsividade e movimento para documentos ODL.", content)
 }
 
@@ -320,60 +394,102 @@ vein page_playground() -> obsidian {
 
 vein page_webserver() -> obsidian {
     forge code = "attach {webserver}\n\ncore main() {\n    webserver.serve_html_forever(8080, \"<h1>OFS server</h1>\")\n}"
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("serve_once", "Aceita uma requisicao HTTP e encerra.", "") + site_card("serve_forever", "Mantem o servidor nativo ativo.", "") + site_card("HTML helpers", "Envia a saida ODL gerada como resposta text/html.", "")) + site_terminal("server.ofs", code)))
+    forge toc = doc_link("purpose", "Uso") + doc_link("api", "API") + doc_link("deploy", "Deploy")
+    forge body = doc_section("purpose", "Servidor nativo", "O modulo webserver sobe HTTP a partir de um executavel OFS. Ele serve HTML gerado por ODL ou conteudo montado por funcoes.", "The webserver module starts HTTP from a native OFS executable. It serves ODL-generated HTML or content assembled by functions.", site_terminal("server.ofs", code))
+    body = body + doc_section("api", "Funcoes", "`serve_once` atende uma requisicao; `serve_forever` mantem o processo ativo; helpers HTML definem content-type.", "`serve_once` handles one request; `serve_forever` keeps the process alive; HTML helpers set the content type.", odl.div("grid", site_card("Local dev", "Ideal para testar sites antes de gerar artefatos estaticos.", "") + site_card("Nativo", "Sem depender de Node para o servidor local.", "") + site_card("OFS first", "A mesma linguagem monta pagina e servidor.", "")))
+    body = body + doc_section("deploy", "Publicacao", "Para GitHub Pages, gere HTML/CSS em `docs/`. Para servidor proprio, rode o binario OFS.", "For GitHub Pages, generate HTML/CSS into `docs/`. For your own server, run the OFS binary.", odl.div("callout", "Navegadores ainda executam HTML/CSS/JS padrao; ODL/OES sao a fonte compilada."))
+    forge content = doc_page("Web Server", "Servidor HTTP nativo a partir de um executavel OFS.", toc, body)
     return page_shell("Web Server", "Servidor HTTP nativo a partir de um executavel OFS.", content)
 }
 
 vein page_webui() -> obsidian {
     forge code = "attach {webui}\n\ncore main() {\n    forge body = webui.nav(\"OFS\", webui.button(\"Docs\", \"#docs\"))\n    body = body + webui.grid(webui.card(\"ODL\", \"Documents\") + webui.card(\"OES\", \"Effects\"))\n    webui.serve(8080, \"OFS Web\", body)\n}"
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Componentes", "Helpers de navegacao, hero, botao, painel, grid e card.", "") + site_card("Composicao", "Componentes sao funcoes OFS comuns retornando obsidian.", "") + site_card("Go Live", "A extensao inicia programas web OFS explicitos e documentos .odl.", "")) + site_terminal("webui.ofs", code)))
+    forge toc = doc_link("components", "Componentes") + doc_link("live", "Go Live") + doc_link("rules", "Regras")
+    forge body = doc_section("components", "Componentes OFS", "webui oferece helpers de hero, nav, botao, grid, card e servidor. Cada helper retorna `obsidian`.", "webui offers hero, nav, button, grid, card, and server helpers. Each helper returns `obsidian`.", site_terminal("webui.ofs", code))
+    body = body + doc_section("live", "Go Live", "A extensao so trata .ofs como site quando encontra uso web explicito, e trata .odl como documento web.", "The extension only treats .ofs as a site when it finds explicit web usage, and treats .odl as a web document.", odl.div("callout", "Mudancas em .odl, .oes, JS e CSS vizinhos recompilam e recarregam o navegador local."))
+    body = body + doc_section("rules", "Separacao", "Use OFS para logica, ODL para estrutura, OES para visual e webserver/webui para servir.", "Use OFS for logic, ODL for structure, OES for visuals, and webserver/webui for serving.", odl.div("grid", site_card("OFS", "Programa e regras de negocio.", "") + site_card("ODL", "Documento e componentes.", "") + site_card("OES", "Design, responsividade e motion.", "")))
+    forge content = doc_page("Web UI", "A camada de componentes sobre ODL, OES e o servidor web nativo.", toc, body)
     return page_shell("Web UI", "A camada de componentes sobre ODL, OES e o servidor web nativo.", content)
 }
 
 vein page_stdlib() -> obsidian {
-    forge modules = site_card("Core", "core, math, string, io e fmt.", "")
-    modules = modules + site_card("Sistemas", "bedrock, memory-modes, rift e helpers de runtime baixo nivel.", "")
-    modules = modules + site_card("Visual", "canvas, window, ui, ODL, OES, webui e webserver.", "")
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", modules) + site_terminal("attach", "attach {math}\nattach {string}\nattach {odl}\nattach {oes}\nattach {webui}")))
+    forge toc = doc_link("core", "Core") + doc_link("system", "Sistema") + doc_link("web", "Web") + doc_link("usage", "Uso")
+    forge core_modules = odl.div("module-grid", module_card("math", "Operacoes numericas e helpers matematicos.") + module_card("string", "Comprimento, recorte, comparacao e manipulacao de texto.") + module_card("io", "Entrada e saida basica.") + module_card("fmt", "Formatacao de valores para texto."))
+    forge system_modules = odl.div("module-grid", module_card("bedrock", "Primitivos de integracao baixo nivel.") + module_card("bedrock_packet", "Estruturas de pacote para comunicacao experimental.") + module_card("memory_modes", "Experimentos controlados com memoria.") + module_card("rift", "Superficie experimental de runtime."))
+    forge web_modules = odl.div("module-grid", module_card("odl", "Construcao de documentos HTML a partir de OFS.") + module_card("oes", "Geracao de estilo, responsividade e motion.") + module_card("webui", "Componentes e servidor de pagina.") + module_card("webserver", "Servidor HTTP nativo."))
+    forge body = doc_section("core", "Bibliotecas base", "Esses modulos sustentam programas pequenos e ferramentas do compilador.", "These modules support small programs and compiler tools.", core_modules)
+    body = body + doc_section("system", "Sistema e runtime", "A familia bedrock/rift existe para experimentos controlados perto do runtime.", "The bedrock/rift family exists for controlled experiments close to the runtime.", system_modules)
+    body = body + doc_section("web", "Web e UI", "A parte web e distribuida como stdlib, nao como ferramenta separada.", "The web layer ships as standard library, not as a separate tool.", web_modules)
+    body = body + doc_section("usage", "Como importar", "Use `attach {nome}` para bibliotecas instaladas ou `attach {F:caminho}` para arquivos locais.", "Use `attach {name}` for installed libraries or `attach {F:path}` for local files.", site_terminal("attach", "attach {math}\nattach {string}\nattach {odl}\nattach {oes}\nattach {webui}"))
+    forge content = doc_page("Biblioteca Padrao", "Modulos distribuidos com o compilador e instaladores OFS.", toc, body)
     return page_shell("Biblioteca Padrao", "Modulos distribuidos com o compilador e instaladores OFS.", content)
 }
 
 vein page_packages() -> obsidian {
     forge code = "bash src/packages/install_library.sh odl\nbash src/packages/install_library.sh oes\nbash src/packages/build_packages.sh"
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Registro", "src/packages/registry.json indexa bibliotecas OFS publicadas.", "") + site_card("Arquivos", "Cada pacote sai como artefato tar.gz versionado.", "") + site_card("Canais", "Pacotes podem expor canais alpha, stable e latest.", "")) + site_terminal("src/packages", code)))
+    forge toc = doc_link("registry", "Registro") + doc_link("install", "Instalar") + doc_link("publish", "Publicar")
+    forge body = doc_section("registry", "Registro", "`src/packages/registry.json` indexa bibliotecas OFS publicadas e seus canais.", "`src/packages/registry.json` indexes published OFS libraries and their channels.", odl.div("grid", site_card("Registro", "Nome, versao, URL e checksum.", "") + site_card("Artefatos", "Pacotes versionados para reproducao.", "") + site_card("Canais", "alpha, stable e latest.", "")))
+    body = body + doc_section("install", "Instalacao", "O instalador copia bibliotecas para o local esperado pelo launcher e pela extensao.", "The installer copies libraries into the location expected by the launcher and extension.", site_terminal("src/packages", code))
+    body = body + doc_section("publish", "Publicacao", "Ao reorganizar o repositorio, mantenha os caminhos dos workflows atualizados antes de publicar release.", "When reorganizing the repository, keep workflow paths updated before publishing a release.", odl.div("callout", "A validacao final deve testar checkout, pacote limpo e instaladores."))
+    forge content = doc_page("Pacotes", "Instale, compile, publique e versione bibliotecas OFS.", toc, body)
     return page_shell("Pacotes", "Instale, compile, publique e versione bibliotecas OFS.", content)
 }
 
 vein page_vscode() -> obsidian {
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Sintaxe", "Gramatica TextMate para fontes .ofs, .odl e .oes.", "") + site_card("Comandos", "Check, run, build, IR, assembly, ODL, OES e traducao.", "") + site_card("Go Live", "Inicia projetos webui/webserver e documentos .odl com recarga ao vivo.", "")) + site_terminal("settings.json", "\"ofs.goLivePort\": 8080\n\"ofs.compilerPath\": \"ofs/dist/ofs\"")))
+    forge toc = doc_link("features", "Recursos") + doc_link("live", "Go Live") + doc_link("settings", "Configuracao")
+    forge body = doc_section("features", "Recursos da extensao", "A extensao reconhece .ofs, .odl e .oes com gramaticas, diagnosticos, comandos, icones e empacotamento do compilador.", "The extension recognizes .ofs, .odl, and .oes with grammars, diagnostics, commands, icons, and packaged compiler binaries.", odl.div("grid", site_card("Sintaxe", "TextMate para OFS, ODL e OES.", "") + site_card("Comandos", "Check, run, build, IR, asm, ODL, OES e tradutor.", "") + site_card("Diagnosticos", "Erros de compilacao aparecem no painel Problems.", "")))
+    body = body + doc_section("live", "Go Live seguro", ".odl e sempre documento web. .ofs so abre como site quando contem webui/webserver explicito.", ".odl is always a web document. .ofs opens as a site only when it contains explicit webui/webserver usage.", odl.div("callout", "O servidor interno recompila ODL/OES e recarrega a pagina ao vivo."))
+    body = body + doc_section("settings", "Configuracao", "Aponte para um launcher customizado quando estiver testando uma build local.", "Point to a custom launcher when testing a local build.", site_terminal("settings.json", "\"ofs.goLivePort\": 8080\n\"ofs.compilerPath\": \"ofs/dist/ofs\""))
+    forge content = doc_page("VS Code", "Suporte de linguagem, diagnosticos, comandos, snippets e Go Live.", toc, body)
     return page_shell("VS Code", "Suporte de linguagem, diagnosticos, comandos, snippets e Go Live.", content)
 }
 
 vein page_github() -> obsidian {
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Override local", "*.ofs, *.odl e *.oes sao marcados via .gitattributes.", "") + site_card("Gramatica", "source.ofs, source.odl e source.oes sao enviados pela extensao VS Code.", "") + site_card("Reconhecimento global", "A contribuicao para GitHub Linguist precisa de metadados, gramatica e exemplos.", "")) + site_terminal("languages.yml", "OFS:\n  type: programming\n  color: \"#2A0845\"\n  extensions:\n    - \".ofs\"\n  tm_scope: source.ofs")))
+    forge toc = doc_link("local", "Local") + doc_link("global", "Global") + doc_link("pages", "Pages")
+    forge body = doc_section("local", "Reconhecimento neste repositorio", "`.gitattributes` marca .ofs, .odl e .oes como fontes da linguagem para este projeto.", "`.gitattributes` marks .ofs, .odl, and .oes as language sources for this project.", odl.div("grid", site_card("Override local", "*.ofs linguist-language=OFS.", "") + site_card("ODL", "*.odl linguist-language=ODL.", "") + site_card("OES", "*.oes linguist-language=OES.", "")))
+    body = body + doc_section("global", "GitHub Linguist", "Para reconhecimento global, a linguagem precisa de PR no Linguist com extensoes, escopos, cor, exemplos publicos e gramatica.", "For global recognition, the language needs a Linguist PR with extensions, scopes, color, public examples, and grammar.", site_terminal("languages.yml", "OFS:\n  type: programming\n  color: \"#2A0845\"\n  extensions:\n    - \".ofs\"\n  tm_scope: source.ofs\nODL:\n  type: markup\n  extensions:\n    - \".odl\"\nOES:\n  type: markup\n  extensions:\n    - \".oes\""))
+    body = body + doc_section("pages", "GitHub Pages", "GitHub Pages nao executa ODL/OES diretamente. O fluxo correto e gerar HTML/CSS em `docs/` e publicar o artefato.", "GitHub Pages does not execute ODL/OES directly. The correct flow is to generate HTML/CSS into `docs/` and publish the artifact.", odl.div("callout", "A fonte oficial continua ODL/OES; HTML e CSS sao artefatos de hospedagem."))
+    forge content = doc_page("Reconhecimento GitHub", "Como deteccao de fonte e syntax highlighting sao registrados.", toc, body)
     return page_shell("Reconhecimento GitHub", "Como deteccao de fonte e syntax highlighting sao registrados.", content)
 }
 
 vein page_web() -> obsidian {
     forge flow = odl.div("workflow", odl.div("step", "<strong>1. ODL</strong><br>Declare estrutura de documento em OFS.") + odl.div("step", "<strong>2. OES</strong><br>Gere tokens, regras e animacao.") + odl.div("step", "<strong>3. Webserver</strong><br>Sirva a saida gerada localmente.") + odl.div("step", "<strong>4. Pages</strong><br>Publique os artefatos gerados."))
     forge code = "attach {odl}\nattach {oes}\n\nvein page() -> obsidian {\n    return odl.document(\"pt\", \"Site\", \"feito em OFS\", \"\", odl.h1(\"OFS Web\"))\n}"
-    forge content = odl.section("", "band", odl.div("wrap", flow + site_terminal("odl.ofs", code)))
+    forge toc = doc_link("stack", "Stack") + doc_link("hosting", "Hospedagem") + doc_link("interop", "Interop")
+    forge body = doc_section("stack", "Stack web OFS", "A stack separa logica OFS, documento ODL, efeito OES, servidor web e artefato gerado.", "The stack separates OFS logic, ODL document, OES effects, web server, and generated artifact.", flow + site_terminal("odl.ofs", code))
+    body = body + doc_section("hosting", "Hospedagem real", "Browsers aceitam HTML/CSS/JS. OFS gera esses arquivos para GitHub Pages, CDN e servidores comuns.", "Browsers accept HTML/CSS/JS. OFS generates those files for GitHub Pages, CDNs, and common servers.", odl.div("callout", "ODL/OES podem ser hospedados como fonte tambem, mas quem executa no navegador e o artefato gerado."))
+    body = body + doc_section("interop", "O que vem de React, Node, PHP e HTML", "ODL permite componentes, scripts modulares, Markdown e HTML bruto. OES organiza tokens e efeitos. webserver cobre a parte servidor local.", "ODL allows components, module scripts, Markdown, and raw HTML. OES organizes tokens and effects. webserver covers the local server layer.", odl.div("grid", site_card("React-like", "Componentes como funcoes retornando texto/ODL.", "") + site_card("Node-like", "Modulo JS por `spark` quando precisar.", "") + site_card("PHP-like", "Templates preservados por `server`/raw em hospedagem compativel.", "")))
+    forge content = doc_page("ODL + OES", "A resposta nativa da OFS para HTML, CSS, templates PHP e componentes estilo React.", toc, body)
     return page_shell("ODL + OES", "A resposta nativa da OFS para HTML, CSS, templates PHP e componentes estilo React.", content)
 }
 
 vein page_commands() -> obsidian {
     forge code = "ofs/dist/ofs check app.ofs\nofs/dist/ofs run app.ofs\nofs/dist/ofs build app.ofs -o app\nofs/dist/ofs odl page.odl -o index.html\nofs/dist/ofs oes theme.oes -o theme.css\nofs/dist/ofs translate legacy.html --to odl\nofs/dist/ofs translate legacy.css --to oes"
-    forge content = odl.section("", "band", odl.div("wrap", site_terminal("commands", code) + odl.div("grid", site_card("check", "Valida sintaxe e semantica sem gerar binario.", "") + site_card("run", "Compila e executa imediatamente.", "") + site_card("build", "Produz executavel nativo linkado com o runtime.", ""))))
+    forge toc = doc_link("native", "Nativo") + doc_link("web", "Web") + doc_link("translate", "Tradutor")
+    forge table = "<table class=\"api-table\"><thead><tr><th>Comando</th><th>Finalidade</th></tr></thead><tbody><tr><td><code>check</code></td><td>Valida sintaxe e semantica.</td></tr><tr><td><code>run</code></td><td>Compila e executa.</td></tr><tr><td><code>build</code></td><td>Gera executavel nativo.</td></tr><tr><td><code>ir</code></td><td>Mostra LLVM IR.</td></tr><tr><td><code>asm</code></td><td>Gera assembly.</td></tr><tr><td><code>odl</code></td><td>Compila .odl para HTML.</td></tr><tr><td><code>oes</code></td><td>Compila .oes para CSS.</td></tr><tr><td><code>translate</code></td><td>Traduz HTML/CSS para ODL/OES quando possivel.</td></tr></tbody></table>"
+    forge body = doc_section("native", "Comandos nativos", "Use check, run, build, ir e asm no ciclo diario da linguagem.", "Use check, run, build, ir, and asm in the daily language cycle.", site_terminal("commands", code))
+    body = body + doc_section("web", "Comandos web", "`odl` e `oes` geram artefatos de navegador a partir das linguagens web da OFS.", "`odl` and `oes` generate browser artifacts from OFS web languages.", odl.div("table-wrap", table))
+    body = body + doc_section("translate", "Tradutor", "O tradutor ajuda a trazer HTML/CSS legado para ODL/OES sem impedir hospedagem padrao.", "The translator helps bring legacy HTML/CSS into ODL/OES without blocking standard hosting.", odl.div("callout", "O tradutor e util para migracao, mas o codigo final deve ser revisado como qualquer conversao."))
+    forge content = doc_page("Comandos", "Comandos diarios para desenvolvimento OFS.", toc, body)
     return page_shell("Comandos", "Comandos diarios para desenvolvimento OFS.", content)
 }
 
 vein page_design() -> obsidian {
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("grid", site_card("Tokens", "OES guarda cores, espacos e movimento como tokens gerados por OFS.", "") + site_card("Componentes", "Partes do site sao funcoes retornando fragmentos ODL.", "") + site_card("Motion", "Barras, cards e terminais usam pulsos OES.", "")) + site_terminal("design.oes", "gem accent \"#29e0bd\"\npaint .btn\n  curve \"8px\"\npulse \"grow\"\n  rise\n    width \"0\"")))
+    forge toc = doc_link("tokens", "Tokens") + doc_link("components", "Componentes") + doc_link("motion", "Motion")
+    forge body = doc_section("tokens", "Tokens", "OES guarda cor, espaco, raio, motion e layout como fonte versionavel.", "OES keeps color, spacing, radius, motion, and layout as versionable source.", site_terminal("design.oes", "gem accent \"#29e0bd\"\npaint .btn\n  fill \"$accent\"\n  curve \"8px\""))
+    body = body + doc_section("components", "Componentes", "O site oficial e composto por funcoes OFS que retornam ODL. Isso evita editar HTML gerado.", "The official site is composed from OFS functions returning ODL. This avoids editing generated HTML.", odl.div("grid", site_card("Nao poluido", "Sections grandes, cards so onde ajudam.", "") + site_card("Responsivo", "Dimensoes estaveis e grids que colapsam.", "") + site_card("Acessivel", "Contraste alto e texto tecnico direto.", "")))
+    body = body + doc_section("motion", "Motion", "Animacoes sao discretas: revelacao de cards, barras de benchmark e transicoes de hover.", "Motion is restrained: card reveal, benchmark bars, and hover transitions.", odl.div("callout", "A meta e demonstrar poder sem transformar documentacao em vitrine confusa."))
+    forge content = doc_page("Design System", "Como o site oficial e estilizado sem autorar CSS puro como fonte.", toc, body)
     return page_shell("Design System", "Como o site oficial e estilizado sem autorar CSS puro como fonte.", content)
 }
 
 vein page_benchmark() -> obsidian {
     forge summary = "<div class=\"metric-summary\"><div class=\"metric-stat\"><strong>3 runs</strong><span>CPU, RSS e build</span></div><div class=\"metric-stat\"><strong>10 runs</strong><span>Startup de processo</span></div><div class=\"metric-stat\"><strong>wait4</strong><span>Medicao de processo real</span></div><div class=\"metric-stat\"><strong>checksum</strong><span>Saida identica obrigatoria</span></div></div>"
-    forge content = odl.section("benchmark", "band", odl.div("wrap", summary + site_benchmark() + odl.div("card", "<p>O codigo-fonte e o runner ficam em <code>src/site/benchmarks</code>. Menor e melhor. Dependencias de runtime ficam fora do tamanho de artefato, e as medicoes descrevem apenas a maquina e o workload documentados.</p>")))
+    forge toc = doc_link("method", "Metodo") + doc_link("results", "Resultados") + doc_link("limits", "Limites")
+    forge body = doc_section("method", "Metodo", "O benchmark executa processos reais e mede CPU, RSS, startup, compilacao e tamanho do artefato.", "The benchmark runs real processes and measures CPU, RSS, startup, compilation, and artifact size.", summary)
+    body = body + doc_section("results", "Resultados", "Os graficos carregam `benchmark.json` gerado pelo runner local.", "The charts load `benchmark.json` generated by the local runner.", site_benchmark())
+    body = body + doc_section("limits", "Limites", "Esses dados descrevem esta maquina e este workload. Nao sao ranking universal de linguagens.", "These numbers describe this machine and this workload. They are not universal language rankings.", odl.div("callout", "Para publicar numeros serios, mantenha hardware, flags, fonte e versao das ferramentas documentados."))
+    forge content = doc_page("Benchmark", "Medicoes reproduziveis de CPU, memoria, inicializacao, compilacao e tamanho de artefato.", toc, body)
     return page_shell("Benchmark", "Medicoes reproduziveis de CPU, memoria, inicializacao, compilacao e tamanho de artefato.", content)
 }

@@ -1,6 +1,8 @@
-# ODL Reference
+# ODL Reference / Referencia ODL
 
 ODL is the structural web language of OFS.
+
+ODL e a linguagem estrutural de documentos da OFS. Voce escreve `.odl`, a ferramenta OFS compila para HTML, e o navegador recebe um artefato padrao.
 
 ```odl
 page "Title" "pt"
@@ -12,6 +14,8 @@ flow
 ```
 
 Indentation opens and closes elements. A tag may include `.class` and `#id` shorthand.
+
+A indentacao abre e fecha elementos. Uma forma pode incluir `.classe` e `#id` no proprio nome.
 
 | Form | Result |
 |---|---|
@@ -34,4 +38,10 @@ Indentation opens and closes elements. A tag may include `.class` and `#id` shor
 
 The older compatibility forms `document`, `style`, `body`, `markdown`, `html`, `script`, `module`, `js`, and `php` remain accepted so imported HTML-era code can migrate gradually. New OFS web sources should prefer the ODL vocabulary above.
 
-Compile with `ofs odl page.odl -o index.html`.
+As formas antigas de compatibilidade continuam aceitas para migrar codigo existente. Fontes web novas devem preferir `page`, `skin`, `flow`, `deck`, `stage`, `band`, `tile`, `mark`, `raw`, `wire`, `spark`, `pulse` e `server`.
+
+Compile with / Compile com:
+
+```bash
+ofs odl page.odl -o index.html
+```

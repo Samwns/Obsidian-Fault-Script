@@ -15,3 +15,4 @@ src/vscode-extension/node_modules/
 *.vsix
 ROADMAP.md
 ROADMAP.
+docs/roadmap/
