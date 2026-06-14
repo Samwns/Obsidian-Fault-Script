@@ -38,7 +38,7 @@ fi
 
 clang_ir() {
   if [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ]; then
-    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" "$@"
+    clang -Wno-override-module "$@" "${OFS_LLVM_IR_FLAGS[@]}"
   else
     clang -Wno-override-module "$@"
   fi

@@ -96,7 +96,7 @@ compile_ofs_program() {
         if [ "$input" = "ofs/ofscc/ofscc.ofs" ] && [ -f "dist/ofscc.ll" ]; then
             print_info "Recompilação OFS direta falhou neste ambiente; usando dist/ofscc.ll versionado como fallback de instalação."
             if [ "${#llvm_flags[@]}" -gt 0 ]; then
-                clang -Wno-override-module "${llvm_flags[@]}" -O2 "dist/ofscc.ll" "$RUNTIME" -lm -o "$output"
+                clang -Wno-override-module -O2 "dist/ofscc.ll" "$RUNTIME" -lm -o "$output" "${llvm_flags[@]}"
             else
                 clang -Wno-override-module -O2 "dist/ofscc.ll" "$RUNTIME" -lm -o "$output"
             fi
@@ -106,7 +106,7 @@ compile_ofs_program() {
         return 1
     fi
     if [ "${#llvm_flags[@]}" -gt 0 ]; then
-        clang -Wno-override-module "${llvm_flags[@]}" -O2 "$ir" "$RUNTIME" -lm -o "$output"
+        clang -Wno-override-module -O2 "$ir" "$RUNTIME" -lm -o "$output" "${llvm_flags[@]}"
     else
         clang -Wno-override-module -O2 "$ir" "$RUNTIME" -lm -o "$output"
     fi
@@ -130,7 +130,7 @@ compile_versioned_compiler_ir() {
     fi
 
     if [ "${#llvm_flags[@]}" -gt 0 ]; then
-        clang -Wno-override-module "${llvm_flags[@]}" -O2 "$ir" "$RUNTIME" -lm -o "$output"
+        clang -Wno-override-module -O2 "$ir" "$RUNTIME" -lm -o "$output" "${llvm_flags[@]}"
     else
         clang -Wno-override-module -O2 "$ir" "$RUNTIME" -lm -o "$output"
     fi
