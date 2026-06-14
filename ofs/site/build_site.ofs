@@ -8,5 +8,9 @@ core main() {
     write_file("docs/assets/site.js", site_js())
     write_file("docs/assets/benchmark.json", site_benchmark_json())
     write_file("docs/.nojekyll", "")
+    write_file("index.html", site_page_root())
+    write_file("site.css", site_css())
+    write_file("site.js", site_js())
+    write_file("benchmark.json", site_benchmark_json())
     echo("OFS site generated in docs/")
 }

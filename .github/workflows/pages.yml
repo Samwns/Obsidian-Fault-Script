@@ -37,6 +37,8 @@ jobs:
           chmod +x /tmp/ofs
           OFS_RUNTIME=/tmp/libofs_runtime.a /tmp/ofs build ofs/site/build_site.ofs -o /tmp/ofs-build-site
           /tmp/ofs-build-site
+          cp packaging/assets/ofs-256.png docs/assets/ofs-256.png
+          cp packaging/assets/ofs-256.png ofs-256.png
       - uses: actions/configure-pages@v5
         with:
           enablement: true
