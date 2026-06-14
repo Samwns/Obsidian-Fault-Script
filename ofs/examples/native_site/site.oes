@@ -1,74 +1,74 @@
-token ink "#eef6ff"
-token muted "#9fb1c8"
-token paper "#070a0f"
-token surface "#101722"
-token line "#263244"
-token accent "#29e0bd"
-token violet "#7c5cff"
+gem ink "#eef6ff"
+gem muted "#9fb1c8"
+gem paper "#070a0f"
+gem surface "#101722"
+gem line "#263244"
+gem accent "#29e0bd"
+gem violet "#7c5cff"
 
-body
+paint body
   margin "0"
-  background "radial-gradient(circle at top left, rgba(41,224,189,.20), transparent 34%), $paper"
-  color "$ink"
+  fill "radial-gradient(circle at top left, rgba(41,224,189,.20), transparent 34%), $paper"
+  ink "$ink"
   font-family "Inter, system-ui, sans-serif"
 
-.topbar
-  display "flex"
+paint .topbar
+  flow "flex"
   justify "space-between"
   align "center"
   padding "18px clamp(18px, 5vw, 64px)"
-  border-bottom "1px solid var(--line)"
-  background "rgba(7,10,15,.82)"
+  border-bottom "1px solid $line"
+  fill "rgba(7,10,15,.82)"
 
-.docs
-  color "$accent"
+paint .docs
+  ink "$accent"
   text-decoration "none"
   weight "800"
 
-.hero
+paint .hero
   padding "88px clamp(18px, 5vw, 64px)"
 
-.hero h1
+paint .hero h1
   size "clamp(54px, 9vw, 120px)"
   line-height ".88"
   margin "0 0 22px"
 
-.hero p
+paint .hero p
   size "20px"
-  color "$muted"
+  ink "$muted"
 
-.grid
-  display "grid"
-  columns "repeat(3, minmax(0, 1fr))"
-  gap "16px"
+paint .grid
+  flow "grid"
+  grid-cols "repeat(3, minmax(0, 1fr))"
+  space "16px"
   padding "0 clamp(18px, 5vw, 64px) 80px"
 
-.card
+paint .card
   padding "22px"
-  radius "8px"
-  background "$surface"
-  border "1px solid var(--line)"
+  curve "8px"
+  fill "$surface"
+  edge "1px solid $line"
   transition "transform .2s ease, border-color .2s ease"
 
-.card:hover
+paint .card:hover
   transform "translateY(-4px)"
   border-color "$accent"
 
-.card .docs
-  display "inline-flex"
+paint .card .docs
+  flow "inline-flex"
   margin-top "12px"
-  color "$accent"
+  ink "$accent"
   text-decoration "none"
   weight "800"
 
-media "(max-width: 760px)"
-  .grid
-    columns "1fr"
+veil "(max-width: 760px)"
+  paint .grid
+    grid-cols "1fr"
 
-motion "enter"
-  from
+pulse "enter"
+  rise
     opacity "0"
     transform "translateY(10px)"
-  to
+  rest
     opacity "1"
     transform "translateY(0)"

@@ -1,0 +1,35 @@
+{
+  "ODL Page": {
+    "prefix": "page",
+    "body": [
+      "page ${1:\"OFS Site\"} ${2:\"pt\"}",
+      "skin ${3:\"site.css\"}",
+      "flow",
+      "  deck.topbar",
+      "    strong ${4:\"Obsidian Fault Script\"}",
+      "    link.docs ${5:\"Documentacao\"} ${6:\"#content\"}",
+      "  stage#content",
+      "    band.hero",
+      "      title1 ${7:\"ODL + OES\"}",
+      "      mark ${8:\"Build **documents**, `components`, and native-hosted sites.\"}",
+      "      raw ${9:\"<small>Interop HTML quando precisar.</small>\"}",
+      "    band.grid",
+      "      tile.card",
+      "        title2 ${10:\"ODL\"}",
+      "        text ${11:\"Documentos com sintaxe propria.\"}",
+      "  spark ${12:\"app.js\"}"
+    ]
+  },
+  "Markdown Block": {
+    "prefix": "mark",
+    "body": [
+      "mark ${1:\"## Titulo\\nTexto com **destaque** e `codigo`.\"}"
+    ]
+  },
+  "Raw Interop": {
+    "prefix": "raw",
+    "body": [
+      "raw ${1:\"<custom-element></custom-element>\"}"
+    ]
+  }
+}

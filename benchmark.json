@@ -1,6 +1,6 @@
 {
   "schema": 2,
-  "generated_at_utc": "2026-06-14T04:07:14.405Z",
+  "generated_at_utc": "2026-06-14T06:59:27.900Z",
   "machine": {
     "platform": "linux",
     "release": "6.8.0-1052-azure",
@@ -11,12 +11,12 @@
     "node": "v24.14.0"
   },
   "methodology": {
-    "cpu": "Iterative Fibonacci with n varying from 25 to 32 across 5,000,000 iterations. Three process runs; lower is better.",
-    "memory": "Peak resident set size reported by wait4/getrusage for the CPU process. Three runs; lower is better.",
-    "startup": "Minimal hello-world process, ten runs. Includes runtime/VM startup; lower is better.",
-    "compile": "Optimized build of the CPU source, three runs. Python measures bytecode compilation; lower is better.",
-    "artifact": "Bytes of the primary executable, class, DLL, or bytecode artifact. Runtime dependencies are not included.",
-    "warning": "Local measurements describe this machine and workload only. They are not universal language rankings."
+    "cpu": "Fibonacci iterativo com n variando de 25 a 32 por 5.000.000 iteracoes. Tres processos; menor e melhor.",
+    "memory": "Pico de memoria residente reportado por wait4/getrusage no processo de CPU. Tres execucoes; menor e melhor.",
+    "startup": "Processo hello-world minimo, dez execucoes. Inclui startup de runtime/VM; menor e melhor.",
+    "compile": "Build otimizado do codigo de CPU, tres execucoes. Python mede compilacao para bytecode; menor e melhor.",
+    "artifact": "Bytes do executavel, class, DLL ou bytecode principal. Dependencias de runtime nao entram no tamanho.",
+    "warning": "Medicoes locais desta maquina e deste workload. Nao sao rankings universais de linguagens."
   },
   "expected_checksum": "3488433750000",
   "results": [
@@ -26,10 +26,10 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 72.4941,
-        "median": 93.6808,
-        "mean": 93.7568,
-        "max": 115.0956
+        "best": 38.3907,
+        "median": 40.5936,
+        "mean": 40.9481,
+        "max": 43.86
       },
       "memory_rss_kb": {
         "best": 1792,
@@ -38,16 +38,16 @@
         "max": 1792
       },
       "startup_ms": {
-        "best": 1.5845,
-        "median": 4.1282,
-        "mean": 3.6056,
-        "max": 6.9791
+        "best": 1.2876,
+        "median": 1.6046,
+        "mean": 1.5311,
+        "max": 1.8698
       },
       "compile_ms": {
-        "best": 509.3685,
-        "median": 591.7971,
-        "mean": 665.3734,
-        "max": 894.9545
+        "best": 253.4733,
+        "median": 320.8077,
+        "mean": 353.7377,
+        "max": 486.9321
       },
       "artifact_bytes": 28224
     },
@@ -57,28 +57,28 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 258.3776,
-        "median": 259.0087,
-        "mean": 324.1197,
-        "max": 454.9727
+        "best": 126.3768,
+        "median": 145.8393,
+        "mean": 148.6326,
+        "max": 173.6818
       },
       "memory_rss_kb": {
         "best": 1408,
         "median": 1408,
-        "mean": 1450.6667,
-        "max": 1536
+        "mean": 1493.3333,
+        "max": 1664
       },
       "startup_ms": {
-        "best": 2.8841,
-        "median": 6.4902,
-        "mean": 6.1636,
-        "max": 8.965
+        "best": 1.1352,
+        "median": 1.2209,
+        "mean": 1.2203,
+        "max": 1.3373
       },
       "compile_ms": {
-        "best": 220.0516,
-        "median": 243.8769,
-        "mean": 279.4844,
-        "max": 374.5248
+        "best": 82.839,
+        "median": 135.6545,
+        "mean": 134.2799,
+        "max": 184.3463
       },
       "artifact_bytes": 15968
     },
@@ -88,28 +88,28 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 68.102,
-        "median": 81.6086,
-        "mean": 78.3381,
-        "max": 85.3038
+        "best": 112.6559,
+        "median": 128.2768,
+        "mean": 126.4811,
+        "max": 138.5107
       },
       "memory_rss_kb": {
-        "best": 3456,
-        "median": 3456,
-        "mean": 3456,
-        "max": 3456
+        "best": 3328,
+        "median": 3584,
+        "mean": 3498.6667,
+        "max": 3584
       },
       "startup_ms": {
-        "best": 2.3742,
-        "median": 2.5831,
-        "mean": 2.5522,
-        "max": 2.8558
+        "best": 2.086,
+        "median": 2.7918,
+        "mean": 3.628,
+        "max": 7.5067
       },
       "compile_ms": {
-        "best": 813.59,
-        "median": 851.538,
-        "mean": 955.3527,
-        "max": 1200.9301
+        "best": 481.0137,
+        "median": 521.8184,
+        "mean": 1344.3272,
+        "max": 3030.1495
       },
       "artifact_bytes": 16312
     },
@@ -119,28 +119,28 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 181.5283,
-        "median": 376.8008,
-        "mean": 383.7164,
-        "max": 592.8201
+        "best": 117.5009,
+        "median": 169.1244,
+        "mean": 165.717,
+        "max": 210.5258
       },
       "memory_rss_kb": {
-        "best": 44532,
-        "median": 44540,
-        "mean": 44538.6667,
-        "max": 44544
+        "best": 44116,
+        "median": 44164,
+        "mean": 44209.3333,
+        "max": 44348
       },
       "startup_ms": {
-        "best": 62.9209,
-        "median": 98.6117,
-        "mean": 98.0393,
-        "max": 184.0639
+        "best": 49.75,
+        "median": 53.9558,
+        "mean": 53.7225,
+        "max": 59.7603
       },
       "compile_ms": {
-        "best": 763.2968,
-        "median": 794.3082,
-        "mean": 797.8461,
-        "max": 835.9334
+        "best": 719.2686,
+        "median": 831.8974,
+        "mean": 2126.201,
+        "max": 4827.4369
       },
       "artifact_bytes": 671
     },
@@ -150,28 +150,28 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 175.7039,
-        "median": 194.1776,
-        "mean": 201.5661,
-        "max": 234.8167
+        "best": 162.6684,
+        "median": 166.5926,
+        "mean": 582.5289,
+        "max": 1418.3257
       },
       "memory_rss_kb": {
         "best": 28032,
-        "median": 28288,
-        "mean": 28245.3333,
-        "max": 28416
+        "median": 28168,
+        "mean": 28177.3333,
+        "max": 28332
       },
       "startup_ms": {
-        "best": 49.1975,
-        "median": 49.8552,
-        "mean": 54.0114,
-        "max": 83.2068
+        "best": 47.3958,
+        "median": 48.4729,
+        "mean": 48.9542,
+        "max": 53.0455
       },
       "compile_ms": {
-        "best": 2235.9049,
-        "median": 2585.6473,
-        "mean": 3783.29,
-        "max": 6528.3178
+        "best": 1746.9169,
+        "median": 2631.8556,
+        "mean": 7488.4345,
+        "max": 18086.5311
       },
       "artifact_bytes": 4608
     },
@@ -181,28 +181,28 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 5151.7236,
-        "median": 5366.1073,
-        "mean": 7231.6313,
-        "max": 11177.063
+        "best": 4543.3088,
+        "median": 4703.3713,
+        "mean": 4779.3456,
+        "max": 5091.3566
       },
       "memory_rss_kb": {
         "best": 9728,
-        "median": 9728,
-        "mean": 9770.6667,
+        "median": 9856,
+        "mean": 9813.3333,
         "max": 9856
       },
       "startup_ms": {
-        "best": 21.6207,
-        "median": 24.4146,
-        "mean": 24.2246,
-        "max": 28.4603
+        "best": 19.8046,
+        "median": 22.8433,
+        "mean": 30.4682,
+        "max": 68.4727
       },
       "compile_ms": {
-        "best": 55.016,
-        "median": 56.8353,
-        "mean": 57.6433,
-        "max": 61.0785
+        "best": 53.8698,
+        "median": 163.3868,
+        "mean": 150.1571,
+        "max": 233.2146
       },
       "artifact_bytes": 624
     },
@@ -212,28 +212,28 @@
       "correct": true,
       "checksum": "3488433750000",
       "cpu_ms": {
-        "best": 115.6179,
-        "median": 124.4066,
-        "mean": 171.8227,
-        "max": 275.4436
+        "best": 107.4482,
+        "median": 159.034,
+        "mean": 202.6618,
+        "max": 341.5033
       },
       "memory_rss_kb": {
         "best": 1920,
-        "median": 1920,
-        "mean": 2005.3333,
+        "median": 2048,
+        "mean": 2048,
         "max": 2176
       },
       "startup_ms": {
-        "best": 1.3916,
-        "median": 2.3048,
-        "mean": 2.5528,
-        "max": 5.5277
+        "best": 1.5203,
+        "median": 1.7866,
+        "mean": 1.7771,
+        "max": 2.239
       },
       "compile_ms": {
-        "best": 169.7321,
-        "median": 174.59,
-        "mean": 175.1741,
-        "max": 181.2003
+        "best": 130.5307,
+        "median": 178.6846,
+        "mean": 5386.4409,
+        "max": 15850.1074
       },
       "artifact_bytes": 4337512
     }

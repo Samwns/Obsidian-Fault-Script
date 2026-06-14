@@ -1,39 +1,39 @@
-token ink "#eef6ff"
-token paper "#070a0f"
-token accent "#29e0bd"
+gem ink "#eef6ff"
+gem paper "#070a0f"
+gem accent "#29e0bd"
 
-body
+paint body
   margin "0"
-  background "$paper"
-  color "$ink"
+  fill "$paper"
+  ink "$ink"
   font-family "system-ui, sans-serif"
 
-.topbar
-  display "flex"
+paint .topbar
+  flow "flex"
   justify "space-between"
   padding "18px"
   border-bottom "1px solid #263244"
 
-.hero
+paint .hero
   padding "72px 24px"
 
-.grid
-  display "grid"
-  columns "repeat(2, minmax(0, 1fr))"
-  gap "16px"
+paint .grid
+  flow "grid"
+  grid-cols "repeat(2, minmax(0, 1fr))"
+  space "16px"
 
-.card
+paint .card
   padding "20px"
-  radius "8px"
-  background "#101722"
+  curve "8px"
+  fill "#101722"
   transition "transform .2s ease"
 
-media "(max-width: 700px)"
-  .grid
-    columns "1fr"
+veil "(max-width: 700px)"
+  paint .grid
+    grid-cols "1fr"
 
-keyframes "enter"
-  from
+pulse "enter"
+  rise
     opacity "0"
-  to
+  rest
     opacity "1"

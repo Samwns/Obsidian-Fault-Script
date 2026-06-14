@@ -2,7 +2,7 @@
   "name": "obsidian-fault-script",
   "displayName": "Obsidian Fault Script",
   "description": "Language support, diagnostics, autocomplete and embedded self-hosted LLVM compiler for OFS",
-  "version": "1.0.9",
+  "version": "1.0.120",
   "publisher": "Obsidian-Fault",
   "icon": "media/ofs.png",
   "license": "BSL-1.0",
@@ -49,7 +49,11 @@
         "extensions": [
           ".odl"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./media/odl.svg",
+          "dark": "./media/odl.svg"
+        }
       },
       {
         "id": "oes",
@@ -60,7 +64,11 @@
         "extensions": [
           ".oes"
         ],
-        "configuration": "./language-configuration.json"
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./media/oes.svg",
+          "dark": "./media/oes.svg"
+        }
       }
     ],
     "grammars": [
@@ -84,6 +92,14 @@
       {
         "language": "ofs",
         "path": "./snippets/ofs.code-snippets"
+      },
+      {
+        "language": "odl",
+        "path": "./snippets/odl.code-snippets"
+      },
+      {
+        "language": "oes",
+        "path": "./snippets/oes.code-snippets"
       }
     ],
     "themes": [

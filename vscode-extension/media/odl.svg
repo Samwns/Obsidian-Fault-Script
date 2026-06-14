@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="odlA" x1="8" x2="56" y1="8" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#29e0bd"/>
+      <stop offset="1" stop-color="#7c5cff"/>
+    </linearGradient>
+  </defs>
+  <path fill="#071018" d="M12 6h28l12 12v40H12z"/>
+  <path fill="url(#odlA)" d="M14 8h25l11 11v37H14zm28 4v10h10z" opacity=".95"/>
+  <path fill="#071018" d="M21 27h24v4H21zm0 9h18v4H21zm0 9h24v4H21z"/>
+</svg>

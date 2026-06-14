@@ -11,7 +11,18 @@ vein odl_tag_name(token: obsidian) -> obsidian {
         i++
     }
     if (i == 0) { return "div" }
-    return ofs_str_substr(token, 0, i)
+    forge name = ofs_str_substr(token, 0, i)
+    if (ofs_str_eq(name, "deck")) { return "nav" }
+    if (ofs_str_eq(name, "stage")) { return "main" }
+    if (ofs_str_eq(name, "band")) { return "section" }
+    if (ofs_str_eq(name, "tile")) { return "article" }
+    if (ofs_str_eq(name, "text")) { return "p" }
+    if (ofs_str_eq(name, "title1")) { return "h1" }
+    if (ofs_str_eq(name, "title2")) { return "h2" }
+    if (ofs_str_eq(name, "title3")) { return "h3" }
+    if (ofs_str_eq(name, "link")) { return "a" }
+    if (ofs_str_eq(name, "asset")) { return "img" }
+    return name
 }
 
 vein odl_tag_attrs(token: obsidian) -> obsidian {
@@ -91,7 +102,7 @@ vein odl_compile(source: obsidian) -> obsidian {
             continue
         }
         forge command = wl_first_word(clean)
-        if (ofs_str_eq(command, "document")) {
+        if (ofs_str_eq(command, "document") || ofs_str_eq(command, "page")) {
             forge parsed_title = wl_quoted_at(clean, 0)
             forge parsed_lang = wl_quoted_at(clean, 1)
             if (!ofs_str_eq(parsed_title, "")) { title = parsed_title }
@@ -103,21 +114,21 @@ vein odl_compile(source: obsidian) -> obsidian {
         body = body + wl_close_stack(tags, indents, indent, true)
         forge content = wl_quoted_at(clean, 0)
 
-        if (ofs_str_eq(command, "style")) {
+        if (ofs_str_eq(command, "style") || ofs_str_eq(command, "skin")) {
             head = head + "<link rel=\"stylesheet\" href=\"" + wl_escape_html(content) + "\">"
         } else if (ofs_str_eq(command, "meta")) {
             head = head + "<meta name=\"" + wl_escape_html(content) + "\" content=\"" + wl_escape_html(wl_quoted_at(clean, 1)) + "\">"
         } else if (ofs_str_eq(command, "title")) {
             title = content
-        } else if (ofs_str_eq(command, "markdown") || ofs_str_eq(command, "md")) {
+        } else if (ofs_str_eq(command, "markdown") || ofs_str_eq(command, "md") || ofs_str_eq(command, "mark")) {
             body = body + wl_markdown(content)
-        } else if (ofs_str_eq(command, "html")) {
+        } else if (ofs_str_eq(command, "html") || ofs_str_eq(command, "raw")) {
             body = body + wl_unescape(content)
-        } else if (ofs_str_eq(command, "script")) {
+        } else if (ofs_str_eq(command, "script") || ofs_str_eq(command, "wire")) {
             body = body + "<script src=\"" + wl_escape_html(content) + "\"></script>"
-        } else if (ofs_str_eq(command, "module") || ofs_str_eq(command, "node")) {
+        } else if (ofs_str_eq(command, "module") || ofs_str_eq(command, "node") || ofs_str_eq(command, "spark")) {
             body = body + "<script type=\"module\" src=\"" + wl_escape_html(content) + "\"></script>"
-        } else if (ofs_str_eq(command, "js")) {
+        } else if (ofs_str_eq(command, "js") || ofs_str_eq(command, "pulse")) {
             body = body + "<script>" + wl_unescape(content) + "</script>"
         } else if (ofs_str_eq(command, "php")) {
             body = body + "<?php " + wl_unescape(content) + " ?>"
@@ -125,14 +136,14 @@ vein odl_compile(source: obsidian) -> obsidian {
             body = body + odl_studio_script()
         } else if (ofs_str_eq(command, "image") || ofs_str_eq(command, "img")) {
             body = body + "<img src=\"" + wl_escape_html(content) + "\" alt=\"" + wl_escape_html(wl_quoted_at(clean, 1)) + "\">"
-        } else if (ofs_str_eq(command, "component")) {
+        } else if (ofs_str_eq(command, "component") || ofs_str_eq(command, "vein")) {
             forge name = wl_after_first_word(clean)
             body = body + "<template data-odl-component=\"" + wl_escape_html(name) + "\">"
             ofs_array_push(tags, "template")
             ofs_array_push(indents, indent)
-        } else if (ofs_str_eq(command, "use")) {
+        } else if (ofs_str_eq(command, "use") || ofs_str_eq(command, "mount")) {
             body = body + "<odl-use data-component=\"" + wl_escape_html(wl_after_first_word(clean)) + "\"></odl-use>"
-        } else if (ofs_str_eq(command, "body") || ofs_str_eq(command, "head")) {
+        } else if (ofs_str_eq(command, "body") || ofs_str_eq(command, "head") || ofs_str_eq(command, "flow")) {
             // Structural sections are represented by the generated document shell.
         } else {
             forge tag = odl_tag_name(command)
@@ -142,8 +153,13 @@ vein odl_compile(source: obsidian) -> obsidian {
                 tag = "div"
                 attrs = attrs + " data-odl-move=\"." + wl_replace(classes, " ", ".") + "\""
             }
-            if (ofs_str_eq(tag, "a") && !ofs_str_eq(wl_quoted_at(clean, 1), "")) {
+            if ((ofs_str_eq(tag, "a") || ofs_str_eq(command, "link")) && !ofs_str_eq(wl_quoted_at(clean, 1), "")) {
                 attrs = attrs + " href=\"" + wl_escape_html(wl_quoted_at(clean, 1)) + "\""
+            }
+            if (ofs_str_eq(tag, "img")) {
+                body = body + "<img" + attrs + " src=\"" + wl_escape_html(content) + "\" alt=\"" + wl_escape_html(wl_quoted_at(clean, 1)) + "\">"
+                i++
+                continue
             }
             if (!ofs_str_eq(content, "")) {
                 body = body + "<" + tag + attrs + ">" + wl_escape_html(wl_unescape(content)) + "</" + tag + ">"

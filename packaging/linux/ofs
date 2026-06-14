@@ -221,24 +221,63 @@ find_web_tool() {
   return 1
 }
 
+build_web_tool_bin() {
+  local tool="$1" source="$2" target="$3"
+  local tool_ll tool_tmp
+  tool_ll="${TMPDIR:-/tmp}/ofs-${tool}-$$.ll"
+  tool_tmp="${target}.$$"
+  OFSCC_INPUT="$source" OFSCC_MODE=ir OFSCC_C_OUT="$tool_ll" run_ofscc_quiet "$OFSCC"
+  clang_ir "$OFS_CLANG_OPT_LEVEL" "$tool_ll" "$RUNTIME" -lm -o "$tool_tmp"
+  chmod +x "$tool_tmp"
+  mv "$tool_tmp" "$target"
+  rm -f "$tool_ll"
+}
+
+cached_web_tool_bin() {
+  local tool="$1" source="$2"
+  local dir cache_base cache_dir hash tool_bin
+  if ! command -v sha256sum >/dev/null 2>&1; then
+    return 1
+  fi
+  dir="$(cd "$(dirname "$source")" && pwd)"
+  cache_base="${OFS_CACHE_DIR:-${XDG_CACHE_HOME:-${HOME:-/tmp}/.cache}/ofs}"
+  cache_dir="$cache_base/tools"
+  mkdir -p "$cache_dir"
+  hash="$(
+    sha256sum "$source" "$dir/web_language_common.ofs" "$dir/fileio.ofs" "$RUNTIME" 2>/dev/null |
+      sha256sum |
+      awk '{print $1}'
+  )" || return 1
+  if [ -z "$hash" ]; then
+    return 1
+  fi
+  tool_bin="$cache_dir/$tool-$hash"
+  if [ ! -x "$tool_bin" ]; then
+    build_web_tool_bin "$tool" "$source" "$tool_bin"
+  fi
+  printf '%s\n' "$tool_bin"
+}
+
 run_web_tool() {
   local tool="$1" input="$2" output="$3" direction="${4:-}"
-  local source tool_ll tool_bin
+  local source tool_bin tool_tmp
   source="$(find_web_tool "$tool")" || {
     echo "ofs: web language compiler source not found: $tool.ofs" >&2
     exit 1
   }
-  tool_ll="${TMPDIR:-/tmp}/ofs-${tool}-$$.ll"
-  tool_bin="${TMPDIR:-/tmp}/ofs-${tool}-$$"
-  OFSCC_INPUT="$source" OFSCC_MODE=ir OFSCC_C_OUT="$tool_ll" run_ofscc_quiet "$OFSCC"
-  clang_ir "$OFS_CLANG_OPT_LEVEL" "$tool_ll" "$RUNTIME" -lm -o "$tool_bin"
-  chmod +x "$tool_bin"
+  if ! tool_bin="$(cached_web_tool_bin "$tool" "$source")"; then
+    tool_tmp="${TMPDIR:-/tmp}/ofs-${tool}-$$"
+    build_web_tool_bin "$tool" "$source" "$tool_tmp"
+    tool_bin="$tool_tmp"
+  fi
   if [ "$tool" = "odlc" ]; then
     ODLC_INPUT="$input" ODLC_OUTPUT="$output" ODLC_DIRECTION="$direction" "$tool_bin"
   else
     OESC_INPUT="$input" OESC_OUTPUT="$output" OESC_DIRECTION="$direction" "$tool_bin"
   fi
-  rm -f "$tool_ll" "$tool_bin"
+  if [ -n "${tool_tmp:-}" ]; then
+    rm -f "$tool_tmp"
+  fi
 }
 
 cmd="${1:-help}"

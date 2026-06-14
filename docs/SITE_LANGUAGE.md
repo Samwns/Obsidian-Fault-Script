@@ -1,6 +1,6 @@
 # ODL and OES
 
-ODL (**Obsidian Document Language**) and OES (**Obsidian Effect Scripts**) are standalone OFS web languages. They are intentionally close to HTML and CSS, while using indentation, concise forms, native Markdown, and explicit interoperability.
+ODL (**Obsidian Document Language**) and OES (**Obsidian Effect Scripts**) are standalone OFS web languages. They keep the browser output compatible with HTML and CSS, but the authored source uses OFS vocabulary: `page`, `skin`, `flow`, `deck`, `stage`, `band`, `gem`, `paint`, `veil`, and `pulse`.
 
 The OFS toolchain compiles them natively. Browsers receive generated HTML, CSS, and JavaScript artifacts.
 
@@ -13,19 +13,19 @@ The OFS toolchain compiles them natively. Browsers receive generated HTML, CSS, 
 ## ODL
 
 ```odl
-document "OFS Web" "en"
-style "theme.css"
-body
-  nav.topbar
-    h1 "OFS Web"
-    a.button "Documentation" "#docs"
-  main#content
-    markdown "## Native content\nODL supports **Markdown**."
-    html "<custom-element></custom-element>"
-  module "app.js"
+page "OFS Web" "pt"
+skin "theme.css"
+flow
+  deck.topbar
+    title1 "OFS Web"
+    link.button "Documentacao" "#docs"
+  stage#content
+    mark "## Conteudo nativo\nODL suporta **Markdown**."
+    raw "<custom-element></custom-element>"
+  spark "app.js"
 ```
 
-ODL supports `tag.class#id`, native Markdown, raw HTML, browser scripts, ES/Node-style modules, inline JavaScript, and explicit PHP blocks. Interoperability is opt-in, so generated output stays understandable.
+ODL supports `tag.class#id`, native Markdown, raw HTML, browser scripts, ES/Node-style modules, inline JavaScript, and explicit PHP-compatible blocks. Interoperability is opt-in, so generated output stays understandable.
 
 ### Safe Visual Positioning
 
@@ -43,22 +43,22 @@ studio "safe-localhost"
 ## OES
 
 ```oes
-token accent "#29e0bd"
-token surface "#101722"
+gem accent "#29e0bd"
+gem surface "#101722"
 
-.button
-  bg "$accent"
-  radius "8px"
+paint .button
+  fill "$accent"
+  curve "8px"
   transition "transform .2s ease"
 
-media "(max-width: 700px)"
-  .grid
-    columns "1fr"
+veil "(max-width: 700px)"
+  paint .grid
+    grid-cols "1fr"
 
-motion "enter"
-  from
+pulse "enter"
+  rise
     opacity "0"
-  to
+  rest
     opacity "1"
 ```
 

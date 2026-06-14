@@ -1,19 +1,19 @@
-document "OFS Native Web Languages" "en"
-style "site.css"
-body
-  nav.topbar
+page "OFS Native Web Languages" "en"
+skin "site.css"
+flow
+  deck.topbar
     strong "Obsidian Fault Script"
-    a.docs "Documentation" "#content"
-  main#content
-    section.hero
-      h1 "ODL + OES"
-      markdown "Build **documents**, `components`, and native-hosted sites."
-      html "<small>Raw HTML remains available when interoperability matters.</small>"
-    section.grid
-      article.card
-        h2 "ODL"
-        p "Document structure with an indentation-based syntax."
-      article.card
-        h2 "OES"
-        p "Tokens, visual rules, responsive behavior, and motion."
-  module "app.js"
+    link.docs "Documentation" "#content"
+  stage#content
+    band.hero
+      title1 "ODL + OES"
+      mark "Build **documents**, `components`, and native-hosted sites."
+      raw "<small>Raw HTML remains available when interoperability matters.</small>"
+    band.grid
+      tile.card
+        title2 "ODL"
+        text "Document structure with an indentation-based syntax."
+      tile.card
+        title2 "OES"
+        text "Tokens, visual rules, responsive behavior, and motion."
+  spark "app.js"

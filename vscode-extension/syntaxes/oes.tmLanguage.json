@@ -9,7 +9,7 @@
     },
     {
       "name": "keyword.control.oes",
-      "match": "\\b(token|media|supports|layer|keyframes|motion|from|to|raw|css)\\b|\\bat\\d+\\b"
+      "match": "\\b(token|gem|tone|paint|media|veil|supports|guard|layer|strata|keyframes|motion|pulse|from|to|rise|rest|raw|css)\\b|\\bat\\d+\\b"
     },
     {
       "name": "entity.name.tag.css.oes",

@@ -1,0 +1,42 @@
+{
+  "OES Theme": {
+    "prefix": "theme",
+    "body": [
+      "gem accent ${1:\"#29e0bd\"}",
+      "gem surface ${2:\"#101722\"}",
+      "",
+      "paint ${3:.button}",
+      "  fill ${4:\"$accent\"}",
+      "  ink ${5:\"#06100e\"}",
+      "  curve ${6:\"8px\"}",
+      "  transition ${7:\"transform .2s ease\"}",
+      "",
+      "veil ${8:\"(max-width: 700px)\"}",
+      "  paint ${9:.grid}",
+      "    grid-cols ${10:\"1fr\"}",
+      "",
+      "pulse ${11:\"enter\"}",
+      "  rise",
+      "    opacity ${12:\"0\"}",
+      "  rest",
+      "    opacity ${13:\"1\"}"
+    ]
+  },
+  "Paint Rule": {
+    "prefix": "paint",
+    "body": [
+      "paint ${1:.selector}",
+      "  ${2|fill,ink,curve,space,flow,grid-cols,type-size,edge|} ${3:\"value\"}"
+    ]
+  },
+  "Pulse Motion": {
+    "prefix": "pulse",
+    "body": [
+      "pulse ${1:\"enter\"}",
+      "  rise",
+      "    ${2:opacity} ${3:\"0\"}",
+      "  rest",
+      "    ${4:opacity} ${5:\"1\"}"
+    ]
+  }
+}

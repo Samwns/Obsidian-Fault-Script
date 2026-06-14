@@ -29,19 +29,19 @@ core main() {
 **ODL (Obsidian Document Language)** authors document structure. **OES (Obsidian Effect Scripts)** authors tokens, layout, responsive behavior, and motion. OFS compiles them to browser artifacts.
 
 ```odl
-document "OFS Web" "en"
-style "theme.css"
-body
-  main#app
-    h1 "OFS Web"
-    markdown "Built with **ODL**."
+page "OFS Web" "pt"
+skin "theme.css"
+flow
+  stage#app
+    title1 "OFS Web"
+    mark "Built with **ODL**."
 ```
 
 ```oes
-token accent "#29e0bd"
-.button
-  bg "$accent"
-  radius "8px"
+gem accent "#29e0bd"
+paint .button
+  fill "$accent"
+  curve "8px"
 ```
 
 ```bash

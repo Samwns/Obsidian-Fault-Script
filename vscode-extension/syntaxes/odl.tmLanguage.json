@@ -9,7 +9,7 @@
     },
     {
       "name": "keyword.control.odl",
-      "match": "\\b(document|body|head|style|meta|title|component|use|markdown|md|html|script|module|node|js|php|image|img|studio|move)\\b"
+      "match": "\\b(document|page|body|flow|head|style|skin|meta|title|component|vein|use|mount|markdown|mark|md|html|raw|script|wire|module|node|spark|js|pulse|php|image|asset|img|studio|move)\\b"
     },
     {
       "name": "entity.name.tag.odl",
