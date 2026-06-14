@@ -415,19 +415,36 @@ Campos importantes:
 
 ### `fracture`
 
-Camada de baixo nível mais tipada.
+Contexto de ponteiros tipados. O compilador verifica o tipo de `*T`, mas o
+programa continua responsável pela validade do endereço, pelo tempo de vida e
+por não acessar memória fora da região válida.
 
 ### `abyss`
 
-Camada crua e irrestrita.
+Fronteira explícita para trabalho cru. Na implementação atual ela ainda passa
+pelo parser e pelo verificador de tipos comum; não desliga automaticamente as
+verificações e não oferece garantia adicional de segurança de memória.
 
-### `fractal`
+### `intent fractal`
 
-Camada especial ligada a intent/efeitos.
+Metadado de intenção de função:
+
+```ofs
+vein transform(value: stone) -> stone intent fractal {
+    return value * 2
+}
+```
+
+O parser atual não reconhece `fractal { ... }` como bloco. Intents registram a
+intenção da API, mas ainda não constituem um sistema de efeitos com garantias
+estáticas completas.
 
 ### `bedrock`
 
-Vocabulário OFS para memória, regiões, lanes, packets e intrinsics `fault_*`.
+Contexto tipado para memória explícita, regiões, lanes, packets e intrinsics
+`fault_*`. Alocações criadas por `bedrock_cell_new` e `bedrock_region_new`
+devem ser liberadas uma vez com a função `*_drop` correspondente. Não use o
+ponteiro depois da liberação e não acesse índices fora da região alocada.
 
 Exemplo:
 
@@ -445,15 +462,15 @@ core main() {
 
 ### Alias `tectonic`
 
-O parser aceita aliases textuais como:
+O parser aceita `tectonic` antes dos três blocos implementados:
 
 - `tectonic fracture`
 - `tectonic abyss`
-- `tectonic fractal`
-- `tectonic safe`
-- `tectonic unsafe`
 - `tectonic bedrock`
 
+Hoje o prefixo preserva o mesmo corpo de bloco e não altera a geração LLVM.
+`tectonic fractal`, `tectonic safe` e `tectonic unsafe` não são formas
+reconhecidas pelo parser atual.
 ---
 
 ## 13. Biblioteca padrão e pacotes
@@ -962,33 +979,31 @@ cycle (forge i = 0; i < 5; i++) {
 
 ---
 
-## Unsafe Memory (abyss)
+## Explicit Raw Boundary (abyss)
 
-The `abyss` block allows raw, unsafe memory operations:
+The `abyss` block marks code that intentionally works at the raw-memory
+boundary:
 
 ```ofs
 abyss {
-    // Raw memory access — no type checking
-    // Use with extreme caution
+    shard raw: *stone = &value
+    *raw = *raw + 1
 }
 ```
 
 **Rules:**
-- Type checking is relaxed inside `abyss` blocks
-- Direct memory addressing is allowed
-- Only use when absolutely necessary
-- Prefer `fracture` for pointer operations
+- the current compiler still parses and type-checks the block;
+- the block does not validate pointer lifetime or address ownership;
+- pointer dereference is allowed, but invalid addresses remain undefined;
+- prefer `fracture` when typed pointer work is sufficient.
 
 ### Directive alias: tectonic
 
-You can use `tectonic` as a prefix directive for memory/effect modes.
-This is an alias syntax that maps to the same runtime/semantic behavior:
+You can use `tectonic` as a prefix directive for the implemented low-level
+blocks. It maps to the same current parser behavior:
 
 - `tectonic fracture { ... }` -> same as `fracture { ... }`
-- `tectonic safe { ... }` -> same as `fracture { ... }`
 - `tectonic abyss { ... }` -> same as `abyss { ... }`
-- `tectonic unsafe { ... }` -> same as `abyss { ... }`
-- `tectonic fractal { ... }` -> same as `fractal { ... }`
 - `tectonic bedrock { ... }` -> same as `bedrock { ... }`
 
 Example:
@@ -1002,23 +1017,9 @@ core main() {
         *p = 20
     }
 
-    tectonic safe {
-        shard q: *stone = &x
-        *q = *q + 1
-    }
-
     tectonic abyss {
         shard raw: *stone = &x
         *raw = *raw + 1
-    }
-
-    tectonic unsafe {
-        shard raw2: *stone = &x
-        *raw2 = *raw2 + 1
-    }
-
-    tectonic fractal {
-        echo("effect-lifted mode")
     }
 
     tectonic bedrock {
@@ -1027,6 +1028,9 @@ core main() {
     }
 }
 ```
+
+`safe`, `unsafe`, and `fractal` are not accepted after `tectonic` by the
+current parser. `fractal` is available as a function intent, not a block.
 
 ---
 

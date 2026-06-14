@@ -122,19 +122,15 @@ core main() {
         *raw_ptr = *raw_ptr + 1
     }
 
-    // fractal: intermediate effect-lifted block
-    fractal {
-        echo("fractal block active")
-    }
-
-    // tectonic aliases (same behavior as above)
+    // tectonic prefixes preserve the corresponding low-level block.
     tectonic fracture {
         shard alias_ptr: *stone = &x;
         *alias_ptr = *alias_ptr + 1
     }
 
-    tectonic fractal {
-        echo("tectonic fractal active")
+    tectonic bedrock {
+        shard native_ptr: *stone = &x;
+        *native_ptr = *native_ptr + 1
     }
 
     echo(x)
