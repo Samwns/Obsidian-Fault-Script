@@ -38,6 +38,8 @@ jobs:
           OFS_RUNTIME=/tmp/libofs_runtime.a /tmp/ofs build ofs/site/build_site.ofs -o /tmp/ofs-build-site
           /tmp/ofs-build-site
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: docs

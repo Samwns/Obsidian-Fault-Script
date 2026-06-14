@@ -1,4 +1,4 @@
-attach {webui}
+attach {F:../stdlib/webui.ofs}
 
 core main() {
     forge body = webui.nav("OFS Web", webui.button("Docs", "#docs"))
