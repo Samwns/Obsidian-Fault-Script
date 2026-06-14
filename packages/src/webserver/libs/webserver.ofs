@@ -4,6 +4,8 @@
 extern vein ofs_str_len(s: obsidian) -> stone
 extern vein ofs_str_contains(haystack: obsidian, needle: obsidian) -> bool
 extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+extern vein ofs_webserver_serve_once(port: stone, content_type: obsidian, body: obsidian) -> stone
+extern vein ofs_webserver_serve_forever(port: stone, content_type: obsidian, body: obsidian) -> stone
 
 // HTTP Methods
 forge HTTP_GET    = "GET"
@@ -98,4 +100,22 @@ vein not_found_page() -> obsidian {
 vein server_error_page(error: obsidian) -> obsidian {
     forge body = html_page("Server Error", "<h1>500 Server Error</h1><p>" + error + "</p>")
     return http_response(500, MIME_HTML, body)
+}
+
+// Serve a static response once. Returns 0 on success.
+vein serve_once(port: stone, content_type: obsidian, body: obsidian) -> stone {
+    return ofs_webserver_serve_once(port, content_type, body)
+}
+
+// Serve a static response until the process is stopped.
+vein serve_forever(port: stone, content_type: obsidian, body: obsidian) -> stone {
+    return ofs_webserver_serve_forever(port, content_type, body)
+}
+
+vein serve_html_once(port: stone, html: obsidian) -> stone {
+    return serve_once(port, MIME_HTML, html)
+}
+
+vein serve_html_forever(port: stone, html: obsidian) -> stone {
+    return serve_forever(port, MIME_HTML, html)
 }

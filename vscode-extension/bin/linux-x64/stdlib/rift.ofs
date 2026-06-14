@@ -1,0 +1,21 @@
+// OFS Standard Library — Rift Module
+// OFS-native wrappers around foreign runtime boundaries.
+
+rift vein strlen(text: obsidian) -> stone abi c
+rift vein puts(text: obsidian) -> stone abi c
+
+vein rift_text_size(text: obsidian) -> stone {
+    return strlen(text)
+}
+
+vein rift_line(text: obsidian) -> stone {
+    return puts(text)
+}
+
+vein rift_banner(title: obsidian) -> obsidian {
+    return "[rift] " + title
+}
+
+vein rift_report_line(label: obsidian, value: stone) -> void {
+    rift_line(rift_banner(label + ": " + ofs_stone_to_obsidian(value)))
+}

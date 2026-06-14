@@ -19,7 +19,7 @@ const KEYWORDS = [
 const TYPES = ['stone', 'crystal', 'obsidian', 'bool', 'void', 'Array', 'u8', 'u16', 'u32', 'u64', 'i8', 'i16', 'i32'];
 
 const MODULES = [
-  'core', 'math', 'string', 'io', 'webserver', 'bedrock', 'bedrock-packet',
+  'core', 'math', 'string', 'io', 'ofshtml', 'webserver', 'webui', 'bedrock', 'bedrock-packet',
   'terminal-colors', 'memory-modes', 'rift', 'canvas', 'window', 'fmt', 'test-lib'
 ];
 
@@ -43,6 +43,9 @@ const STDLIB_COMPLETIONS = [
   'repeat_str', 'starts_with_char', 'is_empty',
   'prompt', 'print_separator', 'print_header',
   'status_text', 'http_response', 'not_found_response', 'error_response',
+  'serve_once', 'serve_forever', 'serve_html_once', 'serve_html_forever',
+  'webui.page', 'webui.nav', 'webui.hero', 'webui.button', 'webui.panel',
+  'webui.grid', 'webui.card', 'webui.stack', 'webui.serve',
   'fmt_pad_right', 'fmt_pad_left', 'fmt_center', 'fmt_zero_pad', 'fmt_sign',
   'fmt_truncate', 'fmt_repeat', 'fmt_separator', 'fmt_upper', 'fmt_lower', 'fmt_trim',
   'echo_red', 'echo_green', 'echo_yellow', 'echo_blue', 'echo_purple', 'echo_cyan',
@@ -1096,10 +1099,13 @@ function getTerminalRunCommand(ofsPath, filePath) {
   }
 
   if (ofsPath === 'ofs' || compilerName === 'ofs') {
-    return `ofs run "${fileName}"`;
+    if (ofsPath === 'ofs') {
+      return `ofs run "${fileName}"`;
+    }
+    return `"${ofsPath.replace(/"/g, '\\"')}" run "${fileName}"`;
   }
 
-  return `ofs run "${fileName}"`;
+  return `"${ofsPath.replace(/"/g, '\\"')}" run "${fileName}"`;
 }
 
 function createRangeFromLineCol(document, line, col) {
@@ -1119,6 +1125,8 @@ const STDLIB_NAMES = {
   'string':          'string.ofs',
   'io':              'io.ofs',
   'webserver':       'webserver.ofs',
+  'ofshtml':         'ofshtml.ofs',
+  'webui':           'webui.ofs',
   'serve':           'webserver.ofs',
   'bedrock':         'bedrock.ofs',
   'bedrock-packet':  'bedrock_packet.ofs',
@@ -1333,6 +1341,83 @@ function runExecFile(command, args, options = {}) {
   });
 }
 
+function isWebSiteDocument(document) {
+  const text = document.getText();
+  return /^\s*(?:attach|import)\s*\{\s*webui\s*\}/m.test(text)
+    || /\bwebui\.(?:serve|page|hero|nav|button|panel|grid|card|stack)\s*\(/.test(text)
+    || /\bserve_html_(?:once|forever)\s*\(/.test(text)
+    || /\bserve_(?:once|forever)\s*\([^,]+,\s*MIME_HTML\s*,/.test(text);
+}
+
+async function goLiveCurrentFile() {
+  const editor = vscode.window.activeTextEditor;
+  if (!editor || editor.document.languageId !== 'ofs') {
+    vscode.window.showErrorMessage('Open an .ofs file to Go Live.');
+    return;
+  }
+
+  await editor.document.save();
+  if (!isWebSiteDocument(editor.document)) {
+    vscode.window.showWarningMessage('Este arquivo OFS nao parece ser um site. Use attach {webui} e webui.serve(...) ou serve_html_forever(...).');
+    return;
+  }
+
+  const ofsPath = await resolveReadyOfsPath();
+  if (!ofsPath) {
+    vscode.window.showErrorMessage('OFS compiler not found. Enable ofs.autoInstallCompiler or configure ofs.path.');
+    return;
+  }
+
+  const file = editor.document.fileName;
+  const cwd = path.dirname(file);
+  const port = vscode.workspace.getConfiguration().get('ofs.goLivePort', 8080);
+  const checkResult = await runExecFile(ofsPath, ['check', file], { cwd });
+  if (checkResult.error) {
+    const combined = `${checkResult.stdout || ''}\n${checkResult.stderr || ''}`;
+    const firstError = parseFirstCompilerError(combined);
+    vscode.window.showErrorMessage(firstError?.message ? `OFS: ${firstError.message}` : 'OFS Go Live check failed.');
+    return;
+  }
+
+  await terminateActiveExecution({ silent: true });
+
+  const terminal = getOrCreateExecutionTerminal(cwd, ofsPath);
+  activeExecution = {
+    paused: false,
+    terminal,
+    childProcess: null,
+    shellExecution: null,
+    sourceFile: file
+  };
+
+  await setExecutionContext(true, false);
+  terminal.show(true);
+
+  const commandLine = getTerminalRunCommand(ofsPath, file);
+  const shellIntegration = await waitForShellIntegration(terminal);
+  if (shellIntegration) {
+    const compilerName = path.basename(ofsPath || 'ofs').toLowerCase();
+    const isOfscc = compilerName.startsWith('ofscc');
+    const command = isOfscc ? ofsPath : ofsPath;
+    const execution = shellIntegration.executeCommand(command, isOfscc ? [path.basename(file)] : ['run', path.basename(file)]);
+    activeExecution.shellExecution = execution;
+    execution.exitCode.then(async () => {
+      await clearActiveExecution();
+    }).catch(async () => {
+      await clearActiveExecution();
+    });
+  } else {
+    terminal.sendText(commandLine);
+  }
+
+  const url = `http://127.0.0.1:${port}`;
+  vscode.window.showInformationMessage(`OFS Go Live running at ${url}`, 'Open Browser').then((choice) => {
+    if (choice === 'Open Browser') {
+      vscode.env.openExternal(vscode.Uri.parse(url));
+    }
+  });
+}
+
 async function runOfsCheck(document, diagnosticCollection) {
   if (!document || document.languageId !== 'ofs') {
     return;
@@ -1424,7 +1509,9 @@ function runCurrentFile() {
     const commandLine = getTerminalRunCommand(ofsPath, file);
     const shellIntegration = await waitForShellIntegration(terminal);
     if (shellIntegration) {
-      const execution = shellIntegration.executeCommand('ofs', ['run', path.basename(file)]);
+      const compilerName = path.basename(ofsPath || 'ofs').toLowerCase();
+      const isOfscc = compilerName.startsWith('ofscc');
+      const execution = shellIntegration.executeCommand(ofsPath, isOfscc ? [path.basename(file)] : ['run', path.basename(file)]);
       activeExecution.shellExecution = execution;
       execution.exitCode.then(async () => {
         await clearActiveExecution();
@@ -2032,6 +2119,7 @@ function activate(context) {
 
   const checkCmd = vscode.commands.registerCommand('ofs.checkFile', () => checkCurrentFile(diagnosticCollection));
   const asmCmd = vscode.commands.registerCommand('ofs.emitAssembly', () => emitCurrentAssembly());
+  const goLiveCmd = vscode.commands.registerCommand('ofs.goLive', () => goLiveCurrentFile());
   const pauseCmd = vscode.commands.registerCommand('ofs.pauseExecution', () => pauseActiveExecution());
   const resumeCmd = vscode.commands.registerCommand('ofs.resumeExecution', () => resumeActiveExecution());
   const stopCmd = vscode.commands.registerCommand('ofs.stopExecution', () => terminateActiveExecution());
@@ -2040,6 +2128,7 @@ function activate(context) {
     nativeDebugCmd,
     checkCmd,
     asmCmd,
+    goLiveCmd,
     pauseCmd,
     resumeCmd,
     stopCmd,

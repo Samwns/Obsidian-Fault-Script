@@ -1,0 +1,12 @@
+attach {F:../ofscc/fileio.ofs}
+attach {F:sitekit.ofs}
+
+core main() {
+    system("mkdir -p docs/assets")
+    write_file("docs/index.html", site_page())
+    write_file("docs/assets/site.css", site_css())
+    write_file("docs/assets/site.js", site_js())
+    write_file("docs/assets/benchmark.json", site_benchmark_json())
+    write_file("docs/.nojekyll", "")
+    echo("OFS site generated in docs/")
+}

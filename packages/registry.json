@@ -70,13 +70,36 @@
     },
     {
       "name": "webserver",
-      "description": "HTTP utility helpers for building web applications in OFS",
+      "description": "HTTP helpers and native static response server for OFS web applications",
       "author": "OFS Team",
       "license": "MIT",
-      "tags": ["web", "http", "server", "stdlib"],
-      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "tags": ["web", "http", "server", "runtime", "stdlib"],
+      "channels": { "stable": "1.1.0", "latest": "1.1.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/webserver.ofs" }
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/webserver.ofs" },
+        "1.1.0": { "date": "2026-06-14", "channel": "stable", "main": "libs/webserver.ofs" }
+      }
+    },
+    {
+      "name": "ofshtml",
+      "description": "OFS-native markup DSL for generating browser HTML from OFS source",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["web", "html", "markup", "dsl", "site"],
+      "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
+      "versions": {
+        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/ofshtml.ofs" }
+      }
+    },
+    {
+      "name": "webui",
+      "description": "Declarative OFS web UI helpers for pages, style tokens, components, and static web serving",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["web", "ui", "html", "style", "site", "server"],
+      "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
+      "versions": {
+        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/webui.ofs" }
       }
     },
     {

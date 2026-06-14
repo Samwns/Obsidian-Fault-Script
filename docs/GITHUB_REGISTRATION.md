@@ -17,20 +17,21 @@ O GitHub Linguist é o projeto que detecta linguagens de programação. Para reg
 
 1. Fork: https://github.com/github/linguist
 2. Clone localmente
-3. Edite `languages.yml`:
+3. Edite `languages.yml`.
+
+Este repositório já inclui um rascunho pronto em `docs/linguist-language.yml`:
 
 ```yaml
 OFS:
-  type: compiled
+  type: programming
   color: "#2A0845"
   extensions:
-  - .ofs
+    - ".ofs"
   tm_scope: source.ofs
   ace_mode: text
-  codemirror_mode: null
-  codemirror_mime_type: null
+  language_id: 999999
   aliases:
-  - obsidian-fault-script
+    - obsidian-fault-script
 ```
 
 4. Abra PR com título: "Add OFS (Obsidian Fault Script) language support"
@@ -81,6 +82,8 @@ Após registro no Linguist, o repositório deve mostrar:
 ## Status
 
 - ✅ `.gitattributes` configurado
+- ✅ Entrada base para Linguist preparada em `docs/linguist-language.yml`
+- ✅ README técnico atualizado
 - ⏳ PR ao Linguist (manual)
 - ⏳ Awesome Lists (manual)
-- ✅ Repositório removido de C++ e 100% OFS
+- ✅ Repositório configurado para destacar `.ofs`

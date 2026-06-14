@@ -80,6 +80,7 @@ attach {fmt}
 - `test-lib`
 - `ui` (visual, native)
 - `webserver`
+- `webui`
 - `window`
 
 ---
@@ -158,4 +159,5 @@ attach {fmt}
 - `test-lib`
 - `ui` (visual, nativo)
 - `webserver`
+- `webui`
 - `window`

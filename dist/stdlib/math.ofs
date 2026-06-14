@@ -1,0 +1,71 @@
+// OFS Standard Library — Math Module
+// Advanced math functions (uses runtime functions)
+
+// Note: ofs_pow, ofs_sqrt, ofs_mod are available as runtime builtins.
+// These wrappers provide OFS-idiomatic access.
+
+vein square(x: stone) -> stone {
+    return x * x
+}
+
+vein cube(x: stone) -> stone {
+    return x * x * x
+}
+
+vein sum_range(start: stone, end: stone) -> stone {
+    forge total: stone = 0
+    cycle (forge i = start; i <= end; i++) {
+        total += i
+    }
+    return total
+}
+
+vein is_prime(n: stone) -> bool {
+    if (n < 2) { return false }
+    if (n < 4) { return true }
+    if (n % 2 == 0) { return false }
+    forge i: stone = 3
+    while (i * i <= n) {
+        if (n % i == 0) { return false }
+        i += 2
+    }
+    return true
+}
+
+vein count_digits(n: stone) -> stone {
+    if (n == 0) { return 1 }
+    if (n < 0) { n = -n }
+    forge count: stone = 0
+    while (n > 0) {
+        count += 1
+        n = n / 10
+    }
+    return count
+}
+
+vein sum_digits(n: stone) -> stone {
+    if (n < 0) { n = -n }
+    forge total: stone = 0
+    while (n > 0) {
+        total += n % 10
+        n = n / 10
+    }
+    return total
+}
+
+vein reverse_number(n: stone) -> stone {
+    forge reversed: stone = 0
+    forge negative: bool = n < 0
+    if (negative) { n = -n }
+    while (n > 0) {
+        reversed = reversed * 10 + n % 10
+        n = n / 10
+    }
+    if (negative) { return -reversed }
+    return reversed
+}
+
+vein is_palindrome_number(n: stone) -> bool {
+    if (n < 0) { return false }
+    return n == reverse_number(n)
+}

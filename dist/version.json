@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0-native",
+  "buildType": "native-only",
+  "compiler": "OFS (Self-Hosted, C++-Free)",
+  "timestamp": "2026-06-14T00:59:06Z",
+  "buildProcess": "complete-bootstrap",
+  "dependencies": {
+    "cpp": false,
+    "cmake": false,
+    "llvm": false
+  },
+  "deterministic": false,
+  "selfHostValidation": "1"
+}

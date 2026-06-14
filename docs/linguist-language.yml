@@ -1,0 +1,10 @@
+OFS:
+  type: programming
+  color: "#2A0845"
+  extensions:
+    - ".ofs"
+  tm_scope: source.ofs
+  ace_mode: text
+  language_id: 999999
+  aliases:
+    - obsidian-fault-script

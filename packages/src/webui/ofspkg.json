@@ -1,0 +1,20 @@
+{
+  "name": "webui",
+  "version": "0.1.0",
+  "description": "Declarative OFS web UI helpers for pages, style tokens, components, and static web serving",
+  "author": "OFS Team",
+  "license": "MIT",
+  "main": "libs/webui.ofs",
+  "tags": ["web", "ui", "html", "style", "site", "server"],
+  "channels": {
+    "alpha": "0.1.0",
+    "latest": "0.1.0"
+  },
+  "versions": {
+    "0.1.0": {
+      "date": "2026-06-14",
+      "channel": "alpha",
+      "main": "libs/webui.ofs"
+    }
+  }
+}

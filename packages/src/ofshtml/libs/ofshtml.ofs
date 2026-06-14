@@ -1,0 +1,117 @@
+// OFS HTML Markup DSL
+// Source files stay in OFS; browser HTML is only the generated artifact.
+
+namespace ofshtml {
+    vein attr(name: obsidian, value: obsidian) -> obsidian {
+        return " " + name + "=\"" + value + "\""
+    }
+
+    vein empty_attrs() -> obsidian {
+        return ""
+    }
+
+    vein tag(name: obsidian, attrs: obsidian, children: obsidian) -> obsidian {
+        return "<" + name + attrs + ">" + children + "</" + name + ">"
+    }
+
+    vein void_tag(name: obsidian, attrs: obsidian) -> obsidian {
+        return "<" + name + attrs + ">"
+    }
+
+    vein text(value: obsidian) -> obsidian {
+        return value
+    }
+
+    vein document(lang: obsidian, title: obsidian, description: obsidian, head_extra: obsidian, body: obsidian) -> obsidian {
+        forge head = void_tag("meta", attr("charset", "utf-8"))
+        head = head + void_tag("meta", attr("name", "viewport") + attr("content", "width=device-width, initial-scale=1"))
+        head = head + tag("title", empty_attrs(), title)
+        head = head + void_tag("meta", attr("name", "description") + attr("content", description))
+        head = head + head_extra
+        return "<!doctype html>" + tag("html", attr("lang", lang), tag("head", empty_attrs(), head) + tag("body", empty_attrs(), body))
+    }
+
+    vein css(href: obsidian) -> obsidian {
+        return void_tag("link", attr("rel", "stylesheet") + attr("href", href))
+    }
+
+    vein icon(href: obsidian) -> obsidian {
+        return void_tag("link", attr("rel", "icon") + attr("href", href))
+    }
+
+    vein script(src: obsidian) -> obsidian {
+        return tag("script", attr("src", src), "")
+    }
+
+    vein div(class_name: obsidian, children: obsidian) -> obsidian {
+        return tag("div", attr("class", class_name), children)
+    }
+
+    vein section(id: obsidian, class_name: obsidian, children: obsidian) -> obsidian {
+        forge attrs = attr("class", class_name)
+        if (id != "") {
+            attrs = attrs + attr("id", id)
+        }
+        return tag("section", attrs, children)
+    }
+
+    vein article(class_name: obsidian, children: obsidian) -> obsidian {
+        return tag("article", attr("class", class_name), children)
+    }
+
+    vein nav(class_name: obsidian, children: obsidian) -> obsidian {
+        return tag("nav", attr("class", class_name), children)
+    }
+
+    vein header(class_name: obsidian, children: obsidian) -> obsidian {
+        return tag("header", attr("class", class_name), children)
+    }
+
+    vein main(id: obsidian, children: obsidian) -> obsidian {
+        return tag("main", attr("id", id), children)
+    }
+
+    vein footer(class_name: obsidian, children: obsidian) -> obsidian {
+        return tag("footer", attr("class", class_name), children)
+    }
+
+    vein a(class_name: obsidian, href: obsidian, children: obsidian) -> obsidian {
+        return tag("a", attr("class", class_name) + attr("href", href), children)
+    }
+
+    vein img(src: obsidian, alt: obsidian) -> obsidian {
+        return void_tag("img", attr("src", src) + attr("alt", alt))
+    }
+
+    vein p(class_name: obsidian, children: obsidian) -> obsidian {
+        return tag("p", attr("class", class_name), children)
+    }
+
+    vein h1(children: obsidian) -> obsidian {
+        return tag("h1", empty_attrs(), children)
+    }
+
+    vein h2(children: obsidian) -> obsidian {
+        return tag("h2", empty_attrs(), children)
+    }
+
+    vein h3(children: obsidian) -> obsidian {
+        return tag("h3", empty_attrs(), children)
+    }
+
+    vein strong(children: obsidian) -> obsidian {
+        return tag("strong", empty_attrs(), children)
+    }
+
+    vein span(class_name: obsidian, children: obsidian) -> obsidian {
+        return tag("span", attr("class", class_name), children)
+    }
+
+    vein code_block(children: obsidian) -> obsidian {
+        return tag("pre", empty_attrs(), tag("code", empty_attrs(), children))
+    }
+
+    vein table(head: obsidian, body: obsidian) -> obsidian {
+        return tag("table", empty_attrs(), tag("thead", empty_attrs(), head) + tag("tbody", attr("id", "benchmark-rows"), body))
+    }
+}

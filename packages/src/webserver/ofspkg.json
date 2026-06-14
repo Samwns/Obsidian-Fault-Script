@@ -1,6 +1,25 @@
 {
   "name": "webserver",
-  "version": "1.0.0",
-  "description": "HTTP utility helpers for building web applications in OFS",
-  "main": "libs/webserver.ofs"
+  "version": "1.1.0",
+  "description": "HTTP helpers and native static response server for OFS web applications",
+  "author": "OFS Team",
+  "license": "MIT",
+  "main": "libs/webserver.ofs",
+  "tags": ["web", "http", "server", "runtime", "stdlib"],
+  "channels": {
+    "stable": "1.1.0",
+    "latest": "1.1.0"
+  },
+  "versions": {
+    "1.0.0": {
+      "date": "2026-04-07",
+      "channel": "stable",
+      "main": "libs/webserver.ofs"
+    },
+    "1.1.0": {
+      "date": "2026-06-14",
+      "channel": "stable",
+      "main": "libs/webserver.ofs"
+    }
+  }
 }

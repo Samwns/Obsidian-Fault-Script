@@ -80,7 +80,25 @@
   "Attach Stdlib": {
     "prefix": "attach-stdlib",
     "body": [
-      "attach {${1|core,math,string,io,webserver,bedrock,bedrock-packet,terminal-colors,memory-modes,rift,canvas,window,fmt,test-lib|}}"
+      "attach {${1|core,math,string,io,ofshtml,webserver,webui,bedrock,bedrock-packet,terminal-colors,memory-modes,rift,canvas,window,fmt,test-lib|}}"
+    ]
+  },
+  "Web UI Site": {
+    "prefix": "webui-site",
+    "body": [
+      "attach {webui}",
+      "",
+      "core main() {",
+      "    forge body = webui.nav(${1:\"OFS Web\"}, webui.button(${2:\"Docs\"}, ${3:\"#docs\"}))",
+      "    body = body + webui.hero(${4:\"Meu site OFS\"}, ${5:\"UI declarativa em OFS, servida pela propria linguagem.\"}, webui.button(${6:\"Comecar\"}, ${7:\"#docs\"}))",
+      "    body = body + webui.grid(",
+      "        webui.card(${8:\"Componente\"}, ${9:\"HTML e estilo gerados por biblioteca OFS.\"})",
+      "        + webui.card(${10:\"Servidor\"}, ${11:\"Use Go Live para subir o arquivo como site local.\"})",
+      "    )",
+      "    body = body + webui.panel(${12:\"<h2 id=\\\"docs\\\">Site OFS</h2><p class=\\\"ofs-muted\\\">Pronto para editar.</p>\"})",
+      "",
+      "    webui.serve(${13:8080}, ${14:\"OFS Web\"}, body)",
+      "}"
     ]
   },
   "Attach File": {

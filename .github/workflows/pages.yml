@@ -1,0 +1,45 @@
+name: GitHub Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/**
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate site with OFS
+        env:
+          OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
+        run: |
+          clang -O2 -c ofs/runtime/ofs_runtime.c -o /tmp/ofs_runtime.o
+          ar rcs /tmp/libofs_runtime.a /tmp/ofs_runtime.o
+          clang -Wno-override-module -O2 dist/ofscc.ll /tmp/libofs_runtime.a -lm -o /tmp/ofscc
+          chmod +x /tmp/ofscc
+          sed 's/__OFS_VERSION__/pages/g' packaging/linux/ofs > /tmp/ofs
+          chmod +x /tmp/ofs
+          OFS_RUNTIME=/tmp/libofs_runtime.a /tmp/ofs build ofs/site/build_site.ofs -o /tmp/ofs-build-site
+          /tmp/ofs-build-site
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - id: deployment
+        uses: actions/deploy-pages@v4

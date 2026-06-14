@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <errno.h>
 #include <math.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -8,10 +9,22 @@
 #if defined(_WIN32)
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #pragma comment(lib, "user32.lib")
 #pragma comment(lib, "gdi32.lib")
+#pragma comment(lib, "ws2_32.lib")
 #elif defined(__linux__)
+#include <arpa/inet.h>
 #include <dlfcn.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#else
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #endif
 
 void echo_stone(int64_t v) { printf("%lld\n", (long long)v); }
@@ -200,17 +213,147 @@ void echo_stone_nn(int64_t v) { printf("%lld", (long long)v); }
 void echo_crystal_nn(double v) { printf("%g", v); }
 void echo_obsidian_nn(const char* s) { fputs(s ? s : "", stdout); }
 
-int64_t ofs_webserver_serve_once(int64_t port, const char* content_type, const char* body) {
-    (void)port;
-    (void)content_type;
-    (void)body;
+#if defined(_WIN32)
+typedef SOCKET ofs_socket_t;
+#define OFS_INVALID_SOCKET INVALID_SOCKET
+static void ofs_socket_close(ofs_socket_t s) { closesocket(s); }
+#else
+typedef int ofs_socket_t;
+#define OFS_INVALID_SOCKET (-1)
+static void ofs_socket_close(ofs_socket_t s) { close(s); }
+#endif
+
+static int ofs_socket_init(void) {
+#if defined(_WIN32)
+    static int started = 0;
+    if (!started) {
+        WSADATA data;
+        if (WSAStartup(MAKEWORD(2, 2), &data) != 0) return -1;
+        started = 1;
+    }
+#endif
     return 0;
 }
 
+static int ofs_send_all(ofs_socket_t client, const char* data, size_t len) {
+    size_t sent = 0;
+    while (sent < len) {
+#if defined(_WIN32)
+        int n = send(client, data + sent, (int)(len - sent), 0);
+#else
+        ssize_t n = send(client, data + sent, len - sent, 0);
+#endif
+        if (n <= 0) return -1;
+        sent += (size_t)n;
+    }
+    return 0;
+}
+
+static char* ofs_build_http_response(const char* content_type, const char* body) {
+    const char* type = content_type ? content_type : "text/plain; charset=utf-8";
+    const char* payload = body ? body : "";
+    size_t body_len = strlen(payload);
+    char header[512];
+    int header_len = snprintf(
+        header,
+        sizeof(header),
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: %s\r\n"
+        "Content-Length: %zu\r\n"
+        "Connection: close\r\n"
+        "Cache-Control: no-store\r\n"
+        "\r\n",
+        type,
+        body_len
+    );
+    if (header_len < 0) return NULL;
+    if ((size_t)header_len >= sizeof(header)) header_len = (int)sizeof(header) - 1;
+
+    char* response = (char*)ofs_alloc((int64_t)header_len + (int64_t)body_len + 1);
+    memcpy(response, header, (size_t)header_len);
+    memcpy(response + header_len, payload, body_len);
+    response[header_len + body_len] = '\0';
+    return response;
+}
+
+static ofs_socket_t ofs_webserver_listen(int64_t port) {
+    if (port <= 0 || port > 65535) port = 8080;
+    if (ofs_socket_init() != 0) return OFS_INVALID_SOCKET;
+
+    ofs_socket_t server = socket(AF_INET, SOCK_STREAM, 0);
+    if (server == OFS_INVALID_SOCKET) return OFS_INVALID_SOCKET;
+
+    int yes = 1;
+    setsockopt(server, SOL_SOCKET, SO_REUSEADDR, (const char*)&yes, sizeof(yes));
+
+    struct sockaddr_in addr;
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_INET;
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    addr.sin_port = htons((uint16_t)port);
+
+    if (bind(server, (struct sockaddr*)&addr, sizeof(addr)) != 0) {
+        ofs_socket_close(server);
+        return OFS_INVALID_SOCKET;
+    }
+    if (listen(server, 16) != 0) {
+        ofs_socket_close(server);
+        return OFS_INVALID_SOCKET;
+    }
+    return server;
+}
+
+static int64_t ofs_webserver_accept_one(ofs_socket_t server, const char* response, size_t response_len) {
+    char request_buf[2048];
+    struct sockaddr_in client_addr;
+#if defined(_WIN32)
+    int client_len = sizeof(client_addr);
+#else
+    socklen_t client_len = sizeof(client_addr);
+#endif
+    ofs_socket_t client = accept(server, (struct sockaddr*)&client_addr, &client_len);
+    if (client == OFS_INVALID_SOCKET) return -1;
+
+    recv(client, request_buf, sizeof(request_buf) - 1, 0);
+    int ok = ofs_send_all(client, response, response_len);
+    ofs_socket_close(client);
+    return ok == 0 ? 0 : -1;
+}
+
+int64_t ofs_webserver_serve_once(int64_t port, const char* content_type, const char* body) {
+    char* response = ofs_build_http_response(content_type, body);
+    if (!response) return 1;
+    size_t response_len = strlen(response);
+    ofs_socket_t server = ofs_webserver_listen(port);
+    if (server == OFS_INVALID_SOCKET) {
+        ofs_free(response);
+        return 2;
+    }
+
+    int64_t result = ofs_webserver_accept_one(server, response, response_len);
+    ofs_socket_close(server);
+    ofs_free(response);
+    return result == 0 ? 0 : 3;
+}
+
 int64_t ofs_webserver_serve_forever(int64_t port, const char* content_type, const char* body) {
-    (void)port;
-    (void)content_type;
-    (void)body;
+    char* response = ofs_build_http_response(content_type, body);
+    if (!response) return 1;
+    size_t response_len = strlen(response);
+    ofs_socket_t server = ofs_webserver_listen(port);
+    if (server == OFS_INVALID_SOCKET) {
+        ofs_free(response);
+        return 2;
+    }
+
+    printf("OFS web server listening on http://127.0.0.1:%lld\n", (long long)(port > 0 ? port : 8080));
+    fflush(stdout);
+    for (;;) {
+        ofs_webserver_accept_one(server, response, response_len);
+    }
+
+    ofs_socket_close(server);
+    ofs_free(response);
     return 0;
 }
 

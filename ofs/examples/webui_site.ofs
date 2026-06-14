@@ -1,0 +1,18 @@
+attach {webui}
+
+core main() {
+    forge body = webui.nav("OFS Web", webui.button("Docs", "#docs"))
+    body = body + webui.hero(
+        "Obsidian Fault Script",
+        "Um site servido pela propria linguagem, com UI declarativa em OFS e estilo gerado por tokens.",
+        webui.button("Ver componentes", "#docs")
+    )
+    body = body + webui.grid(
+        webui.card("Hibrida", "A mesma linguagem pode mirar console, nativo com canvas e web.")
+        + webui.card("Sem CSS manual", "Voce usa componentes e temas OFS; a biblioteca gera o estilo.")
+        + webui.card("Go Live", "A extensao pode subir o arquivo atual como servidor local.")
+    )
+    body = body + webui.panel("<h2 id=\"docs\">Feito em OFS</h2><p class=\"ofs-muted\">Rode com Go Live ou compile e execute este arquivo.</p>")
+
+    webui.serve(8080, "OFS Web", body)
+}

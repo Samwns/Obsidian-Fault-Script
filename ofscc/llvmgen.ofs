@@ -573,6 +573,8 @@ namespace llvmgen {
         cg_emit("declare i64 @ofs_mouse_y()")
         cg_emit("declare i64 @ofs_mouse_btn(i64)")
         cg_emit("declare i64 @ofs_key_down(i64)")
+        cg_emit("declare i64 @ofs_webserver_serve_once(i64, ptr, ptr)")
+        cg_emit("declare i64 @ofs_webserver_serve_forever(i64, ptr, ptr)")
         cg_emit("declare ptr @fopen(ptr, ptr)")
         cg_emit("declare i64 @fclose(ptr)")
         cg_emit("declare i64 @fread(ptr, i64, i64, ptr)")

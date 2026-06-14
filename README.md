@@ -1,149 +1,73 @@
-# Obsidian Fault Script (OFS) 🔥
+# Obsidian Fault Script
 
-[![OFS Badge](https://img.shields.io/badge/Language-OFS-2A0845)](https://github.com/Samwns/Obsidian-Fault-Script)
+OFS is a self-hosted compiled language with an LLVM pipeline, native runtime, modular standard library, low-level modes, and experimental Web UI support.
 
-**Linguagem compilada, self-hosted e determinística**
+Official site and docs:
 
-Linguagem para aprender programação e, ao mesmo tempo, chegar perto do sistema quando precisar.
+- GitHub Pages: https://samwns.github.io/Obsidian-Fault-Script/
+- Repository: https://github.com/Samwns/Obsidian-Fault-Script
+- Latest release: https://github.com/Samwns/Obsidian-Fault-Script/releases/latest
 
-Você pode:
-- escrever um arquivo `.ofs` e rodar direto;
-- validar sem gerar binário;
-- compilar para executável nativo;
-- reutilizar módulos com `attach`;
-- integrar com código externo via `rift vein`;
-- usar recursos modernos da linguagem, como `impl`, `namespace`, lambdas e tipos inteiros pequenos;
-
-[English](#english) | [Português (Brasil)](#português-brasil)
-
----
-
-## English
-
-- Function values and inline lambdas
-- Low-level blocks: `fracture`, `abyss`, `fractal`, `bedrock`
-- Interop with native code via `extern vein` and `rift vein`
-- Standard modules and installable packages
-- Native visual layer with `window`, `canvas`, and the new `ui` library
-
-### Install
-
-Download the latest release from [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
-
-| Platform | How to install |
-|---|---
-| Linux | `tar xzf ofs-linux-x64-*.tar.gz && sudo mv ofs/bin/ofscc /usr/local/bin/ofs` |
-| macOS | `tar xzf ofs-macos-arm64-*.tar.gz && sudo mv ofs/bin/ofscc /usr/local/bin/ofs` |
-| Windows | Extract `.zip` and add `ofs\bin\` to PATH |
-| VS Code | Install `ofs-vscode-extension.vsix` |
-| From Source | `bash ofscc/scripts/bootstrap.sh` |
-
-### Main commands
+## Quick Start
 
 ```bash
-ofs build file.ofs -o program      # compile to executable  
-ofs check file.ofs                 # type-check (no codegen)
-ofs tokens file.ofs                # lexer output
-ofs ast file.ofs                   # parser output
-ofs ir file.ofs                    # LLVM IR output
-ofs asm file.ofs                   # native assembly output
-ofs version                        # compiler version
-ofs help                           # full help
+dist/ofs check ofs/examples/hello.ofs
+dist/ofs run ofs/examples/hello.ofs
+dist/ofs build ofs/examples/hello.ofs -o hello
+```
 
-### Example
+## Example
 
 ```ofs
-attach {core}
-
-vein double(x: stone) -> stone {
-	return x * 2
-}
-
 core main() {
-	echo(double(21))
+    echo("hello from OFS")
 }
 ```
 
-### Documentation
+## Web Example
 
-- [Getting started](docs/GETTING_STARTED.md)
-- [Language reference](docs/LANGUAGE_REFERENCE.md)
-- [Beginner guide](OFS_JORNADA_INICIANTE.md)
-- [Packages](packages/README.md)
-- [Native visual UI](docs/VISUAL_UI.md)
-- [Changelog](docs/CHANGELOG.md)
-
----
-
-## Português (Brasil)
-
-OFS é uma linguagem estaticamente tipada feita para ser simples no começo e poderosa quando o projeto crescer.
-
-### O que a linguagem já faz hoje
-
-- Executa arquivos `.ofs` direto com `ofs arquivo.ofs`
-- Compila e roda com `ofs run`
-- Gera executável nativo com `ofs build`
-- Valida sem gerar saída com `ofs check`
-- Mostra tokens, AST, LLVM IR e assembly para debug
-- Tem tipos pequenos: `u8`, `u16`, `u32`, `u64`, `i8`, `i32`
-- Tem `monolith` com métodos via `impl`
-- Tem `namespace` para organizar símbolos
-- Aceita funções como valores e lambdas inline
-- Tem `match`, `tremor/catch/throw`, `const` e `strata`
-- Tem blocos de baixo nível: `fracture`, `abyss`, `fractal`, `bedrock`
-- Faz integração nativa com `extern vein` e `rift vein`
-- Reutiliza módulos por `attach {nome}` ou `attach {F:arquivo.ofs}`
-- Já tem `window` e `canvas` para fluxo gráfico básico em OFS
-- Agora tem `ui` para painel, botões, checkbox, slider, estilos e ícones desenhados em OFS
-
-### Instalar
-
-**Criada automaticamente** - Releases gerados em ~5 segundos sem dependências de C++!
-
-Baixe a **release nativa** mais recente em [Releases](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest):
-
-| Plataforma | Como instalar |
-|---|---
-| Linux | `tar xzf ofs-linux-x64-*.tar.gz && sudo mv ofs/bin/ofscc /usr/local/bin/ofs` |
-| macOS | `tar xzf ofs-macos-arm64-*.tar.gz && sudo mv ofs/bin/ofscc /usr/local/bin/ofs` |
-| Windows | Extraia `.zip` e adicione `ofs\bin\` ao PATH |
-| VS Code | Instale `ofs-vscode-extension.vsix` |
-| Do Fonte | `bash ofscc/scripts/bootstrap.sh` |
-
-### Comandos principais
-
-```bash
-ofs arquivo.ofs              # executa direto
-ofs run arquivo.ofs          # compila e executa na hora
-ofs build arquivo.ofs -o app # gera executável nativo
-ofs check arquivo.ofs        # valida tipos e sintaxe
-ofs tokens arquivo.ofs       # mostra tokens
-ofs ast arquivo.ofs          # mostra a AST
-ofs ir arquivo.ofs           # mostra LLVM IR
-ofs asm arquivo.ofs          # mostra assembly nativo
-ofs update                   # atualiza pela release mais recente
-```
-
-### Exemplo rápido
+OFS web pages should be authored in OFS. The browser receives HTML, but the source of the official site is `ofs/site/build_site.ofs`, using the OFS-native markup DSL `attach {ofshtml}`.
 
 ```ofs
-attach {core}
-
-vein dobro(x: stone) -> stone {
-	return x * 2
-}
+attach {webui}
 
 core main() {
-	echo(dobro(21))
+    forge body = webui.hero(
+        "OFS Web",
+        "UI declarativa em OFS, servida pela propria linguagem.",
+        webui.button("Docs", "#docs")
+    )
+
+    webui.serve(8080, "OFS Web", body)
 }
 ```
 
-### Documentação
+## Main Components
 
-- [Guia de Início](docs/GETTING_STARTED.md)
-- [Referência da Linguagem](docs/LANGUAGE_REFERENCE.md)
-- [Jornada Iniciante](OFS_JORNADA_INICIANTE.md)
-- [Pacotes](packages/README.md)
-- [UI visual nativa](docs/VISUAL_UI.md)
-- [Changelog](docs/CHANGELOG.md)
+| Component | Path |
+|---|---|
+| Self-hosted compiler | `ofs/ofscc/`, `ofscc/` |
+| Runtime | `ofs/runtime/ofs_runtime.c` |
+| Standard library | `ofs/stdlib/` |
+| OFS markup DSL | `ofs/stdlib/ofshtml.ofs` |
+| Package registry | `packages/` |
+| VS Code extension | `vscode-extension/` |
+| GitHub Pages source | `ofs/site/` |
+| GitHub Pages artifact | `docs/` |
+
+## Documentation
+
+The documentation site is generated by OFS into `docs/` and deployed by `.github/workflows/pages.yml`.
+
+Key source documents:
+
+- [Getting Started](docs/GETTING_STARTED.md)
+- [Language Reference](docs/LANGUAGE_REFERENCE.md)
+- [Compiler Architecture](docs/COMPILER_ARCHITECTURE.md)
+- [Web UI](docs/WEB_UI.md)
+- [Native Visual UI](docs/VISUAL_UI.md)
+- [GitHub Registration](docs/GITHUB_REGISTRATION.md)
+
+## Release Notes
+
+The latest verified public release at the time of this update is `v1.0.112`. Auto release and build workflows were checked with `gh run list`; the latest `Auto Release` and `OFS Build & Test` runs completed successfully.

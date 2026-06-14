@@ -1,0 +1,103 @@
+// OFS Standard Library - Web UI Module
+// Declarative HTML and style-token helpers for OFS web pages.
+
+attach {webserver}
+
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+monolith WebTheme {
+    bg: obsidian
+    surface: obsidian
+    text: obsidian
+    muted: obsidian
+    accent: obsidian
+    border: obsidian
+    radius: stone
+    gap: stone
+}
+
+namespace webui {
+    vein theme_dark() -> WebTheme {
+        forge t: WebTheme
+        t.bg = "#101418"
+        t.surface = "#f8fbff"
+        t.text = "#17202a"
+        t.muted = "#5d6b78"
+        t.accent = "#008c7a"
+        t.border = "#d8e0e8"
+        t.radius = 8
+        t.gap = 16
+        return t
+    }
+
+    vein theme_light() -> WebTheme {
+        forge t: WebTheme
+        t.bg = "#eef3f7"
+        t.surface = "#ffffff"
+        t.text = "#18212b"
+        t.muted = "#607080"
+        t.accent = "#006fbe"
+        t.border = "#d5dde5"
+        t.radius = 8
+        t.gap = 16
+        return t
+    }
+
+    vein stylesheet(t: WebTheme) -> obsidian {
+        forge css = "<style>"
+        css = css + ":root{color-scheme:light;}"
+        css = css + "*{box-sizing:border-box}body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;background:" + t.bg + ";color:" + t.text + ";line-height:1.5}"
+        css = css + "main{width:min(1040px,calc(100% - 32px));margin:0 auto;padding:32px 0 48px}"
+        css = css + ".ofs-nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 0}"
+        css = css + ".ofs-brand{font-weight:800;font-size:18px}.ofs-stack{display:grid;gap:" + ofs_stone_to_obsidian(t.gap) + "px}"
+        css = css + ".ofs-hero{min-height:52vh;display:grid;align-content:center;gap:18px;padding:48px 0}"
+        css = css + ".ofs-hero h1{margin:0;font-size:clamp(42px,8vw,92px);line-height:.95;letter-spacing:0}.ofs-hero p{max-width:680px;margin:0;color:" + t.muted + ";font-size:20px}"
+        css = css + ".ofs-panel,.ofs-card{background:" + t.surface + ";border:1px solid " + t.border + ";border-radius:" + ofs_stone_to_obsidian(t.radius) + "px;padding:20px}"
+        css = css + ".ofs-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:" + ofs_stone_to_obsidian(t.gap) + "px}"
+        css = css + ".ofs-button{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:0 16px;border-radius:" + ofs_stone_to_obsidian(t.radius) + "px;background:" + t.accent + ";color:white;text-decoration:none;font-weight:700}"
+        css = css + ".ofs-muted{color:" + t.muted + "}.ofs-card h3{margin:0 0 8px}.ofs-card p{margin:0;color:" + t.muted + "}"
+        css = css + "@media(max-width:640px){main{width:min(100% - 24px,1040px);padding-top:16px}.ofs-hero{min-height:46vh;padding:32px 0}.ofs-hero p{font-size:17px}}"
+        css = css + "</style>"
+        return css
+    }
+
+    vein page(title: obsidian, body: obsidian, t: WebTheme) -> obsidian {
+        forge html = "<!doctype html><html lang=\"pt-BR\"><head><meta charset=\"utf-8\">"
+        html = html + "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
+        html = html + "<title>" + title + "</title>" + stylesheet(t) + "</head><body><main>"
+        html = html + body + "</main></body></html>"
+        return html
+    }
+
+    vein nav(brand: obsidian, right: obsidian) -> obsidian {
+        return "<nav class=\"ofs-nav\"><div class=\"ofs-brand\">" + brand + "</div><div>" + right + "</div></nav>"
+    }
+
+    vein hero(title: obsidian, subtitle: obsidian, action: obsidian) -> obsidian {
+        return "<section class=\"ofs-hero\"><h1>" + title + "</h1><p>" + subtitle + "</p>" + action + "</section>"
+    }
+
+    vein button(label: obsidian, href: obsidian) -> obsidian {
+        return "<a class=\"ofs-button\" href=\"" + href + "\">" + label + "</a>"
+    }
+
+    vein panel(content: obsidian) -> obsidian {
+        return "<section class=\"ofs-panel\">" + content + "</section>"
+    }
+
+    vein grid(content: obsidian) -> obsidian {
+        return "<section class=\"ofs-grid\">" + content + "</section>"
+    }
+
+    vein card(title: obsidian, body: obsidian) -> obsidian {
+        return "<article class=\"ofs-card\"><h3>" + title + "</h3><p>" + body + "</p></article>"
+    }
+
+    vein stack(content: obsidian) -> obsidian {
+        return "<div class=\"ofs-stack\">" + content + "</div>"
+    }
+
+    vein serve(port: stone, title: obsidian, body: obsidian) -> stone {
+        return serve_html_forever(port, page(title, body, theme_light()))
+    }
+}

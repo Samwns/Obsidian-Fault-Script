@@ -1,0 +1,20 @@
+{
+  "name": "ofshtml",
+  "version": "0.1.0",
+  "description": "OFS-native markup DSL for generating browser HTML from OFS source",
+  "author": "OFS Team",
+  "license": "MIT",
+  "main": "libs/ofshtml.ofs",
+  "tags": ["web", "html", "markup", "dsl", "site"],
+  "channels": {
+    "alpha": "0.1.0",
+    "latest": "0.1.0"
+  },
+  "versions": {
+    "0.1.0": {
+      "date": "2026-06-14",
+      "channel": "alpha",
+      "main": "libs/ofshtml.ofs"
+    }
+  }
+}

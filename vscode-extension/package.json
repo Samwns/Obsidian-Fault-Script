@@ -91,6 +91,13 @@
         "icon": "$(symbol-field)"
       },
       {
+        "command": "ofs.goLive",
+        "title": "Go Live",
+        "shortTitle": "Go Live",
+        "category": "OFS",
+        "icon": "$(globe)"
+      },
+      {
         "command": "ofs.pauseExecution",
         "title": "Pause Execution",
         "category": "OFS",
@@ -172,6 +179,11 @@
           "command": "ofs.emitAssembly",
           "when": "resourceLangId == ofs",
           "group": "2_check@2"
+        },
+        {
+          "command": "ofs.goLive",
+          "when": "resourceLangId == ofs",
+          "group": "navigation@3"
         }
       ],
       "editor/title": [
@@ -214,6 +226,11 @@
           "type": "boolean",
           "default": true,
           "description": "Prefer compiler binary embedded in extension (bin/<platform>) before workspace/system compiler."
+        },
+        "ofs.goLivePort": {
+          "type": "number",
+          "default": 8080,
+          "description": "Default port used by the OFS Go Live command."
         }
       }
     }

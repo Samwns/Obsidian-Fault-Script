@@ -343,6 +343,8 @@ source_filename = "ofs_module"
 @str.335 = private unnamed_addr constant [27 x i8] c"declare i64 @ofs_mouse_y()\00", align 1
 @str.336 = private unnamed_addr constant [32 x i8] c"declare i64 @ofs_mouse_btn(i64)\00", align 1
 @str.337 = private unnamed_addr constant [31 x i8] c"declare i64 @ofs_key_down(i64)\00", align 1
+@str.webserver_serve_once_decl = private unnamed_addr constant [53 x i8] c"declare i64 @ofs_webserver_serve_once(i64, ptr, ptr)\00", align 1
+@str.webserver_serve_forever_decl = private unnamed_addr constant [56 x i8] c"declare i64 @ofs_webserver_serve_forever(i64, ptr, ptr)\00", align 1
 @str.338 = private unnamed_addr constant [29 x i8] c"declare ptr @fopen(ptr, ptr)\00", align 1
 @str.339 = private unnamed_addr constant [25 x i8] c"declare i64 @fclose(ptr)\00", align 1
 @str.340 = private unnamed_addr constant [39 x i8] c"declare i64 @fread(ptr, i64, i64, ptr)\00", align 1
@@ -14460,6 +14462,8 @@ while_end1964:
   call void @cg_emit(ptr @str.335)
   call void @cg_emit(ptr @str.336)
   call void @cg_emit(ptr @str.337)
+  call void @cg_emit(ptr @str.webserver_serve_once_decl)
+  call void @cg_emit(ptr @str.webserver_serve_forever_decl)
   call void @cg_emit(ptr @str.338)
   call void @cg_emit(ptr @str.339)
   call void @cg_emit(ptr @str.340)
@@ -20971,4 +20975,3 @@ if_else2674:
 if_end2675:
   ret i32 0
 }
-
