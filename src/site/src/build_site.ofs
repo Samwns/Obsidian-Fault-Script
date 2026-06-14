@@ -35,10 +35,19 @@ vein write_english_pages(prefix: obsidian) {
     write_file(prefix + "en/downloads.html", page_downloads_en())
 }
 
+vein write_spanish_pages(prefix: obsidian) {
+    write_file(prefix + "es/index.html", page_es_index())
+    write_file(prefix + "es/language.html", page_language_es())
+    write_file(prefix + "es/web.html", page_web_es())
+    write_file(prefix + "es/stdlib.html", page_stdlib_es())
+    write_file(prefix + "es/downloads.html", page_downloads_es())
+}
+
 core main() {
-    system("mkdir -p src/site/public/assets src/site/public/en docs/assets docs/en")
+    system("mkdir -p src/site/public/assets src/site/public/en src/site/public/es docs/assets docs/en docs/es")
     write_pages("src/site/public/")
     write_english_pages("src/site/public/")
+    write_spanish_pages("src/site/public/")
     write_file("src/site/public/.nojekyll", "")
     write_file("src/site/public/assets/site.css", site_css())
     write_file("src/site/public/assets/site.js", site_runtime_js())
@@ -46,6 +55,7 @@ core main() {
 
     write_pages("docs/")
     write_english_pages("docs/")
+    write_spanish_pages("docs/")
     write_file("docs/.nojekyll", "")
     write_file("docs/assets/site.css", site_css())
     write_file("docs/assets/site.js", site_runtime_js())

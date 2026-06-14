@@ -95,6 +95,8 @@ Key source documents:
 - [ODL Reference](docs/ODL_REFERENCE.md)
 - [OES Reference](docs/OES_REFERENCE.md)
 - [Native Visual UI](docs/VISUAL_UI.md)
+- [Standard Library](docs/STANDARD_LIBRARY.md)
+- [Performance Analysis](docs/PERFORMANCE.md)
 - [GitHub Registration](docs/GITHUB_REGISTRATION.md)
 
 ## Release Notes

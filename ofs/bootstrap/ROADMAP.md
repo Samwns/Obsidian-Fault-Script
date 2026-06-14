@@ -41,6 +41,12 @@ Este arquivo acompanha o que ainda falta para a OFS ficar consistente como lingu
 
 ## Pendente de performance
 
+- [ ] Reparar o segmentation fault do teste self-hosted `test_lexer_basic.ofs`.
+- [ ] Adicionar cronometro por fase: attach, lexer, parser, type checker, LLVM e linker.
+- [ ] Medir fontes sinteticas de 10 KB, 100 KB e 1 MB.
+- [ ] Criar acesso interno de caractere com tamanho conhecido sem enfraquecer `ofs_str_char_at`.
+- [ ] Avaliar tokens como slices para evitar substring por token.
+- [ ] Criar string builder nativo para ODL, OES e geradores.
 - [ ] Separar benchmark de linguagem de benchmark de runtime.
 - [ ] Adicionar workloads de string, array, alocacao, IO e chamadas de funcao.
 - [ ] Medir tempo de compilacao por fase do compilador.
