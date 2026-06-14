@@ -210,7 +210,7 @@ if ($mode -in @("odl", "oes", "translate")) {
     Invoke-OfsccEnv -InputPath $tool -Mode "ir" -IrOutput $toolLl
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     $runtime = Join-Path $PSScriptRoot "libofs_runtime.a"
-    & clang -Wno-override-module @LlvmIrFlags -O3 $toolLl $runtime -lm -o $toolExe
+    & clang -Wno-override-module @LlvmIrFlags -O3 -Wl,/OPT:REF $toolLl $runtime -lm -o $toolExe
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     if (-not $output) {
         if ($mode -eq "odl") { $output = "$name.html" }
@@ -260,7 +260,7 @@ if ($mode -in @("build", "run")) {
     if (-not (Test-Path $runtime)) { $runtime = Join-Path $PSScriptRoot "ofs_runtime.lib" }
     Invoke-OfsccEnv -InputPath $inputFile -Mode "ir" -IrOutput $ll
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & clang -Wno-override-module @LlvmIrFlags -O3 $ll $runtime -lm -o $output
+    & clang -Wno-override-module @LlvmIrFlags -O3 -Wl,/OPT:REF $ll $runtime -lm -o $output
     Remove-Item $ll -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     if ($mode -eq "run") {

@@ -21,3 +21,7 @@ Measured dimensions:
 
 The native `runner.c` helper uses `wait4` and `getrusage`, so time and peak RSS
 come from the child process rather than estimates made in browser JavaScript.
+
+The suite uses five fresh processes for CPU, memory, and compilation, plus
+fifteen processes for startup. Every implementation must emit the same
+checksum before its measurements are accepted.

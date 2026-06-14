@@ -34,7 +34,7 @@ jobs:
         env:
           OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
         run: |
-          clang -O2 -c ofs/runtime/ofs_runtime.c -o /tmp/ofs_runtime.o
+          clang -O2 -ffunction-sections -fdata-sections -c ofs/runtime/ofs_runtime.c -o /tmp/ofs_runtime.o
           ar rcs /tmp/libofs_runtime.a /tmp/ofs_runtime.o
           clang -Wno-override-module -O2 ofs/dist/ofscc.ll /tmp/libofs_runtime.a -lm -o /tmp/ofscc
           chmod +x /tmp/ofscc

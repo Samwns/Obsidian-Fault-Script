@@ -28,7 +28,7 @@ jobs:
       - name: Build OFS from repository sources
         run: |
           mkdir -p selfhost
-          clang -O2 -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
+          clang -O2 -ffunction-sections -fdata-sections -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
           ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
           LLVM_IR_FLAGS=()
           clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
@@ -67,7 +67,7 @@ jobs:
       - name: Build OFS from repository sources
         run: |
           mkdir -p selfhost
-          clang -O2 -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
+          clang -O2 -ffunction-sections -fdata-sections -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
           ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
           LLVM_IR_FLAGS=()
           clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
@@ -116,7 +116,7 @@ jobs:
         run: |
           $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
           New-Item -ItemType Directory -Path selfhost -Force | Out-Null
-          & clang -O2 -c "ofs\runtime\ofs_runtime.c" -o "selfhost\ofs_runtime.obj"
+          & clang -O2 -ffunction-sections -fdata-sections -c "ofs\runtime\ofs_runtime.c" -o "selfhost\ofs_runtime.obj"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & llvm-ar rcs "selfhost\libofs_runtime.a" "selfhost\ofs_runtime.obj"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

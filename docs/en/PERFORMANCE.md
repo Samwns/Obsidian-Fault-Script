@@ -22,3 +22,19 @@ The planned order is:
 6. add a native string builder;
 7. measure indexed symbol tables;
 8. evaluate LTO and LLVM flags.
+
+## Link and runtime optimization
+
+The distributed runtime is built with `-ffunction-sections` and
+`-fdata-sections`. The launcher enables `--gc-sections` on ELF, `dead_strip`
+on Mach-O, and `OPT:REF` on PE/COFF so unused runtime functions do not remain
+in every application.
+
+On the workload published on June 14, 2026, this reduced the OFS executable
+from 28,224 to 16,056 bytes without changing its checksum. The launcher also
+caches the detected Clang major version instead of probing the toolchain on
+every compilation. Median build time for the same workload moved from
+320.81 ms to 208.78 ms on the recorded machine.
+
+These are distribution-pipeline improvements. They do not change syntax,
+type checking, or program semantics.

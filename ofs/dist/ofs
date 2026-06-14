@@ -20,12 +20,39 @@ if [ -n "$STDLIB" ]; then
   export OFS_STDLIB="$STDLIB"
 fi
 
+detect_clang_major() {
+  if [ -n "${OFS_CLANG_MAJOR:-}" ]; then
+    printf '%s\n' "$OFS_CLANG_MAJOR"
+    return
+  fi
+  local clang_path cache_dir cache_file cached_path cached_major version
+  clang_path="$(command -v clang)"
+  cache_dir="${OFS_CACHE_DIR:-${XDG_CACHE_HOME:-${HOME:-/tmp}/.cache}/ofs}"
+  cache_file="$cache_dir/clang-toolchain"
+  if [ -r "$cache_file" ]; then
+    IFS='|' read -r cached_path cached_major < "$cache_file" || true
+    if [ "$cached_path" = "$clang_path" ] && [ -n "$cached_major" ]; then
+      printf '%s\n' "$cached_major"
+      return
+    fi
+  fi
+  version="$(clang -dumpversion 2>/dev/null || clang --version 2>/dev/null)"
+  version="${version#*version }"
+  version="${version%%.*}"
+  case "$version" in *[!0-9]*|'') version=0 ;; esac
+  mkdir -p "$cache_dir" 2>/dev/null || true
+  printf '%s|%s\n' "$clang_path" "$version" > "$cache_file" 2>/dev/null || true
+  printf '%s\n' "$version"
+}
+
+CLANG_MAJOR="$(detect_clang_major)"
+
 detect_llvm_ir_flags() {
-  if [ -n "${OFS_LLVM_IR_FLAGS:-}" ]; then
+  if [ "${OFS_LLVM_IR_FLAGS+x}" = x ]; then
     printf '%s\n' "$OFS_LLVM_IR_FLAGS"
     return
   fi
-  if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
+  if [ "$CLANG_MAJOR" = "14" ]; then
     printf '%s\n' "-mllvm -opaque-pointers"
   fi
 }
@@ -35,7 +62,7 @@ detect_clang_opt_level() {
     printf '%s\n' "$OFS_CLANG_OPT"
     return
   fi
-  if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
+  if [ "$CLANG_MAJOR" = "14" ]; then
     printf '%s\n' "-O0"
   else
     printf '%s\n' "-O3"
@@ -48,6 +75,11 @@ if [ -n "$detected_llvm_ir_flags" ]; then
   read -r -a OFS_LLVM_IR_FLAGS <<< "$detected_llvm_ir_flags"
 fi
 OFS_CLANG_OPT_LEVEL="$(detect_clang_opt_level)"
+OFS_LINK_GC_FLAGS=()
+case "$(uname -s)" in
+  Darwin) OFS_LINK_GC_FLAGS=(-Wl,-dead_strip) ;;
+  Linux) OFS_LINK_GC_FLAGS=(-Wl,--gc-sections) ;;
+esac
 
 clang_ir() {
   if [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ]; then
@@ -227,7 +259,7 @@ build_web_tool_bin() {
   tool_ll="${TMPDIR:-/tmp}/ofs-${tool}-$$.ll"
   tool_tmp="${target}.$$"
   OFSCC_INPUT="$source" OFSCC_MODE=ir OFSCC_C_OUT="$tool_ll" run_ofscc_quiet "$OFSCC"
-  clang_ir "$OFS_CLANG_OPT_LEVEL" "$tool_ll" "$RUNTIME" -lm -o "$tool_tmp"
+  clang_ir "$OFS_CLANG_OPT_LEVEL" "${OFS_LINK_GC_FLAGS[@]}" "$tool_ll" "$RUNTIME" -lm -o "$tool_tmp"
   chmod +x "$tool_tmp"
   mv "$tool_tmp" "$target"
   rm -f "$tool_ll"
@@ -417,7 +449,7 @@ case "$mode" in
       rm -f "$ll"
       exit 0
     fi
-    clang_ir "$OFS_CLANG_OPT_LEVEL" "$ll" "$RUNTIME" -lm -o "$output"
+    clang_ir "$OFS_CLANG_OPT_LEVEL" "${OFS_LINK_GC_FLAGS[@]}" "$ll" "$RUNTIME" -lm -o "$output"
     chmod +x "$output"
     rm -f "$ll"
     if [ "$mode" = "run" ]; then

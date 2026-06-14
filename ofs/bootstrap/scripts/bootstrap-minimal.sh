@@ -65,7 +65,7 @@ print_success "Compilador pronto: $EXISTING_COMPILER ($COMPILER_SIZE)"
 if [ ! -f "$RUNTIME" ]; then
     print_info "Runtime não encontrado em $RUNTIME. Compilando runtime C..."
     mkdir -p "$(dirname "$RUNTIME")"
-    clang -O2 -c ofs/runtime/ofs_runtime.c -o "$BUILD_OUTPUT/ofs_runtime.o"
+    clang -O2 -ffunction-sections -fdata-sections -c ofs/runtime/ofs_runtime.c -o "$BUILD_OUTPUT/ofs_runtime.o"
     ar rcs "$RUNTIME" "$BUILD_OUTPUT/ofs_runtime.o"
 fi
 

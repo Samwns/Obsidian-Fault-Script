@@ -5,7 +5,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const root = path.resolve(__dirname, '..', '..');
+const root = path.resolve(__dirname, '..', '..', '..');
 const benchDir = path.join(root, 'src/site', 'benchmarks');
 const sourceDir = path.join(benchDir, 'src');
 const buildDir = path.join(benchDir, 'build');
@@ -159,10 +159,10 @@ for (const language of languages) {
 
   if (language.prepare) language.prepare();
 
-  const compileRuns = samples(language.compile[0], language.compile[1], 3);
+  const compileRuns = samples(language.compile[0], language.compile[1], 5);
   run(language.compileHello[0], language.compileHello[1]);
-  const cpuRuns = samples(language.cpu[0], language.cpu[1], 3);
-  const startupRuns = samples(language.hello[0], language.hello[1], 10);
+  const cpuRuns = samples(language.cpu[0], language.cpu[1], 5);
+  const startupRuns = samples(language.hello[0], language.hello[1], 15);
   const output = cpuRuns[0].output;
 
   if (expectedOutput === null) expectedOutput = output;
@@ -193,10 +193,10 @@ const payload = {
     node: process.version,
   },
   methodology: {
-    cpu: 'Fibonacci iterativo com n variando de 25 a 32 por 5.000.000 iteracoes. Tres processos; menor e melhor.',
-    memory: 'Pico de memoria residente reportado por wait4/getrusage no processo de CPU. Tres execucoes; menor e melhor.',
-    startup: 'Processo hello-world minimo, dez execucoes. Inclui startup de runtime/VM; menor e melhor.',
-    compile: 'Build otimizado do codigo de CPU, tres execucoes. Python mede compilacao para bytecode; menor e melhor.',
+    cpu: 'Fibonacci iterativo com n variando de 25 a 32 por 5.000.000 iteracoes. Cinco processos; menor e melhor.',
+    memory: 'Pico de memoria residente reportado por wait4/getrusage no processo de CPU. Cinco execucoes; menor e melhor.',
+    startup: 'Processo hello-world minimo, quinze execucoes. Inclui startup de runtime/VM; menor e melhor.',
+    compile: 'Build otimizado do codigo de CPU, cinco execucoes. Python mede compilacao para bytecode; menor e melhor.',
     artifact: 'Bytes do executavel, class, DLL ou bytecode principal. Dependencias de runtime nao entram no tamanho.',
     warning: 'Medicoes locais desta maquina e deste workload. Nao sao rankings universais de linguagens.',
   },

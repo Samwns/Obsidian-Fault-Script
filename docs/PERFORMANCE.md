@@ -78,6 +78,22 @@ Essa e uma otimizacao de baixo risco, mas cada alteracao precisa manter os teste
 7. Medir tabelas de simbolos com projetos grandes.
 8. Avaliar LTO e flags LLVM depois que o frontend estiver medido.
 
+## Otimizacao de link e runtime
+
+A runtime distribuida e compilada com `-ffunction-sections` e
+`-fdata-sections`. O launcher usa `--gc-sections` no ELF, `dead_strip` no
+Mach-O e `OPT:REF` no PE/COFF para retirar funcoes da runtime que o programa
+nao referencia.
+
+No workload publicado em 14 de junho de 2026, isso reduziu o executavel OFS
+de 28.224 para 16.056 bytes sem alterar o checksum. O launcher tambem mantem
+em cache a versao principal do Clang, evitando consultar o toolchain em cada
+compilacao. A mediana de build do mesmo workload caiu de 320,81 ms para
+208,78 ms nesta maquina.
+
+Esses ganhos pertencem ao pipeline real de distribuicao. Eles nao mudam a
+sintaxe, o type checker ou a semantica do programa.
+
 ## Gates
 
 Uma otimizacao so deve entrar quando:
