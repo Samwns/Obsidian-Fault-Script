@@ -1,37 +1,18 @@
-# Obsidian Fault Script
+<div align="center">
+  <img src="docs/ofs-256.png" width="112" height="112" alt="Obsidian Fault Script icon">
 
-OFS e uma linguagem compilada experimental com compilador self-hosted, runtime nativo, geracao LLVM IR e uma stack web propria com ODL para documentos e OES para efeitos.
+  # Obsidian Fault Script
 
-## Links
+  **A self-hosted compiled language for native programs and the Web.**
 
-- Documentacao: https://samwns.github.io/Obsidian-Fault-Script/
-- Downloads e releases: https://github.com/Samwns/Obsidian-Fault-Script/releases
-- Benchmark: https://samwns.github.io/Obsidian-Fault-Script/benchmark.html
-- Web / ODL / OES: https://samwns.github.io/Obsidian-Fault-Script/web.html
+  [![Build](https://github.com/Samwns/Obsidian-Fault-Script/actions/workflows/build.yml/badge.svg)](https://github.com/Samwns/Obsidian-Fault-Script/actions/workflows/build.yml)
+  [![Pages](https://github.com/Samwns/Obsidian-Fault-Script/actions/workflows/pages.yml/badge.svg)](https://samwns.github.io/Obsidian-Fault-Script/docs/)
+  [![Release](https://img.shields.io/github/v/release/Samwns/Obsidian-Fault-Script?display_name=tag&sort=semver)](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest)
+  [![License](https://img.shields.io/badge/license-BSL--1.0-29e0bd)](docs/legal/LICENSE)
+  [![LLVM](https://img.shields.io/badge/backend-LLVM-7c5cff)](docs/COMPILER_ARCHITECTURE.md)
 
-## Exemplo rapido
-
-```ofs
-vein add(a: stone, b: stone) -> stone {
-    return a + b
-}
-
-core main() {
-    echo(add(20, 22))
-}
-```
-
-```bash
-ofs check app.ofs
-ofs run app.ofs
-ofs build app.ofs -o app
-```
-
-## Web
-
-ODL e OES sao fontes do projeto. HTML e CSS sao artefatos gerados para hospedagem em navegadores, GitHub Pages, CDN ou servidor proprio.
-
-```bash
-ofs odl page.odl -o index.html
-ofs oes site.oes -o site.css
-```
+  [**Official Site**](https://samwns.github.io/Obsidian-Fault-Script/docs/)
+  · [**Documentation**](https://samwns.github.io/Obsidian-Fault-Script/docs/getting-started.html)
+  · [**Downloads**](https://github.com/Samwns/Obsidian-Fault-Script/releases/latest)
+  · [**Benchmark**](https://samwns.github.io/Obsidian-Fault-Script/docs/benchmark.html)
+</div>
