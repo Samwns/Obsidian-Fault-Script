@@ -26,7 +26,7 @@ detect_llvm_ir_flags() {
     return
   fi
   if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
-    printf '%s\n' "-mllvm -opaque-pointers"
+    printf '%s\n' "-mllvm -opaque-pointers -fno-vectorize -fno-slp-vectorize"
   fi
 }
 
