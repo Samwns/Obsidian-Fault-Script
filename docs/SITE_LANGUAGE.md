@@ -91,7 +91,7 @@ When publishing to GitHub Pages, keep the generated `index.html` and `site.css` 
 Example site:
 
 ```bash
-dist/ofs build ofs/examples/native_site/build.ofs -o /tmp/ofs-native-site-build
+ofs/dist/ofs build ofs/examples/native_site/build.ofs -o /tmp/ofs-native-site-build
 /tmp/ofs-native-site-build
 python3 -m http.server 4180 --directory ofs/examples/native_site/dist
 ```

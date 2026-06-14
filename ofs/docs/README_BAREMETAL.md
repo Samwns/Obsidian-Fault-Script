@@ -9,15 +9,15 @@ O perfil bare-metal/freestanding permite compilar programas OFS sem dependência
    ```bash
    # Do diretório raiz do repositório
    cd ..
-   bash ofscc/scripts/bootstrap-minimal.sh
+   bash ofs/bootstrap/scripts/bootstrap-minimal.sh
    cd ofs
    ```
 
 2. Compile seu programa normalmente:
 
    ```bash
-   ../dist/ofscc check examples/baremetal_minimal.ofs
-   ../dist/ofscc build examples/baremetal_minimal.ofs -o baremetal_minimal
+   ../ofs/dist/ofscc check examples/baremetal_minimal.ofs
+   ../ofs/dist/ofscc build examples/baremetal_minimal.ofs -o baremetal_minimal
    ./baremetal_minimal
    ```
 

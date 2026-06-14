@@ -124,7 +124,7 @@ bash ofs/ofscc/test_bootstrap.sh [compiler_path]
 ## Phase D/E Prep in Repo
 
 - `/.github/workflows/selfhosted-release.yml` — experimental self-hosted pipeline without C++ build stage
-- `/packaging/installer_generator.ofs` — installer artifact generation in OFS (Windows/Linux/macOS stubs)
+- `/src/packaging/installer_generator.ofs` — installer artifact generation in OFS (Windows/Linux/macOS stubs)
 
 ## Next Steps
 

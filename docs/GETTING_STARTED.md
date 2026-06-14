@@ -9,10 +9,10 @@
 
 ```bash
 # 1. Fazer bootstrap do compilador OFS nativo  
-bash ofscc/scripts/bootstrap.sh
+bash ofs/bootstrap/scripts/bootstrap.sh
 
 # 2. Rodar um programa
-dist/ofs run ofs/examples/hello.ofs
+ofs/dist/ofs run ofs/examples/hello.ofs
 # Output: Hello, World!
 ```
 
@@ -33,31 +33,31 @@ cd Obsidian-Fault-Script
 
 ```bash
 # Windows, Linux ou macOS - mesmo comando!
-bash ofscc/scripts/bootstrap.sh
+bash ofs/bootstrap/scripts/bootstrap.sh
 ```
 
-Isso cria/atualiza o compilador self-hosted em `dist/ofscc`.
+Isso cria/atualiza o compilador self-hosted em `ofs/dist/ofscc`.
 
-`ofscc/scripts/bootstrap-minimal.sh` ainda existe, mas agora e apenas compatibilidade.
+`ofs/bootstrap/scripts/bootstrap-minimal.sh` ainda existe, mas agora e apenas compatibilidade.
 Use `bootstrap.sh` para instalar a linguagem completa.
 
 ### 3. Usar o compilador nativo
 
 ```bash
 # Rodar direto, com saida limpa do seu programa
-dist/ofs run seu_programa.ofs
+ofs/dist/ofs run seu_programa.ofs
 
 # Compilar arquivo OFS para executável nativo
-dist/ofs build seu_programa.ofs -o seu_programa
+ofs/dist/ofs build seu_programa.ofs -o seu_programa
 
 # Type-check sem gerar binário
-dist/ofs check seu_programa.ofs
+ofs/dist/ofs check seu_programa.ofs
 
 # Inspecionar código
-dist/ofs tokens seu_programa.ofs      # Tokens do lexer
-dist/ofs ast seu_programa.ofs         # Abstract syntax tree
-dist/ofs ir seu_programa.ofs          # LLVM IR
-dist/ofs asm seu_programa.ofs         # Assembly nativo
+ofs/dist/ofs tokens seu_programa.ofs      # Tokens do lexer
+ofs/dist/ofs ast seu_programa.ofs         # Abstract syntax tree
+ofs/dist/ofs ir seu_programa.ofs          # LLVM IR
+ofs/dist/ofs asm seu_programa.ofs         # Assembly nativo
 ```
 
 ### 4. (Opcional) Usar com Make
@@ -89,7 +89,7 @@ core main() {
 Rode:
 
 ```bash
-dist/ofs run hello.ofs
+ofs/dist/ofs run hello.ofs
 ```
 
 Output:
@@ -116,57 +116,57 @@ core main() {
 Rode:
 
 ```bash
-dist/ofs run math.ofs
+ofs/dist/ofs run math.ofs
 ```
 
 ### Exemplos prontos
 
 ```bash
 # FizzBuzz
-dist/ofs run ofs/examples/fizzbuzz.ofs
+ofs/dist/ofs run ofs/examples/fizzbuzz.ofs
 
 # Recursão
-dist/ofs run ofs/examples/recursion.ofs
+ofs/dist/ofs run ofs/examples/recursion.ofs
 
 # Strings
-dist/ofs run ofs/examples/string_ops.ofs
+ofs/dist/ofs run ofs/examples/string_ops.ofs
 
 # Arrays
-dist/ofs run ofs/examples/collections.ofs
+ofs/dist/ofs run ofs/examples/collections.ofs
 ```
 
 ## 3. Comandos Principais
 
-O wrapper `dist/ofs` oferece:
+O wrapper `ofs/dist/ofs` oferece:
 
 ```bash
 # Rodar direto
-dist/ofs run programa.ofs
+ofs/dist/ofs run programa.ofs
 
 # Compilar para executável
-dist/ofs build programa.ofs -o programa
+ofs/dist/ofs build programa.ofs -o programa
 
 # Validar sem gerar saída
-dist/ofs check programa.ofs
+ofs/dist/ofs check programa.ofs
 
 # Debug: inspecionar código
-dist/ofs tokens programa.ofs  # Análise léxica
-dist/ofs ast programa.ofs     # Sintaxe
-dist/ofs ir programa.ofs      # LLVM IR
-dist/ofs asm programa.ofs     # Assembly nativo
+ofs/dist/ofs tokens programa.ofs  # Análise léxica
+ofs/dist/ofs ast programa.ofs     # Sintaxe
+ofs/dist/ofs ir programa.ofs      # LLVM IR
+ofs/dist/ofs asm programa.ofs     # Assembly nativo
 ```
 
 ### Exemplos de uso
 
 ```bash
 # Programa simples
-dist/ofs run hello.ofs
+ofs/dist/ofs run hello.ofs
 
 # Com otimização
-dist/ofs build programa.ofs -o programa && ./programa
+ofs/dist/ofs build programa.ofs -o programa && ./programa
 
 # Type-check de biblioteca (sem executar)
-dist/ofs check meu_codigo.ofs
+ofs/dist/ofs check meu_codigo.ofs
 ```
 
 ---
@@ -442,10 +442,10 @@ Exemplos no repositório:
 
 1. Leia a [Referência da Linguagem](LANGUAGE_REFERENCE.md)
 2. Rode os exemplos em `ofs/examples/`
-3. Veja os pacotes em [packages/README.md](../packages/README.md)
-4. Use a [Jornada Iniciante](../OFS_JORNADA_INICIANTE.md) se estiver começando
+3. Veja os pacotes em [src/packages/README.md](../src/packages/README.md)
+4. Use a [Jornada Iniciante](pt/OFS_JORNADA_INICIANTE.md) se estiver começando
 - Explore the **[standard library](../ofs/stdlib/)** for reusable functions
-- Continue with the **[OFS Beginner Journey](../OFS_JORNADA_INICIANTE.md)** for the next study steps
+- Continue with the **[OFS Beginner Journey](pt/OFS_JORNADA_INICIANTE.md)** for the next study steps
 
 ### New in v1.0
 

@@ -1,4 +1,4 @@
-attach {F:../../packages/src/canvas/libs/canvas.ofs}
+attach {F:../../src/packages/src/canvas/libs/canvas.ofs}
 
 core main() {
     forge cv = canvas.create(8, 8)

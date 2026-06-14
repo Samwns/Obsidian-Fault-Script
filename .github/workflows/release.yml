@@ -61,7 +61,7 @@ jobs:
       - name: Build current self-hosted compiler
         run: |
           mkdir -p selfhost
-          cp dist/ofscc.ll selfhost/ofscc.ll
+          cp ofs/dist/ofscc.ll selfhost/ofscc.ll
           clang -O2 -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
           ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
           LLVM_IR_FLAGS=()
@@ -75,8 +75,8 @@ jobs:
         run: |
           TAG="${{ needs.version.outputs.tag }}"
           VERSION="${TAG#v}"
-          chmod +x packaging/linux/build-native-packages.sh
-          packaging/linux/build-native-packages.sh "$VERSION" "$TAG" selfhost/ofscc selfhost/libofs_runtime.a native-installers
+          chmod +x src/packaging/linux/build-native-packages.sh
+          src/packaging/linux/build-native-packages.sh "$VERSION" "$TAG" selfhost/ofscc selfhost/libofs_runtime.a native-installers
 
           mkdir -p deb-test
           dpkg-deb -x "native-installers/ofs-debian-ubuntu-x64-installer-${TAG}.deb" deb-test
@@ -112,7 +112,7 @@ jobs:
       - name: Build current self-hosted compiler
         run: |
           mkdir -p selfhost
-          cp dist/ofscc.ll selfhost/ofscc.ll
+          cp ofs/dist/ofscc.ll selfhost/ofscc.ll
           clang -O2 -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
           ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
           LLVM_IR_FLAGS=()
@@ -133,14 +133,14 @@ jobs:
           mkdir -p "$ROOT/usr/local/share/ofs/ofscc"
           mkdir -p "$ROOT/usr/local/share/ofs/ofscc-src"
 
-          sed "s/__OFS_VERSION__/${VERSION}/g" packaging/linux/ofs > "$ROOT/usr/local/bin/ofs"
+          sed "s/__OFS_VERSION__/${VERSION}/g" src/packaging/linux/ofs > "$ROOT/usr/local/bin/ofs"
           cp selfhost/ofscc "$ROOT/usr/local/bin/ofscc"
           chmod +x "$ROOT/usr/local/bin/ofs"
           chmod +x "$ROOT/usr/local/bin/ofscc"
           cp ofs/stdlib/*.ofs "$ROOT/usr/local/share/ofs/stdlib/" 2>/dev/null || true
           cp ofs/tools/*.ofs "$ROOT/usr/local/share/ofs/tools/" 2>/dev/null || true
           cp ofs/ofscc/fileio.ofs "$ROOT/usr/local/share/ofs/ofscc/" 2>/dev/null || true
-          cp -r ofscc/* "$ROOT/usr/local/share/ofs/ofscc-src/" 2>/dev/null || true
+          cp -r ofs/bootstrap/* "$ROOT/usr/local/share/ofs/ofscc-src/" 2>/dev/null || true
           mkdir -p "$ROOT/usr/local/lib"
           cp selfhost/libofs_runtime.a "$ROOT/usr/local/lib/"
 
@@ -164,7 +164,7 @@ jobs:
             "$COMPONENT_PKG"
 
           mkdir -p pkg-resources
-          cp LICENSE pkg-resources/LICENSE.txt
+          cp docs/legal/LICENSE pkg-resources/LICENSE.txt
           cat > distribution.xml <<EOF
           <?xml version="1.0" encoding="utf-8"?>
           <installer-gui-script minSpecVersion="1">
@@ -253,24 +253,24 @@ jobs:
           $Version = $TAG.TrimStart("v")
           $RepoRoot = (Get-Location).Path
           $Dist = "$RepoRoot\windows-dist"
-          $AssetsDir = "$RepoRoot\packaging\windows"
+          $AssetsDir = "$RepoRoot\src/packaging\windows"
           New-Item -ItemType Directory -Path $Dist -Force | Out-Null
 
           Copy-Item "selfhost\ofscc.exe" "$Dist\ofscc.exe"
           Copy-Item "selfhost\libofs_runtime.a" "$Dist\libofs_runtime.a"
-          Copy-Item "packaging\windows\ofs.cmd" "$Dist\ofs.cmd"
-          (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", $Version) | Set-Content "$Dist\ofs.ps1"
-          Copy-Item "packaging\windows\install.cmd" "$Dist\install.cmd"
-          Copy-Item "packaging\windows\install.ps1" "$Dist\install.ps1"
+          Copy-Item "src/packaging\windows\ofs.cmd" "$Dist\ofs.cmd"
+          (Get-Content "src/packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", $Version) | Set-Content "$Dist\ofs.ps1"
+          Copy-Item "src/packaging\windows\install.cmd" "$Dist\install.cmd"
+          Copy-Item "src/packaging\windows\install.ps1" "$Dist\install.ps1"
           foreach ($cmd in @("infuse", "uncover", "reinfuse")) {
-            Copy-Item "packaging\windows\$cmd.ps1" "$Dist\" -ErrorAction SilentlyContinue
-            Copy-Item "packaging\windows\$cmd.cmd" "$Dist\" -ErrorAction SilentlyContinue
+            Copy-Item "src/packaging\windows\$cmd.ps1" "$Dist\" -ErrorAction SilentlyContinue
+            Copy-Item "src/packaging\windows\$cmd.cmd" "$Dist\" -ErrorAction SilentlyContinue
           }
           New-Item -ItemType Directory -Path "$Dist\stdlib" -Force | Out-Null
           Copy-Item "ofs\stdlib\*.ofs" "$Dist\stdlib\" -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Path "$Dist\tools" -Force | Out-Null
           Copy-Item "ofs\tools\*.ofs" "$Dist\tools\" -ErrorAction SilentlyContinue
-          Copy-Item "LICENSE" "$Dist\LICENSE.txt" -ErrorAction SilentlyContinue
+          Copy-Item "docs/legal/LICENSE" "$Dist\LICENSE.txt" -ErrorAction SilentlyContinue
 
           $VersionOutput = & "$Dist\ofs.cmd" version | Out-String
           if ($VersionOutput -notmatch [regex]::Escape("ofs $Version - Obsidian Fault Script")) {
@@ -292,7 +292,7 @@ jobs:
             "/DOUTPUT=$InstallerPath" `
             "/DDIST_DIR=$Dist" `
             "/DASSETS_DIR=$AssetsDir" `
-            packaging\windows\installer.nsi
+            src/packaging\windows\installer.nsi
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Write-Output "installer_exe=$InstallerPath" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           Get-ChildItem $InstallerPath
@@ -315,7 +315,7 @@ jobs:
         run: |
           TAG="${{ needs.version.outputs.tag }}"
           VERSION="${TAG#v}"
-          node -e "const fs=require('fs');const p='vscode-extension/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const p='src/vscode-extension/package.json';const j=JSON.parse(fs.readFileSync(p,'utf8'));j.version='${VERSION}';fs.writeFileSync(p,JSON.stringify(j,null,2)+'\n');"
 
       - uses: actions/setup-node@v4
         with:
@@ -325,12 +325,12 @@ jobs:
         run: |
           TAG="${{ needs.version.outputs.tag }}"
           VERSION="${TAG#v}"
-          mkdir -p vscode-extension/bin/linux-x64/tools
-          sed "s/__OFS_VERSION__/${VERSION}/g" packaging/linux/ofs > vscode-extension/bin/linux-x64/ofs
-          chmod +x vscode-extension/bin/linux-x64/ofs
-          cp ofs/tools/*.ofs vscode-extension/bin/linux-x64/tools/
-          cp ofs/stdlib/*.ofs vscode-extension/bin/linux-x64/stdlib/
-          cd vscode-extension
+          mkdir -p src/vscode-extension/bin/linux-x64/tools
+          sed "s/__OFS_VERSION__/${VERSION}/g" src/packaging/linux/ofs > src/vscode-extension/bin/linux-x64/ofs
+          chmod +x src/vscode-extension/bin/linux-x64/ofs
+          cp ofs/tools/*.ofs src/vscode-extension/bin/linux-x64/tools/
+          cp ofs/stdlib/*.ofs src/vscode-extension/bin/linux-x64/stdlib/
+          cd src/vscode-extension
           rm -f *.vsix  
           npm ci
           npm run package
@@ -339,7 +339,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: extension-${{ needs.version.outputs.tag }}
-          path: "vscode-extension/*.vsix"
+          path: "src/vscode-extension/*.vsix"
 
   # ── Publish ─────────────────────────────────────────────────────────
   publish:

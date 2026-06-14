@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - packages/src/**
+      - src/packages/src/**
       - .github/workflows/publish-libraries.yml
 
 permissions:
@@ -38,9 +38,9 @@ jobs:
       - name: Publish libraries as packages
         run: |
           set -euo pipefail
-          mkdir -p .pkg-publish
+          mkdir -p src/pkg-publish
 
-          for dir in packages/src/*; do
+          for dir in src/packages/src/*; do
             [[ -d "$dir" ]] || continue
             [[ -f "$dir/ofspkg.json" ]] || continue
 
@@ -49,7 +49,7 @@ jobs:
             description=$(node -pe "require('./${dir}/ofspkg.json').description || ''")
             main_module=$(node -pe "require('./${dir}/ofspkg.json').main")
             package_name="@${OWNER_LOWER}/ofs-lib-${short_name}"
-            workdir=".pkg-publish/${short_name}"
+            workdir="src/pkg-publish/${short_name}"
 
             rm -rf "$workdir"
             mkdir -p "$workdir"

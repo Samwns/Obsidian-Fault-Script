@@ -7,13 +7,13 @@ Este exemplo mostra como compilar e rodar um programa OFS sem dependência de li
 1. Prepare o compilador OFS nativo (do diretório raiz):
 
    ```bash
-   bash ofscc/scripts/bootstrap-minimal.sh
+   bash ofs/bootstrap/scripts/bootstrap-minimal.sh
    ```
 
 2. Compile um programa OFS normalmente. O backend irá gerar código sem dependências de libc (exceto o mínimo do runtime OFS).
 
    ```bash
-   dist/ofscc build ofs/examples/baremetal_minimal.ofs -o baremetal_minimal
+   ofs/dist/ofscc build ofs/examples/baremetal_minimal.ofs -o baremetal_minimal
    ./baremetal_minimal
    ```
 

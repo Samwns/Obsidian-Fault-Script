@@ -1,0 +1,205 @@
+{
+  "version": "1",
+  "updated": "2026-04-12",
+  "src/packages": [
+    {
+      "name": "canvas",
+      "description": "Unstable native pixel buffer helpers for OFS window rendering",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["canvas", "graphics", "pixels", "window", "native", "unstable"],
+      "channels": { "beta": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-12", "channel": "beta", "main": "libs/canvas.ofs" }
+      }
+    },
+    {
+      "name": "fmt",
+      "description": "String formatting utilities: padding, alignment, truncation, case conversion, trim, separators, and table helpers",
+      "author": "OFS Community",
+      "license": "MIT",
+      "tags": ["string", "format", "text", "table", "utility"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/fmt.ofs" }
+      }
+    },
+    {
+      "name": "core",
+      "description": "Core OFS utilities: math, predicates, range helpers, and integer algorithms",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["core", "math", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/core.ofs" }
+      }
+    },
+    {
+      "name": "math",
+      "description": "Advanced math functions: primes, digit utilities, reverse numbers",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["math", "primes", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/math.ofs" }
+      }
+    },
+    {
+      "name": "string",
+      "description": "String utility functions for OFS: repeat, starts_with, is_empty",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["string", "text", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/string.ofs" }
+      }
+    },
+    {
+      "name": "io",
+      "description": "I/O utility functions for OFS: prompt, separators, headers",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["io", "input", "output", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/io.ofs" }
+      }
+    },
+    {
+      "name": "webserver",
+      "description": "HTTP helpers and native static response server for OFS web applications",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["web", "http", "server", "runtime", "stdlib"],
+      "channels": { "stable": "1.1.0", "latest": "1.1.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/webserver.ofs" },
+        "1.1.0": { "date": "2026-06-14", "channel": "stable", "main": "libs/webserver.ofs" }
+      }
+    },
+    {
+      "name": "ofshtml",
+      "description": "OFS-native markup DSL for generating browser HTML from OFS source",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["web", "html", "markup", "dsl", "site"],
+      "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
+      "versions": {
+        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/ofshtml.ofs" }
+      }
+    },
+    {
+      "name": "odl",
+      "description": "Obsidian Document Language for generating browser documents from OFS source",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["web", "markup", "html", "dsl", "odl"],
+      "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
+      "versions": {
+        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/odl.ofs" }
+      }
+    },
+    {
+      "name": "oes",
+      "description": "Obsidian Effect Scripts for style rules, responsive behavior, and motion",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["web", "style", "css", "dsl", "oes"],
+      "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
+      "versions": {
+        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/oes.ofs" }
+      }
+    },
+    {
+      "name": "webui",
+      "description": "Declarative OFS web UI helpers for pages, style tokens, components, and static web serving",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["web", "ui", "html", "style", "site", "server"],
+      "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
+      "versions": {
+        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/webui.ofs" }
+      }
+    },
+    {
+      "name": "bedrock",
+      "description": "Low-level heap cells, regions, and bit-field helpers",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["low-level", "memory", "bits", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/bedrock.ofs" }
+      }
+    },
+    {
+      "name": "bedrock-packet",
+      "description": "Packet layout helpers built on bedrock regions",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["low-level", "packets", "networking", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/bedrock_packet.ofs" }
+      }
+    },
+    {
+      "name": "rift",
+      "description": "Foreign runtime wrappers and C ABI helpers for OFS",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["ffi", "interop", "abi", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/rift.ofs" }
+      }
+    },
+    {
+      "name": "terminal-colors",
+      "description": "ANSI terminal color output helpers for OFS",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["terminal", "colors", "ansi", "ui"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/terminal_colors.ofs" }
+      }
+    },
+    {
+      "name": "memory-modes",
+      "description": "Helpers and documentation for fracture/abyss/fractal memory modes",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["memory", "modes", "fracture", "abyss", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/memory_modes.ofs" }
+      }
+    },
+    {
+      "name": "test-lib",
+      "description": "OFS test utilities and helpers for unit testing",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["test", "unit-test", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/test_lib.ofs" }
+      }
+    },
+    {
+      "name": "window",
+      "description": "Window and input helpers for OFS native applications",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["window", "input", "graphics", "runtime", "stdlib"],
+      "channels": { "stable": "1.0.0", "latest": "1.0.0" },
+      "versions": {
+        "1.0.0": { "date": "2026-04-12", "channel": "stable", "main": "libs/window.ofs" }
+      }
+    }
+  ]
+}

@@ -10,10 +10,10 @@
 
 ```bash
 # Tudo em um comando - ~2 segundos!
-bash ofscc/scripts/bootstrap.sh
+bash ofs/bootstrap/scripts/bootstrap.sh
 
-# Pronto! Seu compilador nativo está em dist/ofscc
-dist/ofs build seu_programa.ofs -o programa
+# Pronto! Seu compilador nativo está em ofs/dist/ofscc
+ofs/dist/ofs build seu_programa.ofs -o programa
 ```
 
 Pronto! Apenas OFS compilando OFS.
@@ -36,22 +36,22 @@ O ponto de entrada recomendado para instalacao completa da linguagem e `bootstra
 ## Como Funciona?
 
 ### Phase 1: Compilador inicial (uma vez)
-Quando o repositório é clonado, `dist/ofscc` já contém um compilador OFS pré-compilado.
+Quando o repositório é clonado, `ofs/dist/ofscc` já contém um compilador OFS pré-compilado.
 
 ### Phase 2: Recompilação self-hosted
 
-Por padrao, `bootstrap.sh` reconstrói o compilador a partir do IR versionado `dist/ofscc.ll`.
+Por padrao, `bootstrap.sh` reconstrói o compilador a partir do IR versionado `ofs/dist/ofscc.ll`.
 Isso e o caminho certo para instalacao: rapido, previsivel e sem depender de C++/CMake.
 
 Para validar o ciclo OFS -> OFS explicitamente:
 
 ```bash
-OFS_BOOTSTRAP_SELFHOST=1 bash ofscc/scripts/bootstrap.sh
+OFS_BOOTSTRAP_SELFHOST=1 bash ofs/bootstrap/scripts/bootstrap.sh
 ```
 ```bash
 # Compila ofscc.ofs (código-fonte do compilador)
-# usando dist/ofscc (compilador binário existente)
-# -> novo dist/ofscc
+# usando ofs/dist/ofscc (compilador binário existente)
+# -> novo ofs/dist/ofscc
 ```
 
 ### Phase 3: Verificação (determinismo)
@@ -72,17 +72,17 @@ OFS_BOOTSTRAP_SELFHOST=1 bash ofscc/scripts/bootstrap.sh
 cd Obsidian-Fault-Script
 
 # Roda bootstrap.sh (não precisa de C++/CMake)
-bash ofscc/scripts/bootstrap.sh
+bash ofs/bootstrap/scripts/bootstrap.sh
 
 # Saída esperada:
-# [✓] dist/ofscc criado com sucesso
+# [✓] ofs/dist/ofscc criado com sucesso
 # [✓] Checksum: a1b2c3d4... (repetível!)
 # [✓] Determinismo verificado!
 ```
 
 **Tempo**: ~2 segundos
 **Dependências**: bash, clang e ar
-**Saída**: `dist/ofscc` compilador nativo
+**Saída**: `ofs/dist/ofscc` compilador nativo
 
 ### Método 2: Bootstrap com Validação (Legacy C++)
 
@@ -90,12 +90,12 @@ Se você quiser executar o bootstrap completo com validação (recompila 3 vezes
 
 ```bash
 # Roda validação completa de determinismo
-bash ofscc/scripts/bootstrap-minimal.sh --validate
+bash ofs/bootstrap/scripts/bootstrap-minimal.sh --validate
 
 # Isso vai compilar:
-# 1. dist/ofscc (v1)
-# 2. dist/ofscc (v2, compilado por v1)
-# 3. dist/ofscc (v3, compilado por v2)
+# 1. ofs/dist/ofscc (v1)
+# 2. ofs/dist/ofscc (v2, compilado por v1)
+# 3. ofs/dist/ofscc (v3, compilado por v2)
 # Depois verifica: v2 === v3? Se sim → ✓ SUCESSO
 ```
 
@@ -106,25 +106,25 @@ bash ofscc/scripts/bootstrap-minimal.sh --validate
 
 ## Troubleshooting
 
-### Erro: "bash: ofscc/scripts/bootstrap-minimal.sh: Arquivo não encontrado"
+### Erro: "bash: ofs/bootstrap/scripts/bootstrap-minimal.sh: Arquivo não encontrado"
 
 **Causa**: Você não está no diretório correto.
 
 **Solução**:
 ```bash
 cd Obsidian-Fault-Script
-bash ofscc/scripts/bootstrap-minimal.sh
+bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 ```
 
-### Erro: "dist/ofscc: permission denied"
+### Erro: "ofs/dist/ofscc: permission denied"
 
 **Causa**: Arquivo não tem permissão de execução.
 
 **Solução**:
 ```bash
-chmod +x dist/ofscc
+chmod +x ofs/dist/ofscc
 # Ou roda bootstrap novamente
-bash ofscc/scripts/bootstrap-minimal.sh
+bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 ```
 
 ### Erro: "Failed to compile ofscc.ofs"
@@ -136,7 +136,7 @@ bash ofscc/scripts/bootstrap-minimal.sh
 # Tente redownloadar o repositório fresco
 git clone https://github.com/Samwns/Obsidian-Fault-Script.git
 cd Obsidian-Fault-Script
-bash ofscc/scripts/bootstrap-minimal.sh
+bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 ```
 
 ### Erro: "Determinism check failed: v2 != v3"
@@ -145,7 +145,7 @@ bash ofscc/scripts/bootstrap-minimal.sh
 
 **Solução**: Este é um bug no compilador. Abra uma issue com:
 ```bash
-bash ofscc/scripts/bootstrap-minimal.sh --debug
+bash ofs/bootstrap/scripts/bootstrap-minimal.sh --debug
 # Salva output.log com detalhes da compilação
 ```
 
@@ -157,7 +157,7 @@ bash ofscc/scripts/bootstrap-minimal.sh --debug
 Toolchain OFS Nativo (POST-BOOTSTRAP):
 
 ┌──────────────────────┐
-│  dist/ofscc (nativo) │  Compilador OFS self-hosted
+│  ofs/dist/ofscc (nativo) │  Compilador OFS self-hosted
 └──────────┬───────────┘
            │ lê arquivo .ofs
            │ análise léxica/sintática
@@ -169,7 +169,7 @@ Toolchain OFS Nativo (POST-BOOTSTRAP):
 
 Não há runtime C++. Apenas:
 1. Código-fonte OFS
-2. Compilador binário (dist/ofscc)
+2. Compilador binário (ofs/dist/ofscc)
 3. C compiler (gcc/clang) para link final
 ```
 
@@ -185,7 +185,7 @@ Após bootstrap bem-sucedido, você pode arquivar (não remover):
 - ❌ Dependências LLVM/Clang para build
 
 **Para manter:**
-- ✅ `dist/ofscc` (compilador nativo)
+- ✅ `ofs/dist/ofscc` (compilador nativo)
 - ✅ `ofscc/` (código-fonte OFS do compilador)
 - ✅ `stdlib/` (biblioteca padrão)
 - ✅ `examples/` (exemplos)
@@ -207,7 +207,7 @@ Após bootstrap bem-sucedido, você pode arquivar (não remover):
 - [Getting Started Guide](./GETTING_STARTED.md) — Como começar
 - [Language Reference](./LANGUAGE_REFERENCE.md) — Sintaxe completa
 - [Compiler Architecture](./COMPILER_ARCHITECTURE.md) — Internals do compilador
-- [Bootstrap Scripts](../ofscc/scripts/README.md) — Scripts disponíveis
+- [Bootstrap Scripts](../ofs/bootstrap/scripts/README.md) — Scripts disponíveis
 
 ---
 

@@ -3,14 +3,15 @@ build-mingw/
 build-debug/
 *.o
 *.a
-!dist/libofs_runtime.a
-!vscode-extension/bin/linux-x64/libofs_runtime.a
+!ofs/dist/libofs_runtime.a
+!src/vscode-extension/bin/linux-x64/libofs_runtime.a
 *.ll
-!dist/ofscc.ll
+!ofs/dist/ofscc.ll
 *.out
 /tmp/
 *.exe
-vscode-extension/node_modules/
-# vscode-extension/.gitignore
+src/vscode-extension/node_modules/
+# src/vscode-extension/.gitignore
 *.vsix
+ROADMAP.md
 ROADMAP.

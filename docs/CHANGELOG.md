@@ -9,12 +9,12 @@ All notable changes to this project are recorded here.
 - Fixed LLVM 14 opaque pointer handling in CI and release builds.
 - Fixed Bash 3/macOS wrapper behavior when LLVM IR flags are empty.
 - Fixed example checks so relative `attach {F:...}` paths run from each example directory.
-- Fixed Windows release packaging collision by using a dedicated `windows-dist` staging directory.
+- Fixed Windows release src/packaging collision by using a dedicated `windows-dist` staging directory.
 
 ### Release
 
 - Release automation now produces native installers for Debian/Ubuntu, Fedora, Arch, macOS, and Windows.
-- VS Code extension packaging is included in the release assets.
+- VS Code extension src/packaging is included in the release assets.
 - Windows CI validates the native compiler binary and installer package; Linux/macOS continue to run full example and stdlib smoke checks.
 
 ---
@@ -48,7 +48,7 @@ ofs/
 
 - Compiler distributed via releases as `ofs` binary
 - Users install via: `sudo mv ofs/bin/ofscc /usr/local/bin/ofs`
-- Language bootstrapping: `bash ofscc/scripts/bootstrap-minimal.sh`
+- Language bootstrapping: `bash ofs/bootstrap/scripts/bootstrap-minimal.sh`
 - No C++ runtime or compiler needed to build OFS
 
 ---
@@ -68,10 +68,10 @@ ofs/
   - VS Code extension auto-build integration
   - Checksums (SHA256) + version metadata auto-generated
 
-- **Bootstrap Scripts** (`ofscc/scripts/`):
+- **Bootstrap Scripts** (`ofs/bootstrap/scripts/`):
   - `bootstrap-minimal.sh`: Native-only compiler recompile (~2 sec, deterministic)
-  - `release-native-only.sh`: Linux/macOS release packaging (~5 sec)
-  - `release-native-only-windows.ps1`: Windows release packaging (~5 sec)
+  - `release-native-only.sh`: Linux/macOS release src/packaging (~5 sec)
+  - `release-native-only-windows.ps1`: Windows release src/packaging (~5 sec)
   - Built-in determinism validation (compiles twice, verifies identical binaries)
 
 - **Documentation Updates**:
@@ -84,7 +84,7 @@ ofs/
 - **VS Code Extension** (v1.0.8):
   - Updated display name: "Obsidian Fault Script (Native)"
   - Highlights: "(C++-free)" and "self-hosted native compiler"
-  - Auto-detection of native compiler in `dist/ofscc`
+  - Auto-detection of native compiler in `ofs/dist/ofscc`
 
 ### Performance Improvements
 

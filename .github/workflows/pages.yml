@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - website/**
+      - src/site/**
       - docs/**
       - ofs/stdlib/odl.ofs
       - ofs/stdlib/oes.ofs
@@ -34,22 +34,21 @@ jobs:
         run: |
           clang -O2 -c ofs/runtime/ofs_runtime.c -o /tmp/ofs_runtime.o
           ar rcs /tmp/libofs_runtime.a /tmp/ofs_runtime.o
-          clang -Wno-override-module -O2 dist/ofscc.ll /tmp/libofs_runtime.a -lm -o /tmp/ofscc
+          clang -Wno-override-module -O2 ofs/dist/ofscc.ll /tmp/libofs_runtime.a -lm -o /tmp/ofscc
           chmod +x /tmp/ofscc
-          sed 's/__OFS_VERSION__/pages/g' packaging/linux/ofs > /tmp/ofs
+          sed 's/__OFS_VERSION__/pages/g' src/packaging/linux/ofs > /tmp/ofs
           chmod +x /tmp/ofs
-          OFS_RUNTIME=/tmp/libofs_runtime.a /tmp/ofs build website/src/build_site.ofs -o /tmp/ofs-build-site
+          OFS_RUNTIME=/tmp/libofs_runtime.a /tmp/ofs build src/site/src/build_site.ofs -o /tmp/ofs-build-site
           /tmp/ofs-build-site
-          cp packaging/assets/ofs-256.png docs/assets/ofs-256.png
-          cp packaging/assets/ofs-256.png docs/ofs-256.png
-          cp packaging/assets/ofs-256.png website/public/assets/ofs-256.png
-          cp packaging/assets/ofs-256.png website/public/ofs-256.png
-          cp packaging/assets/ofs-256.png ofs-256.png
+          cp src/packaging/assets/ofs-256.png docs/assets/ofs-256.png
+          cp src/packaging/assets/ofs-256.png docs/ofs-256.png
+          cp src/packaging/assets/ofs-256.png src/site/public/assets/ofs-256.png
+          cp src/packaging/assets/ofs-256.png src/site/public/ofs-256.png
       - uses: actions/configure-pages@v5
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: website/public
+          path: docs
       - id: deployment
         uses: actions/deploy-pages@v4

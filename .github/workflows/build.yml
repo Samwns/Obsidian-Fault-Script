@@ -4,12 +4,12 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'ofscc/**'
+      - 'ofs/bootstrap/**'
       - 'ofs/examples/**'
       - 'ofs/runtime/**'
       - 'ofs/stdlib/**'
-      - 'packaging/**'
-      - 'dist/ofscc.ll'
+      - 'src/packaging/**'
+      - 'ofs/dist/ofscc.ll'
       - '.github/workflows/build.yml'
   pull_request:
     branches: [main]
@@ -32,8 +32,8 @@ jobs:
           ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
           LLVM_IR_FLAGS=()
           clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
-          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -O2 dist/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
-          sed 's/__OFS_VERSION__/ci/g' packaging/linux/ofs > selfhost/ofs
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -O2 ofs/dist/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
+          sed 's/__OFS_VERSION__/ci/g' src/packaging/linux/ofs > selfhost/ofs
           chmod +x selfhost/ofs selfhost/ofscc
           selfhost/ofs version
           OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check selfhost/ofscc
@@ -71,8 +71,8 @@ jobs:
           ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
           LLVM_IR_FLAGS=()
           clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
-          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -O2 dist/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
-          sed 's/__OFS_VERSION__/ci/g' packaging/linux/ofs > selfhost/ofs
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -O2 ofs/dist/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
+          sed 's/__OFS_VERSION__/ci/g' src/packaging/linux/ofs > selfhost/ofs
           chmod +x selfhost/ofs selfhost/ofscc
           selfhost/ofs version
           OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check selfhost/ofscc
@@ -123,10 +123,10 @@ jobs:
           $llvmIrFlags = @()
           $clangVersion = (& clang --version | Out-String)
           if ($clangVersion -match 'version 14\.') { $llvmIrFlags = @("-mllvm", "-opaque-pointers") }
-          & clang -Wno-override-module @llvmIrFlags -O2 "dist\ofscc.ll" "selfhost\libofs_runtime.a" -o "selfhost\ofscc.exe"
+          & clang -Wno-override-module @llvmIrFlags -O2 "ofs\dist\ofscc.ll" "selfhost\libofs_runtime.a" -o "selfhost\ofscc.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Copy-Item "packaging\windows\ofs.cmd" "selfhost\ofs.cmd"
-          (Get-Content "packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", "ci") | Set-Content "selfhost\ofs.ps1"
+          Copy-Item "src/packaging\windows\ofs.cmd" "selfhost\ofs.cmd"
+          (Get-Content "src/packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", "ci") | Set-Content "selfhost\ofs.ps1"
           "OFS_CMD=$((Resolve-Path 'selfhost\ofs.cmd').Path)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           "OFS_STDLIB=$(((Resolve-Path 'ofs\stdlib').Path).Replace('\', '/'))" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
           & "selfhost\ofs.cmd" version

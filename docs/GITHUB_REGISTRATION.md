@@ -19,8 +19,8 @@ This override applies immediately to repositories that include it.
 
 The TextMate grammar lives in:
 
-- `grammar/syntaxes/ofs.tmLanguage.json`
-- `vscode-extension/syntaxes/ofs.tmLanguage.json`
+- `src/grammar/syntaxes/ofs.tmLanguage.json`
+- `src/vscode-extension/syntaxes/ofs.tmLanguage.json`
 
 Its scope is `source.ofs`, and the grammar is MIT licensed.
 

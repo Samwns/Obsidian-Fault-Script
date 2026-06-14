@@ -103,7 +103,7 @@ vein resolve_attach_path(base: obsidian, spec: obsidian) -> obsidian {
         return stdlib_path(file_name)
     }
 
-    return "packages/src/" + spec + "/libs/" + file_name + ".ofs"
+    return "src/packages/src/" + spec + "/libs/" + file_name + ".ofs"
 }
 
 vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {

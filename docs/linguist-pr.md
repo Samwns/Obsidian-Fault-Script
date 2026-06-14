@@ -28,7 +28,7 @@ The grammar is MIT licensed and uses the `source.ofs` scope.
 Representative source should come from:
 
 - `ofs/ofscc/` for the self-hosted compiler
-- `website/src/` for ODL/OES site generation
+- `src/site/src/` for ODL/OES site generation
 - `ofs/examples/bedrock_gateway.ofs` for low-level features
 
 ## Acceptance Gate

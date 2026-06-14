@@ -699,7 +699,7 @@ Note: String (`obsidian`) casts require runtime functions (`ofs_stone_to_obsidia
 
 ## Imports
 
-Use `attach` to bring stdlib modules, packages, or local files into scope.
+Use `attach` to bring stdlib modules, src/packages, or local files into scope.
 
 ### Library attach (stdlib / package)
 

@@ -3,7 +3,7 @@
 // Run with:      ofs run fmt_demo.ofs
 //
 // For local development (without installing):
-attach {F:../../packages/src/fmt/libs/fmt.ofs}
+attach {F:../../src/packages/src/fmt/libs/fmt.ofs}
 
 core main() {
     // ── Padding ──────────────────────────────────────────────────────────
@@ -63,7 +63,7 @@ core main() {
         echo("dev domain")
     }
     if (fmt_contains_str(url, "ofs")) {
-        echo("OFS website confirmed")
+        echo("OFS src/site confirmed")
     }
 
     // ── Table output ─────────────────────────────────────────────────────
