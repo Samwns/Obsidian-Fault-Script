@@ -6,6 +6,19 @@ OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OFSCC="${OFSCC:-$ROOT/ofscc}"
 RUNTIME="${OFS_RUNTIME:-$ROOT/libofs_runtime.a}"
+STDLIB="${OFS_STDLIB:-}"
+
+if [ -z "$STDLIB" ]; then
+  for candidate in "$ROOT/stdlib" "$ROOT/../share/ofs/stdlib" /usr/local/share/ofs/stdlib /usr/share/ofs/stdlib; do
+    if [ -d "$candidate" ]; then
+      STDLIB="$candidate"
+      break
+    fi
+  done
+fi
+if [ -n "$STDLIB" ]; then
+  export OFS_STDLIB="$STDLIB"
+fi
 
 detect_llvm_ir_flags() {
   if [ -n "${OFS_LLVM_IR_FLAGS:-}" ]; then
@@ -17,15 +30,28 @@ detect_llvm_ir_flags() {
   fi
 }
 
+detect_clang_opt_level() {
+  if [ -n "${OFS_CLANG_OPT:-}" ]; then
+    printf '%s\n' "$OFS_CLANG_OPT"
+    return
+  fi
+  if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
+    printf '%s\n' "-O0"
+  else
+    printf '%s\n' "-O3"
+  fi
+}
+
 OFS_LLVM_IR_FLAGS=()
 detected_llvm_ir_flags="$(detect_llvm_ir_flags)"
 if [ -n "$detected_llvm_ir_flags" ]; then
   read -r -a OFS_LLVM_IR_FLAGS <<< "$detected_llvm_ir_flags"
 fi
+OFS_CLANG_OPT_LEVEL="$(detect_clang_opt_level)"
 
 clang_ir() {
   if [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ]; then
-    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" "$@"
+    clang -Wno-override-module "$@" "${OFS_LLVM_IR_FLAGS[@]}"
   else
     clang -Wno-override-module "$@"
   fi
@@ -76,6 +102,9 @@ Usage:
   ofs ast    <file.ofs>                 Print AST (debug)
   ofs ir     <file.ofs>                 Emit LLVM IR (debug)
   ofs asm    <file.ofs>                 Emit target-native assembly
+  ofs odl    <file.odl> [-o page.html]  Compile ODL to HTML
+  ofs oes    <file.oes> [-o style.css]  Compile OES to CSS
+  ofs translate <file> --to odl|oes     Import HTML or CSS
   ofs version                           Print compiler version
   ofs update                            Update to the latest release
   ofs help                              Show this help message
@@ -176,6 +205,42 @@ need_ofscc() {
   fi
 }
 
+find_web_tool() {
+  local name="$1"
+  for candidate in \
+    "$ROOT/../share/ofs/tools/$name.ofs" \
+    "$ROOT/../lib/ofs/tools/$name.ofs" \
+    "$ROOT/../ofs/tools/$name.ofs" \
+    "$ROOT/../../ofs/tools/$name.ofs" \
+    "ofs/tools/$name.ofs"; do
+    if [ -f "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  return 1
+}
+
+run_web_tool() {
+  local tool="$1" input="$2" output="$3" direction="${4:-}"
+  local source tool_ll tool_bin
+  source="$(find_web_tool "$tool")" || {
+    echo "ofs: web language compiler source not found: $tool.ofs" >&2
+    exit 1
+  }
+  tool_ll="${TMPDIR:-/tmp}/ofs-${tool}-$$.ll"
+  tool_bin="${TMPDIR:-/tmp}/ofs-${tool}-$$"
+  OFSCC_INPUT="$source" OFSCC_MODE=ir OFSCC_C_OUT="$tool_ll" run_ofscc_quiet "$OFSCC"
+  clang_ir "$OFS_CLANG_OPT_LEVEL" "$tool_ll" "$RUNTIME" -lm -o "$tool_bin"
+  chmod +x "$tool_bin"
+  if [ "$tool" = "odlc" ]; then
+    ODLC_INPUT="$input" ODLC_OUTPUT="$output" ODLC_DIRECTION="$direction" "$tool_bin"
+  else
+    OESC_INPUT="$input" OESC_OUTPUT="$output" OESC_DIRECTION="$direction" "$tool_bin"
+  fi
+  rm -f "$tool_ll" "$tool_bin"
+}
+
 cmd="${1:-help}"
 case "$cmd" in
   version|--version|-v)
@@ -200,17 +265,26 @@ input=""
 output=""
 
 case "$mode" in
-  check|tokens|ast|ir|asm|build|run) ;;
+  check|tokens|ast|ir|asm|build|run|odl|oes|translate) ;;
   *)
     input="$mode"
-    mode="run"
+    case "$input" in
+      *.odl) mode="odl" ;;
+      *.oes) mode="oes" ;;
+      *) mode="run" ;;
+    esac
     ;;
 esac
 
+translate_to=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
     -o|--output)
       output="${2:-}"
+      shift 2
+      ;;
+    --to)
+      translate_to="${2:-}"
       shift 2
       ;;
     *)
@@ -253,6 +327,26 @@ run_executable() {
 }
 
 case "$mode" in
+  odl)
+    [ -n "$output" ] || output="${input%.*}.html"
+    run_web_tool odlc "$input" "$output"
+    ;;
+  oes)
+    [ -n "$output" ] || output="${input%.*}.css"
+    run_web_tool oesc "$input" "$output"
+    ;;
+  translate)
+    if [ "$translate_to" = "odl" ]; then
+      [ -n "$output" ] || output="${input%.*}.odl"
+      run_web_tool odlc "$input" "$output" from-html
+    elif [ "$translate_to" = "oes" ]; then
+      [ -n "$output" ] || output="${input%.*}.oes"
+      run_web_tool oesc "$input" "$output" from-css
+    else
+      echo "ofs translate: use --to odl or --to oes" >&2
+      exit 2
+    fi
+    ;;
   check)
     OFSCC_INPUT="$input" OFSCC_MODE="$mode" run_ofscc_quiet "$OFSCC"
     ;;
@@ -284,7 +378,7 @@ case "$mode" in
       rm -f "$ll"
       exit 0
     fi
-    clang_ir -O2 "$ll" "$RUNTIME" -lm -o "$output"
+    clang_ir "$OFS_CLANG_OPT_LEVEL" "$ll" "$RUNTIME" -lm -o "$output"
     chmod +x "$output"
     rm -f "$ll"
     if [ "$mode" = "run" ]; then

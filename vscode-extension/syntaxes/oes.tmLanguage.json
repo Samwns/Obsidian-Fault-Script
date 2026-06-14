@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Obsidian Effect Scripts",
+  "scopeName": "source.oes",
+  "patterns": [
+    {
+      "name": "comment.line.double-slash.oes",
+      "match": "//.*$"
+    },
+    {
+      "name": "keyword.control.oes",
+      "match": "\\b(token|media|supports|layer|keyframes|motion|from|to|raw|css)\\b|\\bat\\d+\\b"
+    },
+    {
+      "name": "entity.name.tag.css.oes",
+      "match": "^\\s*(?:[.#]?[a-zA-Z_][\\w.#:-]*|:[\\w-]+)(?=\\s*$)"
+    },
+    {
+      "name": "support.type.property-name.css.oes",
+      "match": "^\\s*[a-zA-Z-]+(?=\\s+\")"
+    },
+    {
+      "name": "variable.other.oes",
+      "match": "\\$[a-zA-Z_][\\w-]*"
+    },
+    {
+      "name": "string.quoted.double.oes",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.oes",
+          "match": "\\\\."
+        }
+      ]
+    }
+  ]
+}

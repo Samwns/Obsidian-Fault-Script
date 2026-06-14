@@ -1,0 +1,39 @@
+token ink "#eef6ff"
+token paper "#070a0f"
+token accent "#29e0bd"
+
+body
+  margin "0"
+  background "$paper"
+  color "$ink"
+  font-family "system-ui, sans-serif"
+
+.topbar
+  display "flex"
+  justify "space-between"
+  padding "18px"
+  border-bottom "1px solid #263244"
+
+.hero
+  padding "72px 24px"
+
+.grid
+  display "grid"
+  columns "repeat(2, minmax(0, 1fr))"
+  gap "16px"
+
+.card
+  padding "20px"
+  radius "8px"
+  background "#101722"
+  transition "transform .2s ease"
+
+media "(max-width: 700px)"
+  .grid
+    columns "1fr"
+
+keyframes "enter"
+  from
+    opacity "0"
+  to
+    opacity "1"

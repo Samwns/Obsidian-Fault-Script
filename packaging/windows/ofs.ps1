@@ -91,6 +91,9 @@ Usage:
   ofs ast    <file.ofs>                 Print AST (debug)
   ofs ir     <file.ofs>                 Emit LLVM IR (debug)
   ofs asm    <file.ofs>                 Emit target-native assembly
+  ofs odl    <file.odl> [-o page.html]  Compile ODL to HTML
+  ofs oes    <file.oes> [-o style.css]  Compile OES to CSS
+  ofs translate <file> --to odl|oes     Import HTML or CSS
   ofs version                           Print compiler version
   ofs update                            Update to the latest release
   ofs help                              Show this help message
@@ -163,16 +166,23 @@ $rest = if ($argsList.Count -gt 1) { $argsList[1..($argsList.Count - 1)] } else 
 $mode = $cmd
 $inputFile = ""
 $output = ""
+$translateTo = ""
 
-if ($mode -notin @("check", "tokens", "ast", "ir", "asm", "build", "run")) {
+if ($mode -notin @("check", "tokens", "ast", "ir", "asm", "build", "run", "odl", "oes", "translate")) {
     $inputFile = $mode
-    $mode = "run"
+    $extension = [IO.Path]::GetExtension($inputFile).ToLowerInvariant()
+    if ($extension -eq ".odl") { $mode = "odl" }
+    elseif ($extension -eq ".oes") { $mode = "oes" }
+    else { $mode = "run" }
 }
 
 for ($i = 0; $i -lt $rest.Count; $i++) {
     if ($rest[$i] -in @("-o", "--output")) {
         $i++
         if ($i -lt $rest.Count) { $output = $rest[$i] }
+    } elseif ($rest[$i] -eq "--to") {
+        $i++
+        if ($i -lt $rest.Count) { $translateTo = $rest[$i] }
     } elseif (-not $inputFile) {
         $inputFile = $rest[$i]
     }
@@ -186,6 +196,41 @@ if (-not $inputFile) {
 $name = [IO.Path]::GetFileNameWithoutExtension($inputFile)
 $work = Join-Path ([IO.Path]::GetTempPath()) "ofs-$name-$PID"
 $ll = "$work.ll"
+
+if ($mode -in @("odl", "oes", "translate")) {
+    $toolName = if ($mode -eq "translate") {
+        if ($translateTo -eq "odl") { "odlc" }
+        elseif ($translateTo -eq "oes") { "oesc" }
+        else { throw "ofs translate: --to must be odl or oes" }
+    } elseif ($mode -eq "odl") { "odlc" } else { "oesc" }
+    $tool = Join-Path $PSScriptRoot "tools\$toolName.ofs"
+    if (-not (Test-Path $tool)) { throw "ofs: web language tool not found: $tool" }
+    $toolLl = "$work-tool.ll"
+    $toolExe = "$work-tool.exe"
+    Invoke-OfsccEnv -InputPath $tool -Mode "ir" -IrOutput $toolLl
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    $runtime = Join-Path $PSScriptRoot "libofs_runtime.a"
+    & clang -Wno-override-module @LlvmIrFlags -O3 $toolLl $runtime -lm -o $toolExe
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+    if (-not $output) {
+        if ($mode -eq "odl") { $output = "$name.html" }
+        elseif ($mode -eq "oes") { $output = "$name.css" }
+        else { $output = "$name.$translateTo" }
+    }
+    if ($toolName -eq "odlc") {
+        $env:ODLC_INPUT = (Resolve-Path $inputFile).Path
+        $env:ODLC_OUTPUT = [IO.Path]::GetFullPath($output)
+        $env:ODLC_DIRECTION = if ($mode -eq "translate") { "from-html" } else { "" }
+    } else {
+        $env:OESC_INPUT = (Resolve-Path $inputFile).Path
+        $env:OESC_OUTPUT = [IO.Path]::GetFullPath($output)
+        $env:OESC_DIRECTION = if ($mode -eq "translate") { "from-css" } else { "" }
+    }
+    & $toolExe
+    $exitCode = $LASTEXITCODE
+    Remove-Item $toolLl, $toolExe -ErrorAction SilentlyContinue
+    exit $exitCode
+}
 
 if ($mode -in @("check", "tokens", "ast")) {
     Invoke-OfsccEnv -InputPath $inputFile -Mode $mode
@@ -215,7 +260,7 @@ if ($mode -in @("build", "run")) {
     if (-not (Test-Path $runtime)) { $runtime = Join-Path $PSScriptRoot "ofs_runtime.lib" }
     Invoke-OfsccEnv -InputPath $inputFile -Mode "ir" -IrOutput $ll
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    & clang -Wno-override-module @LlvmIrFlags -O2 $ll $runtime -lm -o $output
+    & clang -Wno-override-module @LlvmIrFlags -O3 $ll $runtime -lm -o $output
     Remove-Item $ll -ErrorAction SilentlyContinue
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     if ($mode -eq "run") {

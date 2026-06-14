@@ -1,6 +1,6 @@
 # Obsidian Fault Script
 
-OFS is a self-hosted compiled language with an LLVM pipeline, native runtime, modular standard library, low-level modes, and experimental Web UI support.
+OFS is a self-hosted compiled language with an LLVM pipeline, native runtime, modular standard library, low-level modes, and a native web-language toolchain.
 
 Official site and docs:
 
@@ -24,23 +24,46 @@ core main() {
 }
 ```
 
-## Web Example
+## ODL and OES
 
-OFS web pages are authored in OFS. The browser receives generated HTML/CSS artifacts, while the official site source lives in `website/src/`, using **ODL (Obsidian Document Language)** for structure and **OES (Obsidian Effect Scripts)** for style and motion.
+**ODL (Obsidian Document Language)** authors document structure. **OES (Obsidian Effect Scripts)** authors tokens, layout, responsive behavior, and motion. OFS compiles them to browser artifacts.
 
-```ofs
-attach {webui}
-
-core main() {
-    forge body = webui.hero(
-        "OFS Web",
-        "UI declarativa em OFS, servida pela propria linguagem.",
-        webui.button("Docs", "#docs")
-    )
-
-    webui.serve(8080, "OFS Web", body)
-}
+```odl
+document "OFS Web" "en"
+style "theme.css"
+body
+  main#app
+    h1 "OFS Web"
+    markdown "Built with **ODL**."
 ```
+
+```oes
+token accent "#29e0bd"
+.button
+  bg "$accent"
+  radius "8px"
+```
+
+```bash
+dist/ofs odl page.odl -o index.html
+dist/ofs oes theme.oes -o theme.css
+dist/ofs translate legacy.html --to odl
+dist/ofs translate legacy.css --to oes
+```
+
+ODL also supports native Markdown and explicit HTML, JavaScript/module, Node-style module, and PHP interop.
+
+Run the complete native-web example:
+
+```bash
+dist/ofs build ofs/examples/native_site/build.ofs -o /tmp/ofs-native-site-build
+/tmp/ofs-native-site-build
+python3 -m http.server 4180 --directory ofs/examples/native_site/dist
+```
+
+Open `http://127.0.0.1:4180/?ofs-studio=1` to test local-only visual positioning.
+
+The example publishes generated HTML/CSS and also keeps `source/page.odl` and `source/site.oes` in the output folder. Static hosts ignore those source files unless someone opens them directly.
 
 ## Main Components
 
@@ -49,8 +72,9 @@ core main() {
 | Self-hosted compiler | `ofs/ofscc/`, `ofscc/` |
 | Runtime | `ofs/runtime/ofs_runtime.c` |
 | Standard library | `ofs/stdlib/` |
-| ODL document DSL | `ofs/stdlib/odl.ofs` |
-| OES effect/style DSL | `ofs/stdlib/oes.ofs` |
+| ODL/OES native compilers | `ofs/tools/` |
+| ODL document helpers | `ofs/stdlib/odl.ofs` |
+| OES effect/style helpers | `ofs/stdlib/oes.ofs` |
 | Package registry | `packages/` |
 | VS Code extension | `vscode-extension/` |
 | Website source | `website/src/` |
@@ -68,6 +92,8 @@ Key source documents:
 - [Compiler Architecture](docs/COMPILER_ARCHITECTURE.md)
 - [Web UI](docs/WEB_UI.md)
 - [Site Language](docs/SITE_LANGUAGE.md)
+- [ODL Reference](docs/ODL_REFERENCE.md)
+- [OES Reference](docs/OES_REFERENCE.md)
 - [Native Visual UI](docs/VISUAL_UI.md)
 - [GitHub Registration](docs/GITHUB_REGISTRATION.md)
 

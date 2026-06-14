@@ -129,6 +129,8 @@ jobs:
           ROOT="pkg-root"
           mkdir -p "$ROOT/usr/local/bin"
           mkdir -p "$ROOT/usr/local/share/ofs/stdlib"
+          mkdir -p "$ROOT/usr/local/share/ofs/tools"
+          mkdir -p "$ROOT/usr/local/share/ofs/ofscc"
           mkdir -p "$ROOT/usr/local/share/ofs/ofscc-src"
 
           sed "s/__OFS_VERSION__/${VERSION}/g" packaging/linux/ofs > "$ROOT/usr/local/bin/ofs"
@@ -136,6 +138,8 @@ jobs:
           chmod +x "$ROOT/usr/local/bin/ofs"
           chmod +x "$ROOT/usr/local/bin/ofscc"
           cp ofs/stdlib/*.ofs "$ROOT/usr/local/share/ofs/stdlib/" 2>/dev/null || true
+          cp ofs/tools/*.ofs "$ROOT/usr/local/share/ofs/tools/" 2>/dev/null || true
+          cp ofs/ofscc/fileio.ofs "$ROOT/usr/local/share/ofs/ofscc/" 2>/dev/null || true
           cp -r ofscc/* "$ROOT/usr/local/share/ofs/ofscc-src/" 2>/dev/null || true
           mkdir -p "$ROOT/usr/local/lib"
           cp selfhost/libofs_runtime.a "$ROOT/usr/local/lib/"
@@ -264,9 +268,8 @@ jobs:
           }
           New-Item -ItemType Directory -Path "$Dist\stdlib" -Force | Out-Null
           Copy-Item "ofs\stdlib\*.ofs" "$Dist\stdlib\" -ErrorAction SilentlyContinue
-          New-Item -ItemType Directory -Path "$Dist\ofscc" -Force | Out-Null
-          Copy-Item "ofscc\*.ofs" "$Dist\ofscc\" -ErrorAction SilentlyContinue
-          Copy-Item "ofscc\README.md" "$Dist\ofscc\" -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path "$Dist\tools" -Force | Out-Null
+          Copy-Item "ofs\tools\*.ofs" "$Dist\tools\" -ErrorAction SilentlyContinue
           Copy-Item "LICENSE" "$Dist\LICENSE.txt" -ErrorAction SilentlyContinue
 
           $VersionOutput = & "$Dist\ofs.cmd" version | Out-String
@@ -320,6 +323,13 @@ jobs:
 
       - name: Package extension
         run: |
+          TAG="${{ needs.version.outputs.tag }}"
+          VERSION="${TAG#v}"
+          mkdir -p vscode-extension/bin/linux-x64/tools
+          sed "s/__OFS_VERSION__/${VERSION}/g" packaging/linux/ofs > vscode-extension/bin/linux-x64/ofs
+          chmod +x vscode-extension/bin/linux-x64/ofs
+          cp ofs/tools/*.ofs vscode-extension/bin/linux-x64/tools/
+          cp ofs/stdlib/*.ofs vscode-extension/bin/linux-x64/stdlib/
           cd vscode-extension
           rm -f *.vsix  
           npm ci

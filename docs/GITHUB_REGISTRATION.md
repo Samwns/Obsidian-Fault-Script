@@ -7,6 +7,10 @@ This repository uses `.gitattributes` so GitHub treats `.ofs` files as OFS:
 ```gitattributes
 *.ofs linguist-language=OFS
 *.ofs linguist-detectable=true
+*.odl linguist-language=ODL
+*.odl linguist-detectable=true
+*.oes linguist-language=OES
+*.oes linguist-detectable=true
 ```
 
 This override applies immediately to repositories that include it.
@@ -44,7 +48,7 @@ documented in `docs/linguist-pr.md`.
 
 ## Current Status
 
-- Repository-local `.ofs` recognition: complete.
+- Repository-local `.ofs`, `.odl`, and `.oes` recognition: complete.
 - TextMate grammar: complete.
 - VS Code syntax highlighting: complete.
 - Linguist contribution files: prepared.

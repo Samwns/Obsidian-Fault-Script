@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const https = require('https');
+const http = require('http');
 
 const KEYWORDS = [
   'core', 'vein', 'forge', 'const', 'monolith', 'impl', 'namespace', 'strata', 'extern', 'rift',
@@ -1032,6 +1033,16 @@ async function terminateActiveExecution(options = {}) {
   }
 
   const pid = activeExecution.childProcess?.pid;
+  if (activeExecution.liveServer) {
+    if (activeExecution.watchers) {
+      for (const watcher of activeExecution.watchers) {
+        try { watcher.close(); } catch {}
+      }
+    }
+    await new Promise((resolve) => activeExecution.liveServer.close(resolve));
+    await clearActiveExecution();
+    return;
+  }
   if (!pid) {
     activeExecution.terminal?.sendText('\u0003', false);
     await clearActiveExecution();
@@ -1344,6 +1355,9 @@ function runExecFile(command, args, options = {}) {
 }
 
 function isWebSiteDocument(document) {
+  if (document.languageId === 'odl' || document.fileName.toLowerCase().endsWith('.odl')) {
+    return true;
+  }
   const text = document.getText();
   return /^\s*(?:attach|import)\s*\{\s*webui\s*\}/m.test(text)
     || /\bwebui\.(?:serve|page|hero|nav|button|panel|grid|card|stack)\s*\(/.test(text)
@@ -1353,14 +1367,14 @@ function isWebSiteDocument(document) {
 
 async function goLiveCurrentFile() {
   const editor = vscode.window.activeTextEditor;
-  if (!editor || editor.document.languageId !== 'ofs') {
-    vscode.window.showErrorMessage('Open an .ofs file to Go Live.');
+  if (!editor || !['ofs', 'odl'].includes(editor.document.languageId)) {
+    vscode.window.showErrorMessage('Open an OFS web program or an .odl document to Go Live.');
     return;
   }
 
   await editor.document.save();
   if (!isWebSiteDocument(editor.document)) {
-    vscode.window.showWarningMessage('Este arquivo OFS nao parece ser um site. Use attach {webui} e webui.serve(...) ou serve_html_forever(...).');
+    vscode.window.showWarningMessage('This OFS file does not declare a web site. Use attach {webui}, webui.serve(...), or an .odl document.');
     return;
   }
 
@@ -1373,6 +1387,88 @@ async function goLiveCurrentFile() {
   const file = editor.document.fileName;
   const cwd = path.dirname(file);
   const port = vscode.workspace.getConfiguration().get('ofs.goLivePort', 8080);
+  if (editor.document.languageId === 'odl') {
+    const outputDir = path.join(cwd, '.ofs-live');
+    const outputFile = path.join(outputDir, 'index.html');
+    let liveVersion = Date.now();
+    let rebuildTimer = null;
+    fs.mkdirSync(outputDir, { recursive: true });
+
+    const compileLiveProject = async () => {
+      const compileResult = await runExecFile(ofsPath, ['odl', file, '-o', outputFile], { cwd });
+      if (compileResult.error) {
+        const combined = `${compileResult.stdout || ''}\n${compileResult.stderr || ''}`.trim();
+        vscode.window.showErrorMessage(combined || 'ODL compilation failed.');
+        return false;
+      }
+      for (const entry of fs.readdirSync(cwd)) {
+        const source = path.join(cwd, entry);
+        const stat = fs.statSync(source);
+        if (!stat.isFile()) continue;
+        if (entry.endsWith('.oes')) {
+          const result = await runExecFile(ofsPath, ['oes', source, '-o', path.join(outputDir, `${path.parse(entry).name}.css`)], { cwd });
+          if (result.error) {
+            vscode.window.showWarningMessage(`OES compile failed: ${entry}`);
+          }
+        } else if (/\.(js|mjs|css|png|jpe?g|gif|svg|webp|ico)$/i.test(entry)) {
+          fs.copyFileSync(source, path.join(outputDir, entry));
+        }
+      }
+      liveVersion = Date.now();
+      return true;
+    };
+
+    if (!(await compileLiveProject())) return;
+
+    await terminateActiveExecution({ silent: true });
+    const liveReloadScript = `<script>(()=>{let v=${liveVersion};setInterval(async()=>{try{const n=Number(await (await fetch('/__ofs_live')).text());if(n&&n!==v)location.reload()}catch{}},450)})();</script>`;
+    const mime = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.odl': 'text/odl; charset=utf-8', '.oes': 'text/oes; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' };
+    const liveServer = http.createServer((request, response) => {
+      const requested = decodeURIComponent((request.url || '/').split('?')[0]);
+      if (requested === '/__ofs_live') {
+        response.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
+        response.end(String(liveVersion));
+        return;
+      }
+      const relative = requested === '/' ? 'index.html' : requested.replace(/^\/+/, '');
+      const target = path.resolve(outputDir, relative);
+      if (!target.startsWith(path.resolve(outputDir) + path.sep) && target !== outputFile) {
+        response.writeHead(403).end('Forbidden');
+        return;
+      }
+      fs.readFile(target, (error, data) => {
+        if (error) {
+          response.writeHead(404).end('Not found');
+          return;
+        }
+        const ext = path.extname(target).toLowerCase();
+        if (ext === '.html') {
+          data = Buffer.from(String(data).replace('</body>', `${liveReloadScript}</body>`));
+        }
+        response.writeHead(200, { 'Content-Type': mime[ext] || 'application/octet-stream', 'Cache-Control': 'no-store' });
+        response.end(data);
+      });
+    });
+    await new Promise((resolve, reject) => liveServer.once('error', reject).listen(port, '127.0.0.1', resolve));
+    const scheduleRebuild = () => {
+      clearTimeout(rebuildTimer);
+      rebuildTimer = setTimeout(() => compileLiveProject(), 120);
+    };
+    const watchers = [fs.watch(file, scheduleRebuild)];
+    for (const entry of fs.readdirSync(cwd)) {
+      if (/\.(oes|js|mjs|css)$/i.test(entry)) {
+        watchers.push(fs.watch(path.join(cwd, entry), scheduleRebuild));
+      }
+    }
+    activeExecution = { paused: false, terminal: null, childProcess: null, shellExecution: null, sourceFile: file, liveServer, watchers };
+    await setExecutionContext(true, false);
+    const url = `http://127.0.0.1:${port}`;
+    vscode.window.showInformationMessage(`ODL Go Live running with live reload at ${url}`, 'Open Browser').then((choice) => {
+      if (choice === 'Open Browser') vscode.env.openExternal(vscode.Uri.parse(url));
+    });
+    return;
+  }
+
   const checkResult = await runExecFile(ofsPath, ['check', file], { cwd });
   if (checkResult.error) {
     const combined = `${checkResult.stdout || ''}\n${checkResult.stderr || ''}`;

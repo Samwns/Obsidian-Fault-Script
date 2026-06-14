@@ -1,0 +1,26 @@
+document "OFS Native Web Languages" "en"
+style "site.css"
+body
+  nav.topbar
+    strong "Obsidian Fault Script"
+    a.docs "Documentation" "#content"
+  main#content
+    section.hero
+      h1 "ODL + OES"
+      markdown "Build **documents**, `components`, and native-hosted sites."
+      html "<small>Raw HTML remains available when interoperability matters.</small>"
+    section.grid
+      article.card
+        h2 "ODL"
+        p "Document structure with an indentation-based syntax."
+        a.docs "Read source" "source/page.odl"
+      article.card
+        h2 "OES"
+        p "Tokens, visual rules, responsive behavior, and motion."
+        a.docs "Read source" "source/site.oes"
+      move.card.feature
+        h2 "Safe visual positioning"
+        p "Run with ?ofs-studio=1 on localhost and drag marked elements."
+        a.docs "Export OES" "?ofs-studio=1"
+  studio "safe-localhost"
+  module "app.js"

@@ -1,2 +1,6 @@
 *.ofs linguist-language=OFS
 *.ofs linguist-detectable=true
+*.odl linguist-language=ODL
+*.odl linguist-detectable=true
+*.oes linguist-language=OES
+*.oes linguist-detectable=true

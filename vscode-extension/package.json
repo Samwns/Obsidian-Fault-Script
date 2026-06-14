@@ -39,6 +39,28 @@
           "light": "./media/ofs.svg",
           "dark": "./media/ofs.svg"
         }
+      },
+      {
+        "id": "odl",
+        "aliases": [
+          "ODL",
+          "Obsidian Document Language"
+        ],
+        "extensions": [
+          ".odl"
+        ],
+        "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "oes",
+        "aliases": [
+          "OES",
+          "Obsidian Effect Scripts"
+        ],
+        "extensions": [
+          ".oes"
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
@@ -46,6 +68,16 @@
         "language": "ofs",
         "scopeName": "source.ofs",
         "path": "./syntaxes/ofs.tmLanguage.json"
+      },
+      {
+        "language": "odl",
+        "scopeName": "source.odl",
+        "path": "./syntaxes/odl.tmLanguage.json"
+      },
+      {
+        "language": "oes",
+        "scopeName": "source.oes",
+        "path": "./syntaxes/oes.tmLanguage.json"
       }
     ],
     "snippets": [
@@ -182,7 +214,7 @@
         },
         {
           "command": "ofs.goLive",
-          "when": "resourceLangId == ofs",
+          "when": "resourceLangId == ofs || resourceLangId == odl",
           "group": "navigation@3"
         }
       ],

@@ -1,0 +1,27 @@
+extern vein fopen(path: obsidian, mode: obsidian) -> obsidian
+extern vein fclose(file: obsidian) -> stone
+extern vein fread(buffer: obsidian, size: stone, count: stone, file: obsidian) -> stone
+extern vein fputs(value: obsidian, file: obsidian) -> stone
+extern vein fseek(file: obsidian, offset: stone, origin: stone) -> stone
+extern vein ftell(file: obsidian) -> stone
+extern vein ofs_alloc(size: stone) -> obsidian
+
+vein read_file(path: obsidian) -> obsidian {
+    forge file = fopen(path, "r")
+    if (file == null) { throw "unable to open " + path }
+    fseek(file, 0, 2)
+    forge size = ftell(file)
+    fseek(file, 0, 0)
+    forge buffer = ofs_alloc(size + 1)
+    fread(buffer, 1, size, file)
+    fclose(file)
+    return buffer
+}
+
+vein write_file(path: obsidian, content: obsidian) -> bool {
+    forge file = fopen(path, "w")
+    if (file == null) { return false }
+    fputs(content, file)
+    fclose(file)
+    return true
+}

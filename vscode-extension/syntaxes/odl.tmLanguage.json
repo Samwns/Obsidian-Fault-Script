@@ -1,0 +1,38 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "Obsidian Document Language",
+  "scopeName": "source.odl",
+  "patterns": [
+    {
+      "name": "comment.line.double-slash.odl",
+      "match": "//.*$"
+    },
+    {
+      "name": "keyword.control.odl",
+      "match": "\\b(document|body|head|style|meta|title|component|use|markdown|md|html|script|module|node|js|php|image|img|studio|move)\\b"
+    },
+    {
+      "name": "entity.name.tag.odl",
+      "match": "^\\s*[a-zA-Z][\\w-]*(?=[.#\\s]|$)"
+    },
+    {
+      "name": "entity.other.attribute-name.class.odl",
+      "match": "\\.[a-zA-Z_][\\w-]*"
+    },
+    {
+      "name": "entity.other.attribute-name.id.odl",
+      "match": "#[a-zA-Z_][\\w-]*"
+    },
+    {
+      "name": "string.quoted.double.odl",
+      "begin": "\"",
+      "end": "\"",
+      "patterns": [
+        {
+          "name": "constant.character.escape.odl",
+          "match": "\\\\."
+        }
+      ]
+    }
+  ]
+}

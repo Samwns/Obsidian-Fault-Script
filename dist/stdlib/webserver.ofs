@@ -27,6 +27,8 @@ forge MIME_HTML = "text/html; charset=utf-8"
 forge MIME_TEXT = "text/plain; charset=utf-8"
 forge MIME_CSS  = "text/css"
 forge MIME_JS   = "application/javascript"
+forge MIME_ODL  = "text/odl; charset=utf-8"
+forge MIME_OES  = "text/oes; charset=utf-8"
 
 // Get status message
 vein status_text(code: stone) -> obsidian {
@@ -73,6 +75,10 @@ vein get_mime_type(filename: obsidian) -> obsidian {
         return MIME_CSS
     } else if (ofs_str_contains(filename, ".js")) {
         return MIME_JS
+    } else if (ofs_str_contains(filename, ".odl")) {
+        return MIME_ODL
+    } else if (ofs_str_contains(filename, ".oes")) {
+        return MIME_OES
     } else {
         return MIME_TEXT
     }

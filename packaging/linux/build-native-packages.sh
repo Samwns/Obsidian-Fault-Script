@@ -30,6 +30,8 @@ install_payload() {
   install -d "$dest/usr/bin"
   install -d "$dest/usr/lib/ofs"
   install -d "$dest/usr/share/ofs/stdlib"
+  install -d "$dest/usr/share/ofs/tools"
+  install -d "$dest/usr/share/ofs/ofscc"
   install -d "$dest/usr/share/ofs/ofscc-src"
   install -d "$dest/usr/share/doc/$PKG_NAME"
   install -d "$dest/usr/share/licenses/$PKG_NAME"
@@ -41,6 +43,8 @@ install_payload() {
   chmod 0755 "$dest/usr/bin/ofs"
 
   cp "$ROOT"/ofs/stdlib/*.ofs "$dest/usr/share/ofs/stdlib/"
+  cp "$ROOT"/ofs/tools/*.ofs "$dest/usr/share/ofs/tools/"
+  cp "$ROOT"/ofs/ofscc/fileio.ofs "$dest/usr/share/ofs/ofscc/"
   cp -r "$ROOT"/ofscc/* "$dest/usr/share/ofs/ofscc-src/"
   install -m 0644 "$ROOT/LICENSE" "$dest/usr/share/licenses/$PKG_NAME/LICENSE"
   install -m 0644 "$ROOT/README.md" "$dest/usr/share/doc/$PKG_NAME/README.md" 2>/dev/null || true
@@ -101,6 +105,8 @@ tar xzf %{SOURCE0} -C %{buildroot}
 /usr/lib/ofs/ofscc
 /usr/lib/ofs/libofs_runtime.a
 /usr/share/ofs/stdlib
+/usr/share/ofs/tools
+/usr/share/ofs/ofscc
 /usr/share/ofs/ofscc-src
 /usr/share/doc/$PKG_NAME
 /usr/share/licenses/$PKG_NAME/LICENSE

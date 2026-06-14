@@ -28,6 +28,7 @@ function run(command, args, options = {}) {
     env: {
       ...process.env,
       OFS_STDLIB: path.join(root, 'dist', 'stdlib'),
+      OFS_CLANG_OPT: '-O3',
     },
     maxBuffer: 32 * 1024 * 1024,
     ...options,
@@ -88,8 +89,8 @@ const languages = [
   {
     name: 'C',
     available: () => commandExists('gcc'),
-    compile: ['gcc', ['-O2', '-std=c11', 'website/benchmarks/src/cpu.c', '-o', 'website/benchmarks/build/cpu-c']],
-    compileHello: ['gcc', ['-O2', '-std=c11', 'website/benchmarks/src/hello.c', '-o', 'website/benchmarks/build/hello-c']],
+    compile: ['gcc', ['-O3', '-std=c11', 'website/benchmarks/src/cpu.c', '-o', 'website/benchmarks/build/cpu-c']],
+    compileHello: ['gcc', ['-O3', '-std=c11', 'website/benchmarks/src/hello.c', '-o', 'website/benchmarks/build/hello-c']],
     cpu: [path.join(buildDir, 'cpu-c'), []],
     hello: [path.join(buildDir, 'hello-c'), []],
     artifact: path.join(buildDir, 'cpu-c'),
@@ -97,8 +98,8 @@ const languages = [
   {
     name: 'C++',
     available: () => commandExists('g++'),
-    compile: ['g++', ['-O2', '-std=c++17', 'website/benchmarks/src/cpu.cpp', '-o', 'website/benchmarks/build/cpu-cpp']],
-    compileHello: ['g++', ['-O2', '-std=c++17', 'website/benchmarks/src/hello.cpp', '-o', 'website/benchmarks/build/hello-cpp']],
+    compile: ['g++', ['-O3', '-std=c++17', 'website/benchmarks/src/cpu.cpp', '-o', 'website/benchmarks/build/cpu-cpp']],
+    compileHello: ['g++', ['-O3', '-std=c++17', 'website/benchmarks/src/hello.cpp', '-o', 'website/benchmarks/build/hello-cpp']],
     cpu: [path.join(buildDir, 'cpu-cpp'), []],
     hello: [path.join(buildDir, 'hello-cpp'), []],
     artifact: path.join(buildDir, 'cpu-cpp'),
@@ -139,8 +140,8 @@ const languages = [
   {
     name: 'Rust',
     available: () => commandExists('rustc'),
-    compile: ['rustc', ['-O', 'website/benchmarks/src/cpu.rs', '-o', 'website/benchmarks/build/cpu-rust']],
-    compileHello: ['rustc', ['-O', 'website/benchmarks/src/hello.rs', '-o', 'website/benchmarks/build/hello-rust']],
+    compile: ['rustc', ['-C', 'opt-level=3', 'website/benchmarks/src/cpu.rs', '-o', 'website/benchmarks/build/cpu-rust']],
+    compileHello: ['rustc', ['-C', 'opt-level=3', 'website/benchmarks/src/hello.rs', '-o', 'website/benchmarks/build/hello-rust']],
     cpu: [path.join(buildDir, 'cpu-rust'), []],
     hello: [path.join(buildDir, 'hello-rust'), []],
     artifact: path.join(buildDir, 'cpu-rust'),

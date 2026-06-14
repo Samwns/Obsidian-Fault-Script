@@ -1,0 +1,12 @@
+attach {F:../../ofscc/fileio.ofs}
+
+core main() {
+    system("mkdir -p ofs/examples/native_site/dist")
+    system("mkdir -p ofs/examples/native_site/dist/source")
+    system("dist/ofs odl ofs/examples/native_site/page.odl -o ofs/examples/native_site/dist/index.html")
+    system("dist/ofs oes ofs/examples/native_site/site.oes -o ofs/examples/native_site/dist/site.css")
+    system("cp ofs/examples/native_site/app.js ofs/examples/native_site/dist/app.js")
+    system("cp ofs/examples/native_site/page.odl ofs/examples/native_site/dist/source/page.odl")
+    system("cp ofs/examples/native_site/site.oes ofs/examples/native_site/dist/source/site.oes")
+    echo("native site: ofs/examples/native_site/dist/index.html")
+}

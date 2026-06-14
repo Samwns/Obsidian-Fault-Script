@@ -1,0 +1,204 @@
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_array_len(a: Array) -> stone
+extern vein ofs_array_get(a: Array, index: stone) -> stone
+extern vein ofs_array_push(a: Array, value: stone) -> void
+extern vein ofs_array_pop(a: Array) -> stone
+
+vein wl_starts_with(value: obsidian, prefix: obsidian) -> bool {
+    forge prefix_len = ofs_str_len(prefix)
+    if (ofs_str_len(value) < prefix_len) { return false }
+    return ofs_str_eq(ofs_str_substr(value, 0, prefix_len), prefix)
+}
+
+vein wl_trim(value: obsidian) -> obsidian {
+    forge start = 0
+    forge end = ofs_str_len(value)
+    while (start < end) {
+        forge c = ofs_str_char_at(value, start)
+        if (c != 32 && c != 9 && c != 10 && c != 13) { break }
+        start++
+    }
+    while (end > start) {
+        forge c = ofs_str_char_at(value, end - 1)
+        if (c != 32 && c != 9 && c != 10 && c != 13) { break }
+        end--
+    }
+    return ofs_str_substr(value, start, end - start)
+}
+
+vein wl_indent(value: obsidian) -> stone {
+    forge spaces = 0
+    forge i = 0
+    while (i < ofs_str_len(value)) {
+        forge c = ofs_str_char_at(value, i)
+        if (c == 32) {
+            spaces++
+        } else if (c == 9) {
+            spaces += 2
+        } else {
+            break
+        }
+        i++
+    }
+    return spaces / 2
+}
+
+vein wl_first_word(value: obsidian) -> obsidian {
+    forge clean = wl_trim(value)
+    forge i = 0
+    while (i < ofs_str_len(clean)) {
+        forge c = ofs_str_char_at(clean, i)
+        if (c == 32 || c == 9) { break }
+        i++
+    }
+    return ofs_str_substr(clean, 0, i)
+}
+
+vein wl_after_first_word(value: obsidian) -> obsidian {
+    forge clean = wl_trim(value)
+    forge i = 0
+    while (i < ofs_str_len(clean)) {
+        forge c = ofs_str_char_at(clean, i)
+        if (c == 32 || c == 9) { break }
+        i++
+    }
+    return wl_trim(ofs_str_substr(clean, i, ofs_str_len(clean) - i))
+}
+
+vein wl_quoted_at(value: obsidian, wanted: stone) -> obsidian {
+    forge i = 0
+    forge current = 0
+    forge start = -1
+    while (i < ofs_str_len(value)) {
+        if (ofs_str_char_at(value, i) == 34) {
+            if (start < 0) {
+                start = i + 1
+            } else {
+                if (current == wanted) {
+                    return ofs_str_substr(value, start, i - start)
+                }
+                current++
+                start = -1
+            }
+        }
+        i++
+    }
+    return ""
+}
+
+vein wl_replace(value: obsidian, needle: obsidian, replacement: obsidian) -> obsidian {
+    if (ofs_str_eq(needle, "")) { return value }
+    forge out = ""
+    forge i = 0
+    forge needle_len = ofs_str_len(needle)
+    while (i < ofs_str_len(value)) {
+        if (i + needle_len <= ofs_str_len(value) &&
+            ofs_str_eq(ofs_str_substr(value, i, needle_len), needle)) {
+            out = out + replacement
+            i += needle_len
+        } else {
+            out = out + ofs_str_substr(value, i, 1)
+            i++
+        }
+    }
+    return out
+}
+
+vein wl_unescape(value: obsidian) -> obsidian {
+    forge out = wl_replace(value, "\\n", "\n")
+    out = wl_replace(out, "\\t", "\t")
+    out = wl_replace(out, "\\\"", "\"")
+    return wl_replace(out, "\\\\", "\\")
+}
+
+vein wl_escape_html(value: obsidian) -> obsidian {
+    forge out = wl_replace(value, "&", "&amp;")
+    out = wl_replace(out, "<", "&lt;")
+    out = wl_replace(out, ">", "&gt;")
+    return wl_replace(out, "\"", "&quot;")
+}
+
+vein wl_markdown_inline(value: obsidian) -> obsidian {
+    forge out = wl_escape_html(wl_unescape(value))
+    forge result = ""
+    forge i = 0
+    forge strong_open = false
+    forge code_open = false
+    while (i < ofs_str_len(out)) {
+        if (i + 2 <= ofs_str_len(out) && ofs_str_eq(ofs_str_substr(out, i, 2), "**")) {
+            if (strong_open) {
+                result = result + "</strong>"
+            } else {
+                result = result + "<strong>"
+            }
+            strong_open = !strong_open
+            i += 2
+        } else if (ofs_str_char_at(out, i) == 96) {
+            if (code_open) {
+                result = result + "</code>"
+            } else {
+                result = result + "<code>"
+            }
+            code_open = !code_open
+            i++
+        } else {
+            result = result + ofs_str_substr(out, i, 1)
+            i++
+        }
+    }
+    if (strong_open) { result = result + "</strong>" }
+    if (code_open) { result = result + "</code>" }
+    return result
+}
+
+vein wl_markdown(value: obsidian) -> obsidian {
+    forge text = wl_unescape(value)
+    if (wl_starts_with(text, "### ")) {
+        return "<h3>" + wl_markdown_inline(ofs_str_substr(text, 4, ofs_str_len(text) - 4)) + "</h3>"
+    }
+    if (wl_starts_with(text, "## ")) {
+        return "<h2>" + wl_markdown_inline(ofs_str_substr(text, 3, ofs_str_len(text) - 3)) + "</h2>"
+    }
+    if (wl_starts_with(text, "# ")) {
+        return "<h1>" + wl_markdown_inline(ofs_str_substr(text, 2, ofs_str_len(text) - 2)) + "</h1>"
+    }
+    if (wl_starts_with(text, "- ")) {
+        return "<ul><li>" + wl_markdown_inline(ofs_str_substr(text, 2, ofs_str_len(text) - 2)) + "</li></ul>"
+    }
+    return "<p>" + wl_markdown_inline(text) + "</p>"
+}
+
+vein wl_lines(source: obsidian) -> Array<obsidian> {
+    forge lines: Array<obsidian> = []
+    forge start = 0
+    forge i = 0
+    while (i <= ofs_str_len(source)) {
+        if (i == ofs_str_len(source) || ofs_str_char_at(source, i) == 10) {
+            forge line = ofs_str_substr(source, start, i - start)
+            if (ofs_str_len(line) > 0 && ofs_str_char_at(line, ofs_str_len(line) - 1) == 13) {
+                line = ofs_str_substr(line, 0, ofs_str_len(line) - 1)
+            }
+            ofs_array_push(lines, line)
+            start = i + 1
+        }
+        i++
+    }
+    return lines
+}
+
+vein wl_close_stack(tags: Array<obsidian>, indents: Array<stone>, indent: stone, inclusive: bool) -> obsidian {
+    forge out = ""
+    while (ofs_array_len(tags) > 0) {
+        forge last = ofs_array_len(tags) - 1
+        forge open_indent: stone = ofs_array_get(indents, last)
+        if (open_indent < indent || (!inclusive && open_indent == indent)) { break }
+        forge tag: obsidian = ofs_array_get(tags, last)
+        out = out + "</" + tag + ">"
+        ofs_array_pop(tags)
+        ofs_array_pop(indents)
+    }
+    return out
+}

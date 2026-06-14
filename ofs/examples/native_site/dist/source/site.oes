@@ -1,0 +1,74 @@
+token ink "#eef6ff"
+token muted "#9fb1c8"
+token paper "#070a0f"
+token surface "#101722"
+token line "#263244"
+token accent "#29e0bd"
+token violet "#7c5cff"
+
+body
+  margin "0"
+  background "radial-gradient(circle at top left, rgba(41,224,189,.20), transparent 34%), $paper"
+  color "$ink"
+  font-family "Inter, system-ui, sans-serif"
+
+.topbar
+  display "flex"
+  justify "space-between"
+  align "center"
+  padding "18px clamp(18px, 5vw, 64px)"
+  border-bottom "1px solid var(--line)"
+  background "rgba(7,10,15,.82)"
+
+.docs
+  color "$accent"
+  text-decoration "none"
+  weight "800"
+
+.hero
+  padding "88px clamp(18px, 5vw, 64px)"
+
+.hero h1
+  size "clamp(54px, 9vw, 120px)"
+  line-height ".88"
+  margin "0 0 22px"
+
+.hero p
+  size "20px"
+  color "$muted"
+
+.grid
+  display "grid"
+  columns "repeat(3, minmax(0, 1fr))"
+  gap "16px"
+  padding "0 clamp(18px, 5vw, 64px) 80px"
+
+.card
+  padding "22px"
+  radius "8px"
+  background "$surface"
+  border "1px solid var(--line)"
+  transition "transform .2s ease, border-color .2s ease"
+
+.card:hover
+  transform "translateY(-4px)"
+  border-color "$accent"
+
+.card .docs
+  display "inline-flex"
+  margin-top "12px"
+  color "$accent"
+  text-decoration "none"
+  weight "800"
+
+media "(max-width: 760px)"
+  .grid
+    columns "1fr"
+
+motion "enter"
+  from
+    opacity "0"
+    transform "translateY(10px)"
+  to
+    opacity "1"
+    transform "translateY(0)"
