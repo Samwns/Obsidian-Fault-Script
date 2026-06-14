@@ -75,7 +75,19 @@ detect_llvm_ir_flags() {
         return
     fi
     if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
-        printf '%s\n' "-mllvm -opaque-pointers -fno-vectorize -fno-slp-vectorize"
+        printf '%s\n' "-mllvm -opaque-pointers"
+    fi
+}
+
+detect_clang_opt_level() {
+    if [ -n "${OFS_CLANG_OPT:-}" ]; then
+        printf '%s\n' "$OFS_CLANG_OPT"
+        return
+    fi
+    if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
+        printf '%s\n' "-O0"
+    else
+        printf '%s\n' "-O2"
     fi
 }
 
@@ -86,19 +98,21 @@ compile_ofs_program() {
     local ir="${output}.ll"
     local detected_flags
     local llvm_flags=()
+    local clang_opt
 
     detected_flags="$(detect_llvm_ir_flags)"
     if [ -n "$detected_flags" ]; then
         read -r -a llvm_flags <<< "$detected_flags"
     fi
+    clang_opt="$(detect_clang_opt_level)"
 
     if ! OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ir" OFSCC_OPT="$opt" "$EXISTING_COMPILER"; then
         if [ "$input" = "ofs/ofscc/ofscc.ofs" ] && [ -f "dist/ofscc.ll" ]; then
             print_info "Recompilação OFS direta falhou neste ambiente; usando dist/ofscc.ll versionado como fallback de instalação."
             if [ "${#llvm_flags[@]}" -gt 0 ]; then
-                clang -Wno-override-module -O2 "dist/ofscc.ll" "$RUNTIME" -lm -o "$output" "${llvm_flags[@]}"
+                clang -Wno-override-module "$clang_opt" "dist/ofscc.ll" "$RUNTIME" -lm -o "$output" "${llvm_flags[@]}"
             else
-                clang -Wno-override-module -O2 "dist/ofscc.ll" "$RUNTIME" -lm -o "$output"
+                clang -Wno-override-module "$clang_opt" "dist/ofscc.ll" "$RUNTIME" -lm -o "$output"
             fi
             chmod +x "$output"
             return
@@ -106,9 +120,9 @@ compile_ofs_program() {
         return 1
     fi
     if [ "${#llvm_flags[@]}" -gt 0 ]; then
-        clang -Wno-override-module -O2 "$ir" "$RUNTIME" -lm -o "$output" "${llvm_flags[@]}"
+        clang -Wno-override-module "$clang_opt" "$ir" "$RUNTIME" -lm -o "$output" "${llvm_flags[@]}"
     else
-        clang -Wno-override-module -O2 "$ir" "$RUNTIME" -lm -o "$output"
+        clang -Wno-override-module "$clang_opt" "$ir" "$RUNTIME" -lm -o "$output"
     fi
     rm -f "$ir"
     chmod +x "$output"
@@ -119,6 +133,7 @@ compile_versioned_compiler_ir() {
     local ir="${OFSCC_LLVM_IR:-dist/ofscc.ll}"
     local detected_flags
     local llvm_flags=()
+    local clang_opt
 
     if [ ! -f "$ir" ]; then
         print_error "IR versionado não encontrado: $ir"
@@ -128,11 +143,12 @@ compile_versioned_compiler_ir() {
     if [ -n "$detected_flags" ]; then
         read -r -a llvm_flags <<< "$detected_flags"
     fi
+    clang_opt="$(detect_clang_opt_level)"
 
     if [ "${#llvm_flags[@]}" -gt 0 ]; then
-        clang -Wno-override-module -O2 "$ir" "$RUNTIME" -lm -o "$output" "${llvm_flags[@]}"
+        clang -Wno-override-module "$clang_opt" "$ir" "$RUNTIME" -lm -o "$output" "${llvm_flags[@]}"
     else
-        clang -Wno-override-module -O2 "$ir" "$RUNTIME" -lm -o "$output"
+        clang -Wno-override-module "$clang_opt" "$ir" "$RUNTIME" -lm -o "$output"
     fi
     chmod +x "$output"
 }

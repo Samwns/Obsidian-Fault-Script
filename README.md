@@ -71,7 +71,6 @@ core main() {
 - [Beginner guide](OFS_JORNADA_INICIANTE.md)
 - [Packages](packages/README.md)
 - [Native visual UI](docs/VISUAL_UI.md)
-- [External install test](docs/EXTERNAL_INSTALL_TEST.md)
 - [Changelog](docs/CHANGELOG.md)
 
 ---
@@ -147,5 +146,4 @@ core main() {
 - [Jornada Iniciante](OFS_JORNADA_INICIANTE.md)
 - [Pacotes](packages/README.md)
 - [UI visual nativa](docs/VISUAL_UI.md)
-- [Teste de instalação externa](docs/EXTERNAL_INSTALL_TEST.md)
 - [Changelog](docs/CHANGELOG.md)

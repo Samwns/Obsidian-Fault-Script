@@ -26,7 +26,19 @@ detect_llvm_ir_flags() {
     return
   fi
   if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
-    printf '%s\n' "-mllvm -opaque-pointers -fno-vectorize -fno-slp-vectorize"
+    printf '%s\n' "-mllvm -opaque-pointers"
+  fi
+}
+
+detect_clang_opt_level() {
+  if [ -n "${OFS_CLANG_OPT:-}" ]; then
+    printf '%s\n' "$OFS_CLANG_OPT"
+    return
+  fi
+  if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
+    printf '%s\n' "-O0"
+  else
+    printf '%s\n' "-O2"
   fi
 }
 
@@ -35,6 +47,7 @@ detected_llvm_ir_flags="$(detect_llvm_ir_flags)"
 if [ -n "$detected_llvm_ir_flags" ]; then
   read -r -a OFS_LLVM_IR_FLAGS <<< "$detected_llvm_ir_flags"
 fi
+OFS_CLANG_OPT_LEVEL="$(detect_clang_opt_level)"
 
 clang_ir() {
   if [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ]; then
@@ -297,7 +310,7 @@ case "$mode" in
       rm -f "$ll"
       exit 0
     fi
-    clang_ir -O2 "$ll" "$RUNTIME" -lm -o "$output"
+    clang_ir "$OFS_CLANG_OPT_LEVEL" "$ll" "$RUNTIME" -lm -o "$output"
     chmod +x "$output"
     rm -f "$ll"
     if [ "$mode" = "run" ]; then
