@@ -26,7 +26,7 @@ core main() {
 
 ## Web Example
 
-OFS web pages should be authored in OFS. The browser receives HTML, but the source of the official site is `ofs/site/build_site.ofs`, using the OFS-native markup DSL `attach {ofshtml}`.
+OFS web pages should be authored in OFS. The browser receives HTML/CSS, but the source of the official site is `ofs/site/build_site.ofs`, using **Benitoite** for markup and **Serpentine** for style.
 
 ```ofs
 attach {webui}
@@ -49,7 +49,8 @@ core main() {
 | Self-hosted compiler | `ofs/ofscc/`, `ofscc/` |
 | Runtime | `ofs/runtime/ofs_runtime.c` |
 | Standard library | `ofs/stdlib/` |
-| OFS markup DSL | `ofs/stdlib/ofshtml.ofs` |
+| Benitoite markup DSL | `ofs/stdlib/benitoite.ofs` |
+| Serpentine style DSL | `ofs/stdlib/serpentine.ofs` |
 | Package registry | `packages/` |
 | VS Code extension | `vscode-extension/` |
 | GitHub Pages source | `ofs/site/` |
@@ -65,9 +66,10 @@ Key source documents:
 - [Language Reference](docs/LANGUAGE_REFERENCE.md)
 - [Compiler Architecture](docs/COMPILER_ARCHITECTURE.md)
 - [Web UI](docs/WEB_UI.md)
+- [Site Language](docs/SITE_LANGUAGE.md)
 - [Native Visual UI](docs/VISUAL_UI.md)
 - [GitHub Registration](docs/GITHUB_REGISTRATION.md)
 
 ## Release Notes
 
-The latest verified public release at the time of this update is `v1.0.112`. Auto release and build workflows were checked with `gh run list`; the latest `Auto Release` and `OFS Build & Test` runs completed successfully.
+The latest public release is available at https://github.com/Samwns/Obsidian-Fault-Script/releases/latest. Auto release, build, and Pages workflows are verified after each documentation/site update.

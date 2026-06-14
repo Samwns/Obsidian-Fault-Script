@@ -1,0 +1,20 @@
+{
+  "name": "benitoite",
+  "version": "0.1.0",
+  "description": "OFS-native markup DSL for generating browser documents without authoring HTML directly",
+  "author": "OFS Team",
+  "license": "MIT",
+  "main": "libs/benitoite.ofs",
+  "tags": ["web", "markup", "html", "dsl", "benitoite"],
+  "channels": {
+    "alpha": "0.1.0",
+    "latest": "0.1.0"
+  },
+  "versions": {
+    "0.1.0": {
+      "date": "2026-06-14",
+      "channel": "alpha",
+      "main": "libs/benitoite.ofs"
+    }
+  }
+}

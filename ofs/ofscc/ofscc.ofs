@@ -92,7 +92,9 @@ vein resolve_attach_path(base: obsidian, spec: obsidian) -> obsidian {
     if (ofs_str_eq(spec, "bedrock") || ofs_str_eq(spec, "bedrock-packet") ||
         ofs_str_eq(spec, "canvas") || ofs_str_eq(spec, "core") ||
         ofs_str_eq(spec, "io") || ofs_str_eq(spec, "math") ||
+        ofs_str_eq(spec, "serpentine") ||
         ofs_str_eq(spec, "ofshtml") ||
+        ofs_str_eq(spec, "benitoite") ||
         ofs_str_eq(spec, "memory-modes") || ofs_str_eq(spec, "rift") ||
         ofs_str_eq(spec, "string") || ofs_str_eq(spec, "terminal-colors") ||
         ofs_str_eq(spec, "test-lib") || ofs_str_eq(spec, "webserver") ||

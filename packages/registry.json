@@ -92,6 +92,28 @@
       }
     },
     {
+      "name": "benitoite",
+      "description": "OFS-native markup DSL for generating browser documents without authoring HTML directly",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["web", "markup", "html", "dsl", "benitoite"],
+      "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
+      "versions": {
+        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/benitoite.ofs" }
+      }
+    },
+    {
+      "name": "serpentine",
+      "description": "OFS-native style DSL paired with Benitoite for generating CSS-like browser styles",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": ["web", "style", "css", "dsl", "serpentine"],
+      "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
+      "versions": {
+        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/serpentine.ofs" }
+      }
+    },
+    {
       "name": "webui",
       "description": "Declarative OFS web UI helpers for pages, style tokens, components, and static web serving",
       "author": "OFS Team",
