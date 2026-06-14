@@ -868,7 +868,8 @@ namespace parser {
         _prefix_namespace_refs(n.c3, ns_name, names)
 
         forge i = 0
-        while (i < node_extra_len(id)) {
+        forge extra_count = node_extra_len(id)
+        while (i < extra_count) {
             _prefix_namespace_refs(node_get_extra(id, i), ns_name, names)
             i++
         }
@@ -938,7 +939,8 @@ namespace parser {
         }
 
         forge i = 0
-        while (i < node_extra_len(ns)) {
+        forge member_count = node_extra_len(ns)
+        while (i < member_count) {
             _prefix_namespace_refs(node_get_extra(ns, i), ns_name, local_names)
             i++
         }

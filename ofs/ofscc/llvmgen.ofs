@@ -168,7 +168,8 @@ namespace llvmgen {
         if (n.kind == NK_MONOLITH) {
             ofs_array_push(_mono_names, n.val)
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge field_count = node_extra_len(id)
+            while (i < field_count) {
                 forge field_id = node_get_extra(id, i)
                 forge f: Node = node_get(field_id)
                 ofs_array_push(_field_owners, n.val)
@@ -179,7 +180,8 @@ namespace llvmgen {
             }
         }
         forge j = 0
-        while (j < node_extra_len(id)) {
+        forge extra_count = node_extra_len(id)
+        while (j < extra_count) {
             collect_types(node_get_extra(id, j))
             j++
         }
@@ -187,7 +189,8 @@ namespace llvmgen {
 
     vein collect_globals(root_id: stone) -> void {
         forge i = 0
-        while (i < node_extra_len(root_id)) {
+        forge declaration_count = node_extra_len(root_id)
+        while (i < declaration_count) {
             forge id = node_get_extra(root_id, i)
             forge n: Node = node_get(id)
             if (n.kind == NK_VAR_DECL || n.kind == NK_CONST_DECL) {
@@ -469,7 +472,8 @@ namespace llvmgen {
         collect_strings(n.c2)
         collect_strings(n.c3)
         forge i = 0
-        while (i < node_extra_len(id)) {
+        forge extra_count = node_extra_len(id)
+        while (i < extra_count) {
             collect_strings(node_get_extra(id, i))
             i++
         }
@@ -477,7 +481,8 @@ namespace llvmgen {
 
     vein collect_all_strings() -> void {
         forge i = 0
-        while (i < node_pool_len()) {
+        forge pool_count = node_pool_len()
+        while (i < pool_count) {
             forge n: Node = node_get(i)
             if (n.kind == NK_LIT_STRING) {
                 string_name_for(n.val)
@@ -1105,7 +1110,8 @@ namespace llvmgen {
             if (ofs_str_eq(n.val, "ofs_pow") || ofs_str_eq(n.val, "ofs_sqrt")) {
                 forge args2 = ""
                 forge ai = 0
-                while (ai < node_extra_len(id)) {
+                forge arg_count = node_extra_len(id)
+                while (ai < arg_count) {
                     if (ai > 0) { args2 = args2 + ", " }
                     forge aid = node_get_extra(id, ai)
                     emit_expr(aid)
@@ -1350,7 +1356,8 @@ namespace llvmgen {
 
             forge args = ""
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge arg_count = node_extra_len(id)
+            while (i < arg_count) {
                 if (i > 0) { args = args + ", " }
                 forge arg_id = node_get_extra(id, i)
                 emit_expr(arg_id)
@@ -1458,7 +1465,8 @@ namespace llvmgen {
         if (n.kind == NK_BLOCK) {
             push_scope()
             forge bi = 0
-            while (bi < node_extra_len(id)) {
+            forge statement_count = node_extra_len(id)
+            while (bi < statement_count) {
                 emit_stmt(node_get_extra(id, bi))
                 bi++
             }
@@ -1619,7 +1627,8 @@ namespace llvmgen {
             cg_emit("  call void @__ofs_init_globals()")
             forge body_id = n.c2
             forge i = 0
-            while (i < node_extra_len(body_id)) {
+            forge statement_count = node_extra_len(body_id)
+            while (i < statement_count) {
                 emit_stmt(node_get_extra(body_id, i))
                 i++
             }
@@ -1646,7 +1655,8 @@ namespace llvmgen {
             cg_emit_raw("define " + llvm_type(_current_ret_type) + " @" + n.val + "(")
             forge params_id = n.c0
             forge pi = 0
-            while (pi < node_extra_len(params_id)) {
+            forge param_count = node_extra_len(params_id)
+            while (pi < param_count) {
                 if (pi > 0) { cg_emit_raw(", ") }
                 forge param_id = node_get_extra(params_id, pi)
                 forge param: Node = node_get(param_id)
@@ -1664,7 +1674,7 @@ namespace llvmgen {
             cg_emit("entry:")
 
             pi = 0
-            while (pi < node_extra_len(params_id)) {
+            while (pi < param_count) {
                 forge param_id2 = node_get_extra(params_id, pi)
                 forge param2: Node = node_get(param_id2)
                 forge pt2 = "stone"
@@ -1686,7 +1696,8 @@ namespace llvmgen {
 
             forge fbody = n.c2
             forge si = 0
-            while (si < node_extra_len(fbody)) {
+            forge statement_count = node_extra_len(fbody)
+            while (si < statement_count) {
                 emit_stmt(node_get_extra(fbody, si))
                 si++
             }
@@ -1726,14 +1737,16 @@ namespace llvmgen {
         emit_global_init()
 
         forge i = 0
-        while (i < node_extra_len(root_id)) {
+        forge declaration_count = node_extra_len(root_id)
+        while (i < declaration_count) {
             forge decl_id = node_get_extra(root_id, i)
             forge n: Node = node_get(decl_id)
             if (n.kind == NK_CORE_DECL || n.kind == NK_FN_DECL) {
                 emit_function(decl_id)
             } else if (n.kind == NK_NAMESPACE || n.kind == NK_IMPL) {
                 forge j = 0
-                while (j < node_extra_len(decl_id)) {
+                forge member_count = node_extra_len(decl_id)
+                while (j < member_count) {
                     forge member_id = node_get_extra(decl_id, j)
                     forge m: Node = node_get(member_id)
                     if (m.kind == NK_CORE_DECL || m.kind == NK_FN_DECL) {

@@ -226,7 +226,8 @@ namespace typeck {
         
         if (n.kind == NK_CALL) {
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge arg_count = node_extra_len(id)
+            while (i < arg_count) {
                 forge arg_id = node_get_extra(id, i)
                 check_node(arg_id)
                 i++
@@ -323,7 +324,8 @@ namespace typeck {
         
         if (n.kind == NK_BLOCK) {
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge statement_count = node_extra_len(id)
+            while (i < statement_count) {
                 forge stmt_id = node_get_extra(id, i)
                 check_node(stmt_id)
                 i++
@@ -359,7 +361,8 @@ namespace typeck {
             forge params_id = n.c0
             if (params_id >= 0) {
                 forge i = 0
-                while (i < node_extra_len(params_id)) {
+                forge param_count = node_extra_len(params_id)
+                while (i < param_count) {
                     forge param_id = node_get_extra(params_id, i)
                     forge param: Node = node_get(param_id)
                     forge param_type_id = param.c0
@@ -394,7 +397,8 @@ namespace typeck {
             declare(type_sym)
 
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge field_count = node_extra_len(id)
+            while (i < field_count) {
                 forge field_id = node_get_extra(id, i)
                 forge field: Node = node_get(field_id)
                 if (field.c0 >= 0) {
@@ -411,7 +415,8 @@ namespace typeck {
 
         if (n.kind == NK_IMPL) {
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge method_count = node_extra_len(id)
+            while (i < method_count) {
                 forge method_id = node_get_extra(id, i)
                 check_node(method_id)
                 i++
@@ -422,7 +427,8 @@ namespace typeck {
         if (n.kind == NK_NAMESPACE) {
             push_scope()
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge member_count = node_extra_len(id)
+            while (i < member_count) {
                 forge member_id = node_get_extra(id, i)
                 check_node(member_id)
                 i++
@@ -447,7 +453,8 @@ namespace typeck {
         if (n.kind == NK_PROGRAM) {
             // predeclare top-level functions for call resolution
             forge d = 0
-            while (d < node_extra_len(id)) {
+            forge declaration_count = node_extra_len(id)
+            while (d < declaration_count) {
                 forge decl_id = node_get_extra(id, d)
                 forge decl: Node = node_get(decl_id)
                 if (decl.kind == NK_FN_DECL || decl.kind == NK_CORE_DECL) {
@@ -470,7 +477,8 @@ namespace typeck {
                     declare(ext_sym)
                 } else if (decl.kind == NK_NAMESPACE || decl.kind == NK_IMPL) {
                     forge j = 0
-                    while (j < node_extra_len(decl_id)) {
+                    forge member_count = node_extra_len(decl_id)
+                    while (j < member_count) {
                         forge member_id = node_get_extra(decl_id, j)
                         forge member: Node = node_get(member_id)
                         if (member.kind == NK_FN_DECL || member.kind == NK_CORE_DECL || member.kind == NK_EXTERN_VN || member.kind == NK_RIFT_VN) {
@@ -490,7 +498,7 @@ namespace typeck {
             }
 
             forge i = 0
-            while (i < node_extra_len(id)) {
+            while (i < declaration_count) {
                 forge decl_id = node_get_extra(id, i)
                 check_node(decl_id)
                 i++

@@ -7146,27 +7146,30 @@ entry:
   store ptr %names, ptr %names.addr
   %i2653 = alloca i64, align 8
   store i64 0, ptr %i2653
+  %count2654 = alloca i64, align 8
+  %names_val2655 = load ptr, ptr %names.addr
+  %arr_len2656 = call i64 @ofs_array_len(ptr %names_val2655)
+  store i64 %arr_len2656, ptr %count2654
   br label %while_cond933
 
 while_cond933:
-  %i_val2654 = load i64, ptr %i2653
-  %names_val2655 = load ptr, ptr %names.addr
-  %arr_len2656 = call i64 @ofs_array_len(ptr %names_val2655)
-  %cmp2657 = icmp slt i64 %i_val2654, %arr_len2656
-  br i1 %cmp2657, label %while_body934, label %while_end935
+  %i_val2657 = load i64, ptr %i2653
+  %count_val2658 = load i64, ptr %count2654
+  %cmp2659 = icmp slt i64 %i_val2657, %count_val2658
+  br i1 %cmp2659, label %while_body934, label %while_end935
 
 while_body934:
-  %item2658 = alloca ptr, align 8
-  %names_val2659 = load ptr, ptr %names.addr
-  %i_val2660 = load i64, ptr %i2653
-  %arr_get2661 = call ptr @ofs_array_get(ptr %names_val2659, i64 %i_val2660)
-  %arr_item2662 = load ptr, ptr %arr_get2661
-  store ptr %arr_item2662, ptr %item2658
-  %item_val2663 = load ptr, ptr %item2658
-  %name_val2664 = load ptr, ptr %name.addr
-  %streq2665 = call i32 @ofs_str_eq(ptr %item_val2663, ptr %name_val2664)
-  %cond2666 = icmp ne i32 %streq2665, 0
-  br i1 %cond2666, label %if_then936, label %if_else937
+  %item2660 = alloca ptr, align 8
+  %names_val2661 = load ptr, ptr %names.addr
+  %i_val2662 = load i64, ptr %i2653
+  %arr_get2663 = call ptr @ofs_array_get(ptr %names_val2661, i64 %i_val2662)
+  %arr_item2664 = load ptr, ptr %arr_get2663
+  store ptr %arr_item2664, ptr %item2660
+  %item_val2665 = load ptr, ptr %item2660
+  %name_val2666 = load ptr, ptr %name.addr
+  %streq2667 = call i32 @ofs_str_eq(ptr %item_val2665, ptr %name_val2666)
+  %cond2668 = icmp ne i32 %streq2667, 0
+  br i1 %cond2668, label %if_then936, label %if_else937
 
 if_then936:
   ret i32 1
@@ -7175,9 +7178,9 @@ if_else937:
   br label %if_end938
 
 if_end938:
-  %post_old2667 = load i64, ptr %i2653
-  %post_new2668 = add i64 %post_old2667, 1
-  store i64 %post_new2668, ptr %i2653
+  %post_old2669 = load i64, ptr %i2653
+  %post_new2670 = add i64 %post_old2669, 1
+  store i64 %post_new2670, ptr %i2653
   br label %while_cond933
 
 while_end935:
@@ -7192,9 +7195,9 @@ entry:
   store ptr %ns_name, ptr %ns_name.addr
   %names.addr = alloca ptr, align 8
   store ptr %names, ptr %names.addr
-  %id_val2669 = load i64, ptr %id.addr
-  %cmp2670 = icmp slt i64 %id_val2669, 0
-  br i1 %cmp2670, label %if_then939, label %if_else940
+  %id_val2671 = load i64, ptr %id.addr
+  %cmp2672 = icmp slt i64 %id_val2671, 0
+  br i1 %cmp2672, label %if_then939, label %if_else940
 
 if_then939:
   ret void
@@ -7203,35 +7206,35 @@ if_else940:
   br label %if_end941
 
 if_end941:
-  %obj2672 = call ptr @ofs_alloc(i64 4096)
-  %id_val2673 = load i64, ptr %id.addr
-  %call2674 = call ptr @node_get(i64 %id_val2673)
-  %named_val2675 = load %Node, ptr %call2674
-  store %Node %named_val2675, ptr %obj2672
-  %field_ptr2676 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 0
-  %field2677 = load i64, ptr %field_ptr2676
-  %NK_CALL_val2678 = load i64, ptr @NK_CALL
-  %cmp2679 = icmp eq i64 %field2677, %NK_CALL_val2678
-  br i1 %cmp2679, label %if_then942, label %if_else943
+  %obj2674 = call ptr @ofs_alloc(i64 4096)
+  %id_val2675 = load i64, ptr %id.addr
+  %call2676 = call ptr @node_get(i64 %id_val2675)
+  %named_val2677 = load %Node, ptr %call2676
+  store %Node %named_val2677, ptr %obj2674
+  %field_ptr2678 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 0
+  %field2679 = load i64, ptr %field_ptr2678
+  %NK_CALL_val2680 = load i64, ptr @NK_CALL
+  %cmp2681 = icmp eq i64 %field2679, %NK_CALL_val2680
+  br i1 %cmp2681, label %if_then942, label %if_else943
 
 if_then942:
-  %field_ptr2680 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 1
-  %field2681 = load ptr, ptr %field_ptr2680
-  %names_val2682 = load ptr, ptr %names.addr
-  %call2683 = call i32 @parser___name_in_list(ptr %field2681, ptr %names_val2682)
-  %cond2684 = icmp ne i32 %call2683, 0
-  br i1 %cond2684, label %if_then945, label %if_else946
+  %field_ptr2682 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 1
+  %field2683 = load ptr, ptr %field_ptr2682
+  %names_val2684 = load ptr, ptr %names.addr
+  %call2685 = call i32 @parser___name_in_list(ptr %field2683, ptr %names_val2684)
+  %cond2686 = icmp ne i32 %call2685, 0
+  br i1 %cond2686, label %if_then945, label %if_else946
 
 if_then945:
-  %field_ptr2685 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 1
-  %ns_name_val2686 = load ptr, ptr %ns_name.addr
-  %concat2687 = call ptr @ofs_str_concat(ptr %ns_name_val2686, ptr @str.141)
-  %field_ptr2688 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 1
-  %field2689 = load ptr, ptr %field_ptr2688
-  %concat2690 = call ptr @ofs_str_concat(ptr %concat2687, ptr %field2689)
-  store ptr %concat2690, ptr %field_ptr2685
-  %id_val2691 = load i64, ptr %id.addr
-  call void @node_set(i64 %id_val2691, ptr %obj2672)
+  %field_ptr2687 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 1
+  %ns_name_val2688 = load ptr, ptr %ns_name.addr
+  %concat2689 = call ptr @ofs_str_concat(ptr %ns_name_val2688, ptr @str.141)
+  %field_ptr2690 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 1
+  %field2691 = load ptr, ptr %field_ptr2690
+  %concat2692 = call ptr @ofs_str_concat(ptr %concat2689, ptr %field2691)
+  store ptr %concat2692, ptr %field_ptr2687
+  %id_val2693 = load i64, ptr %id.addr
+  call void @node_set(i64 %id_val2693, ptr %obj2674)
   br label %if_end947
 
 if_else946:
@@ -7244,30 +7247,30 @@ if_else943:
   br label %if_end944
 
 if_end944:
-  %field_ptr2692 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 0
-  %field2693 = load i64, ptr %field_ptr2692
-  %NK_IDENT_val2694 = load i64, ptr @NK_IDENT
-  %cmp2695 = icmp eq i64 %field2693, %NK_IDENT_val2694
-  br i1 %cmp2695, label %if_then948, label %if_else949
+  %field_ptr2694 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 0
+  %field2695 = load i64, ptr %field_ptr2694
+  %NK_IDENT_val2696 = load i64, ptr @NK_IDENT
+  %cmp2697 = icmp eq i64 %field2695, %NK_IDENT_val2696
+  br i1 %cmp2697, label %if_then948, label %if_else949
 
 if_then948:
-  %field_ptr2696 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 1
-  %field2697 = load ptr, ptr %field_ptr2696
-  %names_val2698 = load ptr, ptr %names.addr
-  %call2699 = call i32 @parser___name_in_list(ptr %field2697, ptr %names_val2698)
-  %cond2700 = icmp ne i32 %call2699, 0
-  br i1 %cond2700, label %if_then951, label %if_else952
+  %field_ptr2698 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 1
+  %field2699 = load ptr, ptr %field_ptr2698
+  %names_val2700 = load ptr, ptr %names.addr
+  %call2701 = call i32 @parser___name_in_list(ptr %field2699, ptr %names_val2700)
+  %cond2702 = icmp ne i32 %call2701, 0
+  br i1 %cond2702, label %if_then951, label %if_else952
 
 if_then951:
-  %field_ptr2701 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 1
-  %ns_name_val2702 = load ptr, ptr %ns_name.addr
-  %concat2703 = call ptr @ofs_str_concat(ptr %ns_name_val2702, ptr @str.141)
-  %field_ptr2704 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 1
-  %field2705 = load ptr, ptr %field_ptr2704
-  %concat2706 = call ptr @ofs_str_concat(ptr %concat2703, ptr %field2705)
-  store ptr %concat2706, ptr %field_ptr2701
-  %id_val2707 = load i64, ptr %id.addr
-  call void @node_set(i64 %id_val2707, ptr %obj2672)
+  %field_ptr2703 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 1
+  %ns_name_val2704 = load ptr, ptr %ns_name.addr
+  %concat2705 = call ptr @ofs_str_concat(ptr %ns_name_val2704, ptr @str.141)
+  %field_ptr2706 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 1
+  %field2707 = load ptr, ptr %field_ptr2706
+  %concat2708 = call ptr @ofs_str_concat(ptr %concat2705, ptr %field2707)
+  store ptr %concat2708, ptr %field_ptr2703
+  %id_val2709 = load i64, ptr %id.addr
+  call void @node_set(i64 %id_val2709, ptr %obj2674)
   br label %if_end953
 
 if_else952:
@@ -7280,47 +7283,50 @@ if_else949:
   br label %if_end950
 
 if_end950:
-  %field_ptr2708 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 5
-  %field2709 = load i64, ptr %field_ptr2708
-  %ns_name_val2710 = load ptr, ptr %ns_name.addr
-  %names_val2711 = load ptr, ptr %names.addr
-  call void @parser___prefix_namespace_refs(i64 %field2709, ptr %ns_name_val2710, ptr %names_val2711)
-  %field_ptr2712 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 6
-  %field2713 = load i64, ptr %field_ptr2712
-  %ns_name_val2714 = load ptr, ptr %ns_name.addr
-  %names_val2715 = load ptr, ptr %names.addr
-  call void @parser___prefix_namespace_refs(i64 %field2713, ptr %ns_name_val2714, ptr %names_val2715)
-  %field_ptr2716 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 7
-  %field2717 = load i64, ptr %field_ptr2716
-  %ns_name_val2718 = load ptr, ptr %ns_name.addr
-  %names_val2719 = load ptr, ptr %names.addr
-  call void @parser___prefix_namespace_refs(i64 %field2717, ptr %ns_name_val2718, ptr %names_val2719)
-  %field_ptr2720 = getelementptr inbounds %Node, ptr %obj2672, i32 0, i32 8
-  %field2721 = load i64, ptr %field_ptr2720
-  %ns_name_val2722 = load ptr, ptr %ns_name.addr
-  %names_val2723 = load ptr, ptr %names.addr
-  call void @parser___prefix_namespace_refs(i64 %field2721, ptr %ns_name_val2722, ptr %names_val2723)
-  %i2724 = alloca i64, align 8
-  store i64 0, ptr %i2724
+  %field_ptr2710 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 5
+  %field2711 = load i64, ptr %field_ptr2710
+  %ns_name_val2712 = load ptr, ptr %ns_name.addr
+  %names_val2713 = load ptr, ptr %names.addr
+  call void @parser___prefix_namespace_refs(i64 %field2711, ptr %ns_name_val2712, ptr %names_val2713)
+  %field_ptr2714 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 6
+  %field2715 = load i64, ptr %field_ptr2714
+  %ns_name_val2716 = load ptr, ptr %ns_name.addr
+  %names_val2717 = load ptr, ptr %names.addr
+  call void @parser___prefix_namespace_refs(i64 %field2715, ptr %ns_name_val2716, ptr %names_val2717)
+  %field_ptr2718 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 7
+  %field2719 = load i64, ptr %field_ptr2718
+  %ns_name_val2720 = load ptr, ptr %ns_name.addr
+  %names_val2721 = load ptr, ptr %names.addr
+  call void @parser___prefix_namespace_refs(i64 %field2719, ptr %ns_name_val2720, ptr %names_val2721)
+  %field_ptr2722 = getelementptr inbounds %Node, ptr %obj2674, i32 0, i32 8
+  %field2723 = load i64, ptr %field_ptr2722
+  %ns_name_val2724 = load ptr, ptr %ns_name.addr
+  %names_val2725 = load ptr, ptr %names.addr
+  call void @parser___prefix_namespace_refs(i64 %field2723, ptr %ns_name_val2724, ptr %names_val2725)
+  %i2726 = alloca i64, align 8
+  store i64 0, ptr %i2726
+  %extra_count2727 = alloca i64, align 8
+  %id_val2728 = load i64, ptr %id.addr
+  %call2729 = call i64 @node_extra_len(i64 %id_val2728)
+  store i64 %call2729, ptr %extra_count2727
   br label %while_cond954
 
 while_cond954:
-  %i_val2725 = load i64, ptr %i2724
-  %id_val2726 = load i64, ptr %id.addr
-  %call2727 = call i64 @node_extra_len(i64 %id_val2726)
-  %cmp2728 = icmp slt i64 %i_val2725, %call2727
-  br i1 %cmp2728, label %while_body955, label %while_end956
+  %i_val2730 = load i64, ptr %i2726
+  %extra_count_val2731 = load i64, ptr %extra_count2727
+  %cmp2732 = icmp slt i64 %i_val2730, %extra_count_val2731
+  br i1 %cmp2732, label %while_body955, label %while_end956
 
 while_body955:
-  %id_val2729 = load i64, ptr %id.addr
-  %i_val2730 = load i64, ptr %i2724
-  %call2731 = call i64 @node_get_extra(i64 %id_val2729, i64 %i_val2730)
-  %ns_name_val2732 = load ptr, ptr %ns_name.addr
-  %names_val2733 = load ptr, ptr %names.addr
-  call void @parser___prefix_namespace_refs(i64 %call2731, ptr %ns_name_val2732, ptr %names_val2733)
-  %post_old2734 = load i64, ptr %i2724
-  %post_new2735 = add i64 %post_old2734, 1
-  store i64 %post_new2735, ptr %i2724
+  %id_val2733 = load i64, ptr %id.addr
+  %i_val2734 = load i64, ptr %i2726
+  %call2735 = call i64 @node_get_extra(i64 %id_val2733, i64 %i_val2734)
+  %ns_name_val2736 = load ptr, ptr %ns_name.addr
+  %names_val2737 = load ptr, ptr %names.addr
+  call void @parser___prefix_namespace_refs(i64 %call2735, ptr %ns_name_val2736, ptr %names_val2737)
+  %post_old2738 = load i64, ptr %i2726
+  %post_new2739 = add i64 %post_old2738, 1
+  store i64 %post_new2739, ptr %i2726
   br label %while_cond954
 
 while_end956:
@@ -7329,117 +7335,117 @@ while_end956:
 
 define i64 @parser__parse_namespace_decl() {
 entry:
-  %obj2737 = call ptr @ofs_alloc(i64 4096)
-  %call2738 = call ptr @parser___cur()
-  %named_val2739 = load %Token, ptr %call2738
-  store %Token %named_val2739, ptr %obj2737
-  %call2740 = call ptr @parser___advance()
-  %call2741 = call i64 @parser___cur_kind()
-  %TOK_IDENT_val2742 = load i64, ptr @TOK_IDENT
-  %cmp2743 = icmp ne i64 %call2741, %TOK_IDENT_val2742
-  br i1 %cmp2743, label %if_then957, label %if_else958
+  %obj2741 = call ptr @ofs_alloc(i64 4096)
+  %call2742 = call ptr @parser___cur()
+  %named_val2743 = load %Token, ptr %call2742
+  store %Token %named_val2743, ptr %obj2741
+  %call2744 = call ptr @parser___advance()
+  %call2745 = call i64 @parser___cur_kind()
+  %TOK_IDENT_val2746 = load i64, ptr @TOK_IDENT
+  %cmp2747 = icmp ne i64 %call2745, %TOK_IDENT_val2746
+  br i1 %cmp2747, label %if_then957, label %if_else958
 
 if_then957:
   call void @parser___error(ptr @str.169)
-  %neg2744 = sub i64 0, 1
-  ret i64 %neg2744
+  %neg2748 = sub i64 0, 1
+  ret i64 %neg2748
 
 if_else958:
   br label %if_end959
 
 if_end959:
-  %ns_name2745 = alloca ptr, align 8
-  %call2746 = call ptr @parser___cur_val()
-  store ptr %call2746, ptr %ns_name2745
-  %ns_line2747 = alloca i64, align 8
-  %call2748 = call ptr @parser___cur()
-  %field_ptr2749 = getelementptr inbounds %Token, ptr %call2748, i32 0, i32 2
-  %field2750 = load i64, ptr %field_ptr2749
-  store i64 %field2750, ptr %ns_line2747
-  %ns_col2751 = alloca i64, align 8
+  %ns_name2749 = alloca ptr, align 8
+  %call2750 = call ptr @parser___cur_val()
+  store ptr %call2750, ptr %ns_name2749
+  %ns_line2751 = alloca i64, align 8
   %call2752 = call ptr @parser___cur()
-  %field_ptr2753 = getelementptr inbounds %Token, ptr %call2752, i32 0, i32 3
+  %field_ptr2753 = getelementptr inbounds %Token, ptr %call2752, i32 0, i32 2
   %field2754 = load i64, ptr %field_ptr2753
-  store i64 %field2754, ptr %ns_col2751
-  %call2755 = call ptr @parser___advance()
-  %TOK_LBRACE_val2756 = load i64, ptr @TOK_LBRACE
-  %call2757 = call i32 @parser___expect(i64 %TOK_LBRACE_val2756)
-  %cond2758 = icmp ne i32 %call2757, 0
-  %not2759 = xor i1 %cond2758, true
-  br i1 %not2759, label %if_then960, label %if_else961
+  store i64 %field2754, ptr %ns_line2751
+  %ns_col2755 = alloca i64, align 8
+  %call2756 = call ptr @parser___cur()
+  %field_ptr2757 = getelementptr inbounds %Token, ptr %call2756, i32 0, i32 3
+  %field2758 = load i64, ptr %field_ptr2757
+  store i64 %field2758, ptr %ns_col2755
+  %call2759 = call ptr @parser___advance()
+  %TOK_LBRACE_val2760 = load i64, ptr @TOK_LBRACE
+  %call2761 = call i32 @parser___expect(i64 %TOK_LBRACE_val2760)
+  %cond2762 = icmp ne i32 %call2761, 0
+  %not2763 = xor i1 %cond2762, true
+  br i1 %not2763, label %if_then960, label %if_else961
 
 if_then960:
   call void @parser___error(ptr @str.170)
-  %neg2760 = sub i64 0, 1
-  ret i64 %neg2760
+  %neg2764 = sub i64 0, 1
+  ret i64 %neg2764
 
 if_else961:
   br label %if_end962
 
 if_end962:
-  %ns2761 = alloca i64, align 8
-  %NK_NAMESPACE_val2762 = load i64, ptr @NK_NAMESPACE
-  %ns_name_val2763 = load ptr, ptr %ns_name2745
-  %ns_line_val2764 = load i64, ptr %ns_line2747
-  %ns_col_val2765 = load i64, ptr %ns_col2751
-  %call2766 = call i64 @node_new(i64 %NK_NAMESPACE_val2762, ptr %ns_name_val2763, i64 %ns_line_val2764, i64 %ns_col_val2765)
-  store i64 %call2766, ptr %ns2761
-  %local_names2767 = alloca ptr, align 8
-  %arr2768 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr2768, ptr %local_names2767
+  %ns2765 = alloca i64, align 8
+  %NK_NAMESPACE_val2766 = load i64, ptr @NK_NAMESPACE
+  %ns_name_val2767 = load ptr, ptr %ns_name2749
+  %ns_line_val2768 = load i64, ptr %ns_line2751
+  %ns_col_val2769 = load i64, ptr %ns_col2755
+  %call2770 = call i64 @node_new(i64 %NK_NAMESPACE_val2766, ptr %ns_name_val2767, i64 %ns_line_val2768, i64 %ns_col_val2769)
+  store i64 %call2770, ptr %ns2765
+  %local_names2771 = alloca ptr, align 8
+  %arr2772 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr2772, ptr %local_names2771
   br label %while_cond963
 
 while_cond963:
-  %call2769 = call i64 @parser___cur_kind()
-  %TOK_RBRACE_val2770 = load i64, ptr @TOK_RBRACE
-  %cmp2771 = icmp ne i64 %call2769, %TOK_RBRACE_val2770
-  %call2772 = call i64 @parser___cur_kind()
-  %TOK_EOF_val2773 = load i64, ptr @TOK_EOF
-  %cmp2774 = icmp ne i64 %call2772, %TOK_EOF_val2773
-  %logic2775 = and i1 %cmp2771, %cmp2774
-  br i1 %logic2775, label %while_body964, label %while_end965
+  %call2773 = call i64 @parser___cur_kind()
+  %TOK_RBRACE_val2774 = load i64, ptr @TOK_RBRACE
+  %cmp2775 = icmp ne i64 %call2773, %TOK_RBRACE_val2774
+  %call2776 = call i64 @parser___cur_kind()
+  %TOK_EOF_val2777 = load i64, ptr @TOK_EOF
+  %cmp2778 = icmp ne i64 %call2776, %TOK_EOF_val2777
+  %logic2779 = and i1 %cmp2775, %cmp2778
+  br i1 %logic2779, label %while_body964, label %while_end965
 
 while_body964:
-  %member2776 = alloca i64, align 8
-  %neg2777 = sub i64 0, 1
-  store i64 %neg2777, ptr %member2776
-  %call2778 = call i64 @parser___cur_kind()
-  %TOK_VEIN_val2779 = load i64, ptr @TOK_VEIN
-  %cmp2780 = icmp eq i64 %call2778, %TOK_VEIN_val2779
-  %call2781 = call i64 @parser___cur_kind()
-  %TOK_CORE_val2782 = load i64, ptr @TOK_CORE
-  %cmp2783 = icmp eq i64 %call2781, %TOK_CORE_val2782
-  %logic2784 = or i1 %cmp2780, %cmp2783
-  br i1 %logic2784, label %if_then966, label %if_else967
+  %member2780 = alloca i64, align 8
+  %neg2781 = sub i64 0, 1
+  store i64 %neg2781, ptr %member2780
+  %call2782 = call i64 @parser___cur_kind()
+  %TOK_VEIN_val2783 = load i64, ptr @TOK_VEIN
+  %cmp2784 = icmp eq i64 %call2782, %TOK_VEIN_val2783
+  %call2785 = call i64 @parser___cur_kind()
+  %TOK_CORE_val2786 = load i64, ptr @TOK_CORE
+  %cmp2787 = icmp eq i64 %call2785, %TOK_CORE_val2786
+  %logic2788 = or i1 %cmp2784, %cmp2787
+  br i1 %logic2788, label %if_then966, label %if_else967
 
 if_then966:
-  %call2785 = call i64 @parser__parse_fn_decl()
-  store i64 %call2785, ptr %member2776
-  %member_val2786 = load i64, ptr %member2776
-  %cmp2787 = icmp sge i64 %member_val2786, 0
-  br i1 %cmp2787, label %if_then969, label %if_else970
+  %call2789 = call i64 @parser__parse_fn_decl()
+  store i64 %call2789, ptr %member2780
+  %member_val2790 = load i64, ptr %member2780
+  %cmp2791 = icmp sge i64 %member_val2790, 0
+  br i1 %cmp2791, label %if_then969, label %if_else970
 
 if_then969:
-  %obj2789 = call ptr @ofs_alloc(i64 4096)
-  %member_val2790 = load i64, ptr %member2776
-  %call2791 = call ptr @node_get(i64 %member_val2790)
-  %named_val2792 = load %Node, ptr %call2791
-  store %Node %named_val2792, ptr %obj2789
-  %local_names_val2793 = load ptr, ptr %local_names2767
-  %field_ptr2794 = getelementptr inbounds %Node, ptr %obj2789, i32 0, i32 1
-  %field2795 = load ptr, ptr %field_ptr2794
-  %arr_push2796 = alloca ptr, align 8
-  store ptr %field2795, ptr %arr_push2796
-  call void @ofs_array_push(ptr %local_names_val2793, ptr %arr_push2796)
-  %field_ptr2797 = getelementptr inbounds %Node, ptr %obj2789, i32 0, i32 1
-  %ns_name_val2798 = load ptr, ptr %ns_name2745
-  %concat2799 = call ptr @ofs_str_concat(ptr %ns_name_val2798, ptr @str.141)
-  %field_ptr2800 = getelementptr inbounds %Node, ptr %obj2789, i32 0, i32 1
-  %field2801 = load ptr, ptr %field_ptr2800
-  %concat2802 = call ptr @ofs_str_concat(ptr %concat2799, ptr %field2801)
-  store ptr %concat2802, ptr %field_ptr2797
-  %member_val2803 = load i64, ptr %member2776
-  call void @node_set(i64 %member_val2803, ptr %obj2789)
+  %obj2793 = call ptr @ofs_alloc(i64 4096)
+  %member_val2794 = load i64, ptr %member2780
+  %call2795 = call ptr @node_get(i64 %member_val2794)
+  %named_val2796 = load %Node, ptr %call2795
+  store %Node %named_val2796, ptr %obj2793
+  %local_names_val2797 = load ptr, ptr %local_names2771
+  %field_ptr2798 = getelementptr inbounds %Node, ptr %obj2793, i32 0, i32 1
+  %field2799 = load ptr, ptr %field_ptr2798
+  %arr_push2800 = alloca ptr, align 8
+  store ptr %field2799, ptr %arr_push2800
+  call void @ofs_array_push(ptr %local_names_val2797, ptr %arr_push2800)
+  %field_ptr2801 = getelementptr inbounds %Node, ptr %obj2793, i32 0, i32 1
+  %ns_name_val2802 = load ptr, ptr %ns_name2749
+  %concat2803 = call ptr @ofs_str_concat(ptr %ns_name_val2802, ptr @str.141)
+  %field_ptr2804 = getelementptr inbounds %Node, ptr %obj2793, i32 0, i32 1
+  %field2805 = load ptr, ptr %field_ptr2804
+  %concat2806 = call ptr @ofs_str_concat(ptr %concat2803, ptr %field2805)
+  store ptr %concat2806, ptr %field_ptr2801
+  %member_val2807 = load i64, ptr %member2780
+  call void @node_set(i64 %member_val2807, ptr %obj2793)
   br label %if_end971
 
 if_else970:
@@ -7449,43 +7455,43 @@ if_end971:
   br label %if_end968
 
 if_else967:
-  %call2804 = call i64 @parser___cur_kind()
-  %TOK_FORGE_val2805 = load i64, ptr @TOK_FORGE
-  %cmp2806 = icmp eq i64 %call2804, %TOK_FORGE_val2805
-  %call2807 = call i64 @parser___cur_kind()
-  %TOK_CONST_val2808 = load i64, ptr @TOK_CONST
-  %cmp2809 = icmp eq i64 %call2807, %TOK_CONST_val2808
-  %logic2810 = or i1 %cmp2806, %cmp2809
-  br i1 %logic2810, label %if_then972, label %if_else973
+  %call2808 = call i64 @parser___cur_kind()
+  %TOK_FORGE_val2809 = load i64, ptr @TOK_FORGE
+  %cmp2810 = icmp eq i64 %call2808, %TOK_FORGE_val2809
+  %call2811 = call i64 @parser___cur_kind()
+  %TOK_CONST_val2812 = load i64, ptr @TOK_CONST
+  %cmp2813 = icmp eq i64 %call2811, %TOK_CONST_val2812
+  %logic2814 = or i1 %cmp2810, %cmp2813
+  br i1 %logic2814, label %if_then972, label %if_else973
 
 if_then972:
-  %call2811 = call i64 @parser__parse_stmt()
-  store i64 %call2811, ptr %member2776
-  %member_val2812 = load i64, ptr %member2776
-  %cmp2813 = icmp sge i64 %member_val2812, 0
-  br i1 %cmp2813, label %if_then975, label %if_else976
+  %call2815 = call i64 @parser__parse_stmt()
+  store i64 %call2815, ptr %member2780
+  %member_val2816 = load i64, ptr %member2780
+  %cmp2817 = icmp sge i64 %member_val2816, 0
+  br i1 %cmp2817, label %if_then975, label %if_else976
 
 if_then975:
-  %obj2815 = call ptr @ofs_alloc(i64 4096)
-  %member_val2816 = load i64, ptr %member2776
-  %call2817 = call ptr @node_get(i64 %member_val2816)
-  %named_val2818 = load %Node, ptr %call2817
-  store %Node %named_val2818, ptr %obj2815
-  %local_names_val2819 = load ptr, ptr %local_names2767
-  %field_ptr2820 = getelementptr inbounds %Node, ptr %obj2815, i32 0, i32 1
-  %field2821 = load ptr, ptr %field_ptr2820
-  %arr_push2822 = alloca ptr, align 8
-  store ptr %field2821, ptr %arr_push2822
-  call void @ofs_array_push(ptr %local_names_val2819, ptr %arr_push2822)
-  %field_ptr2823 = getelementptr inbounds %Node, ptr %obj2815, i32 0, i32 1
-  %ns_name_val2824 = load ptr, ptr %ns_name2745
-  %concat2825 = call ptr @ofs_str_concat(ptr %ns_name_val2824, ptr @str.141)
-  %field_ptr2826 = getelementptr inbounds %Node, ptr %obj2815, i32 0, i32 1
-  %field2827 = load ptr, ptr %field_ptr2826
-  %concat2828 = call ptr @ofs_str_concat(ptr %concat2825, ptr %field2827)
-  store ptr %concat2828, ptr %field_ptr2823
-  %member_val2829 = load i64, ptr %member2776
-  call void @node_set(i64 %member_val2829, ptr %obj2815)
+  %obj2819 = call ptr @ofs_alloc(i64 4096)
+  %member_val2820 = load i64, ptr %member2780
+  %call2821 = call ptr @node_get(i64 %member_val2820)
+  %named_val2822 = load %Node, ptr %call2821
+  store %Node %named_val2822, ptr %obj2819
+  %local_names_val2823 = load ptr, ptr %local_names2771
+  %field_ptr2824 = getelementptr inbounds %Node, ptr %obj2819, i32 0, i32 1
+  %field2825 = load ptr, ptr %field_ptr2824
+  %arr_push2826 = alloca ptr, align 8
+  store ptr %field2825, ptr %arr_push2826
+  call void @ofs_array_push(ptr %local_names_val2823, ptr %arr_push2826)
+  %field_ptr2827 = getelementptr inbounds %Node, ptr %obj2819, i32 0, i32 1
+  %ns_name_val2828 = load ptr, ptr %ns_name2749
+  %concat2829 = call ptr @ofs_str_concat(ptr %ns_name_val2828, ptr @str.141)
+  %field_ptr2830 = getelementptr inbounds %Node, ptr %obj2819, i32 0, i32 1
+  %field2831 = load ptr, ptr %field_ptr2830
+  %concat2832 = call ptr @ofs_str_concat(ptr %concat2829, ptr %field2831)
+  store ptr %concat2832, ptr %field_ptr2827
+  %member_val2833 = load i64, ptr %member2780
+  call void @node_set(i64 %member_val2833, ptr %obj2819)
   br label %if_end977
 
 if_else976:
@@ -7495,63 +7501,63 @@ if_end977:
   br label %if_end974
 
 if_else973:
-  %call2830 = call i64 @parser___cur_kind()
-  %TOK_MONOLITH_val2831 = load i64, ptr @TOK_MONOLITH
-  %cmp2832 = icmp eq i64 %call2830, %TOK_MONOLITH_val2831
-  br i1 %cmp2832, label %if_then978, label %if_else979
+  %call2834 = call i64 @parser___cur_kind()
+  %TOK_MONOLITH_val2835 = load i64, ptr @TOK_MONOLITH
+  %cmp2836 = icmp eq i64 %call2834, %TOK_MONOLITH_val2835
+  br i1 %cmp2836, label %if_then978, label %if_else979
 
 if_then978:
-  %call2833 = call i64 @parser__parse_monolith_decl()
-  store i64 %call2833, ptr %member2776
+  %call2837 = call i64 @parser__parse_monolith_decl()
+  store i64 %call2837, ptr %member2780
   br label %if_end980
 
 if_else979:
-  %call2834 = call i64 @parser___cur_kind()
-  %TOK_EXTERN_val2835 = load i64, ptr @TOK_EXTERN
-  %cmp2836 = icmp eq i64 %call2834, %TOK_EXTERN_val2835
-  br i1 %cmp2836, label %if_then981, label %if_else982
+  %call2838 = call i64 @parser___cur_kind()
+  %TOK_EXTERN_val2839 = load i64, ptr @TOK_EXTERN
+  %cmp2840 = icmp eq i64 %call2838, %TOK_EXTERN_val2839
+  br i1 %cmp2840, label %if_then981, label %if_else982
 
 if_then981:
-  %call2837 = call i64 @parser__parse_extern_decl()
-  store i64 %call2837, ptr %member2776
+  %call2841 = call i64 @parser__parse_extern_decl()
+  store i64 %call2841, ptr %member2780
   br label %if_end983
 
 if_else982:
-  %call2838 = call i64 @parser___cur_kind()
-  %TOK_RIFT_val2839 = load i64, ptr @TOK_RIFT
-  %cmp2840 = icmp eq i64 %call2838, %TOK_RIFT_val2839
-  br i1 %cmp2840, label %if_then984, label %if_else985
+  %call2842 = call i64 @parser___cur_kind()
+  %TOK_RIFT_val2843 = load i64, ptr @TOK_RIFT
+  %cmp2844 = icmp eq i64 %call2842, %TOK_RIFT_val2843
+  br i1 %cmp2844, label %if_then984, label %if_else985
 
 if_then984:
-  %call2841 = call i64 @parser__parse_rift_decl()
-  store i64 %call2841, ptr %member2776
+  %call2845 = call i64 @parser__parse_rift_decl()
+  store i64 %call2845, ptr %member2780
   br label %if_end986
 
 if_else985:
-  %call2842 = call i64 @parser___cur_kind()
-  %TOK_IMPL_val2843 = load i64, ptr @TOK_IMPL
-  %cmp2844 = icmp eq i64 %call2842, %TOK_IMPL_val2843
-  br i1 %cmp2844, label %if_then987, label %if_else988
+  %call2846 = call i64 @parser___cur_kind()
+  %TOK_IMPL_val2847 = load i64, ptr @TOK_IMPL
+  %cmp2848 = icmp eq i64 %call2846, %TOK_IMPL_val2847
+  br i1 %cmp2848, label %if_then987, label %if_else988
 
 if_then987:
-  %call2845 = call i64 @parser__parse_impl_decl()
-  store i64 %call2845, ptr %member2776
+  %call2849 = call i64 @parser__parse_impl_decl()
+  store i64 %call2849, ptr %member2780
   br label %if_end989
 
 if_else988:
-  %call2846 = call i64 @parser___cur_kind()
-  %TOK_STRATA_val2847 = load i64, ptr @TOK_STRATA
-  %cmp2848 = icmp eq i64 %call2846, %TOK_STRATA_val2847
-  br i1 %cmp2848, label %if_then990, label %if_else991
+  %call2850 = call i64 @parser___cur_kind()
+  %TOK_STRATA_val2851 = load i64, ptr @TOK_STRATA
+  %cmp2852 = icmp eq i64 %call2850, %TOK_STRATA_val2851
+  br i1 %cmp2852, label %if_then990, label %if_else991
 
 if_then990:
-  %call2849 = call i64 @parser__parse_strata_decl()
-  store i64 %call2849, ptr %member2776
+  %call2853 = call i64 @parser__parse_strata_decl()
+  store i64 %call2853, ptr %member2780
   br label %if_end992
 
 if_else991:
   call void @parser___error(ptr @str.171)
-  %call2850 = call ptr @parser___advance()
+  %call2854 = call ptr @parser___advance()
   br label %if_end992
 
 if_end992:
@@ -7573,14 +7579,14 @@ if_end974:
   br label %if_end968
 
 if_end968:
-  %member_val2851 = load i64, ptr %member2776
-  %cmp2852 = icmp sge i64 %member_val2851, 0
-  br i1 %cmp2852, label %if_then993, label %if_else994
+  %member_val2855 = load i64, ptr %member2780
+  %cmp2856 = icmp sge i64 %member_val2855, 0
+  br i1 %cmp2856, label %if_then993, label %if_else994
 
 if_then993:
-  %ns_val2853 = load i64, ptr %ns2761
-  %member_val2854 = load i64, ptr %member2776
-  call void @node_add_extra(i64 %ns_val2853, i64 %member_val2854)
+  %ns_val2857 = load i64, ptr %ns2765
+  %member_val2858 = load i64, ptr %member2780
+  call void @node_add_extra(i64 %ns_val2857, i64 %member_val2858)
   br label %if_end995
 
 if_else994:
@@ -7590,11 +7596,11 @@ if_end995:
   br label %while_cond963
 
 while_end965:
-  %TOK_RBRACE_val2855 = load i64, ptr @TOK_RBRACE
-  %call2856 = call i32 @parser___expect(i64 %TOK_RBRACE_val2855)
-  %cond2857 = icmp ne i32 %call2856, 0
-  %not2858 = xor i1 %cond2857, true
-  br i1 %not2858, label %if_then996, label %if_else997
+  %TOK_RBRACE_val2859 = load i64, ptr @TOK_RBRACE
+  %call2860 = call i32 @parser___expect(i64 %TOK_RBRACE_val2859)
+  %cond2861 = icmp ne i32 %call2860, 0
+  %not2862 = xor i1 %cond2861, true
+  br i1 %not2862, label %if_then996, label %if_else997
 
 if_then996:
   call void @parser___error(ptr @str.172)
@@ -7604,157 +7610,160 @@ if_else997:
   br label %if_end998
 
 if_end998:
-  %i2859 = alloca i64, align 8
-  store i64 0, ptr %i2859
+  %i2863 = alloca i64, align 8
+  store i64 0, ptr %i2863
+  %member_count2864 = alloca i64, align 8
+  %ns_val2865 = load i64, ptr %ns2765
+  %call2866 = call i64 @node_extra_len(i64 %ns_val2865)
+  store i64 %call2866, ptr %member_count2864
   br label %while_cond999
 
 while_cond999:
-  %i_val2860 = load i64, ptr %i2859
-  %ns_val2861 = load i64, ptr %ns2761
-  %call2862 = call i64 @node_extra_len(i64 %ns_val2861)
-  %cmp2863 = icmp slt i64 %i_val2860, %call2862
-  br i1 %cmp2863, label %while_body1000, label %while_end1001
+  %i_val2867 = load i64, ptr %i2863
+  %member_count_val2868 = load i64, ptr %member_count2864
+  %cmp2869 = icmp slt i64 %i_val2867, %member_count_val2868
+  br i1 %cmp2869, label %while_body1000, label %while_end1001
 
 while_body1000:
-  %ns_val2864 = load i64, ptr %ns2761
-  %i_val2865 = load i64, ptr %i2859
-  %call2866 = call i64 @node_get_extra(i64 %ns_val2864, i64 %i_val2865)
-  %ns_name_val2867 = load ptr, ptr %ns_name2745
-  %local_names_val2868 = load ptr, ptr %local_names2767
-  call void @parser___prefix_namespace_refs(i64 %call2866, ptr %ns_name_val2867, ptr %local_names_val2868)
-  %post_old2869 = load i64, ptr %i2859
-  %post_new2870 = add i64 %post_old2869, 1
-  store i64 %post_new2870, ptr %i2859
+  %ns_val2870 = load i64, ptr %ns2765
+  %i_val2871 = load i64, ptr %i2863
+  %call2872 = call i64 @node_get_extra(i64 %ns_val2870, i64 %i_val2871)
+  %ns_name_val2873 = load ptr, ptr %ns_name2749
+  %local_names_val2874 = load ptr, ptr %local_names2771
+  call void @parser___prefix_namespace_refs(i64 %call2872, ptr %ns_name_val2873, ptr %local_names_val2874)
+  %post_old2875 = load i64, ptr %i2863
+  %post_new2876 = add i64 %post_old2875, 1
+  store i64 %post_new2876, ptr %i2863
   br label %while_cond999
 
 while_end1001:
-  %ns_val2871 = load i64, ptr %ns2761
-  ret i64 %ns_val2871
+  %ns_val2877 = load i64, ptr %ns2765
+  ret i64 %ns_val2877
 }
 
 define i64 @parser__parse_strata_decl() {
 entry:
-  %obj2873 = call ptr @ofs_alloc(i64 4096)
-  %call2874 = call ptr @parser___cur()
-  %named_val2875 = load %Token, ptr %call2874
-  store %Token %named_val2875, ptr %obj2873
-  %call2876 = call ptr @parser___advance()
-  %call2877 = call i64 @parser___cur_kind()
-  %TOK_IDENT_val2878 = load i64, ptr @TOK_IDENT
-  %cmp2879 = icmp ne i64 %call2877, %TOK_IDENT_val2878
-  br i1 %cmp2879, label %if_then1002, label %if_else1003
+  %obj2879 = call ptr @ofs_alloc(i64 4096)
+  %call2880 = call ptr @parser___cur()
+  %named_val2881 = load %Token, ptr %call2880
+  store %Token %named_val2881, ptr %obj2879
+  %call2882 = call ptr @parser___advance()
+  %call2883 = call i64 @parser___cur_kind()
+  %TOK_IDENT_val2884 = load i64, ptr @TOK_IDENT
+  %cmp2885 = icmp ne i64 %call2883, %TOK_IDENT_val2884
+  br i1 %cmp2885, label %if_then1002, label %if_else1003
 
 if_then1002:
   call void @parser___error(ptr @str.173)
-  %neg2880 = sub i64 0, 1
-  ret i64 %neg2880
+  %neg2886 = sub i64 0, 1
+  ret i64 %neg2886
 
 if_else1003:
   br label %if_end1004
 
 if_end1004:
-  %strata_name2881 = alloca ptr, align 8
-  %call2882 = call ptr @parser___cur_val()
-  store ptr %call2882, ptr %strata_name2881
-  %s_line2883 = alloca i64, align 8
-  %call2884 = call ptr @parser___cur()
-  %field_ptr2885 = getelementptr inbounds %Token, ptr %call2884, i32 0, i32 2
-  %field2886 = load i64, ptr %field_ptr2885
-  store i64 %field2886, ptr %s_line2883
-  %s_col2887 = alloca i64, align 8
-  %call2888 = call ptr @parser___cur()
-  %field_ptr2889 = getelementptr inbounds %Token, ptr %call2888, i32 0, i32 3
-  %field2890 = load i64, ptr %field_ptr2889
-  store i64 %field2890, ptr %s_col2887
-  %call2891 = call ptr @parser___advance()
-  %TOK_LBRACE_val2892 = load i64, ptr @TOK_LBRACE
-  %call2893 = call i32 @parser___expect(i64 %TOK_LBRACE_val2892)
-  %cond2894 = icmp ne i32 %call2893, 0
-  %not2895 = xor i1 %cond2894, true
-  br i1 %not2895, label %if_then1005, label %if_else1006
+  %strata_name2887 = alloca ptr, align 8
+  %call2888 = call ptr @parser___cur_val()
+  store ptr %call2888, ptr %strata_name2887
+  %s_line2889 = alloca i64, align 8
+  %call2890 = call ptr @parser___cur()
+  %field_ptr2891 = getelementptr inbounds %Token, ptr %call2890, i32 0, i32 2
+  %field2892 = load i64, ptr %field_ptr2891
+  store i64 %field2892, ptr %s_line2889
+  %s_col2893 = alloca i64, align 8
+  %call2894 = call ptr @parser___cur()
+  %field_ptr2895 = getelementptr inbounds %Token, ptr %call2894, i32 0, i32 3
+  %field2896 = load i64, ptr %field_ptr2895
+  store i64 %field2896, ptr %s_col2893
+  %call2897 = call ptr @parser___advance()
+  %TOK_LBRACE_val2898 = load i64, ptr @TOK_LBRACE
+  %call2899 = call i32 @parser___expect(i64 %TOK_LBRACE_val2898)
+  %cond2900 = icmp ne i32 %call2899, 0
+  %not2901 = xor i1 %cond2900, true
+  br i1 %not2901, label %if_then1005, label %if_else1006
 
 if_then1005:
   call void @parser___error(ptr @str.174)
-  %neg2896 = sub i64 0, 1
-  ret i64 %neg2896
+  %neg2902 = sub i64 0, 1
+  ret i64 %neg2902
 
 if_else1006:
   br label %if_end1007
 
 if_end1007:
-  %st2897 = alloca i64, align 8
-  %NK_STRATA_val2898 = load i64, ptr @NK_STRATA
-  %strata_name_val2899 = load ptr, ptr %strata_name2881
-  %s_line_val2900 = load i64, ptr %s_line2883
-  %s_col_val2901 = load i64, ptr %s_col2887
-  %call2902 = call i64 @node_new(i64 %NK_STRATA_val2898, ptr %strata_name_val2899, i64 %s_line_val2900, i64 %s_col_val2901)
-  store i64 %call2902, ptr %st2897
+  %st2903 = alloca i64, align 8
+  %NK_STRATA_val2904 = load i64, ptr @NK_STRATA
+  %strata_name_val2905 = load ptr, ptr %strata_name2887
+  %s_line_val2906 = load i64, ptr %s_line2889
+  %s_col_val2907 = load i64, ptr %s_col2893
+  %call2908 = call i64 @node_new(i64 %NK_STRATA_val2904, ptr %strata_name_val2905, i64 %s_line_val2906, i64 %s_col_val2907)
+  store i64 %call2908, ptr %st2903
   br label %while_cond1008
 
 while_cond1008:
-  %call2903 = call i64 @parser___cur_kind()
-  %TOK_RBRACE_val2904 = load i64, ptr @TOK_RBRACE
-  %cmp2905 = icmp ne i64 %call2903, %TOK_RBRACE_val2904
-  %call2906 = call i64 @parser___cur_kind()
-  %TOK_EOF_val2907 = load i64, ptr @TOK_EOF
-  %cmp2908 = icmp ne i64 %call2906, %TOK_EOF_val2907
-  %logic2909 = and i1 %cmp2905, %cmp2908
-  br i1 %logic2909, label %while_body1009, label %while_end1010
+  %call2909 = call i64 @parser___cur_kind()
+  %TOK_RBRACE_val2910 = load i64, ptr @TOK_RBRACE
+  %cmp2911 = icmp ne i64 %call2909, %TOK_RBRACE_val2910
+  %call2912 = call i64 @parser___cur_kind()
+  %TOK_EOF_val2913 = load i64, ptr @TOK_EOF
+  %cmp2914 = icmp ne i64 %call2912, %TOK_EOF_val2913
+  %logic2915 = and i1 %cmp2911, %cmp2914
+  br i1 %logic2915, label %while_body1009, label %while_end1010
 
 while_body1009:
-  %call2910 = call i64 @parser___cur_kind()
-  %TOK_IDENT_val2911 = load i64, ptr @TOK_IDENT
-  %cmp2912 = icmp ne i64 %call2910, %TOK_IDENT_val2911
-  br i1 %cmp2912, label %if_then1011, label %if_else1012
+  %call2916 = call i64 @parser___cur_kind()
+  %TOK_IDENT_val2917 = load i64, ptr @TOK_IDENT
+  %cmp2918 = icmp ne i64 %call2916, %TOK_IDENT_val2917
+  br i1 %cmp2918, label %if_then1011, label %if_else1012
 
 if_then1011:
   call void @parser___error(ptr @str.175)
-  %call2913 = call ptr @parser___advance()
+  %call2919 = call ptr @parser___advance()
   br label %while_cond1008
 
 if_else1012:
   br label %if_end1013
 
 if_end1013:
-  %v_name2914 = alloca ptr, align 8
-  %call2915 = call ptr @parser___cur_val()
-  store ptr %call2915, ptr %v_name2914
-  %v_line2916 = alloca i64, align 8
-  %call2917 = call ptr @parser___cur()
-  %field_ptr2918 = getelementptr inbounds %Token, ptr %call2917, i32 0, i32 2
-  %field2919 = load i64, ptr %field_ptr2918
-  store i64 %field2919, ptr %v_line2916
-  %v_col2920 = alloca i64, align 8
-  %call2921 = call ptr @parser___cur()
-  %field_ptr2922 = getelementptr inbounds %Token, ptr %call2921, i32 0, i32 3
-  %field2923 = load i64, ptr %field_ptr2922
-  store i64 %field2923, ptr %v_col2920
-  %call2924 = call ptr @parser___advance()
-  %variant2925 = alloca i64, align 8
-  %NK_VARIANT_val2926 = load i64, ptr @NK_VARIANT
-  %v_name_val2927 = load ptr, ptr %v_name2914
-  %v_line_val2928 = load i64, ptr %v_line2916
-  %v_col_val2929 = load i64, ptr %v_col2920
-  %call2930 = call i64 @node_new(i64 %NK_VARIANT_val2926, ptr %v_name_val2927, i64 %v_line_val2928, i64 %v_col_val2929)
-  store i64 %call2930, ptr %variant2925
-  %call2931 = call i64 @parser___cur_kind()
-  %TOK_LPAREN_val2932 = load i64, ptr @TOK_LPAREN
-  %cmp2933 = icmp eq i64 %call2931, %TOK_LPAREN_val2932
-  br i1 %cmp2933, label %if_then1014, label %if_else1015
+  %v_name2920 = alloca ptr, align 8
+  %call2921 = call ptr @parser___cur_val()
+  store ptr %call2921, ptr %v_name2920
+  %v_line2922 = alloca i64, align 8
+  %call2923 = call ptr @parser___cur()
+  %field_ptr2924 = getelementptr inbounds %Token, ptr %call2923, i32 0, i32 2
+  %field2925 = load i64, ptr %field_ptr2924
+  store i64 %field2925, ptr %v_line2922
+  %v_col2926 = alloca i64, align 8
+  %call2927 = call ptr @parser___cur()
+  %field_ptr2928 = getelementptr inbounds %Token, ptr %call2927, i32 0, i32 3
+  %field2929 = load i64, ptr %field_ptr2928
+  store i64 %field2929, ptr %v_col2926
+  %call2930 = call ptr @parser___advance()
+  %variant2931 = alloca i64, align 8
+  %NK_VARIANT_val2932 = load i64, ptr @NK_VARIANT
+  %v_name_val2933 = load ptr, ptr %v_name2920
+  %v_line_val2934 = load i64, ptr %v_line2922
+  %v_col_val2935 = load i64, ptr %v_col2926
+  %call2936 = call i64 @node_new(i64 %NK_VARIANT_val2932, ptr %v_name_val2933, i64 %v_line_val2934, i64 %v_col_val2935)
+  store i64 %call2936, ptr %variant2931
+  %call2937 = call i64 @parser___cur_kind()
+  %TOK_LPAREN_val2938 = load i64, ptr @TOK_LPAREN
+  %cmp2939 = icmp eq i64 %call2937, %TOK_LPAREN_val2938
+  br i1 %cmp2939, label %if_then1014, label %if_else1015
 
 if_then1014:
-  %call2934 = call ptr @parser___advance()
-  %v_type2935 = alloca i64, align 8
-  %call2936 = call i64 @parser__parse_type()
-  store i64 %call2936, ptr %v_type2935
-  %variant_val2937 = load i64, ptr %variant2925
-  %v_type_val2938 = load i64, ptr %v_type2935
-  call void @node_set_child(i64 %variant_val2937, i64 0, i64 %v_type_val2938)
-  %TOK_RPAREN_val2939 = load i64, ptr @TOK_RPAREN
-  %call2940 = call i32 @parser___expect(i64 %TOK_RPAREN_val2939)
-  %cond2941 = icmp ne i32 %call2940, 0
-  %not2942 = xor i1 %cond2941, true
-  br i1 %not2942, label %if_then1017, label %if_else1018
+  %call2940 = call ptr @parser___advance()
+  %v_type2941 = alloca i64, align 8
+  %call2942 = call i64 @parser__parse_type()
+  store i64 %call2942, ptr %v_type2941
+  %variant_val2943 = load i64, ptr %variant2931
+  %v_type_val2944 = load i64, ptr %v_type2941
+  call void @node_set_child(i64 %variant_val2943, i64 0, i64 %v_type_val2944)
+  %TOK_RPAREN_val2945 = load i64, ptr @TOK_RPAREN
+  %call2946 = call i32 @parser___expect(i64 %TOK_RPAREN_val2945)
+  %cond2947 = icmp ne i32 %call2946, 0
+  %not2948 = xor i1 %cond2947, true
+  br i1 %not2948, label %if_then1017, label %if_else1018
 
 if_then1017:
   call void @parser___error(ptr @str.176)
@@ -7770,20 +7779,20 @@ if_else1015:
   br label %if_end1016
 
 if_end1016:
-  %st_val2943 = load i64, ptr %st2897
-  %variant_val2944 = load i64, ptr %variant2925
-  call void @node_add_extra(i64 %st_val2943, i64 %variant_val2944)
-  %call2945 = call i64 @parser___cur_kind()
-  %TOK_COMMA_val2946 = load i64, ptr @TOK_COMMA
-  %cmp2947 = icmp eq i64 %call2945, %TOK_COMMA_val2946
-  %call2948 = call i64 @parser___cur_kind()
-  %TOK_SEMI_val2949 = load i64, ptr @TOK_SEMI
-  %cmp2950 = icmp eq i64 %call2948, %TOK_SEMI_val2949
-  %logic2951 = or i1 %cmp2947, %cmp2950
-  br i1 %logic2951, label %if_then1020, label %if_else1021
+  %st_val2949 = load i64, ptr %st2903
+  %variant_val2950 = load i64, ptr %variant2931
+  call void @node_add_extra(i64 %st_val2949, i64 %variant_val2950)
+  %call2951 = call i64 @parser___cur_kind()
+  %TOK_COMMA_val2952 = load i64, ptr @TOK_COMMA
+  %cmp2953 = icmp eq i64 %call2951, %TOK_COMMA_val2952
+  %call2954 = call i64 @parser___cur_kind()
+  %TOK_SEMI_val2955 = load i64, ptr @TOK_SEMI
+  %cmp2956 = icmp eq i64 %call2954, %TOK_SEMI_val2955
+  %logic2957 = or i1 %cmp2953, %cmp2956
+  br i1 %logic2957, label %if_then1020, label %if_else1021
 
 if_then1020:
-  %call2952 = call ptr @parser___advance()
+  %call2958 = call ptr @parser___advance()
   br label %if_end1022
 
 if_else1021:
@@ -7793,11 +7802,11 @@ if_end1022:
   br label %while_cond1008
 
 while_end1010:
-  %TOK_RBRACE_val2953 = load i64, ptr @TOK_RBRACE
-  %call2954 = call i32 @parser___expect(i64 %TOK_RBRACE_val2953)
-  %cond2955 = icmp ne i32 %call2954, 0
-  %not2956 = xor i1 %cond2955, true
-  br i1 %not2956, label %if_then1023, label %if_else1024
+  %TOK_RBRACE_val2959 = load i64, ptr @TOK_RBRACE
+  %call2960 = call i32 @parser___expect(i64 %TOK_RBRACE_val2959)
+  %cond2961 = icmp ne i32 %call2960, 0
+  %not2962 = xor i1 %cond2961, true
+  br i1 %not2962, label %if_then1023, label %if_else1024
 
 if_then1023:
   call void @parser___error(ptr @str.177)
@@ -7807,52 +7816,52 @@ if_else1024:
   br label %if_end1025
 
 if_end1025:
-  %st_val2957 = load i64, ptr %st2897
-  ret i64 %st_val2957
+  %st_val2963 = load i64, ptr %st2903
+  ret i64 %st_val2963
 }
 
 define i64 @parser__parse_program() {
 entry:
-  %program2958 = alloca i64, align 8
-  %NK_PROGRAM_val2959 = load i64, ptr @NK_PROGRAM
-  %call2960 = call i64 @node_new(i64 %NK_PROGRAM_val2959, ptr @str.63, i64 1, i64 1)
-  store i64 %call2960, ptr %program2958
+  %program2964 = alloca i64, align 8
+  %NK_PROGRAM_val2965 = load i64, ptr @NK_PROGRAM
+  %call2966 = call i64 @node_new(i64 %NK_PROGRAM_val2965, ptr @str.63, i64 1, i64 1)
+  store i64 %call2966, ptr %program2964
   br label %while_cond1026
 
 while_cond1026:
-  %call2961 = call i64 @parser___cur_kind()
-  %TOK_EOF_val2962 = load i64, ptr @TOK_EOF
-  %cmp2963 = icmp ne i64 %call2961, %TOK_EOF_val2962
-  br i1 %cmp2963, label %while_body1027, label %while_end1028
+  %call2967 = call i64 @parser___cur_kind()
+  %TOK_EOF_val2968 = load i64, ptr @TOK_EOF
+  %cmp2969 = icmp ne i64 %call2967, %TOK_EOF_val2968
+  br i1 %cmp2969, label %while_body1027, label %while_end1028
 
 while_body1027:
-  %obj2965 = call ptr @ofs_alloc(i64 4096)
-  %call2966 = call ptr @parser___cur()
-  %named_val2967 = load %Token, ptr %call2966
-  store %Token %named_val2967, ptr %obj2965
-  %field_ptr2968 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field2969 = load i64, ptr %field_ptr2968
-  %TOK_VEIN_val2970 = load i64, ptr @TOK_VEIN
-  %cmp2971 = icmp eq i64 %field2969, %TOK_VEIN_val2970
-  %field_ptr2972 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field2973 = load i64, ptr %field_ptr2972
-  %TOK_CORE_val2974 = load i64, ptr @TOK_CORE
-  %cmp2975 = icmp eq i64 %field2973, %TOK_CORE_val2974
-  %logic2976 = or i1 %cmp2971, %cmp2975
-  br i1 %logic2976, label %if_then1029, label %if_else1030
+  %obj2971 = call ptr @ofs_alloc(i64 4096)
+  %call2972 = call ptr @parser___cur()
+  %named_val2973 = load %Token, ptr %call2972
+  store %Token %named_val2973, ptr %obj2971
+  %field_ptr2974 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field2975 = load i64, ptr %field_ptr2974
+  %TOK_VEIN_val2976 = load i64, ptr @TOK_VEIN
+  %cmp2977 = icmp eq i64 %field2975, %TOK_VEIN_val2976
+  %field_ptr2978 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field2979 = load i64, ptr %field_ptr2978
+  %TOK_CORE_val2980 = load i64, ptr @TOK_CORE
+  %cmp2981 = icmp eq i64 %field2979, %TOK_CORE_val2980
+  %logic2982 = or i1 %cmp2977, %cmp2981
+  br i1 %logic2982, label %if_then1029, label %if_else1030
 
 if_then1029:
-  %decl2977 = alloca i64, align 8
-  %call2978 = call i64 @parser__parse_fn_decl()
-  store i64 %call2978, ptr %decl2977
-  %decl_val2979 = load i64, ptr %decl2977
-  %cmp2980 = icmp sge i64 %decl_val2979, 0
-  br i1 %cmp2980, label %if_then1032, label %if_else1033
+  %decl2983 = alloca i64, align 8
+  %call2984 = call i64 @parser__parse_fn_decl()
+  store i64 %call2984, ptr %decl2983
+  %decl_val2985 = load i64, ptr %decl2983
+  %cmp2986 = icmp sge i64 %decl_val2985, 0
+  br i1 %cmp2986, label %if_then1032, label %if_else1033
 
 if_then1032:
-  %program_val2981 = load i64, ptr %program2958
-  %decl_val2982 = load i64, ptr %decl2977
-  call void @node_add_extra(i64 %program_val2981, i64 %decl_val2982)
+  %program_val2987 = load i64, ptr %program2964
+  %decl_val2988 = load i64, ptr %decl2983
+  call void @node_add_extra(i64 %program_val2987, i64 %decl_val2988)
   br label %if_end1034
 
 if_else1033:
@@ -7862,24 +7871,24 @@ if_end1034:
   br label %if_end1031
 
 if_else1030:
-  %field_ptr2983 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field2984 = load i64, ptr %field_ptr2983
-  %TOK_MONOLITH_val2985 = load i64, ptr @TOK_MONOLITH
-  %cmp2986 = icmp eq i64 %field2984, %TOK_MONOLITH_val2985
-  br i1 %cmp2986, label %if_then1035, label %if_else1036
+  %field_ptr2989 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field2990 = load i64, ptr %field_ptr2989
+  %TOK_MONOLITH_val2991 = load i64, ptr @TOK_MONOLITH
+  %cmp2992 = icmp eq i64 %field2990, %TOK_MONOLITH_val2991
+  br i1 %cmp2992, label %if_then1035, label %if_else1036
 
 if_then1035:
-  %decl2987 = alloca i64, align 8
-  %call2988 = call i64 @parser__parse_monolith_decl()
-  store i64 %call2988, ptr %decl2987
-  %decl_val2989 = load i64, ptr %decl2987
-  %cmp2990 = icmp sge i64 %decl_val2989, 0
-  br i1 %cmp2990, label %if_then1038, label %if_else1039
+  %decl2993 = alloca i64, align 8
+  %call2994 = call i64 @parser__parse_monolith_decl()
+  store i64 %call2994, ptr %decl2993
+  %decl_val2995 = load i64, ptr %decl2993
+  %cmp2996 = icmp sge i64 %decl_val2995, 0
+  br i1 %cmp2996, label %if_then1038, label %if_else1039
 
 if_then1038:
-  %program_val2991 = load i64, ptr %program2958
-  %decl_val2992 = load i64, ptr %decl2987
-  call void @node_add_extra(i64 %program_val2991, i64 %decl_val2992)
+  %program_val2997 = load i64, ptr %program2964
+  %decl_val2998 = load i64, ptr %decl2993
+  call void @node_add_extra(i64 %program_val2997, i64 %decl_val2998)
   br label %if_end1040
 
 if_else1039:
@@ -7889,24 +7898,24 @@ if_end1040:
   br label %if_end1037
 
 if_else1036:
-  %field_ptr2993 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field2994 = load i64, ptr %field_ptr2993
-  %TOK_IMPL_val2995 = load i64, ptr @TOK_IMPL
-  %cmp2996 = icmp eq i64 %field2994, %TOK_IMPL_val2995
-  br i1 %cmp2996, label %if_then1041, label %if_else1042
+  %field_ptr2999 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field3000 = load i64, ptr %field_ptr2999
+  %TOK_IMPL_val3001 = load i64, ptr @TOK_IMPL
+  %cmp3002 = icmp eq i64 %field3000, %TOK_IMPL_val3001
+  br i1 %cmp3002, label %if_then1041, label %if_else1042
 
 if_then1041:
-  %decl2997 = alloca i64, align 8
-  %call2998 = call i64 @parser__parse_impl_decl()
-  store i64 %call2998, ptr %decl2997
-  %decl_val2999 = load i64, ptr %decl2997
-  %cmp3000 = icmp sge i64 %decl_val2999, 0
-  br i1 %cmp3000, label %if_then1044, label %if_else1045
+  %decl3003 = alloca i64, align 8
+  %call3004 = call i64 @parser__parse_impl_decl()
+  store i64 %call3004, ptr %decl3003
+  %decl_val3005 = load i64, ptr %decl3003
+  %cmp3006 = icmp sge i64 %decl_val3005, 0
+  br i1 %cmp3006, label %if_then1044, label %if_else1045
 
 if_then1044:
-  %program_val3001 = load i64, ptr %program2958
-  %decl_val3002 = load i64, ptr %decl2997
-  call void @node_add_extra(i64 %program_val3001, i64 %decl_val3002)
+  %program_val3007 = load i64, ptr %program2964
+  %decl_val3008 = load i64, ptr %decl3003
+  call void @node_add_extra(i64 %program_val3007, i64 %decl_val3008)
   br label %if_end1046
 
 if_else1045:
@@ -7916,24 +7925,24 @@ if_end1046:
   br label %if_end1043
 
 if_else1042:
-  %field_ptr3003 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field3004 = load i64, ptr %field_ptr3003
-  %TOK_NAMESPACE_val3005 = load i64, ptr @TOK_NAMESPACE
-  %cmp3006 = icmp eq i64 %field3004, %TOK_NAMESPACE_val3005
-  br i1 %cmp3006, label %if_then1047, label %if_else1048
+  %field_ptr3009 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field3010 = load i64, ptr %field_ptr3009
+  %TOK_NAMESPACE_val3011 = load i64, ptr @TOK_NAMESPACE
+  %cmp3012 = icmp eq i64 %field3010, %TOK_NAMESPACE_val3011
+  br i1 %cmp3012, label %if_then1047, label %if_else1048
 
 if_then1047:
-  %decl3007 = alloca i64, align 8
-  %call3008 = call i64 @parser__parse_namespace_decl()
-  store i64 %call3008, ptr %decl3007
-  %decl_val3009 = load i64, ptr %decl3007
-  %cmp3010 = icmp sge i64 %decl_val3009, 0
-  br i1 %cmp3010, label %if_then1050, label %if_else1051
+  %decl3013 = alloca i64, align 8
+  %call3014 = call i64 @parser__parse_namespace_decl()
+  store i64 %call3014, ptr %decl3013
+  %decl_val3015 = load i64, ptr %decl3013
+  %cmp3016 = icmp sge i64 %decl_val3015, 0
+  br i1 %cmp3016, label %if_then1050, label %if_else1051
 
 if_then1050:
-  %program_val3011 = load i64, ptr %program2958
-  %decl_val3012 = load i64, ptr %decl3007
-  call void @node_add_extra(i64 %program_val3011, i64 %decl_val3012)
+  %program_val3017 = load i64, ptr %program2964
+  %decl_val3018 = load i64, ptr %decl3013
+  call void @node_add_extra(i64 %program_val3017, i64 %decl_val3018)
   br label %if_end1052
 
 if_else1051:
@@ -7943,24 +7952,24 @@ if_end1052:
   br label %if_end1049
 
 if_else1048:
-  %field_ptr3013 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field3014 = load i64, ptr %field_ptr3013
-  %TOK_STRATA_val3015 = load i64, ptr @TOK_STRATA
-  %cmp3016 = icmp eq i64 %field3014, %TOK_STRATA_val3015
-  br i1 %cmp3016, label %if_then1053, label %if_else1054
+  %field_ptr3019 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field3020 = load i64, ptr %field_ptr3019
+  %TOK_STRATA_val3021 = load i64, ptr @TOK_STRATA
+  %cmp3022 = icmp eq i64 %field3020, %TOK_STRATA_val3021
+  br i1 %cmp3022, label %if_then1053, label %if_else1054
 
 if_then1053:
-  %decl3017 = alloca i64, align 8
-  %call3018 = call i64 @parser__parse_strata_decl()
-  store i64 %call3018, ptr %decl3017
-  %decl_val3019 = load i64, ptr %decl3017
-  %cmp3020 = icmp sge i64 %decl_val3019, 0
-  br i1 %cmp3020, label %if_then1056, label %if_else1057
+  %decl3023 = alloca i64, align 8
+  %call3024 = call i64 @parser__parse_strata_decl()
+  store i64 %call3024, ptr %decl3023
+  %decl_val3025 = load i64, ptr %decl3023
+  %cmp3026 = icmp sge i64 %decl_val3025, 0
+  br i1 %cmp3026, label %if_then1056, label %if_else1057
 
 if_then1056:
-  %program_val3021 = load i64, ptr %program2958
-  %decl_val3022 = load i64, ptr %decl3017
-  call void @node_add_extra(i64 %program_val3021, i64 %decl_val3022)
+  %program_val3027 = load i64, ptr %program2964
+  %decl_val3028 = load i64, ptr %decl3023
+  call void @node_add_extra(i64 %program_val3027, i64 %decl_val3028)
   br label %if_end1058
 
 if_else1057:
@@ -7970,24 +7979,24 @@ if_end1058:
   br label %if_end1055
 
 if_else1054:
-  %field_ptr3023 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field3024 = load i64, ptr %field_ptr3023
-  %TOK_EXTERN_val3025 = load i64, ptr @TOK_EXTERN
-  %cmp3026 = icmp eq i64 %field3024, %TOK_EXTERN_val3025
-  br i1 %cmp3026, label %if_then1059, label %if_else1060
+  %field_ptr3029 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field3030 = load i64, ptr %field_ptr3029
+  %TOK_EXTERN_val3031 = load i64, ptr @TOK_EXTERN
+  %cmp3032 = icmp eq i64 %field3030, %TOK_EXTERN_val3031
+  br i1 %cmp3032, label %if_then1059, label %if_else1060
 
 if_then1059:
-  %decl3027 = alloca i64, align 8
-  %call3028 = call i64 @parser__parse_extern_decl()
-  store i64 %call3028, ptr %decl3027
-  %decl_val3029 = load i64, ptr %decl3027
-  %cmp3030 = icmp sge i64 %decl_val3029, 0
-  br i1 %cmp3030, label %if_then1062, label %if_else1063
+  %decl3033 = alloca i64, align 8
+  %call3034 = call i64 @parser__parse_extern_decl()
+  store i64 %call3034, ptr %decl3033
+  %decl_val3035 = load i64, ptr %decl3033
+  %cmp3036 = icmp sge i64 %decl_val3035, 0
+  br i1 %cmp3036, label %if_then1062, label %if_else1063
 
 if_then1062:
-  %program_val3031 = load i64, ptr %program2958
-  %decl_val3032 = load i64, ptr %decl3027
-  call void @node_add_extra(i64 %program_val3031, i64 %decl_val3032)
+  %program_val3037 = load i64, ptr %program2964
+  %decl_val3038 = load i64, ptr %decl3033
+  call void @node_add_extra(i64 %program_val3037, i64 %decl_val3038)
   br label %if_end1064
 
 if_else1063:
@@ -7997,24 +8006,24 @@ if_end1064:
   br label %if_end1061
 
 if_else1060:
-  %field_ptr3033 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field3034 = load i64, ptr %field_ptr3033
-  %TOK_RIFT_val3035 = load i64, ptr @TOK_RIFT
-  %cmp3036 = icmp eq i64 %field3034, %TOK_RIFT_val3035
-  br i1 %cmp3036, label %if_then1065, label %if_else1066
+  %field_ptr3039 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field3040 = load i64, ptr %field_ptr3039
+  %TOK_RIFT_val3041 = load i64, ptr @TOK_RIFT
+  %cmp3042 = icmp eq i64 %field3040, %TOK_RIFT_val3041
+  br i1 %cmp3042, label %if_then1065, label %if_else1066
 
 if_then1065:
-  %decl3037 = alloca i64, align 8
-  %call3038 = call i64 @parser__parse_rift_decl()
-  store i64 %call3038, ptr %decl3037
-  %decl_val3039 = load i64, ptr %decl3037
-  %cmp3040 = icmp sge i64 %decl_val3039, 0
-  br i1 %cmp3040, label %if_then1068, label %if_else1069
+  %decl3043 = alloca i64, align 8
+  %call3044 = call i64 @parser__parse_rift_decl()
+  store i64 %call3044, ptr %decl3043
+  %decl_val3045 = load i64, ptr %decl3043
+  %cmp3046 = icmp sge i64 %decl_val3045, 0
+  br i1 %cmp3046, label %if_then1068, label %if_else1069
 
 if_then1068:
-  %program_val3041 = load i64, ptr %program2958
-  %decl_val3042 = load i64, ptr %decl3037
-  call void @node_add_extra(i64 %program_val3041, i64 %decl_val3042)
+  %program_val3047 = load i64, ptr %program2964
+  %decl_val3048 = load i64, ptr %decl3043
+  call void @node_add_extra(i64 %program_val3047, i64 %decl_val3048)
   br label %if_end1070
 
 if_else1069:
@@ -8024,29 +8033,29 @@ if_end1070:
   br label %if_end1067
 
 if_else1066:
-  %field_ptr3043 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field3044 = load i64, ptr %field_ptr3043
-  %TOK_FORGE_val3045 = load i64, ptr @TOK_FORGE
-  %cmp3046 = icmp eq i64 %field3044, %TOK_FORGE_val3045
-  %field_ptr3047 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field3048 = load i64, ptr %field_ptr3047
-  %TOK_CONST_val3049 = load i64, ptr @TOK_CONST
-  %cmp3050 = icmp eq i64 %field3048, %TOK_CONST_val3049
-  %logic3051 = or i1 %cmp3046, %cmp3050
-  br i1 %logic3051, label %if_then1071, label %if_else1072
+  %field_ptr3049 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field3050 = load i64, ptr %field_ptr3049
+  %TOK_FORGE_val3051 = load i64, ptr @TOK_FORGE
+  %cmp3052 = icmp eq i64 %field3050, %TOK_FORGE_val3051
+  %field_ptr3053 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field3054 = load i64, ptr %field_ptr3053
+  %TOK_CONST_val3055 = load i64, ptr @TOK_CONST
+  %cmp3056 = icmp eq i64 %field3054, %TOK_CONST_val3055
+  %logic3057 = or i1 %cmp3052, %cmp3056
+  br i1 %logic3057, label %if_then1071, label %if_else1072
 
 if_then1071:
-  %stmt3052 = alloca i64, align 8
-  %call3053 = call i64 @parser__parse_stmt()
-  store i64 %call3053, ptr %stmt3052
-  %stmt_val3054 = load i64, ptr %stmt3052
-  %cmp3055 = icmp sge i64 %stmt_val3054, 0
-  br i1 %cmp3055, label %if_then1074, label %if_else1075
+  %stmt3058 = alloca i64, align 8
+  %call3059 = call i64 @parser__parse_stmt()
+  store i64 %call3059, ptr %stmt3058
+  %stmt_val3060 = load i64, ptr %stmt3058
+  %cmp3061 = icmp sge i64 %stmt_val3060, 0
+  br i1 %cmp3061, label %if_then1074, label %if_else1075
 
 if_then1074:
-  %program_val3056 = load i64, ptr %program2958
-  %stmt_val3057 = load i64, ptr %stmt3052
-  call void @node_add_extra(i64 %program_val3056, i64 %stmt_val3057)
+  %program_val3062 = load i64, ptr %program2964
+  %stmt_val3063 = load i64, ptr %stmt3058
+  call void @node_add_extra(i64 %program_val3062, i64 %stmt_val3063)
   br label %if_end1076
 
 if_else1075:
@@ -8056,19 +8065,19 @@ if_end1076:
   br label %if_end1073
 
 if_else1072:
-  %field_ptr3058 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field3059 = load i64, ptr %field_ptr3058
-  %TOK_ATTACH_val3060 = load i64, ptr @TOK_ATTACH
-  %cmp3061 = icmp eq i64 %field3059, %TOK_ATTACH_val3060
-  br i1 %cmp3061, label %if_then1077, label %if_else1078
+  %field_ptr3064 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field3065 = load i64, ptr %field_ptr3064
+  %TOK_ATTACH_val3066 = load i64, ptr @TOK_ATTACH
+  %cmp3067 = icmp eq i64 %field3065, %TOK_ATTACH_val3066
+  br i1 %cmp3067, label %if_then1077, label %if_else1078
 
 if_then1077:
-  %call3062 = call ptr @parser___advance()
-  %TOK_LBRACE_val3063 = load i64, ptr @TOK_LBRACE
-  %call3064 = call i32 @parser___expect(i64 %TOK_LBRACE_val3063)
-  %cond3065 = icmp ne i32 %call3064, 0
-  %not3066 = xor i1 %cond3065, true
-  br i1 %not3066, label %if_then1080, label %if_else1081
+  %call3068 = call ptr @parser___advance()
+  %TOK_LBRACE_val3069 = load i64, ptr @TOK_LBRACE
+  %call3070 = call i32 @parser___expect(i64 %TOK_LBRACE_val3069)
+  %cond3071 = icmp ne i32 %call3070, 0
+  %not3072 = xor i1 %cond3071, true
+  br i1 %not3072, label %if_then1080, label %if_else1081
 
 if_then1080:
   call void @parser___error(ptr @str.146)
@@ -8078,50 +8087,50 @@ if_else1081:
   br label %if_end1082
 
 if_end1082:
-  %path3067 = alloca ptr, align 8
-  store ptr @str.63, ptr %path3067
-  %call3068 = call i64 @parser___cur_kind()
-  %TOK_IDENT_val3069 = load i64, ptr @TOK_IDENT
-  %cmp3070 = icmp eq i64 %call3068, %TOK_IDENT_val3069
-  br i1 %cmp3070, label %if_then1083, label %if_else1084
+  %path3073 = alloca ptr, align 8
+  store ptr @str.63, ptr %path3073
+  %call3074 = call i64 @parser___cur_kind()
+  %TOK_IDENT_val3075 = load i64, ptr @TOK_IDENT
+  %cmp3076 = icmp eq i64 %call3074, %TOK_IDENT_val3075
+  br i1 %cmp3076, label %if_then1083, label %if_else1084
 
 if_then1083:
-  %path_val3071 = alloca ptr, align 8
-  store ptr @str.63, ptr %path_val3071
+  %path_val3077 = alloca ptr, align 8
+  store ptr @str.63, ptr %path_val3077
   br label %while_cond1086
 
 while_cond1086:
-  %call3072 = call i64 @parser___cur_kind()
-  %TOK_RBRACE_val3073 = load i64, ptr @TOK_RBRACE
-  %cmp3074 = icmp ne i64 %call3072, %TOK_RBRACE_val3073
-  %call3075 = call i64 @parser___cur_kind()
-  %TOK_EOF_val3076 = load i64, ptr @TOK_EOF
-  %cmp3077 = icmp ne i64 %call3075, %TOK_EOF_val3076
-  %logic3078 = and i1 %cmp3074, %cmp3077
-  br i1 %logic3078, label %while_body1087, label %while_end1088
+  %call3078 = call i64 @parser___cur_kind()
+  %TOK_RBRACE_val3079 = load i64, ptr @TOK_RBRACE
+  %cmp3080 = icmp ne i64 %call3078, %TOK_RBRACE_val3079
+  %call3081 = call i64 @parser___cur_kind()
+  %TOK_EOF_val3082 = load i64, ptr @TOK_EOF
+  %cmp3083 = icmp ne i64 %call3081, %TOK_EOF_val3082
+  %logic3084 = and i1 %cmp3080, %cmp3083
+  br i1 %logic3084, label %while_body1087, label %while_end1088
 
 while_body1087:
-  %path_val_val3079 = load ptr, ptr %path_val3071
-  %call3080 = call ptr @parser___cur_val()
-  %concat3081 = call ptr @ofs_str_concat(ptr %path_val_val3079, ptr %call3080)
-  store ptr %concat3081, ptr %path_val3071
-  %call3082 = call ptr @parser___advance()
+  %path_val_val3085 = load ptr, ptr %path_val3077
+  %call3086 = call ptr @parser___cur_val()
+  %concat3087 = call ptr @ofs_str_concat(ptr %path_val_val3085, ptr %call3086)
+  store ptr %concat3087, ptr %path_val3077
+  %call3088 = call ptr @parser___advance()
   br label %while_cond1086
 
 while_end1088:
-  %path_val_val3083 = load ptr, ptr %path_val3071
-  store ptr %path_val_val3083, ptr %path3067
+  %path_val_val3089 = load ptr, ptr %path_val3077
+  store ptr %path_val_val3089, ptr %path3073
   br label %if_end1085
 
 if_else1084:
   br label %if_end1085
 
 if_end1085:
-  %TOK_RBRACE_val3084 = load i64, ptr @TOK_RBRACE
-  %call3085 = call i32 @parser___expect(i64 %TOK_RBRACE_val3084)
-  %cond3086 = icmp ne i32 %call3085, 0
-  %not3087 = xor i1 %cond3086, true
-  br i1 %not3087, label %if_then1089, label %if_else1090
+  %TOK_RBRACE_val3090 = load i64, ptr @TOK_RBRACE
+  %call3091 = call i32 @parser___expect(i64 %TOK_RBRACE_val3090)
+  %cond3092 = icmp ne i32 %call3091, 0
+  %not3093 = xor i1 %cond3092, true
+  br i1 %not3093, label %if_then1089, label %if_else1090
 
 if_then1089:
   call void @parser___error(ptr @str.147)
@@ -8131,33 +8140,33 @@ if_else1090:
   br label %if_end1091
 
 if_end1091:
-  %attach_node3088 = alloca i64, align 8
-  %NK_ATTACH_val3089 = load i64, ptr @NK_ATTACH
-  %path_val3090 = load ptr, ptr %path3067
-  %field_ptr3091 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 2
-  %field3092 = load i64, ptr %field_ptr3091
-  %field_ptr3093 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 3
-  %field3094 = load i64, ptr %field_ptr3093
-  %call3095 = call i64 @node_new(i64 %NK_ATTACH_val3089, ptr %path_val3090, i64 %field3092, i64 %field3094)
-  store i64 %call3095, ptr %attach_node3088
-  %program_val3096 = load i64, ptr %program2958
-  %attach_node_val3097 = load i64, ptr %attach_node3088
-  call void @node_add_extra(i64 %program_val3096, i64 %attach_node_val3097)
+  %attach_node3094 = alloca i64, align 8
+  %NK_ATTACH_val3095 = load i64, ptr @NK_ATTACH
+  %path_val3096 = load ptr, ptr %path3073
+  %field_ptr3097 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 2
+  %field3098 = load i64, ptr %field_ptr3097
+  %field_ptr3099 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 3
+  %field3100 = load i64, ptr %field_ptr3099
+  %call3101 = call i64 @node_new(i64 %NK_ATTACH_val3095, ptr %path_val3096, i64 %field3098, i64 %field3100)
+  store i64 %call3101, ptr %attach_node3094
+  %program_val3102 = load i64, ptr %program2964
+  %attach_node_val3103 = load i64, ptr %attach_node3094
+  call void @node_add_extra(i64 %program_val3102, i64 %attach_node_val3103)
   br label %if_end1079
 
 if_else1078:
-  %field_ptr3098 = getelementptr inbounds %Token, ptr %obj2965, i32 0, i32 0
-  %field3099 = load i64, ptr %field_ptr3098
-  %TOK_EOF_val3100 = load i64, ptr @TOK_EOF
-  %cmp3101 = icmp eq i64 %field3099, %TOK_EOF_val3100
-  br i1 %cmp3101, label %if_then1092, label %if_else1093
+  %field_ptr3104 = getelementptr inbounds %Token, ptr %obj2971, i32 0, i32 0
+  %field3105 = load i64, ptr %field_ptr3104
+  %TOK_EOF_val3106 = load i64, ptr @TOK_EOF
+  %cmp3107 = icmp eq i64 %field3105, %TOK_EOF_val3106
+  br i1 %cmp3107, label %if_then1092, label %if_else1093
 
 if_then1092:
   br label %while_end1028
 
 if_else1093:
   call void @parser___error(ptr @str.178)
-  %call3102 = call ptr @parser___advance()
+  %call3108 = call ptr @parser___advance()
   br label %if_end1094
 
 if_end1094:
@@ -8191,57 +8200,57 @@ if_end1031:
   br label %while_cond1026
 
 while_end1028:
-  %program_val3103 = load i64, ptr %program2958
-  ret i64 %program_val3103
+  %program_val3109 = load i64, ptr %program2964
+  ret i64 %program_val3109
 }
 
 define i64 @parser__parse(ptr %tokens) {
 entry:
   %tokens.addr = alloca ptr, align 8
   store ptr %tokens, ptr %tokens.addr
-  %tokens_val3104 = load ptr, ptr %tokens.addr
-  store ptr %tokens_val3104, ptr @parser___tokens
+  %tokens_val3110 = load ptr, ptr %tokens.addr
+  store ptr %tokens_val3110, ptr @parser___tokens
   store i64 0, ptr @parser___pos
-  %tokens_val3105 = load ptr, ptr %tokens.addr
-  %arr_len3106 = call i64 @ofs_array_len(ptr %tokens_val3105)
-  store i64 %arr_len3106, ptr @parser___len
-  %call3107 = call i64 @parser__parse_program()
-  ret i64 %call3107
+  %tokens_val3111 = load ptr, ptr %tokens.addr
+  %arr_len3112 = call i64 @ofs_array_len(ptr %tokens_val3111)
+  store i64 %arr_len3112, ptr @parser___len
+  %call3113 = call i64 @parser__parse_program()
+  ret i64 %call3113
 }
 
 define void @typeck__push_scope() {
 entry:
-  %post_old3108 = load i64, ptr @typeck___scope_depth
-  %post_new3109 = add i64 %post_old3108, 1
-  store i64 %post_new3109, ptr @typeck___scope_depth
+  %post_old3114 = load i64, ptr @typeck___scope_depth
+  %post_new3115 = add i64 %post_old3114, 1
+  store i64 %post_new3115, ptr @typeck___scope_depth
   ret void
 }
 
 define void @typeck__pop_scope() {
 entry:
-  %len3110 = alloca i64, align 8
-  %typeck___symbols_val3111 = load ptr, ptr @typeck___symbols
-  %arr_len3112 = call i64 @ofs_array_len(ptr %typeck___symbols_val3111)
-  store i64 %arr_len3112, ptr %len3110
+  %len3116 = alloca i64, align 8
+  %typeck___symbols_val3117 = load ptr, ptr @typeck___symbols
+  %arr_len3118 = call i64 @ofs_array_len(ptr %typeck___symbols_val3117)
+  store i64 %arr_len3118, ptr %len3116
   br label %while_cond1095
 
 while_cond1095:
-  %len_val3113 = load i64, ptr %len3110
-  %cmp3114 = icmp sgt i64 %len_val3113, 0
-  br i1 %cmp3114, label %while_body1096, label %while_end1097
+  %len_val3119 = load i64, ptr %len3116
+  %cmp3120 = icmp sgt i64 %len_val3119, 0
+  br i1 %cmp3120, label %while_body1096, label %while_end1097
 
 while_body1096:
-  %depth3115 = alloca i64, align 8
-  %typeck___symbol_depths_val3116 = load ptr, ptr @typeck___symbol_depths
-  %len_val3117 = load i64, ptr %len3110
-  %op3118 = sub i64 %len_val3117, 1
-  %arr_get3119 = call ptr @ofs_array_get(ptr %typeck___symbol_depths_val3116, i64 %op3118)
-  %arr_item3120 = load i64, ptr %arr_get3119
-  store i64 %arr_item3120, ptr %depth3115
-  %depth_val3121 = load i64, ptr %depth3115
-  %typeck___scope_depth_val3122 = load i64, ptr @typeck___scope_depth
-  %cmp3123 = icmp slt i64 %depth_val3121, %typeck___scope_depth_val3122
-  br i1 %cmp3123, label %if_then1098, label %if_else1099
+  %depth3121 = alloca i64, align 8
+  %typeck___symbol_depths_val3122 = load ptr, ptr @typeck___symbol_depths
+  %len_val3123 = load i64, ptr %len3116
+  %op3124 = sub i64 %len_val3123, 1
+  %arr_get3125 = call ptr @ofs_array_get(ptr %typeck___symbol_depths_val3122, i64 %op3124)
+  %arr_item3126 = load i64, ptr %arr_get3125
+  store i64 %arr_item3126, ptr %depth3121
+  %depth_val3127 = load i64, ptr %depth3121
+  %typeck___scope_depth_val3128 = load i64, ptr @typeck___scope_depth
+  %cmp3129 = icmp slt i64 %depth_val3127, %typeck___scope_depth_val3128
+  br i1 %cmp3129, label %if_then1098, label %if_else1099
 
 if_then1098:
   br label %while_end1097
@@ -8250,24 +8259,24 @@ if_else1099:
   br label %if_end1100
 
 if_end1100:
-  %typeck___symbols_val3124 = load ptr, ptr @typeck___symbols
-  %arr_pop3125 = call ptr @ofs_array_pop(ptr %typeck___symbols_val3124)
-  %typeck___symbol_depths_val3126 = load ptr, ptr @typeck___symbol_depths
-  %arr_pop3127 = call ptr @ofs_array_pop(ptr %typeck___symbol_depths_val3126)
-  %typeck___symbols_val3128 = load ptr, ptr @typeck___symbols
-  %arr_len3129 = call i64 @ofs_array_len(ptr %typeck___symbols_val3128)
-  store i64 %arr_len3129, ptr %len3110
+  %typeck___symbols_val3130 = load ptr, ptr @typeck___symbols
+  %arr_pop3131 = call ptr @ofs_array_pop(ptr %typeck___symbols_val3130)
+  %typeck___symbol_depths_val3132 = load ptr, ptr @typeck___symbol_depths
+  %arr_pop3133 = call ptr @ofs_array_pop(ptr %typeck___symbol_depths_val3132)
+  %typeck___symbols_val3134 = load ptr, ptr @typeck___symbols
+  %arr_len3135 = call i64 @ofs_array_len(ptr %typeck___symbols_val3134)
+  store i64 %arr_len3135, ptr %len3116
   br label %while_cond1095
 
 while_end1097:
-  %typeck___scope_depth_val3130 = load i64, ptr @typeck___scope_depth
-  %cmp3131 = icmp sgt i64 %typeck___scope_depth_val3130, 0
-  br i1 %cmp3131, label %if_then1101, label %if_else1102
+  %typeck___scope_depth_val3136 = load i64, ptr @typeck___scope_depth
+  %cmp3137 = icmp sgt i64 %typeck___scope_depth_val3136, 0
+  br i1 %cmp3137, label %if_then1101, label %if_else1102
 
 if_then1101:
-  %post_old3132 = load i64, ptr @typeck___scope_depth
-  %post_new3133 = sub i64 %post_old3132, 1
-  store i64 %post_new3133, ptr @typeck___scope_depth
+  %post_old3138 = load i64, ptr @typeck___scope_depth
+  %post_new3139 = sub i64 %post_old3138, 1
+  store i64 %post_new3139, ptr @typeck___scope_depth
   br label %if_end1103
 
 if_else1102:
@@ -8279,15 +8288,15 @@ if_end1103:
 
 define void @typeck__declare(ptr %sym) {
 entry:
-  %typeck___symbols_val3134 = load ptr, ptr @typeck___symbols
-  %arr_push3135 = alloca ptr, align 8
-  store ptr %sym, ptr %arr_push3135
-  call void @ofs_array_push(ptr %typeck___symbols_val3134, ptr %arr_push3135)
-  %typeck___symbol_depths_val3136 = load ptr, ptr @typeck___symbol_depths
-  %typeck___scope_depth_val3137 = load i64, ptr @typeck___scope_depth
-  %arr_push3138 = alloca i64, align 8
-  store i64 %typeck___scope_depth_val3137, ptr %arr_push3138
-  call void @ofs_array_push(ptr %typeck___symbol_depths_val3136, ptr %arr_push3138)
+  %typeck___symbols_val3140 = load ptr, ptr @typeck___symbols
+  %arr_push3141 = alloca ptr, align 8
+  store ptr %sym, ptr %arr_push3141
+  call void @ofs_array_push(ptr %typeck___symbols_val3140, ptr %arr_push3141)
+  %typeck___symbol_depths_val3142 = load ptr, ptr @typeck___symbol_depths
+  %typeck___scope_depth_val3143 = load i64, ptr @typeck___scope_depth
+  %arr_push3144 = alloca i64, align 8
+  store i64 %typeck___scope_depth_val3143, ptr %arr_push3144
+  call void @ofs_array_push(ptr %typeck___symbol_depths_val3142, ptr %arr_push3144)
   ret void
 }
 
@@ -8295,64 +8304,64 @@ define ptr @typeck__resolve(ptr %name) {
 entry:
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %i3139 = alloca i64, align 8
-  %typeck___symbols_val3140 = load ptr, ptr @typeck___symbols
-  %arr_len3141 = call i64 @ofs_array_len(ptr %typeck___symbols_val3140)
-  %op3142 = sub i64 %arr_len3141, 1
-  store i64 %op3142, ptr %i3139
+  %i3145 = alloca i64, align 8
+  %typeck___symbols_val3146 = load ptr, ptr @typeck___symbols
+  %arr_len3147 = call i64 @ofs_array_len(ptr %typeck___symbols_val3146)
+  %op3148 = sub i64 %arr_len3147, 1
+  store i64 %op3148, ptr %i3145
   br label %while_cond1104
 
 while_cond1104:
-  %i_val3143 = load i64, ptr %i3139
-  %cmp3144 = icmp sge i64 %i_val3143, 0
-  br i1 %cmp3144, label %while_body1105, label %while_end1106
+  %i_val3149 = load i64, ptr %i3145
+  %cmp3150 = icmp sge i64 %i_val3149, 0
+  br i1 %cmp3150, label %while_body1105, label %while_end1106
 
 while_body1105:
-  %obj3146 = call ptr @ofs_alloc(i64 4096)
-  %typeck___symbols_val3147 = load ptr, ptr @typeck___symbols
-  %i_val3148 = load i64, ptr %i3139
-  %arr_get3149 = call ptr @ofs_array_get(ptr %typeck___symbols_val3147, i64 %i_val3148)
-  %arr_item3150 = load ptr, ptr %arr_get3149
-  %named_val3151 = load %Symbol, ptr %arr_item3150
-  store %Symbol %named_val3151, ptr %obj3146
-  %field_ptr3152 = getelementptr inbounds %Symbol, ptr %obj3146, i32 0, i32 0
-  %field3153 = load ptr, ptr %field_ptr3152
-  %name_val3154 = load ptr, ptr %name.addr
-  %streq3155 = call i32 @ofs_str_eq(ptr %field3153, ptr %name_val3154)
-  %cond3156 = icmp ne i32 %streq3155, 0
-  br i1 %cond3156, label %if_then1107, label %if_else1108
+  %obj3152 = call ptr @ofs_alloc(i64 4096)
+  %typeck___symbols_val3153 = load ptr, ptr @typeck___symbols
+  %i_val3154 = load i64, ptr %i3145
+  %arr_get3155 = call ptr @ofs_array_get(ptr %typeck___symbols_val3153, i64 %i_val3154)
+  %arr_item3156 = load ptr, ptr %arr_get3155
+  %named_val3157 = load %Symbol, ptr %arr_item3156
+  store %Symbol %named_val3157, ptr %obj3152
+  %field_ptr3158 = getelementptr inbounds %Symbol, ptr %obj3152, i32 0, i32 0
+  %field3159 = load ptr, ptr %field_ptr3158
+  %name_val3160 = load ptr, ptr %name.addr
+  %streq3161 = call i32 @ofs_str_eq(ptr %field3159, ptr %name_val3160)
+  %cond3162 = icmp ne i32 %streq3161, 0
+  br i1 %cond3162, label %if_then1107, label %if_else1108
 
 if_then1107:
-  ret ptr %obj3146
+  ret ptr %obj3152
 
 if_else1108:
   br label %if_end1109
 
 if_end1109:
-  %post_old3157 = load i64, ptr %i3139
-  %post_new3158 = sub i64 %post_old3157, 1
-  store i64 %post_new3158, ptr %i3139
+  %post_old3163 = load i64, ptr %i3145
+  %post_new3164 = sub i64 %post_old3163, 1
+  store i64 %post_new3164, ptr %i3145
   br label %while_cond1104
 
 while_end1106:
-  %obj3160 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3161 = getelementptr inbounds %Symbol, ptr %obj3160, i32 0, i32 0
-  store ptr @str.63, ptr %field_ptr3161
-  %field_ptr3162 = getelementptr inbounds %Symbol, ptr %obj3160, i32 0, i32 1
-  store ptr @str.179, ptr %field_ptr3162
-  %field_ptr3163 = getelementptr inbounds %Symbol, ptr %obj3160, i32 0, i32 2
-  %SYM_UNKNOWN_val3164 = load i64, ptr @SYM_UNKNOWN
-  store i64 %SYM_UNKNOWN_val3164, ptr %field_ptr3163
-  ret ptr %obj3160
+  %obj3166 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3167 = getelementptr inbounds %Symbol, ptr %obj3166, i32 0, i32 0
+  store ptr @str.63, ptr %field_ptr3167
+  %field_ptr3168 = getelementptr inbounds %Symbol, ptr %obj3166, i32 0, i32 1
+  store ptr @str.179, ptr %field_ptr3168
+  %field_ptr3169 = getelementptr inbounds %Symbol, ptr %obj3166, i32 0, i32 2
+  %SYM_UNKNOWN_val3170 = load i64, ptr @SYM_UNKNOWN
+  store i64 %SYM_UNKNOWN_val3170, ptr %field_ptr3169
+  ret ptr %obj3166
 }
 
 define ptr @typeck__type_node_name(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %id_val3165 = load i64, ptr %id.addr
-  %cmp3166 = icmp slt i64 %id_val3165, 0
-  br i1 %cmp3166, label %if_then1110, label %if_else1111
+  %id_val3171 = load i64, ptr %id.addr
+  %cmp3172 = icmp slt i64 %id_val3171, 0
+  br i1 %cmp3172, label %if_then1110, label %if_else1111
 
 if_then1110:
   ret ptr @str.180
@@ -8361,16 +8370,16 @@ if_else1111:
   br label %if_end1112
 
 if_end1112:
-  %obj3168 = call ptr @ofs_alloc(i64 4096)
-  %id_val3169 = load i64, ptr %id.addr
-  %call3170 = call ptr @node_get(i64 %id_val3169)
-  %named_val3171 = load %Node, ptr %call3170
-  store %Node %named_val3171, ptr %obj3168
-  %field_ptr3172 = getelementptr inbounds %Node, ptr %obj3168, i32 0, i32 0
-  %field3173 = load i64, ptr %field_ptr3172
-  %NK_TYPE_ARRAY_val3174 = load i64, ptr @NK_TYPE_ARRAY
-  %cmp3175 = icmp eq i64 %field3173, %NK_TYPE_ARRAY_val3174
-  br i1 %cmp3175, label %if_then1113, label %if_else1114
+  %obj3174 = call ptr @ofs_alloc(i64 4096)
+  %id_val3175 = load i64, ptr %id.addr
+  %call3176 = call ptr @node_get(i64 %id_val3175)
+  %named_val3177 = load %Node, ptr %call3176
+  store %Node %named_val3177, ptr %obj3174
+  %field_ptr3178 = getelementptr inbounds %Node, ptr %obj3174, i32 0, i32 0
+  %field3179 = load i64, ptr %field_ptr3178
+  %NK_TYPE_ARRAY_val3180 = load i64, ptr @NK_TYPE_ARRAY
+  %cmp3181 = icmp eq i64 %field3179, %NK_TYPE_ARRAY_val3180
+  br i1 %cmp3181, label %if_then1113, label %if_else1114
 
 if_then1113:
   ret ptr @str.144
@@ -8379,9 +8388,9 @@ if_else1114:
   br label %if_end1115
 
 if_end1115:
-  %field_ptr3176 = getelementptr inbounds %Node, ptr %obj3168, i32 0, i32 1
-  %field3177 = load ptr, ptr %field_ptr3176
-  ret ptr %field3177
+  %field_ptr3182 = getelementptr inbounds %Node, ptr %obj3174, i32 0, i32 1
+  %field3183 = load ptr, ptr %field_ptr3182
+  ret ptr %field3183
 }
 
 define void @typeck__register_field(ptr %owner, ptr %name, ptr %type_str) {
@@ -8392,21 +8401,21 @@ entry:
   store ptr %name, ptr %name.addr
   %type_str.addr = alloca ptr, align 8
   store ptr %type_str, ptr %type_str.addr
-  %typeck___field_owners_val3178 = load ptr, ptr @typeck___field_owners
-  %owner_val3179 = load ptr, ptr %owner.addr
-  %arr_push3180 = alloca ptr, align 8
-  store ptr %owner_val3179, ptr %arr_push3180
-  call void @ofs_array_push(ptr %typeck___field_owners_val3178, ptr %arr_push3180)
-  %typeck___field_names_val3181 = load ptr, ptr @typeck___field_names
-  %name_val3182 = load ptr, ptr %name.addr
-  %arr_push3183 = alloca ptr, align 8
-  store ptr %name_val3182, ptr %arr_push3183
-  call void @ofs_array_push(ptr %typeck___field_names_val3181, ptr %arr_push3183)
-  %typeck___field_types_val3184 = load ptr, ptr @typeck___field_types
-  %type_str_val3185 = load ptr, ptr %type_str.addr
+  %typeck___field_owners_val3184 = load ptr, ptr @typeck___field_owners
+  %owner_val3185 = load ptr, ptr %owner.addr
   %arr_push3186 = alloca ptr, align 8
-  store ptr %type_str_val3185, ptr %arr_push3186
-  call void @ofs_array_push(ptr %typeck___field_types_val3184, ptr %arr_push3186)
+  store ptr %owner_val3185, ptr %arr_push3186
+  call void @ofs_array_push(ptr %typeck___field_owners_val3184, ptr %arr_push3186)
+  %typeck___field_names_val3187 = load ptr, ptr @typeck___field_names
+  %name_val3188 = load ptr, ptr %name.addr
+  %arr_push3189 = alloca ptr, align 8
+  store ptr %name_val3188, ptr %arr_push3189
+  call void @ofs_array_push(ptr %typeck___field_names_val3187, ptr %arr_push3189)
+  %typeck___field_types_val3190 = load ptr, ptr @typeck___field_types
+  %type_str_val3191 = load ptr, ptr %type_str.addr
+  %arr_push3192 = alloca ptr, align 8
+  store ptr %type_str_val3191, ptr %arr_push3192
+  call void @ofs_array_push(ptr %typeck___field_types_val3190, ptr %arr_push3192)
   ret void
 }
 
@@ -8416,56 +8425,56 @@ entry:
   store ptr %owner, ptr %owner.addr
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %i3187 = alloca i64, align 8
-  %typeck___field_names_val3188 = load ptr, ptr @typeck___field_names
-  %arr_len3189 = call i64 @ofs_array_len(ptr %typeck___field_names_val3188)
-  %op3190 = sub i64 %arr_len3189, 1
-  store i64 %op3190, ptr %i3187
+  %i3193 = alloca i64, align 8
+  %typeck___field_names_val3194 = load ptr, ptr @typeck___field_names
+  %arr_len3195 = call i64 @ofs_array_len(ptr %typeck___field_names_val3194)
+  %op3196 = sub i64 %arr_len3195, 1
+  store i64 %op3196, ptr %i3193
   br label %while_cond1116
 
 while_cond1116:
-  %i_val3191 = load i64, ptr %i3187
-  %cmp3192 = icmp sge i64 %i_val3191, 0
-  br i1 %cmp3192, label %while_body1117, label %while_end1118
+  %i_val3197 = load i64, ptr %i3193
+  %cmp3198 = icmp sge i64 %i_val3197, 0
+  br i1 %cmp3198, label %while_body1117, label %while_end1118
 
 while_body1117:
-  %f_owner3193 = alloca ptr, align 8
-  %typeck___field_owners_val3194 = load ptr, ptr @typeck___field_owners
-  %i_val3195 = load i64, ptr %i3187
-  %arr_get3196 = call ptr @ofs_array_get(ptr %typeck___field_owners_val3194, i64 %i_val3195)
-  %arr_item3197 = load ptr, ptr %arr_get3196
-  store ptr %arr_item3197, ptr %f_owner3193
-  %f_name3198 = alloca ptr, align 8
-  %typeck___field_names_val3199 = load ptr, ptr @typeck___field_names
-  %i_val3200 = load i64, ptr %i3187
-  %arr_get3201 = call ptr @ofs_array_get(ptr %typeck___field_names_val3199, i64 %i_val3200)
-  %arr_item3202 = load ptr, ptr %arr_get3201
-  store ptr %arr_item3202, ptr %f_name3198
-  %f_owner_val3203 = load ptr, ptr %f_owner3193
-  %owner_val3204 = load ptr, ptr %owner.addr
-  %streq3205 = call i32 @ofs_str_eq(ptr %f_owner_val3203, ptr %owner_val3204)
-  %f_name_val3206 = load ptr, ptr %f_name3198
-  %name_val3207 = load ptr, ptr %name.addr
-  %streq3208 = call i32 @ofs_str_eq(ptr %f_name_val3206, ptr %name_val3207)
-  %cond3209 = icmp ne i32 %streq3205, 0
-  %cond3210 = icmp ne i32 %streq3208, 0
-  %logic3211 = and i1 %cond3209, %cond3210
-  br i1 %logic3211, label %if_then1119, label %if_else1120
+  %f_owner3199 = alloca ptr, align 8
+  %typeck___field_owners_val3200 = load ptr, ptr @typeck___field_owners
+  %i_val3201 = load i64, ptr %i3193
+  %arr_get3202 = call ptr @ofs_array_get(ptr %typeck___field_owners_val3200, i64 %i_val3201)
+  %arr_item3203 = load ptr, ptr %arr_get3202
+  store ptr %arr_item3203, ptr %f_owner3199
+  %f_name3204 = alloca ptr, align 8
+  %typeck___field_names_val3205 = load ptr, ptr @typeck___field_names
+  %i_val3206 = load i64, ptr %i3193
+  %arr_get3207 = call ptr @ofs_array_get(ptr %typeck___field_names_val3205, i64 %i_val3206)
+  %arr_item3208 = load ptr, ptr %arr_get3207
+  store ptr %arr_item3208, ptr %f_name3204
+  %f_owner_val3209 = load ptr, ptr %f_owner3199
+  %owner_val3210 = load ptr, ptr %owner.addr
+  %streq3211 = call i32 @ofs_str_eq(ptr %f_owner_val3209, ptr %owner_val3210)
+  %f_name_val3212 = load ptr, ptr %f_name3204
+  %name_val3213 = load ptr, ptr %name.addr
+  %streq3214 = call i32 @ofs_str_eq(ptr %f_name_val3212, ptr %name_val3213)
+  %cond3215 = icmp ne i32 %streq3211, 0
+  %cond3216 = icmp ne i32 %streq3214, 0
+  %logic3217 = and i1 %cond3215, %cond3216
+  br i1 %logic3217, label %if_then1119, label %if_else1120
 
 if_then1119:
-  %typeck___field_types_val3212 = load ptr, ptr @typeck___field_types
-  %i_val3213 = load i64, ptr %i3187
-  %arr_get3214 = call ptr @ofs_array_get(ptr %typeck___field_types_val3212, i64 %i_val3213)
-  %arr_item3215 = load ptr, ptr %arr_get3214
-  ret ptr %arr_item3215
+  %typeck___field_types_val3218 = load ptr, ptr @typeck___field_types
+  %i_val3219 = load i64, ptr %i3193
+  %arr_get3220 = call ptr @ofs_array_get(ptr %typeck___field_types_val3218, i64 %i_val3219)
+  %arr_item3221 = load ptr, ptr %arr_get3220
+  ret ptr %arr_item3221
 
 if_else1120:
   br label %if_end1121
 
 if_end1121:
-  %post_old3216 = load i64, ptr %i3187
-  %post_new3217 = sub i64 %post_old3216, 1
-  store i64 %post_new3217, ptr %i3187
+  %post_old3222 = load i64, ptr %i3193
+  %post_new3223 = sub i64 %post_old3222, 1
+  store i64 %post_new3223, ptr %i3193
   br label %while_cond1116
 
 while_end1118:
@@ -8476,10 +8485,10 @@ define i32 @typeck__check_type_string(ptr %type_str) {
 entry:
   %type_str.addr = alloca ptr, align 8
   store ptr %type_str, ptr %type_str.addr
-  %type_str_val3218 = load ptr, ptr %type_str.addr
-  %streq3219 = call i32 @ofs_str_eq(ptr %type_str_val3218, ptr @str.181)
-  %cond3220 = icmp ne i32 %streq3219, 0
-  br i1 %cond3220, label %if_then1122, label %if_else1123
+  %type_str_val3224 = load ptr, ptr %type_str.addr
+  %streq3225 = call i32 @ofs_str_eq(ptr %type_str_val3224, ptr @str.181)
+  %cond3226 = icmp ne i32 %streq3225, 0
+  br i1 %cond3226, label %if_then1122, label %if_else1123
 
 if_then1122:
   ret i32 1
@@ -8488,10 +8497,10 @@ if_else1123:
   br label %if_end1124
 
 if_end1124:
-  %type_str_val3221 = load ptr, ptr %type_str.addr
-  %streq3222 = call i32 @ofs_str_eq(ptr %type_str_val3221, ptr @str.182)
-  %cond3223 = icmp ne i32 %streq3222, 0
-  br i1 %cond3223, label %if_then1125, label %if_else1126
+  %type_str_val3227 = load ptr, ptr %type_str.addr
+  %streq3228 = call i32 @ofs_str_eq(ptr %type_str_val3227, ptr @str.182)
+  %cond3229 = icmp ne i32 %streq3228, 0
+  br i1 %cond3229, label %if_then1125, label %if_else1126
 
 if_then1125:
   ret i32 1
@@ -8500,10 +8509,10 @@ if_else1126:
   br label %if_end1127
 
 if_end1127:
-  %type_str_val3224 = load ptr, ptr %type_str.addr
-  %streq3225 = call i32 @ofs_str_eq(ptr %type_str_val3224, ptr @str.183)
-  %cond3226 = icmp ne i32 %streq3225, 0
-  br i1 %cond3226, label %if_then1128, label %if_else1129
+  %type_str_val3230 = load ptr, ptr %type_str.addr
+  %streq3231 = call i32 @ofs_str_eq(ptr %type_str_val3230, ptr @str.183)
+  %cond3232 = icmp ne i32 %streq3231, 0
+  br i1 %cond3232, label %if_then1128, label %if_else1129
 
 if_then1128:
   ret i32 1
@@ -8512,10 +8521,10 @@ if_else1129:
   br label %if_end1130
 
 if_end1130:
-  %type_str_val3227 = load ptr, ptr %type_str.addr
-  %streq3228 = call i32 @ofs_str_eq(ptr %type_str_val3227, ptr @str.184)
-  %cond3229 = icmp ne i32 %streq3228, 0
-  br i1 %cond3229, label %if_then1131, label %if_else1132
+  %type_str_val3233 = load ptr, ptr %type_str.addr
+  %streq3234 = call i32 @ofs_str_eq(ptr %type_str_val3233, ptr @str.184)
+  %cond3235 = icmp ne i32 %streq3234, 0
+  br i1 %cond3235, label %if_then1131, label %if_else1132
 
 if_then1131:
   ret i32 1
@@ -8524,10 +8533,10 @@ if_else1132:
   br label %if_end1133
 
 if_end1133:
-  %type_str_val3230 = load ptr, ptr %type_str.addr
-  %streq3231 = call i32 @ofs_str_eq(ptr %type_str_val3230, ptr @str.180)
-  %cond3232 = icmp ne i32 %streq3231, 0
-  br i1 %cond3232, label %if_then1134, label %if_else1135
+  %type_str_val3236 = load ptr, ptr %type_str.addr
+  %streq3237 = call i32 @ofs_str_eq(ptr %type_str_val3236, ptr @str.180)
+  %cond3238 = icmp ne i32 %streq3237, 0
+  br i1 %cond3238, label %if_then1134, label %if_else1135
 
 if_then1134:
   ret i32 1
@@ -8536,10 +8545,10 @@ if_else1135:
   br label %if_end1136
 
 if_end1136:
-  %type_str_val3233 = load ptr, ptr %type_str.addr
-  %streq3234 = call i32 @ofs_str_eq(ptr %type_str_val3233, ptr @str.144)
-  %cond3235 = icmp ne i32 %streq3234, 0
-  br i1 %cond3235, label %if_then1137, label %if_else1138
+  %type_str_val3239 = load ptr, ptr %type_str.addr
+  %streq3240 = call i32 @ofs_str_eq(ptr %type_str_val3239, ptr @str.144)
+  %cond3241 = icmp ne i32 %streq3240, 0
+  br i1 %cond3241, label %if_then1137, label %if_else1138
 
 if_then1137:
   ret i32 1
@@ -8548,10 +8557,10 @@ if_else1138:
   br label %if_end1139
 
 if_end1139:
-  %type_str_val3236 = load ptr, ptr %type_str.addr
-  %streq3237 = call i32 @ofs_str_eq(ptr %type_str_val3236, ptr @str.185)
-  %cond3238 = icmp ne i32 %streq3237, 0
-  br i1 %cond3238, label %if_then1140, label %if_else1141
+  %type_str_val3242 = load ptr, ptr %type_str.addr
+  %streq3243 = call i32 @ofs_str_eq(ptr %type_str_val3242, ptr @str.185)
+  %cond3244 = icmp ne i32 %streq3243, 0
+  br i1 %cond3244, label %if_then1140, label %if_else1141
 
 if_then1140:
   ret i32 1
@@ -8560,10 +8569,10 @@ if_else1141:
   br label %if_end1142
 
 if_end1142:
-  %type_str_val3239 = load ptr, ptr %type_str.addr
-  %streq3240 = call i32 @ofs_str_eq(ptr %type_str_val3239, ptr @str.186)
-  %cond3241 = icmp ne i32 %streq3240, 0
-  br i1 %cond3241, label %if_then1143, label %if_else1144
+  %type_str_val3245 = load ptr, ptr %type_str.addr
+  %streq3246 = call i32 @ofs_str_eq(ptr %type_str_val3245, ptr @str.186)
+  %cond3247 = icmp ne i32 %streq3246, 0
+  br i1 %cond3247, label %if_then1143, label %if_else1144
 
 if_then1143:
   ret i32 1
@@ -8572,10 +8581,10 @@ if_else1144:
   br label %if_end1145
 
 if_end1145:
-  %type_str_val3242 = load ptr, ptr %type_str.addr
-  %streq3243 = call i32 @ofs_str_eq(ptr %type_str_val3242, ptr @str.187)
-  %cond3244 = icmp ne i32 %streq3243, 0
-  br i1 %cond3244, label %if_then1146, label %if_else1147
+  %type_str_val3248 = load ptr, ptr %type_str.addr
+  %streq3249 = call i32 @ofs_str_eq(ptr %type_str_val3248, ptr @str.187)
+  %cond3250 = icmp ne i32 %streq3249, 0
+  br i1 %cond3250, label %if_then1146, label %if_else1147
 
 if_then1146:
   ret i32 1
@@ -8584,10 +8593,10 @@ if_else1147:
   br label %if_end1148
 
 if_end1148:
-  %type_str_val3245 = load ptr, ptr %type_str.addr
-  %streq3246 = call i32 @ofs_str_eq(ptr %type_str_val3245, ptr @str.188)
-  %cond3247 = icmp ne i32 %streq3246, 0
-  br i1 %cond3247, label %if_then1149, label %if_else1150
+  %type_str_val3251 = load ptr, ptr %type_str.addr
+  %streq3252 = call i32 @ofs_str_eq(ptr %type_str_val3251, ptr @str.188)
+  %cond3253 = icmp ne i32 %streq3252, 0
+  br i1 %cond3253, label %if_then1149, label %if_else1150
 
 if_then1149:
   ret i32 1
@@ -8596,10 +8605,10 @@ if_else1150:
   br label %if_end1151
 
 if_end1151:
-  %type_str_val3248 = load ptr, ptr %type_str.addr
-  %streq3249 = call i32 @ofs_str_eq(ptr %type_str_val3248, ptr @str.189)
-  %cond3250 = icmp ne i32 %streq3249, 0
-  br i1 %cond3250, label %if_then1152, label %if_else1153
+  %type_str_val3254 = load ptr, ptr %type_str.addr
+  %streq3255 = call i32 @ofs_str_eq(ptr %type_str_val3254, ptr @str.189)
+  %cond3256 = icmp ne i32 %streq3255, 0
+  br i1 %cond3256, label %if_then1152, label %if_else1153
 
 if_then1152:
   ret i32 1
@@ -8608,10 +8617,10 @@ if_else1153:
   br label %if_end1154
 
 if_end1154:
-  %type_str_val3251 = load ptr, ptr %type_str.addr
-  %streq3252 = call i32 @ofs_str_eq(ptr %type_str_val3251, ptr @str.190)
-  %cond3253 = icmp ne i32 %streq3252, 0
-  br i1 %cond3253, label %if_then1155, label %if_else1156
+  %type_str_val3257 = load ptr, ptr %type_str.addr
+  %streq3258 = call i32 @ofs_str_eq(ptr %type_str_val3257, ptr @str.190)
+  %cond3259 = icmp ne i32 %streq3258, 0
+  br i1 %cond3259, label %if_then1155, label %if_else1156
 
 if_then1155:
   ret i32 1
@@ -8629,11 +8638,11 @@ entry:
   store ptr %from, ptr %from.addr
   %to.addr = alloca ptr, align 8
   store ptr %to, ptr %to.addr
-  %from_val3254 = load ptr, ptr %from.addr
-  %to_val3255 = load ptr, ptr %to.addr
-  %streq3256 = call i32 @ofs_str_eq(ptr %from_val3254, ptr %to_val3255)
-  %cond3257 = icmp ne i32 %streq3256, 0
-  br i1 %cond3257, label %if_then1158, label %if_else1159
+  %from_val3260 = load ptr, ptr %from.addr
+  %to_val3261 = load ptr, ptr %to.addr
+  %streq3262 = call i32 @ofs_str_eq(ptr %from_val3260, ptr %to_val3261)
+  %cond3263 = icmp ne i32 %streq3262, 0
+  br i1 %cond3263, label %if_then1158, label %if_else1159
 
 if_then1158:
   ret i32 1
@@ -8642,14 +8651,14 @@ if_else1159:
   br label %if_end1160
 
 if_end1160:
-  %to_val3258 = load ptr, ptr %to.addr
-  %streq3259 = call i32 @ofs_str_eq(ptr %to_val3258, ptr @str.181)
-  %from_val3260 = load ptr, ptr %from.addr
-  %streq3261 = call i32 @ofs_str_eq(ptr %from_val3260, ptr @str.190)
-  %cond3262 = icmp ne i32 %streq3259, 0
-  %cond3263 = icmp ne i32 %streq3261, 0
-  %logic3264 = and i1 %cond3262, %cond3263
-  br i1 %logic3264, label %if_then1161, label %if_else1162
+  %to_val3264 = load ptr, ptr %to.addr
+  %streq3265 = call i32 @ofs_str_eq(ptr %to_val3264, ptr @str.181)
+  %from_val3266 = load ptr, ptr %from.addr
+  %streq3267 = call i32 @ofs_str_eq(ptr %from_val3266, ptr @str.190)
+  %cond3268 = icmp ne i32 %streq3265, 0
+  %cond3269 = icmp ne i32 %streq3267, 0
+  %logic3270 = and i1 %cond3268, %cond3269
+  br i1 %logic3270, label %if_then1161, label %if_else1162
 
 if_then1161:
   ret i32 1
@@ -8665,9 +8674,9 @@ define ptr @typeck__check_node(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %id_val3265 = load i64, ptr %id.addr
-  %cmp3266 = icmp slt i64 %id_val3265, 0
-  br i1 %cmp3266, label %if_then1164, label %if_else1165
+  %id_val3271 = load i64, ptr %id.addr
+  %cmp3272 = icmp slt i64 %id_val3271, 0
+  br i1 %cmp3272, label %if_then1164, label %if_else1165
 
 if_then1164:
   ret ptr @str.180
@@ -8676,456 +8685,456 @@ if_else1165:
   br label %if_end1166
 
 if_end1166:
-  %obj3268 = call ptr @ofs_alloc(i64 4096)
-  %id_val3269 = load i64, ptr %id.addr
-  %call3270 = call ptr @node_get(i64 %id_val3269)
-  %named_val3271 = load %Node, ptr %call3270
-  store %Node %named_val3271, ptr %obj3268
-  %field_ptr3272 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3273 = load i64, ptr %field_ptr3272
-  %NK_LIT_INT_val3274 = load i64, ptr @NK_LIT_INT
-  %cmp3275 = icmp eq i64 %field3273, %NK_LIT_INT_val3274
-  br i1 %cmp3275, label %if_then1167, label %if_else1168
+  %obj3274 = call ptr @ofs_alloc(i64 4096)
+  %id_val3275 = load i64, ptr %id.addr
+  %call3276 = call ptr @node_get(i64 %id_val3275)
+  %named_val3277 = load %Node, ptr %call3276
+  store %Node %named_val3277, ptr %obj3274
+  %field_ptr3278 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3279 = load i64, ptr %field_ptr3278
+  %NK_LIT_INT_val3280 = load i64, ptr @NK_LIT_INT
+  %cmp3281 = icmp eq i64 %field3279, %NK_LIT_INT_val3280
+  br i1 %cmp3281, label %if_then1167, label %if_else1168
 
 if_then1167:
-  %id_val3276 = load i64, ptr %id.addr
-  call void @node_set_type(i64 %id_val3276, ptr @str.181)
+  %id_val3282 = load i64, ptr %id.addr
+  call void @node_set_type(i64 %id_val3282, ptr @str.181)
   ret ptr @str.181
 
 if_else1168:
   br label %if_end1169
 
 if_end1169:
-  %field_ptr3277 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3278 = load i64, ptr %field_ptr3277
-  %NK_LIT_FLOAT_val3279 = load i64, ptr @NK_LIT_FLOAT
-  %cmp3280 = icmp eq i64 %field3278, %NK_LIT_FLOAT_val3279
-  br i1 %cmp3280, label %if_then1170, label %if_else1171
+  %field_ptr3283 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3284 = load i64, ptr %field_ptr3283
+  %NK_LIT_FLOAT_val3285 = load i64, ptr @NK_LIT_FLOAT
+  %cmp3286 = icmp eq i64 %field3284, %NK_LIT_FLOAT_val3285
+  br i1 %cmp3286, label %if_then1170, label %if_else1171
 
 if_then1170:
-  %id_val3281 = load i64, ptr %id.addr
-  call void @node_set_type(i64 %id_val3281, ptr @str.182)
+  %id_val3287 = load i64, ptr %id.addr
+  call void @node_set_type(i64 %id_val3287, ptr @str.182)
   ret ptr @str.182
 
 if_else1171:
   br label %if_end1172
 
 if_end1172:
-  %field_ptr3282 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3283 = load i64, ptr %field_ptr3282
-  %NK_LIT_STRING_val3284 = load i64, ptr @NK_LIT_STRING
-  %cmp3285 = icmp eq i64 %field3283, %NK_LIT_STRING_val3284
-  br i1 %cmp3285, label %if_then1173, label %if_else1174
+  %field_ptr3288 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3289 = load i64, ptr %field_ptr3288
+  %NK_LIT_STRING_val3290 = load i64, ptr @NK_LIT_STRING
+  %cmp3291 = icmp eq i64 %field3289, %NK_LIT_STRING_val3290
+  br i1 %cmp3291, label %if_then1173, label %if_else1174
 
 if_then1173:
-  %id_val3286 = load i64, ptr %id.addr
-  call void @node_set_type(i64 %id_val3286, ptr @str.183)
+  %id_val3292 = load i64, ptr %id.addr
+  call void @node_set_type(i64 %id_val3292, ptr @str.183)
   ret ptr @str.183
 
 if_else1174:
   br label %if_end1175
 
 if_end1175:
-  %field_ptr3287 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3288 = load i64, ptr %field_ptr3287
-  %NK_LIT_BOOL_val3289 = load i64, ptr @NK_LIT_BOOL
-  %cmp3290 = icmp eq i64 %field3288, %NK_LIT_BOOL_val3289
-  br i1 %cmp3290, label %if_then1176, label %if_else1177
+  %field_ptr3293 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3294 = load i64, ptr %field_ptr3293
+  %NK_LIT_BOOL_val3295 = load i64, ptr @NK_LIT_BOOL
+  %cmp3296 = icmp eq i64 %field3294, %NK_LIT_BOOL_val3295
+  br i1 %cmp3296, label %if_then1176, label %if_else1177
 
 if_then1176:
-  %id_val3291 = load i64, ptr %id.addr
-  call void @node_set_type(i64 %id_val3291, ptr @str.184)
+  %id_val3297 = load i64, ptr %id.addr
+  call void @node_set_type(i64 %id_val3297, ptr @str.184)
   ret ptr @str.184
 
 if_else1177:
   br label %if_end1178
 
 if_end1178:
-  %field_ptr3292 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3293 = load i64, ptr %field_ptr3292
-  %NK_LIT_NULL_val3294 = load i64, ptr @NK_LIT_NULL
-  %cmp3295 = icmp eq i64 %field3293, %NK_LIT_NULL_val3294
-  br i1 %cmp3295, label %if_then1179, label %if_else1180
+  %field_ptr3298 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3299 = load i64, ptr %field_ptr3298
+  %NK_LIT_NULL_val3300 = load i64, ptr @NK_LIT_NULL
+  %cmp3301 = icmp eq i64 %field3299, %NK_LIT_NULL_val3300
+  br i1 %cmp3301, label %if_then1179, label %if_else1180
 
 if_then1179:
-  %id_val3296 = load i64, ptr %id.addr
-  call void @node_set_type(i64 %id_val3296, ptr @str.40)
+  %id_val3302 = load i64, ptr %id.addr
+  call void @node_set_type(i64 %id_val3302, ptr @str.40)
   ret ptr @str.40
 
 if_else1180:
   br label %if_end1181
 
 if_end1181:
-  %field_ptr3297 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3298 = load i64, ptr %field_ptr3297
-  %NK_IDENT_val3299 = load i64, ptr @NK_IDENT
-  %cmp3300 = icmp eq i64 %field3298, %NK_IDENT_val3299
-  br i1 %cmp3300, label %if_then1182, label %if_else1183
+  %field_ptr3303 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3304 = load i64, ptr %field_ptr3303
+  %NK_IDENT_val3305 = load i64, ptr @NK_IDENT
+  %cmp3306 = icmp eq i64 %field3304, %NK_IDENT_val3305
+  br i1 %cmp3306, label %if_then1182, label %if_else1183
 
 if_then1182:
-  %obj3302 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3303 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3304 = load ptr, ptr %field_ptr3303
-  %call3305 = call ptr @typeck__resolve(ptr %field3304)
-  %named_val3306 = load %Symbol, ptr %call3305
-  store %Symbol %named_val3306, ptr %obj3302
-  %field_ptr3307 = getelementptr inbounds %Symbol, ptr %obj3302, i32 0, i32 0
-  %field3308 = load ptr, ptr %field_ptr3307
-  %streq3309 = call i32 @ofs_str_eq(ptr %field3308, ptr @str.63)
-  %cond3310 = icmp ne i32 %streq3309, 0
-  br i1 %cond3310, label %if_then1185, label %if_else1186
+  %obj3308 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3309 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3310 = load ptr, ptr %field_ptr3309
+  %call3311 = call ptr @typeck__resolve(ptr %field3310)
+  %named_val3312 = load %Symbol, ptr %call3311
+  store %Symbol %named_val3312, ptr %obj3308
+  %field_ptr3313 = getelementptr inbounds %Symbol, ptr %obj3308, i32 0, i32 0
+  %field3314 = load ptr, ptr %field_ptr3313
+  %streq3315 = call i32 @ofs_str_eq(ptr %field3314, ptr @str.63)
+  %cond3316 = icmp ne i32 %streq3315, 0
+  br i1 %cond3316, label %if_then1185, label %if_else1186
 
 if_then1185:
-  %field_ptr3311 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 3
-  %field3312 = load i64, ptr %field_ptr3311
-  %stone_to_str3313 = call ptr @ofs_stone_to_obsidian(i64 %field3312)
-  %concat3314 = call ptr @ofs_str_concat(ptr @str.191, ptr %stone_to_str3313)
-  %concat3315 = call ptr @ofs_str_concat(ptr %concat3314, ptr @str.94)
-  %field_ptr3316 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 4
-  %field3317 = load i64, ptr %field_ptr3316
-  %stone_to_str3318 = call ptr @ofs_stone_to_obsidian(i64 %field3317)
-  %concat3319 = call ptr @ofs_str_concat(ptr %concat3315, ptr %stone_to_str3318)
-  %concat3320 = call ptr @ofs_str_concat(ptr %concat3319, ptr @str.192)
-  %field_ptr3321 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3322 = load ptr, ptr %field_ptr3321
-  %concat3323 = call ptr @ofs_str_concat(ptr %concat3320, ptr %field3322)
-  %concat3324 = call ptr @ofs_str_concat(ptr %concat3323, ptr @str.193)
-  call void @echo_obsidian(ptr %concat3324)
+  %field_ptr3317 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 3
+  %field3318 = load i64, ptr %field_ptr3317
+  %stone_to_str3319 = call ptr @ofs_stone_to_obsidian(i64 %field3318)
+  %concat3320 = call ptr @ofs_str_concat(ptr @str.191, ptr %stone_to_str3319)
+  %concat3321 = call ptr @ofs_str_concat(ptr %concat3320, ptr @str.94)
+  %field_ptr3322 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 4
+  %field3323 = load i64, ptr %field_ptr3322
+  %stone_to_str3324 = call ptr @ofs_stone_to_obsidian(i64 %field3323)
+  %concat3325 = call ptr @ofs_str_concat(ptr %concat3321, ptr %stone_to_str3324)
+  %concat3326 = call ptr @ofs_str_concat(ptr %concat3325, ptr @str.192)
+  %field_ptr3327 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3328 = load ptr, ptr %field_ptr3327
+  %concat3329 = call ptr @ofs_str_concat(ptr %concat3326, ptr %field3328)
+  %concat3330 = call ptr @ofs_str_concat(ptr %concat3329, ptr @str.193)
+  call void @echo_obsidian(ptr %concat3330)
   ret ptr @str.179
 
 if_else1186:
   br label %if_end1187
 
 if_end1187:
-  %id_val3325 = load i64, ptr %id.addr
-  %field_ptr3326 = getelementptr inbounds %Symbol, ptr %obj3302, i32 0, i32 1
-  %field3327 = load ptr, ptr %field_ptr3326
-  call void @node_set_type(i64 %id_val3325, ptr %field3327)
-  %field_ptr3328 = getelementptr inbounds %Symbol, ptr %obj3302, i32 0, i32 1
-  %field3329 = load ptr, ptr %field_ptr3328
-  ret ptr %field3329
+  %id_val3331 = load i64, ptr %id.addr
+  %field_ptr3332 = getelementptr inbounds %Symbol, ptr %obj3308, i32 0, i32 1
+  %field3333 = load ptr, ptr %field_ptr3332
+  call void @node_set_type(i64 %id_val3331, ptr %field3333)
+  %field_ptr3334 = getelementptr inbounds %Symbol, ptr %obj3308, i32 0, i32 1
+  %field3335 = load ptr, ptr %field_ptr3334
+  ret ptr %field3335
 
 if_else1183:
   br label %if_end1184
 
 if_end1184:
-  %field_ptr3330 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3331 = load i64, ptr %field_ptr3330
-  %NK_BIN_OP_val3332 = load i64, ptr @NK_BIN_OP
-  %cmp3333 = icmp eq i64 %field3331, %NK_BIN_OP_val3332
-  br i1 %cmp3333, label %if_then1188, label %if_else1189
+  %field_ptr3336 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3337 = load i64, ptr %field_ptr3336
+  %NK_BIN_OP_val3338 = load i64, ptr @NK_BIN_OP
+  %cmp3339 = icmp eq i64 %field3337, %NK_BIN_OP_val3338
+  br i1 %cmp3339, label %if_then1188, label %if_else1189
 
 if_then1188:
-  %left_type3334 = alloca ptr, align 8
-  %field_ptr3335 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3336 = load i64, ptr %field_ptr3335
-  %call3337 = call ptr @typeck__check_node(i64 %field3336)
-  store ptr %call3337, ptr %left_type3334
-  %right_type3338 = alloca ptr, align 8
-  %field_ptr3339 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3340 = load i64, ptr %field_ptr3339
-  %call3341 = call ptr @typeck__check_node(i64 %field3340)
-  store ptr %call3341, ptr %right_type3338
-  %field_ptr3342 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3343 = load ptr, ptr %field_ptr3342
-  %streq3344 = call i32 @ofs_str_eq(ptr %field3343, ptr @str.54)
-  %field_ptr3345 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3346 = load ptr, ptr %field_ptr3345
-  %streq3347 = call i32 @ofs_str_eq(ptr %field3346, ptr @str.55)
-  %cond3348 = icmp ne i32 %streq3344, 0
-  %cond3349 = icmp ne i32 %streq3347, 0
-  %logic3350 = or i1 %cond3348, %cond3349
-  %field_ptr3351 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
+  %left_type3340 = alloca ptr, align 8
+  %field_ptr3341 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3342 = load i64, ptr %field_ptr3341
+  %call3343 = call ptr @typeck__check_node(i64 %field3342)
+  store ptr %call3343, ptr %left_type3340
+  %right_type3344 = alloca ptr, align 8
+  %field_ptr3345 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3346 = load i64, ptr %field_ptr3345
+  %call3347 = call ptr @typeck__check_node(i64 %field3346)
+  store ptr %call3347, ptr %right_type3344
+  %field_ptr3348 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3349 = load ptr, ptr %field_ptr3348
+  %streq3350 = call i32 @ofs_str_eq(ptr %field3349, ptr @str.54)
+  %field_ptr3351 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
   %field3352 = load ptr, ptr %field_ptr3351
-  %streq3353 = call i32 @ofs_str_eq(ptr %field3352, ptr @str.56)
-  %cond3354 = icmp ne i32 %streq3353, 0
-  %logic3355 = or i1 %logic3350, %cond3354
-  %field_ptr3356 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3357 = load ptr, ptr %field_ptr3356
-  %streq3358 = call i32 @ofs_str_eq(ptr %field3357, ptr @str.57)
-  %cond3359 = icmp ne i32 %streq3358, 0
-  %logic3360 = or i1 %logic3355, %cond3359
-  br i1 %logic3360, label %if_then1191, label %if_else1192
+  %streq3353 = call i32 @ofs_str_eq(ptr %field3352, ptr @str.55)
+  %cond3354 = icmp ne i32 %streq3350, 0
+  %cond3355 = icmp ne i32 %streq3353, 0
+  %logic3356 = or i1 %cond3354, %cond3355
+  %field_ptr3357 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3358 = load ptr, ptr %field_ptr3357
+  %streq3359 = call i32 @ofs_str_eq(ptr %field3358, ptr @str.56)
+  %cond3360 = icmp ne i32 %streq3359, 0
+  %logic3361 = or i1 %logic3356, %cond3360
+  %field_ptr3362 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3363 = load ptr, ptr %field_ptr3362
+  %streq3364 = call i32 @ofs_str_eq(ptr %field3363, ptr @str.57)
+  %cond3365 = icmp ne i32 %streq3364, 0
+  %logic3366 = or i1 %logic3361, %cond3365
+  br i1 %logic3366, label %if_then1191, label %if_else1192
 
 if_then1191:
-  %field_ptr3361 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3362 = load ptr, ptr %field_ptr3361
-  %streq3363 = call i32 @ofs_str_eq(ptr %field3362, ptr @str.54)
-  %left_type_val3364 = load ptr, ptr %left_type3334
-  %streq3365 = call i32 @ofs_str_eq(ptr %left_type_val3364, ptr @str.183)
-  %right_type_val3366 = load ptr, ptr %right_type3338
-  %streq3367 = call i32 @ofs_str_eq(ptr %right_type_val3366, ptr @str.183)
-  %cond3368 = icmp ne i32 %streq3365, 0
-  %cond3369 = icmp ne i32 %streq3367, 0
-  %logic3370 = or i1 %cond3368, %cond3369
-  %cond3371 = icmp ne i32 %streq3363, 0
-  %logic3372 = and i1 %cond3371, %logic3370
-  br i1 %logic3372, label %if_then1194, label %if_else1195
+  %field_ptr3367 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3368 = load ptr, ptr %field_ptr3367
+  %streq3369 = call i32 @ofs_str_eq(ptr %field3368, ptr @str.54)
+  %left_type_val3370 = load ptr, ptr %left_type3340
+  %streq3371 = call i32 @ofs_str_eq(ptr %left_type_val3370, ptr @str.183)
+  %right_type_val3372 = load ptr, ptr %right_type3344
+  %streq3373 = call i32 @ofs_str_eq(ptr %right_type_val3372, ptr @str.183)
+  %cond3374 = icmp ne i32 %streq3371, 0
+  %cond3375 = icmp ne i32 %streq3373, 0
+  %logic3376 = or i1 %cond3374, %cond3375
+  %cond3377 = icmp ne i32 %streq3369, 0
+  %logic3378 = and i1 %cond3377, %logic3376
+  br i1 %logic3378, label %if_then1194, label %if_else1195
 
 if_then1194:
-  %id_val3373 = load i64, ptr %id.addr
-  call void @node_set_type(i64 %id_val3373, ptr @str.183)
+  %id_val3379 = load i64, ptr %id.addr
+  call void @node_set_type(i64 %id_val3379, ptr @str.183)
   ret ptr @str.183
 
 if_else1195:
   br label %if_end1196
 
 if_end1196:
-  %left_type_val3374 = load ptr, ptr %left_type3334
-  %right_type_val3375 = load ptr, ptr %right_type3338
-  %call3376 = call i32 @typeck__check_type_compat(ptr %left_type_val3374, ptr %right_type_val3375)
-  %cond3377 = icmp ne i32 %call3376, 0
-  %not3378 = xor i1 %cond3377, true
-  br i1 %not3378, label %if_then1197, label %if_else1198
+  %left_type_val3380 = load ptr, ptr %left_type3340
+  %right_type_val3381 = load ptr, ptr %right_type3344
+  %call3382 = call i32 @typeck__check_type_compat(ptr %left_type_val3380, ptr %right_type_val3381)
+  %cond3383 = icmp ne i32 %call3382, 0
+  %not3384 = xor i1 %cond3383, true
+  br i1 %not3384, label %if_then1197, label %if_else1198
 
 if_then1197:
-  %field_ptr3379 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3380 = load ptr, ptr %field_ptr3379
-  %concat3381 = call ptr @ofs_str_concat(ptr @str.194, ptr %field3380)
-  call void @echo_obsidian(ptr %concat3381)
+  %field_ptr3385 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3386 = load ptr, ptr %field_ptr3385
+  %concat3387 = call ptr @ofs_str_concat(ptr @str.194, ptr %field3386)
+  call void @echo_obsidian(ptr %concat3387)
   br label %if_end1199
 
 if_else1198:
   br label %if_end1199
 
 if_end1199:
-  %id_val3382 = load i64, ptr %id.addr
-  %left_type_val3383 = load ptr, ptr %left_type3334
-  call void @node_set_type(i64 %id_val3382, ptr %left_type_val3383)
-  %left_type_val3384 = load ptr, ptr %left_type3334
-  ret ptr %left_type_val3384
+  %id_val3388 = load i64, ptr %id.addr
+  %left_type_val3389 = load ptr, ptr %left_type3340
+  call void @node_set_type(i64 %id_val3388, ptr %left_type_val3389)
+  %left_type_val3390 = load ptr, ptr %left_type3340
+  ret ptr %left_type_val3390
 
 if_else1192:
   br label %if_end1193
 
 if_end1193:
-  %field_ptr3385 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3386 = load ptr, ptr %field_ptr3385
-  %streq3387 = call i32 @ofs_str_eq(ptr %field3386, ptr @str.58)
-  %field_ptr3388 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3389 = load ptr, ptr %field_ptr3388
-  %streq3390 = call i32 @ofs_str_eq(ptr %field3389, ptr @str.59)
-  %cond3391 = icmp ne i32 %streq3387, 0
-  %cond3392 = icmp ne i32 %streq3390, 0
-  %logic3393 = or i1 %cond3391, %cond3392
-  %field_ptr3394 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
+  %field_ptr3391 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3392 = load ptr, ptr %field_ptr3391
+  %streq3393 = call i32 @ofs_str_eq(ptr %field3392, ptr @str.58)
+  %field_ptr3394 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
   %field3395 = load ptr, ptr %field_ptr3394
-  %streq3396 = call i32 @ofs_str_eq(ptr %field3395, ptr @str.114)
-  %cond3397 = icmp ne i32 %streq3396, 0
-  %logic3398 = or i1 %logic3393, %cond3397
-  %field_ptr3399 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3400 = load ptr, ptr %field_ptr3399
-  %streq3401 = call i32 @ofs_str_eq(ptr %field3400, ptr @str.112)
-  %cond3402 = icmp ne i32 %streq3401, 0
-  %logic3403 = or i1 %logic3398, %cond3402
-  %field_ptr3404 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3405 = load ptr, ptr %field_ptr3404
-  %streq3406 = call i32 @ofs_str_eq(ptr %field3405, ptr @str.117)
-  %cond3407 = icmp ne i32 %streq3406, 0
-  %logic3408 = or i1 %logic3403, %cond3407
-  %field_ptr3409 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3410 = load ptr, ptr %field_ptr3409
-  %streq3411 = call i32 @ofs_str_eq(ptr %field3410, ptr @str.115)
-  %cond3412 = icmp ne i32 %streq3411, 0
-  %logic3413 = or i1 %logic3408, %cond3412
-  br i1 %logic3413, label %if_then1200, label %if_else1201
+  %streq3396 = call i32 @ofs_str_eq(ptr %field3395, ptr @str.59)
+  %cond3397 = icmp ne i32 %streq3393, 0
+  %cond3398 = icmp ne i32 %streq3396, 0
+  %logic3399 = or i1 %cond3397, %cond3398
+  %field_ptr3400 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3401 = load ptr, ptr %field_ptr3400
+  %streq3402 = call i32 @ofs_str_eq(ptr %field3401, ptr @str.114)
+  %cond3403 = icmp ne i32 %streq3402, 0
+  %logic3404 = or i1 %logic3399, %cond3403
+  %field_ptr3405 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3406 = load ptr, ptr %field_ptr3405
+  %streq3407 = call i32 @ofs_str_eq(ptr %field3406, ptr @str.112)
+  %cond3408 = icmp ne i32 %streq3407, 0
+  %logic3409 = or i1 %logic3404, %cond3408
+  %field_ptr3410 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3411 = load ptr, ptr %field_ptr3410
+  %streq3412 = call i32 @ofs_str_eq(ptr %field3411, ptr @str.117)
+  %cond3413 = icmp ne i32 %streq3412, 0
+  %logic3414 = or i1 %logic3409, %cond3413
+  %field_ptr3415 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3416 = load ptr, ptr %field_ptr3415
+  %streq3417 = call i32 @ofs_str_eq(ptr %field3416, ptr @str.115)
+  %cond3418 = icmp ne i32 %streq3417, 0
+  %logic3419 = or i1 %logic3414, %cond3418
+  br i1 %logic3419, label %if_then1200, label %if_else1201
 
 if_then1200:
-  %id_val3414 = load i64, ptr %id.addr
-  call void @node_set_type(i64 %id_val3414, ptr @str.184)
+  %id_val3420 = load i64, ptr %id.addr
+  call void @node_set_type(i64 %id_val3420, ptr @str.184)
   ret ptr @str.184
 
 if_else1201:
   br label %if_end1202
 
 if_end1202:
-  %field_ptr3415 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3416 = load ptr, ptr %field_ptr3415
-  %streq3417 = call i32 @ofs_str_eq(ptr %field3416, ptr @str.118)
-  %field_ptr3418 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3419 = load ptr, ptr %field_ptr3418
-  %streq3420 = call i32 @ofs_str_eq(ptr %field3419, ptr @str.120)
-  %cond3421 = icmp ne i32 %streq3417, 0
-  %cond3422 = icmp ne i32 %streq3420, 0
-  %logic3423 = or i1 %cond3421, %cond3422
-  br i1 %logic3423, label %if_then1203, label %if_else1204
+  %field_ptr3421 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3422 = load ptr, ptr %field_ptr3421
+  %streq3423 = call i32 @ofs_str_eq(ptr %field3422, ptr @str.118)
+  %field_ptr3424 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3425 = load ptr, ptr %field_ptr3424
+  %streq3426 = call i32 @ofs_str_eq(ptr %field3425, ptr @str.120)
+  %cond3427 = icmp ne i32 %streq3423, 0
+  %cond3428 = icmp ne i32 %streq3426, 0
+  %logic3429 = or i1 %cond3427, %cond3428
+  br i1 %logic3429, label %if_then1203, label %if_else1204
 
 if_then1203:
-  %id_val3424 = load i64, ptr %id.addr
-  call void @node_set_type(i64 %id_val3424, ptr @str.184)
+  %id_val3430 = load i64, ptr %id.addr
+  call void @node_set_type(i64 %id_val3430, ptr @str.184)
   ret ptr @str.184
 
 if_else1204:
   br label %if_end1205
 
 if_end1205:
-  %id_val3425 = load i64, ptr %id.addr
-  %left_type_val3426 = load ptr, ptr %left_type3334
-  call void @node_set_type(i64 %id_val3425, ptr %left_type_val3426)
-  %left_type_val3427 = load ptr, ptr %left_type3334
-  ret ptr %left_type_val3427
+  %id_val3431 = load i64, ptr %id.addr
+  %left_type_val3432 = load ptr, ptr %left_type3340
+  call void @node_set_type(i64 %id_val3431, ptr %left_type_val3432)
+  %left_type_val3433 = load ptr, ptr %left_type3340
+  ret ptr %left_type_val3433
 
 if_else1189:
   br label %if_end1190
 
 if_end1190:
-  %field_ptr3428 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3429 = load i64, ptr %field_ptr3428
-  %NK_FIELD_val3430 = load i64, ptr @NK_FIELD
-  %cmp3431 = icmp eq i64 %field3429, %NK_FIELD_val3430
-  br i1 %cmp3431, label %if_then1206, label %if_else1207
+  %field_ptr3434 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3435 = load i64, ptr %field_ptr3434
+  %NK_FIELD_val3436 = load i64, ptr @NK_FIELD
+  %cmp3437 = icmp eq i64 %field3435, %NK_FIELD_val3436
+  br i1 %cmp3437, label %if_then1206, label %if_else1207
 
 if_then1206:
-  %base_type3432 = alloca ptr, align 8
-  %field_ptr3433 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3434 = load i64, ptr %field_ptr3433
-  %call3435 = call ptr @typeck__check_node(i64 %field3434)
-  store ptr %call3435, ptr %base_type3432
-  %ft3436 = alloca ptr, align 8
-  %base_type_val3437 = load ptr, ptr %base_type3432
-  %field_ptr3438 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3439 = load ptr, ptr %field_ptr3438
-  %call3440 = call ptr @typeck__field_type(ptr %base_type_val3437, ptr %field3439)
-  store ptr %call3440, ptr %ft3436
-  %id_val3441 = load i64, ptr %id.addr
-  %ft_val3442 = load ptr, ptr %ft3436
-  call void @node_set_type(i64 %id_val3441, ptr %ft_val3442)
-  %ft_val3443 = load ptr, ptr %ft3436
-  ret ptr %ft_val3443
+  %base_type3438 = alloca ptr, align 8
+  %field_ptr3439 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3440 = load i64, ptr %field_ptr3439
+  %call3441 = call ptr @typeck__check_node(i64 %field3440)
+  store ptr %call3441, ptr %base_type3438
+  %ft3442 = alloca ptr, align 8
+  %base_type_val3443 = load ptr, ptr %base_type3438
+  %field_ptr3444 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3445 = load ptr, ptr %field_ptr3444
+  %call3446 = call ptr @typeck__field_type(ptr %base_type_val3443, ptr %field3445)
+  store ptr %call3446, ptr %ft3442
+  %id_val3447 = load i64, ptr %id.addr
+  %ft_val3448 = load ptr, ptr %ft3442
+  call void @node_set_type(i64 %id_val3447, ptr %ft_val3448)
+  %ft_val3449 = load ptr, ptr %ft3442
+  ret ptr %ft_val3449
 
 if_else1207:
   br label %if_end1208
 
 if_end1208:
-  %field_ptr3444 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3445 = load i64, ptr %field_ptr3444
-  %NK_INDEX_val3446 = load i64, ptr @NK_INDEX
-  %cmp3447 = icmp eq i64 %field3445, %NK_INDEX_val3446
-  br i1 %cmp3447, label %if_then1209, label %if_else1210
+  %field_ptr3450 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3451 = load i64, ptr %field_ptr3450
+  %NK_INDEX_val3452 = load i64, ptr @NK_INDEX
+  %cmp3453 = icmp eq i64 %field3451, %NK_INDEX_val3452
+  br i1 %cmp3453, label %if_then1209, label %if_else1210
 
 if_then1209:
-  %field_ptr3448 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3449 = load i64, ptr %field_ptr3448
-  %call3450 = call ptr @typeck__check_node(i64 %field3449)
-  %field_ptr3451 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3452 = load i64, ptr %field_ptr3451
-  %call3453 = call ptr @typeck__check_node(i64 %field3452)
-  %id_val3454 = load i64, ptr %id.addr
-  call void @node_set_type(i64 %id_val3454, ptr @str.181)
+  %field_ptr3454 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3455 = load i64, ptr %field_ptr3454
+  %call3456 = call ptr @typeck__check_node(i64 %field3455)
+  %field_ptr3457 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3458 = load i64, ptr %field_ptr3457
+  %call3459 = call ptr @typeck__check_node(i64 %field3458)
+  %id_val3460 = load i64, ptr %id.addr
+  call void @node_set_type(i64 %id_val3460, ptr @str.181)
   ret ptr @str.181
 
 if_else1210:
   br label %if_end1211
 
 if_end1211:
-  %field_ptr3455 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3456 = load i64, ptr %field_ptr3455
-  %NK_CAST_val3457 = load i64, ptr @NK_CAST
-  %cmp3458 = icmp eq i64 %field3456, %NK_CAST_val3457
-  br i1 %cmp3458, label %if_then1212, label %if_else1213
+  %field_ptr3461 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3462 = load i64, ptr %field_ptr3461
+  %NK_CAST_val3463 = load i64, ptr @NK_CAST
+  %cmp3464 = icmp eq i64 %field3462, %NK_CAST_val3463
+  br i1 %cmp3464, label %if_then1212, label %if_else1213
 
 if_then1212:
-  %field_ptr3459 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3460 = load i64, ptr %field_ptr3459
-  %call3461 = call ptr @typeck__check_node(i64 %field3460)
-  %id_val3462 = load i64, ptr %id.addr
-  %field_ptr3463 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3464 = load ptr, ptr %field_ptr3463
-  call void @node_set_type(i64 %id_val3462, ptr %field3464)
-  %field_ptr3465 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3466 = load ptr, ptr %field_ptr3465
-  ret ptr %field3466
+  %field_ptr3465 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3466 = load i64, ptr %field_ptr3465
+  %call3467 = call ptr @typeck__check_node(i64 %field3466)
+  %id_val3468 = load i64, ptr %id.addr
+  %field_ptr3469 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3470 = load ptr, ptr %field_ptr3469
+  call void @node_set_type(i64 %id_val3468, ptr %field3470)
+  %field_ptr3471 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3472 = load ptr, ptr %field_ptr3471
+  ret ptr %field3472
 
 if_else1213:
   br label %if_end1214
 
 if_end1214:
-  %field_ptr3467 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3468 = load i64, ptr %field_ptr3467
-  %NK_ASSIGN_val3469 = load i64, ptr @NK_ASSIGN
-  %cmp3470 = icmp eq i64 %field3468, %NK_ASSIGN_val3469
-  br i1 %cmp3470, label %if_then1215, label %if_else1216
+  %field_ptr3473 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3474 = load i64, ptr %field_ptr3473
+  %NK_ASSIGN_val3475 = load i64, ptr @NK_ASSIGN
+  %cmp3476 = icmp eq i64 %field3474, %NK_ASSIGN_val3475
+  br i1 %cmp3476, label %if_then1215, label %if_else1216
 
 if_then1215:
-  %target_type3471 = alloca ptr, align 8
-  %field_ptr3472 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3473 = load i64, ptr %field_ptr3472
-  %call3474 = call ptr @typeck__check_node(i64 %field3473)
-  store ptr %call3474, ptr %target_type3471
-  %field_ptr3475 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3476 = load i64, ptr %field_ptr3475
-  %call3477 = call ptr @typeck__check_node(i64 %field3476)
-  %id_val3478 = load i64, ptr %id.addr
-  %target_type_val3479 = load ptr, ptr %target_type3471
-  call void @node_set_type(i64 %id_val3478, ptr %target_type_val3479)
-  %target_type_val3480 = load ptr, ptr %target_type3471
-  ret ptr %target_type_val3480
+  %target_type3477 = alloca ptr, align 8
+  %field_ptr3478 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3479 = load i64, ptr %field_ptr3478
+  %call3480 = call ptr @typeck__check_node(i64 %field3479)
+  store ptr %call3480, ptr %target_type3477
+  %field_ptr3481 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3482 = load i64, ptr %field_ptr3481
+  %call3483 = call ptr @typeck__check_node(i64 %field3482)
+  %id_val3484 = load i64, ptr %id.addr
+  %target_type_val3485 = load ptr, ptr %target_type3477
+  call void @node_set_type(i64 %id_val3484, ptr %target_type_val3485)
+  %target_type_val3486 = load ptr, ptr %target_type3477
+  ret ptr %target_type_val3486
 
 if_else1216:
   br label %if_end1217
 
 if_end1217:
-  %field_ptr3481 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3482 = load i64, ptr %field_ptr3481
-  %NK_UNARY_OP_val3483 = load i64, ptr @NK_UNARY_OP
-  %cmp3484 = icmp eq i64 %field3482, %NK_UNARY_OP_val3483
-  br i1 %cmp3484, label %if_then1218, label %if_else1219
+  %field_ptr3487 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3488 = load i64, ptr %field_ptr3487
+  %NK_UNARY_OP_val3489 = load i64, ptr @NK_UNARY_OP
+  %cmp3490 = icmp eq i64 %field3488, %NK_UNARY_OP_val3489
+  br i1 %cmp3490, label %if_then1218, label %if_else1219
 
 if_then1218:
-  %operand_type3485 = alloca ptr, align 8
-  %field_ptr3486 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3487 = load i64, ptr %field_ptr3486
-  %call3488 = call ptr @typeck__check_node(i64 %field3487)
-  store ptr %call3488, ptr %operand_type3485
-  %field_ptr3489 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3490 = load ptr, ptr %field_ptr3489
-  %streq3491 = call i32 @ofs_str_eq(ptr %field3490, ptr @str.119)
-  %cond3492 = icmp ne i32 %streq3491, 0
-  br i1 %cond3492, label %if_then1221, label %if_else1222
+  %operand_type3491 = alloca ptr, align 8
+  %field_ptr3492 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3493 = load i64, ptr %field_ptr3492
+  %call3494 = call ptr @typeck__check_node(i64 %field3493)
+  store ptr %call3494, ptr %operand_type3491
+  %field_ptr3495 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3496 = load ptr, ptr %field_ptr3495
+  %streq3497 = call i32 @ofs_str_eq(ptr %field3496, ptr @str.119)
+  %cond3498 = icmp ne i32 %streq3497, 0
+  br i1 %cond3498, label %if_then1221, label %if_else1222
 
 if_then1221:
-  %id_val3493 = load i64, ptr %id.addr
-  %operand_type_val3494 = load ptr, ptr %operand_type3485
-  %concat3495 = call ptr @ofs_str_concat(ptr @str.56, ptr %operand_type_val3494)
-  call void @node_set_type(i64 %id_val3493, ptr %concat3495)
-  %operand_type_val3496 = load ptr, ptr %operand_type3485
-  %concat3497 = call ptr @ofs_str_concat(ptr @str.56, ptr %operand_type_val3496)
-  ret ptr %concat3497
+  %id_val3499 = load i64, ptr %id.addr
+  %operand_type_val3500 = load ptr, ptr %operand_type3491
+  %concat3501 = call ptr @ofs_str_concat(ptr @str.56, ptr %operand_type_val3500)
+  call void @node_set_type(i64 %id_val3499, ptr %concat3501)
+  %operand_type_val3502 = load ptr, ptr %operand_type3491
+  %concat3503 = call ptr @ofs_str_concat(ptr @str.56, ptr %operand_type_val3502)
+  ret ptr %concat3503
 
 if_else1222:
   br label %if_end1223
 
 if_end1223:
-  %field_ptr3498 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3499 = load ptr, ptr %field_ptr3498
-  %streq3500 = call i32 @ofs_str_eq(ptr %field3499, ptr @str.56)
-  %cond3501 = icmp ne i32 %streq3500, 0
-  br i1 %cond3501, label %if_then1224, label %if_else1225
+  %field_ptr3504 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3505 = load ptr, ptr %field_ptr3504
+  %streq3506 = call i32 @ofs_str_eq(ptr %field3505, ptr @str.56)
+  %cond3507 = icmp ne i32 %streq3506, 0
+  br i1 %cond3507, label %if_then1224, label %if_else1225
 
 if_then1224:
-  %operand_type_val3502 = load ptr, ptr %operand_type3485
-  %strlen3503 = call i64 @ofs_str_len(ptr %operand_type_val3502)
-  %cmp3504 = icmp sgt i64 %strlen3503, 1
-  %operand_type_val3505 = load ptr, ptr %operand_type3485
-  %call3506 = call ptr @ofs_str_substr(ptr %operand_type_val3505, i64 0, i64 1)
-  %streq3507 = call i32 @ofs_str_eq(ptr %call3506, ptr @str.56)
-  %cond3508 = icmp ne i32 %streq3507, 0
-  %logic3509 = and i1 %cmp3504, %cond3508
-  br i1 %logic3509, label %if_then1227, label %if_else1228
+  %operand_type_val3508 = load ptr, ptr %operand_type3491
+  %strlen3509 = call i64 @ofs_str_len(ptr %operand_type_val3508)
+  %cmp3510 = icmp sgt i64 %strlen3509, 1
+  %operand_type_val3511 = load ptr, ptr %operand_type3491
+  %call3512 = call ptr @ofs_str_substr(ptr %operand_type_val3511, i64 0, i64 1)
+  %streq3513 = call i32 @ofs_str_eq(ptr %call3512, ptr @str.56)
+  %cond3514 = icmp ne i32 %streq3513, 0
+  %logic3515 = and i1 %cmp3510, %cond3514
+  br i1 %logic3515, label %if_then1227, label %if_else1228
 
 if_then1227:
-  %inner3510 = alloca ptr, align 8
-  %operand_type_val3511 = load ptr, ptr %operand_type3485
-  %operand_type_val3512 = load ptr, ptr %operand_type3485
-  %strlen3513 = call i64 @ofs_str_len(ptr %operand_type_val3512)
-  %op3514 = sub i64 %strlen3513, 1
-  %call3515 = call ptr @ofs_str_substr(ptr %operand_type_val3511, i64 1, i64 %op3514)
-  store ptr %call3515, ptr %inner3510
-  %id_val3516 = load i64, ptr %id.addr
-  %inner_val3517 = load ptr, ptr %inner3510
-  call void @node_set_type(i64 %id_val3516, ptr %inner_val3517)
-  %inner_val3518 = load ptr, ptr %inner3510
-  ret ptr %inner_val3518
+  %inner3516 = alloca ptr, align 8
+  %operand_type_val3517 = load ptr, ptr %operand_type3491
+  %operand_type_val3518 = load ptr, ptr %operand_type3491
+  %strlen3519 = call i64 @ofs_str_len(ptr %operand_type_val3518)
+  %op3520 = sub i64 %strlen3519, 1
+  %call3521 = call ptr @ofs_str_substr(ptr %operand_type_val3517, i64 1, i64 %op3520)
+  store ptr %call3521, ptr %inner3516
+  %id_val3522 = load i64, ptr %id.addr
+  %inner_val3523 = load ptr, ptr %inner3516
+  call void @node_set_type(i64 %id_val3522, ptr %inner_val3523)
+  %inner_val3524 = load ptr, ptr %inner3516
+  ret ptr %inner_val3524
 
 if_else1228:
   br label %if_end1229
@@ -9137,119 +9146,122 @@ if_else1225:
   br label %if_end1226
 
 if_end1226:
-  %id_val3519 = load i64, ptr %id.addr
-  %operand_type_val3520 = load ptr, ptr %operand_type3485
-  call void @node_set_type(i64 %id_val3519, ptr %operand_type_val3520)
-  %operand_type_val3521 = load ptr, ptr %operand_type3485
-  ret ptr %operand_type_val3521
+  %id_val3525 = load i64, ptr %id.addr
+  %operand_type_val3526 = load ptr, ptr %operand_type3491
+  call void @node_set_type(i64 %id_val3525, ptr %operand_type_val3526)
+  %operand_type_val3527 = load ptr, ptr %operand_type3491
+  ret ptr %operand_type_val3527
 
 if_else1219:
   br label %if_end1220
 
 if_end1220:
-  %field_ptr3522 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3523 = load i64, ptr %field_ptr3522
-  %NK_CALL_val3524 = load i64, ptr @NK_CALL
-  %cmp3525 = icmp eq i64 %field3523, %NK_CALL_val3524
-  br i1 %cmp3525, label %if_then1230, label %if_else1231
+  %field_ptr3528 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3529 = load i64, ptr %field_ptr3528
+  %NK_CALL_val3530 = load i64, ptr @NK_CALL
+  %cmp3531 = icmp eq i64 %field3529, %NK_CALL_val3530
+  br i1 %cmp3531, label %if_then1230, label %if_else1231
 
 if_then1230:
-  %i3526 = alloca i64, align 8
-  store i64 0, ptr %i3526
+  %i3532 = alloca i64, align 8
+  store i64 0, ptr %i3532
+  %arg_count3533 = alloca i64, align 8
+  %id_val3534 = load i64, ptr %id.addr
+  %call3535 = call i64 @node_extra_len(i64 %id_val3534)
+  store i64 %call3535, ptr %arg_count3533
   br label %while_cond1233
 
 while_cond1233:
-  %i_val3527 = load i64, ptr %i3526
-  %id_val3528 = load i64, ptr %id.addr
-  %call3529 = call i64 @node_extra_len(i64 %id_val3528)
-  %cmp3530 = icmp slt i64 %i_val3527, %call3529
-  br i1 %cmp3530, label %while_body1234, label %while_end1235
+  %i_val3536 = load i64, ptr %i3532
+  %arg_count_val3537 = load i64, ptr %arg_count3533
+  %cmp3538 = icmp slt i64 %i_val3536, %arg_count_val3537
+  br i1 %cmp3538, label %while_body1234, label %while_end1235
 
 while_body1234:
-  %arg_id3531 = alloca i64, align 8
-  %id_val3532 = load i64, ptr %id.addr
-  %i_val3533 = load i64, ptr %i3526
-  %call3534 = call i64 @node_get_extra(i64 %id_val3532, i64 %i_val3533)
-  store i64 %call3534, ptr %arg_id3531
-  %arg_id_val3535 = load i64, ptr %arg_id3531
-  %call3536 = call ptr @typeck__check_node(i64 %arg_id_val3535)
-  %post_old3537 = load i64, ptr %i3526
-  %post_new3538 = add i64 %post_old3537, 1
-  store i64 %post_new3538, ptr %i3526
+  %arg_id3539 = alloca i64, align 8
+  %id_val3540 = load i64, ptr %id.addr
+  %i_val3541 = load i64, ptr %i3532
+  %call3542 = call i64 @node_get_extra(i64 %id_val3540, i64 %i_val3541)
+  store i64 %call3542, ptr %arg_id3539
+  %arg_id_val3543 = load i64, ptr %arg_id3539
+  %call3544 = call ptr @typeck__check_node(i64 %arg_id_val3543)
+  %post_old3545 = load i64, ptr %i3532
+  %post_new3546 = add i64 %post_old3545, 1
+  store i64 %post_new3546, ptr %i3532
   br label %while_cond1233
 
 while_end1235:
-  %obj3540 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3541 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3542 = load ptr, ptr %field_ptr3541
-  %call3543 = call ptr @typeck__resolve(ptr %field3542)
-  %named_val3544 = load %Symbol, ptr %call3543
-  store %Symbol %named_val3544, ptr %obj3540
-  %field_ptr3545 = getelementptr inbounds %Symbol, ptr %obj3540, i32 0, i32 0
-  %field3546 = load ptr, ptr %field_ptr3545
-  %streq3547 = call i32 @ofs_str_eq(ptr %field3546, ptr @str.63)
-  %cond3548 = icmp ne i32 %streq3547, 0
-  %not3549 = xor i1 %cond3548, true
-  br i1 %not3549, label %if_then1236, label %if_else1237
+  %obj3548 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3549 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3550 = load ptr, ptr %field_ptr3549
+  %call3551 = call ptr @typeck__resolve(ptr %field3550)
+  %named_val3552 = load %Symbol, ptr %call3551
+  store %Symbol %named_val3552, ptr %obj3548
+  %field_ptr3553 = getelementptr inbounds %Symbol, ptr %obj3548, i32 0, i32 0
+  %field3554 = load ptr, ptr %field_ptr3553
+  %streq3555 = call i32 @ofs_str_eq(ptr %field3554, ptr @str.63)
+  %cond3556 = icmp ne i32 %streq3555, 0
+  %not3557 = xor i1 %cond3556, true
+  br i1 %not3557, label %if_then1236, label %if_else1237
 
 if_then1236:
-  %id_val3550 = load i64, ptr %id.addr
-  %field_ptr3551 = getelementptr inbounds %Symbol, ptr %obj3540, i32 0, i32 1
-  %field3552 = load ptr, ptr %field_ptr3551
-  call void @node_set_type(i64 %id_val3550, ptr %field3552)
-  %field_ptr3553 = getelementptr inbounds %Symbol, ptr %obj3540, i32 0, i32 1
-  %field3554 = load ptr, ptr %field_ptr3553
-  ret ptr %field3554
+  %id_val3558 = load i64, ptr %id.addr
+  %field_ptr3559 = getelementptr inbounds %Symbol, ptr %obj3548, i32 0, i32 1
+  %field3560 = load ptr, ptr %field_ptr3559
+  call void @node_set_type(i64 %id_val3558, ptr %field3560)
+  %field_ptr3561 = getelementptr inbounds %Symbol, ptr %obj3548, i32 0, i32 1
+  %field3562 = load ptr, ptr %field_ptr3561
+  ret ptr %field3562
 
 if_else1237:
   br label %if_end1238
 
 if_end1238:
-  %id_val3555 = load i64, ptr %id.addr
-  call void @node_set_type(i64 %id_val3555, ptr @str.179)
+  %id_val3563 = load i64, ptr %id.addr
+  call void @node_set_type(i64 %id_val3563, ptr @str.179)
   ret ptr @str.179
 
 if_else1231:
   br label %if_end1232
 
 if_end1232:
-  %field_ptr3556 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3557 = load i64, ptr %field_ptr3556
-  %NK_VAR_DECL_val3558 = load i64, ptr @NK_VAR_DECL
-  %cmp3559 = icmp eq i64 %field3557, %NK_VAR_DECL_val3558
-  %field_ptr3560 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3561 = load i64, ptr %field_ptr3560
-  %NK_CONST_DECL_val3562 = load i64, ptr @NK_CONST_DECL
-  %cmp3563 = icmp eq i64 %field3561, %NK_CONST_DECL_val3562
-  %logic3564 = or i1 %cmp3559, %cmp3563
-  br i1 %logic3564, label %if_then1239, label %if_else1240
+  %field_ptr3564 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3565 = load i64, ptr %field_ptr3564
+  %NK_VAR_DECL_val3566 = load i64, ptr @NK_VAR_DECL
+  %cmp3567 = icmp eq i64 %field3565, %NK_VAR_DECL_val3566
+  %field_ptr3568 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3569 = load i64, ptr %field_ptr3568
+  %NK_CONST_DECL_val3570 = load i64, ptr @NK_CONST_DECL
+  %cmp3571 = icmp eq i64 %field3569, %NK_CONST_DECL_val3570
+  %logic3572 = or i1 %cmp3567, %cmp3571
+  br i1 %logic3572, label %if_then1239, label %if_else1240
 
 if_then1239:
-  %type_node_id3565 = alloca i64, align 8
-  %field_ptr3566 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3567 = load i64, ptr %field_ptr3566
-  store i64 %field3567, ptr %type_node_id3565
-  %init_id3568 = alloca i64, align 8
-  %field_ptr3569 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3570 = load i64, ptr %field_ptr3569
-  store i64 %field3570, ptr %init_id3568
-  %type_str3571 = alloca ptr, align 8
-  store ptr @str.179, ptr %type_str3571
-  %type_node_id_val3572 = load i64, ptr %type_node_id3565
-  %cmp3573 = icmp sge i64 %type_node_id_val3572, 0
-  br i1 %cmp3573, label %if_then1242, label %if_else1243
+  %type_node_id3573 = alloca i64, align 8
+  %field_ptr3574 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3575 = load i64, ptr %field_ptr3574
+  store i64 %field3575, ptr %type_node_id3573
+  %init_id3576 = alloca i64, align 8
+  %field_ptr3577 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3578 = load i64, ptr %field_ptr3577
+  store i64 %field3578, ptr %init_id3576
+  %type_str3579 = alloca ptr, align 8
+  store ptr @str.179, ptr %type_str3579
+  %type_node_id_val3580 = load i64, ptr %type_node_id3573
+  %cmp3581 = icmp sge i64 %type_node_id_val3580, 0
+  br i1 %cmp3581, label %if_then1242, label %if_else1243
 
 if_then1242:
-  %type_node_id_val3574 = load i64, ptr %type_node_id3565
-  %call3575 = call ptr @typeck__type_node_name(i64 %type_node_id_val3574)
-  store ptr %call3575, ptr %type_str3571
-  %init_id_val3576 = load i64, ptr %init_id3568
-  %cmp3577 = icmp sge i64 %init_id_val3576, 0
-  br i1 %cmp3577, label %if_then1245, label %if_else1246
+  %type_node_id_val3582 = load i64, ptr %type_node_id3573
+  %call3583 = call ptr @typeck__type_node_name(i64 %type_node_id_val3582)
+  store ptr %call3583, ptr %type_str3579
+  %init_id_val3584 = load i64, ptr %init_id3576
+  %cmp3585 = icmp sge i64 %init_id_val3584, 0
+  br i1 %cmp3585, label %if_then1245, label %if_else1246
 
 if_then1245:
-  %init_id_val3578 = load i64, ptr %init_id3568
-  %call3579 = call ptr @typeck__check_node(i64 %init_id_val3578)
+  %init_id_val3586 = load i64, ptr %init_id3576
+  %call3587 = call ptr @typeck__check_node(i64 %init_id_val3586)
   br label %if_end1247
 
 if_else1246:
@@ -9259,14 +9271,14 @@ if_end1247:
   br label %if_end1244
 
 if_else1243:
-  %init_id_val3580 = load i64, ptr %init_id3568
-  %cmp3581 = icmp sge i64 %init_id_val3580, 0
-  br i1 %cmp3581, label %if_then1248, label %if_else1249
+  %init_id_val3588 = load i64, ptr %init_id3576
+  %cmp3589 = icmp sge i64 %init_id_val3588, 0
+  br i1 %cmp3589, label %if_then1248, label %if_else1249
 
 if_then1248:
-  %init_id_val3582 = load i64, ptr %init_id3568
-  %call3583 = call ptr @typeck__check_node(i64 %init_id_val3582)
-  store ptr %call3583, ptr %type_str3571
+  %init_id_val3590 = load i64, ptr %init_id3576
+  %call3591 = call ptr @typeck__check_node(i64 %init_id_val3590)
+  store ptr %call3591, ptr %type_str3579
   br label %if_end1250
 
 if_else1249:
@@ -9276,61 +9288,61 @@ if_end1250:
   br label %if_end1244
 
 if_end1244:
-  %obj3585 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3586 = getelementptr inbounds %Symbol, ptr %obj3585, i32 0, i32 0
-  %field_ptr3587 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3588 = load ptr, ptr %field_ptr3587
-  store ptr %field3588, ptr %field_ptr3586
-  %field_ptr3589 = getelementptr inbounds %Symbol, ptr %obj3585, i32 0, i32 1
-  %type_str_val3590 = load ptr, ptr %type_str3571
-  store ptr %type_str_val3590, ptr %field_ptr3589
-  %field_ptr3591 = getelementptr inbounds %Symbol, ptr %obj3585, i32 0, i32 2
-  %SYM_VAR_val3592 = load i64, ptr @SYM_VAR
-  store i64 %SYM_VAR_val3592, ptr %field_ptr3591
-  %field_ptr3593 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3594 = load i64, ptr %field_ptr3593
-  %NK_CONST_DECL_val3595 = load i64, ptr @NK_CONST_DECL
-  %cmp3596 = icmp eq i64 %field3594, %NK_CONST_DECL_val3595
-  br i1 %cmp3596, label %if_then1251, label %if_else1252
+  %obj3593 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3594 = getelementptr inbounds %Symbol, ptr %obj3593, i32 0, i32 0
+  %field_ptr3595 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3596 = load ptr, ptr %field_ptr3595
+  store ptr %field3596, ptr %field_ptr3594
+  %field_ptr3597 = getelementptr inbounds %Symbol, ptr %obj3593, i32 0, i32 1
+  %type_str_val3598 = load ptr, ptr %type_str3579
+  store ptr %type_str_val3598, ptr %field_ptr3597
+  %field_ptr3599 = getelementptr inbounds %Symbol, ptr %obj3593, i32 0, i32 2
+  %SYM_VAR_val3600 = load i64, ptr @SYM_VAR
+  store i64 %SYM_VAR_val3600, ptr %field_ptr3599
+  %field_ptr3601 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3602 = load i64, ptr %field_ptr3601
+  %NK_CONST_DECL_val3603 = load i64, ptr @NK_CONST_DECL
+  %cmp3604 = icmp eq i64 %field3602, %NK_CONST_DECL_val3603
+  br i1 %cmp3604, label %if_then1251, label %if_else1252
 
 if_then1251:
-  %field_ptr3597 = getelementptr inbounds %Symbol, ptr %obj3585, i32 0, i32 2
-  %SYM_CONST_val3598 = load i64, ptr @SYM_CONST
-  store i64 %SYM_CONST_val3598, ptr %field_ptr3597
+  %field_ptr3605 = getelementptr inbounds %Symbol, ptr %obj3593, i32 0, i32 2
+  %SYM_CONST_val3606 = load i64, ptr @SYM_CONST
+  store i64 %SYM_CONST_val3606, ptr %field_ptr3605
   br label %if_end1253
 
 if_else1252:
   br label %if_end1253
 
 if_end1253:
-  call void @typeck__declare(ptr %obj3585)
-  %id_val3599 = load i64, ptr %id.addr
-  %type_str_val3600 = load ptr, ptr %type_str3571
-  call void @node_set_type(i64 %id_val3599, ptr %type_str_val3600)
-  %type_str_val3601 = load ptr, ptr %type_str3571
-  ret ptr %type_str_val3601
+  call void @typeck__declare(ptr %obj3593)
+  %id_val3607 = load i64, ptr %id.addr
+  %type_str_val3608 = load ptr, ptr %type_str3579
+  call void @node_set_type(i64 %id_val3607, ptr %type_str_val3608)
+  %type_str_val3609 = load ptr, ptr %type_str3579
+  ret ptr %type_str_val3609
 
 if_else1240:
   br label %if_end1241
 
 if_end1241:
-  %field_ptr3602 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3603 = load i64, ptr %field_ptr3602
-  %NK_RETURN_val3604 = load i64, ptr @NK_RETURN
-  %cmp3605 = icmp eq i64 %field3603, %NK_RETURN_val3604
-  br i1 %cmp3605, label %if_then1254, label %if_else1255
+  %field_ptr3610 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3611 = load i64, ptr %field_ptr3610
+  %NK_RETURN_val3612 = load i64, ptr @NK_RETURN
+  %cmp3613 = icmp eq i64 %field3611, %NK_RETURN_val3612
+  br i1 %cmp3613, label %if_then1254, label %if_else1255
 
 if_then1254:
-  %field_ptr3606 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3607 = load i64, ptr %field_ptr3606
-  %cmp3608 = icmp sge i64 %field3607, 0
-  br i1 %cmp3608, label %if_then1257, label %if_else1258
+  %field_ptr3614 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3615 = load i64, ptr %field_ptr3614
+  %cmp3616 = icmp sge i64 %field3615, 0
+  br i1 %cmp3616, label %if_then1257, label %if_else1258
 
 if_then1257:
-  %field_ptr3609 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3610 = load i64, ptr %field_ptr3609
-  %call3611 = call ptr @typeck__check_node(i64 %field3610)
-  ret ptr %call3611
+  %field_ptr3617 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3618 = load i64, ptr %field_ptr3617
+  %call3619 = call ptr @typeck__check_node(i64 %field3618)
+  ret ptr %call3619
 
 if_else1258:
   br label %if_end1259
@@ -9342,31 +9354,31 @@ if_else1255:
   br label %if_end1256
 
 if_end1256:
-  %field_ptr3612 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3613 = load i64, ptr %field_ptr3612
-  %NK_IF_val3614 = load i64, ptr @NK_IF
-  %cmp3615 = icmp eq i64 %field3613, %NK_IF_val3614
-  br i1 %cmp3615, label %if_then1260, label %if_else1261
+  %field_ptr3620 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3621 = load i64, ptr %field_ptr3620
+  %NK_IF_val3622 = load i64, ptr @NK_IF
+  %cmp3623 = icmp eq i64 %field3621, %NK_IF_val3622
+  br i1 %cmp3623, label %if_then1260, label %if_else1261
 
 if_then1260:
-  %field_ptr3616 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3617 = load i64, ptr %field_ptr3616
-  %call3618 = call ptr @typeck__check_node(i64 %field3617)
+  %field_ptr3624 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3625 = load i64, ptr %field_ptr3624
+  %call3626 = call ptr @typeck__check_node(i64 %field3625)
   call void @typeck__push_scope()
-  %field_ptr3619 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3620 = load i64, ptr %field_ptr3619
-  %call3621 = call ptr @typeck__check_node(i64 %field3620)
+  %field_ptr3627 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3628 = load i64, ptr %field_ptr3627
+  %call3629 = call ptr @typeck__check_node(i64 %field3628)
   call void @typeck__pop_scope()
-  %field_ptr3622 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 7
-  %field3623 = load i64, ptr %field_ptr3622
-  %cmp3624 = icmp sge i64 %field3623, 0
-  br i1 %cmp3624, label %if_then1263, label %if_else1264
+  %field_ptr3630 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 7
+  %field3631 = load i64, ptr %field_ptr3630
+  %cmp3632 = icmp sge i64 %field3631, 0
+  br i1 %cmp3632, label %if_then1263, label %if_else1264
 
 if_then1263:
   call void @typeck__push_scope()
-  %field_ptr3625 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 7
-  %field3626 = load i64, ptr %field_ptr3625
-  %call3627 = call ptr @typeck__check_node(i64 %field3626)
+  %field_ptr3633 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 7
+  %field3634 = load i64, ptr %field_ptr3633
+  %call3635 = call ptr @typeck__check_node(i64 %field3634)
   call void @typeck__pop_scope()
   br label %if_end1265
 
@@ -9380,20 +9392,20 @@ if_else1261:
   br label %if_end1262
 
 if_end1262:
-  %field_ptr3628 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3629 = load i64, ptr %field_ptr3628
-  %NK_WHILE_val3630 = load i64, ptr @NK_WHILE
-  %cmp3631 = icmp eq i64 %field3629, %NK_WHILE_val3630
-  br i1 %cmp3631, label %if_then1266, label %if_else1267
+  %field_ptr3636 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3637 = load i64, ptr %field_ptr3636
+  %NK_WHILE_val3638 = load i64, ptr @NK_WHILE
+  %cmp3639 = icmp eq i64 %field3637, %NK_WHILE_val3638
+  br i1 %cmp3639, label %if_then1266, label %if_else1267
 
 if_then1266:
-  %field_ptr3632 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3633 = load i64, ptr %field_ptr3632
-  %call3634 = call ptr @typeck__check_node(i64 %field3633)
+  %field_ptr3640 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3641 = load i64, ptr %field_ptr3640
+  %call3642 = call ptr @typeck__check_node(i64 %field3641)
   call void @typeck__push_scope()
-  %field_ptr3635 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3636 = load i64, ptr %field_ptr3635
-  %call3637 = call ptr @typeck__check_node(i64 %field3636)
+  %field_ptr3643 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3644 = load i64, ptr %field_ptr3643
+  %call3645 = call ptr @typeck__check_node(i64 %field3644)
   call void @typeck__pop_scope()
   ret ptr @str.180
 
@@ -9401,68 +9413,68 @@ if_else1267:
   br label %if_end1268
 
 if_end1268:
-  %field_ptr3638 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3639 = load i64, ptr %field_ptr3638
-  %NK_CYCLE_C_val3640 = load i64, ptr @NK_CYCLE_C
-  %cmp3641 = icmp eq i64 %field3639, %NK_CYCLE_C_val3640
-  br i1 %cmp3641, label %if_then1269, label %if_else1270
+  %field_ptr3646 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3647 = load i64, ptr %field_ptr3646
+  %NK_CYCLE_C_val3648 = load i64, ptr @NK_CYCLE_C
+  %cmp3649 = icmp eq i64 %field3647, %NK_CYCLE_C_val3648
+  br i1 %cmp3649, label %if_then1269, label %if_else1270
 
 if_then1269:
   call void @typeck__push_scope()
-  %field_ptr3642 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3643 = load i64, ptr %field_ptr3642
-  %cmp3644 = icmp sge i64 %field3643, 0
-  br i1 %cmp3644, label %if_then1272, label %if_else1273
+  %field_ptr3650 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3651 = load i64, ptr %field_ptr3650
+  %cmp3652 = icmp sge i64 %field3651, 0
+  br i1 %cmp3652, label %if_then1272, label %if_else1273
 
 if_then1272:
-  %field_ptr3645 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3646 = load i64, ptr %field_ptr3645
-  %call3647 = call ptr @typeck__check_node(i64 %field3646)
+  %field_ptr3653 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3654 = load i64, ptr %field_ptr3653
+  %call3655 = call ptr @typeck__check_node(i64 %field3654)
   br label %if_end1274
 
 if_else1273:
   br label %if_end1274
 
 if_end1274:
-  %field_ptr3648 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3649 = load i64, ptr %field_ptr3648
-  %cmp3650 = icmp sge i64 %field3649, 0
-  br i1 %cmp3650, label %if_then1275, label %if_else1276
+  %field_ptr3656 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3657 = load i64, ptr %field_ptr3656
+  %cmp3658 = icmp sge i64 %field3657, 0
+  br i1 %cmp3658, label %if_then1275, label %if_else1276
 
 if_then1275:
-  %field_ptr3651 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3652 = load i64, ptr %field_ptr3651
-  %call3653 = call ptr @typeck__check_node(i64 %field3652)
+  %field_ptr3659 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3660 = load i64, ptr %field_ptr3659
+  %call3661 = call ptr @typeck__check_node(i64 %field3660)
   br label %if_end1277
 
 if_else1276:
   br label %if_end1277
 
 if_end1277:
-  %field_ptr3654 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 8
-  %field3655 = load i64, ptr %field_ptr3654
-  %cmp3656 = icmp sge i64 %field3655, 0
-  br i1 %cmp3656, label %if_then1278, label %if_else1279
+  %field_ptr3662 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 8
+  %field3663 = load i64, ptr %field_ptr3662
+  %cmp3664 = icmp sge i64 %field3663, 0
+  br i1 %cmp3664, label %if_then1278, label %if_else1279
 
 if_then1278:
-  %field_ptr3657 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 8
-  %field3658 = load i64, ptr %field_ptr3657
-  %call3659 = call ptr @typeck__check_node(i64 %field3658)
+  %field_ptr3665 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 8
+  %field3666 = load i64, ptr %field_ptr3665
+  %call3667 = call ptr @typeck__check_node(i64 %field3666)
   br label %if_end1280
 
 if_else1279:
   br label %if_end1280
 
 if_end1280:
-  %field_ptr3660 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 7
-  %field3661 = load i64, ptr %field_ptr3660
-  %cmp3662 = icmp sge i64 %field3661, 0
-  br i1 %cmp3662, label %if_then1281, label %if_else1282
+  %field_ptr3668 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 7
+  %field3669 = load i64, ptr %field_ptr3668
+  %cmp3670 = icmp sge i64 %field3669, 0
+  br i1 %cmp3670, label %if_then1281, label %if_else1282
 
 if_then1281:
-  %field_ptr3663 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 7
-  %field3664 = load i64, ptr %field_ptr3663
-  %call3665 = call ptr @typeck__check_node(i64 %field3664)
+  %field_ptr3671 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 7
+  %field3672 = load i64, ptr %field_ptr3671
+  %call3673 = call ptr @typeck__check_node(i64 %field3672)
   br label %if_end1283
 
 if_else1282:
@@ -9476,37 +9488,37 @@ if_else1270:
   br label %if_end1271
 
 if_end1271:
-  %field_ptr3666 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3667 = load i64, ptr %field_ptr3666
-  %NK_CYCLE_RANGE_val3668 = load i64, ptr @NK_CYCLE_RANGE
-  %cmp3669 = icmp eq i64 %field3667, %NK_CYCLE_RANGE_val3668
-  br i1 %cmp3669, label %if_then1284, label %if_else1285
+  %field_ptr3674 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3675 = load i64, ptr %field_ptr3674
+  %NK_CYCLE_RANGE_val3676 = load i64, ptr @NK_CYCLE_RANGE
+  %cmp3677 = icmp eq i64 %field3675, %NK_CYCLE_RANGE_val3676
+  br i1 %cmp3677, label %if_then1284, label %if_else1285
 
 if_then1284:
-  %field_ptr3670 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3671 = load i64, ptr %field_ptr3670
-  %call3672 = call ptr @typeck__check_node(i64 %field3671)
+  %field_ptr3678 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3679 = load i64, ptr %field_ptr3678
+  %call3680 = call ptr @typeck__check_node(i64 %field3679)
   call void @typeck__push_scope()
-  %obj3674 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3675 = getelementptr inbounds %Symbol, ptr %obj3674, i32 0, i32 0
-  %field_ptr3676 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3677 = load ptr, ptr %field_ptr3676
-  store ptr %field3677, ptr %field_ptr3675
-  %field_ptr3678 = getelementptr inbounds %Symbol, ptr %obj3674, i32 0, i32 1
-  store ptr @str.181, ptr %field_ptr3678
-  %field_ptr3679 = getelementptr inbounds %Symbol, ptr %obj3674, i32 0, i32 2
-  %SYM_VAR_val3680 = load i64, ptr @SYM_VAR
-  store i64 %SYM_VAR_val3680, ptr %field_ptr3679
-  call void @typeck__declare(ptr %obj3674)
-  %field_ptr3681 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3682 = load i64, ptr %field_ptr3681
-  %cmp3683 = icmp sge i64 %field3682, 0
-  br i1 %cmp3683, label %if_then1287, label %if_else1288
+  %obj3682 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3683 = getelementptr inbounds %Symbol, ptr %obj3682, i32 0, i32 0
+  %field_ptr3684 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3685 = load ptr, ptr %field_ptr3684
+  store ptr %field3685, ptr %field_ptr3683
+  %field_ptr3686 = getelementptr inbounds %Symbol, ptr %obj3682, i32 0, i32 1
+  store ptr @str.181, ptr %field_ptr3686
+  %field_ptr3687 = getelementptr inbounds %Symbol, ptr %obj3682, i32 0, i32 2
+  %SYM_VAR_val3688 = load i64, ptr @SYM_VAR
+  store i64 %SYM_VAR_val3688, ptr %field_ptr3687
+  call void @typeck__declare(ptr %obj3682)
+  %field_ptr3689 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3690 = load i64, ptr %field_ptr3689
+  %cmp3691 = icmp sge i64 %field3690, 0
+  br i1 %cmp3691, label %if_then1287, label %if_else1288
 
 if_then1287:
-  %field_ptr3684 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3685 = load i64, ptr %field_ptr3684
-  %call3686 = call ptr @typeck__check_node(i64 %field3685)
+  %field_ptr3692 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3693 = load i64, ptr %field_ptr3692
+  %call3694 = call ptr @typeck__check_node(i64 %field3693)
   br label %if_end1289
 
 if_else1288:
@@ -9520,35 +9532,38 @@ if_else1285:
   br label %if_end1286
 
 if_end1286:
-  %field_ptr3687 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3688 = load i64, ptr %field_ptr3687
-  %NK_BLOCK_val3689 = load i64, ptr @NK_BLOCK
-  %cmp3690 = icmp eq i64 %field3688, %NK_BLOCK_val3689
-  br i1 %cmp3690, label %if_then1290, label %if_else1291
+  %field_ptr3695 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3696 = load i64, ptr %field_ptr3695
+  %NK_BLOCK_val3697 = load i64, ptr @NK_BLOCK
+  %cmp3698 = icmp eq i64 %field3696, %NK_BLOCK_val3697
+  br i1 %cmp3698, label %if_then1290, label %if_else1291
 
 if_then1290:
-  %i3691 = alloca i64, align 8
-  store i64 0, ptr %i3691
+  %i3699 = alloca i64, align 8
+  store i64 0, ptr %i3699
+  %statement_count3700 = alloca i64, align 8
+  %id_val3701 = load i64, ptr %id.addr
+  %call3702 = call i64 @node_extra_len(i64 %id_val3701)
+  store i64 %call3702, ptr %statement_count3700
   br label %while_cond1293
 
 while_cond1293:
-  %i_val3692 = load i64, ptr %i3691
-  %id_val3693 = load i64, ptr %id.addr
-  %call3694 = call i64 @node_extra_len(i64 %id_val3693)
-  %cmp3695 = icmp slt i64 %i_val3692, %call3694
-  br i1 %cmp3695, label %while_body1294, label %while_end1295
+  %i_val3703 = load i64, ptr %i3699
+  %statement_count_val3704 = load i64, ptr %statement_count3700
+  %cmp3705 = icmp slt i64 %i_val3703, %statement_count_val3704
+  br i1 %cmp3705, label %while_body1294, label %while_end1295
 
 while_body1294:
-  %stmt_id3696 = alloca i64, align 8
-  %id_val3697 = load i64, ptr %id.addr
-  %i_val3698 = load i64, ptr %i3691
-  %call3699 = call i64 @node_get_extra(i64 %id_val3697, i64 %i_val3698)
-  store i64 %call3699, ptr %stmt_id3696
-  %stmt_id_val3700 = load i64, ptr %stmt_id3696
-  %call3701 = call ptr @typeck__check_node(i64 %stmt_id_val3700)
-  %post_old3702 = load i64, ptr %i3691
-  %post_new3703 = add i64 %post_old3702, 1
-  store i64 %post_new3703, ptr %i3691
+  %stmt_id3706 = alloca i64, align 8
+  %id_val3707 = load i64, ptr %id.addr
+  %i_val3708 = load i64, ptr %i3699
+  %call3709 = call i64 @node_get_extra(i64 %id_val3707, i64 %i_val3708)
+  store i64 %call3709, ptr %stmt_id3706
+  %stmt_id_val3710 = load i64, ptr %stmt_id3706
+  %call3711 = call ptr @typeck__check_node(i64 %stmt_id_val3710)
+  %post_old3712 = load i64, ptr %i3699
+  %post_new3713 = add i64 %post_old3712, 1
+  store i64 %post_new3713, ptr %i3699
   br label %while_cond1293
 
 while_end1295:
@@ -9558,23 +9573,23 @@ if_else1291:
   br label %if_end1292
 
 if_end1292:
-  %field_ptr3704 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3705 = load i64, ptr %field_ptr3704
-  %NK_TREMOR_val3706 = load i64, ptr @NK_TREMOR
-  %cmp3707 = icmp eq i64 %field3705, %NK_TREMOR_val3706
-  br i1 %cmp3707, label %if_then1296, label %if_else1297
+  %field_ptr3714 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3715 = load i64, ptr %field_ptr3714
+  %NK_TREMOR_val3716 = load i64, ptr @NK_TREMOR
+  %cmp3717 = icmp eq i64 %field3715, %NK_TREMOR_val3716
+  br i1 %cmp3717, label %if_then1296, label %if_else1297
 
 if_then1296:
   call void @typeck__push_scope()
-  %field_ptr3708 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3709 = load i64, ptr %field_ptr3708
-  %cmp3710 = icmp sge i64 %field3709, 0
-  br i1 %cmp3710, label %if_then1299, label %if_else1300
+  %field_ptr3718 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3719 = load i64, ptr %field_ptr3718
+  %cmp3720 = icmp sge i64 %field3719, 0
+  br i1 %cmp3720, label %if_then1299, label %if_else1300
 
 if_then1299:
-  %field_ptr3711 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3712 = load i64, ptr %field_ptr3711
-  %call3713 = call ptr @typeck__check_node(i64 %field3712)
+  %field_ptr3721 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3722 = load i64, ptr %field_ptr3721
+  %call3723 = call ptr @typeck__check_node(i64 %field3722)
   br label %if_end1301
 
 if_else1300:
@@ -9582,45 +9597,45 @@ if_else1300:
 
 if_end1301:
   call void @typeck__pop_scope()
-  %field_ptr3714 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 7
-  %field3715 = load i64, ptr %field_ptr3714
-  %cmp3716 = icmp sge i64 %field3715, 0
-  br i1 %cmp3716, label %if_then1302, label %if_else1303
+  %field_ptr3724 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 7
+  %field3725 = load i64, ptr %field_ptr3724
+  %cmp3726 = icmp sge i64 %field3725, 0
+  br i1 %cmp3726, label %if_then1302, label %if_else1303
 
 if_then1302:
   call void @typeck__push_scope()
-  %field_ptr3717 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3718 = load i64, ptr %field_ptr3717
-  %cmp3719 = icmp sge i64 %field3718, 0
-  br i1 %cmp3719, label %if_then1305, label %if_else1306
+  %field_ptr3727 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3728 = load i64, ptr %field_ptr3727
+  %cmp3729 = icmp sge i64 %field3728, 0
+  br i1 %cmp3729, label %if_then1305, label %if_else1306
 
 if_then1305:
-  %obj3721 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3722 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 6
-  %field3723 = load i64, ptr %field_ptr3722
-  %call3724 = call ptr @node_get(i64 %field3723)
-  %named_val3725 = load %Node, ptr %call3724
-  store %Node %named_val3725, ptr %obj3721
-  %obj3727 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3728 = getelementptr inbounds %Symbol, ptr %obj3727, i32 0, i32 0
-  %field_ptr3729 = getelementptr inbounds %Node, ptr %obj3721, i32 0, i32 1
-  %field3730 = load ptr, ptr %field_ptr3729
-  store ptr %field3730, ptr %field_ptr3728
-  %field_ptr3731 = getelementptr inbounds %Symbol, ptr %obj3727, i32 0, i32 1
-  store ptr @str.183, ptr %field_ptr3731
-  %field_ptr3732 = getelementptr inbounds %Symbol, ptr %obj3727, i32 0, i32 2
-  %SYM_VAR_val3733 = load i64, ptr @SYM_VAR
-  store i64 %SYM_VAR_val3733, ptr %field_ptr3732
-  call void @typeck__declare(ptr %obj3727)
+  %obj3731 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3732 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 6
+  %field3733 = load i64, ptr %field_ptr3732
+  %call3734 = call ptr @node_get(i64 %field3733)
+  %named_val3735 = load %Node, ptr %call3734
+  store %Node %named_val3735, ptr %obj3731
+  %obj3737 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3738 = getelementptr inbounds %Symbol, ptr %obj3737, i32 0, i32 0
+  %field_ptr3739 = getelementptr inbounds %Node, ptr %obj3731, i32 0, i32 1
+  %field3740 = load ptr, ptr %field_ptr3739
+  store ptr %field3740, ptr %field_ptr3738
+  %field_ptr3741 = getelementptr inbounds %Symbol, ptr %obj3737, i32 0, i32 1
+  store ptr @str.183, ptr %field_ptr3741
+  %field_ptr3742 = getelementptr inbounds %Symbol, ptr %obj3737, i32 0, i32 2
+  %SYM_VAR_val3743 = load i64, ptr @SYM_VAR
+  store i64 %SYM_VAR_val3743, ptr %field_ptr3742
+  call void @typeck__declare(ptr %obj3737)
   br label %if_end1307
 
 if_else1306:
   br label %if_end1307
 
 if_end1307:
-  %field_ptr3734 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 7
-  %field3735 = load i64, ptr %field_ptr3734
-  %call3736 = call ptr @typeck__check_node(i64 %field3735)
+  %field_ptr3744 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 7
+  %field3745 = load i64, ptr %field_ptr3744
+  %call3746 = call ptr @typeck__check_node(i64 %field3745)
   call void @typeck__pop_scope()
   br label %if_end1304
 
@@ -9634,85 +9649,88 @@ if_else1297:
   br label %if_end1298
 
 if_end1298:
-  %field_ptr3737 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3738 = load i64, ptr %field_ptr3737
-  %NK_FN_DECL_val3739 = load i64, ptr @NK_FN_DECL
-  %cmp3740 = icmp eq i64 %field3738, %NK_FN_DECL_val3739
-  %field_ptr3741 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3742 = load i64, ptr %field_ptr3741
-  %NK_CORE_DECL_val3743 = load i64, ptr @NK_CORE_DECL
-  %cmp3744 = icmp eq i64 %field3742, %NK_CORE_DECL_val3743
-  %logic3745 = or i1 %cmp3740, %cmp3744
-  br i1 %logic3745, label %if_then1308, label %if_else1309
+  %field_ptr3747 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3748 = load i64, ptr %field_ptr3747
+  %NK_FN_DECL_val3749 = load i64, ptr @NK_FN_DECL
+  %cmp3750 = icmp eq i64 %field3748, %NK_FN_DECL_val3749
+  %field_ptr3751 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3752 = load i64, ptr %field_ptr3751
+  %NK_CORE_DECL_val3753 = load i64, ptr @NK_CORE_DECL
+  %cmp3754 = icmp eq i64 %field3752, %NK_CORE_DECL_val3753
+  %logic3755 = or i1 %cmp3750, %cmp3754
+  br i1 %logic3755, label %if_then1308, label %if_else1309
 
 if_then1308:
   call void @typeck__push_scope()
-  %params_id3746 = alloca i64, align 8
-  %field_ptr3747 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 5
-  %field3748 = load i64, ptr %field_ptr3747
-  store i64 %field3748, ptr %params_id3746
-  %params_id_val3749 = load i64, ptr %params_id3746
-  %cmp3750 = icmp sge i64 %params_id_val3749, 0
-  br i1 %cmp3750, label %if_then1311, label %if_else1312
+  %params_id3756 = alloca i64, align 8
+  %field_ptr3757 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 5
+  %field3758 = load i64, ptr %field_ptr3757
+  store i64 %field3758, ptr %params_id3756
+  %params_id_val3759 = load i64, ptr %params_id3756
+  %cmp3760 = icmp sge i64 %params_id_val3759, 0
+  br i1 %cmp3760, label %if_then1311, label %if_else1312
 
 if_then1311:
-  %i3751 = alloca i64, align 8
-  store i64 0, ptr %i3751
+  %i3761 = alloca i64, align 8
+  store i64 0, ptr %i3761
+  %param_count3762 = alloca i64, align 8
+  %params_id_val3763 = load i64, ptr %params_id3756
+  %call3764 = call i64 @node_extra_len(i64 %params_id_val3763)
+  store i64 %call3764, ptr %param_count3762
   br label %while_cond1314
 
 while_cond1314:
-  %i_val3752 = load i64, ptr %i3751
-  %params_id_val3753 = load i64, ptr %params_id3746
-  %call3754 = call i64 @node_extra_len(i64 %params_id_val3753)
-  %cmp3755 = icmp slt i64 %i_val3752, %call3754
-  br i1 %cmp3755, label %while_body1315, label %while_end1316
+  %i_val3765 = load i64, ptr %i3761
+  %param_count_val3766 = load i64, ptr %param_count3762
+  %cmp3767 = icmp slt i64 %i_val3765, %param_count_val3766
+  br i1 %cmp3767, label %while_body1315, label %while_end1316
 
 while_body1315:
-  %param_id3756 = alloca i64, align 8
-  %params_id_val3757 = load i64, ptr %params_id3746
-  %i_val3758 = load i64, ptr %i3751
-  %call3759 = call i64 @node_get_extra(i64 %params_id_val3757, i64 %i_val3758)
-  store i64 %call3759, ptr %param_id3756
-  %obj3761 = call ptr @ofs_alloc(i64 4096)
-  %param_id_val3762 = load i64, ptr %param_id3756
-  %call3763 = call ptr @node_get(i64 %param_id_val3762)
-  %named_val3764 = load %Node, ptr %call3763
-  store %Node %named_val3764, ptr %obj3761
-  %param_type_id3765 = alloca i64, align 8
-  %field_ptr3766 = getelementptr inbounds %Node, ptr %obj3761, i32 0, i32 5
-  %field3767 = load i64, ptr %field_ptr3766
-  store i64 %field3767, ptr %param_type_id3765
-  %param_type_str3768 = alloca ptr, align 8
-  store ptr @str.179, ptr %param_type_str3768
-  %param_type_id_val3769 = load i64, ptr %param_type_id3765
-  %cmp3770 = icmp sge i64 %param_type_id_val3769, 0
-  br i1 %cmp3770, label %if_then1317, label %if_else1318
+  %param_id3768 = alloca i64, align 8
+  %params_id_val3769 = load i64, ptr %params_id3756
+  %i_val3770 = load i64, ptr %i3761
+  %call3771 = call i64 @node_get_extra(i64 %params_id_val3769, i64 %i_val3770)
+  store i64 %call3771, ptr %param_id3768
+  %obj3773 = call ptr @ofs_alloc(i64 4096)
+  %param_id_val3774 = load i64, ptr %param_id3768
+  %call3775 = call ptr @node_get(i64 %param_id_val3774)
+  %named_val3776 = load %Node, ptr %call3775
+  store %Node %named_val3776, ptr %obj3773
+  %param_type_id3777 = alloca i64, align 8
+  %field_ptr3778 = getelementptr inbounds %Node, ptr %obj3773, i32 0, i32 5
+  %field3779 = load i64, ptr %field_ptr3778
+  store i64 %field3779, ptr %param_type_id3777
+  %param_type_str3780 = alloca ptr, align 8
+  store ptr @str.179, ptr %param_type_str3780
+  %param_type_id_val3781 = load i64, ptr %param_type_id3777
+  %cmp3782 = icmp sge i64 %param_type_id_val3781, 0
+  br i1 %cmp3782, label %if_then1317, label %if_else1318
 
 if_then1317:
-  %param_type_id_val3771 = load i64, ptr %param_type_id3765
-  %call3772 = call ptr @typeck__type_node_name(i64 %param_type_id_val3771)
-  store ptr %call3772, ptr %param_type_str3768
+  %param_type_id_val3783 = load i64, ptr %param_type_id3777
+  %call3784 = call ptr @typeck__type_node_name(i64 %param_type_id_val3783)
+  store ptr %call3784, ptr %param_type_str3780
   br label %if_end1319
 
 if_else1318:
   br label %if_end1319
 
 if_end1319:
-  %obj3774 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3775 = getelementptr inbounds %Symbol, ptr %obj3774, i32 0, i32 0
-  %field_ptr3776 = getelementptr inbounds %Node, ptr %obj3761, i32 0, i32 1
-  %field3777 = load ptr, ptr %field_ptr3776
-  store ptr %field3777, ptr %field_ptr3775
-  %field_ptr3778 = getelementptr inbounds %Symbol, ptr %obj3774, i32 0, i32 1
-  %param_type_str_val3779 = load ptr, ptr %param_type_str3768
-  store ptr %param_type_str_val3779, ptr %field_ptr3778
-  %field_ptr3780 = getelementptr inbounds %Symbol, ptr %obj3774, i32 0, i32 2
-  %SYM_PARAM_val3781 = load i64, ptr @SYM_PARAM
-  store i64 %SYM_PARAM_val3781, ptr %field_ptr3780
-  call void @typeck__declare(ptr %obj3774)
-  %post_old3782 = load i64, ptr %i3751
-  %post_new3783 = add i64 %post_old3782, 1
-  store i64 %post_new3783, ptr %i3751
+  %obj3786 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3787 = getelementptr inbounds %Symbol, ptr %obj3786, i32 0, i32 0
+  %field_ptr3788 = getelementptr inbounds %Node, ptr %obj3773, i32 0, i32 1
+  %field3789 = load ptr, ptr %field_ptr3788
+  store ptr %field3789, ptr %field_ptr3787
+  %field_ptr3790 = getelementptr inbounds %Symbol, ptr %obj3786, i32 0, i32 1
+  %param_type_str_val3791 = load ptr, ptr %param_type_str3780
+  store ptr %param_type_str_val3791, ptr %field_ptr3790
+  %field_ptr3792 = getelementptr inbounds %Symbol, ptr %obj3786, i32 0, i32 2
+  %SYM_PARAM_val3793 = load i64, ptr @SYM_PARAM
+  store i64 %SYM_PARAM_val3793, ptr %field_ptr3792
+  call void @typeck__declare(ptr %obj3786)
+  %post_old3794 = load i64, ptr %i3761
+  %post_new3795 = add i64 %post_old3794, 1
+  store i64 %post_new3795, ptr %i3761
   br label %while_cond1314
 
 while_end1316:
@@ -9722,17 +9740,17 @@ if_else1312:
   br label %if_end1313
 
 if_end1313:
-  %body_id3784 = alloca i64, align 8
-  %field_ptr3785 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 7
-  %field3786 = load i64, ptr %field_ptr3785
-  store i64 %field3786, ptr %body_id3784
-  %body_id_val3787 = load i64, ptr %body_id3784
-  %cmp3788 = icmp sge i64 %body_id_val3787, 0
-  br i1 %cmp3788, label %if_then1320, label %if_else1321
+  %body_id3796 = alloca i64, align 8
+  %field_ptr3797 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 7
+  %field3798 = load i64, ptr %field_ptr3797
+  store i64 %field3798, ptr %body_id3796
+  %body_id_val3799 = load i64, ptr %body_id3796
+  %cmp3800 = icmp sge i64 %body_id_val3799, 0
+  br i1 %cmp3800, label %if_then1320, label %if_else1321
 
 if_then1320:
-  %body_id_val3789 = load i64, ptr %body_id3784
-  %call3790 = call ptr @typeck__check_node(i64 %body_id_val3789)
+  %body_id_val3801 = load i64, ptr %body_id3796
+  %call3802 = call ptr @typeck__check_node(i64 %body_id_val3801)
   br label %if_end1322
 
 if_else1321:
@@ -9746,79 +9764,82 @@ if_else1309:
   br label %if_end1310
 
 if_end1310:
-  %field_ptr3791 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3792 = load i64, ptr %field_ptr3791
-  %NK_MONOLITH_val3793 = load i64, ptr @NK_MONOLITH
-  %cmp3794 = icmp eq i64 %field3792, %NK_MONOLITH_val3793
-  br i1 %cmp3794, label %if_then1323, label %if_else1324
+  %field_ptr3803 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3804 = load i64, ptr %field_ptr3803
+  %NK_MONOLITH_val3805 = load i64, ptr @NK_MONOLITH
+  %cmp3806 = icmp eq i64 %field3804, %NK_MONOLITH_val3805
+  br i1 %cmp3806, label %if_then1323, label %if_else1324
 
 if_then1323:
-  %obj3796 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3797 = getelementptr inbounds %Symbol, ptr %obj3796, i32 0, i32 0
-  %field_ptr3798 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3799 = load ptr, ptr %field_ptr3798
-  store ptr %field3799, ptr %field_ptr3797
-  %field_ptr3800 = getelementptr inbounds %Symbol, ptr %obj3796, i32 0, i32 1
-  %field_ptr3801 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3802 = load ptr, ptr %field_ptr3801
-  store ptr %field3802, ptr %field_ptr3800
-  %field_ptr3803 = getelementptr inbounds %Symbol, ptr %obj3796, i32 0, i32 2
-  %SYM_MONOLITH_val3804 = load i64, ptr @SYM_MONOLITH
-  store i64 %SYM_MONOLITH_val3804, ptr %field_ptr3803
-  call void @typeck__declare(ptr %obj3796)
-  %i3805 = alloca i64, align 8
-  store i64 0, ptr %i3805
+  %obj3808 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3809 = getelementptr inbounds %Symbol, ptr %obj3808, i32 0, i32 0
+  %field_ptr3810 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3811 = load ptr, ptr %field_ptr3810
+  store ptr %field3811, ptr %field_ptr3809
+  %field_ptr3812 = getelementptr inbounds %Symbol, ptr %obj3808, i32 0, i32 1
+  %field_ptr3813 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3814 = load ptr, ptr %field_ptr3813
+  store ptr %field3814, ptr %field_ptr3812
+  %field_ptr3815 = getelementptr inbounds %Symbol, ptr %obj3808, i32 0, i32 2
+  %SYM_MONOLITH_val3816 = load i64, ptr @SYM_MONOLITH
+  store i64 %SYM_MONOLITH_val3816, ptr %field_ptr3815
+  call void @typeck__declare(ptr %obj3808)
+  %i3817 = alloca i64, align 8
+  store i64 0, ptr %i3817
+  %field_count3818 = alloca i64, align 8
+  %id_val3819 = load i64, ptr %id.addr
+  %call3820 = call i64 @node_extra_len(i64 %id_val3819)
+  store i64 %call3820, ptr %field_count3818
   br label %while_cond1326
 
 while_cond1326:
-  %i_val3806 = load i64, ptr %i3805
-  %id_val3807 = load i64, ptr %id.addr
-  %call3808 = call i64 @node_extra_len(i64 %id_val3807)
-  %cmp3809 = icmp slt i64 %i_val3806, %call3808
-  br i1 %cmp3809, label %while_body1327, label %while_end1328
+  %i_val3821 = load i64, ptr %i3817
+  %field_count_val3822 = load i64, ptr %field_count3818
+  %cmp3823 = icmp slt i64 %i_val3821, %field_count_val3822
+  br i1 %cmp3823, label %while_body1327, label %while_end1328
 
 while_body1327:
-  %field_id3810 = alloca i64, align 8
-  %id_val3811 = load i64, ptr %id.addr
-  %i_val3812 = load i64, ptr %i3805
-  %call3813 = call i64 @node_get_extra(i64 %id_val3811, i64 %i_val3812)
-  store i64 %call3813, ptr %field_id3810
-  %obj3815 = call ptr @ofs_alloc(i64 4096)
-  %field_id_val3816 = load i64, ptr %field_id3810
-  %call3817 = call ptr @node_get(i64 %field_id_val3816)
-  %named_val3818 = load %Node, ptr %call3817
-  store %Node %named_val3818, ptr %obj3815
-  %field_ptr3819 = getelementptr inbounds %Node, ptr %obj3815, i32 0, i32 5
-  %field3820 = load i64, ptr %field_ptr3819
-  %cmp3821 = icmp sge i64 %field3820, 0
-  br i1 %cmp3821, label %if_then1329, label %if_else1330
+  %field_id3824 = alloca i64, align 8
+  %id_val3825 = load i64, ptr %id.addr
+  %i_val3826 = load i64, ptr %i3817
+  %call3827 = call i64 @node_get_extra(i64 %id_val3825, i64 %i_val3826)
+  store i64 %call3827, ptr %field_id3824
+  %obj3829 = call ptr @ofs_alloc(i64 4096)
+  %field_id_val3830 = load i64, ptr %field_id3824
+  %call3831 = call ptr @node_get(i64 %field_id_val3830)
+  %named_val3832 = load %Node, ptr %call3831
+  store %Node %named_val3832, ptr %obj3829
+  %field_ptr3833 = getelementptr inbounds %Node, ptr %obj3829, i32 0, i32 5
+  %field3834 = load i64, ptr %field_ptr3833
+  %cmp3835 = icmp sge i64 %field3834, 0
+  br i1 %cmp3835, label %if_then1329, label %if_else1330
 
 if_then1329:
-  %field_type_str3822 = alloca ptr, align 8
-  %field_ptr3823 = getelementptr inbounds %Node, ptr %obj3815, i32 0, i32 5
-  %field3824 = load i64, ptr %field_ptr3823
-  %call3825 = call ptr @typeck__type_node_name(i64 %field3824)
-  store ptr %call3825, ptr %field_type_str3822
-  %field_ptr3826 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3827 = load ptr, ptr %field_ptr3826
-  %field_ptr3828 = getelementptr inbounds %Node, ptr %obj3815, i32 0, i32 1
-  %field3829 = load ptr, ptr %field_ptr3828
-  %field_type_str_val3830 = load ptr, ptr %field_type_str3822
-  call void @typeck__register_field(ptr %field3827, ptr %field3829, ptr %field_type_str_val3830)
-  %field_type_str_val3831 = load ptr, ptr %field_type_str3822
-  %call3832 = call i32 @typeck__check_type_string(ptr %field_type_str_val3831)
-  %cond3833 = icmp ne i32 %call3832, 0
-  %not3834 = xor i1 %cond3833, true
-  br i1 %not3834, label %if_then1332, label %if_else1333
+  %field_type_str3836 = alloca ptr, align 8
+  %field_ptr3837 = getelementptr inbounds %Node, ptr %obj3829, i32 0, i32 5
+  %field3838 = load i64, ptr %field_ptr3837
+  %call3839 = call ptr @typeck__type_node_name(i64 %field3838)
+  store ptr %call3839, ptr %field_type_str3836
+  %field_ptr3840 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3841 = load ptr, ptr %field_ptr3840
+  %field_ptr3842 = getelementptr inbounds %Node, ptr %obj3829, i32 0, i32 1
+  %field3843 = load ptr, ptr %field_ptr3842
+  %field_type_str_val3844 = load ptr, ptr %field_type_str3836
+  call void @typeck__register_field(ptr %field3841, ptr %field3843, ptr %field_type_str_val3844)
+  %field_type_str_val3845 = load ptr, ptr %field_type_str3836
+  %call3846 = call i32 @typeck__check_type_string(ptr %field_type_str_val3845)
+  %cond3847 = icmp ne i32 %call3846, 0
+  %not3848 = xor i1 %cond3847, true
+  br i1 %not3848, label %if_then1332, label %if_else1333
 
 if_then1332:
-  %field_type_str_val3835 = load ptr, ptr %field_type_str3822
-  %concat3836 = call ptr @ofs_str_concat(ptr @str.195, ptr %field_type_str_val3835)
-  %concat3837 = call ptr @ofs_str_concat(ptr %concat3836, ptr @str.196)
-  %field_ptr3838 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3839 = load ptr, ptr %field_ptr3838
-  %concat3840 = call ptr @ofs_str_concat(ptr %concat3837, ptr %field3839)
-  call void @echo_obsidian(ptr %concat3840)
+  %field_type_str_val3849 = load ptr, ptr %field_type_str3836
+  %concat3850 = call ptr @ofs_str_concat(ptr @str.195, ptr %field_type_str_val3849)
+  %concat3851 = call ptr @ofs_str_concat(ptr %concat3850, ptr @str.196)
+  %field_ptr3852 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3853 = load ptr, ptr %field_ptr3852
+  %concat3854 = call ptr @ofs_str_concat(ptr %concat3851, ptr %field3853)
+  call void @echo_obsidian(ptr %concat3854)
   br label %if_end1334
 
 if_else1333:
@@ -9831,9 +9852,9 @@ if_else1330:
   br label %if_end1331
 
 if_end1331:
-  %post_old3841 = load i64, ptr %i3805
-  %post_new3842 = add i64 %post_old3841, 1
-  store i64 %post_new3842, ptr %i3805
+  %post_old3855 = load i64, ptr %i3817
+  %post_new3856 = add i64 %post_old3855, 1
+  store i64 %post_new3856, ptr %i3817
   br label %while_cond1326
 
 while_end1328:
@@ -9843,35 +9864,38 @@ if_else1324:
   br label %if_end1325
 
 if_end1325:
-  %field_ptr3843 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3844 = load i64, ptr %field_ptr3843
-  %NK_IMPL_val3845 = load i64, ptr @NK_IMPL
-  %cmp3846 = icmp eq i64 %field3844, %NK_IMPL_val3845
-  br i1 %cmp3846, label %if_then1335, label %if_else1336
+  %field_ptr3857 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3858 = load i64, ptr %field_ptr3857
+  %NK_IMPL_val3859 = load i64, ptr @NK_IMPL
+  %cmp3860 = icmp eq i64 %field3858, %NK_IMPL_val3859
+  br i1 %cmp3860, label %if_then1335, label %if_else1336
 
 if_then1335:
-  %i3847 = alloca i64, align 8
-  store i64 0, ptr %i3847
+  %i3861 = alloca i64, align 8
+  store i64 0, ptr %i3861
+  %method_count3862 = alloca i64, align 8
+  %id_val3863 = load i64, ptr %id.addr
+  %call3864 = call i64 @node_extra_len(i64 %id_val3863)
+  store i64 %call3864, ptr %method_count3862
   br label %while_cond1338
 
 while_cond1338:
-  %i_val3848 = load i64, ptr %i3847
-  %id_val3849 = load i64, ptr %id.addr
-  %call3850 = call i64 @node_extra_len(i64 %id_val3849)
-  %cmp3851 = icmp slt i64 %i_val3848, %call3850
-  br i1 %cmp3851, label %while_body1339, label %while_end1340
+  %i_val3865 = load i64, ptr %i3861
+  %method_count_val3866 = load i64, ptr %method_count3862
+  %cmp3867 = icmp slt i64 %i_val3865, %method_count_val3866
+  br i1 %cmp3867, label %while_body1339, label %while_end1340
 
 while_body1339:
-  %method_id3852 = alloca i64, align 8
-  %id_val3853 = load i64, ptr %id.addr
-  %i_val3854 = load i64, ptr %i3847
-  %call3855 = call i64 @node_get_extra(i64 %id_val3853, i64 %i_val3854)
-  store i64 %call3855, ptr %method_id3852
-  %method_id_val3856 = load i64, ptr %method_id3852
-  %call3857 = call ptr @typeck__check_node(i64 %method_id_val3856)
-  %post_old3858 = load i64, ptr %i3847
-  %post_new3859 = add i64 %post_old3858, 1
-  store i64 %post_new3859, ptr %i3847
+  %method_id3868 = alloca i64, align 8
+  %id_val3869 = load i64, ptr %id.addr
+  %i_val3870 = load i64, ptr %i3861
+  %call3871 = call i64 @node_get_extra(i64 %id_val3869, i64 %i_val3870)
+  store i64 %call3871, ptr %method_id3868
+  %method_id_val3872 = load i64, ptr %method_id3868
+  %call3873 = call ptr @typeck__check_node(i64 %method_id_val3872)
+  %post_old3874 = load i64, ptr %i3861
+  %post_new3875 = add i64 %post_old3874, 1
+  store i64 %post_new3875, ptr %i3861
   br label %while_cond1338
 
 while_end1340:
@@ -9881,36 +9905,39 @@ if_else1336:
   br label %if_end1337
 
 if_end1337:
-  %field_ptr3860 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3861 = load i64, ptr %field_ptr3860
-  %NK_NAMESPACE_val3862 = load i64, ptr @NK_NAMESPACE
-  %cmp3863 = icmp eq i64 %field3861, %NK_NAMESPACE_val3862
-  br i1 %cmp3863, label %if_then1341, label %if_else1342
+  %field_ptr3876 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3877 = load i64, ptr %field_ptr3876
+  %NK_NAMESPACE_val3878 = load i64, ptr @NK_NAMESPACE
+  %cmp3879 = icmp eq i64 %field3877, %NK_NAMESPACE_val3878
+  br i1 %cmp3879, label %if_then1341, label %if_else1342
 
 if_then1341:
   call void @typeck__push_scope()
-  %i3864 = alloca i64, align 8
-  store i64 0, ptr %i3864
+  %i3880 = alloca i64, align 8
+  store i64 0, ptr %i3880
+  %member_count3881 = alloca i64, align 8
+  %id_val3882 = load i64, ptr %id.addr
+  %call3883 = call i64 @node_extra_len(i64 %id_val3882)
+  store i64 %call3883, ptr %member_count3881
   br label %while_cond1344
 
 while_cond1344:
-  %i_val3865 = load i64, ptr %i3864
-  %id_val3866 = load i64, ptr %id.addr
-  %call3867 = call i64 @node_extra_len(i64 %id_val3866)
-  %cmp3868 = icmp slt i64 %i_val3865, %call3867
-  br i1 %cmp3868, label %while_body1345, label %while_end1346
+  %i_val3884 = load i64, ptr %i3880
+  %member_count_val3885 = load i64, ptr %member_count3881
+  %cmp3886 = icmp slt i64 %i_val3884, %member_count_val3885
+  br i1 %cmp3886, label %while_body1345, label %while_end1346
 
 while_body1345:
-  %member_id3869 = alloca i64, align 8
-  %id_val3870 = load i64, ptr %id.addr
-  %i_val3871 = load i64, ptr %i3864
-  %call3872 = call i64 @node_get_extra(i64 %id_val3870, i64 %i_val3871)
-  store i64 %call3872, ptr %member_id3869
-  %member_id_val3873 = load i64, ptr %member_id3869
-  %call3874 = call ptr @typeck__check_node(i64 %member_id_val3873)
-  %post_old3875 = load i64, ptr %i3864
-  %post_new3876 = add i64 %post_old3875, 1
-  store i64 %post_new3876, ptr %i3864
+  %member_id3887 = alloca i64, align 8
+  %id_val3888 = load i64, ptr %id.addr
+  %i_val3889 = load i64, ptr %i3880
+  %call3890 = call i64 @node_get_extra(i64 %id_val3888, i64 %i_val3889)
+  store i64 %call3890, ptr %member_id3887
+  %member_id_val3891 = load i64, ptr %member_id3887
+  %call3892 = call ptr @typeck__check_node(i64 %member_id_val3891)
+  %post_old3893 = load i64, ptr %i3880
+  %post_new3894 = add i64 %post_old3893, 1
+  store i64 %post_new3894, ptr %i3880
   br label %while_cond1344
 
 while_end1346:
@@ -9921,37 +9948,37 @@ if_else1342:
   br label %if_end1343
 
 if_end1343:
-  %field_ptr3877 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3878 = load i64, ptr %field_ptr3877
-  %NK_STRATA_val3879 = load i64, ptr @NK_STRATA
-  %cmp3880 = icmp eq i64 %field3878, %NK_STRATA_val3879
-  br i1 %cmp3880, label %if_then1347, label %if_else1348
+  %field_ptr3895 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3896 = load i64, ptr %field_ptr3895
+  %NK_STRATA_val3897 = load i64, ptr @NK_STRATA
+  %cmp3898 = icmp eq i64 %field3896, %NK_STRATA_val3897
+  br i1 %cmp3898, label %if_then1347, label %if_else1348
 
 if_then1347:
-  %obj3882 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3883 = getelementptr inbounds %Symbol, ptr %obj3882, i32 0, i32 0
-  %field_ptr3884 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3885 = load ptr, ptr %field_ptr3884
-  store ptr %field3885, ptr %field_ptr3883
-  %field_ptr3886 = getelementptr inbounds %Symbol, ptr %obj3882, i32 0, i32 1
-  %field_ptr3887 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 1
-  %field3888 = load ptr, ptr %field_ptr3887
-  store ptr %field3888, ptr %field_ptr3886
-  %field_ptr3889 = getelementptr inbounds %Symbol, ptr %obj3882, i32 0, i32 2
-  %SYM_MONOLITH_val3890 = load i64, ptr @SYM_MONOLITH
-  store i64 %SYM_MONOLITH_val3890, ptr %field_ptr3889
-  call void @typeck__declare(ptr %obj3882)
+  %obj3900 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3901 = getelementptr inbounds %Symbol, ptr %obj3900, i32 0, i32 0
+  %field_ptr3902 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3903 = load ptr, ptr %field_ptr3902
+  store ptr %field3903, ptr %field_ptr3901
+  %field_ptr3904 = getelementptr inbounds %Symbol, ptr %obj3900, i32 0, i32 1
+  %field_ptr3905 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 1
+  %field3906 = load ptr, ptr %field_ptr3905
+  store ptr %field3906, ptr %field_ptr3904
+  %field_ptr3907 = getelementptr inbounds %Symbol, ptr %obj3900, i32 0, i32 2
+  %SYM_MONOLITH_val3908 = load i64, ptr @SYM_MONOLITH
+  store i64 %SYM_MONOLITH_val3908, ptr %field_ptr3907
+  call void @typeck__declare(ptr %obj3900)
   ret ptr @str.180
 
 if_else1348:
   br label %if_end1349
 
 if_end1349:
-  %field_ptr3891 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3892 = load i64, ptr %field_ptr3891
-  %NK_ATTACH_val3893 = load i64, ptr @NK_ATTACH
-  %cmp3894 = icmp eq i64 %field3892, %NK_ATTACH_val3893
-  br i1 %cmp3894, label %if_then1350, label %if_else1351
+  %field_ptr3909 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3910 = load i64, ptr %field_ptr3909
+  %NK_ATTACH_val3911 = load i64, ptr @NK_ATTACH
+  %cmp3912 = icmp eq i64 %field3910, %NK_ATTACH_val3911
+  br i1 %cmp3912, label %if_then1350, label %if_else1351
 
 if_then1350:
   ret ptr @str.180
@@ -9960,214 +9987,220 @@ if_else1351:
   br label %if_end1352
 
 if_end1352:
-  %field_ptr3895 = getelementptr inbounds %Node, ptr %obj3268, i32 0, i32 0
-  %field3896 = load i64, ptr %field_ptr3895
-  %NK_PROGRAM_val3897 = load i64, ptr @NK_PROGRAM
-  %cmp3898 = icmp eq i64 %field3896, %NK_PROGRAM_val3897
-  br i1 %cmp3898, label %if_then1353, label %if_else1354
+  %field_ptr3913 = getelementptr inbounds %Node, ptr %obj3274, i32 0, i32 0
+  %field3914 = load i64, ptr %field_ptr3913
+  %NK_PROGRAM_val3915 = load i64, ptr @NK_PROGRAM
+  %cmp3916 = icmp eq i64 %field3914, %NK_PROGRAM_val3915
+  br i1 %cmp3916, label %if_then1353, label %if_else1354
 
 if_then1353:
-  %d3899 = alloca i64, align 8
-  store i64 0, ptr %d3899
+  %d3917 = alloca i64, align 8
+  store i64 0, ptr %d3917
+  %declaration_count3918 = alloca i64, align 8
+  %id_val3919 = load i64, ptr %id.addr
+  %call3920 = call i64 @node_extra_len(i64 %id_val3919)
+  store i64 %call3920, ptr %declaration_count3918
   br label %while_cond1356
 
 while_cond1356:
-  %d_val3900 = load i64, ptr %d3899
-  %id_val3901 = load i64, ptr %id.addr
-  %call3902 = call i64 @node_extra_len(i64 %id_val3901)
-  %cmp3903 = icmp slt i64 %d_val3900, %call3902
-  br i1 %cmp3903, label %while_body1357, label %while_end1358
+  %d_val3921 = load i64, ptr %d3917
+  %declaration_count_val3922 = load i64, ptr %declaration_count3918
+  %cmp3923 = icmp slt i64 %d_val3921, %declaration_count_val3922
+  br i1 %cmp3923, label %while_body1357, label %while_end1358
 
 while_body1357:
-  %decl_id3904 = alloca i64, align 8
-  %id_val3905 = load i64, ptr %id.addr
-  %d_val3906 = load i64, ptr %d3899
-  %call3907 = call i64 @node_get_extra(i64 %id_val3905, i64 %d_val3906)
-  store i64 %call3907, ptr %decl_id3904
-  %obj3909 = call ptr @ofs_alloc(i64 4096)
-  %decl_id_val3910 = load i64, ptr %decl_id3904
-  %call3911 = call ptr @node_get(i64 %decl_id_val3910)
-  %named_val3912 = load %Node, ptr %call3911
-  store %Node %named_val3912, ptr %obj3909
-  %field_ptr3913 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 0
-  %field3914 = load i64, ptr %field_ptr3913
-  %NK_FN_DECL_val3915 = load i64, ptr @NK_FN_DECL
-  %cmp3916 = icmp eq i64 %field3914, %NK_FN_DECL_val3915
-  %field_ptr3917 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 0
-  %field3918 = load i64, ptr %field_ptr3917
-  %NK_CORE_DECL_val3919 = load i64, ptr @NK_CORE_DECL
-  %cmp3920 = icmp eq i64 %field3918, %NK_CORE_DECL_val3919
-  %logic3921 = or i1 %cmp3916, %cmp3920
-  br i1 %logic3921, label %if_then1359, label %if_else1360
+  %decl_id3924 = alloca i64, align 8
+  %id_val3925 = load i64, ptr %id.addr
+  %d_val3926 = load i64, ptr %d3917
+  %call3927 = call i64 @node_get_extra(i64 %id_val3925, i64 %d_val3926)
+  store i64 %call3927, ptr %decl_id3924
+  %obj3929 = call ptr @ofs_alloc(i64 4096)
+  %decl_id_val3930 = load i64, ptr %decl_id3924
+  %call3931 = call ptr @node_get(i64 %decl_id_val3930)
+  %named_val3932 = load %Node, ptr %call3931
+  store %Node %named_val3932, ptr %obj3929
+  %field_ptr3933 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 0
+  %field3934 = load i64, ptr %field_ptr3933
+  %NK_FN_DECL_val3935 = load i64, ptr @NK_FN_DECL
+  %cmp3936 = icmp eq i64 %field3934, %NK_FN_DECL_val3935
+  %field_ptr3937 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 0
+  %field3938 = load i64, ptr %field_ptr3937
+  %NK_CORE_DECL_val3939 = load i64, ptr @NK_CORE_DECL
+  %cmp3940 = icmp eq i64 %field3938, %NK_CORE_DECL_val3939
+  %logic3941 = or i1 %cmp3936, %cmp3940
+  br i1 %logic3941, label %if_then1359, label %if_else1360
 
 if_then1359:
-  %obj3923 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3924 = getelementptr inbounds %Symbol, ptr %obj3923, i32 0, i32 0
-  %field_ptr3925 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 1
-  %field3926 = load ptr, ptr %field_ptr3925
-  store ptr %field3926, ptr %field_ptr3924
-  %field_ptr3927 = getelementptr inbounds %Symbol, ptr %obj3923, i32 0, i32 1
-  store ptr @str.179, ptr %field_ptr3927
-  %field_ptr3928 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 6
-  %field3929 = load i64, ptr %field_ptr3928
-  %cmp3930 = icmp sge i64 %field3929, 0
-  br i1 %cmp3930, label %if_then1362, label %if_else1363
+  %obj3943 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3944 = getelementptr inbounds %Symbol, ptr %obj3943, i32 0, i32 0
+  %field_ptr3945 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 1
+  %field3946 = load ptr, ptr %field_ptr3945
+  store ptr %field3946, ptr %field_ptr3944
+  %field_ptr3947 = getelementptr inbounds %Symbol, ptr %obj3943, i32 0, i32 1
+  store ptr @str.179, ptr %field_ptr3947
+  %field_ptr3948 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 6
+  %field3949 = load i64, ptr %field_ptr3948
+  %cmp3950 = icmp sge i64 %field3949, 0
+  br i1 %cmp3950, label %if_then1362, label %if_else1363
 
 if_then1362:
-  %field_ptr3931 = getelementptr inbounds %Symbol, ptr %obj3923, i32 0, i32 1
-  %field_ptr3932 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 6
-  %field3933 = load i64, ptr %field_ptr3932
-  %call3934 = call ptr @typeck__type_node_name(i64 %field3933)
-  store ptr %call3934, ptr %field_ptr3931
+  %field_ptr3951 = getelementptr inbounds %Symbol, ptr %obj3943, i32 0, i32 1
+  %field_ptr3952 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 6
+  %field3953 = load i64, ptr %field_ptr3952
+  %call3954 = call ptr @typeck__type_node_name(i64 %field3953)
+  store ptr %call3954, ptr %field_ptr3951
   br label %if_end1364
 
 if_else1363:
   br label %if_end1364
 
 if_end1364:
-  %field_ptr3935 = getelementptr inbounds %Symbol, ptr %obj3923, i32 0, i32 2
-  %SYM_FN_val3936 = load i64, ptr @SYM_FN
-  store i64 %SYM_FN_val3936, ptr %field_ptr3935
-  call void @typeck__declare(ptr %obj3923)
+  %field_ptr3955 = getelementptr inbounds %Symbol, ptr %obj3943, i32 0, i32 2
+  %SYM_FN_val3956 = load i64, ptr @SYM_FN
+  store i64 %SYM_FN_val3956, ptr %field_ptr3955
+  call void @typeck__declare(ptr %obj3943)
   br label %if_end1361
 
 if_else1360:
-  %field_ptr3937 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 0
-  %field3938 = load i64, ptr %field_ptr3937
-  %NK_EXTERN_VN_val3939 = load i64, ptr @NK_EXTERN_VN
-  %cmp3940 = icmp eq i64 %field3938, %NK_EXTERN_VN_val3939
-  %field_ptr3941 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 0
-  %field3942 = load i64, ptr %field_ptr3941
-  %NK_RIFT_VN_val3943 = load i64, ptr @NK_RIFT_VN
-  %cmp3944 = icmp eq i64 %field3942, %NK_RIFT_VN_val3943
-  %logic3945 = or i1 %cmp3940, %cmp3944
-  br i1 %logic3945, label %if_then1365, label %if_else1366
+  %field_ptr3957 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 0
+  %field3958 = load i64, ptr %field_ptr3957
+  %NK_EXTERN_VN_val3959 = load i64, ptr @NK_EXTERN_VN
+  %cmp3960 = icmp eq i64 %field3958, %NK_EXTERN_VN_val3959
+  %field_ptr3961 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 0
+  %field3962 = load i64, ptr %field_ptr3961
+  %NK_RIFT_VN_val3963 = load i64, ptr @NK_RIFT_VN
+  %cmp3964 = icmp eq i64 %field3962, %NK_RIFT_VN_val3963
+  %logic3965 = or i1 %cmp3960, %cmp3964
+  br i1 %logic3965, label %if_then1365, label %if_else1366
 
 if_then1365:
-  %obj3947 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr3948 = getelementptr inbounds %Symbol, ptr %obj3947, i32 0, i32 0
-  %field_ptr3949 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 1
-  %field3950 = load ptr, ptr %field_ptr3949
-  store ptr %field3950, ptr %field_ptr3948
-  %field_ptr3951 = getelementptr inbounds %Symbol, ptr %obj3947, i32 0, i32 1
-  store ptr @str.179, ptr %field_ptr3951
-  %field_ptr3952 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 6
-  %field3953 = load i64, ptr %field_ptr3952
-  %cmp3954 = icmp sge i64 %field3953, 0
-  br i1 %cmp3954, label %if_then1368, label %if_else1369
+  %obj3967 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr3968 = getelementptr inbounds %Symbol, ptr %obj3967, i32 0, i32 0
+  %field_ptr3969 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 1
+  %field3970 = load ptr, ptr %field_ptr3969
+  store ptr %field3970, ptr %field_ptr3968
+  %field_ptr3971 = getelementptr inbounds %Symbol, ptr %obj3967, i32 0, i32 1
+  store ptr @str.179, ptr %field_ptr3971
+  %field_ptr3972 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 6
+  %field3973 = load i64, ptr %field_ptr3972
+  %cmp3974 = icmp sge i64 %field3973, 0
+  br i1 %cmp3974, label %if_then1368, label %if_else1369
 
 if_then1368:
-  %field_ptr3955 = getelementptr inbounds %Symbol, ptr %obj3947, i32 0, i32 1
-  %field_ptr3956 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 6
-  %field3957 = load i64, ptr %field_ptr3956
-  %call3958 = call ptr @typeck__type_node_name(i64 %field3957)
-  store ptr %call3958, ptr %field_ptr3955
+  %field_ptr3975 = getelementptr inbounds %Symbol, ptr %obj3967, i32 0, i32 1
+  %field_ptr3976 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 6
+  %field3977 = load i64, ptr %field_ptr3976
+  %call3978 = call ptr @typeck__type_node_name(i64 %field3977)
+  store ptr %call3978, ptr %field_ptr3975
   br label %if_end1370
 
 if_else1369:
   br label %if_end1370
 
 if_end1370:
-  %field_ptr3959 = getelementptr inbounds %Symbol, ptr %obj3947, i32 0, i32 2
-  %SYM_FN_val3960 = load i64, ptr @SYM_FN
-  store i64 %SYM_FN_val3960, ptr %field_ptr3959
-  call void @typeck__declare(ptr %obj3947)
+  %field_ptr3979 = getelementptr inbounds %Symbol, ptr %obj3967, i32 0, i32 2
+  %SYM_FN_val3980 = load i64, ptr @SYM_FN
+  store i64 %SYM_FN_val3980, ptr %field_ptr3979
+  call void @typeck__declare(ptr %obj3967)
   br label %if_end1367
 
 if_else1366:
-  %field_ptr3961 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 0
-  %field3962 = load i64, ptr %field_ptr3961
-  %NK_NAMESPACE_val3963 = load i64, ptr @NK_NAMESPACE
-  %cmp3964 = icmp eq i64 %field3962, %NK_NAMESPACE_val3963
-  %field_ptr3965 = getelementptr inbounds %Node, ptr %obj3909, i32 0, i32 0
-  %field3966 = load i64, ptr %field_ptr3965
-  %NK_IMPL_val3967 = load i64, ptr @NK_IMPL
-  %cmp3968 = icmp eq i64 %field3966, %NK_IMPL_val3967
-  %logic3969 = or i1 %cmp3964, %cmp3968
-  br i1 %logic3969, label %if_then1371, label %if_else1372
+  %field_ptr3981 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 0
+  %field3982 = load i64, ptr %field_ptr3981
+  %NK_NAMESPACE_val3983 = load i64, ptr @NK_NAMESPACE
+  %cmp3984 = icmp eq i64 %field3982, %NK_NAMESPACE_val3983
+  %field_ptr3985 = getelementptr inbounds %Node, ptr %obj3929, i32 0, i32 0
+  %field3986 = load i64, ptr %field_ptr3985
+  %NK_IMPL_val3987 = load i64, ptr @NK_IMPL
+  %cmp3988 = icmp eq i64 %field3986, %NK_IMPL_val3987
+  %logic3989 = or i1 %cmp3984, %cmp3988
+  br i1 %logic3989, label %if_then1371, label %if_else1372
 
 if_then1371:
-  %j3970 = alloca i64, align 8
-  store i64 0, ptr %j3970
+  %j3990 = alloca i64, align 8
+  store i64 0, ptr %j3990
+  %member_count3991 = alloca i64, align 8
+  %decl_id_val3992 = load i64, ptr %decl_id3924
+  %call3993 = call i64 @node_extra_len(i64 %decl_id_val3992)
+  store i64 %call3993, ptr %member_count3991
   br label %while_cond1374
 
 while_cond1374:
-  %j_val3971 = load i64, ptr %j3970
-  %decl_id_val3972 = load i64, ptr %decl_id3904
-  %call3973 = call i64 @node_extra_len(i64 %decl_id_val3972)
-  %cmp3974 = icmp slt i64 %j_val3971, %call3973
-  br i1 %cmp3974, label %while_body1375, label %while_end1376
+  %j_val3994 = load i64, ptr %j3990
+  %member_count_val3995 = load i64, ptr %member_count3991
+  %cmp3996 = icmp slt i64 %j_val3994, %member_count_val3995
+  br i1 %cmp3996, label %while_body1375, label %while_end1376
 
 while_body1375:
-  %member_id3975 = alloca i64, align 8
-  %decl_id_val3976 = load i64, ptr %decl_id3904
-  %j_val3977 = load i64, ptr %j3970
-  %call3978 = call i64 @node_get_extra(i64 %decl_id_val3976, i64 %j_val3977)
-  store i64 %call3978, ptr %member_id3975
-  %obj3980 = call ptr @ofs_alloc(i64 4096)
-  %member_id_val3981 = load i64, ptr %member_id3975
-  %call3982 = call ptr @node_get(i64 %member_id_val3981)
-  %named_val3983 = load %Node, ptr %call3982
-  store %Node %named_val3983, ptr %obj3980
-  %field_ptr3984 = getelementptr inbounds %Node, ptr %obj3980, i32 0, i32 0
-  %field3985 = load i64, ptr %field_ptr3984
-  %NK_FN_DECL_val3986 = load i64, ptr @NK_FN_DECL
-  %cmp3987 = icmp eq i64 %field3985, %NK_FN_DECL_val3986
-  %field_ptr3988 = getelementptr inbounds %Node, ptr %obj3980, i32 0, i32 0
-  %field3989 = load i64, ptr %field_ptr3988
-  %NK_CORE_DECL_val3990 = load i64, ptr @NK_CORE_DECL
-  %cmp3991 = icmp eq i64 %field3989, %NK_CORE_DECL_val3990
-  %logic3992 = or i1 %cmp3987, %cmp3991
-  %field_ptr3993 = getelementptr inbounds %Node, ptr %obj3980, i32 0, i32 0
-  %field3994 = load i64, ptr %field_ptr3993
-  %NK_EXTERN_VN_val3995 = load i64, ptr @NK_EXTERN_VN
-  %cmp3996 = icmp eq i64 %field3994, %NK_EXTERN_VN_val3995
-  %logic3997 = or i1 %logic3992, %cmp3996
-  %field_ptr3998 = getelementptr inbounds %Node, ptr %obj3980, i32 0, i32 0
-  %field3999 = load i64, ptr %field_ptr3998
-  %NK_RIFT_VN_val4000 = load i64, ptr @NK_RIFT_VN
-  %cmp4001 = icmp eq i64 %field3999, %NK_RIFT_VN_val4000
-  %logic4002 = or i1 %logic3997, %cmp4001
-  br i1 %logic4002, label %if_then1377, label %if_else1378
+  %member_id3997 = alloca i64, align 8
+  %decl_id_val3998 = load i64, ptr %decl_id3924
+  %j_val3999 = load i64, ptr %j3990
+  %call4000 = call i64 @node_get_extra(i64 %decl_id_val3998, i64 %j_val3999)
+  store i64 %call4000, ptr %member_id3997
+  %obj4002 = call ptr @ofs_alloc(i64 4096)
+  %member_id_val4003 = load i64, ptr %member_id3997
+  %call4004 = call ptr @node_get(i64 %member_id_val4003)
+  %named_val4005 = load %Node, ptr %call4004
+  store %Node %named_val4005, ptr %obj4002
+  %field_ptr4006 = getelementptr inbounds %Node, ptr %obj4002, i32 0, i32 0
+  %field4007 = load i64, ptr %field_ptr4006
+  %NK_FN_DECL_val4008 = load i64, ptr @NK_FN_DECL
+  %cmp4009 = icmp eq i64 %field4007, %NK_FN_DECL_val4008
+  %field_ptr4010 = getelementptr inbounds %Node, ptr %obj4002, i32 0, i32 0
+  %field4011 = load i64, ptr %field_ptr4010
+  %NK_CORE_DECL_val4012 = load i64, ptr @NK_CORE_DECL
+  %cmp4013 = icmp eq i64 %field4011, %NK_CORE_DECL_val4012
+  %logic4014 = or i1 %cmp4009, %cmp4013
+  %field_ptr4015 = getelementptr inbounds %Node, ptr %obj4002, i32 0, i32 0
+  %field4016 = load i64, ptr %field_ptr4015
+  %NK_EXTERN_VN_val4017 = load i64, ptr @NK_EXTERN_VN
+  %cmp4018 = icmp eq i64 %field4016, %NK_EXTERN_VN_val4017
+  %logic4019 = or i1 %logic4014, %cmp4018
+  %field_ptr4020 = getelementptr inbounds %Node, ptr %obj4002, i32 0, i32 0
+  %field4021 = load i64, ptr %field_ptr4020
+  %NK_RIFT_VN_val4022 = load i64, ptr @NK_RIFT_VN
+  %cmp4023 = icmp eq i64 %field4021, %NK_RIFT_VN_val4022
+  %logic4024 = or i1 %logic4019, %cmp4023
+  br i1 %logic4024, label %if_then1377, label %if_else1378
 
 if_then1377:
-  %obj4004 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr4005 = getelementptr inbounds %Symbol, ptr %obj4004, i32 0, i32 0
-  %field_ptr4006 = getelementptr inbounds %Node, ptr %obj3980, i32 0, i32 1
-  %field4007 = load ptr, ptr %field_ptr4006
-  store ptr %field4007, ptr %field_ptr4005
-  %field_ptr4008 = getelementptr inbounds %Symbol, ptr %obj4004, i32 0, i32 1
-  store ptr @str.179, ptr %field_ptr4008
-  %field_ptr4009 = getelementptr inbounds %Node, ptr %obj3980, i32 0, i32 6
-  %field4010 = load i64, ptr %field_ptr4009
-  %cmp4011 = icmp sge i64 %field4010, 0
-  br i1 %cmp4011, label %if_then1380, label %if_else1381
+  %obj4026 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr4027 = getelementptr inbounds %Symbol, ptr %obj4026, i32 0, i32 0
+  %field_ptr4028 = getelementptr inbounds %Node, ptr %obj4002, i32 0, i32 1
+  %field4029 = load ptr, ptr %field_ptr4028
+  store ptr %field4029, ptr %field_ptr4027
+  %field_ptr4030 = getelementptr inbounds %Symbol, ptr %obj4026, i32 0, i32 1
+  store ptr @str.179, ptr %field_ptr4030
+  %field_ptr4031 = getelementptr inbounds %Node, ptr %obj4002, i32 0, i32 6
+  %field4032 = load i64, ptr %field_ptr4031
+  %cmp4033 = icmp sge i64 %field4032, 0
+  br i1 %cmp4033, label %if_then1380, label %if_else1381
 
 if_then1380:
-  %field_ptr4012 = getelementptr inbounds %Symbol, ptr %obj4004, i32 0, i32 1
-  %field_ptr4013 = getelementptr inbounds %Node, ptr %obj3980, i32 0, i32 6
-  %field4014 = load i64, ptr %field_ptr4013
-  %call4015 = call ptr @typeck__type_node_name(i64 %field4014)
-  store ptr %call4015, ptr %field_ptr4012
+  %field_ptr4034 = getelementptr inbounds %Symbol, ptr %obj4026, i32 0, i32 1
+  %field_ptr4035 = getelementptr inbounds %Node, ptr %obj4002, i32 0, i32 6
+  %field4036 = load i64, ptr %field_ptr4035
+  %call4037 = call ptr @typeck__type_node_name(i64 %field4036)
+  store ptr %call4037, ptr %field_ptr4034
   br label %if_end1382
 
 if_else1381:
   br label %if_end1382
 
 if_end1382:
-  %field_ptr4016 = getelementptr inbounds %Symbol, ptr %obj4004, i32 0, i32 2
-  %SYM_FN_val4017 = load i64, ptr @SYM_FN
-  store i64 %SYM_FN_val4017, ptr %field_ptr4016
-  call void @typeck__declare(ptr %obj4004)
+  %field_ptr4038 = getelementptr inbounds %Symbol, ptr %obj4026, i32 0, i32 2
+  %SYM_FN_val4039 = load i64, ptr @SYM_FN
+  store i64 %SYM_FN_val4039, ptr %field_ptr4038
+  call void @typeck__declare(ptr %obj4026)
   br label %if_end1379
 
 if_else1378:
   br label %if_end1379
 
 if_end1379:
-  %post_old4018 = load i64, ptr %j3970
-  %post_new4019 = add i64 %post_old4018, 1
-  store i64 %post_new4019, ptr %j3970
+  %post_old4040 = load i64, ptr %j3990
+  %post_new4041 = add i64 %post_old4040, 1
+  store i64 %post_new4041, ptr %j3990
   br label %while_cond1374
 
 while_end1376:
@@ -10183,34 +10216,33 @@ if_end1367:
   br label %if_end1361
 
 if_end1361:
-  %post_old4020 = load i64, ptr %d3899
-  %post_new4021 = add i64 %post_old4020, 1
-  store i64 %post_new4021, ptr %d3899
+  %post_old4042 = load i64, ptr %d3917
+  %post_new4043 = add i64 %post_old4042, 1
+  store i64 %post_new4043, ptr %d3917
   br label %while_cond1356
 
 while_end1358:
-  %i4022 = alloca i64, align 8
-  store i64 0, ptr %i4022
+  %i4044 = alloca i64, align 8
+  store i64 0, ptr %i4044
   br label %while_cond1383
 
 while_cond1383:
-  %i_val4023 = load i64, ptr %i4022
-  %id_val4024 = load i64, ptr %id.addr
-  %call4025 = call i64 @node_extra_len(i64 %id_val4024)
-  %cmp4026 = icmp slt i64 %i_val4023, %call4025
-  br i1 %cmp4026, label %while_body1384, label %while_end1385
+  %i_val4045 = load i64, ptr %i4044
+  %declaration_count_val4046 = load i64, ptr %declaration_count3918
+  %cmp4047 = icmp slt i64 %i_val4045, %declaration_count_val4046
+  br i1 %cmp4047, label %while_body1384, label %while_end1385
 
 while_body1384:
-  %decl_id4027 = alloca i64, align 8
-  %id_val4028 = load i64, ptr %id.addr
-  %i_val4029 = load i64, ptr %i4022
-  %call4030 = call i64 @node_get_extra(i64 %id_val4028, i64 %i_val4029)
-  store i64 %call4030, ptr %decl_id4027
-  %decl_id_val4031 = load i64, ptr %decl_id4027
-  %call4032 = call ptr @typeck__check_node(i64 %decl_id_val4031)
-  %post_old4033 = load i64, ptr %i4022
-  %post_new4034 = add i64 %post_old4033, 1
-  store i64 %post_new4034, ptr %i4022
+  %decl_id4048 = alloca i64, align 8
+  %id_val4049 = load i64, ptr %id.addr
+  %i_val4050 = load i64, ptr %i4044
+  %call4051 = call i64 @node_get_extra(i64 %id_val4049, i64 %i_val4050)
+  store i64 %call4051, ptr %decl_id4048
+  %decl_id_val4052 = load i64, ptr %decl_id4048
+  %call4053 = call ptr @typeck__check_node(i64 %decl_id_val4052)
+  %post_old4054 = load i64, ptr %i4044
+  %post_new4055 = add i64 %post_old4054, 1
+  store i64 %post_new4055, ptr %i4044
   br label %while_cond1383
 
 while_end1385:
@@ -10228,8 +10260,8 @@ entry:
   %root_id.addr = alloca i64, align 8
   store i64 %root_id, ptr %root_id.addr
   call void @typeck__push_scope()
-  %root_id_val4035 = load i64, ptr %root_id.addr
-  %call4036 = call ptr @typeck__check_node(i64 %root_id_val4035)
+  %root_id_val4056 = load i64, ptr %root_id.addr
+  %call4057 = call ptr @typeck__check_node(i64 %root_id_val4056)
   call void @typeck__pop_scope()
   ret void
 }
@@ -10238,10 +10270,10 @@ define ptr @codegen__type_to_c(ptr %ofs_type) {
 entry:
   %ofs_type.addr = alloca ptr, align 8
   store ptr %ofs_type, ptr %ofs_type.addr
-  %ofs_type_val4037 = load ptr, ptr %ofs_type.addr
-  %streq4038 = call i32 @ofs_str_eq(ptr %ofs_type_val4037, ptr @str.181)
-  %cond4039 = icmp ne i32 %streq4038, 0
-  br i1 %cond4039, label %if_then1386, label %if_else1387
+  %ofs_type_val4058 = load ptr, ptr %ofs_type.addr
+  %streq4059 = call i32 @ofs_str_eq(ptr %ofs_type_val4058, ptr @str.181)
+  %cond4060 = icmp ne i32 %streq4059, 0
+  br i1 %cond4060, label %if_then1386, label %if_else1387
 
 if_then1386:
   ret ptr @str.197
@@ -10250,10 +10282,10 @@ if_else1387:
   br label %if_end1388
 
 if_end1388:
-  %ofs_type_val4040 = load ptr, ptr %ofs_type.addr
-  %streq4041 = call i32 @ofs_str_eq(ptr %ofs_type_val4040, ptr @str.182)
-  %cond4042 = icmp ne i32 %streq4041, 0
-  br i1 %cond4042, label %if_then1389, label %if_else1390
+  %ofs_type_val4061 = load ptr, ptr %ofs_type.addr
+  %streq4062 = call i32 @ofs_str_eq(ptr %ofs_type_val4061, ptr @str.182)
+  %cond4063 = icmp ne i32 %streq4062, 0
+  br i1 %cond4063, label %if_then1389, label %if_else1390
 
 if_then1389:
   ret ptr @str.198
@@ -10262,10 +10294,10 @@ if_else1390:
   br label %if_end1391
 
 if_end1391:
-  %ofs_type_val4043 = load ptr, ptr %ofs_type.addr
-  %streq4044 = call i32 @ofs_str_eq(ptr %ofs_type_val4043, ptr @str.183)
-  %cond4045 = icmp ne i32 %streq4044, 0
-  br i1 %cond4045, label %if_then1392, label %if_else1393
+  %ofs_type_val4064 = load ptr, ptr %ofs_type.addr
+  %streq4065 = call i32 @ofs_str_eq(ptr %ofs_type_val4064, ptr @str.183)
+  %cond4066 = icmp ne i32 %streq4065, 0
+  br i1 %cond4066, label %if_then1392, label %if_else1393
 
 if_then1392:
   ret ptr @str.199
@@ -10274,10 +10306,10 @@ if_else1393:
   br label %if_end1394
 
 if_end1394:
-  %ofs_type_val4046 = load ptr, ptr %ofs_type.addr
-  %streq4047 = call i32 @ofs_str_eq(ptr %ofs_type_val4046, ptr @str.184)
-  %cond4048 = icmp ne i32 %streq4047, 0
-  br i1 %cond4048, label %if_then1395, label %if_else1396
+  %ofs_type_val4067 = load ptr, ptr %ofs_type.addr
+  %streq4068 = call i32 @ofs_str_eq(ptr %ofs_type_val4067, ptr @str.184)
+  %cond4069 = icmp ne i32 %streq4068, 0
+  br i1 %cond4069, label %if_then1395, label %if_else1396
 
 if_then1395:
   ret ptr @str.200
@@ -10286,10 +10318,10 @@ if_else1396:
   br label %if_end1397
 
 if_end1397:
-  %ofs_type_val4049 = load ptr, ptr %ofs_type.addr
-  %streq4050 = call i32 @ofs_str_eq(ptr %ofs_type_val4049, ptr @str.180)
-  %cond4051 = icmp ne i32 %streq4050, 0
-  br i1 %cond4051, label %if_then1398, label %if_else1399
+  %ofs_type_val4070 = load ptr, ptr %ofs_type.addr
+  %streq4071 = call i32 @ofs_str_eq(ptr %ofs_type_val4070, ptr @str.180)
+  %cond4072 = icmp ne i32 %streq4071, 0
+  br i1 %cond4072, label %if_then1398, label %if_else1399
 
 if_then1398:
   ret ptr @str.180
@@ -10298,10 +10330,10 @@ if_else1399:
   br label %if_end1400
 
 if_end1400:
-  %ofs_type_val4052 = load ptr, ptr %ofs_type.addr
-  %streq4053 = call i32 @ofs_str_eq(ptr %ofs_type_val4052, ptr @str.185)
-  %cond4054 = icmp ne i32 %streq4053, 0
-  br i1 %cond4054, label %if_then1401, label %if_else1402
+  %ofs_type_val4073 = load ptr, ptr %ofs_type.addr
+  %streq4074 = call i32 @ofs_str_eq(ptr %ofs_type_val4073, ptr @str.185)
+  %cond4075 = icmp ne i32 %streq4074, 0
+  br i1 %cond4075, label %if_then1401, label %if_else1402
 
 if_then1401:
   ret ptr @str.201
@@ -10310,10 +10342,10 @@ if_else1402:
   br label %if_end1403
 
 if_end1403:
-  %ofs_type_val4055 = load ptr, ptr %ofs_type.addr
-  %streq4056 = call i32 @ofs_str_eq(ptr %ofs_type_val4055, ptr @str.186)
-  %cond4057 = icmp ne i32 %streq4056, 0
-  br i1 %cond4057, label %if_then1404, label %if_else1405
+  %ofs_type_val4076 = load ptr, ptr %ofs_type.addr
+  %streq4077 = call i32 @ofs_str_eq(ptr %ofs_type_val4076, ptr @str.186)
+  %cond4078 = icmp ne i32 %streq4077, 0
+  br i1 %cond4078, label %if_then1404, label %if_else1405
 
 if_then1404:
   ret ptr @str.202
@@ -10322,10 +10354,10 @@ if_else1405:
   br label %if_end1406
 
 if_end1406:
-  %ofs_type_val4058 = load ptr, ptr %ofs_type.addr
-  %streq4059 = call i32 @ofs_str_eq(ptr %ofs_type_val4058, ptr @str.187)
-  %cond4060 = icmp ne i32 %streq4059, 0
-  br i1 %cond4060, label %if_then1407, label %if_else1408
+  %ofs_type_val4079 = load ptr, ptr %ofs_type.addr
+  %streq4080 = call i32 @ofs_str_eq(ptr %ofs_type_val4079, ptr @str.187)
+  %cond4081 = icmp ne i32 %streq4080, 0
+  br i1 %cond4081, label %if_then1407, label %if_else1408
 
 if_then1407:
   ret ptr @str.203
@@ -10334,10 +10366,10 @@ if_else1408:
   br label %if_end1409
 
 if_end1409:
-  %ofs_type_val4061 = load ptr, ptr %ofs_type.addr
-  %streq4062 = call i32 @ofs_str_eq(ptr %ofs_type_val4061, ptr @str.188)
-  %cond4063 = icmp ne i32 %streq4062, 0
-  br i1 %cond4063, label %if_then1410, label %if_else1411
+  %ofs_type_val4082 = load ptr, ptr %ofs_type.addr
+  %streq4083 = call i32 @ofs_str_eq(ptr %ofs_type_val4082, ptr @str.188)
+  %cond4084 = icmp ne i32 %streq4083, 0
+  br i1 %cond4084, label %if_then1410, label %if_else1411
 
 if_then1410:
   ret ptr @str.204
@@ -10346,10 +10378,10 @@ if_else1411:
   br label %if_end1412
 
 if_end1412:
-  %ofs_type_val4064 = load ptr, ptr %ofs_type.addr
-  %streq4065 = call i32 @ofs_str_eq(ptr %ofs_type_val4064, ptr @str.189)
-  %cond4066 = icmp ne i32 %streq4065, 0
-  br i1 %cond4066, label %if_then1413, label %if_else1414
+  %ofs_type_val4085 = load ptr, ptr %ofs_type.addr
+  %streq4086 = call i32 @ofs_str_eq(ptr %ofs_type_val4085, ptr @str.189)
+  %cond4087 = icmp ne i32 %streq4086, 0
+  br i1 %cond4087, label %if_then1413, label %if_else1414
 
 if_then1413:
   ret ptr @str.205
@@ -10358,10 +10390,10 @@ if_else1414:
   br label %if_end1415
 
 if_end1415:
-  %ofs_type_val4067 = load ptr, ptr %ofs_type.addr
-  %streq4068 = call i32 @ofs_str_eq(ptr %ofs_type_val4067, ptr @str.190)
-  %cond4069 = icmp ne i32 %streq4068, 0
-  br i1 %cond4069, label %if_then1416, label %if_else1417
+  %ofs_type_val4088 = load ptr, ptr %ofs_type.addr
+  %streq4089 = call i32 @ofs_str_eq(ptr %ofs_type_val4088, ptr @str.190)
+  %cond4090 = icmp ne i32 %streq4089, 0
+  br i1 %cond4090, label %if_then1416, label %if_else1417
 
 if_then1416:
   ret ptr @str.206
@@ -10392,9 +10424,9 @@ define void @codegen__emit_forward_for_decl(i64 %decl_id) {
 entry:
   %decl_id.addr = alloca i64, align 8
   store i64 %decl_id, ptr %decl_id.addr
-  %decl_id_val4070 = load i64, ptr %decl_id.addr
-  %cmp4071 = icmp slt i64 %decl_id_val4070, 0
-  br i1 %cmp4071, label %if_then1419, label %if_else1420
+  %decl_id_val4091 = load i64, ptr %decl_id.addr
+  %cmp4092 = icmp slt i64 %decl_id_val4091, 0
+  br i1 %cmp4092, label %if_then1419, label %if_else1420
 
 if_then1419:
   ret void
@@ -10403,75 +10435,78 @@ if_else1420:
   br label %if_end1421
 
 if_end1421:
-  %obj4073 = call ptr @ofs_alloc(i64 4096)
-  %decl_id_val4074 = load i64, ptr %decl_id.addr
-  %call4075 = call ptr @node_get(i64 %decl_id_val4074)
-  %named_val4076 = load %Node, ptr %call4075
-  store %Node %named_val4076, ptr %obj4073
-  %field_ptr4077 = getelementptr inbounds %Node, ptr %obj4073, i32 0, i32 0
-  %field4078 = load i64, ptr %field_ptr4077
-  %NK_FN_DECL_val4079 = load i64, ptr @NK_FN_DECL
-  %cmp4080 = icmp eq i64 %field4078, %NK_FN_DECL_val4079
-  %field_ptr4081 = getelementptr inbounds %Node, ptr %obj4073, i32 0, i32 0
-  %field4082 = load i64, ptr %field_ptr4081
-  %NK_CORE_DECL_val4083 = load i64, ptr @NK_CORE_DECL
-  %cmp4084 = icmp eq i64 %field4082, %NK_CORE_DECL_val4083
-  %logic4085 = or i1 %cmp4080, %cmp4084
-  br i1 %logic4085, label %if_then1422, label %if_else1423
+  %obj4094 = call ptr @ofs_alloc(i64 4096)
+  %decl_id_val4095 = load i64, ptr %decl_id.addr
+  %call4096 = call ptr @node_get(i64 %decl_id_val4095)
+  %named_val4097 = load %Node, ptr %call4096
+  store %Node %named_val4097, ptr %obj4094
+  %field_ptr4098 = getelementptr inbounds %Node, ptr %obj4094, i32 0, i32 0
+  %field4099 = load i64, ptr %field_ptr4098
+  %NK_FN_DECL_val4100 = load i64, ptr @NK_FN_DECL
+  %cmp4101 = icmp eq i64 %field4099, %NK_FN_DECL_val4100
+  %field_ptr4102 = getelementptr inbounds %Node, ptr %obj4094, i32 0, i32 0
+  %field4103 = load i64, ptr %field_ptr4102
+  %NK_CORE_DECL_val4104 = load i64, ptr @NK_CORE_DECL
+  %cmp4105 = icmp eq i64 %field4103, %NK_CORE_DECL_val4104
+  %logic4106 = or i1 %cmp4101, %cmp4105
+  br i1 %logic4106, label %if_then1422, label %if_else1423
 
 if_then1422:
-  %ret_type_id4086 = alloca i64, align 8
-  %field_ptr4087 = getelementptr inbounds %Node, ptr %obj4073, i32 0, i32 6
-  %field4088 = load i64, ptr %field_ptr4087
-  store i64 %field4088, ptr %ret_type_id4086
-  %ret_type_str4089 = alloca ptr, align 8
-  store ptr @str.180, ptr %ret_type_str4089
-  %ret_type_id_val4090 = load i64, ptr %ret_type_id4086
-  %cmp4091 = icmp sge i64 %ret_type_id_val4090, 0
-  br i1 %cmp4091, label %if_then1425, label %if_else1426
+  %ret_type_id4107 = alloca i64, align 8
+  %field_ptr4108 = getelementptr inbounds %Node, ptr %obj4094, i32 0, i32 6
+  %field4109 = load i64, ptr %field_ptr4108
+  store i64 %field4109, ptr %ret_type_id4107
+  %ret_type_str4110 = alloca ptr, align 8
+  store ptr @str.180, ptr %ret_type_str4110
+  %ret_type_id_val4111 = load i64, ptr %ret_type_id4107
+  %cmp4112 = icmp sge i64 %ret_type_id_val4111, 0
+  br i1 %cmp4112, label %if_then1425, label %if_else1426
 
 if_then1425:
-  %obj4093 = call ptr @ofs_alloc(i64 4096)
-  %ret_type_id_val4094 = load i64, ptr %ret_type_id4086
-  %call4095 = call ptr @node_get(i64 %ret_type_id_val4094)
-  %named_val4096 = load %Node, ptr %call4095
-  store %Node %named_val4096, ptr %obj4093
-  %field_ptr4097 = getelementptr inbounds %Node, ptr %obj4093, i32 0, i32 1
-  %field4098 = load ptr, ptr %field_ptr4097
-  store ptr %field4098, ptr %ret_type_str4089
+  %obj4114 = call ptr @ofs_alloc(i64 4096)
+  %ret_type_id_val4115 = load i64, ptr %ret_type_id4107
+  %call4116 = call ptr @node_get(i64 %ret_type_id_val4115)
+  %named_val4117 = load %Node, ptr %call4116
+  store %Node %named_val4117, ptr %obj4114
+  %field_ptr4118 = getelementptr inbounds %Node, ptr %obj4114, i32 0, i32 1
+  %field4119 = load ptr, ptr %field_ptr4118
+  store ptr %field4119, ptr %ret_type_str4110
   br label %if_end1427
 
 if_else1426:
   br label %if_end1427
 
 if_end1427:
-  %ret_type_str_val4099 = load ptr, ptr %ret_type_str4089
-  %call4100 = call ptr @codegen__type_to_c(ptr %ret_type_str_val4099)
-  %concat4101 = call ptr @ofs_str_concat(ptr %call4100, ptr @str.216)
-  %field_ptr4102 = getelementptr inbounds %Node, ptr %obj4073, i32 0, i32 1
-  %field4103 = load ptr, ptr %field_ptr4102
-  %concat4104 = call ptr @ofs_str_concat(ptr %concat4101, ptr %field4103)
-  %concat4105 = call ptr @ofs_str_concat(ptr %concat4104, ptr @str.124)
-  call void @cg_emit_raw(ptr %concat4105)
-  %params_id4106 = alloca i64, align 8
-  %field_ptr4107 = getelementptr inbounds %Node, ptr %obj4073, i32 0, i32 5
-  %field4108 = load i64, ptr %field_ptr4107
-  store i64 %field4108, ptr %params_id4106
-  %j4109 = alloca i64, align 8
-  store i64 0, ptr %j4109
+  %ret_type_str_val4120 = load ptr, ptr %ret_type_str4110
+  %call4121 = call ptr @codegen__type_to_c(ptr %ret_type_str_val4120)
+  %concat4122 = call ptr @ofs_str_concat(ptr %call4121, ptr @str.216)
+  %field_ptr4123 = getelementptr inbounds %Node, ptr %obj4094, i32 0, i32 1
+  %field4124 = load ptr, ptr %field_ptr4123
+  %concat4125 = call ptr @ofs_str_concat(ptr %concat4122, ptr %field4124)
+  %concat4126 = call ptr @ofs_str_concat(ptr %concat4125, ptr @str.124)
+  call void @cg_emit_raw(ptr %concat4126)
+  %params_id4127 = alloca i64, align 8
+  %field_ptr4128 = getelementptr inbounds %Node, ptr %obj4094, i32 0, i32 5
+  %field4129 = load i64, ptr %field_ptr4128
+  store i64 %field4129, ptr %params_id4127
+  %j4130 = alloca i64, align 8
+  store i64 0, ptr %j4130
+  %param_count4131 = alloca i64, align 8
+  %params_id_val4132 = load i64, ptr %params_id4127
+  %call4133 = call i64 @node_extra_len(i64 %params_id_val4132)
+  store i64 %call4133, ptr %param_count4131
   br label %while_cond1428
 
 while_cond1428:
-  %j_val4110 = load i64, ptr %j4109
-  %params_id_val4111 = load i64, ptr %params_id4106
-  %call4112 = call i64 @node_extra_len(i64 %params_id_val4111)
-  %cmp4113 = icmp slt i64 %j_val4110, %call4112
-  br i1 %cmp4113, label %while_body1429, label %while_end1430
+  %j_val4134 = load i64, ptr %j4130
+  %param_count_val4135 = load i64, ptr %param_count4131
+  %cmp4136 = icmp slt i64 %j_val4134, %param_count_val4135
+  br i1 %cmp4136, label %while_body1429, label %while_end1430
 
 while_body1429:
-  %j_val4114 = load i64, ptr %j4109
-  %cmp4115 = icmp sgt i64 %j_val4114, 0
-  br i1 %cmp4115, label %if_then1431, label %if_else1432
+  %j_val4137 = load i64, ptr %j4130
+  %cmp4138 = icmp sgt i64 %j_val4137, 0
+  br i1 %cmp4138, label %if_then1431, label %if_else1432
 
 if_then1431:
   call void @cg_emit_raw(ptr @str.217)
@@ -10481,51 +10516,51 @@ if_else1432:
   br label %if_end1433
 
 if_end1433:
-  %param_id4116 = alloca i64, align 8
-  %params_id_val4117 = load i64, ptr %params_id4106
-  %j_val4118 = load i64, ptr %j4109
-  %call4119 = call i64 @node_get_extra(i64 %params_id_val4117, i64 %j_val4118)
-  store i64 %call4119, ptr %param_id4116
-  %obj4121 = call ptr @ofs_alloc(i64 4096)
-  %param_id_val4122 = load i64, ptr %param_id4116
-  %call4123 = call ptr @node_get(i64 %param_id_val4122)
-  %named_val4124 = load %Node, ptr %call4123
-  store %Node %named_val4124, ptr %obj4121
-  %param_type_id4125 = alloca i64, align 8
-  %field_ptr4126 = getelementptr inbounds %Node, ptr %obj4121, i32 0, i32 5
-  %field4127 = load i64, ptr %field_ptr4126
-  store i64 %field4127, ptr %param_type_id4125
-  %param_type_str4128 = alloca ptr, align 8
-  store ptr @str.179, ptr %param_type_str4128
-  %param_type_id_val4129 = load i64, ptr %param_type_id4125
-  %cmp4130 = icmp sge i64 %param_type_id_val4129, 0
-  br i1 %cmp4130, label %if_then1434, label %if_else1435
+  %param_id4139 = alloca i64, align 8
+  %params_id_val4140 = load i64, ptr %params_id4127
+  %j_val4141 = load i64, ptr %j4130
+  %call4142 = call i64 @node_get_extra(i64 %params_id_val4140, i64 %j_val4141)
+  store i64 %call4142, ptr %param_id4139
+  %obj4144 = call ptr @ofs_alloc(i64 4096)
+  %param_id_val4145 = load i64, ptr %param_id4139
+  %call4146 = call ptr @node_get(i64 %param_id_val4145)
+  %named_val4147 = load %Node, ptr %call4146
+  store %Node %named_val4147, ptr %obj4144
+  %param_type_id4148 = alloca i64, align 8
+  %field_ptr4149 = getelementptr inbounds %Node, ptr %obj4144, i32 0, i32 5
+  %field4150 = load i64, ptr %field_ptr4149
+  store i64 %field4150, ptr %param_type_id4148
+  %param_type_str4151 = alloca ptr, align 8
+  store ptr @str.179, ptr %param_type_str4151
+  %param_type_id_val4152 = load i64, ptr %param_type_id4148
+  %cmp4153 = icmp sge i64 %param_type_id_val4152, 0
+  br i1 %cmp4153, label %if_then1434, label %if_else1435
 
 if_then1434:
-  %obj4132 = call ptr @ofs_alloc(i64 4096)
-  %param_type_id_val4133 = load i64, ptr %param_type_id4125
-  %call4134 = call ptr @node_get(i64 %param_type_id_val4133)
-  %named_val4135 = load %Node, ptr %call4134
-  store %Node %named_val4135, ptr %obj4132
-  %field_ptr4136 = getelementptr inbounds %Node, ptr %obj4132, i32 0, i32 1
-  %field4137 = load ptr, ptr %field_ptr4136
-  store ptr %field4137, ptr %param_type_str4128
+  %obj4155 = call ptr @ofs_alloc(i64 4096)
+  %param_type_id_val4156 = load i64, ptr %param_type_id4148
+  %call4157 = call ptr @node_get(i64 %param_type_id_val4156)
+  %named_val4158 = load %Node, ptr %call4157
+  store %Node %named_val4158, ptr %obj4155
+  %field_ptr4159 = getelementptr inbounds %Node, ptr %obj4155, i32 0, i32 1
+  %field4160 = load ptr, ptr %field_ptr4159
+  store ptr %field4160, ptr %param_type_str4151
   br label %if_end1436
 
 if_else1435:
   br label %if_end1436
 
 if_end1436:
-  %param_type_str_val4138 = load ptr, ptr %param_type_str4128
-  %call4139 = call ptr @codegen__type_to_c(ptr %param_type_str_val4138)
-  %concat4140 = call ptr @ofs_str_concat(ptr %call4139, ptr @str.216)
-  %field_ptr4141 = getelementptr inbounds %Node, ptr %obj4121, i32 0, i32 1
-  %field4142 = load ptr, ptr %field_ptr4141
-  %concat4143 = call ptr @ofs_str_concat(ptr %concat4140, ptr %field4142)
-  call void @cg_emit_raw(ptr %concat4143)
-  %post_old4144 = load i64, ptr %j4109
-  %post_new4145 = add i64 %post_old4144, 1
-  store i64 %post_new4145, ptr %j4109
+  %param_type_str_val4161 = load ptr, ptr %param_type_str4151
+  %call4162 = call ptr @codegen__type_to_c(ptr %param_type_str_val4161)
+  %concat4163 = call ptr @ofs_str_concat(ptr %call4162, ptr @str.216)
+  %field_ptr4164 = getelementptr inbounds %Node, ptr %obj4144, i32 0, i32 1
+  %field4165 = load ptr, ptr %field_ptr4164
+  %concat4166 = call ptr @ofs_str_concat(ptr %concat4163, ptr %field4165)
+  call void @cg_emit_raw(ptr %concat4166)
+  %post_old4167 = load i64, ptr %j4130
+  %post_new4168 = add i64 %post_old4167, 1
+  store i64 %post_new4168, ptr %j4130
   br label %while_cond1428
 
 while_end1430:
@@ -10537,37 +10572,40 @@ if_else1423:
   br label %if_end1424
 
 if_end1424:
-  %field_ptr4146 = getelementptr inbounds %Node, ptr %obj4073, i32 0, i32 0
-  %field4147 = load i64, ptr %field_ptr4146
-  %NK_NAMESPACE_val4148 = load i64, ptr @NK_NAMESPACE
-  %cmp4149 = icmp eq i64 %field4147, %NK_NAMESPACE_val4148
-  %field_ptr4150 = getelementptr inbounds %Node, ptr %obj4073, i32 0, i32 0
-  %field4151 = load i64, ptr %field_ptr4150
-  %NK_IMPL_val4152 = load i64, ptr @NK_IMPL
-  %cmp4153 = icmp eq i64 %field4151, %NK_IMPL_val4152
-  %logic4154 = or i1 %cmp4149, %cmp4153
-  br i1 %logic4154, label %if_then1437, label %if_else1438
+  %field_ptr4169 = getelementptr inbounds %Node, ptr %obj4094, i32 0, i32 0
+  %field4170 = load i64, ptr %field_ptr4169
+  %NK_NAMESPACE_val4171 = load i64, ptr @NK_NAMESPACE
+  %cmp4172 = icmp eq i64 %field4170, %NK_NAMESPACE_val4171
+  %field_ptr4173 = getelementptr inbounds %Node, ptr %obj4094, i32 0, i32 0
+  %field4174 = load i64, ptr %field_ptr4173
+  %NK_IMPL_val4175 = load i64, ptr @NK_IMPL
+  %cmp4176 = icmp eq i64 %field4174, %NK_IMPL_val4175
+  %logic4177 = or i1 %cmp4172, %cmp4176
+  br i1 %logic4177, label %if_then1437, label %if_else1438
 
 if_then1437:
-  %i4155 = alloca i64, align 8
-  store i64 0, ptr %i4155
+  %i4178 = alloca i64, align 8
+  store i64 0, ptr %i4178
+  %member_count4179 = alloca i64, align 8
+  %decl_id_val4180 = load i64, ptr %decl_id.addr
+  %call4181 = call i64 @node_extra_len(i64 %decl_id_val4180)
+  store i64 %call4181, ptr %member_count4179
   br label %while_cond1440
 
 while_cond1440:
-  %i_val4156 = load i64, ptr %i4155
-  %decl_id_val4157 = load i64, ptr %decl_id.addr
-  %call4158 = call i64 @node_extra_len(i64 %decl_id_val4157)
-  %cmp4159 = icmp slt i64 %i_val4156, %call4158
-  br i1 %cmp4159, label %while_body1441, label %while_end1442
+  %i_val4182 = load i64, ptr %i4178
+  %member_count_val4183 = load i64, ptr %member_count4179
+  %cmp4184 = icmp slt i64 %i_val4182, %member_count_val4183
+  br i1 %cmp4184, label %while_body1441, label %while_end1442
 
 while_body1441:
-  %decl_id_val4160 = load i64, ptr %decl_id.addr
-  %i_val4161 = load i64, ptr %i4155
-  %call4162 = call i64 @node_get_extra(i64 %decl_id_val4160, i64 %i_val4161)
-  call void @codegen__emit_forward_for_decl(i64 %call4162)
-  %post_old4163 = load i64, ptr %i4155
-  %post_new4164 = add i64 %post_old4163, 1
-  store i64 %post_new4164, ptr %i4155
+  %decl_id_val4185 = load i64, ptr %decl_id.addr
+  %i_val4186 = load i64, ptr %i4178
+  %call4187 = call i64 @node_get_extra(i64 %decl_id_val4185, i64 %i_val4186)
+  call void @codegen__emit_forward_for_decl(i64 %call4187)
+  %post_old4188 = load i64, ptr %i4178
+  %post_new4189 = add i64 %post_old4188, 1
+  store i64 %post_new4189, ptr %i4178
   br label %while_cond1440
 
 while_end1442:
@@ -10584,28 +10622,31 @@ define void @codegen__emit_forward_decls(i64 %root_id) {
 entry:
   %root_id.addr = alloca i64, align 8
   store i64 %root_id, ptr %root_id.addr
-  %i4165 = alloca i64, align 8
-  store i64 0, ptr %i4165
+  %i4190 = alloca i64, align 8
+  store i64 0, ptr %i4190
+  %declaration_count4191 = alloca i64, align 8
+  %root_id_val4192 = load i64, ptr %root_id.addr
+  %call4193 = call i64 @node_extra_len(i64 %root_id_val4192)
+  store i64 %call4193, ptr %declaration_count4191
   br label %while_cond1443
 
 while_cond1443:
-  %i_val4166 = load i64, ptr %i4165
-  %root_id_val4167 = load i64, ptr %root_id.addr
-  %call4168 = call i64 @node_extra_len(i64 %root_id_val4167)
-  %cmp4169 = icmp slt i64 %i_val4166, %call4168
-  br i1 %cmp4169, label %while_body1444, label %while_end1445
+  %i_val4194 = load i64, ptr %i4190
+  %declaration_count_val4195 = load i64, ptr %declaration_count4191
+  %cmp4196 = icmp slt i64 %i_val4194, %declaration_count_val4195
+  br i1 %cmp4196, label %while_body1444, label %while_end1445
 
 while_body1444:
-  %decl_id4170 = alloca i64, align 8
-  %root_id_val4171 = load i64, ptr %root_id.addr
-  %i_val4172 = load i64, ptr %i4165
-  %call4173 = call i64 @node_get_extra(i64 %root_id_val4171, i64 %i_val4172)
-  store i64 %call4173, ptr %decl_id4170
-  %decl_id_val4174 = load i64, ptr %decl_id4170
-  call void @codegen__emit_forward_for_decl(i64 %decl_id_val4174)
-  %post_old4175 = load i64, ptr %i4165
-  %post_new4176 = add i64 %post_old4175, 1
-  store i64 %post_new4176, ptr %i4165
+  %decl_id4197 = alloca i64, align 8
+  %root_id_val4198 = load i64, ptr %root_id.addr
+  %i_val4199 = load i64, ptr %i4190
+  %call4200 = call i64 @node_get_extra(i64 %root_id_val4198, i64 %i_val4199)
+  store i64 %call4200, ptr %decl_id4197
+  %decl_id_val4201 = load i64, ptr %decl_id4197
+  call void @codegen__emit_forward_for_decl(i64 %decl_id_val4201)
+  %post_old4202 = load i64, ptr %i4190
+  %post_new4203 = add i64 %post_old4202, 1
+  store i64 %post_new4203, ptr %i4190
   br label %while_cond1443
 
 while_end1445:
@@ -10616,9 +10657,9 @@ define void @codegen__emit_type_node(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %id_val4177 = load i64, ptr %id.addr
-  %cmp4178 = icmp slt i64 %id_val4177, 0
-  br i1 %cmp4178, label %if_then1446, label %if_else1447
+  %id_val4204 = load i64, ptr %id.addr
+  %cmp4205 = icmp slt i64 %id_val4204, 0
+  br i1 %cmp4205, label %if_then1446, label %if_else1447
 
 if_then1446:
   ret void
@@ -10627,15 +10668,15 @@ if_else1447:
   br label %if_end1448
 
 if_end1448:
-  %obj4180 = call ptr @ofs_alloc(i64 4096)
-  %id_val4181 = load i64, ptr %id.addr
-  %call4182 = call ptr @node_get(i64 %id_val4181)
-  %named_val4183 = load %Node, ptr %call4182
-  store %Node %named_val4183, ptr %obj4180
-  %field_ptr4184 = getelementptr inbounds %Node, ptr %obj4180, i32 0, i32 1
-  %field4185 = load ptr, ptr %field_ptr4184
-  %call4186 = call ptr @codegen__type_to_c(ptr %field4185)
-  call void @cg_emit_raw(ptr %call4186)
+  %obj4207 = call ptr @ofs_alloc(i64 4096)
+  %id_val4208 = load i64, ptr %id.addr
+  %call4209 = call ptr @node_get(i64 %id_val4208)
+  %named_val4210 = load %Node, ptr %call4209
+  store %Node %named_val4210, ptr %obj4207
+  %field_ptr4211 = getelementptr inbounds %Node, ptr %obj4207, i32 0, i32 1
+  %field4212 = load ptr, ptr %field_ptr4211
+  %call4213 = call ptr @codegen__type_to_c(ptr %field4212)
+  call void @cg_emit_raw(ptr %call4213)
   ret void
 }
 
@@ -10643,10 +10684,10 @@ define i32 @codegen__needs_stmt_semi(i64 %kind) {
 entry:
   %kind.addr = alloca i64, align 8
   store i64 %kind, ptr %kind.addr
-  %kind_val4187 = load i64, ptr %kind.addr
-  %NK_CALL_val4188 = load i64, ptr @NK_CALL
-  %cmp4189 = icmp eq i64 %kind_val4187, %NK_CALL_val4188
-  br i1 %cmp4189, label %if_then1449, label %if_else1450
+  %kind_val4214 = load i64, ptr %kind.addr
+  %NK_CALL_val4215 = load i64, ptr @NK_CALL
+  %cmp4216 = icmp eq i64 %kind_val4214, %NK_CALL_val4215
+  br i1 %cmp4216, label %if_then1449, label %if_else1450
 
 if_then1449:
   ret i32 1
@@ -10655,10 +10696,10 @@ if_else1450:
   br label %if_end1451
 
 if_end1451:
-  %kind_val4190 = load i64, ptr %kind.addr
-  %NK_ASSIGN_val4191 = load i64, ptr @NK_ASSIGN
-  %cmp4192 = icmp eq i64 %kind_val4190, %NK_ASSIGN_val4191
-  br i1 %cmp4192, label %if_then1452, label %if_else1453
+  %kind_val4217 = load i64, ptr %kind.addr
+  %NK_ASSIGN_val4218 = load i64, ptr @NK_ASSIGN
+  %cmp4219 = icmp eq i64 %kind_val4217, %NK_ASSIGN_val4218
+  br i1 %cmp4219, label %if_then1452, label %if_else1453
 
 if_then1452:
   ret i32 1
@@ -10667,10 +10708,10 @@ if_else1453:
   br label %if_end1454
 
 if_end1454:
-  %kind_val4193 = load i64, ptr %kind.addr
-  %NK_BIN_OP_val4194 = load i64, ptr @NK_BIN_OP
-  %cmp4195 = icmp eq i64 %kind_val4193, %NK_BIN_OP_val4194
-  br i1 %cmp4195, label %if_then1455, label %if_else1456
+  %kind_val4220 = load i64, ptr %kind.addr
+  %NK_BIN_OP_val4221 = load i64, ptr @NK_BIN_OP
+  %cmp4222 = icmp eq i64 %kind_val4220, %NK_BIN_OP_val4221
+  br i1 %cmp4222, label %if_then1455, label %if_else1456
 
 if_then1455:
   ret i32 1
@@ -10679,10 +10720,10 @@ if_else1456:
   br label %if_end1457
 
 if_end1457:
-  %kind_val4196 = load i64, ptr %kind.addr
-  %NK_UNARY_OP_val4197 = load i64, ptr @NK_UNARY_OP
-  %cmp4198 = icmp eq i64 %kind_val4196, %NK_UNARY_OP_val4197
-  br i1 %cmp4198, label %if_then1458, label %if_else1459
+  %kind_val4223 = load i64, ptr %kind.addr
+  %NK_UNARY_OP_val4224 = load i64, ptr @NK_UNARY_OP
+  %cmp4225 = icmp eq i64 %kind_val4223, %NK_UNARY_OP_val4224
+  br i1 %cmp4225, label %if_then1458, label %if_else1459
 
 if_then1458:
   ret i32 1
@@ -10691,10 +10732,10 @@ if_else1459:
   br label %if_end1460
 
 if_end1460:
-  %kind_val4199 = load i64, ptr %kind.addr
-  %NK_POST_OP_val4200 = load i64, ptr @NK_POST_OP
-  %cmp4201 = icmp eq i64 %kind_val4199, %NK_POST_OP_val4200
-  br i1 %cmp4201, label %if_then1461, label %if_else1462
+  %kind_val4226 = load i64, ptr %kind.addr
+  %NK_POST_OP_val4227 = load i64, ptr @NK_POST_OP
+  %cmp4228 = icmp eq i64 %kind_val4226, %NK_POST_OP_val4227
+  br i1 %cmp4228, label %if_then1461, label %if_else1462
 
 if_then1461:
   ret i32 1
@@ -10703,10 +10744,10 @@ if_else1462:
   br label %if_end1463
 
 if_end1463:
-  %kind_val4202 = load i64, ptr %kind.addr
-  %NK_CAST_val4203 = load i64, ptr @NK_CAST
-  %cmp4204 = icmp eq i64 %kind_val4202, %NK_CAST_val4203
-  br i1 %cmp4204, label %if_then1464, label %if_else1465
+  %kind_val4229 = load i64, ptr %kind.addr
+  %NK_CAST_val4230 = load i64, ptr @NK_CAST
+  %cmp4231 = icmp eq i64 %kind_val4229, %NK_CAST_val4230
+  br i1 %cmp4231, label %if_then1464, label %if_else1465
 
 if_then1464:
   ret i32 1
@@ -10715,10 +10756,10 @@ if_else1465:
   br label %if_end1466
 
 if_end1466:
-  %kind_val4205 = load i64, ptr %kind.addr
-  %NK_INDEX_val4206 = load i64, ptr @NK_INDEX
-  %cmp4207 = icmp eq i64 %kind_val4205, %NK_INDEX_val4206
-  br i1 %cmp4207, label %if_then1467, label %if_else1468
+  %kind_val4232 = load i64, ptr %kind.addr
+  %NK_INDEX_val4233 = load i64, ptr @NK_INDEX
+  %cmp4234 = icmp eq i64 %kind_val4232, %NK_INDEX_val4233
+  br i1 %cmp4234, label %if_then1467, label %if_else1468
 
 if_then1467:
   ret i32 1
@@ -10727,10 +10768,10 @@ if_else1468:
   br label %if_end1469
 
 if_end1469:
-  %kind_val4208 = load i64, ptr %kind.addr
-  %NK_FIELD_val4209 = load i64, ptr @NK_FIELD
-  %cmp4210 = icmp eq i64 %kind_val4208, %NK_FIELD_val4209
-  br i1 %cmp4210, label %if_then1470, label %if_else1471
+  %kind_val4235 = load i64, ptr %kind.addr
+  %NK_FIELD_val4236 = load i64, ptr @NK_FIELD
+  %cmp4237 = icmp eq i64 %kind_val4235, %NK_FIELD_val4236
+  br i1 %cmp4237, label %if_then1470, label %if_else1471
 
 if_then1470:
   ret i32 1
@@ -10739,10 +10780,10 @@ if_else1471:
   br label %if_end1472
 
 if_end1472:
-  %kind_val4211 = load i64, ptr %kind.addr
-  %NK_IDENT_val4212 = load i64, ptr @NK_IDENT
-  %cmp4213 = icmp eq i64 %kind_val4211, %NK_IDENT_val4212
-  br i1 %cmp4213, label %if_then1473, label %if_else1474
+  %kind_val4238 = load i64, ptr %kind.addr
+  %NK_IDENT_val4239 = load i64, ptr @NK_IDENT
+  %cmp4240 = icmp eq i64 %kind_val4238, %NK_IDENT_val4239
+  br i1 %cmp4240, label %if_then1473, label %if_else1474
 
 if_then1473:
   ret i32 1
@@ -10751,10 +10792,10 @@ if_else1474:
   br label %if_end1475
 
 if_end1475:
-  %kind_val4214 = load i64, ptr %kind.addr
-  %NK_LIT_INT_val4215 = load i64, ptr @NK_LIT_INT
-  %cmp4216 = icmp eq i64 %kind_val4214, %NK_LIT_INT_val4215
-  br i1 %cmp4216, label %if_then1476, label %if_else1477
+  %kind_val4241 = load i64, ptr %kind.addr
+  %NK_LIT_INT_val4242 = load i64, ptr @NK_LIT_INT
+  %cmp4243 = icmp eq i64 %kind_val4241, %NK_LIT_INT_val4242
+  br i1 %cmp4243, label %if_then1476, label %if_else1477
 
 if_then1476:
   ret i32 1
@@ -10763,10 +10804,10 @@ if_else1477:
   br label %if_end1478
 
 if_end1478:
-  %kind_val4217 = load i64, ptr %kind.addr
-  %NK_LIT_FLOAT_val4218 = load i64, ptr @NK_LIT_FLOAT
-  %cmp4219 = icmp eq i64 %kind_val4217, %NK_LIT_FLOAT_val4218
-  br i1 %cmp4219, label %if_then1479, label %if_else1480
+  %kind_val4244 = load i64, ptr %kind.addr
+  %NK_LIT_FLOAT_val4245 = load i64, ptr @NK_LIT_FLOAT
+  %cmp4246 = icmp eq i64 %kind_val4244, %NK_LIT_FLOAT_val4245
+  br i1 %cmp4246, label %if_then1479, label %if_else1480
 
 if_then1479:
   ret i32 1
@@ -10775,10 +10816,10 @@ if_else1480:
   br label %if_end1481
 
 if_end1481:
-  %kind_val4220 = load i64, ptr %kind.addr
-  %NK_LIT_STRING_val4221 = load i64, ptr @NK_LIT_STRING
-  %cmp4222 = icmp eq i64 %kind_val4220, %NK_LIT_STRING_val4221
-  br i1 %cmp4222, label %if_then1482, label %if_else1483
+  %kind_val4247 = load i64, ptr %kind.addr
+  %NK_LIT_STRING_val4248 = load i64, ptr @NK_LIT_STRING
+  %cmp4249 = icmp eq i64 %kind_val4247, %NK_LIT_STRING_val4248
+  br i1 %cmp4249, label %if_then1482, label %if_else1483
 
 if_then1482:
   ret i32 1
@@ -10787,10 +10828,10 @@ if_else1483:
   br label %if_end1484
 
 if_end1484:
-  %kind_val4223 = load i64, ptr %kind.addr
-  %NK_LIT_BOOL_val4224 = load i64, ptr @NK_LIT_BOOL
-  %cmp4225 = icmp eq i64 %kind_val4223, %NK_LIT_BOOL_val4224
-  br i1 %cmp4225, label %if_then1485, label %if_else1486
+  %kind_val4250 = load i64, ptr %kind.addr
+  %NK_LIT_BOOL_val4251 = load i64, ptr @NK_LIT_BOOL
+  %cmp4252 = icmp eq i64 %kind_val4250, %NK_LIT_BOOL_val4251
+  br i1 %cmp4252, label %if_then1485, label %if_else1486
 
 if_then1485:
   ret i32 1
@@ -10799,10 +10840,10 @@ if_else1486:
   br label %if_end1487
 
 if_end1487:
-  %kind_val4226 = load i64, ptr %kind.addr
-  %NK_LIT_NULL_val4227 = load i64, ptr @NK_LIT_NULL
-  %cmp4228 = icmp eq i64 %kind_val4226, %NK_LIT_NULL_val4227
-  br i1 %cmp4228, label %if_then1488, label %if_else1489
+  %kind_val4253 = load i64, ptr %kind.addr
+  %NK_LIT_NULL_val4254 = load i64, ptr @NK_LIT_NULL
+  %cmp4255 = icmp eq i64 %kind_val4253, %NK_LIT_NULL_val4254
+  br i1 %cmp4255, label %if_then1488, label %if_else1489
 
 if_then1488:
   ret i32 1
@@ -10818,9 +10859,9 @@ define void @codegen__emit_node(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %id_val4229 = load i64, ptr %id.addr
-  %cmp4230 = icmp slt i64 %id_val4229, 0
-  br i1 %cmp4230, label %if_then1491, label %if_else1492
+  %id_val4256 = load i64, ptr %id.addr
+  %cmp4257 = icmp slt i64 %id_val4256, 0
+  br i1 %cmp4257, label %if_then1491, label %if_else1492
 
 if_then1491:
   ret void
@@ -10829,73 +10870,73 @@ if_else1492:
   br label %if_end1493
 
 if_end1493:
-  %obj4232 = call ptr @ofs_alloc(i64 4096)
-  %id_val4233 = load i64, ptr %id.addr
-  %call4234 = call ptr @node_get(i64 %id_val4233)
-  %named_val4235 = load %Node, ptr %call4234
-  store %Node %named_val4235, ptr %obj4232
-  %field_ptr4236 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4237 = load i64, ptr %field_ptr4236
-  %NK_LIT_INT_val4238 = load i64, ptr @NK_LIT_INT
-  %cmp4239 = icmp eq i64 %field4237, %NK_LIT_INT_val4238
-  br i1 %cmp4239, label %if_then1494, label %if_else1495
+  %obj4259 = call ptr @ofs_alloc(i64 4096)
+  %id_val4260 = load i64, ptr %id.addr
+  %call4261 = call ptr @node_get(i64 %id_val4260)
+  %named_val4262 = load %Node, ptr %call4261
+  store %Node %named_val4262, ptr %obj4259
+  %field_ptr4263 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4264 = load i64, ptr %field_ptr4263
+  %NK_LIT_INT_val4265 = load i64, ptr @NK_LIT_INT
+  %cmp4266 = icmp eq i64 %field4264, %NK_LIT_INT_val4265
+  br i1 %cmp4266, label %if_then1494, label %if_else1495
 
 if_then1494:
-  %field_ptr4240 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4241 = load ptr, ptr %field_ptr4240
-  call void @cg_emit_raw(ptr %field4241)
+  %field_ptr4267 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4268 = load ptr, ptr %field_ptr4267
+  call void @cg_emit_raw(ptr %field4268)
   ret void
 
 if_else1495:
   br label %if_end1496
 
 if_end1496:
-  %field_ptr4242 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4243 = load i64, ptr %field_ptr4242
-  %NK_LIT_FLOAT_val4244 = load i64, ptr @NK_LIT_FLOAT
-  %cmp4245 = icmp eq i64 %field4243, %NK_LIT_FLOAT_val4244
-  br i1 %cmp4245, label %if_then1497, label %if_else1498
+  %field_ptr4269 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4270 = load i64, ptr %field_ptr4269
+  %NK_LIT_FLOAT_val4271 = load i64, ptr @NK_LIT_FLOAT
+  %cmp4272 = icmp eq i64 %field4270, %NK_LIT_FLOAT_val4271
+  br i1 %cmp4272, label %if_then1497, label %if_else1498
 
 if_then1497:
-  %field_ptr4246 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4247 = load ptr, ptr %field_ptr4246
-  call void @cg_emit_raw(ptr %field4247)
+  %field_ptr4273 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4274 = load ptr, ptr %field_ptr4273
+  call void @cg_emit_raw(ptr %field4274)
   ret void
 
 if_else1498:
   br label %if_end1499
 
 if_end1499:
-  %field_ptr4248 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4249 = load i64, ptr %field_ptr4248
-  %NK_LIT_STRING_val4250 = load i64, ptr @NK_LIT_STRING
-  %cmp4251 = icmp eq i64 %field4249, %NK_LIT_STRING_val4250
-  br i1 %cmp4251, label %if_then1500, label %if_else1501
+  %field_ptr4275 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4276 = load i64, ptr %field_ptr4275
+  %NK_LIT_STRING_val4277 = load i64, ptr @NK_LIT_STRING
+  %cmp4278 = icmp eq i64 %field4276, %NK_LIT_STRING_val4277
+  br i1 %cmp4278, label %if_then1500, label %if_else1501
 
 if_then1500:
-  %field_ptr4252 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4253 = load ptr, ptr %field_ptr4252
-  %concat4254 = call ptr @ofs_str_concat(ptr @str.100, ptr %field4253)
-  %concat4255 = call ptr @ofs_str_concat(ptr %concat4254, ptr @str.100)
-  call void @cg_emit_raw(ptr %concat4255)
+  %field_ptr4279 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4280 = load ptr, ptr %field_ptr4279
+  %concat4281 = call ptr @ofs_str_concat(ptr @str.100, ptr %field4280)
+  %concat4282 = call ptr @ofs_str_concat(ptr %concat4281, ptr @str.100)
+  call void @cg_emit_raw(ptr %concat4282)
   ret void
 
 if_else1501:
   br label %if_end1502
 
 if_end1502:
-  %field_ptr4256 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4257 = load i64, ptr %field_ptr4256
-  %NK_LIT_BOOL_val4258 = load i64, ptr @NK_LIT_BOOL
-  %cmp4259 = icmp eq i64 %field4257, %NK_LIT_BOOL_val4258
-  br i1 %cmp4259, label %if_then1503, label %if_else1504
+  %field_ptr4283 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4284 = load i64, ptr %field_ptr4283
+  %NK_LIT_BOOL_val4285 = load i64, ptr @NK_LIT_BOOL
+  %cmp4286 = icmp eq i64 %field4284, %NK_LIT_BOOL_val4285
+  br i1 %cmp4286, label %if_then1503, label %if_else1504
 
 if_then1503:
-  %field_ptr4260 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4261 = load ptr, ptr %field_ptr4260
-  %streq4262 = call i32 @ofs_str_eq(ptr %field4261, ptr @str.38)
-  %cond4263 = icmp ne i32 %streq4262, 0
-  br i1 %cond4263, label %if_then1506, label %if_else1507
+  %field_ptr4287 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4288 = load ptr, ptr %field_ptr4287
+  %streq4289 = call i32 @ofs_str_eq(ptr %field4288, ptr @str.38)
+  %cond4290 = icmp ne i32 %streq4289, 0
+  br i1 %cond4290, label %if_then1506, label %if_else1507
 
 if_then1506:
   call void @cg_emit_raw(ptr @str.219)
@@ -10912,11 +10953,11 @@ if_else1504:
   br label %if_end1505
 
 if_end1505:
-  %field_ptr4264 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4265 = load i64, ptr %field_ptr4264
-  %NK_LIT_NULL_val4266 = load i64, ptr @NK_LIT_NULL
-  %cmp4267 = icmp eq i64 %field4265, %NK_LIT_NULL_val4266
-  br i1 %cmp4267, label %if_then1509, label %if_else1510
+  %field_ptr4291 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4292 = load i64, ptr %field_ptr4291
+  %NK_LIT_NULL_val4293 = load i64, ptr @NK_LIT_NULL
+  %cmp4294 = icmp eq i64 %field4292, %NK_LIT_NULL_val4293
+  br i1 %cmp4294, label %if_then1509, label %if_else1510
 
 if_then1509:
   call void @cg_emit_raw(ptr @str.220)
@@ -10926,41 +10967,41 @@ if_else1510:
   br label %if_end1511
 
 if_end1511:
-  %field_ptr4268 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4269 = load i64, ptr %field_ptr4268
-  %NK_IDENT_val4270 = load i64, ptr @NK_IDENT
-  %cmp4271 = icmp eq i64 %field4269, %NK_IDENT_val4270
-  br i1 %cmp4271, label %if_then1512, label %if_else1513
+  %field_ptr4295 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4296 = load i64, ptr %field_ptr4295
+  %NK_IDENT_val4297 = load i64, ptr @NK_IDENT
+  %cmp4298 = icmp eq i64 %field4296, %NK_IDENT_val4297
+  br i1 %cmp4298, label %if_then1512, label %if_else1513
 
 if_then1512:
-  %field_ptr4272 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4273 = load ptr, ptr %field_ptr4272
-  call void @cg_emit_raw(ptr %field4273)
+  %field_ptr4299 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4300 = load ptr, ptr %field_ptr4299
+  call void @cg_emit_raw(ptr %field4300)
   ret void
 
 if_else1513:
   br label %if_end1514
 
 if_end1514:
-  %field_ptr4274 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4275 = load i64, ptr %field_ptr4274
-  %NK_BIN_OP_val4276 = load i64, ptr @NK_BIN_OP
-  %cmp4277 = icmp eq i64 %field4275, %NK_BIN_OP_val4276
-  br i1 %cmp4277, label %if_then1515, label %if_else1516
+  %field_ptr4301 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4302 = load i64, ptr %field_ptr4301
+  %NK_BIN_OP_val4303 = load i64, ptr @NK_BIN_OP
+  %cmp4304 = icmp eq i64 %field4302, %NK_BIN_OP_val4303
+  br i1 %cmp4304, label %if_then1515, label %if_else1516
 
 if_then1515:
   call void @cg_emit_raw(ptr @str.124)
-  %field_ptr4278 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4279 = load i64, ptr %field_ptr4278
-  call void @codegen__emit_node(i64 %field4279)
-  %field_ptr4280 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4281 = load ptr, ptr %field_ptr4280
-  %concat4282 = call ptr @ofs_str_concat(ptr @str.216, ptr %field4281)
-  %concat4283 = call ptr @ofs_str_concat(ptr %concat4282, ptr @str.216)
-  call void @cg_emit_raw(ptr %concat4283)
-  %field_ptr4284 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 6
-  %field4285 = load i64, ptr %field_ptr4284
-  call void @codegen__emit_node(i64 %field4285)
+  %field_ptr4305 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4306 = load i64, ptr %field_ptr4305
+  call void @codegen__emit_node(i64 %field4306)
+  %field_ptr4307 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4308 = load ptr, ptr %field_ptr4307
+  %concat4309 = call ptr @ofs_str_concat(ptr @str.216, ptr %field4308)
+  %concat4310 = call ptr @ofs_str_concat(ptr %concat4309, ptr @str.216)
+  call void @cg_emit_raw(ptr %concat4310)
+  %field_ptr4311 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 6
+  %field4312 = load i64, ptr %field_ptr4311
+  call void @codegen__emit_node(i64 %field4312)
   call void @cg_emit_raw(ptr @str.125)
   ret void
 
@@ -10968,20 +11009,20 @@ if_else1516:
   br label %if_end1517
 
 if_end1517:
-  %field_ptr4286 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4287 = load i64, ptr %field_ptr4286
-  %NK_UNARY_OP_val4288 = load i64, ptr @NK_UNARY_OP
-  %cmp4289 = icmp eq i64 %field4287, %NK_UNARY_OP_val4288
-  br i1 %cmp4289, label %if_then1518, label %if_else1519
+  %field_ptr4313 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4314 = load i64, ptr %field_ptr4313
+  %NK_UNARY_OP_val4315 = load i64, ptr @NK_UNARY_OP
+  %cmp4316 = icmp eq i64 %field4314, %NK_UNARY_OP_val4315
+  br i1 %cmp4316, label %if_then1518, label %if_else1519
 
 if_then1518:
-  %field_ptr4290 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4291 = load ptr, ptr %field_ptr4290
-  %concat4292 = call ptr @ofs_str_concat(ptr @str.124, ptr %field4291)
-  call void @cg_emit_raw(ptr %concat4292)
-  %field_ptr4293 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4294 = load i64, ptr %field_ptr4293
-  call void @codegen__emit_node(i64 %field4294)
+  %field_ptr4317 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4318 = load ptr, ptr %field_ptr4317
+  %concat4319 = call ptr @ofs_str_concat(ptr @str.124, ptr %field4318)
+  call void @cg_emit_raw(ptr %concat4319)
+  %field_ptr4320 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4321 = load i64, ptr %field_ptr4320
+  call void @codegen__emit_node(i64 %field4321)
   call void @cg_emit_raw(ptr @str.125)
   ret void
 
@@ -10989,32 +11030,35 @@ if_else1519:
   br label %if_end1520
 
 if_end1520:
-  %field_ptr4295 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4296 = load i64, ptr %field_ptr4295
-  %NK_CALL_val4297 = load i64, ptr @NK_CALL
-  %cmp4298 = icmp eq i64 %field4296, %NK_CALL_val4297
-  br i1 %cmp4298, label %if_then1521, label %if_else1522
+  %field_ptr4322 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4323 = load i64, ptr %field_ptr4322
+  %NK_CALL_val4324 = load i64, ptr @NK_CALL
+  %cmp4325 = icmp eq i64 %field4323, %NK_CALL_val4324
+  br i1 %cmp4325, label %if_then1521, label %if_else1522
 
 if_then1521:
-  %field_ptr4299 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4300 = load ptr, ptr %field_ptr4299
-  %concat4301 = call ptr @ofs_str_concat(ptr %field4300, ptr @str.124)
-  call void @cg_emit_raw(ptr %concat4301)
-  %i4302 = alloca i64, align 8
-  store i64 0, ptr %i4302
+  %field_ptr4326 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4327 = load ptr, ptr %field_ptr4326
+  %concat4328 = call ptr @ofs_str_concat(ptr %field4327, ptr @str.124)
+  call void @cg_emit_raw(ptr %concat4328)
+  %i4329 = alloca i64, align 8
+  store i64 0, ptr %i4329
+  %arg_count4330 = alloca i64, align 8
+  %id_val4331 = load i64, ptr %id.addr
+  %call4332 = call i64 @node_extra_len(i64 %id_val4331)
+  store i64 %call4332, ptr %arg_count4330
   br label %while_cond1524
 
 while_cond1524:
-  %i_val4303 = load i64, ptr %i4302
-  %id_val4304 = load i64, ptr %id.addr
-  %call4305 = call i64 @node_extra_len(i64 %id_val4304)
-  %cmp4306 = icmp slt i64 %i_val4303, %call4305
-  br i1 %cmp4306, label %while_body1525, label %while_end1526
+  %i_val4333 = load i64, ptr %i4329
+  %arg_count_val4334 = load i64, ptr %arg_count4330
+  %cmp4335 = icmp slt i64 %i_val4333, %arg_count_val4334
+  br i1 %cmp4335, label %while_body1525, label %while_end1526
 
 while_body1525:
-  %i_val4307 = load i64, ptr %i4302
-  %cmp4308 = icmp sgt i64 %i_val4307, 0
-  br i1 %cmp4308, label %if_then1527, label %if_else1528
+  %i_val4336 = load i64, ptr %i4329
+  %cmp4337 = icmp sgt i64 %i_val4336, 0
+  br i1 %cmp4337, label %if_then1527, label %if_else1528
 
 if_then1527:
   call void @cg_emit_raw(ptr @str.217)
@@ -11024,16 +11068,16 @@ if_else1528:
   br label %if_end1529
 
 if_end1529:
-  %arg_id4309 = alloca i64, align 8
-  %id_val4310 = load i64, ptr %id.addr
-  %i_val4311 = load i64, ptr %i4302
-  %call4312 = call i64 @node_get_extra(i64 %id_val4310, i64 %i_val4311)
-  store i64 %call4312, ptr %arg_id4309
-  %arg_id_val4313 = load i64, ptr %arg_id4309
-  call void @codegen__emit_node(i64 %arg_id_val4313)
-  %post_old4314 = load i64, ptr %i4302
-  %post_new4315 = add i64 %post_old4314, 1
-  store i64 %post_new4315, ptr %i4302
+  %arg_id4338 = alloca i64, align 8
+  %id_val4339 = load i64, ptr %id.addr
+  %i_val4340 = load i64, ptr %i4329
+  %call4341 = call i64 @node_get_extra(i64 %id_val4339, i64 %i_val4340)
+  store i64 %call4341, ptr %arg_id4338
+  %arg_id_val4342 = load i64, ptr %arg_id4338
+  call void @codegen__emit_node(i64 %arg_id_val4342)
+  %post_old4343 = load i64, ptr %i4329
+  %post_new4344 = add i64 %post_old4343, 1
+  store i64 %post_new4344, ptr %i4329
   br label %while_cond1524
 
 while_end1526:
@@ -11044,48 +11088,48 @@ if_else1522:
   br label %if_end1523
 
 if_end1523:
-  %field_ptr4316 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4317 = load i64, ptr %field_ptr4316
-  %NK_ASSIGN_val4318 = load i64, ptr @NK_ASSIGN
-  %cmp4319 = icmp eq i64 %field4317, %NK_ASSIGN_val4318
-  br i1 %cmp4319, label %if_then1530, label %if_else1531
+  %field_ptr4345 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4346 = load i64, ptr %field_ptr4345
+  %NK_ASSIGN_val4347 = load i64, ptr @NK_ASSIGN
+  %cmp4348 = icmp eq i64 %field4346, %NK_ASSIGN_val4347
+  br i1 %cmp4348, label %if_then1530, label %if_else1531
 
 if_then1530:
-  %field_ptr4320 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4321 = load i64, ptr %field_ptr4320
-  call void @codegen__emit_node(i64 %field4321)
-  %field_ptr4322 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4323 = load ptr, ptr %field_ptr4322
-  %concat4324 = call ptr @ofs_str_concat(ptr @str.216, ptr %field4323)
-  %concat4325 = call ptr @ofs_str_concat(ptr %concat4324, ptr @str.216)
-  call void @cg_emit_raw(ptr %concat4325)
-  %field_ptr4326 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 6
-  %field4327 = load i64, ptr %field_ptr4326
-  call void @codegen__emit_node(i64 %field4327)
+  %field_ptr4349 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4350 = load i64, ptr %field_ptr4349
+  call void @codegen__emit_node(i64 %field4350)
+  %field_ptr4351 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4352 = load ptr, ptr %field_ptr4351
+  %concat4353 = call ptr @ofs_str_concat(ptr @str.216, ptr %field4352)
+  %concat4354 = call ptr @ofs_str_concat(ptr %concat4353, ptr @str.216)
+  call void @cg_emit_raw(ptr %concat4354)
+  %field_ptr4355 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 6
+  %field4356 = load i64, ptr %field_ptr4355
+  call void @codegen__emit_node(i64 %field4356)
   ret void
 
 if_else1531:
   br label %if_end1532
 
 if_end1532:
-  %field_ptr4328 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4329 = load i64, ptr %field_ptr4328
-  %NK_VAR_DECL_val4330 = load i64, ptr @NK_VAR_DECL
-  %cmp4331 = icmp eq i64 %field4329, %NK_VAR_DECL_val4330
-  br i1 %cmp4331, label %if_then1533, label %if_else1534
+  %field_ptr4357 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4358 = load i64, ptr %field_ptr4357
+  %NK_VAR_DECL_val4359 = load i64, ptr @NK_VAR_DECL
+  %cmp4360 = icmp eq i64 %field4358, %NK_VAR_DECL_val4359
+  br i1 %cmp4360, label %if_then1533, label %if_else1534
 
 if_then1533:
-  %type_id4332 = alloca i64, align 8
-  %field_ptr4333 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4334 = load i64, ptr %field_ptr4333
-  store i64 %field4334, ptr %type_id4332
-  %type_id_val4335 = load i64, ptr %type_id4332
-  %cmp4336 = icmp sge i64 %type_id_val4335, 0
-  br i1 %cmp4336, label %if_then1536, label %if_else1537
+  %type_id4361 = alloca i64, align 8
+  %field_ptr4362 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4363 = load i64, ptr %field_ptr4362
+  store i64 %field4363, ptr %type_id4361
+  %type_id_val4364 = load i64, ptr %type_id4361
+  %cmp4365 = icmp sge i64 %type_id_val4364, 0
+  br i1 %cmp4365, label %if_then1536, label %if_else1537
 
 if_then1536:
-  %type_id_val4337 = load i64, ptr %type_id4332
-  call void @codegen__emit_type_node(i64 %type_id_val4337)
+  %type_id_val4366 = load i64, ptr %type_id4361
+  call void @codegen__emit_type_node(i64 %type_id_val4366)
   br label %if_end1538
 
 if_else1537:
@@ -11093,20 +11137,20 @@ if_else1537:
   br label %if_end1538
 
 if_end1538:
-  %field_ptr4338 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4339 = load ptr, ptr %field_ptr4338
-  %concat4340 = call ptr @ofs_str_concat(ptr @str.216, ptr %field4339)
-  call void @cg_emit_raw(ptr %concat4340)
-  %field_ptr4341 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 6
-  %field4342 = load i64, ptr %field_ptr4341
-  %cmp4343 = icmp sge i64 %field4342, 0
-  br i1 %cmp4343, label %if_then1539, label %if_else1540
+  %field_ptr4367 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4368 = load ptr, ptr %field_ptr4367
+  %concat4369 = call ptr @ofs_str_concat(ptr @str.216, ptr %field4368)
+  call void @cg_emit_raw(ptr %concat4369)
+  %field_ptr4370 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 6
+  %field4371 = load i64, ptr %field_ptr4370
+  %cmp4372 = icmp sge i64 %field4371, 0
+  br i1 %cmp4372, label %if_then1539, label %if_else1540
 
 if_then1539:
   call void @cg_emit_raw(ptr @str.221)
-  %field_ptr4344 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 6
-  %field4345 = load i64, ptr %field_ptr4344
-  call void @codegen__emit_node(i64 %field4345)
+  %field_ptr4373 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 6
+  %field4374 = load i64, ptr %field_ptr4373
+  call void @codegen__emit_node(i64 %field4374)
   br label %if_end1541
 
 if_else1540:
@@ -11120,25 +11164,25 @@ if_else1534:
   br label %if_end1535
 
 if_end1535:
-  %field_ptr4346 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4347 = load i64, ptr %field_ptr4346
-  %NK_CONST_DECL_val4348 = load i64, ptr @NK_CONST_DECL
-  %cmp4349 = icmp eq i64 %field4347, %NK_CONST_DECL_val4348
-  br i1 %cmp4349, label %if_then1542, label %if_else1543
+  %field_ptr4375 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4376 = load i64, ptr %field_ptr4375
+  %NK_CONST_DECL_val4377 = load i64, ptr @NK_CONST_DECL
+  %cmp4378 = icmp eq i64 %field4376, %NK_CONST_DECL_val4377
+  br i1 %cmp4378, label %if_then1542, label %if_else1543
 
 if_then1542:
-  %type_id4350 = alloca i64, align 8
-  %field_ptr4351 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4352 = load i64, ptr %field_ptr4351
-  store i64 %field4352, ptr %type_id4350
+  %type_id4379 = alloca i64, align 8
+  %field_ptr4380 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4381 = load i64, ptr %field_ptr4380
+  store i64 %field4381, ptr %type_id4379
   call void @cg_emit_raw(ptr @str.222)
-  %type_id_val4353 = load i64, ptr %type_id4350
-  %cmp4354 = icmp sge i64 %type_id_val4353, 0
-  br i1 %cmp4354, label %if_then1545, label %if_else1546
+  %type_id_val4382 = load i64, ptr %type_id4379
+  %cmp4383 = icmp sge i64 %type_id_val4382, 0
+  br i1 %cmp4383, label %if_then1545, label %if_else1546
 
 if_then1545:
-  %type_id_val4355 = load i64, ptr %type_id4350
-  call void @codegen__emit_type_node(i64 %type_id_val4355)
+  %type_id_val4384 = load i64, ptr %type_id4379
+  call void @codegen__emit_type_node(i64 %type_id_val4384)
   br label %if_end1547
 
 if_else1546:
@@ -11146,20 +11190,20 @@ if_else1546:
   br label %if_end1547
 
 if_end1547:
-  %field_ptr4356 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4357 = load ptr, ptr %field_ptr4356
-  %concat4358 = call ptr @ofs_str_concat(ptr @str.216, ptr %field4357)
-  call void @cg_emit_raw(ptr %concat4358)
-  %field_ptr4359 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 6
-  %field4360 = load i64, ptr %field_ptr4359
-  %cmp4361 = icmp sge i64 %field4360, 0
-  br i1 %cmp4361, label %if_then1548, label %if_else1549
+  %field_ptr4385 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4386 = load ptr, ptr %field_ptr4385
+  %concat4387 = call ptr @ofs_str_concat(ptr @str.216, ptr %field4386)
+  call void @cg_emit_raw(ptr %concat4387)
+  %field_ptr4388 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 6
+  %field4389 = load i64, ptr %field_ptr4388
+  %cmp4390 = icmp sge i64 %field4389, 0
+  br i1 %cmp4390, label %if_then1548, label %if_else1549
 
 if_then1548:
   call void @cg_emit_raw(ptr @str.221)
-  %field_ptr4362 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 6
-  %field4363 = load i64, ptr %field_ptr4362
-  call void @codegen__emit_node(i64 %field4363)
+  %field_ptr4391 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 6
+  %field4392 = load i64, ptr %field_ptr4391
+  call void @codegen__emit_node(i64 %field4392)
   br label %if_end1550
 
 if_else1549:
@@ -11173,43 +11217,46 @@ if_else1543:
   br label %if_end1544
 
 if_end1544:
-  %field_ptr4364 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4365 = load i64, ptr %field_ptr4364
-  %NK_BLOCK_val4366 = load i64, ptr @NK_BLOCK
-  %cmp4367 = icmp eq i64 %field4365, %NK_BLOCK_val4366
-  br i1 %cmp4367, label %if_then1551, label %if_else1552
+  %field_ptr4393 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4394 = load i64, ptr %field_ptr4393
+  %NK_BLOCK_val4395 = load i64, ptr @NK_BLOCK
+  %cmp4396 = icmp eq i64 %field4394, %NK_BLOCK_val4395
+  br i1 %cmp4396, label %if_then1551, label %if_else1552
 
 if_then1551:
   call void @cg_emit(ptr @str.127)
-  %i4368 = alloca i64, align 8
-  store i64 0, ptr %i4368
+  %i4397 = alloca i64, align 8
+  store i64 0, ptr %i4397
+  %statement_count4398 = alloca i64, align 8
+  %id_val4399 = load i64, ptr %id.addr
+  %call4400 = call i64 @node_extra_len(i64 %id_val4399)
+  store i64 %call4400, ptr %statement_count4398
   br label %while_cond1554
 
 while_cond1554:
-  %i_val4369 = load i64, ptr %i4368
-  %id_val4370 = load i64, ptr %id.addr
-  %call4371 = call i64 @node_extra_len(i64 %id_val4370)
-  %cmp4372 = icmp slt i64 %i_val4369, %call4371
-  br i1 %cmp4372, label %while_body1555, label %while_end1556
+  %i_val4401 = load i64, ptr %i4397
+  %statement_count_val4402 = load i64, ptr %statement_count4398
+  %cmp4403 = icmp slt i64 %i_val4401, %statement_count_val4402
+  br i1 %cmp4403, label %while_body1555, label %while_end1556
 
 while_body1555:
-  %stmt_id4373 = alloca i64, align 8
-  %id_val4374 = load i64, ptr %id.addr
-  %i_val4375 = load i64, ptr %i4368
-  %call4376 = call i64 @node_get_extra(i64 %id_val4374, i64 %i_val4375)
-  store i64 %call4376, ptr %stmt_id4373
-  %stmt_id_val4377 = load i64, ptr %stmt_id4373
-  call void @codegen__emit_node(i64 %stmt_id_val4377)
-  %obj4379 = call ptr @ofs_alloc(i64 4096)
-  %stmt_id_val4380 = load i64, ptr %stmt_id4373
-  %call4381 = call ptr @node_get(i64 %stmt_id_val4380)
-  %named_val4382 = load %Node, ptr %call4381
-  store %Node %named_val4382, ptr %obj4379
-  %field_ptr4383 = getelementptr inbounds %Node, ptr %obj4379, i32 0, i32 0
-  %field4384 = load i64, ptr %field_ptr4383
-  %call4385 = call i32 @codegen__needs_stmt_semi(i64 %field4384)
-  %cond4386 = icmp ne i32 %call4385, 0
-  br i1 %cond4386, label %if_then1557, label %if_else1558
+  %stmt_id4404 = alloca i64, align 8
+  %id_val4405 = load i64, ptr %id.addr
+  %i_val4406 = load i64, ptr %i4397
+  %call4407 = call i64 @node_get_extra(i64 %id_val4405, i64 %i_val4406)
+  store i64 %call4407, ptr %stmt_id4404
+  %stmt_id_val4408 = load i64, ptr %stmt_id4404
+  call void @codegen__emit_node(i64 %stmt_id_val4408)
+  %obj4410 = call ptr @ofs_alloc(i64 4096)
+  %stmt_id_val4411 = load i64, ptr %stmt_id4404
+  %call4412 = call ptr @node_get(i64 %stmt_id_val4411)
+  %named_val4413 = load %Node, ptr %call4412
+  store %Node %named_val4413, ptr %obj4410
+  %field_ptr4414 = getelementptr inbounds %Node, ptr %obj4410, i32 0, i32 0
+  %field4415 = load i64, ptr %field_ptr4414
+  %call4416 = call i32 @codegen__needs_stmt_semi(i64 %field4415)
+  %cond4417 = icmp ne i32 %call4416, 0
+  br i1 %cond4417, label %if_then1557, label %if_else1558
 
 if_then1557:
   call void @cg_emit(ptr @str.129)
@@ -11219,9 +11266,9 @@ if_else1558:
   br label %if_end1559
 
 if_end1559:
-  %post_old4387 = load i64, ptr %i4368
-  %post_new4388 = add i64 %post_old4387, 1
-  store i64 %post_new4388, ptr %i4368
+  %post_old4418 = load i64, ptr %i4397
+  %post_new4419 = add i64 %post_old4418, 1
+  store i64 %post_new4419, ptr %i4397
   br label %while_cond1554
 
 while_end1556:
@@ -11232,31 +11279,31 @@ if_else1552:
   br label %if_end1553
 
 if_end1553:
-  %field_ptr4389 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4390 = load i64, ptr %field_ptr4389
-  %NK_IF_val4391 = load i64, ptr @NK_IF
-  %cmp4392 = icmp eq i64 %field4390, %NK_IF_val4391
-  br i1 %cmp4392, label %if_then1560, label %if_else1561
+  %field_ptr4420 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4421 = load i64, ptr %field_ptr4420
+  %NK_IF_val4422 = load i64, ptr @NK_IF
+  %cmp4423 = icmp eq i64 %field4421, %NK_IF_val4422
+  br i1 %cmp4423, label %if_then1560, label %if_else1561
 
 if_then1560:
   call void @cg_emit_raw(ptr @str.223)
-  %field_ptr4393 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4394 = load i64, ptr %field_ptr4393
-  call void @codegen__emit_node(i64 %field4394)
+  %field_ptr4424 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4425 = load i64, ptr %field_ptr4424
+  call void @codegen__emit_node(i64 %field4425)
   call void @cg_emit_raw(ptr @str.224)
-  %field_ptr4395 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 6
-  %field4396 = load i64, ptr %field_ptr4395
-  call void @codegen__emit_node(i64 %field4396)
-  %field_ptr4397 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 7
-  %field4398 = load i64, ptr %field_ptr4397
-  %cmp4399 = icmp sge i64 %field4398, 0
-  br i1 %cmp4399, label %if_then1563, label %if_else1564
+  %field_ptr4426 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 6
+  %field4427 = load i64, ptr %field_ptr4426
+  call void @codegen__emit_node(i64 %field4427)
+  %field_ptr4428 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 7
+  %field4429 = load i64, ptr %field_ptr4428
+  %cmp4430 = icmp sge i64 %field4429, 0
+  br i1 %cmp4430, label %if_then1563, label %if_else1564
 
 if_then1563:
   call void @cg_emit_raw(ptr @str.225)
-  %field_ptr4400 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 7
-  %field4401 = load i64, ptr %field_ptr4400
-  call void @codegen__emit_node(i64 %field4401)
+  %field_ptr4431 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 7
+  %field4432 = load i64, ptr %field_ptr4431
+  call void @codegen__emit_node(i64 %field4432)
   br label %if_end1565
 
 if_else1564:
@@ -11270,21 +11317,21 @@ if_else1561:
   br label %if_end1562
 
 if_end1562:
-  %field_ptr4402 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4403 = load i64, ptr %field_ptr4402
-  %NK_WHILE_val4404 = load i64, ptr @NK_WHILE
-  %cmp4405 = icmp eq i64 %field4403, %NK_WHILE_val4404
-  br i1 %cmp4405, label %if_then1566, label %if_else1567
+  %field_ptr4433 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4434 = load i64, ptr %field_ptr4433
+  %NK_WHILE_val4435 = load i64, ptr @NK_WHILE
+  %cmp4436 = icmp eq i64 %field4434, %NK_WHILE_val4435
+  br i1 %cmp4436, label %if_then1566, label %if_else1567
 
 if_then1566:
   call void @cg_emit_raw(ptr @str.226)
-  %field_ptr4406 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4407 = load i64, ptr %field_ptr4406
-  call void @codegen__emit_node(i64 %field4407)
+  %field_ptr4437 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4438 = load i64, ptr %field_ptr4437
+  call void @codegen__emit_node(i64 %field4438)
   call void @cg_emit_raw(ptr @str.224)
-  %field_ptr4408 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 6
-  %field4409 = load i64, ptr %field_ptr4408
-  call void @codegen__emit_node(i64 %field4409)
+  %field_ptr4439 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 6
+  %field4440 = load i64, ptr %field_ptr4439
+  call void @codegen__emit_node(i64 %field4440)
   call void @cg_emit(ptr @str.63)
   ret void
 
@@ -11292,24 +11339,24 @@ if_else1567:
   br label %if_end1568
 
 if_end1568:
-  %field_ptr4410 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4411 = load i64, ptr %field_ptr4410
-  %NK_RETURN_val4412 = load i64, ptr @NK_RETURN
-  %cmp4413 = icmp eq i64 %field4411, %NK_RETURN_val4412
-  br i1 %cmp4413, label %if_then1569, label %if_else1570
+  %field_ptr4441 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4442 = load i64, ptr %field_ptr4441
+  %NK_RETURN_val4443 = load i64, ptr @NK_RETURN
+  %cmp4444 = icmp eq i64 %field4442, %NK_RETURN_val4443
+  br i1 %cmp4444, label %if_then1569, label %if_else1570
 
 if_then1569:
   call void @cg_emit_raw(ptr @str.11)
-  %field_ptr4414 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4415 = load i64, ptr %field_ptr4414
-  %cmp4416 = icmp sge i64 %field4415, 0
-  br i1 %cmp4416, label %if_then1572, label %if_else1573
+  %field_ptr4445 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4446 = load i64, ptr %field_ptr4445
+  %cmp4447 = icmp sge i64 %field4446, 0
+  br i1 %cmp4447, label %if_then1572, label %if_else1573
 
 if_then1572:
   call void @cg_emit_raw(ptr @str.216)
-  %field_ptr4417 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4418 = load i64, ptr %field_ptr4417
-  call void @codegen__emit_node(i64 %field4418)
+  %field_ptr4448 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4449 = load i64, ptr %field_ptr4448
+  call void @codegen__emit_node(i64 %field4449)
   br label %if_end1574
 
 if_else1573:
@@ -11323,11 +11370,11 @@ if_else1570:
   br label %if_end1571
 
 if_end1571:
-  %field_ptr4419 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4420 = load i64, ptr %field_ptr4419
-  %NK_BREAK_val4421 = load i64, ptr @NK_BREAK
-  %cmp4422 = icmp eq i64 %field4420, %NK_BREAK_val4421
-  br i1 %cmp4422, label %if_then1575, label %if_else1576
+  %field_ptr4450 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4451 = load i64, ptr %field_ptr4450
+  %NK_BREAK_val4452 = load i64, ptr @NK_BREAK
+  %cmp4453 = icmp eq i64 %field4451, %NK_BREAK_val4452
+  br i1 %cmp4453, label %if_then1575, label %if_else1576
 
 if_then1575:
   call void @cg_emit(ptr @str.227)
@@ -11337,11 +11384,11 @@ if_else1576:
   br label %if_end1577
 
 if_end1577:
-  %field_ptr4423 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4424 = load i64, ptr %field_ptr4423
-  %NK_CONTINUE_val4425 = load i64, ptr @NK_CONTINUE
-  %cmp4426 = icmp eq i64 %field4424, %NK_CONTINUE_val4425
-  br i1 %cmp4426, label %if_then1578, label %if_else1579
+  %field_ptr4454 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4455 = load i64, ptr %field_ptr4454
+  %NK_CONTINUE_val4456 = load i64, ptr @NK_CONTINUE
+  %cmp4457 = icmp eq i64 %field4455, %NK_CONTINUE_val4456
+  br i1 %cmp4457, label %if_then1578, label %if_else1579
 
 if_then1578:
   call void @cg_emit(ptr @str.228)
@@ -11351,11 +11398,11 @@ if_else1579:
   br label %if_end1580
 
 if_end1580:
-  %field_ptr4427 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4428 = load i64, ptr %field_ptr4427
-  %NK_THROW_val4429 = load i64, ptr @NK_THROW
-  %cmp4430 = icmp eq i64 %field4428, %NK_THROW_val4429
-  br i1 %cmp4430, label %if_then1581, label %if_else1582
+  %field_ptr4458 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4459 = load i64, ptr %field_ptr4458
+  %NK_THROW_val4460 = load i64, ptr @NK_THROW
+  %cmp4461 = icmp eq i64 %field4459, %NK_THROW_val4460
+  br i1 %cmp4461, label %if_then1581, label %if_else1582
 
 if_then1581:
   call void @cg_emit_raw(ptr @str.229)
@@ -11366,39 +11413,39 @@ if_else1582:
   br label %if_end1583
 
 if_end1583:
-  %field_ptr4431 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4432 = load i64, ptr %field_ptr4431
-  %NK_TREMOR_val4433 = load i64, ptr @NK_TREMOR
-  %cmp4434 = icmp eq i64 %field4432, %NK_TREMOR_val4433
-  br i1 %cmp4434, label %if_then1584, label %if_else1585
+  %field_ptr4462 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4463 = load i64, ptr %field_ptr4462
+  %NK_TREMOR_val4464 = load i64, ptr @NK_TREMOR
+  %cmp4465 = icmp eq i64 %field4463, %NK_TREMOR_val4464
+  br i1 %cmp4465, label %if_then1584, label %if_else1585
 
 if_then1584:
   call void @cg_emit(ptr @str.127)
-  %field_ptr4435 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4436 = load i64, ptr %field_ptr4435
-  %cmp4437 = icmp sge i64 %field4436, 0
-  br i1 %cmp4437, label %if_then1587, label %if_else1588
+  %field_ptr4466 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4467 = load i64, ptr %field_ptr4466
+  %cmp4468 = icmp sge i64 %field4467, 0
+  br i1 %cmp4468, label %if_then1587, label %if_else1588
 
 if_then1587:
-  %field_ptr4438 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4439 = load i64, ptr %field_ptr4438
-  call void @codegen__emit_node(i64 %field4439)
+  %field_ptr4469 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4470 = load i64, ptr %field_ptr4469
+  call void @codegen__emit_node(i64 %field4470)
   br label %if_end1589
 
 if_else1588:
   br label %if_end1589
 
 if_end1589:
-  %field_ptr4440 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 7
-  %field4441 = load i64, ptr %field_ptr4440
-  %cmp4442 = icmp sge i64 %field4441, 0
-  br i1 %cmp4442, label %if_then1590, label %if_else1591
+  %field_ptr4471 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 7
+  %field4472 = load i64, ptr %field_ptr4471
+  %cmp4473 = icmp sge i64 %field4472, 0
+  br i1 %cmp4473, label %if_then1590, label %if_else1591
 
 if_then1590:
   call void @cg_emit(ptr @str.230)
-  %field_ptr4443 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 7
-  %field4444 = load i64, ptr %field_ptr4443
-  call void @codegen__emit_node(i64 %field4444)
+  %field_ptr4474 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 7
+  %field4475 = load i64, ptr %field_ptr4474
+  call void @codegen__emit_node(i64 %field4475)
   br label %if_end1592
 
 if_else1591:
@@ -11412,70 +11459,73 @@ if_else1585:
   br label %if_end1586
 
 if_end1586:
-  %field_ptr4445 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4446 = load i64, ptr %field_ptr4445
-  %NK_FN_DECL_val4447 = load i64, ptr @NK_FN_DECL
-  %cmp4448 = icmp eq i64 %field4446, %NK_FN_DECL_val4447
-  %field_ptr4449 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4450 = load i64, ptr %field_ptr4449
-  %NK_CORE_DECL_val4451 = load i64, ptr @NK_CORE_DECL
-  %cmp4452 = icmp eq i64 %field4450, %NK_CORE_DECL_val4451
-  %logic4453 = or i1 %cmp4448, %cmp4452
-  br i1 %logic4453, label %if_then1593, label %if_else1594
+  %field_ptr4476 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4477 = load i64, ptr %field_ptr4476
+  %NK_FN_DECL_val4478 = load i64, ptr @NK_FN_DECL
+  %cmp4479 = icmp eq i64 %field4477, %NK_FN_DECL_val4478
+  %field_ptr4480 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4481 = load i64, ptr %field_ptr4480
+  %NK_CORE_DECL_val4482 = load i64, ptr @NK_CORE_DECL
+  %cmp4483 = icmp eq i64 %field4481, %NK_CORE_DECL_val4482
+  %logic4484 = or i1 %cmp4479, %cmp4483
+  br i1 %logic4484, label %if_then1593, label %if_else1594
 
 if_then1593:
-  %ret_type_id4454 = alloca i64, align 8
-  %field_ptr4455 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 6
-  %field4456 = load i64, ptr %field_ptr4455
-  store i64 %field4456, ptr %ret_type_id4454
-  %ret_type_str4457 = alloca ptr, align 8
-  store ptr @str.180, ptr %ret_type_str4457
-  %ret_type_id_val4458 = load i64, ptr %ret_type_id4454
-  %cmp4459 = icmp sge i64 %ret_type_id_val4458, 0
-  br i1 %cmp4459, label %if_then1596, label %if_else1597
+  %ret_type_id4485 = alloca i64, align 8
+  %field_ptr4486 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 6
+  %field4487 = load i64, ptr %field_ptr4486
+  store i64 %field4487, ptr %ret_type_id4485
+  %ret_type_str4488 = alloca ptr, align 8
+  store ptr @str.180, ptr %ret_type_str4488
+  %ret_type_id_val4489 = load i64, ptr %ret_type_id4485
+  %cmp4490 = icmp sge i64 %ret_type_id_val4489, 0
+  br i1 %cmp4490, label %if_then1596, label %if_else1597
 
 if_then1596:
-  %obj4461 = call ptr @ofs_alloc(i64 4096)
-  %ret_type_id_val4462 = load i64, ptr %ret_type_id4454
-  %call4463 = call ptr @node_get(i64 %ret_type_id_val4462)
-  %named_val4464 = load %Node, ptr %call4463
-  store %Node %named_val4464, ptr %obj4461
-  %field_ptr4465 = getelementptr inbounds %Node, ptr %obj4461, i32 0, i32 1
-  %field4466 = load ptr, ptr %field_ptr4465
-  store ptr %field4466, ptr %ret_type_str4457
+  %obj4492 = call ptr @ofs_alloc(i64 4096)
+  %ret_type_id_val4493 = load i64, ptr %ret_type_id4485
+  %call4494 = call ptr @node_get(i64 %ret_type_id_val4493)
+  %named_val4495 = load %Node, ptr %call4494
+  store %Node %named_val4495, ptr %obj4492
+  %field_ptr4496 = getelementptr inbounds %Node, ptr %obj4492, i32 0, i32 1
+  %field4497 = load ptr, ptr %field_ptr4496
+  store ptr %field4497, ptr %ret_type_str4488
   br label %if_end1598
 
 if_else1597:
   br label %if_end1598
 
 if_end1598:
-  %ret_type_str_val4467 = load ptr, ptr %ret_type_str4457
-  %call4468 = call ptr @codegen__type_to_c(ptr %ret_type_str_val4467)
-  %concat4469 = call ptr @ofs_str_concat(ptr %call4468, ptr @str.216)
-  %field_ptr4470 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4471 = load ptr, ptr %field_ptr4470
-  %concat4472 = call ptr @ofs_str_concat(ptr %concat4469, ptr %field4471)
-  %concat4473 = call ptr @ofs_str_concat(ptr %concat4472, ptr @str.124)
-  call void @cg_emit(ptr %concat4473)
-  %params_id4474 = alloca i64, align 8
-  %field_ptr4475 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 5
-  %field4476 = load i64, ptr %field_ptr4475
-  store i64 %field4476, ptr %params_id4474
-  %j4477 = alloca i64, align 8
-  store i64 0, ptr %j4477
+  %ret_type_str_val4498 = load ptr, ptr %ret_type_str4488
+  %call4499 = call ptr @codegen__type_to_c(ptr %ret_type_str_val4498)
+  %concat4500 = call ptr @ofs_str_concat(ptr %call4499, ptr @str.216)
+  %field_ptr4501 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4502 = load ptr, ptr %field_ptr4501
+  %concat4503 = call ptr @ofs_str_concat(ptr %concat4500, ptr %field4502)
+  %concat4504 = call ptr @ofs_str_concat(ptr %concat4503, ptr @str.124)
+  call void @cg_emit(ptr %concat4504)
+  %params_id4505 = alloca i64, align 8
+  %field_ptr4506 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 5
+  %field4507 = load i64, ptr %field_ptr4506
+  store i64 %field4507, ptr %params_id4505
+  %j4508 = alloca i64, align 8
+  store i64 0, ptr %j4508
+  %param_count4509 = alloca i64, align 8
+  %params_id_val4510 = load i64, ptr %params_id4505
+  %call4511 = call i64 @node_extra_len(i64 %params_id_val4510)
+  store i64 %call4511, ptr %param_count4509
   br label %while_cond1599
 
 while_cond1599:
-  %j_val4478 = load i64, ptr %j4477
-  %params_id_val4479 = load i64, ptr %params_id4474
-  %call4480 = call i64 @node_extra_len(i64 %params_id_val4479)
-  %cmp4481 = icmp slt i64 %j_val4478, %call4480
-  br i1 %cmp4481, label %while_body1600, label %while_end1601
+  %j_val4512 = load i64, ptr %j4508
+  %param_count_val4513 = load i64, ptr %param_count4509
+  %cmp4514 = icmp slt i64 %j_val4512, %param_count_val4513
+  br i1 %cmp4514, label %while_body1600, label %while_end1601
 
 while_body1600:
-  %j_val4482 = load i64, ptr %j4477
-  %cmp4483 = icmp sgt i64 %j_val4482, 0
-  br i1 %cmp4483, label %if_then1602, label %if_else1603
+  %j_val4515 = load i64, ptr %j4508
+  %cmp4516 = icmp sgt i64 %j_val4515, 0
+  br i1 %cmp4516, label %if_then1602, label %if_else1603
 
 if_then1602:
   call void @cg_emit_raw(ptr @str.217)
@@ -11485,66 +11535,66 @@ if_else1603:
   br label %if_end1604
 
 if_end1604:
-  %param_id4484 = alloca i64, align 8
-  %params_id_val4485 = load i64, ptr %params_id4474
-  %j_val4486 = load i64, ptr %j4477
-  %call4487 = call i64 @node_get_extra(i64 %params_id_val4485, i64 %j_val4486)
-  store i64 %call4487, ptr %param_id4484
-  %obj4489 = call ptr @ofs_alloc(i64 4096)
-  %param_id_val4490 = load i64, ptr %param_id4484
-  %call4491 = call ptr @node_get(i64 %param_id_val4490)
-  %named_val4492 = load %Node, ptr %call4491
-  store %Node %named_val4492, ptr %obj4489
-  %param_type_id4493 = alloca i64, align 8
-  %field_ptr4494 = getelementptr inbounds %Node, ptr %obj4489, i32 0, i32 5
-  %field4495 = load i64, ptr %field_ptr4494
-  store i64 %field4495, ptr %param_type_id4493
-  %param_type_str4496 = alloca ptr, align 8
-  store ptr @str.179, ptr %param_type_str4496
-  %param_type_id_val4497 = load i64, ptr %param_type_id4493
-  %cmp4498 = icmp sge i64 %param_type_id_val4497, 0
-  br i1 %cmp4498, label %if_then1605, label %if_else1606
+  %param_id4517 = alloca i64, align 8
+  %params_id_val4518 = load i64, ptr %params_id4505
+  %j_val4519 = load i64, ptr %j4508
+  %call4520 = call i64 @node_get_extra(i64 %params_id_val4518, i64 %j_val4519)
+  store i64 %call4520, ptr %param_id4517
+  %obj4522 = call ptr @ofs_alloc(i64 4096)
+  %param_id_val4523 = load i64, ptr %param_id4517
+  %call4524 = call ptr @node_get(i64 %param_id_val4523)
+  %named_val4525 = load %Node, ptr %call4524
+  store %Node %named_val4525, ptr %obj4522
+  %param_type_id4526 = alloca i64, align 8
+  %field_ptr4527 = getelementptr inbounds %Node, ptr %obj4522, i32 0, i32 5
+  %field4528 = load i64, ptr %field_ptr4527
+  store i64 %field4528, ptr %param_type_id4526
+  %param_type_str4529 = alloca ptr, align 8
+  store ptr @str.179, ptr %param_type_str4529
+  %param_type_id_val4530 = load i64, ptr %param_type_id4526
+  %cmp4531 = icmp sge i64 %param_type_id_val4530, 0
+  br i1 %cmp4531, label %if_then1605, label %if_else1606
 
 if_then1605:
-  %obj4500 = call ptr @ofs_alloc(i64 4096)
-  %param_type_id_val4501 = load i64, ptr %param_type_id4493
-  %call4502 = call ptr @node_get(i64 %param_type_id_val4501)
-  %named_val4503 = load %Node, ptr %call4502
-  store %Node %named_val4503, ptr %obj4500
-  %field_ptr4504 = getelementptr inbounds %Node, ptr %obj4500, i32 0, i32 1
-  %field4505 = load ptr, ptr %field_ptr4504
-  store ptr %field4505, ptr %param_type_str4496
+  %obj4533 = call ptr @ofs_alloc(i64 4096)
+  %param_type_id_val4534 = load i64, ptr %param_type_id4526
+  %call4535 = call ptr @node_get(i64 %param_type_id_val4534)
+  %named_val4536 = load %Node, ptr %call4535
+  store %Node %named_val4536, ptr %obj4533
+  %field_ptr4537 = getelementptr inbounds %Node, ptr %obj4533, i32 0, i32 1
+  %field4538 = load ptr, ptr %field_ptr4537
+  store ptr %field4538, ptr %param_type_str4529
   br label %if_end1607
 
 if_else1606:
   br label %if_end1607
 
 if_end1607:
-  %param_type_str_val4506 = load ptr, ptr %param_type_str4496
-  %call4507 = call ptr @codegen__type_to_c(ptr %param_type_str_val4506)
-  %concat4508 = call ptr @ofs_str_concat(ptr %call4507, ptr @str.216)
-  %field_ptr4509 = getelementptr inbounds %Node, ptr %obj4489, i32 0, i32 1
-  %field4510 = load ptr, ptr %field_ptr4509
-  %concat4511 = call ptr @ofs_str_concat(ptr %concat4508, ptr %field4510)
-  call void @cg_emit_raw(ptr %concat4511)
-  %post_old4512 = load i64, ptr %j4477
-  %post_new4513 = add i64 %post_old4512, 1
-  store i64 %post_new4513, ptr %j4477
+  %param_type_str_val4539 = load ptr, ptr %param_type_str4529
+  %call4540 = call ptr @codegen__type_to_c(ptr %param_type_str_val4539)
+  %concat4541 = call ptr @ofs_str_concat(ptr %call4540, ptr @str.216)
+  %field_ptr4542 = getelementptr inbounds %Node, ptr %obj4522, i32 0, i32 1
+  %field4543 = load ptr, ptr %field_ptr4542
+  %concat4544 = call ptr @ofs_str_concat(ptr %concat4541, ptr %field4543)
+  call void @cg_emit_raw(ptr %concat4544)
+  %post_old4545 = load i64, ptr %j4508
+  %post_new4546 = add i64 %post_old4545, 1
+  store i64 %post_new4546, ptr %j4508
   br label %while_cond1599
 
 while_end1601:
   call void @cg_emit_raw(ptr @str.224)
-  %body_id4514 = alloca i64, align 8
-  %field_ptr4515 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 7
-  %field4516 = load i64, ptr %field_ptr4515
-  store i64 %field4516, ptr %body_id4514
-  %body_id_val4517 = load i64, ptr %body_id4514
-  %cmp4518 = icmp sge i64 %body_id_val4517, 0
-  br i1 %cmp4518, label %if_then1608, label %if_else1609
+  %body_id4547 = alloca i64, align 8
+  %field_ptr4548 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 7
+  %field4549 = load i64, ptr %field_ptr4548
+  store i64 %field4549, ptr %body_id4547
+  %body_id_val4550 = load i64, ptr %body_id4547
+  %cmp4551 = icmp sge i64 %body_id_val4550, 0
+  br i1 %cmp4551, label %if_then1608, label %if_else1609
 
 if_then1608:
-  %body_id_val4519 = load i64, ptr %body_id4514
-  call void @codegen__emit_node(i64 %body_id_val4519)
+  %body_id_val4552 = load i64, ptr %body_id4547
+  call void @codegen__emit_node(i64 %body_id_val4552)
   br label %if_end1610
 
 if_else1609:
@@ -11558,83 +11608,86 @@ if_else1594:
   br label %if_end1595
 
 if_end1595:
-  %field_ptr4520 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4521 = load i64, ptr %field_ptr4520
-  %NK_MONOLITH_val4522 = load i64, ptr @NK_MONOLITH
-  %cmp4523 = icmp eq i64 %field4521, %NK_MONOLITH_val4522
-  br i1 %cmp4523, label %if_then1611, label %if_else1612
+  %field_ptr4553 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4554 = load i64, ptr %field_ptr4553
+  %NK_MONOLITH_val4555 = load i64, ptr @NK_MONOLITH
+  %cmp4556 = icmp eq i64 %field4554, %NK_MONOLITH_val4555
+  br i1 %cmp4556, label %if_then1611, label %if_else1612
 
 if_then1611:
-  %field_ptr4524 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4525 = load ptr, ptr %field_ptr4524
-  %concat4526 = call ptr @ofs_str_concat(ptr @str.231, ptr %field4525)
-  %concat4527 = call ptr @ofs_str_concat(ptr %concat4526, ptr @str.232)
-  call void @cg_emit(ptr %concat4527)
-  %i4528 = alloca i64, align 8
-  store i64 0, ptr %i4528
+  %field_ptr4557 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4558 = load ptr, ptr %field_ptr4557
+  %concat4559 = call ptr @ofs_str_concat(ptr @str.231, ptr %field4558)
+  %concat4560 = call ptr @ofs_str_concat(ptr %concat4559, ptr @str.232)
+  call void @cg_emit(ptr %concat4560)
+  %i4561 = alloca i64, align 8
+  store i64 0, ptr %i4561
+  %field_count4562 = alloca i64, align 8
+  %id_val4563 = load i64, ptr %id.addr
+  %call4564 = call i64 @node_extra_len(i64 %id_val4563)
+  store i64 %call4564, ptr %field_count4562
   br label %while_cond1614
 
 while_cond1614:
-  %i_val4529 = load i64, ptr %i4528
-  %id_val4530 = load i64, ptr %id.addr
-  %call4531 = call i64 @node_extra_len(i64 %id_val4530)
-  %cmp4532 = icmp slt i64 %i_val4529, %call4531
-  br i1 %cmp4532, label %while_body1615, label %while_end1616
+  %i_val4565 = load i64, ptr %i4561
+  %field_count_val4566 = load i64, ptr %field_count4562
+  %cmp4567 = icmp slt i64 %i_val4565, %field_count_val4566
+  br i1 %cmp4567, label %while_body1615, label %while_end1616
 
 while_body1615:
-  %field_id4533 = alloca i64, align 8
-  %id_val4534 = load i64, ptr %id.addr
-  %i_val4535 = load i64, ptr %i4528
-  %call4536 = call i64 @node_get_extra(i64 %id_val4534, i64 %i_val4535)
-  store i64 %call4536, ptr %field_id4533
-  %obj4538 = call ptr @ofs_alloc(i64 4096)
-  %field_id_val4539 = load i64, ptr %field_id4533
-  %call4540 = call ptr @node_get(i64 %field_id_val4539)
-  %named_val4541 = load %Node, ptr %call4540
-  store %Node %named_val4541, ptr %obj4538
-  %field_type4542 = alloca ptr, align 8
-  store ptr @str.197, ptr %field_type4542
-  %field_ptr4543 = getelementptr inbounds %Node, ptr %obj4538, i32 0, i32 5
-  %field4544 = load i64, ptr %field_ptr4543
-  %cmp4545 = icmp sge i64 %field4544, 0
-  br i1 %cmp4545, label %if_then1617, label %if_else1618
+  %field_id4568 = alloca i64, align 8
+  %id_val4569 = load i64, ptr %id.addr
+  %i_val4570 = load i64, ptr %i4561
+  %call4571 = call i64 @node_get_extra(i64 %id_val4569, i64 %i_val4570)
+  store i64 %call4571, ptr %field_id4568
+  %obj4573 = call ptr @ofs_alloc(i64 4096)
+  %field_id_val4574 = load i64, ptr %field_id4568
+  %call4575 = call ptr @node_get(i64 %field_id_val4574)
+  %named_val4576 = load %Node, ptr %call4575
+  store %Node %named_val4576, ptr %obj4573
+  %field_type4577 = alloca ptr, align 8
+  store ptr @str.197, ptr %field_type4577
+  %field_ptr4578 = getelementptr inbounds %Node, ptr %obj4573, i32 0, i32 5
+  %field4579 = load i64, ptr %field_ptr4578
+  %cmp4580 = icmp sge i64 %field4579, 0
+  br i1 %cmp4580, label %if_then1617, label %if_else1618
 
 if_then1617:
-  %obj4547 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr4548 = getelementptr inbounds %Node, ptr %obj4538, i32 0, i32 5
-  %field4549 = load i64, ptr %field_ptr4548
-  %call4550 = call ptr @node_get(i64 %field4549)
-  %named_val4551 = load %Node, ptr %call4550
-  store %Node %named_val4551, ptr %obj4547
-  %field_ptr4552 = getelementptr inbounds %Node, ptr %obj4547, i32 0, i32 1
-  %field4553 = load ptr, ptr %field_ptr4552
-  %call4554 = call ptr @codegen__type_to_c(ptr %field4553)
-  store ptr %call4554, ptr %field_type4542
+  %obj4582 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr4583 = getelementptr inbounds %Node, ptr %obj4573, i32 0, i32 5
+  %field4584 = load i64, ptr %field_ptr4583
+  %call4585 = call ptr @node_get(i64 %field4584)
+  %named_val4586 = load %Node, ptr %call4585
+  store %Node %named_val4586, ptr %obj4582
+  %field_ptr4587 = getelementptr inbounds %Node, ptr %obj4582, i32 0, i32 1
+  %field4588 = load ptr, ptr %field_ptr4587
+  %call4589 = call ptr @codegen__type_to_c(ptr %field4588)
+  store ptr %call4589, ptr %field_type4577
   br label %if_end1619
 
 if_else1618:
   br label %if_end1619
 
 if_end1619:
-  %field_type_val4555 = load ptr, ptr %field_type4542
-  %concat4556 = call ptr @ofs_str_concat(ptr @str.233, ptr %field_type_val4555)
-  %concat4557 = call ptr @ofs_str_concat(ptr %concat4556, ptr @str.216)
-  %field_ptr4558 = getelementptr inbounds %Node, ptr %obj4538, i32 0, i32 1
-  %field4559 = load ptr, ptr %field_ptr4558
-  %concat4560 = call ptr @ofs_str_concat(ptr %concat4557, ptr %field4559)
-  %concat4561 = call ptr @ofs_str_concat(ptr %concat4560, ptr @str.129)
-  call void @cg_emit(ptr %concat4561)
-  %post_old4562 = load i64, ptr %i4528
-  %post_new4563 = add i64 %post_old4562, 1
-  store i64 %post_new4563, ptr %i4528
+  %field_type_val4590 = load ptr, ptr %field_type4577
+  %concat4591 = call ptr @ofs_str_concat(ptr @str.233, ptr %field_type_val4590)
+  %concat4592 = call ptr @ofs_str_concat(ptr %concat4591, ptr @str.216)
+  %field_ptr4593 = getelementptr inbounds %Node, ptr %obj4573, i32 0, i32 1
+  %field4594 = load ptr, ptr %field_ptr4593
+  %concat4595 = call ptr @ofs_str_concat(ptr %concat4592, ptr %field4594)
+  %concat4596 = call ptr @ofs_str_concat(ptr %concat4595, ptr @str.129)
+  call void @cg_emit(ptr %concat4596)
+  %post_old4597 = load i64, ptr %i4561
+  %post_new4598 = add i64 %post_old4597, 1
+  store i64 %post_new4598, ptr %i4561
   br label %while_cond1614
 
 while_end1616:
-  %field_ptr4564 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4565 = load ptr, ptr %field_ptr4564
-  %concat4566 = call ptr @ofs_str_concat(ptr @str.234, ptr %field4565)
-  %concat4567 = call ptr @ofs_str_concat(ptr %concat4566, ptr @str.129)
-  call void @cg_emit(ptr %concat4567)
+  %field_ptr4599 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4600 = load ptr, ptr %field_ptr4599
+  %concat4601 = call ptr @ofs_str_concat(ptr @str.234, ptr %field4600)
+  %concat4602 = call ptr @ofs_str_concat(ptr %concat4601, ptr @str.129)
+  call void @cg_emit(ptr %concat4602)
   call void @cg_emit(ptr @str.63)
   ret void
 
@@ -11642,37 +11695,40 @@ if_else1612:
   br label %if_end1613
 
 if_end1613:
-  %field_ptr4568 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4569 = load i64, ptr %field_ptr4568
-  %NK_IMPL_val4570 = load i64, ptr @NK_IMPL
-  %cmp4571 = icmp eq i64 %field4569, %NK_IMPL_val4570
-  %field_ptr4572 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4573 = load i64, ptr %field_ptr4572
-  %NK_NAMESPACE_val4574 = load i64, ptr @NK_NAMESPACE
-  %cmp4575 = icmp eq i64 %field4573, %NK_NAMESPACE_val4574
-  %logic4576 = or i1 %cmp4571, %cmp4575
-  br i1 %logic4576, label %if_then1620, label %if_else1621
+  %field_ptr4603 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4604 = load i64, ptr %field_ptr4603
+  %NK_IMPL_val4605 = load i64, ptr @NK_IMPL
+  %cmp4606 = icmp eq i64 %field4604, %NK_IMPL_val4605
+  %field_ptr4607 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4608 = load i64, ptr %field_ptr4607
+  %NK_NAMESPACE_val4609 = load i64, ptr @NK_NAMESPACE
+  %cmp4610 = icmp eq i64 %field4608, %NK_NAMESPACE_val4609
+  %logic4611 = or i1 %cmp4606, %cmp4610
+  br i1 %logic4611, label %if_then1620, label %if_else1621
 
 if_then1620:
-  %i4577 = alloca i64, align 8
-  store i64 0, ptr %i4577
+  %i4612 = alloca i64, align 8
+  store i64 0, ptr %i4612
+  %member_count4613 = alloca i64, align 8
+  %id_val4614 = load i64, ptr %id.addr
+  %call4615 = call i64 @node_extra_len(i64 %id_val4614)
+  store i64 %call4615, ptr %member_count4613
   br label %while_cond1623
 
 while_cond1623:
-  %i_val4578 = load i64, ptr %i4577
-  %id_val4579 = load i64, ptr %id.addr
-  %call4580 = call i64 @node_extra_len(i64 %id_val4579)
-  %cmp4581 = icmp slt i64 %i_val4578, %call4580
-  br i1 %cmp4581, label %while_body1624, label %while_end1625
+  %i_val4616 = load i64, ptr %i4612
+  %member_count_val4617 = load i64, ptr %member_count4613
+  %cmp4618 = icmp slt i64 %i_val4616, %member_count_val4617
+  br i1 %cmp4618, label %while_body1624, label %while_end1625
 
 while_body1624:
-  %id_val4582 = load i64, ptr %id.addr
-  %i_val4583 = load i64, ptr %i4577
-  %call4584 = call i64 @node_get_extra(i64 %id_val4582, i64 %i_val4583)
-  call void @codegen__emit_node(i64 %call4584)
-  %post_old4585 = load i64, ptr %i4577
-  %post_new4586 = add i64 %post_old4585, 1
-  store i64 %post_new4586, ptr %i4577
+  %id_val4619 = load i64, ptr %id.addr
+  %i_val4620 = load i64, ptr %i4612
+  %call4621 = call i64 @node_get_extra(i64 %id_val4619, i64 %i_val4620)
+  call void @codegen__emit_node(i64 %call4621)
+  %post_old4622 = load i64, ptr %i4612
+  %post_new4623 = add i64 %post_old4622, 1
+  store i64 %post_new4623, ptr %i4612
   br label %while_cond1623
 
 while_end1625:
@@ -11682,78 +11738,80 @@ if_else1621:
   br label %if_end1622
 
 if_end1622:
-  %field_ptr4587 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4588 = load i64, ptr %field_ptr4587
-  %NK_STRATA_val4589 = load i64, ptr @NK_STRATA
-  %cmp4590 = icmp eq i64 %field4588, %NK_STRATA_val4589
-  br i1 %cmp4590, label %if_then1626, label %if_else1627
+  %field_ptr4624 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4625 = load i64, ptr %field_ptr4624
+  %NK_STRATA_val4626 = load i64, ptr @NK_STRATA
+  %cmp4627 = icmp eq i64 %field4625, %NK_STRATA_val4626
+  br i1 %cmp4627, label %if_then1626, label %if_else1627
 
 if_then1626:
-  %field_ptr4591 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4592 = load ptr, ptr %field_ptr4591
-  %concat4593 = call ptr @ofs_str_concat(ptr @str.235, ptr %field4592)
-  %concat4594 = call ptr @ofs_str_concat(ptr %concat4593, ptr @str.236)
-  call void @cg_emit(ptr %concat4594)
-  %i4595 = alloca i64, align 8
-  store i64 0, ptr %i4595
+  %field_ptr4628 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4629 = load ptr, ptr %field_ptr4628
+  %concat4630 = call ptr @ofs_str_concat(ptr @str.235, ptr %field4629)
+  %concat4631 = call ptr @ofs_str_concat(ptr %concat4630, ptr @str.236)
+  call void @cg_emit(ptr %concat4631)
+  %i4632 = alloca i64, align 8
+  store i64 0, ptr %i4632
+  %variant_count4633 = alloca i64, align 8
+  %id_val4634 = load i64, ptr %id.addr
+  %call4635 = call i64 @node_extra_len(i64 %id_val4634)
+  store i64 %call4635, ptr %variant_count4633
   br label %while_cond1629
 
 while_cond1629:
-  %i_val4596 = load i64, ptr %i4595
-  %id_val4597 = load i64, ptr %id.addr
-  %call4598 = call i64 @node_extra_len(i64 %id_val4597)
-  %cmp4599 = icmp slt i64 %i_val4596, %call4598
-  br i1 %cmp4599, label %while_body1630, label %while_end1631
+  %i_val4636 = load i64, ptr %i4632
+  %variant_count_val4637 = load i64, ptr %variant_count4633
+  %cmp4638 = icmp slt i64 %i_val4636, %variant_count_val4637
+  br i1 %cmp4638, label %while_body1630, label %while_end1631
 
 while_body1630:
-  %v_id4600 = alloca i64, align 8
-  %id_val4601 = load i64, ptr %id.addr
-  %i_val4602 = load i64, ptr %i4595
-  %call4603 = call i64 @node_get_extra(i64 %id_val4601, i64 %i_val4602)
-  store i64 %call4603, ptr %v_id4600
-  %obj4605 = call ptr @ofs_alloc(i64 4096)
-  %v_id_val4606 = load i64, ptr %v_id4600
-  %call4607 = call ptr @node_get(i64 %v_id_val4606)
-  %named_val4608 = load %Node, ptr %call4607
-  store %Node %named_val4608, ptr %obj4605
-  %comma4609 = alloca ptr, align 8
-  store ptr @str.63, ptr %comma4609
-  %i_val4610 = load i64, ptr %i4595
-  %op4611 = add i64 %i_val4610, 1
-  %id_val4612 = load i64, ptr %id.addr
-  %call4613 = call i64 @node_extra_len(i64 %id_val4612)
-  %cmp4614 = icmp slt i64 %op4611, %call4613
-  br i1 %cmp4614, label %if_then1632, label %if_else1633
+  %v_id4639 = alloca i64, align 8
+  %id_val4640 = load i64, ptr %id.addr
+  %i_val4641 = load i64, ptr %i4632
+  %call4642 = call i64 @node_get_extra(i64 %id_val4640, i64 %i_val4641)
+  store i64 %call4642, ptr %v_id4639
+  %obj4644 = call ptr @ofs_alloc(i64 4096)
+  %v_id_val4645 = load i64, ptr %v_id4639
+  %call4646 = call ptr @node_get(i64 %v_id_val4645)
+  %named_val4647 = load %Node, ptr %call4646
+  store %Node %named_val4647, ptr %obj4644
+  %comma4648 = alloca ptr, align 8
+  store ptr @str.63, ptr %comma4648
+  %i_val4649 = load i64, ptr %i4632
+  %op4650 = add i64 %i_val4649, 1
+  %variant_count_val4651 = load i64, ptr %variant_count4633
+  %cmp4652 = icmp slt i64 %op4650, %variant_count_val4651
+  br i1 %cmp4652, label %if_then1632, label %if_else1633
 
 if_then1632:
-  store ptr @str.130, ptr %comma4609
+  store ptr @str.130, ptr %comma4648
   br label %if_end1634
 
 if_else1633:
   br label %if_end1634
 
 if_end1634:
-  %field_ptr4615 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4616 = load ptr, ptr %field_ptr4615
-  %concat4617 = call ptr @ofs_str_concat(ptr @str.233, ptr %field4616)
-  %concat4618 = call ptr @ofs_str_concat(ptr %concat4617, ptr @str.141)
-  %field_ptr4619 = getelementptr inbounds %Node, ptr %obj4605, i32 0, i32 1
-  %field4620 = load ptr, ptr %field_ptr4619
-  %concat4621 = call ptr @ofs_str_concat(ptr %concat4618, ptr %field4620)
-  %comma_val4622 = load ptr, ptr %comma4609
-  %concat4623 = call ptr @ofs_str_concat(ptr %concat4621, ptr %comma_val4622)
-  call void @cg_emit(ptr %concat4623)
-  %post_old4624 = load i64, ptr %i4595
-  %post_new4625 = add i64 %post_old4624, 1
-  store i64 %post_new4625, ptr %i4595
+  %field_ptr4653 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4654 = load ptr, ptr %field_ptr4653
+  %concat4655 = call ptr @ofs_str_concat(ptr @str.233, ptr %field4654)
+  %concat4656 = call ptr @ofs_str_concat(ptr %concat4655, ptr @str.141)
+  %field_ptr4657 = getelementptr inbounds %Node, ptr %obj4644, i32 0, i32 1
+  %field4658 = load ptr, ptr %field_ptr4657
+  %concat4659 = call ptr @ofs_str_concat(ptr %concat4656, ptr %field4658)
+  %comma_val4660 = load ptr, ptr %comma4648
+  %concat4661 = call ptr @ofs_str_concat(ptr %concat4659, ptr %comma_val4660)
+  call void @cg_emit(ptr %concat4661)
+  %post_old4662 = load i64, ptr %i4632
+  %post_new4663 = add i64 %post_old4662, 1
+  store i64 %post_new4663, ptr %i4632
   br label %while_cond1629
 
 while_end1631:
-  %field_ptr4626 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 1
-  %field4627 = load ptr, ptr %field_ptr4626
-  %concat4628 = call ptr @ofs_str_concat(ptr @str.234, ptr %field4627)
-  %concat4629 = call ptr @ofs_str_concat(ptr %concat4628, ptr @str.237)
-  call void @cg_emit(ptr %concat4629)
+  %field_ptr4664 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 1
+  %field4665 = load ptr, ptr %field_ptr4664
+  %concat4666 = call ptr @ofs_str_concat(ptr @str.234, ptr %field4665)
+  %concat4667 = call ptr @ofs_str_concat(ptr %concat4666, ptr @str.237)
+  call void @cg_emit(ptr %concat4667)
   call void @cg_emit(ptr @str.63)
   ret void
 
@@ -11761,35 +11819,38 @@ if_else1627:
   br label %if_end1628
 
 if_end1628:
-  %field_ptr4630 = getelementptr inbounds %Node, ptr %obj4232, i32 0, i32 0
-  %field4631 = load i64, ptr %field_ptr4630
-  %NK_PROGRAM_val4632 = load i64, ptr @NK_PROGRAM
-  %cmp4633 = icmp eq i64 %field4631, %NK_PROGRAM_val4632
-  br i1 %cmp4633, label %if_then1635, label %if_else1636
+  %field_ptr4668 = getelementptr inbounds %Node, ptr %obj4259, i32 0, i32 0
+  %field4669 = load i64, ptr %field_ptr4668
+  %NK_PROGRAM_val4670 = load i64, ptr @NK_PROGRAM
+  %cmp4671 = icmp eq i64 %field4669, %NK_PROGRAM_val4670
+  br i1 %cmp4671, label %if_then1635, label %if_else1636
 
 if_then1635:
-  %i4634 = alloca i64, align 8
-  store i64 0, ptr %i4634
+  %i4672 = alloca i64, align 8
+  store i64 0, ptr %i4672
+  %declaration_count4673 = alloca i64, align 8
+  %id_val4674 = load i64, ptr %id.addr
+  %call4675 = call i64 @node_extra_len(i64 %id_val4674)
+  store i64 %call4675, ptr %declaration_count4673
   br label %while_cond1638
 
 while_cond1638:
-  %i_val4635 = load i64, ptr %i4634
-  %id_val4636 = load i64, ptr %id.addr
-  %call4637 = call i64 @node_extra_len(i64 %id_val4636)
-  %cmp4638 = icmp slt i64 %i_val4635, %call4637
-  br i1 %cmp4638, label %while_body1639, label %while_end1640
+  %i_val4676 = load i64, ptr %i4672
+  %declaration_count_val4677 = load i64, ptr %declaration_count4673
+  %cmp4678 = icmp slt i64 %i_val4676, %declaration_count_val4677
+  br i1 %cmp4678, label %while_body1639, label %while_end1640
 
 while_body1639:
-  %decl_id4639 = alloca i64, align 8
-  %id_val4640 = load i64, ptr %id.addr
-  %i_val4641 = load i64, ptr %i4634
-  %call4642 = call i64 @node_get_extra(i64 %id_val4640, i64 %i_val4641)
-  store i64 %call4642, ptr %decl_id4639
-  %decl_id_val4643 = load i64, ptr %decl_id4639
-  call void @codegen__emit_node(i64 %decl_id_val4643)
-  %post_old4644 = load i64, ptr %i4634
-  %post_new4645 = add i64 %post_old4644, 1
-  store i64 %post_new4645, ptr %i4634
+  %decl_id4679 = alloca i64, align 8
+  %id_val4680 = load i64, ptr %id.addr
+  %i_val4681 = load i64, ptr %i4672
+  %call4682 = call i64 @node_get_extra(i64 %id_val4680, i64 %i_val4681)
+  store i64 %call4682, ptr %decl_id4679
+  %decl_id_val4683 = load i64, ptr %decl_id4679
+  call void @codegen__emit_node(i64 %decl_id_val4683)
+  %post_old4684 = load i64, ptr %i4672
+  %post_new4685 = add i64 %post_old4684, 1
+  store i64 %post_new4685, ptr %i4672
   br label %while_cond1638
 
 while_end1640:
@@ -11807,13 +11868,13 @@ entry:
   %root_id.addr = alloca i64, align 8
   store i64 %root_id, ptr %root_id.addr
   call void @codegen__emit_header()
-  %root_id_val4646 = load i64, ptr %root_id.addr
-  call void @codegen__emit_forward_decls(i64 %root_id_val4646)
+  %root_id_val4686 = load i64, ptr %root_id.addr
+  call void @codegen__emit_forward_decls(i64 %root_id_val4686)
   call void @cg_emit(ptr @str.63)
   call void @cg_emit(ptr @str.238)
   call void @cg_emit(ptr @str.63)
-  %root_id_val4647 = load i64, ptr %root_id.addr
-  call void @codegen__emit_node(i64 %root_id_val4647)
+  %root_id_val4687 = load i64, ptr %root_id.addr
+  call void @codegen__emit_node(i64 %root_id_val4687)
   ret void
 }
 
@@ -11823,12 +11884,12 @@ entry:
   store ptr %s, ptr %s.addr
   %prefix.addr = alloca ptr, align 8
   store ptr %prefix, ptr %prefix.addr
-  %s_val4648 = load ptr, ptr %s.addr
-  %strlen4649 = call i64 @ofs_str_len(ptr %s_val4648)
-  %prefix_val4650 = load ptr, ptr %prefix.addr
-  %strlen4651 = call i64 @ofs_str_len(ptr %prefix_val4650)
-  %cmp4652 = icmp slt i64 %strlen4649, %strlen4651
-  br i1 %cmp4652, label %if_then1641, label %if_else1642
+  %s_val4688 = load ptr, ptr %s.addr
+  %strlen4689 = call i64 @ofs_str_len(ptr %s_val4688)
+  %prefix_val4690 = load ptr, ptr %prefix.addr
+  %strlen4691 = call i64 @ofs_str_len(ptr %prefix_val4690)
+  %cmp4692 = icmp slt i64 %strlen4689, %strlen4691
+  br i1 %cmp4692, label %if_then1641, label %if_else1642
 
 if_then1641:
   ret i32 0
@@ -11837,31 +11898,31 @@ if_else1642:
   br label %if_end1643
 
 if_end1643:
-  %s_val4653 = load ptr, ptr %s.addr
-  %prefix_val4654 = load ptr, ptr %prefix.addr
-  %strlen4655 = call i64 @ofs_str_len(ptr %prefix_val4654)
-  %call4656 = call ptr @ofs_str_substr(ptr %s_val4653, i64 0, i64 %strlen4655)
-  %prefix_val4657 = load ptr, ptr %prefix.addr
-  %streq4658 = call i32 @ofs_str_eq(ptr %call4656, ptr %prefix_val4657)
-  ret i32 %streq4658
+  %s_val4693 = load ptr, ptr %s.addr
+  %prefix_val4694 = load ptr, ptr %prefix.addr
+  %strlen4695 = call i64 @ofs_str_len(ptr %prefix_val4694)
+  %call4696 = call ptr @ofs_str_substr(ptr %s_val4693, i64 0, i64 %strlen4695)
+  %prefix_val4697 = load ptr, ptr %prefix.addr
+  %streq4698 = call i32 @ofs_str_eq(ptr %call4696, ptr %prefix_val4697)
+  ret i32 %streq4698
 }
 
 define ptr @llvmgen__pointee_type(ptr %type_str) {
 entry:
   %type_str.addr = alloca ptr, align 8
   store ptr %type_str, ptr %type_str.addr
-  %type_str_val4659 = load ptr, ptr %type_str.addr
-  %call4660 = call i32 @llvmgen__starts_with(ptr %type_str_val4659, ptr @str.56)
-  %cond4661 = icmp ne i32 %call4660, 0
-  br i1 %cond4661, label %if_then1644, label %if_else1645
+  %type_str_val4699 = load ptr, ptr %type_str.addr
+  %call4700 = call i32 @llvmgen__starts_with(ptr %type_str_val4699, ptr @str.56)
+  %cond4701 = icmp ne i32 %call4700, 0
+  br i1 %cond4701, label %if_then1644, label %if_else1645
 
 if_then1644:
-  %type_str_val4662 = load ptr, ptr %type_str.addr
-  %type_str_val4663 = load ptr, ptr %type_str.addr
-  %strlen4664 = call i64 @ofs_str_len(ptr %type_str_val4663)
-  %op4665 = sub i64 %strlen4664, 1
-  %call4666 = call ptr @ofs_str_substr(ptr %type_str_val4662, i64 1, i64 %op4665)
-  ret ptr %call4666
+  %type_str_val4702 = load ptr, ptr %type_str.addr
+  %type_str_val4703 = load ptr, ptr %type_str.addr
+  %strlen4704 = call i64 @ofs_str_len(ptr %type_str_val4703)
+  %op4705 = sub i64 %strlen4704, 1
+  %call4706 = call ptr @ofs_str_substr(ptr %type_str_val4702, i64 1, i64 %op4705)
+  ret ptr %call4706
 
 if_else1645:
   br label %if_end1646
@@ -11874,49 +11935,49 @@ define i64 @llvmgen__hex_digit_value(i64 %c) {
 entry:
   %c.addr = alloca i64, align 8
   store i64 %c, ptr %c.addr
-  %c_val4667 = load i64, ptr %c.addr
-  %cmp4668 = icmp sge i64 %c_val4667, 48
-  %c_val4669 = load i64, ptr %c.addr
-  %cmp4670 = icmp sle i64 %c_val4669, 57
-  %logic4671 = and i1 %cmp4668, %cmp4670
-  br i1 %logic4671, label %if_then1647, label %if_else1648
+  %c_val4707 = load i64, ptr %c.addr
+  %cmp4708 = icmp sge i64 %c_val4707, 48
+  %c_val4709 = load i64, ptr %c.addr
+  %cmp4710 = icmp sle i64 %c_val4709, 57
+  %logic4711 = and i1 %cmp4708, %cmp4710
+  br i1 %logic4711, label %if_then1647, label %if_else1648
 
 if_then1647:
-  %c_val4672 = load i64, ptr %c.addr
-  %op4673 = sub i64 %c_val4672, 48
-  ret i64 %op4673
+  %c_val4712 = load i64, ptr %c.addr
+  %op4713 = sub i64 %c_val4712, 48
+  ret i64 %op4713
 
 if_else1648:
   br label %if_end1649
 
 if_end1649:
-  %c_val4674 = load i64, ptr %c.addr
-  %cmp4675 = icmp sge i64 %c_val4674, 65
-  %c_val4676 = load i64, ptr %c.addr
-  %cmp4677 = icmp sle i64 %c_val4676, 70
-  %logic4678 = and i1 %cmp4675, %cmp4677
-  br i1 %logic4678, label %if_then1650, label %if_else1651
+  %c_val4714 = load i64, ptr %c.addr
+  %cmp4715 = icmp sge i64 %c_val4714, 65
+  %c_val4716 = load i64, ptr %c.addr
+  %cmp4717 = icmp sle i64 %c_val4716, 70
+  %logic4718 = and i1 %cmp4715, %cmp4717
+  br i1 %logic4718, label %if_then1650, label %if_else1651
 
 if_then1650:
-  %c_val4679 = load i64, ptr %c.addr
-  %op4680 = sub i64 %c_val4679, 55
-  ret i64 %op4680
+  %c_val4719 = load i64, ptr %c.addr
+  %op4720 = sub i64 %c_val4719, 55
+  ret i64 %op4720
 
 if_else1651:
   br label %if_end1652
 
 if_end1652:
-  %c_val4681 = load i64, ptr %c.addr
-  %cmp4682 = icmp sge i64 %c_val4681, 97
-  %c_val4683 = load i64, ptr %c.addr
-  %cmp4684 = icmp sle i64 %c_val4683, 102
-  %logic4685 = and i1 %cmp4682, %cmp4684
-  br i1 %logic4685, label %if_then1653, label %if_else1654
+  %c_val4721 = load i64, ptr %c.addr
+  %cmp4722 = icmp sge i64 %c_val4721, 97
+  %c_val4723 = load i64, ptr %c.addr
+  %cmp4724 = icmp sle i64 %c_val4723, 102
+  %logic4725 = and i1 %cmp4722, %cmp4724
+  br i1 %logic4725, label %if_then1653, label %if_else1654
 
 if_then1653:
-  %c_val4686 = load i64, ptr %c.addr
-  %op4687 = sub i64 %c_val4686, 87
-  ret i64 %op4687
+  %c_val4726 = load i64, ptr %c.addr
+  %op4727 = sub i64 %c_val4726, 87
+  ret i64 %op4727
 
 if_else1654:
   br label %if_end1655
@@ -11929,112 +11990,112 @@ define ptr @llvmgen__int_literal_value(ptr %text) {
 entry:
   %text.addr = alloca ptr, align 8
   store ptr %text, ptr %text.addr
-  %text_val4688 = load ptr, ptr %text.addr
-  %strlen4689 = call i64 @ofs_str_len(ptr %text_val4688)
-  %cmp4690 = icmp sgt i64 %strlen4689, 2
-  %text_val4691 = load ptr, ptr %text.addr
-  %call4692 = call ptr @ofs_str_substr(ptr %text_val4691, i64 0, i64 2)
-  %streq4693 = call i32 @ofs_str_eq(ptr %call4692, ptr @str.239)
-  %cond4694 = icmp ne i32 %streq4693, 0
-  %logic4695 = and i1 %cmp4690, %cond4694
-  br i1 %logic4695, label %if_then1656, label %if_else1657
+  %text_len4728 = alloca i64, align 8
+  %text_val4729 = load ptr, ptr %text.addr
+  %strlen4730 = call i64 @ofs_str_len(ptr %text_val4729)
+  store i64 %strlen4730, ptr %text_len4728
+  %text_len_val4731 = load i64, ptr %text_len4728
+  %cmp4732 = icmp sgt i64 %text_len_val4731, 2
+  %text_val4733 = load ptr, ptr %text.addr
+  %call4734 = call ptr @ofs_str_substr(ptr %text_val4733, i64 0, i64 2)
+  %streq4735 = call i32 @ofs_str_eq(ptr %call4734, ptr @str.239)
+  %cond4736 = icmp ne i32 %streq4735, 0
+  %logic4737 = and i1 %cmp4732, %cond4736
+  br i1 %logic4737, label %if_then1656, label %if_else1657
 
 if_then1656:
-  %v4696 = alloca i64, align 8
-  store i64 0, ptr %v4696
-  %i4697 = alloca i64, align 8
-  store i64 2, ptr %i4697
+  %v4738 = alloca i64, align 8
+  store i64 0, ptr %v4738
+  %i4739 = alloca i64, align 8
+  store i64 2, ptr %i4739
   br label %while_cond1659
 
 while_cond1659:
-  %i_val4698 = load i64, ptr %i4697
-  %text_val4699 = load ptr, ptr %text.addr
-  %strlen4700 = call i64 @ofs_str_len(ptr %text_val4699)
-  %cmp4701 = icmp slt i64 %i_val4698, %strlen4700
-  br i1 %cmp4701, label %while_body1660, label %while_end1661
+  %i_val4740 = load i64, ptr %i4739
+  %text_len_val4741 = load i64, ptr %text_len4728
+  %cmp4742 = icmp slt i64 %i_val4740, %text_len_val4741
+  br i1 %cmp4742, label %while_body1660, label %while_end1661
 
 while_body1660:
-  %v_val4702 = load i64, ptr %v4696
-  %op4703 = mul i64 %v_val4702, 16
-  %text_val4704 = load ptr, ptr %text.addr
-  %i_val4705 = load i64, ptr %i4697
-  %call4706 = call i64 @ofs_str_char_at(ptr %text_val4704, i64 %i_val4705)
-  %call4707 = call i64 @llvmgen__hex_digit_value(i64 %call4706)
-  %op4708 = add i64 %op4703, %call4707
-  store i64 %op4708, ptr %v4696
-  %post_old4709 = load i64, ptr %i4697
-  %post_new4710 = add i64 %post_old4709, 1
-  store i64 %post_new4710, ptr %i4697
+  %v_val4743 = load i64, ptr %v4738
+  %op4744 = mul i64 %v_val4743, 16
+  %text_val4745 = load ptr, ptr %text.addr
+  %i_val4746 = load i64, ptr %i4739
+  %call4747 = call i64 @ofs_str_char_at(ptr %text_val4745, i64 %i_val4746)
+  %call4748 = call i64 @llvmgen__hex_digit_value(i64 %call4747)
+  %op4749 = add i64 %op4744, %call4748
+  store i64 %op4749, ptr %v4738
+  %post_old4750 = load i64, ptr %i4739
+  %post_new4751 = add i64 %post_old4750, 1
+  store i64 %post_new4751, ptr %i4739
   br label %while_cond1659
 
 while_end1661:
-  %v_val4711 = load i64, ptr %v4696
-  %stone_to_str4712 = call ptr @ofs_stone_to_obsidian(i64 %v_val4711)
-  ret ptr %stone_to_str4712
+  %v_val4752 = load i64, ptr %v4738
+  %stone_to_str4753 = call ptr @ofs_stone_to_obsidian(i64 %v_val4752)
+  ret ptr %stone_to_str4753
 
 if_else1657:
   br label %if_end1658
 
 if_end1658:
-  %text_val4713 = load ptr, ptr %text.addr
-  %strlen4714 = call i64 @ofs_str_len(ptr %text_val4713)
-  %cmp4715 = icmp sgt i64 %strlen4714, 2
-  %text_val4716 = load ptr, ptr %text.addr
-  %call4717 = call ptr @ofs_str_substr(ptr %text_val4716, i64 0, i64 2)
-  %streq4718 = call i32 @ofs_str_eq(ptr %call4717, ptr @str.240)
-  %cond4719 = icmp ne i32 %streq4718, 0
-  %logic4720 = and i1 %cmp4715, %cond4719
-  br i1 %logic4720, label %if_then1662, label %if_else1663
+  %text_len_val4754 = load i64, ptr %text_len4728
+  %cmp4755 = icmp sgt i64 %text_len_val4754, 2
+  %text_val4756 = load ptr, ptr %text.addr
+  %call4757 = call ptr @ofs_str_substr(ptr %text_val4756, i64 0, i64 2)
+  %streq4758 = call i32 @ofs_str_eq(ptr %call4757, ptr @str.240)
+  %cond4759 = icmp ne i32 %streq4758, 0
+  %logic4760 = and i1 %cmp4755, %cond4759
+  br i1 %logic4760, label %if_then1662, label %if_else1663
 
 if_then1662:
-  %v24721 = alloca i64, align 8
-  store i64 0, ptr %v24721
-  %j4722 = alloca i64, align 8
-  store i64 2, ptr %j4722
+  %v24761 = alloca i64, align 8
+  store i64 0, ptr %v24761
+  %j4762 = alloca i64, align 8
+  store i64 2, ptr %j4762
   br label %while_cond1665
 
 while_cond1665:
-  %j_val4723 = load i64, ptr %j4722
-  %text_val4724 = load ptr, ptr %text.addr
-  %strlen4725 = call i64 @ofs_str_len(ptr %text_val4724)
-  %cmp4726 = icmp slt i64 %j_val4723, %strlen4725
-  br i1 %cmp4726, label %while_body1666, label %while_end1667
+  %j_val4763 = load i64, ptr %j4762
+  %text_len_val4764 = load i64, ptr %text_len4728
+  %cmp4765 = icmp slt i64 %j_val4763, %text_len_val4764
+  br i1 %cmp4765, label %while_body1666, label %while_end1667
 
 while_body1666:
-  %v2_val4727 = load i64, ptr %v24721
-  %op4728 = mul i64 %v2_val4727, 16
-  %text_val4729 = load ptr, ptr %text.addr
-  %j_val4730 = load i64, ptr %j4722
-  %call4731 = call i64 @ofs_str_char_at(ptr %text_val4729, i64 %j_val4730)
-  %call4732 = call i64 @llvmgen__hex_digit_value(i64 %call4731)
-  %op4733 = add i64 %op4728, %call4732
-  store i64 %op4733, ptr %v24721
-  %post_old4734 = load i64, ptr %j4722
-  %post_new4735 = add i64 %post_old4734, 1
-  store i64 %post_new4735, ptr %j4722
+  %v2_val4766 = load i64, ptr %v24761
+  %op4767 = mul i64 %v2_val4766, 16
+  %text_val4768 = load ptr, ptr %text.addr
+  %j_val4769 = load i64, ptr %j4762
+  %call4770 = call i64 @ofs_str_char_at(ptr %text_val4768, i64 %j_val4769)
+  %call4771 = call i64 @llvmgen__hex_digit_value(i64 %call4770)
+  %op4772 = add i64 %op4767, %call4771
+  store i64 %op4772, ptr %v24761
+  %post_old4773 = load i64, ptr %j4762
+  %post_new4774 = add i64 %post_old4773, 1
+  store i64 %post_new4774, ptr %j4762
   br label %while_cond1665
 
 while_end1667:
-  %v2_val4736 = load i64, ptr %v24721
-  %stone_to_str4737 = call ptr @ofs_stone_to_obsidian(i64 %v2_val4736)
-  ret ptr %stone_to_str4737
+  %v2_val4775 = load i64, ptr %v24761
+  %stone_to_str4776 = call ptr @ofs_stone_to_obsidian(i64 %v2_val4775)
+  ret ptr %stone_to_str4776
 
 if_else1663:
   br label %if_end1664
 
 if_end1664:
-  %text_val4738 = load ptr, ptr %text.addr
-  ret ptr %text_val4738
+  %text_val4777 = load ptr, ptr %text.addr
+  ret ptr %text_val4777
 }
 
 define i32 @llvmgen__is_integer_type(ptr %type_str) {
 entry:
   %type_str.addr = alloca ptr, align 8
   store ptr %type_str, ptr %type_str.addr
-  %type_str_val4739 = load ptr, ptr %type_str.addr
-  %streq4740 = call i32 @ofs_str_eq(ptr %type_str_val4739, ptr @str.181)
-  %cond4741 = icmp ne i32 %streq4740, 0
-  br i1 %cond4741, label %if_then1668, label %if_else1669
+  %type_str_val4778 = load ptr, ptr %type_str.addr
+  %streq4779 = call i32 @ofs_str_eq(ptr %type_str_val4778, ptr @str.181)
+  %cond4780 = icmp ne i32 %streq4779, 0
+  br i1 %cond4780, label %if_then1668, label %if_else1669
 
 if_then1668:
   ret i32 1
@@ -12043,10 +12104,10 @@ if_else1669:
   br label %if_end1670
 
 if_end1670:
-  %type_str_val4742 = load ptr, ptr %type_str.addr
-  %streq4743 = call i32 @ofs_str_eq(ptr %type_str_val4742, ptr @str.184)
-  %cond4744 = icmp ne i32 %streq4743, 0
-  br i1 %cond4744, label %if_then1671, label %if_else1672
+  %type_str_val4781 = load ptr, ptr %type_str.addr
+  %streq4782 = call i32 @ofs_str_eq(ptr %type_str_val4781, ptr @str.184)
+  %cond4783 = icmp ne i32 %streq4782, 0
+  br i1 %cond4783, label %if_then1671, label %if_else1672
 
 if_then1671:
   ret i32 1
@@ -12055,10 +12116,10 @@ if_else1672:
   br label %if_end1673
 
 if_end1673:
-  %type_str_val4745 = load ptr, ptr %type_str.addr
-  %streq4746 = call i32 @ofs_str_eq(ptr %type_str_val4745, ptr @str.241)
-  %cond4747 = icmp ne i32 %streq4746, 0
-  br i1 %cond4747, label %if_then1674, label %if_else1675
+  %type_str_val4784 = load ptr, ptr %type_str.addr
+  %streq4785 = call i32 @ofs_str_eq(ptr %type_str_val4784, ptr @str.241)
+  %cond4786 = icmp ne i32 %streq4785, 0
+  br i1 %cond4786, label %if_then1674, label %if_else1675
 
 if_then1674:
   ret i32 1
@@ -12067,14 +12128,14 @@ if_else1675:
   br label %if_end1676
 
 if_end1676:
-  %type_str_val4748 = load ptr, ptr %type_str.addr
-  %streq4749 = call i32 @ofs_str_eq(ptr %type_str_val4748, ptr @str.185)
-  %type_str_val4750 = load ptr, ptr %type_str.addr
-  %streq4751 = call i32 @ofs_str_eq(ptr %type_str_val4750, ptr @str.189)
-  %cond4752 = icmp ne i32 %streq4749, 0
-  %cond4753 = icmp ne i32 %streq4751, 0
-  %logic4754 = or i1 %cond4752, %cond4753
-  br i1 %logic4754, label %if_then1677, label %if_else1678
+  %type_str_val4787 = load ptr, ptr %type_str.addr
+  %streq4788 = call i32 @ofs_str_eq(ptr %type_str_val4787, ptr @str.185)
+  %type_str_val4789 = load ptr, ptr %type_str.addr
+  %streq4790 = call i32 @ofs_str_eq(ptr %type_str_val4789, ptr @str.189)
+  %cond4791 = icmp ne i32 %streq4788, 0
+  %cond4792 = icmp ne i32 %streq4790, 0
+  %logic4793 = or i1 %cond4791, %cond4792
+  br i1 %logic4793, label %if_then1677, label %if_else1678
 
 if_then1677:
   ret i32 1
@@ -12083,14 +12144,14 @@ if_else1678:
   br label %if_end1679
 
 if_end1679:
-  %type_str_val4755 = load ptr, ptr %type_str.addr
-  %streq4756 = call i32 @ofs_str_eq(ptr %type_str_val4755, ptr @str.186)
-  %type_str_val4757 = load ptr, ptr %type_str.addr
-  %streq4758 = call i32 @ofs_str_eq(ptr %type_str_val4757, ptr @str.242)
-  %cond4759 = icmp ne i32 %streq4756, 0
-  %cond4760 = icmp ne i32 %streq4758, 0
-  %logic4761 = or i1 %cond4759, %cond4760
-  br i1 %logic4761, label %if_then1680, label %if_else1681
+  %type_str_val4794 = load ptr, ptr %type_str.addr
+  %streq4795 = call i32 @ofs_str_eq(ptr %type_str_val4794, ptr @str.186)
+  %type_str_val4796 = load ptr, ptr %type_str.addr
+  %streq4797 = call i32 @ofs_str_eq(ptr %type_str_val4796, ptr @str.242)
+  %cond4798 = icmp ne i32 %streq4795, 0
+  %cond4799 = icmp ne i32 %streq4797, 0
+  %logic4800 = or i1 %cond4798, %cond4799
+  br i1 %logic4800, label %if_then1680, label %if_else1681
 
 if_then1680:
   ret i32 1
@@ -12099,14 +12160,14 @@ if_else1681:
   br label %if_end1682
 
 if_end1682:
-  %type_str_val4762 = load ptr, ptr %type_str.addr
-  %streq4763 = call i32 @ofs_str_eq(ptr %type_str_val4762, ptr @str.187)
-  %type_str_val4764 = load ptr, ptr %type_str.addr
-  %streq4765 = call i32 @ofs_str_eq(ptr %type_str_val4764, ptr @str.190)
-  %cond4766 = icmp ne i32 %streq4763, 0
-  %cond4767 = icmp ne i32 %streq4765, 0
-  %logic4768 = or i1 %cond4766, %cond4767
-  br i1 %logic4768, label %if_then1683, label %if_else1684
+  %type_str_val4801 = load ptr, ptr %type_str.addr
+  %streq4802 = call i32 @ofs_str_eq(ptr %type_str_val4801, ptr @str.187)
+  %type_str_val4803 = load ptr, ptr %type_str.addr
+  %streq4804 = call i32 @ofs_str_eq(ptr %type_str_val4803, ptr @str.190)
+  %cond4805 = icmp ne i32 %streq4802, 0
+  %cond4806 = icmp ne i32 %streq4804, 0
+  %logic4807 = or i1 %cond4805, %cond4806
+  br i1 %logic4807, label %if_then1683, label %if_else1684
 
 if_then1683:
   ret i32 1
@@ -12115,10 +12176,10 @@ if_else1684:
   br label %if_end1685
 
 if_end1685:
-  %type_str_val4769 = load ptr, ptr %type_str.addr
-  %streq4770 = call i32 @ofs_str_eq(ptr %type_str_val4769, ptr @str.188)
-  %cond4771 = icmp ne i32 %streq4770, 0
-  br i1 %cond4771, label %if_then1686, label %if_else1687
+  %type_str_val4808 = load ptr, ptr %type_str.addr
+  %streq4809 = call i32 @ofs_str_eq(ptr %type_str_val4808, ptr @str.188)
+  %cond4810 = icmp ne i32 %streq4809, 0
+  br i1 %cond4810, label %if_then1686, label %if_else1687
 
 if_then1686:
   ret i32 1
@@ -12134,45 +12195,45 @@ define ptr @llvmgen__next_tmp(ptr %prefix) {
 entry:
   %prefix.addr = alloca ptr, align 8
   store ptr %prefix, ptr %prefix.addr
-  %name4772 = alloca ptr, align 8
-  %prefix_val4773 = load ptr, ptr %prefix.addr
-  %concat4774 = call ptr @ofs_str_concat(ptr @str.109, ptr %prefix_val4773)
-  %llvmgen___tmp_counter_val4775 = load i64, ptr @llvmgen___tmp_counter
-  %stone_to_str4776 = call ptr @ofs_stone_to_obsidian(i64 %llvmgen___tmp_counter_val4775)
-  %concat4777 = call ptr @ofs_str_concat(ptr %concat4774, ptr %stone_to_str4776)
-  store ptr %concat4777, ptr %name4772
-  %post_old4778 = load i64, ptr @llvmgen___tmp_counter
-  %post_new4779 = add i64 %post_old4778, 1
-  store i64 %post_new4779, ptr @llvmgen___tmp_counter
-  %name_val4780 = load ptr, ptr %name4772
-  ret ptr %name_val4780
+  %name4811 = alloca ptr, align 8
+  %prefix_val4812 = load ptr, ptr %prefix.addr
+  %concat4813 = call ptr @ofs_str_concat(ptr @str.109, ptr %prefix_val4812)
+  %llvmgen___tmp_counter_val4814 = load i64, ptr @llvmgen___tmp_counter
+  %stone_to_str4815 = call ptr @ofs_stone_to_obsidian(i64 %llvmgen___tmp_counter_val4814)
+  %concat4816 = call ptr @ofs_str_concat(ptr %concat4813, ptr %stone_to_str4815)
+  store ptr %concat4816, ptr %name4811
+  %post_old4817 = load i64, ptr @llvmgen___tmp_counter
+  %post_new4818 = add i64 %post_old4817, 1
+  store i64 %post_new4818, ptr @llvmgen___tmp_counter
+  %name_val4819 = load ptr, ptr %name4811
+  ret ptr %name_val4819
 }
 
 define ptr @llvmgen__next_label(ptr %prefix) {
 entry:
   %prefix.addr = alloca ptr, align 8
   store ptr %prefix, ptr %prefix.addr
-  %name4781 = alloca ptr, align 8
-  %prefix_val4782 = load ptr, ptr %prefix.addr
-  %llvmgen___label_counter_val4783 = load i64, ptr @llvmgen___label_counter
-  %stone_to_str4784 = call ptr @ofs_stone_to_obsidian(i64 %llvmgen___label_counter_val4783)
-  %concat4785 = call ptr @ofs_str_concat(ptr %prefix_val4782, ptr %stone_to_str4784)
-  store ptr %concat4785, ptr %name4781
-  %post_old4786 = load i64, ptr @llvmgen___label_counter
-  %post_new4787 = add i64 %post_old4786, 1
-  store i64 %post_new4787, ptr @llvmgen___label_counter
-  %name_val4788 = load ptr, ptr %name4781
-  ret ptr %name_val4788
+  %name4820 = alloca ptr, align 8
+  %prefix_val4821 = load ptr, ptr %prefix.addr
+  %llvmgen___label_counter_val4822 = load i64, ptr @llvmgen___label_counter
+  %stone_to_str4823 = call ptr @ofs_stone_to_obsidian(i64 %llvmgen___label_counter_val4822)
+  %concat4824 = call ptr @ofs_str_concat(ptr %prefix_val4821, ptr %stone_to_str4823)
+  store ptr %concat4824, ptr %name4820
+  %post_old4825 = load i64, ptr @llvmgen___label_counter
+  %post_new4826 = add i64 %post_old4825, 1
+  store i64 %post_new4826, ptr @llvmgen___label_counter
+  %name_val4827 = load ptr, ptr %name4820
+  ret ptr %name_val4827
 }
 
 define ptr @llvmgen__llvm_type(ptr %type_str) {
 entry:
   %type_str.addr = alloca ptr, align 8
   store ptr %type_str, ptr %type_str.addr
-  %type_str_val4789 = load ptr, ptr %type_str.addr
-  %call4790 = call i32 @llvmgen__starts_with(ptr %type_str_val4789, ptr @str.56)
-  %cond4791 = icmp ne i32 %call4790, 0
-  br i1 %cond4791, label %if_then1689, label %if_else1690
+  %type_str_val4828 = load ptr, ptr %type_str.addr
+  %call4829 = call i32 @llvmgen__starts_with(ptr %type_str_val4828, ptr @str.56)
+  %cond4830 = icmp ne i32 %call4829, 0
+  br i1 %cond4830, label %if_then1689, label %if_else1690
 
 if_then1689:
   ret ptr @str.243
@@ -12181,10 +12242,10 @@ if_else1690:
   br label %if_end1691
 
 if_end1691:
-  %type_str_val4792 = load ptr, ptr %type_str.addr
-  %call4793 = call i32 @llvmgen__is_named_type(ptr %type_str_val4792)
-  %cond4794 = icmp ne i32 %call4793, 0
-  br i1 %cond4794, label %if_then1692, label %if_else1693
+  %type_str_val4831 = load ptr, ptr %type_str.addr
+  %call4832 = call i32 @llvmgen__is_named_type(ptr %type_str_val4831)
+  %cond4833 = icmp ne i32 %call4832, 0
+  br i1 %cond4833, label %if_then1692, label %if_else1693
 
 if_then1692:
   ret ptr @str.243
@@ -12193,14 +12254,14 @@ if_else1693:
   br label %if_end1694
 
 if_end1694:
-  %type_str_val4795 = load ptr, ptr %type_str.addr
-  %streq4796 = call i32 @ofs_str_eq(ptr %type_str_val4795, ptr @str.185)
-  %type_str_val4797 = load ptr, ptr %type_str.addr
-  %streq4798 = call i32 @ofs_str_eq(ptr %type_str_val4797, ptr @str.189)
-  %cond4799 = icmp ne i32 %streq4796, 0
-  %cond4800 = icmp ne i32 %streq4798, 0
-  %logic4801 = or i1 %cond4799, %cond4800
-  br i1 %logic4801, label %if_then1695, label %if_else1696
+  %type_str_val4834 = load ptr, ptr %type_str.addr
+  %streq4835 = call i32 @ofs_str_eq(ptr %type_str_val4834, ptr @str.185)
+  %type_str_val4836 = load ptr, ptr %type_str.addr
+  %streq4837 = call i32 @ofs_str_eq(ptr %type_str_val4836, ptr @str.189)
+  %cond4838 = icmp ne i32 %streq4835, 0
+  %cond4839 = icmp ne i32 %streq4837, 0
+  %logic4840 = or i1 %cond4838, %cond4839
+  br i1 %logic4840, label %if_then1695, label %if_else1696
 
 if_then1695:
   ret ptr @str.189
@@ -12209,14 +12270,14 @@ if_else1696:
   br label %if_end1697
 
 if_end1697:
-  %type_str_val4802 = load ptr, ptr %type_str.addr
-  %streq4803 = call i32 @ofs_str_eq(ptr %type_str_val4802, ptr @str.186)
-  %type_str_val4804 = load ptr, ptr %type_str.addr
-  %streq4805 = call i32 @ofs_str_eq(ptr %type_str_val4804, ptr @str.242)
-  %cond4806 = icmp ne i32 %streq4803, 0
-  %cond4807 = icmp ne i32 %streq4805, 0
-  %logic4808 = or i1 %cond4806, %cond4807
-  br i1 %logic4808, label %if_then1698, label %if_else1699
+  %type_str_val4841 = load ptr, ptr %type_str.addr
+  %streq4842 = call i32 @ofs_str_eq(ptr %type_str_val4841, ptr @str.186)
+  %type_str_val4843 = load ptr, ptr %type_str.addr
+  %streq4844 = call i32 @ofs_str_eq(ptr %type_str_val4843, ptr @str.242)
+  %cond4845 = icmp ne i32 %streq4842, 0
+  %cond4846 = icmp ne i32 %streq4844, 0
+  %logic4847 = or i1 %cond4845, %cond4846
+  br i1 %logic4847, label %if_then1698, label %if_else1699
 
 if_then1698:
   ret ptr @str.242
@@ -12225,14 +12286,14 @@ if_else1699:
   br label %if_end1700
 
 if_end1700:
-  %type_str_val4809 = load ptr, ptr %type_str.addr
-  %streq4810 = call i32 @ofs_str_eq(ptr %type_str_val4809, ptr @str.187)
-  %type_str_val4811 = load ptr, ptr %type_str.addr
-  %streq4812 = call i32 @ofs_str_eq(ptr %type_str_val4811, ptr @str.190)
-  %cond4813 = icmp ne i32 %streq4810, 0
-  %cond4814 = icmp ne i32 %streq4812, 0
-  %logic4815 = or i1 %cond4813, %cond4814
-  br i1 %logic4815, label %if_then1701, label %if_else1702
+  %type_str_val4848 = load ptr, ptr %type_str.addr
+  %streq4849 = call i32 @ofs_str_eq(ptr %type_str_val4848, ptr @str.187)
+  %type_str_val4850 = load ptr, ptr %type_str.addr
+  %streq4851 = call i32 @ofs_str_eq(ptr %type_str_val4850, ptr @str.190)
+  %cond4852 = icmp ne i32 %streq4849, 0
+  %cond4853 = icmp ne i32 %streq4851, 0
+  %logic4854 = or i1 %cond4852, %cond4853
+  br i1 %logic4854, label %if_then1701, label %if_else1702
 
 if_then1701:
   ret ptr @str.190
@@ -12241,10 +12302,10 @@ if_else1702:
   br label %if_end1703
 
 if_end1703:
-  %type_str_val4816 = load ptr, ptr %type_str.addr
-  %streq4817 = call i32 @ofs_str_eq(ptr %type_str_val4816, ptr @str.188)
-  %cond4818 = icmp ne i32 %streq4817, 0
-  br i1 %cond4818, label %if_then1704, label %if_else1705
+  %type_str_val4855 = load ptr, ptr %type_str.addr
+  %streq4856 = call i32 @ofs_str_eq(ptr %type_str_val4855, ptr @str.188)
+  %cond4857 = icmp ne i32 %streq4856, 0
+  br i1 %cond4857, label %if_then1704, label %if_else1705
 
 if_then1704:
   ret ptr @str.244
@@ -12253,10 +12314,10 @@ if_else1705:
   br label %if_end1706
 
 if_end1706:
-  %type_str_val4819 = load ptr, ptr %type_str.addr
-  %streq4820 = call i32 @ofs_str_eq(ptr %type_str_val4819, ptr @str.181)
-  %cond4821 = icmp ne i32 %streq4820, 0
-  br i1 %cond4821, label %if_then1707, label %if_else1708
+  %type_str_val4858 = load ptr, ptr %type_str.addr
+  %streq4859 = call i32 @ofs_str_eq(ptr %type_str_val4858, ptr @str.181)
+  %cond4860 = icmp ne i32 %streq4859, 0
+  br i1 %cond4860, label %if_then1707, label %if_else1708
 
 if_then1707:
   ret ptr @str.244
@@ -12265,10 +12326,10 @@ if_else1708:
   br label %if_end1709
 
 if_end1709:
-  %type_str_val4822 = load ptr, ptr %type_str.addr
-  %streq4823 = call i32 @ofs_str_eq(ptr %type_str_val4822, ptr @str.182)
-  %cond4824 = icmp ne i32 %streq4823, 0
-  br i1 %cond4824, label %if_then1710, label %if_else1711
+  %type_str_val4861 = load ptr, ptr %type_str.addr
+  %streq4862 = call i32 @ofs_str_eq(ptr %type_str_val4861, ptr @str.182)
+  %cond4863 = icmp ne i32 %streq4862, 0
+  br i1 %cond4863, label %if_then1710, label %if_else1711
 
 if_then1710:
   ret ptr @str.198
@@ -12277,10 +12338,10 @@ if_else1711:
   br label %if_end1712
 
 if_end1712:
-  %type_str_val4825 = load ptr, ptr %type_str.addr
-  %streq4826 = call i32 @ofs_str_eq(ptr %type_str_val4825, ptr @str.183)
-  %cond4827 = icmp ne i32 %streq4826, 0
-  br i1 %cond4827, label %if_then1713, label %if_else1714
+  %type_str_val4864 = load ptr, ptr %type_str.addr
+  %streq4865 = call i32 @ofs_str_eq(ptr %type_str_val4864, ptr @str.183)
+  %cond4866 = icmp ne i32 %streq4865, 0
+  br i1 %cond4866, label %if_then1713, label %if_else1714
 
 if_then1713:
   ret ptr @str.243
@@ -12289,10 +12350,10 @@ if_else1714:
   br label %if_end1715
 
 if_end1715:
-  %type_str_val4828 = load ptr, ptr %type_str.addr
-  %streq4829 = call i32 @ofs_str_eq(ptr %type_str_val4828, ptr @str.184)
-  %cond4830 = icmp ne i32 %streq4829, 0
-  br i1 %cond4830, label %if_then1716, label %if_else1717
+  %type_str_val4867 = load ptr, ptr %type_str.addr
+  %streq4868 = call i32 @ofs_str_eq(ptr %type_str_val4867, ptr @str.184)
+  %cond4869 = icmp ne i32 %streq4868, 0
+  br i1 %cond4869, label %if_then1716, label %if_else1717
 
 if_then1716:
   ret ptr @str.190
@@ -12301,10 +12362,10 @@ if_else1717:
   br label %if_end1718
 
 if_end1718:
-  %type_str_val4831 = load ptr, ptr %type_str.addr
-  %streq4832 = call i32 @ofs_str_eq(ptr %type_str_val4831, ptr @str.180)
-  %cond4833 = icmp ne i32 %streq4832, 0
-  br i1 %cond4833, label %if_then1719, label %if_else1720
+  %type_str_val4870 = load ptr, ptr %type_str.addr
+  %streq4871 = call i32 @ofs_str_eq(ptr %type_str_val4870, ptr @str.180)
+  %cond4872 = icmp ne i32 %streq4871, 0
+  br i1 %cond4872, label %if_then1719, label %if_else1720
 
 if_then1719:
   ret ptr @str.180
@@ -12313,10 +12374,10 @@ if_else1720:
   br label %if_end1721
 
 if_end1721:
-  %type_str_val4834 = load ptr, ptr %type_str.addr
-  %streq4835 = call i32 @ofs_str_eq(ptr %type_str_val4834, ptr @str.144)
-  %cond4836 = icmp ne i32 %streq4835, 0
-  br i1 %cond4836, label %if_then1722, label %if_else1723
+  %type_str_val4873 = load ptr, ptr %type_str.addr
+  %streq4874 = call i32 @ofs_str_eq(ptr %type_str_val4873, ptr @str.144)
+  %cond4875 = icmp ne i32 %streq4874, 0
+  br i1 %cond4875, label %if_then1722, label %if_else1723
 
 if_then1722:
   ret ptr @str.243
@@ -12332,52 +12393,55 @@ define ptr @llvmgen__storage_type(ptr %type_str) {
 entry:
   %type_str.addr = alloca ptr, align 8
   store ptr %type_str, ptr %type_str.addr
-  %type_str_val4837 = load ptr, ptr %type_str.addr
-  %call4838 = call i32 @llvmgen__is_named_type(ptr %type_str_val4837)
-  %cond4839 = icmp ne i32 %call4838, 0
-  br i1 %cond4839, label %if_then1725, label %if_else1726
+  %type_str_val4876 = load ptr, ptr %type_str.addr
+  %call4877 = call i32 @llvmgen__is_named_type(ptr %type_str_val4876)
+  %cond4878 = icmp ne i32 %call4877, 0
+  br i1 %cond4878, label %if_then1725, label %if_else1726
 
 if_then1725:
-  %type_str_val4840 = load ptr, ptr %type_str.addr
-  %concat4841 = call ptr @ofs_str_concat(ptr @str.109, ptr %type_str_val4840)
-  ret ptr %concat4841
+  %type_str_val4879 = load ptr, ptr %type_str.addr
+  %concat4880 = call ptr @ofs_str_concat(ptr @str.109, ptr %type_str_val4879)
+  ret ptr %concat4880
 
 if_else1726:
   br label %if_end1727
 
 if_end1727:
-  %type_str_val4842 = load ptr, ptr %type_str.addr
-  %call4843 = call ptr @llvmgen__llvm_type(ptr %type_str_val4842)
-  ret ptr %call4843
+  %type_str_val4881 = load ptr, ptr %type_str.addr
+  %call4882 = call ptr @llvmgen__llvm_type(ptr %type_str_val4881)
+  ret ptr %call4882
 }
 
 define i32 @llvmgen__is_named_type(ptr %type_str) {
 entry:
   %type_str.addr = alloca ptr, align 8
   store ptr %type_str, ptr %type_str.addr
-  %i4844 = alloca i64, align 8
-  store i64 0, ptr %i4844
+  %i4883 = alloca i64, align 8
+  store i64 0, ptr %i4883
+  %count4884 = alloca i64, align 8
+  %llvmgen___mono_names_val4885 = load ptr, ptr @llvmgen___mono_names
+  %arr_len4886 = call i64 @ofs_array_len(ptr %llvmgen___mono_names_val4885)
+  store i64 %arr_len4886, ptr %count4884
   br label %while_cond1728
 
 while_cond1728:
-  %i_val4845 = load i64, ptr %i4844
-  %llvmgen___mono_names_val4846 = load ptr, ptr @llvmgen___mono_names
-  %arr_len4847 = call i64 @ofs_array_len(ptr %llvmgen___mono_names_val4846)
-  %cmp4848 = icmp slt i64 %i_val4845, %arr_len4847
-  br i1 %cmp4848, label %while_body1729, label %while_end1730
+  %i_val4887 = load i64, ptr %i4883
+  %count_val4888 = load i64, ptr %count4884
+  %cmp4889 = icmp slt i64 %i_val4887, %count_val4888
+  br i1 %cmp4889, label %while_body1729, label %while_end1730
 
 while_body1729:
-  %name4849 = alloca ptr, align 8
-  %llvmgen___mono_names_val4850 = load ptr, ptr @llvmgen___mono_names
-  %i_val4851 = load i64, ptr %i4844
-  %arr_get4852 = call ptr @ofs_array_get(ptr %llvmgen___mono_names_val4850, i64 %i_val4851)
-  %arr_item4853 = load ptr, ptr %arr_get4852
-  store ptr %arr_item4853, ptr %name4849
-  %name_val4854 = load ptr, ptr %name4849
-  %type_str_val4855 = load ptr, ptr %type_str.addr
-  %streq4856 = call i32 @ofs_str_eq(ptr %name_val4854, ptr %type_str_val4855)
-  %cond4857 = icmp ne i32 %streq4856, 0
-  br i1 %cond4857, label %if_then1731, label %if_else1732
+  %name4890 = alloca ptr, align 8
+  %llvmgen___mono_names_val4891 = load ptr, ptr @llvmgen___mono_names
+  %i_val4892 = load i64, ptr %i4883
+  %arr_get4893 = call ptr @ofs_array_get(ptr %llvmgen___mono_names_val4891, i64 %i_val4892)
+  %arr_item4894 = load ptr, ptr %arr_get4893
+  store ptr %arr_item4894, ptr %name4890
+  %name_val4895 = load ptr, ptr %name4890
+  %type_str_val4896 = load ptr, ptr %type_str.addr
+  %streq4897 = call i32 @ofs_str_eq(ptr %name_val4895, ptr %type_str_val4896)
+  %cond4898 = icmp ne i32 %streq4897, 0
+  br i1 %cond4898, label %if_then1731, label %if_else1732
 
 if_then1731:
   ret i32 1
@@ -12386,9 +12450,9 @@ if_else1732:
   br label %if_end1733
 
 if_end1733:
-  %post_old4858 = load i64, ptr %i4844
-  %post_new4859 = add i64 %post_old4858, 1
-  store i64 %post_new4859, ptr %i4844
+  %post_old4899 = load i64, ptr %i4883
+  %post_new4900 = add i64 %post_old4899, 1
+  store i64 %post_new4900, ptr %i4883
   br label %while_cond1728
 
 while_end1730:
@@ -12401,55 +12465,58 @@ entry:
   store ptr %owner, ptr %owner.addr
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %i4860 = alloca i64, align 8
-  store i64 0, ptr %i4860
+  %i4901 = alloca i64, align 8
+  store i64 0, ptr %i4901
+  %count4902 = alloca i64, align 8
+  %llvmgen___field_names_val4903 = load ptr, ptr @llvmgen___field_names
+  %arr_len4904 = call i64 @ofs_array_len(ptr %llvmgen___field_names_val4903)
+  store i64 %arr_len4904, ptr %count4902
   br label %while_cond1734
 
 while_cond1734:
-  %i_val4861 = load i64, ptr %i4860
-  %llvmgen___field_names_val4862 = load ptr, ptr @llvmgen___field_names
-  %arr_len4863 = call i64 @ofs_array_len(ptr %llvmgen___field_names_val4862)
-  %cmp4864 = icmp slt i64 %i_val4861, %arr_len4863
-  br i1 %cmp4864, label %while_body1735, label %while_end1736
+  %i_val4905 = load i64, ptr %i4901
+  %count_val4906 = load i64, ptr %count4902
+  %cmp4907 = icmp slt i64 %i_val4905, %count_val4906
+  br i1 %cmp4907, label %while_body1735, label %while_end1736
 
 while_body1735:
-  %o4865 = alloca ptr, align 8
-  %llvmgen___field_owners_val4866 = load ptr, ptr @llvmgen___field_owners
-  %i_val4867 = load i64, ptr %i4860
-  %arr_get4868 = call ptr @ofs_array_get(ptr %llvmgen___field_owners_val4866, i64 %i_val4867)
-  %arr_item4869 = load ptr, ptr %arr_get4868
-  store ptr %arr_item4869, ptr %o4865
-  %n4870 = alloca ptr, align 8
-  %llvmgen___field_names_val4871 = load ptr, ptr @llvmgen___field_names
-  %i_val4872 = load i64, ptr %i4860
-  %arr_get4873 = call ptr @ofs_array_get(ptr %llvmgen___field_names_val4871, i64 %i_val4872)
-  %arr_item4874 = load ptr, ptr %arr_get4873
-  store ptr %arr_item4874, ptr %n4870
-  %o_val4875 = load ptr, ptr %o4865
-  %owner_val4876 = load ptr, ptr %owner.addr
-  %streq4877 = call i32 @ofs_str_eq(ptr %o_val4875, ptr %owner_val4876)
-  %n_val4878 = load ptr, ptr %n4870
-  %name_val4879 = load ptr, ptr %name.addr
-  %streq4880 = call i32 @ofs_str_eq(ptr %n_val4878, ptr %name_val4879)
-  %cond4881 = icmp ne i32 %streq4877, 0
-  %cond4882 = icmp ne i32 %streq4880, 0
-  %logic4883 = and i1 %cond4881, %cond4882
-  br i1 %logic4883, label %if_then1737, label %if_else1738
+  %o4908 = alloca ptr, align 8
+  %llvmgen___field_owners_val4909 = load ptr, ptr @llvmgen___field_owners
+  %i_val4910 = load i64, ptr %i4901
+  %arr_get4911 = call ptr @ofs_array_get(ptr %llvmgen___field_owners_val4909, i64 %i_val4910)
+  %arr_item4912 = load ptr, ptr %arr_get4911
+  store ptr %arr_item4912, ptr %o4908
+  %n4913 = alloca ptr, align 8
+  %llvmgen___field_names_val4914 = load ptr, ptr @llvmgen___field_names
+  %i_val4915 = load i64, ptr %i4901
+  %arr_get4916 = call ptr @ofs_array_get(ptr %llvmgen___field_names_val4914, i64 %i_val4915)
+  %arr_item4917 = load ptr, ptr %arr_get4916
+  store ptr %arr_item4917, ptr %n4913
+  %o_val4918 = load ptr, ptr %o4908
+  %owner_val4919 = load ptr, ptr %owner.addr
+  %streq4920 = call i32 @ofs_str_eq(ptr %o_val4918, ptr %owner_val4919)
+  %n_val4921 = load ptr, ptr %n4913
+  %name_val4922 = load ptr, ptr %name.addr
+  %streq4923 = call i32 @ofs_str_eq(ptr %n_val4921, ptr %name_val4922)
+  %cond4924 = icmp ne i32 %streq4920, 0
+  %cond4925 = icmp ne i32 %streq4923, 0
+  %logic4926 = and i1 %cond4924, %cond4925
+  br i1 %logic4926, label %if_then1737, label %if_else1738
 
 if_then1737:
-  %llvmgen___field_indices_val4884 = load ptr, ptr @llvmgen___field_indices
-  %i_val4885 = load i64, ptr %i4860
-  %arr_get4886 = call ptr @ofs_array_get(ptr %llvmgen___field_indices_val4884, i64 %i_val4885)
-  %arr_item4887 = load i64, ptr %arr_get4886
-  ret i64 %arr_item4887
+  %llvmgen___field_indices_val4927 = load ptr, ptr @llvmgen___field_indices
+  %i_val4928 = load i64, ptr %i4901
+  %arr_get4929 = call ptr @ofs_array_get(ptr %llvmgen___field_indices_val4927, i64 %i_val4928)
+  %arr_item4930 = load i64, ptr %arr_get4929
+  ret i64 %arr_item4930
 
 if_else1738:
   br label %if_end1739
 
 if_end1739:
-  %post_old4888 = load i64, ptr %i4860
-  %post_new4889 = add i64 %post_old4888, 1
-  store i64 %post_new4889, ptr %i4860
+  %post_old4931 = load i64, ptr %i4901
+  %post_new4932 = add i64 %post_old4931, 1
+  store i64 %post_new4932, ptr %i4901
   br label %while_cond1734
 
 while_end1736:
@@ -12462,55 +12529,58 @@ entry:
   store ptr %owner, ptr %owner.addr
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %i4890 = alloca i64, align 8
-  store i64 0, ptr %i4890
+  %i4933 = alloca i64, align 8
+  store i64 0, ptr %i4933
+  %count4934 = alloca i64, align 8
+  %llvmgen___field_names_val4935 = load ptr, ptr @llvmgen___field_names
+  %arr_len4936 = call i64 @ofs_array_len(ptr %llvmgen___field_names_val4935)
+  store i64 %arr_len4936, ptr %count4934
   br label %while_cond1740
 
 while_cond1740:
-  %i_val4891 = load i64, ptr %i4890
-  %llvmgen___field_names_val4892 = load ptr, ptr @llvmgen___field_names
-  %arr_len4893 = call i64 @ofs_array_len(ptr %llvmgen___field_names_val4892)
-  %cmp4894 = icmp slt i64 %i_val4891, %arr_len4893
-  br i1 %cmp4894, label %while_body1741, label %while_end1742
+  %i_val4937 = load i64, ptr %i4933
+  %count_val4938 = load i64, ptr %count4934
+  %cmp4939 = icmp slt i64 %i_val4937, %count_val4938
+  br i1 %cmp4939, label %while_body1741, label %while_end1742
 
 while_body1741:
-  %o4895 = alloca ptr, align 8
-  %llvmgen___field_owners_val4896 = load ptr, ptr @llvmgen___field_owners
-  %i_val4897 = load i64, ptr %i4890
-  %arr_get4898 = call ptr @ofs_array_get(ptr %llvmgen___field_owners_val4896, i64 %i_val4897)
-  %arr_item4899 = load ptr, ptr %arr_get4898
-  store ptr %arr_item4899, ptr %o4895
-  %n4900 = alloca ptr, align 8
-  %llvmgen___field_names_val4901 = load ptr, ptr @llvmgen___field_names
-  %i_val4902 = load i64, ptr %i4890
-  %arr_get4903 = call ptr @ofs_array_get(ptr %llvmgen___field_names_val4901, i64 %i_val4902)
-  %arr_item4904 = load ptr, ptr %arr_get4903
-  store ptr %arr_item4904, ptr %n4900
-  %o_val4905 = load ptr, ptr %o4895
-  %owner_val4906 = load ptr, ptr %owner.addr
-  %streq4907 = call i32 @ofs_str_eq(ptr %o_val4905, ptr %owner_val4906)
-  %n_val4908 = load ptr, ptr %n4900
-  %name_val4909 = load ptr, ptr %name.addr
-  %streq4910 = call i32 @ofs_str_eq(ptr %n_val4908, ptr %name_val4909)
-  %cond4911 = icmp ne i32 %streq4907, 0
-  %cond4912 = icmp ne i32 %streq4910, 0
-  %logic4913 = and i1 %cond4911, %cond4912
-  br i1 %logic4913, label %if_then1743, label %if_else1744
+  %o4940 = alloca ptr, align 8
+  %llvmgen___field_owners_val4941 = load ptr, ptr @llvmgen___field_owners
+  %i_val4942 = load i64, ptr %i4933
+  %arr_get4943 = call ptr @ofs_array_get(ptr %llvmgen___field_owners_val4941, i64 %i_val4942)
+  %arr_item4944 = load ptr, ptr %arr_get4943
+  store ptr %arr_item4944, ptr %o4940
+  %n4945 = alloca ptr, align 8
+  %llvmgen___field_names_val4946 = load ptr, ptr @llvmgen___field_names
+  %i_val4947 = load i64, ptr %i4933
+  %arr_get4948 = call ptr @ofs_array_get(ptr %llvmgen___field_names_val4946, i64 %i_val4947)
+  %arr_item4949 = load ptr, ptr %arr_get4948
+  store ptr %arr_item4949, ptr %n4945
+  %o_val4950 = load ptr, ptr %o4940
+  %owner_val4951 = load ptr, ptr %owner.addr
+  %streq4952 = call i32 @ofs_str_eq(ptr %o_val4950, ptr %owner_val4951)
+  %n_val4953 = load ptr, ptr %n4945
+  %name_val4954 = load ptr, ptr %name.addr
+  %streq4955 = call i32 @ofs_str_eq(ptr %n_val4953, ptr %name_val4954)
+  %cond4956 = icmp ne i32 %streq4952, 0
+  %cond4957 = icmp ne i32 %streq4955, 0
+  %logic4958 = and i1 %cond4956, %cond4957
+  br i1 %logic4958, label %if_then1743, label %if_else1744
 
 if_then1743:
-  %llvmgen___field_types_val4914 = load ptr, ptr @llvmgen___field_types
-  %i_val4915 = load i64, ptr %i4890
-  %arr_get4916 = call ptr @ofs_array_get(ptr %llvmgen___field_types_val4914, i64 %i_val4915)
-  %arr_item4917 = load ptr, ptr %arr_get4916
-  ret ptr %arr_item4917
+  %llvmgen___field_types_val4959 = load ptr, ptr @llvmgen___field_types
+  %i_val4960 = load i64, ptr %i4933
+  %arr_get4961 = call ptr @ofs_array_get(ptr %llvmgen___field_types_val4959, i64 %i_val4960)
+  %arr_item4962 = load ptr, ptr %arr_get4961
+  ret ptr %arr_item4962
 
 if_else1744:
   br label %if_end1745
 
 if_end1745:
-  %post_old4918 = load i64, ptr %i4890
-  %post_new4919 = add i64 %post_old4918, 1
-  store i64 %post_new4919, ptr %i4890
+  %post_old4963 = load i64, ptr %i4933
+  %post_new4964 = add i64 %post_old4963, 1
+  store i64 %post_new4964, ptr %i4933
   br label %while_cond1740
 
 while_end1742:
@@ -12521,9 +12591,9 @@ define ptr @llvmgen__type_node_name(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %id_val4920 = load i64, ptr %id.addr
-  %cmp4921 = icmp slt i64 %id_val4920, 0
-  br i1 %cmp4921, label %if_then1746, label %if_else1747
+  %id_val4965 = load i64, ptr %id.addr
+  %cmp4966 = icmp slt i64 %id_val4965, 0
+  br i1 %cmp4966, label %if_then1746, label %if_else1747
 
 if_then1746:
   ret ptr @str.180
@@ -12532,16 +12602,16 @@ if_else1747:
   br label %if_end1748
 
 if_end1748:
-  %obj4923 = call ptr @ofs_alloc(i64 4096)
-  %id_val4924 = load i64, ptr %id.addr
-  %call4925 = call ptr @node_get(i64 %id_val4924)
-  %named_val4926 = load %Node, ptr %call4925
-  store %Node %named_val4926, ptr %obj4923
-  %field_ptr4927 = getelementptr inbounds %Node, ptr %obj4923, i32 0, i32 0
-  %field4928 = load i64, ptr %field_ptr4927
-  %NK_TYPE_ARRAY_val4929 = load i64, ptr @NK_TYPE_ARRAY
-  %cmp4930 = icmp eq i64 %field4928, %NK_TYPE_ARRAY_val4929
-  br i1 %cmp4930, label %if_then1749, label %if_else1750
+  %obj4968 = call ptr @ofs_alloc(i64 4096)
+  %id_val4969 = load i64, ptr %id.addr
+  %call4970 = call ptr @node_get(i64 %id_val4969)
+  %named_val4971 = load %Node, ptr %call4970
+  store %Node %named_val4971, ptr %obj4968
+  %field_ptr4972 = getelementptr inbounds %Node, ptr %obj4968, i32 0, i32 0
+  %field4973 = load i64, ptr %field_ptr4972
+  %NK_TYPE_ARRAY_val4974 = load i64, ptr @NK_TYPE_ARRAY
+  %cmp4975 = icmp eq i64 %field4973, %NK_TYPE_ARRAY_val4974
+  br i1 %cmp4975, label %if_then1749, label %if_else1750
 
 if_then1749:
   ret ptr @str.144
@@ -12550,18 +12620,18 @@ if_else1750:
   br label %if_end1751
 
 if_end1751:
-  %field_ptr4931 = getelementptr inbounds %Node, ptr %obj4923, i32 0, i32 1
-  %field4932 = load ptr, ptr %field_ptr4931
-  ret ptr %field4932
+  %field_ptr4976 = getelementptr inbounds %Node, ptr %obj4968, i32 0, i32 1
+  %field4977 = load ptr, ptr %field_ptr4976
+  ret ptr %field4977
 }
 
 define void @llvmgen__collect_types(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %id_val4933 = load i64, ptr %id.addr
-  %cmp4934 = icmp slt i64 %id_val4933, 0
-  br i1 %cmp4934, label %if_then1752, label %if_else1753
+  %id_val4978 = load i64, ptr %id.addr
+  %cmp4979 = icmp slt i64 %id_val4978, 0
+  br i1 %cmp4979, label %if_then1752, label %if_else1753
 
 if_then1752:
   ret void
@@ -12570,73 +12640,76 @@ if_else1753:
   br label %if_end1754
 
 if_end1754:
-  %obj4936 = call ptr @ofs_alloc(i64 4096)
-  %id_val4937 = load i64, ptr %id.addr
-  %call4938 = call ptr @node_get(i64 %id_val4937)
-  %named_val4939 = load %Node, ptr %call4938
-  store %Node %named_val4939, ptr %obj4936
-  %field_ptr4940 = getelementptr inbounds %Node, ptr %obj4936, i32 0, i32 0
-  %field4941 = load i64, ptr %field_ptr4940
-  %NK_MONOLITH_val4942 = load i64, ptr @NK_MONOLITH
-  %cmp4943 = icmp eq i64 %field4941, %NK_MONOLITH_val4942
-  br i1 %cmp4943, label %if_then1755, label %if_else1756
+  %obj4981 = call ptr @ofs_alloc(i64 4096)
+  %id_val4982 = load i64, ptr %id.addr
+  %call4983 = call ptr @node_get(i64 %id_val4982)
+  %named_val4984 = load %Node, ptr %call4983
+  store %Node %named_val4984, ptr %obj4981
+  %field_ptr4985 = getelementptr inbounds %Node, ptr %obj4981, i32 0, i32 0
+  %field4986 = load i64, ptr %field_ptr4985
+  %NK_MONOLITH_val4987 = load i64, ptr @NK_MONOLITH
+  %cmp4988 = icmp eq i64 %field4986, %NK_MONOLITH_val4987
+  br i1 %cmp4988, label %if_then1755, label %if_else1756
 
 if_then1755:
-  %llvmgen___mono_names_val4944 = load ptr, ptr @llvmgen___mono_names
-  %field_ptr4945 = getelementptr inbounds %Node, ptr %obj4936, i32 0, i32 1
-  %field4946 = load ptr, ptr %field_ptr4945
-  %arr_push4947 = alloca ptr, align 8
-  store ptr %field4946, ptr %arr_push4947
-  call void @ofs_array_push(ptr %llvmgen___mono_names_val4944, ptr %arr_push4947)
-  %i4948 = alloca i64, align 8
-  store i64 0, ptr %i4948
+  %llvmgen___mono_names_val4989 = load ptr, ptr @llvmgen___mono_names
+  %field_ptr4990 = getelementptr inbounds %Node, ptr %obj4981, i32 0, i32 1
+  %field4991 = load ptr, ptr %field_ptr4990
+  %arr_push4992 = alloca ptr, align 8
+  store ptr %field4991, ptr %arr_push4992
+  call void @ofs_array_push(ptr %llvmgen___mono_names_val4989, ptr %arr_push4992)
+  %i4993 = alloca i64, align 8
+  store i64 0, ptr %i4993
+  %field_count4994 = alloca i64, align 8
+  %id_val4995 = load i64, ptr %id.addr
+  %call4996 = call i64 @node_extra_len(i64 %id_val4995)
+  store i64 %call4996, ptr %field_count4994
   br label %while_cond1758
 
 while_cond1758:
-  %i_val4949 = load i64, ptr %i4948
-  %id_val4950 = load i64, ptr %id.addr
-  %call4951 = call i64 @node_extra_len(i64 %id_val4950)
-  %cmp4952 = icmp slt i64 %i_val4949, %call4951
-  br i1 %cmp4952, label %while_body1759, label %while_end1760
+  %i_val4997 = load i64, ptr %i4993
+  %field_count_val4998 = load i64, ptr %field_count4994
+  %cmp4999 = icmp slt i64 %i_val4997, %field_count_val4998
+  br i1 %cmp4999, label %while_body1759, label %while_end1760
 
 while_body1759:
-  %field_id4953 = alloca i64, align 8
-  %id_val4954 = load i64, ptr %id.addr
-  %i_val4955 = load i64, ptr %i4948
-  %call4956 = call i64 @node_get_extra(i64 %id_val4954, i64 %i_val4955)
-  store i64 %call4956, ptr %field_id4953
-  %obj4958 = call ptr @ofs_alloc(i64 4096)
-  %field_id_val4959 = load i64, ptr %field_id4953
-  %call4960 = call ptr @node_get(i64 %field_id_val4959)
-  %named_val4961 = load %Node, ptr %call4960
-  store %Node %named_val4961, ptr %obj4958
-  %llvmgen___field_owners_val4962 = load ptr, ptr @llvmgen___field_owners
-  %field_ptr4963 = getelementptr inbounds %Node, ptr %obj4936, i32 0, i32 1
-  %field4964 = load ptr, ptr %field_ptr4963
-  %arr_push4965 = alloca ptr, align 8
-  store ptr %field4964, ptr %arr_push4965
-  call void @ofs_array_push(ptr %llvmgen___field_owners_val4962, ptr %arr_push4965)
-  %llvmgen___field_names_val4966 = load ptr, ptr @llvmgen___field_names
-  %field_ptr4967 = getelementptr inbounds %Node, ptr %obj4958, i32 0, i32 1
-  %field4968 = load ptr, ptr %field_ptr4967
-  %arr_push4969 = alloca ptr, align 8
-  store ptr %field4968, ptr %arr_push4969
-  call void @ofs_array_push(ptr %llvmgen___field_names_val4966, ptr %arr_push4969)
-  %llvmgen___field_types_val4970 = load ptr, ptr @llvmgen___field_types
-  %field_ptr4971 = getelementptr inbounds %Node, ptr %obj4958, i32 0, i32 5
-  %field4972 = load i64, ptr %field_ptr4971
-  %call4973 = call ptr @llvmgen__type_node_name(i64 %field4972)
-  %arr_push4974 = alloca ptr, align 8
-  store ptr %call4973, ptr %arr_push4974
-  call void @ofs_array_push(ptr %llvmgen___field_types_val4970, ptr %arr_push4974)
-  %llvmgen___field_indices_val4975 = load ptr, ptr @llvmgen___field_indices
-  %i_val4976 = load i64, ptr %i4948
-  %arr_push4977 = alloca i64, align 8
-  store i64 %i_val4976, ptr %arr_push4977
-  call void @ofs_array_push(ptr %llvmgen___field_indices_val4975, ptr %arr_push4977)
-  %post_old4978 = load i64, ptr %i4948
-  %post_new4979 = add i64 %post_old4978, 1
-  store i64 %post_new4979, ptr %i4948
+  %field_id5000 = alloca i64, align 8
+  %id_val5001 = load i64, ptr %id.addr
+  %i_val5002 = load i64, ptr %i4993
+  %call5003 = call i64 @node_get_extra(i64 %id_val5001, i64 %i_val5002)
+  store i64 %call5003, ptr %field_id5000
+  %obj5005 = call ptr @ofs_alloc(i64 4096)
+  %field_id_val5006 = load i64, ptr %field_id5000
+  %call5007 = call ptr @node_get(i64 %field_id_val5006)
+  %named_val5008 = load %Node, ptr %call5007
+  store %Node %named_val5008, ptr %obj5005
+  %llvmgen___field_owners_val5009 = load ptr, ptr @llvmgen___field_owners
+  %field_ptr5010 = getelementptr inbounds %Node, ptr %obj4981, i32 0, i32 1
+  %field5011 = load ptr, ptr %field_ptr5010
+  %arr_push5012 = alloca ptr, align 8
+  store ptr %field5011, ptr %arr_push5012
+  call void @ofs_array_push(ptr %llvmgen___field_owners_val5009, ptr %arr_push5012)
+  %llvmgen___field_names_val5013 = load ptr, ptr @llvmgen___field_names
+  %field_ptr5014 = getelementptr inbounds %Node, ptr %obj5005, i32 0, i32 1
+  %field5015 = load ptr, ptr %field_ptr5014
+  %arr_push5016 = alloca ptr, align 8
+  store ptr %field5015, ptr %arr_push5016
+  call void @ofs_array_push(ptr %llvmgen___field_names_val5013, ptr %arr_push5016)
+  %llvmgen___field_types_val5017 = load ptr, ptr @llvmgen___field_types
+  %field_ptr5018 = getelementptr inbounds %Node, ptr %obj5005, i32 0, i32 5
+  %field5019 = load i64, ptr %field_ptr5018
+  %call5020 = call ptr @llvmgen__type_node_name(i64 %field5019)
+  %arr_push5021 = alloca ptr, align 8
+  store ptr %call5020, ptr %arr_push5021
+  call void @ofs_array_push(ptr %llvmgen___field_types_val5017, ptr %arr_push5021)
+  %llvmgen___field_indices_val5022 = load ptr, ptr @llvmgen___field_indices
+  %i_val5023 = load i64, ptr %i4993
+  %arr_push5024 = alloca i64, align 8
+  store i64 %i_val5023, ptr %arr_push5024
+  call void @ofs_array_push(ptr %llvmgen___field_indices_val5022, ptr %arr_push5024)
+  %post_old5025 = load i64, ptr %i4993
+  %post_new5026 = add i64 %post_old5025, 1
+  store i64 %post_new5026, ptr %i4993
   br label %while_cond1758
 
 while_end1760:
@@ -12646,25 +12719,28 @@ if_else1756:
   br label %if_end1757
 
 if_end1757:
-  %j4980 = alloca i64, align 8
-  store i64 0, ptr %j4980
+  %j5027 = alloca i64, align 8
+  store i64 0, ptr %j5027
+  %extra_count5028 = alloca i64, align 8
+  %id_val5029 = load i64, ptr %id.addr
+  %call5030 = call i64 @node_extra_len(i64 %id_val5029)
+  store i64 %call5030, ptr %extra_count5028
   br label %while_cond1761
 
 while_cond1761:
-  %j_val4981 = load i64, ptr %j4980
-  %id_val4982 = load i64, ptr %id.addr
-  %call4983 = call i64 @node_extra_len(i64 %id_val4982)
-  %cmp4984 = icmp slt i64 %j_val4981, %call4983
-  br i1 %cmp4984, label %while_body1762, label %while_end1763
+  %j_val5031 = load i64, ptr %j5027
+  %extra_count_val5032 = load i64, ptr %extra_count5028
+  %cmp5033 = icmp slt i64 %j_val5031, %extra_count_val5032
+  br i1 %cmp5033, label %while_body1762, label %while_end1763
 
 while_body1762:
-  %id_val4985 = load i64, ptr %id.addr
-  %j_val4986 = load i64, ptr %j4980
-  %call4987 = call i64 @node_get_extra(i64 %id_val4985, i64 %j_val4986)
-  call void @llvmgen__collect_types(i64 %call4987)
-  %post_old4988 = load i64, ptr %j4980
-  %post_new4989 = add i64 %post_old4988, 1
-  store i64 %post_new4989, ptr %j4980
+  %id_val5034 = load i64, ptr %id.addr
+  %j_val5035 = load i64, ptr %j5027
+  %call5036 = call i64 @node_get_extra(i64 %id_val5034, i64 %j_val5035)
+  call void @llvmgen__collect_types(i64 %call5036)
+  %post_old5037 = load i64, ptr %j5027
+  %post_new5038 = add i64 %post_old5037, 1
+  store i64 %post_new5038, ptr %j5027
   br label %while_cond1761
 
 while_end1763:
@@ -12675,91 +12751,94 @@ define void @llvmgen__collect_globals(i64 %root_id) {
 entry:
   %root_id.addr = alloca i64, align 8
   store i64 %root_id, ptr %root_id.addr
-  %i4990 = alloca i64, align 8
-  store i64 0, ptr %i4990
+  %i5039 = alloca i64, align 8
+  store i64 0, ptr %i5039
+  %declaration_count5040 = alloca i64, align 8
+  %root_id_val5041 = load i64, ptr %root_id.addr
+  %call5042 = call i64 @node_extra_len(i64 %root_id_val5041)
+  store i64 %call5042, ptr %declaration_count5040
   br label %while_cond1764
 
 while_cond1764:
-  %i_val4991 = load i64, ptr %i4990
-  %root_id_val4992 = load i64, ptr %root_id.addr
-  %call4993 = call i64 @node_extra_len(i64 %root_id_val4992)
-  %cmp4994 = icmp slt i64 %i_val4991, %call4993
-  br i1 %cmp4994, label %while_body1765, label %while_end1766
+  %i_val5043 = load i64, ptr %i5039
+  %declaration_count_val5044 = load i64, ptr %declaration_count5040
+  %cmp5045 = icmp slt i64 %i_val5043, %declaration_count_val5044
+  br i1 %cmp5045, label %while_body1765, label %while_end1766
 
 while_body1765:
-  %id4995 = alloca i64, align 8
-  %root_id_val4996 = load i64, ptr %root_id.addr
-  %i_val4997 = load i64, ptr %i4990
-  %call4998 = call i64 @node_get_extra(i64 %root_id_val4996, i64 %i_val4997)
-  store i64 %call4998, ptr %id4995
-  %obj5000 = call ptr @ofs_alloc(i64 4096)
-  %id_val5001 = load i64, ptr %id4995
-  %call5002 = call ptr @node_get(i64 %id_val5001)
-  %named_val5003 = load %Node, ptr %call5002
-  store %Node %named_val5003, ptr %obj5000
-  %field_ptr5004 = getelementptr inbounds %Node, ptr %obj5000, i32 0, i32 0
-  %field5005 = load i64, ptr %field_ptr5004
-  %NK_VAR_DECL_val5006 = load i64, ptr @NK_VAR_DECL
-  %cmp5007 = icmp eq i64 %field5005, %NK_VAR_DECL_val5006
-  %field_ptr5008 = getelementptr inbounds %Node, ptr %obj5000, i32 0, i32 0
-  %field5009 = load i64, ptr %field_ptr5008
-  %NK_CONST_DECL_val5010 = load i64, ptr @NK_CONST_DECL
-  %cmp5011 = icmp eq i64 %field5009, %NK_CONST_DECL_val5010
-  %logic5012 = or i1 %cmp5007, %cmp5011
-  br i1 %logic5012, label %if_then1767, label %if_else1768
+  %id5046 = alloca i64, align 8
+  %root_id_val5047 = load i64, ptr %root_id.addr
+  %i_val5048 = load i64, ptr %i5039
+  %call5049 = call i64 @node_get_extra(i64 %root_id_val5047, i64 %i_val5048)
+  store i64 %call5049, ptr %id5046
+  %obj5051 = call ptr @ofs_alloc(i64 4096)
+  %id_val5052 = load i64, ptr %id5046
+  %call5053 = call ptr @node_get(i64 %id_val5052)
+  %named_val5054 = load %Node, ptr %call5053
+  store %Node %named_val5054, ptr %obj5051
+  %field_ptr5055 = getelementptr inbounds %Node, ptr %obj5051, i32 0, i32 0
+  %field5056 = load i64, ptr %field_ptr5055
+  %NK_VAR_DECL_val5057 = load i64, ptr @NK_VAR_DECL
+  %cmp5058 = icmp eq i64 %field5056, %NK_VAR_DECL_val5057
+  %field_ptr5059 = getelementptr inbounds %Node, ptr %obj5051, i32 0, i32 0
+  %field5060 = load i64, ptr %field_ptr5059
+  %NK_CONST_DECL_val5061 = load i64, ptr @NK_CONST_DECL
+  %cmp5062 = icmp eq i64 %field5060, %NK_CONST_DECL_val5061
+  %logic5063 = or i1 %cmp5058, %cmp5062
+  br i1 %logic5063, label %if_then1767, label %if_else1768
 
 if_then1767:
-  %t5013 = alloca ptr, align 8
-  %field_ptr5014 = getelementptr inbounds %Node, ptr %obj5000, i32 0, i32 2
-  %field5015 = load ptr, ptr %field_ptr5014
-  store ptr %field5015, ptr %t5013
-  %t_val5016 = load ptr, ptr %t5013
-  %streq5017 = call i32 @ofs_str_eq(ptr %t_val5016, ptr @str.63)
-  %cond5018 = icmp ne i32 %streq5017, 0
-  br i1 %cond5018, label %if_then1770, label %if_else1771
+  %t5064 = alloca ptr, align 8
+  %field_ptr5065 = getelementptr inbounds %Node, ptr %obj5051, i32 0, i32 2
+  %field5066 = load ptr, ptr %field_ptr5065
+  store ptr %field5066, ptr %t5064
+  %t_val5067 = load ptr, ptr %t5064
+  %streq5068 = call i32 @ofs_str_eq(ptr %t_val5067, ptr @str.63)
+  %cond5069 = icmp ne i32 %streq5068, 0
+  br i1 %cond5069, label %if_then1770, label %if_else1771
 
 if_then1770:
-  store ptr @str.181, ptr %t5013
+  store ptr @str.181, ptr %t5064
   br label %if_end1772
 
 if_else1771:
   br label %if_end1772
 
 if_end1772:
-  %llvmgen___global_names_val5019 = load ptr, ptr @llvmgen___global_names
-  %field_ptr5020 = getelementptr inbounds %Node, ptr %obj5000, i32 0, i32 1
-  %field5021 = load ptr, ptr %field_ptr5020
-  %arr_push5022 = alloca ptr, align 8
-  store ptr %field5021, ptr %arr_push5022
-  call void @ofs_array_push(ptr %llvmgen___global_names_val5019, ptr %arr_push5022)
-  %llvmgen___global_types_val5023 = load ptr, ptr @llvmgen___global_types
-  %t_val5024 = load ptr, ptr %t5013
-  %arr_push5025 = alloca ptr, align 8
-  store ptr %t_val5024, ptr %arr_push5025
-  call void @ofs_array_push(ptr %llvmgen___global_types_val5023, ptr %arr_push5025)
-  %llvmgen___global_inits_val5026 = load ptr, ptr @llvmgen___global_inits
-  %field_ptr5027 = getelementptr inbounds %Node, ptr %obj5000, i32 0, i32 6
-  %field5028 = load i64, ptr %field_ptr5027
-  %arr_push5029 = alloca i64, align 8
-  store i64 %field5028, ptr %arr_push5029
-  call void @ofs_array_push(ptr %llvmgen___global_inits_val5026, ptr %arr_push5029)
+  %llvmgen___global_names_val5070 = load ptr, ptr @llvmgen___global_names
+  %field_ptr5071 = getelementptr inbounds %Node, ptr %obj5051, i32 0, i32 1
+  %field5072 = load ptr, ptr %field_ptr5071
+  %arr_push5073 = alloca ptr, align 8
+  store ptr %field5072, ptr %arr_push5073
+  call void @ofs_array_push(ptr %llvmgen___global_names_val5070, ptr %arr_push5073)
+  %llvmgen___global_types_val5074 = load ptr, ptr @llvmgen___global_types
+  %t_val5075 = load ptr, ptr %t5064
+  %arr_push5076 = alloca ptr, align 8
+  store ptr %t_val5075, ptr %arr_push5076
+  call void @ofs_array_push(ptr %llvmgen___global_types_val5074, ptr %arr_push5076)
+  %llvmgen___global_inits_val5077 = load ptr, ptr @llvmgen___global_inits
+  %field_ptr5078 = getelementptr inbounds %Node, ptr %obj5051, i32 0, i32 6
+  %field5079 = load i64, ptr %field_ptr5078
+  %arr_push5080 = alloca i64, align 8
+  store i64 %field5079, ptr %arr_push5080
+  call void @ofs_array_push(ptr %llvmgen___global_inits_val5077, ptr %arr_push5080)
   br label %if_end1769
 
 if_else1768:
-  %field_ptr5030 = getelementptr inbounds %Node, ptr %obj5000, i32 0, i32 0
-  %field5031 = load i64, ptr %field_ptr5030
-  %NK_NAMESPACE_val5032 = load i64, ptr @NK_NAMESPACE
-  %cmp5033 = icmp eq i64 %field5031, %NK_NAMESPACE_val5032
-  %field_ptr5034 = getelementptr inbounds %Node, ptr %obj5000, i32 0, i32 0
-  %field5035 = load i64, ptr %field_ptr5034
-  %NK_IMPL_val5036 = load i64, ptr @NK_IMPL
-  %cmp5037 = icmp eq i64 %field5035, %NK_IMPL_val5036
-  %logic5038 = or i1 %cmp5033, %cmp5037
-  br i1 %logic5038, label %if_then1773, label %if_else1774
+  %field_ptr5081 = getelementptr inbounds %Node, ptr %obj5051, i32 0, i32 0
+  %field5082 = load i64, ptr %field_ptr5081
+  %NK_NAMESPACE_val5083 = load i64, ptr @NK_NAMESPACE
+  %cmp5084 = icmp eq i64 %field5082, %NK_NAMESPACE_val5083
+  %field_ptr5085 = getelementptr inbounds %Node, ptr %obj5051, i32 0, i32 0
+  %field5086 = load i64, ptr %field_ptr5085
+  %NK_IMPL_val5087 = load i64, ptr @NK_IMPL
+  %cmp5088 = icmp eq i64 %field5086, %NK_IMPL_val5087
+  %logic5089 = or i1 %cmp5084, %cmp5088
+  br i1 %logic5089, label %if_then1773, label %if_else1774
 
 if_then1773:
-  %id_val5039 = load i64, ptr %id4995
-  call void @llvmgen__collect_globals(i64 %id_val5039)
+  %id_val5090 = load i64, ptr %id5046
+  call void @llvmgen__collect_globals(i64 %id_val5090)
   br label %if_end1775
 
 if_else1774:
@@ -12769,9 +12848,9 @@ if_end1775:
   br label %if_end1769
 
 if_end1769:
-  %post_old5040 = load i64, ptr %i4990
-  %post_new5041 = add i64 %post_old5040, 1
-  store i64 %post_new5041, ptr %i4990
+  %post_old5091 = load i64, ptr %i5039
+  %post_new5092 = add i64 %post_old5091, 1
+  store i64 %post_new5092, ptr %i5039
   br label %while_cond1764
 
 while_end1766:
@@ -12782,28 +12861,31 @@ define i32 @llvmgen__seen_node(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %i5042 = alloca i64, align 8
-  store i64 0, ptr %i5042
+  %i5093 = alloca i64, align 8
+  store i64 0, ptr %i5093
+  %count5094 = alloca i64, align 8
+  %llvmgen___visited_nodes_val5095 = load ptr, ptr @llvmgen___visited_nodes
+  %arr_len5096 = call i64 @ofs_array_len(ptr %llvmgen___visited_nodes_val5095)
+  store i64 %arr_len5096, ptr %count5094
   br label %while_cond1776
 
 while_cond1776:
-  %i_val5043 = load i64, ptr %i5042
-  %llvmgen___visited_nodes_val5044 = load ptr, ptr @llvmgen___visited_nodes
-  %arr_len5045 = call i64 @ofs_array_len(ptr %llvmgen___visited_nodes_val5044)
-  %cmp5046 = icmp slt i64 %i_val5043, %arr_len5045
-  br i1 %cmp5046, label %while_body1777, label %while_end1778
+  %i_val5097 = load i64, ptr %i5093
+  %count_val5098 = load i64, ptr %count5094
+  %cmp5099 = icmp slt i64 %i_val5097, %count_val5098
+  br i1 %cmp5099, label %while_body1777, label %while_end1778
 
 while_body1777:
-  %v5047 = alloca i64, align 8
-  %llvmgen___visited_nodes_val5048 = load ptr, ptr @llvmgen___visited_nodes
-  %i_val5049 = load i64, ptr %i5042
-  %arr_get5050 = call ptr @ofs_array_get(ptr %llvmgen___visited_nodes_val5048, i64 %i_val5049)
-  %arr_item5051 = load i64, ptr %arr_get5050
-  store i64 %arr_item5051, ptr %v5047
-  %v_val5052 = load i64, ptr %v5047
-  %id_val5053 = load i64, ptr %id.addr
-  %cmp5054 = icmp eq i64 %v_val5052, %id_val5053
-  br i1 %cmp5054, label %if_then1779, label %if_else1780
+  %v5100 = alloca i64, align 8
+  %llvmgen___visited_nodes_val5101 = load ptr, ptr @llvmgen___visited_nodes
+  %i_val5102 = load i64, ptr %i5093
+  %arr_get5103 = call ptr @ofs_array_get(ptr %llvmgen___visited_nodes_val5101, i64 %i_val5102)
+  %arr_item5104 = load i64, ptr %arr_get5103
+  store i64 %arr_item5104, ptr %v5100
+  %v_val5105 = load i64, ptr %v5100
+  %id_val5106 = load i64, ptr %id.addr
+  %cmp5107 = icmp eq i64 %v_val5105, %id_val5106
+  br i1 %cmp5107, label %if_then1779, label %if_else1780
 
 if_then1779:
   ret i32 1
@@ -12812,9 +12894,9 @@ if_else1780:
   br label %if_end1781
 
 if_end1781:
-  %post_old5055 = load i64, ptr %i5042
-  %post_new5056 = add i64 %post_old5055, 1
-  store i64 %post_new5056, ptr %i5042
+  %post_old5108 = load i64, ptr %i5093
+  %post_new5109 = add i64 %post_old5108, 1
+  store i64 %post_new5109, ptr %i5093
   br label %while_cond1776
 
 while_end1778:
@@ -12825,11 +12907,11 @@ define void @llvmgen__mark_node(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %llvmgen___visited_nodes_val5057 = load ptr, ptr @llvmgen___visited_nodes
-  %id_val5058 = load i64, ptr %id.addr
-  %arr_push5059 = alloca i64, align 8
-  store i64 %id_val5058, ptr %arr_push5059
-  call void @ofs_array_push(ptr %llvmgen___visited_nodes_val5057, ptr %arr_push5059)
+  %llvmgen___visited_nodes_val5110 = load ptr, ptr @llvmgen___visited_nodes
+  %id_val5111 = load i64, ptr %id.addr
+  %arr_push5112 = alloca i64, align 8
+  store i64 %id_val5111, ptr %arr_push5112
+  call void @ofs_array_push(ptr %llvmgen___visited_nodes_val5110, ptr %arr_push5112)
   ret void
 }
 
@@ -12839,23 +12921,23 @@ entry:
   store i64 %id, ptr %id.addr
   %type_str.addr = alloca ptr, align 8
   store ptr %type_str, ptr %type_str.addr
-  %id_val5060 = load i64, ptr %id.addr
-  %cmp5061 = icmp slt i64 %id_val5060, 0
-  br i1 %cmp5061, label %if_then1782, label %if_else1783
+  %id_val5113 = load i64, ptr %id.addr
+  %cmp5114 = icmp slt i64 %id_val5113, 0
+  br i1 %cmp5114, label %if_then1782, label %if_else1783
 
 if_then1782:
-  %type_str_val5062 = load ptr, ptr %type_str.addr
-  %streq5063 = call i32 @ofs_str_eq(ptr %type_str_val5062, ptr @str.183)
-  %type_str_val5064 = load ptr, ptr %type_str.addr
-  %streq5065 = call i32 @ofs_str_eq(ptr %type_str_val5064, ptr @str.144)
-  %cond5066 = icmp ne i32 %streq5063, 0
-  %cond5067 = icmp ne i32 %streq5065, 0
-  %logic5068 = or i1 %cond5066, %cond5067
-  %type_str_val5069 = load ptr, ptr %type_str.addr
-  %call5070 = call i32 @llvmgen__is_named_type(ptr %type_str_val5069)
-  %cond5071 = icmp ne i32 %call5070, 0
-  %logic5072 = or i1 %logic5068, %cond5071
-  br i1 %logic5072, label %if_then1785, label %if_else1786
+  %type_str_val5115 = load ptr, ptr %type_str.addr
+  %streq5116 = call i32 @ofs_str_eq(ptr %type_str_val5115, ptr @str.183)
+  %type_str_val5117 = load ptr, ptr %type_str.addr
+  %streq5118 = call i32 @ofs_str_eq(ptr %type_str_val5117, ptr @str.144)
+  %cond5119 = icmp ne i32 %streq5116, 0
+  %cond5120 = icmp ne i32 %streq5118, 0
+  %logic5121 = or i1 %cond5119, %cond5120
+  %type_str_val5122 = load ptr, ptr %type_str.addr
+  %call5123 = call i32 @llvmgen__is_named_type(ptr %type_str_val5122)
+  %cond5124 = icmp ne i32 %call5123, 0
+  %logic5125 = or i1 %logic5121, %cond5124
+  br i1 %logic5125, label %if_then1785, label %if_else1786
 
 if_then1785:
   ret ptr @str.40
@@ -12864,10 +12946,10 @@ if_else1786:
   br label %if_end1787
 
 if_end1787:
-  %type_str_val5073 = load ptr, ptr %type_str.addr
-  %streq5074 = call i32 @ofs_str_eq(ptr %type_str_val5073, ptr @str.182)
-  %cond5075 = icmp ne i32 %streq5074, 0
-  br i1 %cond5075, label %if_then1788, label %if_else1789
+  %type_str_val5126 = load ptr, ptr %type_str.addr
+  %streq5127 = call i32 @ofs_str_eq(ptr %type_str_val5126, ptr @str.182)
+  %cond5128 = icmp ne i32 %streq5127, 0
+  br i1 %cond5128, label %if_then1788, label %if_else1789
 
 if_then1788:
   ret ptr @str.245
@@ -12882,53 +12964,53 @@ if_else1783:
   br label %if_end1784
 
 if_end1784:
-  %obj5077 = call ptr @ofs_alloc(i64 4096)
-  %id_val5078 = load i64, ptr %id.addr
-  %call5079 = call ptr @node_get(i64 %id_val5078)
-  %named_val5080 = load %Node, ptr %call5079
-  store %Node %named_val5080, ptr %obj5077
-  %field_ptr5081 = getelementptr inbounds %Node, ptr %obj5077, i32 0, i32 0
-  %field5082 = load i64, ptr %field_ptr5081
-  %NK_LIT_INT_val5083 = load i64, ptr @NK_LIT_INT
-  %cmp5084 = icmp eq i64 %field5082, %NK_LIT_INT_val5083
-  br i1 %cmp5084, label %if_then1791, label %if_else1792
+  %obj5130 = call ptr @ofs_alloc(i64 4096)
+  %id_val5131 = load i64, ptr %id.addr
+  %call5132 = call ptr @node_get(i64 %id_val5131)
+  %named_val5133 = load %Node, ptr %call5132
+  store %Node %named_val5133, ptr %obj5130
+  %field_ptr5134 = getelementptr inbounds %Node, ptr %obj5130, i32 0, i32 0
+  %field5135 = load i64, ptr %field_ptr5134
+  %NK_LIT_INT_val5136 = load i64, ptr @NK_LIT_INT
+  %cmp5137 = icmp eq i64 %field5135, %NK_LIT_INT_val5136
+  br i1 %cmp5137, label %if_then1791, label %if_else1792
 
 if_then1791:
-  %field_ptr5085 = getelementptr inbounds %Node, ptr %obj5077, i32 0, i32 1
-  %field5086 = load ptr, ptr %field_ptr5085
-  ret ptr %field5086
+  %field_ptr5138 = getelementptr inbounds %Node, ptr %obj5130, i32 0, i32 1
+  %field5139 = load ptr, ptr %field_ptr5138
+  ret ptr %field5139
 
 if_else1792:
   br label %if_end1793
 
 if_end1793:
-  %field_ptr5087 = getelementptr inbounds %Node, ptr %obj5077, i32 0, i32 0
-  %field5088 = load i64, ptr %field_ptr5087
-  %NK_LIT_FLOAT_val5089 = load i64, ptr @NK_LIT_FLOAT
-  %cmp5090 = icmp eq i64 %field5088, %NK_LIT_FLOAT_val5089
-  br i1 %cmp5090, label %if_then1794, label %if_else1795
+  %field_ptr5140 = getelementptr inbounds %Node, ptr %obj5130, i32 0, i32 0
+  %field5141 = load i64, ptr %field_ptr5140
+  %NK_LIT_FLOAT_val5142 = load i64, ptr @NK_LIT_FLOAT
+  %cmp5143 = icmp eq i64 %field5141, %NK_LIT_FLOAT_val5142
+  br i1 %cmp5143, label %if_then1794, label %if_else1795
 
 if_then1794:
-  %field_ptr5091 = getelementptr inbounds %Node, ptr %obj5077, i32 0, i32 1
-  %field5092 = load ptr, ptr %field_ptr5091
-  ret ptr %field5092
+  %field_ptr5144 = getelementptr inbounds %Node, ptr %obj5130, i32 0, i32 1
+  %field5145 = load ptr, ptr %field_ptr5144
+  ret ptr %field5145
 
 if_else1795:
   br label %if_end1796
 
 if_end1796:
-  %field_ptr5093 = getelementptr inbounds %Node, ptr %obj5077, i32 0, i32 0
-  %field5094 = load i64, ptr %field_ptr5093
-  %NK_LIT_BOOL_val5095 = load i64, ptr @NK_LIT_BOOL
-  %cmp5096 = icmp eq i64 %field5094, %NK_LIT_BOOL_val5095
-  br i1 %cmp5096, label %if_then1797, label %if_else1798
+  %field_ptr5146 = getelementptr inbounds %Node, ptr %obj5130, i32 0, i32 0
+  %field5147 = load i64, ptr %field_ptr5146
+  %NK_LIT_BOOL_val5148 = load i64, ptr @NK_LIT_BOOL
+  %cmp5149 = icmp eq i64 %field5147, %NK_LIT_BOOL_val5148
+  br i1 %cmp5149, label %if_then1797, label %if_else1798
 
 if_then1797:
-  %field_ptr5097 = getelementptr inbounds %Node, ptr %obj5077, i32 0, i32 1
-  %field5098 = load ptr, ptr %field_ptr5097
-  %streq5099 = call i32 @ofs_str_eq(ptr %field5098, ptr @str.38)
-  %cond5100 = icmp ne i32 %streq5099, 0
-  br i1 %cond5100, label %if_then1800, label %if_else1801
+  %field_ptr5150 = getelementptr inbounds %Node, ptr %obj5130, i32 0, i32 1
+  %field5151 = load ptr, ptr %field_ptr5150
+  %streq5152 = call i32 @ofs_str_eq(ptr %field5151, ptr @str.38)
+  %cond5153 = icmp ne i32 %streq5152, 0
+  br i1 %cond5153, label %if_then1800, label %if_else1801
 
 if_then1800:
   ret ptr @str.219
@@ -12943,34 +13025,34 @@ if_else1798:
   br label %if_end1799
 
 if_end1799:
-  %field_ptr5101 = getelementptr inbounds %Node, ptr %obj5077, i32 0, i32 0
-  %field5102 = load i64, ptr %field_ptr5101
-  %NK_LIT_STRING_val5103 = load i64, ptr @NK_LIT_STRING
-  %cmp5104 = icmp eq i64 %field5102, %NK_LIT_STRING_val5103
-  br i1 %cmp5104, label %if_then1803, label %if_else1804
+  %field_ptr5154 = getelementptr inbounds %Node, ptr %obj5130, i32 0, i32 0
+  %field5155 = load i64, ptr %field_ptr5154
+  %NK_LIT_STRING_val5156 = load i64, ptr @NK_LIT_STRING
+  %cmp5157 = icmp eq i64 %field5155, %NK_LIT_STRING_val5156
+  br i1 %cmp5157, label %if_then1803, label %if_else1804
 
 if_then1803:
-  %field_ptr5105 = getelementptr inbounds %Node, ptr %obj5077, i32 0, i32 1
-  %field5106 = load ptr, ptr %field_ptr5105
-  %call5107 = call ptr @llvmgen__string_name_for(ptr %field5106)
-  ret ptr %call5107
+  %field_ptr5158 = getelementptr inbounds %Node, ptr %obj5130, i32 0, i32 1
+  %field5159 = load ptr, ptr %field_ptr5158
+  %call5160 = call ptr @llvmgen__string_name_for(ptr %field5159)
+  ret ptr %call5160
 
 if_else1804:
   br label %if_end1805
 
 if_end1805:
-  %type_str_val5108 = load ptr, ptr %type_str.addr
-  %streq5109 = call i32 @ofs_str_eq(ptr %type_str_val5108, ptr @str.183)
-  %type_str_val5110 = load ptr, ptr %type_str.addr
-  %streq5111 = call i32 @ofs_str_eq(ptr %type_str_val5110, ptr @str.144)
-  %cond5112 = icmp ne i32 %streq5109, 0
-  %cond5113 = icmp ne i32 %streq5111, 0
-  %logic5114 = or i1 %cond5112, %cond5113
-  %type_str_val5115 = load ptr, ptr %type_str.addr
-  %call5116 = call i32 @llvmgen__is_named_type(ptr %type_str_val5115)
-  %cond5117 = icmp ne i32 %call5116, 0
-  %logic5118 = or i1 %logic5114, %cond5117
-  br i1 %logic5118, label %if_then1806, label %if_else1807
+  %type_str_val5161 = load ptr, ptr %type_str.addr
+  %streq5162 = call i32 @ofs_str_eq(ptr %type_str_val5161, ptr @str.183)
+  %type_str_val5163 = load ptr, ptr %type_str.addr
+  %streq5164 = call i32 @ofs_str_eq(ptr %type_str_val5163, ptr @str.144)
+  %cond5165 = icmp ne i32 %streq5162, 0
+  %cond5166 = icmp ne i32 %streq5164, 0
+  %logic5167 = or i1 %cond5165, %cond5166
+  %type_str_val5168 = load ptr, ptr %type_str.addr
+  %call5169 = call i32 @llvmgen__is_named_type(ptr %type_str_val5168)
+  %cond5170 = icmp ne i32 %call5169, 0
+  %logic5171 = or i1 %logic5167, %cond5170
+  br i1 %logic5171, label %if_then1806, label %if_else1807
 
 if_then1806:
   ret ptr @str.40
@@ -12984,37 +13066,37 @@ if_end1808:
 
 define void @llvmgen__push_scope() {
 entry:
-  %post_old5119 = load i64, ptr @llvmgen___scope_depth
-  %post_new5120 = add i64 %post_old5119, 1
-  store i64 %post_new5120, ptr @llvmgen___scope_depth
+  %post_old5172 = load i64, ptr @llvmgen___scope_depth
+  %post_new5173 = add i64 %post_old5172, 1
+  store i64 %post_new5173, ptr @llvmgen___scope_depth
   ret void
 }
 
 define void @llvmgen__pop_scope() {
 entry:
-  %len5121 = alloca i64, align 8
-  %llvmgen___var_names_val5122 = load ptr, ptr @llvmgen___var_names
-  %arr_len5123 = call i64 @ofs_array_len(ptr %llvmgen___var_names_val5122)
-  store i64 %arr_len5123, ptr %len5121
+  %len5174 = alloca i64, align 8
+  %llvmgen___var_names_val5175 = load ptr, ptr @llvmgen___var_names
+  %arr_len5176 = call i64 @ofs_array_len(ptr %llvmgen___var_names_val5175)
+  store i64 %arr_len5176, ptr %len5174
   br label %while_cond1809
 
 while_cond1809:
-  %len_val5124 = load i64, ptr %len5121
-  %cmp5125 = icmp sgt i64 %len_val5124, 0
-  br i1 %cmp5125, label %while_body1810, label %while_end1811
+  %len_val5177 = load i64, ptr %len5174
+  %cmp5178 = icmp sgt i64 %len_val5177, 0
+  br i1 %cmp5178, label %while_body1810, label %while_end1811
 
 while_body1810:
-  %depth5126 = alloca i64, align 8
-  %llvmgen___var_depths_val5127 = load ptr, ptr @llvmgen___var_depths
-  %len_val5128 = load i64, ptr %len5121
-  %op5129 = sub i64 %len_val5128, 1
-  %arr_get5130 = call ptr @ofs_array_get(ptr %llvmgen___var_depths_val5127, i64 %op5129)
-  %arr_item5131 = load i64, ptr %arr_get5130
-  store i64 %arr_item5131, ptr %depth5126
-  %depth_val5132 = load i64, ptr %depth5126
-  %llvmgen___scope_depth_val5133 = load i64, ptr @llvmgen___scope_depth
-  %cmp5134 = icmp slt i64 %depth_val5132, %llvmgen___scope_depth_val5133
-  br i1 %cmp5134, label %if_then1812, label %if_else1813
+  %depth5179 = alloca i64, align 8
+  %llvmgen___var_depths_val5180 = load ptr, ptr @llvmgen___var_depths
+  %len_val5181 = load i64, ptr %len5174
+  %op5182 = sub i64 %len_val5181, 1
+  %arr_get5183 = call ptr @ofs_array_get(ptr %llvmgen___var_depths_val5180, i64 %op5182)
+  %arr_item5184 = load i64, ptr %arr_get5183
+  store i64 %arr_item5184, ptr %depth5179
+  %depth_val5185 = load i64, ptr %depth5179
+  %llvmgen___scope_depth_val5186 = load i64, ptr @llvmgen___scope_depth
+  %cmp5187 = icmp slt i64 %depth_val5185, %llvmgen___scope_depth_val5186
+  br i1 %cmp5187, label %if_then1812, label %if_else1813
 
 if_then1812:
   br label %while_end1811
@@ -13023,28 +13105,28 @@ if_else1813:
   br label %if_end1814
 
 if_end1814:
-  %llvmgen___var_names_val5135 = load ptr, ptr @llvmgen___var_names
-  %arr_pop5136 = call ptr @ofs_array_pop(ptr %llvmgen___var_names_val5135)
-  %llvmgen___var_types_val5137 = load ptr, ptr @llvmgen___var_types
-  %arr_pop5138 = call ptr @ofs_array_pop(ptr %llvmgen___var_types_val5137)
-  %llvmgen___var_ptrs_val5139 = load ptr, ptr @llvmgen___var_ptrs
-  %arr_pop5140 = call ptr @ofs_array_pop(ptr %llvmgen___var_ptrs_val5139)
-  %llvmgen___var_depths_val5141 = load ptr, ptr @llvmgen___var_depths
-  %arr_pop5142 = call ptr @ofs_array_pop(ptr %llvmgen___var_depths_val5141)
-  %llvmgen___var_names_val5143 = load ptr, ptr @llvmgen___var_names
-  %arr_len5144 = call i64 @ofs_array_len(ptr %llvmgen___var_names_val5143)
-  store i64 %arr_len5144, ptr %len5121
+  %llvmgen___var_names_val5188 = load ptr, ptr @llvmgen___var_names
+  %arr_pop5189 = call ptr @ofs_array_pop(ptr %llvmgen___var_names_val5188)
+  %llvmgen___var_types_val5190 = load ptr, ptr @llvmgen___var_types
+  %arr_pop5191 = call ptr @ofs_array_pop(ptr %llvmgen___var_types_val5190)
+  %llvmgen___var_ptrs_val5192 = load ptr, ptr @llvmgen___var_ptrs
+  %arr_pop5193 = call ptr @ofs_array_pop(ptr %llvmgen___var_ptrs_val5192)
+  %llvmgen___var_depths_val5194 = load ptr, ptr @llvmgen___var_depths
+  %arr_pop5195 = call ptr @ofs_array_pop(ptr %llvmgen___var_depths_val5194)
+  %llvmgen___var_names_val5196 = load ptr, ptr @llvmgen___var_names
+  %arr_len5197 = call i64 @ofs_array_len(ptr %llvmgen___var_names_val5196)
+  store i64 %arr_len5197, ptr %len5174
   br label %while_cond1809
 
 while_end1811:
-  %llvmgen___scope_depth_val5145 = load i64, ptr @llvmgen___scope_depth
-  %cmp5146 = icmp sgt i64 %llvmgen___scope_depth_val5145, 0
-  br i1 %cmp5146, label %if_then1815, label %if_else1816
+  %llvmgen___scope_depth_val5198 = load i64, ptr @llvmgen___scope_depth
+  %cmp5199 = icmp sgt i64 %llvmgen___scope_depth_val5198, 0
+  br i1 %cmp5199, label %if_then1815, label %if_else1816
 
 if_then1815:
-  %post_old5147 = load i64, ptr @llvmgen___scope_depth
-  %post_new5148 = sub i64 %post_old5147, 1
-  store i64 %post_new5148, ptr @llvmgen___scope_depth
+  %post_old5200 = load i64, ptr @llvmgen___scope_depth
+  %post_new5201 = sub i64 %post_old5200, 1
+  store i64 %post_new5201, ptr @llvmgen___scope_depth
   br label %if_end1817
 
 if_else1816:
@@ -13062,26 +13144,26 @@ entry:
   store ptr %type_str, ptr %type_str.addr
   %ptr_name.addr = alloca ptr, align 8
   store ptr %ptr_name, ptr %ptr_name.addr
-  %llvmgen___var_names_val5149 = load ptr, ptr @llvmgen___var_names
-  %name_val5150 = load ptr, ptr %name.addr
-  %arr_push5151 = alloca ptr, align 8
-  store ptr %name_val5150, ptr %arr_push5151
-  call void @ofs_array_push(ptr %llvmgen___var_names_val5149, ptr %arr_push5151)
-  %llvmgen___var_types_val5152 = load ptr, ptr @llvmgen___var_types
-  %type_str_val5153 = load ptr, ptr %type_str.addr
-  %arr_push5154 = alloca ptr, align 8
-  store ptr %type_str_val5153, ptr %arr_push5154
-  call void @ofs_array_push(ptr %llvmgen___var_types_val5152, ptr %arr_push5154)
-  %llvmgen___var_ptrs_val5155 = load ptr, ptr @llvmgen___var_ptrs
-  %ptr_name_val5156 = load ptr, ptr %ptr_name.addr
-  %arr_push5157 = alloca ptr, align 8
-  store ptr %ptr_name_val5156, ptr %arr_push5157
-  call void @ofs_array_push(ptr %llvmgen___var_ptrs_val5155, ptr %arr_push5157)
-  %llvmgen___var_depths_val5158 = load ptr, ptr @llvmgen___var_depths
-  %llvmgen___scope_depth_val5159 = load i64, ptr @llvmgen___scope_depth
-  %arr_push5160 = alloca i64, align 8
-  store i64 %llvmgen___scope_depth_val5159, ptr %arr_push5160
-  call void @ofs_array_push(ptr %llvmgen___var_depths_val5158, ptr %arr_push5160)
+  %llvmgen___var_names_val5202 = load ptr, ptr @llvmgen___var_names
+  %name_val5203 = load ptr, ptr %name.addr
+  %arr_push5204 = alloca ptr, align 8
+  store ptr %name_val5203, ptr %arr_push5204
+  call void @ofs_array_push(ptr %llvmgen___var_names_val5202, ptr %arr_push5204)
+  %llvmgen___var_types_val5205 = load ptr, ptr @llvmgen___var_types
+  %type_str_val5206 = load ptr, ptr %type_str.addr
+  %arr_push5207 = alloca ptr, align 8
+  store ptr %type_str_val5206, ptr %arr_push5207
+  call void @ofs_array_push(ptr %llvmgen___var_types_val5205, ptr %arr_push5207)
+  %llvmgen___var_ptrs_val5208 = load ptr, ptr @llvmgen___var_ptrs
+  %ptr_name_val5209 = load ptr, ptr %ptr_name.addr
+  %arr_push5210 = alloca ptr, align 8
+  store ptr %ptr_name_val5209, ptr %arr_push5210
+  call void @ofs_array_push(ptr %llvmgen___var_ptrs_val5208, ptr %arr_push5210)
+  %llvmgen___var_depths_val5211 = load ptr, ptr @llvmgen___var_depths
+  %llvmgen___scope_depth_val5212 = load i64, ptr @llvmgen___scope_depth
+  %arr_push5213 = alloca i64, align 8
+  store i64 %llvmgen___scope_depth_val5212, ptr %arr_push5213
+  call void @ofs_array_push(ptr %llvmgen___var_depths_val5211, ptr %arr_push5213)
   ret void
 }
 
@@ -13091,171 +13173,171 @@ entry:
   store ptr %break_label, ptr %break_label.addr
   %continue_label.addr = alloca ptr, align 8
   store ptr %continue_label, ptr %continue_label.addr
-  %llvmgen___break_labels_val5161 = load ptr, ptr @llvmgen___break_labels
-  %break_label_val5162 = load ptr, ptr %break_label.addr
-  %arr_push5163 = alloca ptr, align 8
-  store ptr %break_label_val5162, ptr %arr_push5163
-  call void @ofs_array_push(ptr %llvmgen___break_labels_val5161, ptr %arr_push5163)
-  %llvmgen___continue_labels_val5164 = load ptr, ptr @llvmgen___continue_labels
-  %continue_label_val5165 = load ptr, ptr %continue_label.addr
-  %arr_push5166 = alloca ptr, align 8
-  store ptr %continue_label_val5165, ptr %arr_push5166
-  call void @ofs_array_push(ptr %llvmgen___continue_labels_val5164, ptr %arr_push5166)
+  %llvmgen___break_labels_val5214 = load ptr, ptr @llvmgen___break_labels
+  %break_label_val5215 = load ptr, ptr %break_label.addr
+  %arr_push5216 = alloca ptr, align 8
+  store ptr %break_label_val5215, ptr %arr_push5216
+  call void @ofs_array_push(ptr %llvmgen___break_labels_val5214, ptr %arr_push5216)
+  %llvmgen___continue_labels_val5217 = load ptr, ptr @llvmgen___continue_labels
+  %continue_label_val5218 = load ptr, ptr %continue_label.addr
+  %arr_push5219 = alloca ptr, align 8
+  store ptr %continue_label_val5218, ptr %arr_push5219
+  call void @ofs_array_push(ptr %llvmgen___continue_labels_val5217, ptr %arr_push5219)
   ret void
 }
 
 define void @llvmgen__pop_loop() {
 entry:
-  %llvmgen___break_labels_val5167 = load ptr, ptr @llvmgen___break_labels
-  %arr_pop5168 = call ptr @ofs_array_pop(ptr %llvmgen___break_labels_val5167)
-  %llvmgen___continue_labels_val5169 = load ptr, ptr @llvmgen___continue_labels
-  %arr_pop5170 = call ptr @ofs_array_pop(ptr %llvmgen___continue_labels_val5169)
+  %llvmgen___break_labels_val5220 = load ptr, ptr @llvmgen___break_labels
+  %arr_pop5221 = call ptr @ofs_array_pop(ptr %llvmgen___break_labels_val5220)
+  %llvmgen___continue_labels_val5222 = load ptr, ptr @llvmgen___continue_labels
+  %arr_pop5223 = call ptr @ofs_array_pop(ptr %llvmgen___continue_labels_val5222)
   ret void
 }
 
 define ptr @llvmgen__current_break_label() {
 entry:
-  %llvmgen___break_labels_val5171 = load ptr, ptr @llvmgen___break_labels
-  %llvmgen___break_labels_val5172 = load ptr, ptr @llvmgen___break_labels
-  %arr_len5173 = call i64 @ofs_array_len(ptr %llvmgen___break_labels_val5172)
-  %op5174 = sub i64 %arr_len5173, 1
-  %arr_get5175 = call ptr @ofs_array_get(ptr %llvmgen___break_labels_val5171, i64 %op5174)
-  %arr_item5176 = load ptr, ptr %arr_get5175
-  ret ptr %arr_item5176
+  %llvmgen___break_labels_val5224 = load ptr, ptr @llvmgen___break_labels
+  %llvmgen___break_labels_val5225 = load ptr, ptr @llvmgen___break_labels
+  %arr_len5226 = call i64 @ofs_array_len(ptr %llvmgen___break_labels_val5225)
+  %op5227 = sub i64 %arr_len5226, 1
+  %arr_get5228 = call ptr @ofs_array_get(ptr %llvmgen___break_labels_val5224, i64 %op5227)
+  %arr_item5229 = load ptr, ptr %arr_get5228
+  ret ptr %arr_item5229
 }
 
 define ptr @llvmgen__current_continue_label() {
 entry:
-  %llvmgen___continue_labels_val5177 = load ptr, ptr @llvmgen___continue_labels
-  %llvmgen___continue_labels_val5178 = load ptr, ptr @llvmgen___continue_labels
-  %arr_len5179 = call i64 @ofs_array_len(ptr %llvmgen___continue_labels_val5178)
-  %op5180 = sub i64 %arr_len5179, 1
-  %arr_get5181 = call ptr @ofs_array_get(ptr %llvmgen___continue_labels_val5177, i64 %op5180)
-  %arr_item5182 = load ptr, ptr %arr_get5181
-  ret ptr %arr_item5182
+  %llvmgen___continue_labels_val5230 = load ptr, ptr @llvmgen___continue_labels
+  %llvmgen___continue_labels_val5231 = load ptr, ptr @llvmgen___continue_labels
+  %arr_len5232 = call i64 @ofs_array_len(ptr %llvmgen___continue_labels_val5231)
+  %op5233 = sub i64 %arr_len5232, 1
+  %arr_get5234 = call ptr @ofs_array_get(ptr %llvmgen___continue_labels_val5230, i64 %op5233)
+  %arr_item5235 = load ptr, ptr %arr_get5234
+  ret ptr %arr_item5235
 }
 
 define i64 @llvmgen__var_index(ptr %name) {
 entry:
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %i5183 = alloca i64, align 8
-  %llvmgen___var_names_val5184 = load ptr, ptr @llvmgen___var_names
-  %arr_len5185 = call i64 @ofs_array_len(ptr %llvmgen___var_names_val5184)
-  %op5186 = sub i64 %arr_len5185, 1
-  store i64 %op5186, ptr %i5183
+  %i5236 = alloca i64, align 8
+  %llvmgen___var_names_val5237 = load ptr, ptr @llvmgen___var_names
+  %arr_len5238 = call i64 @ofs_array_len(ptr %llvmgen___var_names_val5237)
+  %op5239 = sub i64 %arr_len5238, 1
+  store i64 %op5239, ptr %i5236
   br label %while_cond1818
 
 while_cond1818:
-  %i_val5187 = load i64, ptr %i5183
-  %cmp5188 = icmp sge i64 %i_val5187, 0
-  br i1 %cmp5188, label %while_body1819, label %while_end1820
+  %i_val5240 = load i64, ptr %i5236
+  %cmp5241 = icmp sge i64 %i_val5240, 0
+  br i1 %cmp5241, label %while_body1819, label %while_end1820
 
 while_body1819:
-  %n5189 = alloca ptr, align 8
-  %llvmgen___var_names_val5190 = load ptr, ptr @llvmgen___var_names
-  %i_val5191 = load i64, ptr %i5183
-  %arr_get5192 = call ptr @ofs_array_get(ptr %llvmgen___var_names_val5190, i64 %i_val5191)
-  %arr_item5193 = load ptr, ptr %arr_get5192
-  store ptr %arr_item5193, ptr %n5189
-  %n_val5194 = load ptr, ptr %n5189
-  %name_val5195 = load ptr, ptr %name.addr
-  %streq5196 = call i32 @ofs_str_eq(ptr %n_val5194, ptr %name_val5195)
-  %cond5197 = icmp ne i32 %streq5196, 0
-  br i1 %cond5197, label %if_then1821, label %if_else1822
+  %n5242 = alloca ptr, align 8
+  %llvmgen___var_names_val5243 = load ptr, ptr @llvmgen___var_names
+  %i_val5244 = load i64, ptr %i5236
+  %arr_get5245 = call ptr @ofs_array_get(ptr %llvmgen___var_names_val5243, i64 %i_val5244)
+  %arr_item5246 = load ptr, ptr %arr_get5245
+  store ptr %arr_item5246, ptr %n5242
+  %n_val5247 = load ptr, ptr %n5242
+  %name_val5248 = load ptr, ptr %name.addr
+  %streq5249 = call i32 @ofs_str_eq(ptr %n_val5247, ptr %name_val5248)
+  %cond5250 = icmp ne i32 %streq5249, 0
+  br i1 %cond5250, label %if_then1821, label %if_else1822
 
 if_then1821:
-  %i_val5198 = load i64, ptr %i5183
-  ret i64 %i_val5198
+  %i_val5251 = load i64, ptr %i5236
+  ret i64 %i_val5251
 
 if_else1822:
   br label %if_end1823
 
 if_end1823:
-  %post_old5199 = load i64, ptr %i5183
-  %post_new5200 = sub i64 %post_old5199, 1
-  store i64 %post_new5200, ptr %i5183
+  %post_old5252 = load i64, ptr %i5236
+  %post_new5253 = sub i64 %post_old5252, 1
+  store i64 %post_new5253, ptr %i5236
   br label %while_cond1818
 
 while_end1820:
-  %neg5201 = sub i64 0, 1
-  ret i64 %neg5201
+  %neg5254 = sub i64 0, 1
+  ret i64 %neg5254
 }
 
 define i64 @llvmgen__global_index(ptr %name) {
 entry:
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %i5202 = alloca i64, align 8
-  %llvmgen___global_names_val5203 = load ptr, ptr @llvmgen___global_names
-  %arr_len5204 = call i64 @ofs_array_len(ptr %llvmgen___global_names_val5203)
-  %op5205 = sub i64 %arr_len5204, 1
-  store i64 %op5205, ptr %i5202
+  %i5255 = alloca i64, align 8
+  %llvmgen___global_names_val5256 = load ptr, ptr @llvmgen___global_names
+  %arr_len5257 = call i64 @ofs_array_len(ptr %llvmgen___global_names_val5256)
+  %op5258 = sub i64 %arr_len5257, 1
+  store i64 %op5258, ptr %i5255
   br label %while_cond1824
 
 while_cond1824:
-  %i_val5206 = load i64, ptr %i5202
-  %cmp5207 = icmp sge i64 %i_val5206, 0
-  br i1 %cmp5207, label %while_body1825, label %while_end1826
+  %i_val5259 = load i64, ptr %i5255
+  %cmp5260 = icmp sge i64 %i_val5259, 0
+  br i1 %cmp5260, label %while_body1825, label %while_end1826
 
 while_body1825:
-  %n5208 = alloca ptr, align 8
-  %llvmgen___global_names_val5209 = load ptr, ptr @llvmgen___global_names
-  %i_val5210 = load i64, ptr %i5202
-  %arr_get5211 = call ptr @ofs_array_get(ptr %llvmgen___global_names_val5209, i64 %i_val5210)
-  %arr_item5212 = load ptr, ptr %arr_get5211
-  store ptr %arr_item5212, ptr %n5208
-  %n_val5213 = load ptr, ptr %n5208
-  %name_val5214 = load ptr, ptr %name.addr
-  %streq5215 = call i32 @ofs_str_eq(ptr %n_val5213, ptr %name_val5214)
-  %cond5216 = icmp ne i32 %streq5215, 0
-  br i1 %cond5216, label %if_then1827, label %if_else1828
+  %n5261 = alloca ptr, align 8
+  %llvmgen___global_names_val5262 = load ptr, ptr @llvmgen___global_names
+  %i_val5263 = load i64, ptr %i5255
+  %arr_get5264 = call ptr @ofs_array_get(ptr %llvmgen___global_names_val5262, i64 %i_val5263)
+  %arr_item5265 = load ptr, ptr %arr_get5264
+  store ptr %arr_item5265, ptr %n5261
+  %n_val5266 = load ptr, ptr %n5261
+  %name_val5267 = load ptr, ptr %name.addr
+  %streq5268 = call i32 @ofs_str_eq(ptr %n_val5266, ptr %name_val5267)
+  %cond5269 = icmp ne i32 %streq5268, 0
+  br i1 %cond5269, label %if_then1827, label %if_else1828
 
 if_then1827:
-  %i_val5217 = load i64, ptr %i5202
-  ret i64 %i_val5217
+  %i_val5270 = load i64, ptr %i5255
+  ret i64 %i_val5270
 
 if_else1828:
   br label %if_end1829
 
 if_end1829:
-  %post_old5218 = load i64, ptr %i5202
-  %post_new5219 = sub i64 %post_old5218, 1
-  store i64 %post_new5219, ptr %i5202
+  %post_old5271 = load i64, ptr %i5255
+  %post_new5272 = sub i64 %post_old5271, 1
+  store i64 %post_new5272, ptr %i5255
   br label %while_cond1824
 
 while_end1826:
-  %neg5220 = sub i64 0, 1
-  ret i64 %neg5220
+  %neg5273 = sub i64 0, 1
+  ret i64 %neg5273
 }
 
 define ptr @llvmgen__var_type(ptr %name) {
 entry:
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %i5221 = alloca i64, align 8
-  %name_val5222 = load ptr, ptr %name.addr
-  %call5223 = call i64 @llvmgen__var_index(ptr %name_val5222)
-  store i64 %call5223, ptr %i5221
-  %i_val5224 = load i64, ptr %i5221
-  %cmp5225 = icmp slt i64 %i_val5224, 0
-  br i1 %cmp5225, label %if_then1830, label %if_else1831
+  %i5274 = alloca i64, align 8
+  %name_val5275 = load ptr, ptr %name.addr
+  %call5276 = call i64 @llvmgen__var_index(ptr %name_val5275)
+  store i64 %call5276, ptr %i5274
+  %i_val5277 = load i64, ptr %i5274
+  %cmp5278 = icmp slt i64 %i_val5277, 0
+  br i1 %cmp5278, label %if_then1830, label %if_else1831
 
 if_then1830:
-  %gi5226 = alloca i64, align 8
-  %name_val5227 = load ptr, ptr %name.addr
-  %call5228 = call i64 @llvmgen__global_index(ptr %name_val5227)
-  store i64 %call5228, ptr %gi5226
-  %gi_val5229 = load i64, ptr %gi5226
-  %cmp5230 = icmp sge i64 %gi_val5229, 0
-  br i1 %cmp5230, label %if_then1833, label %if_else1834
+  %gi5279 = alloca i64, align 8
+  %name_val5280 = load ptr, ptr %name.addr
+  %call5281 = call i64 @llvmgen__global_index(ptr %name_val5280)
+  store i64 %call5281, ptr %gi5279
+  %gi_val5282 = load i64, ptr %gi5279
+  %cmp5283 = icmp sge i64 %gi_val5282, 0
+  br i1 %cmp5283, label %if_then1833, label %if_else1834
 
 if_then1833:
-  %llvmgen___global_types_val5231 = load ptr, ptr @llvmgen___global_types
-  %gi_val5232 = load i64, ptr %gi5226
-  %arr_get5233 = call ptr @ofs_array_get(ptr %llvmgen___global_types_val5231, i64 %gi_val5232)
-  %arr_item5234 = load ptr, ptr %arr_get5233
-  ret ptr %arr_item5234
+  %llvmgen___global_types_val5284 = load ptr, ptr @llvmgen___global_types
+  %gi_val5285 = load i64, ptr %gi5279
+  %arr_get5286 = call ptr @ofs_array_get(ptr %llvmgen___global_types_val5284, i64 %gi_val5285)
+  %arr_item5287 = load ptr, ptr %arr_get5286
+  ret ptr %arr_item5287
 
 if_else1834:
   br label %if_end1835
@@ -13267,112 +13349,112 @@ if_else1831:
   br label %if_end1832
 
 if_end1832:
-  %llvmgen___var_types_val5235 = load ptr, ptr @llvmgen___var_types
-  %i_val5236 = load i64, ptr %i5221
-  %arr_get5237 = call ptr @ofs_array_get(ptr %llvmgen___var_types_val5235, i64 %i_val5236)
-  %arr_item5238 = load ptr, ptr %arr_get5237
-  ret ptr %arr_item5238
+  %llvmgen___var_types_val5288 = load ptr, ptr @llvmgen___var_types
+  %i_val5289 = load i64, ptr %i5274
+  %arr_get5290 = call ptr @ofs_array_get(ptr %llvmgen___var_types_val5288, i64 %i_val5289)
+  %arr_item5291 = load ptr, ptr %arr_get5290
+  ret ptr %arr_item5291
 }
 
 define ptr @llvmgen__var_ptr(ptr %name) {
 entry:
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %i5239 = alloca i64, align 8
-  %name_val5240 = load ptr, ptr %name.addr
-  %call5241 = call i64 @llvmgen__var_index(ptr %name_val5240)
-  store i64 %call5241, ptr %i5239
-  %i_val5242 = load i64, ptr %i5239
-  %cmp5243 = icmp slt i64 %i_val5242, 0
-  br i1 %cmp5243, label %if_then1836, label %if_else1837
+  %i5292 = alloca i64, align 8
+  %name_val5293 = load ptr, ptr %name.addr
+  %call5294 = call i64 @llvmgen__var_index(ptr %name_val5293)
+  store i64 %call5294, ptr %i5292
+  %i_val5295 = load i64, ptr %i5292
+  %cmp5296 = icmp slt i64 %i_val5295, 0
+  br i1 %cmp5296, label %if_then1836, label %if_else1837
 
 if_then1836:
-  %gi5244 = alloca i64, align 8
-  %name_val5245 = load ptr, ptr %name.addr
-  %call5246 = call i64 @llvmgen__global_index(ptr %name_val5245)
-  store i64 %call5246, ptr %gi5244
-  %gi_val5247 = load i64, ptr %gi5244
-  %cmp5248 = icmp sge i64 %gi_val5247, 0
-  br i1 %cmp5248, label %if_then1839, label %if_else1840
+  %gi5297 = alloca i64, align 8
+  %name_val5298 = load ptr, ptr %name.addr
+  %call5299 = call i64 @llvmgen__global_index(ptr %name_val5298)
+  store i64 %call5299, ptr %gi5297
+  %gi_val5300 = load i64, ptr %gi5297
+  %cmp5301 = icmp sge i64 %gi_val5300, 0
+  br i1 %cmp5301, label %if_then1839, label %if_else1840
 
 if_then1839:
-  %name_val5249 = load ptr, ptr %name.addr
-  %concat5250 = call ptr @ofs_str_concat(ptr @str.246, ptr %name_val5249)
-  ret ptr %concat5250
+  %name_val5302 = load ptr, ptr %name.addr
+  %concat5303 = call ptr @ofs_str_concat(ptr @str.246, ptr %name_val5302)
+  ret ptr %concat5303
 
 if_else1840:
   br label %if_end1841
 
 if_end1841:
-  %name_val5251 = load ptr, ptr %name.addr
-  %concat5252 = call ptr @ofs_str_concat(ptr @str.109, ptr %name_val5251)
-  ret ptr %concat5252
+  %name_val5304 = load ptr, ptr %name.addr
+  %concat5305 = call ptr @ofs_str_concat(ptr @str.109, ptr %name_val5304)
+  ret ptr %concat5305
 
 if_else1837:
   br label %if_end1838
 
 if_end1838:
-  %llvmgen___var_ptrs_val5253 = load ptr, ptr @llvmgen___var_ptrs
-  %i_val5254 = load i64, ptr %i5239
-  %arr_get5255 = call ptr @ofs_array_get(ptr %llvmgen___var_ptrs_val5253, i64 %i_val5254)
-  %arr_item5256 = load ptr, ptr %arr_get5255
-  ret ptr %arr_item5256
+  %llvmgen___var_ptrs_val5306 = load ptr, ptr @llvmgen___var_ptrs
+  %i_val5307 = load i64, ptr %i5292
+  %arr_get5308 = call ptr @ofs_array_get(ptr %llvmgen___var_ptrs_val5306, i64 %i_val5307)
+  %arr_item5309 = load ptr, ptr %arr_get5308
+  ret ptr %arr_item5309
 }
 
 define ptr @llvmgen__expr_as_i1() {
 entry:
-  %llvmgen___expr_type_val5257 = load ptr, ptr @llvmgen___expr_type
-  %streq5258 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val5257, ptr @str.241)
-  %cond5259 = icmp ne i32 %streq5258, 0
-  br i1 %cond5259, label %if_then1842, label %if_else1843
+  %llvmgen___expr_type_val5310 = load ptr, ptr @llvmgen___expr_type
+  %streq5311 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val5310, ptr @str.241)
+  %cond5312 = icmp ne i32 %streq5311, 0
+  br i1 %cond5312, label %if_then1842, label %if_else1843
 
 if_then1842:
-  %llvmgen___expr_val_val5260 = load ptr, ptr @llvmgen___expr_val
-  ret ptr %llvmgen___expr_val_val5260
+  %llvmgen___expr_val_val5313 = load ptr, ptr @llvmgen___expr_val
+  ret ptr %llvmgen___expr_val_val5313
 
 if_else1843:
   br label %if_end1844
 
 if_end1844:
-  %tmp5261 = alloca ptr, align 8
-  %call5262 = call ptr @llvmgen__next_tmp(ptr @str.247)
-  store ptr %call5262, ptr %tmp5261
-  %llvmgen___expr_type_val5263 = load ptr, ptr @llvmgen___expr_type
-  %streq5264 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val5263, ptr @str.183)
-  %llvmgen___expr_type_val5265 = load ptr, ptr @llvmgen___expr_type
-  %streq5266 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val5265, ptr @str.144)
-  %cond5267 = icmp ne i32 %streq5264, 0
-  %cond5268 = icmp ne i32 %streq5266, 0
-  %logic5269 = or i1 %cond5267, %cond5268
-  br i1 %logic5269, label %if_then1845, label %if_else1846
+  %tmp5314 = alloca ptr, align 8
+  %call5315 = call ptr @llvmgen__next_tmp(ptr @str.247)
+  store ptr %call5315, ptr %tmp5314
+  %llvmgen___expr_type_val5316 = load ptr, ptr @llvmgen___expr_type
+  %streq5317 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val5316, ptr @str.183)
+  %llvmgen___expr_type_val5318 = load ptr, ptr @llvmgen___expr_type
+  %streq5319 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val5318, ptr @str.144)
+  %cond5320 = icmp ne i32 %streq5317, 0
+  %cond5321 = icmp ne i32 %streq5319, 0
+  %logic5322 = or i1 %cond5320, %cond5321
+  br i1 %logic5322, label %if_then1845, label %if_else1846
 
 if_then1845:
-  %tmp_val5270 = load ptr, ptr %tmp5261
-  %concat5271 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val5270)
-  %concat5272 = call ptr @ofs_str_concat(ptr %concat5271, ptr @str.248)
-  %llvmgen___expr_val_val5273 = load ptr, ptr @llvmgen___expr_val
-  %concat5274 = call ptr @ofs_str_concat(ptr %concat5272, ptr %llvmgen___expr_val_val5273)
-  %concat5275 = call ptr @ofs_str_concat(ptr %concat5274, ptr @str.249)
-  call void @cg_emit(ptr %concat5275)
+  %tmp_val5323 = load ptr, ptr %tmp5314
+  %concat5324 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val5323)
+  %concat5325 = call ptr @ofs_str_concat(ptr %concat5324, ptr @str.248)
+  %llvmgen___expr_val_val5326 = load ptr, ptr @llvmgen___expr_val
+  %concat5327 = call ptr @ofs_str_concat(ptr %concat5325, ptr %llvmgen___expr_val_val5326)
+  %concat5328 = call ptr @ofs_str_concat(ptr %concat5327, ptr @str.249)
+  call void @cg_emit(ptr %concat5328)
   br label %if_end1847
 
 if_else1846:
-  %tmp_val5276 = load ptr, ptr %tmp5261
-  %concat5277 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val5276)
-  %concat5278 = call ptr @ofs_str_concat(ptr %concat5277, ptr @str.250)
-  %llvmgen___expr_type_val5279 = load ptr, ptr @llvmgen___expr_type
-  %call5280 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val5279)
-  %concat5281 = call ptr @ofs_str_concat(ptr %concat5278, ptr %call5280)
-  %concat5282 = call ptr @ofs_str_concat(ptr %concat5281, ptr @str.216)
-  %llvmgen___expr_val_val5283 = load ptr, ptr @llvmgen___expr_val
-  %concat5284 = call ptr @ofs_str_concat(ptr %concat5282, ptr %llvmgen___expr_val_val5283)
-  %concat5285 = call ptr @ofs_str_concat(ptr %concat5284, ptr @str.251)
-  call void @cg_emit(ptr %concat5285)
+  %tmp_val5329 = load ptr, ptr %tmp5314
+  %concat5330 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val5329)
+  %concat5331 = call ptr @ofs_str_concat(ptr %concat5330, ptr @str.250)
+  %llvmgen___expr_type_val5332 = load ptr, ptr @llvmgen___expr_type
+  %call5333 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val5332)
+  %concat5334 = call ptr @ofs_str_concat(ptr %concat5331, ptr %call5333)
+  %concat5335 = call ptr @ofs_str_concat(ptr %concat5334, ptr @str.216)
+  %llvmgen___expr_val_val5336 = load ptr, ptr @llvmgen___expr_val
+  %concat5337 = call ptr @ofs_str_concat(ptr %concat5335, ptr %llvmgen___expr_val_val5336)
+  %concat5338 = call ptr @ofs_str_concat(ptr %concat5337, ptr @str.251)
+  call void @cg_emit(ptr %concat5338)
   br label %if_end1847
 
 if_end1847:
-  %tmp_val5286 = load ptr, ptr %tmp5261
-  ret ptr %tmp_val5286
+  %tmp_val5339 = load ptr, ptr %tmp5314
+  ret ptr %tmp_val5339
 }
 
 define ptr @llvmgen__coerce_for_store(ptr %value, ptr %from_type, ptr %to_type) {
@@ -13383,265 +13465,265 @@ entry:
   store ptr %from_type, ptr %from_type.addr
   %to_type.addr = alloca ptr, align 8
   store ptr %to_type, ptr %to_type.addr
-  %from_type_val5287 = load ptr, ptr %from_type.addr
-  %to_type_val5288 = load ptr, ptr %to_type.addr
-  %streq5289 = call i32 @ofs_str_eq(ptr %from_type_val5287, ptr %to_type_val5288)
-  %cond5290 = icmp ne i32 %streq5289, 0
-  br i1 %cond5290, label %if_then1848, label %if_else1849
+  %from_type_val5340 = load ptr, ptr %from_type.addr
+  %to_type_val5341 = load ptr, ptr %to_type.addr
+  %streq5342 = call i32 @ofs_str_eq(ptr %from_type_val5340, ptr %to_type_val5341)
+  %cond5343 = icmp ne i32 %streq5342, 0
+  br i1 %cond5343, label %if_then1848, label %if_else1849
 
 if_then1848:
-  %value_val5291 = load ptr, ptr %value.addr
-  ret ptr %value_val5291
+  %value_val5344 = load ptr, ptr %value.addr
+  ret ptr %value_val5344
 
 if_else1849:
   br label %if_end1850
 
 if_end1850:
-  %from_type_val5292 = load ptr, ptr %from_type.addr
-  %streq5293 = call i32 @ofs_str_eq(ptr %from_type_val5292, ptr @str.241)
-  %to_type_val5294 = load ptr, ptr %to_type.addr
-  %streq5295 = call i32 @ofs_str_eq(ptr %to_type_val5294, ptr @str.184)
-  %cond5296 = icmp ne i32 %streq5293, 0
-  %cond5297 = icmp ne i32 %streq5295, 0
-  %logic5298 = and i1 %cond5296, %cond5297
-  br i1 %logic5298, label %if_then1851, label %if_else1852
+  %from_type_val5345 = load ptr, ptr %from_type.addr
+  %streq5346 = call i32 @ofs_str_eq(ptr %from_type_val5345, ptr @str.241)
+  %to_type_val5347 = load ptr, ptr %to_type.addr
+  %streq5348 = call i32 @ofs_str_eq(ptr %to_type_val5347, ptr @str.184)
+  %cond5349 = icmp ne i32 %streq5346, 0
+  %cond5350 = icmp ne i32 %streq5348, 0
+  %logic5351 = and i1 %cond5349, %cond5350
+  br i1 %logic5351, label %if_then1851, label %if_else1852
 
 if_then1851:
-  %z5299 = alloca ptr, align 8
-  %call5300 = call ptr @llvmgen__next_tmp(ptr @str.252)
-  store ptr %call5300, ptr %z5299
-  %z_val5301 = load ptr, ptr %z5299
-  %concat5302 = call ptr @ofs_str_concat(ptr @str.233, ptr %z_val5301)
-  %concat5303 = call ptr @ofs_str_concat(ptr %concat5302, ptr @str.253)
-  %value_val5304 = load ptr, ptr %value.addr
-  %concat5305 = call ptr @ofs_str_concat(ptr %concat5303, ptr %value_val5304)
-  %concat5306 = call ptr @ofs_str_concat(ptr %concat5305, ptr @str.254)
-  call void @cg_emit(ptr %concat5306)
-  %z_val5307 = load ptr, ptr %z5299
-  ret ptr %z_val5307
+  %z5352 = alloca ptr, align 8
+  %call5353 = call ptr @llvmgen__next_tmp(ptr @str.252)
+  store ptr %call5353, ptr %z5352
+  %z_val5354 = load ptr, ptr %z5352
+  %concat5355 = call ptr @ofs_str_concat(ptr @str.233, ptr %z_val5354)
+  %concat5356 = call ptr @ofs_str_concat(ptr %concat5355, ptr @str.253)
+  %value_val5357 = load ptr, ptr %value.addr
+  %concat5358 = call ptr @ofs_str_concat(ptr %concat5356, ptr %value_val5357)
+  %concat5359 = call ptr @ofs_str_concat(ptr %concat5358, ptr @str.254)
+  call void @cg_emit(ptr %concat5359)
+  %z_val5360 = load ptr, ptr %z5352
+  ret ptr %z_val5360
 
 if_else1852:
   br label %if_end1853
 
 if_end1853:
-  %from_type_val5308 = load ptr, ptr %from_type.addr
-  %streq5309 = call i32 @ofs_str_eq(ptr %from_type_val5308, ptr @str.184)
-  %to_type_val5310 = load ptr, ptr %to_type.addr
-  %streq5311 = call i32 @ofs_str_eq(ptr %to_type_val5310, ptr @str.181)
-  %cond5312 = icmp ne i32 %streq5309, 0
-  %cond5313 = icmp ne i32 %streq5311, 0
-  %logic5314 = and i1 %cond5312, %cond5313
-  br i1 %logic5314, label %if_then1854, label %if_else1855
+  %from_type_val5361 = load ptr, ptr %from_type.addr
+  %streq5362 = call i32 @ofs_str_eq(ptr %from_type_val5361, ptr @str.184)
+  %to_type_val5363 = load ptr, ptr %to_type.addr
+  %streq5364 = call i32 @ofs_str_eq(ptr %to_type_val5363, ptr @str.181)
+  %cond5365 = icmp ne i32 %streq5362, 0
+  %cond5366 = icmp ne i32 %streq5364, 0
+  %logic5367 = and i1 %cond5365, %cond5366
+  br i1 %logic5367, label %if_then1854, label %if_else1855
 
 if_then1854:
-  %z25315 = alloca ptr, align 8
-  %call5316 = call ptr @llvmgen__next_tmp(ptr @str.252)
-  store ptr %call5316, ptr %z25315
-  %z2_val5317 = load ptr, ptr %z25315
-  %concat5318 = call ptr @ofs_str_concat(ptr @str.233, ptr %z2_val5317)
-  %concat5319 = call ptr @ofs_str_concat(ptr %concat5318, ptr @str.255)
-  %value_val5320 = load ptr, ptr %value.addr
-  %concat5321 = call ptr @ofs_str_concat(ptr %concat5319, ptr %value_val5320)
-  %concat5322 = call ptr @ofs_str_concat(ptr %concat5321, ptr @str.256)
-  call void @cg_emit(ptr %concat5322)
-  %z2_val5323 = load ptr, ptr %z25315
-  ret ptr %z2_val5323
+  %z25368 = alloca ptr, align 8
+  %call5369 = call ptr @llvmgen__next_tmp(ptr @str.252)
+  store ptr %call5369, ptr %z25368
+  %z2_val5370 = load ptr, ptr %z25368
+  %concat5371 = call ptr @ofs_str_concat(ptr @str.233, ptr %z2_val5370)
+  %concat5372 = call ptr @ofs_str_concat(ptr %concat5371, ptr @str.255)
+  %value_val5373 = load ptr, ptr %value.addr
+  %concat5374 = call ptr @ofs_str_concat(ptr %concat5372, ptr %value_val5373)
+  %concat5375 = call ptr @ofs_str_concat(ptr %concat5374, ptr @str.256)
+  call void @cg_emit(ptr %concat5375)
+  %z2_val5376 = load ptr, ptr %z25368
+  ret ptr %z2_val5376
 
 if_else1855:
   br label %if_end1856
 
 if_end1856:
-  %from_type_val5324 = load ptr, ptr %from_type.addr
-  %streq5325 = call i32 @ofs_str_eq(ptr %from_type_val5324, ptr @str.181)
-  %to_type_val5326 = load ptr, ptr %to_type.addr
-  %streq5327 = call i32 @ofs_str_eq(ptr %to_type_val5326, ptr @str.182)
-  %cond5328 = icmp ne i32 %streq5325, 0
-  %cond5329 = icmp ne i32 %streq5327, 0
-  %logic5330 = and i1 %cond5328, %cond5329
-  br i1 %logic5330, label %if_then1857, label %if_else1858
+  %from_type_val5377 = load ptr, ptr %from_type.addr
+  %streq5378 = call i32 @ofs_str_eq(ptr %from_type_val5377, ptr @str.181)
+  %to_type_val5379 = load ptr, ptr %to_type.addr
+  %streq5380 = call i32 @ofs_str_eq(ptr %to_type_val5379, ptr @str.182)
+  %cond5381 = icmp ne i32 %streq5378, 0
+  %cond5382 = icmp ne i32 %streq5380, 0
+  %logic5383 = and i1 %cond5381, %cond5382
+  br i1 %logic5383, label %if_then1857, label %if_else1858
 
 if_then1857:
-  %fp5331 = alloca ptr, align 8
-  %call5332 = call ptr @llvmgen__next_tmp(ptr @str.257)
-  store ptr %call5332, ptr %fp5331
-  %fp_val5333 = load ptr, ptr %fp5331
-  %concat5334 = call ptr @ofs_str_concat(ptr @str.233, ptr %fp_val5333)
-  %concat5335 = call ptr @ofs_str_concat(ptr %concat5334, ptr @str.258)
-  %value_val5336 = load ptr, ptr %value.addr
-  %concat5337 = call ptr @ofs_str_concat(ptr %concat5335, ptr %value_val5336)
-  %concat5338 = call ptr @ofs_str_concat(ptr %concat5337, ptr @str.259)
-  call void @cg_emit(ptr %concat5338)
-  %fp_val5339 = load ptr, ptr %fp5331
-  ret ptr %fp_val5339
+  %fp5384 = alloca ptr, align 8
+  %call5385 = call ptr @llvmgen__next_tmp(ptr @str.257)
+  store ptr %call5385, ptr %fp5384
+  %fp_val5386 = load ptr, ptr %fp5384
+  %concat5387 = call ptr @ofs_str_concat(ptr @str.233, ptr %fp_val5386)
+  %concat5388 = call ptr @ofs_str_concat(ptr %concat5387, ptr @str.258)
+  %value_val5389 = load ptr, ptr %value.addr
+  %concat5390 = call ptr @ofs_str_concat(ptr %concat5388, ptr %value_val5389)
+  %concat5391 = call ptr @ofs_str_concat(ptr %concat5390, ptr @str.259)
+  call void @cg_emit(ptr %concat5391)
+  %fp_val5392 = load ptr, ptr %fp5384
+  ret ptr %fp_val5392
 
 if_else1858:
   br label %if_end1859
 
 if_end1859:
-  %from_type_val5340 = load ptr, ptr %from_type.addr
-  %streq5341 = call i32 @ofs_str_eq(ptr %from_type_val5340, ptr @str.182)
-  %to_type_val5342 = load ptr, ptr %to_type.addr
-  %streq5343 = call i32 @ofs_str_eq(ptr %to_type_val5342, ptr @str.181)
-  %cond5344 = icmp ne i32 %streq5341, 0
-  %cond5345 = icmp ne i32 %streq5343, 0
-  %logic5346 = and i1 %cond5344, %cond5345
-  br i1 %logic5346, label %if_then1860, label %if_else1861
+  %from_type_val5393 = load ptr, ptr %from_type.addr
+  %streq5394 = call i32 @ofs_str_eq(ptr %from_type_val5393, ptr @str.182)
+  %to_type_val5395 = load ptr, ptr %to_type.addr
+  %streq5396 = call i32 @ofs_str_eq(ptr %to_type_val5395, ptr @str.181)
+  %cond5397 = icmp ne i32 %streq5394, 0
+  %cond5398 = icmp ne i32 %streq5396, 0
+  %logic5399 = and i1 %cond5397, %cond5398
+  br i1 %logic5399, label %if_then1860, label %if_else1861
 
 if_then1860:
-  %si5347 = alloca ptr, align 8
-  %call5348 = call ptr @llvmgen__next_tmp(ptr @str.260)
-  store ptr %call5348, ptr %si5347
-  %si_val5349 = load ptr, ptr %si5347
-  %concat5350 = call ptr @ofs_str_concat(ptr @str.233, ptr %si_val5349)
-  %concat5351 = call ptr @ofs_str_concat(ptr %concat5350, ptr @str.261)
-  %value_val5352 = load ptr, ptr %value.addr
-  %concat5353 = call ptr @ofs_str_concat(ptr %concat5351, ptr %value_val5352)
-  %concat5354 = call ptr @ofs_str_concat(ptr %concat5353, ptr @str.256)
-  call void @cg_emit(ptr %concat5354)
-  %si_val5355 = load ptr, ptr %si5347
-  ret ptr %si_val5355
+  %si5400 = alloca ptr, align 8
+  %call5401 = call ptr @llvmgen__next_tmp(ptr @str.260)
+  store ptr %call5401, ptr %si5400
+  %si_val5402 = load ptr, ptr %si5400
+  %concat5403 = call ptr @ofs_str_concat(ptr @str.233, ptr %si_val5402)
+  %concat5404 = call ptr @ofs_str_concat(ptr %concat5403, ptr @str.261)
+  %value_val5405 = load ptr, ptr %value.addr
+  %concat5406 = call ptr @ofs_str_concat(ptr %concat5404, ptr %value_val5405)
+  %concat5407 = call ptr @ofs_str_concat(ptr %concat5406, ptr @str.256)
+  call void @cg_emit(ptr %concat5407)
+  %si_val5408 = load ptr, ptr %si5400
+  ret ptr %si_val5408
 
 if_else1861:
   br label %if_end1862
 
 if_end1862:
-  %from_type_val5356 = load ptr, ptr %from_type.addr
-  %call5357 = call i32 @llvmgen__is_integer_type(ptr %from_type_val5356)
-  %to_type_val5358 = load ptr, ptr %to_type.addr
-  %call5359 = call i32 @llvmgen__is_integer_type(ptr %to_type_val5358)
-  %cond5360 = icmp ne i32 %call5357, 0
-  %cond5361 = icmp ne i32 %call5359, 0
-  %logic5362 = and i1 %cond5360, %cond5361
-  %from_type_val5363 = load ptr, ptr %from_type.addr
-  %call5364 = call ptr @llvmgen__llvm_type(ptr %from_type_val5363)
-  %to_type_val5365 = load ptr, ptr %to_type.addr
-  %call5366 = call ptr @llvmgen__llvm_type(ptr %to_type_val5365)
-  %streq5367 = call i32 @ofs_str_eq(ptr %call5364, ptr %call5366)
-  %cond5368 = icmp ne i32 %streq5367, 0
-  %not5369 = xor i1 %cond5368, true
-  %logic5370 = and i1 %logic5362, %not5369
-  br i1 %logic5370, label %if_then1863, label %if_else1864
+  %from_type_val5409 = load ptr, ptr %from_type.addr
+  %call5410 = call i32 @llvmgen__is_integer_type(ptr %from_type_val5409)
+  %to_type_val5411 = load ptr, ptr %to_type.addr
+  %call5412 = call i32 @llvmgen__is_integer_type(ptr %to_type_val5411)
+  %cond5413 = icmp ne i32 %call5410, 0
+  %cond5414 = icmp ne i32 %call5412, 0
+  %logic5415 = and i1 %cond5413, %cond5414
+  %from_type_val5416 = load ptr, ptr %from_type.addr
+  %call5417 = call ptr @llvmgen__llvm_type(ptr %from_type_val5416)
+  %to_type_val5418 = load ptr, ptr %to_type.addr
+  %call5419 = call ptr @llvmgen__llvm_type(ptr %to_type_val5418)
+  %streq5420 = call i32 @ofs_str_eq(ptr %call5417, ptr %call5419)
+  %cond5421 = icmp ne i32 %streq5420, 0
+  %not5422 = xor i1 %cond5421, true
+  %logic5423 = and i1 %logic5415, %not5422
+  br i1 %logic5423, label %if_then1863, label %if_else1864
 
 if_then1863:
-  %cv5371 = alloca ptr, align 8
-  %call5372 = call ptr @llvmgen__next_tmp(ptr @str.262)
-  store ptr %call5372, ptr %cv5371
-  %from_type_val5373 = load ptr, ptr %from_type.addr
-  %call5374 = call ptr @llvmgen__llvm_type(ptr %from_type_val5373)
-  %streq5375 = call i32 @ofs_str_eq(ptr %call5374, ptr @str.189)
-  %to_type_val5376 = load ptr, ptr %to_type.addr
-  %call5377 = call ptr @llvmgen__llvm_type(ptr %to_type_val5376)
-  %streq5378 = call i32 @ofs_str_eq(ptr %call5377, ptr @str.190)
-  %to_type_val5379 = load ptr, ptr %to_type.addr
-  %call5380 = call ptr @llvmgen__llvm_type(ptr %to_type_val5379)
-  %streq5381 = call i32 @ofs_str_eq(ptr %call5380, ptr @str.244)
-  %cond5382 = icmp ne i32 %streq5378, 0
-  %cond5383 = icmp ne i32 %streq5381, 0
-  %logic5384 = or i1 %cond5382, %cond5383
-  %cond5385 = icmp ne i32 %streq5375, 0
-  %logic5386 = and i1 %cond5385, %logic5384
-  br i1 %logic5386, label %if_then1866, label %if_else1867
+  %cv5424 = alloca ptr, align 8
+  %call5425 = call ptr @llvmgen__next_tmp(ptr @str.262)
+  store ptr %call5425, ptr %cv5424
+  %from_type_val5426 = load ptr, ptr %from_type.addr
+  %call5427 = call ptr @llvmgen__llvm_type(ptr %from_type_val5426)
+  %streq5428 = call i32 @ofs_str_eq(ptr %call5427, ptr @str.189)
+  %to_type_val5429 = load ptr, ptr %to_type.addr
+  %call5430 = call ptr @llvmgen__llvm_type(ptr %to_type_val5429)
+  %streq5431 = call i32 @ofs_str_eq(ptr %call5430, ptr @str.190)
+  %to_type_val5432 = load ptr, ptr %to_type.addr
+  %call5433 = call ptr @llvmgen__llvm_type(ptr %to_type_val5432)
+  %streq5434 = call i32 @ofs_str_eq(ptr %call5433, ptr @str.244)
+  %cond5435 = icmp ne i32 %streq5431, 0
+  %cond5436 = icmp ne i32 %streq5434, 0
+  %logic5437 = or i1 %cond5435, %cond5436
+  %cond5438 = icmp ne i32 %streq5428, 0
+  %logic5439 = and i1 %cond5438, %logic5437
+  br i1 %logic5439, label %if_then1866, label %if_else1867
 
 if_then1866:
-  %cv_val5387 = load ptr, ptr %cv5371
-  %concat5388 = call ptr @ofs_str_concat(ptr @str.233, ptr %cv_val5387)
-  %concat5389 = call ptr @ofs_str_concat(ptr %concat5388, ptr @str.263)
-  %value_val5390 = load ptr, ptr %value.addr
-  %concat5391 = call ptr @ofs_str_concat(ptr %concat5389, ptr %value_val5390)
-  %concat5392 = call ptr @ofs_str_concat(ptr %concat5391, ptr @str.264)
-  %to_type_val5393 = load ptr, ptr %to_type.addr
-  %call5394 = call ptr @llvmgen__llvm_type(ptr %to_type_val5393)
-  %concat5395 = call ptr @ofs_str_concat(ptr %concat5392, ptr %call5394)
-  call void @cg_emit(ptr %concat5395)
+  %cv_val5440 = load ptr, ptr %cv5424
+  %concat5441 = call ptr @ofs_str_concat(ptr @str.233, ptr %cv_val5440)
+  %concat5442 = call ptr @ofs_str_concat(ptr %concat5441, ptr @str.263)
+  %value_val5443 = load ptr, ptr %value.addr
+  %concat5444 = call ptr @ofs_str_concat(ptr %concat5442, ptr %value_val5443)
+  %concat5445 = call ptr @ofs_str_concat(ptr %concat5444, ptr @str.264)
+  %to_type_val5446 = load ptr, ptr %to_type.addr
+  %call5447 = call ptr @llvmgen__llvm_type(ptr %to_type_val5446)
+  %concat5448 = call ptr @ofs_str_concat(ptr %concat5445, ptr %call5447)
+  call void @cg_emit(ptr %concat5448)
   br label %if_end1868
 
 if_else1867:
-  %from_type_val5396 = load ptr, ptr %from_type.addr
-  %call5397 = call ptr @llvmgen__llvm_type(ptr %from_type_val5396)
-  %streq5398 = call i32 @ofs_str_eq(ptr %call5397, ptr @str.242)
-  %to_type_val5399 = load ptr, ptr %to_type.addr
-  %call5400 = call ptr @llvmgen__llvm_type(ptr %to_type_val5399)
-  %streq5401 = call i32 @ofs_str_eq(ptr %call5400, ptr @str.190)
-  %to_type_val5402 = load ptr, ptr %to_type.addr
-  %call5403 = call ptr @llvmgen__llvm_type(ptr %to_type_val5402)
-  %streq5404 = call i32 @ofs_str_eq(ptr %call5403, ptr @str.244)
-  %cond5405 = icmp ne i32 %streq5401, 0
-  %cond5406 = icmp ne i32 %streq5404, 0
-  %logic5407 = or i1 %cond5405, %cond5406
-  %cond5408 = icmp ne i32 %streq5398, 0
-  %logic5409 = and i1 %cond5408, %logic5407
-  br i1 %logic5409, label %if_then1869, label %if_else1870
+  %from_type_val5449 = load ptr, ptr %from_type.addr
+  %call5450 = call ptr @llvmgen__llvm_type(ptr %from_type_val5449)
+  %streq5451 = call i32 @ofs_str_eq(ptr %call5450, ptr @str.242)
+  %to_type_val5452 = load ptr, ptr %to_type.addr
+  %call5453 = call ptr @llvmgen__llvm_type(ptr %to_type_val5452)
+  %streq5454 = call i32 @ofs_str_eq(ptr %call5453, ptr @str.190)
+  %to_type_val5455 = load ptr, ptr %to_type.addr
+  %call5456 = call ptr @llvmgen__llvm_type(ptr %to_type_val5455)
+  %streq5457 = call i32 @ofs_str_eq(ptr %call5456, ptr @str.244)
+  %cond5458 = icmp ne i32 %streq5454, 0
+  %cond5459 = icmp ne i32 %streq5457, 0
+  %logic5460 = or i1 %cond5458, %cond5459
+  %cond5461 = icmp ne i32 %streq5451, 0
+  %logic5462 = and i1 %cond5461, %logic5460
+  br i1 %logic5462, label %if_then1869, label %if_else1870
 
 if_then1869:
-  %cv_val5410 = load ptr, ptr %cv5371
-  %concat5411 = call ptr @ofs_str_concat(ptr @str.233, ptr %cv_val5410)
-  %concat5412 = call ptr @ofs_str_concat(ptr %concat5411, ptr @str.265)
-  %value_val5413 = load ptr, ptr %value.addr
-  %concat5414 = call ptr @ofs_str_concat(ptr %concat5412, ptr %value_val5413)
-  %concat5415 = call ptr @ofs_str_concat(ptr %concat5414, ptr @str.264)
-  %to_type_val5416 = load ptr, ptr %to_type.addr
-  %call5417 = call ptr @llvmgen__llvm_type(ptr %to_type_val5416)
-  %concat5418 = call ptr @ofs_str_concat(ptr %concat5415, ptr %call5417)
-  call void @cg_emit(ptr %concat5418)
+  %cv_val5463 = load ptr, ptr %cv5424
+  %concat5464 = call ptr @ofs_str_concat(ptr @str.233, ptr %cv_val5463)
+  %concat5465 = call ptr @ofs_str_concat(ptr %concat5464, ptr @str.265)
+  %value_val5466 = load ptr, ptr %value.addr
+  %concat5467 = call ptr @ofs_str_concat(ptr %concat5465, ptr %value_val5466)
+  %concat5468 = call ptr @ofs_str_concat(ptr %concat5467, ptr @str.264)
+  %to_type_val5469 = load ptr, ptr %to_type.addr
+  %call5470 = call ptr @llvmgen__llvm_type(ptr %to_type_val5469)
+  %concat5471 = call ptr @ofs_str_concat(ptr %concat5468, ptr %call5470)
+  call void @cg_emit(ptr %concat5471)
   br label %if_end1871
 
 if_else1870:
-  %from_type_val5419 = load ptr, ptr %from_type.addr
-  %call5420 = call ptr @llvmgen__llvm_type(ptr %from_type_val5419)
-  %streq5421 = call i32 @ofs_str_eq(ptr %call5420, ptr @str.190)
-  %to_type_val5422 = load ptr, ptr %to_type.addr
-  %call5423 = call ptr @llvmgen__llvm_type(ptr %to_type_val5422)
-  %streq5424 = call i32 @ofs_str_eq(ptr %call5423, ptr @str.244)
-  %cond5425 = icmp ne i32 %streq5421, 0
-  %cond5426 = icmp ne i32 %streq5424, 0
-  %logic5427 = and i1 %cond5425, %cond5426
-  br i1 %logic5427, label %if_then1872, label %if_else1873
+  %from_type_val5472 = load ptr, ptr %from_type.addr
+  %call5473 = call ptr @llvmgen__llvm_type(ptr %from_type_val5472)
+  %streq5474 = call i32 @ofs_str_eq(ptr %call5473, ptr @str.190)
+  %to_type_val5475 = load ptr, ptr %to_type.addr
+  %call5476 = call ptr @llvmgen__llvm_type(ptr %to_type_val5475)
+  %streq5477 = call i32 @ofs_str_eq(ptr %call5476, ptr @str.244)
+  %cond5478 = icmp ne i32 %streq5474, 0
+  %cond5479 = icmp ne i32 %streq5477, 0
+  %logic5480 = and i1 %cond5478, %cond5479
+  br i1 %logic5480, label %if_then1872, label %if_else1873
 
 if_then1872:
-  %cv_val5428 = load ptr, ptr %cv5371
-  %concat5429 = call ptr @ofs_str_concat(ptr @str.233, ptr %cv_val5428)
-  %concat5430 = call ptr @ofs_str_concat(ptr %concat5429, ptr @str.255)
-  %value_val5431 = load ptr, ptr %value.addr
-  %concat5432 = call ptr @ofs_str_concat(ptr %concat5430, ptr %value_val5431)
-  %concat5433 = call ptr @ofs_str_concat(ptr %concat5432, ptr @str.256)
-  call void @cg_emit(ptr %concat5433)
+  %cv_val5481 = load ptr, ptr %cv5424
+  %concat5482 = call ptr @ofs_str_concat(ptr @str.233, ptr %cv_val5481)
+  %concat5483 = call ptr @ofs_str_concat(ptr %concat5482, ptr @str.255)
+  %value_val5484 = load ptr, ptr %value.addr
+  %concat5485 = call ptr @ofs_str_concat(ptr %concat5483, ptr %value_val5484)
+  %concat5486 = call ptr @ofs_str_concat(ptr %concat5485, ptr @str.256)
+  call void @cg_emit(ptr %concat5486)
   br label %if_end1874
 
 if_else1873:
-  %from_type_val5434 = load ptr, ptr %from_type.addr
-  %call5435 = call ptr @llvmgen__llvm_type(ptr %from_type_val5434)
-  %streq5436 = call i32 @ofs_str_eq(ptr %call5435, ptr @str.266)
-  %cond5437 = icmp ne i32 %streq5436, 0
-  br i1 %cond5437, label %if_then1875, label %if_else1876
+  %from_type_val5487 = load ptr, ptr %from_type.addr
+  %call5488 = call ptr @llvmgen__llvm_type(ptr %from_type_val5487)
+  %streq5489 = call i32 @ofs_str_eq(ptr %call5488, ptr @str.266)
+  %cond5490 = icmp ne i32 %streq5489, 0
+  br i1 %cond5490, label %if_then1875, label %if_else1876
 
 if_then1875:
-  %cv_val5438 = load ptr, ptr %cv5371
-  %concat5439 = call ptr @ofs_str_concat(ptr @str.233, ptr %cv_val5438)
-  %concat5440 = call ptr @ofs_str_concat(ptr %concat5439, ptr @str.253)
-  %value_val5441 = load ptr, ptr %value.addr
-  %concat5442 = call ptr @ofs_str_concat(ptr %concat5440, ptr %value_val5441)
-  %concat5443 = call ptr @ofs_str_concat(ptr %concat5442, ptr @str.264)
-  %to_type_val5444 = load ptr, ptr %to_type.addr
-  %call5445 = call ptr @llvmgen__llvm_type(ptr %to_type_val5444)
-  %concat5446 = call ptr @ofs_str_concat(ptr %concat5443, ptr %call5445)
-  call void @cg_emit(ptr %concat5446)
+  %cv_val5491 = load ptr, ptr %cv5424
+  %concat5492 = call ptr @ofs_str_concat(ptr @str.233, ptr %cv_val5491)
+  %concat5493 = call ptr @ofs_str_concat(ptr %concat5492, ptr @str.253)
+  %value_val5494 = load ptr, ptr %value.addr
+  %concat5495 = call ptr @ofs_str_concat(ptr %concat5493, ptr %value_val5494)
+  %concat5496 = call ptr @ofs_str_concat(ptr %concat5495, ptr @str.264)
+  %to_type_val5497 = load ptr, ptr %to_type.addr
+  %call5498 = call ptr @llvmgen__llvm_type(ptr %to_type_val5497)
+  %concat5499 = call ptr @ofs_str_concat(ptr %concat5496, ptr %call5498)
+  call void @cg_emit(ptr %concat5499)
   br label %if_end1877
 
 if_else1876:
-  %cv_val5447 = load ptr, ptr %cv5371
-  %concat5448 = call ptr @ofs_str_concat(ptr @str.233, ptr %cv_val5447)
-  %concat5449 = call ptr @ofs_str_concat(ptr %concat5448, ptr @str.267)
-  %from_type_val5450 = load ptr, ptr %from_type.addr
-  %call5451 = call ptr @llvmgen__llvm_type(ptr %from_type_val5450)
-  %concat5452 = call ptr @ofs_str_concat(ptr %concat5449, ptr %call5451)
-  %concat5453 = call ptr @ofs_str_concat(ptr %concat5452, ptr @str.216)
-  %value_val5454 = load ptr, ptr %value.addr
-  %concat5455 = call ptr @ofs_str_concat(ptr %concat5453, ptr %value_val5454)
-  %concat5456 = call ptr @ofs_str_concat(ptr %concat5455, ptr @str.264)
-  %to_type_val5457 = load ptr, ptr %to_type.addr
-  %call5458 = call ptr @llvmgen__llvm_type(ptr %to_type_val5457)
-  %concat5459 = call ptr @ofs_str_concat(ptr %concat5456, ptr %call5458)
-  call void @cg_emit(ptr %concat5459)
+  %cv_val5500 = load ptr, ptr %cv5424
+  %concat5501 = call ptr @ofs_str_concat(ptr @str.233, ptr %cv_val5500)
+  %concat5502 = call ptr @ofs_str_concat(ptr %concat5501, ptr @str.267)
+  %from_type_val5503 = load ptr, ptr %from_type.addr
+  %call5504 = call ptr @llvmgen__llvm_type(ptr %from_type_val5503)
+  %concat5505 = call ptr @ofs_str_concat(ptr %concat5502, ptr %call5504)
+  %concat5506 = call ptr @ofs_str_concat(ptr %concat5505, ptr @str.216)
+  %value_val5507 = load ptr, ptr %value.addr
+  %concat5508 = call ptr @ofs_str_concat(ptr %concat5506, ptr %value_val5507)
+  %concat5509 = call ptr @ofs_str_concat(ptr %concat5508, ptr @str.264)
+  %to_type_val5510 = load ptr, ptr %to_type.addr
+  %call5511 = call ptr @llvmgen__llvm_type(ptr %to_type_val5510)
+  %concat5512 = call ptr @ofs_str_concat(ptr %concat5509, ptr %call5511)
+  call void @cg_emit(ptr %concat5512)
   br label %if_end1877
 
 if_end1877:
@@ -13654,56 +13736,56 @@ if_end1871:
   br label %if_end1868
 
 if_end1868:
-  %cv_val5460 = load ptr, ptr %cv5371
-  ret ptr %cv_val5460
+  %cv_val5513 = load ptr, ptr %cv5424
+  ret ptr %cv_val5513
 
 if_else1864:
   br label %if_end1865
 
 if_end1865:
-  %from_type_val5461 = load ptr, ptr %from_type.addr
-  %streq5462 = call i32 @ofs_str_eq(ptr %from_type_val5461, ptr @str.181)
-  %to_type_val5463 = load ptr, ptr %to_type.addr
-  %streq5464 = call i32 @ofs_str_eq(ptr %to_type_val5463, ptr @str.183)
-  %cond5465 = icmp ne i32 %streq5462, 0
-  %cond5466 = icmp ne i32 %streq5464, 0
-  %logic5467 = and i1 %cond5465, %cond5466
-  br i1 %logic5467, label %if_then1878, label %if_else1879
+  %from_type_val5514 = load ptr, ptr %from_type.addr
+  %streq5515 = call i32 @ofs_str_eq(ptr %from_type_val5514, ptr @str.181)
+  %to_type_val5516 = load ptr, ptr %to_type.addr
+  %streq5517 = call i32 @ofs_str_eq(ptr %to_type_val5516, ptr @str.183)
+  %cond5518 = icmp ne i32 %streq5515, 0
+  %cond5519 = icmp ne i32 %streq5517, 0
+  %logic5520 = and i1 %cond5518, %cond5519
+  br i1 %logic5520, label %if_then1878, label %if_else1879
 
 if_then1878:
-  %s5468 = alloca ptr, align 8
-  %call5469 = call ptr @llvmgen__next_tmp(ptr @str.268)
-  store ptr %call5469, ptr %s5468
-  %s_val5470 = load ptr, ptr %s5468
-  %concat5471 = call ptr @ofs_str_concat(ptr @str.233, ptr %s_val5470)
-  %concat5472 = call ptr @ofs_str_concat(ptr %concat5471, ptr @str.269)
-  %value_val5473 = load ptr, ptr %value.addr
-  %concat5474 = call ptr @ofs_str_concat(ptr %concat5472, ptr %value_val5473)
-  %concat5475 = call ptr @ofs_str_concat(ptr %concat5474, ptr @str.125)
-  call void @cg_emit(ptr %concat5475)
-  %s_val5476 = load ptr, ptr %s5468
-  ret ptr %s_val5476
+  %s5521 = alloca ptr, align 8
+  %call5522 = call ptr @llvmgen__next_tmp(ptr @str.268)
+  store ptr %call5522, ptr %s5521
+  %s_val5523 = load ptr, ptr %s5521
+  %concat5524 = call ptr @ofs_str_concat(ptr @str.233, ptr %s_val5523)
+  %concat5525 = call ptr @ofs_str_concat(ptr %concat5524, ptr @str.269)
+  %value_val5526 = load ptr, ptr %value.addr
+  %concat5527 = call ptr @ofs_str_concat(ptr %concat5525, ptr %value_val5526)
+  %concat5528 = call ptr @ofs_str_concat(ptr %concat5527, ptr @str.125)
+  call void @cg_emit(ptr %concat5528)
+  %s_val5529 = load ptr, ptr %s5521
+  ret ptr %s_val5529
 
 if_else1879:
   br label %if_end1880
 
 if_end1880:
-  %from_type_val5477 = load ptr, ptr %from_type.addr
-  %streq5478 = call i32 @ofs_str_eq(ptr %from_type_val5477, ptr @str.40)
-  %to_type_val5479 = load ptr, ptr %to_type.addr
-  %streq5480 = call i32 @ofs_str_eq(ptr %to_type_val5479, ptr @str.183)
-  %to_type_val5481 = load ptr, ptr %to_type.addr
-  %streq5482 = call i32 @ofs_str_eq(ptr %to_type_val5481, ptr @str.144)
-  %cond5483 = icmp ne i32 %streq5480, 0
-  %cond5484 = icmp ne i32 %streq5482, 0
-  %logic5485 = or i1 %cond5483, %cond5484
-  %to_type_val5486 = load ptr, ptr %to_type.addr
-  %call5487 = call i32 @llvmgen__is_named_type(ptr %to_type_val5486)
-  %cond5488 = icmp ne i32 %call5487, 0
-  %logic5489 = or i1 %logic5485, %cond5488
-  %cond5490 = icmp ne i32 %streq5478, 0
-  %logic5491 = and i1 %cond5490, %logic5489
-  br i1 %logic5491, label %if_then1881, label %if_else1882
+  %from_type_val5530 = load ptr, ptr %from_type.addr
+  %streq5531 = call i32 @ofs_str_eq(ptr %from_type_val5530, ptr @str.40)
+  %to_type_val5532 = load ptr, ptr %to_type.addr
+  %streq5533 = call i32 @ofs_str_eq(ptr %to_type_val5532, ptr @str.183)
+  %to_type_val5534 = load ptr, ptr %to_type.addr
+  %streq5535 = call i32 @ofs_str_eq(ptr %to_type_val5534, ptr @str.144)
+  %cond5536 = icmp ne i32 %streq5533, 0
+  %cond5537 = icmp ne i32 %streq5535, 0
+  %logic5538 = or i1 %cond5536, %cond5537
+  %to_type_val5539 = load ptr, ptr %to_type.addr
+  %call5540 = call i32 @llvmgen__is_named_type(ptr %to_type_val5539)
+  %cond5541 = icmp ne i32 %call5540, 0
+  %logic5542 = or i1 %logic5538, %cond5541
+  %cond5543 = icmp ne i32 %streq5531, 0
+  %logic5544 = and i1 %cond5543, %logic5542
+  br i1 %logic5544, label %if_then1881, label %if_else1882
 
 if_then1881:
   ret ptr @str.40
@@ -13712,8 +13794,8 @@ if_else1882:
   br label %if_end1883
 
 if_end1883:
-  %value_val5492 = load ptr, ptr %value.addr
-  ret ptr %value_val5492
+  %value_val5545 = load ptr, ptr %value.addr
+  ret ptr %value_val5545
 }
 
 define i32 @llvmgen__is_call_name(i64 %id, ptr %name) {
@@ -13722,9 +13804,9 @@ entry:
   store i64 %id, ptr %id.addr
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %id_val5493 = load i64, ptr %id.addr
-  %cmp5494 = icmp slt i64 %id_val5493, 0
-  br i1 %cmp5494, label %if_then1884, label %if_else1885
+  %id_val5546 = load i64, ptr %id.addr
+  %cmp5547 = icmp slt i64 %id_val5546, 0
+  br i1 %cmp5547, label %if_then1884, label %if_else1885
 
 if_then1884:
   ret i32 0
@@ -13733,16 +13815,16 @@ if_else1885:
   br label %if_end1886
 
 if_end1886:
-  %obj5496 = call ptr @ofs_alloc(i64 4096)
-  %id_val5497 = load i64, ptr %id.addr
-  %call5498 = call ptr @node_get(i64 %id_val5497)
-  %named_val5499 = load %Node, ptr %call5498
-  store %Node %named_val5499, ptr %obj5496
-  %field_ptr5500 = getelementptr inbounds %Node, ptr %obj5496, i32 0, i32 0
-  %field5501 = load i64, ptr %field_ptr5500
-  %NK_CALL_val5502 = load i64, ptr @NK_CALL
-  %cmp5503 = icmp ne i64 %field5501, %NK_CALL_val5502
-  br i1 %cmp5503, label %if_then1887, label %if_else1888
+  %obj5549 = call ptr @ofs_alloc(i64 4096)
+  %id_val5550 = load i64, ptr %id.addr
+  %call5551 = call ptr @node_get(i64 %id_val5550)
+  %named_val5552 = load %Node, ptr %call5551
+  store %Node %named_val5552, ptr %obj5549
+  %field_ptr5553 = getelementptr inbounds %Node, ptr %obj5549, i32 0, i32 0
+  %field5554 = load i64, ptr %field_ptr5553
+  %NK_CALL_val5555 = load i64, ptr @NK_CALL
+  %cmp5556 = icmp ne i64 %field5554, %NK_CALL_val5555
+  br i1 %cmp5556, label %if_then1887, label %if_else1888
 
 if_then1887:
   ret i32 0
@@ -13751,11 +13833,11 @@ if_else1888:
   br label %if_end1889
 
 if_end1889:
-  %field_ptr5504 = getelementptr inbounds %Node, ptr %obj5496, i32 0, i32 1
-  %field5505 = load ptr, ptr %field_ptr5504
-  %name_val5506 = load ptr, ptr %name.addr
-  %streq5507 = call i32 @ofs_str_eq(ptr %field5505, ptr %name_val5506)
-  ret i32 %streq5507
+  %field_ptr5557 = getelementptr inbounds %Node, ptr %obj5549, i32 0, i32 1
+  %field5558 = load ptr, ptr %field_ptr5557
+  %name_val5559 = load ptr, ptr %name.addr
+  %streq5560 = call i32 @ofs_str_eq(ptr %field5558, ptr %name_val5559)
+  ret i32 %streq5560
 }
 
 define void @llvmgen__emit_array_get(i64 %id, ptr %expected_type) {
@@ -13764,108 +13846,108 @@ entry:
   store i64 %id, ptr %id.addr
   %expected_type.addr = alloca ptr, align 8
   store ptr %expected_type, ptr %expected_type.addr
-  %obj5509 = call ptr @ofs_alloc(i64 4096)
-  %id_val5510 = load i64, ptr %id.addr
-  %call5511 = call ptr @node_get(i64 %id_val5510)
-  %named_val5512 = load %Node, ptr %call5511
-  store %Node %named_val5512, ptr %obj5509
-  %arr_id5513 = alloca i64, align 8
-  %id_val5514 = load i64, ptr %id.addr
-  %call5515 = call i64 @node_get_extra(i64 %id_val5514, i64 0)
-  store i64 %call5515, ptr %arr_id5513
-  %idx_id5516 = alloca i64, align 8
-  %id_val5517 = load i64, ptr %id.addr
-  %call5518 = call i64 @node_get_extra(i64 %id_val5517, i64 1)
-  store i64 %call5518, ptr %idx_id5516
-  %field_ptr5519 = getelementptr inbounds %Node, ptr %obj5509, i32 0, i32 0
-  %field5520 = load i64, ptr %field_ptr5519
-  %NK_INDEX_val5521 = load i64, ptr @NK_INDEX
-  %cmp5522 = icmp eq i64 %field5520, %NK_INDEX_val5521
-  br i1 %cmp5522, label %if_then1890, label %if_else1891
+  %obj5562 = call ptr @ofs_alloc(i64 4096)
+  %id_val5563 = load i64, ptr %id.addr
+  %call5564 = call ptr @node_get(i64 %id_val5563)
+  %named_val5565 = load %Node, ptr %call5564
+  store %Node %named_val5565, ptr %obj5562
+  %arr_id5566 = alloca i64, align 8
+  %id_val5567 = load i64, ptr %id.addr
+  %call5568 = call i64 @node_get_extra(i64 %id_val5567, i64 0)
+  store i64 %call5568, ptr %arr_id5566
+  %idx_id5569 = alloca i64, align 8
+  %id_val5570 = load i64, ptr %id.addr
+  %call5571 = call i64 @node_get_extra(i64 %id_val5570, i64 1)
+  store i64 %call5571, ptr %idx_id5569
+  %field_ptr5572 = getelementptr inbounds %Node, ptr %obj5562, i32 0, i32 0
+  %field5573 = load i64, ptr %field_ptr5572
+  %NK_INDEX_val5574 = load i64, ptr @NK_INDEX
+  %cmp5575 = icmp eq i64 %field5573, %NK_INDEX_val5574
+  br i1 %cmp5575, label %if_then1890, label %if_else1891
 
 if_then1890:
-  %field_ptr5523 = getelementptr inbounds %Node, ptr %obj5509, i32 0, i32 5
-  %field5524 = load i64, ptr %field_ptr5523
-  store i64 %field5524, ptr %arr_id5513
-  %field_ptr5525 = getelementptr inbounds %Node, ptr %obj5509, i32 0, i32 6
-  %field5526 = load i64, ptr %field_ptr5525
-  store i64 %field5526, ptr %idx_id5516
+  %field_ptr5576 = getelementptr inbounds %Node, ptr %obj5562, i32 0, i32 5
+  %field5577 = load i64, ptr %field_ptr5576
+  store i64 %field5577, ptr %arr_id5566
+  %field_ptr5578 = getelementptr inbounds %Node, ptr %obj5562, i32 0, i32 6
+  %field5579 = load i64, ptr %field_ptr5578
+  store i64 %field5579, ptr %idx_id5569
   br label %if_end1892
 
 if_else1891:
   br label %if_end1892
 
 if_end1892:
-  %arr_id_val5527 = load i64, ptr %arr_id5513
-  call void @llvmgen__emit_expr(i64 %arr_id_val5527)
-  %arr5528 = alloca ptr, align 8
-  %llvmgen___expr_val_val5529 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val5529, ptr %arr5528
-  %idx_id_val5530 = load i64, ptr %idx_id5516
-  call void @llvmgen__emit_expr(i64 %idx_id_val5530)
-  %idx5531 = alloca ptr, align 8
-  %llvmgen___expr_val_val5532 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val5532, ptr %idx5531
-  %raw5533 = alloca ptr, align 8
-  %call5534 = call ptr @llvmgen__next_tmp(ptr @str.270)
-  store ptr %call5534, ptr %raw5533
-  %raw_val5535 = load ptr, ptr %raw5533
-  %concat5536 = call ptr @ofs_str_concat(ptr @str.233, ptr %raw_val5535)
-  %concat5537 = call ptr @ofs_str_concat(ptr %concat5536, ptr @str.271)
-  %arr_val5538 = load ptr, ptr %arr5528
-  %concat5539 = call ptr @ofs_str_concat(ptr %concat5537, ptr %arr_val5538)
-  %concat5540 = call ptr @ofs_str_concat(ptr %concat5539, ptr @str.272)
-  %idx_val5541 = load ptr, ptr %idx5531
-  %concat5542 = call ptr @ofs_str_concat(ptr %concat5540, ptr %idx_val5541)
-  %concat5543 = call ptr @ofs_str_concat(ptr %concat5542, ptr @str.125)
-  call void @cg_emit(ptr %concat5543)
-  %expected_type_val5544 = load ptr, ptr %expected_type.addr
-  %call5545 = call i32 @llvmgen__is_named_type(ptr %expected_type_val5544)
-  %expected_type_val5546 = load ptr, ptr %expected_type.addr
-  %streq5547 = call i32 @ofs_str_eq(ptr %expected_type_val5546, ptr @str.183)
-  %cond5548 = icmp ne i32 %call5545, 0
-  %cond5549 = icmp ne i32 %streq5547, 0
-  %logic5550 = or i1 %cond5548, %cond5549
-  %expected_type_val5551 = load ptr, ptr %expected_type.addr
-  %streq5552 = call i32 @ofs_str_eq(ptr %expected_type_val5551, ptr @str.144)
-  %cond5553 = icmp ne i32 %streq5552, 0
-  %logic5554 = or i1 %logic5550, %cond5553
-  br i1 %logic5554, label %if_then1893, label %if_else1894
+  %arr_id_val5580 = load i64, ptr %arr_id5566
+  call void @llvmgen__emit_expr(i64 %arr_id_val5580)
+  %arr5581 = alloca ptr, align 8
+  %llvmgen___expr_val_val5582 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val5582, ptr %arr5581
+  %idx_id_val5583 = load i64, ptr %idx_id5569
+  call void @llvmgen__emit_expr(i64 %idx_id_val5583)
+  %idx5584 = alloca ptr, align 8
+  %llvmgen___expr_val_val5585 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val5585, ptr %idx5584
+  %raw5586 = alloca ptr, align 8
+  %call5587 = call ptr @llvmgen__next_tmp(ptr @str.270)
+  store ptr %call5587, ptr %raw5586
+  %raw_val5588 = load ptr, ptr %raw5586
+  %concat5589 = call ptr @ofs_str_concat(ptr @str.233, ptr %raw_val5588)
+  %concat5590 = call ptr @ofs_str_concat(ptr %concat5589, ptr @str.271)
+  %arr_val5591 = load ptr, ptr %arr5581
+  %concat5592 = call ptr @ofs_str_concat(ptr %concat5590, ptr %arr_val5591)
+  %concat5593 = call ptr @ofs_str_concat(ptr %concat5592, ptr @str.272)
+  %idx_val5594 = load ptr, ptr %idx5584
+  %concat5595 = call ptr @ofs_str_concat(ptr %concat5593, ptr %idx_val5594)
+  %concat5596 = call ptr @ofs_str_concat(ptr %concat5595, ptr @str.125)
+  call void @cg_emit(ptr %concat5596)
+  %expected_type_val5597 = load ptr, ptr %expected_type.addr
+  %call5598 = call i32 @llvmgen__is_named_type(ptr %expected_type_val5597)
+  %expected_type_val5599 = load ptr, ptr %expected_type.addr
+  %streq5600 = call i32 @ofs_str_eq(ptr %expected_type_val5599, ptr @str.183)
+  %cond5601 = icmp ne i32 %call5598, 0
+  %cond5602 = icmp ne i32 %streq5600, 0
+  %logic5603 = or i1 %cond5601, %cond5602
+  %expected_type_val5604 = load ptr, ptr %expected_type.addr
+  %streq5605 = call i32 @ofs_str_eq(ptr %expected_type_val5604, ptr @str.144)
+  %cond5606 = icmp ne i32 %streq5605, 0
+  %logic5607 = or i1 %logic5603, %cond5606
+  br i1 %logic5607, label %if_then1893, label %if_else1894
 
 if_then1893:
-  %loaded_ptr5555 = alloca ptr, align 8
-  %call5556 = call ptr @llvmgen__next_tmp(ptr @str.273)
-  store ptr %call5556, ptr %loaded_ptr5555
-  %loaded_ptr_val5557 = load ptr, ptr %loaded_ptr5555
-  %concat5558 = call ptr @ofs_str_concat(ptr @str.233, ptr %loaded_ptr_val5557)
-  %concat5559 = call ptr @ofs_str_concat(ptr %concat5558, ptr @str.274)
-  %raw_val5560 = load ptr, ptr %raw5533
-  %concat5561 = call ptr @ofs_str_concat(ptr %concat5559, ptr %raw_val5560)
-  call void @cg_emit(ptr %concat5561)
-  %loaded_ptr_val5562 = load ptr, ptr %loaded_ptr5555
-  store ptr %loaded_ptr_val5562, ptr @llvmgen___expr_val
-  %expected_type_val5563 = load ptr, ptr %expected_type.addr
-  store ptr %expected_type_val5563, ptr @llvmgen___expr_type
+  %loaded_ptr5608 = alloca ptr, align 8
+  %call5609 = call ptr @llvmgen__next_tmp(ptr @str.273)
+  store ptr %call5609, ptr %loaded_ptr5608
+  %loaded_ptr_val5610 = load ptr, ptr %loaded_ptr5608
+  %concat5611 = call ptr @ofs_str_concat(ptr @str.233, ptr %loaded_ptr_val5610)
+  %concat5612 = call ptr @ofs_str_concat(ptr %concat5611, ptr @str.274)
+  %raw_val5613 = load ptr, ptr %raw5586
+  %concat5614 = call ptr @ofs_str_concat(ptr %concat5612, ptr %raw_val5613)
+  call void @cg_emit(ptr %concat5614)
+  %loaded_ptr_val5615 = load ptr, ptr %loaded_ptr5608
+  store ptr %loaded_ptr_val5615, ptr @llvmgen___expr_val
+  %expected_type_val5616 = load ptr, ptr %expected_type.addr
+  store ptr %expected_type_val5616, ptr @llvmgen___expr_type
   br label %if_end1895
 
 if_else1894:
-  %loaded5564 = alloca ptr, align 8
-  %call5565 = call ptr @llvmgen__next_tmp(ptr @str.273)
-  store ptr %call5565, ptr %loaded5564
-  %loaded_val5566 = load ptr, ptr %loaded5564
-  %concat5567 = call ptr @ofs_str_concat(ptr @str.233, ptr %loaded_val5566)
-  %concat5568 = call ptr @ofs_str_concat(ptr %concat5567, ptr @str.275)
-  %expected_type_val5569 = load ptr, ptr %expected_type.addr
-  %call5570 = call ptr @llvmgen__llvm_type(ptr %expected_type_val5569)
-  %concat5571 = call ptr @ofs_str_concat(ptr %concat5568, ptr %call5570)
-  %concat5572 = call ptr @ofs_str_concat(ptr %concat5571, ptr @str.276)
-  %raw_val5573 = load ptr, ptr %raw5533
-  %concat5574 = call ptr @ofs_str_concat(ptr %concat5572, ptr %raw_val5573)
-  call void @cg_emit(ptr %concat5574)
-  %loaded_val5575 = load ptr, ptr %loaded5564
-  store ptr %loaded_val5575, ptr @llvmgen___expr_val
-  %expected_type_val5576 = load ptr, ptr %expected_type.addr
-  store ptr %expected_type_val5576, ptr @llvmgen___expr_type
+  %loaded5617 = alloca ptr, align 8
+  %call5618 = call ptr @llvmgen__next_tmp(ptr @str.273)
+  store ptr %call5618, ptr %loaded5617
+  %loaded_val5619 = load ptr, ptr %loaded5617
+  %concat5620 = call ptr @ofs_str_concat(ptr @str.233, ptr %loaded_val5619)
+  %concat5621 = call ptr @ofs_str_concat(ptr %concat5620, ptr @str.275)
+  %expected_type_val5622 = load ptr, ptr %expected_type.addr
+  %call5623 = call ptr @llvmgen__llvm_type(ptr %expected_type_val5622)
+  %concat5624 = call ptr @ofs_str_concat(ptr %concat5621, ptr %call5623)
+  %concat5625 = call ptr @ofs_str_concat(ptr %concat5624, ptr @str.276)
+  %raw_val5626 = load ptr, ptr %raw5586
+  %concat5627 = call ptr @ofs_str_concat(ptr %concat5625, ptr %raw_val5626)
+  call void @cg_emit(ptr %concat5627)
+  %loaded_val5628 = load ptr, ptr %loaded5617
+  store ptr %loaded_val5628, ptr @llvmgen___expr_val
+  %expected_type_val5629 = load ptr, ptr %expected_type.addr
+  store ptr %expected_type_val5629, ptr @llvmgen___expr_type
   br label %if_end1895
 
 if_end1895:
@@ -13876,9 +13958,9 @@ define ptr @llvmgen__llvm_escape_byte(i64 %c) {
 entry:
   %c.addr = alloca i64, align 8
   store i64 %c, ptr %c.addr
-  %c_val5577 = load i64, ptr %c.addr
-  %cmp5578 = icmp eq i64 %c_val5577, 10
-  br i1 %cmp5578, label %if_then1896, label %if_else1897
+  %c_val5630 = load i64, ptr %c.addr
+  %cmp5631 = icmp eq i64 %c_val5630, 10
+  br i1 %cmp5631, label %if_then1896, label %if_else1897
 
 if_then1896:
   ret ptr @str.277
@@ -13887,9 +13969,9 @@ if_else1897:
   br label %if_end1898
 
 if_end1898:
-  %c_val5579 = load i64, ptr %c.addr
-  %cmp5580 = icmp eq i64 %c_val5579, 9
-  br i1 %cmp5580, label %if_then1899, label %if_else1900
+  %c_val5632 = load i64, ptr %c.addr
+  %cmp5633 = icmp eq i64 %c_val5632, 9
+  br i1 %cmp5633, label %if_then1899, label %if_else1900
 
 if_then1899:
   ret ptr @str.278
@@ -13898,9 +13980,9 @@ if_else1900:
   br label %if_end1901
 
 if_end1901:
-  %c_val5581 = load i64, ptr %c.addr
-  %cmp5582 = icmp eq i64 %c_val5581, 13
-  br i1 %cmp5582, label %if_then1902, label %if_else1903
+  %c_val5634 = load i64, ptr %c.addr
+  %cmp5635 = icmp eq i64 %c_val5634, 13
+  br i1 %cmp5635, label %if_then1902, label %if_else1903
 
 if_then1902:
   ret ptr @str.279
@@ -13909,9 +13991,9 @@ if_else1903:
   br label %if_end1904
 
 if_end1904:
-  %c_val5583 = load i64, ptr %c.addr
-  %cmp5584 = icmp eq i64 %c_val5583, 34
-  br i1 %cmp5584, label %if_then1905, label %if_else1906
+  %c_val5636 = load i64, ptr %c.addr
+  %cmp5637 = icmp eq i64 %c_val5636, 34
+  br i1 %cmp5637, label %if_then1905, label %if_else1906
 
 if_then1905:
   ret ptr @str.280
@@ -13920,9 +14002,9 @@ if_else1906:
   br label %if_end1907
 
 if_end1907:
-  %c_val5585 = load i64, ptr %c.addr
-  %cmp5586 = icmp eq i64 %c_val5585, 92
-  br i1 %cmp5586, label %if_then1908, label %if_else1909
+  %c_val5638 = load i64, ptr %c.addr
+  %cmp5639 = icmp eq i64 %c_val5638, 92
+  br i1 %cmp5639, label %if_then1908, label %if_else1909
 
 if_then1908:
   ret ptr @str.281
@@ -13931,9 +14013,9 @@ if_else1909:
   br label %if_end1910
 
 if_end1910:
-  %c_val5587 = load i64, ptr %c.addr
-  %cmp5588 = icmp eq i64 %c_val5587, 0
-  br i1 %cmp5588, label %if_then1911, label %if_else1912
+  %c_val5640 = load i64, ptr %c.addr
+  %cmp5641 = icmp eq i64 %c_val5640, 0
+  br i1 %cmp5641, label %if_then1911, label %if_else1912
 
 if_then1911:
   ret ptr @str.282
@@ -13942,160 +14024,163 @@ if_else1912:
   br label %if_end1913
 
 if_end1913:
-  %c_val5589 = load i64, ptr %c.addr
-  %stone_to_str5590 = call ptr @ofs_stone_to_obsidian(i64 %c_val5589)
-  %call5591 = call ptr @ofs_str_substr(ptr %stone_to_str5590, i64 0, i64 0)
-  ret ptr %call5591
+  %c_val5642 = load i64, ptr %c.addr
+  %stone_to_str5643 = call ptr @ofs_stone_to_obsidian(i64 %c_val5642)
+  %call5644 = call ptr @ofs_str_substr(ptr %stone_to_str5643, i64 0, i64 0)
+  ret ptr %call5644
 }
 
 define ptr @llvmgen__llvm_escape_string(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %out5592 = alloca ptr, align 8
-  store ptr @str.63, ptr %out5592
-  %i5593 = alloca i64, align 8
-  store i64 0, ptr %i5593
-  %len5594 = alloca i64, align 8
-  %s_val5595 = load ptr, ptr %s.addr
-  %strlen5596 = call i64 @ofs_str_len(ptr %s_val5595)
-  store i64 %strlen5596, ptr %len5594
+  %out5645 = alloca ptr, align 8
+  store ptr @str.63, ptr %out5645
+  %i5646 = alloca i64, align 8
+  store i64 0, ptr %i5646
+  %len5647 = alloca i64, align 8
+  %s_val5648 = load ptr, ptr %s.addr
+  %strlen5649 = call i64 @ofs_str_len(ptr %s_val5648)
+  store i64 %strlen5649, ptr %len5647
   br label %while_cond1914
 
 while_cond1914:
-  %i_val5597 = load i64, ptr %i5593
-  %len_val5598 = load i64, ptr %len5594
-  %cmp5599 = icmp slt i64 %i_val5597, %len_val5598
-  br i1 %cmp5599, label %while_body1915, label %while_end1916
+  %i_val5650 = load i64, ptr %i5646
+  %len_val5651 = load i64, ptr %len5647
+  %cmp5652 = icmp slt i64 %i_val5650, %len_val5651
+  br i1 %cmp5652, label %while_body1915, label %while_end1916
 
 while_body1915:
-  %c5600 = alloca i64, align 8
-  %s_val5601 = load ptr, ptr %s.addr
-  %i_val5602 = load i64, ptr %i5593
-  %call5603 = call i64 @ofs_str_char_at(ptr %s_val5601, i64 %i_val5602)
-  store i64 %call5603, ptr %c5600
-  %c_val5604 = load i64, ptr %c5600
-  %cmp5605 = icmp eq i64 %c_val5604, 10
-  %c_val5606 = load i64, ptr %c5600
-  %cmp5607 = icmp eq i64 %c_val5606, 9
-  %logic5608 = or i1 %cmp5605, %cmp5607
-  %c_val5609 = load i64, ptr %c5600
-  %cmp5610 = icmp eq i64 %c_val5609, 13
-  %logic5611 = or i1 %logic5608, %cmp5610
-  %c_val5612 = load i64, ptr %c5600
-  %cmp5613 = icmp eq i64 %c_val5612, 34
-  %logic5614 = or i1 %logic5611, %cmp5613
-  %c_val5615 = load i64, ptr %c5600
-  %cmp5616 = icmp eq i64 %c_val5615, 92
-  %logic5617 = or i1 %logic5614, %cmp5616
-  %c_val5618 = load i64, ptr %c5600
-  %cmp5619 = icmp eq i64 %c_val5618, 0
-  %logic5620 = or i1 %logic5617, %cmp5619
-  br i1 %logic5620, label %if_then1917, label %if_else1918
+  %c5653 = alloca i64, align 8
+  %s_val5654 = load ptr, ptr %s.addr
+  %i_val5655 = load i64, ptr %i5646
+  %call5656 = call i64 @ofs_str_char_at(ptr %s_val5654, i64 %i_val5655)
+  store i64 %call5656, ptr %c5653
+  %c_val5657 = load i64, ptr %c5653
+  %cmp5658 = icmp eq i64 %c_val5657, 10
+  %c_val5659 = load i64, ptr %c5653
+  %cmp5660 = icmp eq i64 %c_val5659, 9
+  %logic5661 = or i1 %cmp5658, %cmp5660
+  %c_val5662 = load i64, ptr %c5653
+  %cmp5663 = icmp eq i64 %c_val5662, 13
+  %logic5664 = or i1 %logic5661, %cmp5663
+  %c_val5665 = load i64, ptr %c5653
+  %cmp5666 = icmp eq i64 %c_val5665, 34
+  %logic5667 = or i1 %logic5664, %cmp5666
+  %c_val5668 = load i64, ptr %c5653
+  %cmp5669 = icmp eq i64 %c_val5668, 92
+  %logic5670 = or i1 %logic5667, %cmp5669
+  %c_val5671 = load i64, ptr %c5653
+  %cmp5672 = icmp eq i64 %c_val5671, 0
+  %logic5673 = or i1 %logic5670, %cmp5672
+  br i1 %logic5673, label %if_then1917, label %if_else1918
 
 if_then1917:
-  %out_val5621 = load ptr, ptr %out5592
-  %c_val5622 = load i64, ptr %c5600
-  %call5623 = call ptr @llvmgen__llvm_escape_byte(i64 %c_val5622)
-  %concat5624 = call ptr @ofs_str_concat(ptr %out_val5621, ptr %call5623)
-  store ptr %concat5624, ptr %out5592
+  %out_val5674 = load ptr, ptr %out5645
+  %c_val5675 = load i64, ptr %c5653
+  %call5676 = call ptr @llvmgen__llvm_escape_byte(i64 %c_val5675)
+  %concat5677 = call ptr @ofs_str_concat(ptr %out_val5674, ptr %call5676)
+  store ptr %concat5677, ptr %out5645
   br label %if_end1919
 
 if_else1918:
-  %out_val5625 = load ptr, ptr %out5592
-  %s_val5626 = load ptr, ptr %s.addr
-  %i_val5627 = load i64, ptr %i5593
-  %call5628 = call ptr @ofs_str_substr(ptr %s_val5626, i64 %i_val5627, i64 1)
-  %concat5629 = call ptr @ofs_str_concat(ptr %out_val5625, ptr %call5628)
-  store ptr %concat5629, ptr %out5592
+  %out_val5678 = load ptr, ptr %out5645
+  %s_val5679 = load ptr, ptr %s.addr
+  %i_val5680 = load i64, ptr %i5646
+  %call5681 = call ptr @ofs_str_substr(ptr %s_val5679, i64 %i_val5680, i64 1)
+  %concat5682 = call ptr @ofs_str_concat(ptr %out_val5678, ptr %call5681)
+  store ptr %concat5682, ptr %out5645
   br label %if_end1919
 
 if_end1919:
-  %post_old5630 = load i64, ptr %i5593
-  %post_new5631 = add i64 %post_old5630, 1
-  store i64 %post_new5631, ptr %i5593
+  %post_old5683 = load i64, ptr %i5646
+  %post_new5684 = add i64 %post_old5683, 1
+  store i64 %post_new5684, ptr %i5646
   br label %while_cond1914
 
 while_end1916:
-  %out_val5632 = load ptr, ptr %out5592
-  %concat5633 = call ptr @ofs_str_concat(ptr %out_val5632, ptr @str.282)
-  ret ptr %concat5633
+  %out_val5685 = load ptr, ptr %out5645
+  %concat5686 = call ptr @ofs_str_concat(ptr %out_val5685, ptr @str.282)
+  ret ptr %concat5686
 }
 
 define ptr @llvmgen__string_name_for(ptr %value) {
 entry:
   %value.addr = alloca ptr, align 8
   store ptr %value, ptr %value.addr
-  %i5634 = alloca i64, align 8
-  store i64 0, ptr %i5634
+  %i5687 = alloca i64, align 8
+  store i64 0, ptr %i5687
+  %count5688 = alloca i64, align 8
+  %llvmgen___string_vals_val5689 = load ptr, ptr @llvmgen___string_vals
+  %arr_len5690 = call i64 @ofs_array_len(ptr %llvmgen___string_vals_val5689)
+  store i64 %arr_len5690, ptr %count5688
   br label %while_cond1920
 
 while_cond1920:
-  %i_val5635 = load i64, ptr %i5634
-  %llvmgen___string_vals_val5636 = load ptr, ptr @llvmgen___string_vals
-  %arr_len5637 = call i64 @ofs_array_len(ptr %llvmgen___string_vals_val5636)
-  %cmp5638 = icmp slt i64 %i_val5635, %arr_len5637
-  br i1 %cmp5638, label %while_body1921, label %while_end1922
+  %i_val5691 = load i64, ptr %i5687
+  %count_val5692 = load i64, ptr %count5688
+  %cmp5693 = icmp slt i64 %i_val5691, %count_val5692
+  br i1 %cmp5693, label %while_body1921, label %while_end1922
 
 while_body1921:
-  %v5639 = alloca ptr, align 8
-  %llvmgen___string_vals_val5640 = load ptr, ptr @llvmgen___string_vals
-  %i_val5641 = load i64, ptr %i5634
-  %arr_get5642 = call ptr @ofs_array_get(ptr %llvmgen___string_vals_val5640, i64 %i_val5641)
-  %arr_item5643 = load ptr, ptr %arr_get5642
-  store ptr %arr_item5643, ptr %v5639
-  %v_val5644 = load ptr, ptr %v5639
-  %value_val5645 = load ptr, ptr %value.addr
-  %streq5646 = call i32 @ofs_str_eq(ptr %v_val5644, ptr %value_val5645)
-  %cond5647 = icmp ne i32 %streq5646, 0
-  br i1 %cond5647, label %if_then1923, label %if_else1924
+  %v5694 = alloca ptr, align 8
+  %llvmgen___string_vals_val5695 = load ptr, ptr @llvmgen___string_vals
+  %i_val5696 = load i64, ptr %i5687
+  %arr_get5697 = call ptr @ofs_array_get(ptr %llvmgen___string_vals_val5695, i64 %i_val5696)
+  %arr_item5698 = load ptr, ptr %arr_get5697
+  store ptr %arr_item5698, ptr %v5694
+  %v_val5699 = load ptr, ptr %v5694
+  %value_val5700 = load ptr, ptr %value.addr
+  %streq5701 = call i32 @ofs_str_eq(ptr %v_val5699, ptr %value_val5700)
+  %cond5702 = icmp ne i32 %streq5701, 0
+  br i1 %cond5702, label %if_then1923, label %if_else1924
 
 if_then1923:
-  %llvmgen___string_names_val5648 = load ptr, ptr @llvmgen___string_names
-  %i_val5649 = load i64, ptr %i5634
-  %arr_get5650 = call ptr @ofs_array_get(ptr %llvmgen___string_names_val5648, i64 %i_val5649)
-  %arr_item5651 = load ptr, ptr %arr_get5650
-  ret ptr %arr_item5651
+  %llvmgen___string_names_val5703 = load ptr, ptr @llvmgen___string_names
+  %i_val5704 = load i64, ptr %i5687
+  %arr_get5705 = call ptr @ofs_array_get(ptr %llvmgen___string_names_val5703, i64 %i_val5704)
+  %arr_item5706 = load ptr, ptr %arr_get5705
+  ret ptr %arr_item5706
 
 if_else1924:
   br label %if_end1925
 
 if_end1925:
-  %post_old5652 = load i64, ptr %i5634
-  %post_new5653 = add i64 %post_old5652, 1
-  store i64 %post_new5653, ptr %i5634
+  %post_old5707 = load i64, ptr %i5687
+  %post_new5708 = add i64 %post_old5707, 1
+  store i64 %post_new5708, ptr %i5687
   br label %while_cond1920
 
 while_end1922:
-  %name5654 = alloca ptr, align 8
-  %llvmgen___str_counter_val5655 = load i64, ptr @llvmgen___str_counter
-  %stone_to_str5656 = call ptr @ofs_stone_to_obsidian(i64 %llvmgen___str_counter_val5655)
-  %concat5657 = call ptr @ofs_str_concat(ptr @str.283, ptr %stone_to_str5656)
-  store ptr %concat5657, ptr %name5654
-  %post_old5658 = load i64, ptr @llvmgen___str_counter
-  %post_new5659 = add i64 %post_old5658, 1
-  store i64 %post_new5659, ptr @llvmgen___str_counter
-  %llvmgen___string_vals_val5660 = load ptr, ptr @llvmgen___string_vals
-  %value_val5661 = load ptr, ptr %value.addr
-  %arr_push5662 = alloca ptr, align 8
-  store ptr %value_val5661, ptr %arr_push5662
-  call void @ofs_array_push(ptr %llvmgen___string_vals_val5660, ptr %arr_push5662)
-  %llvmgen___string_names_val5663 = load ptr, ptr @llvmgen___string_names
-  %name_val5664 = load ptr, ptr %name5654
-  %arr_push5665 = alloca ptr, align 8
-  store ptr %name_val5664, ptr %arr_push5665
-  call void @ofs_array_push(ptr %llvmgen___string_names_val5663, ptr %arr_push5665)
-  %name_val5666 = load ptr, ptr %name5654
-  ret ptr %name_val5666
+  %name5709 = alloca ptr, align 8
+  %llvmgen___str_counter_val5710 = load i64, ptr @llvmgen___str_counter
+  %stone_to_str5711 = call ptr @ofs_stone_to_obsidian(i64 %llvmgen___str_counter_val5710)
+  %concat5712 = call ptr @ofs_str_concat(ptr @str.283, ptr %stone_to_str5711)
+  store ptr %concat5712, ptr %name5709
+  %post_old5713 = load i64, ptr @llvmgen___str_counter
+  %post_new5714 = add i64 %post_old5713, 1
+  store i64 %post_new5714, ptr @llvmgen___str_counter
+  %llvmgen___string_vals_val5715 = load ptr, ptr @llvmgen___string_vals
+  %value_val5716 = load ptr, ptr %value.addr
+  %arr_push5717 = alloca ptr, align 8
+  store ptr %value_val5716, ptr %arr_push5717
+  call void @ofs_array_push(ptr %llvmgen___string_vals_val5715, ptr %arr_push5717)
+  %llvmgen___string_names_val5718 = load ptr, ptr @llvmgen___string_names
+  %name_val5719 = load ptr, ptr %name5709
+  %arr_push5720 = alloca ptr, align 8
+  store ptr %name_val5719, ptr %arr_push5720
+  call void @ofs_array_push(ptr %llvmgen___string_names_val5718, ptr %arr_push5720)
+  %name_val5721 = load ptr, ptr %name5709
+  ret ptr %name_val5721
 }
 
 define void @llvmgen__collect_strings(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %id_val5667 = load i64, ptr %id.addr
-  %cmp5668 = icmp slt i64 %id_val5667, 0
-  br i1 %cmp5668, label %if_then1926, label %if_else1927
+  %id_val5722 = load i64, ptr %id.addr
+  %cmp5723 = icmp slt i64 %id_val5722, 0
+  br i1 %cmp5723, label %if_then1926, label %if_else1927
 
 if_then1926:
   ret void
@@ -14104,10 +14189,10 @@ if_else1927:
   br label %if_end1928
 
 if_end1928:
-  %id_val5669 = load i64, ptr %id.addr
-  %call5670 = call i32 @llvmgen__seen_node(i64 %id_val5669)
-  %cond5671 = icmp ne i32 %call5670, 0
-  br i1 %cond5671, label %if_then1929, label %if_else1930
+  %id_val5724 = load i64, ptr %id.addr
+  %call5725 = call i32 @llvmgen__seen_node(i64 %id_val5724)
+  %cond5726 = icmp ne i32 %call5725, 0
+  br i1 %cond5726, label %if_then1929, label %if_else1930
 
 if_then1929:
   ret void
@@ -14116,60 +14201,63 @@ if_else1930:
   br label %if_end1931
 
 if_end1931:
-  %id_val5672 = load i64, ptr %id.addr
-  call void @llvmgen__mark_node(i64 %id_val5672)
-  %obj5674 = call ptr @ofs_alloc(i64 4096)
-  %id_val5675 = load i64, ptr %id.addr
-  %call5676 = call ptr @node_get(i64 %id_val5675)
-  %named_val5677 = load %Node, ptr %call5676
-  store %Node %named_val5677, ptr %obj5674
-  %field_ptr5678 = getelementptr inbounds %Node, ptr %obj5674, i32 0, i32 0
-  %field5679 = load i64, ptr %field_ptr5678
-  %NK_LIT_STRING_val5680 = load i64, ptr @NK_LIT_STRING
-  %cmp5681 = icmp eq i64 %field5679, %NK_LIT_STRING_val5680
-  br i1 %cmp5681, label %if_then1932, label %if_else1933
+  %id_val5727 = load i64, ptr %id.addr
+  call void @llvmgen__mark_node(i64 %id_val5727)
+  %obj5729 = call ptr @ofs_alloc(i64 4096)
+  %id_val5730 = load i64, ptr %id.addr
+  %call5731 = call ptr @node_get(i64 %id_val5730)
+  %named_val5732 = load %Node, ptr %call5731
+  store %Node %named_val5732, ptr %obj5729
+  %field_ptr5733 = getelementptr inbounds %Node, ptr %obj5729, i32 0, i32 0
+  %field5734 = load i64, ptr %field_ptr5733
+  %NK_LIT_STRING_val5735 = load i64, ptr @NK_LIT_STRING
+  %cmp5736 = icmp eq i64 %field5734, %NK_LIT_STRING_val5735
+  br i1 %cmp5736, label %if_then1932, label %if_else1933
 
 if_then1932:
-  %field_ptr5682 = getelementptr inbounds %Node, ptr %obj5674, i32 0, i32 1
-  %field5683 = load ptr, ptr %field_ptr5682
-  %call5684 = call ptr @llvmgen__string_name_for(ptr %field5683)
+  %field_ptr5737 = getelementptr inbounds %Node, ptr %obj5729, i32 0, i32 1
+  %field5738 = load ptr, ptr %field_ptr5737
+  %call5739 = call ptr @llvmgen__string_name_for(ptr %field5738)
   br label %if_end1934
 
 if_else1933:
   br label %if_end1934
 
 if_end1934:
-  %field_ptr5685 = getelementptr inbounds %Node, ptr %obj5674, i32 0, i32 5
-  %field5686 = load i64, ptr %field_ptr5685
-  call void @llvmgen__collect_strings(i64 %field5686)
-  %field_ptr5687 = getelementptr inbounds %Node, ptr %obj5674, i32 0, i32 6
-  %field5688 = load i64, ptr %field_ptr5687
-  call void @llvmgen__collect_strings(i64 %field5688)
-  %field_ptr5689 = getelementptr inbounds %Node, ptr %obj5674, i32 0, i32 7
-  %field5690 = load i64, ptr %field_ptr5689
-  call void @llvmgen__collect_strings(i64 %field5690)
-  %field_ptr5691 = getelementptr inbounds %Node, ptr %obj5674, i32 0, i32 8
-  %field5692 = load i64, ptr %field_ptr5691
-  call void @llvmgen__collect_strings(i64 %field5692)
-  %i5693 = alloca i64, align 8
-  store i64 0, ptr %i5693
+  %field_ptr5740 = getelementptr inbounds %Node, ptr %obj5729, i32 0, i32 5
+  %field5741 = load i64, ptr %field_ptr5740
+  call void @llvmgen__collect_strings(i64 %field5741)
+  %field_ptr5742 = getelementptr inbounds %Node, ptr %obj5729, i32 0, i32 6
+  %field5743 = load i64, ptr %field_ptr5742
+  call void @llvmgen__collect_strings(i64 %field5743)
+  %field_ptr5744 = getelementptr inbounds %Node, ptr %obj5729, i32 0, i32 7
+  %field5745 = load i64, ptr %field_ptr5744
+  call void @llvmgen__collect_strings(i64 %field5745)
+  %field_ptr5746 = getelementptr inbounds %Node, ptr %obj5729, i32 0, i32 8
+  %field5747 = load i64, ptr %field_ptr5746
+  call void @llvmgen__collect_strings(i64 %field5747)
+  %i5748 = alloca i64, align 8
+  store i64 0, ptr %i5748
+  %extra_count5749 = alloca i64, align 8
+  %id_val5750 = load i64, ptr %id.addr
+  %call5751 = call i64 @node_extra_len(i64 %id_val5750)
+  store i64 %call5751, ptr %extra_count5749
   br label %while_cond1935
 
 while_cond1935:
-  %i_val5694 = load i64, ptr %i5693
-  %id_val5695 = load i64, ptr %id.addr
-  %call5696 = call i64 @node_extra_len(i64 %id_val5695)
-  %cmp5697 = icmp slt i64 %i_val5694, %call5696
-  br i1 %cmp5697, label %while_body1936, label %while_end1937
+  %i_val5752 = load i64, ptr %i5748
+  %extra_count_val5753 = load i64, ptr %extra_count5749
+  %cmp5754 = icmp slt i64 %i_val5752, %extra_count_val5753
+  br i1 %cmp5754, label %while_body1936, label %while_end1937
 
 while_body1936:
-  %id_val5698 = load i64, ptr %id.addr
-  %i_val5699 = load i64, ptr %i5693
-  %call5700 = call i64 @node_get_extra(i64 %id_val5698, i64 %i_val5699)
-  call void @llvmgen__collect_strings(i64 %call5700)
-  %post_old5701 = load i64, ptr %i5693
-  %post_new5702 = add i64 %post_old5701, 1
-  store i64 %post_new5702, ptr %i5693
+  %id_val5755 = load i64, ptr %id.addr
+  %i_val5756 = load i64, ptr %i5748
+  %call5757 = call i64 @node_get_extra(i64 %id_val5755, i64 %i_val5756)
+  call void @llvmgen__collect_strings(i64 %call5757)
+  %post_old5758 = load i64, ptr %i5748
+  %post_new5759 = add i64 %post_old5758, 1
+  store i64 %post_new5759, ptr %i5748
   br label %while_cond1935
 
 while_end1937:
@@ -14178,41 +14266,44 @@ while_end1937:
 
 define void @llvmgen__collect_all_strings() {
 entry:
-  %i5703 = alloca i64, align 8
-  store i64 0, ptr %i5703
+  %i5760 = alloca i64, align 8
+  store i64 0, ptr %i5760
+  %pool_count5761 = alloca i64, align 8
+  %call5762 = call i64 @node_pool_len()
+  store i64 %call5762, ptr %pool_count5761
   br label %while_cond1938
 
 while_cond1938:
-  %i_val5704 = load i64, ptr %i5703
-  %call5705 = call i64 @node_pool_len()
-  %cmp5706 = icmp slt i64 %i_val5704, %call5705
-  br i1 %cmp5706, label %while_body1939, label %while_end1940
+  %i_val5763 = load i64, ptr %i5760
+  %pool_count_val5764 = load i64, ptr %pool_count5761
+  %cmp5765 = icmp slt i64 %i_val5763, %pool_count_val5764
+  br i1 %cmp5765, label %while_body1939, label %while_end1940
 
 while_body1939:
-  %obj5708 = call ptr @ofs_alloc(i64 4096)
-  %i_val5709 = load i64, ptr %i5703
-  %call5710 = call ptr @node_get(i64 %i_val5709)
-  %named_val5711 = load %Node, ptr %call5710
-  store %Node %named_val5711, ptr %obj5708
-  %field_ptr5712 = getelementptr inbounds %Node, ptr %obj5708, i32 0, i32 0
-  %field5713 = load i64, ptr %field_ptr5712
-  %NK_LIT_STRING_val5714 = load i64, ptr @NK_LIT_STRING
-  %cmp5715 = icmp eq i64 %field5713, %NK_LIT_STRING_val5714
-  br i1 %cmp5715, label %if_then1941, label %if_else1942
+  %obj5767 = call ptr @ofs_alloc(i64 4096)
+  %i_val5768 = load i64, ptr %i5760
+  %call5769 = call ptr @node_get(i64 %i_val5768)
+  %named_val5770 = load %Node, ptr %call5769
+  store %Node %named_val5770, ptr %obj5767
+  %field_ptr5771 = getelementptr inbounds %Node, ptr %obj5767, i32 0, i32 0
+  %field5772 = load i64, ptr %field_ptr5771
+  %NK_LIT_STRING_val5773 = load i64, ptr @NK_LIT_STRING
+  %cmp5774 = icmp eq i64 %field5772, %NK_LIT_STRING_val5773
+  br i1 %cmp5774, label %if_then1941, label %if_else1942
 
 if_then1941:
-  %field_ptr5716 = getelementptr inbounds %Node, ptr %obj5708, i32 0, i32 1
-  %field5717 = load ptr, ptr %field_ptr5716
-  %call5718 = call ptr @llvmgen__string_name_for(ptr %field5717)
+  %field_ptr5775 = getelementptr inbounds %Node, ptr %obj5767, i32 0, i32 1
+  %field5776 = load ptr, ptr %field_ptr5775
+  %call5777 = call ptr @llvmgen__string_name_for(ptr %field5776)
   br label %if_end1943
 
 if_else1942:
   br label %if_end1943
 
 if_end1943:
-  %post_old5719 = load i64, ptr %i5703
-  %post_new5720 = add i64 %post_old5719, 1
-  store i64 %post_new5720, ptr %i5703
+  %post_old5778 = load i64, ptr %i5760
+  %post_new5779 = add i64 %post_old5778, 1
+  store i64 %post_new5779, ptr %i5760
   br label %while_cond1938
 
 while_end1940:
@@ -14224,59 +14315,65 @@ entry:
   call void @cg_emit(ptr @str.284)
   call void @cg_emit(ptr @str.285)
   call void @cg_emit(ptr @str.63)
-  %mi5721 = alloca i64, align 8
-  store i64 0, ptr %mi5721
+  %mi5780 = alloca i64, align 8
+  store i64 0, ptr %mi5780
+  %mono_count5781 = alloca i64, align 8
+  %llvmgen___mono_names_val5782 = load ptr, ptr @llvmgen___mono_names
+  %arr_len5783 = call i64 @ofs_array_len(ptr %llvmgen___mono_names_val5782)
+  store i64 %arr_len5783, ptr %mono_count5781
+  %field_count5784 = alloca i64, align 8
+  %llvmgen___field_names_val5785 = load ptr, ptr @llvmgen___field_names
+  %arr_len5786 = call i64 @ofs_array_len(ptr %llvmgen___field_names_val5785)
+  store i64 %arr_len5786, ptr %field_count5784
   br label %while_cond1944
 
 while_cond1944:
-  %mi_val5722 = load i64, ptr %mi5721
-  %llvmgen___mono_names_val5723 = load ptr, ptr @llvmgen___mono_names
-  %arr_len5724 = call i64 @ofs_array_len(ptr %llvmgen___mono_names_val5723)
-  %cmp5725 = icmp slt i64 %mi_val5722, %arr_len5724
-  br i1 %cmp5725, label %while_body1945, label %while_end1946
+  %mi_val5787 = load i64, ptr %mi5780
+  %mono_count_val5788 = load i64, ptr %mono_count5781
+  %cmp5789 = icmp slt i64 %mi_val5787, %mono_count_val5788
+  br i1 %cmp5789, label %while_body1945, label %while_end1946
 
 while_body1945:
-  %mono5726 = alloca ptr, align 8
-  %llvmgen___mono_names_val5727 = load ptr, ptr @llvmgen___mono_names
-  %mi_val5728 = load i64, ptr %mi5721
-  %arr_get5729 = call ptr @ofs_array_get(ptr %llvmgen___mono_names_val5727, i64 %mi_val5728)
-  %arr_item5730 = load ptr, ptr %arr_get5729
-  store ptr %arr_item5730, ptr %mono5726
-  %mono_val5731 = load ptr, ptr %mono5726
-  %concat5732 = call ptr @ofs_str_concat(ptr @str.109, ptr %mono_val5731)
-  %concat5733 = call ptr @ofs_str_concat(ptr %concat5732, ptr @str.286)
-  call void @cg_emit_raw(ptr %concat5733)
-  %first5734 = alloca i32, align 8
-  store i32 1, ptr %first5734
-  %fi5735 = alloca i64, align 8
-  store i64 0, ptr %fi5735
+  %mono5790 = alloca ptr, align 8
+  %llvmgen___mono_names_val5791 = load ptr, ptr @llvmgen___mono_names
+  %mi_val5792 = load i64, ptr %mi5780
+  %arr_get5793 = call ptr @ofs_array_get(ptr %llvmgen___mono_names_val5791, i64 %mi_val5792)
+  %arr_item5794 = load ptr, ptr %arr_get5793
+  store ptr %arr_item5794, ptr %mono5790
+  %mono_val5795 = load ptr, ptr %mono5790
+  %concat5796 = call ptr @ofs_str_concat(ptr @str.109, ptr %mono_val5795)
+  %concat5797 = call ptr @ofs_str_concat(ptr %concat5796, ptr @str.286)
+  call void @cg_emit_raw(ptr %concat5797)
+  %first5798 = alloca i32, align 8
+  store i32 1, ptr %first5798
+  %fi5799 = alloca i64, align 8
+  store i64 0, ptr %fi5799
   br label %while_cond1947
 
 while_cond1947:
-  %fi_val5736 = load i64, ptr %fi5735
-  %llvmgen___field_names_val5737 = load ptr, ptr @llvmgen___field_names
-  %arr_len5738 = call i64 @ofs_array_len(ptr %llvmgen___field_names_val5737)
-  %cmp5739 = icmp slt i64 %fi_val5736, %arr_len5738
-  br i1 %cmp5739, label %while_body1948, label %while_end1949
+  %fi_val5800 = load i64, ptr %fi5799
+  %field_count_val5801 = load i64, ptr %field_count5784
+  %cmp5802 = icmp slt i64 %fi_val5800, %field_count_val5801
+  br i1 %cmp5802, label %while_body1948, label %while_end1949
 
 while_body1948:
-  %owner5740 = alloca ptr, align 8
-  %llvmgen___field_owners_val5741 = load ptr, ptr @llvmgen___field_owners
-  %fi_val5742 = load i64, ptr %fi5735
-  %arr_get5743 = call ptr @ofs_array_get(ptr %llvmgen___field_owners_val5741, i64 %fi_val5742)
-  %arr_item5744 = load ptr, ptr %arr_get5743
-  store ptr %arr_item5744, ptr %owner5740
-  %owner_val5745 = load ptr, ptr %owner5740
-  %mono_val5746 = load ptr, ptr %mono5726
-  %streq5747 = call i32 @ofs_str_eq(ptr %owner_val5745, ptr %mono_val5746)
-  %cond5748 = icmp ne i32 %streq5747, 0
-  br i1 %cond5748, label %if_then1950, label %if_else1951
+  %owner5803 = alloca ptr, align 8
+  %llvmgen___field_owners_val5804 = load ptr, ptr @llvmgen___field_owners
+  %fi_val5805 = load i64, ptr %fi5799
+  %arr_get5806 = call ptr @ofs_array_get(ptr %llvmgen___field_owners_val5804, i64 %fi_val5805)
+  %arr_item5807 = load ptr, ptr %arr_get5806
+  store ptr %arr_item5807, ptr %owner5803
+  %owner_val5808 = load ptr, ptr %owner5803
+  %mono_val5809 = load ptr, ptr %mono5790
+  %streq5810 = call i32 @ofs_str_eq(ptr %owner_val5808, ptr %mono_val5809)
+  %cond5811 = icmp ne i32 %streq5810, 0
+  br i1 %cond5811, label %if_then1950, label %if_else1951
 
 if_then1950:
-  %first_val5749 = load i32, ptr %first5734
-  %cond5750 = icmp ne i32 %first_val5749, 0
-  %not5751 = xor i1 %cond5750, true
-  br i1 %not5751, label %if_then1953, label %if_else1954
+  %first_val5812 = load i32, ptr %first5798
+  %cond5813 = icmp ne i32 %first_val5812, 0
+  %not5814 = xor i1 %cond5813, true
+  br i1 %not5814, label %if_then1953, label %if_else1954
 
 if_then1953:
   call void @cg_emit_raw(ptr @str.217)
@@ -14286,40 +14383,40 @@ if_else1954:
   br label %if_end1955
 
 if_end1955:
-  %ft5752 = alloca ptr, align 8
-  %llvmgen___field_types_val5753 = load ptr, ptr @llvmgen___field_types
-  %fi_val5754 = load i64, ptr %fi5735
-  %arr_get5755 = call ptr @ofs_array_get(ptr %llvmgen___field_types_val5753, i64 %fi_val5754)
-  %arr_item5756 = load ptr, ptr %arr_get5755
-  store ptr %arr_item5756, ptr %ft5752
-  %ft_val5757 = load ptr, ptr %ft5752
-  %call5758 = call ptr @llvmgen__llvm_type(ptr %ft_val5757)
-  call void @cg_emit_raw(ptr %call5758)
-  store i32 0, ptr %first5734
+  %ft5815 = alloca ptr, align 8
+  %llvmgen___field_types_val5816 = load ptr, ptr @llvmgen___field_types
+  %fi_val5817 = load i64, ptr %fi5799
+  %arr_get5818 = call ptr @ofs_array_get(ptr %llvmgen___field_types_val5816, i64 %fi_val5817)
+  %arr_item5819 = load ptr, ptr %arr_get5818
+  store ptr %arr_item5819, ptr %ft5815
+  %ft_val5820 = load ptr, ptr %ft5815
+  %call5821 = call ptr @llvmgen__llvm_type(ptr %ft_val5820)
+  call void @cg_emit_raw(ptr %call5821)
+  store i32 0, ptr %first5798
   br label %if_end1952
 
 if_else1951:
   br label %if_end1952
 
 if_end1952:
-  %post_old5759 = load i64, ptr %fi5735
-  %post_new5760 = add i64 %post_old5759, 1
-  store i64 %post_new5760, ptr %fi5735
+  %post_old5822 = load i64, ptr %fi5799
+  %post_new5823 = add i64 %post_old5822, 1
+  store i64 %post_new5823, ptr %fi5799
   br label %while_cond1947
 
 while_end1949:
   call void @cg_emit_raw(ptr @str.287)
   call void @cg_emit(ptr @str.63)
-  %post_old5761 = load i64, ptr %mi5721
-  %post_new5762 = add i64 %post_old5761, 1
-  store i64 %post_new5762, ptr %mi5721
+  %post_old5824 = load i64, ptr %mi5780
+  %post_new5825 = add i64 %post_old5824, 1
+  store i64 %post_new5825, ptr %mi5780
   br label %while_cond1944
 
 while_end1946:
-  %llvmgen___mono_names_val5763 = load ptr, ptr @llvmgen___mono_names
-  %arr_len5764 = call i64 @ofs_array_len(ptr %llvmgen___mono_names_val5763)
-  %cmp5765 = icmp sgt i64 %arr_len5764, 0
-  br i1 %cmp5765, label %if_then1956, label %if_else1957
+  %llvmgen___mono_names_val5826 = load ptr, ptr @llvmgen___mono_names
+  %arr_len5827 = call i64 @ofs_array_len(ptr %llvmgen___mono_names_val5826)
+  %cmp5828 = icmp sgt i64 %arr_len5827, 0
+  br i1 %cmp5828, label %if_then1956, label %if_else1957
 
 if_then1956:
   call void @cg_emit(ptr @str.63)
@@ -14329,97 +14426,103 @@ if_else1957:
   br label %if_end1958
 
 if_end1958:
-  %i5766 = alloca i64, align 8
-  store i64 0, ptr %i5766
+  %i5829 = alloca i64, align 8
+  store i64 0, ptr %i5829
+  %string_count5830 = alloca i64, align 8
+  %llvmgen___string_vals_val5831 = load ptr, ptr @llvmgen___string_vals
+  %arr_len5832 = call i64 @ofs_array_len(ptr %llvmgen___string_vals_val5831)
+  store i64 %arr_len5832, ptr %string_count5830
   br label %while_cond1959
 
 while_cond1959:
-  %i_val5767 = load i64, ptr %i5766
-  %llvmgen___string_vals_val5768 = load ptr, ptr @llvmgen___string_vals
-  %arr_len5769 = call i64 @ofs_array_len(ptr %llvmgen___string_vals_val5768)
-  %cmp5770 = icmp slt i64 %i_val5767, %arr_len5769
-  br i1 %cmp5770, label %while_body1960, label %while_end1961
+  %i_val5833 = load i64, ptr %i5829
+  %string_count_val5834 = load i64, ptr %string_count5830
+  %cmp5835 = icmp slt i64 %i_val5833, %string_count_val5834
+  br i1 %cmp5835, label %while_body1960, label %while_end1961
 
 while_body1960:
-  %value5771 = alloca ptr, align 8
-  %llvmgen___string_vals_val5772 = load ptr, ptr @llvmgen___string_vals
-  %i_val5773 = load i64, ptr %i5766
-  %arr_get5774 = call ptr @ofs_array_get(ptr %llvmgen___string_vals_val5772, i64 %i_val5773)
-  %arr_item5775 = load ptr, ptr %arr_get5774
-  store ptr %arr_item5775, ptr %value5771
-  %name5776 = alloca ptr, align 8
-  %llvmgen___string_names_val5777 = load ptr, ptr @llvmgen___string_names
-  %i_val5778 = load i64, ptr %i5766
-  %arr_get5779 = call ptr @ofs_array_get(ptr %llvmgen___string_names_val5777, i64 %i_val5778)
-  %arr_item5780 = load ptr, ptr %arr_get5779
-  store ptr %arr_item5780, ptr %name5776
-  %nbytes5781 = alloca i64, align 8
-  %value_val5782 = load ptr, ptr %value5771
-  %strlen5783 = call i64 @ofs_str_len(ptr %value_val5782)
-  %op5784 = add i64 %strlen5783, 1
-  store i64 %op5784, ptr %nbytes5781
-  %name_val5785 = load ptr, ptr %name5776
-  %concat5786 = call ptr @ofs_str_concat(ptr %name_val5785, ptr @str.288)
-  %nbytes_val5787 = load i64, ptr %nbytes5781
-  %stone_to_str5788 = call ptr @ofs_stone_to_obsidian(i64 %nbytes_val5787)
-  %concat5789 = call ptr @ofs_str_concat(ptr %concat5786, ptr %stone_to_str5788)
-  %concat5790 = call ptr @ofs_str_concat(ptr %concat5789, ptr @str.289)
-  %value_val5791 = load ptr, ptr %value5771
-  %call5792 = call ptr @llvmgen__llvm_escape_string(ptr %value_val5791)
-  %concat5793 = call ptr @ofs_str_concat(ptr %concat5790, ptr %call5792)
-  %concat5794 = call ptr @ofs_str_concat(ptr %concat5793, ptr @str.290)
-  call void @cg_emit(ptr %concat5794)
-  %post_old5795 = load i64, ptr %i5766
-  %post_new5796 = add i64 %post_old5795, 1
-  store i64 %post_new5796, ptr %i5766
+  %value5836 = alloca ptr, align 8
+  %llvmgen___string_vals_val5837 = load ptr, ptr @llvmgen___string_vals
+  %i_val5838 = load i64, ptr %i5829
+  %arr_get5839 = call ptr @ofs_array_get(ptr %llvmgen___string_vals_val5837, i64 %i_val5838)
+  %arr_item5840 = load ptr, ptr %arr_get5839
+  store ptr %arr_item5840, ptr %value5836
+  %name5841 = alloca ptr, align 8
+  %llvmgen___string_names_val5842 = load ptr, ptr @llvmgen___string_names
+  %i_val5843 = load i64, ptr %i5829
+  %arr_get5844 = call ptr @ofs_array_get(ptr %llvmgen___string_names_val5842, i64 %i_val5843)
+  %arr_item5845 = load ptr, ptr %arr_get5844
+  store ptr %arr_item5845, ptr %name5841
+  %nbytes5846 = alloca i64, align 8
+  %value_val5847 = load ptr, ptr %value5836
+  %strlen5848 = call i64 @ofs_str_len(ptr %value_val5847)
+  %op5849 = add i64 %strlen5848, 1
+  store i64 %op5849, ptr %nbytes5846
+  %name_val5850 = load ptr, ptr %name5841
+  %concat5851 = call ptr @ofs_str_concat(ptr %name_val5850, ptr @str.288)
+  %nbytes_val5852 = load i64, ptr %nbytes5846
+  %stone_to_str5853 = call ptr @ofs_stone_to_obsidian(i64 %nbytes_val5852)
+  %concat5854 = call ptr @ofs_str_concat(ptr %concat5851, ptr %stone_to_str5853)
+  %concat5855 = call ptr @ofs_str_concat(ptr %concat5854, ptr @str.289)
+  %value_val5856 = load ptr, ptr %value5836
+  %call5857 = call ptr @llvmgen__llvm_escape_string(ptr %value_val5856)
+  %concat5858 = call ptr @ofs_str_concat(ptr %concat5855, ptr %call5857)
+  %concat5859 = call ptr @ofs_str_concat(ptr %concat5858, ptr @str.290)
+  call void @cg_emit(ptr %concat5859)
+  %post_old5860 = load i64, ptr %i5829
+  %post_new5861 = add i64 %post_old5860, 1
+  store i64 %post_new5861, ptr %i5829
   br label %while_cond1959
 
 while_end1961:
-  %gi5797 = alloca i64, align 8
-  store i64 0, ptr %gi5797
+  %gi5862 = alloca i64, align 8
+  store i64 0, ptr %gi5862
+  %global_count5863 = alloca i64, align 8
+  %llvmgen___global_names_val5864 = load ptr, ptr @llvmgen___global_names
+  %arr_len5865 = call i64 @ofs_array_len(ptr %llvmgen___global_names_val5864)
+  store i64 %arr_len5865, ptr %global_count5863
   br label %while_cond1962
 
 while_cond1962:
-  %gi_val5798 = load i64, ptr %gi5797
-  %llvmgen___global_names_val5799 = load ptr, ptr @llvmgen___global_names
-  %arr_len5800 = call i64 @ofs_array_len(ptr %llvmgen___global_names_val5799)
-  %cmp5801 = icmp slt i64 %gi_val5798, %arr_len5800
-  br i1 %cmp5801, label %while_body1963, label %while_end1964
+  %gi_val5866 = load i64, ptr %gi5862
+  %global_count_val5867 = load i64, ptr %global_count5863
+  %cmp5868 = icmp slt i64 %gi_val5866, %global_count_val5867
+  br i1 %cmp5868, label %while_body1963, label %while_end1964
 
 while_body1963:
-  %gname5802 = alloca ptr, align 8
-  %llvmgen___global_names_val5803 = load ptr, ptr @llvmgen___global_names
-  %gi_val5804 = load i64, ptr %gi5797
-  %arr_get5805 = call ptr @ofs_array_get(ptr %llvmgen___global_names_val5803, i64 %gi_val5804)
-  %arr_item5806 = load ptr, ptr %arr_get5805
-  store ptr %arr_item5806, ptr %gname5802
-  %gt5807 = alloca ptr, align 8
-  %llvmgen___global_types_val5808 = load ptr, ptr @llvmgen___global_types
-  %gi_val5809 = load i64, ptr %gi5797
-  %arr_get5810 = call ptr @ofs_array_get(ptr %llvmgen___global_types_val5808, i64 %gi_val5809)
-  %arr_item5811 = load ptr, ptr %arr_get5810
-  store ptr %arr_item5811, ptr %gt5807
-  %gid5812 = alloca i64, align 8
-  %llvmgen___global_inits_val5813 = load ptr, ptr @llvmgen___global_inits
-  %gi_val5814 = load i64, ptr %gi5797
-  %arr_get5815 = call ptr @ofs_array_get(ptr %llvmgen___global_inits_val5813, i64 %gi_val5814)
-  %arr_item5816 = load i64, ptr %arr_get5815
-  store i64 %arr_item5816, ptr %gid5812
-  %gname_val5817 = load ptr, ptr %gname5802
-  %concat5818 = call ptr @ofs_str_concat(ptr @str.246, ptr %gname_val5817)
-  %concat5819 = call ptr @ofs_str_concat(ptr %concat5818, ptr @str.291)
-  %gt_val5820 = load ptr, ptr %gt5807
-  %call5821 = call ptr @llvmgen__llvm_type(ptr %gt_val5820)
-  %concat5822 = call ptr @ofs_str_concat(ptr %concat5819, ptr %call5821)
-  %concat5823 = call ptr @ofs_str_concat(ptr %concat5822, ptr @str.216)
-  %gid_val5824 = load i64, ptr %gid5812
-  %gt_val5825 = load ptr, ptr %gt5807
-  %call5826 = call ptr @llvmgen__const_init_value(i64 %gid_val5824, ptr %gt_val5825)
-  %concat5827 = call ptr @ofs_str_concat(ptr %concat5823, ptr %call5826)
-  call void @cg_emit(ptr %concat5827)
-  %post_old5828 = load i64, ptr %gi5797
-  %post_new5829 = add i64 %post_old5828, 1
-  store i64 %post_new5829, ptr %gi5797
+  %gname5869 = alloca ptr, align 8
+  %llvmgen___global_names_val5870 = load ptr, ptr @llvmgen___global_names
+  %gi_val5871 = load i64, ptr %gi5862
+  %arr_get5872 = call ptr @ofs_array_get(ptr %llvmgen___global_names_val5870, i64 %gi_val5871)
+  %arr_item5873 = load ptr, ptr %arr_get5872
+  store ptr %arr_item5873, ptr %gname5869
+  %gt5874 = alloca ptr, align 8
+  %llvmgen___global_types_val5875 = load ptr, ptr @llvmgen___global_types
+  %gi_val5876 = load i64, ptr %gi5862
+  %arr_get5877 = call ptr @ofs_array_get(ptr %llvmgen___global_types_val5875, i64 %gi_val5876)
+  %arr_item5878 = load ptr, ptr %arr_get5877
+  store ptr %arr_item5878, ptr %gt5874
+  %gid5879 = alloca i64, align 8
+  %llvmgen___global_inits_val5880 = load ptr, ptr @llvmgen___global_inits
+  %gi_val5881 = load i64, ptr %gi5862
+  %arr_get5882 = call ptr @ofs_array_get(ptr %llvmgen___global_inits_val5880, i64 %gi_val5881)
+  %arr_item5883 = load i64, ptr %arr_get5882
+  store i64 %arr_item5883, ptr %gid5879
+  %gname_val5884 = load ptr, ptr %gname5869
+  %concat5885 = call ptr @ofs_str_concat(ptr @str.246, ptr %gname_val5884)
+  %concat5886 = call ptr @ofs_str_concat(ptr %concat5885, ptr @str.291)
+  %gt_val5887 = load ptr, ptr %gt5874
+  %call5888 = call ptr @llvmgen__llvm_type(ptr %gt_val5887)
+  %concat5889 = call ptr @ofs_str_concat(ptr %concat5886, ptr %call5888)
+  %concat5890 = call ptr @ofs_str_concat(ptr %concat5889, ptr @str.216)
+  %gid_val5891 = load i64, ptr %gid5879
+  %gt_val5892 = load ptr, ptr %gt5874
+  %call5893 = call ptr @llvmgen__const_init_value(i64 %gid_val5891, ptr %gt_val5892)
+  %concat5894 = call ptr @ofs_str_concat(ptr %concat5890, ptr %call5893)
+  call void @cg_emit(ptr %concat5894)
+  %post_old5895 = load i64, ptr %gi5862
+  %post_new5896 = add i64 %post_old5895, 1
+  store i64 %post_new5896, ptr %gi5862
   br label %while_cond1962
 
 while_end1964:
@@ -14491,95 +14594,98 @@ define void @llvmgen__emit_global_init() {
 entry:
   call void @cg_emit(ptr @str.351)
   call void @cg_emit(ptr @str.352)
-  %gi5830 = alloca i64, align 8
-  store i64 0, ptr %gi5830
+  %gi5897 = alloca i64, align 8
+  store i64 0, ptr %gi5897
+  %global_count5898 = alloca i64, align 8
+  %llvmgen___global_names_val5899 = load ptr, ptr @llvmgen___global_names
+  %arr_len5900 = call i64 @ofs_array_len(ptr %llvmgen___global_names_val5899)
+  store i64 %arr_len5900, ptr %global_count5898
   br label %while_cond1965
 
 while_cond1965:
-  %gi_val5831 = load i64, ptr %gi5830
-  %llvmgen___global_names_val5832 = load ptr, ptr @llvmgen___global_names
-  %arr_len5833 = call i64 @ofs_array_len(ptr %llvmgen___global_names_val5832)
-  %cmp5834 = icmp slt i64 %gi_val5831, %arr_len5833
-  br i1 %cmp5834, label %while_body1966, label %while_end1967
+  %gi_val5901 = load i64, ptr %gi5897
+  %global_count_val5902 = load i64, ptr %global_count5898
+  %cmp5903 = icmp slt i64 %gi_val5901, %global_count_val5902
+  br i1 %cmp5903, label %while_body1966, label %while_end1967
 
 while_body1966:
-  %gname5835 = alloca ptr, align 8
-  %llvmgen___global_names_val5836 = load ptr, ptr @llvmgen___global_names
-  %gi_val5837 = load i64, ptr %gi5830
-  %arr_get5838 = call ptr @ofs_array_get(ptr %llvmgen___global_names_val5836, i64 %gi_val5837)
-  %arr_item5839 = load ptr, ptr %arr_get5838
-  store ptr %arr_item5839, ptr %gname5835
-  %gt5840 = alloca ptr, align 8
-  %llvmgen___global_types_val5841 = load ptr, ptr @llvmgen___global_types
-  %gi_val5842 = load i64, ptr %gi5830
-  %arr_get5843 = call ptr @ofs_array_get(ptr %llvmgen___global_types_val5841, i64 %gi_val5842)
-  %arr_item5844 = load ptr, ptr %arr_get5843
-  store ptr %arr_item5844, ptr %gt5840
-  %gid5845 = alloca i64, align 8
-  %llvmgen___global_inits_val5846 = load ptr, ptr @llvmgen___global_inits
-  %gi_val5847 = load i64, ptr %gi5830
-  %arr_get5848 = call ptr @ofs_array_get(ptr %llvmgen___global_inits_val5846, i64 %gi_val5847)
-  %arr_item5849 = load i64, ptr %arr_get5848
-  store i64 %arr_item5849, ptr %gid5845
-  %obj5851 = call ptr @ofs_alloc(i64 4096)
-  %gid_val5852 = load i64, ptr %gid5845
-  %call5853 = call ptr @node_get(i64 %gid_val5852)
-  %named_val5854 = load %Node, ptr %call5853
-  store %Node %named_val5854, ptr %obj5851
-  %gt_val5855 = load ptr, ptr %gt5840
-  %streq5856 = call i32 @ofs_str_eq(ptr %gt_val5855, ptr @str.144)
-  %gid_val5857 = load i64, ptr %gid5845
-  %cmp5858 = icmp sge i64 %gid_val5857, 0
-  %cond5859 = icmp ne i32 %streq5856, 0
-  %logic5860 = and i1 %cond5859, %cmp5858
-  %field_ptr5861 = getelementptr inbounds %Node, ptr %obj5851, i32 0, i32 0
-  %field5862 = load i64, ptr %field_ptr5861
-  %NK_ARRAY_LIT_val5863 = load i64, ptr @NK_ARRAY_LIT
-  %cmp5864 = icmp eq i64 %field5862, %NK_ARRAY_LIT_val5863
-  %logic5865 = and i1 %logic5860, %cmp5864
-  br i1 %logic5865, label %if_then1968, label %if_else1969
+  %gname5904 = alloca ptr, align 8
+  %llvmgen___global_names_val5905 = load ptr, ptr @llvmgen___global_names
+  %gi_val5906 = load i64, ptr %gi5897
+  %arr_get5907 = call ptr @ofs_array_get(ptr %llvmgen___global_names_val5905, i64 %gi_val5906)
+  %arr_item5908 = load ptr, ptr %arr_get5907
+  store ptr %arr_item5908, ptr %gname5904
+  %gt5909 = alloca ptr, align 8
+  %llvmgen___global_types_val5910 = load ptr, ptr @llvmgen___global_types
+  %gi_val5911 = load i64, ptr %gi5897
+  %arr_get5912 = call ptr @ofs_array_get(ptr %llvmgen___global_types_val5910, i64 %gi_val5911)
+  %arr_item5913 = load ptr, ptr %arr_get5912
+  store ptr %arr_item5913, ptr %gt5909
+  %gid5914 = alloca i64, align 8
+  %llvmgen___global_inits_val5915 = load ptr, ptr @llvmgen___global_inits
+  %gi_val5916 = load i64, ptr %gi5897
+  %arr_get5917 = call ptr @ofs_array_get(ptr %llvmgen___global_inits_val5915, i64 %gi_val5916)
+  %arr_item5918 = load i64, ptr %arr_get5917
+  store i64 %arr_item5918, ptr %gid5914
+  %obj5920 = call ptr @ofs_alloc(i64 4096)
+  %gid_val5921 = load i64, ptr %gid5914
+  %call5922 = call ptr @node_get(i64 %gid_val5921)
+  %named_val5923 = load %Node, ptr %call5922
+  store %Node %named_val5923, ptr %obj5920
+  %gt_val5924 = load ptr, ptr %gt5909
+  %streq5925 = call i32 @ofs_str_eq(ptr %gt_val5924, ptr @str.144)
+  %gid_val5926 = load i64, ptr %gid5914
+  %cmp5927 = icmp sge i64 %gid_val5926, 0
+  %cond5928 = icmp ne i32 %streq5925, 0
+  %logic5929 = and i1 %cond5928, %cmp5927
+  %field_ptr5930 = getelementptr inbounds %Node, ptr %obj5920, i32 0, i32 0
+  %field5931 = load i64, ptr %field_ptr5930
+  %NK_ARRAY_LIT_val5932 = load i64, ptr @NK_ARRAY_LIT
+  %cmp5933 = icmp eq i64 %field5931, %NK_ARRAY_LIT_val5932
+  %logic5934 = and i1 %logic5929, %cmp5933
+  br i1 %logic5934, label %if_then1968, label %if_else1969
 
 if_then1968:
-  %arr5866 = alloca ptr, align 8
-  %call5867 = call ptr @llvmgen__next_tmp(ptr @str.353)
-  store ptr %call5867, ptr %arr5866
-  %arr_val5868 = load ptr, ptr %arr5866
-  %concat5869 = call ptr @ofs_str_concat(ptr @str.233, ptr %arr_val5868)
-  %concat5870 = call ptr @ofs_str_concat(ptr %concat5869, ptr @str.354)
-  %gid_val5871 = load i64, ptr %gid5845
-  %call5872 = call i64 @node_extra_len(i64 %gid_val5871)
-  %stone_to_str5873 = call ptr @ofs_stone_to_obsidian(i64 %call5872)
-  %concat5874 = call ptr @ofs_str_concat(ptr %concat5870, ptr %stone_to_str5873)
-  %concat5875 = call ptr @ofs_str_concat(ptr %concat5874, ptr @str.355)
-  call void @cg_emit(ptr %concat5875)
-  %arr_val5876 = load ptr, ptr %arr5866
-  %concat5877 = call ptr @ofs_str_concat(ptr @str.356, ptr %arr_val5876)
-  %concat5878 = call ptr @ofs_str_concat(ptr %concat5877, ptr @str.357)
-  %gname_val5879 = load ptr, ptr %gname5835
-  %concat5880 = call ptr @ofs_str_concat(ptr %concat5878, ptr %gname_val5879)
-  call void @cg_emit(ptr %concat5880)
+  %arr5935 = alloca ptr, align 8
+  %call5936 = call ptr @llvmgen__next_tmp(ptr @str.353)
+  store ptr %call5936, ptr %arr5935
+  %arr_val5937 = load ptr, ptr %arr5935
+  %concat5938 = call ptr @ofs_str_concat(ptr @str.233, ptr %arr_val5937)
+  %concat5939 = call ptr @ofs_str_concat(ptr %concat5938, ptr @str.354)
+  %gid_val5940 = load i64, ptr %gid5914
+  %call5941 = call i64 @node_extra_len(i64 %gid_val5940)
+  %stone_to_str5942 = call ptr @ofs_stone_to_obsidian(i64 %call5941)
+  %concat5943 = call ptr @ofs_str_concat(ptr %concat5939, ptr %stone_to_str5942)
+  %concat5944 = call ptr @ofs_str_concat(ptr %concat5943, ptr @str.355)
+  call void @cg_emit(ptr %concat5944)
+  %arr_val5945 = load ptr, ptr %arr5935
+  %concat5946 = call ptr @ofs_str_concat(ptr @str.356, ptr %arr_val5945)
+  %concat5947 = call ptr @ofs_str_concat(ptr %concat5946, ptr @str.357)
+  %gname_val5948 = load ptr, ptr %gname5904
+  %concat5949 = call ptr @ofs_str_concat(ptr %concat5947, ptr %gname_val5948)
+  call void @cg_emit(ptr %concat5949)
   br label %if_end1970
 
 if_else1969:
-  %gt_val5881 = load ptr, ptr %gt5840
-  %call5882 = call i32 @llvmgen__is_named_type(ptr %gt_val5881)
-  %cond5883 = icmp ne i32 %call5882, 0
-  br i1 %cond5883, label %if_then1971, label %if_else1972
+  %gt_val5950 = load ptr, ptr %gt5909
+  %call5951 = call i32 @llvmgen__is_named_type(ptr %gt_val5950)
+  %cond5952 = icmp ne i32 %call5951, 0
+  br i1 %cond5952, label %if_then1971, label %if_else1972
 
 if_then1971:
-  %obj5884 = alloca ptr, align 8
-  %call5885 = call ptr @llvmgen__next_tmp(ptr @str.358)
-  store ptr %call5885, ptr %obj5884
-  %obj_val5886 = load ptr, ptr %obj5884
-  %concat5887 = call ptr @ofs_str_concat(ptr @str.233, ptr %obj_val5886)
-  %concat5888 = call ptr @ofs_str_concat(ptr %concat5887, ptr @str.359)
-  call void @cg_emit(ptr %concat5888)
-  %obj_val5889 = load ptr, ptr %obj5884
-  %concat5890 = call ptr @ofs_str_concat(ptr @str.356, ptr %obj_val5889)
-  %concat5891 = call ptr @ofs_str_concat(ptr %concat5890, ptr @str.357)
-  %gname_val5892 = load ptr, ptr %gname5835
-  %concat5893 = call ptr @ofs_str_concat(ptr %concat5891, ptr %gname_val5892)
-  call void @cg_emit(ptr %concat5893)
+  %obj5953 = alloca ptr, align 8
+  %call5954 = call ptr @llvmgen__next_tmp(ptr @str.358)
+  store ptr %call5954, ptr %obj5953
+  %obj_val5955 = load ptr, ptr %obj5953
+  %concat5956 = call ptr @ofs_str_concat(ptr @str.233, ptr %obj_val5955)
+  %concat5957 = call ptr @ofs_str_concat(ptr %concat5956, ptr @str.359)
+  call void @cg_emit(ptr %concat5957)
+  %obj_val5958 = load ptr, ptr %obj5953
+  %concat5959 = call ptr @ofs_str_concat(ptr @str.356, ptr %obj_val5958)
+  %concat5960 = call ptr @ofs_str_concat(ptr %concat5959, ptr @str.357)
+  %gname_val5961 = load ptr, ptr %gname5904
+  %concat5962 = call ptr @ofs_str_concat(ptr %concat5960, ptr %gname_val5961)
+  call void @cg_emit(ptr %concat5962)
   br label %if_end1973
 
 if_else1972:
@@ -14589,9 +14695,9 @@ if_end1973:
   br label %if_end1970
 
 if_end1970:
-  %post_old5894 = load i64, ptr %gi5830
-  %post_new5895 = add i64 %post_old5894, 1
-  store i64 %post_new5895, ptr %gi5830
+  %post_old5963 = load i64, ptr %gi5897
+  %post_new5964 = add i64 %post_old5963, 1
+  store i64 %post_new5964, ptr %gi5897
   br label %while_cond1965
 
 while_end1967:
@@ -14605,22 +14711,22 @@ define void @llvmgen__emit_expr(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %obj5897 = call ptr @ofs_alloc(i64 4096)
-  %id_val5898 = load i64, ptr %id.addr
-  %call5899 = call ptr @node_get(i64 %id_val5898)
-  %named_val5900 = load %Node, ptr %call5899
-  store %Node %named_val5900, ptr %obj5897
-  %field_ptr5901 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field5902 = load i64, ptr %field_ptr5901
-  %NK_LIT_INT_val5903 = load i64, ptr @NK_LIT_INT
-  %cmp5904 = icmp eq i64 %field5902, %NK_LIT_INT_val5903
-  br i1 %cmp5904, label %if_then1974, label %if_else1975
+  %obj5966 = call ptr @ofs_alloc(i64 4096)
+  %id_val5967 = load i64, ptr %id.addr
+  %call5968 = call ptr @node_get(i64 %id_val5967)
+  %named_val5969 = load %Node, ptr %call5968
+  store %Node %named_val5969, ptr %obj5966
+  %field_ptr5970 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field5971 = load i64, ptr %field_ptr5970
+  %NK_LIT_INT_val5972 = load i64, ptr @NK_LIT_INT
+  %cmp5973 = icmp eq i64 %field5971, %NK_LIT_INT_val5972
+  br i1 %cmp5973, label %if_then1974, label %if_else1975
 
 if_then1974:
-  %field_ptr5905 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field5906 = load ptr, ptr %field_ptr5905
-  %call5907 = call ptr @llvmgen__int_literal_value(ptr %field5906)
-  store ptr %call5907, ptr @llvmgen___expr_val
+  %field_ptr5974 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field5975 = load ptr, ptr %field_ptr5974
+  %call5976 = call ptr @llvmgen__int_literal_value(ptr %field5975)
+  store ptr %call5976, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -14628,16 +14734,16 @@ if_else1975:
   br label %if_end1976
 
 if_end1976:
-  %field_ptr5908 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field5909 = load i64, ptr %field_ptr5908
-  %NK_LIT_FLOAT_val5910 = load i64, ptr @NK_LIT_FLOAT
-  %cmp5911 = icmp eq i64 %field5909, %NK_LIT_FLOAT_val5910
-  br i1 %cmp5911, label %if_then1977, label %if_else1978
+  %field_ptr5977 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field5978 = load i64, ptr %field_ptr5977
+  %NK_LIT_FLOAT_val5979 = load i64, ptr @NK_LIT_FLOAT
+  %cmp5980 = icmp eq i64 %field5978, %NK_LIT_FLOAT_val5979
+  br i1 %cmp5980, label %if_then1977, label %if_else1978
 
 if_then1977:
-  %field_ptr5912 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field5913 = load ptr, ptr %field_ptr5912
-  store ptr %field5913, ptr @llvmgen___expr_val
+  %field_ptr5981 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field5982 = load ptr, ptr %field_ptr5981
+  store ptr %field5982, ptr @llvmgen___expr_val
   store ptr @str.182, ptr @llvmgen___expr_type
   ret void
 
@@ -14645,17 +14751,17 @@ if_else1978:
   br label %if_end1979
 
 if_end1979:
-  %field_ptr5914 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field5915 = load i64, ptr %field_ptr5914
-  %NK_LIT_STRING_val5916 = load i64, ptr @NK_LIT_STRING
-  %cmp5917 = icmp eq i64 %field5915, %NK_LIT_STRING_val5916
-  br i1 %cmp5917, label %if_then1980, label %if_else1981
+  %field_ptr5983 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field5984 = load i64, ptr %field_ptr5983
+  %NK_LIT_STRING_val5985 = load i64, ptr @NK_LIT_STRING
+  %cmp5986 = icmp eq i64 %field5984, %NK_LIT_STRING_val5985
+  br i1 %cmp5986, label %if_then1980, label %if_else1981
 
 if_then1980:
-  %field_ptr5918 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field5919 = load ptr, ptr %field_ptr5918
-  %call5920 = call ptr @llvmgen__string_name_for(ptr %field5919)
-  store ptr %call5920, ptr @llvmgen___expr_val
+  %field_ptr5987 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field5988 = load ptr, ptr %field_ptr5987
+  %call5989 = call ptr @llvmgen__string_name_for(ptr %field5988)
+  store ptr %call5989, ptr @llvmgen___expr_val
   store ptr @str.183, ptr @llvmgen___expr_type
   ret void
 
@@ -14663,18 +14769,18 @@ if_else1981:
   br label %if_end1982
 
 if_end1982:
-  %field_ptr5921 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field5922 = load i64, ptr %field_ptr5921
-  %NK_LIT_BOOL_val5923 = load i64, ptr @NK_LIT_BOOL
-  %cmp5924 = icmp eq i64 %field5922, %NK_LIT_BOOL_val5923
-  br i1 %cmp5924, label %if_then1983, label %if_else1984
+  %field_ptr5990 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field5991 = load i64, ptr %field_ptr5990
+  %NK_LIT_BOOL_val5992 = load i64, ptr @NK_LIT_BOOL
+  %cmp5993 = icmp eq i64 %field5991, %NK_LIT_BOOL_val5992
+  br i1 %cmp5993, label %if_then1983, label %if_else1984
 
 if_then1983:
-  %field_ptr5925 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field5926 = load ptr, ptr %field_ptr5925
-  %streq5927 = call i32 @ofs_str_eq(ptr %field5926, ptr @str.38)
-  %cond5928 = icmp ne i32 %streq5927, 0
-  br i1 %cond5928, label %if_then1986, label %if_else1987
+  %field_ptr5994 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field5995 = load ptr, ptr %field_ptr5994
+  %streq5996 = call i32 @ofs_str_eq(ptr %field5995, ptr @str.38)
+  %cond5997 = icmp ne i32 %streq5996, 0
+  br i1 %cond5997, label %if_then1986, label %if_else1987
 
 if_then1986:
   store ptr @str.219, ptr @llvmgen___expr_val
@@ -14692,11 +14798,11 @@ if_else1984:
   br label %if_end1985
 
 if_end1985:
-  %field_ptr5929 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field5930 = load i64, ptr %field_ptr5929
-  %NK_LIT_NULL_val5931 = load i64, ptr @NK_LIT_NULL
-  %cmp5932 = icmp eq i64 %field5930, %NK_LIT_NULL_val5931
-  br i1 %cmp5932, label %if_then1989, label %if_else1990
+  %field_ptr5998 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field5999 = load i64, ptr %field_ptr5998
+  %NK_LIT_NULL_val6000 = load i64, ptr @NK_LIT_NULL
+  %cmp6001 = icmp eq i64 %field5999, %NK_LIT_NULL_val6000
+  br i1 %cmp6001, label %if_then1989, label %if_else1990
 
 if_then1989:
   store ptr @str.40, ptr @llvmgen___expr_val
@@ -14707,82 +14813,82 @@ if_else1990:
   br label %if_end1991
 
 if_end1991:
-  %field_ptr5933 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field5934 = load i64, ptr %field_ptr5933
-  %NK_ARRAY_LIT_val5935 = load i64, ptr @NK_ARRAY_LIT
-  %cmp5936 = icmp eq i64 %field5934, %NK_ARRAY_LIT_val5935
-  br i1 %cmp5936, label %if_then1992, label %if_else1993
+  %field_ptr6002 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field6003 = load i64, ptr %field_ptr6002
+  %NK_ARRAY_LIT_val6004 = load i64, ptr @NK_ARRAY_LIT
+  %cmp6005 = icmp eq i64 %field6003, %NK_ARRAY_LIT_val6004
+  br i1 %cmp6005, label %if_then1992, label %if_else1993
 
 if_then1992:
-  %arr5937 = alloca ptr, align 8
-  %call5938 = call ptr @llvmgen__next_tmp(ptr @str.361)
-  store ptr %call5938, ptr %arr5937
-  %count5939 = alloca i64, align 8
-  %id_val5940 = load i64, ptr %id.addr
-  %call5941 = call i64 @node_extra_len(i64 %id_val5940)
-  store i64 %call5941, ptr %count5939
-  %arr_val5942 = load ptr, ptr %arr5937
-  %concat5943 = call ptr @ofs_str_concat(ptr @str.233, ptr %arr_val5942)
-  %concat5944 = call ptr @ofs_str_concat(ptr %concat5943, ptr @str.354)
-  %count_val5945 = load i64, ptr %count5939
-  %stone_to_str5946 = call ptr @ofs_stone_to_obsidian(i64 %count_val5945)
-  %concat5947 = call ptr @ofs_str_concat(ptr %concat5944, ptr %stone_to_str5946)
-  %concat5948 = call ptr @ofs_str_concat(ptr %concat5947, ptr @str.355)
-  call void @cg_emit(ptr %concat5948)
-  %ai5949 = alloca i64, align 8
-  store i64 0, ptr %ai5949
+  %arr6006 = alloca ptr, align 8
+  %call6007 = call ptr @llvmgen__next_tmp(ptr @str.361)
+  store ptr %call6007, ptr %arr6006
+  %count6008 = alloca i64, align 8
+  %id_val6009 = load i64, ptr %id.addr
+  %call6010 = call i64 @node_extra_len(i64 %id_val6009)
+  store i64 %call6010, ptr %count6008
+  %arr_val6011 = load ptr, ptr %arr6006
+  %concat6012 = call ptr @ofs_str_concat(ptr @str.233, ptr %arr_val6011)
+  %concat6013 = call ptr @ofs_str_concat(ptr %concat6012, ptr @str.354)
+  %count_val6014 = load i64, ptr %count6008
+  %stone_to_str6015 = call ptr @ofs_stone_to_obsidian(i64 %count_val6014)
+  %concat6016 = call ptr @ofs_str_concat(ptr %concat6013, ptr %stone_to_str6015)
+  %concat6017 = call ptr @ofs_str_concat(ptr %concat6016, ptr @str.355)
+  call void @cg_emit(ptr %concat6017)
+  %ai6018 = alloca i64, align 8
+  store i64 0, ptr %ai6018
   br label %while_cond1995
 
 while_cond1995:
-  %ai_val5950 = load i64, ptr %ai5949
-  %count_val5951 = load i64, ptr %count5939
-  %cmp5952 = icmp slt i64 %ai_val5950, %count_val5951
-  br i1 %cmp5952, label %while_body1996, label %while_end1997
+  %ai_val6019 = load i64, ptr %ai6018
+  %count_val6020 = load i64, ptr %count6008
+  %cmp6021 = icmp slt i64 %ai_val6019, %count_val6020
+  br i1 %cmp6021, label %while_body1996, label %while_end1997
 
 while_body1996:
-  %elem_id5953 = alloca i64, align 8
-  %id_val5954 = load i64, ptr %id.addr
-  %ai_val5955 = load i64, ptr %ai5949
-  %call5956 = call i64 @node_get_extra(i64 %id_val5954, i64 %ai_val5955)
-  store i64 %call5956, ptr %elem_id5953
-  %elem_id_val5957 = load i64, ptr %elem_id5953
-  call void @llvmgen__emit_expr(i64 %elem_id_val5957)
-  %slot5958 = alloca ptr, align 8
-  %call5959 = call ptr @llvmgen__next_tmp(ptr @str.362)
-  store ptr %call5959, ptr %slot5958
-  %slot_val5960 = load ptr, ptr %slot5958
-  %concat5961 = call ptr @ofs_str_concat(ptr @str.233, ptr %slot_val5960)
-  %concat5962 = call ptr @ofs_str_concat(ptr %concat5961, ptr @str.363)
-  %llvmgen___expr_type_val5963 = load ptr, ptr @llvmgen___expr_type
-  %call5964 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val5963)
-  %concat5965 = call ptr @ofs_str_concat(ptr %concat5962, ptr %call5964)
-  %concat5966 = call ptr @ofs_str_concat(ptr %concat5965, ptr @str.364)
-  call void @cg_emit(ptr %concat5966)
-  %llvmgen___expr_type_val5967 = load ptr, ptr @llvmgen___expr_type
-  %call5968 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val5967)
-  %concat5969 = call ptr @ofs_str_concat(ptr @str.365, ptr %call5968)
-  %concat5970 = call ptr @ofs_str_concat(ptr %concat5969, ptr @str.216)
-  %llvmgen___expr_val_val5971 = load ptr, ptr @llvmgen___expr_val
-  %concat5972 = call ptr @ofs_str_concat(ptr %concat5970, ptr %llvmgen___expr_val_val5971)
-  %concat5973 = call ptr @ofs_str_concat(ptr %concat5972, ptr @str.276)
-  %slot_val5974 = load ptr, ptr %slot5958
-  %concat5975 = call ptr @ofs_str_concat(ptr %concat5973, ptr %slot_val5974)
-  call void @cg_emit(ptr %concat5975)
-  %arr_val5976 = load ptr, ptr %arr5937
-  %concat5977 = call ptr @ofs_str_concat(ptr @str.366, ptr %arr_val5976)
-  %concat5978 = call ptr @ofs_str_concat(ptr %concat5977, ptr @str.276)
-  %slot_val5979 = load ptr, ptr %slot5958
-  %concat5980 = call ptr @ofs_str_concat(ptr %concat5978, ptr %slot_val5979)
-  %concat5981 = call ptr @ofs_str_concat(ptr %concat5980, ptr @str.125)
-  call void @cg_emit(ptr %concat5981)
-  %post_old5982 = load i64, ptr %ai5949
-  %post_new5983 = add i64 %post_old5982, 1
-  store i64 %post_new5983, ptr %ai5949
+  %elem_id6022 = alloca i64, align 8
+  %id_val6023 = load i64, ptr %id.addr
+  %ai_val6024 = load i64, ptr %ai6018
+  %call6025 = call i64 @node_get_extra(i64 %id_val6023, i64 %ai_val6024)
+  store i64 %call6025, ptr %elem_id6022
+  %elem_id_val6026 = load i64, ptr %elem_id6022
+  call void @llvmgen__emit_expr(i64 %elem_id_val6026)
+  %slot6027 = alloca ptr, align 8
+  %call6028 = call ptr @llvmgen__next_tmp(ptr @str.362)
+  store ptr %call6028, ptr %slot6027
+  %slot_val6029 = load ptr, ptr %slot6027
+  %concat6030 = call ptr @ofs_str_concat(ptr @str.233, ptr %slot_val6029)
+  %concat6031 = call ptr @ofs_str_concat(ptr %concat6030, ptr @str.363)
+  %llvmgen___expr_type_val6032 = load ptr, ptr @llvmgen___expr_type
+  %call6033 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val6032)
+  %concat6034 = call ptr @ofs_str_concat(ptr %concat6031, ptr %call6033)
+  %concat6035 = call ptr @ofs_str_concat(ptr %concat6034, ptr @str.364)
+  call void @cg_emit(ptr %concat6035)
+  %llvmgen___expr_type_val6036 = load ptr, ptr @llvmgen___expr_type
+  %call6037 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val6036)
+  %concat6038 = call ptr @ofs_str_concat(ptr @str.365, ptr %call6037)
+  %concat6039 = call ptr @ofs_str_concat(ptr %concat6038, ptr @str.216)
+  %llvmgen___expr_val_val6040 = load ptr, ptr @llvmgen___expr_val
+  %concat6041 = call ptr @ofs_str_concat(ptr %concat6039, ptr %llvmgen___expr_val_val6040)
+  %concat6042 = call ptr @ofs_str_concat(ptr %concat6041, ptr @str.276)
+  %slot_val6043 = load ptr, ptr %slot6027
+  %concat6044 = call ptr @ofs_str_concat(ptr %concat6042, ptr %slot_val6043)
+  call void @cg_emit(ptr %concat6044)
+  %arr_val6045 = load ptr, ptr %arr6006
+  %concat6046 = call ptr @ofs_str_concat(ptr @str.366, ptr %arr_val6045)
+  %concat6047 = call ptr @ofs_str_concat(ptr %concat6046, ptr @str.276)
+  %slot_val6048 = load ptr, ptr %slot6027
+  %concat6049 = call ptr @ofs_str_concat(ptr %concat6047, ptr %slot_val6048)
+  %concat6050 = call ptr @ofs_str_concat(ptr %concat6049, ptr @str.125)
+  call void @cg_emit(ptr %concat6050)
+  %post_old6051 = load i64, ptr %ai6018
+  %post_new6052 = add i64 %post_old6051, 1
+  store i64 %post_new6052, ptr %ai6018
   br label %while_cond1995
 
 while_end1997:
-  %arr_val5984 = load ptr, ptr %arr5937
-  store ptr %arr_val5984, ptr @llvmgen___expr_val
+  %arr_val6053 = load ptr, ptr %arr6006
+  store ptr %arr_val6053, ptr @llvmgen___expr_val
   store ptr @str.144, ptr @llvmgen___expr_type
   ret void
 
@@ -14790,482 +14896,482 @@ if_else1993:
   br label %if_end1994
 
 if_end1994:
-  %field_ptr5985 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field5986 = load i64, ptr %field_ptr5985
-  %NK_IDENT_val5987 = load i64, ptr @NK_IDENT
-  %cmp5988 = icmp eq i64 %field5986, %NK_IDENT_val5987
-  br i1 %cmp5988, label %if_then1998, label %if_else1999
+  %field_ptr6054 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field6055 = load i64, ptr %field_ptr6054
+  %NK_IDENT_val6056 = load i64, ptr @NK_IDENT
+  %cmp6057 = icmp eq i64 %field6055, %NK_IDENT_val6056
+  br i1 %cmp6057, label %if_then1998, label %if_else1999
 
 if_then1998:
-  %t5989 = alloca ptr, align 8
-  %field_ptr5990 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field5991 = load ptr, ptr %field_ptr5990
-  %call5992 = call ptr @llvmgen__var_type(ptr %field5991)
-  store ptr %call5992, ptr %t5989
-  %p5993 = alloca ptr, align 8
-  %field_ptr5994 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field5995 = load ptr, ptr %field_ptr5994
-  %call5996 = call ptr @llvmgen__var_ptr(ptr %field5995)
-  store ptr %call5996, ptr %p5993
-  %t_val5997 = load ptr, ptr %t5989
-  %call5998 = call i32 @llvmgen__is_named_type(ptr %t_val5997)
-  %cond5999 = icmp ne i32 %call5998, 0
-  br i1 %cond5999, label %if_then2001, label %if_else2002
+  %t6058 = alloca ptr, align 8
+  %field_ptr6059 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6060 = load ptr, ptr %field_ptr6059
+  %call6061 = call ptr @llvmgen__var_type(ptr %field6060)
+  store ptr %call6061, ptr %t6058
+  %p6062 = alloca ptr, align 8
+  %field_ptr6063 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6064 = load ptr, ptr %field_ptr6063
+  %call6065 = call ptr @llvmgen__var_ptr(ptr %field6064)
+  store ptr %call6065, ptr %p6062
+  %t_val6066 = load ptr, ptr %t6058
+  %call6067 = call i32 @llvmgen__is_named_type(ptr %t_val6066)
+  %cond6068 = icmp ne i32 %call6067, 0
+  br i1 %cond6068, label %if_then2001, label %if_else2002
 
 if_then2001:
-  %field_ptr6000 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6001 = load ptr, ptr %field_ptr6000
-  %call6002 = call i64 @llvmgen__var_index(ptr %field6001)
-  %cmp6003 = icmp slt i64 %call6002, 0
-  %field_ptr6004 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6005 = load ptr, ptr %field_ptr6004
-  %call6006 = call i64 @llvmgen__global_index(ptr %field6005)
-  %cmp6007 = icmp sge i64 %call6006, 0
-  %logic6008 = and i1 %cmp6003, %cmp6007
-  br i1 %logic6008, label %if_then2004, label %if_else2005
+  %field_ptr6069 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6070 = load ptr, ptr %field_ptr6069
+  %call6071 = call i64 @llvmgen__var_index(ptr %field6070)
+  %cmp6072 = icmp slt i64 %call6071, 0
+  %field_ptr6073 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6074 = load ptr, ptr %field_ptr6073
+  %call6075 = call i64 @llvmgen__global_index(ptr %field6074)
+  %cmp6076 = icmp sge i64 %call6075, 0
+  %logic6077 = and i1 %cmp6072, %cmp6076
+  br i1 %logic6077, label %if_then2004, label %if_else2005
 
 if_then2004:
-  %gp6009 = alloca ptr, align 8
-  %call6010 = call ptr @llvmgen__next_tmp(ptr @str.367)
-  store ptr %call6010, ptr %gp6009
-  %gp_val6011 = load ptr, ptr %gp6009
-  %concat6012 = call ptr @ofs_str_concat(ptr @str.233, ptr %gp_val6011)
-  %concat6013 = call ptr @ofs_str_concat(ptr %concat6012, ptr @str.274)
-  %p_val6014 = load ptr, ptr %p5993
-  %concat6015 = call ptr @ofs_str_concat(ptr %concat6013, ptr %p_val6014)
-  call void @cg_emit(ptr %concat6015)
-  %gp_val6016 = load ptr, ptr %gp6009
-  store ptr %gp_val6016, ptr @llvmgen___expr_val
+  %gp6078 = alloca ptr, align 8
+  %call6079 = call ptr @llvmgen__next_tmp(ptr @str.367)
+  store ptr %call6079, ptr %gp6078
+  %gp_val6080 = load ptr, ptr %gp6078
+  %concat6081 = call ptr @ofs_str_concat(ptr @str.233, ptr %gp_val6080)
+  %concat6082 = call ptr @ofs_str_concat(ptr %concat6081, ptr @str.274)
+  %p_val6083 = load ptr, ptr %p6062
+  %concat6084 = call ptr @ofs_str_concat(ptr %concat6082, ptr %p_val6083)
+  call void @cg_emit(ptr %concat6084)
+  %gp_val6085 = load ptr, ptr %gp6078
+  store ptr %gp_val6085, ptr @llvmgen___expr_val
   br label %if_end2006
 
 if_else2005:
-  %p_val6017 = load ptr, ptr %p5993
-  store ptr %p_val6017, ptr @llvmgen___expr_val
+  %p_val6086 = load ptr, ptr %p6062
+  store ptr %p_val6086, ptr @llvmgen___expr_val
   br label %if_end2006
 
 if_end2006:
-  %t_val6018 = load ptr, ptr %t5989
-  store ptr %t_val6018, ptr @llvmgen___expr_type
+  %t_val6087 = load ptr, ptr %t6058
+  store ptr %t_val6087, ptr @llvmgen___expr_type
   ret void
 
 if_else2002:
   br label %if_end2003
 
 if_end2003:
-  %tmp6019 = alloca ptr, align 8
-  %field_ptr6020 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6021 = load ptr, ptr %field_ptr6020
-  %concat6022 = call ptr @ofs_str_concat(ptr %field6021, ptr @str.368)
-  %call6023 = call ptr @llvmgen__next_tmp(ptr %concat6022)
-  store ptr %call6023, ptr %tmp6019
-  %tmp_val6024 = load ptr, ptr %tmp6019
-  %concat6025 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val6024)
-  %concat6026 = call ptr @ofs_str_concat(ptr %concat6025, ptr @str.275)
-  %t_val6027 = load ptr, ptr %t5989
-  %call6028 = call ptr @llvmgen__llvm_type(ptr %t_val6027)
-  %concat6029 = call ptr @ofs_str_concat(ptr %concat6026, ptr %call6028)
-  %concat6030 = call ptr @ofs_str_concat(ptr %concat6029, ptr @str.276)
-  %p_val6031 = load ptr, ptr %p5993
-  %concat6032 = call ptr @ofs_str_concat(ptr %concat6030, ptr %p_val6031)
-  call void @cg_emit(ptr %concat6032)
-  %tmp_val6033 = load ptr, ptr %tmp6019
-  store ptr %tmp_val6033, ptr @llvmgen___expr_val
-  %t_val6034 = load ptr, ptr %t5989
-  store ptr %t_val6034, ptr @llvmgen___expr_type
+  %tmp6088 = alloca ptr, align 8
+  %field_ptr6089 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6090 = load ptr, ptr %field_ptr6089
+  %concat6091 = call ptr @ofs_str_concat(ptr %field6090, ptr @str.368)
+  %call6092 = call ptr @llvmgen__next_tmp(ptr %concat6091)
+  store ptr %call6092, ptr %tmp6088
+  %tmp_val6093 = load ptr, ptr %tmp6088
+  %concat6094 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val6093)
+  %concat6095 = call ptr @ofs_str_concat(ptr %concat6094, ptr @str.275)
+  %t_val6096 = load ptr, ptr %t6058
+  %call6097 = call ptr @llvmgen__llvm_type(ptr %t_val6096)
+  %concat6098 = call ptr @ofs_str_concat(ptr %concat6095, ptr %call6097)
+  %concat6099 = call ptr @ofs_str_concat(ptr %concat6098, ptr @str.276)
+  %p_val6100 = load ptr, ptr %p6062
+  %concat6101 = call ptr @ofs_str_concat(ptr %concat6099, ptr %p_val6100)
+  call void @cg_emit(ptr %concat6101)
+  %tmp_val6102 = load ptr, ptr %tmp6088
+  store ptr %tmp_val6102, ptr @llvmgen___expr_val
+  %t_val6103 = load ptr, ptr %t6058
+  store ptr %t_val6103, ptr @llvmgen___expr_type
   ret void
 
 if_else1999:
   br label %if_end2000
 
 if_end2000:
-  %field_ptr6035 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field6036 = load i64, ptr %field_ptr6035
-  %NK_INDEX_val6037 = load i64, ptr @NK_INDEX
-  %cmp6038 = icmp eq i64 %field6036, %NK_INDEX_val6037
-  br i1 %cmp6038, label %if_then2007, label %if_else2008
+  %field_ptr6104 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field6105 = load i64, ptr %field_ptr6104
+  %NK_INDEX_val6106 = load i64, ptr @NK_INDEX
+  %cmp6107 = icmp eq i64 %field6105, %NK_INDEX_val6106
+  br i1 %cmp6107, label %if_then2007, label %if_else2008
 
 if_then2007:
-  %id_val6039 = load i64, ptr %id.addr
-  call void @llvmgen__emit_array_get(i64 %id_val6039, ptr @str.181)
+  %id_val6108 = load i64, ptr %id.addr
+  call void @llvmgen__emit_array_get(i64 %id_val6108, ptr @str.181)
   ret void
 
 if_else2008:
   br label %if_end2009
 
 if_end2009:
-  %field_ptr6040 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field6041 = load i64, ptr %field_ptr6040
-  %NK_CAST_val6042 = load i64, ptr @NK_CAST
-  %cmp6043 = icmp eq i64 %field6041, %NK_CAST_val6042
-  br i1 %cmp6043, label %if_then2010, label %if_else2011
+  %field_ptr6109 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field6110 = load i64, ptr %field_ptr6109
+  %NK_CAST_val6111 = load i64, ptr @NK_CAST
+  %cmp6112 = icmp eq i64 %field6110, %NK_CAST_val6111
+  br i1 %cmp6112, label %if_then2010, label %if_else2011
 
 if_then2010:
-  %field_ptr6044 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 5
-  %field6045 = load i64, ptr %field_ptr6044
-  call void @llvmgen__emit_expr(i64 %field6045)
-  %casted6046 = alloca ptr, align 8
-  %llvmgen___expr_val_val6047 = load ptr, ptr @llvmgen___expr_val
-  %llvmgen___expr_type_val6048 = load ptr, ptr @llvmgen___expr_type
-  %field_ptr6049 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6050 = load ptr, ptr %field_ptr6049
-  %call6051 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val6047, ptr %llvmgen___expr_type_val6048, ptr %field6050)
-  store ptr %call6051, ptr %casted6046
-  %casted_val6052 = load ptr, ptr %casted6046
-  store ptr %casted_val6052, ptr @llvmgen___expr_val
-  %field_ptr6053 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6054 = load ptr, ptr %field_ptr6053
-  store ptr %field6054, ptr @llvmgen___expr_type
+  %field_ptr6113 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 5
+  %field6114 = load i64, ptr %field_ptr6113
+  call void @llvmgen__emit_expr(i64 %field6114)
+  %casted6115 = alloca ptr, align 8
+  %llvmgen___expr_val_val6116 = load ptr, ptr @llvmgen___expr_val
+  %llvmgen___expr_type_val6117 = load ptr, ptr @llvmgen___expr_type
+  %field_ptr6118 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6119 = load ptr, ptr %field_ptr6118
+  %call6120 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val6116, ptr %llvmgen___expr_type_val6117, ptr %field6119)
+  store ptr %call6120, ptr %casted6115
+  %casted_val6121 = load ptr, ptr %casted6115
+  store ptr %casted_val6121, ptr @llvmgen___expr_val
+  %field_ptr6122 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6123 = load ptr, ptr %field_ptr6122
+  store ptr %field6123, ptr @llvmgen___expr_type
   ret void
 
 if_else2011:
   br label %if_end2012
 
 if_end2012:
-  %field_ptr6055 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field6056 = load i64, ptr %field_ptr6055
-  %NK_BIN_OP_val6057 = load i64, ptr @NK_BIN_OP
-  %cmp6058 = icmp eq i64 %field6056, %NK_BIN_OP_val6057
-  br i1 %cmp6058, label %if_then2013, label %if_else2014
+  %field_ptr6124 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field6125 = load i64, ptr %field_ptr6124
+  %NK_BIN_OP_val6126 = load i64, ptr @NK_BIN_OP
+  %cmp6127 = icmp eq i64 %field6125, %NK_BIN_OP_val6126
+  br i1 %cmp6127, label %if_then2013, label %if_else2014
 
 if_then2013:
-  %field_ptr6059 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6060 = load ptr, ptr %field_ptr6059
-  %streq6061 = call i32 @ofs_str_eq(ptr %field6060, ptr @str.110)
-  %field_ptr6062 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6063 = load ptr, ptr %field_ptr6062
-  %streq6064 = call i32 @ofs_str_eq(ptr %field6063, ptr @str.103)
-  %cond6065 = icmp ne i32 %streq6061, 0
-  %cond6066 = icmp ne i32 %streq6064, 0
-  %logic6067 = or i1 %cond6065, %cond6066
-  %field_ptr6068 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6069 = load ptr, ptr %field_ptr6068
-  %streq6070 = call i32 @ofs_str_eq(ptr %field6069, ptr @str.105)
-  %cond6071 = icmp ne i32 %streq6070, 0
-  %logic6072 = or i1 %logic6067, %cond6071
-  %field_ptr6073 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6074 = load ptr, ptr %field_ptr6073
-  %streq6075 = call i32 @ofs_str_eq(ptr %field6074, ptr @str.107)
-  %cond6076 = icmp ne i32 %streq6075, 0
-  %logic6077 = or i1 %logic6072, %cond6076
-  %field_ptr6078 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6079 = load ptr, ptr %field_ptr6078
-  %streq6080 = call i32 @ofs_str_eq(ptr %field6079, ptr @str.108)
-  %cond6081 = icmp ne i32 %streq6080, 0
-  %logic6082 = or i1 %logic6077, %cond6081
-  %field_ptr6083 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6084 = load ptr, ptr %field_ptr6083
-  %streq6085 = call i32 @ofs_str_eq(ptr %field6084, ptr @str.369)
-  %cond6086 = icmp ne i32 %streq6085, 0
-  %logic6087 = or i1 %logic6082, %cond6086
-  br i1 %logic6087, label %if_then2016, label %if_else2017
+  %field_ptr6128 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6129 = load ptr, ptr %field_ptr6128
+  %streq6130 = call i32 @ofs_str_eq(ptr %field6129, ptr @str.110)
+  %field_ptr6131 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6132 = load ptr, ptr %field_ptr6131
+  %streq6133 = call i32 @ofs_str_eq(ptr %field6132, ptr @str.103)
+  %cond6134 = icmp ne i32 %streq6130, 0
+  %cond6135 = icmp ne i32 %streq6133, 0
+  %logic6136 = or i1 %cond6134, %cond6135
+  %field_ptr6137 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6138 = load ptr, ptr %field_ptr6137
+  %streq6139 = call i32 @ofs_str_eq(ptr %field6138, ptr @str.105)
+  %cond6140 = icmp ne i32 %streq6139, 0
+  %logic6141 = or i1 %logic6136, %cond6140
+  %field_ptr6142 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6143 = load ptr, ptr %field_ptr6142
+  %streq6144 = call i32 @ofs_str_eq(ptr %field6143, ptr @str.107)
+  %cond6145 = icmp ne i32 %streq6144, 0
+  %logic6146 = or i1 %logic6141, %cond6145
+  %field_ptr6147 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6148 = load ptr, ptr %field_ptr6147
+  %streq6149 = call i32 @ofs_str_eq(ptr %field6148, ptr @str.108)
+  %cond6150 = icmp ne i32 %streq6149, 0
+  %logic6151 = or i1 %logic6146, %cond6150
+  %field_ptr6152 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6153 = load ptr, ptr %field_ptr6152
+  %streq6154 = call i32 @ofs_str_eq(ptr %field6153, ptr @str.369)
+  %cond6155 = icmp ne i32 %streq6154, 0
+  %logic6156 = or i1 %logic6151, %cond6155
+  br i1 %logic6156, label %if_then2016, label %if_else2017
 
 if_then2016:
-  %obj6089 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr6090 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 5
-  %field6091 = load i64, ptr %field_ptr6090
-  %call6092 = call ptr @node_get(i64 %field6091)
-  %named_val6093 = load %Node, ptr %call6092
-  store %Node %named_val6093, ptr %obj6089
-  %field_ptr6094 = getelementptr inbounds %Node, ptr %obj6089, i32 0, i32 0
-  %field6095 = load i64, ptr %field_ptr6094
-  %NK_IDENT_val6096 = load i64, ptr @NK_IDENT
-  %cmp6097 = icmp eq i64 %field6095, %NK_IDENT_val6096
-  br i1 %cmp6097, label %if_then2019, label %if_else2020
+  %obj6158 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr6159 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 5
+  %field6160 = load i64, ptr %field_ptr6159
+  %call6161 = call ptr @node_get(i64 %field6160)
+  %named_val6162 = load %Node, ptr %call6161
+  store %Node %named_val6162, ptr %obj6158
+  %field_ptr6163 = getelementptr inbounds %Node, ptr %obj6158, i32 0, i32 0
+  %field6164 = load i64, ptr %field_ptr6163
+  %NK_IDENT_val6165 = load i64, ptr @NK_IDENT
+  %cmp6166 = icmp eq i64 %field6164, %NK_IDENT_val6165
+  br i1 %cmp6166, label %if_then2019, label %if_else2020
 
 if_then2019:
-  %at6098 = alloca ptr, align 8
-  %field_ptr6099 = getelementptr inbounds %Node, ptr %obj6089, i32 0, i32 1
-  %field6100 = load ptr, ptr %field_ptr6099
-  %call6101 = call ptr @llvmgen__var_type(ptr %field6100)
-  store ptr %call6101, ptr %at6098
-  %ap6102 = alloca ptr, align 8
-  %field_ptr6103 = getelementptr inbounds %Node, ptr %obj6089, i32 0, i32 1
-  %field6104 = load ptr, ptr %field_ptr6103
-  %call6105 = call ptr @llvmgen__var_ptr(ptr %field6104)
-  store ptr %call6105, ptr %ap6102
-  %field_ptr6106 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 6
-  %field6107 = load i64, ptr %field_ptr6106
-  call void @llvmgen__emit_expr(i64 %field6107)
-  %av6108 = alloca ptr, align 8
-  %llvmgen___expr_val_val6109 = load ptr, ptr @llvmgen___expr_val
-  %llvmgen___expr_type_val6110 = load ptr, ptr @llvmgen___expr_type
-  %at_val6111 = load ptr, ptr %at6098
-  %call6112 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val6109, ptr %llvmgen___expr_type_val6110, ptr %at_val6111)
-  store ptr %call6112, ptr %av6108
-  %field_ptr6113 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6114 = load ptr, ptr %field_ptr6113
-  %streq6115 = call i32 @ofs_str_eq(ptr %field6114, ptr @str.110)
-  %cond6116 = icmp ne i32 %streq6115, 0
-  %not6117 = xor i1 %cond6116, true
-  br i1 %not6117, label %if_then2022, label %if_else2023
+  %at6167 = alloca ptr, align 8
+  %field_ptr6168 = getelementptr inbounds %Node, ptr %obj6158, i32 0, i32 1
+  %field6169 = load ptr, ptr %field_ptr6168
+  %call6170 = call ptr @llvmgen__var_type(ptr %field6169)
+  store ptr %call6170, ptr %at6167
+  %ap6171 = alloca ptr, align 8
+  %field_ptr6172 = getelementptr inbounds %Node, ptr %obj6158, i32 0, i32 1
+  %field6173 = load ptr, ptr %field_ptr6172
+  %call6174 = call ptr @llvmgen__var_ptr(ptr %field6173)
+  store ptr %call6174, ptr %ap6171
+  %field_ptr6175 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 6
+  %field6176 = load i64, ptr %field_ptr6175
+  call void @llvmgen__emit_expr(i64 %field6176)
+  %av6177 = alloca ptr, align 8
+  %llvmgen___expr_val_val6178 = load ptr, ptr @llvmgen___expr_val
+  %llvmgen___expr_type_val6179 = load ptr, ptr @llvmgen___expr_type
+  %at_val6180 = load ptr, ptr %at6167
+  %call6181 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val6178, ptr %llvmgen___expr_type_val6179, ptr %at_val6180)
+  store ptr %call6181, ptr %av6177
+  %field_ptr6182 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6183 = load ptr, ptr %field_ptr6182
+  %streq6184 = call i32 @ofs_str_eq(ptr %field6183, ptr @str.110)
+  %cond6185 = icmp ne i32 %streq6184, 0
+  %not6186 = xor i1 %cond6185, true
+  br i1 %not6186, label %if_then2022, label %if_else2023
 
 if_then2022:
-  %olda6118 = alloca ptr, align 8
-  %call6119 = call ptr @llvmgen__next_tmp(ptr @str.370)
-  store ptr %call6119, ptr %olda6118
-  %newa6120 = alloca ptr, align 8
-  %call6121 = call ptr @llvmgen__next_tmp(ptr @str.371)
-  store ptr %call6121, ptr %newa6120
-  %olda_val6122 = load ptr, ptr %olda6118
-  %concat6123 = call ptr @ofs_str_concat(ptr @str.233, ptr %olda_val6122)
-  %concat6124 = call ptr @ofs_str_concat(ptr %concat6123, ptr @str.275)
-  %at_val6125 = load ptr, ptr %at6098
-  %call6126 = call ptr @llvmgen__llvm_type(ptr %at_val6125)
-  %concat6127 = call ptr @ofs_str_concat(ptr %concat6124, ptr %call6126)
-  %concat6128 = call ptr @ofs_str_concat(ptr %concat6127, ptr @str.276)
-  %ap_val6129 = load ptr, ptr %ap6102
-  %concat6130 = call ptr @ofs_str_concat(ptr %concat6128, ptr %ap_val6129)
-  call void @cg_emit(ptr %concat6130)
-  %at_val6131 = load ptr, ptr %at6098
-  %streq6132 = call i32 @ofs_str_eq(ptr %at_val6131, ptr @str.183)
-  %field_ptr6133 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6134 = load ptr, ptr %field_ptr6133
-  %streq6135 = call i32 @ofs_str_eq(ptr %field6134, ptr @str.103)
-  %cond6136 = icmp ne i32 %streq6132, 0
-  %cond6137 = icmp ne i32 %streq6135, 0
-  %logic6138 = and i1 %cond6136, %cond6137
-  br i1 %logic6138, label %if_then2025, label %if_else2026
+  %olda6187 = alloca ptr, align 8
+  %call6188 = call ptr @llvmgen__next_tmp(ptr @str.370)
+  store ptr %call6188, ptr %olda6187
+  %newa6189 = alloca ptr, align 8
+  %call6190 = call ptr @llvmgen__next_tmp(ptr @str.371)
+  store ptr %call6190, ptr %newa6189
+  %olda_val6191 = load ptr, ptr %olda6187
+  %concat6192 = call ptr @ofs_str_concat(ptr @str.233, ptr %olda_val6191)
+  %concat6193 = call ptr @ofs_str_concat(ptr %concat6192, ptr @str.275)
+  %at_val6194 = load ptr, ptr %at6167
+  %call6195 = call ptr @llvmgen__llvm_type(ptr %at_val6194)
+  %concat6196 = call ptr @ofs_str_concat(ptr %concat6193, ptr %call6195)
+  %concat6197 = call ptr @ofs_str_concat(ptr %concat6196, ptr @str.276)
+  %ap_val6198 = load ptr, ptr %ap6171
+  %concat6199 = call ptr @ofs_str_concat(ptr %concat6197, ptr %ap_val6198)
+  call void @cg_emit(ptr %concat6199)
+  %at_val6200 = load ptr, ptr %at6167
+  %streq6201 = call i32 @ofs_str_eq(ptr %at_val6200, ptr @str.183)
+  %field_ptr6202 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6203 = load ptr, ptr %field_ptr6202
+  %streq6204 = call i32 @ofs_str_eq(ptr %field6203, ptr @str.103)
+  %cond6205 = icmp ne i32 %streq6201, 0
+  %cond6206 = icmp ne i32 %streq6204, 0
+  %logic6207 = and i1 %cond6205, %cond6206
+  br i1 %logic6207, label %if_then2025, label %if_else2026
 
 if_then2025:
-  %newa_val6139 = load ptr, ptr %newa6120
-  %concat6140 = call ptr @ofs_str_concat(ptr @str.233, ptr %newa_val6139)
-  %concat6141 = call ptr @ofs_str_concat(ptr %concat6140, ptr @str.372)
-  %olda_val6142 = load ptr, ptr %olda6118
-  %concat6143 = call ptr @ofs_str_concat(ptr %concat6141, ptr %olda_val6142)
-  %concat6144 = call ptr @ofs_str_concat(ptr %concat6143, ptr @str.276)
-  %av_val6145 = load ptr, ptr %av6108
-  %concat6146 = call ptr @ofs_str_concat(ptr %concat6144, ptr %av_val6145)
-  %concat6147 = call ptr @ofs_str_concat(ptr %concat6146, ptr @str.125)
-  call void @cg_emit(ptr %concat6147)
+  %newa_val6208 = load ptr, ptr %newa6189
+  %concat6209 = call ptr @ofs_str_concat(ptr @str.233, ptr %newa_val6208)
+  %concat6210 = call ptr @ofs_str_concat(ptr %concat6209, ptr @str.372)
+  %olda_val6211 = load ptr, ptr %olda6187
+  %concat6212 = call ptr @ofs_str_concat(ptr %concat6210, ptr %olda_val6211)
+  %concat6213 = call ptr @ofs_str_concat(ptr %concat6212, ptr @str.276)
+  %av_val6214 = load ptr, ptr %av6177
+  %concat6215 = call ptr @ofs_str_concat(ptr %concat6213, ptr %av_val6214)
+  %concat6216 = call ptr @ofs_str_concat(ptr %concat6215, ptr @str.125)
+  call void @cg_emit(ptr %concat6216)
   br label %if_end2027
 
 if_else2026:
-  %aop6148 = alloca ptr, align 8
-  store ptr @str.373, ptr %aop6148
-  %field_ptr6149 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6150 = load ptr, ptr %field_ptr6149
-  %streq6151 = call i32 @ofs_str_eq(ptr %field6150, ptr @str.105)
-  %cond6152 = icmp ne i32 %streq6151, 0
-  br i1 %cond6152, label %if_then2028, label %if_else2029
+  %aop6217 = alloca ptr, align 8
+  store ptr @str.373, ptr %aop6217
+  %field_ptr6218 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6219 = load ptr, ptr %field_ptr6218
+  %streq6220 = call i32 @ofs_str_eq(ptr %field6219, ptr @str.105)
+  %cond6221 = icmp ne i32 %streq6220, 0
+  br i1 %cond6221, label %if_then2028, label %if_else2029
 
 if_then2028:
-  store ptr @str.374, ptr %aop6148
+  store ptr @str.374, ptr %aop6217
   br label %if_end2030
 
 if_else2029:
   br label %if_end2030
 
 if_end2030:
-  %field_ptr6153 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6154 = load ptr, ptr %field_ptr6153
-  %streq6155 = call i32 @ofs_str_eq(ptr %field6154, ptr @str.107)
-  %cond6156 = icmp ne i32 %streq6155, 0
-  br i1 %cond6156, label %if_then2031, label %if_else2032
+  %field_ptr6222 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6223 = load ptr, ptr %field_ptr6222
+  %streq6224 = call i32 @ofs_str_eq(ptr %field6223, ptr @str.107)
+  %cond6225 = icmp ne i32 %streq6224, 0
+  br i1 %cond6225, label %if_then2031, label %if_else2032
 
 if_then2031:
-  store ptr @str.375, ptr %aop6148
+  store ptr @str.375, ptr %aop6217
   br label %if_end2033
 
 if_else2032:
   br label %if_end2033
 
 if_end2033:
-  %field_ptr6157 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6158 = load ptr, ptr %field_ptr6157
-  %streq6159 = call i32 @ofs_str_eq(ptr %field6158, ptr @str.108)
-  %cond6160 = icmp ne i32 %streq6159, 0
-  br i1 %cond6160, label %if_then2034, label %if_else2035
+  %field_ptr6226 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6227 = load ptr, ptr %field_ptr6226
+  %streq6228 = call i32 @ofs_str_eq(ptr %field6227, ptr @str.108)
+  %cond6229 = icmp ne i32 %streq6228, 0
+  br i1 %cond6229, label %if_then2034, label %if_else2035
 
 if_then2034:
-  store ptr @str.376, ptr %aop6148
+  store ptr @str.376, ptr %aop6217
   br label %if_end2036
 
 if_else2035:
   br label %if_end2036
 
 if_end2036:
-  %field_ptr6161 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6162 = load ptr, ptr %field_ptr6161
-  %streq6163 = call i32 @ofs_str_eq(ptr %field6162, ptr @str.369)
-  %cond6164 = icmp ne i32 %streq6163, 0
-  br i1 %cond6164, label %if_then2037, label %if_else2038
+  %field_ptr6230 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6231 = load ptr, ptr %field_ptr6230
+  %streq6232 = call i32 @ofs_str_eq(ptr %field6231, ptr @str.369)
+  %cond6233 = icmp ne i32 %streq6232, 0
+  br i1 %cond6233, label %if_then2037, label %if_else2038
 
 if_then2037:
-  store ptr @str.377, ptr %aop6148
+  store ptr @str.377, ptr %aop6217
   br label %if_end2039
 
 if_else2038:
   br label %if_end2039
 
 if_end2039:
-  %newa_val6165 = load ptr, ptr %newa6120
-  %concat6166 = call ptr @ofs_str_concat(ptr @str.233, ptr %newa_val6165)
-  %concat6167 = call ptr @ofs_str_concat(ptr %concat6166, ptr @str.221)
-  %aop_val6168 = load ptr, ptr %aop6148
-  %concat6169 = call ptr @ofs_str_concat(ptr %concat6167, ptr %aop_val6168)
-  %concat6170 = call ptr @ofs_str_concat(ptr %concat6169, ptr @str.216)
-  %at_val6171 = load ptr, ptr %at6098
-  %call6172 = call ptr @llvmgen__llvm_type(ptr %at_val6171)
-  %concat6173 = call ptr @ofs_str_concat(ptr %concat6170, ptr %call6172)
-  %concat6174 = call ptr @ofs_str_concat(ptr %concat6173, ptr @str.216)
-  %olda_val6175 = load ptr, ptr %olda6118
-  %concat6176 = call ptr @ofs_str_concat(ptr %concat6174, ptr %olda_val6175)
-  %concat6177 = call ptr @ofs_str_concat(ptr %concat6176, ptr @str.217)
-  %av_val6178 = load ptr, ptr %av6108
-  %concat6179 = call ptr @ofs_str_concat(ptr %concat6177, ptr %av_val6178)
-  call void @cg_emit(ptr %concat6179)
+  %newa_val6234 = load ptr, ptr %newa6189
+  %concat6235 = call ptr @ofs_str_concat(ptr @str.233, ptr %newa_val6234)
+  %concat6236 = call ptr @ofs_str_concat(ptr %concat6235, ptr @str.221)
+  %aop_val6237 = load ptr, ptr %aop6217
+  %concat6238 = call ptr @ofs_str_concat(ptr %concat6236, ptr %aop_val6237)
+  %concat6239 = call ptr @ofs_str_concat(ptr %concat6238, ptr @str.216)
+  %at_val6240 = load ptr, ptr %at6167
+  %call6241 = call ptr @llvmgen__llvm_type(ptr %at_val6240)
+  %concat6242 = call ptr @ofs_str_concat(ptr %concat6239, ptr %call6241)
+  %concat6243 = call ptr @ofs_str_concat(ptr %concat6242, ptr @str.216)
+  %olda_val6244 = load ptr, ptr %olda6187
+  %concat6245 = call ptr @ofs_str_concat(ptr %concat6243, ptr %olda_val6244)
+  %concat6246 = call ptr @ofs_str_concat(ptr %concat6245, ptr @str.217)
+  %av_val6247 = load ptr, ptr %av6177
+  %concat6248 = call ptr @ofs_str_concat(ptr %concat6246, ptr %av_val6247)
+  call void @cg_emit(ptr %concat6248)
   br label %if_end2027
 
 if_end2027:
-  %newa_val6180 = load ptr, ptr %newa6120
-  store ptr %newa_val6180, ptr %av6108
+  %newa_val6249 = load ptr, ptr %newa6189
+  store ptr %newa_val6249, ptr %av6177
   br label %if_end2024
 
 if_else2023:
   br label %if_end2024
 
 if_end2024:
-  %at_val6181 = load ptr, ptr %at6098
-  %call6182 = call ptr @llvmgen__llvm_type(ptr %at_val6181)
-  %concat6183 = call ptr @ofs_str_concat(ptr @str.365, ptr %call6182)
-  %concat6184 = call ptr @ofs_str_concat(ptr %concat6183, ptr @str.216)
-  %av_val6185 = load ptr, ptr %av6108
-  %concat6186 = call ptr @ofs_str_concat(ptr %concat6184, ptr %av_val6185)
-  %concat6187 = call ptr @ofs_str_concat(ptr %concat6186, ptr @str.276)
-  %ap_val6188 = load ptr, ptr %ap6102
-  %concat6189 = call ptr @ofs_str_concat(ptr %concat6187, ptr %ap_val6188)
-  call void @cg_emit(ptr %concat6189)
-  %av_val6190 = load ptr, ptr %av6108
-  store ptr %av_val6190, ptr @llvmgen___expr_val
-  %at_val6191 = load ptr, ptr %at6098
-  store ptr %at_val6191, ptr @llvmgen___expr_type
+  %at_val6250 = load ptr, ptr %at6167
+  %call6251 = call ptr @llvmgen__llvm_type(ptr %at_val6250)
+  %concat6252 = call ptr @ofs_str_concat(ptr @str.365, ptr %call6251)
+  %concat6253 = call ptr @ofs_str_concat(ptr %concat6252, ptr @str.216)
+  %av_val6254 = load ptr, ptr %av6177
+  %concat6255 = call ptr @ofs_str_concat(ptr %concat6253, ptr %av_val6254)
+  %concat6256 = call ptr @ofs_str_concat(ptr %concat6255, ptr @str.276)
+  %ap_val6257 = load ptr, ptr %ap6171
+  %concat6258 = call ptr @ofs_str_concat(ptr %concat6256, ptr %ap_val6257)
+  call void @cg_emit(ptr %concat6258)
+  %av_val6259 = load ptr, ptr %av6177
+  store ptr %av_val6259, ptr @llvmgen___expr_val
+  %at_val6260 = load ptr, ptr %at6167
+  store ptr %at_val6260, ptr @llvmgen___expr_type
   ret void
 
 if_else2020:
   br label %if_end2021
 
 if_end2021:
-  %field_ptr6192 = getelementptr inbounds %Node, ptr %obj6089, i32 0, i32 0
-  %field6193 = load i64, ptr %field_ptr6192
-  %NK_FIELD_val6194 = load i64, ptr @NK_FIELD
-  %cmp6195 = icmp eq i64 %field6193, %NK_FIELD_val6194
-  br i1 %cmp6195, label %if_then2040, label %if_else2041
+  %field_ptr6261 = getelementptr inbounds %Node, ptr %obj6158, i32 0, i32 0
+  %field6262 = load i64, ptr %field_ptr6261
+  %NK_FIELD_val6263 = load i64, ptr @NK_FIELD
+  %cmp6264 = icmp eq i64 %field6262, %NK_FIELD_val6263
+  br i1 %cmp6264, label %if_then2040, label %if_else2041
 
 if_then2040:
-  %field_ptr6196 = getelementptr inbounds %Node, ptr %obj6089, i32 0, i32 5
-  %field6197 = load i64, ptr %field_ptr6196
-  call void @llvmgen__emit_expr(i64 %field6197)
-  %bp6198 = alloca ptr, align 8
-  %llvmgen___expr_val_val6199 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val6199, ptr %bp6198
-  %bt6200 = alloca ptr, align 8
-  %llvmgen___expr_type_val6201 = load ptr, ptr @llvmgen___expr_type
-  store ptr %llvmgen___expr_type_val6201, ptr %bt6200
-  %ft_assign6202 = alloca ptr, align 8
-  %bt_val6203 = load ptr, ptr %bt6200
-  %field_ptr6204 = getelementptr inbounds %Node, ptr %obj6089, i32 0, i32 1
-  %field6205 = load ptr, ptr %field_ptr6204
-  %call6206 = call ptr @llvmgen__field_type(ptr %bt_val6203, ptr %field6205)
-  store ptr %call6206, ptr %ft_assign6202
-  %idx_assign6207 = alloca i64, align 8
-  %bt_val6208 = load ptr, ptr %bt6200
-  %field_ptr6209 = getelementptr inbounds %Node, ptr %obj6089, i32 0, i32 1
-  %field6210 = load ptr, ptr %field_ptr6209
-  %call6211 = call i64 @llvmgen__field_index(ptr %bt_val6208, ptr %field6210)
-  store i64 %call6211, ptr %idx_assign6207
-  %fp_assign6212 = alloca ptr, align 8
-  %call6213 = call ptr @llvmgen__next_tmp(ptr @str.378)
-  store ptr %call6213, ptr %fp_assign6212
-  %fp_assign_val6214 = load ptr, ptr %fp_assign6212
-  %concat6215 = call ptr @ofs_str_concat(ptr @str.233, ptr %fp_assign_val6214)
-  %concat6216 = call ptr @ofs_str_concat(ptr %concat6215, ptr @str.379)
-  %bt_val6217 = load ptr, ptr %bt6200
-  %concat6218 = call ptr @ofs_str_concat(ptr %concat6216, ptr %bt_val6217)
-  %concat6219 = call ptr @ofs_str_concat(ptr %concat6218, ptr @str.276)
-  %bp_val6220 = load ptr, ptr %bp6198
-  %concat6221 = call ptr @ofs_str_concat(ptr %concat6219, ptr %bp_val6220)
-  %concat6222 = call ptr @ofs_str_concat(ptr %concat6221, ptr @str.380)
-  %idx_assign_val6223 = load i64, ptr %idx_assign6207
-  %stone_to_str6224 = call ptr @ofs_stone_to_obsidian(i64 %idx_assign_val6223)
-  %concat6225 = call ptr @ofs_str_concat(ptr %concat6222, ptr %stone_to_str6224)
-  call void @cg_emit(ptr %concat6225)
-  %field_ptr6226 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 6
-  %field6227 = load i64, ptr %field_ptr6226
-  call void @llvmgen__emit_expr(i64 %field6227)
-  %fv_assign6228 = alloca ptr, align 8
-  %llvmgen___expr_val_val6229 = load ptr, ptr @llvmgen___expr_val
-  %llvmgen___expr_type_val6230 = load ptr, ptr @llvmgen___expr_type
-  %ft_assign_val6231 = load ptr, ptr %ft_assign6202
-  %call6232 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val6229, ptr %llvmgen___expr_type_val6230, ptr %ft_assign_val6231)
-  store ptr %call6232, ptr %fv_assign6228
-  %ft_assign_val6233 = load ptr, ptr %ft_assign6202
-  %call6234 = call ptr @llvmgen__llvm_type(ptr %ft_assign_val6233)
-  %concat6235 = call ptr @ofs_str_concat(ptr @str.365, ptr %call6234)
-  %concat6236 = call ptr @ofs_str_concat(ptr %concat6235, ptr @str.216)
-  %fv_assign_val6237 = load ptr, ptr %fv_assign6228
-  %concat6238 = call ptr @ofs_str_concat(ptr %concat6236, ptr %fv_assign_val6237)
-  %concat6239 = call ptr @ofs_str_concat(ptr %concat6238, ptr @str.276)
-  %fp_assign_val6240 = load ptr, ptr %fp_assign6212
-  %concat6241 = call ptr @ofs_str_concat(ptr %concat6239, ptr %fp_assign_val6240)
-  call void @cg_emit(ptr %concat6241)
-  %fv_assign_val6242 = load ptr, ptr %fv_assign6228
-  store ptr %fv_assign_val6242, ptr @llvmgen___expr_val
-  %ft_assign_val6243 = load ptr, ptr %ft_assign6202
-  store ptr %ft_assign_val6243, ptr @llvmgen___expr_type
+  %field_ptr6265 = getelementptr inbounds %Node, ptr %obj6158, i32 0, i32 5
+  %field6266 = load i64, ptr %field_ptr6265
+  call void @llvmgen__emit_expr(i64 %field6266)
+  %bp6267 = alloca ptr, align 8
+  %llvmgen___expr_val_val6268 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val6268, ptr %bp6267
+  %bt6269 = alloca ptr, align 8
+  %llvmgen___expr_type_val6270 = load ptr, ptr @llvmgen___expr_type
+  store ptr %llvmgen___expr_type_val6270, ptr %bt6269
+  %ft_assign6271 = alloca ptr, align 8
+  %bt_val6272 = load ptr, ptr %bt6269
+  %field_ptr6273 = getelementptr inbounds %Node, ptr %obj6158, i32 0, i32 1
+  %field6274 = load ptr, ptr %field_ptr6273
+  %call6275 = call ptr @llvmgen__field_type(ptr %bt_val6272, ptr %field6274)
+  store ptr %call6275, ptr %ft_assign6271
+  %idx_assign6276 = alloca i64, align 8
+  %bt_val6277 = load ptr, ptr %bt6269
+  %field_ptr6278 = getelementptr inbounds %Node, ptr %obj6158, i32 0, i32 1
+  %field6279 = load ptr, ptr %field_ptr6278
+  %call6280 = call i64 @llvmgen__field_index(ptr %bt_val6277, ptr %field6279)
+  store i64 %call6280, ptr %idx_assign6276
+  %fp_assign6281 = alloca ptr, align 8
+  %call6282 = call ptr @llvmgen__next_tmp(ptr @str.378)
+  store ptr %call6282, ptr %fp_assign6281
+  %fp_assign_val6283 = load ptr, ptr %fp_assign6281
+  %concat6284 = call ptr @ofs_str_concat(ptr @str.233, ptr %fp_assign_val6283)
+  %concat6285 = call ptr @ofs_str_concat(ptr %concat6284, ptr @str.379)
+  %bt_val6286 = load ptr, ptr %bt6269
+  %concat6287 = call ptr @ofs_str_concat(ptr %concat6285, ptr %bt_val6286)
+  %concat6288 = call ptr @ofs_str_concat(ptr %concat6287, ptr @str.276)
+  %bp_val6289 = load ptr, ptr %bp6267
+  %concat6290 = call ptr @ofs_str_concat(ptr %concat6288, ptr %bp_val6289)
+  %concat6291 = call ptr @ofs_str_concat(ptr %concat6290, ptr @str.380)
+  %idx_assign_val6292 = load i64, ptr %idx_assign6276
+  %stone_to_str6293 = call ptr @ofs_stone_to_obsidian(i64 %idx_assign_val6292)
+  %concat6294 = call ptr @ofs_str_concat(ptr %concat6291, ptr %stone_to_str6293)
+  call void @cg_emit(ptr %concat6294)
+  %field_ptr6295 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 6
+  %field6296 = load i64, ptr %field_ptr6295
+  call void @llvmgen__emit_expr(i64 %field6296)
+  %fv_assign6297 = alloca ptr, align 8
+  %llvmgen___expr_val_val6298 = load ptr, ptr @llvmgen___expr_val
+  %llvmgen___expr_type_val6299 = load ptr, ptr @llvmgen___expr_type
+  %ft_assign_val6300 = load ptr, ptr %ft_assign6271
+  %call6301 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val6298, ptr %llvmgen___expr_type_val6299, ptr %ft_assign_val6300)
+  store ptr %call6301, ptr %fv_assign6297
+  %ft_assign_val6302 = load ptr, ptr %ft_assign6271
+  %call6303 = call ptr @llvmgen__llvm_type(ptr %ft_assign_val6302)
+  %concat6304 = call ptr @ofs_str_concat(ptr @str.365, ptr %call6303)
+  %concat6305 = call ptr @ofs_str_concat(ptr %concat6304, ptr @str.216)
+  %fv_assign_val6306 = load ptr, ptr %fv_assign6297
+  %concat6307 = call ptr @ofs_str_concat(ptr %concat6305, ptr %fv_assign_val6306)
+  %concat6308 = call ptr @ofs_str_concat(ptr %concat6307, ptr @str.276)
+  %fp_assign_val6309 = load ptr, ptr %fp_assign6281
+  %concat6310 = call ptr @ofs_str_concat(ptr %concat6308, ptr %fp_assign_val6309)
+  call void @cg_emit(ptr %concat6310)
+  %fv_assign_val6311 = load ptr, ptr %fv_assign6297
+  store ptr %fv_assign_val6311, ptr @llvmgen___expr_val
+  %ft_assign_val6312 = load ptr, ptr %ft_assign6271
+  store ptr %ft_assign_val6312, ptr @llvmgen___expr_type
   ret void
 
 if_else2041:
   br label %if_end2042
 
 if_end2042:
-  %field_ptr6244 = getelementptr inbounds %Node, ptr %obj6089, i32 0, i32 0
-  %field6245 = load i64, ptr %field_ptr6244
-  %NK_UNARY_OP_val6246 = load i64, ptr @NK_UNARY_OP
-  %cmp6247 = icmp eq i64 %field6245, %NK_UNARY_OP_val6246
-  %field_ptr6248 = getelementptr inbounds %Node, ptr %obj6089, i32 0, i32 1
-  %field6249 = load ptr, ptr %field_ptr6248
-  %streq6250 = call i32 @ofs_str_eq(ptr %field6249, ptr @str.56)
-  %cond6251 = icmp ne i32 %streq6250, 0
-  %logic6252 = and i1 %cmp6247, %cond6251
-  br i1 %logic6252, label %if_then2043, label %if_else2044
+  %field_ptr6313 = getelementptr inbounds %Node, ptr %obj6158, i32 0, i32 0
+  %field6314 = load i64, ptr %field_ptr6313
+  %NK_UNARY_OP_val6315 = load i64, ptr @NK_UNARY_OP
+  %cmp6316 = icmp eq i64 %field6314, %NK_UNARY_OP_val6315
+  %field_ptr6317 = getelementptr inbounds %Node, ptr %obj6158, i32 0, i32 1
+  %field6318 = load ptr, ptr %field_ptr6317
+  %streq6319 = call i32 @ofs_str_eq(ptr %field6318, ptr @str.56)
+  %cond6320 = icmp ne i32 %streq6319, 0
+  %logic6321 = and i1 %cmp6316, %cond6320
+  br i1 %logic6321, label %if_then2043, label %if_else2044
 
 if_then2043:
-  %field_ptr6253 = getelementptr inbounds %Node, ptr %obj6089, i32 0, i32 5
-  %field6254 = load i64, ptr %field_ptr6253
-  call void @llvmgen__emit_expr(i64 %field6254)
-  %ptr_assign6255 = alloca ptr, align 8
-  %llvmgen___expr_val_val6256 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val6256, ptr %ptr_assign6255
-  %ptr_type6257 = alloca ptr, align 8
-  %llvmgen___expr_type_val6258 = load ptr, ptr @llvmgen___expr_type
-  store ptr %llvmgen___expr_type_val6258, ptr %ptr_type6257
-  %pt_assign6259 = alloca ptr, align 8
-  %ptr_type_val6260 = load ptr, ptr %ptr_type6257
-  %call6261 = call ptr @llvmgen__pointee_type(ptr %ptr_type_val6260)
-  store ptr %call6261, ptr %pt_assign6259
-  %field_ptr6262 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 6
-  %field6263 = load i64, ptr %field_ptr6262
-  call void @llvmgen__emit_expr(i64 %field6263)
-  %deref_val6264 = alloca ptr, align 8
-  %llvmgen___expr_val_val6265 = load ptr, ptr @llvmgen___expr_val
-  %llvmgen___expr_type_val6266 = load ptr, ptr @llvmgen___expr_type
-  %pt_assign_val6267 = load ptr, ptr %pt_assign6259
-  %call6268 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val6265, ptr %llvmgen___expr_type_val6266, ptr %pt_assign_val6267)
-  store ptr %call6268, ptr %deref_val6264
-  %pt_assign_val6269 = load ptr, ptr %pt_assign6259
-  %call6270 = call ptr @llvmgen__llvm_type(ptr %pt_assign_val6269)
-  %concat6271 = call ptr @ofs_str_concat(ptr @str.365, ptr %call6270)
-  %concat6272 = call ptr @ofs_str_concat(ptr %concat6271, ptr @str.216)
-  %deref_val_val6273 = load ptr, ptr %deref_val6264
-  %concat6274 = call ptr @ofs_str_concat(ptr %concat6272, ptr %deref_val_val6273)
-  %concat6275 = call ptr @ofs_str_concat(ptr %concat6274, ptr @str.276)
-  %ptr_assign_val6276 = load ptr, ptr %ptr_assign6255
-  %concat6277 = call ptr @ofs_str_concat(ptr %concat6275, ptr %ptr_assign_val6276)
-  call void @cg_emit(ptr %concat6277)
-  %deref_val_val6278 = load ptr, ptr %deref_val6264
-  store ptr %deref_val_val6278, ptr @llvmgen___expr_val
-  %pt_assign_val6279 = load ptr, ptr %pt_assign6259
-  store ptr %pt_assign_val6279, ptr @llvmgen___expr_type
+  %field_ptr6322 = getelementptr inbounds %Node, ptr %obj6158, i32 0, i32 5
+  %field6323 = load i64, ptr %field_ptr6322
+  call void @llvmgen__emit_expr(i64 %field6323)
+  %ptr_assign6324 = alloca ptr, align 8
+  %llvmgen___expr_val_val6325 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val6325, ptr %ptr_assign6324
+  %ptr_type6326 = alloca ptr, align 8
+  %llvmgen___expr_type_val6327 = load ptr, ptr @llvmgen___expr_type
+  store ptr %llvmgen___expr_type_val6327, ptr %ptr_type6326
+  %pt_assign6328 = alloca ptr, align 8
+  %ptr_type_val6329 = load ptr, ptr %ptr_type6326
+  %call6330 = call ptr @llvmgen__pointee_type(ptr %ptr_type_val6329)
+  store ptr %call6330, ptr %pt_assign6328
+  %field_ptr6331 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 6
+  %field6332 = load i64, ptr %field_ptr6331
+  call void @llvmgen__emit_expr(i64 %field6332)
+  %deref_val6333 = alloca ptr, align 8
+  %llvmgen___expr_val_val6334 = load ptr, ptr @llvmgen___expr_val
+  %llvmgen___expr_type_val6335 = load ptr, ptr @llvmgen___expr_type
+  %pt_assign_val6336 = load ptr, ptr %pt_assign6328
+  %call6337 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val6334, ptr %llvmgen___expr_type_val6335, ptr %pt_assign_val6336)
+  store ptr %call6337, ptr %deref_val6333
+  %pt_assign_val6338 = load ptr, ptr %pt_assign6328
+  %call6339 = call ptr @llvmgen__llvm_type(ptr %pt_assign_val6338)
+  %concat6340 = call ptr @ofs_str_concat(ptr @str.365, ptr %call6339)
+  %concat6341 = call ptr @ofs_str_concat(ptr %concat6340, ptr @str.216)
+  %deref_val_val6342 = load ptr, ptr %deref_val6333
+  %concat6343 = call ptr @ofs_str_concat(ptr %concat6341, ptr %deref_val_val6342)
+  %concat6344 = call ptr @ofs_str_concat(ptr %concat6343, ptr @str.276)
+  %ptr_assign_val6345 = load ptr, ptr %ptr_assign6324
+  %concat6346 = call ptr @ofs_str_concat(ptr %concat6344, ptr %ptr_assign_val6345)
+  call void @cg_emit(ptr %concat6346)
+  %deref_val_val6347 = load ptr, ptr %deref_val6333
+  store ptr %deref_val_val6347, ptr @llvmgen___expr_val
+  %pt_assign_val6348 = load ptr, ptr %pt_assign6328
+  store ptr %pt_assign_val6348, ptr @llvmgen___expr_type
   ret void
 
 if_else2044:
@@ -15278,88 +15384,88 @@ if_else2017:
   br label %if_end2018
 
 if_end2018:
-  %field_ptr6280 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 5
-  %field6281 = load i64, ptr %field_ptr6280
-  call void @llvmgen__emit_expr(i64 %field6281)
-  %left6282 = alloca ptr, align 8
-  %llvmgen___expr_val_val6283 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val6283, ptr %left6282
-  %left_type6284 = alloca ptr, align 8
-  %llvmgen___expr_type_val6285 = load ptr, ptr @llvmgen___expr_type
-  store ptr %llvmgen___expr_type_val6285, ptr %left_type6284
-  %field_ptr6286 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 6
-  %field6287 = load i64, ptr %field_ptr6286
-  call void @llvmgen__emit_expr(i64 %field6287)
-  %right6288 = alloca ptr, align 8
-  %llvmgen___expr_val_val6289 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val6289, ptr %right6288
-  %right_type6290 = alloca ptr, align 8
-  %llvmgen___expr_type_val6291 = load ptr, ptr @llvmgen___expr_type
-  store ptr %llvmgen___expr_type_val6291, ptr %right_type6290
-  %field_ptr6292 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6293 = load ptr, ptr %field_ptr6292
-  %streq6294 = call i32 @ofs_str_eq(ptr %field6293, ptr @str.54)
-  %left_type_val6295 = load ptr, ptr %left_type6284
-  %streq6296 = call i32 @ofs_str_eq(ptr %left_type_val6295, ptr @str.183)
-  %right_type_val6297 = load ptr, ptr %right_type6290
-  %streq6298 = call i32 @ofs_str_eq(ptr %right_type_val6297, ptr @str.183)
-  %cond6299 = icmp ne i32 %streq6296, 0
-  %cond6300 = icmp ne i32 %streq6298, 0
-  %logic6301 = or i1 %cond6299, %cond6300
-  %cond6302 = icmp ne i32 %streq6294, 0
-  %logic6303 = and i1 %cond6302, %logic6301
-  br i1 %logic6303, label %if_then2046, label %if_else2047
+  %field_ptr6349 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 5
+  %field6350 = load i64, ptr %field_ptr6349
+  call void @llvmgen__emit_expr(i64 %field6350)
+  %left6351 = alloca ptr, align 8
+  %llvmgen___expr_val_val6352 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val6352, ptr %left6351
+  %left_type6353 = alloca ptr, align 8
+  %llvmgen___expr_type_val6354 = load ptr, ptr @llvmgen___expr_type
+  store ptr %llvmgen___expr_type_val6354, ptr %left_type6353
+  %field_ptr6355 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 6
+  %field6356 = load i64, ptr %field_ptr6355
+  call void @llvmgen__emit_expr(i64 %field6356)
+  %right6357 = alloca ptr, align 8
+  %llvmgen___expr_val_val6358 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val6358, ptr %right6357
+  %right_type6359 = alloca ptr, align 8
+  %llvmgen___expr_type_val6360 = load ptr, ptr @llvmgen___expr_type
+  store ptr %llvmgen___expr_type_val6360, ptr %right_type6359
+  %field_ptr6361 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6362 = load ptr, ptr %field_ptr6361
+  %streq6363 = call i32 @ofs_str_eq(ptr %field6362, ptr @str.54)
+  %left_type_val6364 = load ptr, ptr %left_type6353
+  %streq6365 = call i32 @ofs_str_eq(ptr %left_type_val6364, ptr @str.183)
+  %right_type_val6366 = load ptr, ptr %right_type6359
+  %streq6367 = call i32 @ofs_str_eq(ptr %right_type_val6366, ptr @str.183)
+  %cond6368 = icmp ne i32 %streq6365, 0
+  %cond6369 = icmp ne i32 %streq6367, 0
+  %logic6370 = or i1 %cond6368, %cond6369
+  %cond6371 = icmp ne i32 %streq6363, 0
+  %logic6372 = and i1 %cond6371, %logic6370
+  br i1 %logic6372, label %if_then2046, label %if_else2047
 
 if_then2046:
-  %left_type_val6304 = load ptr, ptr %left_type6284
-  %streq6305 = call i32 @ofs_str_eq(ptr %left_type_val6304, ptr @str.183)
-  %cond6306 = icmp ne i32 %streq6305, 0
-  %not6307 = xor i1 %cond6306, true
-  br i1 %not6307, label %if_then2049, label %if_else2050
+  %left_type_val6373 = load ptr, ptr %left_type6353
+  %streq6374 = call i32 @ofs_str_eq(ptr %left_type_val6373, ptr @str.183)
+  %cond6375 = icmp ne i32 %streq6374, 0
+  %not6376 = xor i1 %cond6375, true
+  br i1 %not6376, label %if_then2049, label %if_else2050
 
 if_then2049:
-  %left_val6308 = load ptr, ptr %left6282
-  %left_type_val6309 = load ptr, ptr %left_type6284
-  %call6310 = call ptr @llvmgen__coerce_for_store(ptr %left_val6308, ptr %left_type_val6309, ptr @str.183)
-  store ptr %call6310, ptr %left6282
+  %left_val6377 = load ptr, ptr %left6351
+  %left_type_val6378 = load ptr, ptr %left_type6353
+  %call6379 = call ptr @llvmgen__coerce_for_store(ptr %left_val6377, ptr %left_type_val6378, ptr @str.183)
+  store ptr %call6379, ptr %left6351
   br label %if_end2051
 
 if_else2050:
   br label %if_end2051
 
 if_end2051:
-  %right_type_val6311 = load ptr, ptr %right_type6290
-  %streq6312 = call i32 @ofs_str_eq(ptr %right_type_val6311, ptr @str.183)
-  %cond6313 = icmp ne i32 %streq6312, 0
-  %not6314 = xor i1 %cond6313, true
-  br i1 %not6314, label %if_then2052, label %if_else2053
+  %right_type_val6380 = load ptr, ptr %right_type6359
+  %streq6381 = call i32 @ofs_str_eq(ptr %right_type_val6380, ptr @str.183)
+  %cond6382 = icmp ne i32 %streq6381, 0
+  %not6383 = xor i1 %cond6382, true
+  br i1 %not6383, label %if_then2052, label %if_else2053
 
 if_then2052:
-  %right_val6315 = load ptr, ptr %right6288
-  %right_type_val6316 = load ptr, ptr %right_type6290
-  %call6317 = call ptr @llvmgen__coerce_for_store(ptr %right_val6315, ptr %right_type_val6316, ptr @str.183)
-  store ptr %call6317, ptr %right6288
+  %right_val6384 = load ptr, ptr %right6357
+  %right_type_val6385 = load ptr, ptr %right_type6359
+  %call6386 = call ptr @llvmgen__coerce_for_store(ptr %right_val6384, ptr %right_type_val6385, ptr @str.183)
+  store ptr %call6386, ptr %right6357
   br label %if_end2054
 
 if_else2053:
   br label %if_end2054
 
 if_end2054:
-  %tmp6318 = alloca ptr, align 8
-  %call6319 = call ptr @llvmgen__next_tmp(ptr @str.381)
-  store ptr %call6319, ptr %tmp6318
-  %tmp_val6320 = load ptr, ptr %tmp6318
-  %concat6321 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val6320)
-  %concat6322 = call ptr @ofs_str_concat(ptr %concat6321, ptr @str.372)
-  %left_val6323 = load ptr, ptr %left6282
-  %concat6324 = call ptr @ofs_str_concat(ptr %concat6322, ptr %left_val6323)
-  %concat6325 = call ptr @ofs_str_concat(ptr %concat6324, ptr @str.276)
-  %right_val6326 = load ptr, ptr %right6288
-  %concat6327 = call ptr @ofs_str_concat(ptr %concat6325, ptr %right_val6326)
-  %concat6328 = call ptr @ofs_str_concat(ptr %concat6327, ptr @str.125)
-  call void @cg_emit(ptr %concat6328)
-  %tmp_val6329 = load ptr, ptr %tmp6318
-  store ptr %tmp_val6329, ptr @llvmgen___expr_val
+  %tmp6387 = alloca ptr, align 8
+  %call6388 = call ptr @llvmgen__next_tmp(ptr @str.381)
+  store ptr %call6388, ptr %tmp6387
+  %tmp_val6389 = load ptr, ptr %tmp6387
+  %concat6390 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val6389)
+  %concat6391 = call ptr @ofs_str_concat(ptr %concat6390, ptr @str.372)
+  %left_val6392 = load ptr, ptr %left6351
+  %concat6393 = call ptr @ofs_str_concat(ptr %concat6391, ptr %left_val6392)
+  %concat6394 = call ptr @ofs_str_concat(ptr %concat6393, ptr @str.276)
+  %right_val6395 = load ptr, ptr %right6357
+  %concat6396 = call ptr @ofs_str_concat(ptr %concat6394, ptr %right_val6395)
+  %concat6397 = call ptr @ofs_str_concat(ptr %concat6396, ptr @str.125)
+  call void @cg_emit(ptr %concat6397)
+  %tmp_val6398 = load ptr, ptr %tmp6387
+  store ptr %tmp_val6398, ptr @llvmgen___expr_val
   store ptr @str.183, ptr @llvmgen___expr_type
   ret void
 
@@ -15367,138 +15473,138 @@ if_else2047:
   br label %if_end2048
 
 if_end2048:
-  %field_ptr6330 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6331 = load ptr, ptr %field_ptr6330
-  %streq6332 = call i32 @ofs_str_eq(ptr %field6331, ptr @str.54)
-  %field_ptr6333 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6334 = load ptr, ptr %field_ptr6333
-  %streq6335 = call i32 @ofs_str_eq(ptr %field6334, ptr @str.55)
-  %cond6336 = icmp ne i32 %streq6332, 0
-  %cond6337 = icmp ne i32 %streq6335, 0
-  %logic6338 = or i1 %cond6336, %cond6337
-  %field_ptr6339 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6340 = load ptr, ptr %field_ptr6339
-  %streq6341 = call i32 @ofs_str_eq(ptr %field6340, ptr @str.56)
-  %cond6342 = icmp ne i32 %streq6341, 0
-  %logic6343 = or i1 %logic6338, %cond6342
-  %field_ptr6344 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6345 = load ptr, ptr %field_ptr6344
-  %streq6346 = call i32 @ofs_str_eq(ptr %field6345, ptr @str.57)
-  %cond6347 = icmp ne i32 %streq6346, 0
-  %logic6348 = or i1 %logic6343, %cond6347
-  %field_ptr6349 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6350 = load ptr, ptr %field_ptr6349
-  %streq6351 = call i32 @ofs_str_eq(ptr %field6350, ptr @str.109)
-  %cond6352 = icmp ne i32 %streq6351, 0
-  %logic6353 = or i1 %logic6348, %cond6352
-  br i1 %logic6353, label %if_then2055, label %if_else2056
+  %field_ptr6399 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6400 = load ptr, ptr %field_ptr6399
+  %streq6401 = call i32 @ofs_str_eq(ptr %field6400, ptr @str.54)
+  %field_ptr6402 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6403 = load ptr, ptr %field_ptr6402
+  %streq6404 = call i32 @ofs_str_eq(ptr %field6403, ptr @str.55)
+  %cond6405 = icmp ne i32 %streq6401, 0
+  %cond6406 = icmp ne i32 %streq6404, 0
+  %logic6407 = or i1 %cond6405, %cond6406
+  %field_ptr6408 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6409 = load ptr, ptr %field_ptr6408
+  %streq6410 = call i32 @ofs_str_eq(ptr %field6409, ptr @str.56)
+  %cond6411 = icmp ne i32 %streq6410, 0
+  %logic6412 = or i1 %logic6407, %cond6411
+  %field_ptr6413 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6414 = load ptr, ptr %field_ptr6413
+  %streq6415 = call i32 @ofs_str_eq(ptr %field6414, ptr @str.57)
+  %cond6416 = icmp ne i32 %streq6415, 0
+  %logic6417 = or i1 %logic6412, %cond6416
+  %field_ptr6418 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6419 = load ptr, ptr %field_ptr6418
+  %streq6420 = call i32 @ofs_str_eq(ptr %field6419, ptr @str.109)
+  %cond6421 = icmp ne i32 %streq6420, 0
+  %logic6422 = or i1 %logic6417, %cond6421
+  br i1 %logic6422, label %if_then2055, label %if_else2056
 
 if_then2055:
-  %left_type_val6354 = load ptr, ptr %left_type6284
-  %streq6355 = call i32 @ofs_str_eq(ptr %left_type_val6354, ptr @str.182)
-  %right_type_val6356 = load ptr, ptr %right_type6290
-  %streq6357 = call i32 @ofs_str_eq(ptr %right_type_val6356, ptr @str.182)
-  %cond6358 = icmp ne i32 %streq6355, 0
-  %cond6359 = icmp ne i32 %streq6357, 0
-  %logic6360 = or i1 %cond6358, %cond6359
-  br i1 %logic6360, label %if_then2058, label %if_else2059
+  %left_type_val6423 = load ptr, ptr %left_type6353
+  %streq6424 = call i32 @ofs_str_eq(ptr %left_type_val6423, ptr @str.182)
+  %right_type_val6425 = load ptr, ptr %right_type6359
+  %streq6426 = call i32 @ofs_str_eq(ptr %right_type_val6425, ptr @str.182)
+  %cond6427 = icmp ne i32 %streq6424, 0
+  %cond6428 = icmp ne i32 %streq6426, 0
+  %logic6429 = or i1 %cond6427, %cond6428
+  br i1 %logic6429, label %if_then2058, label %if_else2059
 
 if_then2058:
-  %left_type_val6361 = load ptr, ptr %left_type6284
-  %streq6362 = call i32 @ofs_str_eq(ptr %left_type_val6361, ptr @str.182)
-  %cond6363 = icmp ne i32 %streq6362, 0
-  %not6364 = xor i1 %cond6363, true
-  br i1 %not6364, label %if_then2061, label %if_else2062
+  %left_type_val6430 = load ptr, ptr %left_type6353
+  %streq6431 = call i32 @ofs_str_eq(ptr %left_type_val6430, ptr @str.182)
+  %cond6432 = icmp ne i32 %streq6431, 0
+  %not6433 = xor i1 %cond6432, true
+  br i1 %not6433, label %if_then2061, label %if_else2062
 
 if_then2061:
-  %left_val6365 = load ptr, ptr %left6282
-  %left_type_val6366 = load ptr, ptr %left_type6284
-  %call6367 = call ptr @llvmgen__coerce_for_store(ptr %left_val6365, ptr %left_type_val6366, ptr @str.182)
-  store ptr %call6367, ptr %left6282
+  %left_val6434 = load ptr, ptr %left6351
+  %left_type_val6435 = load ptr, ptr %left_type6353
+  %call6436 = call ptr @llvmgen__coerce_for_store(ptr %left_val6434, ptr %left_type_val6435, ptr @str.182)
+  store ptr %call6436, ptr %left6351
   br label %if_end2063
 
 if_else2062:
   br label %if_end2063
 
 if_end2063:
-  %right_type_val6368 = load ptr, ptr %right_type6290
-  %streq6369 = call i32 @ofs_str_eq(ptr %right_type_val6368, ptr @str.182)
-  %cond6370 = icmp ne i32 %streq6369, 0
-  %not6371 = xor i1 %cond6370, true
-  br i1 %not6371, label %if_then2064, label %if_else2065
+  %right_type_val6437 = load ptr, ptr %right_type6359
+  %streq6438 = call i32 @ofs_str_eq(ptr %right_type_val6437, ptr @str.182)
+  %cond6439 = icmp ne i32 %streq6438, 0
+  %not6440 = xor i1 %cond6439, true
+  br i1 %not6440, label %if_then2064, label %if_else2065
 
 if_then2064:
-  %right_val6372 = load ptr, ptr %right6288
-  %right_type_val6373 = load ptr, ptr %right_type6290
-  %call6374 = call ptr @llvmgen__coerce_for_store(ptr %right_val6372, ptr %right_type_val6373, ptr @str.182)
-  store ptr %call6374, ptr %right6288
+  %right_val6441 = load ptr, ptr %right6357
+  %right_type_val6442 = load ptr, ptr %right_type6359
+  %call6443 = call ptr @llvmgen__coerce_for_store(ptr %right_val6441, ptr %right_type_val6442, ptr @str.182)
+  store ptr %call6443, ptr %right6357
   br label %if_end2066
 
 if_else2065:
   br label %if_end2066
 
 if_end2066:
-  %fop6375 = alloca ptr, align 8
-  store ptr @str.382, ptr %fop6375
-  %field_ptr6376 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6377 = load ptr, ptr %field_ptr6376
-  %streq6378 = call i32 @ofs_str_eq(ptr %field6377, ptr @str.55)
-  %cond6379 = icmp ne i32 %streq6378, 0
-  br i1 %cond6379, label %if_then2067, label %if_else2068
+  %fop6444 = alloca ptr, align 8
+  store ptr @str.382, ptr %fop6444
+  %field_ptr6445 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6446 = load ptr, ptr %field_ptr6445
+  %streq6447 = call i32 @ofs_str_eq(ptr %field6446, ptr @str.55)
+  %cond6448 = icmp ne i32 %streq6447, 0
+  br i1 %cond6448, label %if_then2067, label %if_else2068
 
 if_then2067:
-  store ptr @str.383, ptr %fop6375
+  store ptr @str.383, ptr %fop6444
   br label %if_end2069
 
 if_else2068:
   br label %if_end2069
 
 if_end2069:
-  %field_ptr6380 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6381 = load ptr, ptr %field_ptr6380
-  %streq6382 = call i32 @ofs_str_eq(ptr %field6381, ptr @str.56)
-  %cond6383 = icmp ne i32 %streq6382, 0
-  br i1 %cond6383, label %if_then2070, label %if_else2071
+  %field_ptr6449 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6450 = load ptr, ptr %field_ptr6449
+  %streq6451 = call i32 @ofs_str_eq(ptr %field6450, ptr @str.56)
+  %cond6452 = icmp ne i32 %streq6451, 0
+  br i1 %cond6452, label %if_then2070, label %if_else2071
 
 if_then2070:
-  store ptr @str.384, ptr %fop6375
+  store ptr @str.384, ptr %fop6444
   br label %if_end2072
 
 if_else2071:
   br label %if_end2072
 
 if_end2072:
-  %field_ptr6384 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6385 = load ptr, ptr %field_ptr6384
-  %streq6386 = call i32 @ofs_str_eq(ptr %field6385, ptr @str.57)
-  %cond6387 = icmp ne i32 %streq6386, 0
-  br i1 %cond6387, label %if_then2073, label %if_else2074
+  %field_ptr6453 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6454 = load ptr, ptr %field_ptr6453
+  %streq6455 = call i32 @ofs_str_eq(ptr %field6454, ptr @str.57)
+  %cond6456 = icmp ne i32 %streq6455, 0
+  br i1 %cond6456, label %if_then2073, label %if_else2074
 
 if_then2073:
-  store ptr @str.385, ptr %fop6375
+  store ptr @str.385, ptr %fop6444
   br label %if_end2075
 
 if_else2074:
   br label %if_end2075
 
 if_end2075:
-  %ftmp6388 = alloca ptr, align 8
-  %call6389 = call ptr @llvmgen__next_tmp(ptr @str.386)
-  store ptr %call6389, ptr %ftmp6388
-  %ftmp_val6390 = load ptr, ptr %ftmp6388
-  %concat6391 = call ptr @ofs_str_concat(ptr @str.233, ptr %ftmp_val6390)
-  %concat6392 = call ptr @ofs_str_concat(ptr %concat6391, ptr @str.221)
-  %fop_val6393 = load ptr, ptr %fop6375
-  %concat6394 = call ptr @ofs_str_concat(ptr %concat6392, ptr %fop_val6393)
-  %concat6395 = call ptr @ofs_str_concat(ptr %concat6394, ptr @str.387)
-  %left_val6396 = load ptr, ptr %left6282
-  %concat6397 = call ptr @ofs_str_concat(ptr %concat6395, ptr %left_val6396)
-  %concat6398 = call ptr @ofs_str_concat(ptr %concat6397, ptr @str.217)
-  %right_val6399 = load ptr, ptr %right6288
-  %concat6400 = call ptr @ofs_str_concat(ptr %concat6398, ptr %right_val6399)
-  call void @cg_emit(ptr %concat6400)
-  %ftmp_val6401 = load ptr, ptr %ftmp6388
-  store ptr %ftmp_val6401, ptr @llvmgen___expr_val
+  %ftmp6457 = alloca ptr, align 8
+  %call6458 = call ptr @llvmgen__next_tmp(ptr @str.386)
+  store ptr %call6458, ptr %ftmp6457
+  %ftmp_val6459 = load ptr, ptr %ftmp6457
+  %concat6460 = call ptr @ofs_str_concat(ptr @str.233, ptr %ftmp_val6459)
+  %concat6461 = call ptr @ofs_str_concat(ptr %concat6460, ptr @str.221)
+  %fop_val6462 = load ptr, ptr %fop6444
+  %concat6463 = call ptr @ofs_str_concat(ptr %concat6461, ptr %fop_val6462)
+  %concat6464 = call ptr @ofs_str_concat(ptr %concat6463, ptr @str.387)
+  %left_val6465 = load ptr, ptr %left6351
+  %concat6466 = call ptr @ofs_str_concat(ptr %concat6464, ptr %left_val6465)
+  %concat6467 = call ptr @ofs_str_concat(ptr %concat6466, ptr @str.217)
+  %right_val6468 = load ptr, ptr %right6357
+  %concat6469 = call ptr @ofs_str_concat(ptr %concat6467, ptr %right_val6468)
+  call void @cg_emit(ptr %concat6469)
+  %ftmp_val6470 = load ptr, ptr %ftmp6457
+  store ptr %ftmp_val6470, ptr @llvmgen___expr_val
   store ptr @str.182, ptr @llvmgen___expr_type
   ret void
 
@@ -15506,117 +15612,117 @@ if_else2059:
   br label %if_end2060
 
 if_end2060:
-  %left_type_val6402 = load ptr, ptr %left_type6284
-  %call6403 = call ptr @llvmgen__llvm_type(ptr %left_type_val6402)
-  %streq6404 = call i32 @ofs_str_eq(ptr %call6403, ptr @str.244)
-  %cond6405 = icmp ne i32 %streq6404, 0
-  %not6406 = xor i1 %cond6405, true
-  br i1 %not6406, label %if_then2076, label %if_else2077
+  %left_type_val6471 = load ptr, ptr %left_type6353
+  %call6472 = call ptr @llvmgen__llvm_type(ptr %left_type_val6471)
+  %streq6473 = call i32 @ofs_str_eq(ptr %call6472, ptr @str.244)
+  %cond6474 = icmp ne i32 %streq6473, 0
+  %not6475 = xor i1 %cond6474, true
+  br i1 %not6475, label %if_then2076, label %if_else2077
 
 if_then2076:
-  %left_val6407 = load ptr, ptr %left6282
-  %left_type_val6408 = load ptr, ptr %left_type6284
-  %call6409 = call ptr @llvmgen__coerce_for_store(ptr %left_val6407, ptr %left_type_val6408, ptr @str.181)
-  store ptr %call6409, ptr %left6282
+  %left_val6476 = load ptr, ptr %left6351
+  %left_type_val6477 = load ptr, ptr %left_type6353
+  %call6478 = call ptr @llvmgen__coerce_for_store(ptr %left_val6476, ptr %left_type_val6477, ptr @str.181)
+  store ptr %call6478, ptr %left6351
   br label %if_end2078
 
 if_else2077:
   br label %if_end2078
 
 if_end2078:
-  %right_type_val6410 = load ptr, ptr %right_type6290
-  %call6411 = call ptr @llvmgen__llvm_type(ptr %right_type_val6410)
-  %streq6412 = call i32 @ofs_str_eq(ptr %call6411, ptr @str.244)
-  %cond6413 = icmp ne i32 %streq6412, 0
-  %not6414 = xor i1 %cond6413, true
-  br i1 %not6414, label %if_then2079, label %if_else2080
+  %right_type_val6479 = load ptr, ptr %right_type6359
+  %call6480 = call ptr @llvmgen__llvm_type(ptr %right_type_val6479)
+  %streq6481 = call i32 @ofs_str_eq(ptr %call6480, ptr @str.244)
+  %cond6482 = icmp ne i32 %streq6481, 0
+  %not6483 = xor i1 %cond6482, true
+  br i1 %not6483, label %if_then2079, label %if_else2080
 
 if_then2079:
-  %right_val6415 = load ptr, ptr %right6288
-  %right_type_val6416 = load ptr, ptr %right_type6290
-  %call6417 = call ptr @llvmgen__coerce_for_store(ptr %right_val6415, ptr %right_type_val6416, ptr @str.181)
-  store ptr %call6417, ptr %right6288
+  %right_val6484 = load ptr, ptr %right6357
+  %right_type_val6485 = load ptr, ptr %right_type6359
+  %call6486 = call ptr @llvmgen__coerce_for_store(ptr %right_val6484, ptr %right_type_val6485, ptr @str.181)
+  store ptr %call6486, ptr %right6357
   br label %if_end2081
 
 if_else2080:
   br label %if_end2081
 
 if_end2081:
-  %op6418 = alloca ptr, align 8
-  store ptr @str.373, ptr %op6418
-  %field_ptr6419 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6420 = load ptr, ptr %field_ptr6419
-  %streq6421 = call i32 @ofs_str_eq(ptr %field6420, ptr @str.55)
-  %cond6422 = icmp ne i32 %streq6421, 0
-  br i1 %cond6422, label %if_then2082, label %if_else2083
+  %op6487 = alloca ptr, align 8
+  store ptr @str.373, ptr %op6487
+  %field_ptr6488 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6489 = load ptr, ptr %field_ptr6488
+  %streq6490 = call i32 @ofs_str_eq(ptr %field6489, ptr @str.55)
+  %cond6491 = icmp ne i32 %streq6490, 0
+  br i1 %cond6491, label %if_then2082, label %if_else2083
 
 if_then2082:
-  store ptr @str.374, ptr %op6418
+  store ptr @str.374, ptr %op6487
   br label %if_end2084
 
 if_else2083:
   br label %if_end2084
 
 if_end2084:
-  %field_ptr6423 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6424 = load ptr, ptr %field_ptr6423
-  %streq6425 = call i32 @ofs_str_eq(ptr %field6424, ptr @str.56)
-  %cond6426 = icmp ne i32 %streq6425, 0
-  br i1 %cond6426, label %if_then2085, label %if_else2086
+  %field_ptr6492 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6493 = load ptr, ptr %field_ptr6492
+  %streq6494 = call i32 @ofs_str_eq(ptr %field6493, ptr @str.56)
+  %cond6495 = icmp ne i32 %streq6494, 0
+  br i1 %cond6495, label %if_then2085, label %if_else2086
 
 if_then2085:
-  store ptr @str.375, ptr %op6418
+  store ptr @str.375, ptr %op6487
   br label %if_end2087
 
 if_else2086:
   br label %if_end2087
 
 if_end2087:
-  %field_ptr6427 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6428 = load ptr, ptr %field_ptr6427
-  %streq6429 = call i32 @ofs_str_eq(ptr %field6428, ptr @str.57)
-  %cond6430 = icmp ne i32 %streq6429, 0
-  br i1 %cond6430, label %if_then2088, label %if_else2089
+  %field_ptr6496 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6497 = load ptr, ptr %field_ptr6496
+  %streq6498 = call i32 @ofs_str_eq(ptr %field6497, ptr @str.57)
+  %cond6499 = icmp ne i32 %streq6498, 0
+  br i1 %cond6499, label %if_then2088, label %if_else2089
 
 if_then2088:
-  store ptr @str.376, ptr %op6418
+  store ptr @str.376, ptr %op6487
   br label %if_end2090
 
 if_else2089:
   br label %if_end2090
 
 if_end2090:
-  %field_ptr6431 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6432 = load ptr, ptr %field_ptr6431
-  %streq6433 = call i32 @ofs_str_eq(ptr %field6432, ptr @str.109)
-  %cond6434 = icmp ne i32 %streq6433, 0
-  br i1 %cond6434, label %if_then2091, label %if_else2092
+  %field_ptr6500 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6501 = load ptr, ptr %field_ptr6500
+  %streq6502 = call i32 @ofs_str_eq(ptr %field6501, ptr @str.109)
+  %cond6503 = icmp ne i32 %streq6502, 0
+  br i1 %cond6503, label %if_then2091, label %if_else2092
 
 if_then2091:
-  store ptr @str.377, ptr %op6418
+  store ptr @str.377, ptr %op6487
   br label %if_end2093
 
 if_else2092:
   br label %if_end2093
 
 if_end2093:
-  %arith_tmp6435 = alloca ptr, align 8
-  %call6436 = call ptr @llvmgen__next_tmp(ptr @str.388)
-  store ptr %call6436, ptr %arith_tmp6435
-  %arith_tmp_val6437 = load ptr, ptr %arith_tmp6435
-  %concat6438 = call ptr @ofs_str_concat(ptr @str.233, ptr %arith_tmp_val6437)
-  %concat6439 = call ptr @ofs_str_concat(ptr %concat6438, ptr @str.221)
-  %op_val6440 = load ptr, ptr %op6418
-  %concat6441 = call ptr @ofs_str_concat(ptr %concat6439, ptr %op_val6440)
-  %concat6442 = call ptr @ofs_str_concat(ptr %concat6441, ptr @str.389)
-  %left_val6443 = load ptr, ptr %left6282
-  %concat6444 = call ptr @ofs_str_concat(ptr %concat6442, ptr %left_val6443)
-  %concat6445 = call ptr @ofs_str_concat(ptr %concat6444, ptr @str.217)
-  %right_val6446 = load ptr, ptr %right6288
-  %concat6447 = call ptr @ofs_str_concat(ptr %concat6445, ptr %right_val6446)
-  call void @cg_emit(ptr %concat6447)
-  %arith_tmp_val6448 = load ptr, ptr %arith_tmp6435
-  store ptr %arith_tmp_val6448, ptr @llvmgen___expr_val
+  %arith_tmp6504 = alloca ptr, align 8
+  %call6505 = call ptr @llvmgen__next_tmp(ptr @str.388)
+  store ptr %call6505, ptr %arith_tmp6504
+  %arith_tmp_val6506 = load ptr, ptr %arith_tmp6504
+  %concat6507 = call ptr @ofs_str_concat(ptr @str.233, ptr %arith_tmp_val6506)
+  %concat6508 = call ptr @ofs_str_concat(ptr %concat6507, ptr @str.221)
+  %op_val6509 = load ptr, ptr %op6487
+  %concat6510 = call ptr @ofs_str_concat(ptr %concat6508, ptr %op_val6509)
+  %concat6511 = call ptr @ofs_str_concat(ptr %concat6510, ptr @str.389)
+  %left_val6512 = load ptr, ptr %left6351
+  %concat6513 = call ptr @ofs_str_concat(ptr %concat6511, ptr %left_val6512)
+  %concat6514 = call ptr @ofs_str_concat(ptr %concat6513, ptr @str.217)
+  %right_val6515 = load ptr, ptr %right6357
+  %concat6516 = call ptr @ofs_str_concat(ptr %concat6514, ptr %right_val6515)
+  call void @cg_emit(ptr %concat6516)
+  %arith_tmp_val6517 = load ptr, ptr %arith_tmp6504
+  store ptr %arith_tmp_val6517, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -15624,144 +15730,144 @@ if_else2056:
   br label %if_end2057
 
 if_end2057:
-  %field_ptr6449 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6450 = load ptr, ptr %field_ptr6449
-  %streq6451 = call i32 @ofs_str_eq(ptr %field6450, ptr @str.113)
-  %field_ptr6452 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6453 = load ptr, ptr %field_ptr6452
-  %streq6454 = call i32 @ofs_str_eq(ptr %field6453, ptr @str.116)
-  %cond6455 = icmp ne i32 %streq6451, 0
-  %cond6456 = icmp ne i32 %streq6454, 0
-  %logic6457 = or i1 %cond6455, %cond6456
-  %field_ptr6458 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6459 = load ptr, ptr %field_ptr6458
-  %streq6460 = call i32 @ofs_str_eq(ptr %field6459, ptr @str.121)
-  %cond6461 = icmp ne i32 %streq6460, 0
-  %logic6462 = or i1 %logic6457, %cond6461
-  %field_ptr6463 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6464 = load ptr, ptr %field_ptr6463
-  %streq6465 = call i32 @ofs_str_eq(ptr %field6464, ptr @str.119)
-  %cond6466 = icmp ne i32 %streq6465, 0
-  %logic6467 = or i1 %logic6462, %cond6466
-  %field_ptr6468 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6469 = load ptr, ptr %field_ptr6468
-  %streq6470 = call i32 @ofs_str_eq(ptr %field6469, ptr @str.122)
-  %cond6471 = icmp ne i32 %streq6470, 0
-  %logic6472 = or i1 %logic6467, %cond6471
-  br i1 %logic6472, label %if_then2094, label %if_else2095
+  %field_ptr6518 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6519 = load ptr, ptr %field_ptr6518
+  %streq6520 = call i32 @ofs_str_eq(ptr %field6519, ptr @str.113)
+  %field_ptr6521 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6522 = load ptr, ptr %field_ptr6521
+  %streq6523 = call i32 @ofs_str_eq(ptr %field6522, ptr @str.116)
+  %cond6524 = icmp ne i32 %streq6520, 0
+  %cond6525 = icmp ne i32 %streq6523, 0
+  %logic6526 = or i1 %cond6524, %cond6525
+  %field_ptr6527 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6528 = load ptr, ptr %field_ptr6527
+  %streq6529 = call i32 @ofs_str_eq(ptr %field6528, ptr @str.121)
+  %cond6530 = icmp ne i32 %streq6529, 0
+  %logic6531 = or i1 %logic6526, %cond6530
+  %field_ptr6532 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6533 = load ptr, ptr %field_ptr6532
+  %streq6534 = call i32 @ofs_str_eq(ptr %field6533, ptr @str.119)
+  %cond6535 = icmp ne i32 %streq6534, 0
+  %logic6536 = or i1 %logic6531, %cond6535
+  %field_ptr6537 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6538 = load ptr, ptr %field_ptr6537
+  %streq6539 = call i32 @ofs_str_eq(ptr %field6538, ptr @str.122)
+  %cond6540 = icmp ne i32 %streq6539, 0
+  %logic6541 = or i1 %logic6536, %cond6540
+  br i1 %logic6541, label %if_then2094, label %if_else2095
 
 if_then2094:
-  %left_type_val6473 = load ptr, ptr %left_type6284
-  %call6474 = call ptr @llvmgen__llvm_type(ptr %left_type_val6473)
-  %streq6475 = call i32 @ofs_str_eq(ptr %call6474, ptr @str.244)
-  %cond6476 = icmp ne i32 %streq6475, 0
-  %not6477 = xor i1 %cond6476, true
-  br i1 %not6477, label %if_then2097, label %if_else2098
+  %left_type_val6542 = load ptr, ptr %left_type6353
+  %call6543 = call ptr @llvmgen__llvm_type(ptr %left_type_val6542)
+  %streq6544 = call i32 @ofs_str_eq(ptr %call6543, ptr @str.244)
+  %cond6545 = icmp ne i32 %streq6544, 0
+  %not6546 = xor i1 %cond6545, true
+  br i1 %not6546, label %if_then2097, label %if_else2098
 
 if_then2097:
-  %left_val6478 = load ptr, ptr %left6282
-  %left_type_val6479 = load ptr, ptr %left_type6284
-  %call6480 = call ptr @llvmgen__coerce_for_store(ptr %left_val6478, ptr %left_type_val6479, ptr @str.181)
-  store ptr %call6480, ptr %left6282
+  %left_val6547 = load ptr, ptr %left6351
+  %left_type_val6548 = load ptr, ptr %left_type6353
+  %call6549 = call ptr @llvmgen__coerce_for_store(ptr %left_val6547, ptr %left_type_val6548, ptr @str.181)
+  store ptr %call6549, ptr %left6351
   br label %if_end2099
 
 if_else2098:
   br label %if_end2099
 
 if_end2099:
-  %right_type_val6481 = load ptr, ptr %right_type6290
-  %call6482 = call ptr @llvmgen__llvm_type(ptr %right_type_val6481)
-  %streq6483 = call i32 @ofs_str_eq(ptr %call6482, ptr @str.244)
-  %cond6484 = icmp ne i32 %streq6483, 0
-  %not6485 = xor i1 %cond6484, true
-  br i1 %not6485, label %if_then2100, label %if_else2101
+  %right_type_val6550 = load ptr, ptr %right_type6359
+  %call6551 = call ptr @llvmgen__llvm_type(ptr %right_type_val6550)
+  %streq6552 = call i32 @ofs_str_eq(ptr %call6551, ptr @str.244)
+  %cond6553 = icmp ne i32 %streq6552, 0
+  %not6554 = xor i1 %cond6553, true
+  br i1 %not6554, label %if_then2100, label %if_else2101
 
 if_then2100:
-  %right_val6486 = load ptr, ptr %right6288
-  %right_type_val6487 = load ptr, ptr %right_type6290
-  %call6488 = call ptr @llvmgen__coerce_for_store(ptr %right_val6486, ptr %right_type_val6487, ptr @str.181)
-  store ptr %call6488, ptr %right6288
+  %right_val6555 = load ptr, ptr %right6357
+  %right_type_val6556 = load ptr, ptr %right_type6359
+  %call6557 = call ptr @llvmgen__coerce_for_store(ptr %right_val6555, ptr %right_type_val6556, ptr @str.181)
+  store ptr %call6557, ptr %right6357
   br label %if_end2102
 
 if_else2101:
   br label %if_end2102
 
 if_end2102:
-  %bop6489 = alloca ptr, align 8
-  store ptr @str.390, ptr %bop6489
-  %field_ptr6490 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6491 = load ptr, ptr %field_ptr6490
-  %streq6492 = call i32 @ofs_str_eq(ptr %field6491, ptr @str.113)
-  %cond6493 = icmp ne i32 %streq6492, 0
-  br i1 %cond6493, label %if_then2103, label %if_else2104
+  %bop6558 = alloca ptr, align 8
+  store ptr @str.390, ptr %bop6558
+  %field_ptr6559 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6560 = load ptr, ptr %field_ptr6559
+  %streq6561 = call i32 @ofs_str_eq(ptr %field6560, ptr @str.113)
+  %cond6562 = icmp ne i32 %streq6561, 0
+  br i1 %cond6562, label %if_then2103, label %if_else2104
 
 if_then2103:
-  store ptr @str.391, ptr %bop6489
+  store ptr @str.391, ptr %bop6558
   br label %if_end2105
 
 if_else2104:
   br label %if_end2105
 
 if_end2105:
-  %field_ptr6494 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6495 = load ptr, ptr %field_ptr6494
-  %streq6496 = call i32 @ofs_str_eq(ptr %field6495, ptr @str.116)
-  %cond6497 = icmp ne i32 %streq6496, 0
-  br i1 %cond6497, label %if_then2106, label %if_else2107
+  %field_ptr6563 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6564 = load ptr, ptr %field_ptr6563
+  %streq6565 = call i32 @ofs_str_eq(ptr %field6564, ptr @str.116)
+  %cond6566 = icmp ne i32 %streq6565, 0
+  br i1 %cond6566, label %if_then2106, label %if_else2107
 
 if_then2106:
-  store ptr @str.392, ptr %bop6489
+  store ptr @str.392, ptr %bop6558
   br label %if_end2108
 
 if_else2107:
   br label %if_end2108
 
 if_end2108:
-  %field_ptr6498 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6499 = load ptr, ptr %field_ptr6498
-  %streq6500 = call i32 @ofs_str_eq(ptr %field6499, ptr @str.119)
-  %cond6501 = icmp ne i32 %streq6500, 0
-  br i1 %cond6501, label %if_then2109, label %if_else2110
+  %field_ptr6567 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6568 = load ptr, ptr %field_ptr6567
+  %streq6569 = call i32 @ofs_str_eq(ptr %field6568, ptr @str.119)
+  %cond6570 = icmp ne i32 %streq6569, 0
+  br i1 %cond6570, label %if_then2109, label %if_else2110
 
 if_then2109:
-  store ptr @str.393, ptr %bop6489
+  store ptr @str.393, ptr %bop6558
   br label %if_end2111
 
 if_else2110:
   br label %if_end2111
 
 if_end2111:
-  %field_ptr6502 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6503 = load ptr, ptr %field_ptr6502
-  %streq6504 = call i32 @ofs_str_eq(ptr %field6503, ptr @str.122)
-  %cond6505 = icmp ne i32 %streq6504, 0
-  br i1 %cond6505, label %if_then2112, label %if_else2113
+  %field_ptr6571 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6572 = load ptr, ptr %field_ptr6571
+  %streq6573 = call i32 @ofs_str_eq(ptr %field6572, ptr @str.122)
+  %cond6574 = icmp ne i32 %streq6573, 0
+  br i1 %cond6574, label %if_then2112, label %if_else2113
 
 if_then2112:
-  store ptr @str.394, ptr %bop6489
+  store ptr @str.394, ptr %bop6558
   br label %if_end2114
 
 if_else2113:
   br label %if_end2114
 
 if_end2114:
-  %bit_tmp6506 = alloca ptr, align 8
-  %call6507 = call ptr @llvmgen__next_tmp(ptr @str.395)
-  store ptr %call6507, ptr %bit_tmp6506
-  %bit_tmp_val6508 = load ptr, ptr %bit_tmp6506
-  %concat6509 = call ptr @ofs_str_concat(ptr @str.233, ptr %bit_tmp_val6508)
-  %concat6510 = call ptr @ofs_str_concat(ptr %concat6509, ptr @str.221)
-  %bop_val6511 = load ptr, ptr %bop6489
-  %concat6512 = call ptr @ofs_str_concat(ptr %concat6510, ptr %bop_val6511)
-  %concat6513 = call ptr @ofs_str_concat(ptr %concat6512, ptr @str.389)
-  %left_val6514 = load ptr, ptr %left6282
-  %concat6515 = call ptr @ofs_str_concat(ptr %concat6513, ptr %left_val6514)
-  %concat6516 = call ptr @ofs_str_concat(ptr %concat6515, ptr @str.217)
-  %right_val6517 = load ptr, ptr %right6288
-  %concat6518 = call ptr @ofs_str_concat(ptr %concat6516, ptr %right_val6517)
-  call void @cg_emit(ptr %concat6518)
-  %bit_tmp_val6519 = load ptr, ptr %bit_tmp6506
-  store ptr %bit_tmp_val6519, ptr @llvmgen___expr_val
+  %bit_tmp6575 = alloca ptr, align 8
+  %call6576 = call ptr @llvmgen__next_tmp(ptr @str.395)
+  store ptr %call6576, ptr %bit_tmp6575
+  %bit_tmp_val6577 = load ptr, ptr %bit_tmp6575
+  %concat6578 = call ptr @ofs_str_concat(ptr @str.233, ptr %bit_tmp_val6577)
+  %concat6579 = call ptr @ofs_str_concat(ptr %concat6578, ptr @str.221)
+  %bop_val6580 = load ptr, ptr %bop6558
+  %concat6581 = call ptr @ofs_str_concat(ptr %concat6579, ptr %bop_val6580)
+  %concat6582 = call ptr @ofs_str_concat(ptr %concat6581, ptr @str.389)
+  %left_val6583 = load ptr, ptr %left6351
+  %concat6584 = call ptr @ofs_str_concat(ptr %concat6582, ptr %left_val6583)
+  %concat6585 = call ptr @ofs_str_concat(ptr %concat6584, ptr @str.217)
+  %right_val6586 = load ptr, ptr %right6357
+  %concat6587 = call ptr @ofs_str_concat(ptr %concat6585, ptr %right_val6586)
+  call void @cg_emit(ptr %concat6587)
+  %bit_tmp_val6588 = load ptr, ptr %bit_tmp6575
+  store ptr %bit_tmp_val6588, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -15769,413 +15875,413 @@ if_else2095:
   br label %if_end2096
 
 if_end2096:
-  %field_ptr6520 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6521 = load ptr, ptr %field_ptr6520
-  %streq6522 = call i32 @ofs_str_eq(ptr %field6521, ptr @str.58)
-  %field_ptr6523 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6524 = load ptr, ptr %field_ptr6523
-  %streq6525 = call i32 @ofs_str_eq(ptr %field6524, ptr @str.59)
-  %cond6526 = icmp ne i32 %streq6522, 0
-  %cond6527 = icmp ne i32 %streq6525, 0
-  %logic6528 = or i1 %cond6526, %cond6527
-  %field_ptr6529 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6530 = load ptr, ptr %field_ptr6529
-  %streq6531 = call i32 @ofs_str_eq(ptr %field6530, ptr @str.114)
-  %cond6532 = icmp ne i32 %streq6531, 0
-  %logic6533 = or i1 %logic6528, %cond6532
-  %field_ptr6534 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6535 = load ptr, ptr %field_ptr6534
-  %streq6536 = call i32 @ofs_str_eq(ptr %field6535, ptr @str.112)
-  %cond6537 = icmp ne i32 %streq6536, 0
-  %logic6538 = or i1 %logic6533, %cond6537
-  %field_ptr6539 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6540 = load ptr, ptr %field_ptr6539
-  %streq6541 = call i32 @ofs_str_eq(ptr %field6540, ptr @str.117)
-  %cond6542 = icmp ne i32 %streq6541, 0
-  %logic6543 = or i1 %logic6538, %cond6542
-  %field_ptr6544 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6545 = load ptr, ptr %field_ptr6544
-  %streq6546 = call i32 @ofs_str_eq(ptr %field6545, ptr @str.115)
-  %cond6547 = icmp ne i32 %streq6546, 0
-  %logic6548 = or i1 %logic6543, %cond6547
-  br i1 %logic6548, label %if_then2115, label %if_else2116
+  %field_ptr6589 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6590 = load ptr, ptr %field_ptr6589
+  %streq6591 = call i32 @ofs_str_eq(ptr %field6590, ptr @str.58)
+  %field_ptr6592 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6593 = load ptr, ptr %field_ptr6592
+  %streq6594 = call i32 @ofs_str_eq(ptr %field6593, ptr @str.59)
+  %cond6595 = icmp ne i32 %streq6591, 0
+  %cond6596 = icmp ne i32 %streq6594, 0
+  %logic6597 = or i1 %cond6595, %cond6596
+  %field_ptr6598 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6599 = load ptr, ptr %field_ptr6598
+  %streq6600 = call i32 @ofs_str_eq(ptr %field6599, ptr @str.114)
+  %cond6601 = icmp ne i32 %streq6600, 0
+  %logic6602 = or i1 %logic6597, %cond6601
+  %field_ptr6603 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6604 = load ptr, ptr %field_ptr6603
+  %streq6605 = call i32 @ofs_str_eq(ptr %field6604, ptr @str.112)
+  %cond6606 = icmp ne i32 %streq6605, 0
+  %logic6607 = or i1 %logic6602, %cond6606
+  %field_ptr6608 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6609 = load ptr, ptr %field_ptr6608
+  %streq6610 = call i32 @ofs_str_eq(ptr %field6609, ptr @str.117)
+  %cond6611 = icmp ne i32 %streq6610, 0
+  %logic6612 = or i1 %logic6607, %cond6611
+  %field_ptr6613 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6614 = load ptr, ptr %field_ptr6613
+  %streq6615 = call i32 @ofs_str_eq(ptr %field6614, ptr @str.115)
+  %cond6616 = icmp ne i32 %streq6615, 0
+  %logic6617 = or i1 %logic6612, %cond6616
+  br i1 %logic6617, label %if_then2115, label %if_else2116
 
 if_then2115:
-  %pred6549 = alloca ptr, align 8
-  store ptr @str.396, ptr %pred6549
-  %field_ptr6550 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6551 = load ptr, ptr %field_ptr6550
-  %streq6552 = call i32 @ofs_str_eq(ptr %field6551, ptr @str.59)
-  %cond6553 = icmp ne i32 %streq6552, 0
-  br i1 %cond6553, label %if_then2118, label %if_else2119
+  %pred6618 = alloca ptr, align 8
+  store ptr @str.396, ptr %pred6618
+  %field_ptr6619 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6620 = load ptr, ptr %field_ptr6619
+  %streq6621 = call i32 @ofs_str_eq(ptr %field6620, ptr @str.59)
+  %cond6622 = icmp ne i32 %streq6621, 0
+  br i1 %cond6622, label %if_then2118, label %if_else2119
 
 if_then2118:
-  store ptr @str.397, ptr %pred6549
+  store ptr @str.397, ptr %pred6618
   br label %if_end2120
 
 if_else2119:
   br label %if_end2120
 
 if_end2120:
-  %field_ptr6554 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6555 = load ptr, ptr %field_ptr6554
-  %streq6556 = call i32 @ofs_str_eq(ptr %field6555, ptr @str.114)
-  %cond6557 = icmp ne i32 %streq6556, 0
-  br i1 %cond6557, label %if_then2121, label %if_else2122
+  %field_ptr6623 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6624 = load ptr, ptr %field_ptr6623
+  %streq6625 = call i32 @ofs_str_eq(ptr %field6624, ptr @str.114)
+  %cond6626 = icmp ne i32 %streq6625, 0
+  br i1 %cond6626, label %if_then2121, label %if_else2122
 
 if_then2121:
-  store ptr @str.398, ptr %pred6549
+  store ptr @str.398, ptr %pred6618
   br label %if_end2123
 
 if_else2122:
   br label %if_end2123
 
 if_end2123:
-  %field_ptr6558 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6559 = load ptr, ptr %field_ptr6558
-  %streq6560 = call i32 @ofs_str_eq(ptr %field6559, ptr @str.112)
-  %cond6561 = icmp ne i32 %streq6560, 0
-  br i1 %cond6561, label %if_then2124, label %if_else2125
+  %field_ptr6627 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6628 = load ptr, ptr %field_ptr6627
+  %streq6629 = call i32 @ofs_str_eq(ptr %field6628, ptr @str.112)
+  %cond6630 = icmp ne i32 %streq6629, 0
+  br i1 %cond6630, label %if_then2124, label %if_else2125
 
 if_then2124:
-  store ptr @str.399, ptr %pred6549
+  store ptr @str.399, ptr %pred6618
   br label %if_end2126
 
 if_else2125:
   br label %if_end2126
 
 if_end2126:
-  %field_ptr6562 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6563 = load ptr, ptr %field_ptr6562
-  %streq6564 = call i32 @ofs_str_eq(ptr %field6563, ptr @str.117)
-  %cond6565 = icmp ne i32 %streq6564, 0
-  br i1 %cond6565, label %if_then2127, label %if_else2128
+  %field_ptr6631 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6632 = load ptr, ptr %field_ptr6631
+  %streq6633 = call i32 @ofs_str_eq(ptr %field6632, ptr @str.117)
+  %cond6634 = icmp ne i32 %streq6633, 0
+  br i1 %cond6634, label %if_then2127, label %if_else2128
 
 if_then2127:
-  store ptr @str.400, ptr %pred6549
+  store ptr @str.400, ptr %pred6618
   br label %if_end2129
 
 if_else2128:
   br label %if_end2129
 
 if_end2129:
-  %field_ptr6566 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6567 = load ptr, ptr %field_ptr6566
-  %streq6568 = call i32 @ofs_str_eq(ptr %field6567, ptr @str.115)
-  %cond6569 = icmp ne i32 %streq6568, 0
-  br i1 %cond6569, label %if_then2130, label %if_else2131
+  %field_ptr6635 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6636 = load ptr, ptr %field_ptr6635
+  %streq6637 = call i32 @ofs_str_eq(ptr %field6636, ptr @str.115)
+  %cond6638 = icmp ne i32 %streq6637, 0
+  br i1 %cond6638, label %if_then2130, label %if_else2131
 
 if_then2130:
-  store ptr @str.401, ptr %pred6549
+  store ptr @str.401, ptr %pred6618
   br label %if_end2132
 
 if_else2131:
   br label %if_end2132
 
 if_end2132:
-  %cmp_tmp6570 = alloca ptr, align 8
-  %call6571 = call ptr @llvmgen__next_tmp(ptr @str.402)
-  store ptr %call6571, ptr %cmp_tmp6570
-  %left_type_val6572 = load ptr, ptr %left_type6284
-  %streq6573 = call i32 @ofs_str_eq(ptr %left_type_val6572, ptr @str.40)
-  %right_type_val6574 = load ptr, ptr %right_type6290
-  %streq6575 = call i32 @ofs_str_eq(ptr %right_type_val6574, ptr @str.40)
-  %cond6576 = icmp ne i32 %streq6573, 0
-  %cond6577 = icmp ne i32 %streq6575, 0
-  %logic6578 = or i1 %cond6576, %cond6577
-  br i1 %logic6578, label %if_then2133, label %if_else2134
+  %cmp_tmp6639 = alloca ptr, align 8
+  %call6640 = call ptr @llvmgen__next_tmp(ptr @str.402)
+  store ptr %call6640, ptr %cmp_tmp6639
+  %left_type_val6641 = load ptr, ptr %left_type6353
+  %streq6642 = call i32 @ofs_str_eq(ptr %left_type_val6641, ptr @str.40)
+  %right_type_val6643 = load ptr, ptr %right_type6359
+  %streq6644 = call i32 @ofs_str_eq(ptr %right_type_val6643, ptr @str.40)
+  %cond6645 = icmp ne i32 %streq6642, 0
+  %cond6646 = icmp ne i32 %streq6644, 0
+  %logic6647 = or i1 %cond6645, %cond6646
+  br i1 %logic6647, label %if_then2133, label %if_else2134
 
 if_then2133:
-  %ptr_val6579 = alloca ptr, align 8
-  %left_val6580 = load ptr, ptr %left6282
-  store ptr %left_val6580, ptr %ptr_val6579
-  %left_type_val6581 = load ptr, ptr %left_type6284
-  %streq6582 = call i32 @ofs_str_eq(ptr %left_type_val6581, ptr @str.40)
-  %cond6583 = icmp ne i32 %streq6582, 0
-  br i1 %cond6583, label %if_then2136, label %if_else2137
+  %ptr_val6648 = alloca ptr, align 8
+  %left_val6649 = load ptr, ptr %left6351
+  store ptr %left_val6649, ptr %ptr_val6648
+  %left_type_val6650 = load ptr, ptr %left_type6353
+  %streq6651 = call i32 @ofs_str_eq(ptr %left_type_val6650, ptr @str.40)
+  %cond6652 = icmp ne i32 %streq6651, 0
+  br i1 %cond6652, label %if_then2136, label %if_else2137
 
 if_then2136:
-  %right_val6584 = load ptr, ptr %right6288
-  store ptr %right_val6584, ptr %ptr_val6579
+  %right_val6653 = load ptr, ptr %right6357
+  store ptr %right_val6653, ptr %ptr_val6648
   br label %if_end2138
 
 if_else2137:
   br label %if_end2138
 
 if_end2138:
-  %field_ptr6585 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6586 = load ptr, ptr %field_ptr6585
-  %streq6587 = call i32 @ofs_str_eq(ptr %field6586, ptr @str.59)
-  %cond6588 = icmp ne i32 %streq6587, 0
-  br i1 %cond6588, label %if_then2139, label %if_else2140
+  %field_ptr6654 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6655 = load ptr, ptr %field_ptr6654
+  %streq6656 = call i32 @ofs_str_eq(ptr %field6655, ptr @str.59)
+  %cond6657 = icmp ne i32 %streq6656, 0
+  br i1 %cond6657, label %if_then2139, label %if_else2140
 
 if_then2139:
-  %cmp_tmp_val6589 = load ptr, ptr %cmp_tmp6570
-  %concat6590 = call ptr @ofs_str_concat(ptr @str.233, ptr %cmp_tmp_val6589)
-  %concat6591 = call ptr @ofs_str_concat(ptr %concat6590, ptr @str.248)
-  %ptr_val_val6592 = load ptr, ptr %ptr_val6579
-  %concat6593 = call ptr @ofs_str_concat(ptr %concat6591, ptr %ptr_val_val6592)
-  %concat6594 = call ptr @ofs_str_concat(ptr %concat6593, ptr @str.249)
-  call void @cg_emit(ptr %concat6594)
+  %cmp_tmp_val6658 = load ptr, ptr %cmp_tmp6639
+  %concat6659 = call ptr @ofs_str_concat(ptr @str.233, ptr %cmp_tmp_val6658)
+  %concat6660 = call ptr @ofs_str_concat(ptr %concat6659, ptr @str.248)
+  %ptr_val_val6661 = load ptr, ptr %ptr_val6648
+  %concat6662 = call ptr @ofs_str_concat(ptr %concat6660, ptr %ptr_val_val6661)
+  %concat6663 = call ptr @ofs_str_concat(ptr %concat6662, ptr @str.249)
+  call void @cg_emit(ptr %concat6663)
   br label %if_end2141
 
 if_else2140:
-  %cmp_tmp_val6595 = load ptr, ptr %cmp_tmp6570
-  %concat6596 = call ptr @ofs_str_concat(ptr @str.233, ptr %cmp_tmp_val6595)
-  %concat6597 = call ptr @ofs_str_concat(ptr %concat6596, ptr @str.403)
-  %ptr_val_val6598 = load ptr, ptr %ptr_val6579
-  %concat6599 = call ptr @ofs_str_concat(ptr %concat6597, ptr %ptr_val_val6598)
-  %concat6600 = call ptr @ofs_str_concat(ptr %concat6599, ptr @str.249)
-  call void @cg_emit(ptr %concat6600)
+  %cmp_tmp_val6664 = load ptr, ptr %cmp_tmp6639
+  %concat6665 = call ptr @ofs_str_concat(ptr @str.233, ptr %cmp_tmp_val6664)
+  %concat6666 = call ptr @ofs_str_concat(ptr %concat6665, ptr @str.403)
+  %ptr_val_val6667 = load ptr, ptr %ptr_val6648
+  %concat6668 = call ptr @ofs_str_concat(ptr %concat6666, ptr %ptr_val_val6667)
+  %concat6669 = call ptr @ofs_str_concat(ptr %concat6668, ptr @str.249)
+  call void @cg_emit(ptr %concat6669)
   br label %if_end2141
 
 if_end2141:
-  %cmp_tmp_val6601 = load ptr, ptr %cmp_tmp6570
-  store ptr %cmp_tmp_val6601, ptr @llvmgen___expr_val
+  %cmp_tmp_val6670 = load ptr, ptr %cmp_tmp6639
+  store ptr %cmp_tmp_val6670, ptr @llvmgen___expr_val
   store ptr @str.241, ptr @llvmgen___expr_type
   br label %if_end2135
 
 if_else2134:
-  %left_type_val6602 = load ptr, ptr %left_type6284
-  %streq6603 = call i32 @ofs_str_eq(ptr %left_type_val6602, ptr @str.183)
-  %right_type_val6604 = load ptr, ptr %right_type6290
-  %streq6605 = call i32 @ofs_str_eq(ptr %right_type_val6604, ptr @str.183)
-  %cond6606 = icmp ne i32 %streq6603, 0
-  %cond6607 = icmp ne i32 %streq6605, 0
-  %logic6608 = or i1 %cond6606, %cond6607
-  br i1 %logic6608, label %if_then2142, label %if_else2143
+  %left_type_val6671 = load ptr, ptr %left_type6353
+  %streq6672 = call i32 @ofs_str_eq(ptr %left_type_val6671, ptr @str.183)
+  %right_type_val6673 = load ptr, ptr %right_type6359
+  %streq6674 = call i32 @ofs_str_eq(ptr %right_type_val6673, ptr @str.183)
+  %cond6675 = icmp ne i32 %streq6672, 0
+  %cond6676 = icmp ne i32 %streq6674, 0
+  %logic6677 = or i1 %cond6675, %cond6676
+  br i1 %logic6677, label %if_then2142, label %if_else2143
 
 if_then2142:
-  %cmp_tmp_val6609 = load ptr, ptr %cmp_tmp6570
-  %concat6610 = call ptr @ofs_str_concat(ptr @str.233, ptr %cmp_tmp_val6609)
-  %concat6611 = call ptr @ofs_str_concat(ptr %concat6610, ptr @str.404)
-  %left_val6612 = load ptr, ptr %left6282
-  %concat6613 = call ptr @ofs_str_concat(ptr %concat6611, ptr %left_val6612)
-  %concat6614 = call ptr @ofs_str_concat(ptr %concat6613, ptr @str.276)
-  %right_val6615 = load ptr, ptr %right6288
-  %concat6616 = call ptr @ofs_str_concat(ptr %concat6614, ptr %right_val6615)
-  %concat6617 = call ptr @ofs_str_concat(ptr %concat6616, ptr @str.125)
-  call void @cg_emit(ptr %concat6617)
-  %bool_tmp6618 = alloca ptr, align 8
-  %call6619 = call ptr @llvmgen__next_tmp(ptr @str.405)
-  store ptr %call6619, ptr %bool_tmp6618
-  %field_ptr6620 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6621 = load ptr, ptr %field_ptr6620
-  %streq6622 = call i32 @ofs_str_eq(ptr %field6621, ptr @str.59)
-  %cond6623 = icmp ne i32 %streq6622, 0
-  br i1 %cond6623, label %if_then2145, label %if_else2146
+  %cmp_tmp_val6678 = load ptr, ptr %cmp_tmp6639
+  %concat6679 = call ptr @ofs_str_concat(ptr @str.233, ptr %cmp_tmp_val6678)
+  %concat6680 = call ptr @ofs_str_concat(ptr %concat6679, ptr @str.404)
+  %left_val6681 = load ptr, ptr %left6351
+  %concat6682 = call ptr @ofs_str_concat(ptr %concat6680, ptr %left_val6681)
+  %concat6683 = call ptr @ofs_str_concat(ptr %concat6682, ptr @str.276)
+  %right_val6684 = load ptr, ptr %right6357
+  %concat6685 = call ptr @ofs_str_concat(ptr %concat6683, ptr %right_val6684)
+  %concat6686 = call ptr @ofs_str_concat(ptr %concat6685, ptr @str.125)
+  call void @cg_emit(ptr %concat6686)
+  %bool_tmp6687 = alloca ptr, align 8
+  %call6688 = call ptr @llvmgen__next_tmp(ptr @str.405)
+  store ptr %call6688, ptr %bool_tmp6687
+  %field_ptr6689 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6690 = load ptr, ptr %field_ptr6689
+  %streq6691 = call i32 @ofs_str_eq(ptr %field6690, ptr @str.59)
+  %cond6692 = icmp ne i32 %streq6691, 0
+  br i1 %cond6692, label %if_then2145, label %if_else2146
 
 if_then2145:
-  %bool_tmp_val6624 = load ptr, ptr %bool_tmp6618
-  %concat6625 = call ptr @ofs_str_concat(ptr @str.233, ptr %bool_tmp_val6624)
-  %concat6626 = call ptr @ofs_str_concat(ptr %concat6625, ptr @str.406)
-  %cmp_tmp_val6627 = load ptr, ptr %cmp_tmp6570
-  %concat6628 = call ptr @ofs_str_concat(ptr %concat6626, ptr %cmp_tmp_val6627)
-  %concat6629 = call ptr @ofs_str_concat(ptr %concat6628, ptr @str.251)
-  call void @cg_emit(ptr %concat6629)
+  %bool_tmp_val6693 = load ptr, ptr %bool_tmp6687
+  %concat6694 = call ptr @ofs_str_concat(ptr @str.233, ptr %bool_tmp_val6693)
+  %concat6695 = call ptr @ofs_str_concat(ptr %concat6694, ptr @str.406)
+  %cmp_tmp_val6696 = load ptr, ptr %cmp_tmp6639
+  %concat6697 = call ptr @ofs_str_concat(ptr %concat6695, ptr %cmp_tmp_val6696)
+  %concat6698 = call ptr @ofs_str_concat(ptr %concat6697, ptr @str.251)
+  call void @cg_emit(ptr %concat6698)
   br label %if_end2147
 
 if_else2146:
-  %bool_tmp_val6630 = load ptr, ptr %bool_tmp6618
-  %concat6631 = call ptr @ofs_str_concat(ptr @str.233, ptr %bool_tmp_val6630)
-  %concat6632 = call ptr @ofs_str_concat(ptr %concat6631, ptr @str.407)
-  %cmp_tmp_val6633 = load ptr, ptr %cmp_tmp6570
-  %concat6634 = call ptr @ofs_str_concat(ptr %concat6632, ptr %cmp_tmp_val6633)
-  %concat6635 = call ptr @ofs_str_concat(ptr %concat6634, ptr @str.251)
-  call void @cg_emit(ptr %concat6635)
+  %bool_tmp_val6699 = load ptr, ptr %bool_tmp6687
+  %concat6700 = call ptr @ofs_str_concat(ptr @str.233, ptr %bool_tmp_val6699)
+  %concat6701 = call ptr @ofs_str_concat(ptr %concat6700, ptr @str.407)
+  %cmp_tmp_val6702 = load ptr, ptr %cmp_tmp6639
+  %concat6703 = call ptr @ofs_str_concat(ptr %concat6701, ptr %cmp_tmp_val6702)
+  %concat6704 = call ptr @ofs_str_concat(ptr %concat6703, ptr @str.251)
+  call void @cg_emit(ptr %concat6704)
   br label %if_end2147
 
 if_end2147:
-  %bool_tmp_val6636 = load ptr, ptr %bool_tmp6618
-  store ptr %bool_tmp_val6636, ptr @llvmgen___expr_val
+  %bool_tmp_val6705 = load ptr, ptr %bool_tmp6687
+  store ptr %bool_tmp_val6705, ptr @llvmgen___expr_val
   store ptr @str.241, ptr @llvmgen___expr_type
   br label %if_end2144
 
 if_else2143:
-  %left_type_val6637 = load ptr, ptr %left_type6284
-  %streq6638 = call i32 @ofs_str_eq(ptr %left_type_val6637, ptr @str.182)
-  %right_type_val6639 = load ptr, ptr %right_type6290
-  %streq6640 = call i32 @ofs_str_eq(ptr %right_type_val6639, ptr @str.182)
-  %cond6641 = icmp ne i32 %streq6638, 0
-  %cond6642 = icmp ne i32 %streq6640, 0
-  %logic6643 = or i1 %cond6641, %cond6642
-  br i1 %logic6643, label %if_then2148, label %if_else2149
+  %left_type_val6706 = load ptr, ptr %left_type6353
+  %streq6707 = call i32 @ofs_str_eq(ptr %left_type_val6706, ptr @str.182)
+  %right_type_val6708 = load ptr, ptr %right_type6359
+  %streq6709 = call i32 @ofs_str_eq(ptr %right_type_val6708, ptr @str.182)
+  %cond6710 = icmp ne i32 %streq6707, 0
+  %cond6711 = icmp ne i32 %streq6709, 0
+  %logic6712 = or i1 %cond6710, %cond6711
+  br i1 %logic6712, label %if_then2148, label %if_else2149
 
 if_then2148:
-  %left_type_val6644 = load ptr, ptr %left_type6284
-  %streq6645 = call i32 @ofs_str_eq(ptr %left_type_val6644, ptr @str.182)
-  %cond6646 = icmp ne i32 %streq6645, 0
-  %not6647 = xor i1 %cond6646, true
-  br i1 %not6647, label %if_then2151, label %if_else2152
+  %left_type_val6713 = load ptr, ptr %left_type6353
+  %streq6714 = call i32 @ofs_str_eq(ptr %left_type_val6713, ptr @str.182)
+  %cond6715 = icmp ne i32 %streq6714, 0
+  %not6716 = xor i1 %cond6715, true
+  br i1 %not6716, label %if_then2151, label %if_else2152
 
 if_then2151:
-  %left_val6648 = load ptr, ptr %left6282
-  %left_type_val6649 = load ptr, ptr %left_type6284
-  %call6650 = call ptr @llvmgen__coerce_for_store(ptr %left_val6648, ptr %left_type_val6649, ptr @str.182)
-  store ptr %call6650, ptr %left6282
+  %left_val6717 = load ptr, ptr %left6351
+  %left_type_val6718 = load ptr, ptr %left_type6353
+  %call6719 = call ptr @llvmgen__coerce_for_store(ptr %left_val6717, ptr %left_type_val6718, ptr @str.182)
+  store ptr %call6719, ptr %left6351
   br label %if_end2153
 
 if_else2152:
   br label %if_end2153
 
 if_end2153:
-  %right_type_val6651 = load ptr, ptr %right_type6290
-  %streq6652 = call i32 @ofs_str_eq(ptr %right_type_val6651, ptr @str.182)
-  %cond6653 = icmp ne i32 %streq6652, 0
-  %not6654 = xor i1 %cond6653, true
-  br i1 %not6654, label %if_then2154, label %if_else2155
+  %right_type_val6720 = load ptr, ptr %right_type6359
+  %streq6721 = call i32 @ofs_str_eq(ptr %right_type_val6720, ptr @str.182)
+  %cond6722 = icmp ne i32 %streq6721, 0
+  %not6723 = xor i1 %cond6722, true
+  br i1 %not6723, label %if_then2154, label %if_else2155
 
 if_then2154:
-  %right_val6655 = load ptr, ptr %right6288
-  %right_type_val6656 = load ptr, ptr %right_type6290
-  %call6657 = call ptr @llvmgen__coerce_for_store(ptr %right_val6655, ptr %right_type_val6656, ptr @str.182)
-  store ptr %call6657, ptr %right6288
+  %right_val6724 = load ptr, ptr %right6357
+  %right_type_val6725 = load ptr, ptr %right_type6359
+  %call6726 = call ptr @llvmgen__coerce_for_store(ptr %right_val6724, ptr %right_type_val6725, ptr @str.182)
+  store ptr %call6726, ptr %right6357
   br label %if_end2156
 
 if_else2155:
   br label %if_end2156
 
 if_end2156:
-  %fpred6658 = alloca ptr, align 8
-  store ptr @str.408, ptr %fpred6658
-  %field_ptr6659 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6660 = load ptr, ptr %field_ptr6659
-  %streq6661 = call i32 @ofs_str_eq(ptr %field6660, ptr @str.59)
-  %cond6662 = icmp ne i32 %streq6661, 0
-  br i1 %cond6662, label %if_then2157, label %if_else2158
+  %fpred6727 = alloca ptr, align 8
+  store ptr @str.408, ptr %fpred6727
+  %field_ptr6728 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6729 = load ptr, ptr %field_ptr6728
+  %streq6730 = call i32 @ofs_str_eq(ptr %field6729, ptr @str.59)
+  %cond6731 = icmp ne i32 %streq6730, 0
+  br i1 %cond6731, label %if_then2157, label %if_else2158
 
 if_then2157:
-  store ptr @str.409, ptr %fpred6658
+  store ptr @str.409, ptr %fpred6727
   br label %if_end2159
 
 if_else2158:
   br label %if_end2159
 
 if_end2159:
-  %field_ptr6663 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6664 = load ptr, ptr %field_ptr6663
-  %streq6665 = call i32 @ofs_str_eq(ptr %field6664, ptr @str.114)
-  %cond6666 = icmp ne i32 %streq6665, 0
-  br i1 %cond6666, label %if_then2160, label %if_else2161
+  %field_ptr6732 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6733 = load ptr, ptr %field_ptr6732
+  %streq6734 = call i32 @ofs_str_eq(ptr %field6733, ptr @str.114)
+  %cond6735 = icmp ne i32 %streq6734, 0
+  br i1 %cond6735, label %if_then2160, label %if_else2161
 
 if_then2160:
-  store ptr @str.410, ptr %fpred6658
+  store ptr @str.410, ptr %fpred6727
   br label %if_end2162
 
 if_else2161:
   br label %if_end2162
 
 if_end2162:
-  %field_ptr6667 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6668 = load ptr, ptr %field_ptr6667
-  %streq6669 = call i32 @ofs_str_eq(ptr %field6668, ptr @str.112)
-  %cond6670 = icmp ne i32 %streq6669, 0
-  br i1 %cond6670, label %if_then2163, label %if_else2164
+  %field_ptr6736 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6737 = load ptr, ptr %field_ptr6736
+  %streq6738 = call i32 @ofs_str_eq(ptr %field6737, ptr @str.112)
+  %cond6739 = icmp ne i32 %streq6738, 0
+  br i1 %cond6739, label %if_then2163, label %if_else2164
 
 if_then2163:
-  store ptr @str.411, ptr %fpred6658
+  store ptr @str.411, ptr %fpred6727
   br label %if_end2165
 
 if_else2164:
   br label %if_end2165
 
 if_end2165:
-  %field_ptr6671 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6672 = load ptr, ptr %field_ptr6671
-  %streq6673 = call i32 @ofs_str_eq(ptr %field6672, ptr @str.117)
-  %cond6674 = icmp ne i32 %streq6673, 0
-  br i1 %cond6674, label %if_then2166, label %if_else2167
+  %field_ptr6740 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6741 = load ptr, ptr %field_ptr6740
+  %streq6742 = call i32 @ofs_str_eq(ptr %field6741, ptr @str.117)
+  %cond6743 = icmp ne i32 %streq6742, 0
+  br i1 %cond6743, label %if_then2166, label %if_else2167
 
 if_then2166:
-  store ptr @str.412, ptr %fpred6658
+  store ptr @str.412, ptr %fpred6727
   br label %if_end2168
 
 if_else2167:
   br label %if_end2168
 
 if_end2168:
-  %field_ptr6675 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6676 = load ptr, ptr %field_ptr6675
-  %streq6677 = call i32 @ofs_str_eq(ptr %field6676, ptr @str.115)
-  %cond6678 = icmp ne i32 %streq6677, 0
-  br i1 %cond6678, label %if_then2169, label %if_else2170
+  %field_ptr6744 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6745 = load ptr, ptr %field_ptr6744
+  %streq6746 = call i32 @ofs_str_eq(ptr %field6745, ptr @str.115)
+  %cond6747 = icmp ne i32 %streq6746, 0
+  br i1 %cond6747, label %if_then2169, label %if_else2170
 
 if_then2169:
-  store ptr @str.413, ptr %fpred6658
+  store ptr @str.413, ptr %fpred6727
   br label %if_end2171
 
 if_else2170:
   br label %if_end2171
 
 if_end2171:
-  %cmp_tmp_val6679 = load ptr, ptr %cmp_tmp6570
-  %concat6680 = call ptr @ofs_str_concat(ptr @str.233, ptr %cmp_tmp_val6679)
-  %concat6681 = call ptr @ofs_str_concat(ptr %concat6680, ptr @str.414)
-  %fpred_val6682 = load ptr, ptr %fpred6658
-  %concat6683 = call ptr @ofs_str_concat(ptr %concat6681, ptr %fpred_val6682)
-  %concat6684 = call ptr @ofs_str_concat(ptr %concat6683, ptr @str.387)
-  %left_val6685 = load ptr, ptr %left6282
-  %concat6686 = call ptr @ofs_str_concat(ptr %concat6684, ptr %left_val6685)
-  %concat6687 = call ptr @ofs_str_concat(ptr %concat6686, ptr @str.217)
-  %right_val6688 = load ptr, ptr %right6288
-  %concat6689 = call ptr @ofs_str_concat(ptr %concat6687, ptr %right_val6688)
-  call void @cg_emit(ptr %concat6689)
+  %cmp_tmp_val6748 = load ptr, ptr %cmp_tmp6639
+  %concat6749 = call ptr @ofs_str_concat(ptr @str.233, ptr %cmp_tmp_val6748)
+  %concat6750 = call ptr @ofs_str_concat(ptr %concat6749, ptr @str.414)
+  %fpred_val6751 = load ptr, ptr %fpred6727
+  %concat6752 = call ptr @ofs_str_concat(ptr %concat6750, ptr %fpred_val6751)
+  %concat6753 = call ptr @ofs_str_concat(ptr %concat6752, ptr @str.387)
+  %left_val6754 = load ptr, ptr %left6351
+  %concat6755 = call ptr @ofs_str_concat(ptr %concat6753, ptr %left_val6754)
+  %concat6756 = call ptr @ofs_str_concat(ptr %concat6755, ptr @str.217)
+  %right_val6757 = load ptr, ptr %right6357
+  %concat6758 = call ptr @ofs_str_concat(ptr %concat6756, ptr %right_val6757)
+  call void @cg_emit(ptr %concat6758)
   br label %if_end2150
 
 if_else2149:
-  %left_type_val6690 = load ptr, ptr %left_type6284
-  %call6691 = call ptr @llvmgen__llvm_type(ptr %left_type_val6690)
-  %streq6692 = call i32 @ofs_str_eq(ptr %call6691, ptr @str.244)
-  %cond6693 = icmp ne i32 %streq6692, 0
-  %not6694 = xor i1 %cond6693, true
-  br i1 %not6694, label %if_then2172, label %if_else2173
+  %left_type_val6759 = load ptr, ptr %left_type6353
+  %call6760 = call ptr @llvmgen__llvm_type(ptr %left_type_val6759)
+  %streq6761 = call i32 @ofs_str_eq(ptr %call6760, ptr @str.244)
+  %cond6762 = icmp ne i32 %streq6761, 0
+  %not6763 = xor i1 %cond6762, true
+  br i1 %not6763, label %if_then2172, label %if_else2173
 
 if_then2172:
-  %left_val6695 = load ptr, ptr %left6282
-  %left_type_val6696 = load ptr, ptr %left_type6284
-  %call6697 = call ptr @llvmgen__coerce_for_store(ptr %left_val6695, ptr %left_type_val6696, ptr @str.181)
-  store ptr %call6697, ptr %left6282
+  %left_val6764 = load ptr, ptr %left6351
+  %left_type_val6765 = load ptr, ptr %left_type6353
+  %call6766 = call ptr @llvmgen__coerce_for_store(ptr %left_val6764, ptr %left_type_val6765, ptr @str.181)
+  store ptr %call6766, ptr %left6351
   br label %if_end2174
 
 if_else2173:
   br label %if_end2174
 
 if_end2174:
-  %right_type_val6698 = load ptr, ptr %right_type6290
-  %call6699 = call ptr @llvmgen__llvm_type(ptr %right_type_val6698)
-  %streq6700 = call i32 @ofs_str_eq(ptr %call6699, ptr @str.244)
-  %cond6701 = icmp ne i32 %streq6700, 0
-  %not6702 = xor i1 %cond6701, true
-  br i1 %not6702, label %if_then2175, label %if_else2176
+  %right_type_val6767 = load ptr, ptr %right_type6359
+  %call6768 = call ptr @llvmgen__llvm_type(ptr %right_type_val6767)
+  %streq6769 = call i32 @ofs_str_eq(ptr %call6768, ptr @str.244)
+  %cond6770 = icmp ne i32 %streq6769, 0
+  %not6771 = xor i1 %cond6770, true
+  br i1 %not6771, label %if_then2175, label %if_else2176
 
 if_then2175:
-  %right_val6703 = load ptr, ptr %right6288
-  %right_type_val6704 = load ptr, ptr %right_type6290
-  %call6705 = call ptr @llvmgen__coerce_for_store(ptr %right_val6703, ptr %right_type_val6704, ptr @str.181)
-  store ptr %call6705, ptr %right6288
+  %right_val6772 = load ptr, ptr %right6357
+  %right_type_val6773 = load ptr, ptr %right_type6359
+  %call6774 = call ptr @llvmgen__coerce_for_store(ptr %right_val6772, ptr %right_type_val6773, ptr @str.181)
+  store ptr %call6774, ptr %right6357
   br label %if_end2177
 
 if_else2176:
   br label %if_end2177
 
 if_end2177:
-  %cmp_tmp_val6706 = load ptr, ptr %cmp_tmp6570
-  %concat6707 = call ptr @ofs_str_concat(ptr @str.233, ptr %cmp_tmp_val6706)
-  %concat6708 = call ptr @ofs_str_concat(ptr %concat6707, ptr @str.415)
-  %pred_val6709 = load ptr, ptr %pred6549
-  %concat6710 = call ptr @ofs_str_concat(ptr %concat6708, ptr %pred_val6709)
-  %concat6711 = call ptr @ofs_str_concat(ptr %concat6710, ptr @str.389)
-  %left_val6712 = load ptr, ptr %left6282
-  %concat6713 = call ptr @ofs_str_concat(ptr %concat6711, ptr %left_val6712)
-  %concat6714 = call ptr @ofs_str_concat(ptr %concat6713, ptr @str.217)
-  %right_val6715 = load ptr, ptr %right6288
-  %concat6716 = call ptr @ofs_str_concat(ptr %concat6714, ptr %right_val6715)
-  call void @cg_emit(ptr %concat6716)
+  %cmp_tmp_val6775 = load ptr, ptr %cmp_tmp6639
+  %concat6776 = call ptr @ofs_str_concat(ptr @str.233, ptr %cmp_tmp_val6775)
+  %concat6777 = call ptr @ofs_str_concat(ptr %concat6776, ptr @str.415)
+  %pred_val6778 = load ptr, ptr %pred6618
+  %concat6779 = call ptr @ofs_str_concat(ptr %concat6777, ptr %pred_val6778)
+  %concat6780 = call ptr @ofs_str_concat(ptr %concat6779, ptr @str.389)
+  %left_val6781 = load ptr, ptr %left6351
+  %concat6782 = call ptr @ofs_str_concat(ptr %concat6780, ptr %left_val6781)
+  %concat6783 = call ptr @ofs_str_concat(ptr %concat6782, ptr @str.217)
+  %right_val6784 = load ptr, ptr %right6357
+  %concat6785 = call ptr @ofs_str_concat(ptr %concat6783, ptr %right_val6784)
+  call void @cg_emit(ptr %concat6785)
   br label %if_end2150
 
 if_end2150:
-  %cmp_tmp_val6717 = load ptr, ptr %cmp_tmp6570
-  store ptr %cmp_tmp_val6717, ptr @llvmgen___expr_val
+  %cmp_tmp_val6786 = load ptr, ptr %cmp_tmp6639
+  store ptr %cmp_tmp_val6786, ptr @llvmgen___expr_val
   store ptr @str.241, ptr @llvmgen___expr_type
   br label %if_end2144
 
@@ -16189,98 +16295,98 @@ if_else2116:
   br label %if_end2117
 
 if_end2117:
-  %field_ptr6718 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6719 = load ptr, ptr %field_ptr6718
-  %streq6720 = call i32 @ofs_str_eq(ptr %field6719, ptr @str.118)
-  %field_ptr6721 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6722 = load ptr, ptr %field_ptr6721
-  %streq6723 = call i32 @ofs_str_eq(ptr %field6722, ptr @str.120)
-  %cond6724 = icmp ne i32 %streq6720, 0
-  %cond6725 = icmp ne i32 %streq6723, 0
-  %logic6726 = or i1 %cond6724, %cond6725
-  br i1 %logic6726, label %if_then2178, label %if_else2179
+  %field_ptr6787 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6788 = load ptr, ptr %field_ptr6787
+  %streq6789 = call i32 @ofs_str_eq(ptr %field6788, ptr @str.118)
+  %field_ptr6790 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6791 = load ptr, ptr %field_ptr6790
+  %streq6792 = call i32 @ofs_str_eq(ptr %field6791, ptr @str.120)
+  %cond6793 = icmp ne i32 %streq6789, 0
+  %cond6794 = icmp ne i32 %streq6792, 0
+  %logic6795 = or i1 %cond6793, %cond6794
+  br i1 %logic6795, label %if_then2178, label %if_else2179
 
 if_then2178:
-  %left_bool6727 = alloca ptr, align 8
-  %left_val6728 = load ptr, ptr %left6282
-  store ptr %left_val6728, ptr %left_bool6727
-  %left_type_val6729 = load ptr, ptr %left_type6284
-  %streq6730 = call i32 @ofs_str_eq(ptr %left_type_val6729, ptr @str.241)
-  %cond6731 = icmp ne i32 %streq6730, 0
-  %not6732 = xor i1 %cond6731, true
-  br i1 %not6732, label %if_then2181, label %if_else2182
+  %left_bool6796 = alloca ptr, align 8
+  %left_val6797 = load ptr, ptr %left6351
+  store ptr %left_val6797, ptr %left_bool6796
+  %left_type_val6798 = load ptr, ptr %left_type6353
+  %streq6799 = call i32 @ofs_str_eq(ptr %left_type_val6798, ptr @str.241)
+  %cond6800 = icmp ne i32 %streq6799, 0
+  %not6801 = xor i1 %cond6800, true
+  br i1 %not6801, label %if_then2181, label %if_else2182
 
 if_then2181:
-  %left_val6733 = load ptr, ptr %left6282
-  store ptr %left_val6733, ptr @llvmgen___expr_val
-  %left_type_val6734 = load ptr, ptr %left_type6284
-  store ptr %left_type_val6734, ptr @llvmgen___expr_type
-  %call6735 = call ptr @llvmgen__expr_as_i1()
-  store ptr %call6735, ptr %left_bool6727
+  %left_val6802 = load ptr, ptr %left6351
+  store ptr %left_val6802, ptr @llvmgen___expr_val
+  %left_type_val6803 = load ptr, ptr %left_type6353
+  store ptr %left_type_val6803, ptr @llvmgen___expr_type
+  %call6804 = call ptr @llvmgen__expr_as_i1()
+  store ptr %call6804, ptr %left_bool6796
   br label %if_end2183
 
 if_else2182:
   br label %if_end2183
 
 if_end2183:
-  %right_bool6736 = alloca ptr, align 8
-  %right_val6737 = load ptr, ptr %right6288
-  store ptr %right_val6737, ptr %right_bool6736
-  %right_type_val6738 = load ptr, ptr %right_type6290
-  %streq6739 = call i32 @ofs_str_eq(ptr %right_type_val6738, ptr @str.241)
-  %cond6740 = icmp ne i32 %streq6739, 0
-  %not6741 = xor i1 %cond6740, true
-  br i1 %not6741, label %if_then2184, label %if_else2185
+  %right_bool6805 = alloca ptr, align 8
+  %right_val6806 = load ptr, ptr %right6357
+  store ptr %right_val6806, ptr %right_bool6805
+  %right_type_val6807 = load ptr, ptr %right_type6359
+  %streq6808 = call i32 @ofs_str_eq(ptr %right_type_val6807, ptr @str.241)
+  %cond6809 = icmp ne i32 %streq6808, 0
+  %not6810 = xor i1 %cond6809, true
+  br i1 %not6810, label %if_then2184, label %if_else2185
 
 if_then2184:
-  %right_val6742 = load ptr, ptr %right6288
-  store ptr %right_val6742, ptr @llvmgen___expr_val
-  %right_type_val6743 = load ptr, ptr %right_type6290
-  store ptr %right_type_val6743, ptr @llvmgen___expr_type
-  %call6744 = call ptr @llvmgen__expr_as_i1()
-  store ptr %call6744, ptr %right_bool6736
+  %right_val6811 = load ptr, ptr %right6357
+  store ptr %right_val6811, ptr @llvmgen___expr_val
+  %right_type_val6812 = load ptr, ptr %right_type6359
+  store ptr %right_type_val6812, ptr @llvmgen___expr_type
+  %call6813 = call ptr @llvmgen__expr_as_i1()
+  store ptr %call6813, ptr %right_bool6805
   br label %if_end2186
 
 if_else2185:
   br label %if_end2186
 
 if_end2186:
-  %logic_tmp6745 = alloca ptr, align 8
-  %call6746 = call ptr @llvmgen__next_tmp(ptr @str.416)
-  store ptr %call6746, ptr %logic_tmp6745
-  %field_ptr6747 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6748 = load ptr, ptr %field_ptr6747
-  %streq6749 = call i32 @ofs_str_eq(ptr %field6748, ptr @str.118)
-  %cond6750 = icmp ne i32 %streq6749, 0
-  br i1 %cond6750, label %if_then2187, label %if_else2188
+  %logic_tmp6814 = alloca ptr, align 8
+  %call6815 = call ptr @llvmgen__next_tmp(ptr @str.416)
+  store ptr %call6815, ptr %logic_tmp6814
+  %field_ptr6816 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6817 = load ptr, ptr %field_ptr6816
+  %streq6818 = call i32 @ofs_str_eq(ptr %field6817, ptr @str.118)
+  %cond6819 = icmp ne i32 %streq6818, 0
+  br i1 %cond6819, label %if_then2187, label %if_else2188
 
 if_then2187:
-  %logic_tmp_val6751 = load ptr, ptr %logic_tmp6745
-  %concat6752 = call ptr @ofs_str_concat(ptr @str.233, ptr %logic_tmp_val6751)
-  %concat6753 = call ptr @ofs_str_concat(ptr %concat6752, ptr @str.417)
-  %left_bool_val6754 = load ptr, ptr %left_bool6727
-  %concat6755 = call ptr @ofs_str_concat(ptr %concat6753, ptr %left_bool_val6754)
-  %concat6756 = call ptr @ofs_str_concat(ptr %concat6755, ptr @str.217)
-  %right_bool_val6757 = load ptr, ptr %right_bool6736
-  %concat6758 = call ptr @ofs_str_concat(ptr %concat6756, ptr %right_bool_val6757)
-  call void @cg_emit(ptr %concat6758)
+  %logic_tmp_val6820 = load ptr, ptr %logic_tmp6814
+  %concat6821 = call ptr @ofs_str_concat(ptr @str.233, ptr %logic_tmp_val6820)
+  %concat6822 = call ptr @ofs_str_concat(ptr %concat6821, ptr @str.417)
+  %left_bool_val6823 = load ptr, ptr %left_bool6796
+  %concat6824 = call ptr @ofs_str_concat(ptr %concat6822, ptr %left_bool_val6823)
+  %concat6825 = call ptr @ofs_str_concat(ptr %concat6824, ptr @str.217)
+  %right_bool_val6826 = load ptr, ptr %right_bool6805
+  %concat6827 = call ptr @ofs_str_concat(ptr %concat6825, ptr %right_bool_val6826)
+  call void @cg_emit(ptr %concat6827)
   br label %if_end2189
 
 if_else2188:
-  %logic_tmp_val6759 = load ptr, ptr %logic_tmp6745
-  %concat6760 = call ptr @ofs_str_concat(ptr @str.233, ptr %logic_tmp_val6759)
-  %concat6761 = call ptr @ofs_str_concat(ptr %concat6760, ptr @str.418)
-  %left_bool_val6762 = load ptr, ptr %left_bool6727
-  %concat6763 = call ptr @ofs_str_concat(ptr %concat6761, ptr %left_bool_val6762)
-  %concat6764 = call ptr @ofs_str_concat(ptr %concat6763, ptr @str.217)
-  %right_bool_val6765 = load ptr, ptr %right_bool6736
-  %concat6766 = call ptr @ofs_str_concat(ptr %concat6764, ptr %right_bool_val6765)
-  call void @cg_emit(ptr %concat6766)
+  %logic_tmp_val6828 = load ptr, ptr %logic_tmp6814
+  %concat6829 = call ptr @ofs_str_concat(ptr @str.233, ptr %logic_tmp_val6828)
+  %concat6830 = call ptr @ofs_str_concat(ptr %concat6829, ptr @str.418)
+  %left_bool_val6831 = load ptr, ptr %left_bool6796
+  %concat6832 = call ptr @ofs_str_concat(ptr %concat6830, ptr %left_bool_val6831)
+  %concat6833 = call ptr @ofs_str_concat(ptr %concat6832, ptr @str.217)
+  %right_bool_val6834 = load ptr, ptr %right_bool6805
+  %concat6835 = call ptr @ofs_str_concat(ptr %concat6833, ptr %right_bool_val6834)
+  call void @cg_emit(ptr %concat6835)
   br label %if_end2189
 
 if_end2189:
-  %logic_tmp_val6767 = load ptr, ptr %logic_tmp6745
-  store ptr %logic_tmp_val6767, ptr @llvmgen___expr_val
+  %logic_tmp_val6836 = load ptr, ptr %logic_tmp6814
+  store ptr %logic_tmp_val6836, ptr @llvmgen___expr_val
   store ptr @str.241, ptr @llvmgen___expr_type
   ret void
 
@@ -16294,97 +16400,97 @@ if_else2014:
   br label %if_end2015
 
 if_end2015:
-  %field_ptr6768 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field6769 = load i64, ptr %field_ptr6768
-  %NK_UNARY_OP_val6770 = load i64, ptr @NK_UNARY_OP
-  %cmp6771 = icmp eq i64 %field6769, %NK_UNARY_OP_val6770
-  br i1 %cmp6771, label %if_then2190, label %if_else2191
+  %field_ptr6837 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field6838 = load i64, ptr %field_ptr6837
+  %NK_UNARY_OP_val6839 = load i64, ptr @NK_UNARY_OP
+  %cmp6840 = icmp eq i64 %field6838, %NK_UNARY_OP_val6839
+  br i1 %cmp6840, label %if_then2190, label %if_else2191
 
 if_then2190:
-  %obj6773 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr6774 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 5
-  %field6775 = load i64, ptr %field_ptr6774
-  %call6776 = call ptr @node_get(i64 %field6775)
-  %named_val6777 = load %Node, ptr %call6776
-  store %Node %named_val6777, ptr %obj6773
-  %field_ptr6778 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6779 = load ptr, ptr %field_ptr6778
-  %streq6780 = call i32 @ofs_str_eq(ptr %field6779, ptr @str.119)
-  %cond6781 = icmp ne i32 %streq6780, 0
-  br i1 %cond6781, label %if_then2193, label %if_else2194
+  %obj6842 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr6843 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 5
+  %field6844 = load i64, ptr %field_ptr6843
+  %call6845 = call ptr @node_get(i64 %field6844)
+  %named_val6846 = load %Node, ptr %call6845
+  store %Node %named_val6846, ptr %obj6842
+  %field_ptr6847 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6848 = load ptr, ptr %field_ptr6847
+  %streq6849 = call i32 @ofs_str_eq(ptr %field6848, ptr @str.119)
+  %cond6850 = icmp ne i32 %streq6849, 0
+  br i1 %cond6850, label %if_then2193, label %if_else2194
 
 if_then2193:
-  %field_ptr6782 = getelementptr inbounds %Node, ptr %obj6773, i32 0, i32 0
-  %field6783 = load i64, ptr %field_ptr6782
-  %NK_IDENT_val6784 = load i64, ptr @NK_IDENT
-  %cmp6785 = icmp eq i64 %field6783, %NK_IDENT_val6784
-  br i1 %cmp6785, label %if_then2196, label %if_else2197
+  %field_ptr6851 = getelementptr inbounds %Node, ptr %obj6842, i32 0, i32 0
+  %field6852 = load i64, ptr %field_ptr6851
+  %NK_IDENT_val6853 = load i64, ptr @NK_IDENT
+  %cmp6854 = icmp eq i64 %field6852, %NK_IDENT_val6853
+  br i1 %cmp6854, label %if_then2196, label %if_else2197
 
 if_then2196:
-  %field_ptr6786 = getelementptr inbounds %Node, ptr %obj6773, i32 0, i32 1
-  %field6787 = load ptr, ptr %field_ptr6786
-  %call6788 = call ptr @llvmgen__var_ptr(ptr %field6787)
-  store ptr %call6788, ptr @llvmgen___expr_val
-  %field_ptr6789 = getelementptr inbounds %Node, ptr %obj6773, i32 0, i32 1
-  %field6790 = load ptr, ptr %field_ptr6789
-  %call6791 = call ptr @llvmgen__var_type(ptr %field6790)
-  %concat6792 = call ptr @ofs_str_concat(ptr @str.56, ptr %call6791)
-  store ptr %concat6792, ptr @llvmgen___expr_type
+  %field_ptr6855 = getelementptr inbounds %Node, ptr %obj6842, i32 0, i32 1
+  %field6856 = load ptr, ptr %field_ptr6855
+  %call6857 = call ptr @llvmgen__var_ptr(ptr %field6856)
+  store ptr %call6857, ptr @llvmgen___expr_val
+  %field_ptr6858 = getelementptr inbounds %Node, ptr %obj6842, i32 0, i32 1
+  %field6859 = load ptr, ptr %field_ptr6858
+  %call6860 = call ptr @llvmgen__var_type(ptr %field6859)
+  %concat6861 = call ptr @ofs_str_concat(ptr @str.56, ptr %call6860)
+  store ptr %concat6861, ptr @llvmgen___expr_type
   ret void
 
 if_else2197:
   br label %if_end2198
 
 if_end2198:
-  %field_ptr6793 = getelementptr inbounds %Node, ptr %obj6773, i32 0, i32 0
-  %field6794 = load i64, ptr %field_ptr6793
-  %NK_FIELD_val6795 = load i64, ptr @NK_FIELD
-  %cmp6796 = icmp eq i64 %field6794, %NK_FIELD_val6795
-  br i1 %cmp6796, label %if_then2199, label %if_else2200
+  %field_ptr6862 = getelementptr inbounds %Node, ptr %obj6842, i32 0, i32 0
+  %field6863 = load i64, ptr %field_ptr6862
+  %NK_FIELD_val6864 = load i64, ptr @NK_FIELD
+  %cmp6865 = icmp eq i64 %field6863, %NK_FIELD_val6864
+  br i1 %cmp6865, label %if_then2199, label %if_else2200
 
 if_then2199:
-  %field_ptr6797 = getelementptr inbounds %Node, ptr %obj6773, i32 0, i32 5
-  %field6798 = load i64, ptr %field_ptr6797
-  call void @llvmgen__emit_expr(i64 %field6798)
-  %abp6799 = alloca ptr, align 8
-  %llvmgen___expr_val_val6800 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val6800, ptr %abp6799
-  %abt6801 = alloca ptr, align 8
-  %llvmgen___expr_type_val6802 = load ptr, ptr @llvmgen___expr_type
-  store ptr %llvmgen___expr_type_val6802, ptr %abt6801
-  %aft6803 = alloca ptr, align 8
-  %abt_val6804 = load ptr, ptr %abt6801
-  %field_ptr6805 = getelementptr inbounds %Node, ptr %obj6773, i32 0, i32 1
-  %field6806 = load ptr, ptr %field_ptr6805
-  %call6807 = call ptr @llvmgen__field_type(ptr %abt_val6804, ptr %field6806)
-  store ptr %call6807, ptr %aft6803
-  %aidx6808 = alloca i64, align 8
-  %abt_val6809 = load ptr, ptr %abt6801
-  %field_ptr6810 = getelementptr inbounds %Node, ptr %obj6773, i32 0, i32 1
-  %field6811 = load ptr, ptr %field_ptr6810
-  %call6812 = call i64 @llvmgen__field_index(ptr %abt_val6809, ptr %field6811)
-  store i64 %call6812, ptr %aidx6808
-  %agep6813 = alloca ptr, align 8
-  %call6814 = call ptr @llvmgen__next_tmp(ptr @str.419)
-  store ptr %call6814, ptr %agep6813
-  %agep_val6815 = load ptr, ptr %agep6813
-  %concat6816 = call ptr @ofs_str_concat(ptr @str.233, ptr %agep_val6815)
-  %concat6817 = call ptr @ofs_str_concat(ptr %concat6816, ptr @str.379)
-  %abt_val6818 = load ptr, ptr %abt6801
-  %concat6819 = call ptr @ofs_str_concat(ptr %concat6817, ptr %abt_val6818)
-  %concat6820 = call ptr @ofs_str_concat(ptr %concat6819, ptr @str.276)
-  %abp_val6821 = load ptr, ptr %abp6799
-  %concat6822 = call ptr @ofs_str_concat(ptr %concat6820, ptr %abp_val6821)
-  %concat6823 = call ptr @ofs_str_concat(ptr %concat6822, ptr @str.380)
-  %aidx_val6824 = load i64, ptr %aidx6808
-  %stone_to_str6825 = call ptr @ofs_stone_to_obsidian(i64 %aidx_val6824)
-  %concat6826 = call ptr @ofs_str_concat(ptr %concat6823, ptr %stone_to_str6825)
-  call void @cg_emit(ptr %concat6826)
-  %agep_val6827 = load ptr, ptr %agep6813
-  store ptr %agep_val6827, ptr @llvmgen___expr_val
-  %aft_val6828 = load ptr, ptr %aft6803
-  %concat6829 = call ptr @ofs_str_concat(ptr @str.56, ptr %aft_val6828)
-  store ptr %concat6829, ptr @llvmgen___expr_type
+  %field_ptr6866 = getelementptr inbounds %Node, ptr %obj6842, i32 0, i32 5
+  %field6867 = load i64, ptr %field_ptr6866
+  call void @llvmgen__emit_expr(i64 %field6867)
+  %abp6868 = alloca ptr, align 8
+  %llvmgen___expr_val_val6869 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val6869, ptr %abp6868
+  %abt6870 = alloca ptr, align 8
+  %llvmgen___expr_type_val6871 = load ptr, ptr @llvmgen___expr_type
+  store ptr %llvmgen___expr_type_val6871, ptr %abt6870
+  %aft6872 = alloca ptr, align 8
+  %abt_val6873 = load ptr, ptr %abt6870
+  %field_ptr6874 = getelementptr inbounds %Node, ptr %obj6842, i32 0, i32 1
+  %field6875 = load ptr, ptr %field_ptr6874
+  %call6876 = call ptr @llvmgen__field_type(ptr %abt_val6873, ptr %field6875)
+  store ptr %call6876, ptr %aft6872
+  %aidx6877 = alloca i64, align 8
+  %abt_val6878 = load ptr, ptr %abt6870
+  %field_ptr6879 = getelementptr inbounds %Node, ptr %obj6842, i32 0, i32 1
+  %field6880 = load ptr, ptr %field_ptr6879
+  %call6881 = call i64 @llvmgen__field_index(ptr %abt_val6878, ptr %field6880)
+  store i64 %call6881, ptr %aidx6877
+  %agep6882 = alloca ptr, align 8
+  %call6883 = call ptr @llvmgen__next_tmp(ptr @str.419)
+  store ptr %call6883, ptr %agep6882
+  %agep_val6884 = load ptr, ptr %agep6882
+  %concat6885 = call ptr @ofs_str_concat(ptr @str.233, ptr %agep_val6884)
+  %concat6886 = call ptr @ofs_str_concat(ptr %concat6885, ptr @str.379)
+  %abt_val6887 = load ptr, ptr %abt6870
+  %concat6888 = call ptr @ofs_str_concat(ptr %concat6886, ptr %abt_val6887)
+  %concat6889 = call ptr @ofs_str_concat(ptr %concat6888, ptr @str.276)
+  %abp_val6890 = load ptr, ptr %abp6868
+  %concat6891 = call ptr @ofs_str_concat(ptr %concat6889, ptr %abp_val6890)
+  %concat6892 = call ptr @ofs_str_concat(ptr %concat6891, ptr @str.380)
+  %aidx_val6893 = load i64, ptr %aidx6877
+  %stone_to_str6894 = call ptr @ofs_stone_to_obsidian(i64 %aidx_val6893)
+  %concat6895 = call ptr @ofs_str_concat(ptr %concat6892, ptr %stone_to_str6894)
+  call void @cg_emit(ptr %concat6895)
+  %agep_val6896 = load ptr, ptr %agep6882
+  store ptr %agep_val6896, ptr @llvmgen___expr_val
+  %aft_val6897 = load ptr, ptr %aft6872
+  %concat6898 = call ptr @ofs_str_concat(ptr @str.56, ptr %aft_val6897)
+  store ptr %concat6898, ptr @llvmgen___expr_type
   ret void
 
 if_else2200:
@@ -16397,31 +16503,31 @@ if_else2194:
   br label %if_end2195
 
 if_end2195:
-  %field_ptr6830 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 5
-  %field6831 = load i64, ptr %field_ptr6830
-  call void @llvmgen__emit_expr(i64 %field6831)
-  %field_ptr6832 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6833 = load ptr, ptr %field_ptr6832
-  %streq6834 = call i32 @ofs_str_eq(ptr %field6833, ptr @str.111)
-  %cond6835 = icmp ne i32 %streq6834, 0
-  br i1 %cond6835, label %if_then2202, label %if_else2203
+  %field_ptr6899 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 5
+  %field6900 = load i64, ptr %field_ptr6899
+  call void @llvmgen__emit_expr(i64 %field6900)
+  %field_ptr6901 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6902 = load ptr, ptr %field_ptr6901
+  %streq6903 = call i32 @ofs_str_eq(ptr %field6902, ptr @str.111)
+  %cond6904 = icmp ne i32 %streq6903, 0
+  br i1 %cond6904, label %if_then2202, label %if_else2203
 
 if_then2202:
-  %b6836 = alloca ptr, align 8
-  %call6837 = call ptr @llvmgen__expr_as_i1()
-  store ptr %call6837, ptr %b6836
-  %tmp6838 = alloca ptr, align 8
-  %call6839 = call ptr @llvmgen__next_tmp(ptr @str.420)
-  store ptr %call6839, ptr %tmp6838
-  %tmp_val6840 = load ptr, ptr %tmp6838
-  %concat6841 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val6840)
-  %concat6842 = call ptr @ofs_str_concat(ptr %concat6841, ptr @str.421)
-  %b_val6843 = load ptr, ptr %b6836
-  %concat6844 = call ptr @ofs_str_concat(ptr %concat6842, ptr %b_val6843)
-  %concat6845 = call ptr @ofs_str_concat(ptr %concat6844, ptr @str.422)
-  call void @cg_emit(ptr %concat6845)
-  %tmp_val6846 = load ptr, ptr %tmp6838
-  store ptr %tmp_val6846, ptr @llvmgen___expr_val
+  %b6905 = alloca ptr, align 8
+  %call6906 = call ptr @llvmgen__expr_as_i1()
+  store ptr %call6906, ptr %b6905
+  %tmp6907 = alloca ptr, align 8
+  %call6908 = call ptr @llvmgen__next_tmp(ptr @str.420)
+  store ptr %call6908, ptr %tmp6907
+  %tmp_val6909 = load ptr, ptr %tmp6907
+  %concat6910 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val6909)
+  %concat6911 = call ptr @ofs_str_concat(ptr %concat6910, ptr @str.421)
+  %b_val6912 = load ptr, ptr %b6905
+  %concat6913 = call ptr @ofs_str_concat(ptr %concat6911, ptr %b_val6912)
+  %concat6914 = call ptr @ofs_str_concat(ptr %concat6913, ptr @str.422)
+  call void @cg_emit(ptr %concat6914)
+  %tmp_val6915 = load ptr, ptr %tmp6907
+  store ptr %tmp_val6915, ptr @llvmgen___expr_val
   store ptr @str.241, ptr @llvmgen___expr_type
   ret void
 
@@ -16429,69 +16535,69 @@ if_else2203:
   br label %if_end2204
 
 if_end2204:
-  %field_ptr6847 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6848 = load ptr, ptr %field_ptr6847
-  %streq6849 = call i32 @ofs_str_eq(ptr %field6848, ptr @str.55)
-  %cond6850 = icmp ne i32 %streq6849, 0
-  br i1 %cond6850, label %if_then2205, label %if_else2206
+  %field_ptr6916 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6917 = load ptr, ptr %field_ptr6916
+  %streq6918 = call i32 @ofs_str_eq(ptr %field6917, ptr @str.55)
+  %cond6919 = icmp ne i32 %streq6918, 0
+  br i1 %cond6919, label %if_then2205, label %if_else2206
 
 if_then2205:
-  %tmp6851 = alloca ptr, align 8
-  %call6852 = call ptr @llvmgen__next_tmp(ptr @str.423)
-  store ptr %call6852, ptr %tmp6851
-  %llvmgen___expr_type_val6853 = load ptr, ptr @llvmgen___expr_type
-  %streq6854 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val6853, ptr @str.182)
-  %cond6855 = icmp ne i32 %streq6854, 0
-  br i1 %cond6855, label %if_then2208, label %if_else2209
+  %tmp6920 = alloca ptr, align 8
+  %call6921 = call ptr @llvmgen__next_tmp(ptr @str.423)
+  store ptr %call6921, ptr %tmp6920
+  %llvmgen___expr_type_val6922 = load ptr, ptr @llvmgen___expr_type
+  %streq6923 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val6922, ptr @str.182)
+  %cond6924 = icmp ne i32 %streq6923, 0
+  br i1 %cond6924, label %if_then2208, label %if_else2209
 
 if_then2208:
-  %tmp_val6856 = load ptr, ptr %tmp6851
-  %concat6857 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val6856)
-  %concat6858 = call ptr @ofs_str_concat(ptr %concat6857, ptr @str.424)
-  %llvmgen___expr_val_val6859 = load ptr, ptr @llvmgen___expr_val
-  %concat6860 = call ptr @ofs_str_concat(ptr %concat6858, ptr %llvmgen___expr_val_val6859)
-  call void @cg_emit(ptr %concat6860)
+  %tmp_val6925 = load ptr, ptr %tmp6920
+  %concat6926 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val6925)
+  %concat6927 = call ptr @ofs_str_concat(ptr %concat6926, ptr @str.424)
+  %llvmgen___expr_val_val6928 = load ptr, ptr @llvmgen___expr_val
+  %concat6929 = call ptr @ofs_str_concat(ptr %concat6927, ptr %llvmgen___expr_val_val6928)
+  call void @cg_emit(ptr %concat6929)
   store ptr @str.182, ptr @llvmgen___expr_type
   br label %if_end2210
 
 if_else2209:
-  %tmp_val6861 = load ptr, ptr %tmp6851
-  %concat6862 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val6861)
-  %concat6863 = call ptr @ofs_str_concat(ptr %concat6862, ptr @str.425)
-  %llvmgen___expr_val_val6864 = load ptr, ptr @llvmgen___expr_val
-  %concat6865 = call ptr @ofs_str_concat(ptr %concat6863, ptr %llvmgen___expr_val_val6864)
-  call void @cg_emit(ptr %concat6865)
+  %tmp_val6930 = load ptr, ptr %tmp6920
+  %concat6931 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp_val6930)
+  %concat6932 = call ptr @ofs_str_concat(ptr %concat6931, ptr @str.425)
+  %llvmgen___expr_val_val6933 = load ptr, ptr @llvmgen___expr_val
+  %concat6934 = call ptr @ofs_str_concat(ptr %concat6932, ptr %llvmgen___expr_val_val6933)
+  call void @cg_emit(ptr %concat6934)
   store ptr @str.181, ptr @llvmgen___expr_type
   br label %if_end2210
 
 if_end2210:
-  %tmp_val6866 = load ptr, ptr %tmp6851
-  store ptr %tmp_val6866, ptr @llvmgen___expr_val
+  %tmp_val6935 = load ptr, ptr %tmp6920
+  store ptr %tmp_val6935, ptr @llvmgen___expr_val
   ret void
 
 if_else2206:
   br label %if_end2207
 
 if_end2207:
-  %field_ptr6867 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6868 = load ptr, ptr %field_ptr6867
-  %streq6869 = call i32 @ofs_str_eq(ptr %field6868, ptr @str.123)
-  %cond6870 = icmp ne i32 %streq6869, 0
-  br i1 %cond6870, label %if_then2211, label %if_else2212
+  %field_ptr6936 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6937 = load ptr, ptr %field_ptr6936
+  %streq6938 = call i32 @ofs_str_eq(ptr %field6937, ptr @str.123)
+  %cond6939 = icmp ne i32 %streq6938, 0
+  br i1 %cond6939, label %if_then2211, label %if_else2212
 
 if_then2211:
-  %ntmp6871 = alloca ptr, align 8
-  %call6872 = call ptr @llvmgen__next_tmp(ptr @str.426)
-  store ptr %call6872, ptr %ntmp6871
-  %ntmp_val6873 = load ptr, ptr %ntmp6871
-  %concat6874 = call ptr @ofs_str_concat(ptr @str.233, ptr %ntmp_val6873)
-  %concat6875 = call ptr @ofs_str_concat(ptr %concat6874, ptr @str.427)
-  %llvmgen___expr_val_val6876 = load ptr, ptr @llvmgen___expr_val
-  %concat6877 = call ptr @ofs_str_concat(ptr %concat6875, ptr %llvmgen___expr_val_val6876)
-  %concat6878 = call ptr @ofs_str_concat(ptr %concat6877, ptr @str.428)
-  call void @cg_emit(ptr %concat6878)
-  %ntmp_val6879 = load ptr, ptr %ntmp6871
-  store ptr %ntmp_val6879, ptr @llvmgen___expr_val
+  %ntmp6940 = alloca ptr, align 8
+  %call6941 = call ptr @llvmgen__next_tmp(ptr @str.426)
+  store ptr %call6941, ptr %ntmp6940
+  %ntmp_val6942 = load ptr, ptr %ntmp6940
+  %concat6943 = call ptr @ofs_str_concat(ptr @str.233, ptr %ntmp_val6942)
+  %concat6944 = call ptr @ofs_str_concat(ptr %concat6943, ptr @str.427)
+  %llvmgen___expr_val_val6945 = load ptr, ptr @llvmgen___expr_val
+  %concat6946 = call ptr @ofs_str_concat(ptr %concat6944, ptr %llvmgen___expr_val_val6945)
+  %concat6947 = call ptr @ofs_str_concat(ptr %concat6946, ptr @str.428)
+  call void @cg_emit(ptr %concat6947)
+  %ntmp_val6948 = load ptr, ptr %ntmp6940
+  store ptr %ntmp_val6948, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -16499,34 +16605,34 @@ if_else2212:
   br label %if_end2213
 
 if_end2213:
-  %field_ptr6880 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6881 = load ptr, ptr %field_ptr6880
-  %streq6882 = call i32 @ofs_str_eq(ptr %field6881, ptr @str.56)
-  %cond6883 = icmp ne i32 %streq6882, 0
-  br i1 %cond6883, label %if_then2214, label %if_else2215
+  %field_ptr6949 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6950 = load ptr, ptr %field_ptr6949
+  %streq6951 = call i32 @ofs_str_eq(ptr %field6950, ptr @str.56)
+  %cond6952 = icmp ne i32 %streq6951, 0
+  br i1 %cond6952, label %if_then2214, label %if_else2215
 
 if_then2214:
-  %pt6884 = alloca ptr, align 8
-  %llvmgen___expr_type_val6885 = load ptr, ptr @llvmgen___expr_type
-  %call6886 = call ptr @llvmgen__pointee_type(ptr %llvmgen___expr_type_val6885)
-  store ptr %call6886, ptr %pt6884
-  %dtmp6887 = alloca ptr, align 8
-  %call6888 = call ptr @llvmgen__next_tmp(ptr @str.429)
-  store ptr %call6888, ptr %dtmp6887
-  %dtmp_val6889 = load ptr, ptr %dtmp6887
-  %concat6890 = call ptr @ofs_str_concat(ptr @str.233, ptr %dtmp_val6889)
-  %concat6891 = call ptr @ofs_str_concat(ptr %concat6890, ptr @str.275)
-  %pt_val6892 = load ptr, ptr %pt6884
-  %call6893 = call ptr @llvmgen__llvm_type(ptr %pt_val6892)
-  %concat6894 = call ptr @ofs_str_concat(ptr %concat6891, ptr %call6893)
-  %concat6895 = call ptr @ofs_str_concat(ptr %concat6894, ptr @str.276)
-  %llvmgen___expr_val_val6896 = load ptr, ptr @llvmgen___expr_val
-  %concat6897 = call ptr @ofs_str_concat(ptr %concat6895, ptr %llvmgen___expr_val_val6896)
-  call void @cg_emit(ptr %concat6897)
-  %dtmp_val6898 = load ptr, ptr %dtmp6887
-  store ptr %dtmp_val6898, ptr @llvmgen___expr_val
-  %pt_val6899 = load ptr, ptr %pt6884
-  store ptr %pt_val6899, ptr @llvmgen___expr_type
+  %pt6953 = alloca ptr, align 8
+  %llvmgen___expr_type_val6954 = load ptr, ptr @llvmgen___expr_type
+  %call6955 = call ptr @llvmgen__pointee_type(ptr %llvmgen___expr_type_val6954)
+  store ptr %call6955, ptr %pt6953
+  %dtmp6956 = alloca ptr, align 8
+  %call6957 = call ptr @llvmgen__next_tmp(ptr @str.429)
+  store ptr %call6957, ptr %dtmp6956
+  %dtmp_val6958 = load ptr, ptr %dtmp6956
+  %concat6959 = call ptr @ofs_str_concat(ptr @str.233, ptr %dtmp_val6958)
+  %concat6960 = call ptr @ofs_str_concat(ptr %concat6959, ptr @str.275)
+  %pt_val6961 = load ptr, ptr %pt6953
+  %call6962 = call ptr @llvmgen__llvm_type(ptr %pt_val6961)
+  %concat6963 = call ptr @ofs_str_concat(ptr %concat6960, ptr %call6962)
+  %concat6964 = call ptr @ofs_str_concat(ptr %concat6963, ptr @str.276)
+  %llvmgen___expr_val_val6965 = load ptr, ptr @llvmgen___expr_val
+  %concat6966 = call ptr @ofs_str_concat(ptr %concat6964, ptr %llvmgen___expr_val_val6965)
+  call void @cg_emit(ptr %concat6966)
+  %dtmp_val6967 = load ptr, ptr %dtmp6956
+  store ptr %dtmp_val6967, ptr @llvmgen___expr_val
+  %pt_val6968 = load ptr, ptr %pt6953
+  store ptr %pt_val6968, ptr @llvmgen___expr_type
   ret void
 
 if_else2215:
@@ -16539,322 +16645,322 @@ if_else2191:
   br label %if_end2192
 
 if_end2192:
-  %field_ptr6900 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field6901 = load i64, ptr %field_ptr6900
-  %NK_ASSIGN_val6902 = load i64, ptr @NK_ASSIGN
-  %cmp6903 = icmp eq i64 %field6901, %NK_ASSIGN_val6902
-  br i1 %cmp6903, label %if_then2217, label %if_else2218
+  %field_ptr6969 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field6970 = load i64, ptr %field_ptr6969
+  %NK_ASSIGN_val6971 = load i64, ptr @NK_ASSIGN
+  %cmp6972 = icmp eq i64 %field6970, %NK_ASSIGN_val6971
+  br i1 %cmp6972, label %if_then2217, label %if_else2218
 
 if_then2217:
-  %obj6905 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr6906 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 5
-  %field6907 = load i64, ptr %field_ptr6906
-  %call6908 = call ptr @node_get(i64 %field6907)
-  %named_val6909 = load %Node, ptr %call6908
-  store %Node %named_val6909, ptr %obj6905
-  %field_ptr6910 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 0
-  %field6911 = load i64, ptr %field_ptr6910
-  %NK_IDENT_val6912 = load i64, ptr @NK_IDENT
-  %cmp6913 = icmp eq i64 %field6911, %NK_IDENT_val6912
-  br i1 %cmp6913, label %if_then2220, label %if_else2221
+  %obj6974 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr6975 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 5
+  %field6976 = load i64, ptr %field_ptr6975
+  %call6977 = call ptr @node_get(i64 %field6976)
+  %named_val6978 = load %Node, ptr %call6977
+  store %Node %named_val6978, ptr %obj6974
+  %field_ptr6979 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 0
+  %field6980 = load i64, ptr %field_ptr6979
+  %NK_IDENT_val6981 = load i64, ptr @NK_IDENT
+  %cmp6982 = icmp eq i64 %field6980, %NK_IDENT_val6981
+  br i1 %cmp6982, label %if_then2220, label %if_else2221
 
 if_then2220:
-  %t6914 = alloca ptr, align 8
-  %field_ptr6915 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 1
-  %field6916 = load ptr, ptr %field_ptr6915
-  %call6917 = call ptr @llvmgen__var_type(ptr %field6916)
-  store ptr %call6917, ptr %t6914
-  %p6918 = alloca ptr, align 8
-  %field_ptr6919 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 1
-  %field6920 = load ptr, ptr %field_ptr6919
-  %call6921 = call ptr @llvmgen__var_ptr(ptr %field6920)
-  store ptr %call6921, ptr %p6918
-  %field_ptr6922 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 6
-  %field6923 = load i64, ptr %field_ptr6922
-  call void @llvmgen__emit_expr(i64 %field6923)
-  %v6924 = alloca ptr, align 8
-  %llvmgen___expr_val_val6925 = load ptr, ptr @llvmgen___expr_val
-  %llvmgen___expr_type_val6926 = load ptr, ptr @llvmgen___expr_type
-  %t_val6927 = load ptr, ptr %t6914
-  %call6928 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val6925, ptr %llvmgen___expr_type_val6926, ptr %t_val6927)
-  store ptr %call6928, ptr %v6924
-  %field_ptr6929 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6930 = load ptr, ptr %field_ptr6929
-  %streq6931 = call i32 @ofs_str_eq(ptr %field6930, ptr @str.110)
-  %cond6932 = icmp ne i32 %streq6931, 0
-  %not6933 = xor i1 %cond6932, true
-  br i1 %not6933, label %if_then2223, label %if_else2224
+  %t6983 = alloca ptr, align 8
+  %field_ptr6984 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 1
+  %field6985 = load ptr, ptr %field_ptr6984
+  %call6986 = call ptr @llvmgen__var_type(ptr %field6985)
+  store ptr %call6986, ptr %t6983
+  %p6987 = alloca ptr, align 8
+  %field_ptr6988 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 1
+  %field6989 = load ptr, ptr %field_ptr6988
+  %call6990 = call ptr @llvmgen__var_ptr(ptr %field6989)
+  store ptr %call6990, ptr %p6987
+  %field_ptr6991 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 6
+  %field6992 = load i64, ptr %field_ptr6991
+  call void @llvmgen__emit_expr(i64 %field6992)
+  %v6993 = alloca ptr, align 8
+  %llvmgen___expr_val_val6994 = load ptr, ptr @llvmgen___expr_val
+  %llvmgen___expr_type_val6995 = load ptr, ptr @llvmgen___expr_type
+  %t_val6996 = load ptr, ptr %t6983
+  %call6997 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val6994, ptr %llvmgen___expr_type_val6995, ptr %t_val6996)
+  store ptr %call6997, ptr %v6993
+  %field_ptr6998 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field6999 = load ptr, ptr %field_ptr6998
+  %streq7000 = call i32 @ofs_str_eq(ptr %field6999, ptr @str.110)
+  %cond7001 = icmp ne i32 %streq7000, 0
+  %not7002 = xor i1 %cond7001, true
+  br i1 %not7002, label %if_then2223, label %if_else2224
 
 if_then2223:
-  %oldv6934 = alloca ptr, align 8
-  %call6935 = call ptr @llvmgen__next_tmp(ptr @str.370)
-  store ptr %call6935, ptr %oldv6934
-  %newv6936 = alloca ptr, align 8
-  %call6937 = call ptr @llvmgen__next_tmp(ptr @str.371)
-  store ptr %call6937, ptr %newv6936
-  %oldv_val6938 = load ptr, ptr %oldv6934
-  %concat6939 = call ptr @ofs_str_concat(ptr @str.233, ptr %oldv_val6938)
-  %concat6940 = call ptr @ofs_str_concat(ptr %concat6939, ptr @str.275)
-  %t_val6941 = load ptr, ptr %t6914
-  %call6942 = call ptr @llvmgen__llvm_type(ptr %t_val6941)
-  %concat6943 = call ptr @ofs_str_concat(ptr %concat6940, ptr %call6942)
-  %concat6944 = call ptr @ofs_str_concat(ptr %concat6943, ptr @str.276)
-  %p_val6945 = load ptr, ptr %p6918
-  %concat6946 = call ptr @ofs_str_concat(ptr %concat6944, ptr %p_val6945)
-  call void @cg_emit(ptr %concat6946)
-  %t_val6947 = load ptr, ptr %t6914
-  %streq6948 = call i32 @ofs_str_eq(ptr %t_val6947, ptr @str.183)
-  %field_ptr6949 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6950 = load ptr, ptr %field_ptr6949
-  %streq6951 = call i32 @ofs_str_eq(ptr %field6950, ptr @str.103)
-  %cond6952 = icmp ne i32 %streq6948, 0
-  %cond6953 = icmp ne i32 %streq6951, 0
-  %logic6954 = and i1 %cond6952, %cond6953
-  br i1 %logic6954, label %if_then2226, label %if_else2227
+  %oldv7003 = alloca ptr, align 8
+  %call7004 = call ptr @llvmgen__next_tmp(ptr @str.370)
+  store ptr %call7004, ptr %oldv7003
+  %newv7005 = alloca ptr, align 8
+  %call7006 = call ptr @llvmgen__next_tmp(ptr @str.371)
+  store ptr %call7006, ptr %newv7005
+  %oldv_val7007 = load ptr, ptr %oldv7003
+  %concat7008 = call ptr @ofs_str_concat(ptr @str.233, ptr %oldv_val7007)
+  %concat7009 = call ptr @ofs_str_concat(ptr %concat7008, ptr @str.275)
+  %t_val7010 = load ptr, ptr %t6983
+  %call7011 = call ptr @llvmgen__llvm_type(ptr %t_val7010)
+  %concat7012 = call ptr @ofs_str_concat(ptr %concat7009, ptr %call7011)
+  %concat7013 = call ptr @ofs_str_concat(ptr %concat7012, ptr @str.276)
+  %p_val7014 = load ptr, ptr %p6987
+  %concat7015 = call ptr @ofs_str_concat(ptr %concat7013, ptr %p_val7014)
+  call void @cg_emit(ptr %concat7015)
+  %t_val7016 = load ptr, ptr %t6983
+  %streq7017 = call i32 @ofs_str_eq(ptr %t_val7016, ptr @str.183)
+  %field_ptr7018 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7019 = load ptr, ptr %field_ptr7018
+  %streq7020 = call i32 @ofs_str_eq(ptr %field7019, ptr @str.103)
+  %cond7021 = icmp ne i32 %streq7017, 0
+  %cond7022 = icmp ne i32 %streq7020, 0
+  %logic7023 = and i1 %cond7021, %cond7022
+  br i1 %logic7023, label %if_then2226, label %if_else2227
 
 if_then2226:
-  %newv_val6955 = load ptr, ptr %newv6936
-  %concat6956 = call ptr @ofs_str_concat(ptr @str.233, ptr %newv_val6955)
-  %concat6957 = call ptr @ofs_str_concat(ptr %concat6956, ptr @str.372)
-  %oldv_val6958 = load ptr, ptr %oldv6934
-  %concat6959 = call ptr @ofs_str_concat(ptr %concat6957, ptr %oldv_val6958)
-  %concat6960 = call ptr @ofs_str_concat(ptr %concat6959, ptr @str.276)
-  %v_val6961 = load ptr, ptr %v6924
-  %concat6962 = call ptr @ofs_str_concat(ptr %concat6960, ptr %v_val6961)
-  %concat6963 = call ptr @ofs_str_concat(ptr %concat6962, ptr @str.125)
-  call void @cg_emit(ptr %concat6963)
+  %newv_val7024 = load ptr, ptr %newv7005
+  %concat7025 = call ptr @ofs_str_concat(ptr @str.233, ptr %newv_val7024)
+  %concat7026 = call ptr @ofs_str_concat(ptr %concat7025, ptr @str.372)
+  %oldv_val7027 = load ptr, ptr %oldv7003
+  %concat7028 = call ptr @ofs_str_concat(ptr %concat7026, ptr %oldv_val7027)
+  %concat7029 = call ptr @ofs_str_concat(ptr %concat7028, ptr @str.276)
+  %v_val7030 = load ptr, ptr %v6993
+  %concat7031 = call ptr @ofs_str_concat(ptr %concat7029, ptr %v_val7030)
+  %concat7032 = call ptr @ofs_str_concat(ptr %concat7031, ptr @str.125)
+  call void @cg_emit(ptr %concat7032)
   br label %if_end2228
 
 if_else2227:
-  %op6964 = alloca ptr, align 8
-  store ptr @str.373, ptr %op6964
-  %field_ptr6965 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6966 = load ptr, ptr %field_ptr6965
-  %streq6967 = call i32 @ofs_str_eq(ptr %field6966, ptr @str.105)
-  %cond6968 = icmp ne i32 %streq6967, 0
-  br i1 %cond6968, label %if_then2229, label %if_else2230
+  %op7033 = alloca ptr, align 8
+  store ptr @str.373, ptr %op7033
+  %field_ptr7034 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7035 = load ptr, ptr %field_ptr7034
+  %streq7036 = call i32 @ofs_str_eq(ptr %field7035, ptr @str.105)
+  %cond7037 = icmp ne i32 %streq7036, 0
+  br i1 %cond7037, label %if_then2229, label %if_else2230
 
 if_then2229:
-  store ptr @str.374, ptr %op6964
+  store ptr @str.374, ptr %op7033
   br label %if_end2231
 
 if_else2230:
   br label %if_end2231
 
 if_end2231:
-  %field_ptr6969 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6970 = load ptr, ptr %field_ptr6969
-  %streq6971 = call i32 @ofs_str_eq(ptr %field6970, ptr @str.107)
-  %cond6972 = icmp ne i32 %streq6971, 0
-  br i1 %cond6972, label %if_then2232, label %if_else2233
+  %field_ptr7038 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7039 = load ptr, ptr %field_ptr7038
+  %streq7040 = call i32 @ofs_str_eq(ptr %field7039, ptr @str.107)
+  %cond7041 = icmp ne i32 %streq7040, 0
+  br i1 %cond7041, label %if_then2232, label %if_else2233
 
 if_then2232:
-  store ptr @str.375, ptr %op6964
+  store ptr @str.375, ptr %op7033
   br label %if_end2234
 
 if_else2233:
   br label %if_end2234
 
 if_end2234:
-  %field_ptr6973 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6974 = load ptr, ptr %field_ptr6973
-  %streq6975 = call i32 @ofs_str_eq(ptr %field6974, ptr @str.108)
-  %cond6976 = icmp ne i32 %streq6975, 0
-  br i1 %cond6976, label %if_then2235, label %if_else2236
+  %field_ptr7042 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7043 = load ptr, ptr %field_ptr7042
+  %streq7044 = call i32 @ofs_str_eq(ptr %field7043, ptr @str.108)
+  %cond7045 = icmp ne i32 %streq7044, 0
+  br i1 %cond7045, label %if_then2235, label %if_else2236
 
 if_then2235:
-  store ptr @str.376, ptr %op6964
+  store ptr @str.376, ptr %op7033
   br label %if_end2237
 
 if_else2236:
   br label %if_end2237
 
 if_end2237:
-  %field_ptr6977 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field6978 = load ptr, ptr %field_ptr6977
-  %streq6979 = call i32 @ofs_str_eq(ptr %field6978, ptr @str.369)
-  %cond6980 = icmp ne i32 %streq6979, 0
-  br i1 %cond6980, label %if_then2238, label %if_else2239
+  %field_ptr7046 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7047 = load ptr, ptr %field_ptr7046
+  %streq7048 = call i32 @ofs_str_eq(ptr %field7047, ptr @str.369)
+  %cond7049 = icmp ne i32 %streq7048, 0
+  br i1 %cond7049, label %if_then2238, label %if_else2239
 
 if_then2238:
-  store ptr @str.377, ptr %op6964
+  store ptr @str.377, ptr %op7033
   br label %if_end2240
 
 if_else2239:
   br label %if_end2240
 
 if_end2240:
-  %newv_val6981 = load ptr, ptr %newv6936
-  %concat6982 = call ptr @ofs_str_concat(ptr @str.233, ptr %newv_val6981)
-  %concat6983 = call ptr @ofs_str_concat(ptr %concat6982, ptr @str.221)
-  %op_val6984 = load ptr, ptr %op6964
-  %concat6985 = call ptr @ofs_str_concat(ptr %concat6983, ptr %op_val6984)
-  %concat6986 = call ptr @ofs_str_concat(ptr %concat6985, ptr @str.216)
-  %t_val6987 = load ptr, ptr %t6914
-  %call6988 = call ptr @llvmgen__llvm_type(ptr %t_val6987)
-  %concat6989 = call ptr @ofs_str_concat(ptr %concat6986, ptr %call6988)
-  %concat6990 = call ptr @ofs_str_concat(ptr %concat6989, ptr @str.216)
-  %oldv_val6991 = load ptr, ptr %oldv6934
-  %concat6992 = call ptr @ofs_str_concat(ptr %concat6990, ptr %oldv_val6991)
-  %concat6993 = call ptr @ofs_str_concat(ptr %concat6992, ptr @str.217)
-  %v_val6994 = load ptr, ptr %v6924
-  %concat6995 = call ptr @ofs_str_concat(ptr %concat6993, ptr %v_val6994)
-  call void @cg_emit(ptr %concat6995)
+  %newv_val7050 = load ptr, ptr %newv7005
+  %concat7051 = call ptr @ofs_str_concat(ptr @str.233, ptr %newv_val7050)
+  %concat7052 = call ptr @ofs_str_concat(ptr %concat7051, ptr @str.221)
+  %op_val7053 = load ptr, ptr %op7033
+  %concat7054 = call ptr @ofs_str_concat(ptr %concat7052, ptr %op_val7053)
+  %concat7055 = call ptr @ofs_str_concat(ptr %concat7054, ptr @str.216)
+  %t_val7056 = load ptr, ptr %t6983
+  %call7057 = call ptr @llvmgen__llvm_type(ptr %t_val7056)
+  %concat7058 = call ptr @ofs_str_concat(ptr %concat7055, ptr %call7057)
+  %concat7059 = call ptr @ofs_str_concat(ptr %concat7058, ptr @str.216)
+  %oldv_val7060 = load ptr, ptr %oldv7003
+  %concat7061 = call ptr @ofs_str_concat(ptr %concat7059, ptr %oldv_val7060)
+  %concat7062 = call ptr @ofs_str_concat(ptr %concat7061, ptr @str.217)
+  %v_val7063 = load ptr, ptr %v6993
+  %concat7064 = call ptr @ofs_str_concat(ptr %concat7062, ptr %v_val7063)
+  call void @cg_emit(ptr %concat7064)
   br label %if_end2228
 
 if_end2228:
-  %newv_val6996 = load ptr, ptr %newv6936
-  store ptr %newv_val6996, ptr %v6924
+  %newv_val7065 = load ptr, ptr %newv7005
+  store ptr %newv_val7065, ptr %v6993
   br label %if_end2225
 
 if_else2224:
   br label %if_end2225
 
 if_end2225:
-  %t_val6997 = load ptr, ptr %t6914
-  %call6998 = call ptr @llvmgen__llvm_type(ptr %t_val6997)
-  %concat6999 = call ptr @ofs_str_concat(ptr @str.365, ptr %call6998)
-  %concat7000 = call ptr @ofs_str_concat(ptr %concat6999, ptr @str.216)
-  %v_val7001 = load ptr, ptr %v6924
-  %concat7002 = call ptr @ofs_str_concat(ptr %concat7000, ptr %v_val7001)
-  %concat7003 = call ptr @ofs_str_concat(ptr %concat7002, ptr @str.276)
-  %p_val7004 = load ptr, ptr %p6918
-  %concat7005 = call ptr @ofs_str_concat(ptr %concat7003, ptr %p_val7004)
-  call void @cg_emit(ptr %concat7005)
-  %v_val7006 = load ptr, ptr %v6924
-  store ptr %v_val7006, ptr @llvmgen___expr_val
-  %t_val7007 = load ptr, ptr %t6914
-  store ptr %t_val7007, ptr @llvmgen___expr_type
+  %t_val7066 = load ptr, ptr %t6983
+  %call7067 = call ptr @llvmgen__llvm_type(ptr %t_val7066)
+  %concat7068 = call ptr @ofs_str_concat(ptr @str.365, ptr %call7067)
+  %concat7069 = call ptr @ofs_str_concat(ptr %concat7068, ptr @str.216)
+  %v_val7070 = load ptr, ptr %v6993
+  %concat7071 = call ptr @ofs_str_concat(ptr %concat7069, ptr %v_val7070)
+  %concat7072 = call ptr @ofs_str_concat(ptr %concat7071, ptr @str.276)
+  %p_val7073 = load ptr, ptr %p6987
+  %concat7074 = call ptr @ofs_str_concat(ptr %concat7072, ptr %p_val7073)
+  call void @cg_emit(ptr %concat7074)
+  %v_val7075 = load ptr, ptr %v6993
+  store ptr %v_val7075, ptr @llvmgen___expr_val
+  %t_val7076 = load ptr, ptr %t6983
+  store ptr %t_val7076, ptr @llvmgen___expr_type
   ret void
 
 if_else2221:
   br label %if_end2222
 
 if_end2222:
-  %field_ptr7008 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 0
-  %field7009 = load i64, ptr %field_ptr7008
-  %NK_FIELD_val7010 = load i64, ptr @NK_FIELD
-  %cmp7011 = icmp eq i64 %field7009, %NK_FIELD_val7010
-  br i1 %cmp7011, label %if_then2241, label %if_else2242
+  %field_ptr7077 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 0
+  %field7078 = load i64, ptr %field_ptr7077
+  %NK_FIELD_val7079 = load i64, ptr @NK_FIELD
+  %cmp7080 = icmp eq i64 %field7078, %NK_FIELD_val7079
+  br i1 %cmp7080, label %if_then2241, label %if_else2242
 
 if_then2241:
-  %obj7013 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr7014 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 5
-  %field7015 = load i64, ptr %field_ptr7014
-  %call7016 = call ptr @node_get(i64 %field7015)
-  %named_val7017 = load %Node, ptr %call7016
-  store %Node %named_val7017, ptr %obj7013
-  %field_ptr7018 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 5
-  %field7019 = load i64, ptr %field_ptr7018
-  call void @llvmgen__emit_expr(i64 %field7019)
-  %base_ptr7020 = alloca ptr, align 8
-  %llvmgen___expr_val_val7021 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7021, ptr %base_ptr7020
-  %base_type7022 = alloca ptr, align 8
-  %llvmgen___expr_type_val7023 = load ptr, ptr @llvmgen___expr_type
-  store ptr %llvmgen___expr_type_val7023, ptr %base_type7022
-  %ft7024 = alloca ptr, align 8
-  %base_type_val7025 = load ptr, ptr %base_type7022
-  %field_ptr7026 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 1
-  %field7027 = load ptr, ptr %field_ptr7026
-  %call7028 = call ptr @llvmgen__field_type(ptr %base_type_val7025, ptr %field7027)
-  store ptr %call7028, ptr %ft7024
-  %idx7029 = alloca i64, align 8
-  %base_type_val7030 = load ptr, ptr %base_type7022
-  %field_ptr7031 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 1
-  %field7032 = load ptr, ptr %field_ptr7031
-  %call7033 = call i64 @llvmgen__field_index(ptr %base_type_val7030, ptr %field7032)
-  store i64 %call7033, ptr %idx7029
-  %gep7034 = alloca ptr, align 8
-  %call7035 = call ptr @llvmgen__next_tmp(ptr @str.378)
-  store ptr %call7035, ptr %gep7034
-  %gep_val7036 = load ptr, ptr %gep7034
-  %concat7037 = call ptr @ofs_str_concat(ptr @str.233, ptr %gep_val7036)
-  %concat7038 = call ptr @ofs_str_concat(ptr %concat7037, ptr @str.379)
-  %base_type_val7039 = load ptr, ptr %base_type7022
-  %concat7040 = call ptr @ofs_str_concat(ptr %concat7038, ptr %base_type_val7039)
-  %concat7041 = call ptr @ofs_str_concat(ptr %concat7040, ptr @str.276)
-  %base_ptr_val7042 = load ptr, ptr %base_ptr7020
-  %concat7043 = call ptr @ofs_str_concat(ptr %concat7041, ptr %base_ptr_val7042)
-  %concat7044 = call ptr @ofs_str_concat(ptr %concat7043, ptr @str.380)
-  %idx_val7045 = load i64, ptr %idx7029
-  %stone_to_str7046 = call ptr @ofs_stone_to_obsidian(i64 %idx_val7045)
-  %concat7047 = call ptr @ofs_str_concat(ptr %concat7044, ptr %stone_to_str7046)
-  call void @cg_emit(ptr %concat7047)
-  %field_ptr7048 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 6
-  %field7049 = load i64, ptr %field_ptr7048
-  call void @llvmgen__emit_expr(i64 %field7049)
-  %fv7050 = alloca ptr, align 8
-  %llvmgen___expr_val_val7051 = load ptr, ptr @llvmgen___expr_val
-  %llvmgen___expr_type_val7052 = load ptr, ptr @llvmgen___expr_type
-  %ft_val7053 = load ptr, ptr %ft7024
-  %call7054 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val7051, ptr %llvmgen___expr_type_val7052, ptr %ft_val7053)
-  store ptr %call7054, ptr %fv7050
-  %ft_val7055 = load ptr, ptr %ft7024
-  %call7056 = call ptr @llvmgen__llvm_type(ptr %ft_val7055)
-  %concat7057 = call ptr @ofs_str_concat(ptr @str.365, ptr %call7056)
-  %concat7058 = call ptr @ofs_str_concat(ptr %concat7057, ptr @str.216)
-  %fv_val7059 = load ptr, ptr %fv7050
-  %concat7060 = call ptr @ofs_str_concat(ptr %concat7058, ptr %fv_val7059)
-  %concat7061 = call ptr @ofs_str_concat(ptr %concat7060, ptr @str.276)
-  %gep_val7062 = load ptr, ptr %gep7034
-  %concat7063 = call ptr @ofs_str_concat(ptr %concat7061, ptr %gep_val7062)
-  call void @cg_emit(ptr %concat7063)
-  %fv_val7064 = load ptr, ptr %fv7050
-  store ptr %fv_val7064, ptr @llvmgen___expr_val
-  %ft_val7065 = load ptr, ptr %ft7024
-  store ptr %ft_val7065, ptr @llvmgen___expr_type
+  %obj7082 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr7083 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 5
+  %field7084 = load i64, ptr %field_ptr7083
+  %call7085 = call ptr @node_get(i64 %field7084)
+  %named_val7086 = load %Node, ptr %call7085
+  store %Node %named_val7086, ptr %obj7082
+  %field_ptr7087 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 5
+  %field7088 = load i64, ptr %field_ptr7087
+  call void @llvmgen__emit_expr(i64 %field7088)
+  %base_ptr7089 = alloca ptr, align 8
+  %llvmgen___expr_val_val7090 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7090, ptr %base_ptr7089
+  %base_type7091 = alloca ptr, align 8
+  %llvmgen___expr_type_val7092 = load ptr, ptr @llvmgen___expr_type
+  store ptr %llvmgen___expr_type_val7092, ptr %base_type7091
+  %ft7093 = alloca ptr, align 8
+  %base_type_val7094 = load ptr, ptr %base_type7091
+  %field_ptr7095 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 1
+  %field7096 = load ptr, ptr %field_ptr7095
+  %call7097 = call ptr @llvmgen__field_type(ptr %base_type_val7094, ptr %field7096)
+  store ptr %call7097, ptr %ft7093
+  %idx7098 = alloca i64, align 8
+  %base_type_val7099 = load ptr, ptr %base_type7091
+  %field_ptr7100 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 1
+  %field7101 = load ptr, ptr %field_ptr7100
+  %call7102 = call i64 @llvmgen__field_index(ptr %base_type_val7099, ptr %field7101)
+  store i64 %call7102, ptr %idx7098
+  %gep7103 = alloca ptr, align 8
+  %call7104 = call ptr @llvmgen__next_tmp(ptr @str.378)
+  store ptr %call7104, ptr %gep7103
+  %gep_val7105 = load ptr, ptr %gep7103
+  %concat7106 = call ptr @ofs_str_concat(ptr @str.233, ptr %gep_val7105)
+  %concat7107 = call ptr @ofs_str_concat(ptr %concat7106, ptr @str.379)
+  %base_type_val7108 = load ptr, ptr %base_type7091
+  %concat7109 = call ptr @ofs_str_concat(ptr %concat7107, ptr %base_type_val7108)
+  %concat7110 = call ptr @ofs_str_concat(ptr %concat7109, ptr @str.276)
+  %base_ptr_val7111 = load ptr, ptr %base_ptr7089
+  %concat7112 = call ptr @ofs_str_concat(ptr %concat7110, ptr %base_ptr_val7111)
+  %concat7113 = call ptr @ofs_str_concat(ptr %concat7112, ptr @str.380)
+  %idx_val7114 = load i64, ptr %idx7098
+  %stone_to_str7115 = call ptr @ofs_stone_to_obsidian(i64 %idx_val7114)
+  %concat7116 = call ptr @ofs_str_concat(ptr %concat7113, ptr %stone_to_str7115)
+  call void @cg_emit(ptr %concat7116)
+  %field_ptr7117 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 6
+  %field7118 = load i64, ptr %field_ptr7117
+  call void @llvmgen__emit_expr(i64 %field7118)
+  %fv7119 = alloca ptr, align 8
+  %llvmgen___expr_val_val7120 = load ptr, ptr @llvmgen___expr_val
+  %llvmgen___expr_type_val7121 = load ptr, ptr @llvmgen___expr_type
+  %ft_val7122 = load ptr, ptr %ft7093
+  %call7123 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val7120, ptr %llvmgen___expr_type_val7121, ptr %ft_val7122)
+  store ptr %call7123, ptr %fv7119
+  %ft_val7124 = load ptr, ptr %ft7093
+  %call7125 = call ptr @llvmgen__llvm_type(ptr %ft_val7124)
+  %concat7126 = call ptr @ofs_str_concat(ptr @str.365, ptr %call7125)
+  %concat7127 = call ptr @ofs_str_concat(ptr %concat7126, ptr @str.216)
+  %fv_val7128 = load ptr, ptr %fv7119
+  %concat7129 = call ptr @ofs_str_concat(ptr %concat7127, ptr %fv_val7128)
+  %concat7130 = call ptr @ofs_str_concat(ptr %concat7129, ptr @str.276)
+  %gep_val7131 = load ptr, ptr %gep7103
+  %concat7132 = call ptr @ofs_str_concat(ptr %concat7130, ptr %gep_val7131)
+  call void @cg_emit(ptr %concat7132)
+  %fv_val7133 = load ptr, ptr %fv7119
+  store ptr %fv_val7133, ptr @llvmgen___expr_val
+  %ft_val7134 = load ptr, ptr %ft7093
+  store ptr %ft_val7134, ptr @llvmgen___expr_type
   ret void
 
 if_else2242:
   br label %if_end2243
 
 if_end2243:
-  %field_ptr7066 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 0
-  %field7067 = load i64, ptr %field_ptr7066
-  %NK_UNARY_OP_val7068 = load i64, ptr @NK_UNARY_OP
-  %cmp7069 = icmp eq i64 %field7067, %NK_UNARY_OP_val7068
-  %field_ptr7070 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 1
-  %field7071 = load ptr, ptr %field_ptr7070
-  %streq7072 = call i32 @ofs_str_eq(ptr %field7071, ptr @str.56)
-  %cond7073 = icmp ne i32 %streq7072, 0
-  %logic7074 = and i1 %cmp7069, %cond7073
-  br i1 %logic7074, label %if_then2244, label %if_else2245
+  %field_ptr7135 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 0
+  %field7136 = load i64, ptr %field_ptr7135
+  %NK_UNARY_OP_val7137 = load i64, ptr @NK_UNARY_OP
+  %cmp7138 = icmp eq i64 %field7136, %NK_UNARY_OP_val7137
+  %field_ptr7139 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 1
+  %field7140 = load ptr, ptr %field_ptr7139
+  %streq7141 = call i32 @ofs_str_eq(ptr %field7140, ptr @str.56)
+  %cond7142 = icmp ne i32 %streq7141, 0
+  %logic7143 = and i1 %cmp7138, %cond7142
+  br i1 %logic7143, label %if_then2244, label %if_else2245
 
 if_then2244:
-  %field_ptr7075 = getelementptr inbounds %Node, ptr %obj6905, i32 0, i32 5
-  %field7076 = load i64, ptr %field_ptr7075
-  call void @llvmgen__emit_expr(i64 %field7076)
-  %ptr_target7077 = alloca ptr, align 8
-  %llvmgen___expr_val_val7078 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7078, ptr %ptr_target7077
-  %pt7079 = alloca ptr, align 8
-  %llvmgen___expr_type_val7080 = load ptr, ptr @llvmgen___expr_type
-  %call7081 = call ptr @llvmgen__pointee_type(ptr %llvmgen___expr_type_val7080)
-  store ptr %call7081, ptr %pt7079
-  %field_ptr7082 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 6
-  %field7083 = load i64, ptr %field_ptr7082
-  call void @llvmgen__emit_expr(i64 %field7083)
-  %pv7084 = alloca ptr, align 8
-  %llvmgen___expr_val_val7085 = load ptr, ptr @llvmgen___expr_val
-  %llvmgen___expr_type_val7086 = load ptr, ptr @llvmgen___expr_type
-  %pt_val7087 = load ptr, ptr %pt7079
-  %call7088 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val7085, ptr %llvmgen___expr_type_val7086, ptr %pt_val7087)
-  store ptr %call7088, ptr %pv7084
-  %pt_val7089 = load ptr, ptr %pt7079
-  %call7090 = call ptr @llvmgen__llvm_type(ptr %pt_val7089)
-  %concat7091 = call ptr @ofs_str_concat(ptr @str.365, ptr %call7090)
-  %concat7092 = call ptr @ofs_str_concat(ptr %concat7091, ptr @str.216)
-  %pv_val7093 = load ptr, ptr %pv7084
-  %concat7094 = call ptr @ofs_str_concat(ptr %concat7092, ptr %pv_val7093)
-  %concat7095 = call ptr @ofs_str_concat(ptr %concat7094, ptr @str.276)
-  %ptr_target_val7096 = load ptr, ptr %ptr_target7077
-  %concat7097 = call ptr @ofs_str_concat(ptr %concat7095, ptr %ptr_target_val7096)
-  call void @cg_emit(ptr %concat7097)
-  %pv_val7098 = load ptr, ptr %pv7084
-  store ptr %pv_val7098, ptr @llvmgen___expr_val
-  %pt_val7099 = load ptr, ptr %pt7079
-  store ptr %pt_val7099, ptr @llvmgen___expr_type
+  %field_ptr7144 = getelementptr inbounds %Node, ptr %obj6974, i32 0, i32 5
+  %field7145 = load i64, ptr %field_ptr7144
+  call void @llvmgen__emit_expr(i64 %field7145)
+  %ptr_target7146 = alloca ptr, align 8
+  %llvmgen___expr_val_val7147 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7147, ptr %ptr_target7146
+  %pt7148 = alloca ptr, align 8
+  %llvmgen___expr_type_val7149 = load ptr, ptr @llvmgen___expr_type
+  %call7150 = call ptr @llvmgen__pointee_type(ptr %llvmgen___expr_type_val7149)
+  store ptr %call7150, ptr %pt7148
+  %field_ptr7151 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 6
+  %field7152 = load i64, ptr %field_ptr7151
+  call void @llvmgen__emit_expr(i64 %field7152)
+  %pv7153 = alloca ptr, align 8
+  %llvmgen___expr_val_val7154 = load ptr, ptr @llvmgen___expr_val
+  %llvmgen___expr_type_val7155 = load ptr, ptr @llvmgen___expr_type
+  %pt_val7156 = load ptr, ptr %pt7148
+  %call7157 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val7154, ptr %llvmgen___expr_type_val7155, ptr %pt_val7156)
+  store ptr %call7157, ptr %pv7153
+  %pt_val7158 = load ptr, ptr %pt7148
+  %call7159 = call ptr @llvmgen__llvm_type(ptr %pt_val7158)
+  %concat7160 = call ptr @ofs_str_concat(ptr @str.365, ptr %call7159)
+  %concat7161 = call ptr @ofs_str_concat(ptr %concat7160, ptr @str.216)
+  %pv_val7162 = load ptr, ptr %pv7153
+  %concat7163 = call ptr @ofs_str_concat(ptr %concat7161, ptr %pv_val7162)
+  %concat7164 = call ptr @ofs_str_concat(ptr %concat7163, ptr @str.276)
+  %ptr_target_val7165 = load ptr, ptr %ptr_target7146
+  %concat7166 = call ptr @ofs_str_concat(ptr %concat7164, ptr %ptr_target_val7165)
+  call void @cg_emit(ptr %concat7166)
+  %pv_val7167 = load ptr, ptr %pv7153
+  store ptr %pv_val7167, ptr @llvmgen___expr_val
+  %pt_val7168 = load ptr, ptr %pt7148
+  store ptr %pt_val7168, ptr @llvmgen___expr_type
   ret void
 
 if_else2245:
@@ -16867,80 +16973,80 @@ if_else2218:
   br label %if_end2219
 
 if_end2219:
-  %field_ptr7100 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field7101 = load i64, ptr %field_ptr7100
-  %NK_FIELD_val7102 = load i64, ptr @NK_FIELD
-  %cmp7103 = icmp eq i64 %field7101, %NK_FIELD_val7102
-  br i1 %cmp7103, label %if_then2247, label %if_else2248
+  %field_ptr7169 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field7170 = load i64, ptr %field_ptr7169
+  %NK_FIELD_val7171 = load i64, ptr @NK_FIELD
+  %cmp7172 = icmp eq i64 %field7170, %NK_FIELD_val7171
+  br i1 %cmp7172, label %if_then2247, label %if_else2248
 
 if_then2247:
-  %field_ptr7104 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 5
-  %field7105 = load i64, ptr %field_ptr7104
-  call void @llvmgen__emit_expr(i64 %field7105)
-  %base_ptr27106 = alloca ptr, align 8
-  %llvmgen___expr_val_val7107 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7107, ptr %base_ptr27106
-  %base_type27108 = alloca ptr, align 8
-  %llvmgen___expr_type_val7109 = load ptr, ptr @llvmgen___expr_type
-  store ptr %llvmgen___expr_type_val7109, ptr %base_type27108
-  %ft27110 = alloca ptr, align 8
-  %base_type2_val7111 = load ptr, ptr %base_type27108
-  %field_ptr7112 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7113 = load ptr, ptr %field_ptr7112
-  %call7114 = call ptr @llvmgen__field_type(ptr %base_type2_val7111, ptr %field7113)
-  store ptr %call7114, ptr %ft27110
-  %idx27115 = alloca i64, align 8
-  %base_type2_val7116 = load ptr, ptr %base_type27108
-  %field_ptr7117 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7118 = load ptr, ptr %field_ptr7117
-  %call7119 = call i64 @llvmgen__field_index(ptr %base_type2_val7116, ptr %field7118)
-  store i64 %call7119, ptr %idx27115
-  %gep27120 = alloca ptr, align 8
-  %call7121 = call ptr @llvmgen__next_tmp(ptr @str.378)
-  store ptr %call7121, ptr %gep27120
-  %gep2_val7122 = load ptr, ptr %gep27120
-  %concat7123 = call ptr @ofs_str_concat(ptr @str.233, ptr %gep2_val7122)
-  %concat7124 = call ptr @ofs_str_concat(ptr %concat7123, ptr @str.379)
-  %base_type2_val7125 = load ptr, ptr %base_type27108
-  %concat7126 = call ptr @ofs_str_concat(ptr %concat7124, ptr %base_type2_val7125)
-  %concat7127 = call ptr @ofs_str_concat(ptr %concat7126, ptr @str.276)
-  %base_ptr2_val7128 = load ptr, ptr %base_ptr27106
-  %concat7129 = call ptr @ofs_str_concat(ptr %concat7127, ptr %base_ptr2_val7128)
-  %concat7130 = call ptr @ofs_str_concat(ptr %concat7129, ptr @str.380)
-  %idx2_val7131 = load i64, ptr %idx27115
-  %stone_to_str7132 = call ptr @ofs_stone_to_obsidian(i64 %idx2_val7131)
-  %concat7133 = call ptr @ofs_str_concat(ptr %concat7130, ptr %stone_to_str7132)
-  call void @cg_emit(ptr %concat7133)
-  %ft2_val7134 = load ptr, ptr %ft27110
-  %call7135 = call i32 @llvmgen__is_named_type(ptr %ft2_val7134)
-  %cond7136 = icmp ne i32 %call7135, 0
-  br i1 %cond7136, label %if_then2250, label %if_else2251
+  %field_ptr7173 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 5
+  %field7174 = load i64, ptr %field_ptr7173
+  call void @llvmgen__emit_expr(i64 %field7174)
+  %base_ptr27175 = alloca ptr, align 8
+  %llvmgen___expr_val_val7176 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7176, ptr %base_ptr27175
+  %base_type27177 = alloca ptr, align 8
+  %llvmgen___expr_type_val7178 = load ptr, ptr @llvmgen___expr_type
+  store ptr %llvmgen___expr_type_val7178, ptr %base_type27177
+  %ft27179 = alloca ptr, align 8
+  %base_type2_val7180 = load ptr, ptr %base_type27177
+  %field_ptr7181 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7182 = load ptr, ptr %field_ptr7181
+  %call7183 = call ptr @llvmgen__field_type(ptr %base_type2_val7180, ptr %field7182)
+  store ptr %call7183, ptr %ft27179
+  %idx27184 = alloca i64, align 8
+  %base_type2_val7185 = load ptr, ptr %base_type27177
+  %field_ptr7186 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7187 = load ptr, ptr %field_ptr7186
+  %call7188 = call i64 @llvmgen__field_index(ptr %base_type2_val7185, ptr %field7187)
+  store i64 %call7188, ptr %idx27184
+  %gep27189 = alloca ptr, align 8
+  %call7190 = call ptr @llvmgen__next_tmp(ptr @str.378)
+  store ptr %call7190, ptr %gep27189
+  %gep2_val7191 = load ptr, ptr %gep27189
+  %concat7192 = call ptr @ofs_str_concat(ptr @str.233, ptr %gep2_val7191)
+  %concat7193 = call ptr @ofs_str_concat(ptr %concat7192, ptr @str.379)
+  %base_type2_val7194 = load ptr, ptr %base_type27177
+  %concat7195 = call ptr @ofs_str_concat(ptr %concat7193, ptr %base_type2_val7194)
+  %concat7196 = call ptr @ofs_str_concat(ptr %concat7195, ptr @str.276)
+  %base_ptr2_val7197 = load ptr, ptr %base_ptr27175
+  %concat7198 = call ptr @ofs_str_concat(ptr %concat7196, ptr %base_ptr2_val7197)
+  %concat7199 = call ptr @ofs_str_concat(ptr %concat7198, ptr @str.380)
+  %idx2_val7200 = load i64, ptr %idx27184
+  %stone_to_str7201 = call ptr @ofs_stone_to_obsidian(i64 %idx2_val7200)
+  %concat7202 = call ptr @ofs_str_concat(ptr %concat7199, ptr %stone_to_str7201)
+  call void @cg_emit(ptr %concat7202)
+  %ft2_val7203 = load ptr, ptr %ft27179
+  %call7204 = call i32 @llvmgen__is_named_type(ptr %ft2_val7203)
+  %cond7205 = icmp ne i32 %call7204, 0
+  br i1 %cond7205, label %if_then2250, label %if_else2251
 
 if_then2250:
-  %gep2_val7137 = load ptr, ptr %gep27120
-  store ptr %gep2_val7137, ptr @llvmgen___expr_val
-  %ft2_val7138 = load ptr, ptr %ft27110
-  store ptr %ft2_val7138, ptr @llvmgen___expr_type
+  %gep2_val7206 = load ptr, ptr %gep27189
+  store ptr %gep2_val7206, ptr @llvmgen___expr_val
+  %ft2_val7207 = load ptr, ptr %ft27179
+  store ptr %ft2_val7207, ptr @llvmgen___expr_type
   br label %if_end2252
 
 if_else2251:
-  %lv7139 = alloca ptr, align 8
-  %call7140 = call ptr @llvmgen__next_tmp(ptr @str.430)
-  store ptr %call7140, ptr %lv7139
-  %lv_val7141 = load ptr, ptr %lv7139
-  %concat7142 = call ptr @ofs_str_concat(ptr @str.233, ptr %lv_val7141)
-  %concat7143 = call ptr @ofs_str_concat(ptr %concat7142, ptr @str.275)
-  %ft2_val7144 = load ptr, ptr %ft27110
-  %call7145 = call ptr @llvmgen__llvm_type(ptr %ft2_val7144)
-  %concat7146 = call ptr @ofs_str_concat(ptr %concat7143, ptr %call7145)
-  %concat7147 = call ptr @ofs_str_concat(ptr %concat7146, ptr @str.276)
-  %gep2_val7148 = load ptr, ptr %gep27120
-  %concat7149 = call ptr @ofs_str_concat(ptr %concat7147, ptr %gep2_val7148)
-  call void @cg_emit(ptr %concat7149)
-  %lv_val7150 = load ptr, ptr %lv7139
-  store ptr %lv_val7150, ptr @llvmgen___expr_val
-  %ft2_val7151 = load ptr, ptr %ft27110
-  store ptr %ft2_val7151, ptr @llvmgen___expr_type
+  %lv7208 = alloca ptr, align 8
+  %call7209 = call ptr @llvmgen__next_tmp(ptr @str.430)
+  store ptr %call7209, ptr %lv7208
+  %lv_val7210 = load ptr, ptr %lv7208
+  %concat7211 = call ptr @ofs_str_concat(ptr @str.233, ptr %lv_val7210)
+  %concat7212 = call ptr @ofs_str_concat(ptr %concat7211, ptr @str.275)
+  %ft2_val7213 = load ptr, ptr %ft27179
+  %call7214 = call ptr @llvmgen__llvm_type(ptr %ft2_val7213)
+  %concat7215 = call ptr @ofs_str_concat(ptr %concat7212, ptr %call7214)
+  %concat7216 = call ptr @ofs_str_concat(ptr %concat7215, ptr @str.276)
+  %gep2_val7217 = load ptr, ptr %gep27189
+  %concat7218 = call ptr @ofs_str_concat(ptr %concat7216, ptr %gep2_val7217)
+  call void @cg_emit(ptr %concat7218)
+  %lv_val7219 = load ptr, ptr %lv7208
+  store ptr %lv_val7219, ptr @llvmgen___expr_val
+  %ft2_val7220 = load ptr, ptr %ft27179
+  store ptr %ft2_val7220, ptr @llvmgen___expr_type
   br label %if_end2252
 
 if_end2252:
@@ -16950,78 +17056,78 @@ if_else2248:
   br label %if_end2249
 
 if_end2249:
-  %field_ptr7152 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field7153 = load i64, ptr %field_ptr7152
-  %NK_POST_OP_val7154 = load i64, ptr @NK_POST_OP
-  %cmp7155 = icmp eq i64 %field7153, %NK_POST_OP_val7154
-  br i1 %cmp7155, label %if_then2253, label %if_else2254
+  %field_ptr7221 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field7222 = load i64, ptr %field_ptr7221
+  %NK_POST_OP_val7223 = load i64, ptr @NK_POST_OP
+  %cmp7224 = icmp eq i64 %field7222, %NK_POST_OP_val7223
+  br i1 %cmp7224, label %if_then2253, label %if_else2254
 
 if_then2253:
-  %obj7157 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr7158 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 5
-  %field7159 = load i64, ptr %field_ptr7158
-  %call7160 = call ptr @node_get(i64 %field7159)
-  %named_val7161 = load %Node, ptr %call7160
-  store %Node %named_val7161, ptr %obj7157
-  %field_ptr7162 = getelementptr inbounds %Node, ptr %obj7157, i32 0, i32 0
-  %field7163 = load i64, ptr %field_ptr7162
-  %NK_IDENT_val7164 = load i64, ptr @NK_IDENT
-  %cmp7165 = icmp eq i64 %field7163, %NK_IDENT_val7164
-  br i1 %cmp7165, label %if_then2256, label %if_else2257
+  %obj7226 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr7227 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 5
+  %field7228 = load i64, ptr %field_ptr7227
+  %call7229 = call ptr @node_get(i64 %field7228)
+  %named_val7230 = load %Node, ptr %call7229
+  store %Node %named_val7230, ptr %obj7226
+  %field_ptr7231 = getelementptr inbounds %Node, ptr %obj7226, i32 0, i32 0
+  %field7232 = load i64, ptr %field_ptr7231
+  %NK_IDENT_val7233 = load i64, ptr @NK_IDENT
+  %cmp7234 = icmp eq i64 %field7232, %NK_IDENT_val7233
+  br i1 %cmp7234, label %if_then2256, label %if_else2257
 
 if_then2256:
-  %p7166 = alloca ptr, align 8
-  %field_ptr7167 = getelementptr inbounds %Node, ptr %obj7157, i32 0, i32 1
-  %field7168 = load ptr, ptr %field_ptr7167
-  %call7169 = call ptr @llvmgen__var_ptr(ptr %field7168)
-  store ptr %call7169, ptr %p7166
-  %old7170 = alloca ptr, align 8
-  %call7171 = call ptr @llvmgen__next_tmp(ptr @str.431)
-  store ptr %call7171, ptr %old7170
-  %nv7172 = alloca ptr, align 8
-  %call7173 = call ptr @llvmgen__next_tmp(ptr @str.432)
-  store ptr %call7173, ptr %nv7172
-  %old_val7174 = load ptr, ptr %old7170
-  %concat7175 = call ptr @ofs_str_concat(ptr @str.233, ptr %old_val7174)
-  %concat7176 = call ptr @ofs_str_concat(ptr %concat7175, ptr @str.433)
-  %p_val7177 = load ptr, ptr %p7166
-  %concat7178 = call ptr @ofs_str_concat(ptr %concat7176, ptr %p_val7177)
-  call void @cg_emit(ptr %concat7178)
-  %field_ptr7179 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7180 = load ptr, ptr %field_ptr7179
-  %streq7181 = call i32 @ofs_str_eq(ptr %field7180, ptr @str.102)
-  %cond7182 = icmp ne i32 %streq7181, 0
-  br i1 %cond7182, label %if_then2259, label %if_else2260
+  %p7235 = alloca ptr, align 8
+  %field_ptr7236 = getelementptr inbounds %Node, ptr %obj7226, i32 0, i32 1
+  %field7237 = load ptr, ptr %field_ptr7236
+  %call7238 = call ptr @llvmgen__var_ptr(ptr %field7237)
+  store ptr %call7238, ptr %p7235
+  %old7239 = alloca ptr, align 8
+  %call7240 = call ptr @llvmgen__next_tmp(ptr @str.431)
+  store ptr %call7240, ptr %old7239
+  %nv7241 = alloca ptr, align 8
+  %call7242 = call ptr @llvmgen__next_tmp(ptr @str.432)
+  store ptr %call7242, ptr %nv7241
+  %old_val7243 = load ptr, ptr %old7239
+  %concat7244 = call ptr @ofs_str_concat(ptr @str.233, ptr %old_val7243)
+  %concat7245 = call ptr @ofs_str_concat(ptr %concat7244, ptr @str.433)
+  %p_val7246 = load ptr, ptr %p7235
+  %concat7247 = call ptr @ofs_str_concat(ptr %concat7245, ptr %p_val7246)
+  call void @cg_emit(ptr %concat7247)
+  %field_ptr7248 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7249 = load ptr, ptr %field_ptr7248
+  %streq7250 = call i32 @ofs_str_eq(ptr %field7249, ptr @str.102)
+  %cond7251 = icmp ne i32 %streq7250, 0
+  br i1 %cond7251, label %if_then2259, label %if_else2260
 
 if_then2259:
-  %nv_val7183 = load ptr, ptr %nv7172
-  %concat7184 = call ptr @ofs_str_concat(ptr @str.233, ptr %nv_val7183)
-  %concat7185 = call ptr @ofs_str_concat(ptr %concat7184, ptr @str.434)
-  %old_val7186 = load ptr, ptr %old7170
-  %concat7187 = call ptr @ofs_str_concat(ptr %concat7185, ptr %old_val7186)
-  %concat7188 = call ptr @ofs_str_concat(ptr %concat7187, ptr @str.435)
-  call void @cg_emit(ptr %concat7188)
+  %nv_val7252 = load ptr, ptr %nv7241
+  %concat7253 = call ptr @ofs_str_concat(ptr @str.233, ptr %nv_val7252)
+  %concat7254 = call ptr @ofs_str_concat(ptr %concat7253, ptr @str.434)
+  %old_val7255 = load ptr, ptr %old7239
+  %concat7256 = call ptr @ofs_str_concat(ptr %concat7254, ptr %old_val7255)
+  %concat7257 = call ptr @ofs_str_concat(ptr %concat7256, ptr @str.435)
+  call void @cg_emit(ptr %concat7257)
   br label %if_end2261
 
 if_else2260:
-  %nv_val7189 = load ptr, ptr %nv7172
-  %concat7190 = call ptr @ofs_str_concat(ptr @str.233, ptr %nv_val7189)
-  %concat7191 = call ptr @ofs_str_concat(ptr %concat7190, ptr @str.436)
-  %old_val7192 = load ptr, ptr %old7170
-  %concat7193 = call ptr @ofs_str_concat(ptr %concat7191, ptr %old_val7192)
-  %concat7194 = call ptr @ofs_str_concat(ptr %concat7193, ptr @str.435)
-  call void @cg_emit(ptr %concat7194)
+  %nv_val7258 = load ptr, ptr %nv7241
+  %concat7259 = call ptr @ofs_str_concat(ptr @str.233, ptr %nv_val7258)
+  %concat7260 = call ptr @ofs_str_concat(ptr %concat7259, ptr @str.436)
+  %old_val7261 = load ptr, ptr %old7239
+  %concat7262 = call ptr @ofs_str_concat(ptr %concat7260, ptr %old_val7261)
+  %concat7263 = call ptr @ofs_str_concat(ptr %concat7262, ptr @str.435)
+  call void @cg_emit(ptr %concat7263)
   br label %if_end2261
 
 if_end2261:
-  %nv_val7195 = load ptr, ptr %nv7172
-  %concat7196 = call ptr @ofs_str_concat(ptr @str.437, ptr %nv_val7195)
-  %concat7197 = call ptr @ofs_str_concat(ptr %concat7196, ptr @str.276)
-  %p_val7198 = load ptr, ptr %p7166
-  %concat7199 = call ptr @ofs_str_concat(ptr %concat7197, ptr %p_val7198)
-  call void @cg_emit(ptr %concat7199)
-  %old_val7200 = load ptr, ptr %old7170
-  store ptr %old_val7200, ptr @llvmgen___expr_val
+  %nv_val7264 = load ptr, ptr %nv7241
+  %concat7265 = call ptr @ofs_str_concat(ptr @str.437, ptr %nv_val7264)
+  %concat7266 = call ptr @ofs_str_concat(ptr %concat7265, ptr @str.276)
+  %p_val7267 = load ptr, ptr %p7235
+  %concat7268 = call ptr @ofs_str_concat(ptr %concat7266, ptr %p_val7267)
+  call void @cg_emit(ptr %concat7268)
+  %old_val7269 = load ptr, ptr %old7239
+  store ptr %old_val7269, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17035,38 +17141,38 @@ if_else2254:
   br label %if_end2255
 
 if_end2255:
-  %field_ptr7201 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 0
-  %field7202 = load i64, ptr %field_ptr7201
-  %NK_CALL_val7203 = load i64, ptr @NK_CALL
-  %cmp7204 = icmp eq i64 %field7202, %NK_CALL_val7203
-  br i1 %cmp7204, label %if_then2262, label %if_else2263
+  %field_ptr7270 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 0
+  %field7271 = load i64, ptr %field_ptr7270
+  %NK_CALL_val7272 = load i64, ptr @NK_CALL
+  %cmp7273 = icmp eq i64 %field7271, %NK_CALL_val7272
+  br i1 %cmp7273, label %if_then2262, label %if_else2263
 
 if_then2262:
-  %field_ptr7205 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7206 = load ptr, ptr %field_ptr7205
-  %streq7207 = call i32 @ofs_str_eq(ptr %field7206, ptr @str.438)
-  %cond7208 = icmp ne i32 %streq7207, 0
-  br i1 %cond7208, label %if_then2265, label %if_else2266
+  %field_ptr7274 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7275 = load ptr, ptr %field_ptr7274
+  %streq7276 = call i32 @ofs_str_eq(ptr %field7275, ptr @str.438)
+  %cond7277 = icmp ne i32 %streq7276, 0
+  br i1 %cond7277, label %if_then2265, label %if_else2266
 
 if_then2265:
-  %arg_id07209 = alloca i64, align 8
-  %id_val7210 = load i64, ptr %id.addr
-  %call7211 = call i64 @node_get_extra(i64 %id_val7210, i64 0)
-  store i64 %call7211, ptr %arg_id07209
-  %arg_id0_val7212 = load i64, ptr %arg_id07209
-  call void @llvmgen__emit_expr(i64 %arg_id0_val7212)
-  %tmp07213 = alloca ptr, align 8
-  %call7214 = call ptr @llvmgen__next_tmp(ptr @str.439)
-  store ptr %call7214, ptr %tmp07213
-  %tmp0_val7215 = load ptr, ptr %tmp07213
-  %concat7216 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp0_val7215)
-  %concat7217 = call ptr @ofs_str_concat(ptr %concat7216, ptr @str.269)
-  %llvmgen___expr_val_val7218 = load ptr, ptr @llvmgen___expr_val
-  %concat7219 = call ptr @ofs_str_concat(ptr %concat7217, ptr %llvmgen___expr_val_val7218)
-  %concat7220 = call ptr @ofs_str_concat(ptr %concat7219, ptr @str.125)
-  call void @cg_emit(ptr %concat7220)
-  %tmp0_val7221 = load ptr, ptr %tmp07213
-  store ptr %tmp0_val7221, ptr @llvmgen___expr_val
+  %arg_id07278 = alloca i64, align 8
+  %id_val7279 = load i64, ptr %id.addr
+  %call7280 = call i64 @node_get_extra(i64 %id_val7279, i64 0)
+  store i64 %call7280, ptr %arg_id07278
+  %arg_id0_val7281 = load i64, ptr %arg_id07278
+  call void @llvmgen__emit_expr(i64 %arg_id0_val7281)
+  %tmp07282 = alloca ptr, align 8
+  %call7283 = call ptr @llvmgen__next_tmp(ptr @str.439)
+  store ptr %call7283, ptr %tmp07282
+  %tmp0_val7284 = load ptr, ptr %tmp07282
+  %concat7285 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp0_val7284)
+  %concat7286 = call ptr @ofs_str_concat(ptr %concat7285, ptr @str.269)
+  %llvmgen___expr_val_val7287 = load ptr, ptr @llvmgen___expr_val
+  %concat7288 = call ptr @ofs_str_concat(ptr %concat7286, ptr %llvmgen___expr_val_val7287)
+  %concat7289 = call ptr @ofs_str_concat(ptr %concat7288, ptr @str.125)
+  call void @cg_emit(ptr %concat7289)
+  %tmp0_val7290 = load ptr, ptr %tmp07282
+  store ptr %tmp0_val7290, ptr @llvmgen___expr_val
   store ptr @str.183, ptr @llvmgen___expr_type
   ret void
 
@@ -17074,31 +17180,31 @@ if_else2266:
   br label %if_end2267
 
 if_end2267:
-  %field_ptr7222 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7223 = load ptr, ptr %field_ptr7222
-  %streq7224 = call i32 @ofs_str_eq(ptr %field7223, ptr @str.440)
-  %cond7225 = icmp ne i32 %streq7224, 0
-  br i1 %cond7225, label %if_then2268, label %if_else2269
+  %field_ptr7291 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7292 = load ptr, ptr %field_ptr7291
+  %streq7293 = call i32 @ofs_str_eq(ptr %field7292, ptr @str.440)
+  %cond7294 = icmp ne i32 %streq7293, 0
+  br i1 %cond7294, label %if_then2268, label %if_else2269
 
 if_then2268:
-  %arg_id17226 = alloca i64, align 8
-  %id_val7227 = load i64, ptr %id.addr
-  %call7228 = call i64 @node_get_extra(i64 %id_val7227, i64 0)
-  store i64 %call7228, ptr %arg_id17226
-  %arg_id1_val7229 = load i64, ptr %arg_id17226
-  call void @llvmgen__emit_expr(i64 %arg_id1_val7229)
-  %tmp17230 = alloca ptr, align 8
-  %call7231 = call ptr @llvmgen__next_tmp(ptr @str.441)
-  store ptr %call7231, ptr %tmp17230
-  %tmp1_val7232 = load ptr, ptr %tmp17230
-  %concat7233 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp1_val7232)
-  %concat7234 = call ptr @ofs_str_concat(ptr %concat7233, ptr @str.442)
-  %llvmgen___expr_val_val7235 = load ptr, ptr @llvmgen___expr_val
-  %concat7236 = call ptr @ofs_str_concat(ptr %concat7234, ptr %llvmgen___expr_val_val7235)
-  %concat7237 = call ptr @ofs_str_concat(ptr %concat7236, ptr @str.125)
-  call void @cg_emit(ptr %concat7237)
-  %tmp1_val7238 = load ptr, ptr %tmp17230
-  store ptr %tmp1_val7238, ptr @llvmgen___expr_val
+  %arg_id17295 = alloca i64, align 8
+  %id_val7296 = load i64, ptr %id.addr
+  %call7297 = call i64 @node_get_extra(i64 %id_val7296, i64 0)
+  store i64 %call7297, ptr %arg_id17295
+  %arg_id1_val7298 = load i64, ptr %arg_id17295
+  call void @llvmgen__emit_expr(i64 %arg_id1_val7298)
+  %tmp17299 = alloca ptr, align 8
+  %call7300 = call ptr @llvmgen__next_tmp(ptr @str.441)
+  store ptr %call7300, ptr %tmp17299
+  %tmp1_val7301 = load ptr, ptr %tmp17299
+  %concat7302 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp1_val7301)
+  %concat7303 = call ptr @ofs_str_concat(ptr %concat7302, ptr @str.442)
+  %llvmgen___expr_val_val7304 = load ptr, ptr @llvmgen___expr_val
+  %concat7305 = call ptr @ofs_str_concat(ptr %concat7303, ptr %llvmgen___expr_val_val7304)
+  %concat7306 = call ptr @ofs_str_concat(ptr %concat7305, ptr @str.125)
+  call void @cg_emit(ptr %concat7306)
+  %tmp1_val7307 = load ptr, ptr %tmp17299
+  store ptr %tmp1_val7307, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17106,46 +17212,46 @@ if_else2269:
   br label %if_end2270
 
 if_end2270:
-  %field_ptr7239 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7240 = load ptr, ptr %field_ptr7239
-  %streq7241 = call i32 @ofs_str_eq(ptr %field7240, ptr @str.443)
-  %cond7242 = icmp ne i32 %streq7241, 0
-  br i1 %cond7242, label %if_then2271, label %if_else2272
+  %field_ptr7308 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7309 = load ptr, ptr %field_ptr7308
+  %streq7310 = call i32 @ofs_str_eq(ptr %field7309, ptr @str.443)
+  %cond7311 = icmp ne i32 %streq7310, 0
+  br i1 %cond7311, label %if_then2271, label %if_else2272
 
 if_then2271:
-  %a_id7243 = alloca i64, align 8
-  %id_val7244 = load i64, ptr %id.addr
-  %call7245 = call i64 @node_get_extra(i64 %id_val7244, i64 0)
-  store i64 %call7245, ptr %a_id7243
-  %a_id_val7246 = load i64, ptr %a_id7243
-  call void @llvmgen__emit_expr(i64 %a_id_val7246)
-  %a7247 = alloca ptr, align 8
-  %llvmgen___expr_val_val7248 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7248, ptr %a7247
-  %b_id7249 = alloca i64, align 8
-  %id_val7250 = load i64, ptr %id.addr
-  %call7251 = call i64 @node_get_extra(i64 %id_val7250, i64 1)
-  store i64 %call7251, ptr %b_id7249
-  %b_id_val7252 = load i64, ptr %b_id7249
-  call void @llvmgen__emit_expr(i64 %b_id_val7252)
-  %b7253 = alloca ptr, align 8
-  %llvmgen___expr_val_val7254 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7254, ptr %b7253
-  %tmp27255 = alloca ptr, align 8
-  %call7256 = call ptr @llvmgen__next_tmp(ptr @str.444)
-  store ptr %call7256, ptr %tmp27255
-  %tmp2_val7257 = load ptr, ptr %tmp27255
-  %concat7258 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp2_val7257)
-  %concat7259 = call ptr @ofs_str_concat(ptr %concat7258, ptr @str.404)
-  %a_val7260 = load ptr, ptr %a7247
-  %concat7261 = call ptr @ofs_str_concat(ptr %concat7259, ptr %a_val7260)
-  %concat7262 = call ptr @ofs_str_concat(ptr %concat7261, ptr @str.276)
-  %b_val7263 = load ptr, ptr %b7253
-  %concat7264 = call ptr @ofs_str_concat(ptr %concat7262, ptr %b_val7263)
-  %concat7265 = call ptr @ofs_str_concat(ptr %concat7264, ptr @str.125)
-  call void @cg_emit(ptr %concat7265)
-  %tmp2_val7266 = load ptr, ptr %tmp27255
-  store ptr %tmp2_val7266, ptr @llvmgen___expr_val
+  %a_id7312 = alloca i64, align 8
+  %id_val7313 = load i64, ptr %id.addr
+  %call7314 = call i64 @node_get_extra(i64 %id_val7313, i64 0)
+  store i64 %call7314, ptr %a_id7312
+  %a_id_val7315 = load i64, ptr %a_id7312
+  call void @llvmgen__emit_expr(i64 %a_id_val7315)
+  %a7316 = alloca ptr, align 8
+  %llvmgen___expr_val_val7317 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7317, ptr %a7316
+  %b_id7318 = alloca i64, align 8
+  %id_val7319 = load i64, ptr %id.addr
+  %call7320 = call i64 @node_get_extra(i64 %id_val7319, i64 1)
+  store i64 %call7320, ptr %b_id7318
+  %b_id_val7321 = load i64, ptr %b_id7318
+  call void @llvmgen__emit_expr(i64 %b_id_val7321)
+  %b7322 = alloca ptr, align 8
+  %llvmgen___expr_val_val7323 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7323, ptr %b7322
+  %tmp27324 = alloca ptr, align 8
+  %call7325 = call ptr @llvmgen__next_tmp(ptr @str.444)
+  store ptr %call7325, ptr %tmp27324
+  %tmp2_val7326 = load ptr, ptr %tmp27324
+  %concat7327 = call ptr @ofs_str_concat(ptr @str.233, ptr %tmp2_val7326)
+  %concat7328 = call ptr @ofs_str_concat(ptr %concat7327, ptr @str.404)
+  %a_val7329 = load ptr, ptr %a7316
+  %concat7330 = call ptr @ofs_str_concat(ptr %concat7328, ptr %a_val7329)
+  %concat7331 = call ptr @ofs_str_concat(ptr %concat7330, ptr @str.276)
+  %b_val7332 = load ptr, ptr %b7322
+  %concat7333 = call ptr @ofs_str_concat(ptr %concat7331, ptr %b_val7332)
+  %concat7334 = call ptr @ofs_str_concat(ptr %concat7333, ptr @str.125)
+  call void @cg_emit(ptr %concat7334)
+  %tmp2_val7335 = load ptr, ptr %tmp27324
+  store ptr %tmp2_val7335, ptr @llvmgen___expr_val
   store ptr @str.184, ptr @llvmgen___expr_type
   ret void
 
@@ -17153,80 +17259,83 @@ if_else2272:
   br label %if_end2273
 
 if_end2273:
-  %field_ptr7267 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7268 = load ptr, ptr %field_ptr7267
-  %streq7269 = call i32 @ofs_str_eq(ptr %field7268, ptr @str.445)
-  %field_ptr7270 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7271 = load ptr, ptr %field_ptr7270
-  %streq7272 = call i32 @ofs_str_eq(ptr %field7271, ptr @str.446)
-  %cond7273 = icmp ne i32 %streq7269, 0
-  %cond7274 = icmp ne i32 %streq7272, 0
-  %logic7275 = or i1 %cond7273, %cond7274
-  br i1 %logic7275, label %if_then2274, label %if_else2275
+  %field_ptr7336 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7337 = load ptr, ptr %field_ptr7336
+  %streq7338 = call i32 @ofs_str_eq(ptr %field7337, ptr @str.445)
+  %field_ptr7339 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7340 = load ptr, ptr %field_ptr7339
+  %streq7341 = call i32 @ofs_str_eq(ptr %field7340, ptr @str.446)
+  %cond7342 = icmp ne i32 %streq7338, 0
+  %cond7343 = icmp ne i32 %streq7341, 0
+  %logic7344 = or i1 %cond7342, %cond7343
+  br i1 %logic7344, label %if_then2274, label %if_else2275
 
 if_then2274:
-  %args27276 = alloca ptr, align 8
-  store ptr @str.63, ptr %args27276
-  %ai7277 = alloca i64, align 8
-  store i64 0, ptr %ai7277
+  %args27345 = alloca ptr, align 8
+  store ptr @str.63, ptr %args27345
+  %ai7346 = alloca i64, align 8
+  store i64 0, ptr %ai7346
+  %arg_count7347 = alloca i64, align 8
+  %id_val7348 = load i64, ptr %id.addr
+  %call7349 = call i64 @node_extra_len(i64 %id_val7348)
+  store i64 %call7349, ptr %arg_count7347
   br label %while_cond2277
 
 while_cond2277:
-  %ai_val7278 = load i64, ptr %ai7277
-  %id_val7279 = load i64, ptr %id.addr
-  %call7280 = call i64 @node_extra_len(i64 %id_val7279)
-  %cmp7281 = icmp slt i64 %ai_val7278, %call7280
-  br i1 %cmp7281, label %while_body2278, label %while_end2279
+  %ai_val7350 = load i64, ptr %ai7346
+  %arg_count_val7351 = load i64, ptr %arg_count7347
+  %cmp7352 = icmp slt i64 %ai_val7350, %arg_count_val7351
+  br i1 %cmp7352, label %while_body2278, label %while_end2279
 
 while_body2278:
-  %ai_val7282 = load i64, ptr %ai7277
-  %cmp7283 = icmp sgt i64 %ai_val7282, 0
-  br i1 %cmp7283, label %if_then2280, label %if_else2281
+  %ai_val7353 = load i64, ptr %ai7346
+  %cmp7354 = icmp sgt i64 %ai_val7353, 0
+  br i1 %cmp7354, label %if_then2280, label %if_else2281
 
 if_then2280:
-  %args2_val7284 = load ptr, ptr %args27276
-  %concat7285 = call ptr @ofs_str_concat(ptr %args2_val7284, ptr @str.217)
-  store ptr %concat7285, ptr %args27276
+  %args2_val7355 = load ptr, ptr %args27345
+  %concat7356 = call ptr @ofs_str_concat(ptr %args2_val7355, ptr @str.217)
+  store ptr %concat7356, ptr %args27345
   br label %if_end2282
 
 if_else2281:
   br label %if_end2282
 
 if_end2282:
-  %aid7286 = alloca i64, align 8
-  %id_val7287 = load i64, ptr %id.addr
-  %ai_val7288 = load i64, ptr %ai7277
-  %call7289 = call i64 @node_get_extra(i64 %id_val7287, i64 %ai_val7288)
-  store i64 %call7289, ptr %aid7286
-  %aid_val7290 = load i64, ptr %aid7286
-  call void @llvmgen__emit_expr(i64 %aid_val7290)
-  %args2_val7291 = load ptr, ptr %args27276
-  %concat7292 = call ptr @ofs_str_concat(ptr %args2_val7291, ptr @str.447)
-  %llvmgen___expr_val_val7293 = load ptr, ptr @llvmgen___expr_val
-  %concat7294 = call ptr @ofs_str_concat(ptr %concat7292, ptr %llvmgen___expr_val_val7293)
-  store ptr %concat7294, ptr %args27276
-  %post_old7295 = load i64, ptr %ai7277
-  %post_new7296 = add i64 %post_old7295, 1
-  store i64 %post_new7296, ptr %ai7277
+  %aid7357 = alloca i64, align 8
+  %id_val7358 = load i64, ptr %id.addr
+  %ai_val7359 = load i64, ptr %ai7346
+  %call7360 = call i64 @node_get_extra(i64 %id_val7358, i64 %ai_val7359)
+  store i64 %call7360, ptr %aid7357
+  %aid_val7361 = load i64, ptr %aid7357
+  call void @llvmgen__emit_expr(i64 %aid_val7361)
+  %args2_val7362 = load ptr, ptr %args27345
+  %concat7363 = call ptr @ofs_str_concat(ptr %args2_val7362, ptr @str.447)
+  %llvmgen___expr_val_val7364 = load ptr, ptr @llvmgen___expr_val
+  %concat7365 = call ptr @ofs_str_concat(ptr %concat7363, ptr %llvmgen___expr_val_val7364)
+  store ptr %concat7365, ptr %args27345
+  %post_old7366 = load i64, ptr %ai7346
+  %post_new7367 = add i64 %post_old7366, 1
+  store i64 %post_new7367, ptr %ai7346
   br label %while_cond2277
 
 while_end2279:
-  %dt7297 = alloca ptr, align 8
-  %call7298 = call ptr @llvmgen__next_tmp(ptr @str.448)
-  store ptr %call7298, ptr %dt7297
-  %dt_val7299 = load ptr, ptr %dt7297
-  %concat7300 = call ptr @ofs_str_concat(ptr @str.233, ptr %dt_val7299)
-  %concat7301 = call ptr @ofs_str_concat(ptr %concat7300, ptr @str.449)
-  %field_ptr7302 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7303 = load ptr, ptr %field_ptr7302
-  %concat7304 = call ptr @ofs_str_concat(ptr %concat7301, ptr %field7303)
-  %concat7305 = call ptr @ofs_str_concat(ptr %concat7304, ptr @str.124)
-  %args2_val7306 = load ptr, ptr %args27276
-  %concat7307 = call ptr @ofs_str_concat(ptr %concat7305, ptr %args2_val7306)
-  %concat7308 = call ptr @ofs_str_concat(ptr %concat7307, ptr @str.125)
-  call void @cg_emit(ptr %concat7308)
-  %dt_val7309 = load ptr, ptr %dt7297
-  store ptr %dt_val7309, ptr @llvmgen___expr_val
+  %dt7368 = alloca ptr, align 8
+  %call7369 = call ptr @llvmgen__next_tmp(ptr @str.448)
+  store ptr %call7369, ptr %dt7368
+  %dt_val7370 = load ptr, ptr %dt7368
+  %concat7371 = call ptr @ofs_str_concat(ptr @str.233, ptr %dt_val7370)
+  %concat7372 = call ptr @ofs_str_concat(ptr %concat7371, ptr @str.449)
+  %field_ptr7373 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7374 = load ptr, ptr %field_ptr7373
+  %concat7375 = call ptr @ofs_str_concat(ptr %concat7372, ptr %field7374)
+  %concat7376 = call ptr @ofs_str_concat(ptr %concat7375, ptr @str.124)
+  %args2_val7377 = load ptr, ptr %args27345
+  %concat7378 = call ptr @ofs_str_concat(ptr %concat7376, ptr %args2_val7377)
+  %concat7379 = call ptr @ofs_str_concat(ptr %concat7378, ptr @str.125)
+  call void @cg_emit(ptr %concat7379)
+  %dt_val7380 = load ptr, ptr %dt7368
+  store ptr %dt_val7380, ptr @llvmgen___expr_val
   store ptr @str.182, ptr @llvmgen___expr_type
   ret void
 
@@ -17234,116 +17343,116 @@ if_else2275:
   br label %if_end2276
 
 if_end2276:
-  %field_ptr7310 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7311 = load ptr, ptr %field_ptr7310
-  %streq7312 = call i32 @ofs_str_eq(ptr %field7311, ptr @str.29)
-  %cond7313 = icmp ne i32 %streq7312, 0
-  br i1 %cond7313, label %if_then2283, label %if_else2284
+  %field_ptr7381 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7382 = load ptr, ptr %field_ptr7381
+  %streq7383 = call i32 @ofs_str_eq(ptr %field7382, ptr @str.29)
+  %cond7384 = icmp ne i32 %streq7383, 0
+  br i1 %cond7384, label %if_then2283, label %if_else2284
 
 if_then2283:
-  %arg_id7314 = alloca i64, align 8
-  %id_val7315 = load i64, ptr %id.addr
-  %call7316 = call i64 @node_get_extra(i64 %id_val7315, i64 0)
-  store i64 %call7316, ptr %arg_id7314
-  %arg_id_val7317 = load i64, ptr %arg_id7314
-  call void @llvmgen__emit_expr(i64 %arg_id_val7317)
-  %llvmgen___expr_type_val7318 = load ptr, ptr @llvmgen___expr_type
-  %call7319 = call i32 @llvmgen__is_integer_type(ptr %llvmgen___expr_type_val7318)
-  %llvmgen___expr_type_val7320 = load ptr, ptr @llvmgen___expr_type
-  %streq7321 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val7320, ptr @str.184)
-  %cond7322 = icmp ne i32 %streq7321, 0
-  %not7323 = xor i1 %cond7322, true
-  %cond7324 = icmp ne i32 %call7319, 0
-  %logic7325 = and i1 %cond7324, %not7323
-  %llvmgen___expr_type_val7326 = load ptr, ptr @llvmgen___expr_type
-  %streq7327 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val7326, ptr @str.241)
-  %cond7328 = icmp ne i32 %streq7327, 0
-  %not7329 = xor i1 %cond7328, true
-  %logic7330 = and i1 %logic7325, %not7329
-  br i1 %logic7330, label %if_then2286, label %if_else2287
+  %arg_id7385 = alloca i64, align 8
+  %id_val7386 = load i64, ptr %id.addr
+  %call7387 = call i64 @node_get_extra(i64 %id_val7386, i64 0)
+  store i64 %call7387, ptr %arg_id7385
+  %arg_id_val7388 = load i64, ptr %arg_id7385
+  call void @llvmgen__emit_expr(i64 %arg_id_val7388)
+  %llvmgen___expr_type_val7389 = load ptr, ptr @llvmgen___expr_type
+  %call7390 = call i32 @llvmgen__is_integer_type(ptr %llvmgen___expr_type_val7389)
+  %llvmgen___expr_type_val7391 = load ptr, ptr @llvmgen___expr_type
+  %streq7392 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val7391, ptr @str.184)
+  %cond7393 = icmp ne i32 %streq7392, 0
+  %not7394 = xor i1 %cond7393, true
+  %cond7395 = icmp ne i32 %call7390, 0
+  %logic7396 = and i1 %cond7395, %not7394
+  %llvmgen___expr_type_val7397 = load ptr, ptr @llvmgen___expr_type
+  %streq7398 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val7397, ptr @str.241)
+  %cond7399 = icmp ne i32 %streq7398, 0
+  %not7400 = xor i1 %cond7399, true
+  %logic7401 = and i1 %logic7396, %not7400
+  br i1 %logic7401, label %if_then2286, label %if_else2287
 
 if_then2286:
-  %ev7331 = alloca ptr, align 8
-  %llvmgen___expr_val_val7332 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7332, ptr %ev7331
-  %llvmgen___expr_type_val7333 = load ptr, ptr @llvmgen___expr_type
-  %call7334 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7333)
-  %streq7335 = call i32 @ofs_str_eq(ptr %call7334, ptr @str.244)
-  %cond7336 = icmp ne i32 %streq7335, 0
-  %not7337 = xor i1 %cond7336, true
-  br i1 %not7337, label %if_then2289, label %if_else2290
+  %ev7402 = alloca ptr, align 8
+  %llvmgen___expr_val_val7403 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7403, ptr %ev7402
+  %llvmgen___expr_type_val7404 = load ptr, ptr @llvmgen___expr_type
+  %call7405 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7404)
+  %streq7406 = call i32 @ofs_str_eq(ptr %call7405, ptr @str.244)
+  %cond7407 = icmp ne i32 %streq7406, 0
+  %not7408 = xor i1 %cond7407, true
+  br i1 %not7408, label %if_then2289, label %if_else2290
 
 if_then2289:
-  %llvmgen___expr_val_val7338 = load ptr, ptr @llvmgen___expr_val
-  %llvmgen___expr_type_val7339 = load ptr, ptr @llvmgen___expr_type
-  %call7340 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val7338, ptr %llvmgen___expr_type_val7339, ptr @str.181)
-  store ptr %call7340, ptr %ev7331
+  %llvmgen___expr_val_val7409 = load ptr, ptr @llvmgen___expr_val
+  %llvmgen___expr_type_val7410 = load ptr, ptr @llvmgen___expr_type
+  %call7411 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val7409, ptr %llvmgen___expr_type_val7410, ptr @str.181)
+  store ptr %call7411, ptr %ev7402
   br label %if_end2291
 
 if_else2290:
   br label %if_end2291
 
 if_end2291:
-  %ev_val7341 = load ptr, ptr %ev7331
-  %concat7342 = call ptr @ofs_str_concat(ptr @str.450, ptr %ev_val7341)
-  %concat7343 = call ptr @ofs_str_concat(ptr %concat7342, ptr @str.125)
-  call void @cg_emit(ptr %concat7343)
+  %ev_val7412 = load ptr, ptr %ev7402
+  %concat7413 = call ptr @ofs_str_concat(ptr @str.450, ptr %ev_val7412)
+  %concat7414 = call ptr @ofs_str_concat(ptr %concat7413, ptr @str.125)
+  call void @cg_emit(ptr %concat7414)
   br label %if_end2288
 
 if_else2287:
-  %llvmgen___expr_type_val7344 = load ptr, ptr @llvmgen___expr_type
-  %streq7345 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val7344, ptr @str.182)
-  %cond7346 = icmp ne i32 %streq7345, 0
-  br i1 %cond7346, label %if_then2292, label %if_else2293
+  %llvmgen___expr_type_val7415 = load ptr, ptr @llvmgen___expr_type
+  %streq7416 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val7415, ptr @str.182)
+  %cond7417 = icmp ne i32 %streq7416, 0
+  br i1 %cond7417, label %if_then2292, label %if_else2293
 
 if_then2292:
-  %llvmgen___expr_val_val7347 = load ptr, ptr @llvmgen___expr_val
-  %concat7348 = call ptr @ofs_str_concat(ptr @str.451, ptr %llvmgen___expr_val_val7347)
-  %concat7349 = call ptr @ofs_str_concat(ptr %concat7348, ptr @str.125)
-  call void @cg_emit(ptr %concat7349)
+  %llvmgen___expr_val_val7418 = load ptr, ptr @llvmgen___expr_val
+  %concat7419 = call ptr @ofs_str_concat(ptr @str.451, ptr %llvmgen___expr_val_val7418)
+  %concat7420 = call ptr @ofs_str_concat(ptr %concat7419, ptr @str.125)
+  call void @cg_emit(ptr %concat7420)
   br label %if_end2294
 
 if_else2293:
-  %llvmgen___expr_type_val7350 = load ptr, ptr @llvmgen___expr_type
-  %streq7351 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val7350, ptr @str.241)
-  %cond7352 = icmp ne i32 %streq7351, 0
-  br i1 %cond7352, label %if_then2295, label %if_else2296
+  %llvmgen___expr_type_val7421 = load ptr, ptr @llvmgen___expr_type
+  %streq7422 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val7421, ptr @str.241)
+  %cond7423 = icmp ne i32 %streq7422, 0
+  br i1 %cond7423, label %if_then2295, label %if_else2296
 
 if_then2295:
-  %eb7353 = alloca ptr, align 8
-  %call7354 = call ptr @llvmgen__next_tmp(ptr @str.452)
-  store ptr %call7354, ptr %eb7353
-  %eb_val7355 = load ptr, ptr %eb7353
-  %concat7356 = call ptr @ofs_str_concat(ptr @str.233, ptr %eb_val7355)
-  %concat7357 = call ptr @ofs_str_concat(ptr %concat7356, ptr @str.253)
-  %llvmgen___expr_val_val7358 = load ptr, ptr @llvmgen___expr_val
-  %concat7359 = call ptr @ofs_str_concat(ptr %concat7357, ptr %llvmgen___expr_val_val7358)
-  %concat7360 = call ptr @ofs_str_concat(ptr %concat7359, ptr @str.254)
-  call void @cg_emit(ptr %concat7360)
-  %eb_val7361 = load ptr, ptr %eb7353
-  %concat7362 = call ptr @ofs_str_concat(ptr @str.453, ptr %eb_val7361)
-  %concat7363 = call ptr @ofs_str_concat(ptr %concat7362, ptr @str.125)
-  call void @cg_emit(ptr %concat7363)
+  %eb7424 = alloca ptr, align 8
+  %call7425 = call ptr @llvmgen__next_tmp(ptr @str.452)
+  store ptr %call7425, ptr %eb7424
+  %eb_val7426 = load ptr, ptr %eb7424
+  %concat7427 = call ptr @ofs_str_concat(ptr @str.233, ptr %eb_val7426)
+  %concat7428 = call ptr @ofs_str_concat(ptr %concat7427, ptr @str.253)
+  %llvmgen___expr_val_val7429 = load ptr, ptr @llvmgen___expr_val
+  %concat7430 = call ptr @ofs_str_concat(ptr %concat7428, ptr %llvmgen___expr_val_val7429)
+  %concat7431 = call ptr @ofs_str_concat(ptr %concat7430, ptr @str.254)
+  call void @cg_emit(ptr %concat7431)
+  %eb_val7432 = load ptr, ptr %eb7424
+  %concat7433 = call ptr @ofs_str_concat(ptr @str.453, ptr %eb_val7432)
+  %concat7434 = call ptr @ofs_str_concat(ptr %concat7433, ptr @str.125)
+  call void @cg_emit(ptr %concat7434)
   br label %if_end2297
 
 if_else2296:
-  %llvmgen___expr_type_val7364 = load ptr, ptr @llvmgen___expr_type
-  %streq7365 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val7364, ptr @str.184)
-  %cond7366 = icmp ne i32 %streq7365, 0
-  br i1 %cond7366, label %if_then2298, label %if_else2299
+  %llvmgen___expr_type_val7435 = load ptr, ptr @llvmgen___expr_type
+  %streq7436 = call i32 @ofs_str_eq(ptr %llvmgen___expr_type_val7435, ptr @str.184)
+  %cond7437 = icmp ne i32 %streq7436, 0
+  br i1 %cond7437, label %if_then2298, label %if_else2299
 
 if_then2298:
-  %llvmgen___expr_val_val7367 = load ptr, ptr @llvmgen___expr_val
-  %concat7368 = call ptr @ofs_str_concat(ptr @str.453, ptr %llvmgen___expr_val_val7367)
-  %concat7369 = call ptr @ofs_str_concat(ptr %concat7368, ptr @str.125)
-  call void @cg_emit(ptr %concat7369)
+  %llvmgen___expr_val_val7438 = load ptr, ptr @llvmgen___expr_val
+  %concat7439 = call ptr @ofs_str_concat(ptr @str.453, ptr %llvmgen___expr_val_val7438)
+  %concat7440 = call ptr @ofs_str_concat(ptr %concat7439, ptr @str.125)
+  call void @cg_emit(ptr %concat7440)
   br label %if_end2300
 
 if_else2299:
-  %llvmgen___expr_val_val7370 = load ptr, ptr @llvmgen___expr_val
-  %concat7371 = call ptr @ofs_str_concat(ptr @str.454, ptr %llvmgen___expr_val_val7370)
-  %concat7372 = call ptr @ofs_str_concat(ptr %concat7371, ptr @str.125)
-  call void @cg_emit(ptr %concat7372)
+  %llvmgen___expr_val_val7441 = load ptr, ptr @llvmgen___expr_val
+  %concat7442 = call ptr @ofs_str_concat(ptr @str.454, ptr %llvmgen___expr_val_val7441)
+  %concat7443 = call ptr @ofs_str_concat(ptr %concat7442, ptr @str.125)
+  call void @cg_emit(ptr %concat7443)
   br label %if_end2300
 
 if_end2300:
@@ -17364,28 +17473,28 @@ if_else2284:
   br label %if_end2285
 
 if_end2285:
-  %field_ptr7373 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7374 = load ptr, ptr %field_ptr7373
-  %streq7375 = call i32 @ofs_str_eq(ptr %field7374, ptr @str.455)
-  %cond7376 = icmp ne i32 %streq7375, 0
-  br i1 %cond7376, label %if_then2301, label %if_else2302
+  %field_ptr7444 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7445 = load ptr, ptr %field_ptr7444
+  %streq7446 = call i32 @ofs_str_eq(ptr %field7445, ptr @str.455)
+  %cond7447 = icmp ne i32 %streq7446, 0
+  br i1 %cond7447, label %if_then2301, label %if_else2302
 
 if_then2301:
-  %id_val7377 = load i64, ptr %id.addr
-  %call7378 = call i64 @node_get_extra(i64 %id_val7377, i64 0)
-  call void @llvmgen__emit_expr(i64 %call7378)
-  %fc7379 = alloca ptr, align 8
-  %call7380 = call ptr @llvmgen__next_tmp(ptr @str.455)
-  store ptr %call7380, ptr %fc7379
-  %fc_val7381 = load ptr, ptr %fc7379
-  %concat7382 = call ptr @ofs_str_concat(ptr @str.233, ptr %fc_val7381)
-  %concat7383 = call ptr @ofs_str_concat(ptr %concat7382, ptr @str.456)
-  %llvmgen___expr_val_val7384 = load ptr, ptr @llvmgen___expr_val
-  %concat7385 = call ptr @ofs_str_concat(ptr %concat7383, ptr %llvmgen___expr_val_val7384)
-  %concat7386 = call ptr @ofs_str_concat(ptr %concat7385, ptr @str.125)
-  call void @cg_emit(ptr %concat7386)
-  %fc_val7387 = load ptr, ptr %fc7379
-  store ptr %fc_val7387, ptr @llvmgen___expr_val
+  %id_val7448 = load i64, ptr %id.addr
+  %call7449 = call i64 @node_get_extra(i64 %id_val7448, i64 0)
+  call void @llvmgen__emit_expr(i64 %call7449)
+  %fc7450 = alloca ptr, align 8
+  %call7451 = call ptr @llvmgen__next_tmp(ptr @str.455)
+  store ptr %call7451, ptr %fc7450
+  %fc_val7452 = load ptr, ptr %fc7450
+  %concat7453 = call ptr @ofs_str_concat(ptr @str.233, ptr %fc_val7452)
+  %concat7454 = call ptr @ofs_str_concat(ptr %concat7453, ptr @str.456)
+  %llvmgen___expr_val_val7455 = load ptr, ptr @llvmgen___expr_val
+  %concat7456 = call ptr @ofs_str_concat(ptr %concat7454, ptr %llvmgen___expr_val_val7455)
+  %concat7457 = call ptr @ofs_str_concat(ptr %concat7456, ptr @str.125)
+  call void @cg_emit(ptr %concat7457)
+  %fc_val7458 = load ptr, ptr %fc7450
+  store ptr %fc_val7458, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17393,28 +17502,28 @@ if_else2302:
   br label %if_end2303
 
 if_end2303:
-  %field_ptr7388 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7389 = load ptr, ptr %field_ptr7388
-  %streq7390 = call i32 @ofs_str_eq(ptr %field7389, ptr @str.457)
-  %cond7391 = icmp ne i32 %streq7390, 0
-  br i1 %cond7391, label %if_then2304, label %if_else2305
+  %field_ptr7459 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7460 = load ptr, ptr %field_ptr7459
+  %streq7461 = call i32 @ofs_str_eq(ptr %field7460, ptr @str.457)
+  %cond7462 = icmp ne i32 %streq7461, 0
+  br i1 %cond7462, label %if_then2304, label %if_else2305
 
 if_then2304:
-  %id_val7392 = load i64, ptr %id.addr
-  %call7393 = call i64 @node_get_extra(i64 %id_val7392, i64 0)
-  call void @llvmgen__emit_expr(i64 %call7393)
-  %fl7394 = alloca ptr, align 8
-  %call7395 = call ptr @llvmgen__next_tmp(ptr @str.457)
-  store ptr %call7395, ptr %fl7394
-  %fl_val7396 = load ptr, ptr %fl7394
-  %concat7397 = call ptr @ofs_str_concat(ptr @str.233, ptr %fl_val7396)
-  %concat7398 = call ptr @ofs_str_concat(ptr %concat7397, ptr @str.458)
-  %llvmgen___expr_val_val7399 = load ptr, ptr @llvmgen___expr_val
-  %concat7400 = call ptr @ofs_str_concat(ptr %concat7398, ptr %llvmgen___expr_val_val7399)
-  %concat7401 = call ptr @ofs_str_concat(ptr %concat7400, ptr @str.459)
-  call void @cg_emit(ptr %concat7401)
-  %fl_val7402 = load ptr, ptr %fl7394
-  store ptr %fl_val7402, ptr @llvmgen___expr_val
+  %id_val7463 = load i64, ptr %id.addr
+  %call7464 = call i64 @node_get_extra(i64 %id_val7463, i64 0)
+  call void @llvmgen__emit_expr(i64 %call7464)
+  %fl7465 = alloca ptr, align 8
+  %call7466 = call ptr @llvmgen__next_tmp(ptr @str.457)
+  store ptr %call7466, ptr %fl7465
+  %fl_val7467 = load ptr, ptr %fl7465
+  %concat7468 = call ptr @ofs_str_concat(ptr @str.233, ptr %fl_val7467)
+  %concat7469 = call ptr @ofs_str_concat(ptr %concat7468, ptr @str.458)
+  %llvmgen___expr_val_val7470 = load ptr, ptr @llvmgen___expr_val
+  %concat7471 = call ptr @ofs_str_concat(ptr %concat7469, ptr %llvmgen___expr_val_val7470)
+  %concat7472 = call ptr @ofs_str_concat(ptr %concat7471, ptr @str.459)
+  call void @cg_emit(ptr %concat7472)
+  %fl_val7473 = load ptr, ptr %fl7465
+  store ptr %fl_val7473, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17422,28 +17531,28 @@ if_else2305:
   br label %if_end2306
 
 if_end2306:
-  %field_ptr7403 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7404 = load ptr, ptr %field_ptr7403
-  %streq7405 = call i32 @ofs_str_eq(ptr %field7404, ptr @str.460)
-  %cond7406 = icmp ne i32 %streq7405, 0
-  br i1 %cond7406, label %if_then2307, label %if_else2308
+  %field_ptr7474 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7475 = load ptr, ptr %field_ptr7474
+  %streq7476 = call i32 @ofs_str_eq(ptr %field7475, ptr @str.460)
+  %cond7477 = icmp ne i32 %streq7476, 0
+  br i1 %cond7477, label %if_then2307, label %if_else2308
 
 if_then2307:
-  %id_val7407 = load i64, ptr %id.addr
-  %call7408 = call i64 @node_get_extra(i64 %id_val7407, i64 0)
-  call void @llvmgen__emit_expr(i64 %call7408)
-  %ft7409 = alloca ptr, align 8
-  %call7410 = call ptr @llvmgen__next_tmp(ptr @str.460)
-  store ptr %call7410, ptr %ft7409
-  %ft_val7411 = load ptr, ptr %ft7409
-  %concat7412 = call ptr @ofs_str_concat(ptr @str.233, ptr %ft_val7411)
-  %concat7413 = call ptr @ofs_str_concat(ptr %concat7412, ptr @str.461)
-  %llvmgen___expr_val_val7414 = load ptr, ptr @llvmgen___expr_val
-  %concat7415 = call ptr @ofs_str_concat(ptr %concat7413, ptr %llvmgen___expr_val_val7414)
-  %concat7416 = call ptr @ofs_str_concat(ptr %concat7415, ptr @str.459)
-  call void @cg_emit(ptr %concat7416)
-  %ft_val7417 = load ptr, ptr %ft7409
-  store ptr %ft_val7417, ptr @llvmgen___expr_val
+  %id_val7478 = load i64, ptr %id.addr
+  %call7479 = call i64 @node_get_extra(i64 %id_val7478, i64 0)
+  call void @llvmgen__emit_expr(i64 %call7479)
+  %ft7480 = alloca ptr, align 8
+  %call7481 = call ptr @llvmgen__next_tmp(ptr @str.460)
+  store ptr %call7481, ptr %ft7480
+  %ft_val7482 = load ptr, ptr %ft7480
+  %concat7483 = call ptr @ofs_str_concat(ptr @str.233, ptr %ft_val7482)
+  %concat7484 = call ptr @ofs_str_concat(ptr %concat7483, ptr @str.461)
+  %llvmgen___expr_val_val7485 = load ptr, ptr @llvmgen___expr_val
+  %concat7486 = call ptr @ofs_str_concat(ptr %concat7484, ptr %llvmgen___expr_val_val7485)
+  %concat7487 = call ptr @ofs_str_concat(ptr %concat7486, ptr @str.459)
+  call void @cg_emit(ptr %concat7487)
+  %ft_val7488 = load ptr, ptr %ft7480
+  store ptr %ft_val7488, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17451,28 +17560,28 @@ if_else2308:
   br label %if_end2309
 
 if_end2309:
-  %field_ptr7418 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7419 = load ptr, ptr %field_ptr7418
-  %streq7420 = call i32 @ofs_str_eq(ptr %field7419, ptr @str.462)
-  %cond7421 = icmp ne i32 %streq7420, 0
-  br i1 %cond7421, label %if_then2310, label %if_else2311
+  %field_ptr7489 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7490 = load ptr, ptr %field_ptr7489
+  %streq7491 = call i32 @ofs_str_eq(ptr %field7490, ptr @str.462)
+  %cond7492 = icmp ne i32 %streq7491, 0
+  br i1 %cond7492, label %if_then2310, label %if_else2311
 
 if_then2310:
-  %id_val7422 = load i64, ptr %id.addr
-  %call7423 = call i64 @node_get_extra(i64 %id_val7422, i64 0)
-  call void @llvmgen__emit_expr(i64 %call7423)
-  %fs7424 = alloca ptr, align 8
-  %call7425 = call ptr @llvmgen__next_tmp(ptr @str.462)
-  store ptr %call7425, ptr %fs7424
-  %fs_val7426 = load ptr, ptr %fs7424
-  %concat7427 = call ptr @ofs_str_concat(ptr @str.233, ptr %fs_val7426)
-  %concat7428 = call ptr @ofs_str_concat(ptr %concat7427, ptr @str.463)
-  %llvmgen___expr_val_val7429 = load ptr, ptr @llvmgen___expr_val
-  %concat7430 = call ptr @ofs_str_concat(ptr %concat7428, ptr %llvmgen___expr_val_val7429)
-  %concat7431 = call ptr @ofs_str_concat(ptr %concat7430, ptr @str.125)
-  call void @cg_emit(ptr %concat7431)
-  %fs_val7432 = load ptr, ptr %fs7424
-  store ptr %fs_val7432, ptr @llvmgen___expr_val
+  %id_val7493 = load i64, ptr %id.addr
+  %call7494 = call i64 @node_get_extra(i64 %id_val7493, i64 0)
+  call void @llvmgen__emit_expr(i64 %call7494)
+  %fs7495 = alloca ptr, align 8
+  %call7496 = call ptr @llvmgen__next_tmp(ptr @str.462)
+  store ptr %call7496, ptr %fs7495
+  %fs_val7497 = load ptr, ptr %fs7495
+  %concat7498 = call ptr @ofs_str_concat(ptr @str.233, ptr %fs_val7497)
+  %concat7499 = call ptr @ofs_str_concat(ptr %concat7498, ptr @str.463)
+  %llvmgen___expr_val_val7500 = load ptr, ptr @llvmgen___expr_val
+  %concat7501 = call ptr @ofs_str_concat(ptr %concat7499, ptr %llvmgen___expr_val_val7500)
+  %concat7502 = call ptr @ofs_str_concat(ptr %concat7501, ptr @str.125)
+  call void @cg_emit(ptr %concat7502)
+  %fs_val7503 = load ptr, ptr %fs7495
+  store ptr %fs_val7503, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17480,36 +17589,36 @@ if_else2311:
   br label %if_end2312
 
 if_end2312:
-  %field_ptr7433 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7434 = load ptr, ptr %field_ptr7433
-  %streq7435 = call i32 @ofs_str_eq(ptr %field7434, ptr @str.464)
-  %cond7436 = icmp ne i32 %streq7435, 0
-  br i1 %cond7436, label %if_then2313, label %if_else2314
+  %field_ptr7504 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7505 = load ptr, ptr %field_ptr7504
+  %streq7506 = call i32 @ofs_str_eq(ptr %field7505, ptr @str.464)
+  %cond7507 = icmp ne i32 %streq7506, 0
+  br i1 %cond7507, label %if_then2313, label %if_else2314
 
 if_then2313:
-  %id_val7437 = load i64, ptr %id.addr
-  %call7438 = call i64 @node_get_extra(i64 %id_val7437, i64 0)
-  call void @llvmgen__emit_expr(i64 %call7438)
-  %base_ptr7439 = alloca ptr, align 8
-  %llvmgen___expr_val_val7440 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7440, ptr %base_ptr7439
-  %id_val7441 = load i64, ptr %id.addr
-  %call7442 = call i64 @node_get_extra(i64 %id_val7441, i64 1)
-  call void @llvmgen__emit_expr(i64 %call7442)
-  %step7443 = alloca ptr, align 8
-  %call7444 = call ptr @llvmgen__next_tmp(ptr @str.464)
-  store ptr %call7444, ptr %step7443
-  %step_val7445 = load ptr, ptr %step7443
-  %concat7446 = call ptr @ofs_str_concat(ptr @str.233, ptr %step_val7445)
-  %concat7447 = call ptr @ofs_str_concat(ptr %concat7446, ptr @str.465)
-  %base_ptr_val7448 = load ptr, ptr %base_ptr7439
-  %concat7449 = call ptr @ofs_str_concat(ptr %concat7447, ptr %base_ptr_val7448)
-  %concat7450 = call ptr @ofs_str_concat(ptr %concat7449, ptr @str.272)
-  %llvmgen___expr_val_val7451 = load ptr, ptr @llvmgen___expr_val
-  %concat7452 = call ptr @ofs_str_concat(ptr %concat7450, ptr %llvmgen___expr_val_val7451)
-  call void @cg_emit(ptr %concat7452)
-  %step_val7453 = load ptr, ptr %step7443
-  store ptr %step_val7453, ptr @llvmgen___expr_val
+  %id_val7508 = load i64, ptr %id.addr
+  %call7509 = call i64 @node_get_extra(i64 %id_val7508, i64 0)
+  call void @llvmgen__emit_expr(i64 %call7509)
+  %base_ptr7510 = alloca ptr, align 8
+  %llvmgen___expr_val_val7511 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7511, ptr %base_ptr7510
+  %id_val7512 = load i64, ptr %id.addr
+  %call7513 = call i64 @node_get_extra(i64 %id_val7512, i64 1)
+  call void @llvmgen__emit_expr(i64 %call7513)
+  %step7514 = alloca ptr, align 8
+  %call7515 = call ptr @llvmgen__next_tmp(ptr @str.464)
+  store ptr %call7515, ptr %step7514
+  %step_val7516 = load ptr, ptr %step7514
+  %concat7517 = call ptr @ofs_str_concat(ptr @str.233, ptr %step_val7516)
+  %concat7518 = call ptr @ofs_str_concat(ptr %concat7517, ptr @str.465)
+  %base_ptr_val7519 = load ptr, ptr %base_ptr7510
+  %concat7520 = call ptr @ofs_str_concat(ptr %concat7518, ptr %base_ptr_val7519)
+  %concat7521 = call ptr @ofs_str_concat(ptr %concat7520, ptr @str.272)
+  %llvmgen___expr_val_val7522 = load ptr, ptr @llvmgen___expr_val
+  %concat7523 = call ptr @ofs_str_concat(ptr %concat7521, ptr %llvmgen___expr_val_val7522)
+  call void @cg_emit(ptr %concat7523)
+  %step_val7524 = load ptr, ptr %step7514
+  store ptr %step_val7524, ptr @llvmgen___expr_val
   store ptr @str.466, ptr @llvmgen___expr_type
   ret void
 
@@ -17517,108 +17626,108 @@ if_else2314:
   br label %if_end2315
 
 if_end2315:
-  %field_ptr7454 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7455 = load ptr, ptr %field_ptr7454
-  %streq7456 = call i32 @ofs_str_eq(ptr %field7455, ptr @str.467)
-  %field_ptr7457 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7458 = load ptr, ptr %field_ptr7457
-  %streq7459 = call i32 @ofs_str_eq(ptr %field7458, ptr @str.468)
-  %cond7460 = icmp ne i32 %streq7456, 0
-  %cond7461 = icmp ne i32 %streq7459, 0
-  %logic7462 = or i1 %cond7460, %cond7461
-  br i1 %logic7462, label %if_then2316, label %if_else2317
+  %field_ptr7525 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7526 = load ptr, ptr %field_ptr7525
+  %streq7527 = call i32 @ofs_str_eq(ptr %field7526, ptr @str.467)
+  %field_ptr7528 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7529 = load ptr, ptr %field_ptr7528
+  %streq7530 = call i32 @ofs_str_eq(ptr %field7529, ptr @str.468)
+  %cond7531 = icmp ne i32 %streq7527, 0
+  %cond7532 = icmp ne i32 %streq7530, 0
+  %logic7533 = or i1 %cond7531, %cond7532
+  br i1 %logic7533, label %if_then2316, label %if_else2317
 
 if_then2316:
-  %id_val7463 = load i64, ptr %id.addr
-  %call7464 = call i64 @node_get_extra(i64 %id_val7463, i64 0)
-  call void @llvmgen__emit_expr(i64 %call7464)
-  %sv7465 = alloca ptr, align 8
-  %llvmgen___expr_val_val7466 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7466, ptr %sv7465
-  %id_val7467 = load i64, ptr %id.addr
-  %call7468 = call i64 @node_get_extra(i64 %id_val7467, i64 1)
-  call void @llvmgen__emit_expr(i64 %call7468)
-  %sh7469 = alloca ptr, align 8
-  %llvmgen___expr_val_val7470 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7470, ptr %sh7469
-  %rsh7471 = alloca ptr, align 8
-  %call7472 = call ptr @llvmgen__next_tmp(ptr @str.469)
-  store ptr %call7472, ptr %rsh7471
-  %a7473 = alloca ptr, align 8
-  %call7474 = call ptr @llvmgen__next_tmp(ptr @str.470)
-  store ptr %call7474, ptr %a7473
-  %b7475 = alloca ptr, align 8
-  %call7476 = call ptr @llvmgen__next_tmp(ptr @str.471)
-  store ptr %call7476, ptr %b7475
-  %ro7477 = alloca ptr, align 8
-  %call7478 = call ptr @llvmgen__next_tmp(ptr @str.472)
-  store ptr %call7478, ptr %ro7477
-  %rsh_val7479 = load ptr, ptr %rsh7471
-  %concat7480 = call ptr @ofs_str_concat(ptr @str.233, ptr %rsh_val7479)
-  %concat7481 = call ptr @ofs_str_concat(ptr %concat7480, ptr @str.473)
-  %sh_val7482 = load ptr, ptr %sh7469
-  %concat7483 = call ptr @ofs_str_concat(ptr %concat7481, ptr %sh_val7482)
-  call void @cg_emit(ptr %concat7483)
-  %field_ptr7484 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7485 = load ptr, ptr %field_ptr7484
-  %streq7486 = call i32 @ofs_str_eq(ptr %field7485, ptr @str.467)
-  %cond7487 = icmp ne i32 %streq7486, 0
-  br i1 %cond7487, label %if_then2319, label %if_else2320
+  %id_val7534 = load i64, ptr %id.addr
+  %call7535 = call i64 @node_get_extra(i64 %id_val7534, i64 0)
+  call void @llvmgen__emit_expr(i64 %call7535)
+  %sv7536 = alloca ptr, align 8
+  %llvmgen___expr_val_val7537 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7537, ptr %sv7536
+  %id_val7538 = load i64, ptr %id.addr
+  %call7539 = call i64 @node_get_extra(i64 %id_val7538, i64 1)
+  call void @llvmgen__emit_expr(i64 %call7539)
+  %sh7540 = alloca ptr, align 8
+  %llvmgen___expr_val_val7541 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7541, ptr %sh7540
+  %rsh7542 = alloca ptr, align 8
+  %call7543 = call ptr @llvmgen__next_tmp(ptr @str.469)
+  store ptr %call7543, ptr %rsh7542
+  %a7544 = alloca ptr, align 8
+  %call7545 = call ptr @llvmgen__next_tmp(ptr @str.470)
+  store ptr %call7545, ptr %a7544
+  %b7546 = alloca ptr, align 8
+  %call7547 = call ptr @llvmgen__next_tmp(ptr @str.471)
+  store ptr %call7547, ptr %b7546
+  %ro7548 = alloca ptr, align 8
+  %call7549 = call ptr @llvmgen__next_tmp(ptr @str.472)
+  store ptr %call7549, ptr %ro7548
+  %rsh_val7550 = load ptr, ptr %rsh7542
+  %concat7551 = call ptr @ofs_str_concat(ptr @str.233, ptr %rsh_val7550)
+  %concat7552 = call ptr @ofs_str_concat(ptr %concat7551, ptr @str.473)
+  %sh_val7553 = load ptr, ptr %sh7540
+  %concat7554 = call ptr @ofs_str_concat(ptr %concat7552, ptr %sh_val7553)
+  call void @cg_emit(ptr %concat7554)
+  %field_ptr7555 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7556 = load ptr, ptr %field_ptr7555
+  %streq7557 = call i32 @ofs_str_eq(ptr %field7556, ptr @str.467)
+  %cond7558 = icmp ne i32 %streq7557, 0
+  br i1 %cond7558, label %if_then2319, label %if_else2320
 
 if_then2319:
-  %a_val7488 = load ptr, ptr %a7473
-  %concat7489 = call ptr @ofs_str_concat(ptr @str.233, ptr %a_val7488)
-  %concat7490 = call ptr @ofs_str_concat(ptr %concat7489, ptr @str.474)
-  %sv_val7491 = load ptr, ptr %sv7465
-  %concat7492 = call ptr @ofs_str_concat(ptr %concat7490, ptr %sv_val7491)
-  %concat7493 = call ptr @ofs_str_concat(ptr %concat7492, ptr @str.217)
-  %sh_val7494 = load ptr, ptr %sh7469
-  %concat7495 = call ptr @ofs_str_concat(ptr %concat7493, ptr %sh_val7494)
-  call void @cg_emit(ptr %concat7495)
-  %b_val7496 = load ptr, ptr %b7475
-  %concat7497 = call ptr @ofs_str_concat(ptr @str.233, ptr %b_val7496)
-  %concat7498 = call ptr @ofs_str_concat(ptr %concat7497, ptr @str.475)
-  %sv_val7499 = load ptr, ptr %sv7465
-  %concat7500 = call ptr @ofs_str_concat(ptr %concat7498, ptr %sv_val7499)
-  %concat7501 = call ptr @ofs_str_concat(ptr %concat7500, ptr @str.217)
-  %rsh_val7502 = load ptr, ptr %rsh7471
-  %concat7503 = call ptr @ofs_str_concat(ptr %concat7501, ptr %rsh_val7502)
-  call void @cg_emit(ptr %concat7503)
+  %a_val7559 = load ptr, ptr %a7544
+  %concat7560 = call ptr @ofs_str_concat(ptr @str.233, ptr %a_val7559)
+  %concat7561 = call ptr @ofs_str_concat(ptr %concat7560, ptr @str.474)
+  %sv_val7562 = load ptr, ptr %sv7536
+  %concat7563 = call ptr @ofs_str_concat(ptr %concat7561, ptr %sv_val7562)
+  %concat7564 = call ptr @ofs_str_concat(ptr %concat7563, ptr @str.217)
+  %sh_val7565 = load ptr, ptr %sh7540
+  %concat7566 = call ptr @ofs_str_concat(ptr %concat7564, ptr %sh_val7565)
+  call void @cg_emit(ptr %concat7566)
+  %b_val7567 = load ptr, ptr %b7546
+  %concat7568 = call ptr @ofs_str_concat(ptr @str.233, ptr %b_val7567)
+  %concat7569 = call ptr @ofs_str_concat(ptr %concat7568, ptr @str.475)
+  %sv_val7570 = load ptr, ptr %sv7536
+  %concat7571 = call ptr @ofs_str_concat(ptr %concat7569, ptr %sv_val7570)
+  %concat7572 = call ptr @ofs_str_concat(ptr %concat7571, ptr @str.217)
+  %rsh_val7573 = load ptr, ptr %rsh7542
+  %concat7574 = call ptr @ofs_str_concat(ptr %concat7572, ptr %rsh_val7573)
+  call void @cg_emit(ptr %concat7574)
   br label %if_end2321
 
 if_else2320:
-  %a_val7504 = load ptr, ptr %a7473
-  %concat7505 = call ptr @ofs_str_concat(ptr @str.233, ptr %a_val7504)
-  %concat7506 = call ptr @ofs_str_concat(ptr %concat7505, ptr @str.475)
-  %sv_val7507 = load ptr, ptr %sv7465
-  %concat7508 = call ptr @ofs_str_concat(ptr %concat7506, ptr %sv_val7507)
-  %concat7509 = call ptr @ofs_str_concat(ptr %concat7508, ptr @str.217)
-  %sh_val7510 = load ptr, ptr %sh7469
-  %concat7511 = call ptr @ofs_str_concat(ptr %concat7509, ptr %sh_val7510)
-  call void @cg_emit(ptr %concat7511)
-  %b_val7512 = load ptr, ptr %b7475
-  %concat7513 = call ptr @ofs_str_concat(ptr @str.233, ptr %b_val7512)
-  %concat7514 = call ptr @ofs_str_concat(ptr %concat7513, ptr @str.474)
-  %sv_val7515 = load ptr, ptr %sv7465
-  %concat7516 = call ptr @ofs_str_concat(ptr %concat7514, ptr %sv_val7515)
-  %concat7517 = call ptr @ofs_str_concat(ptr %concat7516, ptr @str.217)
-  %rsh_val7518 = load ptr, ptr %rsh7471
-  %concat7519 = call ptr @ofs_str_concat(ptr %concat7517, ptr %rsh_val7518)
-  call void @cg_emit(ptr %concat7519)
+  %a_val7575 = load ptr, ptr %a7544
+  %concat7576 = call ptr @ofs_str_concat(ptr @str.233, ptr %a_val7575)
+  %concat7577 = call ptr @ofs_str_concat(ptr %concat7576, ptr @str.475)
+  %sv_val7578 = load ptr, ptr %sv7536
+  %concat7579 = call ptr @ofs_str_concat(ptr %concat7577, ptr %sv_val7578)
+  %concat7580 = call ptr @ofs_str_concat(ptr %concat7579, ptr @str.217)
+  %sh_val7581 = load ptr, ptr %sh7540
+  %concat7582 = call ptr @ofs_str_concat(ptr %concat7580, ptr %sh_val7581)
+  call void @cg_emit(ptr %concat7582)
+  %b_val7583 = load ptr, ptr %b7546
+  %concat7584 = call ptr @ofs_str_concat(ptr @str.233, ptr %b_val7583)
+  %concat7585 = call ptr @ofs_str_concat(ptr %concat7584, ptr @str.474)
+  %sv_val7586 = load ptr, ptr %sv7536
+  %concat7587 = call ptr @ofs_str_concat(ptr %concat7585, ptr %sv_val7586)
+  %concat7588 = call ptr @ofs_str_concat(ptr %concat7587, ptr @str.217)
+  %rsh_val7589 = load ptr, ptr %rsh7542
+  %concat7590 = call ptr @ofs_str_concat(ptr %concat7588, ptr %rsh_val7589)
+  call void @cg_emit(ptr %concat7590)
   br label %if_end2321
 
 if_end2321:
-  %ro_val7520 = load ptr, ptr %ro7477
-  %concat7521 = call ptr @ofs_str_concat(ptr @str.233, ptr %ro_val7520)
-  %concat7522 = call ptr @ofs_str_concat(ptr %concat7521, ptr @str.476)
-  %a_val7523 = load ptr, ptr %a7473
-  %concat7524 = call ptr @ofs_str_concat(ptr %concat7522, ptr %a_val7523)
-  %concat7525 = call ptr @ofs_str_concat(ptr %concat7524, ptr @str.217)
-  %b_val7526 = load ptr, ptr %b7475
-  %concat7527 = call ptr @ofs_str_concat(ptr %concat7525, ptr %b_val7526)
-  call void @cg_emit(ptr %concat7527)
-  %ro_val7528 = load ptr, ptr %ro7477
-  store ptr %ro_val7528, ptr @llvmgen___expr_val
+  %ro_val7591 = load ptr, ptr %ro7548
+  %concat7592 = call ptr @ofs_str_concat(ptr @str.233, ptr %ro_val7591)
+  %concat7593 = call ptr @ofs_str_concat(ptr %concat7592, ptr @str.476)
+  %a_val7594 = load ptr, ptr %a7544
+  %concat7595 = call ptr @ofs_str_concat(ptr %concat7593, ptr %a_val7594)
+  %concat7596 = call ptr @ofs_str_concat(ptr %concat7595, ptr @str.217)
+  %b_val7597 = load ptr, ptr %b7546
+  %concat7598 = call ptr @ofs_str_concat(ptr %concat7596, ptr %b_val7597)
+  call void @cg_emit(ptr %concat7598)
+  %ro_val7599 = load ptr, ptr %ro7548
+  store ptr %ro_val7599, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17626,76 +17735,76 @@ if_else2317:
   br label %if_end2318
 
 if_end2318:
-  %field_ptr7529 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7530 = load ptr, ptr %field_ptr7529
-  %streq7531 = call i32 @ofs_str_eq(ptr %field7530, ptr @str.477)
-  %cond7532 = icmp ne i32 %streq7531, 0
-  br i1 %cond7532, label %if_then2322, label %if_else2323
+  %field_ptr7600 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7601 = load ptr, ptr %field_ptr7600
+  %streq7602 = call i32 @ofs_str_eq(ptr %field7601, ptr @str.477)
+  %cond7603 = icmp ne i32 %streq7602, 0
+  br i1 %cond7603, label %if_then2322, label %if_else2323
 
 if_then2322:
-  %id_val7533 = load i64, ptr %id.addr
-  %call7534 = call i64 @node_get_extra(i64 %id_val7533, i64 0)
-  call void @llvmgen__emit_expr(i64 %call7534)
-  %cv7535 = alloca ptr, align 8
-  %llvmgen___expr_val_val7536 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7536, ptr %cv7535
-  %id_val7537 = load i64, ptr %id.addr
-  %call7538 = call i64 @node_get_extra(i64 %id_val7537, i64 1)
-  call void @llvmgen__emit_expr(i64 %call7538)
-  %shift7539 = alloca ptr, align 8
-  %llvmgen___expr_val_val7540 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7540, ptr %shift7539
-  %id_val7541 = load i64, ptr %id.addr
-  %call7542 = call i64 @node_get_extra(i64 %id_val7541, i64 2)
-  call void @llvmgen__emit_expr(i64 %call7542)
-  %width7543 = alloca ptr, align 8
-  %llvmgen___expr_val_val7544 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7544, ptr %width7543
-  %one7545 = alloca ptr, align 8
-  %call7546 = call ptr @llvmgen__next_tmp(ptr @str.478)
-  store ptr %call7546, ptr %one7545
-  %mask07547 = alloca ptr, align 8
-  %call7548 = call ptr @llvmgen__next_tmp(ptr @str.479)
-  store ptr %call7548, ptr %mask07547
-  %shifted7549 = alloca ptr, align 8
-  %call7550 = call ptr @llvmgen__next_tmp(ptr @str.480)
-  store ptr %call7550, ptr %shifted7549
-  %cut7551 = alloca ptr, align 8
-  %call7552 = call ptr @llvmgen__next_tmp(ptr @str.481)
-  store ptr %call7552, ptr %cut7551
-  %one_val7553 = load ptr, ptr %one7545
-  %concat7554 = call ptr @ofs_str_concat(ptr @str.233, ptr %one_val7553)
-  %concat7555 = call ptr @ofs_str_concat(ptr %concat7554, ptr @str.482)
-  %width_val7556 = load ptr, ptr %width7543
-  %concat7557 = call ptr @ofs_str_concat(ptr %concat7555, ptr %width_val7556)
-  call void @cg_emit(ptr %concat7557)
-  %mask0_val7558 = load ptr, ptr %mask07547
-  %concat7559 = call ptr @ofs_str_concat(ptr @str.233, ptr %mask0_val7558)
-  %concat7560 = call ptr @ofs_str_concat(ptr %concat7559, ptr @str.436)
-  %one_val7561 = load ptr, ptr %one7545
-  %concat7562 = call ptr @ofs_str_concat(ptr %concat7560, ptr %one_val7561)
-  %concat7563 = call ptr @ofs_str_concat(ptr %concat7562, ptr @str.435)
-  call void @cg_emit(ptr %concat7563)
-  %shifted_val7564 = load ptr, ptr %shifted7549
-  %concat7565 = call ptr @ofs_str_concat(ptr @str.233, ptr %shifted_val7564)
-  %concat7566 = call ptr @ofs_str_concat(ptr %concat7565, ptr @str.475)
-  %cv_val7567 = load ptr, ptr %cv7535
-  %concat7568 = call ptr @ofs_str_concat(ptr %concat7566, ptr %cv_val7567)
-  %concat7569 = call ptr @ofs_str_concat(ptr %concat7568, ptr @str.217)
-  %shift_val7570 = load ptr, ptr %shift7539
-  %concat7571 = call ptr @ofs_str_concat(ptr %concat7569, ptr %shift_val7570)
-  call void @cg_emit(ptr %concat7571)
-  %cut_val7572 = load ptr, ptr %cut7551
-  %concat7573 = call ptr @ofs_str_concat(ptr @str.233, ptr %cut_val7572)
-  %concat7574 = call ptr @ofs_str_concat(ptr %concat7573, ptr @str.483)
-  %shifted_val7575 = load ptr, ptr %shifted7549
-  %concat7576 = call ptr @ofs_str_concat(ptr %concat7574, ptr %shifted_val7575)
-  %concat7577 = call ptr @ofs_str_concat(ptr %concat7576, ptr @str.217)
-  %mask0_val7578 = load ptr, ptr %mask07547
-  %concat7579 = call ptr @ofs_str_concat(ptr %concat7577, ptr %mask0_val7578)
-  call void @cg_emit(ptr %concat7579)
-  %cut_val7580 = load ptr, ptr %cut7551
-  store ptr %cut_val7580, ptr @llvmgen___expr_val
+  %id_val7604 = load i64, ptr %id.addr
+  %call7605 = call i64 @node_get_extra(i64 %id_val7604, i64 0)
+  call void @llvmgen__emit_expr(i64 %call7605)
+  %cv7606 = alloca ptr, align 8
+  %llvmgen___expr_val_val7607 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7607, ptr %cv7606
+  %id_val7608 = load i64, ptr %id.addr
+  %call7609 = call i64 @node_get_extra(i64 %id_val7608, i64 1)
+  call void @llvmgen__emit_expr(i64 %call7609)
+  %shift7610 = alloca ptr, align 8
+  %llvmgen___expr_val_val7611 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7611, ptr %shift7610
+  %id_val7612 = load i64, ptr %id.addr
+  %call7613 = call i64 @node_get_extra(i64 %id_val7612, i64 2)
+  call void @llvmgen__emit_expr(i64 %call7613)
+  %width7614 = alloca ptr, align 8
+  %llvmgen___expr_val_val7615 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7615, ptr %width7614
+  %one7616 = alloca ptr, align 8
+  %call7617 = call ptr @llvmgen__next_tmp(ptr @str.478)
+  store ptr %call7617, ptr %one7616
+  %mask07618 = alloca ptr, align 8
+  %call7619 = call ptr @llvmgen__next_tmp(ptr @str.479)
+  store ptr %call7619, ptr %mask07618
+  %shifted7620 = alloca ptr, align 8
+  %call7621 = call ptr @llvmgen__next_tmp(ptr @str.480)
+  store ptr %call7621, ptr %shifted7620
+  %cut7622 = alloca ptr, align 8
+  %call7623 = call ptr @llvmgen__next_tmp(ptr @str.481)
+  store ptr %call7623, ptr %cut7622
+  %one_val7624 = load ptr, ptr %one7616
+  %concat7625 = call ptr @ofs_str_concat(ptr @str.233, ptr %one_val7624)
+  %concat7626 = call ptr @ofs_str_concat(ptr %concat7625, ptr @str.482)
+  %width_val7627 = load ptr, ptr %width7614
+  %concat7628 = call ptr @ofs_str_concat(ptr %concat7626, ptr %width_val7627)
+  call void @cg_emit(ptr %concat7628)
+  %mask0_val7629 = load ptr, ptr %mask07618
+  %concat7630 = call ptr @ofs_str_concat(ptr @str.233, ptr %mask0_val7629)
+  %concat7631 = call ptr @ofs_str_concat(ptr %concat7630, ptr @str.436)
+  %one_val7632 = load ptr, ptr %one7616
+  %concat7633 = call ptr @ofs_str_concat(ptr %concat7631, ptr %one_val7632)
+  %concat7634 = call ptr @ofs_str_concat(ptr %concat7633, ptr @str.435)
+  call void @cg_emit(ptr %concat7634)
+  %shifted_val7635 = load ptr, ptr %shifted7620
+  %concat7636 = call ptr @ofs_str_concat(ptr @str.233, ptr %shifted_val7635)
+  %concat7637 = call ptr @ofs_str_concat(ptr %concat7636, ptr @str.475)
+  %cv_val7638 = load ptr, ptr %cv7606
+  %concat7639 = call ptr @ofs_str_concat(ptr %concat7637, ptr %cv_val7638)
+  %concat7640 = call ptr @ofs_str_concat(ptr %concat7639, ptr @str.217)
+  %shift_val7641 = load ptr, ptr %shift7610
+  %concat7642 = call ptr @ofs_str_concat(ptr %concat7640, ptr %shift_val7641)
+  call void @cg_emit(ptr %concat7642)
+  %cut_val7643 = load ptr, ptr %cut7622
+  %concat7644 = call ptr @ofs_str_concat(ptr @str.233, ptr %cut_val7643)
+  %concat7645 = call ptr @ofs_str_concat(ptr %concat7644, ptr @str.483)
+  %shifted_val7646 = load ptr, ptr %shifted7620
+  %concat7647 = call ptr @ofs_str_concat(ptr %concat7645, ptr %shifted_val7646)
+  %concat7648 = call ptr @ofs_str_concat(ptr %concat7647, ptr @str.217)
+  %mask0_val7649 = load ptr, ptr %mask07618
+  %concat7650 = call ptr @ofs_str_concat(ptr %concat7648, ptr %mask0_val7649)
+  call void @cg_emit(ptr %concat7650)
+  %cut_val7651 = load ptr, ptr %cut7622
+  store ptr %cut_val7651, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17703,128 +17812,128 @@ if_else2323:
   br label %if_end2324
 
 if_end2324:
-  %field_ptr7581 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7582 = load ptr, ptr %field_ptr7581
-  %streq7583 = call i32 @ofs_str_eq(ptr %field7582, ptr @str.484)
-  %cond7584 = icmp ne i32 %streq7583, 0
-  br i1 %cond7584, label %if_then2325, label %if_else2326
+  %field_ptr7652 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7653 = load ptr, ptr %field_ptr7652
+  %streq7654 = call i32 @ofs_str_eq(ptr %field7653, ptr @str.484)
+  %cond7655 = icmp ne i32 %streq7654, 0
+  br i1 %cond7655, label %if_then2325, label %if_else2326
 
 if_then2325:
-  %id_val7585 = load i64, ptr %id.addr
-  %call7586 = call i64 @node_get_extra(i64 %id_val7585, i64 0)
-  call void @llvmgen__emit_expr(i64 %call7586)
-  %basev7587 = alloca ptr, align 8
-  %llvmgen___expr_val_val7588 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7588, ptr %basev7587
-  %id_val7589 = load i64, ptr %id.addr
-  %call7590 = call i64 @node_get_extra(i64 %id_val7589, i64 1)
-  call void @llvmgen__emit_expr(i64 %call7590)
-  %shift27591 = alloca ptr, align 8
-  %llvmgen___expr_val_val7592 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7592, ptr %shift27591
-  %id_val7593 = load i64, ptr %id.addr
-  %call7594 = call i64 @node_get_extra(i64 %id_val7593, i64 2)
-  call void @llvmgen__emit_expr(i64 %call7594)
-  %width27595 = alloca ptr, align 8
-  %llvmgen___expr_val_val7596 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7596, ptr %width27595
-  %id_val7597 = load i64, ptr %id.addr
-  %call7598 = call i64 @node_get_extra(i64 %id_val7597, i64 3)
-  call void @llvmgen__emit_expr(i64 %call7598)
-  %insertv7599 = alloca ptr, align 8
-  %llvmgen___expr_val_val7600 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7600, ptr %insertv7599
-  %one27601 = alloca ptr, align 8
-  %call7602 = call ptr @llvmgen__next_tmp(ptr @str.485)
-  store ptr %call7602, ptr %one27601
-  %maska7603 = alloca ptr, align 8
-  %call7604 = call ptr @llvmgen__next_tmp(ptr @str.486)
-  store ptr %call7604, ptr %maska7603
-  %maskb7605 = alloca ptr, align 8
-  %call7606 = call ptr @llvmgen__next_tmp(ptr @str.487)
-  store ptr %call7606, ptr %maskb7605
-  %notmask7607 = alloca ptr, align 8
-  %call7608 = call ptr @llvmgen__next_tmp(ptr @str.488)
-  store ptr %call7608, ptr %notmask7607
-  %cleared7609 = alloca ptr, align 8
-  %call7610 = call ptr @llvmgen__next_tmp(ptr @str.489)
-  store ptr %call7610, ptr %cleared7609
-  %ins_shift7611 = alloca ptr, align 8
-  %call7612 = call ptr @llvmgen__next_tmp(ptr @str.490)
-  store ptr %call7612, ptr %ins_shift7611
-  %ins_mask7613 = alloca ptr, align 8
-  %call7614 = call ptr @llvmgen__next_tmp(ptr @str.491)
-  store ptr %call7614, ptr %ins_mask7613
-  %patched7615 = alloca ptr, align 8
-  %call7616 = call ptr @llvmgen__next_tmp(ptr @str.492)
-  store ptr %call7616, ptr %patched7615
-  %one2_val7617 = load ptr, ptr %one27601
-  %concat7618 = call ptr @ofs_str_concat(ptr @str.233, ptr %one2_val7617)
-  %concat7619 = call ptr @ofs_str_concat(ptr %concat7618, ptr @str.482)
-  %width2_val7620 = load ptr, ptr %width27595
-  %concat7621 = call ptr @ofs_str_concat(ptr %concat7619, ptr %width2_val7620)
-  call void @cg_emit(ptr %concat7621)
-  %maska_val7622 = load ptr, ptr %maska7603
-  %concat7623 = call ptr @ofs_str_concat(ptr @str.233, ptr %maska_val7622)
-  %concat7624 = call ptr @ofs_str_concat(ptr %concat7623, ptr @str.436)
-  %one2_val7625 = load ptr, ptr %one27601
-  %concat7626 = call ptr @ofs_str_concat(ptr %concat7624, ptr %one2_val7625)
-  %concat7627 = call ptr @ofs_str_concat(ptr %concat7626, ptr @str.435)
-  call void @cg_emit(ptr %concat7627)
-  %maskb_val7628 = load ptr, ptr %maskb7605
-  %concat7629 = call ptr @ofs_str_concat(ptr @str.233, ptr %maskb_val7628)
-  %concat7630 = call ptr @ofs_str_concat(ptr %concat7629, ptr @str.474)
-  %maska_val7631 = load ptr, ptr %maska7603
-  %concat7632 = call ptr @ofs_str_concat(ptr %concat7630, ptr %maska_val7631)
-  %concat7633 = call ptr @ofs_str_concat(ptr %concat7632, ptr @str.217)
-  %shift2_val7634 = load ptr, ptr %shift27591
-  %concat7635 = call ptr @ofs_str_concat(ptr %concat7633, ptr %shift2_val7634)
-  call void @cg_emit(ptr %concat7635)
-  %notmask_val7636 = load ptr, ptr %notmask7607
-  %concat7637 = call ptr @ofs_str_concat(ptr @str.233, ptr %notmask_val7636)
-  %concat7638 = call ptr @ofs_str_concat(ptr %concat7637, ptr @str.427)
-  %maskb_val7639 = load ptr, ptr %maskb7605
-  %concat7640 = call ptr @ofs_str_concat(ptr %concat7638, ptr %maskb_val7639)
-  %concat7641 = call ptr @ofs_str_concat(ptr %concat7640, ptr @str.428)
-  call void @cg_emit(ptr %concat7641)
-  %cleared_val7642 = load ptr, ptr %cleared7609
-  %concat7643 = call ptr @ofs_str_concat(ptr @str.233, ptr %cleared_val7642)
-  %concat7644 = call ptr @ofs_str_concat(ptr %concat7643, ptr @str.483)
-  %basev_val7645 = load ptr, ptr %basev7587
-  %concat7646 = call ptr @ofs_str_concat(ptr %concat7644, ptr %basev_val7645)
-  %concat7647 = call ptr @ofs_str_concat(ptr %concat7646, ptr @str.217)
-  %notmask_val7648 = load ptr, ptr %notmask7607
-  %concat7649 = call ptr @ofs_str_concat(ptr %concat7647, ptr %notmask_val7648)
-  call void @cg_emit(ptr %concat7649)
-  %ins_shift_val7650 = load ptr, ptr %ins_shift7611
-  %concat7651 = call ptr @ofs_str_concat(ptr @str.233, ptr %ins_shift_val7650)
-  %concat7652 = call ptr @ofs_str_concat(ptr %concat7651, ptr @str.474)
-  %insertv_val7653 = load ptr, ptr %insertv7599
-  %concat7654 = call ptr @ofs_str_concat(ptr %concat7652, ptr %insertv_val7653)
-  %concat7655 = call ptr @ofs_str_concat(ptr %concat7654, ptr @str.217)
-  %shift2_val7656 = load ptr, ptr %shift27591
-  %concat7657 = call ptr @ofs_str_concat(ptr %concat7655, ptr %shift2_val7656)
-  call void @cg_emit(ptr %concat7657)
-  %ins_mask_val7658 = load ptr, ptr %ins_mask7613
-  %concat7659 = call ptr @ofs_str_concat(ptr @str.233, ptr %ins_mask_val7658)
-  %concat7660 = call ptr @ofs_str_concat(ptr %concat7659, ptr @str.483)
-  %ins_shift_val7661 = load ptr, ptr %ins_shift7611
-  %concat7662 = call ptr @ofs_str_concat(ptr %concat7660, ptr %ins_shift_val7661)
-  %concat7663 = call ptr @ofs_str_concat(ptr %concat7662, ptr @str.217)
-  %maskb_val7664 = load ptr, ptr %maskb7605
-  %concat7665 = call ptr @ofs_str_concat(ptr %concat7663, ptr %maskb_val7664)
-  call void @cg_emit(ptr %concat7665)
-  %patched_val7666 = load ptr, ptr %patched7615
-  %concat7667 = call ptr @ofs_str_concat(ptr @str.233, ptr %patched_val7666)
-  %concat7668 = call ptr @ofs_str_concat(ptr %concat7667, ptr @str.476)
-  %cleared_val7669 = load ptr, ptr %cleared7609
-  %concat7670 = call ptr @ofs_str_concat(ptr %concat7668, ptr %cleared_val7669)
-  %concat7671 = call ptr @ofs_str_concat(ptr %concat7670, ptr @str.217)
-  %ins_mask_val7672 = load ptr, ptr %ins_mask7613
-  %concat7673 = call ptr @ofs_str_concat(ptr %concat7671, ptr %ins_mask_val7672)
-  call void @cg_emit(ptr %concat7673)
-  %patched_val7674 = load ptr, ptr %patched7615
-  store ptr %patched_val7674, ptr @llvmgen___expr_val
+  %id_val7656 = load i64, ptr %id.addr
+  %call7657 = call i64 @node_get_extra(i64 %id_val7656, i64 0)
+  call void @llvmgen__emit_expr(i64 %call7657)
+  %basev7658 = alloca ptr, align 8
+  %llvmgen___expr_val_val7659 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7659, ptr %basev7658
+  %id_val7660 = load i64, ptr %id.addr
+  %call7661 = call i64 @node_get_extra(i64 %id_val7660, i64 1)
+  call void @llvmgen__emit_expr(i64 %call7661)
+  %shift27662 = alloca ptr, align 8
+  %llvmgen___expr_val_val7663 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7663, ptr %shift27662
+  %id_val7664 = load i64, ptr %id.addr
+  %call7665 = call i64 @node_get_extra(i64 %id_val7664, i64 2)
+  call void @llvmgen__emit_expr(i64 %call7665)
+  %width27666 = alloca ptr, align 8
+  %llvmgen___expr_val_val7667 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7667, ptr %width27666
+  %id_val7668 = load i64, ptr %id.addr
+  %call7669 = call i64 @node_get_extra(i64 %id_val7668, i64 3)
+  call void @llvmgen__emit_expr(i64 %call7669)
+  %insertv7670 = alloca ptr, align 8
+  %llvmgen___expr_val_val7671 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7671, ptr %insertv7670
+  %one27672 = alloca ptr, align 8
+  %call7673 = call ptr @llvmgen__next_tmp(ptr @str.485)
+  store ptr %call7673, ptr %one27672
+  %maska7674 = alloca ptr, align 8
+  %call7675 = call ptr @llvmgen__next_tmp(ptr @str.486)
+  store ptr %call7675, ptr %maska7674
+  %maskb7676 = alloca ptr, align 8
+  %call7677 = call ptr @llvmgen__next_tmp(ptr @str.487)
+  store ptr %call7677, ptr %maskb7676
+  %notmask7678 = alloca ptr, align 8
+  %call7679 = call ptr @llvmgen__next_tmp(ptr @str.488)
+  store ptr %call7679, ptr %notmask7678
+  %cleared7680 = alloca ptr, align 8
+  %call7681 = call ptr @llvmgen__next_tmp(ptr @str.489)
+  store ptr %call7681, ptr %cleared7680
+  %ins_shift7682 = alloca ptr, align 8
+  %call7683 = call ptr @llvmgen__next_tmp(ptr @str.490)
+  store ptr %call7683, ptr %ins_shift7682
+  %ins_mask7684 = alloca ptr, align 8
+  %call7685 = call ptr @llvmgen__next_tmp(ptr @str.491)
+  store ptr %call7685, ptr %ins_mask7684
+  %patched7686 = alloca ptr, align 8
+  %call7687 = call ptr @llvmgen__next_tmp(ptr @str.492)
+  store ptr %call7687, ptr %patched7686
+  %one2_val7688 = load ptr, ptr %one27672
+  %concat7689 = call ptr @ofs_str_concat(ptr @str.233, ptr %one2_val7688)
+  %concat7690 = call ptr @ofs_str_concat(ptr %concat7689, ptr @str.482)
+  %width2_val7691 = load ptr, ptr %width27666
+  %concat7692 = call ptr @ofs_str_concat(ptr %concat7690, ptr %width2_val7691)
+  call void @cg_emit(ptr %concat7692)
+  %maska_val7693 = load ptr, ptr %maska7674
+  %concat7694 = call ptr @ofs_str_concat(ptr @str.233, ptr %maska_val7693)
+  %concat7695 = call ptr @ofs_str_concat(ptr %concat7694, ptr @str.436)
+  %one2_val7696 = load ptr, ptr %one27672
+  %concat7697 = call ptr @ofs_str_concat(ptr %concat7695, ptr %one2_val7696)
+  %concat7698 = call ptr @ofs_str_concat(ptr %concat7697, ptr @str.435)
+  call void @cg_emit(ptr %concat7698)
+  %maskb_val7699 = load ptr, ptr %maskb7676
+  %concat7700 = call ptr @ofs_str_concat(ptr @str.233, ptr %maskb_val7699)
+  %concat7701 = call ptr @ofs_str_concat(ptr %concat7700, ptr @str.474)
+  %maska_val7702 = load ptr, ptr %maska7674
+  %concat7703 = call ptr @ofs_str_concat(ptr %concat7701, ptr %maska_val7702)
+  %concat7704 = call ptr @ofs_str_concat(ptr %concat7703, ptr @str.217)
+  %shift2_val7705 = load ptr, ptr %shift27662
+  %concat7706 = call ptr @ofs_str_concat(ptr %concat7704, ptr %shift2_val7705)
+  call void @cg_emit(ptr %concat7706)
+  %notmask_val7707 = load ptr, ptr %notmask7678
+  %concat7708 = call ptr @ofs_str_concat(ptr @str.233, ptr %notmask_val7707)
+  %concat7709 = call ptr @ofs_str_concat(ptr %concat7708, ptr @str.427)
+  %maskb_val7710 = load ptr, ptr %maskb7676
+  %concat7711 = call ptr @ofs_str_concat(ptr %concat7709, ptr %maskb_val7710)
+  %concat7712 = call ptr @ofs_str_concat(ptr %concat7711, ptr @str.428)
+  call void @cg_emit(ptr %concat7712)
+  %cleared_val7713 = load ptr, ptr %cleared7680
+  %concat7714 = call ptr @ofs_str_concat(ptr @str.233, ptr %cleared_val7713)
+  %concat7715 = call ptr @ofs_str_concat(ptr %concat7714, ptr @str.483)
+  %basev_val7716 = load ptr, ptr %basev7658
+  %concat7717 = call ptr @ofs_str_concat(ptr %concat7715, ptr %basev_val7716)
+  %concat7718 = call ptr @ofs_str_concat(ptr %concat7717, ptr @str.217)
+  %notmask_val7719 = load ptr, ptr %notmask7678
+  %concat7720 = call ptr @ofs_str_concat(ptr %concat7718, ptr %notmask_val7719)
+  call void @cg_emit(ptr %concat7720)
+  %ins_shift_val7721 = load ptr, ptr %ins_shift7682
+  %concat7722 = call ptr @ofs_str_concat(ptr @str.233, ptr %ins_shift_val7721)
+  %concat7723 = call ptr @ofs_str_concat(ptr %concat7722, ptr @str.474)
+  %insertv_val7724 = load ptr, ptr %insertv7670
+  %concat7725 = call ptr @ofs_str_concat(ptr %concat7723, ptr %insertv_val7724)
+  %concat7726 = call ptr @ofs_str_concat(ptr %concat7725, ptr @str.217)
+  %shift2_val7727 = load ptr, ptr %shift27662
+  %concat7728 = call ptr @ofs_str_concat(ptr %concat7726, ptr %shift2_val7727)
+  call void @cg_emit(ptr %concat7728)
+  %ins_mask_val7729 = load ptr, ptr %ins_mask7684
+  %concat7730 = call ptr @ofs_str_concat(ptr @str.233, ptr %ins_mask_val7729)
+  %concat7731 = call ptr @ofs_str_concat(ptr %concat7730, ptr @str.483)
+  %ins_shift_val7732 = load ptr, ptr %ins_shift7682
+  %concat7733 = call ptr @ofs_str_concat(ptr %concat7731, ptr %ins_shift_val7732)
+  %concat7734 = call ptr @ofs_str_concat(ptr %concat7733, ptr @str.217)
+  %maskb_val7735 = load ptr, ptr %maskb7676
+  %concat7736 = call ptr @ofs_str_concat(ptr %concat7734, ptr %maskb_val7735)
+  call void @cg_emit(ptr %concat7736)
+  %patched_val7737 = load ptr, ptr %patched7686
+  %concat7738 = call ptr @ofs_str_concat(ptr @str.233, ptr %patched_val7737)
+  %concat7739 = call ptr @ofs_str_concat(ptr %concat7738, ptr @str.476)
+  %cleared_val7740 = load ptr, ptr %cleared7680
+  %concat7741 = call ptr @ofs_str_concat(ptr %concat7739, ptr %cleared_val7740)
+  %concat7742 = call ptr @ofs_str_concat(ptr %concat7741, ptr @str.217)
+  %ins_mask_val7743 = load ptr, ptr %ins_mask7684
+  %concat7744 = call ptr @ofs_str_concat(ptr %concat7742, ptr %ins_mask_val7743)
+  call void @cg_emit(ptr %concat7744)
+  %patched_val7745 = load ptr, ptr %patched7686
+  store ptr %patched_val7745, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17832,79 +17941,79 @@ if_else2326:
   br label %if_end2327
 
 if_end2327:
-  %field_ptr7675 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7676 = load ptr, ptr %field_ptr7675
-  %streq7677 = call i32 @ofs_str_eq(ptr %field7676, ptr @str.493)
-  %cond7678 = icmp ne i32 %streq7677, 0
-  br i1 %cond7678, label %if_then2328, label %if_else2329
+  %field_ptr7746 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7747 = load ptr, ptr %field_ptr7746
+  %streq7748 = call i32 @ofs_str_eq(ptr %field7747, ptr @str.493)
+  %cond7749 = icmp ne i32 %streq7748, 0
+  br i1 %cond7749, label %if_then2328, label %if_else2329
 
 if_then2328:
-  %id_val7679 = load i64, ptr %id.addr
-  %call7680 = call i64 @node_get_extra(i64 %id_val7679, i64 0)
-  call void @llvmgen__emit_expr(i64 %call7680)
-  %maskw7681 = alloca ptr, align 8
-  %llvmgen___expr_val_val7682 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7682, ptr %maskw7681
-  %id_val7683 = load i64, ptr %id.addr
-  %call7684 = call i64 @node_get_extra(i64 %id_val7683, i64 1)
-  call void @llvmgen__emit_expr(i64 %call7684)
-  %leftw7685 = alloca ptr, align 8
-  %llvmgen___expr_val_val7686 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7686, ptr %leftw7685
-  %id_val7687 = load i64, ptr %id.addr
-  %call7688 = call i64 @node_get_extra(i64 %id_val7687, i64 2)
-  call void @llvmgen__emit_expr(i64 %call7688)
-  %rightw7689 = alloca ptr, align 8
-  %llvmgen___expr_val_val7690 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7690, ptr %rightw7689
-  %lw7691 = alloca ptr, align 8
-  %call7692 = call ptr @llvmgen__next_tmp(ptr @str.494)
-  store ptr %call7692, ptr %lw7691
-  %nmaskw7693 = alloca ptr, align 8
-  %call7694 = call ptr @llvmgen__next_tmp(ptr @str.495)
-  store ptr %call7694, ptr %nmaskw7693
-  %rw7695 = alloca ptr, align 8
-  %call7696 = call ptr @llvmgen__next_tmp(ptr @str.496)
-  store ptr %call7696, ptr %rw7695
-  %woven7697 = alloca ptr, align 8
-  %call7698 = call ptr @llvmgen__next_tmp(ptr @str.497)
-  store ptr %call7698, ptr %woven7697
-  %lw_val7699 = load ptr, ptr %lw7691
-  %concat7700 = call ptr @ofs_str_concat(ptr @str.233, ptr %lw_val7699)
-  %concat7701 = call ptr @ofs_str_concat(ptr %concat7700, ptr @str.483)
-  %leftw_val7702 = load ptr, ptr %leftw7685
-  %concat7703 = call ptr @ofs_str_concat(ptr %concat7701, ptr %leftw_val7702)
-  %concat7704 = call ptr @ofs_str_concat(ptr %concat7703, ptr @str.217)
-  %maskw_val7705 = load ptr, ptr %maskw7681
-  %concat7706 = call ptr @ofs_str_concat(ptr %concat7704, ptr %maskw_val7705)
-  call void @cg_emit(ptr %concat7706)
-  %nmaskw_val7707 = load ptr, ptr %nmaskw7693
-  %concat7708 = call ptr @ofs_str_concat(ptr @str.233, ptr %nmaskw_val7707)
-  %concat7709 = call ptr @ofs_str_concat(ptr %concat7708, ptr @str.427)
-  %maskw_val7710 = load ptr, ptr %maskw7681
-  %concat7711 = call ptr @ofs_str_concat(ptr %concat7709, ptr %maskw_val7710)
-  %concat7712 = call ptr @ofs_str_concat(ptr %concat7711, ptr @str.428)
-  call void @cg_emit(ptr %concat7712)
-  %rw_val7713 = load ptr, ptr %rw7695
-  %concat7714 = call ptr @ofs_str_concat(ptr @str.233, ptr %rw_val7713)
-  %concat7715 = call ptr @ofs_str_concat(ptr %concat7714, ptr @str.483)
-  %rightw_val7716 = load ptr, ptr %rightw7689
-  %concat7717 = call ptr @ofs_str_concat(ptr %concat7715, ptr %rightw_val7716)
-  %concat7718 = call ptr @ofs_str_concat(ptr %concat7717, ptr @str.217)
-  %nmaskw_val7719 = load ptr, ptr %nmaskw7693
-  %concat7720 = call ptr @ofs_str_concat(ptr %concat7718, ptr %nmaskw_val7719)
-  call void @cg_emit(ptr %concat7720)
-  %woven_val7721 = load ptr, ptr %woven7697
-  %concat7722 = call ptr @ofs_str_concat(ptr @str.233, ptr %woven_val7721)
-  %concat7723 = call ptr @ofs_str_concat(ptr %concat7722, ptr @str.476)
-  %lw_val7724 = load ptr, ptr %lw7691
-  %concat7725 = call ptr @ofs_str_concat(ptr %concat7723, ptr %lw_val7724)
-  %concat7726 = call ptr @ofs_str_concat(ptr %concat7725, ptr @str.217)
-  %rw_val7727 = load ptr, ptr %rw7695
-  %concat7728 = call ptr @ofs_str_concat(ptr %concat7726, ptr %rw_val7727)
-  call void @cg_emit(ptr %concat7728)
-  %woven_val7729 = load ptr, ptr %woven7697
-  store ptr %woven_val7729, ptr @llvmgen___expr_val
+  %id_val7750 = load i64, ptr %id.addr
+  %call7751 = call i64 @node_get_extra(i64 %id_val7750, i64 0)
+  call void @llvmgen__emit_expr(i64 %call7751)
+  %maskw7752 = alloca ptr, align 8
+  %llvmgen___expr_val_val7753 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7753, ptr %maskw7752
+  %id_val7754 = load i64, ptr %id.addr
+  %call7755 = call i64 @node_get_extra(i64 %id_val7754, i64 1)
+  call void @llvmgen__emit_expr(i64 %call7755)
+  %leftw7756 = alloca ptr, align 8
+  %llvmgen___expr_val_val7757 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7757, ptr %leftw7756
+  %id_val7758 = load i64, ptr %id.addr
+  %call7759 = call i64 @node_get_extra(i64 %id_val7758, i64 2)
+  call void @llvmgen__emit_expr(i64 %call7759)
+  %rightw7760 = alloca ptr, align 8
+  %llvmgen___expr_val_val7761 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7761, ptr %rightw7760
+  %lw7762 = alloca ptr, align 8
+  %call7763 = call ptr @llvmgen__next_tmp(ptr @str.494)
+  store ptr %call7763, ptr %lw7762
+  %nmaskw7764 = alloca ptr, align 8
+  %call7765 = call ptr @llvmgen__next_tmp(ptr @str.495)
+  store ptr %call7765, ptr %nmaskw7764
+  %rw7766 = alloca ptr, align 8
+  %call7767 = call ptr @llvmgen__next_tmp(ptr @str.496)
+  store ptr %call7767, ptr %rw7766
+  %woven7768 = alloca ptr, align 8
+  %call7769 = call ptr @llvmgen__next_tmp(ptr @str.497)
+  store ptr %call7769, ptr %woven7768
+  %lw_val7770 = load ptr, ptr %lw7762
+  %concat7771 = call ptr @ofs_str_concat(ptr @str.233, ptr %lw_val7770)
+  %concat7772 = call ptr @ofs_str_concat(ptr %concat7771, ptr @str.483)
+  %leftw_val7773 = load ptr, ptr %leftw7756
+  %concat7774 = call ptr @ofs_str_concat(ptr %concat7772, ptr %leftw_val7773)
+  %concat7775 = call ptr @ofs_str_concat(ptr %concat7774, ptr @str.217)
+  %maskw_val7776 = load ptr, ptr %maskw7752
+  %concat7777 = call ptr @ofs_str_concat(ptr %concat7775, ptr %maskw_val7776)
+  call void @cg_emit(ptr %concat7777)
+  %nmaskw_val7778 = load ptr, ptr %nmaskw7764
+  %concat7779 = call ptr @ofs_str_concat(ptr @str.233, ptr %nmaskw_val7778)
+  %concat7780 = call ptr @ofs_str_concat(ptr %concat7779, ptr @str.427)
+  %maskw_val7781 = load ptr, ptr %maskw7752
+  %concat7782 = call ptr @ofs_str_concat(ptr %concat7780, ptr %maskw_val7781)
+  %concat7783 = call ptr @ofs_str_concat(ptr %concat7782, ptr @str.428)
+  call void @cg_emit(ptr %concat7783)
+  %rw_val7784 = load ptr, ptr %rw7766
+  %concat7785 = call ptr @ofs_str_concat(ptr @str.233, ptr %rw_val7784)
+  %concat7786 = call ptr @ofs_str_concat(ptr %concat7785, ptr @str.483)
+  %rightw_val7787 = load ptr, ptr %rightw7760
+  %concat7788 = call ptr @ofs_str_concat(ptr %concat7786, ptr %rightw_val7787)
+  %concat7789 = call ptr @ofs_str_concat(ptr %concat7788, ptr @str.217)
+  %nmaskw_val7790 = load ptr, ptr %nmaskw7764
+  %concat7791 = call ptr @ofs_str_concat(ptr %concat7789, ptr %nmaskw_val7790)
+  call void @cg_emit(ptr %concat7791)
+  %woven_val7792 = load ptr, ptr %woven7768
+  %concat7793 = call ptr @ofs_str_concat(ptr @str.233, ptr %woven_val7792)
+  %concat7794 = call ptr @ofs_str_concat(ptr %concat7793, ptr @str.476)
+  %lw_val7795 = load ptr, ptr %lw7762
+  %concat7796 = call ptr @ofs_str_concat(ptr %concat7794, ptr %lw_val7795)
+  %concat7797 = call ptr @ofs_str_concat(ptr %concat7796, ptr @str.217)
+  %rw_val7798 = load ptr, ptr %rw7766
+  %concat7799 = call ptr @ofs_str_concat(ptr %concat7797, ptr %rw_val7798)
+  call void @cg_emit(ptr %concat7799)
+  %woven_val7800 = load ptr, ptr %woven7768
+  store ptr %woven_val7800, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17912,16 +18021,16 @@ if_else2329:
   br label %if_end2330
 
 if_end2330:
-  %field_ptr7730 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7731 = load ptr, ptr %field_ptr7730
-  %streq7732 = call i32 @ofs_str_eq(ptr %field7731, ptr @str.498)
-  %field_ptr7733 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7734 = load ptr, ptr %field_ptr7733
-  %streq7735 = call i32 @ofs_str_eq(ptr %field7734, ptr @str.499)
-  %cond7736 = icmp ne i32 %streq7732, 0
-  %cond7737 = icmp ne i32 %streq7735, 0
-  %logic7738 = or i1 %cond7736, %cond7737
-  br i1 %logic7738, label %if_then2331, label %if_else2332
+  %field_ptr7801 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7802 = load ptr, ptr %field_ptr7801
+  %streq7803 = call i32 @ofs_str_eq(ptr %field7802, ptr @str.498)
+  %field_ptr7804 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7805 = load ptr, ptr %field_ptr7804
+  %streq7806 = call i32 @ofs_str_eq(ptr %field7805, ptr @str.499)
+  %cond7807 = icmp ne i32 %streq7803, 0
+  %cond7808 = icmp ne i32 %streq7806, 0
+  %logic7809 = or i1 %cond7807, %cond7808
+  br i1 %logic7809, label %if_then2331, label %if_else2332
 
 if_then2331:
   store ptr @str.140, ptr @llvmgen___expr_val
@@ -17932,31 +18041,31 @@ if_else2332:
   br label %if_end2333
 
 if_end2333:
-  %field_ptr7739 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7740 = load ptr, ptr %field_ptr7739
-  %streq7741 = call i32 @ofs_str_eq(ptr %field7740, ptr @str.500)
-  %cond7742 = icmp ne i32 %streq7741, 0
-  br i1 %cond7742, label %if_then2334, label %if_else2335
+  %field_ptr7810 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7811 = load ptr, ptr %field_ptr7810
+  %streq7812 = call i32 @ofs_str_eq(ptr %field7811, ptr @str.500)
+  %cond7813 = icmp ne i32 %streq7812, 0
+  br i1 %cond7813, label %if_then2334, label %if_else2335
 
 if_then2334:
-  %arr_id7743 = alloca i64, align 8
-  %id_val7744 = load i64, ptr %id.addr
-  %call7745 = call i64 @node_get_extra(i64 %id_val7744, i64 0)
-  store i64 %call7745, ptr %arr_id7743
-  %arr_id_val7746 = load i64, ptr %arr_id7743
-  call void @llvmgen__emit_expr(i64 %arr_id_val7746)
-  %alen7747 = alloca ptr, align 8
-  %call7748 = call ptr @llvmgen__next_tmp(ptr @str.501)
-  store ptr %call7748, ptr %alen7747
-  %alen_val7749 = load ptr, ptr %alen7747
-  %concat7750 = call ptr @ofs_str_concat(ptr @str.233, ptr %alen_val7749)
-  %concat7751 = call ptr @ofs_str_concat(ptr %concat7750, ptr @str.502)
-  %llvmgen___expr_val_val7752 = load ptr, ptr @llvmgen___expr_val
-  %concat7753 = call ptr @ofs_str_concat(ptr %concat7751, ptr %llvmgen___expr_val_val7752)
-  %concat7754 = call ptr @ofs_str_concat(ptr %concat7753, ptr @str.125)
-  call void @cg_emit(ptr %concat7754)
-  %alen_val7755 = load ptr, ptr %alen7747
-  store ptr %alen_val7755, ptr @llvmgen___expr_val
+  %arr_id7814 = alloca i64, align 8
+  %id_val7815 = load i64, ptr %id.addr
+  %call7816 = call i64 @node_get_extra(i64 %id_val7815, i64 0)
+  store i64 %call7816, ptr %arr_id7814
+  %arr_id_val7817 = load i64, ptr %arr_id7814
+  call void @llvmgen__emit_expr(i64 %arr_id_val7817)
+  %alen7818 = alloca ptr, align 8
+  %call7819 = call ptr @llvmgen__next_tmp(ptr @str.501)
+  store ptr %call7819, ptr %alen7818
+  %alen_val7820 = load ptr, ptr %alen7818
+  %concat7821 = call ptr @ofs_str_concat(ptr @str.233, ptr %alen_val7820)
+  %concat7822 = call ptr @ofs_str_concat(ptr %concat7821, ptr @str.502)
+  %llvmgen___expr_val_val7823 = load ptr, ptr @llvmgen___expr_val
+  %concat7824 = call ptr @ofs_str_concat(ptr %concat7822, ptr %llvmgen___expr_val_val7823)
+  %concat7825 = call ptr @ofs_str_concat(ptr %concat7824, ptr @str.125)
+  call void @cg_emit(ptr %concat7825)
+  %alen_val7826 = load ptr, ptr %alen7818
+  store ptr %alen_val7826, ptr @llvmgen___expr_val
   store ptr @str.181, ptr @llvmgen___expr_type
   ret void
 
@@ -17964,71 +18073,71 @@ if_else2335:
   br label %if_end2336
 
 if_end2336:
-  %field_ptr7756 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7757 = load ptr, ptr %field_ptr7756
-  %streq7758 = call i32 @ofs_str_eq(ptr %field7757, ptr @str.503)
-  %cond7759 = icmp ne i32 %streq7758, 0
-  br i1 %cond7759, label %if_then2337, label %if_else2338
+  %field_ptr7827 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7828 = load ptr, ptr %field_ptr7827
+  %streq7829 = call i32 @ofs_str_eq(ptr %field7828, ptr @str.503)
+  %cond7830 = icmp ne i32 %streq7829, 0
+  br i1 %cond7830, label %if_then2337, label %if_else2338
 
 if_then2337:
-  %id_val7760 = load i64, ptr %id.addr
-  call void @llvmgen__emit_array_get(i64 %id_val7760, ptr @str.181)
+  %id_val7831 = load i64, ptr %id.addr
+  call void @llvmgen__emit_array_get(i64 %id_val7831, ptr @str.181)
   ret void
 
 if_else2338:
   br label %if_end2339
 
 if_end2339:
-  %field_ptr7761 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7762 = load ptr, ptr %field_ptr7761
-  %streq7763 = call i32 @ofs_str_eq(ptr %field7762, ptr @str.504)
-  %cond7764 = icmp ne i32 %streq7763, 0
-  br i1 %cond7764, label %if_then2340, label %if_else2341
+  %field_ptr7832 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7833 = load ptr, ptr %field_ptr7832
+  %streq7834 = call i32 @ofs_str_eq(ptr %field7833, ptr @str.504)
+  %cond7835 = icmp ne i32 %streq7834, 0
+  br i1 %cond7835, label %if_then2340, label %if_else2341
 
 if_then2340:
-  %arr_id27765 = alloca i64, align 8
-  %id_val7766 = load i64, ptr %id.addr
-  %call7767 = call i64 @node_get_extra(i64 %id_val7766, i64 0)
-  store i64 %call7767, ptr %arr_id27765
-  %arr_id2_val7768 = load i64, ptr %arr_id27765
-  call void @llvmgen__emit_expr(i64 %arr_id2_val7768)
-  %arr27769 = alloca ptr, align 8
-  %llvmgen___expr_val_val7770 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7770, ptr %arr27769
-  %val_id27771 = alloca i64, align 8
-  %id_val7772 = load i64, ptr %id.addr
-  %call7773 = call i64 @node_get_extra(i64 %id_val7772, i64 1)
-  store i64 %call7773, ptr %val_id27771
-  %val_id2_val7774 = load i64, ptr %val_id27771
-  call void @llvmgen__emit_expr(i64 %val_id2_val7774)
-  %slot27775 = alloca ptr, align 8
-  %call7776 = call ptr @llvmgen__next_tmp(ptr @str.505)
-  store ptr %call7776, ptr %slot27775
-  %slot2_val7777 = load ptr, ptr %slot27775
-  %concat7778 = call ptr @ofs_str_concat(ptr @str.233, ptr %slot2_val7777)
-  %concat7779 = call ptr @ofs_str_concat(ptr %concat7778, ptr @str.363)
-  %llvmgen___expr_type_val7780 = load ptr, ptr @llvmgen___expr_type
-  %call7781 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7780)
-  %concat7782 = call ptr @ofs_str_concat(ptr %concat7779, ptr %call7781)
-  %concat7783 = call ptr @ofs_str_concat(ptr %concat7782, ptr @str.364)
-  call void @cg_emit(ptr %concat7783)
-  %llvmgen___expr_type_val7784 = load ptr, ptr @llvmgen___expr_type
-  %call7785 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7784)
-  %concat7786 = call ptr @ofs_str_concat(ptr @str.365, ptr %call7785)
-  %concat7787 = call ptr @ofs_str_concat(ptr %concat7786, ptr @str.216)
-  %llvmgen___expr_val_val7788 = load ptr, ptr @llvmgen___expr_val
-  %concat7789 = call ptr @ofs_str_concat(ptr %concat7787, ptr %llvmgen___expr_val_val7788)
-  %concat7790 = call ptr @ofs_str_concat(ptr %concat7789, ptr @str.276)
-  %slot2_val7791 = load ptr, ptr %slot27775
-  %concat7792 = call ptr @ofs_str_concat(ptr %concat7790, ptr %slot2_val7791)
-  call void @cg_emit(ptr %concat7792)
-  %arr2_val7793 = load ptr, ptr %arr27769
-  %concat7794 = call ptr @ofs_str_concat(ptr @str.366, ptr %arr2_val7793)
-  %concat7795 = call ptr @ofs_str_concat(ptr %concat7794, ptr @str.276)
-  %slot2_val7796 = load ptr, ptr %slot27775
-  %concat7797 = call ptr @ofs_str_concat(ptr %concat7795, ptr %slot2_val7796)
-  %concat7798 = call ptr @ofs_str_concat(ptr %concat7797, ptr @str.125)
-  call void @cg_emit(ptr %concat7798)
+  %arr_id27836 = alloca i64, align 8
+  %id_val7837 = load i64, ptr %id.addr
+  %call7838 = call i64 @node_get_extra(i64 %id_val7837, i64 0)
+  store i64 %call7838, ptr %arr_id27836
+  %arr_id2_val7839 = load i64, ptr %arr_id27836
+  call void @llvmgen__emit_expr(i64 %arr_id2_val7839)
+  %arr27840 = alloca ptr, align 8
+  %llvmgen___expr_val_val7841 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7841, ptr %arr27840
+  %val_id27842 = alloca i64, align 8
+  %id_val7843 = load i64, ptr %id.addr
+  %call7844 = call i64 @node_get_extra(i64 %id_val7843, i64 1)
+  store i64 %call7844, ptr %val_id27842
+  %val_id2_val7845 = load i64, ptr %val_id27842
+  call void @llvmgen__emit_expr(i64 %val_id2_val7845)
+  %slot27846 = alloca ptr, align 8
+  %call7847 = call ptr @llvmgen__next_tmp(ptr @str.505)
+  store ptr %call7847, ptr %slot27846
+  %slot2_val7848 = load ptr, ptr %slot27846
+  %concat7849 = call ptr @ofs_str_concat(ptr @str.233, ptr %slot2_val7848)
+  %concat7850 = call ptr @ofs_str_concat(ptr %concat7849, ptr @str.363)
+  %llvmgen___expr_type_val7851 = load ptr, ptr @llvmgen___expr_type
+  %call7852 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7851)
+  %concat7853 = call ptr @ofs_str_concat(ptr %concat7850, ptr %call7852)
+  %concat7854 = call ptr @ofs_str_concat(ptr %concat7853, ptr @str.364)
+  call void @cg_emit(ptr %concat7854)
+  %llvmgen___expr_type_val7855 = load ptr, ptr @llvmgen___expr_type
+  %call7856 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7855)
+  %concat7857 = call ptr @ofs_str_concat(ptr @str.365, ptr %call7856)
+  %concat7858 = call ptr @ofs_str_concat(ptr %concat7857, ptr @str.216)
+  %llvmgen___expr_val_val7859 = load ptr, ptr @llvmgen___expr_val
+  %concat7860 = call ptr @ofs_str_concat(ptr %concat7858, ptr %llvmgen___expr_val_val7859)
+  %concat7861 = call ptr @ofs_str_concat(ptr %concat7860, ptr @str.276)
+  %slot2_val7862 = load ptr, ptr %slot27846
+  %concat7863 = call ptr @ofs_str_concat(ptr %concat7861, ptr %slot2_val7862)
+  call void @cg_emit(ptr %concat7863)
+  %arr2_val7864 = load ptr, ptr %arr27840
+  %concat7865 = call ptr @ofs_str_concat(ptr @str.366, ptr %arr2_val7864)
+  %concat7866 = call ptr @ofs_str_concat(ptr %concat7865, ptr @str.276)
+  %slot2_val7867 = load ptr, ptr %slot27846
+  %concat7868 = call ptr @ofs_str_concat(ptr %concat7866, ptr %slot2_val7867)
+  %concat7869 = call ptr @ofs_str_concat(ptr %concat7868, ptr @str.125)
+  call void @cg_emit(ptr %concat7869)
   store ptr @str.140, ptr @llvmgen___expr_val
   store ptr @str.180, ptr @llvmgen___expr_type
   ret void
@@ -18037,68 +18146,68 @@ if_else2341:
   br label %if_end2342
 
 if_end2342:
-  %field_ptr7799 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7800 = load ptr, ptr %field_ptr7799
-  %streq7801 = call i32 @ofs_str_eq(ptr %field7800, ptr @str.506)
-  %cond7802 = icmp ne i32 %streq7801, 0
-  br i1 %cond7802, label %if_then2343, label %if_else2344
+  %field_ptr7870 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7871 = load ptr, ptr %field_ptr7870
+  %streq7872 = call i32 @ofs_str_eq(ptr %field7871, ptr @str.506)
+  %cond7873 = icmp ne i32 %streq7872, 0
+  br i1 %cond7873, label %if_then2343, label %if_else2344
 
 if_then2343:
-  %arr_id37803 = alloca i64, align 8
-  %id_val7804 = load i64, ptr %id.addr
-  %call7805 = call i64 @node_get_extra(i64 %id_val7804, i64 0)
-  store i64 %call7805, ptr %arr_id37803
-  %arr_id3_val7806 = load i64, ptr %arr_id37803
-  call void @llvmgen__emit_expr(i64 %arr_id3_val7806)
-  %arr37807 = alloca ptr, align 8
-  %llvmgen___expr_val_val7808 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7808, ptr %arr37807
-  %idx_id37809 = alloca i64, align 8
-  %id_val7810 = load i64, ptr %id.addr
-  %call7811 = call i64 @node_get_extra(i64 %id_val7810, i64 1)
-  store i64 %call7811, ptr %idx_id37809
-  %idx_id3_val7812 = load i64, ptr %idx_id37809
-  call void @llvmgen__emit_expr(i64 %idx_id3_val7812)
-  %idx37813 = alloca ptr, align 8
-  %llvmgen___expr_val_val7814 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val7814, ptr %idx37813
-  %val_id37815 = alloca i64, align 8
-  %id_val7816 = load i64, ptr %id.addr
-  %call7817 = call i64 @node_get_extra(i64 %id_val7816, i64 2)
-  store i64 %call7817, ptr %val_id37815
-  %val_id3_val7818 = load i64, ptr %val_id37815
-  call void @llvmgen__emit_expr(i64 %val_id3_val7818)
-  %slot37819 = alloca ptr, align 8
-  %call7820 = call ptr @llvmgen__next_tmp(ptr @str.507)
-  store ptr %call7820, ptr %slot37819
-  %slot3_val7821 = load ptr, ptr %slot37819
-  %concat7822 = call ptr @ofs_str_concat(ptr @str.233, ptr %slot3_val7821)
-  %concat7823 = call ptr @ofs_str_concat(ptr %concat7822, ptr @str.363)
-  %llvmgen___expr_type_val7824 = load ptr, ptr @llvmgen___expr_type
-  %call7825 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7824)
-  %concat7826 = call ptr @ofs_str_concat(ptr %concat7823, ptr %call7825)
-  %concat7827 = call ptr @ofs_str_concat(ptr %concat7826, ptr @str.364)
-  call void @cg_emit(ptr %concat7827)
-  %llvmgen___expr_type_val7828 = load ptr, ptr @llvmgen___expr_type
-  %call7829 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7828)
-  %concat7830 = call ptr @ofs_str_concat(ptr @str.365, ptr %call7829)
-  %concat7831 = call ptr @ofs_str_concat(ptr %concat7830, ptr @str.216)
-  %llvmgen___expr_val_val7832 = load ptr, ptr @llvmgen___expr_val
-  %concat7833 = call ptr @ofs_str_concat(ptr %concat7831, ptr %llvmgen___expr_val_val7832)
-  %concat7834 = call ptr @ofs_str_concat(ptr %concat7833, ptr @str.276)
-  %slot3_val7835 = load ptr, ptr %slot37819
-  %concat7836 = call ptr @ofs_str_concat(ptr %concat7834, ptr %slot3_val7835)
-  call void @cg_emit(ptr %concat7836)
-  %arr3_val7837 = load ptr, ptr %arr37807
-  %concat7838 = call ptr @ofs_str_concat(ptr @str.508, ptr %arr3_val7837)
-  %concat7839 = call ptr @ofs_str_concat(ptr %concat7838, ptr @str.272)
-  %idx3_val7840 = load ptr, ptr %idx37813
-  %concat7841 = call ptr @ofs_str_concat(ptr %concat7839, ptr %idx3_val7840)
-  %concat7842 = call ptr @ofs_str_concat(ptr %concat7841, ptr @str.276)
-  %slot3_val7843 = load ptr, ptr %slot37819
-  %concat7844 = call ptr @ofs_str_concat(ptr %concat7842, ptr %slot3_val7843)
-  %concat7845 = call ptr @ofs_str_concat(ptr %concat7844, ptr @str.125)
-  call void @cg_emit(ptr %concat7845)
+  %arr_id37874 = alloca i64, align 8
+  %id_val7875 = load i64, ptr %id.addr
+  %call7876 = call i64 @node_get_extra(i64 %id_val7875, i64 0)
+  store i64 %call7876, ptr %arr_id37874
+  %arr_id3_val7877 = load i64, ptr %arr_id37874
+  call void @llvmgen__emit_expr(i64 %arr_id3_val7877)
+  %arr37878 = alloca ptr, align 8
+  %llvmgen___expr_val_val7879 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7879, ptr %arr37878
+  %idx_id37880 = alloca i64, align 8
+  %id_val7881 = load i64, ptr %id.addr
+  %call7882 = call i64 @node_get_extra(i64 %id_val7881, i64 1)
+  store i64 %call7882, ptr %idx_id37880
+  %idx_id3_val7883 = load i64, ptr %idx_id37880
+  call void @llvmgen__emit_expr(i64 %idx_id3_val7883)
+  %idx37884 = alloca ptr, align 8
+  %llvmgen___expr_val_val7885 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val7885, ptr %idx37884
+  %val_id37886 = alloca i64, align 8
+  %id_val7887 = load i64, ptr %id.addr
+  %call7888 = call i64 @node_get_extra(i64 %id_val7887, i64 2)
+  store i64 %call7888, ptr %val_id37886
+  %val_id3_val7889 = load i64, ptr %val_id37886
+  call void @llvmgen__emit_expr(i64 %val_id3_val7889)
+  %slot37890 = alloca ptr, align 8
+  %call7891 = call ptr @llvmgen__next_tmp(ptr @str.507)
+  store ptr %call7891, ptr %slot37890
+  %slot3_val7892 = load ptr, ptr %slot37890
+  %concat7893 = call ptr @ofs_str_concat(ptr @str.233, ptr %slot3_val7892)
+  %concat7894 = call ptr @ofs_str_concat(ptr %concat7893, ptr @str.363)
+  %llvmgen___expr_type_val7895 = load ptr, ptr @llvmgen___expr_type
+  %call7896 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7895)
+  %concat7897 = call ptr @ofs_str_concat(ptr %concat7894, ptr %call7896)
+  %concat7898 = call ptr @ofs_str_concat(ptr %concat7897, ptr @str.364)
+  call void @cg_emit(ptr %concat7898)
+  %llvmgen___expr_type_val7899 = load ptr, ptr @llvmgen___expr_type
+  %call7900 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7899)
+  %concat7901 = call ptr @ofs_str_concat(ptr @str.365, ptr %call7900)
+  %concat7902 = call ptr @ofs_str_concat(ptr %concat7901, ptr @str.216)
+  %llvmgen___expr_val_val7903 = load ptr, ptr @llvmgen___expr_val
+  %concat7904 = call ptr @ofs_str_concat(ptr %concat7902, ptr %llvmgen___expr_val_val7903)
+  %concat7905 = call ptr @ofs_str_concat(ptr %concat7904, ptr @str.276)
+  %slot3_val7906 = load ptr, ptr %slot37890
+  %concat7907 = call ptr @ofs_str_concat(ptr %concat7905, ptr %slot3_val7906)
+  call void @cg_emit(ptr %concat7907)
+  %arr3_val7908 = load ptr, ptr %arr37878
+  %concat7909 = call ptr @ofs_str_concat(ptr @str.508, ptr %arr3_val7908)
+  %concat7910 = call ptr @ofs_str_concat(ptr %concat7909, ptr @str.272)
+  %idx3_val7911 = load ptr, ptr %idx37884
+  %concat7912 = call ptr @ofs_str_concat(ptr %concat7910, ptr %idx3_val7911)
+  %concat7913 = call ptr @ofs_str_concat(ptr %concat7912, ptr @str.276)
+  %slot3_val7914 = load ptr, ptr %slot37890
+  %concat7915 = call ptr @ofs_str_concat(ptr %concat7913, ptr %slot3_val7914)
+  %concat7916 = call ptr @ofs_str_concat(ptr %concat7915, ptr @str.125)
+  call void @cg_emit(ptr %concat7916)
   store ptr @str.140, ptr @llvmgen___expr_val
   store ptr @str.180, ptr @llvmgen___expr_type
   ret void
@@ -18107,31 +18216,31 @@ if_else2344:
   br label %if_end2345
 
 if_end2345:
-  %field_ptr7846 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7847 = load ptr, ptr %field_ptr7846
-  %streq7848 = call i32 @ofs_str_eq(ptr %field7847, ptr @str.509)
-  %cond7849 = icmp ne i32 %streq7848, 0
-  br i1 %cond7849, label %if_then2346, label %if_else2347
+  %field_ptr7917 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7918 = load ptr, ptr %field_ptr7917
+  %streq7919 = call i32 @ofs_str_eq(ptr %field7918, ptr @str.509)
+  %cond7920 = icmp ne i32 %streq7919, 0
+  br i1 %cond7920, label %if_then2346, label %if_else2347
 
 if_then2346:
-  %arr_id47850 = alloca i64, align 8
-  %id_val7851 = load i64, ptr %id.addr
-  %call7852 = call i64 @node_get_extra(i64 %id_val7851, i64 0)
-  store i64 %call7852, ptr %arr_id47850
-  %arr_id4_val7853 = load i64, ptr %arr_id47850
-  call void @llvmgen__emit_expr(i64 %arr_id4_val7853)
-  %pop_raw7854 = alloca ptr, align 8
-  %call7855 = call ptr @llvmgen__next_tmp(ptr @str.510)
-  store ptr %call7855, ptr %pop_raw7854
-  %pop_raw_val7856 = load ptr, ptr %pop_raw7854
-  %concat7857 = call ptr @ofs_str_concat(ptr @str.233, ptr %pop_raw_val7856)
-  %concat7858 = call ptr @ofs_str_concat(ptr %concat7857, ptr @str.511)
-  %llvmgen___expr_val_val7859 = load ptr, ptr @llvmgen___expr_val
-  %concat7860 = call ptr @ofs_str_concat(ptr %concat7858, ptr %llvmgen___expr_val_val7859)
-  %concat7861 = call ptr @ofs_str_concat(ptr %concat7860, ptr @str.125)
-  call void @cg_emit(ptr %concat7861)
-  %pop_raw_val7862 = load ptr, ptr %pop_raw7854
-  store ptr %pop_raw_val7862, ptr @llvmgen___expr_val
+  %arr_id47921 = alloca i64, align 8
+  %id_val7922 = load i64, ptr %id.addr
+  %call7923 = call i64 @node_get_extra(i64 %id_val7922, i64 0)
+  store i64 %call7923, ptr %arr_id47921
+  %arr_id4_val7924 = load i64, ptr %arr_id47921
+  call void @llvmgen__emit_expr(i64 %arr_id4_val7924)
+  %pop_raw7925 = alloca ptr, align 8
+  %call7926 = call ptr @llvmgen__next_tmp(ptr @str.510)
+  store ptr %call7926, ptr %pop_raw7925
+  %pop_raw_val7927 = load ptr, ptr %pop_raw7925
+  %concat7928 = call ptr @ofs_str_concat(ptr @str.233, ptr %pop_raw_val7927)
+  %concat7929 = call ptr @ofs_str_concat(ptr %concat7928, ptr @str.511)
+  %llvmgen___expr_val_val7930 = load ptr, ptr @llvmgen___expr_val
+  %concat7931 = call ptr @ofs_str_concat(ptr %concat7929, ptr %llvmgen___expr_val_val7930)
+  %concat7932 = call ptr @ofs_str_concat(ptr %concat7931, ptr @str.125)
+  call void @cg_emit(ptr %concat7932)
+  %pop_raw_val7933 = load ptr, ptr %pop_raw7925
+  store ptr %pop_raw_val7933, ptr @llvmgen___expr_val
   store ptr @str.243, ptr @llvmgen___expr_type
   ret void
 
@@ -18139,116 +18248,119 @@ if_else2347:
   br label %if_end2348
 
 if_end2348:
-  %args7863 = alloca ptr, align 8
-  store ptr @str.63, ptr %args7863
-  %i7864 = alloca i64, align 8
-  store i64 0, ptr %i7864
+  %args7934 = alloca ptr, align 8
+  store ptr @str.63, ptr %args7934
+  %i7935 = alloca i64, align 8
+  store i64 0, ptr %i7935
+  %arg_count7936 = alloca i64, align 8
+  %id_val7937 = load i64, ptr %id.addr
+  %call7938 = call i64 @node_extra_len(i64 %id_val7937)
+  store i64 %call7938, ptr %arg_count7936
   br label %while_cond2349
 
 while_cond2349:
-  %i_val7865 = load i64, ptr %i7864
-  %id_val7866 = load i64, ptr %id.addr
-  %call7867 = call i64 @node_extra_len(i64 %id_val7866)
-  %cmp7868 = icmp slt i64 %i_val7865, %call7867
-  br i1 %cmp7868, label %while_body2350, label %while_end2351
+  %i_val7939 = load i64, ptr %i7935
+  %arg_count_val7940 = load i64, ptr %arg_count7936
+  %cmp7941 = icmp slt i64 %i_val7939, %arg_count_val7940
+  br i1 %cmp7941, label %while_body2350, label %while_end2351
 
 while_body2350:
-  %i_val7869 = load i64, ptr %i7864
-  %cmp7870 = icmp sgt i64 %i_val7869, 0
-  br i1 %cmp7870, label %if_then2352, label %if_else2353
+  %i_val7942 = load i64, ptr %i7935
+  %cmp7943 = icmp sgt i64 %i_val7942, 0
+  br i1 %cmp7943, label %if_then2352, label %if_else2353
 
 if_then2352:
-  %args_val7871 = load ptr, ptr %args7863
-  %concat7872 = call ptr @ofs_str_concat(ptr %args_val7871, ptr @str.217)
-  store ptr %concat7872, ptr %args7863
+  %args_val7944 = load ptr, ptr %args7934
+  %concat7945 = call ptr @ofs_str_concat(ptr %args_val7944, ptr @str.217)
+  store ptr %concat7945, ptr %args7934
   br label %if_end2354
 
 if_else2353:
   br label %if_end2354
 
 if_end2354:
-  %arg_id7873 = alloca i64, align 8
-  %id_val7874 = load i64, ptr %id.addr
-  %i_val7875 = load i64, ptr %i7864
-  %call7876 = call i64 @node_get_extra(i64 %id_val7874, i64 %i_val7875)
-  store i64 %call7876, ptr %arg_id7873
-  %arg_id_val7877 = load i64, ptr %arg_id7873
-  call void @llvmgen__emit_expr(i64 %arg_id_val7877)
-  %args_val7878 = load ptr, ptr %args7863
-  %llvmgen___expr_type_val7879 = load ptr, ptr @llvmgen___expr_type
-  %call7880 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7879)
-  %concat7881 = call ptr @ofs_str_concat(ptr %args_val7878, ptr %call7880)
-  %concat7882 = call ptr @ofs_str_concat(ptr %concat7881, ptr @str.216)
-  %llvmgen___expr_val_val7883 = load ptr, ptr @llvmgen___expr_val
-  %concat7884 = call ptr @ofs_str_concat(ptr %concat7882, ptr %llvmgen___expr_val_val7883)
-  store ptr %concat7884, ptr %args7863
-  %post_old7885 = load i64, ptr %i7864
-  %post_new7886 = add i64 %post_old7885, 1
-  store i64 %post_new7886, ptr %i7864
+  %arg_id7946 = alloca i64, align 8
+  %id_val7947 = load i64, ptr %id.addr
+  %i_val7948 = load i64, ptr %i7935
+  %call7949 = call i64 @node_get_extra(i64 %id_val7947, i64 %i_val7948)
+  store i64 %call7949, ptr %arg_id7946
+  %arg_id_val7950 = load i64, ptr %arg_id7946
+  call void @llvmgen__emit_expr(i64 %arg_id_val7950)
+  %args_val7951 = load ptr, ptr %args7934
+  %llvmgen___expr_type_val7952 = load ptr, ptr @llvmgen___expr_type
+  %call7953 = call ptr @llvmgen__llvm_type(ptr %llvmgen___expr_type_val7952)
+  %concat7954 = call ptr @ofs_str_concat(ptr %args_val7951, ptr %call7953)
+  %concat7955 = call ptr @ofs_str_concat(ptr %concat7954, ptr @str.216)
+  %llvmgen___expr_val_val7956 = load ptr, ptr @llvmgen___expr_val
+  %concat7957 = call ptr @ofs_str_concat(ptr %concat7955, ptr %llvmgen___expr_val_val7956)
+  store ptr %concat7957, ptr %args7934
+  %post_old7958 = load i64, ptr %i7935
+  %post_new7959 = add i64 %post_old7958, 1
+  store i64 %post_new7959, ptr %i7935
   br label %while_cond2349
 
 while_end2351:
-  %ret_type7887 = alloca ptr, align 8
-  %field_ptr7888 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 2
-  %field7889 = load ptr, ptr %field_ptr7888
-  store ptr %field7889, ptr %ret_type7887
-  %ret_type_val7890 = load ptr, ptr %ret_type7887
-  %streq7891 = call i32 @ofs_str_eq(ptr %ret_type_val7890, ptr @str.63)
-  %cond7892 = icmp ne i32 %streq7891, 0
-  br i1 %cond7892, label %if_then2355, label %if_else2356
+  %ret_type7960 = alloca ptr, align 8
+  %field_ptr7961 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 2
+  %field7962 = load ptr, ptr %field_ptr7961
+  store ptr %field7962, ptr %ret_type7960
+  %ret_type_val7963 = load ptr, ptr %ret_type7960
+  %streq7964 = call i32 @ofs_str_eq(ptr %ret_type_val7963, ptr @str.63)
+  %cond7965 = icmp ne i32 %streq7964, 0
+  br i1 %cond7965, label %if_then2355, label %if_else2356
 
 if_then2355:
-  store ptr @str.181, ptr %ret_type7887
+  store ptr @str.181, ptr %ret_type7960
   br label %if_end2357
 
 if_else2356:
   br label %if_end2357
 
 if_end2357:
-  %ret_llvm7893 = alloca ptr, align 8
-  %ret_type_val7894 = load ptr, ptr %ret_type7887
-  %call7895 = call ptr @llvmgen__llvm_type(ptr %ret_type_val7894)
-  store ptr %call7895, ptr %ret_llvm7893
-  %ret_llvm_val7896 = load ptr, ptr %ret_llvm7893
-  %streq7897 = call i32 @ofs_str_eq(ptr %ret_llvm_val7896, ptr @str.180)
-  %cond7898 = icmp ne i32 %streq7897, 0
-  br i1 %cond7898, label %if_then2358, label %if_else2359
+  %ret_llvm7966 = alloca ptr, align 8
+  %ret_type_val7967 = load ptr, ptr %ret_type7960
+  %call7968 = call ptr @llvmgen__llvm_type(ptr %ret_type_val7967)
+  store ptr %call7968, ptr %ret_llvm7966
+  %ret_llvm_val7969 = load ptr, ptr %ret_llvm7966
+  %streq7970 = call i32 @ofs_str_eq(ptr %ret_llvm_val7969, ptr @str.180)
+  %cond7971 = icmp ne i32 %streq7970, 0
+  br i1 %cond7971, label %if_then2358, label %if_else2359
 
 if_then2358:
-  %field_ptr7899 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7900 = load ptr, ptr %field_ptr7899
-  %concat7901 = call ptr @ofs_str_concat(ptr @str.512, ptr %field7900)
-  %concat7902 = call ptr @ofs_str_concat(ptr %concat7901, ptr @str.124)
-  %args_val7903 = load ptr, ptr %args7863
-  %concat7904 = call ptr @ofs_str_concat(ptr %concat7902, ptr %args_val7903)
-  %concat7905 = call ptr @ofs_str_concat(ptr %concat7904, ptr @str.125)
-  call void @cg_emit(ptr %concat7905)
+  %field_ptr7972 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7973 = load ptr, ptr %field_ptr7972
+  %concat7974 = call ptr @ofs_str_concat(ptr @str.512, ptr %field7973)
+  %concat7975 = call ptr @ofs_str_concat(ptr %concat7974, ptr @str.124)
+  %args_val7976 = load ptr, ptr %args7934
+  %concat7977 = call ptr @ofs_str_concat(ptr %concat7975, ptr %args_val7976)
+  %concat7978 = call ptr @ofs_str_concat(ptr %concat7977, ptr @str.125)
+  call void @cg_emit(ptr %concat7978)
   store ptr @str.140, ptr @llvmgen___expr_val
   store ptr @str.180, ptr @llvmgen___expr_type
   br label %if_end2360
 
 if_else2359:
-  %call_tmp7906 = alloca ptr, align 8
-  %call7907 = call ptr @llvmgen__next_tmp(ptr @str.513)
-  store ptr %call7907, ptr %call_tmp7906
-  %call_tmp_val7908 = load ptr, ptr %call_tmp7906
-  %concat7909 = call ptr @ofs_str_concat(ptr @str.233, ptr %call_tmp_val7908)
-  %concat7910 = call ptr @ofs_str_concat(ptr %concat7909, ptr @str.514)
-  %ret_llvm_val7911 = load ptr, ptr %ret_llvm7893
-  %concat7912 = call ptr @ofs_str_concat(ptr %concat7910, ptr %ret_llvm_val7911)
-  %concat7913 = call ptr @ofs_str_concat(ptr %concat7912, ptr @str.515)
-  %field_ptr7914 = getelementptr inbounds %Node, ptr %obj5897, i32 0, i32 1
-  %field7915 = load ptr, ptr %field_ptr7914
-  %concat7916 = call ptr @ofs_str_concat(ptr %concat7913, ptr %field7915)
-  %concat7917 = call ptr @ofs_str_concat(ptr %concat7916, ptr @str.124)
-  %args_val7918 = load ptr, ptr %args7863
-  %concat7919 = call ptr @ofs_str_concat(ptr %concat7917, ptr %args_val7918)
-  %concat7920 = call ptr @ofs_str_concat(ptr %concat7919, ptr @str.125)
-  call void @cg_emit(ptr %concat7920)
-  %call_tmp_val7921 = load ptr, ptr %call_tmp7906
-  store ptr %call_tmp_val7921, ptr @llvmgen___expr_val
-  %ret_type_val7922 = load ptr, ptr %ret_type7887
-  store ptr %ret_type_val7922, ptr @llvmgen___expr_type
+  %call_tmp7979 = alloca ptr, align 8
+  %call7980 = call ptr @llvmgen__next_tmp(ptr @str.513)
+  store ptr %call7980, ptr %call_tmp7979
+  %call_tmp_val7981 = load ptr, ptr %call_tmp7979
+  %concat7982 = call ptr @ofs_str_concat(ptr @str.233, ptr %call_tmp_val7981)
+  %concat7983 = call ptr @ofs_str_concat(ptr %concat7982, ptr @str.514)
+  %ret_llvm_val7984 = load ptr, ptr %ret_llvm7966
+  %concat7985 = call ptr @ofs_str_concat(ptr %concat7983, ptr %ret_llvm_val7984)
+  %concat7986 = call ptr @ofs_str_concat(ptr %concat7985, ptr @str.515)
+  %field_ptr7987 = getelementptr inbounds %Node, ptr %obj5966, i32 0, i32 1
+  %field7988 = load ptr, ptr %field_ptr7987
+  %concat7989 = call ptr @ofs_str_concat(ptr %concat7986, ptr %field7988)
+  %concat7990 = call ptr @ofs_str_concat(ptr %concat7989, ptr @str.124)
+  %args_val7991 = load ptr, ptr %args7934
+  %concat7992 = call ptr @ofs_str_concat(ptr %concat7990, ptr %args_val7991)
+  %concat7993 = call ptr @ofs_str_concat(ptr %concat7992, ptr @str.125)
+  call void @cg_emit(ptr %concat7993)
+  %call_tmp_val7994 = load ptr, ptr %call_tmp7979
+  store ptr %call_tmp_val7994, ptr @llvmgen___expr_val
+  %ret_type_val7995 = load ptr, ptr %ret_type7960
+  store ptr %ret_type_val7995, ptr @llvmgen___expr_type
   br label %if_end2360
 
 if_end2360:
@@ -18267,9 +18379,9 @@ define void @llvmgen__emit_stmt(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %id_val7923 = load i64, ptr %id.addr
-  %cmp7924 = icmp slt i64 %id_val7923, 0
-  br i1 %cmp7924, label %if_then2361, label %if_else2362
+  %id_val7996 = load i64, ptr %id.addr
+  %cmp7997 = icmp slt i64 %id_val7996, 0
+  br i1 %cmp7997, label %if_then2361, label %if_else2362
 
 if_then2361:
   ret void
@@ -18278,9 +18390,9 @@ if_else2362:
   br label %if_end2363
 
 if_end2363:
-  %llvmgen___terminated_val7925 = load i32, ptr @llvmgen___terminated
-  %cond7926 = icmp ne i32 %llvmgen___terminated_val7925, 0
-  br i1 %cond7926, label %if_then2364, label %if_else2365
+  %llvmgen___terminated_val7998 = load i32, ptr @llvmgen___terminated
+  %cond7999 = icmp ne i32 %llvmgen___terminated_val7998, 0
+  br i1 %cond7999, label %if_then2364, label %if_else2365
 
 if_then2364:
   ret void
@@ -18289,201 +18401,201 @@ if_else2365:
   br label %if_end2366
 
 if_end2366:
-  %obj7928 = call ptr @ofs_alloc(i64 4096)
-  %id_val7929 = load i64, ptr %id.addr
-  %call7930 = call ptr @node_get(i64 %id_val7929)
-  %named_val7931 = load %Node, ptr %call7930
-  store %Node %named_val7931, ptr %obj7928
-  %field_ptr7932 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field7933 = load i64, ptr %field_ptr7932
-  %NK_VAR_DECL_val7934 = load i64, ptr @NK_VAR_DECL
-  %cmp7935 = icmp eq i64 %field7933, %NK_VAR_DECL_val7934
-  %field_ptr7936 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field7937 = load i64, ptr %field_ptr7936
-  %NK_CONST_DECL_val7938 = load i64, ptr @NK_CONST_DECL
-  %cmp7939 = icmp eq i64 %field7937, %NK_CONST_DECL_val7938
-  %logic7940 = or i1 %cmp7935, %cmp7939
-  br i1 %logic7940, label %if_then2367, label %if_else2368
+  %obj8001 = call ptr @ofs_alloc(i64 4096)
+  %id_val8002 = load i64, ptr %id.addr
+  %call8003 = call ptr @node_get(i64 %id_val8002)
+  %named_val8004 = load %Node, ptr %call8003
+  store %Node %named_val8004, ptr %obj8001
+  %field_ptr8005 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8006 = load i64, ptr %field_ptr8005
+  %NK_VAR_DECL_val8007 = load i64, ptr @NK_VAR_DECL
+  %cmp8008 = icmp eq i64 %field8006, %NK_VAR_DECL_val8007
+  %field_ptr8009 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8010 = load i64, ptr %field_ptr8009
+  %NK_CONST_DECL_val8011 = load i64, ptr @NK_CONST_DECL
+  %cmp8012 = icmp eq i64 %field8010, %NK_CONST_DECL_val8011
+  %logic8013 = or i1 %cmp8008, %cmp8012
+  br i1 %logic8013, label %if_then2367, label %if_else2368
 
 if_then2367:
-  %t7941 = alloca ptr, align 8
-  %field_ptr7942 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 2
-  %field7943 = load ptr, ptr %field_ptr7942
-  store ptr %field7943, ptr %t7941
-  %t_val7944 = load ptr, ptr %t7941
-  %streq7945 = call i32 @ofs_str_eq(ptr %t_val7944, ptr @str.63)
-  %cond7946 = icmp ne i32 %streq7945, 0
-  br i1 %cond7946, label %if_then2370, label %if_else2371
+  %t8014 = alloca ptr, align 8
+  %field_ptr8015 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 2
+  %field8016 = load ptr, ptr %field_ptr8015
+  store ptr %field8016, ptr %t8014
+  %t_val8017 = load ptr, ptr %t8014
+  %streq8018 = call i32 @ofs_str_eq(ptr %t_val8017, ptr @str.63)
+  %cond8019 = icmp ne i32 %streq8018, 0
+  br i1 %cond8019, label %if_then2370, label %if_else2371
 
 if_then2370:
-  store ptr @str.181, ptr %t7941
+  store ptr @str.181, ptr %t8014
   br label %if_end2372
 
 if_else2371:
   br label %if_end2372
 
 if_end2372:
-  %p7947 = alloca ptr, align 8
-  %field_ptr7948 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 1
-  %field7949 = load ptr, ptr %field_ptr7948
-  %call7950 = call ptr @llvmgen__next_tmp(ptr %field7949)
-  store ptr %call7950, ptr %p7947
-  %t_val7951 = load ptr, ptr %t7941
-  %call7952 = call i32 @llvmgen__is_named_type(ptr %t_val7951)
-  %cond7953 = icmp ne i32 %call7952, 0
-  br i1 %cond7953, label %if_then2373, label %if_else2374
+  %p8020 = alloca ptr, align 8
+  %field_ptr8021 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 1
+  %field8022 = load ptr, ptr %field_ptr8021
+  %call8023 = call ptr @llvmgen__next_tmp(ptr %field8022)
+  store ptr %call8023, ptr %p8020
+  %t_val8024 = load ptr, ptr %t8014
+  %call8025 = call i32 @llvmgen__is_named_type(ptr %t_val8024)
+  %cond8026 = icmp ne i32 %call8025, 0
+  br i1 %cond8026, label %if_then2373, label %if_else2374
 
 if_then2373:
-  %mem7954 = alloca ptr, align 8
-  %call7955 = call ptr @llvmgen__next_tmp(ptr @str.516)
-  store ptr %call7955, ptr %mem7954
-  %mem_val7956 = load ptr, ptr %mem7954
-  %concat7957 = call ptr @ofs_str_concat(ptr @str.233, ptr %mem_val7956)
-  %concat7958 = call ptr @ofs_str_concat(ptr %concat7957, ptr @str.359)
-  call void @cg_emit(ptr %concat7958)
-  %mem_val7959 = load ptr, ptr %mem7954
-  store ptr %mem_val7959, ptr %p7947
+  %mem8027 = alloca ptr, align 8
+  %call8028 = call ptr @llvmgen__next_tmp(ptr @str.516)
+  store ptr %call8028, ptr %mem8027
+  %mem_val8029 = load ptr, ptr %mem8027
+  %concat8030 = call ptr @ofs_str_concat(ptr @str.233, ptr %mem_val8029)
+  %concat8031 = call ptr @ofs_str_concat(ptr %concat8030, ptr @str.359)
+  call void @cg_emit(ptr %concat8031)
+  %mem_val8032 = load ptr, ptr %mem8027
+  store ptr %mem_val8032, ptr %p8020
   br label %if_end2375
 
 if_else2374:
-  %p_val7960 = load ptr, ptr %p7947
-  %concat7961 = call ptr @ofs_str_concat(ptr @str.233, ptr %p_val7960)
-  %concat7962 = call ptr @ofs_str_concat(ptr %concat7961, ptr @str.363)
-  %t_val7963 = load ptr, ptr %t7941
-  %call7964 = call ptr @llvmgen__storage_type(ptr %t_val7963)
-  %concat7965 = call ptr @ofs_str_concat(ptr %concat7962, ptr %call7964)
-  %concat7966 = call ptr @ofs_str_concat(ptr %concat7965, ptr @str.364)
-  call void @cg_emit(ptr %concat7966)
+  %p_val8033 = load ptr, ptr %p8020
+  %concat8034 = call ptr @ofs_str_concat(ptr @str.233, ptr %p_val8033)
+  %concat8035 = call ptr @ofs_str_concat(ptr %concat8034, ptr @str.363)
+  %t_val8036 = load ptr, ptr %t8014
+  %call8037 = call ptr @llvmgen__storage_type(ptr %t_val8036)
+  %concat8038 = call ptr @ofs_str_concat(ptr %concat8035, ptr %call8037)
+  %concat8039 = call ptr @ofs_str_concat(ptr %concat8038, ptr @str.364)
+  call void @cg_emit(ptr %concat8039)
   br label %if_end2375
 
 if_end2375:
-  %field_ptr7967 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 1
-  %field7968 = load ptr, ptr %field_ptr7967
-  %t_val7969 = load ptr, ptr %t7941
-  %p_val7970 = load ptr, ptr %p7947
-  call void @llvmgen__declare_var(ptr %field7968, ptr %t_val7969, ptr %p_val7970)
-  %field_ptr7971 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 6
-  %field7972 = load i64, ptr %field_ptr7971
-  %cmp7973 = icmp sge i64 %field7972, 0
-  br i1 %cmp7973, label %if_then2376, label %if_else2377
+  %field_ptr8040 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 1
+  %field8041 = load ptr, ptr %field_ptr8040
+  %t_val8042 = load ptr, ptr %t8014
+  %p_val8043 = load ptr, ptr %p8020
+  call void @llvmgen__declare_var(ptr %field8041, ptr %t_val8042, ptr %p_val8043)
+  %field_ptr8044 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 6
+  %field8045 = load i64, ptr %field_ptr8044
+  %cmp8046 = icmp sge i64 %field8045, 0
+  br i1 %cmp8046, label %if_then2376, label %if_else2377
 
 if_then2376:
-  %field_ptr7974 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 6
-  %field7975 = load i64, ptr %field_ptr7974
-  %call7976 = call i32 @llvmgen__is_call_name(i64 %field7975, ptr @str.503)
-  %cond7977 = icmp ne i32 %call7976, 0
-  br i1 %cond7977, label %if_then2379, label %if_else2380
+  %field_ptr8047 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 6
+  %field8048 = load i64, ptr %field_ptr8047
+  %call8049 = call i32 @llvmgen__is_call_name(i64 %field8048, ptr @str.503)
+  %cond8050 = icmp ne i32 %call8049, 0
+  br i1 %cond8050, label %if_then2379, label %if_else2380
 
 if_then2379:
-  %field_ptr7978 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 6
-  %field7979 = load i64, ptr %field_ptr7978
-  %t_val7980 = load ptr, ptr %t7941
-  call void @llvmgen__emit_array_get(i64 %field7979, ptr %t_val7980)
+  %field_ptr8051 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 6
+  %field8052 = load i64, ptr %field_ptr8051
+  %t_val8053 = load ptr, ptr %t8014
+  call void @llvmgen__emit_array_get(i64 %field8052, ptr %t_val8053)
   br label %if_end2381
 
 if_else2380:
-  %field_ptr7981 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 6
-  %field7982 = load i64, ptr %field_ptr7981
-  call void @llvmgen__emit_expr(i64 %field7982)
+  %field_ptr8054 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 6
+  %field8055 = load i64, ptr %field_ptr8054
+  call void @llvmgen__emit_expr(i64 %field8055)
   br label %if_end2381
 
 if_end2381:
-  %t_val7983 = load ptr, ptr %t7941
-  %call7984 = call i32 @llvmgen__is_named_type(ptr %t_val7983)
-  %cond7985 = icmp ne i32 %call7984, 0
-  br i1 %cond7985, label %if_then2382, label %if_else2383
+  %t_val8056 = load ptr, ptr %t8014
+  %call8057 = call i32 @llvmgen__is_named_type(ptr %t_val8056)
+  %cond8058 = icmp ne i32 %call8057, 0
+  br i1 %cond8058, label %if_then2382, label %if_else2383
 
 if_then2382:
-  %named_val7986 = alloca ptr, align 8
-  %call7987 = call ptr @llvmgen__next_tmp(ptr @str.517)
-  store ptr %call7987, ptr %named_val7986
-  %named_val_val7988 = load ptr, ptr %named_val7986
-  %concat7989 = call ptr @ofs_str_concat(ptr @str.233, ptr %named_val_val7988)
-  %concat7990 = call ptr @ofs_str_concat(ptr %concat7989, ptr @str.518)
-  %t_val7991 = load ptr, ptr %t7941
-  %concat7992 = call ptr @ofs_str_concat(ptr %concat7990, ptr %t_val7991)
-  %concat7993 = call ptr @ofs_str_concat(ptr %concat7992, ptr @str.276)
-  %llvmgen___expr_val_val7994 = load ptr, ptr @llvmgen___expr_val
-  %concat7995 = call ptr @ofs_str_concat(ptr %concat7993, ptr %llvmgen___expr_val_val7994)
-  call void @cg_emit(ptr %concat7995)
-  %t_val7996 = load ptr, ptr %t7941
-  %concat7997 = call ptr @ofs_str_concat(ptr @str.519, ptr %t_val7996)
-  %concat7998 = call ptr @ofs_str_concat(ptr %concat7997, ptr @str.216)
-  %named_val_val7999 = load ptr, ptr %named_val7986
-  %concat8000 = call ptr @ofs_str_concat(ptr %concat7998, ptr %named_val_val7999)
-  %concat8001 = call ptr @ofs_str_concat(ptr %concat8000, ptr @str.276)
-  %p_val8002 = load ptr, ptr %p7947
-  %concat8003 = call ptr @ofs_str_concat(ptr %concat8001, ptr %p_val8002)
-  call void @cg_emit(ptr %concat8003)
+  %named_val8059 = alloca ptr, align 8
+  %call8060 = call ptr @llvmgen__next_tmp(ptr @str.517)
+  store ptr %call8060, ptr %named_val8059
+  %named_val_val8061 = load ptr, ptr %named_val8059
+  %concat8062 = call ptr @ofs_str_concat(ptr @str.233, ptr %named_val_val8061)
+  %concat8063 = call ptr @ofs_str_concat(ptr %concat8062, ptr @str.518)
+  %t_val8064 = load ptr, ptr %t8014
+  %concat8065 = call ptr @ofs_str_concat(ptr %concat8063, ptr %t_val8064)
+  %concat8066 = call ptr @ofs_str_concat(ptr %concat8065, ptr @str.276)
+  %llvmgen___expr_val_val8067 = load ptr, ptr @llvmgen___expr_val
+  %concat8068 = call ptr @ofs_str_concat(ptr %concat8066, ptr %llvmgen___expr_val_val8067)
+  call void @cg_emit(ptr %concat8068)
+  %t_val8069 = load ptr, ptr %t8014
+  %concat8070 = call ptr @ofs_str_concat(ptr @str.519, ptr %t_val8069)
+  %concat8071 = call ptr @ofs_str_concat(ptr %concat8070, ptr @str.216)
+  %named_val_val8072 = load ptr, ptr %named_val8059
+  %concat8073 = call ptr @ofs_str_concat(ptr %concat8071, ptr %named_val_val8072)
+  %concat8074 = call ptr @ofs_str_concat(ptr %concat8073, ptr @str.276)
+  %p_val8075 = load ptr, ptr %p8020
+  %concat8076 = call ptr @ofs_str_concat(ptr %concat8074, ptr %p_val8075)
+  call void @cg_emit(ptr %concat8076)
   br label %if_end2384
 
 if_else2383:
-  %v8004 = alloca ptr, align 8
-  %llvmgen___expr_val_val8005 = load ptr, ptr @llvmgen___expr_val
-  %llvmgen___expr_type_val8006 = load ptr, ptr @llvmgen___expr_type
-  %t_val8007 = load ptr, ptr %t7941
-  %call8008 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val8005, ptr %llvmgen___expr_type_val8006, ptr %t_val8007)
-  store ptr %call8008, ptr %v8004
-  %t_val8009 = load ptr, ptr %t7941
-  %call8010 = call ptr @llvmgen__llvm_type(ptr %t_val8009)
-  %concat8011 = call ptr @ofs_str_concat(ptr @str.365, ptr %call8010)
-  %concat8012 = call ptr @ofs_str_concat(ptr %concat8011, ptr @str.216)
-  %v_val8013 = load ptr, ptr %v8004
-  %concat8014 = call ptr @ofs_str_concat(ptr %concat8012, ptr %v_val8013)
-  %concat8015 = call ptr @ofs_str_concat(ptr %concat8014, ptr @str.276)
-  %p_val8016 = load ptr, ptr %p7947
-  %concat8017 = call ptr @ofs_str_concat(ptr %concat8015, ptr %p_val8016)
-  call void @cg_emit(ptr %concat8017)
+  %v8077 = alloca ptr, align 8
+  %llvmgen___expr_val_val8078 = load ptr, ptr @llvmgen___expr_val
+  %llvmgen___expr_type_val8079 = load ptr, ptr @llvmgen___expr_type
+  %t_val8080 = load ptr, ptr %t8014
+  %call8081 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val8078, ptr %llvmgen___expr_type_val8079, ptr %t_val8080)
+  store ptr %call8081, ptr %v8077
+  %t_val8082 = load ptr, ptr %t8014
+  %call8083 = call ptr @llvmgen__llvm_type(ptr %t_val8082)
+  %concat8084 = call ptr @ofs_str_concat(ptr @str.365, ptr %call8083)
+  %concat8085 = call ptr @ofs_str_concat(ptr %concat8084, ptr @str.216)
+  %v_val8086 = load ptr, ptr %v8077
+  %concat8087 = call ptr @ofs_str_concat(ptr %concat8085, ptr %v_val8086)
+  %concat8088 = call ptr @ofs_str_concat(ptr %concat8087, ptr @str.276)
+  %p_val8089 = load ptr, ptr %p8020
+  %concat8090 = call ptr @ofs_str_concat(ptr %concat8088, ptr %p_val8089)
+  call void @cg_emit(ptr %concat8090)
   br label %if_end2384
 
 if_end2384:
   br label %if_end2378
 
 if_else2377:
-  %t_val8018 = load ptr, ptr %t7941
-  %call8019 = call i32 @llvmgen__is_named_type(ptr %t_val8018)
-  %cond8020 = icmp ne i32 %call8019, 0
-  br i1 %cond8020, label %if_then2385, label %if_else2386
+  %t_val8091 = load ptr, ptr %t8014
+  %call8092 = call i32 @llvmgen__is_named_type(ptr %t_val8091)
+  %cond8093 = icmp ne i32 %call8092, 0
+  br i1 %cond8093, label %if_then2385, label %if_else2386
 
 if_then2385:
   ret void
 
 if_else2386:
-  %t_val8021 = load ptr, ptr %t7941
-  %streq8022 = call i32 @ofs_str_eq(ptr %t_val8021, ptr @str.183)
-  %t_val8023 = load ptr, ptr %t7941
-  %streq8024 = call i32 @ofs_str_eq(ptr %t_val8023, ptr @str.144)
-  %cond8025 = icmp ne i32 %streq8022, 0
-  %cond8026 = icmp ne i32 %streq8024, 0
-  %logic8027 = or i1 %cond8025, %cond8026
-  br i1 %logic8027, label %if_then2388, label %if_else2389
+  %t_val8094 = load ptr, ptr %t8014
+  %streq8095 = call i32 @ofs_str_eq(ptr %t_val8094, ptr @str.183)
+  %t_val8096 = load ptr, ptr %t8014
+  %streq8097 = call i32 @ofs_str_eq(ptr %t_val8096, ptr @str.144)
+  %cond8098 = icmp ne i32 %streq8095, 0
+  %cond8099 = icmp ne i32 %streq8097, 0
+  %logic8100 = or i1 %cond8098, %cond8099
+  br i1 %logic8100, label %if_then2388, label %if_else2389
 
 if_then2388:
-  %p_val8028 = load ptr, ptr %p7947
-  %concat8029 = call ptr @ofs_str_concat(ptr @str.520, ptr %p_val8028)
-  call void @cg_emit(ptr %concat8029)
+  %p_val8101 = load ptr, ptr %p8020
+  %concat8102 = call ptr @ofs_str_concat(ptr @str.520, ptr %p_val8101)
+  call void @cg_emit(ptr %concat8102)
   br label %if_end2390
 
 if_else2389:
-  %t_val8030 = load ptr, ptr %t7941
-  %streq8031 = call i32 @ofs_str_eq(ptr %t_val8030, ptr @str.182)
-  %cond8032 = icmp ne i32 %streq8031, 0
-  br i1 %cond8032, label %if_then2391, label %if_else2392
+  %t_val8103 = load ptr, ptr %t8014
+  %streq8104 = call i32 @ofs_str_eq(ptr %t_val8103, ptr @str.182)
+  %cond8105 = icmp ne i32 %streq8104, 0
+  br i1 %cond8105, label %if_then2391, label %if_else2392
 
 if_then2391:
-  %p_val8033 = load ptr, ptr %p7947
-  %concat8034 = call ptr @ofs_str_concat(ptr @str.521, ptr %p_val8033)
-  call void @cg_emit(ptr %concat8034)
+  %p_val8106 = load ptr, ptr %p8020
+  %concat8107 = call ptr @ofs_str_concat(ptr @str.521, ptr %p_val8106)
+  call void @cg_emit(ptr %concat8107)
   br label %if_end2393
 
 if_else2392:
-  %t_val8035 = load ptr, ptr %t7941
-  %call8036 = call ptr @llvmgen__llvm_type(ptr %t_val8035)
-  %concat8037 = call ptr @ofs_str_concat(ptr @str.365, ptr %call8036)
-  %concat8038 = call ptr @ofs_str_concat(ptr %concat8037, ptr @str.522)
-  %p_val8039 = load ptr, ptr %p7947
-  %concat8040 = call ptr @ofs_str_concat(ptr %concat8038, ptr %p_val8039)
-  call void @cg_emit(ptr %concat8040)
+  %t_val8108 = load ptr, ptr %t8014
+  %call8109 = call ptr @llvmgen__llvm_type(ptr %t_val8108)
+  %concat8110 = call ptr @ofs_str_concat(ptr @str.365, ptr %call8109)
+  %concat8111 = call ptr @ofs_str_concat(ptr %concat8110, ptr @str.522)
+  %p_val8112 = load ptr, ptr %p8020
+  %concat8113 = call ptr @ofs_str_concat(ptr %concat8111, ptr %p_val8112)
+  call void @cg_emit(ptr %concat8113)
   br label %if_end2393
 
 if_end2393:
@@ -18502,111 +18614,111 @@ if_else2368:
   br label %if_end2369
 
 if_end2369:
-  %field_ptr8041 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8042 = load i64, ptr %field_ptr8041
-  %NK_CALL_val8043 = load i64, ptr @NK_CALL
-  %cmp8044 = icmp eq i64 %field8042, %NK_CALL_val8043
-  %field_ptr8045 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8046 = load i64, ptr %field_ptr8045
-  %NK_BIN_OP_val8047 = load i64, ptr @NK_BIN_OP
-  %cmp8048 = icmp eq i64 %field8046, %NK_BIN_OP_val8047
-  %logic8049 = or i1 %cmp8044, %cmp8048
-  %field_ptr8050 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8051 = load i64, ptr %field_ptr8050
-  %NK_UNARY_OP_val8052 = load i64, ptr @NK_UNARY_OP
-  %cmp8053 = icmp eq i64 %field8051, %NK_UNARY_OP_val8052
-  %logic8054 = or i1 %logic8049, %cmp8053
-  %field_ptr8055 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8056 = load i64, ptr %field_ptr8055
-  %NK_ASSIGN_val8057 = load i64, ptr @NK_ASSIGN
-  %cmp8058 = icmp eq i64 %field8056, %NK_ASSIGN_val8057
-  %logic8059 = or i1 %logic8054, %cmp8058
-  %field_ptr8060 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8061 = load i64, ptr %field_ptr8060
-  %NK_POST_OP_val8062 = load i64, ptr @NK_POST_OP
-  %cmp8063 = icmp eq i64 %field8061, %NK_POST_OP_val8062
-  %logic8064 = or i1 %logic8059, %cmp8063
-  %field_ptr8065 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8066 = load i64, ptr %field_ptr8065
-  %NK_LIT_STRING_val8067 = load i64, ptr @NK_LIT_STRING
-  %cmp8068 = icmp eq i64 %field8066, %NK_LIT_STRING_val8067
-  %logic8069 = or i1 %logic8064, %cmp8068
-  %field_ptr8070 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8071 = load i64, ptr %field_ptr8070
-  %NK_LIT_INT_val8072 = load i64, ptr @NK_LIT_INT
-  %cmp8073 = icmp eq i64 %field8071, %NK_LIT_INT_val8072
-  %logic8074 = or i1 %logic8069, %cmp8073
-  br i1 %logic8074, label %if_then2394, label %if_else2395
+  %field_ptr8114 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8115 = load i64, ptr %field_ptr8114
+  %NK_CALL_val8116 = load i64, ptr @NK_CALL
+  %cmp8117 = icmp eq i64 %field8115, %NK_CALL_val8116
+  %field_ptr8118 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8119 = load i64, ptr %field_ptr8118
+  %NK_BIN_OP_val8120 = load i64, ptr @NK_BIN_OP
+  %cmp8121 = icmp eq i64 %field8119, %NK_BIN_OP_val8120
+  %logic8122 = or i1 %cmp8117, %cmp8121
+  %field_ptr8123 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8124 = load i64, ptr %field_ptr8123
+  %NK_UNARY_OP_val8125 = load i64, ptr @NK_UNARY_OP
+  %cmp8126 = icmp eq i64 %field8124, %NK_UNARY_OP_val8125
+  %logic8127 = or i1 %logic8122, %cmp8126
+  %field_ptr8128 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8129 = load i64, ptr %field_ptr8128
+  %NK_ASSIGN_val8130 = load i64, ptr @NK_ASSIGN
+  %cmp8131 = icmp eq i64 %field8129, %NK_ASSIGN_val8130
+  %logic8132 = or i1 %logic8127, %cmp8131
+  %field_ptr8133 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8134 = load i64, ptr %field_ptr8133
+  %NK_POST_OP_val8135 = load i64, ptr @NK_POST_OP
+  %cmp8136 = icmp eq i64 %field8134, %NK_POST_OP_val8135
+  %logic8137 = or i1 %logic8132, %cmp8136
+  %field_ptr8138 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8139 = load i64, ptr %field_ptr8138
+  %NK_LIT_STRING_val8140 = load i64, ptr @NK_LIT_STRING
+  %cmp8141 = icmp eq i64 %field8139, %NK_LIT_STRING_val8140
+  %logic8142 = or i1 %logic8137, %cmp8141
+  %field_ptr8143 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8144 = load i64, ptr %field_ptr8143
+  %NK_LIT_INT_val8145 = load i64, ptr @NK_LIT_INT
+  %cmp8146 = icmp eq i64 %field8144, %NK_LIT_INT_val8145
+  %logic8147 = or i1 %logic8142, %cmp8146
+  br i1 %logic8147, label %if_then2394, label %if_else2395
 
 if_then2394:
-  %id_val8075 = load i64, ptr %id.addr
-  call void @llvmgen__emit_expr(i64 %id_val8075)
+  %id_val8148 = load i64, ptr %id.addr
+  call void @llvmgen__emit_expr(i64 %id_val8148)
   ret void
 
 if_else2395:
   br label %if_end2396
 
 if_end2396:
-  %field_ptr8076 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8077 = load i64, ptr %field_ptr8076
-  %NK_RETURN_val8078 = load i64, ptr @NK_RETURN
-  %cmp8079 = icmp eq i64 %field8077, %NK_RETURN_val8078
-  br i1 %cmp8079, label %if_then2397, label %if_else2398
+  %field_ptr8149 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8150 = load i64, ptr %field_ptr8149
+  %NK_RETURN_val8151 = load i64, ptr @NK_RETURN
+  %cmp8152 = icmp eq i64 %field8150, %NK_RETURN_val8151
+  br i1 %cmp8152, label %if_then2397, label %if_else2398
 
 if_then2397:
-  %llvmgen___current_ret_type_val8080 = load ptr, ptr @llvmgen___current_ret_type
-  %streq8081 = call i32 @ofs_str_eq(ptr %llvmgen___current_ret_type_val8080, ptr @str.180)
-  %cond8082 = icmp ne i32 %streq8081, 0
-  br i1 %cond8082, label %if_then2400, label %if_else2401
+  %llvmgen___current_ret_type_val8153 = load ptr, ptr @llvmgen___current_ret_type
+  %streq8154 = call i32 @ofs_str_eq(ptr %llvmgen___current_ret_type_val8153, ptr @str.180)
+  %cond8155 = icmp ne i32 %streq8154, 0
+  br i1 %cond8155, label %if_then2400, label %if_else2401
 
 if_then2400:
   call void @cg_emit(ptr @str.360)
   br label %if_end2402
 
 if_else2401:
-  %llvmgen___current_ret_type_val8083 = load ptr, ptr @llvmgen___current_ret_type
-  %streq8084 = call i32 @ofs_str_eq(ptr %llvmgen___current_ret_type_val8083, ptr @str.523)
-  %cond8085 = icmp ne i32 %streq8084, 0
-  br i1 %cond8085, label %if_then2403, label %if_else2404
+  %llvmgen___current_ret_type_val8156 = load ptr, ptr @llvmgen___current_ret_type
+  %streq8157 = call i32 @ofs_str_eq(ptr %llvmgen___current_ret_type_val8156, ptr @str.523)
+  %cond8158 = icmp ne i32 %streq8157, 0
+  br i1 %cond8158, label %if_then2403, label %if_else2404
 
 if_then2403:
   call void @cg_emit(ptr @str.524)
   br label %if_end2405
 
 if_else2404:
-  %field_ptr8086 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 5
-  %field8087 = load i64, ptr %field_ptr8086
-  %call8088 = call i32 @llvmgen__is_call_name(i64 %field8087, ptr @str.503)
-  %cond8089 = icmp ne i32 %call8088, 0
-  br i1 %cond8089, label %if_then2406, label %if_else2407
+  %field_ptr8159 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 5
+  %field8160 = load i64, ptr %field_ptr8159
+  %call8161 = call i32 @llvmgen__is_call_name(i64 %field8160, ptr @str.503)
+  %cond8162 = icmp ne i32 %call8161, 0
+  br i1 %cond8162, label %if_then2406, label %if_else2407
 
 if_then2406:
-  %field_ptr8090 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 5
-  %field8091 = load i64, ptr %field_ptr8090
-  %llvmgen___current_ret_type_val8092 = load ptr, ptr @llvmgen___current_ret_type
-  call void @llvmgen__emit_array_get(i64 %field8091, ptr %llvmgen___current_ret_type_val8092)
+  %field_ptr8163 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 5
+  %field8164 = load i64, ptr %field_ptr8163
+  %llvmgen___current_ret_type_val8165 = load ptr, ptr @llvmgen___current_ret_type
+  call void @llvmgen__emit_array_get(i64 %field8164, ptr %llvmgen___current_ret_type_val8165)
   br label %if_end2408
 
 if_else2407:
-  %field_ptr8093 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 5
-  %field8094 = load i64, ptr %field_ptr8093
-  call void @llvmgen__emit_expr(i64 %field8094)
+  %field_ptr8166 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 5
+  %field8167 = load i64, ptr %field_ptr8166
+  call void @llvmgen__emit_expr(i64 %field8167)
   br label %if_end2408
 
 if_end2408:
-  %v8095 = alloca ptr, align 8
-  %llvmgen___expr_val_val8096 = load ptr, ptr @llvmgen___expr_val
-  %llvmgen___expr_type_val8097 = load ptr, ptr @llvmgen___expr_type
-  %llvmgen___current_ret_type_val8098 = load ptr, ptr @llvmgen___current_ret_type
-  %call8099 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val8096, ptr %llvmgen___expr_type_val8097, ptr %llvmgen___current_ret_type_val8098)
-  store ptr %call8099, ptr %v8095
-  %llvmgen___current_ret_type_val8100 = load ptr, ptr @llvmgen___current_ret_type
-  %call8101 = call ptr @llvmgen__llvm_type(ptr %llvmgen___current_ret_type_val8100)
-  %concat8102 = call ptr @ofs_str_concat(ptr @str.525, ptr %call8101)
-  %concat8103 = call ptr @ofs_str_concat(ptr %concat8102, ptr @str.216)
-  %v_val8104 = load ptr, ptr %v8095
-  %concat8105 = call ptr @ofs_str_concat(ptr %concat8103, ptr %v_val8104)
-  call void @cg_emit(ptr %concat8105)
+  %v8168 = alloca ptr, align 8
+  %llvmgen___expr_val_val8169 = load ptr, ptr @llvmgen___expr_val
+  %llvmgen___expr_type_val8170 = load ptr, ptr @llvmgen___expr_type
+  %llvmgen___current_ret_type_val8171 = load ptr, ptr @llvmgen___current_ret_type
+  %call8172 = call ptr @llvmgen__coerce_for_store(ptr %llvmgen___expr_val_val8169, ptr %llvmgen___expr_type_val8170, ptr %llvmgen___current_ret_type_val8171)
+  store ptr %call8172, ptr %v8168
+  %llvmgen___current_ret_type_val8173 = load ptr, ptr @llvmgen___current_ret_type
+  %call8174 = call ptr @llvmgen__llvm_type(ptr %llvmgen___current_ret_type_val8173)
+  %concat8175 = call ptr @ofs_str_concat(ptr @str.525, ptr %call8174)
+  %concat8176 = call ptr @ofs_str_concat(ptr %concat8175, ptr @str.216)
+  %v_val8177 = load ptr, ptr %v8168
+  %concat8178 = call ptr @ofs_str_concat(ptr %concat8176, ptr %v_val8177)
+  call void @cg_emit(ptr %concat8178)
   br label %if_end2405
 
 if_end2405:
@@ -18620,16 +18732,16 @@ if_else2398:
   br label %if_end2399
 
 if_end2399:
-  %field_ptr8106 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8107 = load i64, ptr %field_ptr8106
-  %NK_BREAK_val8108 = load i64, ptr @NK_BREAK
-  %cmp8109 = icmp eq i64 %field8107, %NK_BREAK_val8108
-  br i1 %cmp8109, label %if_then2409, label %if_else2410
+  %field_ptr8179 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8180 = load i64, ptr %field_ptr8179
+  %NK_BREAK_val8181 = load i64, ptr @NK_BREAK
+  %cmp8182 = icmp eq i64 %field8180, %NK_BREAK_val8181
+  br i1 %cmp8182, label %if_then2409, label %if_else2410
 
 if_then2409:
-  %call8110 = call ptr @llvmgen__current_break_label()
-  %concat8111 = call ptr @ofs_str_concat(ptr @str.526, ptr %call8110)
-  call void @cg_emit(ptr %concat8111)
+  %call8183 = call ptr @llvmgen__current_break_label()
+  %concat8184 = call ptr @ofs_str_concat(ptr @str.526, ptr %call8183)
+  call void @cg_emit(ptr %concat8184)
   store i32 1, ptr @llvmgen___terminated
   ret void
 
@@ -18637,16 +18749,16 @@ if_else2410:
   br label %if_end2411
 
 if_end2411:
-  %field_ptr8112 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8113 = load i64, ptr %field_ptr8112
-  %NK_CONTINUE_val8114 = load i64, ptr @NK_CONTINUE
-  %cmp8115 = icmp eq i64 %field8113, %NK_CONTINUE_val8114
-  br i1 %cmp8115, label %if_then2412, label %if_else2413
+  %field_ptr8185 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8186 = load i64, ptr %field_ptr8185
+  %NK_CONTINUE_val8187 = load i64, ptr @NK_CONTINUE
+  %cmp8188 = icmp eq i64 %field8186, %NK_CONTINUE_val8187
+  br i1 %cmp8188, label %if_then2412, label %if_else2413
 
 if_then2412:
-  %call8116 = call ptr @llvmgen__current_continue_label()
-  %concat8117 = call ptr @ofs_str_concat(ptr @str.526, ptr %call8116)
-  call void @cg_emit(ptr %concat8117)
+  %call8189 = call ptr @llvmgen__current_continue_label()
+  %concat8190 = call ptr @ofs_str_concat(ptr @str.526, ptr %call8189)
+  call void @cg_emit(ptr %concat8190)
   store i32 1, ptr @llvmgen___terminated
   ret void
 
@@ -18654,33 +18766,36 @@ if_else2413:
   br label %if_end2414
 
 if_end2414:
-  %field_ptr8118 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8119 = load i64, ptr %field_ptr8118
-  %NK_BLOCK_val8120 = load i64, ptr @NK_BLOCK
-  %cmp8121 = icmp eq i64 %field8119, %NK_BLOCK_val8120
-  br i1 %cmp8121, label %if_then2415, label %if_else2416
+  %field_ptr8191 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8192 = load i64, ptr %field_ptr8191
+  %NK_BLOCK_val8193 = load i64, ptr @NK_BLOCK
+  %cmp8194 = icmp eq i64 %field8192, %NK_BLOCK_val8193
+  br i1 %cmp8194, label %if_then2415, label %if_else2416
 
 if_then2415:
   call void @llvmgen__push_scope()
-  %bi8122 = alloca i64, align 8
-  store i64 0, ptr %bi8122
+  %bi8195 = alloca i64, align 8
+  store i64 0, ptr %bi8195
+  %statement_count8196 = alloca i64, align 8
+  %id_val8197 = load i64, ptr %id.addr
+  %call8198 = call i64 @node_extra_len(i64 %id_val8197)
+  store i64 %call8198, ptr %statement_count8196
   br label %while_cond2418
 
 while_cond2418:
-  %bi_val8123 = load i64, ptr %bi8122
-  %id_val8124 = load i64, ptr %id.addr
-  %call8125 = call i64 @node_extra_len(i64 %id_val8124)
-  %cmp8126 = icmp slt i64 %bi_val8123, %call8125
-  br i1 %cmp8126, label %while_body2419, label %while_end2420
+  %bi_val8199 = load i64, ptr %bi8195
+  %statement_count_val8200 = load i64, ptr %statement_count8196
+  %cmp8201 = icmp slt i64 %bi_val8199, %statement_count_val8200
+  br i1 %cmp8201, label %while_body2419, label %while_end2420
 
 while_body2419:
-  %id_val8127 = load i64, ptr %id.addr
-  %bi_val8128 = load i64, ptr %bi8122
-  %call8129 = call i64 @node_get_extra(i64 %id_val8127, i64 %bi_val8128)
-  call void @llvmgen__emit_stmt(i64 %call8129)
-  %post_old8130 = load i64, ptr %bi8122
-  %post_new8131 = add i64 %post_old8130, 1
-  store i64 %post_new8131, ptr %bi8122
+  %id_val8202 = load i64, ptr %id.addr
+  %bi_val8203 = load i64, ptr %bi8195
+  %call8204 = call i64 @node_get_extra(i64 %id_val8202, i64 %bi_val8203)
+  call void @llvmgen__emit_stmt(i64 %call8204)
+  %post_old8205 = load i64, ptr %bi8195
+  %post_new8206 = add i64 %post_old8205, 1
+  store i64 %post_new8206, ptr %bi8195
   br label %while_cond2418
 
 while_end2420:
@@ -18691,57 +18806,57 @@ if_else2416:
   br label %if_end2417
 
 if_end2417:
-  %field_ptr8132 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8133 = load i64, ptr %field_ptr8132
-  %NK_IF_val8134 = load i64, ptr @NK_IF
-  %cmp8135 = icmp eq i64 %field8133, %NK_IF_val8134
-  br i1 %cmp8135, label %if_then2421, label %if_else2422
+  %field_ptr8207 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8208 = load i64, ptr %field_ptr8207
+  %NK_IF_val8209 = load i64, ptr @NK_IF
+  %cmp8210 = icmp eq i64 %field8208, %NK_IF_val8209
+  br i1 %cmp8210, label %if_then2421, label %if_else2422
 
 if_then2421:
-  %field_ptr8136 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 5
-  %field8137 = load i64, ptr %field_ptr8136
-  call void @llvmgen__emit_expr(i64 %field8137)
-  %cond8138 = alloca ptr, align 8
-  %call8139 = call ptr @llvmgen__expr_as_i1()
-  store ptr %call8139, ptr %cond8138
-  %then_label8140 = alloca ptr, align 8
-  %call8141 = call ptr @llvmgen__next_label(ptr @str.527)
-  store ptr %call8141, ptr %then_label8140
-  %else_label8142 = alloca ptr, align 8
-  %call8143 = call ptr @llvmgen__next_label(ptr @str.528)
-  store ptr %call8143, ptr %else_label8142
-  %end_label8144 = alloca ptr, align 8
-  %call8145 = call ptr @llvmgen__next_label(ptr @str.529)
-  store ptr %call8145, ptr %end_label8144
-  %cond_val8146 = load ptr, ptr %cond8138
-  %concat8147 = call ptr @ofs_str_concat(ptr @str.530, ptr %cond_val8146)
-  %concat8148 = call ptr @ofs_str_concat(ptr %concat8147, ptr @str.531)
-  %then_label_val8149 = load ptr, ptr %then_label8140
-  %concat8150 = call ptr @ofs_str_concat(ptr %concat8148, ptr %then_label_val8149)
-  %concat8151 = call ptr @ofs_str_concat(ptr %concat8150, ptr @str.531)
-  %else_label_val8152 = load ptr, ptr %else_label8142
-  %concat8153 = call ptr @ofs_str_concat(ptr %concat8151, ptr %else_label_val8152)
-  call void @cg_emit(ptr %concat8153)
+  %field_ptr8211 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 5
+  %field8212 = load i64, ptr %field_ptr8211
+  call void @llvmgen__emit_expr(i64 %field8212)
+  %cond8213 = alloca ptr, align 8
+  %call8214 = call ptr @llvmgen__expr_as_i1()
+  store ptr %call8214, ptr %cond8213
+  %then_label8215 = alloca ptr, align 8
+  %call8216 = call ptr @llvmgen__next_label(ptr @str.527)
+  store ptr %call8216, ptr %then_label8215
+  %else_label8217 = alloca ptr, align 8
+  %call8218 = call ptr @llvmgen__next_label(ptr @str.528)
+  store ptr %call8218, ptr %else_label8217
+  %end_label8219 = alloca ptr, align 8
+  %call8220 = call ptr @llvmgen__next_label(ptr @str.529)
+  store ptr %call8220, ptr %end_label8219
+  %cond_val8221 = load ptr, ptr %cond8213
+  %concat8222 = call ptr @ofs_str_concat(ptr @str.530, ptr %cond_val8221)
+  %concat8223 = call ptr @ofs_str_concat(ptr %concat8222, ptr @str.531)
+  %then_label_val8224 = load ptr, ptr %then_label8215
+  %concat8225 = call ptr @ofs_str_concat(ptr %concat8223, ptr %then_label_val8224)
+  %concat8226 = call ptr @ofs_str_concat(ptr %concat8225, ptr @str.531)
+  %else_label_val8227 = load ptr, ptr %else_label8217
+  %concat8228 = call ptr @ofs_str_concat(ptr %concat8226, ptr %else_label_val8227)
+  call void @cg_emit(ptr %concat8228)
   call void @cg_emit(ptr @str.63)
-  %then_label_val8154 = load ptr, ptr %then_label8140
-  %concat8155 = call ptr @ofs_str_concat(ptr %then_label_val8154, ptr @str.94)
-  call void @cg_emit(ptr %concat8155)
+  %then_label_val8229 = load ptr, ptr %then_label8215
+  %concat8230 = call ptr @ofs_str_concat(ptr %then_label_val8229, ptr @str.94)
+  call void @cg_emit(ptr %concat8230)
   store i32 0, ptr @llvmgen___terminated
-  %field_ptr8156 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 6
-  %field8157 = load i64, ptr %field_ptr8156
-  call void @llvmgen__emit_stmt(i64 %field8157)
-  %then_term8158 = alloca i32, align 8
-  %llvmgen___terminated_val8159 = load i32, ptr @llvmgen___terminated
-  store i32 %llvmgen___terminated_val8159, ptr %then_term8158
-  %then_term_val8160 = load i32, ptr %then_term8158
-  %cond8161 = icmp ne i32 %then_term_val8160, 0
-  %not8162 = xor i1 %cond8161, true
-  br i1 %not8162, label %if_then2424, label %if_else2425
+  %field_ptr8231 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 6
+  %field8232 = load i64, ptr %field_ptr8231
+  call void @llvmgen__emit_stmt(i64 %field8232)
+  %then_term8233 = alloca i32, align 8
+  %llvmgen___terminated_val8234 = load i32, ptr @llvmgen___terminated
+  store i32 %llvmgen___terminated_val8234, ptr %then_term8233
+  %then_term_val8235 = load i32, ptr %then_term8233
+  %cond8236 = icmp ne i32 %then_term_val8235, 0
+  %not8237 = xor i1 %cond8236, true
+  br i1 %not8237, label %if_then2424, label %if_else2425
 
 if_then2424:
-  %end_label_val8163 = load ptr, ptr %end_label8144
-  %concat8164 = call ptr @ofs_str_concat(ptr @str.526, ptr %end_label_val8163)
-  call void @cg_emit(ptr %concat8164)
+  %end_label_val8238 = load ptr, ptr %end_label8219
+  %concat8239 = call ptr @ofs_str_concat(ptr @str.526, ptr %end_label_val8238)
+  call void @cg_emit(ptr %concat8239)
   br label %if_end2426
 
 if_else2425:
@@ -18749,37 +18864,37 @@ if_else2425:
 
 if_end2426:
   call void @cg_emit(ptr @str.63)
-  %else_label_val8165 = load ptr, ptr %else_label8142
-  %concat8166 = call ptr @ofs_str_concat(ptr %else_label_val8165, ptr @str.94)
-  call void @cg_emit(ptr %concat8166)
+  %else_label_val8240 = load ptr, ptr %else_label8217
+  %concat8241 = call ptr @ofs_str_concat(ptr %else_label_val8240, ptr @str.94)
+  call void @cg_emit(ptr %concat8241)
   store i32 0, ptr @llvmgen___terminated
-  %field_ptr8167 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 7
-  %field8168 = load i64, ptr %field_ptr8167
-  %cmp8169 = icmp sge i64 %field8168, 0
-  br i1 %cmp8169, label %if_then2427, label %if_else2428
+  %field_ptr8242 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 7
+  %field8243 = load i64, ptr %field_ptr8242
+  %cmp8244 = icmp sge i64 %field8243, 0
+  br i1 %cmp8244, label %if_then2427, label %if_else2428
 
 if_then2427:
-  %field_ptr8170 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 7
-  %field8171 = load i64, ptr %field_ptr8170
-  call void @llvmgen__emit_stmt(i64 %field8171)
+  %field_ptr8245 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 7
+  %field8246 = load i64, ptr %field_ptr8245
+  call void @llvmgen__emit_stmt(i64 %field8246)
   br label %if_end2429
 
 if_else2428:
   br label %if_end2429
 
 if_end2429:
-  %else_term8172 = alloca i32, align 8
-  %llvmgen___terminated_val8173 = load i32, ptr @llvmgen___terminated
-  store i32 %llvmgen___terminated_val8173, ptr %else_term8172
-  %else_term_val8174 = load i32, ptr %else_term8172
-  %cond8175 = icmp ne i32 %else_term_val8174, 0
-  %not8176 = xor i1 %cond8175, true
-  br i1 %not8176, label %if_then2430, label %if_else2431
+  %else_term8247 = alloca i32, align 8
+  %llvmgen___terminated_val8248 = load i32, ptr @llvmgen___terminated
+  store i32 %llvmgen___terminated_val8248, ptr %else_term8247
+  %else_term_val8249 = load i32, ptr %else_term8247
+  %cond8250 = icmp ne i32 %else_term_val8249, 0
+  %not8251 = xor i1 %cond8250, true
+  br i1 %not8251, label %if_then2430, label %if_else2431
 
 if_then2430:
-  %end_label_val8177 = load ptr, ptr %end_label8144
-  %concat8178 = call ptr @ofs_str_concat(ptr @str.526, ptr %end_label_val8177)
-  call void @cg_emit(ptr %concat8178)
+  %end_label_val8252 = load ptr, ptr %end_label8219
+  %concat8253 = call ptr @ofs_str_concat(ptr @str.526, ptr %end_label_val8252)
+  call void @cg_emit(ptr %concat8253)
   br label %if_end2432
 
 if_else2431:
@@ -18787,15 +18902,15 @@ if_else2431:
 
 if_end2432:
   call void @cg_emit(ptr @str.63)
-  %end_label_val8179 = load ptr, ptr %end_label8144
-  %concat8180 = call ptr @ofs_str_concat(ptr %end_label_val8179, ptr @str.94)
-  call void @cg_emit(ptr %concat8180)
-  %then_term_val8181 = load i32, ptr %then_term8158
-  %else_term_val8182 = load i32, ptr %else_term8172
-  %cond8183 = icmp ne i32 %then_term_val8181, 0
-  %cond8184 = icmp ne i32 %else_term_val8182, 0
-  %logic8185 = and i1 %cond8183, %cond8184
-  br i1 %logic8185, label %if_then2433, label %if_else2434
+  %end_label_val8254 = load ptr, ptr %end_label8219
+  %concat8255 = call ptr @ofs_str_concat(ptr %end_label_val8254, ptr @str.94)
+  call void @cg_emit(ptr %concat8255)
+  %then_term_val8256 = load i32, ptr %then_term8233
+  %else_term_val8257 = load i32, ptr %else_term8247
+  %cond8258 = icmp ne i32 %then_term_val8256, 0
+  %cond8259 = icmp ne i32 %else_term_val8257, 0
+  %logic8260 = and i1 %cond8258, %cond8259
+  br i1 %logic8260, label %if_then2433, label %if_else2434
 
 if_then2433:
   call void @cg_emit(ptr @str.532)
@@ -18805,77 +18920,77 @@ if_else2434:
   br label %if_end2435
 
 if_end2435:
-  %then_term_val8186 = load i32, ptr %then_term8158
-  %else_term_val8187 = load i32, ptr %else_term8172
-  %cond8188 = icmp ne i32 %then_term_val8186, 0
-  %cond8189 = icmp ne i32 %else_term_val8187, 0
-  %logic8190 = and i1 %cond8188, %cond8189
-  %zext8191 = zext i1 %logic8190 to i32
-  store i32 %zext8191, ptr @llvmgen___terminated
+  %then_term_val8261 = load i32, ptr %then_term8233
+  %else_term_val8262 = load i32, ptr %else_term8247
+  %cond8263 = icmp ne i32 %then_term_val8261, 0
+  %cond8264 = icmp ne i32 %else_term_val8262, 0
+  %logic8265 = and i1 %cond8263, %cond8264
+  %zext8266 = zext i1 %logic8265 to i32
+  store i32 %zext8266, ptr @llvmgen___terminated
   ret void
 
 if_else2422:
   br label %if_end2423
 
 if_end2423:
-  %field_ptr8192 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8193 = load i64, ptr %field_ptr8192
-  %NK_WHILE_val8194 = load i64, ptr @NK_WHILE
-  %cmp8195 = icmp eq i64 %field8193, %NK_WHILE_val8194
-  br i1 %cmp8195, label %if_then2436, label %if_else2437
+  %field_ptr8267 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8268 = load i64, ptr %field_ptr8267
+  %NK_WHILE_val8269 = load i64, ptr @NK_WHILE
+  %cmp8270 = icmp eq i64 %field8268, %NK_WHILE_val8269
+  br i1 %cmp8270, label %if_then2436, label %if_else2437
 
 if_then2436:
-  %cond_label8196 = alloca ptr, align 8
-  %call8197 = call ptr @llvmgen__next_label(ptr @str.533)
-  store ptr %call8197, ptr %cond_label8196
-  %body_label8198 = alloca ptr, align 8
-  %call8199 = call ptr @llvmgen__next_label(ptr @str.534)
-  store ptr %call8199, ptr %body_label8198
-  %end_label28200 = alloca ptr, align 8
-  %call8201 = call ptr @llvmgen__next_label(ptr @str.535)
-  store ptr %call8201, ptr %end_label28200
-  %end_label2_val8202 = load ptr, ptr %end_label28200
-  %cond_label_val8203 = load ptr, ptr %cond_label8196
-  call void @llvmgen__push_loop(ptr %end_label2_val8202, ptr %cond_label_val8203)
-  %cond_label_val8204 = load ptr, ptr %cond_label8196
-  %concat8205 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label_val8204)
-  call void @cg_emit(ptr %concat8205)
+  %cond_label8271 = alloca ptr, align 8
+  %call8272 = call ptr @llvmgen__next_label(ptr @str.533)
+  store ptr %call8272, ptr %cond_label8271
+  %body_label8273 = alloca ptr, align 8
+  %call8274 = call ptr @llvmgen__next_label(ptr @str.534)
+  store ptr %call8274, ptr %body_label8273
+  %end_label28275 = alloca ptr, align 8
+  %call8276 = call ptr @llvmgen__next_label(ptr @str.535)
+  store ptr %call8276, ptr %end_label28275
+  %end_label2_val8277 = load ptr, ptr %end_label28275
+  %cond_label_val8278 = load ptr, ptr %cond_label8271
+  call void @llvmgen__push_loop(ptr %end_label2_val8277, ptr %cond_label_val8278)
+  %cond_label_val8279 = load ptr, ptr %cond_label8271
+  %concat8280 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label_val8279)
+  call void @cg_emit(ptr %concat8280)
   call void @cg_emit(ptr @str.63)
-  %cond_label_val8206 = load ptr, ptr %cond_label8196
-  %concat8207 = call ptr @ofs_str_concat(ptr %cond_label_val8206, ptr @str.94)
-  call void @cg_emit(ptr %concat8207)
-  %field_ptr8208 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 5
-  %field8209 = load i64, ptr %field_ptr8208
-  call void @llvmgen__emit_expr(i64 %field8209)
-  %cond28210 = alloca ptr, align 8
-  %call8211 = call ptr @llvmgen__expr_as_i1()
-  store ptr %call8211, ptr %cond28210
-  %cond2_val8212 = load ptr, ptr %cond28210
-  %concat8213 = call ptr @ofs_str_concat(ptr @str.530, ptr %cond2_val8212)
-  %concat8214 = call ptr @ofs_str_concat(ptr %concat8213, ptr @str.531)
-  %body_label_val8215 = load ptr, ptr %body_label8198
-  %concat8216 = call ptr @ofs_str_concat(ptr %concat8214, ptr %body_label_val8215)
-  %concat8217 = call ptr @ofs_str_concat(ptr %concat8216, ptr @str.531)
-  %end_label2_val8218 = load ptr, ptr %end_label28200
-  %concat8219 = call ptr @ofs_str_concat(ptr %concat8217, ptr %end_label2_val8218)
-  call void @cg_emit(ptr %concat8219)
+  %cond_label_val8281 = load ptr, ptr %cond_label8271
+  %concat8282 = call ptr @ofs_str_concat(ptr %cond_label_val8281, ptr @str.94)
+  call void @cg_emit(ptr %concat8282)
+  %field_ptr8283 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 5
+  %field8284 = load i64, ptr %field_ptr8283
+  call void @llvmgen__emit_expr(i64 %field8284)
+  %cond28285 = alloca ptr, align 8
+  %call8286 = call ptr @llvmgen__expr_as_i1()
+  store ptr %call8286, ptr %cond28285
+  %cond2_val8287 = load ptr, ptr %cond28285
+  %concat8288 = call ptr @ofs_str_concat(ptr @str.530, ptr %cond2_val8287)
+  %concat8289 = call ptr @ofs_str_concat(ptr %concat8288, ptr @str.531)
+  %body_label_val8290 = load ptr, ptr %body_label8273
+  %concat8291 = call ptr @ofs_str_concat(ptr %concat8289, ptr %body_label_val8290)
+  %concat8292 = call ptr @ofs_str_concat(ptr %concat8291, ptr @str.531)
+  %end_label2_val8293 = load ptr, ptr %end_label28275
+  %concat8294 = call ptr @ofs_str_concat(ptr %concat8292, ptr %end_label2_val8293)
+  call void @cg_emit(ptr %concat8294)
   call void @cg_emit(ptr @str.63)
-  %body_label_val8220 = load ptr, ptr %body_label8198
-  %concat8221 = call ptr @ofs_str_concat(ptr %body_label_val8220, ptr @str.94)
-  call void @cg_emit(ptr %concat8221)
+  %body_label_val8295 = load ptr, ptr %body_label8273
+  %concat8296 = call ptr @ofs_str_concat(ptr %body_label_val8295, ptr @str.94)
+  call void @cg_emit(ptr %concat8296)
   store i32 0, ptr @llvmgen___terminated
-  %field_ptr8222 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 6
-  %field8223 = load i64, ptr %field_ptr8222
-  call void @llvmgen__emit_stmt(i64 %field8223)
-  %llvmgen___terminated_val8224 = load i32, ptr @llvmgen___terminated
-  %cond8225 = icmp ne i32 %llvmgen___terminated_val8224, 0
-  %not8226 = xor i1 %cond8225, true
-  br i1 %not8226, label %if_then2439, label %if_else2440
+  %field_ptr8297 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 6
+  %field8298 = load i64, ptr %field_ptr8297
+  call void @llvmgen__emit_stmt(i64 %field8298)
+  %llvmgen___terminated_val8299 = load i32, ptr @llvmgen___terminated
+  %cond8300 = icmp ne i32 %llvmgen___terminated_val8299, 0
+  %not8301 = xor i1 %cond8300, true
+  br i1 %not8301, label %if_then2439, label %if_else2440
 
 if_then2439:
-  %cond_label_val8227 = load ptr, ptr %cond_label8196
-  %concat8228 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label_val8227)
-  call void @cg_emit(ptr %concat8228)
+  %cond_label_val8302 = load ptr, ptr %cond_label8271
+  %concat8303 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label_val8302)
+  call void @cg_emit(ptr %concat8303)
   br label %if_end2441
 
 if_else2440:
@@ -18883,9 +18998,9 @@ if_else2440:
 
 if_end2441:
   call void @cg_emit(ptr @str.63)
-  %end_label2_val8229 = load ptr, ptr %end_label28200
-  %concat8230 = call ptr @ofs_str_concat(ptr %end_label2_val8229, ptr @str.94)
-  call void @cg_emit(ptr %concat8230)
+  %end_label2_val8304 = load ptr, ptr %end_label28275
+  %concat8305 = call ptr @ofs_str_concat(ptr %end_label2_val8304, ptr @str.94)
+  call void @cg_emit(ptr %concat8305)
   store i32 0, ptr @llvmgen___terminated
   call void @llvmgen__pop_loop()
   ret void
@@ -18894,110 +19009,110 @@ if_else2437:
   br label %if_end2438
 
 if_end2438:
-  %field_ptr8231 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8232 = load i64, ptr %field_ptr8231
-  %NK_CYCLE_C_val8233 = load i64, ptr @NK_CYCLE_C
-  %cmp8234 = icmp eq i64 %field8232, %NK_CYCLE_C_val8233
-  br i1 %cmp8234, label %if_then2442, label %if_else2443
+  %field_ptr8306 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8307 = load i64, ptr %field_ptr8306
+  %NK_CYCLE_C_val8308 = load i64, ptr @NK_CYCLE_C
+  %cmp8309 = icmp eq i64 %field8307, %NK_CYCLE_C_val8308
+  br i1 %cmp8309, label %if_then2442, label %if_else2443
 
 if_then2442:
   call void @llvmgen__push_scope()
-  %field_ptr8235 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 5
-  %field8236 = load i64, ptr %field_ptr8235
-  %cmp8237 = icmp sge i64 %field8236, 0
-  br i1 %cmp8237, label %if_then2445, label %if_else2446
+  %field_ptr8310 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 5
+  %field8311 = load i64, ptr %field_ptr8310
+  %cmp8312 = icmp sge i64 %field8311, 0
+  br i1 %cmp8312, label %if_then2445, label %if_else2446
 
 if_then2445:
-  %field_ptr8238 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 5
-  %field8239 = load i64, ptr %field_ptr8238
-  call void @llvmgen__emit_stmt(i64 %field8239)
+  %field_ptr8313 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 5
+  %field8314 = load i64, ptr %field_ptr8313
+  call void @llvmgen__emit_stmt(i64 %field8314)
   br label %if_end2447
 
 if_else2446:
   br label %if_end2447
 
 if_end2447:
-  %cond_label28240 = alloca ptr, align 8
-  %call8241 = call ptr @llvmgen__next_label(ptr @str.536)
-  store ptr %call8241, ptr %cond_label28240
-  %body_label28242 = alloca ptr, align 8
-  %call8243 = call ptr @llvmgen__next_label(ptr @str.537)
-  store ptr %call8243, ptr %body_label28242
-  %step_label28244 = alloca ptr, align 8
-  %call8245 = call ptr @llvmgen__next_label(ptr @str.538)
-  store ptr %call8245, ptr %step_label28244
-  %end_label38246 = alloca ptr, align 8
-  %call8247 = call ptr @llvmgen__next_label(ptr @str.539)
-  store ptr %call8247, ptr %end_label38246
-  %end_label3_val8248 = load ptr, ptr %end_label38246
-  %step_label2_val8249 = load ptr, ptr %step_label28244
-  call void @llvmgen__push_loop(ptr %end_label3_val8248, ptr %step_label2_val8249)
-  %cond_label2_val8250 = load ptr, ptr %cond_label28240
-  %concat8251 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label2_val8250)
-  call void @cg_emit(ptr %concat8251)
+  %cond_label28315 = alloca ptr, align 8
+  %call8316 = call ptr @llvmgen__next_label(ptr @str.536)
+  store ptr %call8316, ptr %cond_label28315
+  %body_label28317 = alloca ptr, align 8
+  %call8318 = call ptr @llvmgen__next_label(ptr @str.537)
+  store ptr %call8318, ptr %body_label28317
+  %step_label28319 = alloca ptr, align 8
+  %call8320 = call ptr @llvmgen__next_label(ptr @str.538)
+  store ptr %call8320, ptr %step_label28319
+  %end_label38321 = alloca ptr, align 8
+  %call8322 = call ptr @llvmgen__next_label(ptr @str.539)
+  store ptr %call8322, ptr %end_label38321
+  %end_label3_val8323 = load ptr, ptr %end_label38321
+  %step_label2_val8324 = load ptr, ptr %step_label28319
+  call void @llvmgen__push_loop(ptr %end_label3_val8323, ptr %step_label2_val8324)
+  %cond_label2_val8325 = load ptr, ptr %cond_label28315
+  %concat8326 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label2_val8325)
+  call void @cg_emit(ptr %concat8326)
   call void @cg_emit(ptr @str.63)
-  %cond_label2_val8252 = load ptr, ptr %cond_label28240
-  %concat8253 = call ptr @ofs_str_concat(ptr %cond_label2_val8252, ptr @str.94)
-  call void @cg_emit(ptr %concat8253)
-  %field_ptr8254 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 6
-  %field8255 = load i64, ptr %field_ptr8254
-  %cmp8256 = icmp sge i64 %field8255, 0
-  br i1 %cmp8256, label %if_then2448, label %if_else2449
+  %cond_label2_val8327 = load ptr, ptr %cond_label28315
+  %concat8328 = call ptr @ofs_str_concat(ptr %cond_label2_val8327, ptr @str.94)
+  call void @cg_emit(ptr %concat8328)
+  %field_ptr8329 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 6
+  %field8330 = load i64, ptr %field_ptr8329
+  %cmp8331 = icmp sge i64 %field8330, 0
+  br i1 %cmp8331, label %if_then2448, label %if_else2449
 
 if_then2448:
-  %field_ptr8257 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 6
-  %field8258 = load i64, ptr %field_ptr8257
-  call void @llvmgen__emit_expr(i64 %field8258)
-  %c8259 = alloca ptr, align 8
-  %call8260 = call ptr @llvmgen__expr_as_i1()
-  store ptr %call8260, ptr %c8259
-  %c_val8261 = load ptr, ptr %c8259
-  %concat8262 = call ptr @ofs_str_concat(ptr @str.530, ptr %c_val8261)
-  %concat8263 = call ptr @ofs_str_concat(ptr %concat8262, ptr @str.531)
-  %body_label2_val8264 = load ptr, ptr %body_label28242
-  %concat8265 = call ptr @ofs_str_concat(ptr %concat8263, ptr %body_label2_val8264)
-  %concat8266 = call ptr @ofs_str_concat(ptr %concat8265, ptr @str.531)
-  %end_label3_val8267 = load ptr, ptr %end_label38246
-  %concat8268 = call ptr @ofs_str_concat(ptr %concat8266, ptr %end_label3_val8267)
-  call void @cg_emit(ptr %concat8268)
+  %field_ptr8332 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 6
+  %field8333 = load i64, ptr %field_ptr8332
+  call void @llvmgen__emit_expr(i64 %field8333)
+  %c8334 = alloca ptr, align 8
+  %call8335 = call ptr @llvmgen__expr_as_i1()
+  store ptr %call8335, ptr %c8334
+  %c_val8336 = load ptr, ptr %c8334
+  %concat8337 = call ptr @ofs_str_concat(ptr @str.530, ptr %c_val8336)
+  %concat8338 = call ptr @ofs_str_concat(ptr %concat8337, ptr @str.531)
+  %body_label2_val8339 = load ptr, ptr %body_label28317
+  %concat8340 = call ptr @ofs_str_concat(ptr %concat8338, ptr %body_label2_val8339)
+  %concat8341 = call ptr @ofs_str_concat(ptr %concat8340, ptr @str.531)
+  %end_label3_val8342 = load ptr, ptr %end_label38321
+  %concat8343 = call ptr @ofs_str_concat(ptr %concat8341, ptr %end_label3_val8342)
+  call void @cg_emit(ptr %concat8343)
   br label %if_end2450
 
 if_else2449:
-  %body_label2_val8269 = load ptr, ptr %body_label28242
-  %concat8270 = call ptr @ofs_str_concat(ptr @str.526, ptr %body_label2_val8269)
-  call void @cg_emit(ptr %concat8270)
+  %body_label2_val8344 = load ptr, ptr %body_label28317
+  %concat8345 = call ptr @ofs_str_concat(ptr @str.526, ptr %body_label2_val8344)
+  call void @cg_emit(ptr %concat8345)
   br label %if_end2450
 
 if_end2450:
   call void @cg_emit(ptr @str.63)
-  %body_label2_val8271 = load ptr, ptr %body_label28242
-  %concat8272 = call ptr @ofs_str_concat(ptr %body_label2_val8271, ptr @str.94)
-  call void @cg_emit(ptr %concat8272)
+  %body_label2_val8346 = load ptr, ptr %body_label28317
+  %concat8347 = call ptr @ofs_str_concat(ptr %body_label2_val8346, ptr @str.94)
+  call void @cg_emit(ptr %concat8347)
   store i32 0, ptr @llvmgen___terminated
-  %field_ptr8273 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 8
-  %field8274 = load i64, ptr %field_ptr8273
-  %cmp8275 = icmp sge i64 %field8274, 0
-  br i1 %cmp8275, label %if_then2451, label %if_else2452
+  %field_ptr8348 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 8
+  %field8349 = load i64, ptr %field_ptr8348
+  %cmp8350 = icmp sge i64 %field8349, 0
+  br i1 %cmp8350, label %if_then2451, label %if_else2452
 
 if_then2451:
-  %field_ptr8276 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 8
-  %field8277 = load i64, ptr %field_ptr8276
-  call void @llvmgen__emit_stmt(i64 %field8277)
+  %field_ptr8351 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 8
+  %field8352 = load i64, ptr %field_ptr8351
+  call void @llvmgen__emit_stmt(i64 %field8352)
   br label %if_end2453
 
 if_else2452:
   br label %if_end2453
 
 if_end2453:
-  %llvmgen___terminated_val8278 = load i32, ptr @llvmgen___terminated
-  %cond8279 = icmp ne i32 %llvmgen___terminated_val8278, 0
-  %not8280 = xor i1 %cond8279, true
-  br i1 %not8280, label %if_then2454, label %if_else2455
+  %llvmgen___terminated_val8353 = load i32, ptr @llvmgen___terminated
+  %cond8354 = icmp ne i32 %llvmgen___terminated_val8353, 0
+  %not8355 = xor i1 %cond8354, true
+  br i1 %not8355, label %if_then2454, label %if_else2455
 
 if_then2454:
-  %step_label2_val8281 = load ptr, ptr %step_label28244
-  %concat8282 = call ptr @ofs_str_concat(ptr @str.526, ptr %step_label2_val8281)
-  call void @cg_emit(ptr %concat8282)
+  %step_label2_val8356 = load ptr, ptr %step_label28319
+  %concat8357 = call ptr @ofs_str_concat(ptr @str.526, ptr %step_label2_val8356)
+  call void @cg_emit(ptr %concat8357)
   br label %if_end2456
 
 if_else2455:
@@ -19005,34 +19120,34 @@ if_else2455:
 
 if_end2456:
   call void @cg_emit(ptr @str.63)
-  %step_label2_val8283 = load ptr, ptr %step_label28244
-  %concat8284 = call ptr @ofs_str_concat(ptr %step_label2_val8283, ptr @str.94)
-  call void @cg_emit(ptr %concat8284)
+  %step_label2_val8358 = load ptr, ptr %step_label28319
+  %concat8359 = call ptr @ofs_str_concat(ptr %step_label2_val8358, ptr @str.94)
+  call void @cg_emit(ptr %concat8359)
   store i32 0, ptr @llvmgen___terminated
-  %field_ptr8285 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 7
-  %field8286 = load i64, ptr %field_ptr8285
-  %cmp8287 = icmp sge i64 %field8286, 0
-  br i1 %cmp8287, label %if_then2457, label %if_else2458
+  %field_ptr8360 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 7
+  %field8361 = load i64, ptr %field_ptr8360
+  %cmp8362 = icmp sge i64 %field8361, 0
+  br i1 %cmp8362, label %if_then2457, label %if_else2458
 
 if_then2457:
-  %field_ptr8288 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 7
-  %field8289 = load i64, ptr %field_ptr8288
-  call void @llvmgen__emit_expr(i64 %field8289)
+  %field_ptr8363 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 7
+  %field8364 = load i64, ptr %field_ptr8363
+  call void @llvmgen__emit_expr(i64 %field8364)
   br label %if_end2459
 
 if_else2458:
   br label %if_end2459
 
 if_end2459:
-  %llvmgen___terminated_val8290 = load i32, ptr @llvmgen___terminated
-  %cond8291 = icmp ne i32 %llvmgen___terminated_val8290, 0
-  %not8292 = xor i1 %cond8291, true
-  br i1 %not8292, label %if_then2460, label %if_else2461
+  %llvmgen___terminated_val8365 = load i32, ptr @llvmgen___terminated
+  %cond8366 = icmp ne i32 %llvmgen___terminated_val8365, 0
+  %not8367 = xor i1 %cond8366, true
+  br i1 %not8367, label %if_then2460, label %if_else2461
 
 if_then2460:
-  %cond_label2_val8293 = load ptr, ptr %cond_label28240
-  %concat8294 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label2_val8293)
-  call void @cg_emit(ptr %concat8294)
+  %cond_label2_val8368 = load ptr, ptr %cond_label28315
+  %concat8369 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label2_val8368)
+  call void @cg_emit(ptr %concat8369)
   br label %if_end2462
 
 if_else2461:
@@ -19040,9 +19155,9 @@ if_else2461:
 
 if_end2462:
   call void @cg_emit(ptr @str.63)
-  %end_label3_val8295 = load ptr, ptr %end_label38246
-  %concat8296 = call ptr @ofs_str_concat(ptr %end_label3_val8295, ptr @str.94)
-  call void @cg_emit(ptr %concat8296)
+  %end_label3_val8370 = load ptr, ptr %end_label38321
+  %concat8371 = call ptr @ofs_str_concat(ptr %end_label3_val8370, ptr @str.94)
+  call void @cg_emit(ptr %concat8371)
   store i32 0, ptr @llvmgen___terminated
   call void @llvmgen__pop_loop()
   call void @llvmgen__pop_scope()
@@ -19052,162 +19167,162 @@ if_else2443:
   br label %if_end2444
 
 if_end2444:
-  %field_ptr8297 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 0
-  %field8298 = load i64, ptr %field_ptr8297
-  %NK_CYCLE_RANGE_val8299 = load i64, ptr @NK_CYCLE_RANGE
-  %cmp8300 = icmp eq i64 %field8298, %NK_CYCLE_RANGE_val8299
-  br i1 %cmp8300, label %if_then2463, label %if_else2464
+  %field_ptr8372 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 0
+  %field8373 = load i64, ptr %field_ptr8372
+  %NK_CYCLE_RANGE_val8374 = load i64, ptr @NK_CYCLE_RANGE
+  %cmp8375 = icmp eq i64 %field8373, %NK_CYCLE_RANGE_val8374
+  br i1 %cmp8375, label %if_then2463, label %if_else2464
 
 if_then2463:
   call void @llvmgen__push_scope()
-  %field_ptr8301 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 5
-  %field8302 = load i64, ptr %field_ptr8301
-  call void @llvmgen__emit_expr(i64 %field8302)
-  %arr_range8303 = alloca ptr, align 8
-  %llvmgen___expr_val_val8304 = load ptr, ptr @llvmgen___expr_val
-  store ptr %llvmgen___expr_val_val8304, ptr %arr_range8303
-  %idx_ptr8305 = alloca ptr, align 8
-  %call8306 = call ptr @llvmgen__next_tmp(ptr @str.540)
-  store ptr %call8306, ptr %idx_ptr8305
-  %item_ptr8307 = alloca ptr, align 8
-  %field_ptr8308 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 1
-  %field8309 = load ptr, ptr %field_ptr8308
-  %call8310 = call ptr @llvmgen__next_tmp(ptr %field8309)
-  store ptr %call8310, ptr %item_ptr8307
-  %idx_ptr_val8311 = load ptr, ptr %idx_ptr8305
-  %concat8312 = call ptr @ofs_str_concat(ptr @str.233, ptr %idx_ptr_val8311)
-  %concat8313 = call ptr @ofs_str_concat(ptr %concat8312, ptr @str.541)
-  call void @cg_emit(ptr %concat8313)
-  %item_ptr_val8314 = load ptr, ptr %item_ptr8307
-  %concat8315 = call ptr @ofs_str_concat(ptr @str.233, ptr %item_ptr_val8314)
-  %concat8316 = call ptr @ofs_str_concat(ptr %concat8315, ptr @str.541)
-  call void @cg_emit(ptr %concat8316)
-  %idx_ptr_val8317 = load ptr, ptr %idx_ptr8305
-  %concat8318 = call ptr @ofs_str_concat(ptr @str.542, ptr %idx_ptr_val8317)
-  call void @cg_emit(ptr %concat8318)
-  %field_ptr8319 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 1
-  %field8320 = load ptr, ptr %field_ptr8319
-  %item_ptr_val8321 = load ptr, ptr %item_ptr8307
-  call void @llvmgen__declare_var(ptr %field8320, ptr @str.181, ptr %item_ptr_val8321)
-  %cond_label38322 = alloca ptr, align 8
-  %call8323 = call ptr @llvmgen__next_label(ptr @str.543)
-  store ptr %call8323, ptr %cond_label38322
-  %body_label38324 = alloca ptr, align 8
-  %call8325 = call ptr @llvmgen__next_label(ptr @str.544)
-  store ptr %call8325, ptr %body_label38324
-  %step_label38326 = alloca ptr, align 8
-  %call8327 = call ptr @llvmgen__next_label(ptr @str.545)
-  store ptr %call8327, ptr %step_label38326
-  %end_label48328 = alloca ptr, align 8
-  %call8329 = call ptr @llvmgen__next_label(ptr @str.546)
-  store ptr %call8329, ptr %end_label48328
-  %end_label4_val8330 = load ptr, ptr %end_label48328
-  %step_label3_val8331 = load ptr, ptr %step_label38326
-  call void @llvmgen__push_loop(ptr %end_label4_val8330, ptr %step_label3_val8331)
-  %cond_label3_val8332 = load ptr, ptr %cond_label38322
-  %concat8333 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label3_val8332)
-  call void @cg_emit(ptr %concat8333)
-  call void @cg_emit(ptr @str.63)
-  %cond_label3_val8334 = load ptr, ptr %cond_label38322
-  %concat8335 = call ptr @ofs_str_concat(ptr %cond_label3_val8334, ptr @str.94)
-  call void @cg_emit(ptr %concat8335)
-  %idx_val8336 = alloca ptr, align 8
-  %call8337 = call ptr @llvmgen__next_tmp(ptr @str.547)
-  store ptr %call8337, ptr %idx_val8336
-  %len_val8338 = alloca ptr, align 8
-  %call8339 = call ptr @llvmgen__next_tmp(ptr @str.548)
-  store ptr %call8339, ptr %len_val8338
-  %range_cmp8340 = alloca ptr, align 8
-  %call8341 = call ptr @llvmgen__next_tmp(ptr @str.549)
-  store ptr %call8341, ptr %range_cmp8340
-  %idx_val_val8342 = load ptr, ptr %idx_val8336
-  %concat8343 = call ptr @ofs_str_concat(ptr @str.233, ptr %idx_val_val8342)
-  %concat8344 = call ptr @ofs_str_concat(ptr %concat8343, ptr @str.433)
-  %idx_ptr_val8345 = load ptr, ptr %idx_ptr8305
-  %concat8346 = call ptr @ofs_str_concat(ptr %concat8344, ptr %idx_ptr_val8345)
-  call void @cg_emit(ptr %concat8346)
-  %len_val_val8347 = load ptr, ptr %len_val8338
-  %concat8348 = call ptr @ofs_str_concat(ptr @str.233, ptr %len_val_val8347)
-  %concat8349 = call ptr @ofs_str_concat(ptr %concat8348, ptr @str.502)
-  %arr_range_val8350 = load ptr, ptr %arr_range8303
-  %concat8351 = call ptr @ofs_str_concat(ptr %concat8349, ptr %arr_range_val8350)
-  %concat8352 = call ptr @ofs_str_concat(ptr %concat8351, ptr @str.125)
-  call void @cg_emit(ptr %concat8352)
-  %range_cmp_val8353 = load ptr, ptr %range_cmp8340
-  %concat8354 = call ptr @ofs_str_concat(ptr @str.233, ptr %range_cmp_val8353)
-  %concat8355 = call ptr @ofs_str_concat(ptr %concat8354, ptr @str.550)
-  %idx_val_val8356 = load ptr, ptr %idx_val8336
-  %concat8357 = call ptr @ofs_str_concat(ptr %concat8355, ptr %idx_val_val8356)
-  %concat8358 = call ptr @ofs_str_concat(ptr %concat8357, ptr @str.217)
-  %len_val_val8359 = load ptr, ptr %len_val8338
-  %concat8360 = call ptr @ofs_str_concat(ptr %concat8358, ptr %len_val_val8359)
-  call void @cg_emit(ptr %concat8360)
-  %range_cmp_val8361 = load ptr, ptr %range_cmp8340
-  %concat8362 = call ptr @ofs_str_concat(ptr @str.530, ptr %range_cmp_val8361)
-  %concat8363 = call ptr @ofs_str_concat(ptr %concat8362, ptr @str.531)
-  %body_label3_val8364 = load ptr, ptr %body_label38324
-  %concat8365 = call ptr @ofs_str_concat(ptr %concat8363, ptr %body_label3_val8364)
-  %concat8366 = call ptr @ofs_str_concat(ptr %concat8365, ptr @str.531)
-  %end_label4_val8367 = load ptr, ptr %end_label48328
-  %concat8368 = call ptr @ofs_str_concat(ptr %concat8366, ptr %end_label4_val8367)
-  call void @cg_emit(ptr %concat8368)
-  call void @cg_emit(ptr @str.63)
-  %body_label3_val8369 = load ptr, ptr %body_label38324
-  %concat8370 = call ptr @ofs_str_concat(ptr %body_label3_val8369, ptr @str.94)
-  call void @cg_emit(ptr %concat8370)
-  %raw_item8371 = alloca ptr, align 8
-  %call8372 = call ptr @llvmgen__next_tmp(ptr @str.551)
-  store ptr %call8372, ptr %raw_item8371
-  %loaded_item8373 = alloca ptr, align 8
-  %call8374 = call ptr @llvmgen__next_tmp(ptr @str.552)
-  store ptr %call8374, ptr %loaded_item8373
-  %raw_item_val8375 = load ptr, ptr %raw_item8371
-  %concat8376 = call ptr @ofs_str_concat(ptr @str.233, ptr %raw_item_val8375)
-  %concat8377 = call ptr @ofs_str_concat(ptr %concat8376, ptr @str.271)
-  %arr_range_val8378 = load ptr, ptr %arr_range8303
-  %concat8379 = call ptr @ofs_str_concat(ptr %concat8377, ptr %arr_range_val8378)
-  %concat8380 = call ptr @ofs_str_concat(ptr %concat8379, ptr @str.272)
-  %idx_val_val8381 = load ptr, ptr %idx_val8336
-  %concat8382 = call ptr @ofs_str_concat(ptr %concat8380, ptr %idx_val_val8381)
-  %concat8383 = call ptr @ofs_str_concat(ptr %concat8382, ptr @str.125)
-  call void @cg_emit(ptr %concat8383)
-  %loaded_item_val8384 = load ptr, ptr %loaded_item8373
-  %concat8385 = call ptr @ofs_str_concat(ptr @str.233, ptr %loaded_item_val8384)
-  %concat8386 = call ptr @ofs_str_concat(ptr %concat8385, ptr @str.433)
-  %raw_item_val8387 = load ptr, ptr %raw_item8371
-  %concat8388 = call ptr @ofs_str_concat(ptr %concat8386, ptr %raw_item_val8387)
+  %field_ptr8376 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 5
+  %field8377 = load i64, ptr %field_ptr8376
+  call void @llvmgen__emit_expr(i64 %field8377)
+  %arr_range8378 = alloca ptr, align 8
+  %llvmgen___expr_val_val8379 = load ptr, ptr @llvmgen___expr_val
+  store ptr %llvmgen___expr_val_val8379, ptr %arr_range8378
+  %idx_ptr8380 = alloca ptr, align 8
+  %call8381 = call ptr @llvmgen__next_tmp(ptr @str.540)
+  store ptr %call8381, ptr %idx_ptr8380
+  %item_ptr8382 = alloca ptr, align 8
+  %field_ptr8383 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 1
+  %field8384 = load ptr, ptr %field_ptr8383
+  %call8385 = call ptr @llvmgen__next_tmp(ptr %field8384)
+  store ptr %call8385, ptr %item_ptr8382
+  %idx_ptr_val8386 = load ptr, ptr %idx_ptr8380
+  %concat8387 = call ptr @ofs_str_concat(ptr @str.233, ptr %idx_ptr_val8386)
+  %concat8388 = call ptr @ofs_str_concat(ptr %concat8387, ptr @str.541)
   call void @cg_emit(ptr %concat8388)
-  %loaded_item_val8389 = load ptr, ptr %loaded_item8373
-  %concat8390 = call ptr @ofs_str_concat(ptr @str.437, ptr %loaded_item_val8389)
-  %concat8391 = call ptr @ofs_str_concat(ptr %concat8390, ptr @str.276)
-  %item_ptr_val8392 = load ptr, ptr %item_ptr8307
-  %concat8393 = call ptr @ofs_str_concat(ptr %concat8391, ptr %item_ptr_val8392)
+  %item_ptr_val8389 = load ptr, ptr %item_ptr8382
+  %concat8390 = call ptr @ofs_str_concat(ptr @str.233, ptr %item_ptr_val8389)
+  %concat8391 = call ptr @ofs_str_concat(ptr %concat8390, ptr @str.541)
+  call void @cg_emit(ptr %concat8391)
+  %idx_ptr_val8392 = load ptr, ptr %idx_ptr8380
+  %concat8393 = call ptr @ofs_str_concat(ptr @str.542, ptr %idx_ptr_val8392)
   call void @cg_emit(ptr %concat8393)
+  %field_ptr8394 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 1
+  %field8395 = load ptr, ptr %field_ptr8394
+  %item_ptr_val8396 = load ptr, ptr %item_ptr8382
+  call void @llvmgen__declare_var(ptr %field8395, ptr @str.181, ptr %item_ptr_val8396)
+  %cond_label38397 = alloca ptr, align 8
+  %call8398 = call ptr @llvmgen__next_label(ptr @str.543)
+  store ptr %call8398, ptr %cond_label38397
+  %body_label38399 = alloca ptr, align 8
+  %call8400 = call ptr @llvmgen__next_label(ptr @str.544)
+  store ptr %call8400, ptr %body_label38399
+  %step_label38401 = alloca ptr, align 8
+  %call8402 = call ptr @llvmgen__next_label(ptr @str.545)
+  store ptr %call8402, ptr %step_label38401
+  %end_label48403 = alloca ptr, align 8
+  %call8404 = call ptr @llvmgen__next_label(ptr @str.546)
+  store ptr %call8404, ptr %end_label48403
+  %end_label4_val8405 = load ptr, ptr %end_label48403
+  %step_label3_val8406 = load ptr, ptr %step_label38401
+  call void @llvmgen__push_loop(ptr %end_label4_val8405, ptr %step_label3_val8406)
+  %cond_label3_val8407 = load ptr, ptr %cond_label38397
+  %concat8408 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label3_val8407)
+  call void @cg_emit(ptr %concat8408)
+  call void @cg_emit(ptr @str.63)
+  %cond_label3_val8409 = load ptr, ptr %cond_label38397
+  %concat8410 = call ptr @ofs_str_concat(ptr %cond_label3_val8409, ptr @str.94)
+  call void @cg_emit(ptr %concat8410)
+  %idx_val8411 = alloca ptr, align 8
+  %call8412 = call ptr @llvmgen__next_tmp(ptr @str.547)
+  store ptr %call8412, ptr %idx_val8411
+  %len_val8413 = alloca ptr, align 8
+  %call8414 = call ptr @llvmgen__next_tmp(ptr @str.548)
+  store ptr %call8414, ptr %len_val8413
+  %range_cmp8415 = alloca ptr, align 8
+  %call8416 = call ptr @llvmgen__next_tmp(ptr @str.549)
+  store ptr %call8416, ptr %range_cmp8415
+  %idx_val_val8417 = load ptr, ptr %idx_val8411
+  %concat8418 = call ptr @ofs_str_concat(ptr @str.233, ptr %idx_val_val8417)
+  %concat8419 = call ptr @ofs_str_concat(ptr %concat8418, ptr @str.433)
+  %idx_ptr_val8420 = load ptr, ptr %idx_ptr8380
+  %concat8421 = call ptr @ofs_str_concat(ptr %concat8419, ptr %idx_ptr_val8420)
+  call void @cg_emit(ptr %concat8421)
+  %len_val_val8422 = load ptr, ptr %len_val8413
+  %concat8423 = call ptr @ofs_str_concat(ptr @str.233, ptr %len_val_val8422)
+  %concat8424 = call ptr @ofs_str_concat(ptr %concat8423, ptr @str.502)
+  %arr_range_val8425 = load ptr, ptr %arr_range8378
+  %concat8426 = call ptr @ofs_str_concat(ptr %concat8424, ptr %arr_range_val8425)
+  %concat8427 = call ptr @ofs_str_concat(ptr %concat8426, ptr @str.125)
+  call void @cg_emit(ptr %concat8427)
+  %range_cmp_val8428 = load ptr, ptr %range_cmp8415
+  %concat8429 = call ptr @ofs_str_concat(ptr @str.233, ptr %range_cmp_val8428)
+  %concat8430 = call ptr @ofs_str_concat(ptr %concat8429, ptr @str.550)
+  %idx_val_val8431 = load ptr, ptr %idx_val8411
+  %concat8432 = call ptr @ofs_str_concat(ptr %concat8430, ptr %idx_val_val8431)
+  %concat8433 = call ptr @ofs_str_concat(ptr %concat8432, ptr @str.217)
+  %len_val_val8434 = load ptr, ptr %len_val8413
+  %concat8435 = call ptr @ofs_str_concat(ptr %concat8433, ptr %len_val_val8434)
+  call void @cg_emit(ptr %concat8435)
+  %range_cmp_val8436 = load ptr, ptr %range_cmp8415
+  %concat8437 = call ptr @ofs_str_concat(ptr @str.530, ptr %range_cmp_val8436)
+  %concat8438 = call ptr @ofs_str_concat(ptr %concat8437, ptr @str.531)
+  %body_label3_val8439 = load ptr, ptr %body_label38399
+  %concat8440 = call ptr @ofs_str_concat(ptr %concat8438, ptr %body_label3_val8439)
+  %concat8441 = call ptr @ofs_str_concat(ptr %concat8440, ptr @str.531)
+  %end_label4_val8442 = load ptr, ptr %end_label48403
+  %concat8443 = call ptr @ofs_str_concat(ptr %concat8441, ptr %end_label4_val8442)
+  call void @cg_emit(ptr %concat8443)
+  call void @cg_emit(ptr @str.63)
+  %body_label3_val8444 = load ptr, ptr %body_label38399
+  %concat8445 = call ptr @ofs_str_concat(ptr %body_label3_val8444, ptr @str.94)
+  call void @cg_emit(ptr %concat8445)
+  %raw_item8446 = alloca ptr, align 8
+  %call8447 = call ptr @llvmgen__next_tmp(ptr @str.551)
+  store ptr %call8447, ptr %raw_item8446
+  %loaded_item8448 = alloca ptr, align 8
+  %call8449 = call ptr @llvmgen__next_tmp(ptr @str.552)
+  store ptr %call8449, ptr %loaded_item8448
+  %raw_item_val8450 = load ptr, ptr %raw_item8446
+  %concat8451 = call ptr @ofs_str_concat(ptr @str.233, ptr %raw_item_val8450)
+  %concat8452 = call ptr @ofs_str_concat(ptr %concat8451, ptr @str.271)
+  %arr_range_val8453 = load ptr, ptr %arr_range8378
+  %concat8454 = call ptr @ofs_str_concat(ptr %concat8452, ptr %arr_range_val8453)
+  %concat8455 = call ptr @ofs_str_concat(ptr %concat8454, ptr @str.272)
+  %idx_val_val8456 = load ptr, ptr %idx_val8411
+  %concat8457 = call ptr @ofs_str_concat(ptr %concat8455, ptr %idx_val_val8456)
+  %concat8458 = call ptr @ofs_str_concat(ptr %concat8457, ptr @str.125)
+  call void @cg_emit(ptr %concat8458)
+  %loaded_item_val8459 = load ptr, ptr %loaded_item8448
+  %concat8460 = call ptr @ofs_str_concat(ptr @str.233, ptr %loaded_item_val8459)
+  %concat8461 = call ptr @ofs_str_concat(ptr %concat8460, ptr @str.433)
+  %raw_item_val8462 = load ptr, ptr %raw_item8446
+  %concat8463 = call ptr @ofs_str_concat(ptr %concat8461, ptr %raw_item_val8462)
+  call void @cg_emit(ptr %concat8463)
+  %loaded_item_val8464 = load ptr, ptr %loaded_item8448
+  %concat8465 = call ptr @ofs_str_concat(ptr @str.437, ptr %loaded_item_val8464)
+  %concat8466 = call ptr @ofs_str_concat(ptr %concat8465, ptr @str.276)
+  %item_ptr_val8467 = load ptr, ptr %item_ptr8382
+  %concat8468 = call ptr @ofs_str_concat(ptr %concat8466, ptr %item_ptr_val8467)
+  call void @cg_emit(ptr %concat8468)
   store i32 0, ptr @llvmgen___terminated
-  %field_ptr8394 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 6
-  %field8395 = load i64, ptr %field_ptr8394
-  %cmp8396 = icmp sge i64 %field8395, 0
-  br i1 %cmp8396, label %if_then2466, label %if_else2467
+  %field_ptr8469 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 6
+  %field8470 = load i64, ptr %field_ptr8469
+  %cmp8471 = icmp sge i64 %field8470, 0
+  br i1 %cmp8471, label %if_then2466, label %if_else2467
 
 if_then2466:
-  %field_ptr8397 = getelementptr inbounds %Node, ptr %obj7928, i32 0, i32 6
-  %field8398 = load i64, ptr %field_ptr8397
-  call void @llvmgen__emit_stmt(i64 %field8398)
+  %field_ptr8472 = getelementptr inbounds %Node, ptr %obj8001, i32 0, i32 6
+  %field8473 = load i64, ptr %field_ptr8472
+  call void @llvmgen__emit_stmt(i64 %field8473)
   br label %if_end2468
 
 if_else2467:
   br label %if_end2468
 
 if_end2468:
-  %llvmgen___terminated_val8399 = load i32, ptr @llvmgen___terminated
-  %cond8400 = icmp ne i32 %llvmgen___terminated_val8399, 0
-  %not8401 = xor i1 %cond8400, true
-  br i1 %not8401, label %if_then2469, label %if_else2470
+  %llvmgen___terminated_val8474 = load i32, ptr @llvmgen___terminated
+  %cond8475 = icmp ne i32 %llvmgen___terminated_val8474, 0
+  %not8476 = xor i1 %cond8475, true
+  br i1 %not8476, label %if_then2469, label %if_else2470
 
 if_then2469:
-  %step_label3_val8402 = load ptr, ptr %step_label38326
-  %concat8403 = call ptr @ofs_str_concat(ptr @str.526, ptr %step_label3_val8402)
-  call void @cg_emit(ptr %concat8403)
+  %step_label3_val8477 = load ptr, ptr %step_label38401
+  %concat8478 = call ptr @ofs_str_concat(ptr @str.526, ptr %step_label3_val8477)
+  call void @cg_emit(ptr %concat8478)
   br label %if_end2471
 
 if_else2470:
@@ -19215,33 +19330,33 @@ if_else2470:
 
 if_end2471:
   call void @cg_emit(ptr @str.63)
-  %step_label3_val8404 = load ptr, ptr %step_label38326
-  %concat8405 = call ptr @ofs_str_concat(ptr %step_label3_val8404, ptr @str.94)
-  call void @cg_emit(ptr %concat8405)
+  %step_label3_val8479 = load ptr, ptr %step_label38401
+  %concat8480 = call ptr @ofs_str_concat(ptr %step_label3_val8479, ptr @str.94)
+  call void @cg_emit(ptr %concat8480)
   store i32 0, ptr @llvmgen___terminated
-  %next_idx8406 = alloca ptr, align 8
-  %call8407 = call ptr @llvmgen__next_tmp(ptr @str.553)
-  store ptr %call8407, ptr %next_idx8406
-  %next_idx_val8408 = load ptr, ptr %next_idx8406
-  %concat8409 = call ptr @ofs_str_concat(ptr @str.233, ptr %next_idx_val8408)
-  %concat8410 = call ptr @ofs_str_concat(ptr %concat8409, ptr @str.434)
-  %idx_val_val8411 = load ptr, ptr %idx_val8336
-  %concat8412 = call ptr @ofs_str_concat(ptr %concat8410, ptr %idx_val_val8411)
-  %concat8413 = call ptr @ofs_str_concat(ptr %concat8412, ptr @str.435)
-  call void @cg_emit(ptr %concat8413)
-  %next_idx_val8414 = load ptr, ptr %next_idx8406
-  %concat8415 = call ptr @ofs_str_concat(ptr @str.437, ptr %next_idx_val8414)
-  %concat8416 = call ptr @ofs_str_concat(ptr %concat8415, ptr @str.276)
-  %idx_ptr_val8417 = load ptr, ptr %idx_ptr8305
-  %concat8418 = call ptr @ofs_str_concat(ptr %concat8416, ptr %idx_ptr_val8417)
-  call void @cg_emit(ptr %concat8418)
-  %cond_label3_val8419 = load ptr, ptr %cond_label38322
-  %concat8420 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label3_val8419)
-  call void @cg_emit(ptr %concat8420)
+  %next_idx8481 = alloca ptr, align 8
+  %call8482 = call ptr @llvmgen__next_tmp(ptr @str.553)
+  store ptr %call8482, ptr %next_idx8481
+  %next_idx_val8483 = load ptr, ptr %next_idx8481
+  %concat8484 = call ptr @ofs_str_concat(ptr @str.233, ptr %next_idx_val8483)
+  %concat8485 = call ptr @ofs_str_concat(ptr %concat8484, ptr @str.434)
+  %idx_val_val8486 = load ptr, ptr %idx_val8411
+  %concat8487 = call ptr @ofs_str_concat(ptr %concat8485, ptr %idx_val_val8486)
+  %concat8488 = call ptr @ofs_str_concat(ptr %concat8487, ptr @str.435)
+  call void @cg_emit(ptr %concat8488)
+  %next_idx_val8489 = load ptr, ptr %next_idx8481
+  %concat8490 = call ptr @ofs_str_concat(ptr @str.437, ptr %next_idx_val8489)
+  %concat8491 = call ptr @ofs_str_concat(ptr %concat8490, ptr @str.276)
+  %idx_ptr_val8492 = load ptr, ptr %idx_ptr8380
+  %concat8493 = call ptr @ofs_str_concat(ptr %concat8491, ptr %idx_ptr_val8492)
+  call void @cg_emit(ptr %concat8493)
+  %cond_label3_val8494 = load ptr, ptr %cond_label38397
+  %concat8495 = call ptr @ofs_str_concat(ptr @str.526, ptr %cond_label3_val8494)
+  call void @cg_emit(ptr %concat8495)
   call void @cg_emit(ptr @str.63)
-  %end_label4_val8421 = load ptr, ptr %end_label48328
-  %concat8422 = call ptr @ofs_str_concat(ptr %end_label4_val8421, ptr @str.94)
-  call void @cg_emit(ptr %concat8422)
+  %end_label4_val8496 = load ptr, ptr %end_label48403
+  %concat8497 = call ptr @ofs_str_concat(ptr %end_label4_val8496, ptr @str.94)
+  call void @cg_emit(ptr %concat8497)
   store i32 0, ptr @llvmgen___terminated
   call void @llvmgen__pop_loop()
   call void @llvmgen__pop_scope()
@@ -19258,62 +19373,65 @@ define void @llvmgen__emit_function(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %obj8424 = call ptr @ofs_alloc(i64 4096)
-  %id_val8425 = load i64, ptr %id.addr
-  %call8426 = call ptr @node_get(i64 %id_val8425)
-  %named_val8427 = load %Node, ptr %call8426
-  store %Node %named_val8427, ptr %obj8424
-  %field_ptr8428 = getelementptr inbounds %Node, ptr %obj8424, i32 0, i32 0
-  %field8429 = load i64, ptr %field_ptr8428
-  %NK_CORE_DECL_val8430 = load i64, ptr @NK_CORE_DECL
-  %cmp8431 = icmp eq i64 %field8429, %NK_CORE_DECL_val8430
-  br i1 %cmp8431, label %if_then2472, label %if_else2473
+  %obj8499 = call ptr @ofs_alloc(i64 4096)
+  %id_val8500 = load i64, ptr %id.addr
+  %call8501 = call ptr @node_get(i64 %id_val8500)
+  %named_val8502 = load %Node, ptr %call8501
+  store %Node %named_val8502, ptr %obj8499
+  %field_ptr8503 = getelementptr inbounds %Node, ptr %obj8499, i32 0, i32 0
+  %field8504 = load i64, ptr %field_ptr8503
+  %NK_CORE_DECL_val8505 = load i64, ptr @NK_CORE_DECL
+  %cmp8506 = icmp eq i64 %field8504, %NK_CORE_DECL_val8505
+  br i1 %cmp8506, label %if_then2472, label %if_else2473
 
 if_then2472:
-  %arr8432 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8432, ptr @llvmgen___var_names
-  %arr8433 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8433, ptr @llvmgen___var_types
-  %arr8434 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8434, ptr @llvmgen___var_ptrs
-  %arr8435 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8435, ptr @llvmgen___var_depths
+  %arr8507 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8507, ptr @llvmgen___var_names
+  %arr8508 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8508, ptr @llvmgen___var_types
+  %arr8509 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8509, ptr @llvmgen___var_ptrs
+  %arr8510 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8510, ptr @llvmgen___var_depths
   store i64 0, ptr @llvmgen___scope_depth
   store ptr @str.523, ptr @llvmgen___current_ret_type
   store i32 0, ptr @llvmgen___terminated
   call void @cg_emit(ptr @str.554)
   call void @cg_emit(ptr @str.352)
   call void @cg_emit(ptr @str.555)
-  %body_id8436 = alloca i64, align 8
-  %field_ptr8437 = getelementptr inbounds %Node, ptr %obj8424, i32 0, i32 7
-  %field8438 = load i64, ptr %field_ptr8437
-  store i64 %field8438, ptr %body_id8436
-  %i8439 = alloca i64, align 8
-  store i64 0, ptr %i8439
+  %body_id8511 = alloca i64, align 8
+  %field_ptr8512 = getelementptr inbounds %Node, ptr %obj8499, i32 0, i32 7
+  %field8513 = load i64, ptr %field_ptr8512
+  store i64 %field8513, ptr %body_id8511
+  %i8514 = alloca i64, align 8
+  store i64 0, ptr %i8514
+  %statement_count8515 = alloca i64, align 8
+  %body_id_val8516 = load i64, ptr %body_id8511
+  %call8517 = call i64 @node_extra_len(i64 %body_id_val8516)
+  store i64 %call8517, ptr %statement_count8515
   br label %while_cond2475
 
 while_cond2475:
-  %i_val8440 = load i64, ptr %i8439
-  %body_id_val8441 = load i64, ptr %body_id8436
-  %call8442 = call i64 @node_extra_len(i64 %body_id_val8441)
-  %cmp8443 = icmp slt i64 %i_val8440, %call8442
-  br i1 %cmp8443, label %while_body2476, label %while_end2477
+  %i_val8518 = load i64, ptr %i8514
+  %statement_count_val8519 = load i64, ptr %statement_count8515
+  %cmp8520 = icmp slt i64 %i_val8518, %statement_count_val8519
+  br i1 %cmp8520, label %while_body2476, label %while_end2477
 
 while_body2476:
-  %body_id_val8444 = load i64, ptr %body_id8436
-  %i_val8445 = load i64, ptr %i8439
-  %call8446 = call i64 @node_get_extra(i64 %body_id_val8444, i64 %i_val8445)
-  call void @llvmgen__emit_stmt(i64 %call8446)
-  %post_old8447 = load i64, ptr %i8439
-  %post_new8448 = add i64 %post_old8447, 1
-  store i64 %post_new8448, ptr %i8439
+  %body_id_val8521 = load i64, ptr %body_id8511
+  %i_val8522 = load i64, ptr %i8514
+  %call8523 = call i64 @node_get_extra(i64 %body_id_val8521, i64 %i_val8522)
+  call void @llvmgen__emit_stmt(i64 %call8523)
+  %post_old8524 = load i64, ptr %i8514
+  %post_new8525 = add i64 %post_old8524, 1
+  store i64 %post_new8525, ptr %i8514
   br label %while_cond2475
 
 while_end2477:
-  %llvmgen___terminated_val8449 = load i32, ptr @llvmgen___terminated
-  %cond8450 = icmp ne i32 %llvmgen___terminated_val8449, 0
-  %not8451 = xor i1 %cond8450, true
-  br i1 %not8451, label %if_then2478, label %if_else2479
+  %llvmgen___terminated_val8526 = load i32, ptr @llvmgen___terminated
+  %cond8527 = icmp ne i32 %llvmgen___terminated_val8526, 0
+  %not8528 = xor i1 %cond8527, true
+  br i1 %not8528, label %if_then2478, label %if_else2479
 
 if_then2478:
   call void @cg_emit(ptr @str.524)
@@ -19331,44 +19449,44 @@ if_else2473:
   br label %if_end2474
 
 if_end2474:
-  %field_ptr8452 = getelementptr inbounds %Node, ptr %obj8424, i32 0, i32 0
-  %field8453 = load i64, ptr %field_ptr8452
-  %NK_FN_DECL_val8454 = load i64, ptr @NK_FN_DECL
-  %cmp8455 = icmp eq i64 %field8453, %NK_FN_DECL_val8454
-  br i1 %cmp8455, label %if_then2481, label %if_else2482
+  %field_ptr8529 = getelementptr inbounds %Node, ptr %obj8499, i32 0, i32 0
+  %field8530 = load i64, ptr %field_ptr8529
+  %NK_FN_DECL_val8531 = load i64, ptr @NK_FN_DECL
+  %cmp8532 = icmp eq i64 %field8530, %NK_FN_DECL_val8531
+  br i1 %cmp8532, label %if_then2481, label %if_else2482
 
 if_then2481:
-  %arr8456 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8456, ptr @llvmgen___var_names
-  %arr8457 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8457, ptr @llvmgen___var_types
-  %arr8458 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8458, ptr @llvmgen___var_ptrs
-  %arr8459 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8459, ptr @llvmgen___var_depths
+  %arr8533 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8533, ptr @llvmgen___var_names
+  %arr8534 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8534, ptr @llvmgen___var_types
+  %arr8535 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8535, ptr @llvmgen___var_ptrs
+  %arr8536 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8536, ptr @llvmgen___var_depths
   store i64 0, ptr @llvmgen___scope_depth
   store i32 0, ptr @llvmgen___terminated
   store ptr @str.180, ptr @llvmgen___current_ret_type
-  %field_ptr8460 = getelementptr inbounds %Node, ptr %obj8424, i32 0, i32 6
-  %field8461 = load i64, ptr %field_ptr8460
-  %cmp8462 = icmp sge i64 %field8461, 0
-  br i1 %cmp8462, label %if_then2484, label %if_else2485
+  %field_ptr8537 = getelementptr inbounds %Node, ptr %obj8499, i32 0, i32 6
+  %field8538 = load i64, ptr %field_ptr8537
+  %cmp8539 = icmp sge i64 %field8538, 0
+  br i1 %cmp8539, label %if_then2484, label %if_else2485
 
 if_then2484:
-  %obj8464 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr8465 = getelementptr inbounds %Node, ptr %obj8424, i32 0, i32 6
-  %field8466 = load i64, ptr %field_ptr8465
-  %call8467 = call ptr @node_get(i64 %field8466)
-  %named_val8468 = load %Node, ptr %call8467
-  store %Node %named_val8468, ptr %obj8464
-  %field_ptr8469 = getelementptr inbounds %Node, ptr %obj8464, i32 0, i32 1
-  %field8470 = load ptr, ptr %field_ptr8469
-  store ptr %field8470, ptr @llvmgen___current_ret_type
-  %field_ptr8471 = getelementptr inbounds %Node, ptr %obj8464, i32 0, i32 0
-  %field8472 = load i64, ptr %field_ptr8471
-  %NK_TYPE_ARRAY_val8473 = load i64, ptr @NK_TYPE_ARRAY
-  %cmp8474 = icmp eq i64 %field8472, %NK_TYPE_ARRAY_val8473
-  br i1 %cmp8474, label %if_then2487, label %if_else2488
+  %obj8541 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr8542 = getelementptr inbounds %Node, ptr %obj8499, i32 0, i32 6
+  %field8543 = load i64, ptr %field_ptr8542
+  %call8544 = call ptr @node_get(i64 %field8543)
+  %named_val8545 = load %Node, ptr %call8544
+  store %Node %named_val8545, ptr %obj8541
+  %field_ptr8546 = getelementptr inbounds %Node, ptr %obj8541, i32 0, i32 1
+  %field8547 = load ptr, ptr %field_ptr8546
+  store ptr %field8547, ptr @llvmgen___current_ret_type
+  %field_ptr8548 = getelementptr inbounds %Node, ptr %obj8541, i32 0, i32 0
+  %field8549 = load i64, ptr %field_ptr8548
+  %NK_TYPE_ARRAY_val8550 = load i64, ptr @NK_TYPE_ARRAY
+  %cmp8551 = icmp eq i64 %field8549, %NK_TYPE_ARRAY_val8550
+  br i1 %cmp8551, label %if_then2487, label %if_else2488
 
 if_then2487:
   store ptr @str.144, ptr @llvmgen___current_ret_type
@@ -19384,34 +19502,37 @@ if_else2485:
   br label %if_end2486
 
 if_end2486:
-  %llvmgen___current_ret_type_val8475 = load ptr, ptr @llvmgen___current_ret_type
-  %call8476 = call ptr @llvmgen__llvm_type(ptr %llvmgen___current_ret_type_val8475)
-  %concat8477 = call ptr @ofs_str_concat(ptr @str.556, ptr %call8476)
-  %concat8478 = call ptr @ofs_str_concat(ptr %concat8477, ptr @str.515)
-  %field_ptr8479 = getelementptr inbounds %Node, ptr %obj8424, i32 0, i32 1
-  %field8480 = load ptr, ptr %field_ptr8479
-  %concat8481 = call ptr @ofs_str_concat(ptr %concat8478, ptr %field8480)
-  %concat8482 = call ptr @ofs_str_concat(ptr %concat8481, ptr @str.124)
-  call void @cg_emit_raw(ptr %concat8482)
-  %params_id8483 = alloca i64, align 8
-  %field_ptr8484 = getelementptr inbounds %Node, ptr %obj8424, i32 0, i32 5
-  %field8485 = load i64, ptr %field_ptr8484
-  store i64 %field8485, ptr %params_id8483
-  %pi8486 = alloca i64, align 8
-  store i64 0, ptr %pi8486
+  %llvmgen___current_ret_type_val8552 = load ptr, ptr @llvmgen___current_ret_type
+  %call8553 = call ptr @llvmgen__llvm_type(ptr %llvmgen___current_ret_type_val8552)
+  %concat8554 = call ptr @ofs_str_concat(ptr @str.556, ptr %call8553)
+  %concat8555 = call ptr @ofs_str_concat(ptr %concat8554, ptr @str.515)
+  %field_ptr8556 = getelementptr inbounds %Node, ptr %obj8499, i32 0, i32 1
+  %field8557 = load ptr, ptr %field_ptr8556
+  %concat8558 = call ptr @ofs_str_concat(ptr %concat8555, ptr %field8557)
+  %concat8559 = call ptr @ofs_str_concat(ptr %concat8558, ptr @str.124)
+  call void @cg_emit_raw(ptr %concat8559)
+  %params_id8560 = alloca i64, align 8
+  %field_ptr8561 = getelementptr inbounds %Node, ptr %obj8499, i32 0, i32 5
+  %field8562 = load i64, ptr %field_ptr8561
+  store i64 %field8562, ptr %params_id8560
+  %pi8563 = alloca i64, align 8
+  store i64 0, ptr %pi8563
+  %param_count8564 = alloca i64, align 8
+  %params_id_val8565 = load i64, ptr %params_id8560
+  %call8566 = call i64 @node_extra_len(i64 %params_id_val8565)
+  store i64 %call8566, ptr %param_count8564
   br label %while_cond2490
 
 while_cond2490:
-  %pi_val8487 = load i64, ptr %pi8486
-  %params_id_val8488 = load i64, ptr %params_id8483
-  %call8489 = call i64 @node_extra_len(i64 %params_id_val8488)
-  %cmp8490 = icmp slt i64 %pi_val8487, %call8489
-  br i1 %cmp8490, label %while_body2491, label %while_end2492
+  %pi_val8567 = load i64, ptr %pi8563
+  %param_count_val8568 = load i64, ptr %param_count8564
+  %cmp8569 = icmp slt i64 %pi_val8567, %param_count_val8568
+  br i1 %cmp8569, label %while_body2491, label %while_end2492
 
 while_body2491:
-  %pi_val8491 = load i64, ptr %pi8486
-  %cmp8492 = icmp sgt i64 %pi_val8491, 0
-  br i1 %cmp8492, label %if_then2493, label %if_else2494
+  %pi_val8570 = load i64, ptr %pi8563
+  %cmp8571 = icmp sgt i64 %pi_val8570, 0
+  br i1 %cmp8571, label %if_then2493, label %if_else2494
 
 if_then2493:
   call void @cg_emit_raw(ptr @str.217)
@@ -19421,41 +19542,41 @@ if_else2494:
   br label %if_end2495
 
 if_end2495:
-  %param_id8493 = alloca i64, align 8
-  %params_id_val8494 = load i64, ptr %params_id8483
-  %pi_val8495 = load i64, ptr %pi8486
-  %call8496 = call i64 @node_get_extra(i64 %params_id_val8494, i64 %pi_val8495)
-  store i64 %call8496, ptr %param_id8493
-  %obj8498 = call ptr @ofs_alloc(i64 4096)
-  %param_id_val8499 = load i64, ptr %param_id8493
-  %call8500 = call ptr @node_get(i64 %param_id_val8499)
-  %named_val8501 = load %Node, ptr %call8500
-  store %Node %named_val8501, ptr %obj8498
-  %pt8502 = alloca ptr, align 8
-  store ptr @str.181, ptr %pt8502
-  %field_ptr8503 = getelementptr inbounds %Node, ptr %obj8498, i32 0, i32 5
-  %field8504 = load i64, ptr %field_ptr8503
-  %cmp8505 = icmp sge i64 %field8504, 0
-  br i1 %cmp8505, label %if_then2496, label %if_else2497
+  %param_id8572 = alloca i64, align 8
+  %params_id_val8573 = load i64, ptr %params_id8560
+  %pi_val8574 = load i64, ptr %pi8563
+  %call8575 = call i64 @node_get_extra(i64 %params_id_val8573, i64 %pi_val8574)
+  store i64 %call8575, ptr %param_id8572
+  %obj8577 = call ptr @ofs_alloc(i64 4096)
+  %param_id_val8578 = load i64, ptr %param_id8572
+  %call8579 = call ptr @node_get(i64 %param_id_val8578)
+  %named_val8580 = load %Node, ptr %call8579
+  store %Node %named_val8580, ptr %obj8577
+  %pt8581 = alloca ptr, align 8
+  store ptr @str.181, ptr %pt8581
+  %field_ptr8582 = getelementptr inbounds %Node, ptr %obj8577, i32 0, i32 5
+  %field8583 = load i64, ptr %field_ptr8582
+  %cmp8584 = icmp sge i64 %field8583, 0
+  br i1 %cmp8584, label %if_then2496, label %if_else2497
 
 if_then2496:
-  %obj8507 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr8508 = getelementptr inbounds %Node, ptr %obj8498, i32 0, i32 5
-  %field8509 = load i64, ptr %field_ptr8508
-  %call8510 = call ptr @node_get(i64 %field8509)
-  %named_val8511 = load %Node, ptr %call8510
-  store %Node %named_val8511, ptr %obj8507
-  %field_ptr8512 = getelementptr inbounds %Node, ptr %obj8507, i32 0, i32 1
-  %field8513 = load ptr, ptr %field_ptr8512
-  store ptr %field8513, ptr %pt8502
-  %field_ptr8514 = getelementptr inbounds %Node, ptr %obj8507, i32 0, i32 0
-  %field8515 = load i64, ptr %field_ptr8514
-  %NK_TYPE_ARRAY_val8516 = load i64, ptr @NK_TYPE_ARRAY
-  %cmp8517 = icmp eq i64 %field8515, %NK_TYPE_ARRAY_val8516
-  br i1 %cmp8517, label %if_then2499, label %if_else2500
+  %obj8586 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr8587 = getelementptr inbounds %Node, ptr %obj8577, i32 0, i32 5
+  %field8588 = load i64, ptr %field_ptr8587
+  %call8589 = call ptr @node_get(i64 %field8588)
+  %named_val8590 = load %Node, ptr %call8589
+  store %Node %named_val8590, ptr %obj8586
+  %field_ptr8591 = getelementptr inbounds %Node, ptr %obj8586, i32 0, i32 1
+  %field8592 = load ptr, ptr %field_ptr8591
+  store ptr %field8592, ptr %pt8581
+  %field_ptr8593 = getelementptr inbounds %Node, ptr %obj8586, i32 0, i32 0
+  %field8594 = load i64, ptr %field_ptr8593
+  %NK_TYPE_ARRAY_val8595 = load i64, ptr @NK_TYPE_ARRAY
+  %cmp8596 = icmp eq i64 %field8594, %NK_TYPE_ARRAY_val8595
+  br i1 %cmp8596, label %if_then2499, label %if_else2500
 
 if_then2499:
-  store ptr @str.144, ptr %pt8502
+  store ptr @str.144, ptr %pt8581
   br label %if_end2501
 
 if_else2500:
@@ -19468,68 +19589,67 @@ if_else2497:
   br label %if_end2498
 
 if_end2498:
-  %pt_val8518 = load ptr, ptr %pt8502
-  %call8519 = call ptr @llvmgen__llvm_type(ptr %pt_val8518)
-  %concat8520 = call ptr @ofs_str_concat(ptr %call8519, ptr @str.557)
-  %field_ptr8521 = getelementptr inbounds %Node, ptr %obj8498, i32 0, i32 1
-  %field8522 = load ptr, ptr %field_ptr8521
-  %concat8523 = call ptr @ofs_str_concat(ptr %concat8520, ptr %field8522)
-  call void @cg_emit_raw(ptr %concat8523)
-  %post_old8524 = load i64, ptr %pi8486
-  %post_new8525 = add i64 %post_old8524, 1
-  store i64 %post_new8525, ptr %pi8486
+  %pt_val8597 = load ptr, ptr %pt8581
+  %call8598 = call ptr @llvmgen__llvm_type(ptr %pt_val8597)
+  %concat8599 = call ptr @ofs_str_concat(ptr %call8598, ptr @str.557)
+  %field_ptr8600 = getelementptr inbounds %Node, ptr %obj8577, i32 0, i32 1
+  %field8601 = load ptr, ptr %field_ptr8600
+  %concat8602 = call ptr @ofs_str_concat(ptr %concat8599, ptr %field8601)
+  call void @cg_emit_raw(ptr %concat8602)
+  %post_old8603 = load i64, ptr %pi8563
+  %post_new8604 = add i64 %post_old8603, 1
+  store i64 %post_new8604, ptr %pi8563
   br label %while_cond2490
 
 while_end2492:
   call void @cg_emit_raw(ptr @str.558)
   call void @cg_emit(ptr @str.63)
   call void @cg_emit(ptr @str.352)
-  store i64 0, ptr %pi8486
+  store i64 0, ptr %pi8563
   br label %while_cond2502
 
 while_cond2502:
-  %pi_val8526 = load i64, ptr %pi8486
-  %params_id_val8527 = load i64, ptr %params_id8483
-  %call8528 = call i64 @node_extra_len(i64 %params_id_val8527)
-  %cmp8529 = icmp slt i64 %pi_val8526, %call8528
-  br i1 %cmp8529, label %while_body2503, label %while_end2504
+  %pi_val8605 = load i64, ptr %pi8563
+  %param_count_val8606 = load i64, ptr %param_count8564
+  %cmp8607 = icmp slt i64 %pi_val8605, %param_count_val8606
+  br i1 %cmp8607, label %while_body2503, label %while_end2504
 
 while_body2503:
-  %param_id28530 = alloca i64, align 8
-  %params_id_val8531 = load i64, ptr %params_id8483
-  %pi_val8532 = load i64, ptr %pi8486
-  %call8533 = call i64 @node_get_extra(i64 %params_id_val8531, i64 %pi_val8532)
-  store i64 %call8533, ptr %param_id28530
-  %obj8535 = call ptr @ofs_alloc(i64 4096)
-  %param_id2_val8536 = load i64, ptr %param_id28530
-  %call8537 = call ptr @node_get(i64 %param_id2_val8536)
-  %named_val8538 = load %Node, ptr %call8537
-  store %Node %named_val8538, ptr %obj8535
-  %pt28539 = alloca ptr, align 8
-  store ptr @str.181, ptr %pt28539
-  %field_ptr8540 = getelementptr inbounds %Node, ptr %obj8535, i32 0, i32 5
-  %field8541 = load i64, ptr %field_ptr8540
-  %cmp8542 = icmp sge i64 %field8541, 0
-  br i1 %cmp8542, label %if_then2505, label %if_else2506
+  %param_id28608 = alloca i64, align 8
+  %params_id_val8609 = load i64, ptr %params_id8560
+  %pi_val8610 = load i64, ptr %pi8563
+  %call8611 = call i64 @node_get_extra(i64 %params_id_val8609, i64 %pi_val8610)
+  store i64 %call8611, ptr %param_id28608
+  %obj8613 = call ptr @ofs_alloc(i64 4096)
+  %param_id2_val8614 = load i64, ptr %param_id28608
+  %call8615 = call ptr @node_get(i64 %param_id2_val8614)
+  %named_val8616 = load %Node, ptr %call8615
+  store %Node %named_val8616, ptr %obj8613
+  %pt28617 = alloca ptr, align 8
+  store ptr @str.181, ptr %pt28617
+  %field_ptr8618 = getelementptr inbounds %Node, ptr %obj8613, i32 0, i32 5
+  %field8619 = load i64, ptr %field_ptr8618
+  %cmp8620 = icmp sge i64 %field8619, 0
+  br i1 %cmp8620, label %if_then2505, label %if_else2506
 
 if_then2505:
-  %obj8544 = call ptr @ofs_alloc(i64 4096)
-  %field_ptr8545 = getelementptr inbounds %Node, ptr %obj8535, i32 0, i32 5
-  %field8546 = load i64, ptr %field_ptr8545
-  %call8547 = call ptr @node_get(i64 %field8546)
-  %named_val8548 = load %Node, ptr %call8547
-  store %Node %named_val8548, ptr %obj8544
-  %field_ptr8549 = getelementptr inbounds %Node, ptr %obj8544, i32 0, i32 1
-  %field8550 = load ptr, ptr %field_ptr8549
-  store ptr %field8550, ptr %pt28539
-  %field_ptr8551 = getelementptr inbounds %Node, ptr %obj8544, i32 0, i32 0
-  %field8552 = load i64, ptr %field_ptr8551
-  %NK_TYPE_ARRAY_val8553 = load i64, ptr @NK_TYPE_ARRAY
-  %cmp8554 = icmp eq i64 %field8552, %NK_TYPE_ARRAY_val8553
-  br i1 %cmp8554, label %if_then2508, label %if_else2509
+  %obj8622 = call ptr @ofs_alloc(i64 4096)
+  %field_ptr8623 = getelementptr inbounds %Node, ptr %obj8613, i32 0, i32 5
+  %field8624 = load i64, ptr %field_ptr8623
+  %call8625 = call ptr @node_get(i64 %field8624)
+  %named_val8626 = load %Node, ptr %call8625
+  store %Node %named_val8626, ptr %obj8622
+  %field_ptr8627 = getelementptr inbounds %Node, ptr %obj8622, i32 0, i32 1
+  %field8628 = load ptr, ptr %field_ptr8627
+  store ptr %field8628, ptr %pt28617
+  %field_ptr8629 = getelementptr inbounds %Node, ptr %obj8622, i32 0, i32 0
+  %field8630 = load i64, ptr %field_ptr8629
+  %NK_TYPE_ARRAY_val8631 = load i64, ptr @NK_TYPE_ARRAY
+  %cmp8632 = icmp eq i64 %field8630, %NK_TYPE_ARRAY_val8631
+  br i1 %cmp8632, label %if_then2508, label %if_else2509
 
 if_then2508:
-  store ptr @str.144, ptr %pt28539
+  store ptr @str.144, ptr %pt28617
   br label %if_end2510
 
 if_else2509:
@@ -19542,108 +19662,111 @@ if_else2506:
   br label %if_end2507
 
 if_end2507:
-  %pt2_val8555 = load ptr, ptr %pt28539
-  %call8556 = call i32 @llvmgen__is_named_type(ptr %pt2_val8555)
-  %cond8557 = icmp ne i32 %call8556, 0
-  br i1 %cond8557, label %if_then2511, label %if_else2512
+  %pt2_val8633 = load ptr, ptr %pt28617
+  %call8634 = call i32 @llvmgen__is_named_type(ptr %pt2_val8633)
+  %cond8635 = icmp ne i32 %call8634, 0
+  br i1 %cond8635, label %if_then2511, label %if_else2512
 
 if_then2511:
-  %field_ptr8558 = getelementptr inbounds %Node, ptr %obj8535, i32 0, i32 1
-  %field8559 = load ptr, ptr %field_ptr8558
-  %pt2_val8560 = load ptr, ptr %pt28539
-  %field_ptr8561 = getelementptr inbounds %Node, ptr %obj8535, i32 0, i32 1
-  %field8562 = load ptr, ptr %field_ptr8561
-  %concat8563 = call ptr @ofs_str_concat(ptr @str.109, ptr %field8562)
-  call void @llvmgen__declare_var(ptr %field8559, ptr %pt2_val8560, ptr %concat8563)
+  %field_ptr8636 = getelementptr inbounds %Node, ptr %obj8613, i32 0, i32 1
+  %field8637 = load ptr, ptr %field_ptr8636
+  %pt2_val8638 = load ptr, ptr %pt28617
+  %field_ptr8639 = getelementptr inbounds %Node, ptr %obj8613, i32 0, i32 1
+  %field8640 = load ptr, ptr %field_ptr8639
+  %concat8641 = call ptr @ofs_str_concat(ptr @str.109, ptr %field8640)
+  call void @llvmgen__declare_var(ptr %field8637, ptr %pt2_val8638, ptr %concat8641)
   br label %if_end2513
 
 if_else2512:
-  %pp8564 = alloca ptr, align 8
-  %field_ptr8565 = getelementptr inbounds %Node, ptr %obj8535, i32 0, i32 1
-  %field8566 = load ptr, ptr %field_ptr8565
-  %concat8567 = call ptr @ofs_str_concat(ptr @str.109, ptr %field8566)
-  %concat8568 = call ptr @ofs_str_concat(ptr %concat8567, ptr @str.559)
-  store ptr %concat8568, ptr %pp8564
-  %pp_val8569 = load ptr, ptr %pp8564
-  %concat8570 = call ptr @ofs_str_concat(ptr @str.233, ptr %pp_val8569)
-  %concat8571 = call ptr @ofs_str_concat(ptr %concat8570, ptr @str.363)
-  %pt2_val8572 = load ptr, ptr %pt28539
-  %call8573 = call ptr @llvmgen__llvm_type(ptr %pt2_val8572)
-  %concat8574 = call ptr @ofs_str_concat(ptr %concat8571, ptr %call8573)
-  %concat8575 = call ptr @ofs_str_concat(ptr %concat8574, ptr @str.364)
-  call void @cg_emit(ptr %concat8575)
-  %pt2_val8576 = load ptr, ptr %pt28539
-  %call8577 = call ptr @llvmgen__llvm_type(ptr %pt2_val8576)
-  %concat8578 = call ptr @ofs_str_concat(ptr @str.365, ptr %call8577)
-  %concat8579 = call ptr @ofs_str_concat(ptr %concat8578, ptr @str.557)
-  %field_ptr8580 = getelementptr inbounds %Node, ptr %obj8535, i32 0, i32 1
-  %field8581 = load ptr, ptr %field_ptr8580
-  %concat8582 = call ptr @ofs_str_concat(ptr %concat8579, ptr %field8581)
-  %concat8583 = call ptr @ofs_str_concat(ptr %concat8582, ptr @str.276)
-  %pp_val8584 = load ptr, ptr %pp8564
-  %concat8585 = call ptr @ofs_str_concat(ptr %concat8583, ptr %pp_val8584)
-  call void @cg_emit(ptr %concat8585)
-  %field_ptr8586 = getelementptr inbounds %Node, ptr %obj8535, i32 0, i32 1
-  %field8587 = load ptr, ptr %field_ptr8586
-  %pt2_val8588 = load ptr, ptr %pt28539
-  %pp_val8589 = load ptr, ptr %pp8564
-  call void @llvmgen__declare_var(ptr %field8587, ptr %pt2_val8588, ptr %pp_val8589)
+  %pp8642 = alloca ptr, align 8
+  %field_ptr8643 = getelementptr inbounds %Node, ptr %obj8613, i32 0, i32 1
+  %field8644 = load ptr, ptr %field_ptr8643
+  %concat8645 = call ptr @ofs_str_concat(ptr @str.109, ptr %field8644)
+  %concat8646 = call ptr @ofs_str_concat(ptr %concat8645, ptr @str.559)
+  store ptr %concat8646, ptr %pp8642
+  %pp_val8647 = load ptr, ptr %pp8642
+  %concat8648 = call ptr @ofs_str_concat(ptr @str.233, ptr %pp_val8647)
+  %concat8649 = call ptr @ofs_str_concat(ptr %concat8648, ptr @str.363)
+  %pt2_val8650 = load ptr, ptr %pt28617
+  %call8651 = call ptr @llvmgen__llvm_type(ptr %pt2_val8650)
+  %concat8652 = call ptr @ofs_str_concat(ptr %concat8649, ptr %call8651)
+  %concat8653 = call ptr @ofs_str_concat(ptr %concat8652, ptr @str.364)
+  call void @cg_emit(ptr %concat8653)
+  %pt2_val8654 = load ptr, ptr %pt28617
+  %call8655 = call ptr @llvmgen__llvm_type(ptr %pt2_val8654)
+  %concat8656 = call ptr @ofs_str_concat(ptr @str.365, ptr %call8655)
+  %concat8657 = call ptr @ofs_str_concat(ptr %concat8656, ptr @str.557)
+  %field_ptr8658 = getelementptr inbounds %Node, ptr %obj8613, i32 0, i32 1
+  %field8659 = load ptr, ptr %field_ptr8658
+  %concat8660 = call ptr @ofs_str_concat(ptr %concat8657, ptr %field8659)
+  %concat8661 = call ptr @ofs_str_concat(ptr %concat8660, ptr @str.276)
+  %pp_val8662 = load ptr, ptr %pp8642
+  %concat8663 = call ptr @ofs_str_concat(ptr %concat8661, ptr %pp_val8662)
+  call void @cg_emit(ptr %concat8663)
+  %field_ptr8664 = getelementptr inbounds %Node, ptr %obj8613, i32 0, i32 1
+  %field8665 = load ptr, ptr %field_ptr8664
+  %pt2_val8666 = load ptr, ptr %pt28617
+  %pp_val8667 = load ptr, ptr %pp8642
+  call void @llvmgen__declare_var(ptr %field8665, ptr %pt2_val8666, ptr %pp_val8667)
   br label %if_end2513
 
 if_end2513:
-  %post_old8590 = load i64, ptr %pi8486
-  %post_new8591 = add i64 %post_old8590, 1
-  store i64 %post_new8591, ptr %pi8486
+  %post_old8668 = load i64, ptr %pi8563
+  %post_new8669 = add i64 %post_old8668, 1
+  store i64 %post_new8669, ptr %pi8563
   br label %while_cond2502
 
 while_end2504:
-  %fbody8592 = alloca i64, align 8
-  %field_ptr8593 = getelementptr inbounds %Node, ptr %obj8424, i32 0, i32 7
-  %field8594 = load i64, ptr %field_ptr8593
-  store i64 %field8594, ptr %fbody8592
-  %si8595 = alloca i64, align 8
-  store i64 0, ptr %si8595
+  %fbody8670 = alloca i64, align 8
+  %field_ptr8671 = getelementptr inbounds %Node, ptr %obj8499, i32 0, i32 7
+  %field8672 = load i64, ptr %field_ptr8671
+  store i64 %field8672, ptr %fbody8670
+  %si8673 = alloca i64, align 8
+  store i64 0, ptr %si8673
+  %statement_count8674 = alloca i64, align 8
+  %fbody_val8675 = load i64, ptr %fbody8670
+  %call8676 = call i64 @node_extra_len(i64 %fbody_val8675)
+  store i64 %call8676, ptr %statement_count8674
   br label %while_cond2514
 
 while_cond2514:
-  %si_val8596 = load i64, ptr %si8595
-  %fbody_val8597 = load i64, ptr %fbody8592
-  %call8598 = call i64 @node_extra_len(i64 %fbody_val8597)
-  %cmp8599 = icmp slt i64 %si_val8596, %call8598
-  br i1 %cmp8599, label %while_body2515, label %while_end2516
+  %si_val8677 = load i64, ptr %si8673
+  %statement_count_val8678 = load i64, ptr %statement_count8674
+  %cmp8679 = icmp slt i64 %si_val8677, %statement_count_val8678
+  br i1 %cmp8679, label %while_body2515, label %while_end2516
 
 while_body2515:
-  %fbody_val8600 = load i64, ptr %fbody8592
-  %si_val8601 = load i64, ptr %si8595
-  %call8602 = call i64 @node_get_extra(i64 %fbody_val8600, i64 %si_val8601)
-  call void @llvmgen__emit_stmt(i64 %call8602)
-  %post_old8603 = load i64, ptr %si8595
-  %post_new8604 = add i64 %post_old8603, 1
-  store i64 %post_new8604, ptr %si8595
+  %fbody_val8680 = load i64, ptr %fbody8670
+  %si_val8681 = load i64, ptr %si8673
+  %call8682 = call i64 @node_get_extra(i64 %fbody_val8680, i64 %si_val8681)
+  call void @llvmgen__emit_stmt(i64 %call8682)
+  %post_old8683 = load i64, ptr %si8673
+  %post_new8684 = add i64 %post_old8683, 1
+  store i64 %post_new8684, ptr %si8673
   br label %while_cond2514
 
 while_end2516:
-  %llvmgen___terminated_val8605 = load i32, ptr @llvmgen___terminated
-  %cond8606 = icmp ne i32 %llvmgen___terminated_val8605, 0
-  %not8607 = xor i1 %cond8606, true
-  br i1 %not8607, label %if_then2517, label %if_else2518
+  %llvmgen___terminated_val8685 = load i32, ptr @llvmgen___terminated
+  %cond8686 = icmp ne i32 %llvmgen___terminated_val8685, 0
+  %not8687 = xor i1 %cond8686, true
+  br i1 %not8687, label %if_then2517, label %if_else2518
 
 if_then2517:
-  %llvmgen___current_ret_type_val8608 = load ptr, ptr @llvmgen___current_ret_type
-  %streq8609 = call i32 @ofs_str_eq(ptr %llvmgen___current_ret_type_val8608, ptr @str.180)
-  %cond8610 = icmp ne i32 %streq8609, 0
-  br i1 %cond8610, label %if_then2520, label %if_else2521
+  %llvmgen___current_ret_type_val8688 = load ptr, ptr @llvmgen___current_ret_type
+  %streq8689 = call i32 @ofs_str_eq(ptr %llvmgen___current_ret_type_val8688, ptr @str.180)
+  %cond8690 = icmp ne i32 %streq8689, 0
+  br i1 %cond8690, label %if_then2520, label %if_else2521
 
 if_then2520:
   call void @cg_emit(ptr @str.360)
   br label %if_end2522
 
 if_else2521:
-  %llvmgen___current_ret_type_val8611 = load ptr, ptr @llvmgen___current_ret_type
-  %call8612 = call ptr @llvmgen__llvm_type(ptr %llvmgen___current_ret_type_val8611)
-  %concat8613 = call ptr @ofs_str_concat(ptr @str.525, ptr %call8612)
-  %concat8614 = call ptr @ofs_str_concat(ptr %concat8613, ptr @str.560)
-  call void @cg_emit(ptr %concat8614)
+  %llvmgen___current_ret_type_val8691 = load ptr, ptr @llvmgen___current_ret_type
+  %call8692 = call ptr @llvmgen__llvm_type(ptr %llvmgen___current_ret_type_val8691)
+  %concat8693 = call ptr @ofs_str_concat(ptr @str.525, ptr %call8692)
+  %concat8694 = call ptr @ofs_str_concat(ptr %concat8693, ptr @str.560)
+  call void @cg_emit(ptr %concat8694)
   br label %if_end2522
 
 if_end2522:
@@ -19671,135 +19794,141 @@ entry:
   store i64 0, ptr @llvmgen___tmp_counter
   store i64 0, ptr @llvmgen___label_counter
   store i64 0, ptr @llvmgen___str_counter
-  %arr8615 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8615, ptr @llvmgen___mono_names
-  %arr8616 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8616, ptr @llvmgen___field_owners
-  %arr8617 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8617, ptr @llvmgen___field_names
-  %arr8618 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8618, ptr @llvmgen___field_types
-  %arr8619 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8619, ptr @llvmgen___field_indices
-  %arr8620 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8620, ptr @llvmgen___global_names
-  %arr8621 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8621, ptr @llvmgen___global_types
-  %arr8622 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8622, ptr @llvmgen___global_inits
-  %arr8623 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8623, ptr @llvmgen___break_labels
-  %arr8624 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8624, ptr @llvmgen___continue_labels
-  %arr8625 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8625, ptr @llvmgen___visited_nodes
-  %arr8626 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8626, ptr @llvmgen___string_vals
-  %arr8627 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr8627, ptr @llvmgen___string_names
-  %root_id_val8628 = load i64, ptr %root_id.addr
-  call void @llvmgen__collect_types(i64 %root_id_val8628)
+  %arr8695 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8695, ptr @llvmgen___mono_names
+  %arr8696 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8696, ptr @llvmgen___field_owners
+  %arr8697 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8697, ptr @llvmgen___field_names
+  %arr8698 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8698, ptr @llvmgen___field_types
+  %arr8699 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8699, ptr @llvmgen___field_indices
+  %arr8700 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8700, ptr @llvmgen___global_names
+  %arr8701 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8701, ptr @llvmgen___global_types
+  %arr8702 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8702, ptr @llvmgen___global_inits
+  %arr8703 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8703, ptr @llvmgen___break_labels
+  %arr8704 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8704, ptr @llvmgen___continue_labels
+  %arr8705 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8705, ptr @llvmgen___visited_nodes
+  %arr8706 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8706, ptr @llvmgen___string_vals
+  %arr8707 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr8707, ptr @llvmgen___string_names
+  %root_id_val8708 = load i64, ptr %root_id.addr
+  call void @llvmgen__collect_types(i64 %root_id_val8708)
   call void @llvmgen__collect_all_strings()
-  %root_id_val8629 = load i64, ptr %root_id.addr
-  call void @llvmgen__collect_globals(i64 %root_id_val8629)
+  %root_id_val8709 = load i64, ptr %root_id.addr
+  call void @llvmgen__collect_globals(i64 %root_id_val8709)
   call void @llvmgen__emit_header()
   call void @llvmgen__emit_global_init()
-  %i8630 = alloca i64, align 8
-  store i64 0, ptr %i8630
+  %i8710 = alloca i64, align 8
+  store i64 0, ptr %i8710
+  %declaration_count8711 = alloca i64, align 8
+  %root_id_val8712 = load i64, ptr %root_id.addr
+  %call8713 = call i64 @node_extra_len(i64 %root_id_val8712)
+  store i64 %call8713, ptr %declaration_count8711
   br label %while_cond2523
 
 while_cond2523:
-  %i_val8631 = load i64, ptr %i8630
-  %root_id_val8632 = load i64, ptr %root_id.addr
-  %call8633 = call i64 @node_extra_len(i64 %root_id_val8632)
-  %cmp8634 = icmp slt i64 %i_val8631, %call8633
-  br i1 %cmp8634, label %while_body2524, label %while_end2525
+  %i_val8714 = load i64, ptr %i8710
+  %declaration_count_val8715 = load i64, ptr %declaration_count8711
+  %cmp8716 = icmp slt i64 %i_val8714, %declaration_count_val8715
+  br i1 %cmp8716, label %while_body2524, label %while_end2525
 
 while_body2524:
-  %decl_id8635 = alloca i64, align 8
-  %root_id_val8636 = load i64, ptr %root_id.addr
-  %i_val8637 = load i64, ptr %i8630
-  %call8638 = call i64 @node_get_extra(i64 %root_id_val8636, i64 %i_val8637)
-  store i64 %call8638, ptr %decl_id8635
-  %obj8640 = call ptr @ofs_alloc(i64 4096)
-  %decl_id_val8641 = load i64, ptr %decl_id8635
-  %call8642 = call ptr @node_get(i64 %decl_id_val8641)
-  %named_val8643 = load %Node, ptr %call8642
-  store %Node %named_val8643, ptr %obj8640
-  %field_ptr8644 = getelementptr inbounds %Node, ptr %obj8640, i32 0, i32 0
-  %field8645 = load i64, ptr %field_ptr8644
-  %NK_CORE_DECL_val8646 = load i64, ptr @NK_CORE_DECL
-  %cmp8647 = icmp eq i64 %field8645, %NK_CORE_DECL_val8646
-  %field_ptr8648 = getelementptr inbounds %Node, ptr %obj8640, i32 0, i32 0
-  %field8649 = load i64, ptr %field_ptr8648
-  %NK_FN_DECL_val8650 = load i64, ptr @NK_FN_DECL
-  %cmp8651 = icmp eq i64 %field8649, %NK_FN_DECL_val8650
-  %logic8652 = or i1 %cmp8647, %cmp8651
-  br i1 %logic8652, label %if_then2526, label %if_else2527
+  %decl_id8717 = alloca i64, align 8
+  %root_id_val8718 = load i64, ptr %root_id.addr
+  %i_val8719 = load i64, ptr %i8710
+  %call8720 = call i64 @node_get_extra(i64 %root_id_val8718, i64 %i_val8719)
+  store i64 %call8720, ptr %decl_id8717
+  %obj8722 = call ptr @ofs_alloc(i64 4096)
+  %decl_id_val8723 = load i64, ptr %decl_id8717
+  %call8724 = call ptr @node_get(i64 %decl_id_val8723)
+  %named_val8725 = load %Node, ptr %call8724
+  store %Node %named_val8725, ptr %obj8722
+  %field_ptr8726 = getelementptr inbounds %Node, ptr %obj8722, i32 0, i32 0
+  %field8727 = load i64, ptr %field_ptr8726
+  %NK_CORE_DECL_val8728 = load i64, ptr @NK_CORE_DECL
+  %cmp8729 = icmp eq i64 %field8727, %NK_CORE_DECL_val8728
+  %field_ptr8730 = getelementptr inbounds %Node, ptr %obj8722, i32 0, i32 0
+  %field8731 = load i64, ptr %field_ptr8730
+  %NK_FN_DECL_val8732 = load i64, ptr @NK_FN_DECL
+  %cmp8733 = icmp eq i64 %field8731, %NK_FN_DECL_val8732
+  %logic8734 = or i1 %cmp8729, %cmp8733
+  br i1 %logic8734, label %if_then2526, label %if_else2527
 
 if_then2526:
-  %decl_id_val8653 = load i64, ptr %decl_id8635
-  call void @llvmgen__emit_function(i64 %decl_id_val8653)
+  %decl_id_val8735 = load i64, ptr %decl_id8717
+  call void @llvmgen__emit_function(i64 %decl_id_val8735)
   br label %if_end2528
 
 if_else2527:
-  %field_ptr8654 = getelementptr inbounds %Node, ptr %obj8640, i32 0, i32 0
-  %field8655 = load i64, ptr %field_ptr8654
-  %NK_NAMESPACE_val8656 = load i64, ptr @NK_NAMESPACE
-  %cmp8657 = icmp eq i64 %field8655, %NK_NAMESPACE_val8656
-  %field_ptr8658 = getelementptr inbounds %Node, ptr %obj8640, i32 0, i32 0
-  %field8659 = load i64, ptr %field_ptr8658
-  %NK_IMPL_val8660 = load i64, ptr @NK_IMPL
-  %cmp8661 = icmp eq i64 %field8659, %NK_IMPL_val8660
-  %logic8662 = or i1 %cmp8657, %cmp8661
-  br i1 %logic8662, label %if_then2529, label %if_else2530
+  %field_ptr8736 = getelementptr inbounds %Node, ptr %obj8722, i32 0, i32 0
+  %field8737 = load i64, ptr %field_ptr8736
+  %NK_NAMESPACE_val8738 = load i64, ptr @NK_NAMESPACE
+  %cmp8739 = icmp eq i64 %field8737, %NK_NAMESPACE_val8738
+  %field_ptr8740 = getelementptr inbounds %Node, ptr %obj8722, i32 0, i32 0
+  %field8741 = load i64, ptr %field_ptr8740
+  %NK_IMPL_val8742 = load i64, ptr @NK_IMPL
+  %cmp8743 = icmp eq i64 %field8741, %NK_IMPL_val8742
+  %logic8744 = or i1 %cmp8739, %cmp8743
+  br i1 %logic8744, label %if_then2529, label %if_else2530
 
 if_then2529:
-  %j8663 = alloca i64, align 8
-  store i64 0, ptr %j8663
+  %j8745 = alloca i64, align 8
+  store i64 0, ptr %j8745
+  %member_count8746 = alloca i64, align 8
+  %decl_id_val8747 = load i64, ptr %decl_id8717
+  %call8748 = call i64 @node_extra_len(i64 %decl_id_val8747)
+  store i64 %call8748, ptr %member_count8746
   br label %while_cond2532
 
 while_cond2532:
-  %j_val8664 = load i64, ptr %j8663
-  %decl_id_val8665 = load i64, ptr %decl_id8635
-  %call8666 = call i64 @node_extra_len(i64 %decl_id_val8665)
-  %cmp8667 = icmp slt i64 %j_val8664, %call8666
-  br i1 %cmp8667, label %while_body2533, label %while_end2534
+  %j_val8749 = load i64, ptr %j8745
+  %member_count_val8750 = load i64, ptr %member_count8746
+  %cmp8751 = icmp slt i64 %j_val8749, %member_count_val8750
+  br i1 %cmp8751, label %while_body2533, label %while_end2534
 
 while_body2533:
-  %member_id8668 = alloca i64, align 8
-  %decl_id_val8669 = load i64, ptr %decl_id8635
-  %j_val8670 = load i64, ptr %j8663
-  %call8671 = call i64 @node_get_extra(i64 %decl_id_val8669, i64 %j_val8670)
-  store i64 %call8671, ptr %member_id8668
-  %obj8673 = call ptr @ofs_alloc(i64 4096)
-  %member_id_val8674 = load i64, ptr %member_id8668
-  %call8675 = call ptr @node_get(i64 %member_id_val8674)
-  %named_val8676 = load %Node, ptr %call8675
-  store %Node %named_val8676, ptr %obj8673
-  %field_ptr8677 = getelementptr inbounds %Node, ptr %obj8673, i32 0, i32 0
-  %field8678 = load i64, ptr %field_ptr8677
-  %NK_CORE_DECL_val8679 = load i64, ptr @NK_CORE_DECL
-  %cmp8680 = icmp eq i64 %field8678, %NK_CORE_DECL_val8679
-  %field_ptr8681 = getelementptr inbounds %Node, ptr %obj8673, i32 0, i32 0
-  %field8682 = load i64, ptr %field_ptr8681
-  %NK_FN_DECL_val8683 = load i64, ptr @NK_FN_DECL
-  %cmp8684 = icmp eq i64 %field8682, %NK_FN_DECL_val8683
-  %logic8685 = or i1 %cmp8680, %cmp8684
-  br i1 %logic8685, label %if_then2535, label %if_else2536
+  %member_id8752 = alloca i64, align 8
+  %decl_id_val8753 = load i64, ptr %decl_id8717
+  %j_val8754 = load i64, ptr %j8745
+  %call8755 = call i64 @node_get_extra(i64 %decl_id_val8753, i64 %j_val8754)
+  store i64 %call8755, ptr %member_id8752
+  %obj8757 = call ptr @ofs_alloc(i64 4096)
+  %member_id_val8758 = load i64, ptr %member_id8752
+  %call8759 = call ptr @node_get(i64 %member_id_val8758)
+  %named_val8760 = load %Node, ptr %call8759
+  store %Node %named_val8760, ptr %obj8757
+  %field_ptr8761 = getelementptr inbounds %Node, ptr %obj8757, i32 0, i32 0
+  %field8762 = load i64, ptr %field_ptr8761
+  %NK_CORE_DECL_val8763 = load i64, ptr @NK_CORE_DECL
+  %cmp8764 = icmp eq i64 %field8762, %NK_CORE_DECL_val8763
+  %field_ptr8765 = getelementptr inbounds %Node, ptr %obj8757, i32 0, i32 0
+  %field8766 = load i64, ptr %field_ptr8765
+  %NK_FN_DECL_val8767 = load i64, ptr @NK_FN_DECL
+  %cmp8768 = icmp eq i64 %field8766, %NK_FN_DECL_val8767
+  %logic8769 = or i1 %cmp8764, %cmp8768
+  br i1 %logic8769, label %if_then2535, label %if_else2536
 
 if_then2535:
-  %member_id_val8686 = load i64, ptr %member_id8668
-  call void @llvmgen__emit_function(i64 %member_id_val8686)
+  %member_id_val8770 = load i64, ptr %member_id8752
+  call void @llvmgen__emit_function(i64 %member_id_val8770)
   br label %if_end2537
 
 if_else2536:
   br label %if_end2537
 
 if_end2537:
-  %post_old8687 = load i64, ptr %j8663
-  %post_new8688 = add i64 %post_old8687, 1
-  store i64 %post_new8688, ptr %j8663
+  %post_old8771 = load i64, ptr %j8745
+  %post_new8772 = add i64 %post_old8771, 1
+  store i64 %post_new8772, ptr %j8745
   br label %while_cond2532
 
 while_end2534:
@@ -19812,9 +19941,9 @@ if_end2531:
   br label %if_end2528
 
 if_end2528:
-  %post_old8689 = load i64, ptr %i8630
-  %post_new8690 = add i64 %post_old8689, 1
-  store i64 %post_new8690, ptr %i8630
+  %post_old8773 = load i64, ptr %i8710
+  %post_new8774 = add i64 %post_old8773, 1
+  store i64 %post_new8774, ptr %i8710
   br label %while_cond2523
 
 while_end2525:
@@ -19825,29 +19954,32 @@ define i32 @path_seen(ptr %path) {
 entry:
   %path.addr = alloca ptr, align 8
   store ptr %path, ptr %path.addr
-  %i8691 = alloca i64, align 8
-  store i64 0, ptr %i8691
+  %i8775 = alloca i64, align 8
+  store i64 0, ptr %i8775
+  %count8776 = alloca i64, align 8
+  %_expanded_paths_val8777 = load ptr, ptr @_expanded_paths
+  %arr_len8778 = call i64 @ofs_array_len(ptr %_expanded_paths_val8777)
+  store i64 %arr_len8778, ptr %count8776
   br label %while_cond2538
 
 while_cond2538:
-  %i_val8692 = load i64, ptr %i8691
-  %_expanded_paths_val8693 = load ptr, ptr @_expanded_paths
-  %arr_len8694 = call i64 @ofs_array_len(ptr %_expanded_paths_val8693)
-  %cmp8695 = icmp slt i64 %i_val8692, %arr_len8694
-  br i1 %cmp8695, label %while_body2539, label %while_end2540
+  %i_val8779 = load i64, ptr %i8775
+  %count_val8780 = load i64, ptr %count8776
+  %cmp8781 = icmp slt i64 %i_val8779, %count_val8780
+  br i1 %cmp8781, label %while_body2539, label %while_end2540
 
 while_body2539:
-  %p8696 = alloca ptr, align 8
-  %_expanded_paths_val8697 = load ptr, ptr @_expanded_paths
-  %i_val8698 = load i64, ptr %i8691
-  %arr_get8699 = call ptr @ofs_array_get(ptr %_expanded_paths_val8697, i64 %i_val8698)
-  %arr_item8700 = load ptr, ptr %arr_get8699
-  store ptr %arr_item8700, ptr %p8696
-  %p_val8701 = load ptr, ptr %p8696
-  %path_val8702 = load ptr, ptr %path.addr
-  %streq8703 = call i32 @ofs_str_eq(ptr %p_val8701, ptr %path_val8702)
-  %cond8704 = icmp ne i32 %streq8703, 0
-  br i1 %cond8704, label %if_then2541, label %if_else2542
+  %p8782 = alloca ptr, align 8
+  %_expanded_paths_val8783 = load ptr, ptr @_expanded_paths
+  %i_val8784 = load i64, ptr %i8775
+  %arr_get8785 = call ptr @ofs_array_get(ptr %_expanded_paths_val8783, i64 %i_val8784)
+  %arr_item8786 = load ptr, ptr %arr_get8785
+  store ptr %arr_item8786, ptr %p8782
+  %p_val8787 = load ptr, ptr %p8782
+  %path_val8788 = load ptr, ptr %path.addr
+  %streq8789 = call i32 @ofs_str_eq(ptr %p_val8787, ptr %path_val8788)
+  %cond8790 = icmp ne i32 %streq8789, 0
+  br i1 %cond8790, label %if_then2541, label %if_else2542
 
 if_then2541:
   ret i32 1
@@ -19856,9 +19988,9 @@ if_else2542:
   br label %if_end2543
 
 if_end2543:
-  %post_old8705 = load i64, ptr %i8691
-  %post_new8706 = add i64 %post_old8705, 1
-  store i64 %post_new8706, ptr %i8691
+  %post_old8791 = load i64, ptr %i8775
+  %post_new8792 = add i64 %post_old8791, 1
+  store i64 %post_new8792, ptr %i8775
   br label %while_cond2538
 
 while_end2540:
@@ -19869,18 +20001,18 @@ define void @remember_path(ptr %path) {
 entry:
   %path.addr = alloca ptr, align 8
   store ptr %path, ptr %path.addr
-  %path_val8707 = load ptr, ptr %path.addr
-  %call8708 = call i32 @path_seen(ptr %path_val8707)
-  %cond8709 = icmp ne i32 %call8708, 0
-  %not8710 = xor i1 %cond8709, true
-  br i1 %not8710, label %if_then2544, label %if_else2545
+  %path_val8793 = load ptr, ptr %path.addr
+  %call8794 = call i32 @path_seen(ptr %path_val8793)
+  %cond8795 = icmp ne i32 %call8794, 0
+  %not8796 = xor i1 %cond8795, true
+  br i1 %not8796, label %if_then2544, label %if_else2545
 
 if_then2544:
-  %_expanded_paths_val8711 = load ptr, ptr @_expanded_paths
-  %path_val8712 = load ptr, ptr %path.addr
-  %arr_push8713 = alloca ptr, align 8
-  store ptr %path_val8712, ptr %arr_push8713
-  call void @ofs_array_push(ptr %_expanded_paths_val8711, ptr %arr_push8713)
+  %_expanded_paths_val8797 = load ptr, ptr @_expanded_paths
+  %path_val8798 = load ptr, ptr %path.addr
+  %arr_push8799 = alloca ptr, align 8
+  store ptr %path_val8798, ptr %arr_push8799
+  call void @ofs_array_push(ptr %_expanded_paths_val8797, ptr %arr_push8799)
   br label %if_end2546
 
 if_else2545:
@@ -19894,48 +20026,48 @@ define ptr @dirname(ptr %path) {
 entry:
   %path.addr = alloca ptr, align 8
   store ptr %path, ptr %path.addr
-  %i8714 = alloca i64, align 8
-  store i64 0, ptr %i8714
-  %last8715 = alloca i64, align 8
-  %neg8716 = sub i64 0, 1
-  store i64 %neg8716, ptr %last8715
-  %len8717 = alloca i64, align 8
-  %path_val8718 = load ptr, ptr %path.addr
-  %strlen8719 = call i64 @ofs_str_len(ptr %path_val8718)
-  store i64 %strlen8719, ptr %len8717
+  %i8800 = alloca i64, align 8
+  store i64 0, ptr %i8800
+  %last8801 = alloca i64, align 8
+  %neg8802 = sub i64 0, 1
+  store i64 %neg8802, ptr %last8801
+  %len8803 = alloca i64, align 8
+  %path_val8804 = load ptr, ptr %path.addr
+  %strlen8805 = call i64 @ofs_str_len(ptr %path_val8804)
+  store i64 %strlen8805, ptr %len8803
   br label %while_cond2547
 
 while_cond2547:
-  %i_val8720 = load i64, ptr %i8714
-  %len_val8721 = load i64, ptr %len8717
-  %cmp8722 = icmp slt i64 %i_val8720, %len_val8721
-  br i1 %cmp8722, label %while_body2548, label %while_end2549
+  %i_val8806 = load i64, ptr %i8800
+  %len_val8807 = load i64, ptr %len8803
+  %cmp8808 = icmp slt i64 %i_val8806, %len_val8807
+  br i1 %cmp8808, label %while_body2548, label %while_end2549
 
 while_body2548:
-  %path_val8723 = load ptr, ptr %path.addr
-  %i_val8724 = load i64, ptr %i8714
-  %call8725 = call i64 @ofs_str_char_at(ptr %path_val8723, i64 %i_val8724)
-  %cmp8726 = icmp eq i64 %call8725, 47
-  br i1 %cmp8726, label %if_then2550, label %if_else2551
+  %path_val8809 = load ptr, ptr %path.addr
+  %i_val8810 = load i64, ptr %i8800
+  %call8811 = call i64 @ofs_str_char_at(ptr %path_val8809, i64 %i_val8810)
+  %cmp8812 = icmp eq i64 %call8811, 47
+  br i1 %cmp8812, label %if_then2550, label %if_else2551
 
 if_then2550:
-  %i_val8727 = load i64, ptr %i8714
-  store i64 %i_val8727, ptr %last8715
+  %i_val8813 = load i64, ptr %i8800
+  store i64 %i_val8813, ptr %last8801
   br label %if_end2552
 
 if_else2551:
   br label %if_end2552
 
 if_end2552:
-  %post_old8728 = load i64, ptr %i8714
-  %post_new8729 = add i64 %post_old8728, 1
-  store i64 %post_new8729, ptr %i8714
+  %post_old8814 = load i64, ptr %i8800
+  %post_new8815 = add i64 %post_old8814, 1
+  store i64 %post_new8815, ptr %i8800
   br label %while_cond2547
 
 while_end2549:
-  %last_val8730 = load i64, ptr %last8715
-  %cmp8731 = icmp slt i64 %last_val8730, 0
-  br i1 %cmp8731, label %if_then2553, label %if_else2554
+  %last_val8816 = load i64, ptr %last8801
+  %cmp8817 = icmp slt i64 %last_val8816, 0
+  br i1 %cmp8817, label %if_then2553, label %if_else2554
 
 if_then2553:
   ret ptr @str.63
@@ -19944,21 +20076,21 @@ if_else2554:
   br label %if_end2555
 
 if_end2555:
-  %path_val8732 = load ptr, ptr %path.addr
-  %last_val8733 = load i64, ptr %last8715
-  %op8734 = add i64 %last_val8733, 1
-  %call8735 = call ptr @ofs_str_substr(ptr %path_val8732, i64 0, i64 %op8734)
-  ret ptr %call8735
+  %path_val8818 = load ptr, ptr %path.addr
+  %last_val8819 = load i64, ptr %last8801
+  %op8820 = add i64 %last_val8819, 1
+  %call8821 = call ptr @ofs_str_substr(ptr %path_val8818, i64 0, i64 %op8820)
+  ret ptr %call8821
 }
 
 define i32 @is_attach_line(ptr %line) {
 entry:
   %line.addr = alloca ptr, align 8
   store ptr %line, ptr %line.addr
-  %line_val8736 = load ptr, ptr %line.addr
-  %strlen8737 = call i64 @ofs_str_len(ptr %line_val8736)
-  %cmp8738 = icmp slt i64 %strlen8737, 9
-  br i1 %cmp8738, label %if_then2556, label %if_else2557
+  %line_val8822 = load ptr, ptr %line.addr
+  %strlen8823 = call i64 @ofs_str_len(ptr %line_val8822)
+  %cmp8824 = icmp slt i64 %strlen8823, 9
+  br i1 %cmp8824, label %if_then2556, label %if_else2557
 
 if_then2556:
   ret i32 0
@@ -19967,51 +20099,51 @@ if_else2557:
   br label %if_end2558
 
 if_end2558:
-  %line_val8739 = load ptr, ptr %line.addr
-  %call8740 = call ptr @ofs_str_substr(ptr %line_val8739, i64 0, i64 8)
-  %streq8741 = call i32 @ofs_str_eq(ptr %call8740, ptr @str.561)
-  ret i32 %streq8741
+  %line_val8825 = load ptr, ptr %line.addr
+  %call8826 = call ptr @ofs_str_substr(ptr %line_val8825, i64 0, i64 8)
+  %streq8827 = call i32 @ofs_str_eq(ptr %call8826, ptr @str.561)
+  ret i32 %streq8827
 }
 
 define ptr @attach_path_from_line(ptr %line) {
 entry:
   %line.addr = alloca ptr, align 8
   store ptr %line, ptr %line.addr
-  %i8742 = alloca i64, align 8
-  store i64 8, ptr %i8742
-  %len8743 = alloca i64, align 8
-  %line_val8744 = load ptr, ptr %line.addr
-  %strlen8745 = call i64 @ofs_str_len(ptr %line_val8744)
-  store i64 %strlen8745, ptr %len8743
+  %i8828 = alloca i64, align 8
+  store i64 8, ptr %i8828
+  %len8829 = alloca i64, align 8
+  %line_val8830 = load ptr, ptr %line.addr
+  %strlen8831 = call i64 @ofs_str_len(ptr %line_val8830)
+  store i64 %strlen8831, ptr %len8829
   br label %while_cond2559
 
 while_cond2559:
-  %i_val8746 = load i64, ptr %i8742
-  %len_val8747 = load i64, ptr %len8743
-  %cmp8748 = icmp slt i64 %i_val8746, %len_val8747
-  br i1 %cmp8748, label %while_body2560, label %while_end2561
+  %i_val8832 = load i64, ptr %i8828
+  %len_val8833 = load i64, ptr %len8829
+  %cmp8834 = icmp slt i64 %i_val8832, %len_val8833
+  br i1 %cmp8834, label %while_body2560, label %while_end2561
 
 while_body2560:
-  %line_val8749 = load ptr, ptr %line.addr
-  %i_val8750 = load i64, ptr %i8742
-  %call8751 = call i64 @ofs_str_char_at(ptr %line_val8749, i64 %i_val8750)
-  %cmp8752 = icmp eq i64 %call8751, 125
-  br i1 %cmp8752, label %if_then2562, label %if_else2563
+  %line_val8835 = load ptr, ptr %line.addr
+  %i_val8836 = load i64, ptr %i8828
+  %call8837 = call i64 @ofs_str_char_at(ptr %line_val8835, i64 %i_val8836)
+  %cmp8838 = icmp eq i64 %call8837, 125
+  br i1 %cmp8838, label %if_then2562, label %if_else2563
 
 if_then2562:
-  %line_val8753 = load ptr, ptr %line.addr
-  %i_val8754 = load i64, ptr %i8742
-  %op8755 = sub i64 %i_val8754, 8
-  %call8756 = call ptr @ofs_str_substr(ptr %line_val8753, i64 8, i64 %op8755)
-  ret ptr %call8756
+  %line_val8839 = load ptr, ptr %line.addr
+  %i_val8840 = load i64, ptr %i8828
+  %op8841 = sub i64 %i_val8840, 8
+  %call8842 = call ptr @ofs_str_substr(ptr %line_val8839, i64 8, i64 %op8841)
+  ret ptr %call8842
 
 if_else2563:
   br label %if_end2564
 
 if_end2564:
-  %post_old8757 = load i64, ptr %i8742
-  %post_new8758 = add i64 %post_old8757, 1
-  store i64 %post_new8758, ptr %i8742
+  %post_old8843 = load i64, ptr %i8828
+  %post_new8844 = add i64 %post_old8843, 1
+  store i64 %post_new8844, ptr %i8828
   br label %while_cond2559
 
 while_end2561:
@@ -20022,10 +20154,10 @@ define ptr @package_file_name(ptr %name) {
 entry:
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %name_val8759 = load ptr, ptr %name.addr
-  %streq8760 = call i32 @ofs_str_eq(ptr %name_val8759, ptr @str.562)
-  %cond8761 = icmp ne i32 %streq8760, 0
-  br i1 %cond8761, label %if_then2565, label %if_else2566
+  %name_val8845 = load ptr, ptr %name.addr
+  %streq8846 = call i32 @ofs_str_eq(ptr %name_val8845, ptr @str.562)
+  %cond8847 = icmp ne i32 %streq8846, 0
+  br i1 %cond8847, label %if_then2565, label %if_else2566
 
 if_then2565:
   ret ptr @str.563
@@ -20034,10 +20166,10 @@ if_else2566:
   br label %if_end2567
 
 if_end2567:
-  %name_val8762 = load ptr, ptr %name.addr
-  %streq8763 = call i32 @ofs_str_eq(ptr %name_val8762, ptr @str.564)
-  %cond8764 = icmp ne i32 %streq8763, 0
-  br i1 %cond8764, label %if_then2568, label %if_else2569
+  %name_val8848 = load ptr, ptr %name.addr
+  %streq8849 = call i32 @ofs_str_eq(ptr %name_val8848, ptr @str.564)
+  %cond8850 = icmp ne i32 %streq8849, 0
+  br i1 %cond8850, label %if_then2568, label %if_else2569
 
 if_then2568:
   ret ptr @str.565
@@ -20046,10 +20178,10 @@ if_else2569:
   br label %if_end2570
 
 if_end2570:
-  %name_val8765 = load ptr, ptr %name.addr
-  %streq8766 = call i32 @ofs_str_eq(ptr %name_val8765, ptr @str.566)
-  %cond8767 = icmp ne i32 %streq8766, 0
-  br i1 %cond8767, label %if_then2571, label %if_else2572
+  %name_val8851 = load ptr, ptr %name.addr
+  %streq8852 = call i32 @ofs_str_eq(ptr %name_val8851, ptr @str.566)
+  %cond8853 = icmp ne i32 %streq8852, 0
+  br i1 %cond8853, label %if_then2571, label %if_else2572
 
 if_then2571:
   ret ptr @str.567
@@ -20058,10 +20190,10 @@ if_else2572:
   br label %if_end2573
 
 if_end2573:
-  %name_val8768 = load ptr, ptr %name.addr
-  %streq8769 = call i32 @ofs_str_eq(ptr %name_val8768, ptr @str.568)
-  %cond8770 = icmp ne i32 %streq8769, 0
-  br i1 %cond8770, label %if_then2574, label %if_else2575
+  %name_val8854 = load ptr, ptr %name.addr
+  %streq8855 = call i32 @ofs_str_eq(ptr %name_val8854, ptr @str.568)
+  %cond8856 = icmp ne i32 %streq8855, 0
+  br i1 %cond8856, label %if_then2574, label %if_else2575
 
 if_then2574:
   ret ptr @str.569
@@ -20070,39 +20202,39 @@ if_else2575:
   br label %if_end2576
 
 if_end2576:
-  %name_val8771 = load ptr, ptr %name.addr
-  ret ptr %name_val8771
+  %name_val8857 = load ptr, ptr %name.addr
+  ret ptr %name_val8857
 }
 
 define ptr @stdlib_path(ptr %file_name) {
 entry:
   %file_name.addr = alloca ptr, align 8
   store ptr %file_name, ptr %file_name.addr
-  %root8772 = alloca ptr, align 8
-  %call8773 = call ptr @getenv(ptr @str.570)
-  store ptr %call8773, ptr %root8772
-  %root_val8774 = load ptr, ptr %root8772
-  %streq8775 = call i32 @ofs_str_eq(ptr %root_val8774, ptr @str.63)
-  %cond8776 = icmp ne i32 %streq8775, 0
-  %not8777 = xor i1 %cond8776, true
-  br i1 %not8777, label %if_then2577, label %if_else2578
+  %root8858 = alloca ptr, align 8
+  %call8859 = call ptr @getenv(ptr @str.570)
+  store ptr %call8859, ptr %root8858
+  %root_val8860 = load ptr, ptr %root8858
+  %streq8861 = call i32 @ofs_str_eq(ptr %root_val8860, ptr @str.63)
+  %cond8862 = icmp ne i32 %streq8861, 0
+  %not8863 = xor i1 %cond8862, true
+  br i1 %not8863, label %if_then2577, label %if_else2578
 
 if_then2577:
-  %root_val8778 = load ptr, ptr %root8772
-  %concat8779 = call ptr @ofs_str_concat(ptr %root_val8778, ptr @str.57)
-  %file_name_val8780 = load ptr, ptr %file_name.addr
-  %concat8781 = call ptr @ofs_str_concat(ptr %concat8779, ptr %file_name_val8780)
-  %concat8782 = call ptr @ofs_str_concat(ptr %concat8781, ptr @str.571)
-  ret ptr %concat8782
+  %root_val8864 = load ptr, ptr %root8858
+  %concat8865 = call ptr @ofs_str_concat(ptr %root_val8864, ptr @str.57)
+  %file_name_val8866 = load ptr, ptr %file_name.addr
+  %concat8867 = call ptr @ofs_str_concat(ptr %concat8865, ptr %file_name_val8866)
+  %concat8868 = call ptr @ofs_str_concat(ptr %concat8867, ptr @str.571)
+  ret ptr %concat8868
 
 if_else2578:
   br label %if_end2579
 
 if_end2579:
-  %file_name_val8783 = load ptr, ptr %file_name.addr
-  %concat8784 = call ptr @ofs_str_concat(ptr @str.572, ptr %file_name_val8783)
-  %concat8785 = call ptr @ofs_str_concat(ptr %concat8784, ptr @str.571)
-  ret ptr %concat8785
+  %file_name_val8869 = load ptr, ptr %file_name.addr
+  %concat8870 = call ptr @ofs_str_concat(ptr @str.572, ptr %file_name_val8869)
+  %concat8871 = call ptr @ofs_str_concat(ptr %concat8870, ptr @str.571)
+  ret ptr %concat8871
 }
 
 define ptr @resolve_attach_path(ptr %base, ptr %spec) {
@@ -20111,140 +20243,140 @@ entry:
   store ptr %base, ptr %base.addr
   %spec.addr = alloca ptr, align 8
   store ptr %spec, ptr %spec.addr
-  %spec_val8786 = load ptr, ptr %spec.addr
-  %strlen8787 = call i64 @ofs_str_len(ptr %spec_val8786)
-  %cmp8788 = icmp sgt i64 %strlen8787, 2
-  %spec_val8789 = load ptr, ptr %spec.addr
-  %call8790 = call ptr @ofs_str_substr(ptr %spec_val8789, i64 0, i64 2)
-  %streq8791 = call i32 @ofs_str_eq(ptr %call8790, ptr @str.573)
-  %cond8792 = icmp ne i32 %streq8791, 0
-  %logic8793 = and i1 %cmp8788, %cond8792
-  br i1 %logic8793, label %if_then2580, label %if_else2581
+  %spec_val8872 = load ptr, ptr %spec.addr
+  %strlen8873 = call i64 @ofs_str_len(ptr %spec_val8872)
+  %cmp8874 = icmp sgt i64 %strlen8873, 2
+  %spec_val8875 = load ptr, ptr %spec.addr
+  %call8876 = call ptr @ofs_str_substr(ptr %spec_val8875, i64 0, i64 2)
+  %streq8877 = call i32 @ofs_str_eq(ptr %call8876, ptr @str.573)
+  %cond8878 = icmp ne i32 %streq8877, 0
+  %logic8879 = and i1 %cmp8874, %cond8878
+  br i1 %logic8879, label %if_then2580, label %if_else2581
 
 if_then2580:
-  %rel8794 = alloca ptr, align 8
-  %spec_val8795 = load ptr, ptr %spec.addr
-  %spec_val8796 = load ptr, ptr %spec.addr
-  %strlen8797 = call i64 @ofs_str_len(ptr %spec_val8796)
-  %op8798 = sub i64 %strlen8797, 2
-  %call8799 = call ptr @ofs_str_substr(ptr %spec_val8795, i64 2, i64 %op8798)
-  store ptr %call8799, ptr %rel8794
-  %rel_val8800 = load ptr, ptr %rel8794
-  %strlen8801 = call i64 @ofs_str_len(ptr %rel_val8800)
-  %cmp8802 = icmp sgt i64 %strlen8801, 0
-  %rel_val8803 = load ptr, ptr %rel8794
-  %call8804 = call ptr @ofs_str_substr(ptr %rel_val8803, i64 0, i64 1)
-  %streq8805 = call i32 @ofs_str_eq(ptr %call8804, ptr @str.57)
-  %cond8806 = icmp ne i32 %streq8805, 0
-  %logic8807 = and i1 %cmp8802, %cond8806
-  br i1 %logic8807, label %if_then2583, label %if_else2584
+  %rel8880 = alloca ptr, align 8
+  %spec_val8881 = load ptr, ptr %spec.addr
+  %spec_val8882 = load ptr, ptr %spec.addr
+  %strlen8883 = call i64 @ofs_str_len(ptr %spec_val8882)
+  %op8884 = sub i64 %strlen8883, 2
+  %call8885 = call ptr @ofs_str_substr(ptr %spec_val8881, i64 2, i64 %op8884)
+  store ptr %call8885, ptr %rel8880
+  %rel_val8886 = load ptr, ptr %rel8880
+  %strlen8887 = call i64 @ofs_str_len(ptr %rel_val8886)
+  %cmp8888 = icmp sgt i64 %strlen8887, 0
+  %rel_val8889 = load ptr, ptr %rel8880
+  %call8890 = call ptr @ofs_str_substr(ptr %rel_val8889, i64 0, i64 1)
+  %streq8891 = call i32 @ofs_str_eq(ptr %call8890, ptr @str.57)
+  %cond8892 = icmp ne i32 %streq8891, 0
+  %logic8893 = and i1 %cmp8888, %cond8892
+  br i1 %logic8893, label %if_then2583, label %if_else2584
 
 if_then2583:
-  %rel_val8808 = load ptr, ptr %rel8794
-  ret ptr %rel_val8808
+  %rel_val8894 = load ptr, ptr %rel8880
+  ret ptr %rel_val8894
 
 if_else2584:
   br label %if_end2585
 
 if_end2585:
-  %base_val8809 = load ptr, ptr %base.addr
-  %rel_val8810 = load ptr, ptr %rel8794
-  %concat8811 = call ptr @ofs_str_concat(ptr %base_val8809, ptr %rel_val8810)
-  ret ptr %concat8811
+  %base_val8895 = load ptr, ptr %base.addr
+  %rel_val8896 = load ptr, ptr %rel8880
+  %concat8897 = call ptr @ofs_str_concat(ptr %base_val8895, ptr %rel_val8896)
+  ret ptr %concat8897
 
 if_else2581:
   br label %if_end2582
 
 if_end2582:
-  %file_name8812 = alloca ptr, align 8
-  %spec_val8813 = load ptr, ptr %spec.addr
-  %call8814 = call ptr @package_file_name(ptr %spec_val8813)
-  store ptr %call8814, ptr %file_name8812
-  %spec_val8815 = load ptr, ptr %spec.addr
-  %streq8816 = call i32 @ofs_str_eq(ptr %spec_val8815, ptr @str.25)
-  %spec_val8817 = load ptr, ptr %spec.addr
-  %streq8818 = call i32 @ofs_str_eq(ptr %spec_val8817, ptr @str.566)
-  %cond8819 = icmp ne i32 %streq8816, 0
-  %cond8820 = icmp ne i32 %streq8818, 0
-  %logic8821 = or i1 %cond8819, %cond8820
-  %spec_val8822 = load ptr, ptr %spec.addr
-  %streq8823 = call i32 @ofs_str_eq(ptr %spec_val8822, ptr @str.574)
-  %cond8824 = icmp ne i32 %streq8823, 0
-  %logic8825 = or i1 %logic8821, %cond8824
-  %spec_val8826 = load ptr, ptr %spec.addr
-  %streq8827 = call i32 @ofs_str_eq(ptr %spec_val8826, ptr @str.28)
-  %cond8828 = icmp ne i32 %streq8827, 0
-  %logic8829 = or i1 %logic8825, %cond8828
-  %spec_val8830 = load ptr, ptr %spec.addr
-  %streq8831 = call i32 @ofs_str_eq(ptr %spec_val8830, ptr @str.575)
-  %cond8832 = icmp ne i32 %streq8831, 0
-  %logic8833 = or i1 %logic8829, %cond8832
-  %spec_val8834 = load ptr, ptr %spec.addr
-  %streq8835 = call i32 @ofs_str_eq(ptr %spec_val8834, ptr @str.448)
-  %cond8836 = icmp ne i32 %streq8835, 0
-  %logic8837 = or i1 %logic8833, %cond8836
-  %spec_val8838 = load ptr, ptr %spec.addr
-  %streq8839 = call i32 @ofs_str_eq(ptr %spec_val8838, ptr @str.576)
-  %cond8840 = icmp ne i32 %streq8839, 0
-  %logic8841 = or i1 %logic8837, %cond8840
-  %spec_val8842 = load ptr, ptr %spec.addr
-  %streq8843 = call i32 @ofs_str_eq(ptr %spec_val8842, ptr @str.577)
-  %cond8844 = icmp ne i32 %streq8843, 0
-  %logic8845 = or i1 %logic8841, %cond8844
-  %spec_val8846 = load ptr, ptr %spec.addr
-  %streq8847 = call i32 @ofs_str_eq(ptr %spec_val8846, ptr @str.578)
-  %cond8848 = icmp ne i32 %streq8847, 0
-  %logic8849 = or i1 %logic8845, %cond8848
-  %spec_val8850 = load ptr, ptr %spec.addr
-  %streq8851 = call i32 @ofs_str_eq(ptr %spec_val8850, ptr @str.564)
-  %cond8852 = icmp ne i32 %streq8851, 0
-  %logic8853 = or i1 %logic8849, %cond8852
-  %spec_val8854 = load ptr, ptr %spec.addr
-  %streq8855 = call i32 @ofs_str_eq(ptr %spec_val8854, ptr @str.22)
-  %cond8856 = icmp ne i32 %streq8855, 0
-  %logic8857 = or i1 %logic8853, %cond8856
-  %spec_val8858 = load ptr, ptr %spec.addr
-  %streq8859 = call i32 @ofs_str_eq(ptr %spec_val8858, ptr @str.579)
-  %cond8860 = icmp ne i32 %streq8859, 0
-  %logic8861 = or i1 %logic8857, %cond8860
-  %spec_val8862 = load ptr, ptr %spec.addr
-  %streq8863 = call i32 @ofs_str_eq(ptr %spec_val8862, ptr @str.562)
-  %cond8864 = icmp ne i32 %streq8863, 0
-  %logic8865 = or i1 %logic8861, %cond8864
-  %spec_val8866 = load ptr, ptr %spec.addr
-  %streq8867 = call i32 @ofs_str_eq(ptr %spec_val8866, ptr @str.568)
-  %cond8868 = icmp ne i32 %streq8867, 0
-  %logic8869 = or i1 %logic8865, %cond8868
-  %spec_val8870 = load ptr, ptr %spec.addr
-  %streq8871 = call i32 @ofs_str_eq(ptr %spec_val8870, ptr @str.580)
-  %cond8872 = icmp ne i32 %streq8871, 0
-  %logic8873 = or i1 %logic8869, %cond8872
-  %spec_val8874 = load ptr, ptr %spec.addr
-  %streq8875 = call i32 @ofs_str_eq(ptr %spec_val8874, ptr @str.581)
-  %cond8876 = icmp ne i32 %streq8875, 0
-  %logic8877 = or i1 %logic8873, %cond8876
-  %spec_val8878 = load ptr, ptr %spec.addr
-  %streq8879 = call i32 @ofs_str_eq(ptr %spec_val8878, ptr @str.582)
-  %cond8880 = icmp ne i32 %streq8879, 0
-  %logic8881 = or i1 %logic8877, %cond8880
-  br i1 %logic8881, label %if_then2586, label %if_else2587
+  %file_name8898 = alloca ptr, align 8
+  %spec_val8899 = load ptr, ptr %spec.addr
+  %call8900 = call ptr @package_file_name(ptr %spec_val8899)
+  store ptr %call8900, ptr %file_name8898
+  %spec_val8901 = load ptr, ptr %spec.addr
+  %streq8902 = call i32 @ofs_str_eq(ptr %spec_val8901, ptr @str.25)
+  %spec_val8903 = load ptr, ptr %spec.addr
+  %streq8904 = call i32 @ofs_str_eq(ptr %spec_val8903, ptr @str.566)
+  %cond8905 = icmp ne i32 %streq8902, 0
+  %cond8906 = icmp ne i32 %streq8904, 0
+  %logic8907 = or i1 %cond8905, %cond8906
+  %spec_val8908 = load ptr, ptr %spec.addr
+  %streq8909 = call i32 @ofs_str_eq(ptr %spec_val8908, ptr @str.574)
+  %cond8910 = icmp ne i32 %streq8909, 0
+  %logic8911 = or i1 %logic8907, %cond8910
+  %spec_val8912 = load ptr, ptr %spec.addr
+  %streq8913 = call i32 @ofs_str_eq(ptr %spec_val8912, ptr @str.28)
+  %cond8914 = icmp ne i32 %streq8913, 0
+  %logic8915 = or i1 %logic8911, %cond8914
+  %spec_val8916 = load ptr, ptr %spec.addr
+  %streq8917 = call i32 @ofs_str_eq(ptr %spec_val8916, ptr @str.575)
+  %cond8918 = icmp ne i32 %streq8917, 0
+  %logic8919 = or i1 %logic8915, %cond8918
+  %spec_val8920 = load ptr, ptr %spec.addr
+  %streq8921 = call i32 @ofs_str_eq(ptr %spec_val8920, ptr @str.448)
+  %cond8922 = icmp ne i32 %streq8921, 0
+  %logic8923 = or i1 %logic8919, %cond8922
+  %spec_val8924 = load ptr, ptr %spec.addr
+  %streq8925 = call i32 @ofs_str_eq(ptr %spec_val8924, ptr @str.576)
+  %cond8926 = icmp ne i32 %streq8925, 0
+  %logic8927 = or i1 %logic8923, %cond8926
+  %spec_val8928 = load ptr, ptr %spec.addr
+  %streq8929 = call i32 @ofs_str_eq(ptr %spec_val8928, ptr @str.577)
+  %cond8930 = icmp ne i32 %streq8929, 0
+  %logic8931 = or i1 %logic8927, %cond8930
+  %spec_val8932 = load ptr, ptr %spec.addr
+  %streq8933 = call i32 @ofs_str_eq(ptr %spec_val8932, ptr @str.578)
+  %cond8934 = icmp ne i32 %streq8933, 0
+  %logic8935 = or i1 %logic8931, %cond8934
+  %spec_val8936 = load ptr, ptr %spec.addr
+  %streq8937 = call i32 @ofs_str_eq(ptr %spec_val8936, ptr @str.564)
+  %cond8938 = icmp ne i32 %streq8937, 0
+  %logic8939 = or i1 %logic8935, %cond8938
+  %spec_val8940 = load ptr, ptr %spec.addr
+  %streq8941 = call i32 @ofs_str_eq(ptr %spec_val8940, ptr @str.22)
+  %cond8942 = icmp ne i32 %streq8941, 0
+  %logic8943 = or i1 %logic8939, %cond8942
+  %spec_val8944 = load ptr, ptr %spec.addr
+  %streq8945 = call i32 @ofs_str_eq(ptr %spec_val8944, ptr @str.579)
+  %cond8946 = icmp ne i32 %streq8945, 0
+  %logic8947 = or i1 %logic8943, %cond8946
+  %spec_val8948 = load ptr, ptr %spec.addr
+  %streq8949 = call i32 @ofs_str_eq(ptr %spec_val8948, ptr @str.562)
+  %cond8950 = icmp ne i32 %streq8949, 0
+  %logic8951 = or i1 %logic8947, %cond8950
+  %spec_val8952 = load ptr, ptr %spec.addr
+  %streq8953 = call i32 @ofs_str_eq(ptr %spec_val8952, ptr @str.568)
+  %cond8954 = icmp ne i32 %streq8953, 0
+  %logic8955 = or i1 %logic8951, %cond8954
+  %spec_val8956 = load ptr, ptr %spec.addr
+  %streq8957 = call i32 @ofs_str_eq(ptr %spec_val8956, ptr @str.580)
+  %cond8958 = icmp ne i32 %streq8957, 0
+  %logic8959 = or i1 %logic8955, %cond8958
+  %spec_val8960 = load ptr, ptr %spec.addr
+  %streq8961 = call i32 @ofs_str_eq(ptr %spec_val8960, ptr @str.581)
+  %cond8962 = icmp ne i32 %streq8961, 0
+  %logic8963 = or i1 %logic8959, %cond8962
+  %spec_val8964 = load ptr, ptr %spec.addr
+  %streq8965 = call i32 @ofs_str_eq(ptr %spec_val8964, ptr @str.582)
+  %cond8966 = icmp ne i32 %streq8965, 0
+  %logic8967 = or i1 %logic8963, %cond8966
+  br i1 %logic8967, label %if_then2586, label %if_else2587
 
 if_then2586:
-  %file_name_val8882 = load ptr, ptr %file_name8812
-  %call8883 = call ptr @stdlib_path(ptr %file_name_val8882)
-  ret ptr %call8883
+  %file_name_val8968 = load ptr, ptr %file_name8898
+  %call8969 = call ptr @stdlib_path(ptr %file_name_val8968)
+  ret ptr %call8969
 
 if_else2587:
   br label %if_end2588
 
 if_end2588:
-  %spec_val8884 = load ptr, ptr %spec.addr
-  %concat8885 = call ptr @ofs_str_concat(ptr @str.583, ptr %spec_val8884)
-  %concat8886 = call ptr @ofs_str_concat(ptr %concat8885, ptr @str.584)
-  %file_name_val8887 = load ptr, ptr %file_name8812
-  %concat8888 = call ptr @ofs_str_concat(ptr %concat8886, ptr %file_name_val8887)
-  %concat8889 = call ptr @ofs_str_concat(ptr %concat8888, ptr @str.571)
-  ret ptr %concat8889
+  %spec_val8970 = load ptr, ptr %spec.addr
+  %concat8971 = call ptr @ofs_str_concat(ptr @str.583, ptr %spec_val8970)
+  %concat8972 = call ptr @ofs_str_concat(ptr %concat8971, ptr @str.584)
+  %file_name_val8973 = load ptr, ptr %file_name8898
+  %concat8974 = call ptr @ofs_str_concat(ptr %concat8972, ptr %file_name_val8973)
+  %concat8975 = call ptr @ofs_str_concat(ptr %concat8974, ptr @str.571)
+  ret ptr %concat8975
 }
 
 define ptr @expand_attaches(ptr %path, ptr %src) {
@@ -20253,10 +20385,10 @@ entry:
   store ptr %path, ptr %path.addr
   %src.addr = alloca ptr, align 8
   store ptr %src, ptr %src.addr
-  %path_val8890 = load ptr, ptr %path.addr
-  %call8891 = call i32 @path_seen(ptr %path_val8890)
-  %cond8892 = icmp ne i32 %call8891, 0
-  br i1 %cond8892, label %if_then2589, label %if_else2590
+  %path_val8976 = load ptr, ptr %path.addr
+  %call8977 = call i32 @path_seen(ptr %path_val8976)
+  %cond8978 = icmp ne i32 %call8977, 0
+  br i1 %cond8978, label %if_then2589, label %if_else2590
 
 if_then2589:
   ret ptr @str.63
@@ -20265,103 +20397,103 @@ if_else2590:
   br label %if_end2591
 
 if_end2591:
-  %path_val8893 = load ptr, ptr %path.addr
-  call void @remember_path(ptr %path_val8893)
-  %base8894 = alloca ptr, align 8
-  %path_val8895 = load ptr, ptr %path.addr
-  %call8896 = call ptr @dirname(ptr %path_val8895)
-  store ptr %call8896, ptr %base8894
-  %out8897 = alloca ptr, align 8
-  store ptr @str.63, ptr %out8897
-  %start8898 = alloca i64, align 8
-  store i64 0, ptr %start8898
-  %i8899 = alloca i64, align 8
-  store i64 0, ptr %i8899
-  %len8900 = alloca i64, align 8
-  %src_val8901 = load ptr, ptr %src.addr
-  %strlen8902 = call i64 @ofs_str_len(ptr %src_val8901)
-  store i64 %strlen8902, ptr %len8900
+  %path_val8979 = load ptr, ptr %path.addr
+  call void @remember_path(ptr %path_val8979)
+  %base8980 = alloca ptr, align 8
+  %path_val8981 = load ptr, ptr %path.addr
+  %call8982 = call ptr @dirname(ptr %path_val8981)
+  store ptr %call8982, ptr %base8980
+  %out8983 = alloca ptr, align 8
+  store ptr @str.63, ptr %out8983
+  %start8984 = alloca i64, align 8
+  store i64 0, ptr %start8984
+  %i8985 = alloca i64, align 8
+  store i64 0, ptr %i8985
+  %len8986 = alloca i64, align 8
+  %src_val8987 = load ptr, ptr %src.addr
+  %strlen8988 = call i64 @ofs_str_len(ptr %src_val8987)
+  store i64 %strlen8988, ptr %len8986
   br label %while_cond2592
 
 while_cond2592:
-  %i_val8903 = load i64, ptr %i8899
-  %len_val8904 = load i64, ptr %len8900
-  %cmp8905 = icmp sle i64 %i_val8903, %len_val8904
-  br i1 %cmp8905, label %while_body2593, label %while_end2594
+  %i_val8989 = load i64, ptr %i8985
+  %len_val8990 = load i64, ptr %len8986
+  %cmp8991 = icmp sle i64 %i_val8989, %len_val8990
+  br i1 %cmp8991, label %while_body2593, label %while_end2594
 
 while_body2593:
-  %i_val8906 = load i64, ptr %i8899
-  %len_val8907 = load i64, ptr %len8900
-  %cmp8908 = icmp eq i64 %i_val8906, %len_val8907
-  %src_val8909 = load ptr, ptr %src.addr
-  %i_val8910 = load i64, ptr %i8899
-  %call8911 = call i64 @ofs_str_char_at(ptr %src_val8909, i64 %i_val8910)
-  %cmp8912 = icmp eq i64 %call8911, 10
-  %logic8913 = or i1 %cmp8908, %cmp8912
-  br i1 %logic8913, label %if_then2595, label %if_else2596
+  %i_val8992 = load i64, ptr %i8985
+  %len_val8993 = load i64, ptr %len8986
+  %cmp8994 = icmp eq i64 %i_val8992, %len_val8993
+  %src_val8995 = load ptr, ptr %src.addr
+  %i_val8996 = load i64, ptr %i8985
+  %call8997 = call i64 @ofs_str_char_at(ptr %src_val8995, i64 %i_val8996)
+  %cmp8998 = icmp eq i64 %call8997, 10
+  %logic8999 = or i1 %cmp8994, %cmp8998
+  br i1 %logic8999, label %if_then2595, label %if_else2596
 
 if_then2595:
-  %line8914 = alloca ptr, align 8
-  %src_val8915 = load ptr, ptr %src.addr
-  %start_val8916 = load i64, ptr %start8898
-  %i_val8917 = load i64, ptr %i8899
-  %start_val8918 = load i64, ptr %start8898
-  %op8919 = sub i64 %i_val8917, %start_val8918
-  %call8920 = call ptr @ofs_str_substr(ptr %src_val8915, i64 %start_val8916, i64 %op8919)
-  store ptr %call8920, ptr %line8914
-  %line_val8921 = load ptr, ptr %line8914
-  %call8922 = call i32 @is_attach_line(ptr %line_val8921)
-  %cond8923 = icmp ne i32 %call8922, 0
-  br i1 %cond8923, label %if_then2598, label %if_else2599
+  %line9000 = alloca ptr, align 8
+  %src_val9001 = load ptr, ptr %src.addr
+  %start_val9002 = load i64, ptr %start8984
+  %i_val9003 = load i64, ptr %i8985
+  %start_val9004 = load i64, ptr %start8984
+  %op9005 = sub i64 %i_val9003, %start_val9004
+  %call9006 = call ptr @ofs_str_substr(ptr %src_val9001, i64 %start_val9002, i64 %op9005)
+  store ptr %call9006, ptr %line9000
+  %line_val9007 = load ptr, ptr %line9000
+  %call9008 = call i32 @is_attach_line(ptr %line_val9007)
+  %cond9009 = icmp ne i32 %call9008, 0
+  br i1 %cond9009, label %if_then2598, label %if_else2599
 
 if_then2598:
-  %spec8924 = alloca ptr, align 8
-  %line_val8925 = load ptr, ptr %line8914
-  %call8926 = call ptr @attach_path_from_line(ptr %line_val8925)
-  store ptr %call8926, ptr %spec8924
-  %child_path8927 = alloca ptr, align 8
-  %base_val8928 = load ptr, ptr %base8894
-  %spec_val8929 = load ptr, ptr %spec8924
-  %call8930 = call ptr @resolve_attach_path(ptr %base_val8928, ptr %spec_val8929)
-  store ptr %call8930, ptr %child_path8927
-  %child_src8931 = alloca ptr, align 8
-  %child_path_val8932 = load ptr, ptr %child_path8927
-  %call8933 = call ptr @read_file(ptr %child_path_val8932)
-  store ptr %call8933, ptr %child_src8931
-  %out_val8934 = load ptr, ptr %out8897
-  %child_path_val8935 = load ptr, ptr %child_path8927
-  %child_src_val8936 = load ptr, ptr %child_src8931
-  %call8937 = call ptr @expand_attaches(ptr %child_path_val8935, ptr %child_src_val8936)
-  %concat8938 = call ptr @ofs_str_concat(ptr %out_val8934, ptr %call8937)
-  store ptr %concat8938, ptr %out8897
+  %spec9010 = alloca ptr, align 8
+  %line_val9011 = load ptr, ptr %line9000
+  %call9012 = call ptr @attach_path_from_line(ptr %line_val9011)
+  store ptr %call9012, ptr %spec9010
+  %child_path9013 = alloca ptr, align 8
+  %base_val9014 = load ptr, ptr %base8980
+  %spec_val9015 = load ptr, ptr %spec9010
+  %call9016 = call ptr @resolve_attach_path(ptr %base_val9014, ptr %spec_val9015)
+  store ptr %call9016, ptr %child_path9013
+  %child_src9017 = alloca ptr, align 8
+  %child_path_val9018 = load ptr, ptr %child_path9013
+  %call9019 = call ptr @read_file(ptr %child_path_val9018)
+  store ptr %call9019, ptr %child_src9017
+  %out_val9020 = load ptr, ptr %out8983
+  %child_path_val9021 = load ptr, ptr %child_path9013
+  %child_src_val9022 = load ptr, ptr %child_src9017
+  %call9023 = call ptr @expand_attaches(ptr %child_path_val9021, ptr %child_src_val9022)
+  %concat9024 = call ptr @ofs_str_concat(ptr %out_val9020, ptr %call9023)
+  store ptr %concat9024, ptr %out8983
   br label %if_end2600
 
 if_else2599:
-  %out_val8939 = load ptr, ptr %out8897
-  %line_val8940 = load ptr, ptr %line8914
-  %concat8941 = call ptr @ofs_str_concat(ptr %out_val8939, ptr %line_val8940)
-  %concat8942 = call ptr @ofs_str_concat(ptr %concat8941, ptr @str.3)
-  store ptr %concat8942, ptr %out8897
+  %out_val9025 = load ptr, ptr %out8983
+  %line_val9026 = load ptr, ptr %line9000
+  %concat9027 = call ptr @ofs_str_concat(ptr %out_val9025, ptr %line_val9026)
+  %concat9028 = call ptr @ofs_str_concat(ptr %concat9027, ptr @str.3)
+  store ptr %concat9028, ptr %out8983
   br label %if_end2600
 
 if_end2600:
-  %i_val8943 = load i64, ptr %i8899
-  %op8944 = add i64 %i_val8943, 1
-  store i64 %op8944, ptr %start8898
+  %i_val9029 = load i64, ptr %i8985
+  %op9030 = add i64 %i_val9029, 1
+  store i64 %op9030, ptr %start8984
   br label %if_end2597
 
 if_else2596:
   br label %if_end2597
 
 if_end2597:
-  %post_old8945 = load i64, ptr %i8899
-  %post_new8946 = add i64 %post_old8945, 1
-  store i64 %post_new8946, ptr %i8899
+  %post_old9031 = load i64, ptr %i8985
+  %post_new9032 = add i64 %post_old9031, 1
+  store i64 %post_new9032, ptr %i8985
   br label %while_cond2592
 
 while_end2594:
-  %out_val8947 = load ptr, ptr %out8897
-  ret ptr %out_val8947
+  %out_val9033 = load ptr, ptr %out8983
+  ret ptr %out_val9033
 }
 
 define void @usage() {
@@ -20397,67 +20529,67 @@ entry:
   store i32 %print_ast, ptr %print_ast.addr
   %c_opt.addr = alloca ptr, align 8
   store ptr %c_opt, ptr %c_opt.addr
-  %e_in8948 = alloca ptr, align 8
-  %call8949 = call ptr @getenv(ptr @str.596)
-  store ptr %call8949, ptr %e_in8948
-  %e_in_val8950 = load ptr, ptr %e_in8948
-  %streq8951 = call i32 @ofs_str_eq(ptr %e_in_val8950, ptr @str.63)
-  %cond8952 = icmp ne i32 %streq8951, 0
-  %not8953 = xor i1 %cond8952, true
-  br i1 %not8953, label %if_then2601, label %if_else2602
+  %e_in9034 = alloca ptr, align 8
+  %call9035 = call ptr @getenv(ptr @str.596)
+  store ptr %call9035, ptr %e_in9034
+  %e_in_val9036 = load ptr, ptr %e_in9034
+  %streq9037 = call i32 @ofs_str_eq(ptr %e_in_val9036, ptr @str.63)
+  %cond9038 = icmp ne i32 %streq9037, 0
+  %not9039 = xor i1 %cond9038, true
+  br i1 %not9039, label %if_then2601, label %if_else2602
 
 if_then2601:
-  %e_in_val8954 = load ptr, ptr %e_in8948
-  store ptr %e_in_val8954, ptr %input_file.addr
+  %e_in_val9040 = load ptr, ptr %e_in9034
+  store ptr %e_in_val9040, ptr %input_file.addr
   br label %if_end2603
 
 if_else2602:
   br label %if_end2603
 
 if_end2603:
-  %e_out8955 = alloca ptr, align 8
-  %call8956 = call ptr @getenv(ptr @str.597)
-  store ptr %call8956, ptr %e_out8955
-  %e_out_val8957 = load ptr, ptr %e_out8955
-  %streq8958 = call i32 @ofs_str_eq(ptr %e_out_val8957, ptr @str.63)
-  %cond8959 = icmp ne i32 %streq8958, 0
-  %not8960 = xor i1 %cond8959, true
-  br i1 %not8960, label %if_then2604, label %if_else2605
+  %e_out9041 = alloca ptr, align 8
+  %call9042 = call ptr @getenv(ptr @str.597)
+  store ptr %call9042, ptr %e_out9041
+  %e_out_val9043 = load ptr, ptr %e_out9041
+  %streq9044 = call i32 @ofs_str_eq(ptr %e_out_val9043, ptr @str.63)
+  %cond9045 = icmp ne i32 %streq9044, 0
+  %not9046 = xor i1 %cond9045, true
+  br i1 %not9046, label %if_then2604, label %if_else2605
 
 if_then2604:
-  %e_out_val8961 = load ptr, ptr %e_out8955
-  store ptr %e_out_val8961, ptr %output_file.addr
+  %e_out_val9047 = load ptr, ptr %e_out9041
+  store ptr %e_out_val9047, ptr %output_file.addr
   br label %if_end2606
 
 if_else2605:
   br label %if_end2606
 
 if_end2606:
-  %e_c8962 = alloca ptr, align 8
-  %call8963 = call ptr @getenv(ptr @str.598)
-  store ptr %call8963, ptr %e_c8962
-  %e_c_val8964 = load ptr, ptr %e_c8962
-  %streq8965 = call i32 @ofs_str_eq(ptr %e_c_val8964, ptr @str.63)
-  %cond8966 = icmp ne i32 %streq8965, 0
-  %not8967 = xor i1 %cond8966, true
-  br i1 %not8967, label %if_then2607, label %if_else2608
+  %e_c9048 = alloca ptr, align 8
+  %call9049 = call ptr @getenv(ptr @str.598)
+  store ptr %call9049, ptr %e_c9048
+  %e_c_val9050 = load ptr, ptr %e_c9048
+  %streq9051 = call i32 @ofs_str_eq(ptr %e_c_val9050, ptr @str.63)
+  %cond9052 = icmp ne i32 %streq9051, 0
+  %not9053 = xor i1 %cond9052, true
+  br i1 %not9053, label %if_then2607, label %if_else2608
 
 if_then2607:
-  %e_c_val8968 = load ptr, ptr %e_c8962
-  store ptr %e_c_val8968, ptr %c_output.addr
+  %e_c_val9054 = load ptr, ptr %e_c9048
+  store ptr %e_c_val9054, ptr %c_output.addr
   br label %if_end2609
 
 if_else2608:
   br label %if_end2609
 
 if_end2609:
-  %e_mode8969 = alloca ptr, align 8
-  %call8970 = call ptr @getenv(ptr @str.599)
-  store ptr %call8970, ptr %e_mode8969
-  %e_mode_val8971 = load ptr, ptr %e_mode8969
-  %streq8972 = call i32 @ofs_str_eq(ptr %e_mode_val8971, ptr @str.600)
-  %cond8973 = icmp ne i32 %streq8972, 0
-  br i1 %cond8973, label %if_then2610, label %if_else2611
+  %e_mode9055 = alloca ptr, align 8
+  %call9056 = call ptr @getenv(ptr @str.599)
+  store ptr %call9056, ptr %e_mode9055
+  %e_mode_val9057 = load ptr, ptr %e_mode9055
+  %streq9058 = call i32 @ofs_str_eq(ptr %e_mode_val9057, ptr @str.600)
+  %cond9059 = icmp ne i32 %streq9058, 0
+  br i1 %cond9059, label %if_then2610, label %if_else2611
 
 if_then2610:
   store i32 1, ptr %check_only.addr
@@ -20467,10 +20599,10 @@ if_else2611:
   br label %if_end2612
 
 if_end2612:
-  %e_mode_val8974 = load ptr, ptr %e_mode8969
-  %streq8975 = call i32 @ofs_str_eq(ptr %e_mode_val8974, ptr @str.601)
-  %cond8976 = icmp ne i32 %streq8975, 0
-  br i1 %cond8976, label %if_then2613, label %if_else2614
+  %e_mode_val9060 = load ptr, ptr %e_mode9055
+  %streq9061 = call i32 @ofs_str_eq(ptr %e_mode_val9060, ptr @str.601)
+  %cond9062 = icmp ne i32 %streq9061, 0
+  br i1 %cond9062, label %if_then2613, label %if_else2614
 
 if_then2613:
   store i32 1, ptr %print_tokens.addr
@@ -20480,10 +20612,10 @@ if_else2614:
   br label %if_end2615
 
 if_end2615:
-  %e_mode_val8977 = load ptr, ptr %e_mode8969
-  %streq8978 = call i32 @ofs_str_eq(ptr %e_mode_val8977, ptr @str.602)
-  %cond8979 = icmp ne i32 %streq8978, 0
-  br i1 %cond8979, label %if_then2616, label %if_else2617
+  %e_mode_val9063 = load ptr, ptr %e_mode9055
+  %streq9064 = call i32 @ofs_str_eq(ptr %e_mode_val9063, ptr @str.602)
+  %cond9065 = icmp ne i32 %streq9064, 0
+  br i1 %cond9065, label %if_then2616, label %if_else2617
 
 if_then2616:
   store i32 1, ptr %print_ast.addr
@@ -20493,107 +20625,107 @@ if_else2617:
   br label %if_end2618
 
 if_end2618:
-  %e_mode_val8980 = load ptr, ptr %e_mode8969
-  %streq8981 = call i32 @ofs_str_eq(ptr %e_mode_val8980, ptr @str.603)
-  %cond8982 = icmp ne i32 %streq8981, 0
-  br i1 %cond8982, label %if_then2619, label %if_else2620
+  %e_mode_val9066 = load ptr, ptr %e_mode9055
+  %streq9067 = call i32 @ofs_str_eq(ptr %e_mode_val9066, ptr @str.603)
+  %cond9068 = icmp ne i32 %streq9067, 0
+  br i1 %cond9068, label %if_then2619, label %if_else2620
 
 if_then2619:
-  %c_opt_val8983 = load ptr, ptr %c_opt.addr
-  store ptr %c_opt_val8983, ptr %c_opt.addr
+  %c_opt_val9069 = load ptr, ptr %c_opt.addr
+  store ptr %c_opt_val9069, ptr %c_opt.addr
   br label %if_end2621
 
 if_else2620:
   br label %if_end2621
 
 if_end2621:
-  %e_opt8984 = alloca ptr, align 8
-  %call8985 = call ptr @getenv(ptr @str.604)
-  store ptr %call8985, ptr %e_opt8984
-  %e_opt_val8986 = load ptr, ptr %e_opt8984
-  %streq8987 = call i32 @ofs_str_eq(ptr %e_opt_val8986, ptr @str.605)
-  %e_opt_val8988 = load ptr, ptr %e_opt8984
-  %streq8989 = call i32 @ofs_str_eq(ptr %e_opt_val8988, ptr @str.606)
-  %cond8990 = icmp ne i32 %streq8987, 0
-  %cond8991 = icmp ne i32 %streq8989, 0
-  %logic8992 = or i1 %cond8990, %cond8991
-  %e_opt_val8993 = load ptr, ptr %e_opt8984
-  %streq8994 = call i32 @ofs_str_eq(ptr %e_opt_val8993, ptr @str.607)
-  %cond8995 = icmp ne i32 %streq8994, 0
-  %logic8996 = or i1 %logic8992, %cond8995
-  br i1 %logic8996, label %if_then2622, label %if_else2623
+  %e_opt9070 = alloca ptr, align 8
+  %call9071 = call ptr @getenv(ptr @str.604)
+  store ptr %call9071, ptr %e_opt9070
+  %e_opt_val9072 = load ptr, ptr %e_opt9070
+  %streq9073 = call i32 @ofs_str_eq(ptr %e_opt_val9072, ptr @str.605)
+  %e_opt_val9074 = load ptr, ptr %e_opt9070
+  %streq9075 = call i32 @ofs_str_eq(ptr %e_opt_val9074, ptr @str.606)
+  %cond9076 = icmp ne i32 %streq9073, 0
+  %cond9077 = icmp ne i32 %streq9075, 0
+  %logic9078 = or i1 %cond9076, %cond9077
+  %e_opt_val9079 = load ptr, ptr %e_opt9070
+  %streq9080 = call i32 @ofs_str_eq(ptr %e_opt_val9079, ptr @str.607)
+  %cond9081 = icmp ne i32 %streq9080, 0
+  %logic9082 = or i1 %logic9078, %cond9081
+  br i1 %logic9082, label %if_then2622, label %if_else2623
 
 if_then2622:
-  %e_opt_val8997 = load ptr, ptr %e_opt8984
-  store ptr %e_opt_val8997, ptr %c_opt.addr
+  %e_opt_val9083 = load ptr, ptr %e_opt9070
+  store ptr %e_opt_val9083, ptr %c_opt.addr
   br label %if_end2624
 
 if_else2623:
   br label %if_end2624
 
 if_end2624:
-  %check_flag8998 = alloca ptr, align 8
-  store ptr @str.140, ptr %check_flag8998
-  %tokens_flag8999 = alloca ptr, align 8
-  store ptr @str.140, ptr %tokens_flag8999
-  %ast_flag9000 = alloca ptr, align 8
-  store ptr @str.140, ptr %ast_flag9000
-  %check_only_val9001 = load i32, ptr %check_only.addr
-  %cond9002 = icmp ne i32 %check_only_val9001, 0
-  br i1 %cond9002, label %if_then2625, label %if_else2626
+  %check_flag9084 = alloca ptr, align 8
+  store ptr @str.140, ptr %check_flag9084
+  %tokens_flag9085 = alloca ptr, align 8
+  store ptr @str.140, ptr %tokens_flag9085
+  %ast_flag9086 = alloca ptr, align 8
+  store ptr @str.140, ptr %ast_flag9086
+  %check_only_val9087 = load i32, ptr %check_only.addr
+  %cond9088 = icmp ne i32 %check_only_val9087, 0
+  br i1 %cond9088, label %if_then2625, label %if_else2626
 
 if_then2625:
-  store ptr @str.219, ptr %check_flag8998
+  store ptr @str.219, ptr %check_flag9084
   br label %if_end2627
 
 if_else2626:
   br label %if_end2627
 
 if_end2627:
-  %print_tokens_val9003 = load i32, ptr %print_tokens.addr
-  %cond9004 = icmp ne i32 %print_tokens_val9003, 0
-  br i1 %cond9004, label %if_then2628, label %if_else2629
+  %print_tokens_val9089 = load i32, ptr %print_tokens.addr
+  %cond9090 = icmp ne i32 %print_tokens_val9089, 0
+  br i1 %cond9090, label %if_then2628, label %if_else2629
 
 if_then2628:
-  store ptr @str.219, ptr %tokens_flag8999
+  store ptr @str.219, ptr %tokens_flag9085
   br label %if_end2630
 
 if_else2629:
   br label %if_end2630
 
 if_end2630:
-  %print_ast_val9005 = load i32, ptr %print_ast.addr
-  %cond9006 = icmp ne i32 %print_ast_val9005, 0
-  br i1 %cond9006, label %if_then2631, label %if_else2632
+  %print_ast_val9091 = load i32, ptr %print_ast.addr
+  %cond9092 = icmp ne i32 %print_ast_val9091, 0
+  br i1 %cond9092, label %if_then2631, label %if_else2632
 
 if_then2631:
-  store ptr @str.219, ptr %ast_flag9000
+  store ptr @str.219, ptr %ast_flag9086
   br label %if_end2633
 
 if_else2632:
   br label %if_end2633
 
 if_end2633:
-  %input_file_val9007 = load ptr, ptr %input_file.addr
-  %concat9008 = call ptr @ofs_str_concat(ptr %input_file_val9007, ptr @str.121)
-  %output_file_val9009 = load ptr, ptr %output_file.addr
-  %concat9010 = call ptr @ofs_str_concat(ptr %concat9008, ptr %output_file_val9009)
-  %concat9011 = call ptr @ofs_str_concat(ptr %concat9010, ptr @str.121)
-  %c_output_val9012 = load ptr, ptr %c_output.addr
-  %concat9013 = call ptr @ofs_str_concat(ptr %concat9011, ptr %c_output_val9012)
-  %concat9014 = call ptr @ofs_str_concat(ptr %concat9013, ptr @str.121)
-  %check_flag_val9015 = load ptr, ptr %check_flag8998
-  %concat9016 = call ptr @ofs_str_concat(ptr %concat9014, ptr %check_flag_val9015)
-  %concat9017 = call ptr @ofs_str_concat(ptr %concat9016, ptr @str.121)
-  %tokens_flag_val9018 = load ptr, ptr %tokens_flag8999
-  %concat9019 = call ptr @ofs_str_concat(ptr %concat9017, ptr %tokens_flag_val9018)
-  %concat9020 = call ptr @ofs_str_concat(ptr %concat9019, ptr @str.121)
-  %ast_flag_val9021 = load ptr, ptr %ast_flag9000
-  %concat9022 = call ptr @ofs_str_concat(ptr %concat9020, ptr %ast_flag_val9021)
-  %concat9023 = call ptr @ofs_str_concat(ptr %concat9022, ptr @str.121)
-  %c_opt_val9024 = load ptr, ptr %c_opt.addr
-  %concat9025 = call ptr @ofs_str_concat(ptr %concat9023, ptr %c_opt_val9024)
-  ret ptr %concat9025
+  %input_file_val9093 = load ptr, ptr %input_file.addr
+  %concat9094 = call ptr @ofs_str_concat(ptr %input_file_val9093, ptr @str.121)
+  %output_file_val9095 = load ptr, ptr %output_file.addr
+  %concat9096 = call ptr @ofs_str_concat(ptr %concat9094, ptr %output_file_val9095)
+  %concat9097 = call ptr @ofs_str_concat(ptr %concat9096, ptr @str.121)
+  %c_output_val9098 = load ptr, ptr %c_output.addr
+  %concat9099 = call ptr @ofs_str_concat(ptr %concat9097, ptr %c_output_val9098)
+  %concat9100 = call ptr @ofs_str_concat(ptr %concat9099, ptr @str.121)
+  %check_flag_val9101 = load ptr, ptr %check_flag9084
+  %concat9102 = call ptr @ofs_str_concat(ptr %concat9100, ptr %check_flag_val9101)
+  %concat9103 = call ptr @ofs_str_concat(ptr %concat9102, ptr @str.121)
+  %tokens_flag_val9104 = load ptr, ptr %tokens_flag9085
+  %concat9105 = call ptr @ofs_str_concat(ptr %concat9103, ptr %tokens_flag_val9104)
+  %concat9106 = call ptr @ofs_str_concat(ptr %concat9105, ptr @str.121)
+  %ast_flag_val9107 = load ptr, ptr %ast_flag9086
+  %concat9108 = call ptr @ofs_str_concat(ptr %concat9106, ptr %ast_flag_val9107)
+  %concat9109 = call ptr @ofs_str_concat(ptr %concat9108, ptr @str.121)
+  %c_opt_val9110 = load ptr, ptr %c_opt.addr
+  %concat9111 = call ptr @ofs_str_concat(ptr %concat9109, ptr %c_opt_val9110)
+  ret ptr %concat9111
 }
 
 define ptr @parse_state_field(ptr %state, i64 %field_idx) {
@@ -20602,81 +20734,81 @@ entry:
   store ptr %state, ptr %state.addr
   %field_idx.addr = alloca i64, align 8
   store i64 %field_idx, ptr %field_idx.addr
-  %i9026 = alloca i64, align 8
-  store i64 0, ptr %i9026
-  %start9027 = alloca i64, align 8
-  store i64 0, ptr %start9027
-  %cur9028 = alloca i64, align 8
-  store i64 0, ptr %cur9028
-  %len9029 = alloca i64, align 8
-  %state_val9030 = load ptr, ptr %state.addr
-  %strlen9031 = call i64 @ofs_str_len(ptr %state_val9030)
-  store i64 %strlen9031, ptr %len9029
+  %i9112 = alloca i64, align 8
+  store i64 0, ptr %i9112
+  %start9113 = alloca i64, align 8
+  store i64 0, ptr %start9113
+  %cur9114 = alloca i64, align 8
+  store i64 0, ptr %cur9114
+  %len9115 = alloca i64, align 8
+  %state_val9116 = load ptr, ptr %state.addr
+  %strlen9117 = call i64 @ofs_str_len(ptr %state_val9116)
+  store i64 %strlen9117, ptr %len9115
   br label %while_cond2634
 
 while_cond2634:
-  %i_val9032 = load i64, ptr %i9026
-  %len_val9033 = load i64, ptr %len9029
-  %cmp9034 = icmp slt i64 %i_val9032, %len_val9033
-  br i1 %cmp9034, label %while_body2635, label %while_end2636
+  %i_val9118 = load i64, ptr %i9112
+  %len_val9119 = load i64, ptr %len9115
+  %cmp9120 = icmp slt i64 %i_val9118, %len_val9119
+  br i1 %cmp9120, label %while_body2635, label %while_end2636
 
 while_body2635:
-  %state_val9035 = load ptr, ptr %state.addr
-  %i_val9036 = load i64, ptr %i9026
-  %call9037 = call i64 @ofs_str_char_at(ptr %state_val9035, i64 %i_val9036)
-  %cmp9038 = icmp eq i64 %call9037, 124
-  br i1 %cmp9038, label %if_then2637, label %if_else2638
+  %state_val9121 = load ptr, ptr %state.addr
+  %i_val9122 = load i64, ptr %i9112
+  %call9123 = call i64 @ofs_str_char_at(ptr %state_val9121, i64 %i_val9122)
+  %cmp9124 = icmp eq i64 %call9123, 124
+  br i1 %cmp9124, label %if_then2637, label %if_else2638
 
 if_then2637:
-  %cur_val9039 = load i64, ptr %cur9028
-  %field_idx_val9040 = load i64, ptr %field_idx.addr
-  %cmp9041 = icmp eq i64 %cur_val9039, %field_idx_val9040
-  br i1 %cmp9041, label %if_then2640, label %if_else2641
+  %cur_val9125 = load i64, ptr %cur9114
+  %field_idx_val9126 = load i64, ptr %field_idx.addr
+  %cmp9127 = icmp eq i64 %cur_val9125, %field_idx_val9126
+  br i1 %cmp9127, label %if_then2640, label %if_else2641
 
 if_then2640:
-  %state_val9042 = load ptr, ptr %state.addr
-  %start_val9043 = load i64, ptr %start9027
-  %i_val9044 = load i64, ptr %i9026
-  %start_val9045 = load i64, ptr %start9027
-  %op9046 = sub i64 %i_val9044, %start_val9045
-  %call9047 = call ptr @ofs_str_substr(ptr %state_val9042, i64 %start_val9043, i64 %op9046)
-  ret ptr %call9047
+  %state_val9128 = load ptr, ptr %state.addr
+  %start_val9129 = load i64, ptr %start9113
+  %i_val9130 = load i64, ptr %i9112
+  %start_val9131 = load i64, ptr %start9113
+  %op9132 = sub i64 %i_val9130, %start_val9131
+  %call9133 = call ptr @ofs_str_substr(ptr %state_val9128, i64 %start_val9129, i64 %op9132)
+  ret ptr %call9133
 
 if_else2641:
   br label %if_end2642
 
 if_end2642:
-  %post_old9048 = load i64, ptr %cur9028
-  %post_new9049 = add i64 %post_old9048, 1
-  store i64 %post_new9049, ptr %cur9028
-  %i_val9050 = load i64, ptr %i9026
-  %op9051 = add i64 %i_val9050, 1
-  store i64 %op9051, ptr %start9027
+  %post_old9134 = load i64, ptr %cur9114
+  %post_new9135 = add i64 %post_old9134, 1
+  store i64 %post_new9135, ptr %cur9114
+  %i_val9136 = load i64, ptr %i9112
+  %op9137 = add i64 %i_val9136, 1
+  store i64 %op9137, ptr %start9113
   br label %if_end2639
 
 if_else2638:
   br label %if_end2639
 
 if_end2639:
-  %post_old9052 = load i64, ptr %i9026
-  %post_new9053 = add i64 %post_old9052, 1
-  store i64 %post_new9053, ptr %i9026
+  %post_old9138 = load i64, ptr %i9112
+  %post_new9139 = add i64 %post_old9138, 1
+  store i64 %post_new9139, ptr %i9112
   br label %while_cond2634
 
 while_end2636:
-  %cur_val9054 = load i64, ptr %cur9028
-  %field_idx_val9055 = load i64, ptr %field_idx.addr
-  %cmp9056 = icmp eq i64 %cur_val9054, %field_idx_val9055
-  br i1 %cmp9056, label %if_then2643, label %if_else2644
+  %cur_val9140 = load i64, ptr %cur9114
+  %field_idx_val9141 = load i64, ptr %field_idx.addr
+  %cmp9142 = icmp eq i64 %cur_val9140, %field_idx_val9141
+  br i1 %cmp9142, label %if_then2643, label %if_else2644
 
 if_then2643:
-  %state_val9057 = load ptr, ptr %state.addr
-  %start_val9058 = load i64, ptr %start9027
-  %len_val9059 = load i64, ptr %len9029
-  %start_val9060 = load i64, ptr %start9027
-  %op9061 = sub i64 %len_val9059, %start_val9060
-  %call9062 = call ptr @ofs_str_substr(ptr %state_val9057, i64 %start_val9058, i64 %op9061)
-  ret ptr %call9062
+  %state_val9143 = load ptr, ptr %state.addr
+  %start_val9144 = load i64, ptr %start9113
+  %len_val9145 = load i64, ptr %len9115
+  %start_val9146 = load i64, ptr %start9113
+  %op9147 = sub i64 %len_val9145, %start_val9146
+  %call9148 = call ptr @ofs_str_substr(ptr %state_val9143, i64 %start_val9144, i64 %op9147)
+  ret ptr %call9148
 
 if_else2644:
   br label %if_end2645
@@ -20690,78 +20822,78 @@ entry:
   call void @__ofs_init_globals()
   call void @echo_obsidian(ptr @str.608)
   call void @echo_obsidian(ptr @str.63)
-  %input_file9063 = alloca ptr, align 8
-  store ptr @str.609, ptr %input_file9063
-  %output_file9064 = alloca ptr, align 8
-  store ptr @str.610, ptr %output_file9064
-  %c_output9065 = alloca ptr, align 8
-  store ptr @str.611, ptr %c_output9065
-  %check_only9066 = alloca i32, align 8
-  store i32 0, ptr %check_only9066
-  %print_tokens9067 = alloca i32, align 8
-  store i32 0, ptr %print_tokens9067
-  %print_ast9068 = alloca i32, align 8
-  store i32 0, ptr %print_ast9068
-  %c_opt9069 = alloca ptr, align 8
-  store ptr @str.606, ptr %c_opt9069
-  %state9070 = alloca ptr, align 8
-  %input_file_val9071 = load ptr, ptr %input_file9063
-  %output_file_val9072 = load ptr, ptr %output_file9064
-  %c_output_val9073 = load ptr, ptr %c_output9065
-  %check_only_val9074 = load i32, ptr %check_only9066
-  %print_tokens_val9075 = load i32, ptr %print_tokens9067
-  %print_ast_val9076 = load i32, ptr %print_ast9068
-  %c_opt_val9077 = load ptr, ptr %c_opt9069
-  %call9078 = call ptr @apply_env_overrides(ptr %input_file_val9071, ptr %output_file_val9072, ptr %c_output_val9073, i32 %check_only_val9074, i32 %print_tokens_val9075, i32 %print_ast_val9076, ptr %c_opt_val9077)
-  store ptr %call9078, ptr %state9070
-  %state_val9079 = load ptr, ptr %state9070
-  %call9080 = call ptr @parse_state_field(ptr %state_val9079, i64 0)
-  store ptr %call9080, ptr %input_file9063
-  %state_val9081 = load ptr, ptr %state9070
-  %call9082 = call ptr @parse_state_field(ptr %state_val9081, i64 1)
-  store ptr %call9082, ptr %output_file9064
-  %state_val9083 = load ptr, ptr %state9070
-  %call9084 = call ptr @parse_state_field(ptr %state_val9083, i64 2)
-  store ptr %call9084, ptr %c_output9065
-  %state_val9085 = load ptr, ptr %state9070
-  %call9086 = call ptr @parse_state_field(ptr %state_val9085, i64 3)
-  %streq9087 = call i32 @ofs_str_eq(ptr %call9086, ptr @str.219)
-  store i32 %streq9087, ptr %check_only9066
-  %state_val9088 = load ptr, ptr %state9070
-  %call9089 = call ptr @parse_state_field(ptr %state_val9088, i64 4)
-  %streq9090 = call i32 @ofs_str_eq(ptr %call9089, ptr @str.219)
-  store i32 %streq9090, ptr %print_tokens9067
-  %state_val9091 = load ptr, ptr %state9070
-  %call9092 = call ptr @parse_state_field(ptr %state_val9091, i64 5)
-  %streq9093 = call i32 @ofs_str_eq(ptr %call9092, ptr @str.219)
-  store i32 %streq9093, ptr %print_ast9068
-  %state_val9094 = load ptr, ptr %state9070
-  %call9095 = call ptr @parse_state_field(ptr %state_val9094, i64 6)
-  store ptr %call9095, ptr %c_opt9069
-  %compile_mode9096 = alloca ptr, align 8
-  %call9097 = call ptr @getenv(ptr @str.599)
-  store ptr %call9097, ptr %compile_mode9096
-  %compile_mode_val9098 = load ptr, ptr %compile_mode9096
-  %streq9099 = call i32 @ofs_str_eq(ptr %compile_mode_val9098, ptr @str.63)
-  %cond9100 = icmp ne i32 %streq9099, 0
-  br i1 %cond9100, label %if_then2646, label %if_else2647
+  %input_file9149 = alloca ptr, align 8
+  store ptr @str.609, ptr %input_file9149
+  %output_file9150 = alloca ptr, align 8
+  store ptr @str.610, ptr %output_file9150
+  %c_output9151 = alloca ptr, align 8
+  store ptr @str.611, ptr %c_output9151
+  %check_only9152 = alloca i32, align 8
+  store i32 0, ptr %check_only9152
+  %print_tokens9153 = alloca i32, align 8
+  store i32 0, ptr %print_tokens9153
+  %print_ast9154 = alloca i32, align 8
+  store i32 0, ptr %print_ast9154
+  %c_opt9155 = alloca ptr, align 8
+  store ptr @str.606, ptr %c_opt9155
+  %state9156 = alloca ptr, align 8
+  %input_file_val9157 = load ptr, ptr %input_file9149
+  %output_file_val9158 = load ptr, ptr %output_file9150
+  %c_output_val9159 = load ptr, ptr %c_output9151
+  %check_only_val9160 = load i32, ptr %check_only9152
+  %print_tokens_val9161 = load i32, ptr %print_tokens9153
+  %print_ast_val9162 = load i32, ptr %print_ast9154
+  %c_opt_val9163 = load ptr, ptr %c_opt9155
+  %call9164 = call ptr @apply_env_overrides(ptr %input_file_val9157, ptr %output_file_val9158, ptr %c_output_val9159, i32 %check_only_val9160, i32 %print_tokens_val9161, i32 %print_ast_val9162, ptr %c_opt_val9163)
+  store ptr %call9164, ptr %state9156
+  %state_val9165 = load ptr, ptr %state9156
+  %call9166 = call ptr @parse_state_field(ptr %state_val9165, i64 0)
+  store ptr %call9166, ptr %input_file9149
+  %state_val9167 = load ptr, ptr %state9156
+  %call9168 = call ptr @parse_state_field(ptr %state_val9167, i64 1)
+  store ptr %call9168, ptr %output_file9150
+  %state_val9169 = load ptr, ptr %state9156
+  %call9170 = call ptr @parse_state_field(ptr %state_val9169, i64 2)
+  store ptr %call9170, ptr %c_output9151
+  %state_val9171 = load ptr, ptr %state9156
+  %call9172 = call ptr @parse_state_field(ptr %state_val9171, i64 3)
+  %streq9173 = call i32 @ofs_str_eq(ptr %call9172, ptr @str.219)
+  store i32 %streq9173, ptr %check_only9152
+  %state_val9174 = load ptr, ptr %state9156
+  %call9175 = call ptr @parse_state_field(ptr %state_val9174, i64 4)
+  %streq9176 = call i32 @ofs_str_eq(ptr %call9175, ptr @str.219)
+  store i32 %streq9176, ptr %print_tokens9153
+  %state_val9177 = load ptr, ptr %state9156
+  %call9178 = call ptr @parse_state_field(ptr %state_val9177, i64 5)
+  %streq9179 = call i32 @ofs_str_eq(ptr %call9178, ptr @str.219)
+  store i32 %streq9179, ptr %print_ast9154
+  %state_val9180 = load ptr, ptr %state9156
+  %call9181 = call ptr @parse_state_field(ptr %state_val9180, i64 6)
+  store ptr %call9181, ptr %c_opt9155
+  %compile_mode9182 = alloca ptr, align 8
+  %call9183 = call ptr @getenv(ptr @str.599)
+  store ptr %call9183, ptr %compile_mode9182
+  %compile_mode_val9184 = load ptr, ptr %compile_mode9182
+  %streq9185 = call i32 @ofs_str_eq(ptr %compile_mode_val9184, ptr @str.63)
+  %cond9186 = icmp ne i32 %streq9185, 0
+  br i1 %cond9186, label %if_then2646, label %if_else2647
 
 if_then2646:
-  store ptr @str.612, ptr %compile_mode9096
+  store ptr @str.612, ptr %compile_mode9182
   br label %if_end2648
 
 if_else2647:
   br label %if_end2648
 
 if_end2648:
-  %input_file_val9101 = load ptr, ptr %input_file9063
-  %streq9102 = call i32 @ofs_str_eq(ptr %input_file_val9101, ptr @str.63)
-  %input_file_val9103 = load ptr, ptr %input_file9063
-  %streq9104 = call i32 @ofs_str_eq(ptr %input_file_val9103, ptr @str.613)
-  %cond9105 = icmp ne i32 %streq9102, 0
-  %cond9106 = icmp ne i32 %streq9104, 0
-  %logic9107 = or i1 %cond9105, %cond9106
-  br i1 %logic9107, label %if_then2649, label %if_else2650
+  %input_file_val9187 = load ptr, ptr %input_file9149
+  %streq9188 = call i32 @ofs_str_eq(ptr %input_file_val9187, ptr @str.63)
+  %input_file_val9189 = load ptr, ptr %input_file9149
+  %streq9190 = call i32 @ofs_str_eq(ptr %input_file_val9189, ptr @str.613)
+  %cond9191 = icmp ne i32 %streq9188, 0
+  %cond9192 = icmp ne i32 %streq9190, 0
+  %logic9193 = or i1 %cond9191, %cond9192
+  br i1 %logic9193, label %if_then2649, label %if_else2650
 
 if_then2649:
   call void @usage()
@@ -20772,71 +20904,71 @@ if_else2650:
 
 if_end2651:
   call void @echo_obsidian(ptr @str.614)
-  %src9108 = alloca ptr, align 8
-  store ptr @str.63, ptr %src9108
-  %input_file_val9109 = load ptr, ptr %input_file9063
-  %call9110 = call ptr @read_file(ptr %input_file_val9109)
-  store ptr %call9110, ptr %src9108
-  %input_file_val9111 = load ptr, ptr %input_file9063
-  %src_val9112 = load ptr, ptr %src9108
-  %call9113 = call ptr @expand_attaches(ptr %input_file_val9111, ptr %src_val9112)
-  store ptr %call9113, ptr %src9108
-  %src_val9114 = load ptr, ptr %src9108
-  %strlen9115 = call i64 @ofs_str_len(ptr %src_val9114)
-  %stone_to_str9116 = call ptr @ofs_stone_to_obsidian(i64 %strlen9115)
-  %concat9117 = call ptr @ofs_str_concat(ptr @str.615, ptr %stone_to_str9116)
-  %concat9118 = call ptr @ofs_str_concat(ptr %concat9117, ptr @str.616)
-  call void @echo_obsidian(ptr %concat9118)
+  %src9194 = alloca ptr, align 8
+  store ptr @str.63, ptr %src9194
+  %input_file_val9195 = load ptr, ptr %input_file9149
+  %call9196 = call ptr @read_file(ptr %input_file_val9195)
+  store ptr %call9196, ptr %src9194
+  %input_file_val9197 = load ptr, ptr %input_file9149
+  %src_val9198 = load ptr, ptr %src9194
+  %call9199 = call ptr @expand_attaches(ptr %input_file_val9197, ptr %src_val9198)
+  store ptr %call9199, ptr %src9194
+  %src_val9200 = load ptr, ptr %src9194
+  %strlen9201 = call i64 @ofs_str_len(ptr %src_val9200)
+  %stone_to_str9202 = call ptr @ofs_stone_to_obsidian(i64 %strlen9201)
+  %concat9203 = call ptr @ofs_str_concat(ptr @str.615, ptr %stone_to_str9202)
+  %concat9204 = call ptr @ofs_str_concat(ptr %concat9203, ptr @str.616)
+  call void @echo_obsidian(ptr %concat9204)
   call void @echo_obsidian(ptr @str.617)
-  %tokens9119 = alloca ptr, align 8
-  %src_val9120 = load ptr, ptr %src9108
-  %call9121 = call ptr @lexer__lex(ptr %src_val9120)
-  store ptr %call9121, ptr %tokens9119
-  %token_count9122 = alloca i64, align 8
-  %tokens_val9123 = load ptr, ptr %tokens9119
-  %arr_len9124 = call i64 @ofs_array_len(ptr %tokens_val9123)
-  store i64 %arr_len9124, ptr %token_count9122
-  %token_count_val9125 = load i64, ptr %token_count9122
-  %stone_to_str9126 = call ptr @ofs_stone_to_obsidian(i64 %token_count_val9125)
-  %concat9127 = call ptr @ofs_str_concat(ptr @str.615, ptr %stone_to_str9126)
-  %concat9128 = call ptr @ofs_str_concat(ptr %concat9127, ptr @str.618)
-  call void @echo_obsidian(ptr %concat9128)
-  %print_tokens_val9129 = load i32, ptr %print_tokens9067
-  %cond9130 = icmp ne i32 %print_tokens_val9129, 0
-  br i1 %cond9130, label %if_then2652, label %if_else2653
+  %tokens9205 = alloca ptr, align 8
+  %src_val9206 = load ptr, ptr %src9194
+  %call9207 = call ptr @lexer__lex(ptr %src_val9206)
+  store ptr %call9207, ptr %tokens9205
+  %token_count9208 = alloca i64, align 8
+  %tokens_val9209 = load ptr, ptr %tokens9205
+  %arr_len9210 = call i64 @ofs_array_len(ptr %tokens_val9209)
+  store i64 %arr_len9210, ptr %token_count9208
+  %token_count_val9211 = load i64, ptr %token_count9208
+  %stone_to_str9212 = call ptr @ofs_stone_to_obsidian(i64 %token_count_val9211)
+  %concat9213 = call ptr @ofs_str_concat(ptr @str.615, ptr %stone_to_str9212)
+  %concat9214 = call ptr @ofs_str_concat(ptr %concat9213, ptr @str.618)
+  call void @echo_obsidian(ptr %concat9214)
+  %print_tokens_val9215 = load i32, ptr %print_tokens9153
+  %cond9216 = icmp ne i32 %print_tokens_val9215, 0
+  br i1 %cond9216, label %if_then2652, label %if_else2653
 
 if_then2652:
-  %ti9131 = alloca i64, align 8
-  store i64 0, ptr %ti9131
+  %ti9217 = alloca i64, align 8
+  store i64 0, ptr %ti9217
   br label %while_cond2655
 
 while_cond2655:
-  %ti_val9132 = load i64, ptr %ti9131
-  %token_count_val9133 = load i64, ptr %token_count9122
-  %cmp9134 = icmp slt i64 %ti_val9132, %token_count_val9133
-  br i1 %cmp9134, label %while_body2656, label %while_end2657
+  %ti_val9218 = load i64, ptr %ti9217
+  %token_count_val9219 = load i64, ptr %token_count9208
+  %cmp9220 = icmp slt i64 %ti_val9218, %token_count_val9219
+  br i1 %cmp9220, label %while_body2656, label %while_end2657
 
 while_body2656:
-  %obj9136 = call ptr @ofs_alloc(i64 4096)
-  %tokens_val9137 = load ptr, ptr %tokens9119
-  %ti_val9138 = load i64, ptr %ti9131
-  %arr_get9139 = call ptr @ofs_array_get(ptr %tokens_val9137, i64 %ti_val9138)
-  %arr_item9140 = load ptr, ptr %arr_get9139
-  %named_val9141 = load %Token, ptr %arr_item9140
-  store %Token %named_val9141, ptr %obj9136
-  %field_ptr9142 = getelementptr inbounds %Token, ptr %obj9136, i32 0, i32 0
-  %field9143 = load i64, ptr %field_ptr9142
-  %stone_to_str9144 = call ptr @ofs_stone_to_obsidian(i64 %field9143)
-  %concat9145 = call ptr @ofs_str_concat(ptr @str.619, ptr %stone_to_str9144)
-  %concat9146 = call ptr @ofs_str_concat(ptr %concat9145, ptr @str.620)
-  %field_ptr9147 = getelementptr inbounds %Token, ptr %obj9136, i32 0, i32 1
-  %field9148 = load ptr, ptr %field_ptr9147
-  %concat9149 = call ptr @ofs_str_concat(ptr %concat9146, ptr %field9148)
-  %concat9150 = call ptr @ofs_str_concat(ptr %concat9149, ptr @str.193)
-  call void @echo_obsidian(ptr %concat9150)
-  %post_old9151 = load i64, ptr %ti9131
-  %post_new9152 = add i64 %post_old9151, 1
-  store i64 %post_new9152, ptr %ti9131
+  %obj9222 = call ptr @ofs_alloc(i64 4096)
+  %tokens_val9223 = load ptr, ptr %tokens9205
+  %ti_val9224 = load i64, ptr %ti9217
+  %arr_get9225 = call ptr @ofs_array_get(ptr %tokens_val9223, i64 %ti_val9224)
+  %arr_item9226 = load ptr, ptr %arr_get9225
+  %named_val9227 = load %Token, ptr %arr_item9226
+  store %Token %named_val9227, ptr %obj9222
+  %field_ptr9228 = getelementptr inbounds %Token, ptr %obj9222, i32 0, i32 0
+  %field9229 = load i64, ptr %field_ptr9228
+  %stone_to_str9230 = call ptr @ofs_stone_to_obsidian(i64 %field9229)
+  %concat9231 = call ptr @ofs_str_concat(ptr @str.619, ptr %stone_to_str9230)
+  %concat9232 = call ptr @ofs_str_concat(ptr %concat9231, ptr @str.620)
+  %field_ptr9233 = getelementptr inbounds %Token, ptr %obj9222, i32 0, i32 1
+  %field9234 = load ptr, ptr %field_ptr9233
+  %concat9235 = call ptr @ofs_str_concat(ptr %concat9232, ptr %field9234)
+  %concat9236 = call ptr @ofs_str_concat(ptr %concat9235, ptr @str.193)
+  call void @echo_obsidian(ptr %concat9236)
+  %post_old9237 = load i64, ptr %ti9217
+  %post_new9238 = add i64 %post_old9237, 1
+  store i64 %post_new9238, ptr %ti9217
   br label %while_cond2655
 
 while_end2657:
@@ -20847,33 +20979,33 @@ if_else2653:
 
 if_end2654:
   call void @echo_obsidian(ptr @str.621)
-  %root_id9153 = alloca i64, align 8
-  %tokens_val9154 = load ptr, ptr %tokens9119
-  %call9155 = call i64 @parser__parse(ptr %tokens_val9154)
-  store i64 %call9155, ptr %root_id9153
-  %node_count9156 = alloca i64, align 8
-  %call9157 = call i64 @node_pool_len()
-  store i64 %call9157, ptr %node_count9156
-  %node_count_val9158 = load i64, ptr %node_count9156
-  %stone_to_str9159 = call ptr @ofs_stone_to_obsidian(i64 %node_count_val9158)
-  %concat9160 = call ptr @ofs_str_concat(ptr @str.615, ptr %stone_to_str9159)
-  %concat9161 = call ptr @ofs_str_concat(ptr %concat9160, ptr @str.622)
-  call void @echo_obsidian(ptr %concat9161)
-  %print_ast_val9162 = load i32, ptr %print_ast9068
-  %cond9163 = icmp ne i32 %print_ast_val9162, 0
-  br i1 %cond9163, label %if_then2658, label %if_else2659
+  %root_id9239 = alloca i64, align 8
+  %tokens_val9240 = load ptr, ptr %tokens9205
+  %call9241 = call i64 @parser__parse(ptr %tokens_val9240)
+  store i64 %call9241, ptr %root_id9239
+  %node_count9242 = alloca i64, align 8
+  %call9243 = call i64 @node_pool_len()
+  store i64 %call9243, ptr %node_count9242
+  %node_count_val9244 = load i64, ptr %node_count9242
+  %stone_to_str9245 = call ptr @ofs_stone_to_obsidian(i64 %node_count_val9244)
+  %concat9246 = call ptr @ofs_str_concat(ptr @str.615, ptr %stone_to_str9245)
+  %concat9247 = call ptr @ofs_str_concat(ptr %concat9246, ptr @str.622)
+  call void @echo_obsidian(ptr %concat9247)
+  %print_ast_val9248 = load i32, ptr %print_ast9154
+  %cond9249 = icmp ne i32 %print_ast_val9248, 0
+  br i1 %cond9249, label %if_then2658, label %if_else2659
 
 if_then2658:
-  %obj9165 = call ptr @ofs_alloc(i64 4096)
-  %root_id_val9166 = load i64, ptr %root_id9153
-  %call9167 = call ptr @node_get(i64 %root_id_val9166)
-  %named_val9168 = load %Node, ptr %call9167
-  store %Node %named_val9168, ptr %obj9165
-  %field_ptr9169 = getelementptr inbounds %Node, ptr %obj9165, i32 0, i32 0
-  %field9170 = load i64, ptr %field_ptr9169
-  %call9171 = call ptr @node_kind_name(i64 %field9170)
-  %concat9172 = call ptr @ofs_str_concat(ptr @str.623, ptr %call9171)
-  call void @echo_obsidian(ptr %concat9172)
+  %obj9251 = call ptr @ofs_alloc(i64 4096)
+  %root_id_val9252 = load i64, ptr %root_id9239
+  %call9253 = call ptr @node_get(i64 %root_id_val9252)
+  %named_val9254 = load %Node, ptr %call9253
+  store %Node %named_val9254, ptr %obj9251
+  %field_ptr9255 = getelementptr inbounds %Node, ptr %obj9251, i32 0, i32 0
+  %field9256 = load i64, ptr %field_ptr9255
+  %call9257 = call ptr @node_kind_name(i64 %field9256)
+  %concat9258 = call ptr @ofs_str_concat(ptr @str.623, ptr %call9257)
+  call void @echo_obsidian(ptr %concat9258)
   ret i32 0
 
 if_else2659:
@@ -20881,12 +21013,12 @@ if_else2659:
 
 if_end2660:
   call void @echo_obsidian(ptr @str.624)
-  %root_id_val9173 = load i64, ptr %root_id9153
-  call void @typeck__check(i64 %root_id_val9173)
+  %root_id_val9259 = load i64, ptr %root_id9239
+  call void @typeck__check(i64 %root_id_val9259)
   call void @echo_obsidian(ptr @str.625)
-  %check_only_val9174 = load i32, ptr %check_only9066
-  %cond9175 = icmp ne i32 %check_only_val9174, 0
-  br i1 %cond9175, label %if_then2661, label %if_else2662
+  %check_only_val9260 = load i32, ptr %check_only9152
+  %cond9261 = icmp ne i32 %check_only_val9260, 0
+  br i1 %cond9261, label %if_then2661, label %if_else2662
 
 if_then2661:
   call void @echo_obsidian(ptr @str.63)
@@ -20898,33 +21030,33 @@ if_else2662:
 
 if_end2663:
   call void @echo_obsidian(ptr @str.627)
-  %c_output_val9176 = load ptr, ptr %c_output9065
-  call void @cg_open(ptr %c_output_val9176)
-  %compile_mode_val9177 = load ptr, ptr %compile_mode9096
-  %streq9178 = call i32 @ofs_str_eq(ptr %compile_mode_val9177, ptr @str.628)
-  %cond9179 = icmp ne i32 %streq9178, 0
-  br i1 %cond9179, label %if_then2664, label %if_else2665
+  %c_output_val9262 = load ptr, ptr %c_output9151
+  call void @cg_open(ptr %c_output_val9262)
+  %compile_mode_val9263 = load ptr, ptr %compile_mode9182
+  %streq9264 = call i32 @ofs_str_eq(ptr %compile_mode_val9263, ptr @str.628)
+  %cond9265 = icmp ne i32 %streq9264, 0
+  br i1 %cond9265, label %if_then2664, label %if_else2665
 
 if_then2664:
-  %root_id_val9180 = load i64, ptr %root_id9153
-  call void @codegen__generate(i64 %root_id_val9180)
+  %root_id_val9266 = load i64, ptr %root_id9239
+  call void @codegen__generate(i64 %root_id_val9266)
   br label %if_end2666
 
 if_else2665:
-  %root_id_val9181 = load i64, ptr %root_id9153
-  call void @llvmgen__generate(i64 %root_id_val9181)
+  %root_id_val9267 = load i64, ptr %root_id9239
+  call void @llvmgen__generate(i64 %root_id_val9267)
   br label %if_end2666
 
 if_end2666:
   call void @cg_close()
-  %c_output_val9182 = load ptr, ptr %c_output9065
-  %concat9183 = call ptr @ofs_str_concat(ptr @str.615, ptr %c_output_val9182)
-  %concat9184 = call ptr @ofs_str_concat(ptr %concat9183, ptr @str.629)
-  call void @echo_obsidian(ptr %concat9184)
-  %compile_mode_val9185 = load ptr, ptr %compile_mode9096
-  %streq9186 = call i32 @ofs_str_eq(ptr %compile_mode_val9185, ptr @str.603)
-  %cond9187 = icmp ne i32 %streq9186, 0
-  br i1 %cond9187, label %if_then2667, label %if_else2668
+  %c_output_val9268 = load ptr, ptr %c_output9151
+  %concat9269 = call ptr @ofs_str_concat(ptr @str.615, ptr %c_output_val9268)
+  %concat9270 = call ptr @ofs_str_concat(ptr %concat9269, ptr @str.629)
+  call void @echo_obsidian(ptr %concat9270)
+  %compile_mode_val9271 = load ptr, ptr %compile_mode9182
+  %streq9272 = call i32 @ofs_str_eq(ptr %compile_mode_val9271, ptr @str.603)
+  %cond9273 = icmp ne i32 %streq9272, 0
+  br i1 %cond9273, label %if_then2667, label %if_else2668
 
 if_then2667:
   ret i32 0
@@ -20934,66 +21066,66 @@ if_else2668:
 
 if_end2669:
   call void @echo_obsidian(ptr @str.630)
-  %compile_cmd9188 = alloca ptr, align 8
-  store ptr @str.63, ptr %compile_cmd9188
-  %compile_mode_val9189 = load ptr, ptr %compile_mode9096
-  %streq9190 = call i32 @ofs_str_eq(ptr %compile_mode_val9189, ptr @str.628)
-  %cond9191 = icmp ne i32 %streq9190, 0
-  br i1 %cond9191, label %if_then2670, label %if_else2671
+  %compile_cmd9274 = alloca ptr, align 8
+  store ptr @str.63, ptr %compile_cmd9274
+  %compile_mode_val9275 = load ptr, ptr %compile_mode9182
+  %streq9276 = call i32 @ofs_str_eq(ptr %compile_mode_val9275, ptr @str.628)
+  %cond9277 = icmp ne i32 %streq9276, 0
+  br i1 %cond9277, label %if_then2670, label %if_else2671
 
 if_then2670:
-  %c_opt_val9192 = load ptr, ptr %c_opt9069
-  %concat9193 = call ptr @ofs_str_concat(ptr @str.631, ptr %c_opt_val9192)
-  %concat9194 = call ptr @ofs_str_concat(ptr %concat9193, ptr @str.632)
-  %output_file_val9195 = load ptr, ptr %output_file9064
-  %concat9196 = call ptr @ofs_str_concat(ptr %concat9194, ptr %output_file_val9195)
-  %concat9197 = call ptr @ofs_str_concat(ptr %concat9196, ptr @str.216)
-  %c_output_val9198 = load ptr, ptr %c_output9065
-  %concat9199 = call ptr @ofs_str_concat(ptr %concat9197, ptr %c_output_val9198)
-  %concat9200 = call ptr @ofs_str_concat(ptr %concat9199, ptr @str.633)
-  store ptr %concat9200, ptr %compile_cmd9188
+  %c_opt_val9278 = load ptr, ptr %c_opt9155
+  %concat9279 = call ptr @ofs_str_concat(ptr @str.631, ptr %c_opt_val9278)
+  %concat9280 = call ptr @ofs_str_concat(ptr %concat9279, ptr @str.632)
+  %output_file_val9281 = load ptr, ptr %output_file9150
+  %concat9282 = call ptr @ofs_str_concat(ptr %concat9280, ptr %output_file_val9281)
+  %concat9283 = call ptr @ofs_str_concat(ptr %concat9282, ptr @str.216)
+  %c_output_val9284 = load ptr, ptr %c_output9151
+  %concat9285 = call ptr @ofs_str_concat(ptr %concat9283, ptr %c_output_val9284)
+  %concat9286 = call ptr @ofs_str_concat(ptr %concat9285, ptr @str.633)
+  store ptr %concat9286, ptr %compile_cmd9274
   br label %if_end2672
 
 if_else2671:
-  %c_opt_val9201 = load ptr, ptr %c_opt9069
-  %concat9202 = call ptr @ofs_str_concat(ptr @str.634, ptr %c_opt_val9201)
-  %concat9203 = call ptr @ofs_str_concat(ptr %concat9202, ptr @str.216)
-  %c_output_val9204 = load ptr, ptr %c_output9065
-  %concat9205 = call ptr @ofs_str_concat(ptr %concat9203, ptr %c_output_val9204)
-  %concat9206 = call ptr @ofs_str_concat(ptr %concat9205, ptr @str.635)
-  %output_file_val9207 = load ptr, ptr %output_file9064
-  %concat9208 = call ptr @ofs_str_concat(ptr %concat9206, ptr %output_file_val9207)
-  %concat9209 = call ptr @ofs_str_concat(ptr %concat9208, ptr @str.633)
-  store ptr %concat9209, ptr %compile_cmd9188
+  %c_opt_val9287 = load ptr, ptr %c_opt9155
+  %concat9288 = call ptr @ofs_str_concat(ptr @str.634, ptr %c_opt_val9287)
+  %concat9289 = call ptr @ofs_str_concat(ptr %concat9288, ptr @str.216)
+  %c_output_val9290 = load ptr, ptr %c_output9151
+  %concat9291 = call ptr @ofs_str_concat(ptr %concat9289, ptr %c_output_val9290)
+  %concat9292 = call ptr @ofs_str_concat(ptr %concat9291, ptr @str.635)
+  %output_file_val9293 = load ptr, ptr %output_file9150
+  %concat9294 = call ptr @ofs_str_concat(ptr %concat9292, ptr %output_file_val9293)
+  %concat9295 = call ptr @ofs_str_concat(ptr %concat9294, ptr @str.633)
+  store ptr %concat9295, ptr %compile_cmd9274
   br label %if_end2672
 
 if_end2672:
-  %compile_result9210 = alloca i64, align 8
-  %compile_cmd_val9211 = load ptr, ptr %compile_cmd9188
-  %call9212 = call i64 @system(ptr %compile_cmd_val9211)
-  store i64 %call9212, ptr %compile_result9210
-  %compile_result_val9213 = load i64, ptr %compile_result9210
-  %cmp9214 = icmp eq i64 %compile_result_val9213, 0
-  br i1 %cmp9214, label %if_then2673, label %if_else2674
+  %compile_result9296 = alloca i64, align 8
+  %compile_cmd_val9297 = load ptr, ptr %compile_cmd9274
+  %call9298 = call i64 @system(ptr %compile_cmd_val9297)
+  store i64 %call9298, ptr %compile_result9296
+  %compile_result_val9299 = load i64, ptr %compile_result9296
+  %cmp9300 = icmp eq i64 %compile_result_val9299, 0
+  br i1 %cmp9300, label %if_then2673, label %if_else2674
 
 if_then2673:
   call void @echo_obsidian(ptr @str.625)
   call void @echo_obsidian(ptr @str.63)
-  %output_file_val9215 = load ptr, ptr %output_file9064
-  %concat9216 = call ptr @ofs_str_concat(ptr @str.636, ptr %output_file_val9215)
-  %concat9217 = call ptr @ofs_str_concat(ptr %concat9216, ptr @str.637)
-  call void @echo_obsidian(ptr %concat9217)
+  %output_file_val9301 = load ptr, ptr %output_file9150
+  %concat9302 = call ptr @ofs_str_concat(ptr @str.636, ptr %output_file_val9301)
+  %concat9303 = call ptr @ofs_str_concat(ptr %concat9302, ptr @str.637)
+  call void @echo_obsidian(ptr %concat9303)
   br label %if_end2675
 
 if_else2674:
-  %c_output_val9218 = load ptr, ptr %c_output9065
-  %concat9219 = call ptr @ofs_str_concat(ptr @str.638, ptr %c_output_val9218)
-  call void @echo_obsidian(ptr %concat9219)
+  %c_output_val9304 = load ptr, ptr %c_output9151
+  %concat9305 = call ptr @ofs_str_concat(ptr @str.638, ptr %c_output_val9304)
+  call void @echo_obsidian(ptr %concat9305)
   call void @echo_obsidian(ptr @str.63)
-  %compile_result_val9220 = load i64, ptr %compile_result9210
-  %stone_to_str9221 = call ptr @ofs_stone_to_obsidian(i64 %compile_result_val9220)
-  %concat9222 = call ptr @ofs_str_concat(ptr @str.639, ptr %stone_to_str9221)
-  call void @echo_obsidian(ptr %concat9222)
+  %compile_result_val9306 = load i64, ptr %compile_result9296
+  %stone_to_str9307 = call ptr @ofs_stone_to_obsidian(i64 %compile_result_val9306)
+  %concat9308 = call ptr @ofs_str_concat(ptr @str.639, ptr %stone_to_str9307)
+  call void @echo_obsidian(ptr %concat9308)
   call void @exit(i64 1)
   br label %if_end2675
 

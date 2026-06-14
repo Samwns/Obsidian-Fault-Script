@@ -56,7 +56,8 @@ namespace codegen {
 
             forge params_id = n.c0
             forge j = 0
-            while (j < node_extra_len(params_id)) {
+            forge param_count = node_extra_len(params_id)
+            while (j < param_count) {
                 if (j > 0) { cg_emit_raw(", ") }
                 forge param_id = node_get_extra(params_id, j)
                 forge param: Node = node_get(param_id)
@@ -76,7 +77,8 @@ namespace codegen {
 
         if (n.kind == NK_NAMESPACE || n.kind == NK_IMPL) {
             forge i = 0
-            while (i < node_extra_len(decl_id)) {
+            forge member_count = node_extra_len(decl_id)
+            while (i < member_count) {
                 emit_forward_for_decl(node_get_extra(decl_id, i))
                 i++
             }
@@ -86,7 +88,8 @@ namespace codegen {
 
     vein emit_forward_decls(root_id: stone) -> void {
         forge i = 0
-        while (i < node_extra_len(root_id)) {
+        forge declaration_count = node_extra_len(root_id)
+        while (i < declaration_count) {
             forge decl_id = node_get_extra(root_id, i)
             emit_forward_for_decl(decl_id)
             i++
@@ -177,7 +180,8 @@ namespace codegen {
         if (n.kind == NK_CALL) {
             cg_emit_raw(n.val + "(")
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge arg_count = node_extra_len(id)
+            while (i < arg_count) {
                 if (i > 0) { cg_emit_raw(", ") }
                 forge arg_id = node_get_extra(id, i)
                 emit_node(arg_id)
@@ -230,7 +234,8 @@ namespace codegen {
         if (n.kind == NK_BLOCK) {
             cg_emit("{")
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge statement_count = node_extra_len(id)
+            while (i < statement_count) {
                 forge stmt_id = node_get_extra(id, i)
                 emit_node(stmt_id)
                 forge stmt: Node = node_get(stmt_id)
@@ -314,7 +319,8 @@ namespace codegen {
             
             forge params_id = n.c0
             forge j = 0
-            while (j < node_extra_len(params_id)) {
+            forge param_count = node_extra_len(params_id)
+            while (j < param_count) {
                 if (j > 0) { cg_emit_raw(", ") }
                 forge param_id = node_get_extra(params_id, j)
                 forge param: Node = node_get(param_id)
@@ -340,7 +346,8 @@ namespace codegen {
         if (n.kind == NK_MONOLITH) {
             cg_emit("typedef struct " + n.val + " {")
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge field_count = node_extra_len(id)
+            while (i < field_count) {
                 forge field_id = node_get_extra(id, i)
                 forge field: Node = node_get(field_id)
                 forge field_type = "int64_t"
@@ -358,7 +365,8 @@ namespace codegen {
 
         if (n.kind == NK_IMPL || n.kind == NK_NAMESPACE) {
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge member_count = node_extra_len(id)
+            while (i < member_count) {
                 emit_node(node_get_extra(id, i))
                 i++
             }
@@ -368,11 +376,12 @@ namespace codegen {
         if (n.kind == NK_STRATA) {
             cg_emit("typedef enum " + n.val + "_tag {")
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge variant_count = node_extra_len(id)
+            while (i < variant_count) {
                 forge v_id = node_get_extra(id, i)
                 forge v: Node = node_get(v_id)
                 forge comma = ""
-                if (i + 1 < node_extra_len(id)) {
+                if (i + 1 < variant_count) {
                     comma = ","
                 }
                 cg_emit("  " + n.val + "__" + v.val + comma)
@@ -385,7 +394,8 @@ namespace codegen {
         
         if (n.kind == NK_PROGRAM) {
             forge i = 0
-            while (i < node_extra_len(id)) {
+            forge declaration_count = node_extra_len(id)
+            while (i < declaration_count) {
                 forge decl_id = node_get_extra(id, i)
                 emit_node(decl_id)
                 i++

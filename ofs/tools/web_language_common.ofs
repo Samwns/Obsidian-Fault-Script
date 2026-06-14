@@ -32,7 +32,8 @@ vein wl_trim(value: obsidian) -> obsidian {
 vein wl_indent(value: obsidian) -> stone {
     forge spaces = 0
     forge i = 0
-    while (i < ofs_str_len(value)) {
+    forge value_len = ofs_str_len(value)
+    while (i < value_len) {
         forge c = ofs_str_char_at(value, i)
         if (c == 32) {
             spaces++
@@ -49,7 +50,8 @@ vein wl_indent(value: obsidian) -> stone {
 vein wl_first_word(value: obsidian) -> obsidian {
     forge clean = wl_trim(value)
     forge i = 0
-    while (i < ofs_str_len(clean)) {
+    forge clean_len = ofs_str_len(clean)
+    while (i < clean_len) {
         forge c = ofs_str_char_at(clean, i)
         if (c == 32 || c == 9) { break }
         i++
@@ -60,19 +62,21 @@ vein wl_first_word(value: obsidian) -> obsidian {
 vein wl_after_first_word(value: obsidian) -> obsidian {
     forge clean = wl_trim(value)
     forge i = 0
-    while (i < ofs_str_len(clean)) {
+    forge clean_len = ofs_str_len(clean)
+    while (i < clean_len) {
         forge c = ofs_str_char_at(clean, i)
         if (c == 32 || c == 9) { break }
         i++
     }
-    return wl_trim(ofs_str_substr(clean, i, ofs_str_len(clean) - i))
+    return wl_trim(ofs_str_substr(clean, i, clean_len - i))
 }
 
 vein wl_quoted_at(value: obsidian, wanted: stone) -> obsidian {
     forge i = 0
     forge current = 0
     forge start = -1
-    while (i < ofs_str_len(value)) {
+    forge value_len = ofs_str_len(value)
+    while (i < value_len) {
         if (ofs_str_char_at(value, i) == 34) {
             if (start < 0) {
                 start = i + 1
@@ -94,8 +98,9 @@ vein wl_replace(value: obsidian, needle: obsidian, replacement: obsidian) -> obs
     forge out = ""
     forge i = 0
     forge needle_len = ofs_str_len(needle)
-    while (i < ofs_str_len(value)) {
-        if (i + needle_len <= ofs_str_len(value) &&
+    forge value_len = ofs_str_len(value)
+    while (i < value_len) {
+        if (i + needle_len <= value_len &&
             ofs_str_eq(ofs_str_substr(value, i, needle_len), needle)) {
             out = out + replacement
             i += needle_len
@@ -127,8 +132,9 @@ vein wl_markdown_inline(value: obsidian) -> obsidian {
     forge i = 0
     forge strong_open = false
     forge code_open = false
-    while (i < ofs_str_len(out)) {
-        if (i + 2 <= ofs_str_len(out) && ofs_str_eq(ofs_str_substr(out, i, 2), "**")) {
+    forge out_len = ofs_str_len(out)
+    while (i < out_len) {
+        if (i + 2 <= out_len && ofs_str_eq(ofs_str_substr(out, i, 2), "**")) {
             if (strong_open) {
                 result = result + "</strong>"
             } else {
@@ -175,11 +181,13 @@ vein wl_lines(source: obsidian) -> Array<obsidian> {
     forge lines: Array<obsidian> = []
     forge start = 0
     forge i = 0
-    while (i <= ofs_str_len(source)) {
-        if (i == ofs_str_len(source) || ofs_str_char_at(source, i) == 10) {
+    forge source_len = ofs_str_len(source)
+    while (i <= source_len) {
+        if (i == source_len || ofs_str_char_at(source, i) == 10) {
             forge line = ofs_str_substr(source, start, i - start)
-            if (ofs_str_len(line) > 0 && ofs_str_char_at(line, ofs_str_len(line) - 1) == 13) {
-                line = ofs_str_substr(line, 0, ofs_str_len(line) - 1)
+            forge line_len = ofs_str_len(line)
+            if (line_len > 0 && ofs_str_char_at(line, line_len - 1) == 13) {
+                line = ofs_str_substr(line, 0, line_len - 1)
             }
             ofs_array_push(lines, line)
             start = i + 1

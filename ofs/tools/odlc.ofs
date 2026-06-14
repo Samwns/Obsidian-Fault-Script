@@ -5,7 +5,8 @@ extern vein getenv(name: obsidian) -> obsidian
 
 vein odl_tag_name(token: obsidian) -> obsidian {
     forge i = 0
-    while (i < ofs_str_len(token)) {
+    forge token_len = ofs_str_len(token)
+    while (i < token_len) {
         forge c = ofs_str_char_at(token, i)
         if (c == 46 || c == 35) { break }
         i++
@@ -29,13 +30,14 @@ vein odl_tag_attrs(token: obsidian) -> obsidian {
     forge id = ""
     forge classes = ""
     forge i = 0
-    while (i < ofs_str_len(token)) {
+    forge token_len = ofs_str_len(token)
+    while (i < token_len) {
         forge c = ofs_str_char_at(token, i)
         if (c == 46 || c == 35) {
             forge marker = c
             forge start = i + 1
             i++
-            while (i < ofs_str_len(token)) {
+            while (i < token_len) {
                 forge next = ofs_str_char_at(token, i)
                 if (next == 46 || next == 35) { break }
                 i++
@@ -60,12 +62,13 @@ vein odl_tag_attrs(token: obsidian) -> obsidian {
 vein odl_tag_classes(token: obsidian) -> obsidian {
     forge classes = ""
     forge i = 0
-    while (i < ofs_str_len(token)) {
+    forge token_len = ofs_str_len(token)
+    while (i < token_len) {
         forge c = ofs_str_char_at(token, i)
         if (c == 46) {
             forge start = i + 1
             i++
-            while (i < ofs_str_len(token)) {
+            while (i < token_len) {
                 forge next = ofs_str_char_at(token, i)
                 if (next == 46 || next == 35) { break }
                 i++
@@ -92,8 +95,9 @@ vein odl_compile(source: obsidian) -> obsidian {
     forge head = "<meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">"
     forge body = ""
     forge i = 0
+    forge line_count = ofs_array_len(lines)
 
-    while (i < ofs_array_len(lines)) {
+    while (i < line_count) {
         forge raw: obsidian = ofs_array_get(lines, i)
         forge clean = wl_trim(raw)
         forge indent = wl_indent(raw)
