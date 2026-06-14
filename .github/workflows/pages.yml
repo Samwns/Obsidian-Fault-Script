@@ -6,8 +6,10 @@ on:
     paths:
       - src/site/**
       - docs/**
+      - ofs/dist/ofscc.ll
       - ofs/stdlib/odl.ofs
       - ofs/stdlib/oes.ofs
+      - src/packaging/linux/ofs
       - .github/workflows/pages.yml
   workflow_dispatch:
 
