@@ -137,9 +137,19 @@ native_link() {
       win_shims+=("$HOME/.local/lib/ofs/win_shim.o")
     fi
     if [ -d "$win_lib_dir" ] && [ -x "$linker_win" ]; then
-      "$linker_win" -m i386pep --allow-multiple-definition "$obj" "${win_shims[@]}" -L"$win_lib_dir" -lmsvcrt -luser32 -lgdi32 -lkernel32 -lcomctl32 -e main -o "$out_bin"
+      local win_cmd=("$linker_win" -m i386pep --allow-multiple-definition "$obj")
+      if [ "${#win_shims[@]}" -gt 0 ]; then
+        win_cmd+=("${win_shims[@]}")
+      fi
+      win_cmd+=(-L"$win_lib_dir" -lmsvcrt -luser32 -lgdi32 -lkernel32 -lcomctl32 -e main -o "$out_bin")
+      "${win_cmd[@]}"
     elif [ -x /usr/lib64/rocm/llvm/bin/lld-link ]; then
-      /usr/lib64/rocm/llvm/bin/lld-link /entry:main /subsystem:windows "$obj" "${win_shims[@]}" /out:"$out_bin"
+      local win_cmd=(/usr/lib64/rocm/llvm/bin/lld-link /entry:main /subsystem:windows "$obj")
+      if [ "${#win_shims[@]}" -gt 0 ]; then
+        win_cmd+=("${win_shims[@]}")
+      fi
+      win_cmd+=(/out:"$out_bin")
+      "${win_cmd[@]}"
     fi
     rm -f "$obj"
     return 0
@@ -149,23 +159,43 @@ native_link() {
   if command -v llc >/dev/null 2>&1 && [ -n "$CRT_DIR" ] && [ -n "$DYN_LINKER" ]; then
     llc -filetype=obj "$in_ll" -o "$obj"
     local linker_bin="ld"
+    local ld_cmd=()
     if [ -x /usr/lib64/rocm/llvm/bin/ld.lld ]; then
       linker_bin="/usr/lib64/rocm/llvm/bin/ld.lld"
-      "$linker_bin" --allow-multiple-definition -L/usr/lib64 -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj" "${magma_objs[@]}" -lc "${extra_libs[@]}" "$CRT_DIR/crtn.o" -o "$out_bin"
+      ld_cmd=("$linker_bin" --allow-multiple-definition -L/usr/lib64 -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
     else
-      "$linker_bin" --allow-multiple-definition -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj" "${magma_objs[@]}" -lc "${extra_libs[@]}" "$CRT_DIR/crtn.o" -o "$out_bin"
+      ld_cmd=("$linker_bin" --allow-multiple-definition -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
     fi
+    if [ "${#magma_objs[@]}" -gt 0 ]; then
+      ld_cmd+=("${magma_objs[@]}")
+    fi
+    ld_cmd+=(-lc)
+    if [ "${#extra_libs[@]}" -gt 0 ]; then
+      ld_cmd+=("${extra_libs[@]}")
+    fi
+    ld_cmd+=("$CRT_DIR/crtn.o" -o "$out_bin")
+    "${ld_cmd[@]}"
     rm -f "$obj"
     return 0
   fi
 
-  local clang_link_flags=()
-  if [ "$(uname -s)" != "Darwin" ]; then
-    clang_link_flags=(-Wl,--allow-multiple-definition)
-  fi
-
   if command -v clang >/dev/null 2>&1; then
-    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" "${clang_link_flags[@]}" "$in_ll" "${magma_objs[@]}" "${extra_libs[@]}" -o "$out_bin"
+    local clang_cmd=(clang -Wno-override-module)
+    if [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ]; then
+      clang_cmd+=("${OFS_LLVM_IR_FLAGS[@]}")
+    fi
+    if [ "$(uname -s)" != "Darwin" ]; then
+      clang_cmd+=(-Wl,--allow-multiple-definition)
+    fi
+    clang_cmd+=("$in_ll")
+    if [ "${#magma_objs[@]}" -gt 0 ]; then
+      clang_cmd+=("${magma_objs[@]}")
+    fi
+    if [ "${#extra_libs[@]}" -gt 0 ]; then
+      clang_cmd+=("${extra_libs[@]}")
+    fi
+    clang_cmd+=(-o "$out_bin")
+    "${clang_cmd[@]}"
     return 0
   fi
 
@@ -179,7 +209,12 @@ native_asm() {
   if command -v llc >/dev/null 2>&1; then
     llc "$in_ll" -o "$out_s"
   else
-    clang -S -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" "$in_ll" -o "$out_s"
+    local clang_asm=(clang -S -Wno-override-module)
+    if [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ]; then
+      clang_asm+=("${OFS_LLVM_IR_FLAGS[@]}")
+    fi
+    clang_asm+=("$in_ll" -o "$out_s")
+    "${clang_asm[@]}"
   fi
 }
 
