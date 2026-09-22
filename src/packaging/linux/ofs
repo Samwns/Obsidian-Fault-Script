@@ -7,6 +7,13 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OFSCC="${OFSCC:-$ROOT/ofscc}"
 RUNTIME="${OFS_RUNTIME:-$ROOT/magma.o}"
 
+if [ -z "${OFS_STDLIB_PATH:-}" ] && [ -n "${OFS_STDLIB:-}" ]; then
+  export OFS_STDLIB_PATH="$OFS_STDLIB"
+fi
+if [ -z "${OFS_STDLIB:-}" ] && [ -n "${OFS_STDLIB_PATH:-}" ]; then
+  export OFS_STDLIB="$OFS_STDLIB_PATH"
+fi
+
 if [ -z "${OFS_STDLIB_PATH:-}" ]; then
   if [ -d "$ROOT/stdlib" ]; then
     export OFS_STDLIB_PATH="$ROOT/stdlib"
@@ -23,15 +30,24 @@ if [ -z "${OFS_STDLIB_PATH:-}" ]; then
   elif [ -d "/usr/share/ofs/stdlib" ]; then
     export OFS_STDLIB_PATH="/usr/share/ofs/stdlib"
   fi
+  export OFS_STDLIB="${OFS_STDLIB_PATH:-}"
 fi
 
+env_llvm_ir_flags="${OFS_LLVM_IR_FLAGS:-${LLVM_IR_FLAGS:-}}"
 detect_llvm_ir_flags() {
-  if [ -n "${OFS_LLVM_IR_FLAGS:-}" ]; then
-    printf '%s\n' "$OFS_LLVM_IR_FLAGS"
+  if [ -n "${env_llvm_ir_flags:-}" ]; then
+    printf '%s\n' "$env_llvm_ir_flags"
     return
   fi
   if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
     printf '%s\n' "-mllvm -opaque-pointers"
+    return
+  fi
+  if ! echo 'define void @__test_ptr(ptr %p) { ret void }' | clang -Wno-override-module -x ir -c - -o /dev/null 2>/dev/null; then
+    if echo 'define void @__test_ptr(ptr %p) { ret void }' | clang -Wno-override-module -mllvm -opaque-pointers -x ir -c - -o /dev/null 2>/dev/null; then
+      printf '%s\n' "-mllvm -opaque-pointers"
+      return
+    fi
   fi
 }
 
@@ -64,6 +80,40 @@ native_link() {
   local target_os="${3:-linux}"
   local obj="${in_ll%.*}.o"
 
+  local runtime_file=""
+  if [ -n "${OFS_RUNTIME:-}" ] && [ -f "${OFS_RUNTIME}" ]; then
+    runtime_file="${OFS_RUNTIME}"
+  elif [ -n "${RUNTIME:-}" ] && [ -f "${RUNTIME}" ]; then
+    runtime_file="${RUNTIME}"
+  else
+    for candidate in \
+      "$ROOT/libofs_runtime.a" \
+      "$ROOT/ofs_runtime.o" \
+      "$ROOT/magma.o" \
+      "$ROOT/../ofs/dist/libofs_runtime.a" \
+      "$ROOT/../ofs/dist/magma.o" \
+      "$ROOT/../selfhost/libofs_runtime.a" \
+      "$ROOT/../selfhost/ofs_runtime.o" \
+      "$HOME/.local/lib/ofs/libofs_runtime.a" \
+      "$HOME/.local/lib/ofs/magma.o" \
+      "/usr/local/lib/ofs/libofs_runtime.a" \
+      "/usr/local/lib/libofs_runtime.a" \
+      "/usr/local/lib/ofs/magma.o" \
+      "/usr/lib/ofs/libofs_runtime.a" \
+      "/usr/lib/libofs_runtime.a" \
+      "/usr/lib/ofs/magma.o"; do
+      if [ -f "$candidate" ]; then
+        runtime_file="$candidate"
+        break
+      fi
+    done
+  fi
+
+  local magma_objs=()
+  if [ -n "$runtime_file" ]; then
+    magma_objs+=("$runtime_file")
+  fi
+
   extra_libs=(-lm)
   if pkg-config --exists x11 2>/dev/null; then
     extra_libs+=(-lX11)
@@ -95,14 +145,6 @@ native_link() {
     return 0
   fi
 
-  local magma_objs=()
-  for m in "$ROOT/magma.o" "$HOME/.local/lib/ofs/magma.o" "/usr/local/lib/ofs/magma.o"; do
-    if [ -f "$m" ]; then
-      magma_objs+=("$m")
-      break
-    fi
-  done
-
   detect_crt_paths
   if command -v llc >/dev/null 2>&1 && [ -n "$CRT_DIR" ] && [ -n "$DYN_LINKER" ]; then
     llc -filetype=obj "$in_ll" -o "$obj"
@@ -117,8 +159,13 @@ native_link() {
     return 0
   fi
 
+  local clang_link_flags=()
+  if [ "$(uname -s)" != "Darwin" ]; then
+    clang_link_flags=(-Wl,--allow-multiple-definition)
+  fi
+
   if command -v clang >/dev/null 2>&1; then
-    clang -Wno-override-module -Wl,--allow-multiple-definition "$in_ll" "${extra_libs[@]}" -o "$out_bin"
+    clang -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" "${clang_link_flags[@]}" "$in_ll" "${magma_objs[@]}" "${extra_libs[@]}" -o "$out_bin"
     return 0
   fi
 
@@ -132,7 +179,7 @@ native_asm() {
   if command -v llc >/dev/null 2>&1; then
     llc "$in_ll" -o "$out_s"
   else
-    clang -S "$in_ll" -o "$out_s"
+    clang -S -Wno-override-module "${OFS_LLVM_IR_FLAGS[@]}" "$in_ll" -o "$out_s"
   fi
 }
 
