@@ -1,16 +1,747 @@
-<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Obsidian Fault Script</title><meta name="description" content="Official site and documentation for Obsidian Fault Script."><link rel="icon" href="ofs-256.png"><link rel="stylesheet" href="site.css"></head><body><header class="topbar"><nav class="wrap nav"><a class="brand" href="#top"><img src="ofs-256.png" alt="OFS logo"><span class="">Obsidian Fault Script</span></a><div class="links"><a href="#docs" data-i18n="navDocs">Documentacao</a><a href="web.html">Web</a><a href="benchmark.html" data-i18n="navBench">Benchmark</a><a href="downloads.html" data-i18n="navRelease">Downloads</a><div class="nav-tools"><select class="language-select" data-language-select aria-label="Idioma"><option data-href="index.html" value="pt" selected>Portugues</option><option data-href="en/index.html" value="en">English</option><option data-href="es/index.html" value="es">Espanol</option></select><span class="search-box"><button class="search-button" type="button" title="Buscar" aria-label="Buscar" aria-expanded="false">&#128269;</button><input data-site-search type="search" placeholder="Buscar" aria-label="Buscar"><span class="search-count" aria-live="polite"></span></span></div></div></nav></header><main id="top"><section class="hero"><div class="wrap hero-grid"><div class=""><h1 data-i18n="title">OFS: linguagem compilada, runtime nativo e DSLs web proprias.</h1><p class="lead" data-i18n="lead">Obsidian Fault Script usa um compilador self-hosted, gera LLVM IR, linka uma runtime nativa e inclui ODL/OES como linguagens fonte para sites.</p><div class="actions"><a class="btn" href="getting-started.html">Comecar</a><a class="btn secondary" href="downloads.html">Downloads</a><a class="btn secondary" href="https://github.com/Samwns/Obsidian-Fault-Script">GitHub</a></div></div><div class="terminal"><div class="terminal-head">exemplo.ofs</div><pre><code>attach {odl}
-attach {oes}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Obsidian Fault Script (OFS) — Linguagem Compilada, Self-Hosted e Determinística</title>
+    <meta name="description" content="Obsidian Fault Script: Linguagem de programação compilada, self-hosted, com runtime 100% puro em OFS (Stack Magma), compilação nativa sem dependência do Clang e UI nativa declarativa (OLL).">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0c0d14;
+            --bg-surface: #141622;
+            --bg-card: rgba(26, 29, 46, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(203, 166, 247, 0.3);
+            --text-main: #f5f5f7;
+            --text-sub: #a6adc8;
+            --text-dim: #6c7086;
+            --accent-purple: #cba6f7;
+            --accent-blue: #89b4fa;
+            --accent-green: #a6e3a1;
+            --accent-peach: #fab387;
+            --accent-red: #f38ba8;
+            --gradient-primary: linear-gradient(135deg, #cba6f7 0%, #89b4fa 50%, #a6e3a1 100%);
+            --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
 
-vein page() -> obsidian {
-    forge head = odl.css("site.css")
-    forge body = odl.h1("OFS Web")
-    return odl.document("pt", "OFS", "site oficial", head, body)
-}</code></pre></div></div></section><section class="band"><div class="wrap"><div class="section-head"><h2 data-i18n="pillarsTitle">Componentes tecnicos</h2><p data-i18n="pillarsLead">O ecossistema separa compilador, runtime, biblioteca padrao, ferramentas web e empacotamento.</p></div><div class="grid"><article class="card"><h3 data-i18n="p1Title">Self-hosted</h3><p data-i18n="p1Body">Lexer, parser, type checker e geracao LLVM vivem no compilador OFS.</p></article><article class="card"><h3 data-i18n="p2Title">Nativa</h3><p data-i18n="p2Body">A saida e LLVM IR linkada com libofs_runtime.a para gerar executaveis.</p></article><article class="card"><h3 data-i18n="p3Title">Hibrida</h3><p data-i18n="p3Body">Console, canvas/window nativo e sites via webserver/webui no mesmo ecossistema.</p></article></div></div></section><section class="band" id="web"><div class="wrap"><div class="section-head"><h2 data-i18n="webTitle">ODL + OES</h2><p data-i18n="webLead">ODL descreve documentos; OES define estilo, efeitos, responsividade e animacoes.</p></div><div class="terminal"><div class="terminal-head">site.ofs</div><pre><code>attach {odl}
-attach {oes}
-attach {webserver}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-core main() {
-    forge head = odl.css("site.css")
-    forge body = odl.main("app", odl.h1("OFS Web"))
-    webserver.serve_html_forever(8080, odl.document("pt", "OFS", "site", head, body))
-}</code></pre></div></div></section><section class="band" id="docs"><div class="wrap"><div class="section-head"><h2 data-i18n="docsTitle">Documentacao</h2><p data-i18n="docsLead">Guias tecnicos para linguagem, compilador, bootstrap, UI e publicacao.</p></div><div class="docs-list"><a class="doc-link" href="getting-started.html"><strong>Comecando</strong><span class="">Instale, verifique, rode, compile e publique.</span></a><a class="doc-link" href="language.html"><strong>Linguagem OFS</strong><span class="">Sintaxe, tipos, modulos e modos de baixo nivel.</span></a><a class="doc-link" href="compiler.html"><strong>Compilador</strong><span class="">Pipeline self-hosted, LLVM IR e linkagem nativa.</span></a><a class="doc-link" href="odl.html"><strong>ODL</strong><span class="">Referencia da Obsidian Document Language.</span></a><a class="doc-link" href="oes.html"><strong>OES</strong><span class="">Referencia da Obsidian Effect Scripts.</span></a><a class="doc-link" href="playground.html"><strong>Tradutor Web</strong><span class="">Traduza ODL, OES, HTML e CSS no navegador.</span></a><a class="doc-link" href="webserver.html"><strong>Web Server</strong><span class="">Sirva sites gerados por OFS via HTTP.</span></a><a class="doc-link" href="webui.html"><strong>Web UI</strong><span class="">Componentes, paginas e composicao de sites.</span></a><a class="doc-link" href="web.html"><strong>Web</strong><span class="">ODL, OES, targets gerados, webserver e interoperabilidade.</span></a><a class="doc-link" href="stdlib.html"><strong>Biblioteca Padrao</strong><span class="">Modulos distribuidos com OFS.</span></a><a class="doc-link" href="packages.html"><strong>Pacotes</strong><span class="">Registro, instalacao e fluxo de publicacao.</span></a><a class="doc-link" href="vscode.html"><strong>VS Code</strong><span class="">Sintaxe, comandos e Go Live.</span></a><a class="doc-link" href="commands.html"><strong>Comandos CLI</strong><span class="">Check, run, build, IR e assembly.</span></a><a class="doc-link" href="benchmark.html"><strong>Benchmark</strong><span class="">CPU, memoria, startup, build e tamanho.</span></a><a class="doc-link" href="github.html"><strong>Reconhecimento GitHub</strong><span class="">Linguist, gramatica, exemplos e registro.</span></a></div></div></section><section class="band" id="release"><div class="wrap"><div class="section-head"><h2 data-i18n="releaseTitle">Downloads</h2><p data-i18n="releaseLead">Baixe instaladores oficiais, pacote VS Code e checksums publicados na release.</p></div><div class="download-grid"><a class="download-card" data-release-asset="debian-ubuntu" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Debian / Ubuntu</strong><span>.deb x64 com OFS, ODL, OES e stdlib.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="fedora" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Fedora / RHEL / openSUSE</strong><span>.rpm x64 para distros da familia Red Hat e compativeis.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="arch" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Arch / Manjaro</strong><span>Pacote pacman com ferramentas nativas.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="macos-arm64" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>macOS ARM64</strong><span>Instalador para Apple Silicon.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset="windows-x64" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>Windows x64</strong><span>Instalador com launcher e runtime.</span><code data-release-version>latest</code></a><a class="download-card" data-release-asset=".vsix" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest"><strong>VS Code</strong><span>Extensao com OFS, ODL, OES, Go Live e tradutor.</span><code data-release-version>latest</code></a></div><div class="actions"><a class="btn" data-release-asset="CHECKSUMS" href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest">Checksums</a><a class="btn secondary" href="https://github.com/Samwns/Obsidian-Fault-Script/releases">Todas as releases</a></div></div></section></main><footer class="footer"><div class="wrap" data-i18n="footer">OFS e um projeto experimental de linguagem compilada. Site gerado pela propria OFS para GitHub Pages.</div></footer><script src="site.js"></script></body></html>
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(203, 166, 247, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 70%, rgba(137, 180, 250, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            background: rgba(12, 13, 20, 0.75);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .logo-badge {
+            background: var(--gradient-primary);
+            color: #0c0d14;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+
+        nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        nav a:hover {
+            color: var(--accent-purple);
+        }
+
+        .btn-cta {
+            background: var(--accent-purple);
+            color: #0c0d14;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(203, 166, 247, 0.4);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .hero {
+            padding: 6rem 0 4rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(203, 166, 247, 0.1);
+            border: 1px solid var(--border-glow);
+            border-radius: 999px;
+            color: var(--accent-purple);
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -1.5px;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, #ffffff 30%, var(--accent-purple) 80%, var(--accent-blue) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            color: var(--text-sub);
+            max-width: 760px;
+            margin: 0 auto 2.5rem;
+            font-weight: 300;
+        }
+
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--border-glass);
+            padding: 10px 22px;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+            gap: 1.5rem;
+            margin: 4rem 0;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.6rem;
+            color: var(--text-main);
+        }
+
+        .card p {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+        }
+
+        .section-title {
+            text-align: center;
+            margin: 5rem 0 2.5rem;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--text-main);
+        }
+
+        .section-title p {
+            color: var(--text-sub);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        .ecosystem-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
+            margin-top: 2rem;
+        }
+
+        .ecosystem-table th, .ecosystem-table td {
+            padding: 1.2rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .ecosystem-table th {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--accent-purple);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .ecosystem-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .code-block {
+            background: #08090f;
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            overflow-x: auto;
+            color: var(--text-sub);
+            margin: 1.5rem 0;
+            line-height: 1.7;
+        }
+
+        .code-kw { color: var(--accent-purple); font-weight: 700; }
+        .code-type { color: var(--accent-blue); }
+        .code-fn { color: var(--accent-green); }
+        .code-str { color: var(--accent-peach); }
+        .code-comment { color: var(--text-dim); font-style: italic; }
+
+        .terminal-preview {
+            background: #0d0e17;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .terminal-header {
+            background: #181a27;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot-red { background: #f38ba8; }
+        .dot-yellow { background: #f9e2af; }
+        .dot-green { background: #a6e3a1; }
+
+        .terminal-body {
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: #cdd6f4;
+            line-height: 1.7;
+        }
+
+        .pipeline-steps {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .pipeline-step {
+            flex: 1;
+            min-width: 130px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .pipeline-step strong {
+            display: block;
+            color: var(--accent-purple);
+            font-size: 0.95rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .pipeline-step span {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            font-family: var(--font-mono);
+        }
+
+        .pipeline-arrow {
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+            font-weight: 800;
+        }
+
+        footer {
+            border-top: 1px solid var(--border-glass);
+            padding: 3rem 0;
+            margin-top: 6rem;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--accent-purple);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">
+            <span class="logo-badge">OFS</span>
+            <span>Obsidian Fault Script</span>
+        </a>
+        <nav>
+            <a href="#ecosistema">Ecossistema</a>
+            <a href="#magma">Stack Magma</a>
+            <a href="#compilador">Compilação Nativa</a>
+            <a href="#oll">OLL (UI Nativa)</a>
+            <a href="#instaladores">Instaladores</a>
+            <a href="LANGUAGE_REFERENCE.md">Documentação</a>
+        </nav>
+        <a href="#instaladores" class="btn-cta">Baixar v1.0.137</a>
+    </header>
+
+    <div class="container">
+
+        <section class="hero">
+            <div class="hero-badge">🔥 Release v1.0.137 — Stack Magma 100% OFS</div>
+            <h1>A Linguagem dos Seus Sonhos.<br>Nativa, Poderosa e Determinística.</h1>
+            <p>Esqueça compiladores engessados e dependências externas de runtimes em C. O Obsidian Fault Script agora possui um núcleo autossuficiente, compilação direta via LLVM sem Clang e uma família completa de linguagens integradas.</p>
+            <div class="hero-buttons">
+                <a href="#instaladores" class="btn-cta">⚡ Baixar Instaladores Oficiais</a>
+                <a href="LANGUAGE_REFERENCE.md" class="btn-secondary">📖 Referência da Linguagem</a>
+                <a href="https://github.com/Samwns/Obsidian-Fault-Script" class="btn-secondary">GitHub</a>
+            </div>
+        </section>
+
+        <div class="grid-cards">
+            <div class="card">
+                <span class="card-icon">🌋</span>
+                <h3>Stack Magma</h3>
+                <p>O runtime oficial é 100% puro em OFS (<code>Reservoir</code>, <code>Facet</code>, <code>Matrix</code>, <code>Outlet</code>, etc.). Zero dependência de bibliotecas estáticas externas em C.</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">⚡</span>
+                <h3>Zero Dependência de Clang</h3>
+                <p>Compilação direta do LLVM IR para código de máquina nativo (ELF no Linux e PE no Windows) usando <code>llc</code> e ligadores nativos do sistema.</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">🎨</span>
+                <h3>OLL — Layout Nativo</h3>
+                <p>Obsidian Layout Language (.oll): descreva interfaces declarativas para aplicações nativas de forma desacoplada da lógica de programação.</p>
+            </div>
+            <div class="card">
+                <span class="card-icon">🪟</span>
+                <h3>Suporte Visual Win32 no Wine</h3>
+                <p>Geração nativa de executáveis para Windows com suporte a janelas, controles gráficos e executável testado diretamente no Wine.</p>
+            </div>
+        </div>
+
+        <section id="ecosistema">
+            <div class="section-title">
+                <h2>A Família de Linguagens OFS</h2>
+                <p>Uma stack coesa e moderna com funções claras e integradas</p>
+            </div>
+
+            <table class="ecosystem-table">
+                <thead>
+                    <tr>
+                        <th>Extensão</th>
+                        <th>Linguagem</th>
+                        <th>Propósito Principal</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>.ofs</strong></td>
+                        <td>Obsidian Fault Script</td>
+                        <td>Lógica de programação, algoritmos, tipos determinísticos, manipulação de baixo nível e processos.</td>
+                        <td><span style="color: var(--accent-green);">● Estável</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>.oll</strong></td>
+                        <td>Obsidian Layout Language</td>
+                        <td>Estrutura e layout declarativo de interfaces visuais nativas (janelas, painéis, botões, colunas, abas).</td>
+                        <td><span style="color: var(--accent-green);">● Estável</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>.odl</strong></td>
+                        <td>Obsidian Document Language</td>
+                        <td>Estruturação de documentos, conteúdo, artigos e documentação técnica unificada.</td>
+                        <td><span style="color: var(--accent-blue);">● Ativo</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>.oes</strong></td>
+                        <td>Obsidian Element Styling</td>
+                        <td>Design tokens, folhas de estilo, motion e visual direcionado para targets da Web.</td>
+                        <td><span style="color: var(--accent-blue);">● Ativo</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="magma">
+            <div class="section-title">
+                <h2>Stack Magma: Runtime Puro em OFS</h2>
+                <p>Adeus às dependências externas em C. Todos os subsistemas são escritos na própria linguagem.</p>
+            </div>
+
+            <div class="grid-cards">
+                <div class="card">
+                    <h3>Magma</h3>
+                    <p>Ponto de entrada do runtime, bootloader e inicialização de tabelas de símbolos.</p>
+                </div>
+                <div class="card">
+                    <h3>Reservoir</h3>
+                    <p>Alocação dinâmica determinística, liberação e gerenciamento direto de blocos de memória.</p>
+                </div>
+                <div class="card">
+                    <h3>Facet</h3>
+                    <p>Manipulação de strings, concatenação, fatiamento, substring e conversões textuais.</p>
+                </div>
+                <div class="card">
+                    <h3>Matrix</h3>
+                    <p>Coleções dinâmicas, arrays com redimensionamento, filas e pilhas estruturadas.</p>
+                </div>
+                <div class="card">
+                    <h3>Outlet</h3>
+                    <p>Entrada e saída padrão, streaming de texto e escrita rápida em arquivos.</p>
+                </div>
+                <div class="card">
+                    <h3>Foundation</h3>
+                    <p>Acesso ao sistema operacional, variáveis de ambiente, processos filhos e caminhos.</p>
+                </div>
+                <div class="card">
+                    <h3>Pulse</h3>
+                    <p>Temporizadores de alta precisão, medição de ciclos e controle temporal em milissegundos.</p>
+                </div>
+                <div class="card">
+                    <h3>Frame & Impulse</h3>
+                    <p>Gerenciamento de janelas gráficas, telas virtuais e captura de eventos de mouse e teclado.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="compilador">
+            <div class="section-title">
+                <h2>Compilação Nativa & Pipeline LLVM IR</h2>
+                <p>Zero Clang, zero dependências legadas em C e determinismo byte-a-byte</p>
+            </div>
+
+            <div class="pipeline-steps">
+                <div class="pipeline-step">
+                    <strong>1. Fonte OFS</strong>
+                    <span>programa.ofs</span>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-step">
+                    <strong>2. Frontend ofscc</strong>
+                    <span>Lexer + Parser + Tipos</span>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-step">
+                    <strong>3. Backend llvmgen</strong>
+                    <span>Emissão LLVM IR SSA</span>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-step">
+                    <strong>4. Assembler llc</strong>
+                    <span>Geração de objeto (.o)</span>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-step">
+                    <strong>5. Linker + Magma</strong>
+                    <span>ld / ld.lld + magma.o</span>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-step">
+                    <strong>6. Binário Nativo</strong>
+                    <span>ELF (Linux) / PE (Win)</span>
+                </div>
+            </div>
+
+            <div class="grid-cards">
+                <div class="card">
+                    <h3>⚡ Zero Dependência de Clang</h3>
+                    <p>O compilador utiliza o <code>llc</code> diretamente para gerar arquivos de objeto de máquina e os ligadores nativos do sistema operacional (<code>ld</code> no Linux, <code>ld.lld</code> no Windows), eliminando centenas de megabytes de dependências externas.</p>
+                </div>
+                <div class="card">
+                    <h3>🔒 Determinismo Total</h3>
+                    <p>Compilações sucessivas produzem exatamente o mesmo código LLVM IR (validado via <code>cmp -s v3.ll v4.ll</code>). O resultado da compilação é matematicamente previsível e reproduzível em qualquer ambiente.</p>
+                </div>
+                <div class="card">
+                    <h3>🪟 Cross-Compilação Windows</h3>
+                    <p>Gere executáveis Win32 nativos PE32+ diretamente do Linux com a flag <code>--target windows</code>. As chamadas à API Win32 funcionam de forma nativa e podem ser testadas no Wine.</p>
+                </div>
+                <div class="card">
+                    <h3>🚀 Performance de Compilação</h3>
+                    <p>O pipeline completo atinge tempos de compilação entre 50ms e 100ms para programas típicos, permitindo ciclos de desenvolvimento instantâneos sem atrasos de transpiladores lentos.</p>
+                </div>
+            </div>
+
+            <div class="terminal-preview">
+                <div class="terminal-header">
+                    <span class="dot dot-red"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-green"></span>
+                    <span style="margin-left: 8px; font-size: 0.85rem; color: #a6adc8;">Terminal — Comandos do Compilador OFS</span>
+                </div>
+                <div class="terminal-body">
+<span style="color: #6c7086;"># Compilar para binário nativo otimizado</span><br>
+$ ofs build app.ofs -o app<br>
+<span style="color: #a6e3a1;">[OFS] Compilando app.ofs via llvmgen e llc nativo...</span><br>
+<span style="color: #a6e3a1;">[OFS] Linkando com Stack Magma (magma.o)...</span><br>
+<span style="color: #a6e3a1;">[SUCCESS] Binário gerado: ./app</span><br><br>
+<span style="color: #6c7086;"># Execução direta e instantânea</span><br>
+$ ofs run app.ofs<br><br>
+<span style="color: #6c7086;"># Emissão de LLVM IR intermediário para inspeção</span><br>
+$ ofs ir app.ofs -o app.ll<br><br>
+<span style="color: #6c7086;"># Cross-compilar para Windows (PE32+ .exe)</span><br>
+$ ofs build app.ofs --target windows -o app.exe
+                </div>
+            </div>
+        </section>
+
+        <section id="oll">
+            <div class="section-title">
+                <h2>OLL — Obsidian Layout Language</h2>
+                <p>Interfaces nativas declarativas, ricas e desacopladas da lógica de programação</p>
+            </div>
+
+            <div class="grid-cards" style="margin-bottom: 2rem;">
+                <div class="card">
+                    <h3>🎨 Totalmente Declarativo</h3>
+                    <p>Descreva hierarquias de janelas, colunas, cartões, abas, botões e barras de progresso sem acoplar estado à renderização.</p>
+                </div>
+                <div class="card">
+                    <h3>🪟 Janelas Nativas a 60 FPS</h3>
+                    <p>Suporte a renderização acelerada de janelas nativas no Linux e Windows com loop de eventos responsivo, hover e clique.</p>
+                </div>
+                <div class="card">
+                    <h3>📐 Flexbox & Box Model</h3>
+                    <p>Cálculo automático de dimensões, margins, paddings, gaps, alinhamento e dimensões dinâmicas.</p>
+                </div>
+            </div>
+
+            <div class="code-block">
+<span class="code-kw">window</span> <span class="code-str">"Monitor do Sistema OFS"</span> {
+    <span class="code-type">width</span>: 720
+    <span class="code-type">height</span>: 560
+    <span class="code-type">bg_color</span>: #0f111a
+    <span class="code-type">padding</span>: 24
+
+    <span class="code-kw">column</span> {
+        <span class="code-type">gap</span>: 20
+
+        <span class="code-kw">header</span> <span class="code-str">"Painel de Desempenho em Tempo Real"</span> {
+            <span class="code-type">fg_color</span>: #cba6f7
+            <span class="code-type">font_size</span>: 22
+        }
+
+        <span class="code-kw">card</span> {
+            <span class="code-type">bg_color</span>: #181b29
+            <span class="code-type">border_color</span>: #2d3148
+            <span class="code-type">padding</span>: 16
+
+            <span class="code-kw">row</span> {
+                <span class="code-kw">label</span> <span class="code-str">"Uso de CPU:"</span> { <span class="code-type">fg_color</span>: #f5f5f7 <span class="code-type">width</span>: 120 }
+                <span class="code-kw">progress</span> { <span class="code-type">width</span>: 360 <span class="code-type">height</span>: 18 <span class="code-type">value</span>: 74 <span class="code-type">bg_color</span>: #282a36 <span class="code-type">fg_color</span>: #a6e3a1 }
+                <span class="code-kw">badge</span> <span class="code-str">"74%"</span> { <span class="code-type">bg_color</span>: #a6e3a1 <span class="code-type">fg_color</span>: #0c0d14 }
+            }
+        }
+
+        <span class="code-kw">row</span> {
+            <span class="code-type">gap</span>: 16
+            <span class="code-kw">button</span> <span class="code-str">"Otimizar Memória"</span> {
+                <span class="code-type">bg_color</span>: #89b4fa
+                <span class="code-type">fg_color</span>: #0c0d14
+                <span class="code-type">on_click</span>: <span class="code-str">"optimize_ram"</span>
+            }
+            <span class="code-kw">button</span> <span class="code-str">"Encerrar Processos"</span> {
+                <span class="code-type">bg_color</span>: #f38ba8
+                <span class="code-type">fg_color</span>: #0c0d14
+                <span class="code-type">on_click</span>: <span class="code-str">"kill_tasks"</span>
+            }
+        }
+    }
+}
+            </div>
+
+            <div class="terminal-preview">
+                <div class="terminal-header">
+                    <span class="dot dot-red"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-green"></span>
+                    <span style="margin-left: 8px; font-size: 0.85rem; color: #a6adc8;">Terminal — Executar Janela Interativa OLL</span>
+                </div>
+                <div class="terminal-body">
+<span style="color: #6c7086;"># Abrir janela nativa interativa em tempo real (60 FPS)</span><br>
+$ ofs-ui ofs/examples/oll/system_monitor.oll<br>
+<span style="color: #a6e3a1;">[OLL-UI] Criando janela nativa X11/Win32: 720x560</span><br>
+<span style="color: #a6e3a1;">[OLL-UI] Árvore de componentes montada: 12 nós</span><br>
+<span style="color: #a6e3a1;">[OLL-UI] Loop de eventos ativo. Clique ou passe o cursor sobre botões e cartões.</span><br><br>
+<span style="color: #6c7086;"># Renderizar prévia em imagem PPM para validação rápida</span><br>
+$ ofs ui ofs/examples/oll/system_monitor.oll -o preview.ppm<br>
+<span style="color: #a6e3a1;">Rendered layout preview saved to: preview.ppm</span>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin: 2rem 0;">
+                <a href="oll.html" class="btn-cta" style="display: inline-flex;">📖 Ver Especificação Completa da OLL e Exemplos →</a>
+            </div>
+        </section>
+
+        <section id="instaladores">
+            <div class="section-title">
+                <h2>Instaladores e Downloads</h2>
+                <p>Instale o ecossistema OFS completo usando instaladores desenvolvidos na própria linguagem</p>
+            </div>
+
+            <div class="grid-cards">
+                <div class="card" style="border-color: rgba(137, 180, 250, 0.4);">
+                    <span class="card-icon">🐧</span>
+                    <h3>Linux (Nativo ELF)</h3>
+                    <p>Instalador visual e CLI escrito em OFS. Instala <code>ofs</code>, <code>ofscc</code> e a <code>stdlib</code> completa em <code>~/.local/bin</code>.</p>
+                    <div style="margin-top: 1.5rem;">
+                        <div class="code-block" style="padding: 0.8rem; margin: 0 0 1rem;">ofs run src/packaging/installer_wizard_linux.ofs</div>
+                        <a href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest" class="btn-cta" style="width: 100%; justify-content: center;">Baixar Pacote Linux (.tar.gz)</a>
+                    </div>
+                </div>
+
+                <div class="card" style="border-color: rgba(203, 166, 247, 0.4);">
+                    <span class="card-icon">🪟</span>
+                    <h3>Windows (Win32 Nativo)</h3>
+                    <p>Assistente gráfico PE32+ completo inspirado no setup do Windows 10. Pronto para execução nativa ou via Wine.</p>
+                    <div style="margin-top: 1.5rem;">
+                        <div class="code-block" style="padding: 0.8rem; margin: 0 0 1rem;">wine src/packaging/windows/installer_wizard_windows.exe</div>
+                        <a href="https://github.com/Samwns/Obsidian-Fault-Script/releases/latest" class="btn-cta" style="width: 100%; justify-content: center;">Baixar Executável (.exe)</a>
+                    </div>
+                </div>
+
+                <div class="card" style="border-color: rgba(166, 227, 161, 0.4);">
+                    <span class="card-icon">💻</span>
+                    <h3>Extensão do VS Code</h3>
+                    <p>Suporte completo com realce de sintaxe, diagnóstico e snippets para <code>.ofs</code>, <code>.oll</code>, <code>.odl</code> e <code>.oes</code>.</p>
+                    <div style="margin-top: 1.5rem;">
+                        <div class="code-block" style="padding: 0.8rem; margin: 0 0 1rem;">code --install-extension ofs-vscode-extension.vsix</div>
+                        <a href="ofs-vscode-extension.vsix" class="btn-cta" style="width: 100%; justify-content: center;">Baixar Extensão (.vsix)</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>© 2026 Obsidian Fault Script (OFS). Desenvolvido por Samwns e comunidade.</p>
+        <p style="margin-top: 0.5rem;">
+            <a href="language.html">Linguagem</a> • 
+            <a href="compiler.html">Compilador</a> • 
+            <a href="oll.html">Guia OLL</a> • 
+            <a href="downloads.html">Downloads</a> • 
+            <a href="benchmark.html">Benchmark</a> • 
+            <a href="GETTING_STARTED.md">Primeiros Passos</a> • 
+            <a href="LANGUAGE_REFERENCE.md">Referência Técnica</a> • 
+            <a href="https://github.com/Samwns/Obsidian-Fault-Script">GitHub</a>
+        </p>
+    </footer>
+
+</body>
+</html>

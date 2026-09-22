@@ -1,0 +1,11 @@
+attach {F:../../stdlib/runtime/outlet.ofs}
+
+core main() {
+    outlet.print("Testing outlet: ")
+    outlet.print_stone(42)
+    outlet.print(" ")
+    outlet.newline()
+    outlet.println("Line printed via outlet")
+    outlet.color("\x1b[32m", "Green text via outlet")
+    echo("MAGMA_OUTLET_TEST_OK")
+}

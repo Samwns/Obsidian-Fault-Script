@@ -1,0 +1,99 @@
+attach {F:reservoir.ofs}
+attach {F:facet.ofs}
+
+extern vein fopen(path: obsidian, mode: obsidian) -> *stone
+extern vein fclose(f: *stone) -> stone
+extern vein fputs(s: obsidian, f: *stone) -> stone
+extern vein fputc(c: stone, f: *stone) -> stone
+
+monolith Surface {
+    width: stone
+    height: stone
+    buffer: *stone
+}
+
+namespace prism {
+    vein create(w: stone, h: stone) -> Surface {
+        forge surf: Surface
+        surf.width = w
+        surf.height = h
+        surf.buffer = ofs_alloc(w * h * 8)
+        clear(surf, 16777215)
+        return surf
+    }
+
+    vein destroy(surf: Surface) -> void {
+        ofs_free(surf.buffer)
+    }
+
+    vein in_bounds(surf: Surface, x: stone, y: stone) -> bool {
+        return x >= 0 && y >= 0 && x < surf.width && y < surf.height
+    }
+
+    vein clear(surf: Surface, color: stone) -> void {
+        forge total = surf.width * surf.height
+        forge i = 0
+        while (i < total) {
+            forge p: *stone = fault_step(surf.buffer, i)
+            fracture {
+                *p = color
+            }
+            i++
+        }
+    }
+
+    vein set_pixel(surf: Surface, x: stone, y: stone, color: stone) -> void {
+        if (!in_bounds(surf, x, y)) { return }
+        forge idx = y * surf.width + x
+        forge p: *stone = fault_step(surf.buffer, idx)
+        fracture {
+            *p = color
+        }
+    }
+
+    vein get_pixel(surf: Surface, x: stone, y: stone) -> stone {
+        if (!in_bounds(surf, x, y)) { return 0 }
+        forge idx = y * surf.width + x
+        forge p: *stone = fault_step(surf.buffer, idx)
+        fracture {
+            return *p
+        }
+    }
+
+    vein fill_rect(surf: Surface, x: stone, y: stone, w: stone, h: stone, color: stone) -> void {
+        forge yy = 0
+        while (yy < h) {
+            forge xx = 0
+            while (xx < w) {
+                set_pixel(surf, x + xx, y + yy, color)
+                xx++
+            }
+            yy++
+        }
+    }
+
+    vein save_ppm(surf: Surface, path: obsidian) -> bool {
+        forge f: *stone = fopen(path, "wb")
+        if (f == null) { return false }
+        forge header = "P6\n" + ofs_stone_to_obsidian(surf.width) + " " + ofs_stone_to_obsidian(surf.height) + "\n255\n"
+        fputs(header, f)
+        forge total = surf.width * surf.height
+        forge i = 0
+        while (i < total) {
+            forge p: *stone = fault_step(surf.buffer, i)
+            forge col: stone = 0
+            fracture {
+                col = *p
+            }
+            forge r = (col / 65536) % 256
+            forge g = (col / 256) % 256
+            forge b = col % 256
+            fputc(r, f)
+            fputc(g, f)
+            fputc(b, f)
+            i++
+        }
+        fclose(f)
+        return true
+    }
+}

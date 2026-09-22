@@ -1,0 +1,129 @@
+window "Obsidian Fault Script - Control Center" {
+    width: 900
+    height: 680
+    bg_color: #0f111a
+    padding: 24
+
+    column {
+        gap: 16
+
+        header "OBSIDIAN FAULT SCRIPT - NATIVE CONTROL SUITE" {
+            fg_color: #cba6f7
+            font_size: 22
+        }
+
+        row {
+            gap: 12
+            badge "v1.0.137" { bg_color: #89b4fa fg_color: #0c0d14 }
+            badge "Stack Magma" { bg_color: #a6e3a1 fg_color: #0c0d14 }
+            badge "Zero Clang" { bg_color: #fab387 fg_color: #0c0d14 }
+            badge "OLL 60 FPS" { bg_color: #cba6f7 fg_color: #0c0d14 }
+            badge "Multiplataforma" { bg_color: #f38ba8 fg_color: #0c0d14 }
+        }
+
+        row {
+            gap: 16
+
+            card {
+                width: 410
+                height: 250
+                bg_color: #181b29
+                border_color: #2d3148
+                border_width: 1
+                padding: 16
+
+                column {
+                    gap: 10
+                    header "Arquitetura e Pipeline Nativo" { fg_color: #89b4fa font_size: 16 }
+                    label "Compilador: ofscc (Self-Hosted v1.0.137)" { fg_color: #f5f5f7 }
+                    label "Backend: LLVM IR SSA Direto (Sem C/Clang)" { fg_color: #a6adc8 }
+                    label "Emissao: LLC -> LLD PE32+ (x86_64)" { fg_color: #a6adc8 }
+                    label "Runtime: Stack Magma 100% OFS" { fg_color: #a6e3a1 }
+                    label "Determinismo: Byte-a-byte verificado" { fg_color: #a6adc8 }
+                    label "Alocador Heap: Reservoir Deterministico" { fg_color: #a6adc8 }
+                    label "Ambiente: Windows / PortProton / Wine" { fg_color: #fab387 }
+                }
+            }
+
+            card {
+                width: 410
+                height: 250
+                bg_color: #181b29
+                border_color: #2d3148
+                border_width: 1
+                padding: 16
+
+                column {
+                    gap: 10
+                    header "Motor Visual e UI OLL" { fg_color: #a6e3a1 font_size: 16 }
+                    label "Motor Declarativo: OLL v1.0" { fg_color: #f5f5f7 }
+                    label "Renderizacao: 60 FPS com Double Buffering" { fg_color: #a6adc8 }
+                    label "Layout: Box Model Flexbox Automatico" { fg_color: #a6adc8 }
+                    label "Plataformas: Windows, Linux, macOS" { fg_color: #cba6f7 }
+                    label "Tipografia: ClearType Anti-Aliasing" { fg_color: #a6adc8 }
+                    label "Eventos: Mouse, Teclado e Hover Nativos" { fg_color: #a6adc8 }
+                    label "Status: Totalmente Integrado e Operacional" { fg_color: #a6e3a1 }
+                }
+            }
+        }
+
+        card {
+            width: 836
+            height: 140
+            bg_color: #181b29
+            border_color: #2d3148
+            border_width: 1
+            padding: 16
+
+            column {
+                gap: 10
+                header "Telemetria do Sistema e Carregamento Magma" { fg_color: #fab387 font_size: 16 }
+                row {
+                    gap: 12
+                    label "Carga dos Subsistemas (Reservoir, Facet, Matrix, Pulse):" { fg_color: #f5f5f7 width: 440 }
+                    badge "94% NOMINAL" { bg_color: #a6e3a1 fg_color: #0c0d14 }
+                }
+                progress {
+                    width: 800
+                    height: 18
+                    value: 94
+                    bg_color: #282a36
+                    fg_color: #a6e3a1
+                }
+                label "[OFS-CORE] Todos os 10 modulos Stack Magma ativos. Zero memory leaks." { fg_color: #a6adc8 font_size: 12 }
+            }
+        }
+
+        row {
+            gap: 16
+            button "Executar Benchmark" {
+                width: 195
+                height: 38
+                bg_color: #89b4fa
+                fg_color: #0c0d14
+                on_click: "btn_bench"
+            }
+            button "Testar Reservoir" {
+                width: 195
+                height: 38
+                bg_color: #a6e3a1
+                fg_color: #0c0d14
+                on_click: "btn_reservoir"
+            }
+            button "Sobre o OFS" {
+                width: 195
+                height: 38
+                bg_color: #cba6f7
+                fg_color: #0c0d14
+                on_click: "btn_about"
+            }
+            button "Fechar" {
+                width: 195
+                height: 38
+                bg_color: #f38ba8
+                fg_color: #0c0d14
+                on_click: "btn_exit"
+            }
+        }
+    }
+}

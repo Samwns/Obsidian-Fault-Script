@@ -1,0 +1,94 @@
+{
+  "name": "Obsidian Layout Language",
+  "scopeName": "source.oll",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#hex_colors" },
+    { "include": "#numbers" },
+    { "include": "#components" },
+    { "include": "#properties" },
+    { "include": "#keywords" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.oll",
+          "match": "//.*$"
+        },
+        {
+          "name": "comment.block.oll",
+          "begin": "/\\*",
+          "end": "\\*/"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.oll",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.oll",
+              "match": "\\\\."
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.oll",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.oll",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "hex_colors": {
+      "patterns": [
+        {
+          "name": "constant.other.color.hex.oll",
+          "match": "#[0-9a-fA-F]{3,8}\\b"
+        }
+      ]
+    },
+    "numbers": {
+      "patterns": [
+        {
+          "name": "constant.numeric.oll",
+          "match": "\\b[0-9]+(?:px|%|pt|em)?\\b"
+        }
+      ]
+    },
+    "components": {
+      "patterns": [
+        {
+          "name": "entity.name.tag.component.oll",
+          "match": "\\b(window|column|row|panel|container|stack|label|button|input|tabs|tab|toolbar|menu|list|item|card|dialog|statusbar|navbar)\\b"
+        }
+      ]
+    },
+    "properties": {
+      "patterns": [
+        {
+          "name": "support.type.property-name.oll",
+          "match": "\\b(width|height|padding|margin|gap|bg_color|fg_color|border_color|border_width|radius|title|text|bind|on_click|on_change|align|valign|flex|active|visible|opacity|font_size|font_weight)\\b(?=\\s*:)"
+        }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "constant.language.boolean.oll",
+          "match": "\\b(true|false|null|auto|fill|center|start|end)\\b"
+        }
+      ]
+    }
+  }
+}

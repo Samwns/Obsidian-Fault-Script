@@ -1,0 +1,36 @@
+attach {F:reservoir.ofs}
+
+extern vein usleep(usec: stone) -> stone
+extern vein time(tloc: *stone) -> stone
+extern vein clock_gettime(clk_id: stone, tp: *stone) -> stone
+
+namespace pulse {
+    vein now_ms() -> stone {
+        forge ts: *stone = ofs_alloc(16)
+        forge res = clock_gettime(1, ts)
+        if (res != 0) {
+            forge s = time(null)
+            ofs_free(ts)
+            return s * 1000
+        }
+        forge sec: stone = 0
+        forge nsec: stone = 0
+        fracture {
+            sec = *ts
+            forge pnsec: *stone = fault_step(ts, 1)
+            nsec = *pnsec
+        }
+        ofs_free(ts)
+        return (sec * 1000) + (nsec / 1000000)
+    }
+
+    vein sleep_ms(ms: stone) -> void {
+        if (ms > 0) {
+            usleep(ms * 1000)
+        }
+    }
+
+    vein wall_time() -> stone {
+        return time(null)
+    }
+}

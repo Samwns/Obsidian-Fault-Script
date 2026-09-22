@@ -1,0 +1,16 @@
+window DataBindingDemo {
+    title: "OFS Data Binding"
+    width: 600
+    height: 400
+    background: #181825
+
+    column {
+        padding: 20
+        gap: 12
+        label "Two-Way Data Binding" { color: #89b4fa }
+        input { id: "input_name", bind: "username", width: 400, height: 30, background: #11111b, color: #cdd6f4, border: 1 }
+        label "Bound Value:" { color: #a6adc8 }
+        label "Realtime synchronized with OFS state" { color: #a6e3a1 }
+        button "Increment Counter" { id: "btn_inc", width: 160, height: 32, on_click: increment_counter }
+    }
+}

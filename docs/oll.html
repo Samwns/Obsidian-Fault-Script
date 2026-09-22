@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OLL — Obsidian Layout Language | UI Declarativa Nativa OFS</title>
+    <meta name="description" content="Guia e referência completa da Obsidian Layout Language (.oll): linguagem declarativa para construção de interfaces gráficas nativas no Obsidian Fault Script.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Outfit:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-base: #0c0d14;
+            --bg-surface: #141622;
+            --bg-card: rgba(26, 29, 46, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(203, 166, 247, 0.3);
+            --text-main: #f5f5f7;
+            --text-sub: #a6adc8;
+            --text-dim: #6c7086;
+            --accent-purple: #cba6f7;
+            --accent-blue: #89b4fa;
+            --accent-green: #a6e3a1;
+            --accent-peach: #fab387;
+            --accent-red: #f38ba8;
+            --gradient-primary: linear-gradient(135deg, #cba6f7 0%, #89b4fa 50%, #a6e3a1 100%);
+            --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            font-family: var(--font-sans);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(203, 166, 247, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 85% 70%, rgba(137, 180, 250, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            background: rgba(12, 13, 20, 0.75);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            letter-spacing: -0.5px;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .logo-badge {
+            background: var(--gradient-primary);
+            color: #0c0d14;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+
+        nav {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+        }
+
+        nav a {
+            color: var(--text-sub);
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: color 0.2s ease;
+        }
+
+        nav a:hover {
+            color: var(--accent-purple);
+        }
+
+        .btn-cta {
+            background: var(--gradient-primary);
+            color: #0c0d14;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-weight: 700;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(203, 166, 247, 0.4);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .hero {
+            padding: 5rem 0 3rem;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(203, 166, 247, 0.1);
+            border: 1px solid var(--border-glow);
+            color: var(--accent-purple);
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero h1 {
+            font-size: 3.2rem;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1.5px;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(180deg, #ffffff 0%, #a6adc8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-sub);
+            max-width: 760px;
+            margin: 0 auto 2.5rem;
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 2rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.6rem;
+            color: var(--text-main);
+        }
+
+        .card p {
+            color: var(--text-sub);
+            font-size: 0.95rem;
+        }
+
+        .section-title {
+            text-align: center;
+            margin: 5rem 0 2.5rem;
+        }
+
+        .section-title h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            color: var(--text-main);
+        }
+
+        .section-title p {
+            color: var(--text-sub);
+            font-size: 1.1rem;
+            margin-top: 0.5rem;
+        }
+
+        .tag-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: 16px;
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
+            margin: 2rem 0;
+        }
+
+        .tag-table th, .tag-table td {
+            padding: 1rem 1.5rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .tag-table th {
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--accent-purple);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 1px;
+        }
+
+        .tag-table tr:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .code-block {
+            background: #08090f;
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            overflow-x: auto;
+            color: var(--text-sub);
+            margin: 1.5rem 0;
+            line-height: 1.7;
+        }
+
+        .code-kw { color: var(--accent-purple); font-weight: 700; }
+        .code-type { color: var(--accent-blue); }
+        .code-str { color: var(--accent-peach); }
+        .code-num { color: var(--accent-green); }
+
+        .terminal-preview {
+            background: #0d0e17;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            overflow: hidden;
+            margin: 2rem 0;
+        }
+
+        .terminal-header {
+            background: #181a27;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .dot-red { background: #f38ba8; }
+        .dot-yellow { background: #f9e2af; }
+        .dot-green { background: #a6e3a1; }
+
+        .terminal-body {
+            padding: 1.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            color: #cdd6f4;
+            line-height: 1.7;
+        }
+
+        footer {
+            border-top: 1px solid var(--border-glass);
+            padding: 3rem 0;
+            margin-top: 6rem;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
+        footer a {
+            color: var(--accent-purple);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="index.html" class="logo">
+            <span class="logo-badge">OFS</span>
+            <span>Obsidian Fault Script</span>
+        </a>
+        <nav>
+            <a href="index.html#ecosistema">Ecossistema</a>
+            <a href="index.html#compilador">Compilador</a>
+            <a href="index.html#magma">Stack Magma</a>
+            <a href="oll.html" style="color: var(--accent-purple);">OLL</a>
+            <a href="#geometria-janela">Janela & Escala</a>
+            <a href="#modelo-caixas">Modelo de Caixas</a>
+            <a href="index.html#instaladores">Downloads</a>
+            <a href="LANGUAGE_REFERENCE.md">Docs</a>
+        </nav>
+        <a href="index.html#instaladores" class="btn-cta">Baixar OFS</a>
+    </header>
+
+    <div class="container">
+
+        <section class="hero">
+            <div class="hero-badge">🎨 Obsidian Layout Language (.oll)</div>
+            <h1>UI Declarativa para Aplicações Nativas</h1>
+            <p>Construa interfaces gráficas modernas, fluidas e determinísticas para Linux e Windows desacoplando completamente a árvore de componentes visuais da lógica de programação.</p>
+        </section>
+
+        <div class="grid-cards">
+            <div class="card">
+                <h3>🧩 Árvore de Componentes Limpa</h3>
+                <p>Estrutura aninhada inspirada na simplicidade do QML e na semântica da Web moderna, mas compilada e renderizada diretamente para primitivas nativas.</p>
+            </div>
+            <div class="card">
+                <h3>⚡ Renderização a 60 FPS</h3>
+                <p>Motor de renderização acelerado integrado à Stack Magma (subsistemas <code>Frame</code> e <code>Impulse</code>), suportando animações, transições e resposta a eventos instantânea.</p>
+            </div>
+            <div class="card">
+                <h3>🧪 Validação em Headless/CI</h3>
+                <p>O comando <code>ofs ui file.oll -o preview.ppm</code> calcula o layout geométrico e exporta um arquivo de imagem bitmap exato mesmo sem display gráfico ativo.</p>
+            </div>
+        </div>
+
+        <section id="tags">
+            <div class="section-title">
+                <h2>Componentes e Tags da OLL</h2>
+                <p>Todos os blocos fundamentais suportados nativamente pelo analisador e renderizador</p>
+            </div>
+
+            <table class="tag-table">
+                <thead>
+                    <tr>
+                        <th>Tag</th>
+                        <th>Propósito</th>
+                        <th>Propriedades Comuns</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>window</code></td>
+                        <td>Nó raiz da aplicação. Gerencia dimensões, título, auto-centralização no monitor e trancamento de redimensionamento.</td>
+                        <td><code>width</code>, <code>height</code>, <code>auto_center</code> (true/false), <code>resizable</code> (true/false), <code>min_width</code>, <code>min_height</code>, <code>bg_color</code>, <code>padding</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>column</code></td>
+                        <td>Contêiner flexível que empilha elementos verticalmente com controle estrito de vão.</td>
+                        <td><code>gap</code>, <code>padding</code>, <code>width</code>, <code>height</code>, <code>align</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>row</code></td>
+                        <td>Contêiner flexível horizontal com suporte a ancoragem de tags e badges à direita.</td>
+                        <td><code>gap</code>, <code>padding</code>, <code>width</code>, <code>height</code>, <code>align</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>card</code></td>
+                        <td>Painel em relevo com cantos arredondados, borda estilizada e isolamento de layout.</td>
+                        <td><code>bg_color</code>, <code>border_color</code>, <code>border_width</code>, <code>padding</code>, <code>gap</code>, <code>hover_bg</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>header</code></td>
+                        <td>Título textual com peso tipográfico e destaque semântico.</td>
+                        <td><code>fg_color</code>, <code>font_size</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>label</code></td>
+                        <td>Texto estático com anti-aliasing nítido para legendas e dados.</td>
+                        <td><code>fg_color</code>, <code>font_size</code>, <code>width</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>badge</code></td>
+                        <td>Pílula compacta de destaque, indicadores de versão ou status.</td>
+                        <td><code>bg_color</code>, <code>fg_color</code>, <code>padding</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>progress</code></td>
+                        <td>Barra de progresso percentual determinística com preenchimento contínuo.</td>
+                        <td><code>value</code> (0 a 100), <code>width</code>, <code>height</code>, <code>bg_color</code>, <code>fg_color</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>button</code></td>
+                        <td>Botão clicável com feedback imediato de idle, hover e active a 60 FPS.</td>
+                        <td><code>width</code>, <code>height</code>, <code>bg_color</code>, <code>hover_bg</code>, <code>fg_color</code>, <code>hover_border</code>, <code>hover_fg</code>, <code>state</code>, <code>on_click</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>input</code></td>
+                        <td>Campo de entrada de texto com placeholder e borda de foco.</td>
+                        <td><code>width</code>, <code>height</code>, <code>bg_color</code>, <code>fg_color</code>, <code>border_color</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>checkbox</code></td>
+                        <td>Controle de seleção com título, descrição longa e tag de recomendação alinhada à direita.</td>
+                        <td><code>value</code> (true/false), <code>label</code>, <code>description</code>, <code>tag</code>, <code>hover_bg</code>, <code>on_click</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="grid-cards" style="margin-top: 24px;">
+                <div class="card">
+                    <h3>⚪ Estado Idle (Repouso)</h3>
+                    <p>Propriedades padrão como <code>bg_color</code> e <code>border_color</code> definem a estética base do componente quando o usuário não está interagindo com ele.</p>
+                </div>
+                <div class="card">
+                    <h3>✨ Estado Hover (Sobreposição)</h3>
+                    <p>Ao passar o mouse sobre o nó, propriedades como <code>hover_bg</code> e <code>hover_border</code> aplicam realce imediato a 60 FPS com ativação do cursor <code>IDC_HAND</code>.</p>
+                </div>
+                <div class="card">
+                    <h3>🎯 Estado Active (Clique / Pressionado)</h3>
+                    <p>O evento de clique despacha a ação associada em <code>on_click</code> para a máquina de estados sem perda de eventos ou dependências pesadas.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="geometria-janela">
+            <div class="section-title">
+                <h2>Centralização Automática & Trancamento de Escalabilidade</h2>
+                <p>Controle fino de posicionamento no display e integridade visual contra distorções</p>
+            </div>
+
+            <div class="grid-cards">
+                <div class="card">
+                    <h3>🎯 Centralização Automática (<code>auto_center: true</code>)</h3>
+                    <p>Ao inicializar a aplicação, o backend gráfico OLL consulta as dimensões reais da tela primária via chamadas nativas de sistema (<code>GetSystemMetrics(0/1)</code> no Windows e <code>XDisplayWidth/Height</code> no Linux). O cálculo <code>(tela_largura - janela_largura) / 2</code> e <code>(tela_altura - janela_altura) / 2</code> posiciona a janela perfeitamente no centro do monitor do usuário, prevenindo janelas desalinhadas no canto superior (0,0) ou fora do campo visual em displays 4K Ultra-Wide.</p>
+                </div>
+                <div class="card">
+                    <h3>🔒 Trancamento de Escalabilidade (<code>resizable: false</code>)</h3>
+                    <p>Essencial para <strong>Instaladores, Assistentes (Wizards) e Diálogos Modais</strong>. Permite travar as dimensões físicas da janela contra redimensionamentos indesejados. No Windows, o motor emite a máscara <code>WS_FIXED</code> (descartando <code>WS_THICKFRAME</code> e <code>WS_MAXIMIZEBOX</code>), eliminando bordas de arrasto e o botão de maximizar. Isso impede que o usuário force a expansão da janela, erradicando áreas vazias e bordas brancas (Window Frame Mismatch).</p>
+                </div>
+                <div class="card">
+                    <h3>📐 Escalabilidade Dinâmica Responsiva (<code>resizable: true</code>)</h3>
+                    <p>Para aplicativos de edição, IDEs e painéis de dados expansíveis. Ao permitir redimensionamento, a OLL consulta <code>GetClientRect</code> em cada ciclo de renderização a 60 FPS, adaptando o bitmap de memória e aplicando o <code>BitBlt</code> a 100% da área útil do cliente, assegurando que o fundo escuro cubra integralmente a janela sem lacunas ou artefatos gráficos.</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="modelo-caixas">
+            <div class="section-title">
+                <h2>Modelo de Caixas e Alinhamento Inteligente sem Colisões</h2>
+                <p>Estruturação visual com espaçamento determinístico, paddings consistentes e ancoragem lateral</p>
+            </div>
+
+            <div class="grid-cards">
+                <div class="card">
+                    <h3>📦 Sistema de Caixas: Padding, Gap e Margens</h3>
+                    <p>Cada nó na árvore da OLL (como <code>window</code>, <code>card</code>, <code>column</code> e <code>row</code>) possui dimensões e espaçamentos internos rigorosamente calculados. O uso de <code>padding</code> isola o conteúdo das bordas do contêiner, enquanto o <code>gap</code> garante separação homogênea entre elementos filhos sem acúmulo de margens inesperadas.</p>
+                </div>
+                <div class="card">
+                    <h3>🏷️ Ancoragem à Direita sem Sobreposição Textual</h3>
+                    <p>Em formulários densos e listas de seleção (como etapas de instaladores com títulos longos e descrições técnicas), etiquetas informativas (ex: <code>[Recomendado]</code> ou <code>[Opcional]</code>) são posicionadas com cálculo ancorado à direita: <code>(x + w) - (tam_tag * 7) - padding</code>. Isso elimina colisões visuais, garantindo que o texto descritivo nunca atravesse ou encavale sobre a etiqueta.</p>
+                </div>
+                <div class="card">
+                    <h3>🖱️ Realce Tátil de Seleção e Cards Interativos</h3>
+                    <p>Fileiras de opções e cards de pacotes incorporam detecção contínua de cursor via <code>GetCursorPos</code> + <code>ScreenToClient</code>. Quando o mouse paira sobre a linha, o fundo recebe preenchimento de destaque suave e a borda é iluminada, alternando imediatamente o ponteiro para o cursor nativo de mão (<code>IDC_HAND</code>).</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="exemplo">
+            <div class="section-title">
+                <h2>Exemplo Completo: Painel de Controle</h2>
+                <p>Estrutura declarativa limpa sem misturar código imperativo</p>
+            </div>
+
+            <div class="code-block">
+<span class="code-kw">window</span> <span class="code-str">"Instalador do Obsidian Fault Script"</span> {
+    <span class="code-type">width</span>: <span class="code-num">856</span>
+    <span class="code-type">height</span>: <span class="code-num">658</span>
+    <span class="code-type">auto_center</span>: <span class="code-kw">true</span>
+    <span class="code-type">resizable</span>: <span class="code-kw">false</span>
+    <span class="code-type">bg_color</span>: <span class="code-str">#12131c</span>
+    <span class="code-type">padding</span>: <span class="code-num">24</span>
+
+    <span class="code-kw">column</span> {
+        <span class="code-type">gap</span>: <span class="code-num">16</span>
+
+        <span class="code-kw">header</span> <span class="code-str">"Seleção de Componentes e Dependências"</span> {
+            <span class="code-type">fg_color</span>: <span class="code-str">#cba6f7</span>
+            <span class="code-type">font_size</span>: <span class="code-num">22</span>
+        }
+
+        <span class="code-kw">card</span> {
+            <span class="code-type">bg_color</span>: <span class="code-str">#1a1d2e</span>
+            <span class="code-type">border_color</span>: <span class="code-str">#2d3148</span>
+            <span class="code-type">border_width</span>: <span class="code-num">1</span>
+            <span class="code-type">padding</span>: <span class="code-num">16</span>
+
+            <span class="code-kw">column</span> {
+                <span class="code-type">gap</span>: <span class="code-num">12</span>
+                <span class="code-kw">row</span> {
+                    <span class="code-type">align</span>: <span class="code-str">"space-between"</span>
+                    <span class="code-kw">checkbox</span> <span class="code-str">"Compilador OFS AOT"</span> {
+                        <span class="code-type">value</span>: <span class="code-kw">true</span>
+                        <span class="code-type">description</span>: <span class="code-str">"Compilação nativa com geração direta de binários"</span>
+                        <span class="code-type">tag</span>: <span class="code-str">"[Obrigatório]"</span>
+                        <span class="code-type">hover_bg</span>: <span class="code-str">#232742</span>
+                    }
+                }
+                <span class="code-kw">row</span> {
+                    <span class="code-type">align</span>: <span class="code-str">"space-between"</span>
+                    <span class="code-kw">checkbox</span> <span class="code-str">"Variável PATH do Sistema"</span> {
+                        <span class="code-type">value</span>: <span class="code-kw">true</span>
+                        <span class="code-type">description</span>: <span class="code-str">"Adiciona binários do OFS à variável PATH do sistema"</span>
+                        <span class="code-type">tag</span>: <span class="code-str">"[Recomendado]"</span>
+                        <span class="code-type">hover_bg</span>: <span class="code-str">#232742</span>
+                    }
+                }
+            }
+        }
+
+        <span class="code-kw">row</span> {
+            <span class="code-type">gap</span>: <span class="code-num">16</span>
+            <span class="code-kw">button</span> <span class="code-str">"Cancelar"</span> {
+                <span class="code-type">width</span>: <span class="code-num">120</span>
+                <span class="code-type">bg_color</span>: <span class="code-str">#232742</span>
+                <span class="code-type">hover_bg</span>: <span class="code-str">#2e3355</span>
+                <span class="code-type">fg_color</span>: <span class="code-str">#cdd6f4</span>
+                <span class="code-type">on_click</span>: <span class="code-str">"cancel_install"</span>
+            }
+            <span class="code-kw">button</span> <span class="code-str">"Avançar >"</span> {
+                <span class="code-type">width</span>: <span class="code-num">140</span>
+                <span class="code-type">bg_color</span>: <span class="code-str">#89b4fa</span>
+                <span class="code-type">hover_bg</span>: <span class="code-str">#b4befe</span>
+                <span class="code-type">hover_border</span>: <span class="code-str">#89b4fa</span>
+                <span class="code-type">fg_color</span>: <span class="code-str">#0c0d14</span>
+                <span class="code-type">on_click</span>: <span class="code-str">"next_step"</span>
+            }
+        }
+    }
+}
+            </div>
+        </section>
+
+        <section id="comandos">
+            <div class="section-title">
+                <h2>Como Executar e Testar Arquivos OLL</h2>
+                <p>Ferramentas de linha de comando disponíveis no ecossistema OFS</p>
+            </div>
+
+            <div class="terminal-preview">
+                <div class="terminal-header">
+                    <span class="dot dot-red"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-green"></span>
+                    <span style="margin-left: 8px; font-size: 0.85rem; color: #a6adc8;">Terminal — Ferramentas OLL</span>
+                </div>
+                <div class="terminal-body">
+<span style="color: #6c7086;"># 1. Executar janela interativa em tempo real com eventos de mouse e clique</span><br>
+$ ofs-ui ofs/examples/oll/system_monitor.oll<br>
+<span style="color: #a6e3a1;">[OLL-UI] Criando janela nativa X11/Win32: 720x560</span><br>
+<span style="color: #a6e3a1;">[OLL-UI] Árvore montada: 12 nós</span><br>
+<span style="color: #a6e3a1;">[OLL-UI] Loop de eventos a 60 FPS ativo.</span><br><br>
+<span style="color: #6c7086;"># 2. Renderizar prévia em imagem bitmap PPM (ótimo para CI/CD e testes automatizados)</span><br>
+$ ofs ui ofs/examples/oll/system_monitor.oll -o preview.ppm<br>
+<span style="color: #a6e3a1;">Rendered layout preview saved to: preview.ppm</span><br><br>
+<span style="color: #6c7086;"># 3. Executar aplicação OFS completa com binding de eventos OLL</span><br>
+$ ofs run ofs/examples/oll/oll_window_app.ofs
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        <p>© 2026 Obsidian Fault Script (OFS). Desenvolvido por Samwns e comunidade.</p>
+        <p style="margin-top: 0.5rem;">
+            <a href="index.html">Página Principal</a> • 
+            <a href="compiler.html">Compilador</a> • 
+            <a href="language.html">Linguagem</a> • 
+            <a href="downloads.html">Downloads</a> • 
+            <a href="benchmark.html">Benchmark</a> • 
+            <a href="https://github.com/Samwns/Obsidian-Fault-Script">GitHub</a>
+        </p>
+    </footer>
+
+</body>
+</html>

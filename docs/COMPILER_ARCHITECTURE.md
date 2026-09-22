@@ -31,12 +31,15 @@ source.ofs
        │
        ▼
 ┌──────────────┐
-│  Codegen     │ → output.c
-│  (emit C)    │   (type mapping OFS→C)
+│  LLVM Gen    │ → output.ll (LLVM IR nativo)
+│ (llvmgen.ofs)│   (mapeamento OFS → LLVM IR SSA)
 └──────┬───────┘
        │
        ▼
-   output.c → gcc -O2 → executable
+   llc -filetype=obj output.ll -o output.o
+       │
+       ▼
+   ld / ld.lld output.o magma.o (Stack Magma) → executável nativo
 ```
 
 ---
@@ -249,101 +252,72 @@ resolve(name)
 
 ---
 
-## Phase 4: Code Generator
+## Phase 4: LLVM IR Generator (Geração Nativa)
 
-**File**: `ofs/ofscc/codegen.ofs` (400+ lines)
+**File**: `ofs/ofscc/llvmgen.ofs` (74KB, 2,000+ lines)
 
-### Type Mapping (OFS → C)
+O backend primário da OFS gera diretamente LLVM Intermediate Representation (IR), dispensando transpiladores para C ou dependências do Clang.
+
+### Type Mapping (OFS → LLVM IR)
 
 ```ofs
-stone      → int64_t
+stone      → i64
 crystal    → double
-obsidian   → char*
-bool       → int
+obsidian   → i8* (ponteiro para sequência UTF-8)
+bool       → i1
 void       → void
-u8, u16, u32, u64 → uint8_t, uint16_t, uint32_t, uint64_t
-i8, i32    → int8_t, int32_t
-Array<T>   → (handled separately)
+u8, u16, u32, u64 → i8, i16, i32, i64
+i8, i32    → i8, i32
+Array<T>   → %struct.Array* (vetor dinâmico do Stack Magma)
 ```
 
-### Code Emission Strategy
+### Estratégia de Emissão LLVM IR
 
-1. **Header** — #include, typedefs
-2. **Forward declarations** — Function prototypes
-3. **Function definitions** — In declaration order
-4. **Main logic** — Program body
+1. **Target Datalayout & Triple** — Configuração da arquitetura de destino (x86_64 ELF ou Windows PE32+)
+2. **Declarações Externas** — Protótipos das rotinas do Stack Magma (`ofs_alloc`, `ofs_str_concat`, `ofs_array_push`, etc.)
+3. **Definições de Funções** — Blocos básicos rotulados (`entry:`, etc.), alocações de variáveis (`alloca`), instruções SSA (`load`, `store`, `add`, `icmp`, `br`, `call`)
+4. **Constantes de String** — Globais imutáveis `@.str.N = private unnamed_addr constant [...]`
 
-### Example: `forge x = 42`
+### Exemplo: `forge x = 42`
 
-**AST**:
-```
-NK_VAR_DECL
-├─ val: "x"
-├─ c0: -1  (no type annotation)
-└─ c1: 2   (init expr)
-   └─ NK_LIT_INT, val: "42"
+**LLVM IR Gerado**:
+```llvm
+%x = alloca i64, align 8
+store i64 42, i64* %x, align 8
 ```
 
-**Generated C**:
-```c
-int64_t x = 42;
-```
+### Exemplo: `vein add(a: stone, b: stone) -> stone { return a + b }`
 
-### Example: `vein add(a: stone, b: stone) -> stone { return a + b }`
-
-**Generated C**:
-```c
-int64_t add(int64_t a, int64_t b) {
-    return (a + b);
+**LLVM IR Gerado**:
+```llvm
+define i64 @add(i64 %a, i64 %b) {
+entry:
+  %0 = add i64 %a, %b
+  ret i64 %0
 }
 ```
-
-### String Output (No Buffering)
-
-```ofs
-forge _out_file: stone = 0
-
-vein cg_open(path: obsidian) -> void {
-    _out_file = fopen(path, "w")
-}
-
-vein cg_emit(line: obsidian) -> void {
-    fputs(line, _out_file)
-    fputs("\n", _out_file)
-}
-```
-
-**Why**: Avoids O(n²) concatenation — writes directly to file line-by-line.
 
 ---
 
-## Phase 5: Driver
+## Phase 5: Driver do Compilador
 
 **File**: `ofs/ofscc/ofscc.ofs`
 
-### Pipeline
+### Pipeline de Execução Self-Hosted
 
 ```ofs
 core main() {
-    // 1. Read source
     forge src = read_file(input_file)
+    src = expand_attaches(input_file, src)
     
-    // 2. Lex
     forge tokens = lexer.lex(src)
-    
-    // 3. Parse
     forge root_id = parser.parse(tokens)
-    
-    // 4. Type check
     typeck.check(root_id)
     
-    // 5. Codegen
-    cg_open(c_output)
-    codegen.generate(root_id)
-    cg_close()
+    llvmgen.generate(root_id, ll_output)
     
-    // 6. Compile with GCC
-    system("gcc -O2 -o " + output_file + " " + c_output)
+    system("llc -filetype=obj " + ll_output + " -o " + obj_output)
+    system("ld " + obj_output + " ofs/dist/magma.o -lc -lm -o " + output_file)
 }
 ```
 
@@ -424,27 +398,29 @@ For bootstrap to work (`ofscc_v2 === ofscc_v3`):
 | Lexer | <1ms | File I/O |
 | Parser | ~10ms | Node allocation |
 | TypeCheck | ~5ms | Symbol lookup |
-| Codegen | ~10ms | File I/O |
-| GCC | ~100ms | C compiler |
-| **Total** | ~150ms | C compiler |
+| LLVMGen | ~10ms | SSA IR generation |
+| LLC (Assembler) | ~35ms | Machine code emission |
+| Linker (ld / ld.lld) | ~15ms | Object linking with `magma.o` |
+| **Total** | ~70ms | Native machine code generation |
 
 ---
 
-## Future: LLVM Backend
+## Active Architecture: Direct LLVM Backend (Zero-Clang)
 
-Instead of generating C:
+The OFS compiler emits LLVM IR directly without intermediate C code:
 
 ```
-codegen.ofs → output.ll (LLVM IR) → llc → output.o → ld → executable
+llvmgen.ofs → output.ll (LLVM IR) → llc -filetype=obj → output.o → ld (with magma.o) → executable
 ```
 
 Benefits:
-- Direct compilation (no GCC dependency)
-- Better optimization opportunities
-- Faster compilation
-- Direct to machine code
+- Direct machine code generation (no GCC or Clang dependency)
+- Byte-for-byte reproducibility and deterministic IR emission
+- Fast compilation (~50-100ms end-to-end)
+- 100% pure OFS runtime via Stack Magma (`magma.o`)
+- First-class cross-compilation support (Linux ELF and Windows PE32+)
 
 ---
 
-**Architecture Status**: ✅ Complete and working
-**Next**: Verify bootstrap + production hardening
+**Architecture Status**: ✅ Production & Self-Hosted
+**Verification**: Verified via `cmp -s v3.ll v4.ll` (zero diff)

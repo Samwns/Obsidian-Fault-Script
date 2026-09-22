@@ -1,0 +1,43 @@
+attach {F:../../stdlib/runtime/matrix.ofs}
+
+core main() {
+    forge arr: *stone = matrix.create(2, 8)
+    if (matrix.length(arr) != 0) {
+        exit(1)
+    }
+    if (matrix.capacity(arr) < 2) {
+        exit(2)
+    }
+
+    matrix.push(arr, 101)
+    matrix.push(arr, 202)
+    matrix.push(arr, 303)
+    matrix.push(arr, 404)
+    matrix.push(arr, 505)
+
+    if (matrix.length(arr) != 5) {
+        exit(3)
+    }
+
+    forge v0 = matrix.get(arr, 0)
+    forge v2 = matrix.get(arr, 2)
+    forge v4 = matrix.get(arr, 4)
+
+    if (v0 != 101) { exit(4) }
+    if (v2 != 303) { exit(5) }
+    if (v4 != 505) { exit(6) }
+
+    matrix.set(arr, 2, 999)
+    forge v2_new = matrix.get(arr, 2)
+    if (v2_new != 999) { exit(7) }
+
+    forge popped: *stone = matrix.pop(arr)
+    fracture {
+        if (*popped != 505) { exit(8) }
+    }
+    if (matrix.length(arr) != 4) {
+        exit(9)
+    }
+
+    echo("MAGMA_MATRIX_TEST_OK")
+}

@@ -2,7 +2,7 @@
   "name": "obsidian-fault-script",
   "displayName": "Obsidian Fault Script",
   "description": "Language support, diagnostics, autocomplete and embedded self-hosted LLVM compiler for OFS",
-  "version": "1.0.120",
+  "version": "1.0.9",
   "publisher": "Obsidian-Fault",
   "icon": "media/ofs.png",
   "license": "BSL-1.0",
@@ -23,6 +23,13 @@
     "Debuggers"
   ],
   "main": "./src/extension.js",
+  "activationEvents": [
+    "onLanguage:ofs",
+    "onLanguage:oll",
+    "onCommand:ofs.openStudio",
+    "onCommand:ofs.runNative",
+    "onCommand:ofs.previewOll"
+  ],
   "contributes": {
     "languages": [
       {
@@ -41,6 +48,21 @@
         }
       },
       {
+        "id": "oll",
+        "aliases": [
+          "OLL",
+          "Obsidian Layout Language"
+        ],
+        "extensions": [
+          ".oll"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "light": "./media/ofs.svg",
+          "dark": "./media/ofs.svg"
+        }
+      },
+      {
         "id": "odl",
         "aliases": [
           "ODL",
@@ -49,26 +71,18 @@
         "extensions": [
           ".odl"
         ],
-        "configuration": "./language-configuration.json",
-        "icon": {
-          "light": "./media/odl.svg",
-          "dark": "./media/odl.svg"
-        }
+        "configuration": "./language-configuration.json"
       },
       {
         "id": "oes",
         "aliases": [
           "OES",
-          "Obsidian Effect Scripts"
+          "Obsidian Element Styling"
         ],
         "extensions": [
           ".oes"
         ],
-        "configuration": "./language-configuration.json",
-        "icon": {
-          "light": "./media/oes.svg",
-          "dark": "./media/oes.svg"
-        }
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
@@ -76,6 +90,11 @@
         "language": "ofs",
         "scopeName": "source.ofs",
         "path": "./syntaxes/ofs.tmLanguage.json"
+      },
+      {
+        "language": "oll",
+        "scopeName": "source.oll",
+        "path": "./syntaxes/oll.tmLanguage.json"
       },
       {
         "language": "odl",
@@ -94,12 +113,8 @@
         "path": "./snippets/ofs.code-snippets"
       },
       {
-        "language": "odl",
-        "path": "./snippets/odl.code-snippets"
-      },
-      {
-        "language": "oes",
-        "path": "./snippets/oes.code-snippets"
+        "language": "oll",
+        "path": "./snippets/oll.code-snippets"
       }
     ],
     "themes": [
@@ -139,13 +154,6 @@
         "icon": "$(symbol-field)"
       },
       {
-        "command": "ofs.goLive",
-        "title": "Go Live",
-        "shortTitle": "Go Live",
-        "category": "OFS",
-        "icon": "$(globe)"
-      },
-      {
         "command": "ofs.pauseExecution",
         "title": "Pause Execution",
         "category": "OFS",
@@ -162,8 +170,72 @@
         "title": "Stop Execution",
         "category": "OFS",
         "icon": "$(debug-stop)"
+      },
+      {
+        "command": "ofs.runOll",
+        "title": "Run OLL Native Window",
+        "shortTitle": "Run",
+        "category": "OFS",
+        "icon": "$(play)"
+      },
+      {
+        "command": "ofs.previewOll",
+        "title": "Live Preview OLL Layout",
+        "shortTitle": "Preview",
+        "category": "OFS",
+        "icon": "$(layout)"
+      },
+      {
+        "command": "ofs.openStudio",
+        "title": "Open Studio IDLE (OLL Engine)",
+        "shortTitle": "Studio IDLE",
+        "category": "OFS",
+        "icon": "$(layout)"
+      },
+      {
+        "command": "ofs.launchNativeIdle",
+        "title": "Launch Native Studio IDLE (Linux X11)",
+        "shortTitle": "Native IDLE",
+        "category": "OFS",
+        "icon": "$(window)"
+      },
+      {
+        "command": "ofs.refreshWorkspace",
+        "title": "Refresh OFS Studio Explorer",
+        "category": "OFS",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "ofs.setTheme",
+        "title": "Set OLL Theme",
+        "category": "OFS"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "ofs-studio",
+          "title": "OFS Studio",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "ofs-studio": [
+        {
+          "id": "ofs.workspaceView",
+          "name": "OFS Explorer"
+        },
+        {
+          "id": "ofs.actionsView",
+          "name": "Compilador & Ações"
+        },
+        {
+          "id": "ofs.themesView",
+          "name": "Temas Visuais OLL"
+        }
+      ]
+    },
     "debuggers": [
       {
         "type": "ofs-native",
@@ -229,8 +301,18 @@
           "group": "2_check@2"
         },
         {
-          "command": "ofs.goLive",
-          "when": "resourceLangId == ofs || resourceLangId == odl",
+          "command": "ofs.runOll",
+          "when": "resourceLangId == oll",
+          "group": "navigation@1"
+        },
+        {
+          "command": "ofs.previewOll",
+          "when": "resourceLangId == oll",
+          "group": "navigation@2"
+        },
+        {
+          "command": "ofs.openStudio",
+          "when": "resourceLangId == ofs || resourceLangId == oll",
           "group": "navigation@3"
         }
       ],
@@ -249,6 +331,23 @@
           "command": "ofs.stopExecution",
           "when": "resourceLangId == ofs && ofs.executionRunning",
           "group": "navigation@2"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "ofs.refreshWorkspace",
+          "when": "view == ofs.workspaceView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "ofs.openStudio",
+          "when": "view == ofs.workspaceView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "ofs.launchNativeIdle",
+          "when": "view == ofs.actionsView",
+          "group": "navigation@1"
         }
       ]
     },
@@ -274,11 +373,6 @@
           "type": "boolean",
           "default": true,
           "description": "Prefer compiler binary embedded in extension (bin/<platform>) before workspace/system compiler."
-        },
-        "ofs.goLivePort": {
-          "type": "number",
-          "default": 8080,
-          "description": "Default port used by the OFS Go Live command."
         }
       }
     }

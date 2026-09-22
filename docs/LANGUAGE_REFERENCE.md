@@ -67,7 +67,6 @@ Um arquivo `.ofs` pode conter:
 | `u32` | sem sinal | 32 bits |
 | `u64` | sem sinal | 64 bits |
 | `i8` | com sinal | 8 bits |
-| `i16` | com sinal | 16 bits |
 | `i32` | com sinal | 32 bits |
 
 Exemplo:
@@ -415,36 +414,19 @@ Campos importantes:
 
 ### `fracture`
 
-Contexto de ponteiros tipados. O compilador verifica o tipo de `*T`, mas o
-programa continua responsável pela validade do endereço, pelo tempo de vida e
-por não acessar memória fora da região válida.
+Camada de baixo nível mais tipada.
 
 ### `abyss`
 
-Fronteira explícita para trabalho cru. Na implementação atual ela ainda passa
-pelo parser e pelo verificador de tipos comum; não desliga automaticamente as
-verificações e não oferece garantia adicional de segurança de memória.
+Camada crua e irrestrita.
 
-### `intent fractal`
+### `fractal`
 
-Metadado de intenção de função:
-
-```ofs
-vein transform(value: stone) -> stone intent fractal {
-    return value * 2
-}
-```
-
-O parser atual não reconhece `fractal { ... }` como bloco. Intents registram a
-intenção da API, mas ainda não constituem um sistema de efeitos com garantias
-estáticas completas.
+Camada especial ligada a intent/efeitos.
 
 ### `bedrock`
 
-Contexto tipado para memória explícita, regiões, lanes, packets e intrinsics
-`fault_*`. Alocações criadas por `bedrock_cell_new` e `bedrock_region_new`
-devem ser liberadas uma vez com a função `*_drop` correspondente. Não use o
-ponteiro depois da liberação e não acesse índices fora da região alocada.
+Vocabulário OFS para memória, regiões, lanes, packets e intrinsics `fault_*`.
 
 Exemplo:
 
@@ -462,21 +444,27 @@ core main() {
 
 ### Alias `tectonic`
 
-O parser aceita `tectonic` antes dos três blocos implementados:
+O parser aceita aliases textuais como:
 
 - `tectonic fracture`
 - `tectonic abyss`
+- `tectonic fractal`
+- `tectonic safe`
+- `tectonic unsafe`
 - `tectonic bedrock`
 
-Hoje o prefixo preserva o mesmo corpo de bloco e não altera a geração LLVM.
-`tectonic fractal`, `tectonic safe` e `tectonic unsafe` não são formas
-reconhecidas pelo parser atual.
 ---
 
 ## 13. Biblioteca padrão e pacotes
 
 Módulos e pacotes relevantes já presentes no projeto:
 
+- `fs`
+- `net`
+- `http`
+- `odl`
+- `oes`
+- `oll`
 - `canvas`
 - `core`
 - `fmt`
@@ -491,6 +479,75 @@ Módulos e pacotes relevantes já presentes no projeto:
 - `test-lib`
 - `webserver`
 - `window`
+
+Módulo `fs` expõe:
+
+- `fs.exists(path: obsidian) -> bool`
+- `fs.size(path: obsidian) -> stone`
+- `fs.read(path: obsidian) -> obsidian`
+- `fs.write(path: obsidian, content: obsidian) -> bool`
+- `fs.append(path: obsidian, content: obsidian) -> bool`
+
+Módulo `net` expõe:
+
+- `net.tcp_connect(host: obsidian, port: stone) -> stone`
+- `net.tcp_send(fd: stone, data: obsidian) -> stone`
+- `net.tcp_recv(fd: stone, max_len: stone) -> obsidian`
+- `net.tcp_close(fd: stone) -> void`
+- `net.tcp_listen(port: stone, backlog: stone) -> stone`
+- `net.tcp_accept(server_fd: stone) -> stone`
+
+Módulo `http` expõe:
+
+- `http.get(url: obsidian) -> HttpResponse`
+- `http.parse_response(raw: obsidian) -> HttpResponse`
+
+Módulo `odl` expõe:
+
+- `odl.parse(src: obsidian) -> stone`
+- `odl.element_count() -> stone`
+- `odl.new_element(tag: obsidian) -> stone`
+- `odl.get_element(id: stone) -> OdlElement`
+- `odl.set_element(id: stone, elem: OdlElement) -> void`
+- `odl.add_child(parent_id: stone, child_id: stone) -> void`
+- `odl.child_count(parent_id: stone) -> stone`
+- `odl.get_child_at(parent_id: stone, index: stone) -> stone`
+- `odl.reset() -> void`
+
+Módulo `oes` expõe:
+
+- `oes.parse_sheet(css_src: obsidian) -> Array<OesRule>`
+- `oes.apply_rules(node_id: stone, rules: Array<OesRule>) -> void`
+- `oes.matches_selector(elem: OdlElement, sel: obsidian) -> bool`
+- `oes.parse_color(cname: obsidian) -> stone`
+
+Módulo `oll` expõe:
+
+- `oll.parse(src: obsidian) -> stone`
+- `oll.load(path: obsidian) -> stone`
+- `oll.node_count() -> stone`
+- `oll.get_node(id: stone) -> OllNode`
+- `oll.set_node(id: stone, n: OllNode) -> void`
+- `oll.find_by_name(name: obsidian) -> stone`
+- `oll.compute_layout(root_id: stone) -> void`
+- `oll.render(cv: Canvas) -> void`
+- `oll.hit_test(x: stone, y: stone) -> stone`
+- `oll.click(id: stone) -> obsidian`
+- `oll.reset() -> void`
+
+Módulo `canvas` expõe:
+
+- `canvas.create(w: stone, h: stone) -> Canvas`
+- `canvas.destroy(cv: Canvas) -> void`
+- `canvas.clear(cv: Canvas, color: stone) -> void`
+- `canvas.set_pixel(cv: Canvas, x: stone, y: stone, color: stone) -> void`
+- `canvas.get_pixel(cv: Canvas, x: stone, y: stone) -> stone`
+- `canvas.fill_rect(cv: Canvas, x: stone, y: stone, w: stone, h: stone, color: stone) -> void`
+- `canvas.draw_rect(cv: Canvas, x: stone, y: stone, w: stone, h: stone, color: stone) -> void`
+- `canvas.draw_char(cv: Canvas, x: stone, y: stone, ch: stone, color: stone) -> void`
+- `canvas.draw_text(cv: Canvas, x: stone, y: stone, text: obsidian, color: stone) -> void`
+- `canvas.save_ppm(cv: Canvas, path: obsidian) -> bool`
+- `canvas.present(cv: Canvas) -> void`
 
 Módulo `window` expõe:
 
@@ -507,16 +564,6 @@ Módulo `window` expõe:
 - `input.is_down`
 - `input.key`
 
-Módulo `canvas` expõe:
-
-- `canvas.create`
-- `canvas.destroy`
-- `canvas.clear`
-- `canvas.set_pixel`
-- `canvas.get_pixel`
-- `canvas.fill_rect`
-- `canvas.present`
-
 ---
 
 ## 14. Comandos do compilador
@@ -527,6 +574,7 @@ Módulo `canvas` expõe:
 ofs run arquivo.ofs
 ofs build arquivo.ofs -o app
 ofs check arquivo.ofs
+ofs clean
 ofs tokens arquivo.ofs
 ofs ast arquivo.ofs
 ofs ir arquivo.ofs
@@ -716,7 +764,7 @@ Note: String (`obsidian`) casts require runtime functions (`ofs_stone_to_obsidia
 
 ## Imports
 
-Use `attach` to bring stdlib modules, src/packages, or local files into scope.
+Use `attach` to bring stdlib modules, packages, or local files into scope.
 
 ### Library attach (stdlib / package)
 
@@ -736,10 +784,9 @@ The name inside `{}` maps to a known stdlib module or an installed package. The 
 ```ofs
 attach {F:helpers.ofs}
 attach {F:../shared/utils.ofs}
-attach {F:/absolute/path/to/helpers.ofs}
 ```
 
-Use the `F:` prefix to reference a specific `.ofs` file by path relative to the current file, or by absolute path.
+Use the `F:` prefix to reference a specific `.ofs` file by path relative to the current file.
 
 Attach declarations must appear at the top level, before or between other declarations. The preprocessor resolves them before the lexer and parser run, so each module is inlined exactly once (deduplication is automatic).
 
@@ -757,9 +804,6 @@ Attach declarations must appear at the top level, before or between other declar
 | `rift` | Foreign runtime wrappers (C ABI helpers) |
 | `terminal-colors` | ANSI terminal color output |
 | `memory-modes` | Docs and helpers for fracture/abyss/fractal modes |
-| `canvas` | Headless-safe pixel buffer helpers; integrates with `window` |
-| `window` | Window/input API surface with Linux x64 headless runtime stubs |
-| `fmt` | Padding, trimming, table rows, case conversion |
 | `test-lib` | Unit test utilities |
 
 ---
@@ -979,31 +1023,33 @@ cycle (forge i = 0; i < 5; i++) {
 
 ---
 
-## Explicit Raw Boundary (abyss)
+## Unsafe Memory (abyss)
 
-The `abyss` block marks code that intentionally works at the raw-memory
-boundary:
+The `abyss` block allows raw, unsafe memory operations:
 
 ```ofs
 abyss {
-    shard raw: *stone = &value
-    *raw = *raw + 1
+    // Raw memory access — no type checking
+    // Use with extreme caution
 }
 ```
 
 **Rules:**
-- the current compiler still parses and type-checks the block;
-- the block does not validate pointer lifetime or address ownership;
-- pointer dereference is allowed, but invalid addresses remain undefined;
-- prefer `fracture` when typed pointer work is sufficient.
+- Type checking is relaxed inside `abyss` blocks
+- Direct memory addressing is allowed
+- Only use when absolutely necessary
+- Prefer `fracture` for pointer operations
 
 ### Directive alias: tectonic
 
-You can use `tectonic` as a prefix directive for the implemented low-level
-blocks. It maps to the same current parser behavior:
+You can use `tectonic` as a prefix directive for memory/effect modes.
+This is an alias syntax that maps to the same runtime/semantic behavior:
 
 - `tectonic fracture { ... }` -> same as `fracture { ... }`
+- `tectonic safe { ... }` -> same as `fracture { ... }`
 - `tectonic abyss { ... }` -> same as `abyss { ... }`
+- `tectonic unsafe { ... }` -> same as `abyss { ... }`
+- `tectonic fractal { ... }` -> same as `fractal { ... }`
 - `tectonic bedrock { ... }` -> same as `bedrock { ... }`
 
 Example:
@@ -1017,9 +1063,23 @@ core main() {
         *p = 20
     }
 
+    tectonic safe {
+        shard q: *stone = &x
+        *q = *q + 1
+    }
+
     tectonic abyss {
         shard raw: *stone = &x
         *raw = *raw + 1
+    }
+
+    tectonic unsafe {
+        shard raw2: *stone = &x
+        *raw2 = *raw2 + 1
+    }
+
+    tectonic fractal {
+        echo("effect-lifted mode")
     }
 
     tectonic bedrock {
@@ -1028,9 +1088,6 @@ core main() {
     }
 }
 ```
-
-`safe`, `unsafe`, and `fractal` are not accepted after `tectonic` by the
-current parser. `fractal` is available as a function intent, not a block.
 
 ---
 
@@ -1069,6 +1126,9 @@ bedrock {
 Available intrinsics:
 
 - `fault_count(stone)` -> population count
+- `fault_fence()` -> emit a machine-level memory barrier
+- `fault_prefetch(*stone)` -> request a machine-level prefetch for a pointer target
+- `fault_trap()` -> emit a machine-level trap
 - `fault_lead(stone)` -> count leading zeros
 - `fault_trail(stone)` -> count trailing zeros
 - `fault_swap(stone)` -> byte swap
@@ -1078,15 +1138,9 @@ Available intrinsics:
 - `fault_cut(value, shift, width)` -> extract a bit field
 - `fault_patch(base, shift, width, insert)` -> replace a bit field
 - `fault_weave(mask, left, right)` -> blend bits from `left` and `right` using `mask`
-- `fault_fence()` -> accepted by the current self-hosted compiler as a low-level synchronization hook
-- `fault_prefetch(*stone)` -> accepted by the current self-hosted compiler as a low-level prefetch hook
-
-Roadmap intrinsics documented for the low-level surface but not yet fully lowered in the current self-hosted compiler:
-
-- `fault_trap()`
-- `fault_unreachable()`
-- `fault_memcpy(dst, src, len)`
-- `fault_memset(dst, val, len)`
+- `fault_unreachable()` -> marks the current path as unreachable, lowers to `llvm.trap` + `unreachable` IR
+- `fault_memcpy(dst, src, len)` -> bulk memory copy (lowers to `llvm.memcpy`); `dst` and `src` must be pointers
+- `fault_memset(dst, val, len)` -> bulk memory fill with `val` byte (lowers to `llvm.memset`); `dst` must be a pointer
 
 These functions are designed to cover operations assembly already has, while also giving OFS room for its own machine-oriented vocabulary.
 
@@ -1248,38 +1302,24 @@ vein min(a: stone, b: stone) -> stone  // minimum
 vein clamp(val: stone, lo: stone, hi: stone) -> stone  // clamp to range
 ```
 
-### Runtime Functions (built-in)
+### Runtime Nativo OFS (Stack Magma)
 
-These are implemented in C and linked automatically:
+A implementação principal do runtime e da biblioteca padrão da OFS é escrita em OFS (`stdlib/runtime/`), dispensando a biblioteca externa `libofs_runtime.a`:
 
-| Function               | Description              |
-|------------------------|--------------------------|
-| `echo_stone(i64)`      | Print integer            |
-| `echo_crystal(f64)`    | Print float              |
-| `echo_obsidian(i8*)`   | Print string             |
-| `echo_bool(i1)`        | Print boolean            |
-| `ofs_alloc(i64)`       | Allocate memory          |
-| `ofs_free(ptr)`        | Free memory              |
-| `ofs_array_new()`      | Create dynamic array     |
-| `ofs_array_push()`     | Push element to array    |
-| `ofs_array_get()`      | Get element (with bounds check) |
-| `ofs_array_set()`      | Set element at index     |
-| `ofs_array_pop()`      | Remove and return last element |
-| `ofs_array_len()`      | Get array length         |
-| `ofs_str_concat()`     | Concatenate strings      |
-| `ofs_str_eq()`         | Compare strings          |
-| `ofs_str_len()`        | Get string length        |
-| `ofs_str_char_at()`    | Get character at index   |
-| `ofs_str_substr()`     | Get substring            |
-| `ofs_str_contains()`   | Check if string contains another |
-| `ofs_stone_to_obsidian()` | Integer to string     |
-| `ofs_crystal_to_obsidian()` | Float to string     |
-| `ofs_obsidian_to_stone()` | String to integer     |
-| `ofs_obsidian_to_crystal()` | String to float     |
-| `ofs_pow()`            | Power function           |
-| `ofs_sqrt()`           | Square root              |
-| `ofs_mod()`            | Positive modulo          |
-| `ofs_read_line()`      | Read line from stdin     |
+| Subsistema | Módulo | Responsabilidade |
+|---|---|---|
+| **Magma** | `magma.ofs` | Bootstrap e orquestrador de execução do runtime nativo |
+| **Reservoir** | `reservoir.ofs` | Alocação e gerenciamento de memória (`ofs_alloc`, `ofs_free`) |
+| **Facet** | `facet.ofs` | Operações de texto e conversão numérica (`ofs_str_*`, `ofs_*_to_*`) |
+| **Matrix** | `matrix.ofs` | Coleções dinâmicas e vetores (`ofs_array_*`) |
+| **Outlet** | `outlet.ofs` | Entrada e saída do terminal (`echo_*`, cores ANSI, formatação) |
+| **Foundation** | `foundation.ofs` | Abstrações de sistema operacional e ambiente (`ofs_getenv`, `ofs_mod`, `ofs_exit`) |
+| **Pulse** | `pulse.ofs` | Relógio de alta precisão monotônico e timers (`now_ms`, `sleep_ms`) |
+| **Frame** | `frame.ofs` | Gerenciamento de janelas e superfícies nativas |
+| **Impulse** | `impulse.ofs` | Eventos de entrada, mouse e teclado |
+| **Prism** | `prism.ofs` | Rasterização 2D de pixels, geometria e superfícies |
+
+Todas as primitivas de runtime são compiladas diretamente pelo `ofscc` para LLVM IR nativo, garantindo que programas OFS executem sobre o próprio runtime nativo sem depender de implementações em C.
 
 ---
 

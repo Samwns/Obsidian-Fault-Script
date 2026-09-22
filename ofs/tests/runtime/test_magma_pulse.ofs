@@ -1,0 +1,15 @@
+attach {F:../../stdlib/runtime/pulse.ofs}
+
+core main() {
+    forge t0 = pulse.now_ms()
+    pulse.sleep_ms(20)
+    forge t1 = pulse.now_ms()
+    if (t1 < t0) {
+        exit(1)
+    }
+    forge wall = pulse.wall_time()
+    if (wall <= 0) {
+        exit(2)
+    }
+    echo("MAGMA_PULSE_TEST_OK")
+}

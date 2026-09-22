@@ -58,6 +58,13 @@ jobs:
           selfhost/ofs build ofs/tests/window_runtime_smoke.ofs -o selfhost/window-smoke
           DISPLAY= selfhost/window-smoke
 
+      - name: Build OFS native wizard installer
+        env:
+          OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
+        run: |
+          selfhost/ofs build src/packaging/installer_wizard_linux.ofs -o selfhost/installer-wizard-linux
+          chmod +x selfhost/installer-wizard-linux
+
   build-macos:
     name: Build & Test (macOS)
     runs-on: macos-14

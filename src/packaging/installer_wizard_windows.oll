@@ -1,0 +1,130 @@
+window "Instalação do Obsidian Fault Script (OFS)" {
+    width: 680
+    height: 520
+    bg_color: #ffffff
+    fg_color: #1a1a1a
+    padding: 24
+    gap: 16
+
+    column {
+        gap: 16
+
+        column {
+            gap: 6
+            label "Selecione o idioma, a arquitetura e a edição" {
+                height: 36
+                fg_color: #0067b8
+                font_size: 22
+            }
+
+            label "Selecione uma das opções disponíveis para continuar." {
+                height: 20
+                fg_color: #666666
+                font_size: 14
+            }
+        }
+
+        column {
+            gap: 14
+            padding: 12
+
+            row {
+                gap: 20
+                label "Idioma:" {
+                    width: 130
+                    height: 30
+                    fg_color: #333333
+                }
+                button "Português (Brasil)  ▾" {
+                    width: 320
+                    height: 30
+                    bg_color: #f2f2f2
+                    fg_color: #000000
+                    border_color: #cccccc
+                    border_width: 1
+                    on_click: "select_language"
+                }
+            }
+
+            row {
+                gap: 20
+                label "Edição:" {
+                    width: 130
+                    height: 30
+                    fg_color: #333333
+                }
+                button "OFS Community (CLI + Magma + OLL)  ▾" {
+                    width: 320
+                    height: 30
+                    bg_color: #f2f2f2
+                    fg_color: #000000
+                    border_color: #cccccc
+                    border_width: 1
+                    on_click: "select_edition"
+                }
+            }
+
+            row {
+                gap: 20
+                label "Arquitetura:" {
+                    width: 130
+                    height: 30
+                    fg_color: #333333
+                }
+                button "64 bits (x64)  ▾" {
+                    width: 320
+                    height: 30
+                    bg_color: #0078d7
+                    fg_color: #ffffff
+                    border_color: #005a9e
+                    border_width: 1
+                    on_click: "select_arch"
+                }
+            }
+
+            row {
+                gap: 10
+                padding: 10
+                label "[X] Usar as opções recomendadas para este computador" {
+                    height: 24
+                    fg_color: #444444
+                }
+            }
+        }
+
+        row {
+            height: 40
+        }
+
+        row {
+            gap: 12
+            padding: 8
+
+            label "Obsidian Fault System Inc." {
+                width: 340
+                height: 32
+                fg_color: #888888
+            }
+
+            button "Voltar" {
+                width: 110
+                height: 32
+                bg_color: #f3f3f3
+                fg_color: #333333
+                border_color: #cccccc
+                border_width: 1
+                on_click: "btn_back"
+            }
+
+            button "Avançar >" {
+                width: 120
+                height: 32
+                bg_color: #0078d7
+                fg_color: #ffffff
+                border_color: #005a9e
+                border_width: 1
+                on_click: "btn_next"
+            }
+        }
+    }
+}

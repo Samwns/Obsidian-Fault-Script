@@ -1,0 +1,7 @@
+extern vein MessageBoxA(hwnd: *stone, text: obsidian, title: obsidian, utype: stone) -> stone
+extern vein ExitProcess(code: stone) -> void
+
+vein main() -> void {
+    MessageBoxA(null, "Obsidian Fault Script (OFS) Native Visual Engine rodando com sucesso no Wine!", "Instalador OFS Windows", 64)
+    ExitProcess(0)
+}

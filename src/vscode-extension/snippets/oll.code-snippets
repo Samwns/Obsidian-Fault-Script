@@ -1,0 +1,97 @@
+{
+  "OLL Window": {
+    "prefix": "window",
+    "body": [
+      "window \"${1:Titulo da Janela}\" {",
+      "    width: ${2:800}",
+      "    height: ${3:600}",
+      "    bg_color: ${4:#1e1e2e}",
+      "    fg_color: ${5:#cdd6f4}",
+      "    padding: ${6:16}",
+      "    gap: ${7:12}",
+      "    auto_center: true",
+      "    resizable: true",
+      "",
+      "    $0",
+      "}"
+    ],
+    "description": "Cria uma janela nativa OLL"
+  },
+  "OLL Column": {
+    "prefix": "column",
+    "body": [
+      "column {",
+      "    gap: ${1:10}",
+      "    padding: ${2:8}",
+      "    $0",
+      "}"
+    ],
+    "description": "Coluna vertical de componentes OLL"
+  },
+  "OLL Row": {
+    "prefix": "row",
+    "body": [
+      "row {",
+      "    gap: ${1:10}",
+      "    align: center",
+      "    $0",
+      "}"
+    ],
+    "description": "Linha horizontal de componentes OLL"
+  },
+  "OLL Button": {
+    "prefix": "button",
+    "body": [
+      "button \"${1:Clique Aqui}\" {",
+      "    width: ${2:120}",
+      "    height: ${3:36}",
+      "    bg_color: ${4:#007acc}",
+      "    hover_bg_color: ${5:#1f8ad2}",
+      "    fg_color: ${6:#ffffff}",
+      "    on_click: \"${7:action}\"",
+      "}"
+    ],
+    "description": "Botao interativo com suporte a hover"
+  },
+  "OLL Card": {
+    "prefix": "card",
+    "body": [
+      "card {",
+      "    padding: ${1:12}",
+      "    bg_color: ${2:#252538}",
+      "    border_color: ${3:#383854}",
+      "    border_width: 1",
+      "    gap: ${4:8}",
+      "",
+      "    header \"${5:Titulo do Card}\"",
+      "    label \"${6:Descricao}\"",
+      "    $0",
+      "}"
+    ],
+    "description": "Card visual para agrupamento de informacoes"
+  },
+  "OLL Badge": {
+    "prefix": "badge",
+    "body": [
+      "badge \"${1:STATUS}\" {",
+      "    bg_color: ${2:#1e3a29}",
+      "    fg_color: ${3:#a6e3a1}",
+      "    border_color: ${4:#a6e3a1}",
+      "    border_width: 1",
+      "}"
+    ],
+    "description": "Badge indicador visual"
+  },
+  "OLL Progress": {
+    "prefix": "progress",
+    "body": [
+      "progress {",
+      "    width: ${1:200}",
+      "    height: 12",
+      "    gap: ${2:65}",
+      "    border_color: ${3:#a6e3a1}",
+      "}"
+    ],
+    "description": "Barra de progresso percentual"
+  }
+}

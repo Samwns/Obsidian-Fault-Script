@@ -1,0 +1,27 @@
+extern vein GetModuleHandleA(name: obsidian) -> *stone
+extern vein DefWindowProcA(hwnd: *stone, msg: stone, wp: stone, lp: stone) -> stone
+extern vein RegisterClassA(wc: *stone) -> stone
+extern vein CreateWindowExA(ex: stone, cls: obsidian, name: obsidian, style: stone, x: stone, y: stone, w: stone, h: stone, parent: *stone, menu: *stone, inst: *stone, param: *stone) -> *stone
+extern vein ShowWindow(hwnd: *stone, cmd: stone) -> stone
+extern vein UpdateWindow(hwnd: *stone) -> stone
+extern vein GetMessageA(msg: *stone, hwnd: *stone, min: stone, max: stone) -> stone
+extern vein TranslateMessage(msg: *stone) -> stone
+extern vein DispatchMessageA(msg: *stone) -> stone
+extern vein PostQuitMessage(code: stone) -> void
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein fault_step(p: *stone, idx: stone) -> *stone
+extern vein SendMessageA(hwnd: *stone, msg: stone, wp: stone, lp: obsidian) -> stone
+extern vein MessageBoxA(hwnd: *stone, text: obsidian, title: obsidian, utype: stone) -> stone
+extern vein ExitProcess(code: stone) -> void
+
+vein main() -> void {
+    forge hInst = GetModuleHandleA(null)
+    forge hwnd = CreateWindowExA(0, "STATIC", "Instalacao do Obsidian Fault Script (OFS)", 268435456, 100, 100, 680, 520, null, null, hInst, null)
+    if (hwnd != null) {
+        ShowWindow(hwnd, 5)
+        UpdateWindow(hwnd)
+    }
+
+    MessageBoxA(hwnd, "Janela nativa Win32 criada com sucesso pelo Obsidian Fault Script!", "Instalador OFS Windows", 64)
+    ExitProcess(0)
+}

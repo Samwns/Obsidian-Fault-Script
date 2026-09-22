@@ -110,13 +110,37 @@ Componentes retornam `obsidian`, entao podem ser compostos por concatenacao ou p
 
 ## `canvas.ofs`, `window.ofs`, `ui.ofs`
 
-Formam a UI nativa experimental:
+Formam a camada gráfica e de janelas de modo imediato:
 
-- canvas: desenho 2D;
-- window: ciclo de vida de janela;
-- ui: texto, medidas, caixas e controles imediatos.
+- `canvas.ofs`: desenho 2D raster, primitivas de pixels, retângulos, linhas, texto bitmap e exportação PPM;
+- `window.ofs`: ciclo de vida de janelas nativas, polling de eventos, suporte X11 dinâmico no Linux e Win32 no Windows;
+- `ui.ofs`: caixas delimitadoras (`UiRect`), estilo temático (`UiStyle`, `ui.dark()`, `ui.light()`), botões, ícones vetoriais e controles imediatos.
 
-O suporte depende do runtime e da plataforma.
+## `oll.ofs` — Obsidian Layout Language
+
+Motor declarativo de interface de usuário para aplicações desktop nativas:
+
+- Leitura e parsing de arquivos `.oll` desacoplados da lógica do programa (`oll.load`);
+- Árvore hierárquica de nós com cálculo automático de layout (`oll.compute_layout`);
+- Renderização visual automática sobre `canvas` e janelas interativas 60fps (`oll.render`);
+- Elementos suportados: `window`, `column`, `row`, `card`, `header`, `badge`, `progress`, `button`, `label`, `input`, `checkbox`;
+- Propriedades visuais ricas: `bg_color`, `fg_color`, `border_color`, `border_width`, `width`, `height`, `padding`, `margin`, `gap`, `font_size`, `value`;
+- Handlers de eventos nativos: `on_click`, `on_change`, `action`.
+
+## `runtime/` — Stack Magma (Runtime Nativo 100% OFS)
+
+Localizado em `ofs/stdlib/runtime/`, substitui qualquer runtime externo em C:
+
+- `magma.ofs`: Orquestração, pontos de entrada e rotinas essenciais de boot;
+- `reservoir.ofs`: Alocação dinâmica de memória (`ofs_alloc`, `ofs_free`);
+- `facet.ofs`: Manipulação de strings, substring, concatenação e conversões numéricas;
+- `matrix.ofs`: Arrays e coleções dinâmicas estruturadas (`ofs_array_*`);
+- `outlet.ofs`: Terminal, impressão formatada, cores ANSI e streams de arquivo;
+- `foundation.ofs`: Variáveis de ambiente (`ofs_getenv`), caminhos e chamadas de SO;
+- `pulse.ofs`: Temporizadores monotônicos de alta precisão e controle de ticks;
+- `frame.ofs`: Gerenciamento de janelas e contexto de display de baixo nível;
+- `impulse.ofs`: Captura e despacho de eventos de teclado e mouse;
+- `prism.ofs`: Rasterização gráfica vetorial e transformações de superfície.
 
 ## `bedrock.ofs`
 
@@ -141,3 +165,4 @@ Helpers HTML antigos mantidos para compatibilidade. Projetos web novos devem pre
 ## `test_lib.ofs`
 
 Funcoes auxiliares usadas em exemplos e testes da linguagem.
+

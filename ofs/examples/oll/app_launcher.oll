@@ -1,0 +1,120 @@
+window "Obsidian App Hub" {
+    width: 760
+    height: 520
+    bg_color: #11111b
+    fg_color: #cdd6f4
+    padding: 24
+    gap: 16
+
+    column {
+        gap: 16
+
+        row {
+            height: 40
+            gap: 12
+            label "💎 OFS Application Suite" {
+                fg_color: #cba6f7
+                font_size: 20
+            }
+        }
+
+        row {
+            gap: 16
+            height: 160
+
+            panel {
+                width: 220
+                bg_color: #1e1e2e
+                border_color: #89b4fa
+                border_width: 1
+                padding: 16
+                gap: 10
+
+                label "🌐 Catalyst Browser" {
+                    fg_color: #89b4fa
+                    font_size: 16
+                }
+                label "Navegador nativo com renderizador OLL" {
+                    fg_color: #a6adc8
+                }
+                button "Iniciar" {
+                    height: 28
+                    bg_color: #89b4fa
+                    fg_color: #11111b
+                    on_click: "launch_catalyst"
+                }
+            }
+
+            panel {
+                width: 220
+                bg_color: #1e1e2e
+                border_color: #a6e3a1
+                border_width: 1
+                padding: 16
+                gap: 10
+
+                label "📊 System Monitor" {
+                    fg_color: #a6e3a1
+                    font_size: 16
+                }
+                label "Monitor de processos e telemetria Linux" {
+                    fg_color: #a6adc8
+                }
+                button "Iniciar" {
+                    height: 28
+                    bg_color: #a6e3a1
+                    fg_color: #11111b
+                    on_click: "launch_monitor"
+                }
+            }
+
+            panel {
+                width: 220
+                bg_color: #1e1e2e
+                border_color: #fab387
+                border_width: 1
+                padding: 16
+                gap: 10
+
+                label "⚙️ Setup Wizard" {
+                    fg_color: #fab387
+                    font_size: 16
+                }
+                label "Assistente de instalacao OFS multi-OS" {
+                    fg_color: #a6adc8
+                }
+                button "Iniciar" {
+                    height: 28
+                    bg_color: #fab387
+                    fg_color: #11111b
+                    on_click: "launch_installer"
+                }
+            }
+        }
+
+        panel {
+            bg_color: #1e1e2e
+            border_color: #313244
+            border_width: 1
+            padding: 16
+            gap: 12
+
+            label "LOG DE EXECUCAO E EVENTOS DA OLL" {
+                fg_color: #89b4fa
+            }
+
+            label "✓ Engine OLL: Carregamento declarativo concluido" {
+                fg_color: #a6e3a1
+            }
+            label "✓ Runtime: Stack Magma 100% puro em OFS" {
+                fg_color: #a6e3a1
+            }
+            label "✓ Compilador: Native LLC + Linker (zero dependencia do Clang)" {
+                fg_color: #a6e3a1
+            }
+            label "✓ Cross-Platform: Executaveis nativos ELF Linux e PE32+ Windows" {
+                fg_color: #a6e3a1
+            }
+        }
+    }
+}

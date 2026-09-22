@@ -1,0 +1,14 @@
+window HelloWindow {
+    title: "Hello OLL"
+    width: 600
+    height: 400
+    background: #181825
+
+    column {
+        padding: 20
+        gap: 12
+        label "Welcome to Obsidian Layout Language" { color: #89b4fa }
+        label "A declarative native UI language for OFS" { color: #a6adc8 }
+        button "Get Started" { id: "btn_start", width: 120, height: 32, on_click: on_start }
+    }
+}

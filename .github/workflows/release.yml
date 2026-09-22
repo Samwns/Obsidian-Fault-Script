@@ -90,6 +90,11 @@ jobs:
           OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build ofs/tests/window_runtime_smoke.ofs -o deb-test/window-smoke
           DISPLAY= deb-test/window-smoke
 
+          echo "Building OFS native wizard installer..."
+          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build src/packaging/installer_wizard_linux.ofs -o "native-installers/ofs-installer-wizard-linux-${TAG}"
+          chmod +x "native-installers/ofs-installer-wizard-linux-${TAG}"
+          cp src/packaging/installer_wizard_linux.oll "native-installers/"
+
           echo "linux_installers=native-installers/*${TAG}*" >> "$GITHUB_ENV"
 
       - name: Upload artifact

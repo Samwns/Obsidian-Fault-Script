@@ -18,8 +18,7 @@ forge _expanded_paths: Array<obsidian> = []
 
 vein path_seen(path: obsidian) -> bool {
     forge i = 0
-    forge count = ofs_array_len(_expanded_paths)
-    while (i < count) {
+    while (i < ofs_array_len(_expanded_paths)) {
         forge p: obsidian = ofs_array_get(_expanded_paths, i)
         if (ofs_str_eq(p, path)) { return true }
         i++
@@ -48,63 +47,20 @@ vein dirname(path: obsidian) -> obsidian {
 }
 
 vein is_attach_line(line: obsidian) -> bool {
-    if (ofs_str_len(line) < 9) { return false }
-    return ofs_str_eq(ofs_str_substr(line, 0, 8), "attach {")
+    if (ofs_str_len(line) < 11) { return false }
+    return ofs_str_eq(ofs_str_substr(line, 0, 10), "attach {F:")
 }
 
 vein attach_path_from_line(line: obsidian) -> obsidian {
-    forge i = 8
+    forge i = 10
     forge len = ofs_str_len(line)
     while (i < len) {
         if (ofs_str_char_at(line, i) == 125) {
-            return ofs_str_substr(line, 8, i - 8)
+            return ofs_str_substr(line, 10, i - 10)
         }
         i++
     }
     return ""
-}
-
-vein package_file_name(name: obsidian) -> obsidian {
-    if (ofs_str_eq(name, "terminal-colors")) { return "terminal_colors" }
-    if (ofs_str_eq(name, "memory-modes")) { return "memory_modes" }
-    if (ofs_str_eq(name, "bedrock-packet")) { return "bedrock_packet" }
-    if (ofs_str_eq(name, "test-lib")) { return "test_lib" }
-    return name
-}
-
-vein stdlib_path(file_name: obsidian) -> obsidian {
-    forge root = getenv("OFS_STDLIB")
-    if (!ofs_str_eq(root, "")) {
-        return root + "/" + file_name + ".ofs"
-    }
-    return "ofs/stdlib/" + file_name + ".ofs"
-}
-
-vein resolve_attach_path(base: obsidian, spec: obsidian) -> obsidian {
-    if (ofs_str_len(spec) > 2 && ofs_str_eq(ofs_str_substr(spec, 0, 2), "F:")) {
-        forge rel = ofs_str_substr(spec, 2, ofs_str_len(spec) - 2)
-        if (ofs_str_len(rel) > 0 && ofs_str_eq(ofs_str_substr(rel, 0, 1), "/")) {
-            return rel
-        }
-        return base + rel
-    }
-
-    forge file_name = package_file_name(spec)
-    if (ofs_str_eq(spec, "bedrock") || ofs_str_eq(spec, "bedrock-packet") ||
-        ofs_str_eq(spec, "canvas") || ofs_str_eq(spec, "core") ||
-        ofs_str_eq(spec, "io") || ofs_str_eq(spec, "math") ||
-        ofs_str_eq(spec, "oes") ||
-        ofs_str_eq(spec, "ofshtml") ||
-        ofs_str_eq(spec, "odl") ||
-        ofs_str_eq(spec, "memory-modes") || ofs_str_eq(spec, "rift") ||
-        ofs_str_eq(spec, "string") || ofs_str_eq(spec, "terminal-colors") ||
-        ofs_str_eq(spec, "test-lib") || ofs_str_eq(spec, "webserver") ||
-        ofs_str_eq(spec, "webui") ||
-        ofs_str_eq(spec, "window")) {
-        return stdlib_path(file_name)
-    }
-
-    return "src/packages/src/" + spec + "/libs/" + file_name + ".ofs"
 }
 
 vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
@@ -121,8 +77,22 @@ vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
         if (i == len || ofs_str_char_at(src, i) == 10) {
             forge line = ofs_str_substr(src, start, i - start)
             if (is_attach_line(line)) {
-                forge spec = attach_path_from_line(line)
-                forge child_path = resolve_attach_path(base, spec)
+                forge rel = attach_path_from_line(line)
+                forge child_path = base + rel
+                forge f_chk = fopen(child_path, "r")
+                if (f_chk != null) {
+                    fclose(f_chk)
+                } else {
+                    forge env_std = getenv("OFS_STDLIB_PATH")
+                    if (!ofs_str_eq(env_std, "")) {
+                        forge std_cand = env_std + "/" + rel
+                        forge f_std = fopen(std_cand, "r")
+                        if (f_std != null) {
+                            fclose(f_std)
+                            child_path = std_cand
+                        }
+                    }
+                }
                 forge child_src = read_file(child_path)
                 out = out + expand_attaches(child_path, child_src)
             } else {
@@ -202,7 +172,7 @@ vein parse_state_field(state: obsidian, field_idx: stone) -> obsidian {
             if (cur == field_idx) {
                 return ofs_str_substr(state, start, i - start)
             }
-            cur++
+                cur = cur + 1
             start = i + 1
         }
         i++
@@ -307,12 +277,12 @@ core main() {
     }
     
     // Phase 6: Native link from LLVM IR. The C backend is kept only behind OFSCC_MODE=c.
-    echo("[6/6] Native link...")
+    forge obj_file = c_output + ".o"
     forge compile_cmd = ""
     if (ofs_str_eq(compile_mode, "c")) {
         compile_cmd = "gcc " + c_opt + " -o " + output_file + " " + c_output + " 2>&1"
     } else {
-        compile_cmd = "clang -Wno-override-module " + c_opt + " " + c_output + " /usr/local/lib/libofs_runtime.a -lm -o " + output_file + " 2>&1"
+        compile_cmd = "llc -filetype=obj " + c_output + " -o " + obj_file + " && (ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib64/crt1.o /usr/lib64/crti.o " + obj_file + " -lc -lm /usr/lib64/crtn.o -o " + output_file + " 2>&1 || ld -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o " + obj_file + " -lc -lm /usr/lib/x86_64-linux-gnu/crtn.o -o " + output_file + " 2>&1)"
     }
     forge compile_result = system(compile_cmd)
     

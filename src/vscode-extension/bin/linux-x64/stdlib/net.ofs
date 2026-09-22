@@ -1,0 +1,79 @@
+rift vein socket(domain: stone, type: stone, protocol: stone) -> stone abi c
+rift vein close(fd: stone) -> stone abi c
+rift vein htons(port: stone) -> stone abi c
+rift vein inet_addr(ip: obsidian) -> stone abi c
+rift vein ofs_alloc(sz: stone) -> *stone abi c
+rift vein connect(fd: stone, addr: *stone, addrlen: stone) -> stone abi c
+rift vein bind(fd: stone, addr: *stone, addrlen: stone) -> stone abi c
+rift vein listen(fd: stone, backlog: stone) -> stone abi c
+rift vein accept(fd: stone, addr: *stone, addrlen: *stone) -> stone abi c
+rift vein send(fd: stone, buf: obsidian, len: stone, flags: stone) -> stone abi c
+rift vein recv(fd: stone, buf: obsidian, len: stone, flags: stone) -> stone abi c
+extern vein ofs_str_len(s: obsidian) -> stone
+
+namespace net {
+    vein tcp_connect(ip: obsidian, port: stone) -> stone {
+        forge s = socket(2, 1, 0)
+        if (s < 0) {
+            return -1
+        }
+        forge addr: *stone = ofs_alloc(16)
+        forge port_net = htons(port)
+        forge ip_net = inet_addr(ip)
+        forge w0 = 2 + (port_net * 65536) + (ip_net * 4294967296);
+        *addr = w0
+        forge res = connect(s, addr, 16)
+        if (res != 0) {
+            close(s)
+            return -1
+        }
+        return s
+    }
+
+    vein tcp_send(fd: stone, data: obsidian) -> stone {
+        forge len = ofs_str_len(data)
+        return send(fd, data, len, 0)
+    }
+
+    vein tcp_recv(fd: stone, max_len: stone) -> obsidian {
+        forge buf: obsidian = ofs_alloc(max_len + 1)
+        forge n = recv(fd, buf, max_len, 0)
+        if (n <= 0) {
+            return ""
+        }
+        return buf
+    }
+
+    vein tcp_close(fd: stone) -> void {
+        close(fd)
+    }
+
+    vein tcp_listen(port: stone, backlog: stone) -> stone {
+        forge s = socket(2, 1, 0)
+        if (s < 0) {
+            return -1
+        }
+        forge addr: *stone = ofs_alloc(16)
+        forge port_net = htons(port)
+        forge w0 = 2 + (port_net * 65536);
+        *addr = w0
+        forge b_res = bind(s, addr, 16)
+        if (b_res != 0) {
+            close(s)
+            return -1
+        }
+        forge l_res = listen(s, backlog)
+        if (l_res != 0) {
+            close(s)
+            return -1
+        }
+        return s
+    }
+
+    vein tcp_accept(server_fd: stone) -> stone {
+        forge client_addr: *stone = ofs_alloc(16)
+        forge len_ptr: *stone = ofs_alloc(8);
+        *len_ptr = 16
+        return accept(server_fd, client_addr, len_ptr)
+    }
+}

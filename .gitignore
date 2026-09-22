@@ -17,3 +17,8 @@ ROADMAP.md
 ROADMAP.
 docs/roadmap/
 ofs/examples/native_site/dist/
+*.ppm
+idle/
+src/vscode-extension/bin/linux-x64/ofs_idle_linux
+docs/IDLE_ARCHITECTURE.md
+*.ppdb

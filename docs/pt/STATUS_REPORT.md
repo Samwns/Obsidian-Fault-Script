@@ -32,7 +32,7 @@ ofs check ofs/examples/hello.ofs
 Resultado:
 
 - `ofs` instalado em `/usr/local/bin/ofs`
-- runtime instalado em `/usr/local/lib/libofs_runtime.a`
+- runtime Stack Magma instalado em `/usr/local/lib/magma.o`
 - stdlib instalada em `/usr/local/share/ofs/stdlib`
 - `ofs check ofs/examples/hello.ofs` passa
 - o asset `v1.0.88` instala um binário que reporta `ofs 1.0.72`
@@ -196,8 +196,8 @@ Entrada: input.ofs (código-fonte)
 
 ```bash
 OFSCC_INPUT=ofs/ofscc/ofscc.ofs OFSCC_MODE=ir OFSCC_C_OUT=/tmp/ofscc_self_final_v3.ll /tmp/ofscc_v2_candidate
-llvm-as /tmp/ofscc_self_final_v3.ll -o /tmp/ofscc_self_final_v3.bc
-clang -O2 /tmp/ofscc_self_final_v3.ll /tmp/ofs-bootstrap-build/libofs_runtime.a -lm -o /tmp/ofscc_native_final_v3
+llc -filetype=obj /tmp/ofscc_self_final_v3.ll -o /tmp/ofscc_self_final_v3.o
+ld /tmp/ofscc_self_final_v3.o ofs/dist/magma.o -lc -lm -o /tmp/ofscc_native_final_v3
 ```
 
 **Resultado**: `/tmp/ofscc_native_final_v3`

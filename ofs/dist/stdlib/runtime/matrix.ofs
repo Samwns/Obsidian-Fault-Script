@@ -1,0 +1,133 @@
+attach {F:reservoir.ofs}
+
+vein _store_stone(p: *stone, v: stone) -> void {
+    fracture {
+        *p = v
+    }
+}
+
+vein _load_stone(p: *stone) -> stone {
+    fracture {
+        return *p
+    }
+}
+
+vein ofs_array_new(initial_cap: stone, elem_size: stone) -> *stone {
+    if (initial_cap <= 0) { initial_cap = 4 }
+    if (elem_size <= 0) { elem_size = 8 }
+    forge arr: *stone = ofs_alloc(32)
+    forge data: *stone = ofs_alloc(initial_cap * elem_size)
+    _store_stone(arr, data as stone)
+    _store_stone(fault_step(arr, 1), 0)
+    _store_stone(fault_step(arr, 2), initial_cap)
+    _store_stone(fault_step(arr, 3), elem_size)
+    return arr
+}
+
+vein ofs_array_len(arr: *stone) -> stone {
+    if (arr == null) { return 0 }
+    return _load_stone(fault_step(arr, 1))
+}
+
+vein ofs_array_cap(arr: *stone) -> stone {
+    if (arr == null) { return 0 }
+    return _load_stone(fault_step(arr, 2))
+}
+
+vein ofs_array_elem_size(arr: *stone) -> stone {
+    if (arr == null) { return 8 }
+    return _load_stone(fault_step(arr, 3))
+}
+
+vein ofs_array_data(arr: *stone) -> *stone {
+    if (arr == null) { return null }
+    forge d = _load_stone(arr)
+    return d as *stone
+}
+
+vein ofs_array_push(arr: *stone, elem: *stone) -> void {
+    if (arr == null) { return }
+    forge cur_len = ofs_array_len(arr)
+    forge cur_cap = ofs_array_cap(arr)
+    forge esz = ofs_array_elem_size(arr)
+    forge cur_data = ofs_array_data(arr)
+
+    if (cur_len >= cur_cap) {
+        forge new_cap = cur_cap * 2
+        if (new_cap < 4) { new_cap = 4 }
+        forge new_data: *stone = ofs_alloc(new_cap * esz)
+        if (cur_len > 0 && cur_data != null) {
+            memcpy(new_data, cur_data, cur_len * esz)
+            ofs_free(cur_data)
+        }
+        _store_stone(arr, new_data as stone)
+        _store_stone(fault_step(arr, 2), new_cap)
+        cur_data = new_data
+    }
+
+    forge dest = cur_data as stone + (cur_len * esz)
+    memcpy(dest as *stone, elem, esz)
+    _store_stone(fault_step(arr, 1), cur_len + 1)
+}
+
+vein ofs_array_get(arr: *stone, idx: stone) -> *stone {
+    if (arr == null || idx < 0) { exit(1) }
+    forge cur_len = ofs_array_len(arr)
+    if (idx >= cur_len) { exit(1) }
+    forge cur_data = ofs_array_data(arr)
+    forge esz = ofs_array_elem_size(arr)
+    forge ptr = cur_data as stone + (idx * esz)
+    return ptr as *stone
+}
+
+vein ofs_array_set(arr: *stone, idx: stone, elem: *stone) -> void {
+    if (arr == null || idx < 0) { exit(1) }
+    forge cur_len = ofs_array_len(arr)
+    if (idx >= cur_len) { exit(1) }
+    forge cur_data = ofs_array_data(arr)
+    forge esz = ofs_array_elem_size(arr)
+    forge ptr = cur_data as stone + (idx * esz)
+    memcpy(ptr as *stone, elem, esz)
+}
+
+vein ofs_array_pop(arr: *stone) -> *stone {
+    if (arr == null) { exit(1) }
+    forge cur_len = ofs_array_len(arr)
+    if (cur_len <= 0) { exit(1) }
+    forge new_len = cur_len - 1
+    forge cur_data = ofs_array_data(arr)
+    forge esz = ofs_array_elem_size(arr)
+    _store_stone(fault_step(arr, 1), new_len)
+    forge ptr = cur_data as stone + (new_len * esz)
+    return ptr as *stone
+}
+
+namespace matrix {
+    vein create(initial_cap: stone, elem_size: stone) -> *stone {
+        return ofs_array_new(initial_cap, elem_size)
+    }
+
+    vein length(arr: *stone) -> stone {
+        return ofs_array_len(arr)
+    }
+
+    vein capacity(arr: *stone) -> stone {
+        return ofs_array_cap(arr)
+    }
+
+    vein push(arr: *stone, val: stone) -> void {
+        ofs_array_push(arr, val)
+    }
+
+    vein get(arr: *stone, idx: stone) -> stone {
+        return ofs_array_get(arr, idx)
+    }
+
+    vein set(arr: *stone, idx: stone, val: stone) -> void {
+        ofs_array_set(arr, idx, val)
+    }
+
+    vein pop(arr: *stone) -> *stone {
+        return ofs_array_pop(arr)
+    }
+}

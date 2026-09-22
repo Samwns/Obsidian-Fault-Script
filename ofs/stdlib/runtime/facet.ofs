@@ -1,0 +1,175 @@
+attach {F:reservoir.ofs}
+
+extern vein strlen(s: obsidian) -> stone
+extern vein strcmp(a: obsidian, b: obsidian) -> stone
+extern vein strstr(haystack: obsidian, needle: obsidian) -> obsidian
+extern vein sprintf(buf: obsidian, fmt: obsidian, v: stone) -> stone
+extern vein strtoll(s: obsidian, endptr: *stone, base: stone) -> stone
+extern vein strtod(s: obsidian, endptr: *stone) -> crystal
+rift vein ofs_facet_sprintf_double(buf: obsidian, fmt: obsidian, v: crystal) -> stone bind "sprintf" abi c
+
+vein ofs_str_len(s: obsidian) -> stone {
+    if (s == null) { return 0 }
+    return strlen(s)
+}
+
+vein ofs_str_char_at(s: obsidian, idx: stone) -> stone {
+    if (s == null || idx < 0) { return -1 }
+    forge slen = ofs_str_len(s)
+    if (idx >= slen) { return -1 }
+    forge p: *u8 = (s as stone + idx) as *u8
+    forge b: u8 = 0 as u8
+    fracture {
+        b = *p
+    }
+    return b as stone
+}
+
+vein ofs_str_eq(a: obsidian, b: obsidian) -> bool {
+    if (a == null && b == null) { return true }
+    if (a == null || b == null) { return false }
+    if (strcmp(a, b) == 0) { return true }
+    return false
+}
+
+vein ofs_str_concat(a: obsidian, b: obsidian) -> obsidian {
+    forge la = ofs_str_len(a)
+    forge lb = ofs_str_len(b)
+    forge total = la + lb
+    forge res: obsidian = ofs_alloc(total + 1)
+    if (la > 0) {
+        memcpy(res as *stone, a as *stone, la)
+    }
+    if (lb > 0) {
+        forge resp = res as stone + la
+        memcpy(resp as *stone, b as *stone, lb)
+    }
+    return res
+}
+
+vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian {
+    if (s == null) { return "" }
+    forge slen = ofs_str_len(s)
+    if (start < 0) { start = 0 }
+    if (start >= slen) { return "" }
+    if (len < 0 || start + len > slen) { len = slen - start }
+    forge res: obsidian = ofs_alloc(len + 1)
+    if (len > 0) {
+        forge sp = s as stone + start
+        memcpy(res as *stone, sp as *stone, len)
+    }
+    return res
+}
+
+vein ofs_str_contains(haystack: obsidian, needle: obsidian) -> bool {
+    if (haystack == null || needle == null) { return false }
+    forge p = strstr(haystack, needle)
+    if (p != null) { return true }
+    return false
+}
+
+vein ofs_str_upper(s: obsidian) -> obsidian {
+    if (s == null) { return "" }
+    forge slen = ofs_str_len(s)
+    forge res: obsidian = ofs_alloc(slen + 1)
+    forge i = 0
+    while (i < slen) {
+        forge c = ofs_str_char_at(s, i)
+        if (c >= 97 && c <= 122) { c = c - 32 }
+        forge p: *u8 = (res as stone + i) as *u8
+        fracture {
+            *p = c as u8
+        }
+        i++
+    }
+    return res
+}
+
+vein ofs_str_lower(s: obsidian) -> obsidian {
+    if (s == null) { return "" }
+    forge slen = ofs_str_len(s)
+    forge res: obsidian = ofs_alloc(slen + 1)
+    forge i = 0
+    while (i < slen) {
+        forge c = ofs_str_char_at(s, i)
+        if (c >= 65 && c <= 90) { c = c + 32 }
+        forge p: *u8 = (res as stone + i) as *u8
+        fracture {
+            *p = c as u8
+        }
+        i++
+    }
+    return res
+}
+
+vein ofs_stone_to_obsidian(v: stone) -> obsidian {
+    forge buf: obsidian = ofs_alloc(32)
+    sprintf(buf, "%lld", v)
+    return buf
+}
+
+vein ofs_crystal_to_obsidian(v: crystal) -> obsidian {
+    forge buf: obsidian = ofs_alloc(64)
+    ofs_facet_sprintf_double(buf, "%g", v)
+    return buf
+}
+
+vein ofs_obsidian_to_stone(s: obsidian) -> stone {
+    if (s == null) { return 0 }
+    return strtoll(s, null, 10)
+}
+
+vein ofs_obsidian_to_crystal(s: obsidian) -> crystal {
+    if (s == null) { return 0.0 }
+    return strtod(s, null)
+}
+
+namespace facet {
+    vein len(s: obsidian) -> stone {
+        return ofs_str_len(s)
+    }
+
+    vein char_at(s: obsidian, idx: stone) -> stone {
+        return ofs_str_char_at(s, idx)
+    }
+
+    vein eq(a: obsidian, b: obsidian) -> bool {
+        return ofs_str_eq(a, b)
+    }
+
+    vein concat(a: obsidian, b: obsidian) -> obsidian {
+        return ofs_str_concat(a, b)
+    }
+
+    vein substr(s: obsidian, start: stone, count: stone) -> obsidian {
+        return ofs_str_substr(s, start, count)
+    }
+
+    vein contains(haystack: obsidian, needle: obsidian) -> bool {
+        return ofs_str_contains(haystack, needle)
+    }
+
+    vein to_upper(s: obsidian) -> obsidian {
+        return ofs_str_upper(s)
+    }
+
+    vein to_lower(s: obsidian) -> obsidian {
+        return ofs_str_lower(s)
+    }
+
+    vein from_stone(v: stone) -> obsidian {
+        return ofs_stone_to_obsidian(v)
+    }
+
+    vein to_stone(s: obsidian) -> stone {
+        return ofs_obsidian_to_stone(s)
+    }
+
+    vein from_crystal(v: crystal) -> obsidian {
+        return ofs_crystal_to_obsidian(v)
+    }
+
+    vein to_crystal(s: obsidian) -> crystal {
+        return ofs_obsidian_to_crystal(s)
+    }
+}

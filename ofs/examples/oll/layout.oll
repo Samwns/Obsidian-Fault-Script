@@ -1,0 +1,42 @@
+window LayoutDemo {
+    title: "Grid and Box Model Layout"
+    width: 800
+    height: 600
+    background: #1e1e2e
+
+    column {
+        padding: 12
+        gap: 8
+        row {
+            height: 40
+            background: #313244
+            padding: 6
+            gap: 6
+            button "File" { width: 60 }
+            button "Edit" { width: 60 }
+            button "View" { width: 60 }
+            button "Help" { width: 60 }
+        }
+        row {
+            height: 520
+            gap: 8
+            panel {
+                id: "sidebar"
+                width: 200
+                background: #181825
+                padding: 10
+                gap: 6
+                label "Navigation" { color: #89b4fa }
+                button "Dashboard" { width: 180, height: 28 }
+                button "Analytics" { width: 180, height: 28 }
+                button "Settings" { width: 180, height: 28 }
+            }
+            panel {
+                id: "workspace"
+                background: #11111b
+                padding: 16
+                label "Main Canvas Area" { color: #cdd6f4 }
+            }
+        }
+    }
+}

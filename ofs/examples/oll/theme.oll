@@ -1,0 +1,25 @@
+theme CatppuccinMocha {
+    background: #1e1e2e
+    foreground: #cdd6f4
+    accent: #89b4fa
+}
+
+window ThemedWindow {
+    title: "Themed Application"
+    width: 640
+    height: 480
+    background: #1e1e2e
+
+    column {
+        padding: 20
+        gap: 12
+        label "Catppuccin Mocha Palette" { color: #89b4fa }
+        panel {
+            background: #313244
+            padding: 14
+            gap: 8
+            label "Surface Card" { color: #cdd6f4 }
+            button "Accent Action" { id: "btn_accent", width: 130, height: 30, background: #89b4fa, color: #11111b, on_click: on_action }
+        }
+    }
+}

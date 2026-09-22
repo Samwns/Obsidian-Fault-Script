@@ -1,0 +1,17 @@
+attach {F:../../stdlib/runtime/prism.ofs}
+
+core main() {
+    forge surf = prism.create(32, 32)
+    prism.clear(surf, 0)
+    prism.fill_rect(surf, 4, 4, 8, 8, 16711680)
+    forge p = prism.get_pixel(surf, 5, 5)
+    if (p != 16711680) {
+        exit(1)
+    }
+    forge ok = prism.save_ppm(surf, "/tmp/test_prism.ppm")
+    if (ok == false) {
+        exit(2)
+    }
+    prism.destroy(surf)
+    echo("MAGMA_PRISM_TEST_OK")
+}

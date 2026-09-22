@@ -1,0 +1,40 @@
+attach {F:reservoir.ofs}
+
+forge _impulse_mx: stone = 0
+forge _impulse_my: stone = 0
+forge _impulse_mbtn: stone = 0
+forge _impulse_key: stone = 0
+
+vein ofs_mouse_x() -> stone {
+    return _impulse_mx
+}
+
+vein ofs_mouse_y() -> stone {
+    return _impulse_my
+}
+
+vein ofs_mouse_btn(b: stone) -> stone {
+    return _impulse_mbtn
+}
+
+vein ofs_key_down(k: stone) -> stone {
+    return _impulse_key
+}
+
+namespace impulse {
+    vein mouse_x() -> stone {
+        return ofs_mouse_x()
+    }
+
+    vein mouse_y() -> stone {
+        return ofs_mouse_y()
+    }
+
+    vein is_down(btn: stone) -> bool {
+        return ofs_mouse_btn(btn) != 0
+    }
+
+    vein key(sc: stone) -> bool {
+        return ofs_key_down(sc) != 0
+    }
+}

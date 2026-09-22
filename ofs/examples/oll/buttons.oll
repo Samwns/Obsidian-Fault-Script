@@ -1,0 +1,20 @@
+window ButtonShowcase {
+    title: "Buttons Showcase"
+    width: 640
+    height: 480
+    background: #1e1e2e
+
+    column {
+        padding: 16
+        gap: 10
+        label "Interactive Buttons Demo" { color: #f9e2af }
+        row {
+            height: 36
+            gap: 8
+            button "Primary" { id: "btn_pri", width: 100, background: #89b4fa, color: #11111b, on_click: on_primary }
+            button "Secondary" { id: "btn_sec", width: 100, background: #45475a, color: #cdd6f4, on_click: on_secondary }
+            button "Success" { id: "btn_suc", width: 100, background: #a6e3a1, color: #11111b, on_click: on_success }
+            button "Danger" { id: "btn_dan", width: 100, background: #f38ba8, color: #11111b, on_click: on_danger }
+        }
+    }
+}

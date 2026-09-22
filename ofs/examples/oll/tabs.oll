@@ -1,0 +1,28 @@
+window TabbedInterface {
+    title: "Tabbed Container Demo"
+    width: 700
+    height: 500
+    background: #1e1e2e
+
+    column {
+        row {
+            id: "tabs_header"
+            height: 36
+            background: #181825
+            padding: 4
+            gap: 4
+            tabs {
+                tab "General" { id: "tab_general", width: 110, active: true }
+                tab "Appearance" { id: "tab_appearance", width: 110 }
+                tab "Advanced" { id: "tab_advanced", width: 110 }
+            }
+        }
+        panel {
+            id: "tab_content"
+            padding: 20
+            gap: 10
+            label "General Preferences" { color: #f9e2af }
+            label "Configure standard application behavior and defaults" { color: #a6adc8 }
+        }
+    }
+}

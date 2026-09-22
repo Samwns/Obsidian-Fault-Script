@@ -1,0 +1,78 @@
+attach {F:reservoir.ofs}
+attach {F:facet.ofs}
+
+forge _frame_title: obsidian = "OFS Window"
+forge _frame_width: stone = 1024
+forge _frame_height: stone = 768
+forge _frame_open: stone = 0
+
+vein ofs_window_create(title: obsidian, w: stone, h: stone) -> void {
+    _frame_title = title
+    if (w > 0) { _frame_width = w }
+    if (h > 0) { _frame_height = h }
+    _frame_open = 1
+}
+
+vein ofs_window_destroy() -> void {
+    _frame_open = 0
+}
+
+vein ofs_window_present(buf: stone) -> void {
+}
+
+vein ofs_window_present_stone_rgba(buf: *stone) -> void {
+}
+
+vein ofs_window_poll() -> stone {
+    return _frame_open
+}
+
+vein ofs_window_is_open() -> stone {
+    return _frame_open
+}
+
+vein ofs_window_width() -> stone {
+    return _frame_width
+}
+
+vein ofs_window_height() -> stone {
+    return _frame_height
+}
+
+vein ofs_window_set_title(t: obsidian) -> void {
+    _frame_title = t
+}
+
+namespace frame {
+    vein create(title: obsidian, w: stone, h: stone) -> void {
+        ofs_window_create(title, w, h)
+    }
+
+    vein destroy() -> void {
+        ofs_window_destroy()
+    }
+
+    vein present(buf: stone) -> void {
+        ofs_window_present(buf)
+    }
+
+    vein poll() -> bool {
+        return ofs_window_poll() != 0
+    }
+
+    vein is_open() -> bool {
+        return ofs_window_is_open() != 0
+    }
+
+    vein width() -> stone {
+        return ofs_window_width()
+    }
+
+    vein height() -> stone {
+        return ofs_window_height()
+    }
+
+    vein set_title(t: obsidian) -> void {
+        ofs_window_set_title(t)
+    }
+}

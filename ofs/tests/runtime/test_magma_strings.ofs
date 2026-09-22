@@ -1,0 +1,35 @@
+attach {F:../../stdlib/runtime/facet.ofs}
+
+core main() {
+    forge s1 = "Obsidian"
+    forge s2 = "Fault"
+    forge joined = facet.concat(s1, " ")
+    joined = facet.concat(joined, s2)
+    if (facet.eq(joined, "Obsidian Fault") == false) {
+        exit(1)
+    }
+    if (facet.len(joined) != 14) {
+        exit(2)
+    }
+    forge sub = facet.substr(joined, 0, 8)
+    if (facet.eq(sub, "Obsidian") == false) {
+        exit(3)
+    }
+    forge up = facet.to_upper("abc")
+    if (facet.eq(up, "ABC") == false) {
+        exit(4)
+    }
+    forge low = facet.to_lower("XYZ")
+    if (facet.eq(low, "xyz") == false) {
+        exit(5)
+    }
+    forge nstr = facet.from_stone(4242)
+    if (facet.eq(nstr, "4242") == false) {
+        exit(6)
+    }
+    forge num = facet.to_stone("999")
+    if (num != 999) {
+        exit(7)
+    }
+    echo("MAGMA_STRINGS_TEST_OK")
+}

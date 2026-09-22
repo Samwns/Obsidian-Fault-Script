@@ -1,0 +1,11 @@
+attach {F:../../stdlib/runtime/reservoir.ofs}
+
+core main() {
+    forge p: *stone = reservoir.alloc(64)
+    if (p == null) {
+        exit(1)
+    }
+    reservoir.zero(p, 64)
+    reservoir.free(p)
+    echo("MAGMA_MEMORY_TEST_OK")
+}

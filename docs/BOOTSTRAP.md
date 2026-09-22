@@ -1,8 +1,7 @@
 # OFS Self-Hosting Bootstrap Guide
 
 > **Nova Realidade**: O compilador OFS é completamente self-hosted e determinístico.
-> Use `bootstrap.sh` para instalar a linguagem inteira em modo rapido e sem C++.
-> `bootstrap-minimal.sh` continua existindo por compatibilidade com releases e docs antigas.
+> Use `ofs/bootstrap/scripts/bootstrap-minimal.sh` para compilar em ~2 segundos.
 
 ---
 
@@ -10,16 +9,13 @@
 
 ```bash
 # Tudo em um comando - ~2 segundos!
-bash ofs/bootstrap/scripts/bootstrap.sh
+bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 
 # Pronto! Seu compilador nativo está em ofs/dist/ofscc
-ofs/dist/ofs build seu_programa.ofs -o programa
+ofs/dist/ofscc build seu_programa.ofs -o programa
 ```
 
 Pronto! Apenas OFS compilando OFS.
-
-`bootstrap-minimal.sh` continua existindo para compatibilidade com docs, scripts e usuarios antigos.
-O ponto de entrada recomendado para instalacao completa da linguagem e `bootstrap.sh`.
 
 ## O que é Bootstrap?
 
@@ -29,7 +25,7 @@ O ponto de entrada recomendado para instalacao completa da linguagem e `bootstra
 - **C** (1972): Bootstrapped e tornou-se padrão
 - **Rust** (2011): Self-hosted em Rust
 - **Go** (2015): Self-hosted em Go
-- **OFS** (2024): **AGORA COMPLETAMENTE SELF-HOSTED** ✨🚀
+- **OFS** (2024-2026): **COMPLETAMENTE SELF-HOSTED COM STACK MAGMA** ✨🚀
 
 ---
 
@@ -38,18 +34,9 @@ O ponto de entrada recomendado para instalacao completa da linguagem e `bootstra
 ### Phase 1: Compilador inicial (uma vez)
 Quando o repositório é clonado, `ofs/dist/ofscc` já contém um compilador OFS pré-compilado.
 
-### Phase 2: Recompilação self-hosted
-
-Por padrao, `bootstrap.sh` reconstrói o compilador a partir do IR versionado `ofs/dist/ofscc.ll`.
-Isso e o caminho certo para instalacao: rapido, previsivel e sem depender de C++/CMake.
-
-Para validar o ciclo OFS -> OFS explicitamente:
-
+### Phase 2: Recompilação (bootstrap-minimal)
 ```bash
-OFS_BOOTSTRAP_SELFHOST=1 bash ofs/bootstrap/scripts/bootstrap.sh
-```
-```bash
-# Compila ofscc.ofs (código-fonte do compilador)
+# Compila ofs/ofscc/ofscc.ofs (código-fonte do compilador)
 # usando ofs/dist/ofscc (compilador binário existente)
 # -> novo ofs/dist/ofscc
 ```
@@ -65,14 +52,14 @@ OFS_BOOTSTRAP_SELFHOST=1 bash ofs/bootstrap/scripts/bootstrap.sh
 
 ## Como Usar
 
-### Método 1: Bootstrap oficial (Recomendado) ⚡
+### Método 1: Bootstrap Minimal (Recomendado) ⚡
 
 ```bash
 # Navega para o repositório
 cd Obsidian-Fault-Script
 
-# Roda bootstrap.sh (não precisa de C++/CMake)
-bash ofs/bootstrap/scripts/bootstrap.sh
+# Roda bootstrap-minimal.sh
+bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 
 # Saída esperada:
 # [✓] ofs/dist/ofscc criado com sucesso
@@ -81,12 +68,12 @@ bash ofs/bootstrap/scripts/bootstrap.sh
 ```
 
 **Tempo**: ~2 segundos
-**Dependências**: bash, clang e ar
+**Dependências**: Nenhuma (apenas bash e binários nativos)
 **Saída**: `ofs/dist/ofscc` compilador nativo
 
-### Método 2: Bootstrap com Validação (Legacy C++)
+### Método 2: Bootstrap com Validação de Determinismo
 
-Se você quiser executar o bootstrap completo com validação (recompila 3 vezes), ainda pode:
+Se você quiser executar o bootstrap completo com validação (recompila 3 vezes):
 
 ```bash
 # Roda validação completa de determinismo
@@ -108,7 +95,7 @@ bash ofs/bootstrap/scripts/bootstrap-minimal.sh --validate
 
 ### Erro: "bash: ofs/bootstrap/scripts/bootstrap-minimal.sh: Arquivo não encontrado"
 
-**Causa**: Você não está no diretório correto.
+**Causa**: Você não está no diretório raiz do repositório.
 
 **Solução**:
 ```bash
@@ -133,7 +120,7 @@ bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 
 **Solução**:
 ```bash
-# Tente redownloadar o repositório fresco
+# Clone o repositório fresco
 git clone https://github.com/Samwns/Obsidian-Fault-Script.git
 cd Obsidian-Fault-Script
 bash ofs/bootstrap/scripts/bootstrap-minimal.sh
@@ -143,7 +130,7 @@ bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 
 **Causa**: Compilador não é determinístico (timestamps, random seeds, etc).
 
-**Solução**: Este é um bug no compilador. Abra uma issue com:
+**Solução**: Abra uma issue com:
 ```bash
 bash ofs/bootstrap/scripts/bootstrap-minimal.sh --debug
 # Salva output.log com detalhes da compilação
@@ -156,39 +143,38 @@ bash ofs/bootstrap/scripts/bootstrap-minimal.sh --debug
 ```
 Toolchain OFS Nativo (POST-BOOTSTRAP):
 
-┌──────────────────────┐
+┌──────────────────────────┐
 │  ofs/dist/ofscc (nativo) │  Compilador OFS self-hosted
-└──────────┬───────────┘
-           │ lê arquivo .ofs
-           │ análise léxica/sintática
-           │ type-checking
-           │ gera código C
-           │ cc/gcc -O2 compila
-           ▼
-       executável nativo
+└────────────┬─────────────┘
+             │ lê arquivo .ofs
+             │ análise léxica/sintática
+             │ type-checking
+             │ gera LLVM IR nativo (.ll)
+             │ llc -filetype=obj compila para objeto de máquina (.o)
+             │ ld / ld.lld liga nativamente com Stack Magma (magma.o)
+             ▼
+         executável nativo (ELF no Linux, PE32+ no Windows)
 
-Não há runtime C++. Apenas:
-1. Código-fonte OFS
-2. Compilador binário (ofs/dist/ofscc)
-3. C compiler (gcc/clang) para link final
+Sem dependência de compilador C ou runtime externo em C:
+1. Código-fonte OFS (.ofs, .oll, .odl, .oes)
+2. Compilador binário self-hosted (ofs/dist/ofscc)
+3. Runtime nativo 100% puro em OFS (Stack Magma: ofs/dist/magma.o)
+4. Ligador nativo do sistema (ld / ld.lld)
 ```
 
 ---
 
-## Archivos que Podem Ser Removidos
+## Estrutura Canônica Mantida
 
-Após bootstrap bem-sucedido, você pode arquivar (não remover):
+Após bootstrap bem-sucedido, o layout canônico é:
 
-**Para deletar (legacy):**
-- ❌ `ofs/src/` (código-fonte C++ do compilador antigo)
-- ❌ Qualquer CMakeLists.txt referente ao C++
-- ❌ Dependências LLVM/Clang para build
-
-**Para manter:**
 - ✅ `ofs/dist/ofscc` (compilador nativo)
-- ✅ `ofscc/` (código-fonte OFS do compilador)
-- ✅ `stdlib/` (biblioteca padrão)
-- ✅ `examples/` (exemplos)
+- ✅ `ofs/dist/magma.o` (runtime Stack Magma nativo)
+- ✅ `ofs/ofscc/` (código-fonte OFS do compilador)
+- ✅ `ofs/stdlib/` (biblioteca padrão)
+- ✅ `ofs/examples/` (exemplos de código)
+- ✅ `src/packaging/` (instaladores visuais OLL para Linux e Windows)
+- ✅ `src/vscode-extension/` (extensão com realce e suporte a .ofs, .oll, .odl, .oes)
 
 ---
 
@@ -197,7 +183,7 @@ Após bootstrap bem-sucedido, você pode arquivar (não remover):
 1. ✅ Bootstrap completo (sem C++)
 2. 📦 Fazer releases (via GitHub Actions)
 3. 🔗 Distribuir para package managers
-4. 🧪 Criar test suite completo
+4. 🧪 Rodar test suite nativo com Stack Magma
 5. 📚 Documentar stdlib completamente
 
 ---
@@ -207,9 +193,10 @@ Após bootstrap bem-sucedido, você pode arquivar (não remover):
 - [Getting Started Guide](./GETTING_STARTED.md) — Como começar
 - [Language Reference](./LANGUAGE_REFERENCE.md) — Sintaxe completa
 - [Compiler Architecture](./COMPILER_ARCHITECTURE.md) — Internals do compilador
-- [Bootstrap Scripts](../ofs/bootstrap/scripts/README.md) — Scripts disponíveis
+- [Bootstrap Scripts](../ofs/bootstrap/scripts/INDEX.md) — Scripts disponíveis
 
 ---
 
-**Status**: ✅ Compilador self-hosted e determinístico
-**Próximo**: Execute releases automáticas via CI/CD
+**Status**: ✅ Compilador self-hosted e determinístico com Stack Magma
+**Pipeline**: 100% nativo (zero Clang, zero runtime em C)
+

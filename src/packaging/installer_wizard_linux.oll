@@ -1,0 +1,130 @@
+window "Obsidian Fault Script — Instalador Linux" {
+    width: 720
+    height: 540
+    bg_color: #1e1e2e
+    fg_color: #cdd6f4
+    padding: 24
+    gap: 16
+
+    column {
+        gap: 16
+
+        column {
+            gap: 6
+            label "Instalação do Obsidian Fault Script (OFS)" {
+                height: 36
+                fg_color: #cba6f7
+                font_size: 22
+            }
+
+            label "Ambiente Nativo Self-Hosted com Stack Magma e Suporte a OLL" {
+                height: 20
+                fg_color: #a6adc8
+                font_size: 14
+            }
+        }
+
+        column {
+            gap: 14
+            padding: 12
+
+            row {
+                gap: 20
+                label "Destino:" {
+                    width: 140
+                    height: 30
+                    fg_color: #bac2de
+                }
+                button "~/.local/bin e ~/.local/lib/ofs  ▾" {
+                    width: 360
+                    height: 30
+                    bg_color: #313244
+                    fg_color: #cdd6f4
+                    border_color: #45475a
+                    border_width: 1
+                    on_click: "select_target_path"
+                }
+            }
+
+            row {
+                gap: 20
+                label "Componentes:" {
+                    width: 140
+                    height: 30
+                    fg_color: #bac2de
+                }
+                button "ofs + ofscc + stdlib + oll runtime" {
+                    width: 360
+                    height: 30
+                    bg_color: #313244
+                    fg_color: #a6e3a1
+                    border_color: #45475a
+                    border_width: 1
+                    on_click: "select_components"
+                }
+            }
+
+            row {
+                gap: 20
+                label "Backend Nativo:" {
+                    width: 140
+                    height: 30
+                    fg_color: #bac2de
+                }
+                button "LLVM Direto (LLC + LD) sem Clang" {
+                    width: 360
+                    height: 30
+                    bg_color: #45475a
+                    fg_color: #89b4fa
+                    border_color: #585b70
+                    border_width: 1
+                    on_click: "select_backend"
+                }
+            }
+
+            row {
+                gap: 10
+                padding: 10
+                label "[X] Adicionar ~/.local/bin ao PATH do usuario" {
+                    height: 24
+                    fg_color: #a6adc8
+                }
+            }
+        }
+
+        row {
+            height: 40
+        }
+
+        row {
+            gap: 12
+            padding: 8
+
+            label "Versao 1.0.137 — Obsidian Fault System" {
+                width: 360
+                height: 32
+                fg_color: #6c7086
+            }
+
+            button "Cancelar" {
+                width: 110
+                height: 32
+                bg_color: #313244
+                fg_color: #f38ba8
+                border_color: #45475a
+                border_width: 1
+                on_click: "btn_cancel"
+            }
+
+            button "Instalar Agora" {
+                width: 140
+                height: 32
+                bg_color: #a6e3a1
+                fg_color: #11111b
+                border_color: #94e2d5
+                border_width: 1
+                on_click: "btn_install"
+            }
+        }
+    }
+}

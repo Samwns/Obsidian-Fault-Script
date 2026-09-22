@@ -1,0 +1,836 @@
+attach {F:canvas.ofs}
+attach {F:fs.ofs}
+
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at(s: obsidian, idx: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+extern vein ofs_array_len(a: Array) -> stone
+extern vein ofs_array_get(a: Array, index: stone) -> stone
+extern vein ofs_array_push(a: Array, value: stone) -> void
+extern vein ofs_array_set(a: Array, index: stone, value: stone) -> void
+
+monolith OllTheme {
+    name: obsidian
+    style: stone
+    bg_window: stone
+    bg_header: stone
+    bg_surface: stone
+    bg_sidebar: stone
+    bg_editor: stone
+    bg_panel: stone
+    bg_statusbar: stone
+    accent: stone
+    accent_hover: stone
+    accent_fg: stone
+    btn_bg: stone
+    btn_hover: stone
+    btn_active: stone
+    btn_border: stone
+    btn_radius: stone
+    card_radius: stone
+    fg_primary: stone
+    fg_secondary: stone
+    fg_muted: stone
+    border_subtle: stone
+    border_focus: stone
+    shadow_col: stone
+}
+
+monolith OllNode {
+    kind: stone
+    name: obsidian
+    text: obsidian
+    bind_var: obsidian
+    on_click: obsidian
+    on_change: obsidian
+    parent: stone
+    box_x: stone
+    box_y: stone
+    box_w: stone
+    box_h: stone
+    width: stone
+    height: stone
+    padding: stone
+    margin: stone
+    gap: stone
+    bg_color: stone
+    fg_color: stone
+    border_color: stone
+    border_width: stone
+    active: bool
+    hover_bg_color: stone
+    hover_fg_color: stone
+    hover_border_color: stone
+    state: stone
+    auto_center: bool
+    resizable: bool
+    variant: obsidian
+    icon: obsidian
+    radius: stone
+    elevation: stone
+}
+
+namespace oll {
+    forge _nodes: Array<OllNode> = []
+    forge _children_parent: Array<stone> = []
+    forge _children_child: Array<stone> = []
+    forge _root_id: stone = -1
+    forge _current_theme_id: stone = 0
+
+    vein theme_dark_modern() -> OllTheme {
+        forge t: OllTheme
+        t.name = "dark_modern"
+        t.style = 0
+        t.bg_window = 1579032
+        t.bg_header = 1579032
+        t.bg_surface = 1973790
+        t.bg_sidebar = 2039583
+        t.bg_editor = 1973790
+        t.bg_panel = 1579032
+        t.bg_statusbar = 7153881
+        t.accent = 8141549
+        t.accent_hover = 7153881
+        t.accent_fg = 16777215
+        t.btn_bg = 2434342
+        t.btn_hover = 3618621
+        t.btn_active = 1973790
+        t.btn_border = 3947580
+        t.btn_radius = 5
+        t.card_radius = 8
+        t.fg_primary = 13489908
+        t.fg_secondary = 11252415
+        t.fg_muted = 8750469
+        t.border_subtle = 2829099
+        t.border_focus = 8141549
+        t.shadow_col = 986895
+        return t
+    }
+
+    vein theme_gtk() -> OllTheme {
+        forge t: OllTheme
+        t.name = "gtk"
+        t.style = 1
+        t.bg_window = 2368548
+        t.bg_header = 3158064
+        t.bg_surface = 2960685
+        t.bg_sidebar = 2499622
+        t.bg_editor = 1973790
+        t.bg_panel = 2368548
+        t.bg_statusbar = 3507428
+        t.accent = 3507428
+        t.accent_hover = 1864152
+        t.accent_fg = 16777215
+        t.btn_bg = 3815994
+        t.btn_hover = 4671303
+        t.btn_active = 3158064
+        t.btn_border = 5263440
+        t.btn_radius = 8
+        t.card_radius = 10
+        t.fg_primary = 16777215
+        t.fg_secondary = 12632256
+        t.fg_muted = 9079434
+        t.border_subtle = 3947580
+        t.border_focus = 3507428
+        t.shadow_col = 1052688
+        return t
+    }
+
+    vein theme_windows() -> OllTheme {
+        forge t: OllTheme
+        t.name = "windows"
+        t.style = 2
+        t.bg_window = 2105376
+        t.bg_header = 2105376
+        t.bg_surface = 2829099
+        t.bg_sidebar = 2039583
+        t.bg_editor = 1644825
+        t.bg_panel = 2105376
+        t.bg_statusbar = 30932
+        t.accent = 30932
+        t.accent_hover = 1082584
+        t.accent_fg = 16777215
+        t.btn_bg = 2960685
+        t.btn_hover = 3684408
+        t.btn_active = 2499622
+        t.btn_border = 3815994
+        t.btn_radius = 4
+        t.card_radius = 6
+        t.fg_primary = 16777215
+        t.fg_secondary = 13421772
+        t.fg_muted = 7763574
+        t.border_subtle = 3355443
+        t.border_focus = 30932
+        t.shadow_col = 855309
+        return t
+    }
+
+    vein theme_neon() -> OllTheme {
+        forge t: OllTheme
+        t.name = "neon"
+        t.style = 3
+        t.bg_window = 658448
+        t.bg_header = 856343
+        t.bg_surface = 1251103
+        t.bg_sidebar = 856343
+        t.bg_editor = 658448
+        t.bg_panel = 856343
+        t.bg_statusbar = 440020
+        t.accent = 440020
+        t.accent_hover = 11032055
+        t.accent_fg = 16777215
+        t.btn_bg = 1448738
+        t.btn_hover = 2172461
+        t.btn_active = 3159613
+        t.btn_border = 440020
+        t.btn_radius = 6
+        t.card_radius = 8
+        t.fg_primary = 15791868
+        t.fg_secondary = 9147550
+        t.fg_muted = 4738904
+        t.border_subtle = 2172461
+        t.border_focus = 440020
+        t.shadow_col = 329482
+        return t
+    }
+
+    vein theme_by_id(id: stone) -> OllTheme {
+        if (id == 1) { return theme_gtk() }
+        if (id == 2) { return theme_windows() }
+        if (id == 3) { return theme_neon() }
+        return theme_dark_modern()
+    }
+
+    vein theme_by_name(name: obsidian) -> OllTheme {
+        if (ofs_str_eq(name, "gtk") || ofs_str_eq(name, "adwaita") || ofs_str_eq(name, "gnome")) {
+            return theme_gtk()
+        }
+        if (ofs_str_eq(name, "windows") || ofs_str_eq(name, "win") || ofs_str_eq(name, "fluent") || ofs_str_eq(name, "mica")) {
+            return theme_windows()
+        }
+        if (ofs_str_eq(name, "neon") || ofs_str_eq(name, "cyberpunk") || ofs_str_eq(name, "purple")) {
+            return theme_neon()
+        }
+        return theme_dark_modern()
+    }
+
+    vein set_theme(name: obsidian) -> void {
+        forge th = theme_by_name(name)
+        _current_theme_id = th.style
+    }
+
+    vein set_theme_id(id: stone) -> void {
+        _current_theme_id = id
+    }
+
+    vein get_theme() -> OllTheme {
+        return theme_by_id(_current_theme_id)
+    }
+
+    vein get_theme_id() -> stone {
+        return _current_theme_id
+    }
+
+    vein reset() -> void {
+        _nodes = []
+        _children_parent = []
+        _children_child = []
+        _root_id = -1
+    }
+
+    vein node_count() -> stone {
+        return ofs_array_len(_nodes)
+    }
+
+    vein get_node(id: stone) -> OllNode {
+        return ofs_array_get(_nodes, id)
+    }
+
+    vein set_node(id: stone, n: OllNode) -> void {
+        ofs_array_set(_nodes, id, n)
+    }
+
+    vein add_child(parent_id: stone, child_id: stone) -> void {
+        ofs_array_push(_children_parent, parent_id)
+        ofs_array_push(_children_child, child_id)
+        forge n = get_node(child_id)
+        n.parent = parent_id
+        set_node(child_id, n)
+    }
+
+    vein child_count(parent_id: stone) -> stone {
+        forge cnt = 0
+        forge i = 0
+        forge len = ofs_array_len(_children_parent)
+        while (i < len) {
+            if (ofs_array_get(_children_parent, i) == parent_id) {
+                cnt++
+            }
+            i++
+        }
+        return cnt
+    }
+
+    vein get_child_at(parent_id: stone, index: stone) -> stone {
+        forge cnt = 0
+        forge i = 0
+        forge len = ofs_array_len(_children_parent)
+        while (i < len) {
+            if (ofs_array_get(_children_parent, i) == parent_id) {
+                if (cnt == index) {
+                    return ofs_array_get(_children_child, i)
+                }
+                cnt++
+            }
+            i++
+        }
+        return -1
+    }
+
+    vein new_node(kind: stone, name: obsidian, text: obsidian) -> stone {
+        forge n: OllNode
+        n.kind = kind
+        n.name = name
+        n.text = text
+        n.bind_var = ""
+        n.on_click = ""
+        n.on_change = ""
+        n.parent = -1
+        n.box_x = 0
+        n.box_y = 0
+        n.box_w = 0
+        n.box_h = 0
+        n.width = -1
+        n.height = -1
+        n.padding = 0
+        n.margin = 0
+        n.gap = 0
+        n.bg_color = -1
+        n.fg_color = 16777215
+        n.border_color = 5789552
+        n.border_width = 0
+        n.active = false
+        n.hover_bg_color = -1
+        n.hover_fg_color = -1
+        n.hover_border_color = -1
+        n.state = 0
+        n.auto_center = true
+        n.resizable = true
+        n.variant = "default"
+        n.icon = ""
+        n.radius = -1
+        n.elevation = 0
+
+        forge cur_th = get_theme()
+
+        if (kind == 1) {
+            n.bg_color = cur_th.bg_window
+            n.fg_color = cur_th.fg_primary
+            n.width = 1024
+            n.height = 768
+        } else if (kind == 2 || kind == 3 || kind == 4) {
+            n.bg_color = -1
+        } else if (kind == 6) {
+            n.variant = "secondary"
+            n.bg_color = cur_th.btn_bg
+            n.hover_bg_color = cur_th.btn_hover
+            n.fg_color = cur_th.fg_primary
+            n.border_color = cur_th.btn_border
+            n.border_width = 0
+            n.radius = cur_th.btn_radius
+            n.elevation = 1
+            n.height = 28
+            n.padding = 6
+        } else if (kind == 7) {
+            n.bg_color = cur_th.bg_surface
+            n.border_color = cur_th.border_subtle
+            n.border_width = 1
+            n.radius = cur_th.btn_radius
+            n.height = 28
+            n.padding = 4
+            n.fg_color = cur_th.fg_muted
+        } else if (kind == 9) {
+            n.bg_color = cur_th.bg_window
+            n.border_width = 0
+            n.radius = cur_th.btn_radius
+            n.height = 28
+            n.width = 120
+            n.padding = 4
+        } else if (kind == 10) {
+            n.bg_color = cur_th.bg_surface
+            n.border_color = cur_th.border_subtle
+            n.border_width = 1
+            n.radius = cur_th.card_radius
+            n.elevation = 1
+        }
+
+        ofs_array_push(_nodes, n)
+        return ofs_array_len(_nodes) - 1
+    }
+
+    vein parse_hex_color(hex_str: obsidian) -> stone {
+        forge len = ofs_str_len(hex_str)
+        forge start = 0
+        if (len > 0 && ofs_str_char_at(hex_str, 0) == 35) {
+            start = 1
+        }
+        forge color = 0
+        forge i = start
+        while (i < len) {
+            forge c = ofs_str_char_at(hex_str, i)
+            forge v = 0
+            if (c >= 48 && c <= 57) {
+                v = c - 48
+            } else if (c >= 97 && c <= 102) {
+                v = 10 + (c - 97)
+            } else if (c >= 65 && c <= 70) {
+                v = 10 + (c - 65)
+            }
+            color = (color * 16) + v
+            i++
+        }
+        return color
+    }
+
+    vein parse_int(s: obsidian) -> stone {
+        forge res = 0
+        forge i = 0
+        forge len = ofs_str_len(s)
+        while (i < len) {
+            forge c = ofs_str_char_at(s, i)
+            if (c >= 48 && c <= 57) {
+                res = (res * 10) + (c - 48)
+            }
+            i++
+        }
+        return res
+    }
+
+    vein is_ws(c: stone) -> bool {
+        return c == 32 || c == 9 || c == 10 || c == 13
+    }
+
+    vein is_name_char(c: stone) -> bool {
+        return (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || (c >= 48 && c <= 57) || c == 95 || c == 45
+    }
+
+    vein parse(src: obsidian) -> stone {
+        reset()
+        forge stack: Array<stone> = []
+        forge len = ofs_str_len(src)
+        forge i = 0
+
+        while (i < len) {
+            forge c = ofs_str_char_at(src, i)
+            if (is_ws(c) || c == 44 || c == 59) {
+                i++
+            } else if (c == 125) {
+                if (ofs_array_len(stack) > 0) {
+                    ofs_array_pop(stack)
+                }
+                i++
+            } else if (c == 34 || c == 39) {
+                forge quote = c
+                i++
+                forge s_start = i
+                while (i < len && ofs_str_char_at(src, i) != quote) {
+                    if (ofs_str_char_at(src, i) == 92 && i + 1 < len) {
+                        i++
+                    }
+                    i++
+                }
+                forge str_val = ofs_str_substr(src, s_start, i - s_start)
+                if (i < len) { i++ }
+                if (ofs_array_len(stack) > 0) {
+                    forge top_id = ofs_array_get(stack, ofs_array_len(stack) - 1)
+                    forge top = get_node(top_id)
+                    if (ofs_str_eq(top.text, "")) {
+                        top.text = str_val
+                        set_node(top_id, top)
+                    }
+                }
+            } else if (is_name_char(c) || c == 35) {
+                forge tok_start = i
+                while (i < len && (is_name_char(ofs_str_char_at(src, i)) || ofs_str_char_at(src, i) == 35 || ofs_str_char_at(src, i) == 58)) {
+                    i++
+                }
+                forge token = ofs_str_substr(src, tok_start, i - tok_start)
+
+                if (ofs_str_eq(token, "window") || ofs_str_eq(token, "row") || ofs_str_eq(token, "column") ||
+                    ofs_str_eq(token, "panel") || ofs_str_eq(token, "container") || ofs_str_eq(token, "stack") ||
+                    ofs_str_eq(token, "label") || ofs_str_eq(token, "button") || ofs_str_eq(token, "input") ||
+                    ofs_str_eq(token, "tabs") || ofs_str_eq(token, "tab") || ofs_str_eq(token, "toolbar") ||
+                    ofs_str_eq(token, "card") || ofs_str_eq(token, "header") || ofs_str_eq(token, "badge") ||
+                    ofs_str_eq(token, "progress")) {
+                    
+                    forge kind = 4
+                    if (ofs_str_eq(token, "window")) { kind = 1 }
+                    if (ofs_str_eq(token, "row") || ofs_str_eq(token, "toolbar")) { kind = 2 }
+                    if (ofs_str_eq(token, "column")) { kind = 3 }
+                    if (ofs_str_eq(token, "label")) { kind = 5 }
+                    if (ofs_str_eq(token, "button")) { kind = 6 }
+                    if (ofs_str_eq(token, "input")) { kind = 7 }
+                    if (ofs_str_eq(token, "tabs")) { kind = 8 }
+                    if (ofs_str_eq(token, "tab")) { kind = 9 }
+                    if (ofs_str_eq(token, "card") || ofs_str_eq(token, "panel")) { kind = 10 }
+                    if (ofs_str_eq(token, "header")) { kind = 11 }
+                    if (ofs_str_eq(token, "badge")) { kind = 12 }
+                    if (ofs_str_eq(token, "progress")) { kind = 13 }
+
+                    while (i < len && is_ws(ofs_str_char_at(src, i))) { i++ }
+                    forge node_name = ""
+                    if (i < len && is_name_char(ofs_str_char_at(src, i))) {
+                        forge nstart = i
+                        while (i < len && is_name_char(ofs_str_char_at(src, i))) { i++ }
+                        node_name = ofs_str_substr(src, nstart, i - nstart)
+                    }
+
+                    forge node_text = ""
+                    while (i < len && is_ws(ofs_str_char_at(src, i))) { i++ }
+                    if (i < len && (ofs_str_char_at(src, i) == 34 || ofs_str_char_at(src, i) == 39)) {
+                        forge q = ofs_str_char_at(src, i)
+                        i++
+                        forge tstart = i
+                        while (i < len && ofs_str_char_at(src, i) != q) {
+                            if (ofs_str_char_at(src, i) == 92 && i + 1 < len) {
+                                i++
+                            }
+                            i++
+                        }
+                        node_text = ofs_str_substr(src, tstart, i - tstart)
+                        if (i < len) { i++ }
+                    }
+
+                    forge nid = new_node(kind, node_name, node_text)
+                    if (ofs_array_len(stack) > 0) {
+                        forge parent_id = ofs_array_get(stack, ofs_array_len(stack) - 1)
+                        add_child(parent_id, nid)
+                    } else if (_root_id < 0) {
+                        _root_id = nid
+                    }
+
+                    while (i < len && is_ws(ofs_str_char_at(src, i))) { i++ }
+                    if (i < len && ofs_str_char_at(src, i) == 123) {
+                        ofs_array_push(stack, nid)
+                        i++
+                    }
+                } else if (ofs_array_len(stack) > 0) {
+                    forge cur_id = ofs_array_get(stack, ofs_array_len(stack) - 1)
+                    forge cur_node = get_node(cur_id)
+
+                    forge prop_name = token
+                    forge plen = ofs_str_len(prop_name)
+                    if (plen > 0 && ofs_str_char_at(prop_name, plen - 1) == 58) {
+                        prop_name = ofs_str_substr(prop_name, 0, plen - 1)
+                    }
+
+                    while (i < len && (is_ws(ofs_str_char_at(src, i)) || ofs_str_char_at(src, i) == 58)) { i++ }
+
+                    forge prop_val = ""
+                    if (i < len && (ofs_str_char_at(src, i) == 34 || ofs_str_char_at(src, i) == 39)) {
+                        forge q2 = ofs_str_char_at(src, i)
+                        i++
+                        forge val_start = i
+                        while (i < len && ofs_str_char_at(src, i) != q2) {
+                            if (ofs_str_char_at(src, i) == 92 && i + 1 < len) {
+                                i++
+                            }
+                            i++
+                        }
+                        prop_val = ofs_str_substr(src, val_start, i - val_start)
+                        if (i < len) { i++ }
+                    } else {
+                        forge val_start2 = i
+                        while (i < len && is_name_char(ofs_str_char_at(src, i)) || (i < len && ofs_str_char_at(src, i) == 35)) {
+                            i++
+                        }
+                        prop_val = ofs_str_substr(src, val_start2, i - val_start2)
+                    }
+
+                    if (ofs_str_eq(prop_name, "theme")) {
+                        set_theme(prop_val)
+                    } else if (ofs_str_eq(prop_name, "title")) {
+                        cur_node.text = prop_val
+                    } else if (ofs_str_eq(prop_name, "id")) {
+                        cur_node.name = prop_val
+                    } else if (ofs_str_eq(prop_name, "variant")) {
+                        cur_node.variant = prop_val
+                    } else if (ofs_str_eq(prop_name, "icon")) {
+                        cur_node.icon = prop_val
+                    } else if (ofs_str_eq(prop_name, "radius")) {
+                        cur_node.radius = parse_int(prop_val)
+                    } else if (ofs_str_eq(prop_name, "elevation")) {
+                        cur_node.elevation = parse_int(prop_val)
+                    } else if (ofs_str_eq(prop_name, "width")) {
+                        cur_node.width = parse_int(prop_val)
+                    } else if (ofs_str_eq(prop_name, "height")) {
+                        cur_node.height = parse_int(prop_val)
+                    } else if (ofs_str_eq(prop_name, "padding")) {
+                        cur_node.padding = parse_int(prop_val)
+                    } else if (ofs_str_eq(prop_name, "margin")) {
+                        cur_node.margin = parse_int(prop_val)
+                    } else if (ofs_str_eq(prop_name, "gap")) {
+                        cur_node.gap = parse_int(prop_val)
+                    } else if (ofs_str_eq(prop_name, "background") || ofs_str_eq(prop_name, "bg") || ofs_str_eq(prop_name, "bg_color")) {
+                        cur_node.bg_color = parse_hex_color(prop_val)
+                    } else if (ofs_str_eq(prop_name, "color") || ofs_str_eq(prop_name, "fg") || ofs_str_eq(prop_name, "fg_color")) {
+                        cur_node.fg_color = parse_hex_color(prop_val)
+                    } else if (ofs_str_eq(prop_name, "border") || ofs_str_eq(prop_name, "border_width")) {
+                        cur_node.border_width = parse_int(prop_val)
+                    } else if (ofs_str_eq(prop_name, "border_color") || ofs_str_eq(prop_name, "border-color")) {
+                        cur_node.border_color = parse_hex_color(prop_val)
+                    } else if (ofs_str_eq(prop_name, "value")) {
+                        cur_node.gap = parse_int(prop_val)
+                    } else if (ofs_str_eq(prop_name, "on_click")) {
+                        cur_node.on_click = prop_val
+                    } else if (ofs_str_eq(prop_name, "on_change")) {
+                        cur_node.on_change = prop_val
+                    } else if (ofs_str_eq(prop_name, "bind")) {
+                        cur_node.bind_var = prop_val
+                    } else if (ofs_str_eq(prop_name, "active")) {
+                        cur_node.active = ofs_str_eq(prop_val, "true")
+                    } else if (ofs_str_eq(prop_name, "hover_bg") || ofs_str_eq(prop_name, "hover_bg_color")) {
+                        cur_node.hover_bg_color = parse_hex_color(prop_val)
+                    } else if (ofs_str_eq(prop_name, "hover_fg") || ofs_str_eq(prop_name, "hover_fg_color")) {
+                        cur_node.hover_fg_color = parse_hex_color(prop_val)
+                    } else if (ofs_str_eq(prop_name, "hover_border") || ofs_str_eq(prop_name, "hover_border_color")) {
+                        cur_node.hover_border_color = parse_hex_color(prop_val)
+                    } else if (ofs_str_eq(prop_name, "state")) {
+                        if (ofs_str_eq(prop_val, "hover")) { cur_node.state = 1 }
+                        else if (ofs_str_eq(prop_val, "active") || ofs_str_eq(prop_val, "pressed")) { cur_node.state = 2 }
+                        else if (ofs_str_eq(prop_val, "disabled")) { cur_node.state = 3 }
+                        else { cur_node.state = 0 }
+                    } else if (ofs_str_eq(prop_name, "auto_center") || ofs_str_eq(prop_name, "center")) {
+                        cur_node.auto_center = ofs_str_eq(prop_val, "true") || ofs_str_eq(prop_val, "1")
+                    } else if (ofs_str_eq(prop_name, "resizable")) {
+                        cur_node.resizable = ofs_str_eq(prop_val, "true") || ofs_str_eq(prop_val, "1")
+                    }
+
+                    set_node(cur_id, cur_node)
+                }
+            } else {
+                i++
+            }
+        }
+
+        if (_root_id < 0 && ofs_array_len(_nodes) > 0) {
+            _root_id = 0
+        }
+        return _root_id
+    }
+
+    vein load(path: obsidian) -> stone {
+        forge src = fs.read(path)
+        return parse(src)
+    }
+
+    vein find_by_name(name: obsidian) -> stone {
+        forge total = ofs_array_len(_nodes)
+        forge i = 0
+        while (i < total) {
+            forge n = get_node(i)
+            if (ofs_str_eq(n.name, name)) {
+                return i
+            }
+            i++
+        }
+        return -1
+    }
+
+    vein layout_node(id: stone, x: stone, y: stone, avail_w: stone, avail_h: stone) -> void {
+        forge n = get_node(id)
+        n.box_x = x + n.margin
+        n.box_y = y + n.margin
+
+        if (n.width >= 0) {
+            n.box_w = n.width
+        } else {
+            n.box_w = avail_w - (n.margin * 2)
+        }
+
+        if (n.height >= 0) {
+            n.box_h = n.height
+        } else {
+            n.box_h = avail_h - (n.margin * 2)
+        }
+        set_node(id, n)
+
+        forge count = child_count(id)
+        if (count == 0) { return }
+
+        forge inner_x = n.box_x + n.padding
+        forge inner_y = n.box_y + n.padding
+        forge inner_w = n.box_w - (n.padding * 2)
+        forge inner_h = n.box_h - (n.padding * 2)
+
+        if (n.kind == 2) {
+            forge fixed_w_total = 0
+            forge auto_count = 0
+            forge ci = 0
+            while (ci < count) {
+                forge child_id = get_child_at(id, ci)
+                forge cnode = get_node(child_id)
+                if (cnode.width >= 0) {
+                    fixed_w_total = fixed_w_total + cnode.width + (cnode.margin * 2)
+                } else {
+                    auto_count++
+                }
+                ci++
+            }
+            forge gaps = 0
+            if (count > 1) {
+                gaps = n.gap * (count - 1)
+            }
+            forge remaining_w = inner_w - fixed_w_total - gaps
+            if (remaining_w < 0) { remaining_w = 0 }
+            forge auto_w = 0
+            if (auto_count > 0) {
+                auto_w = remaining_w / auto_count
+            }
+
+            forge cur_x = inner_x
+            ci = 0
+            while (ci < count) {
+                forge cid = get_child_at(id, ci)
+                forge c = get_node(cid)
+                forge cw = auto_w
+                if (c.width >= 0) { cw = c.width }
+                forge ch = inner_h
+                if (c.height >= 0) { ch = c.height }
+
+                layout_node(cid, cur_x, inner_y, cw, ch)
+                forge c_after = get_node(cid)
+                cur_x = cur_x + c_after.box_w + (c_after.margin * 2) + n.gap
+                ci++
+            }
+        } else {
+            forge fixed_h_total = 0
+            forge auto_h_count = 0
+            forge cj = 0
+            while (cj < count) {
+                forge ch_id = get_child_at(id, cj)
+                forge cnode2 = get_node(ch_id)
+                if (cnode2.height >= 0) {
+                    fixed_h_total = fixed_h_total + cnode2.height + (cnode2.margin * 2)
+                } else {
+                    auto_h_count++
+                }
+                cj++
+            }
+            forge h_gaps = 0
+            if (count > 1) {
+                h_gaps = n.gap * (count - 1)
+            }
+            forge remaining_h = inner_h - fixed_h_total - h_gaps
+            if (remaining_h < 0) { remaining_h = 0 }
+            forge auto_h = 0
+            if (auto_h_count > 0) {
+                auto_h = remaining_h / auto_h_count
+            }
+
+            forge cur_y = inner_y
+            cj = 0
+            while (cj < count) {
+                forge cid2 = get_child_at(id, cj)
+                forge c2 = get_node(cid2)
+                forge ch2 = auto_h
+                if (c2.height >= 0) { ch2 = c2.height }
+                forge cw2 = inner_w
+                if (c2.width >= 0) { cw2 = c2.width }
+
+                layout_node(cid2, inner_x, cur_y, cw2, ch2)
+                forge c2_after = get_node(cid2)
+                cur_y = cur_y + c2_after.box_h + (c2_after.margin * 2) + n.gap
+                cj++
+            }
+        }
+    }
+
+    vein compute_layout(root_id: stone) -> void {
+        if (root_id < 0) { return }
+        forge n = get_node(root_id)
+        forge w = n.width
+        if (w < 0) { w = 1024 }
+        forge h = n.height
+        if (h < 0) { h = 768 }
+        layout_node(root_id, 0, 0, w, h)
+    }
+
+    vein render(cv: Canvas) -> void {
+        forge total = ofs_array_len(_nodes)
+        forge i = 0
+        while (i < total) {
+            forge n = get_node(i)
+            forge bg = n.bg_color
+            forge fg = n.fg_color
+            forge bcol = n.border_color
+            if (n.state == 1) {
+                if (n.hover_bg_color >= 0) { bg = n.hover_bg_color }
+                if (n.hover_fg_color >= 0) { fg = n.hover_fg_color }
+                if (n.hover_border_color >= 0) { bcol = n.hover_border_color }
+            }
+
+            if (n.elevation > 0 && n.box_w > 0 && n.box_h > 0) {
+                canvas.fill_rounded_rect(cv, n.box_x + 1, n.box_y + 2, n.box_w, n.box_h, n.radius, 657930)
+            }
+
+            if (bg >= 0) {
+                if (n.radius > 0) {
+                    canvas.fill_rounded_rect(cv, n.box_x, n.box_y, n.box_w, n.box_h, n.radius, bg)
+                } else {
+                    canvas.fill_rect(cv, n.box_x, n.box_y, n.box_w, n.box_h, bg)
+                }
+            }
+            if (n.border_width > 0) {
+                if (n.radius > 0) {
+                    canvas.draw_rounded_border(cv, n.box_x, n.box_y, n.box_w, n.box_h, n.radius, bcol)
+                } else {
+                    canvas.draw_rect(cv, n.box_x, n.box_y, n.box_w, n.box_h, bcol)
+                }
+            }
+
+            if (ofs_str_len(n.text) > 0) {
+                forge tx = n.box_x + n.padding + 4
+                forge ty = n.box_y + n.padding + 6
+                if (n.kind == 6) {
+                    forge tlen = ofs_str_len(n.text)
+                    forge text_w = tlen * 7
+                    if (n.box_w > text_w) {
+                        tx = n.box_x + ((n.box_w - text_w) / 2)
+                    }
+                    if (n.box_h > 10) {
+                        ty = n.box_y + ((n.box_h - 8) / 2)
+                    }
+                }
+                canvas.draw_text(cv, tx, ty, n.text, n.fg_color)
+            }
+            i++
+        }
+    }
+
+    vein hit_test(x: stone, y: stone) -> stone {
+        forge total = ofs_array_len(_nodes)
+        forge best_id = -1
+        forge i = total - 1
+        while (i >= 0) {
+            forge n = get_node(i)
+            if (x >= n.box_x && x < (n.box_x + n.box_w) && y >= n.box_y && y < (n.box_y + n.box_h)) {
+                if (n.kind == 6 || n.kind == 7 || n.kind == 9) {
+                    return i
+                }
+                if (best_id < 0) {
+                    best_id = i
+                }
+            }
+            i--
+        }
+        return best_id
+    }
+
+    vein click(id: stone) -> obsidian {
+        if (id < 0 || id >= ofs_array_len(_nodes)) { return "" }
+        forge n = get_node(id)
+        return n.on_click
+    }
+}

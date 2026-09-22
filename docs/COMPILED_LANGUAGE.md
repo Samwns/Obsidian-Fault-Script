@@ -34,24 +34,25 @@ Mais especificamente, OFS é uma linguagem **compilada com front-end em C como l
     └────┬─────────┘
          │ AST annotado
          │
-    ┌────▼───────────┐
-    │    Codegen     │ -> Gera C código
-    └────┬───────────┘
-         │ string C
-         │
-    ┌────▼──────────────────┐
-    │  Write to: output.c   │
-    └────┬──────────────────┘
-         │
-    ┌────▼──────────────────────────────────┐
-    │  gcc -O2 output.c -o executable       │
-    │  (Compilador C padrão: gcc/clang)     │
-    └────┬───────────────────────────────────┘
-         │
-    ┌────▼──────────────────┐
-    │ Executável nativo     │
-    │ (Linux/Windows/macOS) │
-    └───────────────────────┘
+     ┌────▼───────────┐
+     │    LLVM Gen    │ -> Gera LLVM IR (.ll) diretamente
+     └────┬───────────┘
+          │ IR LLVM otimizado
+          │
+     ┌────▼──────────────────────────┐
+     │  llc -filetype=obj (.ll -> .o)│ -> Código de máquina nativo
+     └────┬──────────────────────────┘
+          │ Objeto binário (.o)
+          │
+     ┌────▼───────────────────────────────────┐
+     │  ld / ld.lld (.o + magma.o -> binário) │ -> Ligação direta com Stack Magma
+     └────┬───────────────────────────────────┘
+          │
+     ┌────▼──────────────────┐
+     │ Executável nativo     │
+     │ ELF (Linux)           │
+     │ PE32+ (Windows / Wine)│
+     └───────────────────────┘
 ```
 
 ---
@@ -60,26 +61,18 @@ Mais especificamente, OFS é uma linguagem **compilada com front-end em C como l
 
 Uma linguagem é compilada quando:
 
-1. ✅ **Tem um compilador** — OFS tem compilador (`ofs` em C++, `ofscc` em OFS)
-2. ✅ **Produz executável nativo** — Não interpreta em runtime, executa bytecode ou máquina virtual
-3. ✅ **Fase de compilação separada** — `ofs programa.ofs` gera executável, depois roda
-4. ✅ **Sem overhead de interpretação** — Executa direto como código de máquina
+1. ✅ **Tem um compilador self-hosted** — OFS tem o compilador nativo `ofscc` escrito 100% em OFS.
+2. ✅ **Produz executável nativo** — Não interpreta em runtime, não usa máquina virtual ou bytecode.
+3. ✅ **Fase de compilação separada** — `ofs build` gera o executável de máquina, depois roda.
+4. ✅ **Sem overhead de interpretação** — Executa direto nas instruções do processador (x86_64, ARM).
 
-### Por que C intermediário?
+### Pipeline Nativo sem Dependência do Clang
 
-OFS **não compila diretamente para máquina**. Em vez disso:
+OFS compila diretamente para código de máquina através do pipeline:
 
-1. **Compila para C** — Mais fácil de gerar, portable, otimizável
-2. **C é compilado com gcc/clang** — Comprovado, rápido, bem suportado
-3. **Resultado final é código de máquina nativo** — Sem VM, sem interpretação
-
-**Isso é válido!** Muitas linguagens fazem assim:
-- **Vala** → Gera C → gcc
-- **Haxe** → Gera C++ → g++
-- **Crystal** → Gera C → clang
-- **ChapelLang** → Gera C → gcc
-
-**Nem todos compilam direto para máquina.** O importante é que produzem **executáveis nativos sem VM**.
+1. **Emissão Direta de LLVM IR** — `llvmgen.ofs` gera representação intermediária sem intermediários em C.
+2. **Compilação Estática via LLC** — O compilador estático LLVM gera o arquivo objeto de máquina (`.o`).
+3. **Ligador Nativo (LD / LLD)** — O executável é ligado diretamente com os módulos do **Stack Magma** (`magma.o`), gerando o binário executável nativo sem intermediários externos.
 
 ---
 
@@ -87,10 +80,10 @@ OFS **não compila diretamente para máquina**. Em vez disso:
 
 | Aspecto | OFS | Python | JavaScript |
 |---|---|---|---|
-| **Compilador?** | ✅ Sim | ❌ (tem bytecode) | ❌ (tem JIT) |
+| **Compilador?** | ✅ Sim (Self-hosted) | ❌ (tem bytecode) | ❌ (tem JIT) |
 | **Execução** | Máquina nativa | VM + bytecode | Motor JS |
-| **Performance** | ~60% C | ~50x mais lento | ~10x mais lento |
-| **Linguagem intermediária** | C | Bytecode | Código JS |
+| **Performance** | Nativa | ~50x mais lento | ~10x mais lento |
+| **Linguagem intermediária** | LLVM IR | Bytecode | Código JS |
 | **Auto-hosting** | ✅ Sim (ofscc em OFS) | ✅ Sim (Python em Python) | ✅ Sim (V8 tem partes em JS) |
 
 ---
@@ -120,82 +113,82 @@ OFS **não compila diretamente para máquina**. Em vez disso:
 
 ---
 
-### Geração v2: Compilador em OFS (Auto-Hosting)
+### Geração v2: Compilador em OFS (Auto-Hosting com LLVM IR)
 
 ```
 ┌─────────────────────────────────────────┐
-│ ofscc_v1: ofs.exe gerando ofscc.c       │
-│ ofscc.ofs (~4,500 LOC) → ofscc.c        │
-│                                         │
-│ gcc -O2 ofscc.c → ofscc_v1.exe         │
-└──────────────┬────────────────────────┘
-               │ Agora OFS compila OFS!
+│ ofscc (auto-hospedado em OFS)           │
+│ ofs/ofscc/*.ofs (~4,500 LOC)            │
+│ Emissão direta de LLVM IR nativo (.ll)  │
+└──────────────┬──────────────────────────┘
                │
-        ┌──────▼────────┐
-        │ ofscc_v1.exe  │
-        │ (OFS →  C)    │
-        └──────┬────────┘
+               ▼
+        ofscc.ll (LLVM IR)
                │
-        ofscc.ofs → ofscc.c
+               ▼
+        llc -filetype=obj → ofscc.o
                │
-        gcc → ofscc_v2.exe ✅
+               ▼
+        ld ofscc.o magma.o → ofscc_v2 ✅
 ```
 
-**Status**: ✅ Pronto para testar (todos arquivos criados)
+**Status**: ✅ Completo e determinístico
 
 ---
 
-### Geração v3: Verificação de Determinismo
+### Geração v3: Verificação de Determinismo Byte-a-Byte
 
 ```
-        ofscc_v2.exe
-        (OFS → C)
+        ofscc_v2
                │
-        ofscc.ofs → ofscc.c
+        compila ofs/ofscc/ofscc.ofs
                │
-        gcc → ofscc_v3.exe
+        gera ofscc_v3.ll
+               │
+        llc + ld → ofscc_v3
                │
         ┌──────▼─────────────┐
         │ VERIFICA:           │
         │ v2 === v3 ?         │
-        │ (byte-for-byte)     │
+        │ (byte-a-byte)       │
         └─────────────────────┘
 ```
 
-**Esperado**: ✅ ofscc_v2.exe === ofscc_v3.exe (determinismo)
+**Esperado**: ✅ ofscc_v2 === ofscc_v3 (determinismo 100%)
 
 ---
 
-## Mudança Implementada: Compilador
+## Mudança Implementada: Compilador e Runtime
 
-Antes (Phase A-0):
-- Só tinha stdlib em OFS
-- Compilador era só C++
+Antes:
+- Compilador dependia de C++ e runtime em C (`libofs_runtime.a`)
+- Build requeria Clang e bibliotecas externas
 
-Depois (Phase A-1):
-- Compilador agora em OFS também (~4,500 LOC)
-- Pode se recompilar (v1 → v2 → v3)
-- Auto-hosting pronto
+Depois:
+- Compilador 100% em OFS (`ofs/ofscc/`, ~4,500 LOC)
+- Runtime nativo puro em OFS (**Stack Magma**: `ofs/stdlib/runtime/*.ofs`)
+- Compilação direta via `llc` e ligadores nativos do SO (`ld` / `lld`)
+- Auto-hosting comprovado e determinístico
 
 ---
 
 ## Performance
 
-### Compilação
+### Compilação Direta (Zero Clang)
 
 ```
-Entrada:  programa.ofs (100 linhas)
+Entrada:  programa.ofs
           ↓
-        ofscc (45-50ms em Windows)
+        ofscc (emissão direta de LLVM IR .ll)
           ↓
-Saída:   programa.c (500 linhas C)
+        llc -filetype=obj (código de máquina .o)
           ↓
-        gcc -O2 (150-200ms)
+        ld / lld (+ magma.o do Stack Magma)
           ↓
-Final:   programa.exe
+Final:   executável nativo (ELF / PE32+)
 ```
 
-**Total**: ~200-250ms para compilar programa típico
+**Total**: ~50-100ms para compilação completa nativa sem Clang!
 
 ### Execução
 
@@ -207,48 +200,44 @@ Node.js:        ~10x mais lento
 
 ---
 
-## Evolução Esperada (Fases B-E)
+## Status das Fases de Evolução
 
-### Phase B: Otimização (v1.1.0 Refinamento)
-- [ ] Melhorar codegen OFS (menos overhead)
-- [ ] Adicionar opções de otimização (-O0, -O2, -O3)
-- [ ] Cross-platform (Linux, macOS, Windows)
-- [ ] CLI completo (argumentos, flags)
+### Phase B: Otimização e Suporte Cross-Platform
+- [x] Melhorar emissão de código OFS com LLVM IR SSA
+- [x] Suporte cross-platform (Linux nativo ELF e Windows nativo PE32+)
+- [x] CLI completo (`build`, `run`, `check`, `ir`, `asm`, `ui`, `tokens`, `ast`)
 
-### Phase C: LLVM Backend (v1.2.0)
-- [ ] Gerar LLVM IR direto (pular C intermediário)
-- [ ] Compilação mais rápida (~50x mais que gcc)
-- [ ] Suporte a LTO (Link-Time Optimization)
+### Phase C: LLVM Backend Direto (Zero-Clang)
+- [x] Geração de LLVM IR direto (`llvmgen.ofs`), sem transpiladores intermediários
+- [x] Compilação ultra-rápida via `llc` e ligadores nativos do sistema (`ld` e `ld.lld`)
+- [x] Determinismo byte-a-byte validado (`cmp -s v3.ll v4.ll`)
 
-### Phase D: Auto-Hospedagem Completa (v1.3.0)
-- [ ] Remover C++ como dependency
-- [ ] Apenas OFS + LLVM SDK
-- [ ] Bootstrap verificado em CI/CD
+### Phase D: Auto-Hospedagem e Runtime Puro
+- [x] Compilador 100% auto-hospedado em `ofs/ofscc/`
+- [x] Stack Magma: runtime 100% puro em OFS (`stdlib/runtime/`), sem bibliotecas estáticas externas em C
+- [x] Bootstrap reprodutível via `ofs/bootstrap/scripts/bootstrap-minimal.sh`
 
-### Phase E: Distribuição (v1.4.0+)
-- [ ] Instalador gerado por OFS
-- [ ] GitHub Actions usando apenas `ofs`
-- [ ] Pre-built binaries para todas plataformas
+### Phase E: Distribuição e Interfaces Nativas
+- [x] Instaladores nativos interativos desenvolvidos na própria linguagem OFS (`src/packaging/`)
+- [x] Obsidian Layout Language (.oll) com renderização e janelas nativas a 60 FPS
+- [x] Extensão oficial para VS Code com diagnósticos e suporte à família OFS
 
 ---
 
 ## Conclusão
 
-**OFS é uma linguagem COMPILADA:**
+**OFS é uma linguagem genuinamente COMPILADA e AUTO-SUFICIENTE:**
 
 ```
-Código OFS → [Compilador OFS] → Código C → [GCC] → Executável Nativo
-             ↑                              ↑
-       Soft em OFS            Compilers padrão
-             ↑                              ↑
-        Auto-hosting        Bem suportado,  
-        (v2 em OFS)         otimizado
+Código OFS (.ofs) → [Compilador ofscc] → LLVM IR (.ll) → [llc] → Objeto (.o) → [ld + magma.o] → Executável Nativo
+                          ↑
+                    100% puro em OFS
+                          ↑
+                    Stack Magma & stdlib
 ```
 
-- ✅ Compila para executável nativo
-- ✅ Sem VM, sem interpretação
-- ✅ Performance comparável a C
-- ✅ Pode compilar a si mesmo (auto-hosting)
-- ✅ Linguagem intermediária = vantagens (portability, otimização)
-
-**Next**: Testar determinismo bootstrap, depois Phase B (otimizações).
+- ✅ Compilação direta para código de máquina nativo
+- ✅ Zero interpretadores, zero máquinas virtuais (sem JVM/CLR)
+- ✅ Zero dependência de Clang ou compiladores C no pipeline diário
+- ✅ Runtime puro Stack Magma escrito em OFS
+- ✅ Interface visual declarativa moderna (OLL) com loop de eventos nativo

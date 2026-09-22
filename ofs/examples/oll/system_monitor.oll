@@ -1,0 +1,248 @@
+window "Painel do Sistema Nobara Linux — OFS + OLL" {
+    width: 860
+    height: 620
+    bg_color: #181825
+    fg_color: #cdd6f4
+    padding: 16
+    gap: 12
+
+    column {
+        gap: 12
+
+        row {
+            height: 46
+            padding: 8
+            bg_color: #1e1e2e
+            border_color: #45475a
+            border_width: 1
+            gap: 16
+
+            label "🐧 Nobara Linux 44 — Kernel 7.2.3 — Pure OFS Stack Magma" {
+                fg_color: #cba6f7
+                width: 660
+            }
+            badge "ONLINE" {
+                width: 120
+                height: 28
+                bg_color: #1e3a29
+                border_color: #a6e3a1
+                border_width: 1
+                fg_color: #a6e3a1
+            }
+        }
+
+        row {
+            gap: 12
+            height: 124
+
+            card {
+                width: 195
+                bg_color: #1e1e2e
+                border_color: #313244
+                border_width: 1
+                padding: 10
+                gap: 6
+
+                label "CPU: RYZEN 7 5700X" {
+                    fg_color: #89b4fa
+                }
+                label "24.8% (16 Cores)" {
+                    fg_color: #a6e3a1
+                }
+                progress {
+                    height: 10
+                    value: 25
+                    bg_color: #313244
+                    border_color: #a6e3a1
+                    border_width: 1
+                }
+                label "Frequencia: 4.65 GHz" {
+                    fg_color: #a6adc8
+                }
+            }
+
+            card {
+                width: 195
+                bg_color: #1e1e2e
+                border_color: #313244
+                border_width: 1
+                padding: 10
+                gap: 6
+
+                label "MEMORIA RAM" {
+                    fg_color: #89b4fa
+                }
+                label "14.2 GB / 32 GB (44%)" {
+                    fg_color: #f9e2af
+                }
+                progress {
+                    height: 10
+                    value: 44
+                    bg_color: #313244
+                    border_color: #f9e2af
+                    border_width: 1
+                }
+                label "Disponivel: 17.8 GB" {
+                    fg_color: #a6adc8
+                }
+            }
+
+            card {
+                width: 195
+                bg_color: #1e1e2e
+                border_color: #313244
+                border_width: 1
+                padding: 10
+                gap: 6
+
+                label "GPU RADEON RX 7800 XT" {
+                    fg_color: #89b4fa
+                }
+                label "52 C — 38W (28%)" {
+                    fg_color: #fab387
+                }
+                progress {
+                    height: 10
+                    value: 28
+                    bg_color: #313244
+                    border_color: #fab387
+                    border_width: 1
+                }
+                label "VRAM: 4.1 GB / 16 GB" {
+                    fg_color: #a6adc8
+                }
+            }
+
+            card {
+                width: 195
+                bg_color: #1e1e2e
+                border_color: #313244
+                border_width: 1
+                padding: 10
+                gap: 6
+
+                label "SSD NVME 990 PRO" {
+                    fg_color: #89b4fa
+                }
+                label "1.2 TB / 2.0 TB (60%)" {
+                    fg_color: #cba6f7
+                }
+                progress {
+                    height: 10
+                    value: 60
+                    bg_color: #313244
+                    border_color: #cba6f7
+                    border_width: 1
+                }
+                label "I/O: 3.2 GB/s Read" {
+                    fg_color: #a6adc8
+                }
+            }
+        }
+
+        card {
+            bg_color: #1e1e2e
+            border_color: #313244
+            border_width: 1
+            padding: 12
+            gap: 6
+
+            label "TABELA DE PROCESSOS EM EXECUCAO (TEMPO REAL)" {
+                fg_color: #cba6f7
+                height: 22
+            }
+
+            row {
+                padding: 6
+                bg_color: #313244
+                border_color: #45475a
+                border_width: 1
+                label "PID" { width: 70 fg_color: #89b4fa }
+                label "PROCESSO / APLICATIVO" { width: 280 fg_color: #89b4fa }
+                label "CPU %" { width: 90 fg_color: #89b4fa }
+                label "MEMORIA" { width: 110 fg_color: #89b4fa }
+                label "STATUS NOBARA" { width: 140 fg_color: #89b4fa }
+            }
+
+            row {
+                padding: 5
+                bg_color: #181825
+                label "1042" { width: 70 fg_color: #cdd6f4 }
+                label "ofs-compiler-daemon" { width: 280 fg_color: #a6e3a1 }
+                label "0.8%" { width: 90 fg_color: #a6e3a1 }
+                label "24.5 MB" { width: 110 fg_color: #cdd6f4 }
+                label "Running (Stack Magma)" { width: 140 fg_color: #a6e3a1 }
+            }
+
+            row {
+                padding: 5
+                bg_color: #1e1e2e
+                label "1894" { width: 70 fg_color: #cdd6f4 }
+                label "catalyst-browser" { width: 280 fg_color: #89b4fa }
+                label "2.4%" { width: 90 fg_color: #89b4fa }
+                label "148.0 MB" { width: 110 fg_color: #cdd6f4 }
+                label "Active (OLL UI Native)" { width: 140 fg_color: #89b4fa }
+            }
+
+            row {
+                padding: 5
+                bg_color: #181825
+                label "2301" { width: 70 fg_color: #cdd6f4 }
+                label "ofs-oll-engine" { width: 280 fg_color: #fab387 }
+                label "1.1%" { width: 90 fg_color: #fab387 }
+                label "48.2 MB" { width: 110 fg_color: #cdd6f4 }
+                label "Idle (Event Sandbox)" { width: 140 fg_color: #fab387 }
+            }
+
+            row {
+                padding: 5
+                bg_color: #1e1e2e
+                label "3412" { width: 70 fg_color: #cdd6f4 }
+                label "kwin_wayland" { width: 280 fg_color: #cba6f7 }
+                label "3.7%" { width: 90 fg_color: #cba6f7 }
+                label "210.6 MB" { width: 110 fg_color: #cdd6f4 }
+                label "Compositor (XWayland)" { width: 140 fg_color: #cba6f7 }
+            }
+        }
+
+        row {
+            gap: 12
+            padding: 8
+            bg_color: #1e1e2e
+            border_color: #313244
+            border_width: 1
+
+            label "Obsidian Layout Language — Interface 100% Declarativa sem C" {
+                width: 440
+                fg_color: #a6adc8
+            }
+            button "Atualizar Metricas" {
+                width: 140
+                height: 32
+                bg_color: #89b4fa
+                fg_color: #11111b
+                border_color: #b4befe
+                border_width: 1
+                on_click: "refresh_metrics"
+            }
+            button "Otimizar RAM" {
+                width: 120
+                height: 32
+                bg_color: #a6e3a1
+                fg_color: #11111b
+                border_color: #94e2d5
+                border_width: 1
+                on_click: "optimize_ram"
+            }
+            button "Fechar" {
+                width: 90
+                height: 32
+                bg_color: #f38ba8
+                fg_color: #11111b
+                border_color: #eba0ac
+                border_width: 1
+                on_click: "quit"
+            }
+        }
+    }
+}

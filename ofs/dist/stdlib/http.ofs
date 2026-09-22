@@ -1,0 +1,105 @@
+attach {F:net.ofs}
+
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_contains(haystack: obsidian, needle: obsidian) -> bool
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_str_char_at(s: obsidian, idx: stone) -> stone
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+
+monolith HttpResponse {
+    status: stone
+    body: obsidian
+    content_type: obsidian
+}
+
+namespace http {
+    vein response(status: stone, content_type: obsidian, body: obsidian) -> obsidian {
+        forge status_msg = "OK"
+        if (status == 404) {
+            status_msg = "Not Found"
+        } else if (status == 500) {
+            status_msg = "Internal Server Error"
+        } else if (status == 201) {
+            status_msg = "Created"
+        } else if (status == 400) {
+            status_msg = "Bad Request"
+        }
+
+        forge head = "HTTP/1.1 " + ofs_stone_to_obsidian(status) + " " + status_msg + "\r\n"
+        head = head + "Content-Type: " + content_type + "\r\n"
+        head = head + "Content-Length: " + ofs_stone_to_obsidian(ofs_str_len(body)) + "\r\n"
+        head = head + "Connection: close\r\n\r\n"
+        return head + body
+    }
+
+    vein parse_status_code(response_text: obsidian) -> stone {
+        if (ofs_str_len(response_text) < 12) {
+            return 500
+        }
+        forge c0 = ofs_str_char_at(response_text, 9) - 48
+        forge c1 = ofs_str_char_at(response_text, 10) - 48
+        forge c2 = ofs_str_char_at(response_text, 11) - 48
+        if (c0 >= 0 && c0 <= 9 && c1 >= 0 && c1 <= 9 && c2 >= 0 && c2 <= 9) {
+            return c0 * 100 + c1 * 10 + c2
+        }
+        return 200
+    }
+
+    vein extract_body(response_text: obsidian) -> obsidian {
+        forge len = ofs_str_len(response_text)
+        forge i = 0
+        while (i < len - 3) {
+            if (ofs_str_char_at(response_text, i) == 13 &&
+                ofs_str_char_at(response_text, i + 1) == 10 &&
+                ofs_str_char_at(response_text, i + 2) == 13 &&
+                ofs_str_char_at(response_text, i + 3) == 10) {
+                return ofs_str_substr(response_text, i + 4, len - (i + 4))
+            }
+            i++
+        }
+        forge j = 0
+        while (j < len - 1) {
+            if (ofs_str_char_at(response_text, j) == 10 &&
+                ofs_str_char_at(response_text, j + 1) == 10) {
+                return ofs_str_substr(response_text, j + 2, len - (j + 2))
+            }
+            j++
+        }
+        return response_text
+    }
+
+    vein get(ip: obsidian, port: stone, host: obsidian, path: obsidian) -> HttpResponse {
+        forge resp: HttpResponse
+        resp.status = 0
+        resp.body = ""
+        resp.content_type = "text/plain"
+
+        forge fd = net.tcp_connect(ip, port)
+        if (fd < 0) {
+            resp.status = 503
+            resp.body = "Failed to connect to " + host
+            return resp
+        }
+
+        forge req = "GET " + path + " HTTP/1.1\r\n"
+        req = req + "Host: " + host + "\r\n"
+        req = req + "User-Agent: Catalyst/1.0 (OFS Native Engine)\r\n"
+        req = req + "Accept: text/html,application/odl,*/*\r\n"
+        req = req + "Connection: close\r\n\r\n"
+
+        net.tcp_send(fd, req)
+
+        forge raw_response = ""
+        forge chunk = net.tcp_recv(fd, 4096)
+        while (ofs_str_len(chunk) > 0) {
+            raw_response = raw_response + chunk
+            chunk = net.tcp_recv(fd, 4096)
+        }
+        net.tcp_close(fd)
+
+        resp.status = parse_status_code(raw_response)
+        resp.body = extract_body(raw_response)
+        return resp
+    }
+}

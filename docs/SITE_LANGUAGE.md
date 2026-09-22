@@ -8,6 +8,7 @@ The OFS toolchain compiles them natively. Browsers receive generated HTML, CSS, 
 |---|---|---|
 | `.odl` | document structure, content, components, interop | HTML |
 | `.oes` | tokens, layout, responsive rules, motion | CSS |
+| `.oll` | native desktop UI components, layouts, windows | native UI (60 FPS) / PPM preview |
 | `.ofs` | native logic, generators, servers, build tools | executable |
 
 ## ODL

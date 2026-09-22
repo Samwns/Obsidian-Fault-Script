@@ -1,0 +1,9 @@
+attach {F:reservoir.ofs}
+attach {F:facet.ofs}
+attach {F:matrix.ofs}
+attach {F:outlet.ofs}
+attach {F:foundation.ofs}
+attach {F:pulse.ofs}
+attach {F:frame.ofs}
+attach {F:impulse.ofs}
+attach {F:prism.ofs}

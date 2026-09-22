@@ -1,76 +1,37 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OFS_VERSION="1.0.97"
+OFS_VERSION="1.0.137"
 OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OFSCC="${OFSCC:-$ROOT/ofscc}"
-RUNTIME="${OFS_RUNTIME:-$ROOT/libofs_runtime.a}"
-STDLIB="${OFS_STDLIB:-}"
-REQUESTED_MODE="${1:-help}"
+RUNTIME="${OFS_RUNTIME:-$ROOT/magma.o}"
 
-if [ -z "$STDLIB" ]; then
-  for candidate in "$ROOT/stdlib" "$ROOT/../share/ofs/stdlib" /usr/local/share/ofs/stdlib /usr/share/ofs/stdlib; do
-    if [ -d "$candidate" ]; then
-      STDLIB="$candidate"
-      break
-    fi
-  done
-fi
-if [ -n "$STDLIB" ]; then
-  export OFS_STDLIB="$STDLIB"
-fi
-
-detect_clang_major() {
-  if [ -n "${OFS_CLANG_MAJOR:-}" ]; then
-    printf '%s\n' "$OFS_CLANG_MAJOR"
-    return
+if [ -z "${OFS_STDLIB_PATH:-}" ]; then
+  if [ -d "$ROOT/stdlib" ]; then
+    export OFS_STDLIB_PATH="$ROOT/stdlib"
+  elif [ -d "$ROOT/../ofs/stdlib" ]; then
+    export OFS_STDLIB_PATH="$ROOT/../ofs/stdlib"
+  elif [ -d "$HOME/.local/lib/ofs/stdlib" ]; then
+    export OFS_STDLIB_PATH="$HOME/.local/lib/ofs/stdlib"
+  elif [ -d "$HOME/.local/share/ofs/stdlib" ]; then
+    export OFS_STDLIB_PATH="$HOME/.local/share/ofs/stdlib"
+  elif [ -d "/usr/local/share/ofs/stdlib" ]; then
+    export OFS_STDLIB_PATH="/usr/local/share/ofs/stdlib"
+  elif [ -d "/usr/lib/ofs/stdlib" ]; then
+    export OFS_STDLIB_PATH="/usr/lib/ofs/stdlib"
+  elif [ -d "/usr/share/ofs/stdlib" ]; then
+    export OFS_STDLIB_PATH="/usr/share/ofs/stdlib"
   fi
-  local clang_path cache_dir cache_file cached_path cached_major version
-  clang_path="$(command -v clang)"
-  cache_dir="${OFS_CACHE_DIR:-${XDG_CACHE_HOME:-${HOME:-/tmp}/.cache}/ofs}"
-  cache_file="$cache_dir/clang-toolchain"
-  if [ -r "$cache_file" ]; then
-    IFS='|' read -r cached_path cached_major < "$cache_file" || true
-    if [ "$cached_path" = "$clang_path" ] && [ -n "$cached_major" ]; then
-      printf '%s\n' "$cached_major"
-      return
-    fi
-  fi
-  version="$(clang -dumpversion 2>/dev/null || clang --version 2>/dev/null)"
-  version="${version#*version }"
-  version="${version%%.*}"
-  case "$version" in *[!0-9]*|'') version=0 ;; esac
-  mkdir -p "$cache_dir" 2>/dev/null || true
-  printf '%s|%s\n' "$clang_path" "$version" > "$cache_file" 2>/dev/null || true
-  printf '%s\n' "$version"
-}
-
-CLANG_MAJOR="$(detect_clang_major)"
+fi
 
 detect_llvm_ir_flags() {
-  if [ "${OFS_LLVM_IR_FLAGS+x}" = x ]; then
+  if [ -n "${OFS_LLVM_IR_FLAGS:-}" ]; then
     printf '%s\n' "$OFS_LLVM_IR_FLAGS"
     return
   fi
-  if [ "$CLANG_MAJOR" = "14" ]; then
+  if clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.'; then
     printf '%s\n' "-mllvm -opaque-pointers"
-  fi
-}
-
-detect_clang_opt_level() {
-  if [ -n "${OFS_CLANG_OPT:-}" ]; then
-    printf '%s\n' "$OFS_CLANG_OPT"
-    return
-  fi
-  if [ "${OFS_DEV:-0}" = "1" ] || [ "$REQUESTED_MODE" = "run" ]; then
-    printf '%s\n' "-O0"
-    return
-  fi
-  if [ "$CLANG_MAJOR" = "14" ]; then
-    printf '%s\n' "-O0"
-  else
-    printf '%s\n' "-O3"
   fi
 }
 
@@ -79,32 +40,113 @@ detected_llvm_ir_flags="$(detect_llvm_ir_flags)"
 if [ -n "$detected_llvm_ir_flags" ]; then
   read -r -a OFS_LLVM_IR_FLAGS <<< "$detected_llvm_ir_flags"
 fi
-OFS_CLANG_OPT_LEVEL="$(detect_clang_opt_level)"
-OFS_LINK_GC_FLAGS=()
-case "$(uname -s)" in
-  Darwin) OFS_LINK_GC_FLAGS=(-Wl,-dead_strip) ;;
-  Linux) OFS_LINK_GC_FLAGS=(-Wl,--gc-sections) ;;
-esac
 
-clang_ir() {
-  if [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ]; then
-    clang -Wno-override-module "$@" "${OFS_LLVM_IR_FLAGS[@]}"
+detect_crt_paths() {
+  CRT_DIR=""
+  DYN_LINKER=""
+  for p in /usr/lib64 /usr/lib/x86_64-linux-gnu /usr/lib; do
+    if [ -f "$p/crt1.o" ]; then
+      CRT_DIR="$p"
+      break
+    fi
+  done
+  for dl in /lib64/ld-linux-x86-64.so.2 /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /usr/lib64/ld-linux-x86-64.so.2; do
+    if [ -f "$dl" ]; then
+      DYN_LINKER="$dl"
+      break
+    fi
+  done
+}
+
+native_link() {
+  local in_ll="$1"
+  local out_bin="$2"
+  local target_os="${3:-linux}"
+  local obj="${in_ll%.*}.o"
+
+  extra_libs=(-lm)
+  if pkg-config --exists x11 2>/dev/null; then
+    extra_libs+=(-lX11)
+  elif [ -f /usr/lib64/libX11.so ] || [ -f /usr/lib/x86_64-linux-gnu/libX11.so ]; then
+    extra_libs+=(-lX11)
+  fi
+  if pkg-config --exists xft 2>/dev/null; then
+    extra_libs+=(-lXft)
+  elif [ -f /usr/lib64/libXft.so ] || [ -f /usr/lib/x86_64-linux-gnu/libXft.so ]; then
+    extra_libs+=(-lXft)
+  fi
+
+  if [ "$target_os" = "windows" ] || [ "$target_os" = "win64" ]; then
+    llc -filetype=obj -mtriple=x86_64-pc-windows-gnu "$in_ll" -o "$obj"
+    local win_lib_dir="/opt/wine-staging/lib64/wine/x86_64-windows"
+    local linker_win="/usr/lib64/rocm/llvm/bin/ld.lld"
+    local win_shims=()
+    if [ -f "$ROOT/win_shim.o" ]; then
+      win_shims+=("$ROOT/win_shim.o")
+    elif [ -f "$HOME/.local/lib/ofs/win_shim.o" ]; then
+      win_shims+=("$HOME/.local/lib/ofs/win_shim.o")
+    fi
+    if [ -d "$win_lib_dir" ] && [ -x "$linker_win" ]; then
+      "$linker_win" -m i386pep --allow-multiple-definition "$obj" "${win_shims[@]}" -L"$win_lib_dir" -lmsvcrt -luser32 -lgdi32 -lkernel32 -lcomctl32 -e main -o "$out_bin"
+    elif [ -x /usr/lib64/rocm/llvm/bin/lld-link ]; then
+      /usr/lib64/rocm/llvm/bin/lld-link /entry:main /subsystem:windows "$obj" "${win_shims[@]}" /out:"$out_bin"
+    fi
+    rm -f "$obj"
+    return 0
+  fi
+
+  local magma_objs=()
+  for m in "$ROOT/magma.o" "$HOME/.local/lib/ofs/magma.o" "/usr/local/lib/ofs/magma.o"; do
+    if [ -f "$m" ]; then
+      magma_objs+=("$m")
+      break
+    fi
+  done
+
+  detect_crt_paths
+  if command -v llc >/dev/null 2>&1 && [ -n "$CRT_DIR" ] && [ -n "$DYN_LINKER" ]; then
+    llc -filetype=obj "$in_ll" -o "$obj"
+    local linker_bin="ld"
+    if [ -x /usr/lib64/rocm/llvm/bin/ld.lld ]; then
+      linker_bin="/usr/lib64/rocm/llvm/bin/ld.lld"
+      "$linker_bin" --allow-multiple-definition -L/usr/lib64 -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj" "${magma_objs[@]}" -lc "${extra_libs[@]}" "$CRT_DIR/crtn.o" -o "$out_bin"
+    else
+      "$linker_bin" --allow-multiple-definition -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj" "${magma_objs[@]}" -lc "${extra_libs[@]}" "$CRT_DIR/crtn.o" -o "$out_bin"
+    fi
+    rm -f "$obj"
+    return 0
+  fi
+
+  if command -v clang >/dev/null 2>&1; then
+    clang -Wno-override-module -Wl,--allow-multiple-definition "$in_ll" "${extra_libs[@]}" -o "$out_bin"
+    return 0
+  fi
+
+  echo "ofs: erro: nenhum linker nativo ou assembler encontrado" >&2
+  return 1
+}
+
+native_asm() {
+  local in_ll="$1"
+  local out_s="$2"
+  if command -v llc >/dev/null 2>&1; then
+    llc "$in_ll" -o "$out_s"
   else
-    clang -Wno-override-module "$@"
+    clang -S "$in_ll" -o "$out_s"
   fi
 }
 
+if [ ! -x "$OFSCC" ] && [ -x "$HOME/.local/lib/ofs/ofscc" ]; then
+  OFSCC="$HOME/.local/lib/ofs/ofscc"
+fi
 if [ ! -x "$OFSCC" ] && command -v ofscc >/dev/null 2>&1; then
   OFSCC="$(command -v ofscc)"
 fi
+if [ ! -x "$OFSCC" ] && [ -x /usr/local/bin/ofscc ]; then
+  OFSCC="/usr/local/bin/ofscc"
+fi
 if [ ! -x "$OFSCC" ] && [ -x /usr/lib/ofs/ofscc ]; then
   OFSCC="/usr/lib/ofs/ofscc"
-fi
-if [ ! -f "$RUNTIME" ] && [ -f /usr/local/lib/libofs_runtime.a ]; then
-  RUNTIME="/usr/local/lib/libofs_runtime.a"
-fi
-if [ ! -f "$RUNTIME" ] && [ -f /usr/lib/ofs/libofs_runtime.a ]; then
-  RUNTIME="/usr/lib/ofs/libofs_runtime.a"
 fi
 
 banner() {
@@ -139,9 +181,8 @@ Usage:
   ofs ast    <file.ofs>                 Print AST (debug)
   ofs ir     <file.ofs>                 Emit LLVM IR (debug)
   ofs asm    <file.ofs>                 Emit target-native assembly
-  ofs odl    <file.odl> [-o page.html]  Compile ODL to HTML
-  ofs oes    <file.oes> [-o style.css]  Compile OES to CSS
-  ofs translate <file> --to odl|oes     Import HTML or CSS
+  ofs ui     <file.oll> [-o output.ppm] Parse and render native UI layout
+  ofs clean                             Clean temporary build artifacts
   ofs version                           Print compiler version
   ofs update                            Update to the latest release
   ofs help                              Show this help message
@@ -242,83 +283,6 @@ need_ofscc() {
   fi
 }
 
-find_web_tool() {
-  local name="$1"
-  for candidate in \
-    "$ROOT/tools/$name.ofs" \
-    "$ROOT/../tools/$name.ofs" \
-    "$ROOT/../share/ofs/tools/$name.ofs" \
-    "$ROOT/../lib/ofs/tools/$name.ofs" \
-    "$ROOT/../ofs/tools/$name.ofs" \
-    "$ROOT/../../ofs/tools/$name.ofs" \
-    "ofs/tools/$name.ofs"; do
-    if [ -f "$candidate" ]; then
-      printf '%s\n' "$candidate"
-      return 0
-    fi
-  done
-  return 1
-}
-
-build_web_tool_bin() {
-  local tool="$1" source="$2" target="$3"
-  local tool_ll tool_tmp
-  tool_ll="${TMPDIR:-/tmp}/ofs-${tool}-$$.ll"
-  tool_tmp="${target}.$$"
-  OFSCC_INPUT="$source" OFSCC_MODE=ir OFSCC_C_OUT="$tool_ll" run_ofscc_quiet "$OFSCC"
-  clang_ir "$OFS_CLANG_OPT_LEVEL" "${OFS_LINK_GC_FLAGS[@]}" "$tool_ll" "$RUNTIME" -lm -o "$tool_tmp"
-  chmod +x "$tool_tmp"
-  mv "$tool_tmp" "$target"
-  rm -f "$tool_ll"
-}
-
-cached_web_tool_bin() {
-  local tool="$1" source="$2"
-  local dir cache_base cache_dir hash tool_bin
-  if ! command -v sha256sum >/dev/null 2>&1; then
-    return 1
-  fi
-  dir="$(cd "$(dirname "$source")" && pwd)"
-  cache_base="${OFS_CACHE_DIR:-${XDG_CACHE_HOME:-${HOME:-/tmp}/.cache}/ofs}"
-  cache_dir="$cache_base/tools"
-  mkdir -p "$cache_dir"
-  hash="$(
-    sha256sum "$source" "$dir/web_language_common.ofs" "$dir/fileio.ofs" "$RUNTIME" 2>/dev/null |
-      sha256sum |
-      awk '{print $1}'
-  )" || return 1
-  if [ -z "$hash" ]; then
-    return 1
-  fi
-  tool_bin="$cache_dir/$tool-$hash"
-  if [ ! -x "$tool_bin" ]; then
-    build_web_tool_bin "$tool" "$source" "$tool_bin"
-  fi
-  printf '%s\n' "$tool_bin"
-}
-
-run_web_tool() {
-  local tool="$1" input="$2" output="$3" direction="${4:-}"
-  local source tool_bin tool_tmp
-  source="$(find_web_tool "$tool")" || {
-    echo "ofs: web language compiler source not found: $tool.ofs. Install/copy ofs/tools/$tool.ofs next to the OFS distribution." >&2
-    exit 1
-  }
-  if ! tool_bin="$(cached_web_tool_bin "$tool" "$source")"; then
-    tool_tmp="${TMPDIR:-/tmp}/ofs-${tool}-$$"
-    build_web_tool_bin "$tool" "$source" "$tool_tmp"
-    tool_bin="$tool_tmp"
-  fi
-  if [ "$tool" = "odlc" ]; then
-    ODLC_INPUT="$input" ODLC_OUTPUT="$output" ODLC_DIRECTION="$direction" "$tool_bin"
-  else
-    OESC_INPUT="$input" OESC_OUTPUT="$output" OESC_DIRECTION="$direction" "$tool_bin"
-  fi
-  if [ -n "${tool_tmp:-}" ]; then
-    rm -f "$tool_tmp"
-  fi
-}
-
 cmd="${1:-help}"
 case "$cmd" in
   version|--version|-v)
@@ -341,29 +305,29 @@ shift || true
 mode="$cmd"
 input=""
 output=""
+target_os="linux"
 
 case "$mode" in
-  check|tokens|ast|ir|asm|build|run|odl|oes|translate) ;;
+  check|tokens|ast|ir|asm|build|run|clean|ui) ;;
   *)
     input="$mode"
-    case "$input" in
-      *.odl) mode="odl" ;;
-      *.oes) mode="oes" ;;
-      *) mode="run" ;;
-    esac
+    mode="run"
     ;;
 esac
 
-translate_to=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
     -o|--output)
       output="${2:-}"
       shift 2
       ;;
-    --to)
-      translate_to="${2:-}"
+    --target|-t)
+      target_os="${2:-linux}"
       shift 2
+      ;;
+    --target=*)
+      target_os="${1#*=}"
+      shift
       ;;
     *)
       if [ -z "$input" ]; then
@@ -373,6 +337,13 @@ while [ "$#" -gt 0 ]; do
       ;;
   esac
 done
+
+if [ "$mode" = "clean" ]; then
+  rm -f ./*.ll ./*.bc ./*.s
+  rm -rf "${TMPDIR:-/tmp}/ofs-"*
+  echo "Clean complete."
+  exit 0
+fi
 
 if [ -z "$input" ]; then
   usage
@@ -385,85 +356,116 @@ work="${TMPDIR:-/tmp}/ofs-${name}-$$"
 ll="$work.ll"
 bc="$work.bc"
 
-run_ofscc_quiet() {
-  local log
-  log="$(mktemp "${TMPDIR:-/tmp}/ofscc-log-XXXXXX")"
-  if "$@" >"$log" 2>&1; then
-    rm -f "$log"
-    return 0
-  fi
-  cat "$log" >&2
-  rm -f "$log"
-  return 1
-}
-
-run_executable() {
-  case "$1" in
-    */*|/*) "$1" ;;
-    *) "./$1" ;;
-  esac
-}
-
 case "$mode" in
-  odl)
-    [ -n "$output" ] || output="${input%.*}.html"
-    run_web_tool odlc "$input" "$output"
-    ;;
-  oes)
-    [ -n "$output" ] || output="${input%.*}.css"
-    run_web_tool oesc "$input" "$output"
-    ;;
-  translate)
-    if [ "$translate_to" = "odl" ]; then
-      [ -n "$output" ] || output="${input%.*}.odl"
-      run_web_tool odlc "$input" "$output" from-html
-    elif [ "$translate_to" = "oes" ]; then
-      [ -n "$output" ] || output="${input%.*}.oes"
-      run_web_tool oesc "$input" "$output" from-css
-    else
-      echo "ofs translate: use --to odl or --to oes" >&2
-      exit 2
-    fi
-    ;;
-  check)
-    OFSCC_INPUT="$input" OFSCC_MODE="$mode" run_ofscc_quiet "$OFSCC"
-    ;;
-  tokens|ast)
+  check|tokens|ast)
     OFSCC_INPUT="$input" OFSCC_MODE="$mode" "$OFSCC"
     ;;
   ir)
     [ -n "$output" ] || output="$name.ll"
-    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$output" run_ofscc_quiet "$OFSCC"
+    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$output" "$OFSCC"
     ;;
   asm)
     [ -n "$output" ] || output="$name.s"
     case "$output" in *.s) ;; *) output="$output.s" ;; esac
-    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" run_ofscc_quiet "$OFSCC"
-    clang_ir -S "$ll" -o "$output"
+    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
+    native_asm "$ll" "$output"
     rm -f "$ll"
     echo "ASM: $output"
     ;;
-  build|run)
-    if [ -z "$output" ]; then
-      if [ "$mode" = "run" ]; then
-        output="$work"
-      else
-        output="$name"
-      fi
-    fi
-    OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" run_ofscc_quiet "$OFSCC"
-    if [ "$mode" = "run" ] && ! grep -q '^define i32 @main(' "$ll"; then
-      rm -f "$ll"
-      exit 0
-    fi
-    clang_ir "$OFS_CLANG_OPT_LEVEL" "${OFS_LINK_GC_FLAGS[@]}" "$ll" "$RUNTIME" -lm -o "$output"
-    chmod +x "$output"
-    rm -f "$ll"
-    if [ "$mode" = "run" ]; then
-      run_executable "$output"
-      rm -f "$output"
+  clean)
+    rm -f ./*.ll ./*.bc ./*.s
+    rm -rf "${TMPDIR:-/tmp}/ofs-"*
+    echo "Clean complete."
+    ;;
+  build)
+    if [ "$target_os" = "windows" ] || [ "$target_os" = "win64" ]; then
+      case "${output:-$name}" in *.exe) output="${output:-$name}" ;; *) output="${output:-$name}.exe" ;; esac
     else
-      echo "Built: $output"
+      [ -n "$output" ] || output="$name"
     fi
+    case "$input" in
+      *.oll)
+        abs_input="$(cd "$(dirname "$input")" && pwd)/$(basename "$input")"
+        oll_src="${TMPDIR:-/tmp}/ofs-oll-build-$$.ofs"
+        cat <<EOF > "$oll_src"
+attach {F:oll_x11.ofs}
+core main() {
+    oll_x11.run_window("$abs_input")
+}
+EOF
+        OFSCC_INPUT="$oll_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
+        rm -f "$oll_src"
+        ;;
+      *)
+        OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
+        ;;
+    esac
+    native_link "$ll" "$output" "$target_os"
+    chmod +x "$output" 2>/dev/null || true
+    rm -f "$ll"
+    echo "Built: $output"
+    ;;
+  run)
+    run_tmp="$(mktemp -d "${TMPDIR:-/tmp}/ofs-run-XXXXXX")"
+    run_bin="$run_tmp/$name"
+    run_ll="$run_tmp/$name.ll"
+    trap 'rm -rf "$run_tmp"' EXIT INT TERM
+    case "$input" in
+      *.oll)
+        abs_input="$(cd "$(dirname "$input")" && pwd)/$(basename "$input")"
+        oll_src="$run_tmp/oll_runner.ofs"
+        cat <<EOF > "$oll_src"
+attach {F:oll_x11.ofs}
+core main() {
+    oll_x11.run_window("$abs_input")
+}
+EOF
+        OFSCC_INPUT="$oll_src" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC"
+        ;;
+      *)
+        OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC"
+        ;;
+    esac
+    native_link "$run_ll" "$run_bin" "linux"
+    chmod +x "$run_bin"
+    rm -f "$run_ll"
+    "$run_bin"
+    ;;
+  ui)
+    [ -n "$output" ] || output="${name}_preview.ppm"
+    ui_tmp="$(mktemp -d "${TMPDIR:-/tmp}/ofs-ui-XXXXXX")"
+    ui_ofs="$ui_tmp/runner.ofs"
+    ui_ll="$ui_tmp/runner.ll"
+    ui_bin="$ui_tmp/runner"
+    trap 'rm -rf "$ui_tmp"' EXIT INT TERM
+    abs_input="$(cd "$(dirname "$input")" && pwd)/$(basename "$input")"
+    abs_out_dir="$(cd "$(dirname "$output")" 2>/dev/null && pwd || pwd)"
+    abs_output="$abs_out_dir/$(basename "$output")"
+    cat <<EOF > "$ui_ofs"
+attach {F:oll.ofs}
+vein main() -> void {
+    forge root_id = oll.load("$abs_input")
+    if (root_id < 0) {
+        echo("Error: failed to parse OLL layout: $abs_input")
+        exit(1)
+    }
+    oll.compute_layout(root_id)
+    forge root_n = oll.get_node(root_id)
+    forge w = root_n.box_w
+    if (w <= 0) { w = 1024 }
+    forge h = root_n.box_h
+    if (h <= 0) { h = 768 }
+    echo("OLL UI: $input (" + ofs_stone_to_obsidian(w) + "x" + ofs_stone_to_obsidian(h) + ")")
+    echo("Total nodes: " + ofs_stone_to_obsidian(oll.node_count()))
+    forge cv = canvas.create(w, h)
+    oll.render(cv)
+    canvas.save_ppm(cv, "$abs_output")
+    echo("Rendered layout preview saved to: $output")
+}
+EOF
+    OFSCC_INPUT="$ui_ofs" OFSCC_MODE=ir OFSCC_C_OUT="$ui_ll" "$OFSCC"
+    native_link "$ui_ll" "$ui_bin" "linux"
+    chmod +x "$ui_bin"
+    "$ui_bin"
     ;;
 esac

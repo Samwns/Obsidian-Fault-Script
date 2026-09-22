@@ -14,9 +14,10 @@ fonte OFS
   -> lexer
   -> parser
   -> verificacao de tipos
-  -> geracao LLVM IR
-  -> clang/LLVM
-  -> executavel + libofs_runtime.a
+  -> geracao LLVM IR (llvmgen.ofs)
+  -> compilador estatico LLVM (llc -filetype=obj)
+  -> ligacao nativa com Stack Magma (magma.o via ld/lld)
+  -> executavel nativo (ELF/PE32+)
 ```
 
 Cada etapa deve ser medida separadamente. Melhorar o executavel gerado nao reduz necessariamente o tempo do lexer. Melhorar o lexer nao altera necessariamente CPU do programa final.
@@ -131,8 +132,8 @@ Mach-O e `OPT:REF` no PE/COFF para retirar funcoes da runtime que o programa
 nao referencia.
 
 No workload publicado em 14 de junho de 2026, isso reduziu o executavel OFS
-de 28.224 para 16.056 bytes sem alterar o checksum. O launcher tambem mantem
-em cache a versao principal do Clang, evitando consultar o toolchain em cada
+de 28.224 para 16.056 bytes sem alterar o checksum. O launcher mantem
+em cache os caminhos CRT e toolchain nativo (llc e ld), evitando consultas lentas em cada
 compilacao. A mediana de build do mesmo workload caiu de 320,81 ms para
 208,78 ms nesta maquina.
 

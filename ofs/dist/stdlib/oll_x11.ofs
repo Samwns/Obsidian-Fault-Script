@@ -1,0 +1,3586 @@
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_stone_to_obsidian(val: stone) -> obsidian
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_str_concat(a: obsidian, b: obsidian) -> obsidian
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_str_contains(s: obsidian, sub: obsidian) -> bool
+extern vein exit(code: stone) -> void
+extern vein system(cmd: obsidian) -> stone
+
+extern vein fopen(path: obsidian, mode: obsidian) -> *stone
+extern vein fclose(f: *stone) -> stone
+extern vein fread(buf: *stone, sz: stone, n: stone, f: *stone) -> stone
+extern vein fwrite(buf: obsidian, sz: stone, n: stone, f: *stone) -> stone
+extern vein fseek(f: *stone, offset: stone, whence: stone) -> stone
+extern vein ftell(f: *stone) -> stone
+
+extern vein ofs_array_len(a: Array) -> stone
+extern vein ofs_array_get(a: Array, index: stone) -> stone
+extern vein ofs_array_push(a: Array, value: stone) -> void
+extern vein ofs_array_set(a: Array, index: stone, value: stone) -> void
+extern vein ofs_array_pop(a: Array) -> stone
+
+extern vein XOpenDisplay(name: obsidian) -> *stone
+extern vein XDefaultScreen(disp: *stone) -> stone
+extern vein XDefaultDepth(disp: *stone, s: stone) -> stone
+extern vein XRootWindow(disp: *stone, s: stone) -> stone
+extern vein XCreateSimpleWindow(disp: *stone, parent: stone, x: stone, y: stone, w: stone, h: stone, bw: stone, border: stone, bg: stone) -> stone
+extern vein XStoreName(disp: *stone, win: stone, title: obsidian) -> stone
+extern vein XSelectInput(disp: *stone, win: stone, mask: stone) -> stone
+extern vein XMapWindow(disp: *stone, win: stone) -> stone
+extern vein XFlush(disp: *stone) -> stone
+extern vein XCreateGC(disp: *stone, win: stone, mask: stone, values: *stone) -> *stone
+extern vein XSetForeground(disp: *stone, gc: *stone, color: stone) -> stone
+extern vein XFillRectangle(disp: *stone, win: stone, gc: *stone, x: stone, y: stone, w: stone, h: stone) -> stone
+extern vein XDrawRectangle(disp: *stone, win: stone, gc: *stone, x: stone, y: stone, w: stone, h: stone) -> stone
+extern vein XDrawLine(disp: *stone, win: stone, gc: *stone, x1: stone, y1: stone, x2: stone, y2: stone) -> stone
+extern vein XDrawArc(disp: *stone, win: stone, gc: *stone, x: stone, y: stone, w: stone, h: stone, a1: stone, a2: stone) -> stone
+extern vein XFillArc(disp: *stone, win: stone, gc: *stone, x: stone, y: stone, w: stone, h: stone, a1: stone, a2: stone) -> stone
+extern vein XDrawString(disp: *stone, win: stone, gc: *stone, x: stone, y: stone, str: obsidian, len: stone) -> stone
+extern vein XCreatePixmap(disp: *stone, d: stone, w: stone, h: stone, depth: stone) -> stone
+extern vein XFreePixmap(disp: *stone, pix: stone) -> stone
+extern vein XCopyArea(disp: *stone, src: stone, dst: stone, gc: *stone, sx: stone, sy: stone, w: stone, h: stone, dx: stone, dy: stone) -> stone
+extern vein XPending(disp: *stone) -> stone
+extern vein XNextEvent(disp: *stone, event: *stone) -> stone
+extern vein XKeycodeToKeysym(disp: *stone, kc: stone, index: stone) -> stone
+extern vein XDestroyWindow(disp: *stone, win: stone) -> stone
+extern vein XCloseDisplay(disp: *stone) -> stone
+extern vein usleep(usec: stone) -> stone
+extern vein XDefaultVisual(disp: *stone, s: stone) -> *stone
+extern vein XDefaultColormap(disp: *stone, s: stone) -> stone
+extern vein XftDrawCreate(disp: *stone, drawable: stone, visual: *stone, cmap: stone) -> *stone
+extern vein XftDrawDestroy(draw: *stone) -> void
+extern vein XftFontOpenName(disp: *stone, scr: stone, name: obsidian) -> *stone
+extern vein XftColorAllocValue(disp: *stone, visual: *stone, cmap: stone, color: *stone, result: *stone) -> stone
+extern vein XftDrawStringUtf8(draw: *stone, color: *stone, font: *stone, x: stone, y: stone, str: obsidian, len: stone) -> void
+
+vein _store_stone(p: *stone, v: stone) -> void {
+    fracture {
+        *p = v
+    }
+}
+
+forge g_xft_draw: stone = 0
+forge g_xft_font_ui: stone = 0
+forge g_xft_font_code: stone = 0
+forge g_xft_font_title: stone = 0
+forge g_xft_font_heading: stone = 0
+forge g_xft_visual: stone = 0
+forge g_xft_cmap: stone = 0
+forge g_xft_col_in: stone = 0
+forge g_xft_col_out: stone = 0
+
+monolith OllX11Theme {
+    name: obsidian
+    style: stone
+    bg_window: stone
+    bg_header: stone
+    bg_surface: stone
+    bg_sidebar: stone
+    bg_editor: stone
+    bg_panel: stone
+    bg_statusbar: stone
+    accent: stone
+    accent_hover: stone
+    accent_fg: stone
+    btn_bg: stone
+    btn_hover: stone
+    btn_active: stone
+    btn_border: stone
+    btn_radius: stone
+    card_radius: stone
+    fg_primary: stone
+    fg_secondary: stone
+    fg_muted: stone
+    border_subtle: stone
+    border_focus: stone
+    shadow_col: stone
+}
+
+namespace oll_x11 {
+    vein theme_dark_modern() -> OllX11Theme {
+        forge t: OllX11Theme
+        t.name = "dark_modern"
+        t.style = 0
+        t.bg_window = 1579032
+        t.bg_header = 1579032
+        t.bg_surface = 1973790
+        t.bg_sidebar = 2039583
+        t.bg_editor = 1973790
+        t.bg_panel = 1579032
+        t.bg_statusbar = 1579032
+        t.accent = 8141549
+        t.accent_hover = 7153881
+        t.accent_fg = 16777215
+        t.btn_bg = 2434342
+        t.btn_hover = 3618621
+        t.btn_active = 1973790
+        t.btn_border = 3947580
+        t.btn_radius = 5
+        t.card_radius = 8
+        t.fg_primary = 13489908
+        t.fg_secondary = 11252415
+        t.fg_muted = 8750469
+        t.border_subtle = 2829099
+        t.border_focus = 8141549
+        t.shadow_col = 986895
+        return t
+    }
+
+    vein theme_gtk() -> OllX11Theme {
+        forge t: OllX11Theme
+        t.name = "gtk"
+        t.style = 1
+        t.bg_window = 2368548
+        t.bg_header = 3158064
+        t.bg_surface = 2960685
+        t.bg_sidebar = 2499622
+        t.bg_editor = 1973790
+        t.bg_panel = 2368548
+        t.bg_statusbar = 2368548
+        t.accent = 3636458
+        t.accent_hover = 4886518
+        t.accent_fg = 16777215
+        t.btn_bg = 3289650
+        t.btn_hover = 4210752
+        t.btn_active = 2631720
+        t.btn_border = 4210752
+        t.btn_radius = 6
+        t.card_radius = 10
+        t.fg_primary = 15527148
+        t.fg_secondary = 13027014
+        t.fg_muted = 9605778
+        t.border_subtle = 3421236
+        t.border_focus = 3636458
+        t.shadow_col = 1118481
+        return t
+    }
+
+    vein theme_windows() -> OllX11Theme {
+        forge t: OllX11Theme
+        t.name = "windows"
+        t.style = 2
+        t.bg_window = 2105376
+        t.bg_header = 2105376
+        t.bg_surface = 2500134
+        t.bg_sidebar = 2302755
+        t.bg_editor = 1973790
+        t.bg_panel = 1973790
+        t.bg_statusbar = 1973790
+        t.accent = 15208739
+        t.accent_hover = 16743477
+        t.accent_fg = 16777215
+        t.btn_bg = 2894892
+        t.btn_hover = 3815994
+        t.btn_active = 2105376
+        t.btn_border = 3684408
+        t.btn_radius = 4
+        t.card_radius = 8
+        t.fg_primary = 16777215
+        t.fg_secondary = 13816530
+        t.fg_muted = 10000536
+        t.border_subtle = 3289650
+        t.border_focus = 15208739
+        t.shadow_col = 657930
+        return t
+    }
+
+    vein theme_neon() -> OllX11Theme {
+        forge t: OllX11Theme
+        t.name = "neon"
+        t.style = 3
+        t.bg_window = 723738
+        t.bg_header = 986915
+        t.bg_surface = 1250087
+        t.bg_sidebar = 855328
+        t.bg_editor = 657940
+        t.bg_panel = 789535
+        t.bg_statusbar = 789535
+        t.accent = 65535
+        t.accent_hover = 52428
+        t.accent_fg = 0
+        t.btn_bg = 1513255
+        t.btn_hover = 2302775
+        t.btn_active = 986915
+        t.btn_border = 65535
+        t.btn_radius = 2
+        t.card_radius = 4
+        t.fg_primary = 65535
+        t.fg_secondary = 16744703
+        t.fg_muted = 8947848
+        t.border_subtle = 2171205
+        t.border_focus = 65535
+        t.shadow_col = 131348
+        return t
+    }
+
+    vein theme_dracula() -> OllX11Theme {
+        forge t: OllX11Theme
+        t.name = "dracula"
+        t.style = 4
+        t.bg_window = 2631728
+        t.bg_header = 2237229
+        t.bg_surface = 2894896
+        t.bg_sidebar = 2499625
+        t.bg_editor = 2631728
+        t.bg_panel = 2237229
+        t.bg_statusbar = 1642273
+        t.accent = 12424185
+        t.accent_hover = 16744654
+        t.accent_fg = 16777215
+        t.btn_bg = 4474964
+        t.btn_hover = 6451052
+        t.btn_active = 2894896
+        t.btn_border = 6451052
+        t.btn_radius = 5
+        t.card_radius = 8
+        t.fg_primary = 16316664
+        t.fg_secondary = 9169405
+        t.fg_muted = 6451052
+        t.border_subtle = 4474964
+        t.border_focus = 12424185
+        t.shadow_col = 1118481
+        return t
+    }
+
+    vein theme_monokai() -> OllX11Theme {
+        forge t: OllX11Theme
+        t.name = "monokai"
+        t.style = 5
+        t.bg_window = 2565922
+        t.bg_header = 2039580
+        t.bg_surface = 3552822
+        t.bg_sidebar = 2039580
+        t.bg_editor = 2565922
+        t.bg_panel = 2039580
+        t.bg_statusbar = 1579032
+        t.accent = 10936878
+        t.accent_hover = 16605007
+        t.accent_fg = 0
+        t.btn_bg = 3552822
+        t.btn_hover = 4737096
+        t.btn_active = 2565922
+        t.btn_border = 4737096
+        t.btn_radius = 4
+        t.card_radius = 8
+        t.fg_primary = 16250871
+        t.fg_secondary = 16605007
+        t.fg_muted = 7829367
+        t.border_subtle = 3552822
+        t.border_focus = 10936878
+        t.shadow_col = 986895
+        return t
+    }
+
+    vein get_theme_by_id(id: stone) -> OllX11Theme {
+        if (id == 1) { return theme_gtk() }
+        if (id == 2) { return theme_windows() }
+        if (id == 3) { return theme_neon() }
+        if (id == 4) { return theme_dracula() }
+        if (id == 5) { return theme_monokai() }
+        return theme_dark_modern()
+    }
+
+    vein resolve_path(p: obsidian) -> obsidian {
+        forge f1: *stone = fopen(p, "r")
+        if (f1 != null) {
+            fclose(f1)
+            return p
+        }
+        forge p2 = "idle/" + p
+        forge f2: *stone = fopen(p2, "r")
+        if (f2 != null) {
+            fclose(f2)
+            return p2
+        }
+        forge p3 = "../" + p
+        forge f3: *stone = fopen(p3, "r")
+        if (f3 != null) {
+            fclose(f3)
+            return p3
+        }
+        if (ofs_str_contains(p, "idle/")) {
+            forge p4 = ofs_str_substr(p, 5, ofs_str_len(p) - 5)
+            forge f4: *stone = fopen(p4, "r")
+            if (f4 != null) {
+                fclose(f4)
+                return p4
+            }
+        }
+        if (ofs_str_contains(p, "ofs/")) {
+            forge p5 = "../" + p
+            forge f5: *stone = fopen(p5, "r")
+            if (f5 != null) {
+                fclose(f5)
+                return p5
+            }
+        }
+        return p
+    }
+
+    vein resolve_ofs_binary() -> obsidian {
+        forge f1 = fopen("./ofs/dist/ofs", "r")
+        if (f1 != null) { fclose(f1); return "./ofs/dist/ofs" }
+        forge f2 = fopen("../ofs/dist/ofs", "r")
+        if (f2 != null) { fclose(f2); return "../ofs/dist/ofs" }
+        return "ofs"
+    }
+
+    vein get_filename_from_path(p: obsidian) -> obsidian {
+        forge len = ofs_str_len(p)
+        forge last_slash = -1
+        forge i = 0
+        while (i < len) {
+            forge c = ofs_str_char_at(p, i)
+            if (c == 47 || c == 92) {
+                last_slash = i
+            }
+            i++
+        }
+        if (last_slash >= 0 && last_slash < len - 1) {
+            return ofs_str_substr(p, last_slash + 1, len - 1 - last_slash)
+        }
+        return p
+    }
+
+    vein scan_workspace_files(target_dir: obsidian) -> Array<obsidian> {
+        forge list: Array<obsidian> = []
+        if (ofs_str_len(target_dir) == 0) {
+            return list
+        }
+        forge cmd = "(find \"" + target_dir + "\" -maxdepth 3 -not -path '*/.*' -not -path '*/dist*' -not -path '*/target*' -not -path '*/guide*' -not -path '*/node_modules*' -not -path '*/.gemini*' \\( -name \"*.ofs\" -o -name \"*.oll\" -o -name \"*.md\" \\) | sort) > /tmp/ofs_idle_scan.txt"
+        system(cmd)
+        forge f: *stone = fopen("/tmp/ofs_idle_scan.txt", "r")
+        if (f == null) {
+            return list
+        }
+        fseek(f, 0, 2)
+        forge sz = ftell(f)
+        fseek(f, 0, 0)
+        if (sz <= 0) {
+            fclose(f)
+            return list
+        }
+        forge buf: *stone = ofs_alloc(sz + 1)
+        fread(buf, 1, sz, f)
+        fclose(f)
+
+        forge text: obsidian = buf
+        forge total_len = ofs_str_len(text)
+        forge start = 0
+        forge i = 0
+        while (i < total_len) {
+            forge c = ofs_str_char_at(text, i)
+            if (c == 10) {
+                forge line_len = i - start
+                if (line_len > 0) {
+                    if (ofs_str_char_at(text, i - 1) == 13) { line_len-- }
+                }
+                if (line_len > 1) {
+                    forge raw_p = ofs_str_substr(text, start, line_len)
+                    if (ofs_str_char_at(raw_p, 0) == 46 && ofs_str_char_at(raw_p, 1) == 47) {
+                        forge clean_p = ofs_str_substr(raw_p, 2, ofs_str_len(raw_p) - 2)
+                        ofs_array_push(list, clean_p)
+                    } else {
+                        ofs_array_push(list, raw_p)
+                    }
+                }
+                start = i + 1
+            }
+            i++
+        }
+        return list
+    }
+
+    vein read_file_to_lines(path: obsidian) -> Array<obsidian> {
+        forge lines: Array<obsidian> = []
+        if (ofs_str_len(path) == 0) {
+            return lines
+        }
+        forge resolved = resolve_path(path)
+        forge f: *stone = fopen(resolved, "r")
+        if (f == null) {
+            ofs_array_push(lines, "")
+            return lines
+        }
+        fseek(f, 0, 2)
+        forge sz = ftell(f)
+        fseek(f, 0, 0)
+        if (sz <= 0) {
+            fclose(f)
+            ofs_array_push(lines, "")
+            return lines
+        }
+        forge buf: *stone = ofs_alloc(sz + 1)
+        fread(buf, 1, sz, f)
+        fclose(f)
+
+        forge text: obsidian = buf
+        forge total_len = ofs_str_len(text)
+        forge start = 0
+        forge i = 0
+        while (i < total_len) {
+            forge c = ofs_str_char_at(text, i)
+            if (c == 10) {
+                forge line_len = i - start
+                if (line_len > 0) {
+                    if (ofs_str_char_at(text, i - 1) == 13) {
+                        line_len--
+                    }
+                }
+                forge l_sub = ofs_str_substr(text, start, line_len)
+                ofs_array_push(lines, l_sub)
+                start = i + 1
+            }
+            i++
+        }
+        if (start < total_len) {
+            forge rem_len = total_len - start
+            if (rem_len > 0) {
+                if (ofs_str_char_at(text, total_len - 1) == 13) {
+                    rem_len--
+                }
+            }
+            forge rem_sub = ofs_str_substr(text, start, rem_len)
+            ofs_array_push(lines, rem_sub)
+        }
+        if (ofs_array_len(lines) == 0) {
+            ofs_array_push(lines, "")
+        }
+        return lines
+    }
+
+    vein save_lines_to_file(path: obsidian, lines: Array<obsidian>) -> stone {
+        forge resolved = resolve_path(path)
+        forge f: *stone = fopen(resolved, "w")
+        if (f == null) {
+            return 0
+        }
+        forge count = ofs_array_len(lines)
+        forge i = 0
+        while (i < count) {
+            forge line: obsidian = ofs_array_get(lines, i)
+            forge llen = ofs_str_len(line)
+            if (llen > 0) {
+                fwrite(line, 1, llen, f)
+            }
+            if (i < count - 1) {
+                fwrite("\n", 1, 1, f)
+            }
+            i++
+        }
+        fclose(f)
+        return 1
+    }
+
+    vein git_is_repository(target_dir: obsidian) -> stone {
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" rev-parse --is-inside-work-tree > /tmp/ofs_git_check.txt 2>&1"
+        system(cmd)
+        forge lines = read_file_to_lines("/tmp/ofs_git_check.txt")
+        if (ofs_array_len(lines) > 0) {
+            forge l0: obsidian = ofs_array_get(lines, 0)
+            if (ofs_str_contains(l0, "true")) { return 1 }
+        }
+        return 0
+    }
+
+    vein git_get_branch_name(target_dir: obsidian) -> obsidian {
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" rev-parse --abbrev-ref HEAD > /tmp/ofs_git_br.txt 2>&1"
+        system(cmd)
+        forge lines = read_file_to_lines("/tmp/ofs_git_br.txt")
+        if (ofs_array_len(lines) > 0) {
+            forge br: obsidian = ofs_array_get(lines, 0)
+            forge blen = ofs_str_len(br)
+            if (blen > 0 && ofs_str_contains(br, "fatal") == 0) {
+                return br
+            }
+        }
+        return "main"
+    }
+
+    vein git_refresh_all_status(target_dir: obsidian, staged_f: Array<obsidian>, staged_t: Array<obsidian>, unstaged_f: Array<obsidian>, unstaged_t: Array<obsidian>) -> stone {
+        while (ofs_array_len(staged_f) > 0) { ofs_array_pop(staged_f) }
+        while (ofs_array_len(staged_t) > 0) { ofs_array_pop(staged_t) }
+        while (ofs_array_len(unstaged_f) > 0) { ofs_array_pop(unstaged_f) }
+        while (ofs_array_len(unstaged_t) > 0) { ofs_array_pop(unstaged_t) }
+
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" status --porcelain > /tmp/ofs_git_status.txt 2>&1"
+        system(cmd)
+        forge lines = read_file_to_lines("/tmp/ofs_git_status.txt")
+        forge len = ofs_array_len(lines)
+        forge i = 0
+        while (i < len) {
+            forge l: obsidian = ofs_array_get(lines, i)
+            forge llen = ofs_str_len(l)
+            if (llen >= 3) {
+                forge c0 = ofs_str_char_at(l, 0)
+                forge c1 = ofs_str_char_at(l, 1)
+                forge fname = ofs_str_substr(l, 3, llen - 3)
+                if (c0 == 63 && c1 == 63) {
+                    ofs_array_push(unstaged_f, fname)
+                    ofs_array_push(unstaged_t, "U")
+                } else {
+                    if (c0 != 32) {
+                        forge st_type = "M"
+                        if (c0 == 65) { st_type = "A" }
+                        else if (c0 == 68) { st_type = "D" }
+                        else if (c0 == 82) { st_type = "R" }
+                        ofs_array_push(staged_f, fname)
+                        ofs_array_push(staged_t, st_type)
+                    }
+                    if (c1 != 32) {
+                        forge ust_type = "M"
+                        if (c1 == 68) { ust_type = "D" }
+                        ofs_array_push(unstaged_f, fname)
+                        ofs_array_push(unstaged_t, ust_type)
+                    }
+                }
+            }
+            i++
+        }
+        return 1
+    }
+
+    vein git_action_stage(target_dir: obsidian, file_path: obsidian) -> stone {
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" add \"" + file_path + "\""
+        return system(cmd)
+    }
+
+    vein git_action_stage_all(target_dir: obsidian) -> stone {
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" add -A"
+        return system(cmd)
+    }
+
+    vein git_action_unstage(target_dir: obsidian, file_path: obsidian) -> stone {
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" restore --staged \"" + file_path + "\" 2>/dev/null || git -C \"" + d + "\" reset HEAD \"" + file_path + "\" 2>/dev/null"
+        return system(cmd)
+    }
+
+    vein git_action_unstage_all(target_dir: obsidian) -> stone {
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" restore --staged . 2>/dev/null || git -C \"" + d + "\" reset HEAD 2>/dev/null"
+        return system(cmd)
+    }
+
+    vein git_action_discard(target_dir: obsidian, file_path: obsidian) -> stone {
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" checkout -- \"" + file_path + "\" 2>/dev/null || git -C \"" + d + "\" restore \"" + file_path + "\" 2>/dev/null"
+        return system(cmd)
+    }
+
+    vein git_action_commit(target_dir: obsidian, message: obsidian) -> stone {
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" commit -m \"" + message + "\" > /tmp/ofs_git_cmd.log 2>&1"
+        return system(cmd)
+    }
+
+    vein git_action_push(target_dir: obsidian) -> stone {
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" push > /tmp/ofs_git_cmd.log 2>&1"
+        return system(cmd)
+    }
+
+    vein git_action_pull(target_dir: obsidian) -> stone {
+        forge d = target_dir
+        if (ofs_str_len(d) == 0) { d = "." }
+        forge cmd = "git -C \"" + d + "\" pull > /tmp/ofs_git_cmd.log 2>&1"
+        return system(cmd)
+    }
+
+    vein insert_char_in_line(line: obsidian, col: stone, ch: obsidian) -> obsidian {
+        forge len = ofs_str_len(line)
+        if (col <= 0) {
+            return ch + line
+        }
+        if (col >= len) {
+            return line + ch
+        }
+        forge left = ofs_str_substr(line, 0, col)
+        forge right = ofs_str_substr(line, col, len - col)
+        return left + ch + right
+    }
+
+    vein delete_char_in_line(line: obsidian, col: stone) -> obsidian {
+        forge len = ofs_str_len(line)
+        if (col <= 0 || len == 0) {
+            return line
+        }
+        forge left = ofs_str_substr(line, 0, col - 1)
+        if (col >= len) {
+            return left
+        }
+        forge right = ofs_str_substr(line, col, len - col)
+        return left + right
+    }
+
+    vein split_line_at(line: obsidian, col: stone) -> obsidian {
+        forge len = ofs_str_len(line)
+        if (col >= len) {
+            return ""
+        }
+        return ofs_str_substr(line, col, len - col)
+    }
+
+    vein array_remove_at(a: Array, idx: stone) -> void {
+        forge len = ofs_array_len(a)
+        if (idx < 0 || idx >= len) { return }
+        forge i = idx
+        while (i < len - 1) {
+            forge nxt: stone = ofs_array_get(a, i + 1)
+            ofs_array_set(a, i, nxt)
+            i++
+        }
+        ofs_array_pop(a)
+    }
+
+    vein is_keyword(w: obsidian) -> stone {
+        if (ofs_str_eq(w, "vein")) { return 1 }
+        if (ofs_str_eq(w, "forge")) { return 1 }
+        if (ofs_str_eq(w, "monolith")) { return 1 }
+        if (ofs_str_eq(w, "impl")) { return 1 }
+        if (ofs_str_eq(w, "attach")) { return 1 }
+        if (ofs_str_eq(w, "if")) { return 1 }
+        if (ofs_str_eq(w, "else")) { return 1 }
+        if (ofs_str_eq(w, "while")) { return 1 }
+        if (ofs_str_eq(w, "return")) { return 1 }
+        if (ofs_str_eq(w, "extern")) { return 1 }
+        if (ofs_str_eq(w, "match")) { return 1 }
+        if (ofs_str_eq(w, "case")) { return 1 }
+        if (ofs_str_eq(w, "fracture")) { return 1 }
+        if (ofs_str_eq(w, "namespace")) { return 1 }
+        if (ofs_str_eq(w, "break")) { return 1 }
+        if (ofs_str_eq(w, "true")) { return 1 }
+        if (ofs_str_eq(w, "false")) { return 1 }
+        if (ofs_str_eq(w, "null")) { return 1 }
+        return 0
+    }
+
+    vein is_type_ident(w: obsidian) -> stone {
+        if (ofs_str_eq(w, "stone")) { return 1 }
+        if (ofs_str_eq(w, "crystal")) { return 1 }
+        if (ofs_str_eq(w, "obsidian")) { return 1 }
+        if (ofs_str_eq(w, "bool")) { return 1 }
+        if (ofs_str_eq(w, "void")) { return 1 }
+        if (ofs_str_eq(w, "Array")) { return 1 }
+        if (ofs_str_eq(w, "OllX11Theme")) { return 1 }
+        return 0
+    }
+
+    vein render_syntax_line(disp: *stone, d: stone, gc: *stone, line: obsidian, x: stone, y: stone, default_col: stone) -> void {
+        forge len = ofs_str_len(line)
+        if (len <= 0) { return }
+        forge i = 0
+        while (i < len && i < 115) {
+            forge c = ofs_str_char_at(line, i)
+            if (c == 32 || c == 9) {
+                i++
+            } else if (c == 47 && i + 1 < len && ofs_str_char_at(line, i + 1) == 47) {
+                forge tok_comm = ofs_str_substr(line, i, len - i)
+                draw_str_code(disp, d, gc, 6054768, x + (i * 8), y, tok_comm)
+                i = len
+            } else if (c == 34) {
+                forge s_start = i
+                i++
+                while (i < len && ofs_str_char_at(line, i) != 34) {
+                    if (ofs_str_char_at(line, i) == 92 && i + 1 < len) { i++ }
+                    i++
+                }
+                if (i < len) { i++ }
+                forge tok_str = ofs_str_substr(line, s_start, i - s_start)
+                draw_str_code(disp, d, gc, 10011513, x + (s_start * 8), y, tok_str)
+            } else if (c >= 48 && c <= 57) {
+                forge n_start = i
+                while (i < len) {
+                    forge nc = ofs_str_char_at(line, i)
+                    if ((nc >= 48 && nc <= 57) || nc == 120 || nc == 88 || (nc >= 97 && nc <= 102) || (nc >= 65 && nc <= 70)) {
+                        i++
+                    } else {
+                        break
+                    }
+                }
+                forge tok_n = ofs_str_substr(line, n_start, i - n_start)
+                draw_str_code(disp, d, gc, 15057019, x + (n_start * 8), y, tok_n)
+            } else if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c == 95) {
+                forge w_start = i
+                while (i < len) {
+                    forge wc = ofs_str_char_at(line, i)
+                    if ((wc >= 65 && wc <= 90) || (wc >= 97 && wc <= 122) || (wc >= 48 && wc <= 57) || wc == 95) {
+                        i++
+                    } else {
+                        break
+                    }
+                }
+                forge tok_w = ofs_str_substr(line, w_start, i - w_start)
+                forge w_col = default_col
+                if (is_keyword(tok_w) == 1) {
+                    w_col = 13007069
+                } else if (is_type_ident(tok_w) == 1) {
+                    w_col = 15057019
+                }
+                draw_str_code(disp, d, gc, w_col, x + (w_start * 8), y, tok_w)
+            } else {
+                forge sym_start = i
+                while (i < len) {
+                    forge sc = ofs_str_char_at(line, i)
+                    if (sc == 32 || sc == 9 || sc == 34 || (sc >= 48 && sc <= 57) || (sc >= 65 && sc <= 90) || (sc >= 97 && sc <= 122) || sc == 95 || (sc == 47 && i + 1 < len && ofs_str_char_at(line, i + 1) == 47)) {
+                        break
+                    }
+                    i++
+                }
+                forge tok_sym = ofs_str_substr(line, sym_start, i - sym_start)
+                forge s_col = 11252415
+                if (ofs_str_contains(tok_sym, "->") || ofs_str_contains(tok_sym, "==") || ofs_str_contains(tok_sym, "!=")) {
+                    s_col = 6401007
+                }
+                draw_str_code(disp, d, gc, s_col, x + (sym_start * 8), y, tok_sym)
+            }
+        }
+    }
+
+    vein draw_rect(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, w: stone, h: stone) -> void {
+        XSetForeground(disp, gc, col)
+        XFillRectangle(disp, d, gc, x, y, w, h)
+    }
+
+    vein draw_border(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, w: stone, h: stone) -> void {
+        XSetForeground(disp, gc, col)
+        XDrawRectangle(disp, d, gc, x, y, w, h)
+    }
+
+    vein fill_rounded_rect(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, w: stone, h: stone, r: stone) -> void {
+        if (r <= 1) {
+            draw_rect(disp, d, gc, col, x, y, w, h)
+            return
+        }
+        forge d_diam = r * 2
+        XSetForeground(disp, gc, col)
+        XFillRectangle(disp, d, gc, x + r, y, w - d_diam, h)
+        XFillRectangle(disp, d, gc, x, y + r, r, h - d_diam)
+        XFillRectangle(disp, d, gc, x + w - r, y + r, r, h - d_diam)
+        XFillArc(disp, d, gc, x, y, d_diam, d_diam, 90 * 64, 90 * 64)
+        XFillArc(disp, d, gc, x + w - d_diam, y, d_diam, d_diam, 0 * 64, 90 * 64)
+        XFillArc(disp, d, gc, x, y + h - d_diam, d_diam, d_diam, 180 * 64, 90 * 64)
+        XFillArc(disp, d, gc, x + w - d_diam, y + h - d_diam, d_diam, d_diam, 270 * 64, 90 * 64)
+    }
+
+    vein draw_rounded_border(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, w: stone, h: stone, r: stone) -> void {
+        if (r <= 1) {
+            draw_border(disp, d, gc, col, x, y, w, h)
+            return
+        }
+        forge d_diam = r * 2
+        XSetForeground(disp, gc, col)
+        XDrawLine(disp, d, gc, x + r, y, x + w - r, y)
+        XDrawLine(disp, d, gc, x + r, y + h, x + w - r, y + h)
+        XDrawLine(disp, d, gc, x, y + r, x, y + h - r)
+        XDrawLine(disp, d, gc, x + w, y + r, x + w, y + h - r)
+        XDrawArc(disp, d, gc, x, y, d_diam, d_diam, 90 * 64, 90 * 64)
+        XDrawArc(disp, d, gc, x + w - d_diam, y, d_diam, d_diam, 0 * 64, 90 * 64)
+        XDrawArc(disp, d, gc, x, y + h - d_diam, d_diam, d_diam, 180 * 64, 90 * 64)
+        XDrawArc(disp, d, gc, x + w - d_diam, y + h - d_diam, d_diam, d_diam, 270 * 64, 90 * 64)
+    }
+
+    vein fill_circle(disp: *stone, d: stone, gc: *stone, col: stone, cx: stone, cy: stone, r: stone) -> void {
+        XSetForeground(disp, gc, col)
+        XFillArc(disp, d, gc, cx - r, cy - r, r * 2, r * 2, 0, 360 * 64)
+    }
+
+    vein draw_circle(disp: *stone, d: stone, gc: *stone, col: stone, cx: stone, cy: stone, r: stone) -> void {
+        XSetForeground(disp, gc, col)
+        XDrawArc(disp, d, gc, cx - r, cy - r, r * 2, r * 2, 0, 360 * 64)
+    }
+
+    vein draw_line(disp: *stone, d: stone, gc: *stone, col: stone, x1: stone, y1: stone, x2: stone, y2: stone) -> void {
+        XSetForeground(disp, gc, col)
+        XDrawLine(disp, d, gc, x1, y1, x2, y2)
+    }
+
+    vein draw_str(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, str: obsidian) -> void {
+        if (g_xft_draw != 0 && g_xft_font_ui != 0) {
+            forge r_val = ((col / 65536) % 256) * 257
+            forge g_val = ((col / 256) % 256) * 257
+            forge b_val = (col % 256) * 257
+            forge a_val = 65535
+            forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
+            _store_stone(g_xft_col_in as *stone, c_quad)
+            XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
+            forge len = ofs_str_len(str)
+            XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_ui as *stone, x, y, str, len)
+        } else {
+            XSetForeground(disp, gc, col)
+            forge len = ofs_str_len(str)
+            XDrawString(disp, d, gc, x, y, str, len)
+        }
+    }
+
+    vein draw_str_code(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, str: obsidian) -> void {
+        if (g_xft_draw != 0 && g_xft_font_code != 0) {
+            forge r_val = ((col / 65536) % 256) * 257
+            forge g_val = ((col / 256) % 256) * 257
+            forge b_val = (col % 256) * 257
+            forge a_val = 65535
+            forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
+            _store_stone(g_xft_col_in as *stone, c_quad)
+            XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
+            forge len = ofs_str_len(str)
+            XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_code as *stone, x, y, str, len)
+        } else {
+            XSetForeground(disp, gc, col)
+            forge len = ofs_str_len(str)
+            XDrawString(disp, d, gc, x, y, str, len)
+        }
+    }
+
+    vein draw_str_title(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, str: obsidian) -> void {
+        if (g_xft_draw != 0 && g_xft_font_title != 0) {
+            forge r_val = ((col / 65536) % 256) * 257
+            forge g_val = ((col / 256) % 256) * 257
+            forge b_val = (col % 256) * 257
+            forge a_val = 65535
+            forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
+            _store_stone(g_xft_col_in as *stone, c_quad)
+            XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
+            forge len = ofs_str_len(str)
+            XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_title as *stone, x, y, str, len)
+        } else {
+            XSetForeground(disp, gc, col)
+            forge len = ofs_str_len(str)
+            XDrawString(disp, d, gc, x, y, str, len)
+        }
+    }
+
+    vein draw_str_heading(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, str: obsidian) -> void {
+        if (g_xft_draw != 0 && g_xft_font_heading != 0) {
+            forge r_val = ((col / 65536) % 256) * 257
+            forge g_val = ((col / 256) % 256) * 257
+            forge b_val = (col % 256) * 257
+            forge a_val = 65535
+            forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
+            _store_stone(g_xft_col_in as *stone, c_quad)
+            XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
+            forge len = ofs_str_len(str)
+            XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_heading as *stone, x, y, str, len)
+        } else {
+            draw_str_title(disp, d, gc, col, x, y, str)
+        }
+    }
+
+    vein draw_shadow(disp: *stone, d: stone, gc: *stone, x: stone, y: stone, w: stone, h: stone, r: stone, depth: stone) -> void {
+        forge si = 1
+        while (si <= depth) {
+            forge scol = 789516
+            draw_rounded_border(disp, d, gc, scol, x - si, y - si, w + (si * 2), h + (si * 2), r + si)
+            si++
+        }
+    }
+
+    vein render_themed_button(disp: *stone, d: stone, gc: *stone, x: stone, y: stone, w: stone, h: stone, text: obsidian, variant: obsidian, icon: obsidian, state: stone, th: OllX11Theme) -> void {
+        forge bg_col = th.btn_bg
+        forge border_col = th.btn_border
+        forge text_col = th.fg_primary
+
+        if (ofs_str_eq(variant, "primary")) {
+            bg_col = th.accent
+            border_col = th.accent
+            text_col = th.accent_fg
+            if (state == 1) {
+                bg_col = th.accent_hover
+                border_col = th.accent_hover
+            } else if (state == 2) {
+                bg_col = th.btn_active
+            }
+        } else if (ofs_str_eq(variant, "danger")) {
+            bg_col = 15208739
+            border_col = 15208739
+            text_col = 16777215
+            if (state == 1) { bg_col = 16724530 }
+        } else {
+            if (state == 1) {
+                bg_col = th.btn_hover
+                text_col = 16777215
+            } else if (state == 2) {
+                bg_col = th.btn_active
+            }
+        }
+
+        if (state == 1) {
+            draw_shadow(disp, d, gc, x, y, w, h, th.btn_radius, 1)
+        }
+        fill_rounded_rect(disp, d, gc, bg_col, x, y, w, h, th.btn_radius)
+        draw_rounded_border(disp, d, gc, border_col, x, y, w, h, th.btn_radius)
+
+        forge tx = x + 12
+        if (ofs_str_eq(icon, "run")) {
+            icon_run(disp, d, gc, text_col, x + 8, y + 5)
+            tx = x + 30
+        }
+        forge ty = y + (h / 2) + 4
+        draw_str(disp, d, gc, text_col, tx, ty, text)
+    }
+
+    vein render_themed_switch(disp: *stone, d: stone, gc: *stone, x: stone, y: stone, active: stone, th: OllX11Theme) -> void {
+        forge sw_w = 40
+        forge sw_h = 20
+        forge rad = 10
+        if (active == 1) {
+            fill_rounded_rect(disp, d, gc, th.accent, x, y, sw_w, sw_h, rad)
+            fill_circle(disp, d, gc, 16777215, x + 29, y + 10, 7)
+        } else {
+            fill_rounded_rect(disp, d, gc, th.btn_bg, x, y, sw_w, sw_h, rad)
+            draw_rounded_border(disp, d, gc, th.btn_border, x, y, sw_w, sw_h, rad)
+            fill_circle(disp, d, gc, th.fg_muted, x + 11, y + 10, 7)
+        }
+    }
+
+    vein icon_ofs_logo(disp: *stone, d: stone, gc: *stone, x: stone, y: stone) -> void {
+        draw_line(disp, d, gc, 11032055, x + 8, y, x + 16, y + 8)
+        draw_line(disp, d, gc, 11032055, x + 16, y + 8, x + 8, y + 16)
+        draw_line(disp, d, gc, 11032055, x + 8, y + 16, x, y + 8)
+        draw_line(disp, d, gc, 11032055, x, y + 8, x + 8, y)
+        draw_line(disp, d, gc, 13346551, x + 8, y + 3, x + 13, y + 8)
+        draw_line(disp, d, gc, 13346551, x + 13, y + 8, x + 8, y + 13)
+        draw_line(disp, d, gc, 13346551, x + 8, y + 13, x + 3, y + 8)
+        draw_line(disp, d, gc, 13346551, x + 3, y + 8, x + 8, y + 3)
+        fill_circle(disp, d, gc, 16777215, x + 8, y + 8, 2)
+    }
+
+    vein icon_explorer(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone) -> void {
+        draw_border(disp, d, gc, col, x + 5, y + 2, 10, 13)
+        draw_rect(disp, d, gc, 1579032, x + 2, y + 5, 10, 13)
+        draw_border(disp, d, gc, col, x + 2, y + 5, 10, 13)
+        draw_line(disp, d, gc, col, x + 8, y + 5, x + 12, y + 9)
+    }
+
+    vein icon_search(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone) -> void {
+        draw_circle(disp, d, gc, col, x + 8, y + 8, 5)
+        draw_line(disp, d, gc, col, x + 12, y + 12, x + 17, y + 17)
+        draw_line(disp, d, gc, col, x + 13, y + 12, x + 18, y + 17)
+    }
+
+    vein icon_git(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone) -> void {
+        draw_line(disp, d, gc, col, x + 5, y + 3, x + 5, y + 17)
+        draw_line(disp, d, gc, col, x + 5, y + 12, x + 14, y + 6)
+        fill_circle(disp, d, gc, col, x + 5, y + 3, 2)
+        fill_circle(disp, d, gc, col, x + 5, y + 17, 2)
+        fill_circle(disp, d, gc, col, x + 14, y + 6, 2)
+    }
+
+    vein icon_run(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone) -> void {
+        draw_line(disp, d, gc, col, x + 5, y + 3, x + 5, y + 17)
+        draw_line(disp, d, gc, col, x + 5, y + 3, x + 16, y + 10)
+        draw_line(disp, d, gc, col, x + 16, y + 10, x + 5, y + 17)
+        draw_line(disp, d, gc, col, x + 7, y + 5, x + 14, y + 10)
+        draw_line(disp, d, gc, col, x + 7, y + 15, x + 14, y + 10)
+        draw_line(disp, d, gc, col, x + 9, y + 7, x + 12, y + 10)
+        draw_line(disp, d, gc, col, x + 9, y + 13, x + 12, y + 10)
+    }
+
+    vein icon_pkgs(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone) -> void {
+        draw_border(disp, d, gc, col, x + 2, y + 2, 6, 6)
+        draw_border(disp, d, gc, col, x + 11, y + 2, 6, 6)
+        draw_border(disp, d, gc, col, x + 2, y + 11, 6, 6)
+        draw_border(disp, d, gc, col, x + 11, y + 11, 6, 6)
+    }
+
+    vein icon_gear(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone) -> void {
+        draw_circle(disp, d, gc, col, x + 9, y + 9, 4)
+        draw_line(disp, d, gc, col, x + 9, y + 2, x + 9, y + 5)
+        draw_line(disp, d, gc, col, x + 9, y + 13, x + 9, y + 16)
+        draw_line(disp, d, gc, col, x + 2, y + 9, x + 5, y + 9)
+        draw_line(disp, d, gc, col, x + 13, y + 9, x + 16, y + 9)
+        draw_line(disp, d, gc, col, x + 4, y + 4, x + 6, y + 6)
+        draw_line(disp, d, gc, col, x + 14, y + 14, x + 12, y + 12)
+        draw_line(disp, d, gc, col, x + 14, y + 4, x + 12, y + 6)
+        draw_line(disp, d, gc, col, x + 4, y + 14, x + 6, y + 12)
+    }
+
+    vein icon_folder(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone) -> void {
+        draw_line(disp, d, gc, col, x, y + 1, x + 5, y + 1)
+        draw_line(disp, d, gc, col, x + 5, y + 1, x + 7, y + 3)
+        draw_border(disp, d, gc, col, x, y + 3, 14, 10)
+        draw_line(disp, d, gc, col, x + 1, y + 4, x + 13, y + 4)
+    }
+
+    vein icon_file(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone) -> void {
+        draw_border(disp, d, gc, col, x + 2, y + 1, 10, 14)
+        draw_line(disp, d, gc, col, x + 8, y + 1, x + 12, y + 5)
+        draw_line(disp, d, gc, col, x + 4, y + 7, x + 9, y + 7)
+        draw_line(disp, d, gc, col, x + 4, y + 10, x + 10, y + 10)
+    }
+
+    vein icon_ofs_file(disp: *stone, d: stone, gc: *stone, x: stone, y: stone) -> void {
+        fill_rounded_rect(disp, d, gc, 2432824, x + 2, y + 1, 11, 14, 2)
+        draw_border(disp, d, gc, 11032055, x + 2, y + 1, 11, 14)
+        draw_line(disp, d, gc, 13489908, x + 8, y + 1, x + 13, y + 6)
+        draw_line(disp, d, gc, 13489908, x + 8, y + 6, x + 13, y + 6)
+        draw_line(disp, d, gc, 13489908, x + 8, y + 1, x + 8, y + 6)
+        draw_line(disp, d, gc, 12616956, x + 7, y + 6, x + 10, y + 9)
+        draw_line(disp, d, gc, 12616956, x + 10, y + 9, x + 7, y + 12)
+        draw_line(disp, d, gc, 12616956, x + 7, y + 12, x + 4, y + 9)
+        draw_line(disp, d, gc, 12616956, x + 4, y + 9, x + 7, y + 6)
+        fill_circle(disp, d, gc, 16777215, x + 7, y + 9, 1)
+    }
+
+    vein render_menu_bar(disp: *stone, d: stone, gc: *stone, hover_idx: stone, th: OllX11Theme, win_w: stone) -> void {
+        draw_rect(disp, d, gc, th.bg_header, 0, 0, win_w, 35)
+        draw_line(disp, d, gc, th.border_subtle, 0, 34, win_w, 34)
+
+        icon_ofs_logo(disp, d, gc, 10, 9)
+
+        forge m_items_x = [42, 102, 152, 212, 260, 284, 350, 412]
+        forge m_items_w = [56, 46, 56, 44, 20, 62, 58, 44]
+        forge m_labels = ["Arquivo", "Editar", "Selecao", "Exibir", "Ir", "Executar", "Terminal", "Ajuda"]
+
+        forge mi = 0
+        while (mi < 8) {
+            forge ix = m_items_x[mi]
+            forge iw = m_items_w[mi]
+            forge lbl = m_labels[mi]
+
+            if (hover_idx == mi) {
+                fill_rounded_rect(disp, d, gc, th.btn_hover, ix - 4, 6, iw + 8, 22, th.btn_radius)
+            }
+
+            forge text_col = th.fg_secondary
+            if (hover_idx == mi) { text_col = 16777215 }
+            draw_str(disp, d, gc, text_col, ix, 21, lbl)
+            mi++
+        }
+
+        forge search_w = 480
+        forge search_x = (win_w - search_w) / 2
+        if (search_x < 470) { search_x = 470 }
+        fill_rounded_rect(disp, d, gc, th.btn_bg, search_x, 5, search_w, 24, th.btn_radius)
+        draw_rounded_border(disp, d, gc, th.btn_border, search_x, 5, search_w, 24, th.btn_radius)
+        icon_search(disp, d, gc, th.fg_muted, search_x + 6, 9)
+        draw_str(disp, d, gc, th.fg_muted, search_x + 30, 21, "Obsidian Fault Script :: Studio IDLE (Ctrl+P)")
+    }
+
+    vein render_activity_bar(disp: *stone, d: stone, gc: *stone, active_tab: stone, hover_idx: stone, th: OllX11Theme, win_h: stone) -> void {
+        forge statusbar_y = win_h - 24
+        draw_rect(disp, d, gc, th.bg_sidebar, 0, 35, 48, statusbar_y - 35)
+        draw_line(disp, d, gc, th.border_subtle, 47, 35, 47, statusbar_y)
+
+        forge ai = 0
+        while (ai < 5) {
+            forge ay = 44 + (ai * 46)
+            if (hover_idx == 30 + ai) {
+                fill_rounded_rect(disp, d, gc, th.btn_hover, 4, ay, 40, 38, th.btn_radius)
+            }
+            if (active_tab == ai) {
+                fill_rounded_rect(disp, d, gc, th.accent, 0, ay, 3, 38, 2)
+            }
+
+            forge icon_col = th.fg_muted
+            if (active_tab == ai) { icon_col = 16777215 }
+            else if (hover_idx == 30 + ai) { icon_col = th.accent_hover }
+
+            if (ai == 0) { icon_explorer(disp, d, gc, icon_col, 16, ay + 10) }
+            if (ai == 1) { icon_search(disp, d, gc, icon_col, 16, ay + 10) }
+            if (ai == 2) { icon_git(disp, d, gc, icon_col, 16, ay + 10) }
+            if (ai == 3) { icon_run(disp, d, gc, icon_col, 16, ay + 10) }
+            if (ai == 4) { icon_pkgs(disp, d, gc, icon_col, 16, ay + 10) }
+            ai++
+        }
+
+        forge gy = statusbar_y - 48
+        if (hover_idx == 35) {
+            fill_rounded_rect(disp, d, gc, th.btn_hover, 4, gy, 40, 38, th.btn_radius)
+        }
+        forge g_col = th.fg_muted
+        if (hover_idx == 35) { g_col = th.accent_hover }
+        icon_gear(disp, d, gc, g_col, 15, gy + 10)
+    }
+
+    vein render_sidebar_explorer(disp: *stone, d: stone, gc: *stone, workspace_files: Array<obsidian>, active_file_path: obsidian, open_tabs: Array<obsidian>, hover_idx: stone, th: OllX11Theme, workspace_folder: obsidian, win_h: stone) -> void {
+        forge statusbar_y = win_h - 24
+        draw_rect(disp, d, gc, th.bg_sidebar, 48, 35, 220, statusbar_y - 35)
+        draw_line(disp, d, gc, th.border_subtle, 267, 35, 267, statusbar_y)
+
+        draw_str(disp, d, gc, th.fg_muted, 62, 54, "EXPLORADOR")
+        draw_str(disp, d, gc, th.fg_muted, 218, 54, "+")
+        draw_str(disp, d, gc, th.fg_muted, 234, 54, "R")
+        draw_str(disp, d, gc, th.fg_muted, 250, 54, "-")
+        draw_line(disp, d, gc, th.border_subtle, 48, 64, 267, 64)
+
+        if (ofs_str_len(workspace_folder) == 0) {
+            draw_str_title(disp, d, gc, th.fg_primary, 62, 94, "NENHUMA PASTA")
+            draw_str(disp, d, gc, th.fg_muted, 62, 120, "Voce ainda nao abriu")
+            draw_str(disp, d, gc, th.fg_muted, 62, 138, "uma pasta de trabalho.")
+            forge btn_fp_state = 0
+            if (hover_idx == 200) { btn_fp_state = 1 }
+            render_themed_button(disp, d, gc, 60, 168, 196, 32, "Abrir Pasta...", "primary", "", btn_fp_state, th)
+            return
+        }
+
+        draw_str(disp, d, gc, th.fg_muted, 52, 78, "v")
+        draw_str(disp, d, gc, th.fg_secondary, 66, 78, "EDITORES ABERTOS")
+
+        forge ot_cnt = ofs_array_len(open_tabs)
+        forge oi = 0
+        while (oi < ot_cnt && oi < 4) {
+            forge o_y = 94 + (oi * 20)
+            forge ot_name: obsidian = ofs_array_get(open_tabs, oi)
+            if (hover_idx == 120 + oi) {
+                fill_rounded_rect(disp, d, gc, th.btn_hover, 48, o_y - 3, 219, 18, 3)
+            }
+            if (ofs_str_contains(ot_name, ".ofs")) {
+                icon_ofs_file(disp, d, gc, 66, o_y)
+            } else {
+                forge o_col = 13007069
+                if (ofs_str_contains(ot_name, ".oll")) { o_col = 10011513 }
+                else if (ofs_str_contains(ot_name, ".md")) { o_col = 6401007 }
+                icon_file(disp, d, gc, o_col, 66, o_y)
+            }
+            draw_str(disp, d, gc, th.fg_primary, 82, o_y + 10, ot_name)
+            draw_str(disp, d, gc, th.fg_muted, 250, o_y + 10, "x")
+            oi++
+        }
+
+        forge sep_y = 98 + (oi * 20)
+        draw_line(disp, d, gc, th.border_subtle, 48, sep_y, 267, sep_y)
+
+        forge ws_hdr_y = sep_y + 16
+        draw_str(disp, d, gc, th.fg_muted, 52, ws_hdr_y, "v")
+        icon_folder(disp, d, gc, 15057019, 64, ws_hdr_y - 10)
+        draw_str(disp, d, gc, th.fg_primary, 82, ws_hdr_y, "WORKSPACE")
+
+        forge count = ofs_array_len(workspace_files)
+        forge ri = 0
+        forge ws_start_y = ws_hdr_y + 16
+        while (ri < count && ri < 22) {
+            forge ry = ws_start_y + (ri * 22)
+            forge fpath: obsidian = ofs_array_get(workspace_files, ri)
+            forge fname = get_filename_from_path(fpath)
+
+            forge is_active = 0
+            if (ofs_str_eq(fpath, active_file_path)) { is_active = 1 }
+
+            if (hover_idx == 40 + ri) {
+                fill_rounded_rect(disp, d, gc, th.btn_hover, 48, ry - 3, 219, 20, 4)
+            }
+            if (is_active == 1) {
+                fill_rounded_rect(disp, d, gc, th.btn_active, 48, ry - 3, 219, 20, 4)
+                fill_rounded_rect(disp, d, gc, th.accent, 48, ry - 3, 3, 20, 1)
+            }
+
+            forge rx = 66
+            if (ofs_str_contains(fpath, "/")) { rx = 78 }
+            if (ofs_str_contains(fname, ".ofs")) {
+                icon_ofs_file(disp, d, gc, rx, ry)
+            } else {
+                forge icon_col = 13007069
+                if (ofs_str_contains(fname, ".oll")) { icon_col = 10011513 }
+                else if (ofs_str_contains(fname, ".md")) { icon_col = 6401007 }
+                icon_file(disp, d, gc, icon_col, rx, ry)
+            }
+
+            forge text_col = th.fg_secondary
+            if (is_active == 1) { text_col = 16777215 }
+            draw_str(disp, d, gc, text_col, rx + 16, ry + 11, fname)
+            ri++
+        }
+    }
+
+    vein render_sidebar_search(disp: *stone, d: stone, gc: *stone, hover_idx: stone, th: OllX11Theme, search_query: obsidian, win_h: stone) -> void {
+        forge statusbar_y = win_h - 24
+        draw_rect(disp, d, gc, th.bg_sidebar, 48, 35, 220, statusbar_y - 35)
+        draw_line(disp, d, gc, th.border_subtle, 267, 35, 267, statusbar_y)
+
+        draw_str(disp, d, gc, th.fg_muted, 62, 54, "BUSCA")
+        draw_line(disp, d, gc, th.border_subtle, 48, 64, 267, 64)
+
+        fill_rounded_rect(disp, d, gc, th.btn_bg, 58, 74, 200, 26, th.btn_radius)
+        draw_rounded_border(disp, d, gc, th.btn_border, 58, 74, 200, 26, th.btn_radius)
+        forge s_prompt = "Localizar..."
+        if (ofs_str_len(search_query) > 0) { s_prompt = search_query }
+        draw_str(disp, d, gc, th.fg_secondary, 66, 91, s_prompt)
+
+        fill_rounded_rect(disp, d, gc, th.btn_hover, 186, 78, 20, 18, 3)
+        draw_str(disp, d, gc, th.fg_muted, 189, 91, "Aa")
+        fill_rounded_rect(disp, d, gc, th.btn_hover, 209, 78, 20, 18, 3)
+        draw_str(disp, d, gc, th.fg_muted, 212, 91, "ab")
+        fill_rounded_rect(disp, d, gc, th.btn_hover, 232, 78, 20, 18, 3)
+        draw_str(disp, d, gc, th.fg_muted, 235, 91, ".*")
+
+        fill_rounded_rect(disp, d, gc, th.btn_bg, 58, 108, 200, 26, th.btn_radius)
+        draw_rounded_border(disp, d, gc, th.btn_border, 58, 108, 200, 26, th.btn_radius)
+        draw_str(disp, d, gc, th.fg_muted, 66, 125, "Substituir...")
+
+        draw_line(disp, d, gc, th.border_subtle, 48, 146, 267, 146)
+        draw_str(disp, d, gc, th.fg_muted, 52, 164, "v")
+        draw_str(disp, d, gc, th.fg_primary, 66, 164, "RESULTADOS (3)")
+
+        icon_file(disp, d, gc, 13007069, 66, 180)
+        draw_str(disp, d, gc, 16777215, 82, 191, "main.ofs (2)")
+        draw_str(disp, d, gc, 15057019, 74, 210, "1: extern vein ofs_str_len")
+        draw_str(disp, d, gc, th.fg_secondary, 74, 228, "14: oll_x11.run_window()")
+
+        icon_file(disp, d, gc, 10011513, 66, 252)
+        draw_str(disp, d, gc, 16777215, 82, 263, "oll_x11.ofs (1)")
+        draw_str(disp, d, gc, 15057019, 74, 282, "1159: vein run_window()")
+    }
+
+    vein render_sidebar_git(disp: *stone, d: stone, gc: *stone, hover_idx: stone, th: OllX11Theme, win_h: stone, git_branch: obsidian, git_commit_msg: obsidian, staged_f: Array<obsidian>, staged_t: Array<obsidian>, unstaged_f: Array<obsidian>, unstaged_t: Array<obsidian>, focused_area: stone, is_repo: stone) -> void {
+        forge statusbar_y = win_h - 24
+        draw_rect(disp, d, gc, th.bg_sidebar, 48, 35, 220, statusbar_y - 35)
+        draw_line(disp, d, gc, th.border_subtle, 267, 35, 267, statusbar_y)
+
+        draw_str(disp, d, gc, th.fg_muted, 62, 54, "CONTROLE DE CODIGO")
+        if (hover_idx == 310) {
+            fill_rounded_rect(disp, d, gc, th.btn_hover, 222, 40, 20, 20, 3)
+        }
+        draw_str(disp, d, gc, th.fg_secondary, 227, 54, "R")
+        if (hover_idx == 311) {
+            fill_rounded_rect(disp, d, gc, th.btn_hover, 244, 40, 20, 20, 3)
+        }
+        draw_str(disp, d, gc, th.fg_secondary, 249, 54, "V")
+        draw_line(disp, d, gc, th.border_subtle, 48, 64, 267, 64)
+
+        if (is_repo == 0) {
+            draw_str(disp, d, gc, th.fg_muted, 58, 88, "Nao e repositorio Git.")
+            forge is_init_hov = 0
+            if (hover_idx == 301) { is_init_hov = 1 }
+            render_themed_button(disp, d, gc, 58, 108, 200, 26, "Inicializar Git", "primary", "git", is_init_hov, th)
+            return
+        }
+
+        icon_git(disp, d, gc, th.fg_secondary, 56, 74)
+        draw_str(disp, d, gc, th.fg_primary, 74, 86, git_branch + "*")
+        forge total_changes = ofs_array_len(staged_f) + ofs_array_len(unstaged_f)
+        fill_rounded_rect(disp, d, gc, 3808552, 204, 73, 26, 16, 8)
+        draw_str(disp, d, gc, 14707829, 212, 85, ofs_stone_to_obsidian(total_changes))
+
+        fill_rounded_rect(disp, d, gc, th.btn_bg, 58, 98, 200, 48, th.btn_radius)
+        forge box_border = th.btn_border
+        if (focused_area == 2) { box_border = th.accent_primary }
+        draw_rounded_border(disp, d, gc, box_border, 58, 98, 200, 48, th.btn_radius)
+        if (ofs_str_len(git_commit_msg) == 0) {
+            if (focused_area == 2) {
+                draw_str(disp, d, gc, th.accent_primary, 66, 118, "▋")
+            } else {
+                draw_str(disp, d, gc, th.fg_muted, 66, 118, "Mensagem de commit...")
+                draw_str(disp, d, gc, th.fg_muted, 66, 136, "(Ctrl+Enter commit)")
+            }
+        } else {
+            forge show_m = git_commit_msg
+            if (ofs_str_len(show_m) > 18) {
+                show_m = ofs_str_substr(show_m, 0, 16) + ".."
+            }
+            if (focused_area == 2) { show_m = show_m + "▋" }
+            draw_str(disp, d, gc, th.fg_primary, 66, 118, show_m)
+            draw_str(disp, d, gc, th.fg_muted, 66, 136, "Ctrl+Enter p/ enviar")
+        }
+
+        forge is_cpush_hov = 0
+        if (hover_idx == 300) { is_cpush_hov = 1 }
+        render_themed_button(disp, d, gc, 58, 154, 200, 26, "Commit & Push", "primary", "git", is_cpush_hov, th)
+
+        draw_line(disp, d, gc, th.border_subtle, 48, 188, 267, 188)
+
+        forge n_staged = ofs_array_len(staged_f)
+        draw_str(disp, d, gc, th.fg_muted, 52, 208, "v")
+        draw_str(disp, d, gc, th.fg_primary, 66, 208, "STAGED (" + ofs_stone_to_obsidian(n_staged) + ")")
+        if (hover_idx == 305) {
+            fill_rounded_rect(disp, d, gc, th.btn_hover, 240, 196, 20, 16, 3)
+        }
+        draw_str(disp, d, gc, th.fg_secondary, 246, 208, "-")
+
+        forge cur_gy = 216
+        forge si = 0
+        while (si < n_staged && si < 5) {
+            forge s_item_y = cur_gy + (si * 22)
+            if (hover_idx == 320 + si) {
+                fill_rounded_rect(disp, d, gc, th.btn_hover, 48, s_item_y, 219, 22, 3)
+            }
+            forge sf: obsidian = ofs_array_get(staged_f, si)
+            forge st: obsidian = ofs_array_get(staged_t, si)
+            if (ofs_str_contains(sf, ".ofs")) {
+                icon_ofs_file(disp, d, gc, 54, s_item_y + 3)
+            } else {
+                icon_file(disp, d, gc, 10011513, 54, s_item_y + 3)
+            }
+            forge dsf = sf
+            if (ofs_str_len(dsf) > 14) { dsf = ofs_str_substr(dsf, 0, 12) + ".." }
+            draw_str(disp, d, gc, th.fg_primary, 70, s_item_y + 15, dsf)
+            forge t_col = 10011513
+            if (ofs_str_eq(st, "M")) { t_col = 15057019 }
+            else if (ofs_str_eq(st, "D")) { t_col = 14707829 }
+            draw_str(disp, d, gc, t_col, 228, s_item_y + 15, st)
+            draw_str(disp, d, gc, th.fg_muted, 248, s_item_y + 15, "-")
+            si++
+        }
+
+        cur_gy = cur_gy + (si * 22) + 8
+        draw_line(disp, d, gc, th.border_subtle, 48, cur_gy, 267, cur_gy)
+        cur_gy = cur_gy + 14
+
+        forge n_unstaged = ofs_array_len(unstaged_f)
+        draw_str(disp, d, gc, th.fg_muted, 52, cur_gy + 4, "v")
+        draw_str(disp, d, gc, th.fg_primary, 66, cur_gy + 4, "ALTERACOES (" + ofs_stone_to_obsidian(n_unstaged) + ")")
+        if (hover_idx == 306) {
+            fill_rounded_rect(disp, d, gc, th.btn_hover, 240, cur_gy - 8, 20, 16, 3)
+        }
+        draw_str(disp, d, gc, th.fg_secondary, 246, cur_gy + 4, "+")
+
+        cur_gy = cur_gy + 12
+        forge ui = 0
+        while (ui < n_unstaged && ui < 8 && (cur_gy + (ui * 22)) < (statusbar_y - 24)) {
+            forge u_item_y = cur_gy + (ui * 22)
+            if (hover_idx == 340 + ui) {
+                fill_rounded_rect(disp, d, gc, th.btn_hover, 48, u_item_y, 219, 22, 3)
+            }
+            forge uf: obsidian = ofs_array_get(unstaged_f, ui)
+            forge ut: obsidian = ofs_array_get(unstaged_t, ui)
+            if (ofs_str_contains(uf, ".ofs")) {
+                icon_ofs_file(disp, d, gc, 54, u_item_y + 3)
+            } else {
+                icon_file(disp, d, gc, 15057019, 54, u_item_y + 3)
+            }
+            forge duf = uf
+            if (ofs_str_len(duf) > 13) { duf = ofs_str_substr(duf, 0, 11) + ".." }
+            draw_str(disp, d, gc, th.fg_primary, 70, u_item_y + 15, duf)
+            forge ut_col = 15057019
+            if (ofs_str_eq(ut, "U")) { ut_col = 10011513 }
+            else if (ofs_str_eq(ut, "D")) { ut_col = 14707829 }
+            draw_str(disp, d, gc, ut_col, 216, u_item_y + 15, ut)
+            draw_str(disp, d, gc, th.fg_secondary, 234, u_item_y + 15, "+")
+            draw_str(disp, d, gc, th.fg_muted, 252, u_item_y + 15, "x")
+            ui++
+        }
+    }
+
+    vein render_sidebar_debug(disp: *stone, d: stone, gc: *stone, hover_idx: stone, th: OllX11Theme, active_file_path: obsidian, win_h: stone) -> void {
+        forge statusbar_y = win_h - 24
+        draw_rect(disp, d, gc, th.bg_sidebar, 48, 35, 220, statusbar_y - 35)
+        draw_line(disp, d, gc, th.border_subtle, 267, 35, 267, statusbar_y)
+
+        draw_str(disp, d, gc, th.fg_muted, 62, 54, "EXECUTAR E DEPURAR")
+        draw_line(disp, d, gc, th.border_subtle, 48, 64, 267, 64)
+
+        fill_rounded_rect(disp, d, gc, th.btn_bg, 58, 74, 200, 24, th.btn_radius)
+        draw_rounded_border(disp, d, gc, th.btn_border, 58, 74, 200, 24, th.btn_radius)
+        icon_ofs_logo(disp, d, gc, 64, 78)
+        draw_str(disp, d, gc, th.fg_primary, 86, 90, "OFS: Executar (AOT)")
+
+        render_themed_button(disp, d, gc, 58, 106, 200, 28, "Iniciar Depuracao (F5)", "primary", "run", 0, th)
+
+        draw_line(disp, d, gc, th.border_subtle, 48, 144, 267, 144)
+        draw_str(disp, d, gc, th.fg_muted, 52, 162, "v")
+        draw_str(disp, d, gc, th.fg_primary, 66, 162, "VARIAVEIS (LOCAIS)")
+        draw_str(disp, d, gc, 13007069, 66, 180, "target:")
+        draw_str(disp, d, gc, 10011513, 120, 180, "\"x86_64-linux\"")
+        draw_str(disp, d, gc, 13007069, 66, 198, "engine:")
+        draw_str(disp, d, gc, 10011513, 120, 198, "\"oll_x11\"")
+        draw_str(disp, d, gc, 13007069, 66, 216, "file:")
+        draw_str(disp, d, gc, 15057019, 120, 216, get_filename_from_path(active_file_path))
+
+        draw_line(disp, d, gc, th.border_subtle, 48, 236, 267, 236)
+        draw_str(disp, d, gc, th.fg_muted, 52, 254, "v")
+        draw_str(disp, d, gc, th.fg_primary, 66, 254, "BREAKPOINTS")
+        fill_circle(disp, d, gc, 14707829, 68, 272, 4)
+        draw_str(disp, d, gc, th.fg_secondary, 78, 276, "main.ofs:14")
+        draw_circle(disp, d, gc, th.fg_muted, 68, 292, 4)
+        draw_str(disp, d, gc, th.fg_muted, 78, 296, "oll_x11.ofs:1159")
+
+        draw_line(disp, d, gc, th.border_subtle, 48, 316, 267, 316)
+        draw_str(disp, d, gc, th.fg_muted, 52, 334, "v")
+        draw_str(disp, d, gc, th.fg_primary, 66, 334, "CALL STACK")
+        draw_str(disp, d, gc, 16777215, 66, 352, "main() [main.ofs:1]")
+        draw_str(disp, d, gc, th.fg_muted, 66, 370, "run_window() [oll:1159]")
+    }
+
+    vein render_sidebar_packages(disp: *stone, d: stone, gc: *stone, hover_idx: stone, th: OllX11Theme, ext_search_query: obsidian, focused_area: stone, active_theme_id: stone, win_h: stone) -> void {
+        forge statusbar_y = win_h - 24
+        draw_rect(disp, d, gc, th.bg_sidebar, 48, 35, 220, statusbar_y - 35)
+        draw_line(disp, d, gc, th.border_subtle, 267, 35, 267, statusbar_y)
+
+        draw_str(disp, d, gc, th.fg_muted, 62, 54, "EXTENSOES & TEMAS")
+        draw_line(disp, d, gc, th.border_subtle, 48, 64, 267, 64)
+
+        fill_rounded_rect(disp, d, gc, th.btn_bg, 58, 74, 200, 24, th.btn_radius)
+        forge s_border = th.btn_border
+        if (focused_area == 3) { s_border = th.accent_primary }
+        draw_rounded_border(disp, d, gc, s_border, 58, 74, 200, 24, th.btn_radius)
+        icon_search(disp, d, gc, th.fg_muted, 64, 78)
+        if (ofs_str_len(ext_search_query) == 0) {
+            if (focused_area == 3) {
+                draw_str(disp, d, gc, th.accent_primary, 82, 90, "▋")
+            } else {
+                draw_str(disp, d, gc, th.fg_muted, 82, 90, "Buscar extensoes...")
+            }
+        } else {
+            forge sq_disp = ext_search_query
+            if (focused_area == 3) { sq_disp = sq_disp + "▋" }
+            draw_str(disp, d, gc, th.fg_primary, 82, 90, sq_disp)
+        }
+
+        draw_str(disp, d, gc, th.fg_muted, 52, 116, "v")
+        draw_str(disp, d, gc, th.fg_primary, 66, 116, "DISPONIVEIS (7)")
+
+        forge ext_names = ["OFS Core Tools", "Dark Modern", "Purple Modern", "Light Modern", "Cyber Neon", "Dracula Theme", "Monokai Pro"]
+        forge ext_vers = ["1.2.0", "2.0.0", "1.5.0", "1.2.0", "1.0.0", "2.2.0", "1.8.0"]
+        forge ext_descs = ["LSP nativo & sintaxe", "Tema oficial escuro", "Tema roxo vibrante", "Tema claro contraste", "Cores neon eletricas", "Dracula oficial", "Monokai pro escuro"]
+        forge ext_tids = [-1, 0, 1, 2, 3, 4, 5]
+
+        forge ei = 0
+        while (ei < 7) {
+            forge e_y = 128 + (ei * 54)
+            if (e_y + 48 < statusbar_y) {
+                forge ename: obsidian = ofs_array_get(ext_names, ei)
+                forge ever: obsidian = ofs_array_get(ext_vers, ei)
+                forge edesc: obsidian = ofs_array_get(ext_descs, ei)
+                forge etid: stone = ofs_array_get(ext_tids, ei)
+
+                fill_rounded_rect(disp, d, gc, th.bg_surface, 56, e_y, 204, 50, 4)
+                draw_rounded_border(disp, d, gc, th.border_subtle, 56, e_y, 204, 50, 4)
+
+                icon_pkgs(disp, d, gc, 6401007, 62, e_y + 6)
+                forge disp_ename = ename
+                if (ofs_str_len(disp_ename) > 13) { disp_ename = ofs_str_substr(disp_ename, 0, 11) + ".." }
+                draw_str(disp, d, gc, 16777215, 80, e_y + 16, disp_ename)
+
+                if (etid >= 0 && etid == active_theme_id) {
+                    fill_rounded_rect(disp, d, gc, 1585966, 186, e_y + 5, 68, 16, 3)
+                    draw_str(disp, d, gc, 10011513, 202, e_y + 17, "Ativo")
+                } else if (etid >= 0) {
+                    forge btn_bg_c = th.btn_bg
+                    if (hover_idx == 400 + ei) { btn_bg_c = th.btn_hover }
+                    fill_rounded_rect(disp, d, gc, btn_bg_c, 186, e_y + 5, 68, 16, 3)
+                    draw_rounded_border(disp, d, gc, th.btn_border, 186, e_y + 5, 68, 16, 3)
+                    if (etid >= 4) {
+                        draw_str(disp, d, gc, 16777215, 196, e_y + 17, "Instalar")
+                    } else {
+                        draw_str(disp, d, gc, th.fg_secondary, 200, e_y + 17, "Ativar")
+                    }
+                } else {
+                    fill_rounded_rect(disp, d, gc, 1585966, 186, e_y + 5, 68, 16, 3)
+                    draw_str(disp, d, gc, 10011513, 202, e_y + 17, "Ativo")
+                }
+
+                forge sub_desc = "v" + ever + " • " + edesc
+                if (ofs_str_len(sub_desc) > 22) { sub_desc = ofs_str_substr(sub_desc, 0, 20) + ".." }
+                draw_str(disp, d, gc, th.fg_muted, 62, e_y + 36, sub_desc)
+            }
+            ei++
+        }
+    }
+
+    vein render_sidebar(disp: *stone, d: stone, gc: *stone, active_activity: stone, workspace_files: Array<obsidian>, active_file_path: obsidian, open_tabs: Array<obsidian>, hover_idx: stone, th: OllX11Theme, search_query: obsidian, workspace_folder: obsidian, win_h: stone, git_branch: obsidian, git_commit_msg: obsidian, staged_f: Array<obsidian>, staged_t: Array<obsidian>, unstaged_f: Array<obsidian>, unstaged_t: Array<obsidian>, ext_search_query: obsidian, focused_area: stone, active_theme_id: stone, is_repo: stone) -> void {
+        if (active_activity == 0) {
+            render_sidebar_explorer(disp, d, gc, workspace_files, active_file_path, open_tabs, hover_idx, th, workspace_folder, win_h)
+        } else if (active_activity == 1) {
+            render_sidebar_search(disp, d, gc, hover_idx, th, search_query, win_h)
+        } else if (active_activity == 2) {
+            render_sidebar_git(disp, d, gc, hover_idx, th, win_h, git_branch, git_commit_msg, staged_f, staged_t, unstaged_f, unstaged_t, focused_area, is_repo)
+        } else if (active_activity == 3) {
+            render_sidebar_debug(disp, d, gc, hover_idx, th, active_file_path, win_h)
+        } else if (active_activity == 4) {
+            render_sidebar_packages(disp, d, gc, hover_idx, th, ext_search_query, focused_area, active_theme_id, win_h)
+        }
+    }
+
+    vein render_welcome_page(disp: *stone, d: stone, gc: *stone, th: OllX11Theme, hover_idx: stone, win_w: stone, win_h: stone, panel_y: stone) -> void {
+        draw_rect(disp, d, gc, th.bg_editor, 268, 35, win_w - 268, panel_y - 35)
+
+        forge sx = 300
+        forge max_cw = win_w - sx - 50
+        if (max_cw > 920) { max_cw = 920 }
+
+        icon_ofs_logo(disp, d, gc, sx, 56)
+        draw_str_heading(disp, d, gc, 16777215, sx + 32, 74, "Obsidian Fault Script")
+
+        draw_str(disp, d, gc, th.fg_secondary, sx, 100, "Obsidian Fault Script usa um compilador self-hosted, gera LLVM IR, linka uma runtime nativa")
+        draw_str(disp, d, gc, th.fg_secondary, sx, 118, "e inclui ODL/OES como linguagens fonte para sites e interfaces com motor OLL.")
+
+        forge b1_col = 11032055
+        if (hover_idx == 210) { b1_col = 12616956 }
+        fill_rounded_rect(disp, d, gc, b1_col, sx, 142, 105, 30, 15)
+        draw_str_title(disp, d, gc, 16777215, sx + 18, 162, "Comecar")
+
+        forge b2_bg = 2170672
+        if (hover_idx == 211) { b2_bg = th.btn_hover }
+        fill_rounded_rect(disp, d, gc, b2_bg, sx + 115, 142, 125, 30, 15)
+        draw_rounded_border(disp, d, gc, 4011865, sx + 115, 142, 125, 30, 15)
+        draw_str(disp, d, gc, 16777215, sx + 130, 162, "Abrir Pasta...")
+
+        forge b3_bg = 2170672
+        if (hover_idx == 212) { b3_bg = th.btn_hover }
+        fill_rounded_rect(disp, d, gc, b3_bg, sx + 250, 142, 175, 30, 15)
+        draw_rounded_border(disp, d, gc, 4011865, sx + 250, 142, 175, 30, 15)
+        draw_str(disp, d, gc, 16777215, sx + 264, 162, "Paleta de Comandos")
+
+        forge b4_bg = 2170672
+        if (hover_idx == 213) { b4_bg = th.btn_hover }
+        fill_rounded_rect(disp, d, gc, b4_bg, sx + 435, 142, 170, 30, 15)
+        draw_rounded_border(disp, d, gc, 4011865, sx + 435, 142, 170, 30, 15)
+        draw_str(disp, d, gc, 16777215, sx + 450, 162, "Executar AOT (F5)")
+
+        draw_line(disp, d, gc, th.border_subtle, sx, 192, sx + max_cw, 192)
+
+        draw_str_heading(disp, d, gc, 16777215, sx, 218, "Componentes tecnicos")
+        draw_str(disp, d, gc, th.fg_muted, sx + 310, 218, "Compilador, runtime nativa, stdlib e empacotamento.")
+
+        forge card_gap = 14
+        forge card_w = (max_cw - (card_gap * 2)) / 3
+        forge card_y = 238
+        forge card_h = 88
+
+        forge c1_x = sx
+        fill_rounded_rect(disp, d, gc, 1447206, c1_x, card_y, card_w, card_h, 10)
+        draw_rounded_border(disp, d, gc, 3024710, c1_x, card_y, card_w, card_h, 10)
+        draw_str_title(disp, d, gc, 16777215, c1_x + 14, card_y + 24, "Self-hosted")
+        draw_str(disp, d, gc, 10328250, c1_x + 14, card_y + 46, "Lexer, parser, type checker")
+        draw_str(disp, d, gc, 10328250, c1_x + 14, card_y + 66, "e geracao LLVM vivem no OFS.")
+
+        forge c2_x = sx + card_w + card_gap
+        fill_rounded_rect(disp, d, gc, 1447206, c2_x, card_y, card_w, card_h, 10)
+        draw_rounded_border(disp, d, gc, 3024710, c2_x, card_y, card_w, card_h, 10)
+        draw_str_title(disp, d, gc, 16777215, c2_x + 14, card_y + 24, "Nativa")
+        draw_str(disp, d, gc, 10328250, c2_x + 14, card_y + 46, "A dita saida e LLVM IR linkada")
+        draw_str(disp, d, gc, 10328250, c2_x + 14, card_y + 66, "com libofs_runtime nativo.")
+
+        forge c3_x = sx + (card_w * 2) + (card_gap * 2)
+        fill_rounded_rect(disp, d, gc, 1447206, c3_x, card_y, card_w, card_h, 10)
+        draw_rounded_border(disp, d, gc, 3024710, c3_x, card_y, card_w, card_h, 10)
+        draw_str_title(disp, d, gc, 16777215, c3_x + 14, card_y + 24, "Hibrida")
+        draw_str(disp, d, gc, 10328250, c3_x + 14, card_y + 46, "Console, canvas nativo e sites")
+        draw_str(disp, d, gc, 10328250, c3_x + 14, card_y + 66, "via webui no mesmo ecossistema.")
+
+        forge sec2_y = 356
+        draw_str_heading(disp, d, gc, 16777215, sx, sec2_y, "ODL + OES")
+        draw_str(disp, d, gc, th.fg_muted, sx + 155, sec2_y, "ODL descreve documentos; OES define estilo, layout e animacoes.")
+
+        forge code_y = sec2_y + 14
+        forge code_h = 166
+        fill_rounded_rect(disp, d, gc, 986394, sx, code_y, max_cw, code_h, 10)
+        draw_rounded_border(disp, d, gc, 3024710, sx, code_y, max_cw, code_h, 10)
+
+        fill_rounded_rect(disp, d, gc, 1578528, sx, code_y, max_cw, 28, 10)
+        draw_rect(disp, d, gc, 1578528, sx, code_y + 14, max_cw, 14)
+        draw_line(disp, d, gc, 3024710, sx, code_y + 28, sx + max_cw, code_y + 28)
+
+        fill_circle(disp, d, gc, 15680580, sx + 16, code_y + 14, 4)
+        fill_circle(disp, d, gc, 16096779, sx + 30, code_y + 14, 4)
+        fill_circle(disp, d, gc, 1096065, sx + 44, code_y + 14, 4)
+        draw_str(disp, d, gc, 9209517, sx + 62, code_y + 19, "site.ofs")
+
+        draw_str(disp, d, gc, 12616956, sx + 20, code_y + 48, "attach")
+        draw_str(disp, d, gc, 3718648, sx + 72, code_y + 48, "{odl}")
+        draw_str(disp, d, gc, 12616956, sx + 20, code_y + 68, "attach")
+        draw_str(disp, d, gc, 3718648, sx + 72, code_y + 68, "{oes}")
+        draw_str(disp, d, gc, 12616956, sx + 20, code_y + 94, "view")
+        draw_str(disp, d, gc, 16436245, sx + 58, code_y + 94, "site()")
+        draw_str(disp, d, gc, 9741240, sx + 102, code_y + 94, "-> void {")
+        draw_str(disp, d, gc, 3718648, sx + 44, code_y + 116, "hero")
+        draw_str(disp, d, gc, 8843180, sx + 80, code_y + 116, "\"Obsidian Fault Script\"")
+        draw_str(disp, d, gc, 16777215, sx + 250, code_y + 116, "{")
+        draw_str(disp, d, gc, 3718648, sx + 68, code_y + 136, "tagline")
+        draw_str(disp, d, gc, 8843180, sx + 124, code_y + 136, "\"Compilador nativo, AOT e motor grafico OLL\"")
+        draw_str(disp, d, gc, 16777215, sx + 44, code_y + 152, "}")
+
+        if (panel_y > 600) {
+            forge info_y = code_y + code_h + 14
+            fill_rounded_rect(disp, d, gc, 1447206, sx, info_y, max_cw, 32, 6)
+            draw_rounded_border(disp, d, gc, 3024710, sx, info_y, max_cw, 32, 6)
+            draw_str(disp, d, gc, 10011513, sx + 14, info_y + 21, "[OK] Compilador OFS AOT: v0.1 Conectado | Motor Grafico OLL X11/FreeType Ativo")
+        }
+    }
+
+    vein render_editor_area(disp: *stone, d: stone, gc: *stone, open_tabs: Array<obsidian>, active_tab_idx: stone, hover_idx: stone, th: OllX11Theme, lines: Array<obsidian>, cursor_row: stone, cursor_col: stone, scroll_top: stone, is_dirty: stone, active_file_path: obsidian, win_w: stone, win_h: stone, panel_y: stone) -> void {
+        forge num_tabs = ofs_array_len(open_tabs)
+        if (num_tabs == 0) {
+            render_welcome_page(disp, d, gc, th, hover_idx, win_w, win_h, panel_y)
+            return
+        }
+
+        draw_rect(disp, d, gc, th.bg_header, 268, 35, win_w - 268, 35)
+        draw_line(disp, d, gc, th.border_subtle, 268, 69, win_w, 69)
+        forge ti = 0
+        forge cur_tx = 268
+        while (ti < num_tabs && ti < 8) {
+            forge tw = 140
+            forge tlbl: obsidian = ofs_array_get(open_tabs, ti)
+
+            forge t_bg = th.bg_header
+            if (active_tab_idx == ti) { t_bg = th.bg_editor }
+            else if (hover_idx == 50 + ti) { t_bg = th.btn_bg }
+
+            draw_rect(disp, d, gc, t_bg, cur_tx, 35, tw, 34)
+            draw_line(disp, d, gc, th.border_subtle, cur_tx + tw - 1, 35, cur_tx + tw - 1, 69)
+
+            if (active_tab_idx == ti) {
+                draw_rect(disp, d, gc, th.accent, cur_tx, 35, tw, 2)
+            }
+
+            if (ofs_str_contains(tlbl, ".ofs")) {
+                icon_ofs_file(disp, d, gc, cur_tx + 8, 44)
+            } else {
+                forge dot_col = 13007069
+                if (ofs_str_contains(tlbl, ".oll")) { dot_col = 10011513 }
+                else if (ofs_str_contains(tlbl, ".md")) { dot_col = 6401007 }
+                fill_circle(disp, d, gc, dot_col, cur_tx + 14, 52, 3)
+            }
+
+            forge txt_col = th.fg_muted
+            if (active_tab_idx == ti) { txt_col = 16777215 }
+            forge display_lbl = tlbl
+            if (active_tab_idx == ti && is_dirty == 1) {
+                display_lbl = tlbl + " *"
+            }
+            draw_str(disp, d, gc, txt_col, cur_tx + 26, 56, display_lbl)
+            draw_str(disp, d, gc, th.fg_muted, cur_tx + tw - 18, 56, "x")
+            cur_tx = cur_tx + tw
+            ti++
+        }
+
+        forge run_state = 0
+        if (hover_idx == 55) { run_state = 1 }
+        render_themed_button(disp, d, gc, win_w - 136, 39, 86, 26, "Run", "primary", "run", run_state, th)
+
+        forge split_state = 0
+        if (hover_idx == 56) { split_state = 1 }
+        render_themed_button(disp, d, gc, win_w - 42, 39, 34, 26, "|", "secondary", "", split_state, th)
+
+        draw_rect(disp, d, gc, th.bg_header, 268, 70, win_w - 268, 22)
+        draw_line(disp, d, gc, th.border_subtle, 268, 92, win_w, 92)
+        icon_folder(disp, d, gc, 15057019, 276, 73)
+        draw_str(disp, d, gc, th.fg_muted, 292, 85, "workspace")
+        draw_str(disp, d, gc, th.fg_muted, 360, 85, ">")
+        draw_str(disp, d, gc, th.fg_muted, 372, 85, active_file_path)
+
+        forge editor_h = panel_y - 93
+        draw_rect(disp, d, gc, th.bg_editor, 268, 93, win_w - 268, editor_h)
+        draw_rect(disp, d, gc, th.bg_surface, 268, 93, 48, editor_h)
+        draw_line(disp, d, gc, th.border_subtle, 316, 93, 316, panel_y)
+
+        forge total_lines = ofs_array_len(lines)
+        forge max_vis = (editor_h - 6) / 19
+        forge vis_row = 0
+        while (vis_row < max_vis) {
+            forge actual_row = scroll_top + vis_row
+            forge ny = 96 + (vis_row * 19)
+
+            if (actual_row < total_lines) {
+                forge is_cursor_line = 0
+                if (actual_row == cursor_row) { is_cursor_line = 1 }
+
+                if (is_cursor_line == 1) {
+                    fill_rounded_rect(disp, d, gc, th.btn_bg, 268, ny - 3, win_w - 268 - 65, 19, 0)
+                }
+
+                forge num_col = 6054768
+                if (is_cursor_line == 1) { num_col = 16777215 }
+                forge n_str = ofs_stone_to_obsidian(actual_row + 1)
+                forge nx = 296
+                if (actual_row + 1 < 10) { nx = 302 }
+                else if (actual_row + 1 >= 100) { nx = 284 }
+                draw_str(disp, d, gc, num_col, nx, ny + 12, n_str)
+
+                forge line_str: obsidian = ofs_array_get(lines, actual_row)
+                render_syntax_line(disp, d, gc, line_str, 326, ny + 12, th.fg_secondary)
+
+                if (is_cursor_line == 1) {
+                    forge cur_x = 326 + (cursor_col * 7)
+                    if (cur_x < win_w - 70) {
+                        draw_line(disp, d, gc, th.accent, cur_x, ny - 1, cur_x, ny + 14)
+                        draw_line(disp, d, gc, th.accent, cur_x + 1, ny - 1, cur_x + 1, ny + 14)
+                    }
+                }
+            }
+            vis_row++
+        }
+
+        forge minimap_x = win_w - 65
+        draw_rect(disp, d, gc, th.bg_surface, minimap_x, 93, 65, editor_h)
+        draw_line(disp, d, gc, th.border_subtle, minimap_x, 93, minimap_x, panel_y)
+
+        forge mi = 0
+        forge max_m_lines = (editor_h - 10) / 3
+        while (mi < total_lines && mi < max_m_lines) {
+            forge m_line: obsidian = ofs_array_get(lines, mi)
+            forge m_len = ofs_str_len(m_line)
+            if (m_len > 0) {
+                forge mw = m_len / 2
+                if (mw > 55) { mw = 55 }
+                if (mw < 2) { mw = 2 }
+                forge my = 96 + (mi * 3)
+                if (my < panel_y - 4) {
+                    draw_rect(disp, d, gc, th.fg_muted, minimap_x + 5, my, mw, 2)
+                }
+            }
+            mi++
+        }
+
+        forge v_slider_y = 96 + (scroll_top * 3)
+        if (v_slider_y > panel_y - 75) { v_slider_y = panel_y - 75 }
+        fill_rounded_rect(disp, d, gc, th.btn_hover, minimap_x + 2, v_slider_y, 61, 72, 2)
+        draw_rounded_border(disp, d, gc, th.border_focus, minimap_x + 2, v_slider_y, 61, 72, 2)
+    }
+
+    vein render_bottom_panel(disp: *stone, d: stone, gc: *stone, active_tab: stone, hover_idx: stone, th: OllX11Theme, terminal_lines: Array<obsidian>, lsp_err_count: stone, active_file_name: obsidian, cursor_row: stone, cursor_col: stone, terminal_input_buf: obsidian, focused_area: stone, win_w: stone, win_h: stone, panel_y: stone) -> void {
+        forge statusbar_y = win_h - 24
+        forge panel_w = win_w - 268
+        forge panel_h = statusbar_y - panel_y
+        draw_rect(disp, d, gc, th.bg_panel, 268, panel_y, panel_w, panel_h)
+        draw_line(disp, d, gc, th.border_subtle, 268, panel_y, win_w, panel_y)
+        draw_line(disp, d, gc, th.border_subtle, 268, panel_y + 30, win_w, panel_y + 30)
+
+        forge p_x = [280, 370, 500, 570]
+        forge p_w = [80, 120, 60, 110]
+        forge p_labels = ["TERMINAL", "PROBLEMAS", "SAIDA", "DEBUG CONSOLE"]
+
+        forge pi = 0
+        while (pi < 4) {
+            forge px = p_x[pi]
+            forge pw = p_w[pi]
+            forge plbl = p_labels[pi]
+
+            if (hover_idx == 60 + pi) {
+                fill_rounded_rect(disp, d, gc, th.btn_hover, px - 6, panel_y + 3, pw + 12, 24, th.btn_radius)
+            }
+
+            if (active_tab == pi) {
+                draw_rect(disp, d, gc, th.accent, px - 6, panel_y + 28, pw + 12, 2)
+            }
+
+            forge pcol = th.fg_muted
+            if (active_tab == pi) { pcol = 16777215 }
+            draw_str(disp, d, gc, pcol, px, panel_y + 19, plbl)
+
+            if (pi == 1) {
+                forge badge_bg = 3808552
+                forge badge_fg = 14707829
+                if (lsp_err_count == 0) {
+                    badge_bg = 1585966
+                    badge_fg = 10011513
+                }
+                fill_rounded_rect(disp, d, gc, badge_bg, px + 88, panel_y + 8, 20, 14, 7)
+                draw_str(disp, d, gc, badge_fg, px + 95, panel_y + 19, ofs_stone_to_obsidian(lsp_err_count))
+            }
+            pi++
+        }
+
+        draw_str(disp, d, gc, th.fg_muted, win_w - 45, panel_y + 19, "^")
+        draw_str(disp, d, gc, th.fg_muted, win_w - 20, panel_y + 19, "x")
+
+        if (active_tab == 0) {
+            forge max_term_rows = (panel_h - 45) / 19
+            if (max_term_rows < 3) { max_term_rows = 3 }
+            forge t_cnt = ofs_array_len(terminal_lines)
+            forge ti = 0
+            forge start_ti = 0
+            if (t_cnt > max_term_rows) { start_ti = t_cnt - max_term_rows }
+            while (ti < max_term_rows && (start_ti + ti) < t_cnt) {
+                forge tl: obsidian = ofs_array_get(terminal_lines, start_ti + ti)
+                forge tcol = th.fg_primary
+                if (ofs_str_contains(tl, "OK") || ofs_str_contains(tl, "sucesso") || ofs_str_contains(tl, "Built")) { tcol = 10011513 }
+                else if (ofs_str_contains(tl, "erro") || ofs_str_contains(tl, "Falha")) { tcol = 14707829 }
+                else if (ofs_str_contains(tl, "$")) { tcol = 6401007 }
+                draw_str_code(disp, d, gc, tcol, 286, panel_y + 53 + (ti * 19), tl)
+                ti++
+            }
+            forge prompt_y = panel_y + 53 + (ti * 19)
+            forge prompt_str = "samns@linux-ofs:~/Obsidian-Fault-Script$ "
+            draw_str_code(disp, d, gc, 6401007, 286, prompt_y, prompt_str)
+            forge p_len = ofs_str_len(prompt_str)
+            draw_str_code(disp, d, gc, 16777215, 286 + (p_len * 8), prompt_y, terminal_input_buf)
+            if (focused_area == 1) {
+                forge cur_x = 286 + (p_len * 8) + (ofs_str_len(terminal_input_buf) * 8)
+                draw_str_code(disp, d, gc, th.accent, cur_x, prompt_y, "▋")
+            }
+        } else if (active_tab == 1) {
+            if (lsp_err_count == 0) {
+                draw_str(disp, d, gc, 10011513, 286, panel_y + 59, "[OFS LSP] Zero erros ou avisos encontrados no workspace.")
+                draw_str(disp, d, gc, th.fg_muted, 286, panel_y + 83, "O verificador de tipos (Stack Magma Engine) analisou a sintaxe e a tipagem com sucesso.")
+            } else {
+                draw_str(disp, d, gc, 6401007, 286, panel_y + 59, active_file_name)
+                draw_str(disp, d, gc, 14707829, 286, panel_y + 83, "(X) [Linha " + ofs_stone_to_obsidian(cursor_row + 1) + ", Col " + ofs_stone_to_obsidian(cursor_col + 1) + "] Diagnostico ativo do compilador OFS AOT.")
+                draw_str(disp, d, gc, 15057019, 310, panel_y + 105, "Dica: Utilize tipos validos do OFS (stone, crystal, obsidian, bool, void).")
+                draw_str(disp, d, gc, th.fg_muted, 310, panel_y + 127, "Regra ativa: ofs-typecheck-strict-01 (Stack Magma Diagnostic Engine)")
+            }
+        } else if (active_tab == 2) {
+            draw_str(disp, d, gc, 10011513, 286, panel_y + 59, "[OFS LSP Engine] Monitor de linguagem ativo.")
+            draw_str(disp, d, gc, 6401007, 286, panel_y + 83, "[OLL Engine] Double-Buffered X11 Hardware Accelerated at 60 FPS.")
+            draw_str(disp, d, gc, th.fg_muted, 286, panel_y + 105, "[Workbench] Tema " + th.name + " carregado com sucesso.")
+        } else if (active_tab == 3) {
+            draw_str(disp, d, gc, th.fg_muted, 286, panel_y + 59, "[OFS Debugger] Pronto para sessao de depuracao LLVM (GDB/LLDB Bridge).")
+        }
+    }
+
+    vein render_status_bar(disp: *stone, d: stone, gc: *stone, th: OllX11Theme, cursor_row: stone, cursor_col: stone, lsp_err_count: stone, active_file_name: obsidian, is_dirty: stone, win_w: stone, win_h: stone, git_branch: obsidian) -> void {
+        forge statusbar_y = win_h - 24
+        draw_rect(disp, d, gc, th.bg_statusbar, 0, statusbar_y, win_w, 24)
+        draw_line(disp, d, gc, th.border_subtle, 0, statusbar_y, win_w, statusbar_y)
+
+        icon_git(disp, d, gc, th.fg_secondary, 8, statusbar_y + 2)
+        draw_str(disp, d, gc, th.fg_secondary, 28, statusbar_y + 16, git_branch + "*")
+
+        forge err_col = 10011513
+        if (lsp_err_count > 0) { err_col = 14707829 }
+        draw_str(disp, d, gc, err_col, 84, statusbar_y + 16, ofs_stone_to_obsidian(lsp_err_count) + " (X)")
+        draw_str(disp, d, gc, 15057019, 124, statusbar_y + 16, "0 (!)")
+
+        forge lsp_msg = "OFS LSP: Pronto"
+        if (lsp_err_count > 0) { lsp_msg = "OFS LSP: Erro Detectado" }
+        draw_str(disp, d, gc, th.fg_secondary, 170, statusbar_y + 16, lsp_msg)
+
+        if (is_dirty == 1) {
+            draw_str(disp, d, gc, 15057019, 360, statusbar_y + 16, "[Modificado]")
+        }
+
+        forge pos_str = "Ln " + ofs_stone_to_obsidian(cursor_row + 1) + ", Col " + ofs_stone_to_obsidian(cursor_col + 1)
+        draw_str(disp, d, gc, th.fg_muted, win_w - 420, statusbar_y + 16, pos_str)
+        draw_str(disp, d, gc, th.fg_muted, win_w - 310, statusbar_y + 16, "Espacos: 4")
+        draw_str(disp, d, gc, th.fg_muted, win_w - 220, statusbar_y + 16, "UTF-8")
+        draw_str(disp, d, gc, th.fg_muted, win_w - 160, statusbar_y + 16, "LF")
+        draw_str(disp, d, gc, th.fg_muted, win_w - 120, statusbar_y + 16, "OFS")
+    }
+
+    vein render_dropdown_menu(disp: *stone, d: stone, gc: *stone, menu_id: stone, hover_row: stone, th: OllX11Theme) -> void {
+        forge menu_items_cnt = 6
+        forge mw = 240
+        forge mh = 186
+        forge mx = 38
+        if (menu_id == 1) { mx = 38; menu_items_cnt = 6; mh = 186 }
+        else if (menu_id == 2) { mx = 98; menu_items_cnt = 6; mh = 186 }
+        else if (menu_id == 3) { mx = 148; menu_items_cnt = 4; mh = 128 }
+        else if (menu_id == 4) { mx = 208; menu_items_cnt = 6; mh = 186 }
+        else if (menu_id == 5) { mx = 256; menu_items_cnt = 4; mh = 128 }
+        else if (menu_id == 6) { mx = 280; menu_items_cnt = 4; mh = 128 }
+        else if (menu_id == 7) { mx = 346; menu_items_cnt = 4; mh = 128 }
+        else if (menu_id == 8) { mx = 408; menu_items_cnt = 5; mh = 157 }
+
+        forge my = 35
+
+        draw_shadow(disp, d, gc, mx, my, mw, mh, th.card_radius, 2)
+        fill_rounded_rect(disp, d, gc, th.bg_surface, mx, my, mw, mh, th.card_radius)
+        draw_rounded_border(disp, d, gc, th.border_subtle, mx, my, mw, mh, th.card_radius)
+
+        forge r = 0
+        while (r < menu_items_cnt) {
+            forge ry = my + 6 + (r * 29)
+            if (r == hover_row) {
+                fill_rounded_rect(disp, d, gc, th.btn_hover, mx + 4, ry - 3, mw - 8, 26, th.btn_radius)
+            }
+
+            forge text_col = th.fg_primary
+            if (r == hover_row) { text_col = 16777215 }
+
+            if (menu_id == 1) {
+                if (r == 0) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Novo Arquivo"); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+N") }
+                else if (r == 1) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Abrir Arquivo..."); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+O") }
+                else if (r == 2) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Salvar"); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+S") }
+                else if (r == 3) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Salvar Como..."); draw_str(disp, d, gc, th.fg_muted, mx + 140, ry + 14, "Ctrl+Shift+S") }
+                else if (r == 4) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Preferencias..."); draw_str(disp, d, gc, th.accent, mx + 160, ry + 14, "Ctrl+,") }
+                else if (r == 5) { draw_str(disp, d, gc, 14707829, mx + 16, ry + 14, "Sair"); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Alt+F4") }
+            } else if (menu_id == 2) {
+                if (r == 0) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Desfazer"); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+Z") }
+                else if (r == 1) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Refazer"); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+Y") }
+                else if (r == 2) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Recortar"); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+X") }
+                else if (r == 3) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Copiar"); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+C") }
+                else if (r == 4) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Colar"); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+V") }
+                else if (r == 5) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Localizar..."); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+F") }
+            } else if (menu_id == 3) {
+                if (r == 0) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Selecionar Tudo"); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+A") }
+                else if (r == 1) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Expandir Selecao"); draw_str(disp, d, gc, th.fg_muted, mx + 140, ry + 14, "Shift+Alt+Right") }
+                else if (r == 2) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Mover Linha Acima"); draw_str(disp, d, gc, th.fg_muted, mx + 150, ry + 14, "Alt+Up") }
+                else if (r == 3) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Mover Linha Abaixo"); draw_str(disp, d, gc, th.fg_muted, mx + 150, ry + 14, "Alt+Down") }
+            } else if (menu_id == 4) {
+                if (r == 0) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Explorador"); draw_str(disp, d, gc, th.fg_muted, mx + 140, ry + 14, "Ctrl+Shift+E") }
+                else if (r == 1) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Buscar"); draw_str(disp, d, gc, th.fg_muted, mx + 140, ry + 14, "Ctrl+Shift+F") }
+                else if (r == 2) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Controle de Codigo"); draw_str(disp, d, gc, th.fg_muted, mx + 140, ry + 14, "Ctrl+Shift+G") }
+                else if (r == 3) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Executar e Depurar"); draw_str(disp, d, gc, th.fg_muted, mx + 140, ry + 14, "Ctrl+Shift+D") }
+                else if (r == 4) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Extensoes"); draw_str(disp, d, gc, th.fg_muted, mx + 140, ry + 14, "Ctrl+Shift+X") }
+                else if (r == 5) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Terminal"); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+`") }
+            } else if (menu_id == 5) {
+                if (r == 0) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Ir para Arquivo..."); draw_str(disp, d, gc, th.accent, mx + 160, ry + 14, "Ctrl+P") }
+                else if (r == 1) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Ir para Linha..."); draw_str(disp, d, gc, th.fg_muted, mx + 160, ry + 14, "Ctrl+G") }
+                else if (r == 2) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Proximo Problema"); draw_str(disp, d, gc, 10011513, mx + 190, ry + 14, "F8") }
+                else if (r == 3) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Problema Anterior"); draw_str(disp, d, gc, th.fg_muted, mx + 150, ry + 14, "Shift+F8") }
+            } else if (menu_id == 6) {
+                if (r == 0) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Executar Projeto (AOT)"); draw_str(disp, d, gc, 10011513, mx + 190, ry + 14, "F5") }
+                else if (r == 1) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Executar sem Depurar"); draw_str(disp, d, gc, th.fg_muted, mx + 170, ry + 14, "Ctrl+F5") }
+                else if (r == 2) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Compilar Executavel"); draw_str(disp, d, gc, th.fg_muted, mx + 180, ry + 14, "Ctrl+B") }
+                else if (r == 3) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Pre-visualizar OLL"); draw_str(disp, d, gc, th.accent, mx + 170, ry + 14, "Ctrl+O") }
+            } else if (menu_id == 7) {
+                if (r == 0) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Novo Terminal"); draw_str(disp, d, gc, th.fg_muted, mx + 140, ry + 14, "Ctrl+Shift+`") }
+                else if (r == 1) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Dividir Terminal"); draw_str(disp, d, gc, th.fg_muted, mx + 140, ry + 14, "Ctrl+Shift+5") }
+                else if (r == 2) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Executar Linha Ativa"); draw_str(disp, d, gc, th.fg_muted, mx + 150, ry + 14, "Shift+Enter") }
+                else if (r == 3) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Limpar Terminal"); draw_str(disp, d, gc, th.fg_muted, mx + 170, ry + 14, "Ctrl+K") }
+            } else if (menu_id == 8) {
+                if (r == 0) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Documentacao OFS"); draw_str(disp, d, gc, th.accent, mx + 180, ry + 14, "F1") }
+                else if (r == 1) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Guia do OLL Studio"); draw_str(disp, d, gc, th.fg_muted, mx + 170, ry + 14, "") }
+                else if (r == 2) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Referencia de Tipos"); draw_str(disp, d, gc, th.fg_muted, mx + 170, ry + 14, "") }
+                else if (r == 3) { draw_str(disp, d, gc, text_col, mx + 16, ry + 14, "Atalhos do Teclado"); draw_str(disp, d, gc, th.fg_muted, mx + 150, ry + 14, "Ctrl+K Ctrl+S") }
+                else if (r == 4) { draw_str(disp, d, gc, 6401007, mx + 16, ry + 14, "Sobre o OFS IDLE"); draw_str(disp, d, gc, th.fg_muted, mx + 170, ry + 14, "v0.1") }
+            }
+            r++
+        }
+    }
+
+    vein render_command_palette(disp: *stone, d: stone, gc: *stone, win_w: stone, win_h: stone, query: obsidian, sel_idx: stone, th: OllX11Theme) -> void {
+        forge pw = 620
+        forge ph = 270
+        forge px = (win_w - pw) / 2
+        forge py = 45
+
+        draw_shadow(disp, d, gc, px, py, pw, ph, 8, 3)
+        fill_rounded_rect(disp, d, gc, th.bg_surface, px, py, pw, ph, 8)
+        draw_rounded_border(disp, d, gc, th.border_focus, px, py, pw, ph, 8)
+
+        fill_rounded_rect(disp, d, gc, th.bg_header, px + 8, py + 8, pw - 16, 32, 4)
+        draw_rounded_border(disp, d, gc, th.accent, px + 8, py + 8, pw - 16, 32, 4)
+
+        forge prompt_str = "> " + query + "_"
+        draw_str(disp, d, gc, 16777215, px + 16, py + 28, prompt_str)
+
+        draw_line(disp, d, gc, th.border_subtle, px, py + 46, px + pw, py + 46)
+
+        forge cmd_names = [
+            "OFS: Executar Arquivo Atual (AOT)",
+            "OFS: Compilar Executavel Nativo (Build)",
+            "OFS: Verificar Sintaxe & Tipos (LSP Check)",
+            "OFS: Pre-visualizar Layout OLL (Live Preview)",
+            "Preferencias: Alternar Tema Visual (Dark/GTK/Win/Neon)",
+            "Arquivo: Salvar Arquivo Ativo",
+            "Arquivo: Novo Arquivo",
+            "Terminal: Limpar Saida"
+        ]
+        forge cmd_keys = ["F5", "Ctrl+B", "Ctrl+Shift+B", "Ctrl+O", "Ctrl+,", "Ctrl+S", "Ctrl+N", "Ctrl+K"]
+
+        forge ci = 0
+        while (ci < 8) {
+            forge cy = py + 54 + (ci * 26)
+            if (ci == sel_idx) {
+                fill_rounded_rect(disp, d, gc, th.btn_hover, px + 4, cy - 2, pw - 8, 24, 4)
+                fill_rounded_rect(disp, d, gc, th.accent, px + 4, cy - 2, 3, 24, 1)
+            }
+            forge c_col = th.fg_primary
+            if (ci == sel_idx) { c_col = 16777215 }
+            draw_str(disp, d, gc, c_col, px + 16, cy + 14, cmd_names[ci])
+            draw_str(disp, d, gc, th.accent, px + pw - 110, cy + 14, cmd_keys[ci])
+            ci++
+        }
+    }
+
+    vein render_preferences_modal(disp: *stone, d: stone, gc: *stone, win_w: stone, win_h: stone, tab: stone, theme_idx: stone, font_sz: stone, lsp_on: stone, auto_on: stone, hover_item: stone, th: OllX11Theme) -> void {
+        forge sy = 0
+        while (sy < win_h) {
+            draw_rect(disp, d, gc, 0, 0, sy, win_w, 2)
+            sy = sy + 4
+        }
+
+        forge mw = 760
+        forge mh = 490
+        forge mx = (win_w - mw) / 2
+        forge my = (win_h - mh) / 2
+
+        draw_shadow(disp, d, gc, mx, my, mw, mh, 12, 3)
+        fill_rounded_rect(disp, d, gc, th.bg_surface, mx, my, mw, mh, 12)
+        draw_rounded_border(disp, d, gc, th.border_subtle, mx, my, mw, mh, 12)
+
+        fill_rounded_rect(disp, d, gc, th.bg_header, mx, my, mw, 38, 12)
+        draw_rect(disp, d, gc, th.bg_header, mx, my + 20, mw, 18)
+        draw_line(disp, d, gc, th.border_subtle, mx, my + 38, mx + mw, my + 38)
+        icon_gear(disp, d, gc, th.accent, mx + 12, my + 10)
+        draw_str(disp, d, gc, 16777215, mx + 40, my + 24, "Configuracoes & Preferencias do Obsidian Fault Script (OLL Studio)")
+
+        forge close_bg = th.bg_header
+        if (hover_item == 100) { close_bg = 15208739 }
+        fill_rounded_rect(disp, d, gc, close_bg, mx + mw - 34, my + 5, 28, 28, 4)
+        draw_str(disp, d, gc, 16777215, mx + mw - 25, my + 23, "X")
+
+        forge sb_w = 190
+        draw_rect(disp, d, gc, th.bg_sidebar, mx, my + 39, sb_w, mh - 87)
+        draw_line(disp, d, gc, th.border_subtle, mx + sb_w, my + 39, mx + sb_w, my + mh - 48)
+
+        forge ti = 0
+        while (ti < 4) {
+            forge ty = my + 48 + (ti * 38)
+            if (ti == tab) {
+                fill_rounded_rect(disp, d, gc, th.accent, mx + 6, ty, sb_w - 12, 30, th.btn_radius)
+            } else if (hover_item == 10 + ti) {
+                fill_rounded_rect(disp, d, gc, th.btn_hover, mx + 6, ty, sb_w - 12, 30, th.btn_radius)
+            }
+
+            forge t_col = th.fg_muted
+            if (ti == tab) { t_col = 16777215 }
+            if (ti == 0) { draw_str(disp, d, gc, t_col, mx + 18, ty + 20, "1. Geral & Editor") }
+            if (ti == 1) { draw_str(disp, d, gc, t_col, mx + 18, ty + 20, "2. Aparencia & Tema") }
+            if (ti == 2) { draw_str(disp, d, gc, t_col, mx + 18, ty + 20, "3. Compilador & LSP") }
+            if (ti == 3) { draw_str(disp, d, gc, t_col, mx + 18, ty + 20, "4. Motor Grafico OLL") }
+            ti++
+        }
+
+        forge cx = mx + sb_w + 24
+        forge cy = my + 54
+
+        if (tab == 0) {
+            draw_str(disp, d, gc, 16777215, cx, cy + 10, "Configuracoes Gerais do Editor OFS")
+            draw_line(disp, d, gc, th.border_subtle, cx, cy + 20, cx + 460, cy + 20)
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 50, "Salvar Automaticamente ao perder foco:")
+            render_themed_switch(disp, d, gc, cx + 320, cy + 40, auto_on, th)
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 86, "Tamanho de Tabulacao (Espacos):")
+            draw_str(disp, d, gc, 16777215, cx + 320, cy + 86, "4")
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 122, "Quebra Automatica de Linhas (Word Wrap):")
+            render_themed_switch(disp, d, gc, cx + 320, cy + 112, 1, th)
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 158, "Numeros de Linha Visiveis:")
+            render_themed_switch(disp, d, gc, cx + 320, cy + 148, 1, th)
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 194, "Minimapa do Editor Ativo:")
+            render_themed_switch(disp, d, gc, cx + 320, cy + 184, 0, th)
+        } else if (tab == 1) {
+            draw_str(disp, d, gc, 16777215, cx, cy + 10, "Personalizacao de Aparencia & Tema Visual")
+            draw_line(disp, d, gc, th.border_subtle, cx, cy + 20, cx + 460, cy + 20)
+
+            forge themes_names = ["Dark Modern (Padrao)", "GTK (GNOME Adwaita Dark)", "Windows 11 (Mica / Fluent UI)", "Neon Cyberpunk (Alto Contraste)"]
+            forge thi = 0
+            while (thi < 4) {
+                forge thy = cy + 40 + (thi * 34)
+                forge bg_opt = th.btn_bg
+                if (thi == theme_idx) { bg_opt = th.btn_active }
+                else if (hover_item == 20 + thi) { bg_opt = th.btn_hover }
+
+                fill_rounded_rect(disp, d, gc, bg_opt, cx, thy, 360, 28, th.btn_radius)
+                draw_rounded_border(disp, d, gc, th.btn_border, cx, thy, 360, 28, th.btn_radius)
+
+                if (thi == theme_idx) {
+                    fill_circle(disp, d, gc, th.accent, cx + 16, thy + 14, 5)
+                } else {
+                    draw_circle(disp, d, gc, th.fg_muted, cx + 16, thy + 14, 5)
+                }
+
+                forge tname = themes_names[thi]
+                draw_str(disp, d, gc, th.fg_primary, cx + 32, thy + 18, tname)
+                thi++
+            }
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 190, "Tamanho da Fonte:")
+            draw_str(disp, d, gc, 16777215, cx + 160, cy + 190, ofs_stone_to_obsidian(font_sz) + " pt")
+            render_themed_button(disp, d, gc, cx + 220, cy + 176, 32, 24, "-", "secondary", "", 0, th)
+            render_themed_button(disp, d, gc, cx + 260, cy + 176, 32, 24, "+", "secondary", "", 0, th)
+        } else if (tab == 2) {
+            draw_str(disp, d, gc, 16777215, cx, cy + 10, "Integracao de Compilador & Servidor de Linguagem")
+            draw_line(disp, d, gc, th.border_subtle, cx, cy + 20, cx + 460, cy + 20)
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 50, "Ativar Servidor LSP OFS:")
+            render_themed_switch(disp, d, gc, cx + 320, cy + 40, lsp_on, th)
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 86, "Diagnosticos Estritos de Tipos:")
+            render_themed_switch(disp, d, gc, cx + 320, cy + 76, 1, th)
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 122, "Compilador Padrao:")
+            draw_str(disp, d, gc, 10011513, cx + 160, cy + 122, "ofs AOT (LLVM 18 Native Linux x86_64)")
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 158, "Caminho do Compilador:")
+            draw_str(disp, d, gc, th.fg_muted, cx + 180, cy + 158, "./ofs/dist/ofs")
+        } else if (tab == 3) {
+            draw_str(disp, d, gc, 16777215, cx, cy + 10, "Motor Grafico e Renderizador OLL")
+            draw_line(disp, d, gc, th.border_subtle, cx, cy + 20, cx + 460, cy + 20)
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 50, "Modo de Renderizacao:")
+            draw_str(disp, d, gc, 10011513, cx + 180, cy + 50, "X11 Double-Buffered Pixmap (Hardware Sync)")
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 86, "Taxa de Atualizacao Alvo:")
+            draw_str(disp, d, gc, 16777215, cx + 190, cy + 86, "60 FPS (16ms frametime)")
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 122, "Suporte a Sombras & Cantos:")
+            render_themed_switch(disp, d, gc, cx + 320, cy + 112, 1, th)
+
+            draw_str(disp, d, gc, th.fg_primary, cx, cy + 158, "Formatos de Ativos Suportados:")
+            draw_str(disp, d, gc, 6401007, cx + 220, cy + 158, "SVG Vector, PPM, Raw RGB")
+        }
+
+        draw_line(disp, d, gc, th.border_subtle, mx, my + mh - 48, mx + mw, my + mh - 48)
+        render_themed_button(disp, d, gc, mx + mw - 110, my + mh - 40, 95, 28, "Fechar", "secondary", "", 0, th)
+        render_themed_button(disp, d, gc, mx + mw - 225, my + mh - 40, 105, 28, "Salvar", "primary", "", 0, th)
+    }
+
+    vein render_folder_picker_modal(disp: *stone, d: stone, gc: *stone, win_w: stone, win_h: stone, folder_input: obsidian, hover_idx: stone, th: OllX11Theme) -> void {
+        forge mw = 640
+        forge mh = 260
+        forge mx = (win_w - mw) / 2
+        forge my = (win_h - mh) / 2
+
+        draw_shadow(disp, d, gc, mx, my, mw, mh, 8, 8)
+        fill_rounded_rect(disp, d, gc, th.bg_surface, mx, my, mw, mh, 8)
+        draw_rounded_border(disp, d, gc, th.border_focus, mx, my, mw, mh, 8)
+
+        draw_rect(disp, d, gc, th.bg_header, mx + 1, my + 1, mw - 2, 38)
+        draw_line(disp, d, gc, th.border_subtle, mx, my + 39, mx + mw, my + 39)
+
+        icon_folder(disp, d, gc, 15057019, mx + 14, my + 12)
+        draw_str_title(disp, d, gc, 16777215, mx + 38, my + 25, "Abrir Pasta do Workspace")
+
+        forge close_bg = th.bg_header
+        if (hover_idx == 222) { close_bg = 14707829 }
+        fill_rounded_rect(disp, d, gc, close_bg, mx + mw - 34, my + 6, 26, 26, 4)
+        draw_str(disp, d, gc, 16777215, mx + mw - 25, my + 23, "x")
+
+        draw_str(disp, d, gc, th.fg_secondary, mx + 24, my + 72, "Digite ou confirme o caminho da pasta para escanear:")
+
+        fill_rounded_rect(disp, d, gc, th.bg_window, mx + 24, my + 95, mw - 48, 38, 5)
+        draw_rounded_border(disp, d, gc, th.accent, mx + 24, my + 95, mw - 48, 38, 5)
+
+        draw_str_code(disp, d, gc, 16777215, mx + 36, my + 119, folder_input + "▋")
+
+        draw_str(disp, d, gc, th.fg_muted, mx + 24, my + 155, "Dica: '.' para pasta atual. Pressione Enter para abrir.")
+
+        forge btn_open_hover = 0
+        if (hover_idx == 220) { btn_open_hover = 1 }
+        render_themed_button(disp, d, gc, mx + mw - 240, my + mh - 50, 110, 32, "Abrir Pasta", "primary", "", btn_open_hover, th)
+
+        forge btn_cancel_hover = 0
+        if (hover_idx == 221) { btn_cancel_hover = 1 }
+        render_themed_button(disp, d, gc, mx + mw - 118, my + mh - 50, 94, 32, "Cancelar", "secondary", "", btn_cancel_hover, th)
+    }
+
+    vein run_window(oll_path: obsidian) -> stone {
+        echo("[OFS OLL Viewer] Inicializando motor grafico OLL X11...")
+        forge disp: *stone = XOpenDisplay(null)
+        if (disp == null) {
+            echo("[OFS OLL Viewer] Erro: Impossivel conectar ao display X11.")
+            return 1
+        }
+
+        forge scr = XDefaultScreen(disp)
+        forge depth = XDefaultDepth(disp, scr)
+        forge root = XRootWindow(disp, scr)
+
+        forge win_w = 1240
+        forge win_h = 780
+
+        forge win = XCreateSimpleWindow(disp, root, 50, 50, win_w, win_h, 0, 0, 1579032)
+        XStoreName(disp, win, "Obsidian Fault Script :: Studio IDLE (OLL Engine)")
+
+        forge mask = 1 + 2 + 4 + 8 + 64 + 32768 + 131072
+        XSelectInput(disp, win, mask)
+        XMapWindow(disp, win)
+
+        forge gc: *stone = XCreateGC(disp, win, 0, null)
+        forge pix = XCreatePixmap(disp, win, win_w, win_h, depth)
+
+        XFlush(disp)
+
+        g_xft_visual = XDefaultVisual(disp, scr) as stone
+        g_xft_cmap = XDefaultColormap(disp, scr)
+        g_xft_draw = XftDrawCreate(disp, pix, g_xft_visual as *stone, g_xft_cmap) as stone
+        g_xft_font_ui = XftFontOpenName(disp, scr, "Inter:size=11") as stone
+        if (g_xft_font_ui == 0) {
+            g_xft_font_ui = XftFontOpenName(disp, scr, "DejaVu Sans:size=11") as stone
+        }
+        g_xft_font_code = XftFontOpenName(disp, scr, "DejaVu Sans Mono:size=11") as stone
+        if (g_xft_font_code == 0) {
+            g_xft_font_code = XftFontOpenName(disp, scr, "monospace:size=11") as stone
+        }
+        g_xft_font_title = XftFontOpenName(disp, scr, "Inter:size=14:weight=bold") as stone
+        if (g_xft_font_title == 0) {
+            g_xft_font_title = XftFontOpenName(disp, scr, "DejaVu Sans:size=14:weight=bold") as stone
+        }
+        g_xft_font_heading = XftFontOpenName(disp, scr, "Inter:size=18:weight=bold") as stone
+        if (g_xft_font_heading == 0) {
+            g_xft_font_heading = XftFontOpenName(disp, scr, "DejaVu Sans:size=18:weight=bold") as stone
+        }
+        g_xft_col_in = ofs_alloc(32) as stone
+        g_xft_col_out = ofs_alloc(32) as stone
+
+        forge event_buf: *stone = ofs_alloc(192)
+
+        forge active_activity = 0
+        forge active_panel_tab = 0
+        forge hover_elem = -1
+        forge menu_open = 0
+        forge menu_hover = -1
+        forge modal_open = 0
+        forge modal_tab = 0
+        forge modal_theme = 0
+        forge active_theme_id = 0
+        forge modal_font_size = 14
+        forge modal_lsp = 1
+        forge modal_autosave = 1
+        forge modal_hover = -1
+        forge palette_open = 0
+        forge palette_query = ""
+        forge palette_sel = 0
+        forge search_query = ""
+
+        forge workspace_folder = ""
+        forge workspace_files: Array<obsidian> = []
+
+        forge active_file_path = ""
+        forge active_file_name = ""
+        forge editor_lines: Array<obsidian> = []
+
+        forge open_tabs: Array<obsidian> = []
+        forge open_paths: Array<obsidian> = []
+        forge active_tab_idx = -1
+
+        forge folder_picker_open = 0
+        forge folder_picker_input = "."
+        forge focused_area = 0
+        forge terminal_input_buf = ""
+
+        forge git_branch = "main"
+        forge git_staged_files: Array<obsidian> = []
+        forge git_staged_types: Array<obsidian> = []
+        forge git_unstaged_files: Array<obsidian> = []
+        forge git_unstaged_types: Array<obsidian> = []
+        forge git_commit_msg_buf = ""
+        forge git_is_repo = 0
+        forge ext_search_query = ""
+
+        git_is_repo = git_is_repository(".")
+        if (git_is_repo == 1) {
+            git_branch = git_get_branch_name(".")
+            git_refresh_all_status(".", git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+        }
+
+        forge cursor_row = 0
+        forge cursor_col = 0
+        forge scroll_top = 0
+        forge is_dirty = 0
+        forge lsp_err_count = 0
+
+        forge terminal_lines: Array<obsidian> = []
+        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script$ ofs --version")
+        ofs_array_push(terminal_lines, "Obsidian Fault Script Compiler (ofscc) v0.1 - AOT Linux x86_64")
+        ofs_array_push(terminal_lines, "[OFS IDLE] Terminal interativo pronto. Digite comandos e pressione Enter.")
+        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+
+        forge running = 1
+        forge needs_redraw = 1
+
+        while (running != 0) {
+            while (XPending(disp) > 0) {
+                XNextEvent(disp, event_buf)
+                forge p_type: *stone = event_buf
+                forge ev_type: stone = 0
+                fracture {
+                    ev_type = (*p_type) % 65536
+                }
+
+                if (ev_type == 6) {
+                    forge p_xy6: *stone = fault_step(event_buf, 8)
+                    forge raw_xy6: stone = 0
+                    fracture {
+                        raw_xy6 = *p_xy6
+                    }
+                    forge mx6 = raw_xy6 % 65536
+                    forge my6 = (raw_xy6 / 4294967296) % 65536
+
+                    if (folder_picker_open > 0) {
+                        forge fp_w6 = 640
+                        forge fp_h6 = 260
+                        forge fp_x6 = (win_w - fp_w6) / 2
+                        forge fp_y6 = (win_h - fp_h6) / 2
+                        forge cur_fph = -1
+                        if (mx6 >= fp_x6 + fp_w6 - 34 && mx6 <= fp_x6 + fp_w6 - 8 && my6 >= fp_y6 + 6 && my6 <= fp_y6 + 32) {
+                            cur_fph = 222
+                        } else if (mx6 >= fp_x6 + fp_w6 - 240 && mx6 <= fp_x6 + fp_w6 - 130 && my6 >= fp_y6 + fp_h6 - 50 && my6 <= fp_y6 + fp_h6 - 18) {
+                            cur_fph = 220
+                        } else if (mx6 >= fp_x6 + fp_w6 - 118 && mx6 <= fp_x6 + fp_w6 - 24 && my6 >= fp_y6 + fp_h6 - 50 && my6 <= fp_y6 + fp_h6 - 18) {
+                            cur_fph = 221
+                        }
+                        if (cur_fph != hover_elem) {
+                            hover_elem = cur_fph
+                            needs_redraw = 1
+                        }
+                    } else if (palette_open > 0) {
+                        forge pp_w6 = 620
+                        forge pp_x6 = (win_w - pp_w6) / 2
+                        if (mx6 >= pp_x6 && mx6 <= pp_x6 + pp_w6 && my6 >= 99 && my6 <= 99 + (8 * 26)) {
+                            forge next_psel = (my6 - 99) / 26
+                            if (next_psel != palette_sel) {
+                                palette_sel = next_psel
+                                needs_redraw = 1
+                            }
+                        }
+                    } else if (modal_open > 0) {
+                        forge mmw = 760
+                        forge mmh = 490
+                        forge mmx = (win_w - mmw) / 2
+                        forge mmy = (win_h - mmh) / 2
+                        forge cur_mh = -1
+                        if (mx6 >= mmx + mmw - 34 && mx6 <= mmx + mmw - 6 && my6 >= mmy + 5 && my6 <= mmy + 33) {
+                            cur_mh = 100
+                        } else if (mx6 >= mmx + mmw - 110 && mx6 <= mmx + mmw - 15 && my6 >= mmy + mmh - 40 && my6 <= mmy + mmh - 12) {
+                            cur_mh = 101
+                        } else if (mx6 >= mmx && mx6 <= mmx + 190 && my6 >= mmy + 39 && my6 <= mmy + mmh - 48) {
+                            cur_mh = 10 + ((my6 - (mmy + 48)) / 38)
+                        }
+                        if (cur_mh != modal_hover) {
+                            modal_hover = cur_mh
+                            needs_redraw = 1
+                        }
+                    } else if (menu_open > 0) {
+                        forge cur_menu_h = -1
+                        forge m_mx6 = 38
+                        forge m_cnt6 = 6
+                        if (menu_open == 1) { m_mx6 = 38; m_cnt6 = 6 }
+                        else if (menu_open == 2) { m_mx6 = 98; m_cnt6 = 6 }
+                        else if (menu_open == 3) { m_mx6 = 148; m_cnt6 = 4 }
+                        else if (menu_open == 4) { m_mx6 = 208; m_cnt6 = 6 }
+                        else if (menu_open == 5) { m_mx6 = 256; m_cnt6 = 4 }
+                        else if (menu_open == 6) { m_mx6 = 280; m_cnt6 = 4 }
+                        else if (menu_open == 7) { m_mx6 = 346; m_cnt6 = 4 }
+                        else if (menu_open == 8) { m_mx6 = 408; m_cnt6 = 5 }
+
+                        if (mx6 >= m_mx6 && mx6 <= m_mx6 + 240 && my6 >= 35 && my6 <= 35 + (m_cnt6 * 29)) {
+                            cur_menu_h = (my6 - 38) / 29
+                        }
+                        if (cur_menu_h != menu_hover) {
+                            menu_hover = cur_menu_h
+                            needs_redraw = 1
+                        }
+                    } else {
+                        forge statusbar_y6 = win_h - 24
+                        forge panel_h6 = 220
+                        if (win_h < 650) { panel_h6 = 160 }
+                        forge panel_y6 = statusbar_y6 - panel_h6
+
+                        forge next_hover = -1
+                        if (my6 < 35) {
+                            if (mx6 >= 42 && mx6 < 98) { next_hover = 0 }
+                            else if (mx6 >= 98 && mx6 < 148) { next_hover = 1 }
+                            else if (mx6 >= 148 && mx6 < 208) { next_hover = 2 }
+                            else if (mx6 >= 208 && mx6 < 256) { next_hover = 3 }
+                            else if (mx6 >= 256 && mx6 < 280) { next_hover = 4 }
+                            else if (mx6 >= 280 && mx6 < 346) { next_hover = 5 }
+                            else if (mx6 >= 346 && mx6 < 408) { next_hover = 6 }
+                            else if (mx6 >= 408 && mx6 < 456) { next_hover = 7 }
+                            forge search_x6 = (win_w - 480) / 2
+                            if (search_x6 < 470) { search_x6 = 470 }
+                            if (mx6 >= search_x6 && mx6 <= search_x6 + 480) { next_hover = 8 }
+                        } else if (mx6 < 48) {
+                            if (my6 >= 44 && my6 < 82) { next_hover = 30 }
+                            else if (my6 >= 90 && my6 < 128) { next_hover = 31 }
+                            else if (my6 >= 136 && my6 < 174) { next_hover = 32 }
+                            else if (my6 >= 182 && my6 < 220) { next_hover = 33 }
+                            else if (my6 >= 228 && my6 < 266) { next_hover = 34 }
+                            else if (my6 >= statusbar_y6 - 48 && my6 <= statusbar_y6) { next_hover = 35 }
+                        } else if (mx6 < 268) {
+                            if (active_activity == 0) {
+                                if (ofs_str_len(workspace_folder) == 0) {
+                                    if (mx6 >= 60 && mx6 <= 256 && my6 >= 168 && my6 <= 200) {
+                                        next_hover = 200
+                                    }
+                                } else {
+                                    forge ot_n6 = ofs_array_len(open_tabs)
+                                    if (my6 >= 94 && my6 < 94 + (ot_n6 * 20)) {
+                                        next_hover = 120 + ((my6 - 94) / 20)
+                                    } else if (my6 >= 98 + (ot_n6 * 20) + 16 && my6 < statusbar_y6) {
+                                        next_hover = 40 + ((my6 - (98 + (ot_n6 * 20) + 16)) / 22)
+                                    }
+                                }
+                            } else if (active_activity == 2) {
+                                if (mx6 >= 222 && mx6 <= 242 && my6 >= 40 && my6 <= 60) {
+                                    next_hover = 310
+                                } else if (mx6 >= 244 && mx6 <= 264 && my6 >= 40 && my6 <= 60) {
+                                    next_hover = 311
+                                } else if (mx6 >= 58 && mx6 <= 258 && my6 >= 98 && my6 <= 146) {
+                                    next_hover = 302
+                                } else if (mx6 >= 58 && mx6 <= 258 && my6 >= 154 && my6 <= 180) {
+                                    next_hover = 300
+                                } else if (mx6 >= 240 && mx6 <= 264 && my6 >= 194 && my6 <= 212) {
+                                    next_hover = 305
+                                } else {
+                                    forge n_st_h = ofs_array_len(git_staged_files)
+                                    forge s_base_y = 216
+                                    if (my6 >= s_base_y && my6 < s_base_y + (n_st_h * 22)) {
+                                        next_hover = 320 + ((my6 - s_base_y) / 22)
+                                    } else {
+                                        forge unst_base_y = s_base_y + (n_st_h * 22) + 22
+                                        if (mx6 >= 240 && mx6 <= 264 && my6 >= unst_base_y - 20 && my6 <= unst_base_y) {
+                                            next_hover = 306
+                                        } else {
+                                            forge n_unst_h = ofs_array_len(git_unstaged_files)
+                                            if (my6 >= unst_base_y && my6 < unst_base_y + (n_unst_h * 22)) {
+                                                next_hover = 340 + ((my6 - unst_base_y) / 22)
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (active_activity == 4) {
+                                if (mx6 >= 58 && mx6 <= 258 && my6 >= 74 && my6 <= 98) {
+                                    next_hover = 450
+                                } else if (my6 >= 128 && my6 < 128 + (7 * 54)) {
+                                    next_hover = 400 + ((my6 - 128) / 54)
+                                }
+                            }
+                        } else if (ofs_array_len(open_tabs) == 0 && my6 >= 35 && my6 < panel_y6 && mx6 >= 268) {
+                            if (my6 >= 142 && my6 <= 172) {
+                                if (mx6 >= 300 && mx6 <= 405) { next_hover = 210 }
+                                else if (mx6 >= 415 && mx6 <= 540) { next_hover = 211 }
+                                else if (mx6 >= 550 && mx6 <= 725) { next_hover = 212 }
+                                else if (mx6 >= 735 && mx6 <= 905) { next_hover = 213 }
+                            }
+                        } else if (my6 >= 35 && my6 < 70) {
+                            forge n_tabs_h = ofs_array_len(open_tabs)
+                            forge thi = 0
+                            forge hx = 268
+                            while (thi < n_tabs_h) {
+                                if (mx6 >= hx && mx6 < hx + 140) { next_hover = 50 + thi }
+                                hx = hx + 140
+                                thi++
+                            }
+                            if (mx6 >= win_w - 136 && mx6 < win_w - 50) { next_hover = 55 }
+                            else if (mx6 >= win_w - 42 && mx6 < win_w - 8) { next_hover = 56 }
+                        } else if (my6 >= panel_y6 && my6 < panel_y6 + 30) {
+                            if (mx6 >= 274 && mx6 < 360) { next_hover = 60 }
+                            else if (mx6 >= 364 && mx6 < 490) { next_hover = 61 }
+                            else if (mx6 >= 494 && mx6 < 556) { next_hover = 62 }
+                            else if (mx6 >= 560 && mx6 < 674) { next_hover = 63 }
+                        } else if (my6 >= statusbar_y6) {
+                            if (mx6 >= 8 && mx6 <= 120) { next_hover = 70 }
+                        }
+
+                        if (next_hover != hover_elem) {
+                            hover_elem = next_hover
+                            needs_redraw = 1
+                        }
+                    }
+                } else if (ev_type == 4) {
+                    forge p_xy: *stone = fault_step(event_buf, 8)
+                    forge raw_xy: stone = 0
+                    fracture {
+                        raw_xy = *p_xy
+                    }
+                    forge mx = raw_xy % 65536
+                    forge my = (raw_xy / 4294967296) % 65536
+
+                    forge statusbar_y4 = win_h - 24
+                    forge panel_h4 = 220
+                    if (win_h < 650) { panel_h4 = 160 }
+                    forge panel_y4 = statusbar_y4 - panel_h4
+
+                    if (folder_picker_open > 0) {
+                        forge fp_w4 = 640
+                        forge fp_h4 = 260
+                        forge fp_x4 = (win_w - fp_w4) / 2
+                        forge fp_y4 = (win_h - fp_h4) / 2
+                        if (mx >= fp_x4 + fp_w4 - 34 && mx <= fp_x4 + fp_w4 - 8 && my >= fp_y4 + 6 && my <= fp_y4 + 32) {
+                            folder_picker_open = 0
+                            needs_redraw = 1
+                        } else if (mx >= fp_x4 + fp_w4 - 240 && mx <= fp_x4 + fp_w4 - 130 && my >= fp_y4 + fp_h4 - 50 && my <= fp_y4 + fp_h4 - 18) {
+                            workspace_folder = folder_picker_input
+                            workspace_files = scan_workspace_files(workspace_folder)
+                            git_is_repo = git_is_repository(workspace_folder)
+                            if (git_is_repo == 1) {
+                                git_branch = git_get_branch_name(workspace_folder)
+                                git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                            }
+                            folder_picker_open = 0
+                            needs_redraw = 1
+                        } else if (mx >= fp_x4 + fp_w4 - 118 && mx <= fp_x4 + fp_w4 - 24 && my >= fp_y4 + fp_h4 - 50 && my <= fp_y4 + fp_h4 - 18) {
+                            folder_picker_open = 0
+                            needs_redraw = 1
+                        }
+                    } else if (palette_open > 0) {
+                        forge pp_w4 = 620
+                        forge pp_x4 = (win_w - pp_w4) / 2
+                        if (mx >= pp_x4 && mx <= pp_x4 + pp_w4 && my >= 99 && my <= 99 + (8 * 26)) {
+                            forge sel_cmd = (my - 99) / 26
+                            if (sel_cmd == 0 || sel_cmd == 1) {
+                                active_panel_tab = 0
+                                if (is_dirty == 1) {
+                                    save_lines_to_file(active_file_path, editor_lines)
+                                    is_dirty = 0
+                                }
+                                forge ofs_bin_c = resolve_ofs_binary()
+                                forge real_p_c = resolve_path(active_file_path)
+                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_c)
+                                forge ret_c = system(ofs_bin_c + " build " + real_p_c + " > /tmp/ofs_idle_build.log 2>&1")
+                                forge log_lines_c = read_file_to_lines("/tmp/ofs_idle_build.log")
+                                forge l_len_c = ofs_array_len(log_lines_c)
+                                forge li_c = 0
+                                while (li_c < l_len_c) {
+                                    forge ll_c: obsidian = ofs_array_get(log_lines_c, li_c)
+                                    if (ofs_str_len(ll_c) > 0) { ofs_array_push(terminal_lines, ll_c) }
+                                    li_c++
+                                }
+                                if (ret_c == 0) {
+                                    ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                    lsp_err_count = 0
+                                } else {
+                                    ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_c) + ").")
+                                    lsp_err_count = 1
+                                }
+                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                            } else if (sel_cmd == 2) {
+                                active_panel_tab = 1
+                            } else if (sel_cmd == 3) {
+                                active_panel_tab = 2
+                            } else if (sel_cmd == 4) {
+                                active_theme_id = (active_theme_id + 1) % 4
+                            } else if (sel_cmd == 5) {
+                                save_lines_to_file(active_file_path, editor_lines)
+                                is_dirty = 0
+                                echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
+                            } else if (sel_cmd == 6) {
+                                ofs_array_push(open_tabs, "sem_titulo.ofs")
+                                ofs_array_push(open_paths, "sem_titulo.ofs")
+                                active_tab_idx = ofs_array_len(open_tabs) - 1
+                                active_file_name = "sem_titulo.ofs"
+                                active_file_path = "sem_titulo.ofs"
+                                editor_lines = [""]
+                                cursor_row = 0
+                                cursor_col = 0
+                                scroll_top = 0
+                                is_dirty = 0
+                            } else if (sel_cmd == 7) {
+                                terminal_lines = []
+                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                            }
+                        }
+                        palette_open = 0
+                        needs_redraw = 1
+                    } else if (modal_open > 0) {
+                        forge mw4 = 760
+                        forge mh4 = 490
+                        forge mx4 = (win_w - mw4) / 2
+                        forge my4 = (win_h - mh4) / 2
+
+                        if (mx >= mx4 + mw4 - 34 && mx <= mx4 + mw4 - 6 && my >= my4 + 5 && my <= my4 + 33) {
+                            modal_open = 0
+                        } else if (mx >= mx4 + mw4 - 110 && mx <= mx4 + mw4 - 15 && my >= my4 + mh4 - 40 && my <= my4 + mh4 - 12) {
+                            modal_open = 0
+                        } else if (mx >= mx4 + mw4 - 225 && mx <= mx4 + mw4 - 120 && my >= my4 + mh4 - 40 && my <= my4 + mh4 - 12) {
+                            echo("[OFS IDLE] Preferencias salvas com sucesso!")
+                            modal_open = 0
+                        } else if (mx >= mx4 && mx <= mx4 + 190 && my >= my4 + 39 && my <= my4 + mh4 - 48) {
+                            forge clicked_tab = (my - (my4 + 48)) / 38
+                            if (clicked_tab >= 0 && clicked_tab <= 3) {
+                                modal_tab = clicked_tab
+                            }
+                        } else if (modal_tab == 0) {
+                            forge cx0 = mx4 + 190 + 24
+                            forge cy0 = my4 + 54
+                            if (mx >= cx0 && mx <= cx0 + 380 && my >= cy0 + 35 && my <= cy0 + 65) {
+                                if (modal_autosave == 1) { modal_autosave = 0 }
+                                else { modal_autosave = 1 }
+                            }
+                        } else if (modal_tab == 1) {
+                            forge cx1 = mx4 + 190 + 24
+                            forge cy1 = my4 + 54
+                            if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 40 && my <= cy1 + 68) {
+                                modal_theme = 0
+                                active_theme_id = 0
+                            } else if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 74 && my <= cy1 + 102) {
+                                modal_theme = 1
+                                active_theme_id = 1
+                            } else if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 108 && my <= cy1 + 136) {
+                                modal_theme = 2
+                                active_theme_id = 2
+                            } else if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 142 && my <= cy1 + 170) {
+                                modal_theme = 3
+                                active_theme_id = 3
+                            } else if (mx >= cx1 + 220 && mx <= cx1 + 252 && my >= cy1 + 176 && my <= cy1 + 200) {
+                                if (modal_font_size > 10) { modal_font_size-- }
+                            } else if (mx >= cx1 + 260 && mx <= cx1 + 292 && my >= cy1 + 176 && my <= cy1 + 200) {
+                                if (modal_font_size < 32) { modal_font_size++ }
+                            }
+                        } else if (modal_tab == 2) {
+                            forge cx2 = mx4 + 190 + 24
+                            forge cy2 = my4 + 54
+                            if (mx >= cx2 && mx <= cx2 + 380 && my >= cy2 + 35 && my <= cy2 + 65) {
+                                if (modal_lsp == 1) { modal_lsp = 0 }
+                                else { modal_lsp = 1 }
+                            }
+                        }
+                        needs_redraw = 1
+                    } else if (menu_open > 0) {
+                        forge m_mx4 = 38
+                        forge m_cnt4 = 6
+                        if (menu_open == 1) { m_mx4 = 38; m_cnt4 = 6 }
+                        else if (menu_open == 2) { m_mx4 = 98; m_cnt4 = 6 }
+                        else if (menu_open == 3) { m_mx4 = 148; m_cnt4 = 4 }
+                        else if (menu_open == 4) { m_mx4 = 208; m_cnt4 = 6 }
+                        else if (menu_open == 5) { m_mx4 = 256; m_cnt4 = 4 }
+                        else if (menu_open == 6) { m_mx4 = 280; m_cnt4 = 4 }
+                        else if (menu_open == 7) { m_mx4 = 346; m_cnt4 = 4 }
+                        else if (menu_open == 8) { m_mx4 = 408; m_cnt4 = 5 }
+
+                        if (mx >= m_mx4 && mx <= m_mx4 + 240 && my >= 35 && my <= 35 + (m_cnt4 * 29)) {
+                            forge itm = (my - 38) / 29
+                            if (menu_open == 1) {
+                                if (itm == 0) {
+                                    ofs_array_push(open_tabs, "sem_titulo.ofs")
+                                    ofs_array_push(open_paths, "sem_titulo.ofs")
+                                    active_tab_idx = ofs_array_len(open_tabs) - 1
+                                    active_file_name = "sem_titulo.ofs"
+                                    active_file_path = "sem_titulo.ofs"
+                                    editor_lines = [""]
+                                    cursor_row = 0
+                                    cursor_col = 0
+                                    scroll_top = 0
+                                    is_dirty = 0
+                                } else if (itm == 1) {
+                                    palette_open = 1
+                                    palette_sel = 0
+                                    palette_query = ""
+                                } else if (itm == 2) {
+                                    folder_picker_open = 1
+                                    folder_picker_input = "."
+                                    menu_open = 0
+                                    needs_redraw = 1
+                                } else if (itm == 3) {
+                                    save_lines_to_file(active_file_path, editor_lines)
+                                    is_dirty = 0
+                                    echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
+                                } else if (itm == 4) {
+                                    modal_open = 1
+                                } else if (itm == 5) {
+                                    running = 0
+                                }
+                            } else if (menu_open == 2) {
+                                if (itm == 5) { active_activity = 1 }
+                            } else if (menu_open == 4) {
+                                if (itm >= 0 && itm <= 4) { active_activity = itm }
+                                else if (itm == 5) { active_panel_tab = 0 }
+                            } else if (menu_open == 5) {
+                                if (itm == 0) { palette_open = 1; palette_sel = 0; palette_query = "" }
+                            } else if (menu_open == 6) {
+                                if (itm == 0 || itm == 1) {
+                                    active_panel_tab = 0
+                                    if (is_dirty == 1) {
+                                        save_lines_to_file(active_file_path, editor_lines)
+                                        is_dirty = 0
+                                    }
+                                    forge ofs_b0 = resolve_ofs_binary()
+                                    forge real_p0 = resolve_path(active_file_path)
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p0)
+                                    forge ret0 = system(ofs_b0 + " build " + real_p0 + " > /tmp/ofs_idle_build.log 2>&1")
+                                    forge log_lines0 = read_file_to_lines("/tmp/ofs_idle_build.log")
+                                    forge l_len0 = ofs_array_len(log_lines0)
+                                    forge li0 = 0
+                                    while (li0 < l_len0) {
+                                        forge ll0: obsidian = ofs_array_get(log_lines0, li0)
+                                        if (ofs_str_len(ll0) > 0) { ofs_array_push(terminal_lines, ll0) }
+                                        li0++
+                                    }
+                                    if (ret0 == 0) {
+                                        ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                        lsp_err_count = 0
+                                    } else {
+                                        ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret0) + ").")
+                                        lsp_err_count = 1
+                                    }
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                }
+                            } else if (menu_open == 7) {
+                                if (itm == 3) {
+                                    terminal_lines = []
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                }
+                            }
+                        }
+                        menu_open = 0
+                        needs_redraw = 1
+                    } else {
+                        if (my < 35) {
+                            forge search_w4 = 480
+                            forge search_x4 = (win_w - search_w4) / 2
+                            if (search_x4 < 470) { search_x4 = 470 }
+                            if (mx >= search_x4 && mx <= search_x4 + search_w4) {
+                                palette_open = 1
+                                palette_sel = 0
+                                palette_query = ""
+                            } else if (mx >= 42 && mx < 98) { menu_open = 1; menu_hover = -1 }
+                            else if (mx >= 98 && mx < 148) { menu_open = 2; menu_hover = -1 }
+                            else if (mx >= 148 && mx < 208) { menu_open = 3; menu_hover = -1 }
+                            else if (mx >= 208 && mx < 256) { menu_open = 4; menu_hover = -1 }
+                            else if (mx >= 256 && mx < 280) { menu_open = 5; menu_hover = -1 }
+                            else if (mx >= 280 && mx < 346) { menu_open = 6; menu_hover = -1 }
+                            else if (mx >= 346 && mx < 408) { menu_open = 7; menu_hover = -1 }
+                            else if (mx >= 408 && mx < 456) { menu_open = 8; menu_hover = -1 }
+                        } else if (mx < 48) {
+                            if (my >= 44 && my < 82) { active_activity = 0 }
+                            else if (my >= 90 && my < 128) { active_activity = 1 }
+                            else if (my >= 136 && my < 174) { active_activity = 2 }
+                            else if (my >= 182 && my < 220) { active_activity = 3 }
+                            else if (my >= 228 && my < 266) { active_activity = 4 }
+                            else if (my >= statusbar_y4 - 48 && my <= statusbar_y4) {
+                                modal_open = 1
+                                active_activity = 5
+                            }
+                        } else if (mx < 268) {
+                            if (active_activity == 0) {
+                                if (ofs_str_len(workspace_folder) == 0) {
+                                    if (mx >= 60 && mx <= 256 && my >= 168 && my <= 200) {
+                                        folder_picker_open = 1
+                                        folder_picker_input = "."
+                                        needs_redraw = 1
+                                    }
+                                } else {
+                                    forge ot_n4 = ofs_array_len(open_tabs)
+                                    if (my >= 94 && my < 94 + (ot_n4 * 20)) {
+                                        forge sel_tab_i = (my - 94) / 20
+                                        if (mx >= 242 && mx <= 260) {
+                                            array_remove_at(open_tabs, sel_tab_i)
+                                            array_remove_at(open_paths, sel_tab_i)
+                                            forge rem_len = ofs_array_len(open_tabs)
+                                            if (rem_len == 0) {
+                                                active_tab_idx = -1
+                                                active_file_name = ""
+                                                active_file_path = ""
+                                                editor_lines = []
+                                            } else {
+                                                if (active_tab_idx >= rem_len) { active_tab_idx = rem_len - 1 }
+                                                active_file_path = ofs_array_get(open_paths, active_tab_idx)
+                                                active_file_name = ofs_array_get(open_tabs, active_tab_idx)
+                                                editor_lines = read_file_to_lines(active_file_path)
+                                            }
+                                            cursor_row = 0
+                                            cursor_col = 0
+                                            scroll_top = 0
+                                            is_dirty = 0
+                                        } else {
+                                            active_tab_idx = sel_tab_i
+                                            active_file_path = ofs_array_get(open_paths, active_tab_idx)
+                                            active_file_name = ofs_array_get(open_tabs, active_tab_idx)
+                                            editor_lines = read_file_to_lines(active_file_path)
+                                            cursor_row = 0
+                                            cursor_col = 0
+                                            scroll_top = 0
+                                            is_dirty = 0
+                                        }
+                                    } else {
+                                        forge ws_top4 = 98 + (ot_n4 * 20) + 16
+                                        if (my >= ws_top4 && my < statusbar_y4) {
+                                            forge sel_idx = (my - ws_top4) / 22
+                                            forge total_wf = ofs_array_len(workspace_files)
+                                            if (sel_idx >= 0 && sel_idx < total_wf) {
+                                                forge sel_p: obsidian = ofs_array_get(workspace_files, sel_idx)
+                                                active_file_path = resolve_path(sel_p)
+                                                active_file_name = get_filename_from_path(sel_p)
+                                                editor_lines = read_file_to_lines(active_file_path)
+
+                                                forge found_t = -1
+                                                forge fti = 0
+                                                forge total_op = ofs_array_len(open_paths)
+                                                while (fti < total_op) {
+                                                    forge opt: obsidian = ofs_array_get(open_paths, fti)
+                                                    if (ofs_str_eq(opt, active_file_path)) {
+                                                        found_t = fti
+                                                    }
+                                                    fti++
+                                                }
+
+                                                if (found_t >= 0) {
+                                                    active_tab_idx = found_t
+                                                } else {
+                                                    if (ofs_array_len(open_tabs) >= 5) {
+                                                        ofs_array_set(open_tabs, 4, active_file_name)
+                                                        ofs_array_set(open_paths, 4, active_file_path)
+                                                        active_tab_idx = 4
+                                                    } else {
+                                                        ofs_array_push(open_tabs, active_file_name)
+                                                        ofs_array_push(open_paths, active_file_path)
+                                                        active_tab_idx = ofs_array_len(open_tabs) - 1
+                                                    }
+                                                }
+
+                                                cursor_row = 0
+                                                cursor_col = 0
+                                                scroll_top = 0
+                                                is_dirty = 0
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (active_activity == 2) {
+                                if (mx >= 222 && mx <= 242 && my >= 40 && my <= 60) {
+                                    git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                    git_branch = git_get_branch_name(workspace_folder)
+                                } else if (mx >= 244 && mx <= 264 && my >= 40 && my <= 60) {
+                                    if (ofs_str_len(git_commit_msg_buf) > 0) {
+                                        git_action_commit(workspace_folder, git_commit_msg_buf)
+                                        git_commit_msg_buf = ""
+                                        git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                    }
+                                } else if (mx >= 58 && mx <= 258 && my >= 98 && my <= 146) {
+                                    focused_area = 2
+                                } else if (mx >= 58 && mx <= 258 && my >= 154 && my <= 180) {
+                                    if (ofs_str_len(git_commit_msg_buf) > 0) {
+                                        git_action_commit(workspace_folder, git_commit_msg_buf)
+                                        git_commit_msg_buf = ""
+                                        git_action_push(workspace_folder)
+                                        git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                    }
+                                } else if (mx >= 240 && mx <= 264 && my >= 194 && my <= 212) {
+                                    git_action_unstage_all(workspace_folder)
+                                    git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                } else {
+                                    forge num_st = ofs_array_len(git_staged_files)
+                                    forge s_by = 216
+                                    if (my >= s_by && my < s_by + (num_st * 22)) {
+                                        forge c_s_idx = (my - s_by) / 22
+                                        if (c_s_idx < num_st) {
+                                            forge s_file: obsidian = ofs_array_get(git_staged_files, c_s_idx)
+                                            if (mx >= 240) {
+                                                git_action_unstage(workspace_folder, s_file)
+                                                git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                            } else {
+                                                active_file_path = resolve_path(s_file)
+                                                active_file_name = get_filename_from_path(s_file)
+                                                editor_lines = read_file_to_lines(active_file_path)
+                                                cursor_row = 0
+                                                cursor_col = 0
+                                                is_dirty = 0
+                                            }
+                                        }
+                                    } else {
+                                        forge unst_by = s_by + (num_st * 22) + 22
+                                        if (mx >= 240 && mx <= 264 && my >= unst_by - 20 && my <= unst_by) {
+                                            git_action_stage_all(workspace_folder)
+                                            git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                        } else {
+                                            forge num_unst = ofs_array_len(git_unstaged_files)
+                                            if (my >= unst_by && my < unst_by + (num_unst * 22)) {
+                                                forge c_u_idx = (my - unst_by) / 22
+                                                if (c_u_idx < num_unst) {
+                                                    forge u_file: obsidian = ofs_array_get(git_unstaged_files, c_u_idx)
+                                                    if (mx >= 246) {
+                                                        git_action_discard(workspace_folder, u_file)
+                                                        git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                                    } else if (mx >= 230) {
+                                                        git_action_stage(workspace_folder, u_file)
+                                                        git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                                    } else {
+                                                        active_file_path = resolve_path(u_file)
+                                                        active_file_name = get_filename_from_path(u_file)
+                                                        editor_lines = read_file_to_lines(active_file_path)
+                                                        cursor_row = 0
+                                                        cursor_col = 0
+                                                        is_dirty = 0
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            } else if (active_activity == 3) {
+                                if (my >= 106 && my <= 134) {
+                                    active_panel_tab = 0
+                                    focused_area = 1
+                                    if (is_dirty == 1) {
+                                        save_lines_to_file(active_file_path, editor_lines)
+                                        is_dirty = 0
+                                    }
+                                    forge ofs_b_dbg = resolve_ofs_binary()
+                                    forge real_p_dbg = resolve_path(active_file_path)
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_dbg)
+                                    forge ret_dbg = system(ofs_b_dbg + " build " + real_p_dbg + " > /tmp/ofs_idle_build.log 2>&1")
+                                    forge log_lines_dbg = read_file_to_lines("/tmp/ofs_idle_build.log")
+                                    forge l_len_dbg = ofs_array_len(log_lines_dbg)
+                                    forge li_dbg = 0
+                                    while (li_dbg < l_len_dbg) {
+                                        forge ll_dbg: obsidian = ofs_array_get(log_lines_dbg, li_dbg)
+                                        if (ofs_str_len(ll_dbg) > 0) { ofs_array_push(terminal_lines, ll_dbg) }
+                                        li_dbg++
+                                    }
+                                    if (ret_dbg == 0) {
+                                        ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                        lsp_err_count = 0
+                                    } else {
+                                        ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_dbg) + ").")
+                                        lsp_err_count = 1
+                                    }
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                }
+                            } else if (active_activity == 4) {
+                                if (mx >= 58 && mx <= 258 && my >= 74 && my <= 98) {
+                                    focused_area = 3
+                                } else if (my >= 128 && my < 128 + (7 * 54)) {
+                                    forge card_idx = (my - 128) / 54
+                                    if (mx >= 176 && mx <= 260) {
+                                        if (card_idx == 1) { active_theme_id = 0 }
+                                        else if (card_idx == 2) { active_theme_id = 1 }
+                                        else if (card_idx == 3) { active_theme_id = 2 }
+                                        else if (card_idx == 4) { active_theme_id = 3 }
+                                        else if (card_idx == 5) { active_theme_id = 4 }
+                                        else if (card_idx == 6) { active_theme_id = 5 }
+                                        modal_theme = active_theme_id
+                                    }
+                                }
+                            }
+                        } else if (my >= 35 && my < 70) {
+                            forge total_ot = ofs_array_len(open_tabs)
+                            forge o_i = 0
+                            forge tab_x_cur = 268
+                            forge clicked_tab_hit = 0
+                            while (o_i < total_ot) {
+                                if (mx >= tab_x_cur && mx < tab_x_cur + 140) {
+                                    if (mx >= tab_x_cur + 118) {
+                                        array_remove_at(open_tabs, o_i)
+                                        array_remove_at(open_paths, o_i)
+                                        forge rem_len_t = ofs_array_len(open_tabs)
+                                        if (rem_len_t == 0) {
+                                            active_tab_idx = -1
+                                            active_file_name = ""
+                                            active_file_path = ""
+                                            editor_lines = []
+                                        } else {
+                                            if (active_tab_idx >= rem_len_t) { active_tab_idx = rem_len_t - 1 }
+                                            active_file_path = ofs_array_get(open_paths, active_tab_idx)
+                                            active_file_name = ofs_array_get(open_tabs, active_tab_idx)
+                                            editor_lines = read_file_to_lines(active_file_path)
+                                        }
+                                        cursor_row = 0
+                                        cursor_col = 0
+                                        scroll_top = 0
+                                        is_dirty = 0
+                                    } else {
+                                        active_tab_idx = o_i
+                                        active_file_path = ofs_array_get(open_paths, o_i)
+                                        active_file_name = ofs_array_get(open_tabs, o_i)
+                                        editor_lines = read_file_to_lines(active_file_path)
+                                        cursor_row = 0
+                                        cursor_col = 0
+                                        scroll_top = 0
+                                        is_dirty = 0
+                                    }
+                                    clicked_tab_hit = 1
+                                }
+                                tab_x_cur = tab_x_cur + 140
+                                o_i++
+                            }
+
+                            if (clicked_tab_hit == 0) {
+                                if (mx >= win_w - 136 && mx < win_w - 50) {
+                                    active_panel_tab = 0
+                                    focused_area = 1
+                                    if (is_dirty == 1) {
+                                        save_lines_to_file(active_file_path, editor_lines)
+                                        is_dirty = 0
+                                    }
+                                    forge ofs_bin_r = resolve_ofs_binary()
+                                    forge real_p_r = resolve_path(active_file_path)
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_r)
+                                    forge ret_r = system(ofs_bin_r + " build " + real_p_r + " > /tmp/ofs_idle_build.log 2>&1")
+                                    forge log_lines_r = read_file_to_lines("/tmp/ofs_idle_build.log")
+                                    forge l_len_r = ofs_array_len(log_lines_r)
+                                    forge li_r = 0
+                                    while (li_r < l_len_r) {
+                                        forge ll_r: obsidian = ofs_array_get(log_lines_r, li_r)
+                                        if (ofs_str_len(ll_r) > 0) { ofs_array_push(terminal_lines, ll_r) }
+                                        li_r++
+                                    }
+                                    if (ret_r == 0) {
+                                        ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                        lsp_err_count = 0
+                                    } else {
+                                        ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_r) + ").")
+                                        lsp_err_count = 1
+                                    }
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                }
+                            }
+                        } else if (my >= 93 && my < panel_y4 && mx >= 268 && mx < win_w - 65) {
+                            focused_area = 0
+                            if (ofs_array_len(open_tabs) == 0) {
+                                if (my >= 142 && my <= 172) {
+                                    if (mx >= 300 && mx <= 405) {
+                                        ofs_array_push(open_tabs, "sem_titulo.ofs")
+                                        ofs_array_push(open_paths, "sem_titulo.ofs")
+                                        active_tab_idx = 0
+                                        active_file_name = "sem_titulo.ofs"
+                                        active_file_path = "sem_titulo.ofs"
+                                        editor_lines = [""]
+                                        cursor_row = 0
+                                        cursor_col = 0
+                                        scroll_top = 0
+                                        is_dirty = 0
+                                    } else if (mx >= 415 && mx <= 540) {
+                                        folder_picker_open = 1
+                                        folder_picker_input = "."
+                                    } else if (mx >= 550 && mx <= 725) {
+                                        palette_open = 1
+                                        palette_sel = 0
+                                        palette_query = ""
+                                    } else if (mx >= 735 && mx <= 905) {
+                                        active_panel_tab = 0
+                                        focused_area = 1
+                                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script$ ofs --help")
+                                        system("ofs --help > /tmp/ofs_idle_term.log 2>&1")
+                                        forge hlines = read_file_to_lines("/tmp/ofs_idle_term.log")
+                                        forge hlen = ofs_array_len(hlines)
+                                        forge hi = 0
+                                        while (hi < hlen) {
+                                            forge hl: obsidian = ofs_array_get(hlines, hi)
+                                            if (ofs_str_len(hl) > 0) { ofs_array_push(terminal_lines, hl) }
+                                            hi++
+                                        }
+                                    }
+                                }
+                            } else {
+                                forge clicked_row = scroll_top + ((my - 96) / 19)
+                                forge t_lines = ofs_array_len(editor_lines)
+                                if (clicked_row >= 0 && clicked_row < t_lines) {
+                                    cursor_row = clicked_row
+                                    forge cur_line_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                    forge c_len = ofs_str_len(cur_line_txt)
+                                    forge clicked_col = (mx - 326) / 7
+                                    if (clicked_col < 0) { clicked_col = 0 }
+                                    if (clicked_col > c_len) { clicked_col = c_len }
+                                    cursor_col = clicked_col
+                                }
+                            }
+                        } else if (my >= 93 && my < panel_y4 && mx >= win_w - 65) {
+                            focused_area = 0
+                            forge clicked_sc = (my - 96) / 3
+                            if (clicked_sc < 0) { clicked_sc = 0 }
+                            forge tot_lines_mm = ofs_array_len(editor_lines)
+                            if (clicked_sc >= tot_lines_mm) { clicked_sc = tot_lines_mm - 1 }
+                            scroll_top = clicked_sc
+                        } else if (my >= panel_y4 && my < statusbar_y4 && mx >= 268) {
+                            focused_area = 1
+                            if (my < panel_y4 + 30) {
+                                if (mx >= 274 && mx < 360) { active_panel_tab = 0 }
+                                else if (mx >= 364 && mx < 490) { active_panel_tab = 1 }
+                                else if (mx >= 494 && mx < 556) { active_panel_tab = 2 }
+                                else if (mx >= 560 && mx < 674) { active_panel_tab = 3 }
+                            }
+                        } else if (my >= statusbar_y4) {
+                            if (mx >= 8 && mx <= 120) {
+                                palette_open = 1
+                                palette_query = "Git: "
+                                palette_sel = 0
+                            }
+                        }
+                        needs_redraw = 1
+                    }
+                } else if (ev_type == 2) {
+                    forge p_raw_kc: *stone = fault_step(event_buf, 10)
+                    forge raw_kc: stone = 0
+                    fracture {
+                        raw_kc = *p_raw_kc
+                    }
+                    forge state = raw_kc % 4294967296
+                    forge keycode = (raw_kc / 4294967296) % 256
+                    forge is_shift = state % 2
+                    forge is_ctrl = (state / 4) % 2
+
+                    forge sym = XKeycodeToKeysym(disp, keycode, is_shift)
+
+                    if (folder_picker_open > 0) {
+                        if (sym == 65307) {
+                            folder_picker_open = 0
+                            needs_redraw = 1
+                        } else if (sym == 65293) {
+                            workspace_folder = folder_picker_input
+                            workspace_files = scan_workspace_files(workspace_folder)
+                            git_is_repo = git_is_repository(workspace_folder)
+                            if (git_is_repo == 1) {
+                                git_branch = git_get_branch_name(workspace_folder)
+                                git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                            }
+                            folder_picker_open = 0
+                            needs_redraw = 1
+                        } else if (sym == 65288) {
+                            forge f_len = ofs_str_len(folder_picker_input)
+                            if (f_len > 0) {
+                                folder_picker_input = ofs_str_substr(folder_picker_input, 0, f_len - 1)
+                                needs_redraw = 1
+                            }
+                        } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
+                            forge ch_buf_fp: *stone = ofs_alloc(8)
+                            fracture {
+                                *ch_buf_fp = sym
+                            }
+                            forge ch_str_fp: obsidian = ch_buf_fp
+                            folder_picker_input = folder_picker_input + ch_str_fp
+                            needs_redraw = 1
+                        }
+                    } else if (palette_open > 0) {
+                        if (sym == 65307) {
+                            palette_open = 0
+                            needs_redraw = 1
+                        } else if (sym == 65362) {
+                            if (palette_sel > 0) { palette_sel-- }
+                            needs_redraw = 1
+                        } else if (sym == 65364) {
+                            if (palette_sel < 7) { palette_sel++ }
+                            needs_redraw = 1
+                        } else if (sym == 65288) {
+                            forge qlen = ofs_str_len(palette_query)
+                            if (qlen > 0) {
+                                palette_query = ofs_str_substr(palette_query, 0, qlen - 1)
+                                needs_redraw = 1
+                            }
+                        } else if (sym == 65293) {
+                            if (palette_sel == 0 || palette_sel == 1) {
+                                active_panel_tab = 0
+                                if (is_dirty == 1) {
+                                    save_lines_to_file(active_file_path, editor_lines)
+                                    is_dirty = 0
+                                }
+                                forge ofs_bin_c2 = resolve_ofs_binary()
+                                forge real_p_c2 = resolve_path(active_file_path)
+                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_c2)
+                                forge ret_c2 = system(ofs_bin_c2 + " build " + real_p_c2 + " > /tmp/ofs_idle_build.log 2>&1")
+                                forge log_lines_c2 = read_file_to_lines("/tmp/ofs_idle_build.log")
+                                forge l_len_c2 = ofs_array_len(log_lines_c2)
+                                forge li_c2 = 0
+                                while (li_c2 < l_len_c2) {
+                                    forge ll_c2: obsidian = ofs_array_get(log_lines_c2, li_c2)
+                                    if (ofs_str_len(ll_c2) > 0) { ofs_array_push(terminal_lines, ll_c2) }
+                                    li_c2++
+                                }
+                                if (ret_c2 == 0) {
+                                    ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                    lsp_err_count = 0
+                                } else {
+                                    ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_c2) + ").")
+                                    lsp_err_count = 1
+                                }
+                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                            } else if (palette_sel == 2) {
+                                active_panel_tab = 1
+                            } else if (palette_sel == 3) {
+                                active_panel_tab = 2
+                            } else if (palette_sel == 4) {
+                                active_theme_id = (active_theme_id + 1) % 4
+                            } else if (palette_sel == 5) {
+                                save_lines_to_file(active_file_path, editor_lines)
+                                is_dirty = 0
+                                echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
+                            } else if (palette_sel == 6) {
+                                ofs_array_push(open_tabs, "sem_titulo.ofs")
+                                ofs_array_push(open_paths, "sem_titulo.ofs")
+                                active_tab_idx = ofs_array_len(open_tabs) - 1
+                                active_file_name = "sem_titulo.ofs"
+                                active_file_path = "sem_titulo.ofs"
+                                editor_lines = [""]
+                                cursor_row = 0
+                                cursor_col = 0
+                                scroll_top = 0
+                                is_dirty = 0
+                            } else if (palette_sel == 7) {
+                                terminal_lines = []
+                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                            }
+                            palette_open = 0
+                            needs_redraw = 1
+                        } else if (sym >= 32 && sym <= 126) {
+                            forge ch_buf_p: *stone = ofs_alloc(8)
+                            fracture {
+                                *ch_buf_p = sym
+                            }
+                            forge ch_str_p: obsidian = ch_buf_p
+                            palette_query = palette_query + ch_str_p
+                            needs_redraw = 1
+                        }
+                    } else if (sym == 65307) {
+                        if (modal_open > 0) {
+                            modal_open = 0
+                            needs_redraw = 1
+                        } else if (menu_open > 0) {
+                            menu_open = 0
+                            needs_redraw = 1
+                        } else {
+                            running = 0
+                        }
+                    } else if (is_ctrl == 1 && (sym == 49 || sym == 101 || sym == 69)) {
+                        active_activity = 0
+                        needs_redraw = 1
+                    } else if (is_ctrl == 1 && (sym == 50 || sym == 102 || sym == 70)) {
+                        active_activity = 1
+                        needs_redraw = 1
+                    } else if (is_ctrl == 1 && (sym == 51 || sym == 103 || sym == 71)) {
+                        active_activity = 2
+                        focused_area = 2
+                        needs_redraw = 1
+                    } else if (is_ctrl == 1 && (sym == 52 || sym == 100 || sym == 68)) {
+                        active_activity = 3
+                        needs_redraw = 1
+                    } else if (is_ctrl == 1 && (sym == 53 || sym == 120 || sym == 88)) {
+                        active_activity = 4
+                        focused_area = 3
+                        needs_redraw = 1
+                    } else if (sym == 65479) {
+                        menu_open = 1
+                        menu_hover = -1
+                        needs_redraw = 1
+                    } else if (is_ctrl == 1 && (sym == 112 || sym == 80)) {
+                        palette_open = 1
+                        palette_query = ""
+                        palette_sel = 0
+                        needs_redraw = 1
+                    } else if (is_ctrl == 1 && (sym == 115 || sym == 83)) {
+                        save_lines_to_file(active_file_path, editor_lines)
+                        is_dirty = 0
+                        echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
+                        needs_redraw = 1
+                    } else if (is_ctrl == 1 && (sym == 119 || sym == 87)) {
+                        if (ofs_array_len(open_tabs) > 0 && active_tab_idx >= 0) {
+                            array_remove_at(open_tabs, active_tab_idx)
+                            array_remove_at(open_paths, active_tab_idx)
+                            forge rem_t = ofs_array_len(open_tabs)
+                            if (rem_t == 0) {
+                                active_tab_idx = -1
+                                active_file_name = ""
+                                active_file_path = ""
+                                editor_lines = []
+                            } else {
+                                if (active_tab_idx >= rem_t) { active_tab_idx = rem_t - 1 }
+                                active_file_path = ofs_array_get(open_paths, active_tab_idx)
+                                active_file_name = ofs_array_get(open_tabs, active_tab_idx)
+                                editor_lines = read_file_to_lines(active_file_path)
+                            }
+                            cursor_row = 0
+                            cursor_col = 0
+                            is_dirty = 0
+                            needs_redraw = 1
+                        }
+                    } else if (sym == 65474 || (is_ctrl == 1 && (sym == 98 || sym == 66))) {
+                        active_panel_tab = 0
+                        if (is_dirty == 1) {
+                            save_lines_to_file(active_file_path, editor_lines)
+                            is_dirty = 0
+                        }
+                        forge ofs_bin_k = resolve_ofs_binary()
+                        forge real_p_k = resolve_path(active_file_path)
+                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_k)
+                        forge ret_k = system(ofs_bin_k + " build " + real_p_k + " > /tmp/ofs_idle_build.log 2>&1")
+                        forge log_lines_k = read_file_to_lines("/tmp/ofs_idle_build.log")
+                        forge l_len_k = ofs_array_len(log_lines_k)
+                        forge li_k = 0
+                        while (li_k < l_len_k) {
+                            forge ll_k: obsidian = ofs_array_get(log_lines_k, li_k)
+                            if (ofs_str_len(ll_k) > 0) {
+                                ofs_array_push(terminal_lines, ll_k)
+                            }
+                            li_k++
+                        }
+                        if (ret_k == 0) {
+                            ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                            lsp_err_count = 0
+                        } else {
+                            ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_k) + ").")
+                            lsp_err_count = 1
+                        }
+                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                        needs_redraw = 1
+                    } else if (is_ctrl == 1 && (sym == 111 || sym == 79)) {
+                        folder_picker_open = 1
+                        folder_picker_input = "."
+                        needs_redraw = 1
+                    } else if (is_ctrl == 1 && (sym == 96 || sym == 126 || sym == 106 || sym == 74)) {
+                        focused_area = 1
+                        active_panel_tab = 0
+                        needs_redraw = 1
+                    } else if (focused_area == 1) {
+                        if (sym == 65293) {
+                            ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script$ " + terminal_input_buf)
+                            if (ofs_str_eq(terminal_input_buf, "clear")) {
+                                terminal_lines = []
+                            } else if (ofs_str_len(terminal_input_buf) > 0) {
+                                system("(" + terminal_input_buf + ") > /tmp/ofs_idle_term.log 2>&1")
+                                forge tlogs = read_file_to_lines("/tmp/ofs_idle_term.log")
+                                forge tcnt = ofs_array_len(tlogs)
+                                forge ti3 = 0
+                                while (ti3 < tcnt) {
+                                    forge tl3: obsidian = ofs_array_get(tlogs, ti3)
+                                    if (ofs_str_len(tl3) > 0) {
+                                        ofs_array_push(terminal_lines, tl3)
+                                    }
+                                    ti3++
+                                }
+                            }
+                            terminal_input_buf = ""
+                            needs_redraw = 1
+                        } else if (sym == 65288) {
+                            forge tlen = ofs_str_len(terminal_input_buf)
+                            if (tlen > 0) {
+                                terminal_input_buf = ofs_str_substr(terminal_input_buf, 0, tlen - 1)
+                                needs_redraw = 1
+                            }
+                        } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
+                            forge ch_buf_t: *stone = ofs_alloc(8)
+                            fracture {
+                                *ch_buf_t = sym
+                            }
+                            forge ch_str_t: obsidian = ch_buf_t
+                            terminal_input_buf = terminal_input_buf + ch_str_t
+                            needs_redraw = 1
+                        }
+                    } else if (focused_area == 2) {
+                        if (sym == 65307) {
+                            focused_area = 0
+                            needs_redraw = 1
+                        } else if (sym == 65293) {
+                            if (ofs_str_len(git_commit_msg_buf) > 0) {
+                                git_action_commit(workspace_folder, git_commit_msg_buf)
+                                git_commit_msg_buf = ""
+                                git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                needs_redraw = 1
+                            }
+                        } else if (sym == 65288) {
+                            forge c_msg_len = ofs_str_len(git_commit_msg_buf)
+                            if (c_msg_len > 0) {
+                                git_commit_msg_buf = ofs_str_substr(git_commit_msg_buf, 0, c_msg_len - 1)
+                                needs_redraw = 1
+                            }
+                        } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
+                            forge ch_buf_c: *stone = ofs_alloc(8)
+                            fracture {
+                                *ch_buf_c = sym
+                            }
+                            forge ch_str_c: obsidian = ch_buf_c
+                            git_commit_msg_buf = git_commit_msg_buf + ch_str_c
+                            needs_redraw = 1
+                        }
+                    } else if (focused_area == 3) {
+                        if (sym == 65307) {
+                            focused_area = 0
+                            needs_redraw = 1
+                        } else if (sym == 65288) {
+                            forge q_len_x = ofs_str_len(ext_search_query)
+                            if (q_len_x > 0) {
+                                ext_search_query = ofs_str_substr(ext_search_query, 0, q_len_x - 1)
+                                needs_redraw = 1
+                            }
+                        } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
+                            forge ch_buf_x: *stone = ofs_alloc(8)
+                            fracture {
+                                *ch_buf_x = sym
+                            }
+                            forge ch_str_x: obsidian = ch_buf_x
+                            ext_search_query = ext_search_query + ch_str_x
+                            needs_redraw = 1
+                        }
+                    } else if (ofs_array_len(open_tabs) > 0) {
+                        if (sym == 65362) {
+                            if (cursor_row > 0) {
+                                cursor_row--
+                                forge l_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                forge l_len = ofs_str_len(l_txt)
+                                if (cursor_col > l_len) { cursor_col = l_len }
+                                if (cursor_row < scroll_top) { scroll_top = cursor_row }
+                            }
+                            needs_redraw = 1
+                        } else if (sym == 65364) {
+                            forge t_lines = ofs_array_len(editor_lines)
+                            if (cursor_row < t_lines - 1) {
+                                cursor_row++
+                                forge l_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                forge l_len = ofs_str_len(l_txt)
+                                if (cursor_col > l_len) { cursor_col = l_len }
+                                if (cursor_row >= scroll_top + 24) { scroll_top = cursor_row - 23 }
+                            }
+                            needs_redraw = 1
+                        } else if (sym == 65361) {
+                            if (cursor_col > 0) {
+                                cursor_col--
+                            } else if (cursor_row > 0) {
+                                cursor_row--
+                                forge l_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                cursor_col = ofs_str_len(l_txt)
+                                if (cursor_row < scroll_top) { scroll_top = cursor_row }
+                            }
+                            needs_redraw = 1
+                        } else if (sym == 65363) {
+                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                            forge l_len = ofs_str_len(cur_l)
+                            if (cursor_col < l_len) {
+                                cursor_col++
+                            } else {
+                                forge t_lines = ofs_array_len(editor_lines)
+                                if (cursor_row < t_lines - 1) {
+                                    cursor_row++
+                                    cursor_col = 0
+                                    if (cursor_row >= scroll_top + 24) { scroll_top = cursor_row - 23 }
+                                }
+                            }
+                            needs_redraw = 1
+                        } else if (sym == 65360) {
+                            cursor_col = 0
+                            needs_redraw = 1
+                        } else if (sym == 65367) {
+                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                            cursor_col = ofs_str_len(cur_l)
+                            needs_redraw = 1
+                        } else if (sym == 65365) {
+                            if (cursor_row >= 15) { cursor_row = cursor_row - 15 }
+                            else { cursor_row = 0 }
+                            if (scroll_top >= 15) { scroll_top = scroll_top - 15 }
+                            else { scroll_top = 0 }
+                            needs_redraw = 1
+                        } else if (sym == 65366) {
+                            forge t_lines = ofs_array_len(editor_lines)
+                            cursor_row = cursor_row + 15
+                            if (cursor_row >= t_lines) { cursor_row = t_lines - 1 }
+                            scroll_top = scroll_top + 15
+                            if (scroll_top >= t_lines) { scroll_top = t_lines - 1 }
+                            needs_redraw = 1
+                        } else if (sym == 65288) {
+                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                            if (cursor_col > 0) {
+                                forge new_l = delete_char_in_line(cur_l, cursor_col)
+                                ofs_array_set(editor_lines, cursor_row, new_l)
+                                cursor_col--
+                                is_dirty = 1
+                            } else if (cursor_row > 0) {
+                                forge prev_l: obsidian = ofs_array_get(editor_lines, cursor_row - 1)
+                                cursor_col = ofs_str_len(prev_l)
+                                ofs_array_set(editor_lines, cursor_row - 1, prev_l + cur_l)
+
+                                forge idx = cursor_row
+                                forge total_l = ofs_array_len(editor_lines)
+                                while (idx < total_l - 1) {
+                                    forge nxt: obsidian = ofs_array_get(editor_lines, idx + 1)
+                                    ofs_array_set(editor_lines, idx, nxt)
+                                    idx++
+                                }
+                                ofs_array_pop(editor_lines)
+                                cursor_row--
+                                if (cursor_row < scroll_top) { scroll_top = cursor_row }
+                                is_dirty = 1
+                            }
+                            needs_redraw = 1
+                        } else if (sym == 65293) {
+                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                            forge left_p = ofs_str_substr(cur_l, 0, cursor_col)
+                            forge right_p = split_line_at(cur_l, cursor_col)
+                            ofs_array_set(editor_lines, cursor_row, left_p)
+
+                            ofs_array_push(editor_lines, "")
+                            forge shift_idx = ofs_array_len(editor_lines) - 1
+                            while (shift_idx > cursor_row + 1) {
+                                forge prev_item: obsidian = ofs_array_get(editor_lines, shift_idx - 1)
+                                ofs_array_set(editor_lines, shift_idx, prev_item)
+                                shift_idx--
+                            }
+                            ofs_array_set(editor_lines, cursor_row + 1, right_p)
+                            cursor_row++
+                            cursor_col = 0
+                            if (cursor_row >= scroll_top + 24) { scroll_top = cursor_row - 23 }
+                            is_dirty = 1
+                            needs_redraw = 1
+                        } else if (sym == 65289) {
+                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                            forge new_l = insert_char_in_line(cur_l, cursor_col, "    ")
+                            ofs_array_set(editor_lines, cursor_row, new_l)
+                            cursor_col = cursor_col + 4
+                            is_dirty = 1
+                            needs_redraw = 1
+                        } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
+                            forge ch_buf: *stone = ofs_alloc(8)
+                            fracture {
+                                *ch_buf = sym
+                            }
+                            forge ch_str: obsidian = ch_buf
+                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                            forge new_l = insert_char_in_line(cur_l, cursor_col, ch_str)
+                            ofs_array_set(editor_lines, cursor_row, new_l)
+                            cursor_col++
+                            is_dirty = 1
+                            needs_redraw = 1
+                        }
+                    }
+                } else if (ev_type == 22) {
+                    forge p_wh: *stone = fault_step(event_buf, 7)
+                    forge raw_wh: stone = 0
+                    fracture {
+                        raw_wh = *p_wh
+                    }
+                    forge new_w = (raw_wh % 4294967296) % 65536
+                    forge new_h = ((raw_wh / 4294967296) % 4294967296) % 65536
+                    echo("[OFS IDLE] ConfigureNotify: w=" + ofs_stone_to_obsidian(new_w) + " h=" + ofs_stone_to_obsidian(new_h))
+                    if (new_w > 100 && new_h > 100) {
+                        if (new_w != win_w || new_h != win_h) {
+                            win_w = new_w
+                            win_h = new_h
+                            if (pix != 0) {
+                                XFreePixmap(disp, pix)
+                            }
+                            pix = XCreatePixmap(disp, win, win_w, win_h, depth)
+                            if (g_xft_draw != 0) {
+                                XftDrawDestroy(g_xft_draw as *stone)
+                            }
+                            g_xft_draw = XftDrawCreate(disp, pix, g_xft_visual as *stone, g_xft_cmap) as stone
+                            needs_redraw = 1
+                        }
+                    }
+                } else if (ev_type == 12) {
+                    needs_redraw = 1
+                }
+            }
+
+            if (needs_redraw != 0) {
+                forge cur_th = get_theme_by_id(active_theme_id)
+                forge statusbar_y = win_h - 24
+                forge panel_h = 220
+                if (win_h < 650) { panel_h = 160 }
+                forge panel_y = statusbar_y - panel_h
+
+                draw_rect(disp, pix, gc, cur_th.bg_window, 0, 0, win_w, win_h)
+
+                render_menu_bar(disp, pix, gc, hover_elem, cur_th, win_w)
+                render_activity_bar(disp, pix, gc, active_activity, hover_elem, cur_th, win_h)
+                render_sidebar(disp, pix, gc, active_activity, workspace_files, active_file_path, open_tabs, hover_elem, cur_th, search_query, workspace_folder, win_h, git_branch, git_commit_msg_buf, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types, ext_search_query, focused_area, active_theme_id, git_is_repo)
+                render_editor_area(disp, pix, gc, open_tabs, active_tab_idx, hover_elem, cur_th, editor_lines, cursor_row, cursor_col, scroll_top, is_dirty, active_file_path, win_w, win_h, panel_y)
+                render_bottom_panel(disp, pix, gc, active_panel_tab, hover_elem, cur_th, terminal_lines, lsp_err_count, active_file_name, cursor_row, cursor_col, terminal_input_buf, focused_area, win_w, win_h, panel_y)
+                render_status_bar(disp, pix, gc, cur_th, cursor_row, cursor_col, lsp_err_count, active_file_name, is_dirty, win_w, win_h, git_branch)
+
+                if (menu_open > 0) {
+                    render_dropdown_menu(disp, pix, gc, menu_open, menu_hover, cur_th)
+                }
+
+                if (modal_open > 0) {
+                    render_preferences_modal(disp, pix, gc, win_w, win_h, modal_tab, modal_theme, modal_font_size, modal_lsp, modal_autosave, modal_hover, cur_th)
+                }
+
+                if (folder_picker_open > 0) {
+                    render_folder_picker_modal(disp, pix, gc, win_w, win_h, folder_picker_input, hover_elem, cur_th)
+                }
+
+                if (palette_open > 0) {
+                    render_command_palette(disp, pix, gc, win_w, win_h, palette_query, palette_sel, cur_th)
+                }
+
+                XCopyArea(disp, pix, win, gc, 0, 0, win_w, win_h, 0, 0)
+                XFlush(disp)
+                needs_redraw = 0
+            }
+
+            usleep(16000)
+        }
+
+        echo("[OFS OLL Viewer] Encerrando visualizacao...")
+        if (g_xft_draw != 0) {
+            XftDrawDestroy(g_xft_draw as *stone)
+            g_xft_draw = 0
+        }
+        XFreePixmap(disp, pix)
+        XDestroyWindow(disp, win)
+        XCloseDisplay(disp)
+        echo("[OFS OLL Viewer] Finalizado com sucesso.")
+        return 0
+    }
+}
+

@@ -1,10 +1,10 @@
 // OFS Compiler — Lexer Unit Tests
 // Test individual lexer components
 
-attach {F:ofs/bootstrap/fileio.ofs}
-attach {F:ofs/bootstrap/tokens.ofs}
-attach {F:ofs/bootstrap/chars.ofs}
-attach {F:ofs/bootstrap/lexer.ofs}
+attach {F:ofscc/fileio.ofs}
+attach {F:ofscc/tokens.ofs}
+attach {F:ofscc/chars.ofs}
+attach {F:ofscc/lexer.ofs}
 
 vein test_is_digit() -> void {
     echo("Test: is_digit()")

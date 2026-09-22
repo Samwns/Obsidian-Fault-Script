@@ -86,6 +86,7 @@ namespace typeck {
     // ── Type Checking Core ───────────────────────────────────────────
     
     vein check_type_string(type_str: obsidian) -> bool {
+        if (ofs_str_len(type_str) > 0 && ofs_str_char_at(type_str, 0) == 42) { return true }
         if (ofs_str_eq(type_str, "stone")) { return true }
         if (ofs_str_eq(type_str, "crystal")) { return true }
         if (ofs_str_eq(type_str, "obsidian")) { return true }
@@ -100,10 +101,22 @@ namespace typeck {
         if (ofs_str_eq(type_str, "i32")) { return true }
         return false
     }
-    
+
+    vein is_int_type(t: obsidian) -> bool {
+        if (ofs_str_eq(t, "stone") || ofs_str_eq(t, "u8") || ofs_str_eq(t, "u16") ||
+            ofs_str_eq(t, "u32") || ofs_str_eq(t, "u64") || ofs_str_eq(t, "i8") || ofs_str_eq(t, "i32")) {
+            return true
+        }
+        return false
+    }
+
     vein check_type_compat(from: obsidian, to: obsidian) -> bool {
         if (ofs_str_eq(from, to)) { return true }
-        if (ofs_str_eq(to, "stone") && ofs_str_eq(from, "i32")) { return true }
+        if (is_int_type(from) && is_int_type(to)) { return true }
+        if (ofs_str_len(from) > 0 && ofs_str_char_at(from, 0) == 42 &&
+            ofs_str_len(to) > 0 && ofs_str_char_at(to, 0) == 42) {
+            return true
+        }
         return false
     }
     
@@ -140,7 +153,8 @@ namespace typeck {
         if (n.kind == NK_IDENT) {
             forge sym: Symbol = resolve(n.val)
             if (ofs_str_eq(sym.name, "")) {
-                echo("[typeck warn " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "] unknown identifier '" + n.val + "'")
+                echo("[AVISO SEMANTICO " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "]: identificador desconhecido '" + n.val + "'")
+                echo("  dica: declare a variavel com 'forge' ou importe o modulo com 'attach'.")
                 return "unknown"
             }
             node_set_type(id, sym.type_str)
@@ -152,13 +166,16 @@ namespace typeck {
             forge right_type = check_node(n.c1)
             
             if (ofs_str_eq(n.val, "+") || ofs_str_eq(n.val, "-") ||
-                ofs_str_eq(n.val, "*") || ofs_str_eq(n.val, "/")) {
+                ofs_str_eq(n.val, "*") || ofs_str_eq(n.val, "/") ||
+                ofs_str_eq(n.val, "%") || ofs_str_eq(n.val, "&") ||
+                ofs_str_eq(n.val, "|") || ofs_str_eq(n.val, "^") ||
+                ofs_str_eq(n.val, "<<") || ofs_str_eq(n.val, ">>")) {
                 if (ofs_str_eq(n.val, "+") && (ofs_str_eq(left_type, "obsidian") || ofs_str_eq(right_type, "obsidian"))) {
                     node_set_type(id, "obsidian")
                     return "obsidian"
                 }
                 if (!check_type_compat(left_type, right_type)) {
-                    echo("[typeck warn] type mismatch in " + n.val)
+                    echo("[AVISO DE TIPO " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "]: tipos incompativeis na operacao '" + n.val + "' (" + left_type + " vs " + right_type + ")")
                 }
                 node_set_type(id, left_type)
                 return left_type
@@ -194,12 +211,6 @@ namespace typeck {
             return "stone"
         }
 
-        if (n.kind == NK_CAST) {
-            check_node(n.c0)
-            node_set_type(id, n.val)
-            return n.val
-        }
-
         if (n.kind == NK_ASSIGN) {
             forge target_type = check_node(n.c0)
             check_node(n.c1)
@@ -207,18 +218,27 @@ namespace typeck {
             return target_type
         }
         
+        if (n.kind == NK_CAST) {
+            check_node(n.c0)
+            forge target_type = n.val
+            node_set_type(id, target_type)
+            return target_type
+        }
+
         if (n.kind == NK_UNARY_OP) {
             forge operand_type = check_node(n.c0)
             if (ofs_str_eq(n.val, "&")) {
-                node_set_type(id, "*" + operand_type)
-                return "*" + operand_type
+                forge ptr_t = "*" + operand_type
+                node_set_type(id, ptr_t)
+                return ptr_t
             }
             if (ofs_str_eq(n.val, "*")) {
-                if (ofs_str_len(operand_type) > 1 && ofs_str_eq(ofs_str_substr(operand_type, 0, 1), "*")) {
-                    forge inner = ofs_str_substr(operand_type, 1, ofs_str_len(operand_type) - 1)
-                    node_set_type(id, inner)
-                    return inner
+                forge deref_t = "stone"
+                if (ofs_str_len(operand_type) > 1 && ofs_str_char_at(operand_type, 0) == 42) {
+                    deref_t = ofs_str_substr(operand_type, 1, ofs_str_len(operand_type) - 1)
                 }
+                node_set_type(id, deref_t)
+                return deref_t
             }
             node_set_type(id, operand_type)
             return operand_type
@@ -226,11 +246,23 @@ namespace typeck {
         
         if (n.kind == NK_CALL) {
             forge i = 0
-            forge arg_count = node_extra_len(id)
-            while (i < arg_count) {
+            while (i < node_extra_len(id)) {
                 forge arg_id = node_get_extra(id, i)
                 check_node(arg_id)
                 i++
+            }
+            if (ofs_str_eq(n.val, "fault_cut") || ofs_str_eq(n.val, "fault_patch") || ofs_str_eq(n.val, "fault_swap") || ofs_str_eq(n.val, "fault_count") || ofs_str_eq(n.val, "fault_lead") || ofs_str_eq(n.val, "fault_trail")) {
+                node_set_type(id, "stone")
+                return "stone"
+            }
+            if (ofs_str_eq(n.val, "fault_fence") || ofs_str_eq(n.val, "fault_prefetch") || ofs_str_eq(n.val, "fault_trap")) {
+                node_set_type(id, "void")
+                return "void"
+            }
+            if (ofs_str_eq(n.val, "fault_step")) {
+                forge st_t = check_node(node_get_extra(id, 0))
+                node_set_type(id, st_t)
+                return st_t
             }
             forge fn_sym: Symbol = resolve(n.val)
             if (!ofs_str_eq(fn_sym.name, "")) {
@@ -310,22 +342,25 @@ namespace typeck {
         }
 
         if (n.kind == NK_CYCLE_RANGE) {
-            check_node(n.c0)
+            forge arr_t = check_node(n.c0)
             push_scope()
-            forge sym: Symbol
-            sym.name = n.val
-            sym.type_str = "stone"
-            sym.kind = SYM_VAR
-            declare(sym)
-            if (n.c1 >= 0) { check_node(n.c1) }
+            forge rsym: Symbol
+            rsym.name = n.val
+            rsym.type_str = "stone"
+            if (ofs_str_eq(arr_t, "Array<obsidian>") || ofs_str_eq(arr_t, "obsidian")) {
+                rsym.type_str = "obsidian"
+            }
+            rsym.kind = SYM_VAR
+            declare(rsym)
+            node_set_type(id, rsym.type_str)
+            check_node(n.c1)
             pop_scope()
             return "void"
         }
         
         if (n.kind == NK_BLOCK) {
             forge i = 0
-            forge statement_count = node_extra_len(id)
-            while (i < statement_count) {
+            while (i < node_extra_len(id)) {
                 forge stmt_id = node_get_extra(id, i)
                 check_node(stmt_id)
                 i++
@@ -361,8 +396,7 @@ namespace typeck {
             forge params_id = n.c0
             if (params_id >= 0) {
                 forge i = 0
-                forge param_count = node_extra_len(params_id)
-                while (i < param_count) {
+                while (i < node_extra_len(params_id)) {
                     forge param_id = node_get_extra(params_id, i)
                     forge param: Node = node_get(param_id)
                     forge param_type_id = param.c0
@@ -397,8 +431,7 @@ namespace typeck {
             declare(type_sym)
 
             forge i = 0
-            forge field_count = node_extra_len(id)
-            while (i < field_count) {
+            while (i < node_extra_len(id)) {
                 forge field_id = node_get_extra(id, i)
                 forge field: Node = node_get(field_id)
                 if (field.c0 >= 0) {
@@ -415,8 +448,7 @@ namespace typeck {
 
         if (n.kind == NK_IMPL) {
             forge i = 0
-            forge method_count = node_extra_len(id)
-            while (i < method_count) {
+            while (i < node_extra_len(id)) {
                 forge method_id = node_get_extra(id, i)
                 check_node(method_id)
                 i++
@@ -427,8 +459,7 @@ namespace typeck {
         if (n.kind == NK_NAMESPACE) {
             push_scope()
             forge i = 0
-            forge member_count = node_extra_len(id)
-            while (i < member_count) {
+            while (i < node_extra_len(id)) {
                 forge member_id = node_get_extra(id, i)
                 check_node(member_id)
                 i++
@@ -453,8 +484,7 @@ namespace typeck {
         if (n.kind == NK_PROGRAM) {
             // predeclare top-level functions for call resolution
             forge d = 0
-            forge declaration_count = node_extra_len(id)
-            while (d < declaration_count) {
+            while (d < node_extra_len(id)) {
                 forge decl_id = node_get_extra(id, d)
                 forge decl: Node = node_get(decl_id)
                 if (decl.kind == NK_FN_DECL || decl.kind == NK_CORE_DECL) {
@@ -477,8 +507,7 @@ namespace typeck {
                     declare(ext_sym)
                 } else if (decl.kind == NK_NAMESPACE || decl.kind == NK_IMPL) {
                     forge j = 0
-                    forge member_count = node_extra_len(decl_id)
-                    while (j < member_count) {
+                    while (j < node_extra_len(decl_id)) {
                         forge member_id = node_get_extra(decl_id, j)
                         forge member: Node = node_get(member_id)
                         if (member.kind == NK_FN_DECL || member.kind == NK_CORE_DECL || member.kind == NK_EXTERN_VN || member.kind == NK_RIFT_VN) {
@@ -498,7 +527,7 @@ namespace typeck {
             }
 
             forge i = 0
-            while (i < declaration_count) {
+            while (i < node_extra_len(id)) {
                 forge decl_id = node_get_extra(id, i)
                 check_node(decl_id)
                 i++

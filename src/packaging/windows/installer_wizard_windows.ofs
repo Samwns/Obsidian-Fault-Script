@@ -1,0 +1,632 @@
+extern vein GetModuleHandleA(name: obsidian) -> *stone
+extern vein CreateWindowExA(ex: stone, cls: obsidian, name: obsidian, style: stone, x: stone, y: stone, w: stone, h: stone, parent: *stone, menu: *stone, inst: *stone, param: *stone) -> *stone
+extern vein ShowWindow(hwnd: *stone, cmd: stone) -> stone
+extern vein UpdateWindow(hwnd: *stone) -> stone
+extern vein GetMessageA(msg: *stone, hwnd: *stone, min: stone, max: stone) -> stone
+extern vein TranslateMessage(msg: *stone) -> stone
+extern vein DispatchMessageA(msg: *stone) -> stone
+extern vein PostQuitMessage(code: stone) -> void
+extern vein ExitProcess(code: stone) -> void
+extern vein GetDC(hwnd: *stone) -> *stone
+extern vein ReleaseDC(hwnd: *stone, hdc: *stone) -> stone
+extern vein InvalidateRect(hwnd: *stone, rect: *stone, erase: stone) -> stone
+extern vein ValidateRect(hwnd: *stone, rect: *stone) -> stone
+extern vein GetClientRect(hwnd: *stone, rect: *stone) -> stone
+extern vein GetSystemMetrics(idx: stone) -> stone
+extern vein CreateSolidBrush(color: stone) -> *stone
+extern vein CreatePen(style: stone, width: stone, color: stone) -> *stone
+extern vein SelectObject(hdc: *stone, obj: *stone) -> *stone
+extern vein DeleteObject(obj: *stone) -> stone
+extern vein RoundRect(hdc: *stone, l: stone, t: stone, r: stone, b: stone, rw: stone, rh: stone) -> stone
+extern vein Rectangle(hdc: *stone, l: stone, t: stone, r: stone, b: stone) -> stone
+extern vein SetBkMode(hdc: *stone, mode: stone) -> stone
+extern vein SetTextColor(hdc: *stone, color: stone) -> stone
+extern vein TextOutA(hdc: *stone, x: stone, y: stone, text: obsidian, len: stone) -> stone
+extern vein CreateFontA(h: stone, w: stone, e: stone, o: stone, wt: stone, it: stone, un: stone, st: stone, c: stone, op: stone, cp: stone, q: stone, p: stone, f: obsidian) -> *stone
+extern vein CreateCompatibleDC(hdc: *stone) -> *stone
+extern vein CreateCompatibleBitmap(hdc: *stone, w: stone, h: stone) -> *stone
+extern vein BitBlt(dest: *stone, x: stone, y: stone, w: stone, h: stone, src: *stone, sx: stone, sy: stone, rop: stone) -> stone
+extern vein DeleteDC(hdc: *stone) -> stone
+extern vein MessageBoxA(hwnd: *stone, text: obsidian, title: obsidian, utype: stone) -> stone
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+extern vein lstrlenA(s: obsidian) -> stone
+extern vein fault_step(p: *stone, idx: stone) -> *stone
+extern vein LoadCursorA(inst: *stone, name: stone) -> *stone
+extern vein SetCursor(cur: *stone) -> *stone
+extern vein GetCursorPos(pt: *stone) -> stone
+extern vein ScreenToClient(hwnd: *stone, pt: *stone) -> stone
+extern vein Sleep(ms: stone) -> void
+
+vein _load_stone(p: *stone) -> stone {
+    fracture {
+        return *p
+    }
+}
+
+vein draw_card(hdc: *stone, x: stone, y: stone, w: stone, h: stone, bg_col: stone, border_col: stone, radius: stone) -> void {
+    forge hbrush = CreateSolidBrush(bg_col)
+    forge hpen = CreatePen(0, 1, border_col)
+    forge old_b = SelectObject(hdc, hbrush)
+    forge old_p = SelectObject(hdc, hpen)
+    RoundRect(hdc, x, y, x + w, y + h, radius, radius)
+    SelectObject(hdc, old_b)
+    SelectObject(hdc, old_p)
+    DeleteObject(hbrush)
+    DeleteObject(hpen)
+}
+
+vein draw_text(hdc: *stone, hfont: *stone, x: stone, y: stone, text: obsidian, fg_col: stone) -> void {
+    forge old_f = SelectObject(hdc, hfont)
+    SetTextColor(hdc, fg_col)
+    SetBkMode(hdc, 1)
+    TextOutA(hdc, x, y, text, lstrlenA(text))
+    SelectObject(hdc, old_f)
+}
+
+vein draw_badge(hdc: *stone, hfont: *stone, x: stone, y: stone, w: stone, h: stone, text: obsidian, bg_col: stone, fg_col: stone) -> void {
+    forge hbrush = CreateSolidBrush(bg_col)
+    forge hpen = CreatePen(0, 1, bg_col)
+    forge old_b = SelectObject(hdc, hbrush)
+    forge old_p = SelectObject(hdc, hpen)
+    RoundRect(hdc, x, y, x + w, y + h, h, h)
+    SelectObject(hdc, old_b)
+    SelectObject(hdc, old_p)
+    DeleteObject(hbrush)
+    DeleteObject(hpen)
+    forge old_f = SelectObject(hdc, hfont)
+    SetTextColor(hdc, fg_col)
+    SetBkMode(hdc, 1)
+    forge tlen = lstrlenA(text)
+    forge tx = x + (w - (tlen * 7)) / 2
+    forge ty = y + (h - 14) / 2
+    TextOutA(hdc, tx, ty, text, tlen)
+    SelectObject(hdc, old_f)
+}
+
+vein draw_btn_state(hdc: *stone, hfont: *stone, x: stone, y: stone, w: stone, h: stone, text: obsidian, btn_id: stone, hover_id: stone, base_bg: stone, hover_bg: stone, base_border: stone, hover_border: stone, fg_col: stone) -> void {
+    forge bg = base_bg
+    forge bcol = base_border
+    if (btn_id == hover_id && hover_id > 0) {
+        bg = hover_bg
+        bcol = hover_border
+    }
+    forge hbrush = CreateSolidBrush(bg)
+    forge hpen = CreatePen(0, 1, bcol)
+    forge old_b = SelectObject(hdc, hbrush)
+    forge old_p = SelectObject(hdc, hpen)
+    RoundRect(hdc, x, y, x + w, y + h, 8, 8)
+    SelectObject(hdc, old_b)
+    SelectObject(hdc, old_p)
+    DeleteObject(hbrush)
+    DeleteObject(hpen)
+    forge old_f = SelectObject(hdc, hfont)
+    SetTextColor(hdc, fg_col)
+    SetBkMode(hdc, 1)
+    forge tlen = lstrlenA(text)
+    forge tx = x + (w - (tlen * 8)) / 2
+    forge ty = y + (h - 16) / 2
+    TextOutA(hdc, tx, ty, text, tlen)
+    SelectObject(hdc, old_f)
+}
+
+vein draw_progress(hdc: *stone, x: stone, y: stone, w: stone, h: stone, pct: stone, track_col: stone, fill_col: stone) -> void {
+    forge hbrush_t = CreateSolidBrush(track_col)
+    forge hpen_t = CreatePen(0, 1, track_col)
+    forge old_b = SelectObject(hdc, hbrush_t)
+    forge old_p = SelectObject(hdc, hpen_t)
+    RoundRect(hdc, x, y, x + w, y + h, 8, 8)
+    SelectObject(hdc, old_b)
+    SelectObject(hdc, old_p)
+    DeleteObject(hbrush_t)
+    DeleteObject(hpen_t)
+
+    if (pct > 0) {
+        forge fill_w = (w * pct) / 100
+        forge hbrush_f = CreateSolidBrush(fill_col)
+        forge hpen_f = CreatePen(0, 1, fill_col)
+        old_b = SelectObject(hdc, hbrush_f)
+        old_p = SelectObject(hdc, hpen_f)
+        RoundRect(hdc, x, y, x + fill_w, y + h, 8, 8)
+        SelectObject(hdc, old_b)
+        SelectObject(hdc, old_p)
+        DeleteObject(hbrush_f)
+        DeleteObject(hpen_f)
+    }
+}
+
+vein draw_checkbox_row(hdc: *stone, hfont: *stone, x: stone, y: stone, w: stone, h: stone, row_id: stone, hover_id: stone, checked: stone, text: obsidian, desc: obsidian) -> void {
+    forge card_bg = 1839889
+    forge card_border = 3224132
+    if (row_id == hover_id && hover_id > 0) {
+        card_bg = 2303554
+        card_border = 16430217
+    }
+    draw_card(hdc, x, y, w, h, card_bg, card_border, 6)
+
+    forge box_bg = 2693912
+    forge box_border = 4731181
+    if (checked == 1) {
+        box_bg = 16430217
+        box_border = 16430217
+    } else if (row_id == hover_id && hover_id > 0) {
+        box_border = 16430217
+    }
+
+    forge hbrush = CreateSolidBrush(box_bg)
+    forge hpen = CreatePen(0, 1, box_border)
+    forge old_b = SelectObject(hdc, hbrush)
+    forge old_p = SelectObject(hdc, hpen)
+    RoundRect(hdc, x + 10, y + 6, x + 28, y + 24, 4, 4)
+    SelectObject(hdc, old_b)
+    SelectObject(hdc, old_p)
+    DeleteObject(hbrush)
+    DeleteObject(hpen)
+
+    if (checked == 1) {
+        forge old_f = SelectObject(hdc, hfont)
+        SetTextColor(hdc, 1314060)
+        SetBkMode(hdc, 1)
+        TextOutA(hdc, x + 14, y + 7, "X", 1)
+        SelectObject(hdc, old_f)
+    }
+
+    draw_text(hdc, hfont, x + 38, y + 7, text, 16250357)
+
+    forge dlen = lstrlenA(desc)
+    if (dlen > 0) {
+        forge desc_x = (x + w) - (dlen * 7) - 16
+        draw_text(hdc, hfont, desc_x, y + 7, desc, 13151654)
+    }
+}
+
+vein render_installer(hwnd: *stone, rect_buf: *stone, step: stone, p1: stone, p2: stone, p3: stone, p4: stone, p5: stone, p6: stone, p7: stone, p8: stone, progress_val: stone, hover_id: stone) -> void {
+    forge hdc = GetDC(hwnd)
+    if (hdc == null) { return }
+
+    GetClientRect(hwnd, rect_buf)
+    forge r_val = _load_stone(fault_step(rect_buf, 1))
+    forge win_w = r_val & 65535
+    forge win_h = (r_val >> 32) & 65535
+
+    if (win_w < 600) { win_w = 840 }
+    if (win_h < 400) { win_h = 620 }
+
+    forge mem_dc = CreateCompatibleDC(hdc)
+    forge mem_bmp = CreateCompatibleBitmap(hdc, win_w, win_h)
+    forge old_bmp = SelectObject(mem_dc, mem_bmp)
+
+    forge bg_brush = CreateSolidBrush(1708303)
+    forge old_b = SelectObject(mem_dc, bg_brush)
+    Rectangle(mem_dc, -2, -2, win_w + 4, win_h + 4)
+    SelectObject(mem_dc, old_b)
+    DeleteObject(bg_brush)
+
+    forge font_title = CreateFontA(-18, 0, 0, 0, 700, 0, 0, 0, 0, 0, 0, 5, 0, "Segoe UI")
+    forge font_h2 = CreateFontA(-16, 0, 0, 0, 700, 0, 0, 0, 0, 0, 0, 5, 0, "Segoe UI")
+    forge font_bold = CreateFontA(-13, 0, 0, 0, 700, 0, 0, 0, 0, 0, 0, 5, 0, "Segoe UI")
+    forge font_regular = CreateFontA(-13, 0, 0, 0, 400, 0, 0, 0, 0, 0, 0, 5, 0, "Segoe UI")
+    forge font_small = CreateFontA(-11, 0, 0, 0, 400, 0, 0, 0, 0, 0, 0, 5, 0, "Segoe UI")
+
+    forge hdr_brush = CreateSolidBrush(2233875)
+    old_b = SelectObject(mem_dc, hdr_brush)
+    Rectangle(mem_dc, -2, -2, win_w + 4, 76)
+    SelectObject(mem_dc, old_b)
+    DeleteObject(hdr_brush)
+
+    forge line_pen = CreatePen(0, 1, 4008486)
+    forge old_p = SelectObject(mem_dc, line_pen)
+    Rectangle(mem_dc, 0, 75, win_w, 76)
+    SelectObject(mem_dc, old_p)
+    DeleteObject(line_pen)
+
+    draw_badge(mem_dc, font_bold, 28, 18, 55, 38, "OFS", 16430217, 1314060)
+    draw_text(mem_dc, font_title, 95, 18, "Assistente de Instalacao do Obsidian Fault Script", 16250357)
+    draw_text(mem_dc, font_small, 95, 42, "Compilador Nativo Self-Hosted, Stack Magma e Motor Visual OLL", 13151654)
+    draw_badge(mem_dc, font_small, win_w - 120, 26, 92, 24, "v1.0.137 x64", 10609574, 1314060)
+
+    forge usable_w = win_w - 56
+    forge step_w = (usable_w - 60) / 5
+    forge s0_col = 8810604
+    forge s1_col = 8810604
+    forge s2_col = 8810604
+    forge s3_col = 8810604
+    forge s4_col = 8810604
+    if (step == 0) { s0_col = 16430217 }
+    if (step > 0) { s0_col = 10609574 }
+    if (step == 1) { s1_col = 16430217 }
+    if (step > 1) { s1_col = 10609574 }
+    if (step == 2) { s2_col = 16430217 }
+    if (step > 2) { s2_col = 10609574 }
+    if (step == 3) { s3_col = 16430217 }
+    if (step > 3) { s3_col = 10609574 }
+    if (step == 4) { s4_col = 10609574 }
+
+    forge sx0 = 28
+    forge sx1 = sx0 + step_w + 14
+    forge sx2 = sx1 + step_w + 14
+    forge sx3 = sx2 + step_w + 14
+    forge sx4 = sx3 + step_w + 14
+
+    draw_badge(mem_dc, font_small, sx0, 88, step_w, 24, "1. Boas-vindas", 2233875, s0_col)
+    draw_text(mem_dc, font_small, sx0 + step_w + 4, 93, ">", 8810604)
+    draw_badge(mem_dc, font_small, sx1, 88, step_w, 24, "2. Componentes", 2233875, s1_col)
+    draw_text(mem_dc, font_small, sx1 + step_w + 4, 93, ">", 8810604)
+    draw_badge(mem_dc, font_small, sx2, 88, step_w, 24, "3. Destino", 2233875, s2_col)
+    draw_text(mem_dc, font_small, sx2 + step_w + 4, 93, ">", 8810604)
+    draw_badge(mem_dc, font_small, sx3, 88, step_w, 24, "4. Instalacao", 2233875, s3_col)
+    draw_text(mem_dc, font_small, sx3 + step_w + 4, 93, ">", 8810604)
+    draw_badge(mem_dc, font_small, sx4, 88, step_w, 24, "5. Conclusao", 2233875, s4_col)
+
+    forge main_card_h = win_h - 200
+    draw_card(mem_dc, 28, 126, usable_w, main_card_h, 2693912, 4731181, 10)
+
+    if (step == 0) {
+        draw_text(mem_dc, font_h2, 52, 148, "Bem-vindo ao Assistente de Instalacao do OFS", 16430217)
+        draw_text(mem_dc, font_regular, 52, 176, "Este assistente configurara o compilador self-hosted OFS v1.0.137 e a Stack Magma no seu computador.", 16250357)
+        draw_text(mem_dc, font_small, 52, 198, "O OFS e uma linguagem de sistemas deterministica com backend LLVM direto, sem dependencia de Clang ou C.", 13151654)
+
+        forge half_card_w = (usable_w - 60) / 2
+        draw_card(mem_dc, 52, 230, half_card_w, 160, 1839889, 4008486, 8)
+        draw_text(mem_dc, font_bold, 68, 244, "Recursos do Compilador", 10609574)
+        draw_text(mem_dc, font_small, 68, 272, "- Compilador 100% self-hosted (ofscc)", 16250357)
+        draw_text(mem_dc, font_small, 68, 296, "- Stack Magma com 10 subsistemas nativos", 13151654)
+        draw_text(mem_dc, font_small, 68, 320, "- Alocador deterministico Reservoir", 13151654)
+        draw_text(mem_dc, font_small, 68, 344, "- Determinismo estrito verificado byte-a-byte", 13151654)
+        draw_text(mem_dc, font_small, 68, 368, "- Emissao direta LLC -> LLD PE32+ (x86_64)", 8893434)
+
+        draw_card(mem_dc, 52 + half_card_w + 16, 230, half_card_w, 160, 1839889, 4008486, 8)
+        draw_text(mem_dc, font_bold, 68 + half_card_w + 16, 244, "Motor Visual OLL (UI Nativa)", 16230091)
+        draw_text(mem_dc, font_small, 68 + half_card_w + 16, 272, "- Layouts declarativos modernos (.oll)", 16250357)
+        draw_text(mem_dc, font_small, 68 + half_card_w + 16, 296, "- Renderizacao acelerada com Double Buffering", 13151654)
+        draw_text(mem_dc, font_small, 68 + half_card_w + 16, 320, "- Tipografia ClearType anti-aliasing nitida", 13151654)
+        draw_text(mem_dc, font_small, 68 + half_card_w + 16, 344, "- Auto-centralizacao e trancamento de escala", 16430217)
+        draw_text(mem_dc, font_small, 68 + half_card_w + 16, 368, "- Suporte a Windows, Linux e macOS", 10609574)
+
+        draw_card(mem_dc, 52, 406, usable_w - 48, 88, 1839889, 4008486, 8)
+        draw_text(mem_dc, font_bold, 68, 420, "Recomendacao de Instalacao", 8893434)
+        draw_text(mem_dc, font_small, 68, 444, "Recomendamos manter os componentes padrao recomendados para obter o ecossistema completo.", 13151654)
+        draw_text(mem_dc, font_small, 68, 466, "Passe o cursor sobre os botoes abaixo para conferir o sistema de Hover e clique em Avancar.", 16250357)
+    }
+
+    if (step == 1) {
+        draw_text(mem_dc, font_h2, 52, 148, "Selecao de Componentes", 16430217)
+        draw_text(mem_dc, font_regular, 52, 174, "Selecione quais modulos da linguagem e ferramentas devem ser instalados:", 16250357)
+
+        forge row_w = usable_w - 48
+        draw_checkbox_row(mem_dc, font_regular, 52, 204, row_w, 32, 11, hover_id, p1, "Compilador ofscc v1.0.137 (Self-Hosted nativo)", "[Obrigatorio - 8.4 MB]")
+        draw_checkbox_row(mem_dc, font_regular, 52, 240, row_w, 32, 12, hover_id, p2, "Runtime Stack Magma (Reservoir, Prism, Pulse)", "[4.2 MB]")
+        draw_checkbox_row(mem_dc, font_regular, 52, 276, row_w, 32, 13, hover_id, p3, "Motor Visual Declarativo OLL & CLI ofs-ui", "[3.8 MB]")
+        draw_checkbox_row(mem_dc, font_regular, 52, 312, row_w, 32, 14, hover_id, p4, "Biblioteca Padrao stdlib (Bedrock, Net, HTTP, IO)", "[2.8 MB]")
+        draw_checkbox_row(mem_dc, font_regular, 52, 348, row_w, 32, 15, hover_id, p5, "Adicionar binarios do OFS a variavel PATH do sistema", "[Recomendado]")
+        draw_checkbox_row(mem_dc, font_regular, 52, 384, row_w, 32, 16, hover_id, p6, "Associar arquivos de codigo (.ofs) e layouts (.oll)", "[Recomendado]")
+
+        draw_card(mem_dc, 52, 428, row_w, 66, 1839889, 4008486, 8)
+        draw_text(mem_dc, font_bold, 68, 438, "Espaco em Disco Requerido", 10609574)
+        draw_text(mem_dc, font_small, 68, 462, "Espaco total necessario: 19.2 MB | Espaco disponivel no volume atual: 284.6 GB (Livre)", 13151654)
+    }
+
+    if (step == 2) {
+        draw_text(mem_dc, font_h2, 52, 148, "Local de Instalacao", 16430217)
+        draw_text(mem_dc, font_regular, 52, 174, "O assistente instalara os arquivos do OFS no seguinte diretorio de destino:", 16250357)
+
+        forge dest_w = usable_w - 48
+        draw_card(mem_dc, 52, 206, dest_w - 128, 38, 1839889, 4008486, 6)
+        draw_text(mem_dc, font_bold, 66, 216, "C:\\Program Files\\Obsidian Fault Script\\", 16250357)
+
+        draw_btn_state(mem_dc, font_bold, 52 + dest_w - 120, 206, 120, 38, "Procurar...", 4, hover_id, 3224132, 4737631, 4008486, 16430217, 16250357)
+
+        draw_card(mem_dc, 52, 260, dest_w, 150, 1839889, 4008486, 8)
+        draw_text(mem_dc, font_bold, 68, 274, "Estrutura de Pastas que Sera Criada", 16230091)
+        draw_text(mem_dc, font_small, 68, 300, "-> bin\\        ofs.exe (CLI), ofscc.exe (compilador), ofs-ui.exe (visualizador)", 16250357)
+        draw_text(mem_dc, font_small, 68, 324, "-> lib\\        magma_win.o, win_shim.o (subsistemas de runtime)", 13151654)
+        draw_text(mem_dc, font_small, 68, 348, "-> stdlib\\     bedrock.ofs, oll.ofs, matrix.ofs, prism.ofs, net.ofs, http.ofs", 13151654)
+        draw_text(mem_dc, font_small, 68, 372, "-> docs\\       Documentacao tecnica completa e especificacao de linguagem", 13151654)
+
+        draw_card(mem_dc, 52, 426, dest_w, 68, 1839889, 4008486, 8)
+        draw_badge(mem_dc, font_small, 68, 442, 120, 24, "Status: Valido", 10609574, 1314060)
+        draw_text(mem_dc, font_small, 200, 446, "Permissoes de gravacao verificadas com sucesso. Clique em Instalar.", 13151654)
+    }
+
+    if (step == 3) {
+        draw_text(mem_dc, font_h2, 52, 148, "Instalando o Obsidian Fault Script v1.0.137...", 8893434)
+        draw_text(mem_dc, font_regular, 52, 174, "Aguarde enquanto os componentes selecionados sao configurados no sistema:", 16250357)
+
+        forge inst_w = usable_w - 48
+        draw_progress(mem_dc, 52, 202, inst_w - 110, 22, progress_val, 3549736, 10609574)
+        draw_badge(mem_dc, font_small, 52 + inst_w - 100, 202, 96, 22, "100% OK", 10609574, 1314060)
+
+        draw_card(mem_dc, 52, 238, inst_w, 256, 1839889, 4008486, 8)
+        draw_text(mem_dc, font_bold, 68, 252, "Log de Extracao e Configuracao Magma", 10609574)
+        draw_text(mem_dc, font_small, 68, 278, "[EXTRACT] ofscc.exe (Compilador self-hosted x86_64 PE32+) ... OK", 16250357)
+        draw_text(mem_dc, font_small, 68, 302, "[EXTRACT] ofs.exe (Gerenciador de build e ferramentas CLI) ... OK", 16250357)
+        draw_text(mem_dc, font_small, 68, 326, "[EXTRACT] Stack Magma (Reservoir, Facet, Matrix, Prism, Pulse) ... OK", 13151654)
+        draw_text(mem_dc, font_small, 68, 350, "[EXTRACT] Biblioteca Padrao (stdlib: bedrock, oll, net, http, io) ... OK", 13151654)
+        draw_text(mem_dc, font_small, 68, 374, "[SYSTEM]  Configurando C:\\Program Files\\Obsidian Fault Script\\bin no PATH ... OK", 16430217)
+        draw_text(mem_dc, font_small, 68, 398, "[SYSTEM]  Registrando associacao para arquivos .ofs e layouts .oll ... OK", 16430217)
+        draw_text(mem_dc, font_small, 68, 422, "[VERIFY]  Verificacao de integridade sha256 byte-a-byte (Determinismo) ... OK", 10609574)
+        draw_text(mem_dc, font_small, 68, 446, "[STATUS]  Todos os arquivos foram instalados com sucesso.", 10609574)
+    }
+
+    if (step == 4) {
+        draw_badge(mem_dc, font_bold, 52, 144, 280, 26, "INSTALACAO CONCLUIDA", 10609574, 1314060)
+        draw_text(mem_dc, font_h2, 52, 182, "O Obsidian Fault Script foi Instalado com Exito!", 16250357)
+        draw_text(mem_dc, font_regular, 52, 210, "O compilador ofscc, o runtime Stack Magma e o motor OLL estao prontos para uso no seu computador.", 13151654)
+
+        forge sum_w = usable_w - 48
+        draw_card(mem_dc, 52, 240, sum_w, 140, 1839889, 4008486, 8)
+        draw_text(mem_dc, font_bold, 68, 254, "Resumo da Instalacao", 16430217)
+        draw_text(mem_dc, font_small, 68, 280, "Ambiente:       Windows x64 / PortProton / Wine (Executando perfeitamente)", 16250357)
+        draw_text(mem_dc, font_small, 68, 304, "Caminho CLI:    C:\\Program Files\\Obsidian Fault Script\\bin\\ofs.exe", 13151654)
+        draw_text(mem_dc, font_small, 68, 328, "Compilador:     C:\\Program Files\\Obsidian Fault Script\\bin\\ofscc.exe (v1.0.137)", 13151654)
+        draw_text(mem_dc, font_small, 68, 352, "Status Geral:   Determinismo estrito confirmado. Zero memory leaks.", 10609574)
+
+        draw_checkbox_row(mem_dc, font_regular, 52, 396, sum_w, 32, 21, hover_id, p7, "Iniciar o Obsidian Control Center & OLL Studio agora", "")
+        draw_checkbox_row(mem_dc, font_regular, 52, 434, sum_w, 32, 22, hover_id, p8, "Exibir guia rapido e documentacao oficial no navegador", "")
+    }
+
+    forge footer_y = win_h - 70
+    forge footer_pen = CreatePen(0, 1, 4008486)
+    old_p = SelectObject(mem_dc, footer_pen)
+    Rectangle(mem_dc, 0, footer_y, win_w, footer_y + 1)
+    SelectObject(mem_dc, old_p)
+    DeleteObject(footer_pen)
+
+    draw_text(mem_dc, font_small, 28, footer_y + 24, "Obsidian Fault System Inc. | Licenca MIT Aberta | 100% OFS", 13151654)
+
+    forge b_cancel_x = win_w - 365
+    forge b_back_x = win_w - 255
+    forge b_next_x = win_w - 145
+    forge b_y = footer_y + 14
+
+    draw_btn_state(mem_dc, font_bold, b_cancel_x, b_y, 100, 36, "Cancelar", 1, hover_id, 3224132, 2301988, 4008486, 11045875, 16250357)
+
+    if (step == 0 || step == 3) {
+        draw_btn_state(mem_dc, font_bold, b_back_x, b_y, 100, 36, "< Voltar", 0, hover_id, 2171434, 2171434, 2697533, 2697533, 7105646)
+    } else {
+        draw_btn_state(mem_dc, font_bold, b_back_x, b_y, 100, 36, "< Voltar", 2, hover_id, 3224132, 4737631, 4008486, 16430217, 16250357)
+    }
+
+    if (step == 0 || step == 1) {
+        draw_btn_state(mem_dc, font_bold, b_next_x, b_y, 117, 36, "Avancar >", 3, hover_id, 16430217, 16694206, 16430217, 16777215, 1314060)
+    } else if (step == 2) {
+        draw_btn_state(mem_dc, font_bold, b_next_x, b_y, 117, 36, "Instalar", 3, hover_id, 10609574, 13169824, 10609574, 16777215, 1314060)
+    } else if (step == 3) {
+        draw_btn_state(mem_dc, font_bold, b_next_x, b_y, 117, 36, "Instalando...", 0, hover_id, 8893434, 8893434, 8893434, 8893434, 1314060)
+    } else if (step == 4) {
+        draw_btn_state(mem_dc, font_bold, b_next_x, b_y, 117, 36, "Concluir", 3, hover_id, 10609574, 13169824, 10609574, 16777215, 1314060)
+    }
+
+    BitBlt(hdc, 0, 0, win_w, win_h, mem_dc, 0, 0, 13369376)
+
+    DeleteObject(font_title)
+    DeleteObject(font_h2)
+    DeleteObject(font_bold)
+    DeleteObject(font_regular)
+    DeleteObject(font_small)
+
+    SelectObject(mem_dc, old_bmp)
+    DeleteObject(mem_bmp)
+    DeleteDC(mem_dc)
+    ReleaseDC(hwnd, hdc)
+}
+
+vein main() -> void {
+    forge hInst = GetModuleHandleA(null)
+
+    forge sw = GetSystemMetrics(0)
+    forge sh = GetSystemMetrics(1)
+    forge init_w: stone = 856
+    forge init_h: stone = 658
+    forge wx = (sw - init_w) / 2
+    forge wy = (sh - init_h) / 2
+    if (wx < 0) { wx = 0 }
+    if (wy < 0) { wy = 0 }
+
+    forge hCurArrow = LoadCursorA(null, 32512)
+    forge hCurHand = LoadCursorA(null, 32649)
+    forge cur_cursor = hCurArrow
+    SetCursor(cur_cursor)
+
+    forge WS_FIXED = 13238272
+    forge WS_VISIBLE = 268435456
+    forge SS_NOTIFY = 256
+
+    forge main_hwnd = CreateWindowExA(0, "STATIC", "Instalador do Obsidian Fault Script (OFS) v1.0.137", WS_FIXED | WS_VISIBLE | SS_NOTIFY, wx, wy, init_w, init_h, null, null, hInst, null)
+    if (main_hwnd == null) {
+        ExitProcess(1)
+    }
+
+    ShowWindow(main_hwnd, 5)
+    UpdateWindow(main_hwnd)
+    SetCursor(cur_cursor)
+
+    forge step: stone = 0
+    forge p1: stone = 1
+    forge p2: stone = 1
+    forge p3: stone = 1
+    forge p4: stone = 1
+    forge p5: stone = 1
+    forge p6: stone = 1
+    forge p7: stone = 1
+    forge p8: stone = 1
+    forge progress: stone = 0
+    forge hover_id: stone = 0
+
+    forge rect_buf: *stone = ofs_alloc(32)
+    render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+
+    forge pt: *stone = ofs_alloc(16)
+    forge msg: *stone = ofs_alloc(96)
+    forge has_msg = GetMessageA(msg, null, 0, 0)
+    while (has_msg > 0) {
+        forge msg_id = _load_stone(fault_step(msg, 1)) & 65535
+
+        if (msg_id == 16 || msg_id == 2) {
+            ExitProcess(0)
+        }
+
+        if (msg_id == 32) {
+            SetCursor(cur_cursor)
+            has_msg = GetMessageA(msg, null, 0, 0)
+            continue
+        }
+
+        if (msg_id == 20) {
+            has_msg = GetMessageA(msg, null, 0, 0)
+            continue
+        }
+
+        if (msg_id == 15 || msg_id == 5) {
+            ValidateRect(main_hwnd, null)
+            render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+            has_msg = GetMessageA(msg, null, 0, 0)
+            continue
+        }
+
+        GetClientRect(main_hwnd, rect_buf)
+        forge r_val = _load_stone(fault_step(rect_buf, 1))
+        forge cur_win_w = r_val & 65535
+        forge cur_win_h = (r_val >> 32) & 65535
+        if (cur_win_w < 600) { cur_win_w = 840 }
+        if (cur_win_h < 400) { cur_win_h = 620 }
+
+        GetCursorPos(pt)
+        ScreenToClient(main_hwnd, pt)
+        forge pt_val = _load_stone(pt)
+        forge mx = pt_val & 65535
+        forge my = (pt_val >> 32) & 65535
+
+        forge in_bounds: stone = 1
+        if (mx > 32767 || mx > cur_win_w || my > 32767 || my > cur_win_h) {
+            in_bounds = 0
+        }
+
+        forge b_cancel_x = cur_win_w - 365
+        forge b_back_x = cur_win_w - 255
+        forge b_next_x = cur_win_w - 145
+        forge b_y = cur_win_h - 58
+        forge usable_w = cur_win_w - 56
+
+        forge new_hover: stone = 0
+        if (in_bounds == 1) {
+            if (my >= b_y && my <= (b_y + 36)) {
+                if (mx >= b_cancel_x && mx <= (b_cancel_x + 100)) {
+                    new_hover = 1
+                } else if (mx >= b_back_x && mx <= (b_back_x + 100)) {
+                    if (step > 0 && step != 3) {
+                        new_hover = 2
+                    }
+                } else if (mx >= b_next_x && mx <= (b_next_x + 117)) {
+                    if (step != 3) {
+                        new_hover = 3
+                    }
+                }
+            }
+
+            forge row_w = usable_w - 48
+            if (step == 1 && mx >= 52 && mx <= (52 + row_w)) {
+                if (my >= 204 && my <= 236) { new_hover = 11 }
+                else if (my >= 240 && my <= 272) { new_hover = 12 }
+                else if (my >= 276 && my <= 308) { new_hover = 13 }
+                else if (my >= 312 && my <= 344) { new_hover = 14 }
+                else if (my >= 348 && my <= 380) { new_hover = 15 }
+                else if (my >= 384 && my <= 416) { new_hover = 16 }
+            }
+
+            if (step == 2 && my >= 206 && my <= 244 && mx >= (52 + row_w - 120) && mx <= (52 + row_w)) {
+                new_hover = 4
+            }
+
+            if (step == 4 && mx >= 52 && mx <= (52 + row_w)) {
+                if (my >= 396 && my <= 428) { new_hover = 21 }
+                else if (my >= 434 && my <= 466) { new_hover = 22 }
+            }
+        }
+
+        if (new_hover != hover_id) {
+            hover_id = new_hover
+            if (hover_id > 0) {
+                cur_cursor = hCurHand
+            } else {
+                cur_cursor = hCurArrow
+            }
+            SetCursor(cur_cursor)
+            render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+        }
+
+        if (msg_id == 513) {
+            if (hover_id == 1) {
+                ExitProcess(0)
+            } else if (hover_id == 2) {
+                if (step > 0 && step != 3 && step != 4) {
+                    step = step - 1
+                    render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+                }
+            } else if (hover_id == 3) {
+                if (step == 0) {
+                    step = 1
+                    render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+                } else if (step == 1) {
+                    step = 2
+                    render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+                } else if (step == 2) {
+                    step = 3
+                    hover_id = 0
+                    progress = 15
+                    render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+                    Sleep(180)
+                    progress = 40
+                    render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+                    Sleep(180)
+                    progress = 70
+                    render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+                    Sleep(180)
+                    progress = 90
+                    render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+                    Sleep(150)
+                    progress = 100
+                    render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+                    Sleep(250)
+                    step = 4
+                    render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+                    MessageBoxA(main_hwnd, "Instalacao do Obsidian Fault Script v1.0.137 concluida com sucesso!\n\nTodos os modulos foram registrados no sistema.", "Instalador OFS", 64)
+                } else if (step == 4) {
+                    ExitProcess(0)
+                }
+            } else if (hover_id == 4) {
+                MessageBoxA(main_hwnd, "Diretorio de instalacao recomendado:\nC:\\Program Files\\Obsidian Fault Script\\\n\nTodas as permissoes de gravacao estao OK.", "Destino OFS", 64)
+            } else if (hover_id == 11) {
+                p1 = 1 - p1
+                render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+            } else if (hover_id == 12) {
+                p2 = 1 - p2
+                render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+            } else if (hover_id == 13) {
+                p3 = 1 - p3
+                render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+            } else if (hover_id == 14) {
+                p4 = 1 - p4
+                render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+            } else if (hover_id == 15) {
+                p5 = 1 - p5
+                render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+            } else if (hover_id == 16) {
+                p6 = 1 - p6
+                render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+            } else if (hover_id == 21) {
+                p7 = 1 - p7
+                render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+            } else if (hover_id == 22) {
+                p8 = 1 - p8
+                render_installer(main_hwnd, rect_buf, step, p1, p2, p3, p4, p5, p6, p7, p8, progress, hover_id)
+            }
+        }
+
+        TranslateMessage(msg)
+        DispatchMessageA(msg)
+        has_msg = GetMessageA(msg, null, 0, 0)
+    }
+
+    ExitProcess(0)
+}

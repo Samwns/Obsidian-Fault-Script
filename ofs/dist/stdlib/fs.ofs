@@ -1,0 +1,71 @@
+extern vein fopen(path: obsidian, mode: obsidian) -> obsidian
+extern vein fclose(f: obsidian) -> stone
+extern vein fread(buf: obsidian, sz: stone, n: stone, f: obsidian) -> stone
+extern vein fwrite(buf: obsidian, sz: stone, n: stone, f: obsidian) -> stone
+extern vein fputs(s: obsidian, f: obsidian) -> stone
+extern vein fseek(f: obsidian, offset: stone, whence: stone) -> stone
+extern vein ftell(f: obsidian) -> stone
+extern vein ofs_alloc(size: stone) -> obsidian
+extern vein ofs_str_len(s: obsidian) -> stone
+
+namespace fs {
+    vein exists(path: obsidian) -> bool {
+        forge f = fopen(path, "r")
+        if (f == null) {
+            return false
+        }
+        fclose(f)
+        return true
+    }
+
+    vein size(path: obsidian) -> stone {
+        forge f = fopen(path, "rb")
+        if (f == null) {
+            return 0
+        }
+        fseek(f, 0, 2)
+        forge sz = ftell(f)
+        fclose(f)
+        return sz
+    }
+
+    vein read(path: obsidian) -> obsidian {
+        forge f = fopen(path, "rb")
+        if (f == null) {
+            return ""
+        }
+        fseek(f, 0, 2)
+        forge sz = ftell(f)
+        fseek(f, 0, 0)
+        if (sz <= 0) {
+            fclose(f)
+            return ""
+        }
+        forge buf = ofs_alloc(sz + 1)
+        fread(buf, 1, sz, f)
+        fclose(f)
+        return buf
+    }
+
+    vein write(path: obsidian, content: obsidian) -> bool {
+        forge f = fopen(path, "wb")
+        if (f == null) {
+            return false
+        }
+        forge len = ofs_str_len(content)
+        fwrite(content, 1, len, f)
+        fclose(f)
+        return true
+    }
+
+    vein append(path: obsidian, content: obsidian) -> bool {
+        forge f = fopen(path, "ab")
+        if (f == null) {
+            return false
+        }
+        forge len = ofs_str_len(content)
+        fwrite(content, 1, len, f)
+        fclose(f)
+        return true
+    }
+}

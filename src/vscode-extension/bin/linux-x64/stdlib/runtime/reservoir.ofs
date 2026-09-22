@@ -1,0 +1,43 @@
+extern vein calloc(num: stone, size: stone) -> *stone
+extern vein free(ptr: *stone) -> void
+extern vein malloc(size: stone) -> *stone
+extern vein memcpy(dst: *stone, src: *stone, size: stone) -> *stone
+extern vein memset(dst: *stone, val: stone, size: stone) -> *stone
+extern vein exit(code: stone) -> void
+
+vein ofs_alloc(size: stone) -> *stone {
+    if (size <= 0) { size = 1 }
+    forge ptr: *stone = calloc(1, size)
+    if (ptr == null) {
+        exit(1)
+    }
+    return ptr
+}
+
+vein ofs_free(ptr: *stone) -> void {
+    if (ptr != null) {
+        free(ptr)
+    }
+}
+
+namespace reservoir {
+    vein alloc(size: stone) -> *stone {
+        return ofs_alloc(size)
+    }
+
+    vein free(ptr: *stone) -> void {
+        ofs_free(ptr)
+    }
+
+    vein zero(ptr: *stone, size: stone) -> void {
+        if (ptr != null && size > 0) {
+            memset(ptr, 0, size)
+        }
+    }
+
+    vein copy(dst: *stone, src: *stone, size: stone) -> void {
+        if (dst != null && src != null && size > 0) {
+            memcpy(dst, src, size)
+        }
+    }
+}

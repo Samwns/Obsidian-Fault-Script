@@ -1,0 +1,193 @@
+attach {F:../../stdlib/oll.ofs}
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_stone_to_obsidian(val: stone) -> obsidian
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein exit(code: stone) -> void
+
+extern vein XOpenDisplay(name: obsidian) -> *stone
+extern vein XDefaultScreen(disp: *stone) -> stone
+extern vein XRootWindow(disp: *stone, s: stone) -> stone
+extern vein XCreateSimpleWindow(disp: *stone, parent: stone, x: stone, y: stone, w: stone, h: stone, bw: stone, border: stone, bg: stone) -> stone
+extern vein XStoreName(disp: *stone, win: stone, title: obsidian) -> stone
+extern vein XSelectInput(disp: *stone, win: stone, mask: stone) -> stone
+extern vein XMapWindow(disp: *stone, win: stone) -> stone
+extern vein XFlush(disp: *stone) -> stone
+extern vein XCreateGC(disp: *stone, win: stone, mask: stone, values: *stone) -> *stone
+extern vein XSetForeground(disp: *stone, gc: *stone, color: stone) -> stone
+extern vein XFillRectangle(disp: *stone, win: stone, gc: *stone, x: stone, y: stone, w: stone, h: stone) -> stone
+extern vein XDrawRectangle(disp: *stone, win: stone, gc: *stone, x: stone, y: stone, w: stone, h: stone) -> stone
+extern vein XDrawString(disp: *stone, win: stone, gc: *stone, x: stone, y: stone, str: obsidian, len: stone) -> stone
+extern vein XPending(disp: *stone) -> stone
+extern vein XNextEvent(disp: *stone, event: *stone) -> stone
+extern vein XDestroyWindow(disp: *stone, win: stone) -> stone
+extern vein XCloseDisplay(disp: *stone) -> stone
+extern vein usleep(usec: stone) -> stone
+
+vein render_oll_to_x11(disp: *stone, win: stone, gc: *stone) -> void {
+    forge total = oll.node_count()
+    forge i = 0
+    while (i < total) {
+        forge n = oll.get_node(i)
+        if (n.bg_color >= 0) {
+            XSetForeground(disp, gc, n.bg_color)
+            XFillRectangle(disp, win, gc, n.box_x, n.box_y, n.box_w, n.box_h)
+        }
+
+        if (n.kind == 13) {
+            forge track_col = 3224132
+            if (n.bg_color >= 0) { track_col = n.bg_color }
+            XSetForeground(disp, gc, track_col)
+            XFillRectangle(disp, win, gc, n.box_x, n.box_y, n.box_w, n.box_h)
+            forge pct = n.gap
+            if (pct <= 0) { pct = 45 }
+            forge fill_w = (n.box_w * pct) / 100
+            forge fill_col = n.border_color
+            if (fill_col <= 0) { fill_col = 10937249 }
+            XSetForeground(disp, gc, fill_col)
+            XFillRectangle(disp, win, gc, n.box_x, n.box_y, fill_w, n.box_h)
+        }
+
+        if (n.border_width > 0) {
+            forge bcol = n.border_color
+            if (bcol <= 0) { bcol = 4540250 }
+            XSetForeground(disp, gc, bcol)
+            XDrawRectangle(disp, win, gc, n.box_x, n.box_y, n.box_w, n.box_h)
+        }
+
+        forge tlen = ofs_str_len(n.text)
+        if (tlen > 0) {
+            forge fcol = n.fg_color
+            if (fcol <= 0) { fcol = 13489908 }
+            XSetForeground(disp, gc, fcol)
+            forge tx = n.box_x + n.padding + 6
+            forge ty = n.box_y + n.padding + 16
+            if (n.kind == 6 || n.kind == 12) {
+                forge text_w = tlen * 7
+                if (n.box_w > text_w) {
+                    tx = n.box_x + ((n.box_w - text_w) / 2)
+                }
+                ty = n.box_y + ((n.box_h + 10) / 2)
+            } else if (n.kind == 2 || n.kind == 11) {
+                ty = n.box_y + 20
+            }
+            XDrawString(disp, win, gc, tx, ty, n.text, tlen)
+        }
+        i++
+    }
+    XFlush(disp)
+}
+
+extern vein getenv(name: obsidian) -> obsidian
+
+core main() {
+    forge oll_file = "ofs/examples/oll/system_monitor.oll"
+    forge env_file = getenv("OLL_FILE")
+    if (ofs_str_len(env_file) > 0) {
+        oll_file = env_file
+    }
+    echo("[OFS OLL Viewer] Carregando arquivo de interface: " + oll_file)
+    forge root_id = oll.load(oll_file)
+    if (root_id < 0) {
+        echo("[OFS OLL Viewer] Erro ao carregar layout OLL: " + oll_file)
+        exit(1)
+    }
+
+    oll.compute_layout(root_id)
+    forge root_node = oll.get_node(root_id)
+    forge win_w = root_node.box_w
+    if (win_w <= 0) { win_w = 840 }
+    forge win_h = root_node.box_h
+    if (win_h <= 0) { win_h = 600 }
+
+    forge win_title = "OFS - OLL Native Window (" + root_node.text + ")"
+    if (ofs_str_len(root_node.text) == 0) {
+        win_title = "OFS - OLL Native Layout Window"
+    }
+
+    echo("[OFS OLL Viewer] Conectando ao servidor X11...")
+    forge disp: *stone = XOpenDisplay(null)
+    if (disp == null) {
+        echo("[OFS OLL Viewer] Erro: display X11 indisponivel.")
+        exit(1)
+    }
+
+    forge screen = XDefaultScreen(disp)
+    forge root = XRootWindow(disp, screen)
+    forge black: stone = 0
+    forge white: stone = 16777215
+
+    echo("[OFS OLL Viewer] Criando janela nativa " + ofs_stone_to_obsidian(win_w) + "x" + ofs_stone_to_obsidian(win_h) + "...")
+    forge win = XCreateSimpleWindow(disp, root, 80, 60, win_w, win_h, 1, white, black)
+    if (win == 0) {
+        echo("[OFS OLL Viewer] Erro ao criar janela X11.")
+        XCloseDisplay(disp)
+        exit(1)
+    }
+
+    XStoreName(disp, win, win_title)
+    XSelectInput(disp, win, 163845)
+    XMapWindow(disp, win)
+    XFlush(disp)
+
+    forge gc: *stone = XCreateGC(disp, win, 0, null)
+    echo("[OFS OLL Viewer] Janela criada com sucesso! Window ID: " + ofs_stone_to_obsidian(win))
+    echo("[OFS OLL Viewer] Renderizando layout OLL (" + ofs_stone_to_obsidian(oll.node_count()) + " nos)...")
+
+    render_oll_to_x11(disp, win, gc)
+
+    forge event_buf: *stone = ofs_alloc(192)
+    forge running = 1
+    forge frames = 0
+    forge status_banner = "Interface OLL ativa e interativa!"
+
+    while (running != 0 && frames < 600) {
+        while (XPending(disp) > 0) {
+            XNextEvent(disp, event_buf)
+            forge ev_type: stone = 0
+            fracture {
+                ev_type = *event_buf
+            }
+
+            if (ev_type == 12) {
+                render_oll_to_x11(disp, win, gc)
+            } else if (ev_type == 4) {
+                forge p_xy: *stone = fault_step(event_buf, 8)
+                forge raw_xy: stone = 0
+                fracture {
+                    raw_xy = *p_xy
+                }
+                forge mx = raw_xy % 65536
+                forge my = (raw_xy / 4294967296) % 65536
+                forge hit_id = oll.hit_test(mx, my)
+                if (hit_id >= 0) {
+                    forge hit_node = oll.get_node(hit_id)
+                    echo("[OFS OLL Event] Clique no componente: " + hit_node.text + " (acao: " + hit_node.on_click + ")")
+                    status_banner = "Clicado: " + hit_node.text
+                    if (ofs_str_eq(hit_node.on_click, "quit") || ofs_str_eq(hit_node.on_click, "close")) {
+                        running = 0
+                    }
+                }
+                render_oll_to_x11(disp, win, gc)
+            } else if (ev_type == 2) {
+                forge p_kc: *stone = fault_step(event_buf, 10)
+                forge keycode: stone = 0
+                fracture {
+                    keycode = *p_kc % 256
+                }
+                if (keycode == 9) {
+                    echo("[OFS OLL Event] Tecla ESC pressionada. Fechando...")
+                    running = 0
+                }
+            }
+        }
+        usleep(16000)
+        frames++
+    }
+
+    echo("[OFS OLL Viewer] Encerrando visualizacao...")
+    XDestroyWindow(disp, win)
+    XCloseDisplay(disp)
+    echo("[OFS OLL Viewer] Finalizado com sucesso.")
+}

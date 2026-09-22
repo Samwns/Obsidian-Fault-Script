@@ -1,0 +1,7 @@
+extern vein MessageBoxA(hwnd: *stone, text: obsidian, title: obsidian, utype: stone) -> stone
+extern vein ExitProcess(code: stone) -> void
+
+vein main() -> void {
+    MessageBoxA(null, "Olá! Executável (.exe) gerado com sucesso pelo Obsidian Fault Script (OFS)!\n\nPipeline: OFS -> LLVM IR -> LLC -> LLD (PE32+ x64)\nRuntime: Stack Magma", "Obsidian Fault Script (OFS)", 64)
+    ExitProcess(0)
+}

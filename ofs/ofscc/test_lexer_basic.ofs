@@ -1,9 +1,9 @@
 // OFS Compiler — Lexer Test
 // Tests tokenization of a simple program
 
-attach {F:ofs/bootstrap/fileio.ofs}
-attach {F:ofs/bootstrap/tokens.ofs}
-attach {F:ofs/bootstrap/lexer.ofs}
+attach {F:ofscc/fileio.ofs}
+attach {F:ofscc/tokens.ofs}
+attach {F:ofscc/lexer.ofs}
 
 core main() {
     echo("=== OFS Lexer Test ===")

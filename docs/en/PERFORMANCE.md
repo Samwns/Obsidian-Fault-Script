@@ -34,8 +34,8 @@ on Mach-O, and `OPT:REF` on PE/COFF so unused runtime functions do not remain
 in every application.
 
 On the workload published on June 14, 2026, this reduced the OFS executable
-from 28,224 to 16,056 bytes without changing its checksum. The launcher also
-caches the detected Clang major version instead of probing the toolchain on
+from 28,224 to 16,056 bytes without changing its checksum. The launcher caches
+CRT paths and native toolchain binaries (llc and ld) instead of slow filesystem probing on
 every compilation. Median build time for the same workload moved from
 320.81 ms to 208.78 ms on the recorded machine.
 

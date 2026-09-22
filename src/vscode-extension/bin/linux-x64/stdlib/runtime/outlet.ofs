@@ -1,0 +1,94 @@
+attach {F:reservoir.ofs}
+attach {F:facet.ofs}
+
+extern vein puts(s: obsidian) -> stone
+extern vein printf(fmt: obsidian, s: obsidian) -> stone
+extern vein putchar(c: stone) -> stone
+
+vein echo_obsidian(s: obsidian) -> void {
+    if (s == null) {
+        puts("(null)")
+    } else {
+        puts(s)
+    }
+}
+
+vein echo_stone(v: stone) -> void {
+    forge s = ofs_stone_to_obsidian(v)
+    echo_obsidian(s)
+}
+
+vein echo_crystal(v: crystal) -> void {
+    forge s = ofs_crystal_to_obsidian(v)
+    echo_obsidian(s)
+}
+
+vein echo_bool(v: stone) -> void {
+    if (v != 0) {
+        puts("true")
+    } else {
+        puts("false")
+    }
+}
+
+vein echo_newline() -> void {
+    putchar(10)
+}
+
+vein echo_obsidian_nn(s: obsidian) -> void {
+    if (s != null) {
+        printf("%s", s)
+    }
+}
+
+vein echo_stone_nn(v: stone) -> void {
+    forge s = ofs_stone_to_obsidian(v)
+    echo_obsidian_nn(s)
+}
+
+vein echo_crystal_nn(v: crystal) -> void {
+    forge s = ofs_crystal_to_obsidian(v)
+    echo_obsidian_nn(s)
+}
+
+vein ofs_echo_color(ansi: obsidian, text: obsidian) -> void {
+    forge c = ansi
+    if (c == null) { c = "\x1b[0m" }
+    forge t = text
+    if (t == null) { t = "" }
+    echo_obsidian(c + t + "\x1b[0m")
+}
+
+namespace outlet {
+    vein print(s: obsidian) -> void {
+        echo_obsidian_nn(s)
+    }
+
+    vein println(s: obsidian) -> void {
+        echo_obsidian(s)
+    }
+
+    vein print_stone(v: stone) -> void {
+        echo_stone_nn(v)
+    }
+
+    vein println_stone(v: stone) -> void {
+        echo_stone(v)
+    }
+
+    vein print_crystal(v: crystal) -> void {
+        echo_crystal_nn(v)
+    }
+
+    vein println_crystal(v: crystal) -> void {
+        echo_crystal(v)
+    }
+
+    vein newline() -> void {
+        echo_newline()
+    }
+
+    vein color(ansi: obsidian, text: obsidian) -> void {
+        ofs_echo_color(ansi, text)
+    }
+}

@@ -1,0 +1,51 @@
+attach {F:../../stdlib/runtime/magma.ofs}
+
+core main() {
+    forge mem: *stone = reservoir.alloc(128)
+    reservoir.zero(mem, 128)
+    reservoir.free(mem)
+
+    forge s = facet.concat("Magma", " Stack")
+    if (facet.eq(s, "Magma Stack") == false) {
+        exit(1)
+    }
+
+    forge arr: *stone = matrix.create(4, 8)
+    matrix.push(arr, 777)
+    if (matrix.get(arr, 0) != 777) {
+        exit(2)
+    }
+
+    forge env = foundation.get_env("PATH")
+    if (facet.len(env) == 0) {
+        exit(3)
+    }
+
+    forge t = pulse.now_ms()
+    if (t <= 0) {
+        exit(4)
+    }
+
+    frame.create("Test Window", 800, 600)
+    if (frame.width() != 800) {
+        exit(5)
+    }
+    if (frame.height() != 600) {
+        exit(6)
+    }
+    frame.destroy()
+
+    forge mx = impulse.mouse_x()
+    if (mx != 0) {
+        exit(7)
+    }
+
+    forge surf = prism.create(16, 16)
+    prism.set_pixel(surf, 2, 2, 255)
+    if (prism.get_pixel(surf, 2, 2) != 255) {
+        exit(8)
+    }
+    prism.destroy(surf)
+
+    outlet.println("MAGMA_FULL_STACK_OK")
+}

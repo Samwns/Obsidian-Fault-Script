@@ -1,7 +1,7 @@
-# Guia de Início do OFS — Versão Nativa Self-Hosted
+# Guia de Início do OFS — Versão Nativa (C++-Free)
 
-> OFS usa um compilador self-hosted (`ofscc`) e um wrapper `ofs` para o fluxo diário.
-> O compilador emite LLVM IR diretamente; o wrapper usa ferramentas LLVM/clang para montar e linkar executáveis nativos.
+> **NOVO**: O OFS agora é completamente self-hosted com compilador nativo!
+> Sem dependências de C++, CMake ou LLVM. Releases gerados automaticamente em ~5 segundos.
 
 ---
 
@@ -9,10 +9,11 @@
 
 ```bash
 # 1. Fazer bootstrap do compilador OFS nativo  
-bash ofs/bootstrap/scripts/bootstrap.sh
+bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 
-# 2. Rodar um programa
-ofs/dist/ofs run ofs/examples/hello.ofs
+# 2. Compilar um programa
+ofs/dist/ofscc build ofs/examples/hello.ofs -o hello
+./hello
 # Output: Hello, World!
 ```
 
@@ -33,31 +34,27 @@ cd Obsidian-Fault-Script
 
 ```bash
 # Windows, Linux ou macOS - mesmo comando!
-bash ofs/bootstrap/scripts/bootstrap.sh
+bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 ```
 
-Isso cria/atualiza o compilador self-hosted em `ofs/dist/ofscc`.
-
-`ofs/bootstrap/scripts/bootstrap-minimal.sh` ainda existe, mas agora e apenas compatibilidade.
-Use `bootstrap.sh` para instalar a linguagem completa.
+Isso cria `ofs/dist/ofscc` e `ofs/dist/magma.o` em apenas ~2 segundos!
 
 ### 3. Usar o compilador nativo
 
 ```bash
-# Rodar direto, com saida limpa do seu programa
-ofs/dist/ofs run seu_programa.ofs
-
 # Compilar arquivo OFS para executável nativo
-ofs/dist/ofs build seu_programa.ofs -o seu_programa
+ofs/dist/ofscc build seu_programa.ofs -o seu_programa
+# Ou usar o CLI ofs instalado:
+ofs build seu_programa.ofs -o seu_programa
 
 # Type-check sem gerar binário
-ofs/dist/ofs check seu_programa.ofs
+ofs check seu_programa.ofs
 
 # Inspecionar código
-ofs/dist/ofs tokens seu_programa.ofs      # Tokens do lexer
-ofs/dist/ofs ast seu_programa.ofs         # Abstract syntax tree
-ofs/dist/ofs ir seu_programa.ofs          # LLVM IR
-ofs/dist/ofs asm seu_programa.ofs         # Assembly nativo
+ofs tokens seu_programa.ofs      # Tokens do lexer
+ofs ast seu_programa.ofs         # Abstract syntax tree
+ofs ir seu_programa.ofs          # LLVM IR
+ofs asm seu_programa.ofs         # Assembly nativo
 ```
 
 ### 4. (Opcional) Usar com Make
@@ -86,10 +83,11 @@ core main() {
 }
 ```
 
-Rode:
+Compile:
 
 ```bash
-ofs/dist/ofs run hello.ofs
+dist/ofscc build hello.ofs -o hello
+./hello
 ```
 
 Output:
@@ -113,60 +111,64 @@ core main() {
 }
 ```
 
-Rode:
+Compile:
 
 ```bash
-ofs/dist/ofs run math.ofs
+ofs build math.ofs -o math
+./math
 ```
 
 ### Exemplos prontos
 
 ```bash
 # FizzBuzz
-ofs/dist/ofs run ofs/examples/fizzbuzz.ofs
+ofs build ofs/examples/fizzbuzz.ofs -o fizzbuzz && ./fizzbuzz
 
 # Recursão
-ofs/dist/ofs run ofs/examples/recursion.ofs
+ofs build ofs/examples/recursion.ofs -o rec && ./rec
 
 # Strings
-ofs/dist/ofs run ofs/examples/string_ops.ofs
+ofs build ofs/examples/string_ops.ofs -o str && ./str
 
 # Arrays
-ofs/dist/ofs run ofs/examples/collections.ofs
+ofs build ofs/examples/collections.ofs -o arr && ./arr
 ```
 
 ## 3. Comandos Principais
 
-O wrapper `ofs/dist/ofs` oferece:
+O CLI oficial `ofs` e o compilador nativo `ofs/dist/ofscc` oferecem:
 
 ```bash
-# Rodar direto
-ofs/dist/ofs run programa.ofs
-
 # Compilar para executável
-ofs/dist/ofs build programa.ofs -o programa
+ofs build programa.ofs -o programa
 
 # Validar sem gerar saída
-ofs/dist/ofs check programa.ofs
+ofs check programa.ofs
+
+# Executar imediatamente (JIT/run temporário)
+ofs run programa.ofs
 
 # Debug: inspecionar código
-ofs/dist/ofs tokens programa.ofs  # Análise léxica
-ofs/dist/ofs ast programa.ofs     # Sintaxe
-ofs/dist/ofs ir programa.ofs      # LLVM IR
-ofs/dist/ofs asm programa.ofs     # Assembly nativo
+ofs tokens programa.ofs  # Análise léxica
+ofs ast programa.ofs     # Sintaxe
+ofs ir programa.ofs      # LLVM IR
+ofs asm programa.ofs     # Assembly nativo
+
+# Renderizar layout declarativo OLL
+ofs ui interface.oll -o preview.ppm
 ```
 
 ### Exemplos de uso
 
 ```bash
 # Programa simples
-ofs/dist/ofs run hello.ofs
+ofs build hello.ofs -o hello && ./hello
 
 # Com otimização
-ofs/dist/ofs build programa.ofs -o programa && ./programa
+ofs build programa.ofs -o programa -O3 && ./programa
 
 # Type-check de biblioteca (sem executar)
-ofs/dist/ofs check meu_codigo.ofs
+ofs check meu_codigo.ofs
 ```
 
 ---
@@ -175,10 +177,10 @@ ofs/dist/ofs check meu_codigo.ofs
 
 ```ofs
 core main() {
-    forge nome = "Ana"      // obsidian
-    forge idade = 19         // stone
-    forge altura = 1.70      // crystal
-    forge ativo = true       // bool
+    forge nome = "Ana"
+    forge idade = 19
+    forge altura = 1.70
+    forge ativo = true
 
     forge r: u8 = 255
     forge g: u8 = 128
@@ -195,7 +197,7 @@ core main() {
 Tipos disponíveis no uso comum:
 
 - `stone`, `crystal`, `obsidian`, `bool`, `void`
-- `u8`, `u16`, `u32`, `u64`, `i8`, `i16`, `i32`
+- `u8`, `u16`, `u32`, `u64`, `i8`, `i32`
 - `Array<T>`
 - `monolith` e tipos definidos pelo usuário
 - tipos de função: `vein(stone) -> stone`
@@ -438,24 +440,99 @@ Exemplos no repositório:
 
 ---
 
+## 13. Interface Declarativa com OLL (`.oll`)
+
+O OFS inclui a **OLL (Obsidian Layout Language)**, uma linguagem declarativa para definição de interfaces gráficas limpas e modernas:
+
+```bash
+# Inspecionar nós e hierarquia de layout OLL
+ofs ui packaging/installer_wizard_linux.oll
+
+# Renderizar layout diretamente para imagem PPM
+ofs ui packaging/installer_wizard_linux.oll -o preview.ppm
+```
+
+Exemplo de layout OLL:
+
+```oll
+window "Painel do Sistema" 800x600 theme="obsidian-dark" {
+  header {
+    title "Status do Sistema"
+    subtitle "Nobara Linux 43 x86_64"
+  }
+  column {
+    card title="Recursos" {
+      label "CPU: Ryzen 7 5700X (16 cores)"
+      label "RAM: 32 GB DDR4"
+    }
+    row {
+      button "Atualizar" action="refresh"
+      button "Fechar" action="quit"
+    }
+  }
+}
+```
+
+---
+
+## 14. Compilação Nativa e Cross-compilação Windows (Sem Clang)
+
+O pipeline do OFS não depende do Clang. O backend usa `llc` e o linker nativo (`ld` no Linux, `ld.lld` no Windows):
+
+```bash
+# Compilar binário nativo para Linux
+ofs build meu_programa.ofs -o meu_programa
+
+# Cross-compilar diretamente para Windows PE (.exe)
+ofs build meu_programa.ofs --target windows -o meu_programa.exe
+
+# Executar executável Windows no Linux via Wine
+wine meu_programa.exe
+```
+
+---
+
+## 15. Instaladores Oficiais em OFS Puro
+
+Os instaladores oficiais da linguagem são desenvolvidos em OFS puro com interfaces visuais OLL:
+
+- **Linux**: `src/packaging/installer_wizard_linux.ofs` (alimentado por `src/packaging/installer_wizard_linux.oll`)
+- **Windows**: `src/packaging/windows/installer_wizard_windows.ofs` (alimentado por Win32 e `src/packaging/windows/installer_wizard_windows.oll`)
+
+Para compilar e executar o instalador de Linux:
+```bash
+ofs build src/packaging/installer_wizard_linux.ofs -o ofs-installer-linux
+./ofs-installer-linux
+```
+
+Para compilar e testar o instalador de Windows via Wine:
+```bash
+ofs build src/packaging/windows/installer_wizard_windows.ofs --target windows -o ofs/dist/installer_windows.exe
+wine ofs/dist/installer_windows.exe
+```
+
+---
+
+## 16. Runtime Nativo OFS (Stack Magma)
+
+A Stack Magma substitui completamente os runtimes legados em C (`libofs_runtime.a`):
+
+- `Magma`: Inicialização e orquestração do runtime
+- `Reservoir`: Gerenciamento e alocação de memória (`ofs_alloc`, `ofs_free`)
+- `Facet`: Operações de texto e conversões numéricas
+- `Matrix`: Coleções e vetores dinâmicos
+- `Outlet`: Saída formatada no terminal e cores ANSI
+- `Foundation`: Abstração de SO e variáveis de ambiente
+- `Pulse`: Relógio monotônico de alta precisão e delays
+- `Frame`, `Impulse`, `Prism`: Janelas, eventos e rasterização gráfica
+
+---
+
 ## Próximos passos
 
 1. Leia a [Referência da Linguagem](LANGUAGE_REFERENCE.md)
-2. Rode os exemplos em `ofs/examples/`
-3. Veja os pacotes em [src/packages/README.md](../src/packages/README.md)
-4. Use a [Jornada Iniciante](pt/OFS_JORNADA_INICIANTE.md) se estiver começando
-- Explore the **[standard library](../ofs/stdlib/)** for reusable functions
-- Continue with the **[OFS Beginner Journey](pt/OFS_JORNADA_INICIANTE.md)** for the next study steps
-
-### New in v1.0
-
-- **`while` loops**: `while (cond) { }` for condition-only looping
-- **Type casting**: `expr as type` for explicit conversions
-- **`attach`**: Include other OFS modules
-- **`extern`**: Declare C functions for low-level access
-- **Expanded runtime**: String ops, math, I/O, type conversions
-- **Standard library**: `core.ofs`, `math.ofs`, `string.ofs`, `io.ofs`
+2. Abra a documentação web interativa em `docs/index.html`
+3. Explore os layouts visuais em `examples/oll/`
+4. Instale a extensão oficial do VS Code (`ofs-vscode-extension.vsix`)
 
 Happy coding with OFS! 🪨⚡
-
-- [Bare-metal/Freestanding Profile (experimental)](ofs/docs/BAREMETAL_PROFILE.md)

@@ -1,0 +1,45 @@
+attach {F:reservoir.ofs}
+attach {F:facet.ofs}
+
+extern vein getenv(name: obsidian) -> obsidian
+extern vein exit(code: stone) -> void
+
+vein ofs_getenv(name: obsidian) -> obsidian {
+    if (name == null) { return "" }
+    forge v = getenv(name)
+    if (v == null) { return "" }
+    return v
+}
+
+vein ofs_mod(a: stone, b: stone) -> stone {
+    if (b == 0) {
+        exit(1)
+    }
+    forge r = a % b
+    if (r < 0) {
+        if (b < 0) {
+            r = r - b
+        } else {
+            r = r + b
+        }
+    }
+    return r
+}
+
+vein ofs_exit(code: stone) -> void {
+    exit(code)
+}
+
+namespace foundation {
+    vein get_env(name: obsidian) -> obsidian {
+        return ofs_getenv(name)
+    }
+
+    vein terminate(code: stone) -> void {
+        ofs_exit(code)
+    }
+
+    vein mod(a: stone, b: stone) -> stone {
+        return ofs_mod(a, b)
+    }
+}

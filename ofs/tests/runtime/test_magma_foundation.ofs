@@ -1,0 +1,17 @@
+attach {F:../../stdlib/runtime/foundation.ofs}
+
+core main() {
+    forge p = foundation.get_env("PATH")
+    if (facet.len(p) == 0) {
+        exit(1)
+    }
+    forge m1 = foundation.mod(17, 5)
+    if (m1 != 2) {
+        exit(2)
+    }
+    forge m2 = foundation.mod(-7, 5)
+    if (m2 < 0) {
+        exit(3)
+    }
+    echo("MAGMA_FOUNDATION_TEST_OK")
+}

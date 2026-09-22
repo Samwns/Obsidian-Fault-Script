@@ -1,0 +1,57 @@
+window CatalystBrowser {
+    title: "Catalyst Browser"
+    width: 1024
+    height: 768
+    background: #181825
+
+    column {
+        row {
+            id: "tabbar"
+            height: 32
+            background: #181825
+            padding: 2
+            gap: 6
+            tabs {
+                tab "New Tab" { id: "tab_0", width: 140, active: true }
+                tab "Settings" { id: "tab_1", width: 140 }
+            }
+            button "+" { id: "btn_new_tab", width: 28, height: 28, on_click: on_new_tab }
+        }
+
+        row {
+            id: "toolbar"
+            height: 42
+            background: #1e1e2e
+            padding: 6
+            gap: 8
+            button "<" { id: "btn_back", width: 28, height: 28, on_click: on_back }
+            button ">" { id: "btn_forward", width: 28, height: 28, on_click: on_forward }
+            button "R" { id: "btn_reload", width: 28, height: 28, on_click: on_reload }
+            button "H" { id: "btn_home", width: 28, height: 28, on_click: on_home }
+            input {
+                id: "urlbar"
+                bind: "current_url"
+                width: 700
+                height: 28
+                background: #11111b
+                color: #89b4fa
+                border: 1
+            }
+            label "OFS SECURE" {
+                id: "badge_secure"
+                width: 120
+                height: 28
+                color: #a6e3a1
+                border: 1
+                background: #313244
+            }
+        }
+
+        panel {
+            id: "viewport"
+            background: #1e1e2e
+            height: 694
+            padding: 8
+        }
+    }
+}

@@ -1,0 +1,72 @@
+attach {F:../../ofs/stdlib/oll.ofs}
+attach {F:../../ofs/stdlib/fs.ofs}
+
+extern vein system(cmd: obsidian) -> stone
+extern vein getenv(name: obsidian) -> obsidian
+
+vein do_install() -> bool {
+    forge home = getenv("HOME")
+    if (ofs_str_len(home) == 0) {
+        echo("ERRO: HOME nao definido.")
+        return false
+    }
+
+    echo("Iniciando instalacao do Obsidian Fault Script (OFS)...")
+    forge bin_dir = home + "/.local/bin"
+    forge lib_dir = home + "/.local/lib/ofs"
+    forge stdlib_dir = lib_dir + "/stdlib"
+
+    system("mkdir -p " + bin_dir)
+    system("mkdir -p " + stdlib_dir)
+
+    echo("Copiando binario ofs...")
+    system("cp ofs/dist/ofs " + bin_dir + "/ofs")
+    system("chmod +x " + bin_dir + "/ofs")
+
+    echo("Copiando compilador nativo ofscc...")
+    system("cp ofs/dist/ofscc " + bin_dir + "/ofscc")
+    system("cp ofs/dist/ofscc " + lib_dir + "/ofscc")
+    system("chmod +x " + bin_dir + "/ofscc")
+
+    echo("Copiando runtime Stack Magma nativo...")
+    if (fs.exists("ofs/dist/magma.o")) {
+        system("cp ofs/dist/magma.o " + lib_dir + "/magma.o")
+    }
+
+    echo("Copiando biblioteca padrao (stdlib)...")
+    system("cp -r ofs/stdlib/* " + stdlib_dir + "/")
+
+    echo("Verificando instalacao...")
+    forge check_code = system(bin_dir + "/ofs version")
+    if (check_code == 0) {
+        echo("INSTALACAO CONCLUIDA COM SUCESSO!")
+        echo("Binarios disponiveis em: " + bin_dir)
+        echo("Biblioteca instalada em: " + stdlib_dir)
+        return true
+    } else {
+        echo("AVISO: Falha na verificacao do binario instalado.")
+        return false
+    }
+}
+
+vein main() -> void {
+    forge layout_path = "src/packaging/installer_wizard_linux.oll"
+    forge root_id = oll.load(layout_path)
+    if (root_id < 0) {
+        echo("Falha ao carregar layout OLL: " + layout_path)
+        exit(1)
+    }
+
+    oll.compute_layout(root_id)
+    forge root_node = oll.get_node(root_id)
+    echo("Assistente de Instalacao OFS inicializado via OLL (" + ofs_stone_to_obsidian(root_node.box_w) + "x" + ofs_stone_to_obsidian(root_node.box_h) + ")")
+    echo("Nos de interface OLL: " + ofs_stone_to_obsidian(oll.node_count()))
+
+    forge success = do_install()
+    if (success) {
+        echo("Tudo pronto para programar em OFS!")
+    } else {
+        echo("Houve um problema durante a instalacao.")
+        exit(1)
+    }
+}
