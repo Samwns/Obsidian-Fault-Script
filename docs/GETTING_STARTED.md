@@ -535,4 +535,4 @@ A Stack Magma substitui completamente os runtimes legados em C (`libofs_runtime.
 3. Explore os layouts visuais em `examples/oll/`
 4. Instale a extensão oficial do VS Code (`ofs-vscode-extension.vsix`)
 
-Happy coding with OFS! 🪨⚡
+Happy coding with OFS!

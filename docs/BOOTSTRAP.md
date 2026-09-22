@@ -5,7 +5,7 @@
 
 ---
 
-## ⚡ Quick Start (Recomendado)
+## Quick Start (Recomendado)
 
 ```bash
 # Tudo em um comando - ~2 segundos!
@@ -25,7 +25,7 @@ Pronto! Apenas OFS compilando OFS.
 - **C** (1972): Bootstrapped e tornou-se padrão
 - **Rust** (2011): Self-hosted em Rust
 - **Go** (2015): Self-hosted em Go
-- **OFS** (2024-2026): **COMPLETAMENTE SELF-HOSTED COM STACK MAGMA** ✨🚀
+- **OFS** (2024-2026): **COMPLETAMENTE SELF-HOSTED COM STACK MAGMA**
 
 ---
 
@@ -44,15 +44,15 @@ Quando o repositório é clonado, `ofs/dist/ofscc` já contém um compilador OFS
 ### Phase 3: Verificação (determinismo)
 ```bash
 # Compila novamente com o novo compilador
-# Se ofscc_v2 === ofscc_v3 → SUCESSO!
-# Compilador é determinístico ✓
+# Se ofscc_v2 === ofscc_v3 -> SUCESSO!
+# Compilador e deterministico [OK]
 ```
 
 ---
 
 ## Como Usar
 
-### Método 1: Bootstrap Minimal (Recomendado) ⚡
+### Método 1: Bootstrap Minimal (Recomendado)
 
 ```bash
 # Navega para o repositório
@@ -62,9 +62,9 @@ cd Obsidian-Fault-Script
 bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 
 # Saída esperada:
-# [✓] ofs/dist/ofscc criado com sucesso
-# [✓] Checksum: a1b2c3d4... (repetível!)
-# [✓] Determinismo verificado!
+# [OK] ofs/dist/ofscc criado com sucesso
+# [OK] Checksum: a1b2c3d4... (repetivel!)
+# [OK] Determinismo verificado!
 ```
 
 **Tempo**: ~2 segundos
@@ -83,7 +83,7 @@ bash ofs/bootstrap/scripts/bootstrap-minimal.sh --validate
 # 1. ofs/dist/ofscc (v1)
 # 2. ofs/dist/ofscc (v2, compilado por v1)
 # 3. ofs/dist/ofscc (v3, compilado por v2)
-# Depois verifica: v2 === v3? Se sim → ✓ SUCESSO
+# Depois verifica: v2 === v3? Se sim -> [OK] SUCESSO
 ```
 
 **Tempo**: ~5-10 segundos
@@ -168,23 +168,23 @@ Sem dependência de compilador C ou runtime externo em C:
 
 Após bootstrap bem-sucedido, o layout canônico é:
 
-- ✅ `ofs/dist/ofscc` (compilador nativo)
-- ✅ `ofs/dist/magma.o` (runtime Stack Magma nativo)
-- ✅ `ofs/ofscc/` (código-fonte OFS do compilador)
-- ✅ `ofs/stdlib/` (biblioteca padrão)
-- ✅ `ofs/examples/` (exemplos de código)
-- ✅ `src/packaging/` (instaladores visuais OLL para Linux e Windows)
-- ✅ `src/vscode-extension/` (extensão com realce e suporte a .ofs, .oll, .odl, .oes)
+- `ofs/dist/ofscc` (compilador nativo)
+- `ofs/dist/magma.o` (runtime Stack Magma nativo)
+- `ofs/ofscc/` (código-fonte OFS do compilador)
+- `ofs/stdlib/` (biblioteca padrão)
+- `ofs/examples/` (exemplos de código)
+- `src/packaging/` (instaladores visuais OLL para Linux e Windows)
+- `src/vscode-extension/` (extensão com realce e suporte a .ofs, .oll, .odl, .oes)
 
 ---
 
 ## Próximos Passos
 
-1. ✅ Bootstrap completo (sem C++)
-2. 📦 Fazer releases (via GitHub Actions)
-3. 🔗 Distribuir para package managers
-4. 🧪 Rodar test suite nativo com Stack Magma
-5. 📚 Documentar stdlib completamente
+1. Bootstrap completo (sem C++)
+2. Fazer releases (via GitHub Actions)
+3. Distribuir para package managers
+4. Rodar test suite nativo com Stack Magma
+5. Documentar stdlib completamente
 
 ---
 
@@ -197,6 +197,6 @@ Após bootstrap bem-sucedido, o layout canônico é:
 
 ---
 
-**Status**: ✅ Compilador self-hosted e determinístico com Stack Magma
+**Status**: Compilador self-hosted e determinístico com Stack Magma
 **Pipeline**: 100% nativo (zero Clang, zero runtime em C)
 

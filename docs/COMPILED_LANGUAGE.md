@@ -61,10 +61,10 @@ Mais especificamente, OFS é uma linguagem **compilada com front-end em C como l
 
 Uma linguagem é compilada quando:
 
-1. ✅ **Tem um compilador self-hosted** — OFS tem o compilador nativo `ofscc` escrito 100% em OFS.
-2. ✅ **Produz executável nativo** — Não interpreta em runtime, não usa máquina virtual ou bytecode.
-3. ✅ **Fase de compilação separada** — `ofs build` gera o executável de máquina, depois roda.
-4. ✅ **Sem overhead de interpretação** — Executa direto nas instruções do processador (x86_64, ARM).
+1. **Tem um compilador self-hosted** — OFS tem o compilador nativo `ofscc` escrito em OFS.
+2. **Produz executável nativo** — Não interpreta em runtime, não usa máquina virtual ou bytecode.
+3. **Fase de compilação separada** — `ofs build` gera o executável de máquina, depois roda.
+4. **Sem overhead de interpretação** — Executa direto nas instruções do processador (x86_64, ARM).
 
 ### Pipeline Nativo sem Dependência do Clang
 
@@ -80,11 +80,11 @@ OFS compila diretamente para código de máquina através do pipeline:
 
 | Aspecto | OFS | Python | JavaScript |
 |---|---|---|---|
-| **Compilador?** | ✅ Sim (Self-hosted) | ❌ (tem bytecode) | ❌ (tem JIT) |
+| **Compilador?** | Sim (Self-hosted) | Não (bytecode) | Não (JIT) |
 | **Execução** | Máquina nativa | VM + bytecode | Motor JS |
 | **Performance** | Nativa | ~50x mais lento | ~10x mais lento |
 | **Linguagem intermediária** | LLVM IR | Bytecode | Código JS |
-| **Auto-hosting** | ✅ Sim (ofscc em OFS) | ✅ Sim (Python em Python) | ✅ Sim (V8 tem partes em JS) |
+| **Auto-hosting** | Sim (ofscc em OFS) | Sim (Python em Python) | Sim (V8 tem partes em JS) |
 
 ---
 
@@ -109,7 +109,7 @@ OFS compila diretamente para código de máquina através do pipeline:
         gcc -O2 → programa.exe
 ```
 
-**Status**: ✅ Funcional, compila OFS código
+**Status**: Funcional, compila codigo OFS
 
 ---
 
@@ -129,10 +129,10 @@ OFS compila diretamente para código de máquina através do pipeline:
         llc -filetype=obj → ofscc.o
                │
                ▼
-        ld ofscc.o magma.o → ofscc_v2 ✅
+        ld ofscc.o magma.o → ofscc_v2
 ```
 
-**Status**: ✅ Completo e determinístico
+**Status**: Completo e determinístico
 
 ---
 
@@ -154,7 +154,7 @@ OFS compila diretamente para código de máquina através do pipeline:
         └─────────────────────┘
 ```
 
-**Esperado**: ✅ ofscc_v2 === ofscc_v3 (determinismo 100%)
+**Esperado**: ofscc_v2 === ofscc_v3 (determinismo 100%)
 
 ---
 
@@ -236,8 +236,8 @@ Código OFS (.ofs) → [Compilador ofscc] → LLVM IR (.ll) → [llc] → Objeto
                     Stack Magma & stdlib
 ```
 
-- ✅ Compilação direta para código de máquina nativo
-- ✅ Zero interpretadores, zero máquinas virtuais (sem JVM/CLR)
-- ✅ Zero dependência de Clang ou compiladores C no pipeline diário
-- ✅ Runtime puro Stack Magma escrito em OFS
-- ✅ Interface visual declarativa moderna (OLL) com loop de eventos nativo
+- Compilação direta para código de máquina nativo
+- Zero interpretadores, zero máquinas virtuais (sem JVM/CLR)
+- Zero dependência de Clang ou compiladores C no pipeline diário
+- Runtime puro Stack Magma escrito em OFS
+- Interface visual declarativa moderna (OLL) com loop de eventos nativo
