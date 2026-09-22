@@ -301,7 +301,14 @@ run_update() {
     curl -fL "https://github.com/$OFS_REPO/releases/download/$latest/$asset" -o "$tmp/ofs.pkg"
     sudo installer -pkg "$tmp/ofs.pkg" -target /
     rm -rf "$tmp"
-    if ! ofs version | grep -F "ofs ${latest#v} - Obsidian Fault Script" >/dev/null; then
+    local mac_ofs="ofs"
+    if [ -x "/usr/local/bin/ofs" ]; then
+      mac_ofs="/usr/local/bin/ofs"
+    fi
+    if [ -f "$HOME/.local/bin/ofs" ] && [ "$mac_ofs" != "$HOME/.local/bin/ofs" ]; then
+      cp -f "$mac_ofs" "$HOME/.local/bin/ofs" 2>/dev/null || true
+    fi
+    if ! "$mac_ofs" version | grep -F "ofs ${latest#v} - Obsidian Fault Script" >/dev/null; then
       echo "ofs update: installed version did not match $latest" >&2
       return 1
     fi
@@ -356,7 +363,14 @@ run_update() {
   esac
 
   rm -rf "$tmp"
-  if ! ofs version | grep -F "ofs ${latest#v} - Obsidian Fault Script" >/dev/null; then
+  local target_ofs="ofs"
+  if [ -x "/usr/bin/ofs" ]; then
+    target_ofs="/usr/bin/ofs"
+  fi
+  if [ -f "$HOME/.local/bin/ofs" ] && [ "$target_ofs" != "$HOME/.local/bin/ofs" ]; then
+    cp -f "$target_ofs" "$HOME/.local/bin/ofs" 2>/dev/null || true
+  fi
+  if ! "$target_ofs" version | grep -F "ofs ${latest#v} - Obsidian Fault Script" >/dev/null; then
     echo "ofs update: installed version did not match $latest" >&2
     return 1
   fi
