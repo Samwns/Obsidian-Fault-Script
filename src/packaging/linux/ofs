@@ -115,15 +115,17 @@ native_link() {
   fi
 
   extra_libs=(-lm)
-  if pkg-config --exists x11 2>/dev/null; then
-    extra_libs+=(-lX11)
-  elif [ -f /usr/lib64/libX11.so ] || [ -f /usr/lib/x86_64-linux-gnu/libX11.so ]; then
-    extra_libs+=(-lX11)
-  fi
-  if pkg-config --exists xft 2>/dev/null; then
-    extra_libs+=(-lXft)
-  elif [ -f /usr/lib64/libXft.so ] || [ -f /usr/lib/x86_64-linux-gnu/libXft.so ]; then
-    extra_libs+=(-lXft)
+  if [ "$(uname -s)" != "Darwin" ]; then
+    if pkg-config --exists x11 2>/dev/null; then
+      extra_libs+=(-lX11)
+    elif [ -f /usr/lib64/libX11.so ] || [ -f /usr/lib/x86_64-linux-gnu/libX11.so ]; then
+      extra_libs+=(-lX11)
+    fi
+    if pkg-config --exists xft 2>/dev/null; then
+      extra_libs+=(-lXft)
+    elif [ -f /usr/lib64/libXft.so ] || [ -f /usr/lib/x86_64-linux-gnu/libXft.so ]; then
+      extra_libs+=(-lXft)
+    fi
   fi
 
   if [ "$target_os" = "windows" ] || [ "$target_os" = "win64" ]; then
