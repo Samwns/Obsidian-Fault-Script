@@ -1,20 +1,21 @@
-# OFS Jornada Iniciante
+# OFS — Jornada do Iniciante
 
-Guia direto para quem quer aprender OFS por etapas, sem pular do básico para o baixo nível cedo demais.
-
-## Como usar
-
-1. Copie um módulo por vez.
-2. Rode com `ofs arquivo.ofs`.
-3. Mude alguma coisa no exemplo.
-4. Só avance quando entender o que saiu no terminal.
+Guia prático para aprender Obsidian Fault Script (OFS) por etapas graduais, do básico até a criação de componentes e módulos.
 
 ---
 
-## Módulo 1: Primeiros valores
+## Como Utilizar este Guia
 
-Objetivo:
-- entender `core`, `forge`, `echo` e tipos básicos.
+1. Estude um módulo de cada vez.
+2. Execute o código no terminal com `ofs run arquivo.ofs` (ou compile com `ofs build arquivo.ofs -o programa`).
+3. Modifique os valores para testar o comportamento.
+4. Avance apenas após compreender os resultados impressos no terminal.
+
+---
+
+## Módulo 1: Primeiros Valores e Variáveis
+
+**Objetivo**: Compreender a função `core main()`, a declaração de variáveis com `forge`, a saída no terminal com `echo()` e os tipos primitivos fundamentais.
 
 ```ofs
 core main() {
@@ -30,15 +31,13 @@ core main() {
 }
 ```
 
-Mini desafio:
-- adicione cidade e profissão.
+**Desafio**: Adicione variáveis para armazenar uma cidade (`obsidian`) e uma taxa (`crystal`).
 
 ---
 
-## Módulo 2: Decisão e repetição
+## Módulo 2: Decisão e Laços de Repetição
 
-Objetivo:
-- aprender `if`, `while` e `cycle`.
+**Objetivo**: Utilizar condicionais (`if` / `else`) e laços de repetição (`while`).
 
 ```ofs
 core main() {
@@ -46,212 +45,189 @@ core main() {
 
     while (energia > 0) {
         echo(energia)
-        energia -= 1
-    }
-
-    cycle (forge i = 0; i < 3; i++) {
-        echo(i)
+        energia = energia - 1
     }
 
     if (energia == 0) {
-        echo("recarregar")
+        echo("Recarga necessária")
     }
 }
 ```
 
-Mini desafio:
-- conte de 10 até 1 e depois mostre `decolar`.
+**Desafio**: Crie um laço que realize uma contagem regressiva de 5 a 1 e exiba "Decolagem".
 
 ---
 
-## Módulo 3: Funções
+## Módulo 3: Funções (`vein`)
 
-Objetivo:
-- criar lógica reutilizável com `vein`.
+**Objetivo**: Estruturar e reutilizar código com funções declaradas pela palavra-chave `vein`.
 
 ```ofs
 vein dobro(n: stone) -> stone {
     return n * 2
 }
 
+vein somar(a: stone, b: stone) -> stone {
+    return a + b
+}
+
 core main() {
     echo(dobro(21))
+    echo(somar(10, 32))
 }
 ```
 
-Mini desafio:
-- crie `media(a, b)`.
+**Desafio**: Escreva uma função `media(a: stone, b: stone) -> stone` que retorne a média aritmética inteira de dois números.
 
 ---
 
-## Módulo 4: Tipos pequenos
+## Módulo 4: Tipos Inteiros de Largura Fixa
 
-Objetivo:
-- entender por que `u8` e `u32` existem.
+**Objetivo**: Manipulação de bytes e inteiros com sinal e sem sinal (`u8`, `u16`, `u32`, `i8`, `i32`).
 
 ```ofs
 core main() {
-    forge r: u8 = 255
-    forge g: u8 = 128
-    forge b: u8 = 0
+    forge canal_r: u8 = 255
+    forge canal_g: u8 = 128
+    forge canal_b: u8 = 0
 
-    forge pixel: u32 = (r as u32 << 16) | (g as u32 << 8) | (b as u32)
+    forge pixel: u32 = (canal_r as u32 << 16) | (canal_g as u32 << 8) | (canal_b as u32)
     echo(pixel)
 }
 ```
 
-Mini desafio:
-- extraia o canal vermelho de volta com `as u8`.
+**Desafio**: Isole o canal verde (`canal_g`) de volta a partir de `pixel` utilizando deslocamento de bits e máscara (`& 0xFF`).
 
 ---
 
-## Módulo 5: `monolith` e `impl`
+## Módulo 5: Estruturas de Dados (`monolith`) e Métodos (`impl`)
 
-Objetivo:
-- modelar dados e colocar comportamento no tipo.
+**Objetivo**: Modelar tipos compostos e encapsular operações com `monolith` e `impl`.
 
 ```ofs
-monolith Rect {
-    w: stone
-    h: stone
+monolith Retangulo {
+    largura: stone
+    altura: stone
 }
 
-impl Rect {
+impl Retangulo {
     vein area(self) -> stone {
-        return self.w * self.h
+        return self.largura * self.altura
+    }
+
+    vein perimetro(self) -> stone {
+        return (self.largura + self.altura) * 2
     }
 }
 
 core main() {
-    forge r: Rect
-    r.w = 10
-    r.h = 20
+    forge r: Retangulo
+    r.largura = 10
+    r.altura = 20
+
     echo(r.area())
+    echo(r.perimetro())
 }
 ```
 
-Mini desafio:
-- adicione um método `perimeter`.
+**Desafio**: Crie um método `eh_quadrado(self) -> bool` que retorne verdadeiro caso largura e altura sejam idênticas.
 
 ---
 
-## Módulo 6: `namespace`
+## Módulo 6: Espaços de Nomes (`namespace`)
 
-Objetivo:
-- organizar funções sem poluir o escopo global.
+**Objetivo**: Agrupar funções e constantes relacionadas para manter o escopo global organizado.
 
 ```ofs
-namespace mathx {
-    vein square(x: stone) -> stone {
+namespace calculo {
+    vein quadrado(x: stone) -> stone {
         return x * x
     }
-}
 
-core main() {
-    echo(mathx.square(4))
-}
-```
-
-Mini desafio:
-- adicione `cube`.
-
----
-
-## Módulo 7: `attach`
-
-Objetivo:
-- reaproveitar código OFS de outro arquivo.
-
-Arquivo `minha_lib.ofs`:
-
-```ofs
-vein saudacao() -> obsidian {
-    return "oi"
-}
-```
-
-Arquivo principal:
-
-```ofs
-attach {F:minha_lib.ofs}
-
-core main() {
-    echo(saudacao())
-}
-```
-
-Mini desafio:
-- mova duas funções para outro arquivo e importe com `attach {F:...}`.
-
----
-
-## Módulo 8: Função como valor
-
-Objetivo:
-- usar lambda e passar função como argumento.
-
-```ofs
-vein aplicar(x: stone, fn: vein(stone) -> stone) -> stone {
-    return fn(x)
-}
-
-core main() {
-    forge dobrar = vein(n: stone) -> stone {
-        return n * 2
-    }
-
-    echo(aplicar(10, dobrar))
-}
-```
-
-Mini desafio:
-- troque a lambda por uma que eleva ao quadrado.
-
----
-
-## Módulo 9: Recursos modernos
-
-Objetivo:
-- conhecer recursos úteis fora do fluxo básico.
-
-```ofs
-const limite: stone = 10
-strata Status { Idle, Running, Failed }
-
-core main() {
-    match limite {
-        case 10: { echo("dez") }
-        default: { echo("outro") }
+    vein cubo(x: stone) -> stone {
+        return x * x * x
     }
 }
+
+core main() {
+    echo(calculo.quadrado(5))
+    echo(calculo.cubo(3))
+}
 ```
 
-Mini desafio:
-- troque o `match` para testar dois valores.
+---
+
+## Módulo 7: Módulos Externos com `attach`
+
+**Objetivo**: Dividir código em múltiplos arquivos e importar funções.
+
+Arquivo auxiliar `auxiliar.ofs`:
+```ofs
+vein saudacao(nome: obsidian) -> obsidian {
+    return "Olá, " + nome + "!"
+}
+```
+
+Arquivo principal `main.ofs`:
+```ofs
+attach {F:./auxiliar.ofs}
+
+core main() {
+    echo(saudacao("OFS"))
+}
+```
 
 ---
 
-## Módulo 10: Quando avançar para o baixo nível
+## Módulo 8: Funções como Valores e Lambdas
 
-Só entre nisso quando já estiver confortável com os módulos anteriores.
+**Objetivo**: Passar funções como parâmetros para outras rotinas.
 
-Tópicos:
-- `rift vein`
-- `bedrock`
-- `fracture`
-- `abyss`
-- `window`
+```ofs
+vein aplicar(x: stone, operacao: vein(stone) -> stone) -> stone {
+    return operacao(x)
+}
 
-Sugestão:
-- veja `ofs/examples/showcase.ofs`
-- veja `ofs/examples/attach_file_demo.ofs`
-- leia `docs/LANGUAGE_REFERENCE.md`
+core main() {
+    forge triplo = vein(n: stone) -> stone {
+        return n * 3
+    }
+
+    echo(aplicar(7, triplo))
+}
+```
 
 ---
 
-## Próximos passos
+## Módulo 9: Seleção Múltipla (`match`) e Constantes
 
-1. Ler [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)
-2. Ler [docs/LANGUAGE_REFERENCE.md](docs/LANGUAGE_REFERENCE.md)
-3. Rodar exemplos em `ofs/examples/`
-4. Testar pacotes em [src/packages/README.md](src/packages/README.md)
+**Objetivo**: Simplificar árvores condicionais através de correspondência de padrões e constantes.
+
+```ofs
+const SUCESSO: stone = 200
+const NAO_ENCONTRADO: stone = 404
+
+core main() {
+    forge status = 200
+
+    match status {
+        case SUCESSO: {
+            echo("Requisição atendida com êxito")
+        }
+        case NAO_ENCONTRADO: {
+            echo("Recurso não encontrado")
+        }
+        default: {
+            echo("Código não mapeado")
+        }
+    }
+}
+```
+
+---
+
+## Próximos Passos
+
+1. Leia o [Guia de Início](../GETTING_STARTED.md)
+2. Consulte a [Referência Completa da Linguagem](../LANGUAGE_REFERENCE.md)
+3. Explore os exemplos práticos em `ofs/examples/`
