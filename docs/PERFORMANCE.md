@@ -1,152 +1,57 @@
-# Analise de desempenho da OFS
+# Análise de Desempenho do OFS
 
 ## Objetivo
 
-O objetivo da otimizacao e reduzir custos concretos do compilador e do runtime sem mudar a semantica da linguagem, corromper memoria ou esconder regressao. O tempo total de build deve ficar competitivo com toolchains C em workloads equivalentes por reducao de trabalho repetido, nao por remocao de recursos da linguagem.
+O objetivo da otimização é reduzir custos concretos de execução e compilação do compilador e do runtime sem alterar a semântica da linguagem, sem comprometer a integridade de memória e sem introduzir regressões silenciosas. O tempo total de build deve permanecer competitivo com toolchains nativas equivalentes por eliminação de trabalho redundante, e não por remoção de recursos da linguagem.
 
-## Caminho de compilacao
+---
 
-O fluxo atual e:
+## Fluxo de Compilação
+
+O pipeline de compilação é estruturado nas seguintes etapas:
 
 ```text
-fonte OFS
-  -> expansao de attach
-  -> lexer
-  -> parser
-  -> verificacao de tipos
-  -> geracao LLVM IR (llvmgen.ofs)
-  -> compilador estatico LLVM (llc -filetype=obj)
-  -> ligacao nativa com Stack Magma (magma.o via ld/lld)
-  -> executavel nativo (ELF/PE32+)
+Código-fonte OFS
+  -> Resolução e expansão de módulos (attach)
+  -> Análise léxica (lexer)
+  -> Análise sintática (parser)
+  -> Verificação de tipos (type checker)
+  -> Geração de código intermediário LLVM IR (llvmgen.ofs)
+  -> Compilador estático LLVM (llc -filetype=obj)
+  -> Linkagem nativa com runtime nativo (ld / ld.lld)
+  -> Executável binário nativo (ELF / Mach-O / PE)
 ```
 
-Cada etapa deve ser medida separadamente. Melhorar o executavel gerado nao reduz necessariamente o tempo do lexer. Melhorar o lexer nao altera necessariamente CPU do programa final.
+Cada etapa é mensurada de forma isolada: otimizações no binário final gerado não reduzem necessariamente o tempo do lexer, e melhorias no lexer não alteram o consumo de CPU do programa resultante.
 
-## Gargalos encontrados
+---
 
-### 1. Leitura de caracteres
+## Pontos Críticos e Oportunidades de Otimização
 
-`ofs_str_char_at` usa `strlen` para validar o indice. Essa interface continua
-segura para chamadas gerais. O lexer, que ja valida `_pos` contra `_len`, usa
-`ofs_str_char_at_known` internamente para ler o byte sem repetir a varredura.
+### 1. Leitura de Caracteres no Lexer
 
-Em uma string longa, repetir `strlen` pode transformar uma varredura que deveria ser linear em trabalho repetido.
+A função `ofs_str_char_at` realiza validação de limites usando o comprimento da string. Para chamadas genéricas na biblioteca padrão, essa verificação garante segurança de acesso. No entanto, o lexer interno já mantém o controle estrito de `_pos` em relação a `_len`. O uso da variante `ofs_str_char_at_known` evita varreduras redundantes de comprimento (`strlen`) a cada caractere lido, mantendo a complexidade estritamente linear $O(N)$ no processamento de arquivos-fonte extensos.
 
-Em 14 de junho de 2026, sete processos por versao mediram a geracao de IR do
-workload pequeno em 8,11 ms antes e 7,54 ms depois. Ao compilar o proprio
-`ofscc.ofs`, a mediana caiu de 4.610,40 ms para 3.694,08 ms. As passagens dois
-e tres do bootstrap produziram IR identico, e a API publica manteve a
-verificacao de limites.
+### 2. Alocação de Substrings
 
-### 2. Substrings
+Durante a tokenização, o lexer extrai fatias de texto para representar identificadores, números e literais. A estratégia otimizada consiste em:
+- Armazenar tuplas de posição e comprimento `(início, tamanho)` apontando para o buffer original do arquivo durante a análise sintática.
+- Materializar strings na memória heap apenas quando um nó da árvore sintática ou a tabela de símbolos exigir persistência explícita.
+- Empregar alocadores baseados em arena por arquivo de compilação, permitindo liberação em lote ao término da unidade de tradução.
 
-`ofs_str_substr` calcula o tamanho da string, aloca memoria e copia bytes. O lexer usa substrings para materializar identificadores, numeros e literais.
+### 3. Concatenação de Cadeias de Caracteres
 
-Possiveis evolucoes:
+Operações sequenciais de concatenação em loops geram cópias repetidas de prefixos na heap. No gerador de código LLVM, a rotina `cg_emit` grava diretamente no arquivo de saída, contornando a criação intermediária de buffers temporários.
 
-- token guardar inicio e tamanho na fonte;
-- materializar texto somente quando necessario;
-- usar arena por compilacao;
-- liberar a arena ao terminar o arquivo.
+### 4. Tabelas de Símbolos e Consultas de Escopo
 
-### 3. Concatenacao
+Para programas pequenos e médios, listas lineares de símbolos oferecem boa localidade de cache e simplicidade determinística. Para bases de código de grande porte, a utilização de tabelas hash ou estruturas indexadas por escopo reduz o custo assintótico de busca de variáveis e tipos.
 
-`ofs_str_concat` calcula os dois tamanhos, aloca um novo bloco e copia os dois lados.
+---
 
-Concatenacao repetida em loops pode copiar o mesmo prefixo muitas vezes. A geracao LLVM principal ja usa `cg_emit` para escrever diretamente em arquivo, mas escapes de string e expansao de imports ainda concatenam.
+## Metodologia de Medição
 
-Possiveis evolucoes:
-
-- string builder nativo;
-- buffer com capacidade e crescimento geometrico;
-- API `append` para ODL/OES e ferramentas;
-- medicao de bytes alocados por compilacao.
-
-### 4. Buscas lineares
-
-Simbolos, nomes de variaveis, strings internadas e campos usam arrays e buscas lineares em varios pontos.
-
-Para projetos pequenos isso e simples e previsivel. Para projetos grandes, uma tabela hash ou indices por escopo podem reduzir consultas repetidas.
-
-### 5. Tamanhos dentro de loops
-
-O compilador possui loops que chamam `ofs_array_len`, `node_extra_len` ou `ofs_str_len` na condicao. Quando a colecao nao muda, o tamanho pode ser guardado antes do loop.
-
-Essa e uma otimizacao de baixo risco, mas cada alteracao precisa manter os testes de parser, type checker e LLVM.
-
-## Ordem proposta
-
-1. Reparar e ampliar os testes self-hosted do lexer.
-2. Adicionar medicao detalhada para lexer, parser, type checker e LLVM IR.
-3. Medir leitura de caracteres com fontes de 10 KB, 100 KB e 1 MB.
-4. Substituir substrings de tokens por slices ou uma arena.
-5. Criar string builder para geradores e DSLs.
-6. Medir tabelas de simbolos com projetos grandes.
-7. Avaliar LTO e flags LLVM depois que o compilador estiver medido.
-
-## Estrategia de compilacao
-
-### Memoria
-
-- O lexer deve preferir slices `(inicio, tamanho)` sobre o buffer original em vez
-  de alocar strings para cada token.
-- AST, simbolos e materializacoes temporarias devem usar arena por modulo ou por
-  compilacao. Ao terminar a unidade, a arena inteira e liberada de uma vez.
-- Literais e escapes so devem materializar string quando uma fase posterior
-  realmente precisar do texto copiado.
-
-### Indices
-
-- Consultas frequentes de campos, variaveis, simbolos e nodes devem migrar de
-  busca linear para hash flat pre-dimensionado quando o perfil mostrar ganho.
-- Loops sobre colecoes estaticas devem guardar o tamanho antes da iteracao
-  quando a colecao nao muda no corpo do loop.
-
-### Build incremental
-
-- Arquivos recebem hash de conteudo.
-- AST, metadados de tipos e objetos podem ser cacheados por hash.
-- Uma alteracao local recompila apenas o arquivo modificado e os dependentes
-  diretos.
-- O linker recebe somente objetos novos ou invalidados.
-
-### Modos de build
-
-- `dev`: gera LLVM IR e linka sem otimizacoes pesadas para feedback local.
-- `release`: mantem otimizacoes de LLVM e link de distribuicao.
-- `check` e `ir`: evitam invocar o linker quando o comando nao precisa de
-  executavel.
-
-## Benchmark web
-
-ODL/OES precisam de benchmark separado do benchmark nativo. As metricas web
-devem medir parse ODL, parse OES, emissao HTML, emissao CSS, tamanho do
-artefato e tempo de hot update. Esses numeros nao devem ser misturados com CPU
-do executavel nativo.
-
-## Otimizacao de link e runtime
-
-A runtime distribuida e compilada com `-ffunction-sections` e
-`-fdata-sections`. O launcher usa `--gc-sections` no ELF, `dead_strip` no
-Mach-O e `OPT:REF` no PE/COFF para retirar funcoes da runtime que o programa
-nao referencia.
-
-No workload publicado em 14 de junho de 2026, isso reduziu o executavel OFS
-de 28.224 para 16.056 bytes sem alterar o checksum. O launcher mantem
-em cache os caminhos CRT e toolchain nativo (llc e ld), evitando consultas lentas em cada
-compilacao. A mediana de build do mesmo workload caiu de 320,81 ms para
-208,78 ms nesta maquina.
-
-Esses ganhos pertencem ao pipeline real de distribuicao. Eles nao mudam a
-sintaxe, o type checker ou a semantica do programa.
-
-## Gates
-
-Uma otimizacao so deve entrar quando:
-
-- os testes existentes passam;
-- o bootstrap continua deterministico;
-- ODL e OES continuam compilando;
-- instaladores continuam construindo;
-- o benchmark mostra ganho repetivel;
-- a API publica nao perde seguranca silenciosamente.
+1. Conjunto controlado de testes sintáticos e léxicos com fontes variando entre 10 KB e 1 MB.
+2. Isolamento de tempos por fase: frontend (lexer, parser, tipos), emissão de LLVM IR, e linkagem nativa.
+3. Medição de métricas reais de sistema via chamadas `wait4`: tempo de usuário (CPU), tempo de sistema e pico de memória residente (RSS).
+4. Verificação estrita de integridade via checksum da saída gerada para garantir que nenhuma otimização introduza alterações semânticas.

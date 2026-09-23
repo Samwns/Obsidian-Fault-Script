@@ -1,30 +1,35 @@
-# Biblioteca Padrao OFS
+# Referência da Biblioteca Padrão do OFS
 
-A biblioteca padrao fica em `ofs/stdlib/`. Bibliotecas instaladas sao importadas por nome:
+Os módulos da biblioteca padrão do OFS estão localizados no diretório `ofs/stdlib/`. Módulos instalados no sistema são importados pelo nome com a diretiva `attach`:
 
 ```ofs
 attach {math}
 attach {string}
+attach {io}
 ```
 
-Durante desenvolvimento, um arquivo local pode ser importado por caminho:
+Durante o desenvolvimento ou em projetos locais, um arquivo específico pode ser importado via caminho relativo ou absoluto utilizando o prefixo `F:`:
 
 ```ofs
-attach {F:../libs/minha_lib.ofs}
+attach {F:../modulos/meu_modulo.ofs}
 ```
 
-## `math.ofs`
+---
 
-Funcoes numericas escritas em OFS:
+## 1. Módulos Fundamentais
 
-- `square(x)`: retorna `x * x`;
-- `cube(x)`: retorna `x * x * x`;
-- `sum_range(start, end)`: soma o intervalo inclusivo;
-- `is_prime(n)`: testa primalidade por divisores impares;
-- `count_digits(n)`: conta digitos decimais;
-- `sum_digits(n)`: soma digitos decimais;
-- `reverse_number(n)`: inverte os digitos;
-- `is_palindrome_number(n)`: compara o numero com seu reverso.
+### `math.ofs`
+
+Operações e funções matemáticas implementadas em OFS puro:
+
+- `square(x)`: Retorna o quadrado do número (`x * x`).
+- `cube(x)`: Retorna o cubo do número (`x * x * x`).
+- `sum_range(inicio, fim)`: Calcula o somatório do intervalo inclusivo de inteiros.
+- `is_prime(n)`: Testa primalidade através da verificação de divisores ímpares.
+- `count_digits(n)`: Retorna a quantidade de dígitos do número inteiro.
+- `sum_digits(n)`: Retorna a soma dos dígitos decimais do número.
+- `reverse_number(n)`: Inverte a ordem dos dígitos decimais.
+- `is_palindrome_number(n)`: Verifica se o número é idêntico ao seu reverso.
 
 ```ofs
 attach {math}
@@ -35,134 +40,136 @@ core main() {
 }
 ```
 
-## `string.ofs`
+### `string.ofs`
 
-Helpers de texto sobre os builtins do runtime:
+Rotinas auxiliares para manipulação de strings sobre as primitivas do runtime:
 
-- `repeat_str(text, count)`: repete uma string;
-- `starts_with_char(text, code)`: compara o primeiro byte;
-- `is_empty(text)`: verifica comprimento zero.
+- `repeat_str(texto, vezes)`: Retorna a repetição da string pelo número de vezes indicado.
+- `starts_with_char(texto, codigo_char)`: Verifica se o primeiro caractere da string corresponde ao código ASCII fornecido.
+- `is_empty(texto)`: Retorna verdadeiro caso a string possua comprimento zero.
 
-O runtime tambem fornece `ofs_str_len`, `ofs_str_char_at`, `ofs_str_substr`, `ofs_str_concat`, `ofs_str_eq`, `ofs_str_contains`, conversao para maiusculas/minusculas e conversoes numericas.
+O runtime nativo disponibiliza adicionalmente as rotinas `ofs_str_len`, `ofs_str_char_at`, `ofs_str_substr`, `ofs_str_concat`, `ofs_str_eq`, `ofs_str_contains` e conversões numéricas.
 
-## `io.ofs`
+### `io.ofs`
 
-- `prompt(message)`: imprime a mensagem e le uma linha;
-- `print_separator(character, count)`: imprime uma linha repetida;
-- `print_header(title)`: imprime um cabecalho de terminal.
+Entrada e saída no terminal:
 
-## `terminal_colors.ofs`
+- `prompt(mensagem)`: Imprime a mensagem informada e realiza a leitura de uma linha da entrada padrão (stdin).
+- `print_separator(caractere, tamanho)`: Imprime uma linha repetida com o caractere delimitador.
+- `print_header(titulo)`: Imprime um cabeçalho formatado no terminal.
 
-Define sequencias ANSI e helpers de impressao colorida. Deve ser usado em terminais compativeis; a cor nao altera o conteudo retornado pelo programa.
+### `terminal_colors.ofs`
 
-## `odl.ofs`
+Declaração de constantes de controle ANSI e utilitários para formatação de texto colorido em emuladores de terminal compatíveis.
 
-API tipada para gerar documentos:
+---
 
-- baixo nivel: `attr`, `tag`, `void_tag`, `text`;
-- documento: `document`, `meta`, `css`, `icon`, `script`, `script_module`;
-- estrutura: `div`, `section`, `article`, `nav`, `header`, `main`, `footer`;
-- conteudo: `a`, `img`, `p`, `h1`, `h2`, `h3`, `strong`, `span`;
-- listas/formularios: `ul`, `ol`, `li`, `form`, `label`, `input`, `button`;
-- codigo/tabelas: `code_block`, `table`, `table_id`.
+## 2. Módulos da Stack Web
 
-## `oes.ofs`
+### `odl.ofs`
 
-API para gerar a camada visual:
+API programática em OFS para construção e geração de árvores de documentos ODL/HTML:
 
-- `prop(name, value)`: declaracao;
-- `rule(selector, body)`: regra;
-- `media`, `supports`, `layer`: grupos condicionais;
-- `font_face`: fonte;
-- `keyframes`, `frame`: animacao;
-- `var`, `use`: tokens;
-- `transition`, `animation`: helpers de movimento.
+- **Nível estrutural**: `document`, `meta`, `css`, `icon`, `script`, `script_module`.
+- **Contêineres semânticos**: `div`, `section`, `article`, `nav`, `header`, `main`, `footer`.
+- **Tipografia e conteúdo**: `a`, `img`, `p`, `h1`, `h2`, `h3`, `strong`, `span`.
+- **Formulários e listas**: `ul`, `ol`, `li`, `form`, `label`, `input`, `button`.
+- **Tabelas e blocos de código**: `table`, `table_id`, `code_block`.
+- **Primitivas de baixo nível**: `tag`, `void_tag`, `attr`, `text`.
 
-## `webserver.ofs`
+### `oes.ofs`
 
-Define:
+API programática para criação de folhas de estilo e regras OES/CSS:
 
-- constantes de metodo HTTP;
-- status 200, 201, 400, 404 e 500;
-- MIME JSON, HTML, texto, CSS, JavaScript, ODL e OES;
-- `status_text`;
-- `http_response`;
-- `json_string` e `json_number`;
-- `get_mime_type`;
-- `log_request`;
-- `html_page`, `not_found_page`, `server_error_page`;
-- `serve_once`, `serve_forever`, `serve_html_once`, `serve_html_forever`.
+- `prop(nome, valor)`: Emissão de propriedades individuais de estilo.
+- `rule(seletor, corpo)`: Declaração de blocos seletores com propriedades.
+- `media(consulta, corpo)` / `supports(consulta, corpo)` / `layer(nome, corpo)`: Agrupamentos condicionais e camadas.
+- `keyframes(nome, frames)` / `frame(etapa, corpo)`: Definição de linhas do tempo de animação.
+- `var(nome, valor)` / `use(nome)`: Declaração e uso de tokens visuais.
+- `transition(...)` / `animation(...)`: Auxiliares de movimento.
 
-O servidor atual entrega uma resposta preparada. Roteamento dinamico, TLS e limites de conexao ainda nao formam um framework de producao completo.
+### `webserver.ofs`
 
-## `webui.ofs`
+Servidor HTTP de alto desempenho e utilitários de protocolo:
 
-Define `WebTheme` e:
+- Constantes de métodos HTTP (`GET`, `POST`, `PUT`, `DELETE`).
+- Definições de códigos de status HTTP (200, 201, 400, 404, 500) e textos de status (`status_text`).
+- Detecção e mapeamento de tipos MIME (`get_mime_type`) para HTML, CSS, JS, JSON, texto, ODL e OES.
+- Construção de respostas HTTP (`http_response`) com cabeçalhos apropriados.
+- Emissão de fragmentos JSON estruturados (`json_string`, `json_number`).
+- Registro estruturado de requisições (`log_request`).
+- Laços de execução: `serve_once`, `serve_forever`, `serve_html_once`, `serve_html_forever`.
 
-- `theme_dark`, `theme_light`;
-- `stylesheet`;
-- `page`;
-- `nav`, `hero`, `button`;
-- `panel`, `grid`, `card`, `stack`;
-- `serve`.
+### `webui.ofs`
 
-Componentes retornam `obsidian`, entao podem ser compostos por concatenacao ou por funcoes OFS.
+Biblioteca de componentes para interfaces web construída sobre ODL e OES:
 
-## `canvas.ofs`, `window.ofs`, `ui.ofs`
+- Temas padrão: `theme_dark()`, `theme_light()`.
+- Componentes de layout: `page`, `nav`, `hero`, `panel`, `grid`, `card`, `stack`.
+- Controles: `button`.
+- Servidor rápido: `serve`.
 
-Formam a camada gráfica e de janelas de modo imediato:
+---
 
-- `canvas.ofs`: desenho 2D raster, primitivas de pixels, retângulos, linhas, texto bitmap e exportação PPM;
-- `window.ofs`: ciclo de vida de janelas nativas, polling de eventos, suporte X11 dinâmico no Linux e Win32 no Windows;
-- `ui.ofs`: caixas delimitadoras (`UiRect`), estilo temático (`UiStyle`, `ui.dark()`, `ui.light()`), botões, ícones vetoriais e controles imediatos.
+## 3. Módulos Gráficos Nativos
 
-## `oll.ofs` — Obsidian Layout Language
+### `canvas.ofs`
 
-Motor declarativo de interface de usuário para aplicações desktop nativas:
+API para renderização gráfica 2D direta em buffer de pixels raster:
 
-- Leitura e parsing de arquivos `.oll` desacoplados da lógica do programa (`oll.load`);
-- Árvore hierárquica de nós com cálculo automático de layout (`oll.compute_layout`);
-- Renderização visual automática sobre `canvas` e janelas interativas 60fps (`oll.render`);
-- Elementos suportados: `window`, `column`, `row`, `card`, `header`, `badge`, `progress`, `button`, `label`, `input`, `checkbox`;
-- Propriedades visuais ricas: `bg_color`, `fg_color`, `border_color`, `border_width`, `width`, `height`, `padding`, `margin`, `gap`, `font_size`, `value`;
-- Handlers de eventos nativos: `on_click`, `on_change`, `action`.
+- Criação e liberação de superfícies raster (`canvas.create`, `canvas.destroy`).
+- Limpeza de superfície (`canvas.clear`).
+- Desenho de primitivas: pixels (`set_pixel`), retângulos sólidos e vazados, linhas e texto bitmap.
+- Exportação de imagens para formato PPM binário sem dependências externas.
 
-## `runtime/` — Stack Magma (Runtime Nativo 100% OFS)
+### `window.ofs`
 
-Localizado em `ofs/stdlib/runtime/`, substitui qualquer runtime externo em C:
+Gerenciamento de janelas nativas do sistema operacional:
 
-- `magma.ofs`: Orquestração, pontos de entrada e rotinas essenciais de boot;
-- `reservoir.ofs`: Alocação dinâmica de memória (`ofs_alloc`, `ofs_free`);
-- `facet.ofs`: Manipulação de strings, substring, concatenação e conversões numéricas;
-- `matrix.ofs`: Arrays e coleções dinâmicas estruturadas (`ofs_array_*`);
-- `outlet.ofs`: Terminal, impressão formatada, cores ANSI e streams de arquivo;
-- `foundation.ofs`: Variáveis de ambiente (`ofs_getenv`), caminhos e chamadas de SO;
-- `pulse.ofs`: Temporizadores monotônicos de alta precisão e controle de ticks;
-- `frame.ofs`: Gerenciamento de janelas e contexto de display de baixo nível;
-- `impulse.ofs`: Captura e despacho de eventos de teclado e mouse;
-- `prism.ofs`: Rasterização gráfica vetorial e transformações de superfície.
+- Criação e destruição de janelas (`window.create`, `window.destroy`).
+- Tratamento do loop de eventos e mensagens (`window.poll`).
+- Integração nativa com X11 no Linux e Win32 no Windows.
 
-## `bedrock.ofs`
+### `ui.ofs`
 
-Primitivos de regioes, ponteiros e memoria explicita. Nao e necessario para programas OFS comuns.
+Controles de interface de usuário em modo imediato:
 
-## `bedrock_packet.ofs`
+- Estruturas de caixas delimitadoras (`UiRect`).
+- Estilização temânica (`UiStyle`, `ui.dark()`, `ui.light()`).
+- Controles básicos: botões, rótulos e medição tipográfica.
 
-Estruturas experimentais para organizar dados de pacote e protocolos binarios.
+---
 
-## `memory_modes.ofs`
+## 4. Módulos de Baixo Nível e Sistema
 
-Experimentos dos modos de memoria e das fronteiras de codigo baixo nivel.
+### `bedrock.ofs`
 
-## `rift.ofs`
+Primitivas de gerenciamento explícito de memória:
 
-Superficie experimental de FFI/ABI C. Use quando uma funcao externa precisa ser declarada e chamada pela OFS.
+- Alocação e desalocação manual de blocos de memória e células (`bedrock_cell_new`, `bedrock_cell_drop`).
+- Operações de leitura e escrita direta em endereços de memória.
+- Criação e reciclagem de regiões e arenas de alocação.
 
-## `ofshtml.ofs`
+### `bedrock_packet.ofs`
 
-Helpers HTML antigos mantidos para compatibilidade. Projetos web novos devem preferir ODL e OES.
+Estruturas utilitárias para montagem e parsing de pacotes de dados binários em protocolos de rede.
 
-## `test_lib.ofs`
+### `rift.ofs`
 
-Funcoes auxiliares usadas em exemplos e testes da linguagem.
+Camada para declaração e chamada de funções externas via Foreign Function Interface (FFI) com convenção C ABI.
 
+### `memory_modes.ofs`
+
+Declaração de interfaces experimentais para controle de padrões de acesso a buffers e alocações de sistema.
+
+---
+
+## 5. Módulos de Apoio e Compatibilidade
+
+### `test_lib.ofs`
+
+Módulo auxiliar para validação de testes unitários e exemplos da linguagem.
+
+### `ofshtml.ofs`
+
+Módulo legado mantido para compatibilidade reversa com códigos que utilizavam geradores HTML anteriores ao ODL. Projetos novos devem utilizar `odl.ofs`.

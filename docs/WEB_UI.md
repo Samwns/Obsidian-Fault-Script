@@ -1,70 +1,87 @@
-# Stack Web OFS
+# Arquitetura da Stack Web OFS
 
-A stack web da OFS tem tres camadas de fonte explicitas.
+A stack web do OFS é composta por três camadas bem delimitadas:
 
-| Camada | Arquivo | Finalidade |
+| Camada | Extensão | Finalidade |
 |---|---|---|
-| ODL | `.odl` | Estrutura e conteudo do documento |
-| OES | `.oes` | Tokens, layout, responsividade e movimento |
-| OFS | `.ofs` | Programas nativos, componentes, geracao e servidor HTTP |
+| ODL | `.odl` | Estrutura semântica e conteúdo textual do documento |
+| OES | `.oes` | Tokens visuais, layout responsivo e animações |
+| OFS | `.ofs` | Lógica nativa de processamento, geração estática e servidor HTTP |
 
-ODL e OES sao linguagens compiladas pela OFS, nao apelidos para HTML e CSS escritos a mao. HTML/CSS continuam sendo formatos de publicacao para navegadores.
+ODL e OES são linguagens compiladas pelo próprio toolchain do OFS, e não meros atalhos sintáticos para HTML e CSS manuais. No entanto, HTML5 e CSS padrão continuam sendo os formatos de saída distribuídos para navegadores.
 
-## Site estatico
+---
+
+## 1. Geração de Sites Estáticos
+
+O toolchain compila os arquivos de código-fonte ODL e OES diretamente para artefatos consumíveis por qualquer servidor ou CDN:
 
 ```bash
 ofs odl page.odl -o public/index.html
 ofs oes theme.oes -o public/theme.css
 ```
 
-A saida funciona em GitHub Pages e hospedagem estatica comum.
+A saída gerada pode ser hospedada em plataformas estáticas convencionais, como GitHub Pages, Cloudflare Pages ou servidores Nginx/Apache.
 
-## Servidor OFS nativo
+---
+
+## 2. Servidor Nativo Integrado (`webserver`)
+
+A biblioteca padrão fornece um servidor HTTP de alta performance escrito e executado nativamente em OFS:
 
 ```ofs
 attach {webserver}
 
 core main() {
-    webserver.serve_html_forever(8080, "<h1>OFS server</h1>")
+    forge corpo = "<h1>Servidor Nativo OFS</h1><p>Execução sem dependências externas de runtime.</p>"
+    webserver.serve_html_forever(8080, corpo)
 }
 ```
 
-ODL pode ser usado para autorar paginas, enquanto um programa OFS pode gerar rotas ou servir o artefato gerado.
+O programa compilado em OFS gerencia os sockets de rede e entrega os artefatos compilados sob demanda.
 
-## Interoperabilidade
+---
 
-ODL inclui formas explicitas para interoperar com ecossistemas web existentes.
+## 3. Interoperabilidade com o Ecossistema Web
 
-- `mark` / `markdown`: Markdown nativo
-- `raw` / `html`: HTML bruto explicito
-- `wire` / `script`: JavaScript de navegador
-- `spark` / `module` / `node`: modulos ES
-- `pulse` / `js`: JavaScript inline
-- `server` / `php`: blocos compativeis com templates PHP
-- `raw` / `css` em OES: migracao gradual de CSS
+O compilador ODL possui diretivas específicas para integração direta com código web existente:
 
-## VS Code Go Live
+- `mark` / `markdown`: Processamento de conteúdo formatado em Markdown nativo.
+- `raw` / `html`: Inclusão direta de fragmentos de HTML bruto sem filtros de escape.
+- `wire` / `script`: Inclusão de scripts JavaScript convencionais (`<script src="...">`).
+- `spark` / `module` / `node`: Inclusão de módulos JavaScript ES (`<script type="module" src="...">`).
+- `pulse` / `js`: Execução de blocos inline de JavaScript (`<script>...</script>`).
+- `server` / `php`: Emissão de blocos de processamento server-side (`<?php ... ?>`).
+- `raw` / `css` no OES: Injeção direta de blocos CSS para migração gradual.
 
-O Go Live reconhece um arquivo como site somente quando ele e um documento `.odl` ou um programa `.ofs` que usa `webui`/`webserver`.
+---
 
-Para `.odl`, a extensao compila o documento, compila arquivos `.oes` vizinhos, copia assets de navegador e inicia um servidor HTTP local.
+## 4. Extensão do VS Code e Recarregamento em Tempo Real (*Go Live*)
 
-O servidor local observa o documento, arquivos OES vizinhos, JavaScript, CSS e assets. Quando uma fonte muda, ele recompila e recarrega o navegador automaticamente.
+A extensão oficial do Visual Studio Code ativa o modo *Go Live* ao detectar arquivos `.odl` ou códigos `.ofs` que importam `webui` ou `webserver`.
 
-## Aceitacao pelo navegador
+Ao iniciar o *Go Live*:
+1. O documento `.odl` é compilado para HTML.
+2. Arquivos de estilo `.oes` no mesmo diretório são compilados para CSS.
+3. Um servidor HTTP de desenvolvimento local é inicializado.
+4. O servidor monitora alterações em arquivos `.odl`, `.oes`, scripts e ativos gráficos, disparando a recompilação e o recarregamento automático do navegador via SSE (*Server-Sent Events*).
 
-Navegadores ainda nao executam ODL/OES diretamente. A OFS segue o caminho pratico usado por TypeScript, JSX, Sass e linguagens parecidas:
+---
 
-- os fontes ficam como `.odl` e `.oes`;
-- ferramentas registram sintaxe, MIME, comandos de compilacao e preview;
-- navegadores recebem HTML/CSS/JS gerado;
-- hospedagens estaticas e GitHub Pages publicam os artefatos gerados.
+## 5. Compatibilidade com Navegadores
 
-O webserver nativo OFS e o servidor Go Live da extensao expoem `text/odl` e `text/oes` para inspecao de fonte.
+Navegadores não interpretam arquivos `.odl` e `.oes` diretamente em tempo de execução. O ecossistema OFS adota o modelo consolidado na indústria (semelhante ao TypeScript, JSX e Sass):
 
-## Limites atuais
+1. O código-fonte do projeto é mantido exclusivamente em `.odl` e `.oes`.
+2. As ferramentas de build compilam os arquivos em HTML5, CSS e JS compatíveis.
+3. Servidores e navegadores consomem os artefatos finais gerados.
+4. Para fins de depuração e inspeção, os servidores nativos expõem os tipos MIME `text/odl` e `text/oes`.
 
-- ODL/OES hoje compilam fonte baseada em indentacao para artefatos estaticos.
-- Importacao reversa de HTML/CSS preserva estruturas complexas em blocos raw.
-- Roteamento nativo e handlers HTTP continuam separados das linguagens de documento/efeito.
-- Renderizacao stateful estilo React ainda e planejada; os componentes atuais sao estaticos ou orientados a geracao.
+---
+
+## 6. Escopo Técnico Atual
+
+- As linguagens ODL e OES compilam código-fonte estruturado para páginas estáticas e folhas de estilo.
+- A importação reversa de HTML/CSS armazena trechos complexos em blocos de texto bruto (`raw`).
+- A lógica de roteamento HTTP em programas OFS permanece desacoplada da declaração estrutural dos documentos.
+- Os componentes atuais são orientados à geração e emissão estática em tempo de compilação ou inicialização.
