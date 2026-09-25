@@ -18,6 +18,7 @@ vein write_pages(prefix: obsidian) {
     write_file(prefix + "vscode.html", page_vscode())
     write_file(prefix + "commands.html", page_commands())
     write_file(prefix + "design.html", page_design())
+    write_file(prefix + "oll.html", page_oll())
     write_file(prefix + "benchmark.html", page_benchmark())
     write_file(prefix + "github.html", page_github())
     write_file(prefix + "site.css", site_css())
@@ -32,6 +33,7 @@ vein write_english_pages(prefix: obsidian) {
     write_file(prefix + "en/oes.html", page_oes_en())
     write_file(prefix + "en/web.html", page_web_en())
     write_file(prefix + "en/stdlib.html", page_stdlib_en())
+    write_file(prefix + "en/oll.html", page_oll_en())
     write_file(prefix + "en/downloads.html", page_downloads_en())
 }
 

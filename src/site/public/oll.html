@@ -1,0 +1,28 @@
+<!doctype html><html lang="pt"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>OLL - OFS</title><meta name="description" content="Obsidian Layout Language: UI declarativa nativa para janelas OFS."><link rel="icon" href="ofs-256.png"><link rel="stylesheet" href="site.css"></head><body><header class="topbar"><nav class="wrap nav"><a class="brand" href="index.html"><img src="ofs-256.png" alt="OFS logo"><span class="">OFS</span></a><div class="links"><a href="language.html">Linguagem</a><a href="odl.html">ODL</a><a href="oes.html">OES</a><a href="web.html">Web</a><a href="downloads.html">Downloads</a><a href="playground.html">Tradutor</a><a href="commands.html">CLI</a><a href="benchmark.html">Benchmark</a><div class="nav-tools"><select class="language-select" data-language-select aria-label="Idioma"><option data-href="index.html" value="pt" selected>Português</option><option data-href="en/index.html" value="en">English</option><option data-href="es/index.html" value="es">Español</option></select><span class="search-box"><button class="search-button" type="button" title="Buscar" aria-label="Buscar" aria-expanded="false">&#128269;</button><input data-site-search type="search" placeholder="Buscar" aria-label="Buscar"><span class="search-count" aria-live="polite"></span></span></div></div></nav></header><main id="top"><section class="band"><div class="wrap"><h1>OLL</h1><p class="lead">Obsidian Layout Language: UI declarativa nativa para janelas OFS.</p></div></section><section class="band"><div class="wrap doc-layout"><aside class="toc"><strong>Nesta página</strong><a href="#modes">Modos visuais</a><a href="#oll">Sintaxe OLL</a><a href="#run">Execução</a><a href="#caps">Recursos</a></aside><div class="doc-main"><section class="doc-section" id="modes"><h2>Modos visuais nativos</h2><div class="doc-intro"><p class="">O OFS disponibiliza dois modos de UI nativa: imediato, com controle procedural do loop; e declarativo, com arquivo OLL que descreve a hierarquia de componentes.</p></div><div class="grid"><article class="card"><h3>Modo imediato</h3><p class="">Renderização direta sobre buffers de pixel via `canvas`, `window` e `ui`. Controle total do loop de eventos.</p></article><article class="card"><h3>Modo declarativo (OLL)</h3><p class="">Árvore hierárquica de componentes definida em `.oll`. Taxa de quadros gerida pelo runtime.</p></article></div></section><section class="doc-section" id="oll"><h2>OLL — Obsidian Layout Language</h2><div class="doc-intro"><p class="">Arquivo `.oll` descreve a árvore de interface. O runtime interpreta e renderiza em janela X11 ou Win32 com taxa de quadros estável.</p></div><div class="terminal"><div class="terminal-head">painel.oll</div><pre><code>window "Painel" {
+    width: 640
+    height: 480
+    bg_color: #1e1e2e
+    padding: 24
+
+    column {
+        gap: 16
+        header "Monitor" { fg_color: #cba6f7 }
+        card {
+            bg_color: #313244
+            border_color: #45475a
+            padding: 16
+            row {
+                label "CPU" { fg_color: #89b4fa }
+                badge "45%" { fg_color: #a6e3a1 }
+            }
+            progress { value: 45 bg_color: #45475a fg_color: #a6e3a1 }
+        }
+        row {
+            gap: 12
+            button "Atualizar" { bg_color: #89b4fa fg_color: #11111b on_click: "refresh" }
+            button "Fechar" { bg_color: #f38ba8 fg_color: #11111b on_click: "close" }
+        }
+    }
+}</code></pre></div></section><section class="doc-section" id="run"><h2>Execução</h2><div class="doc-intro"><p class="">Use `ofs-ui` para abrir a janela interativa ou `ofs ui ... -o preview.ppm` para exportar um raster estático.</p></div><div class="terminal"><div class="terminal-head">run</div><pre><code>ofs-ui arquivo.oll
+
+ofs ui arquivo.oll -o preview.ppm</code></pre></div></section><section class="doc-section" id="caps"><h2>Recursos suportados</h2><div class="doc-intro"><p class="">Conjunto de nós, estilos e capacidades disponíveis no runtime OLL atual.</p></div><div class="module-grid"><div class="module"><code>window, column, row</code><p class="">Nós de layout: janela raiz, empilhamento vertical e horizontal.</p></div><div class="module"><code>card, header, badge</code><p class="">Contenedor com borda, título de seção e etiqueta de valor.</p></div><div class="module"><code>button, label, input</code><p class="">Controles interativos com estado: idle, hover, active, disabled.</p></div><div class="module"><code>progress, checkbox</code><p class="">Barra de progresso e caixa de seleção com valor numérico.</p></div></div></section></div></div></section></main><footer class="footer"><div class="wrap">Gerado por ODL e OES em OFS.</div></footer><script src="site.js"></script></body></html>

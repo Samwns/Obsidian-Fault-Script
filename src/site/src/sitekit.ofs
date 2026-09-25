@@ -262,7 +262,7 @@ vein site_docs() -> obsidian {
     links = links + site_doc_link("language.html", "Referência da Linguagem", "Sintaxe, tipos, controle de fluxo e módulos.")
     links = links + site_doc_link("compiler.html", "Arquitetura do Compilador", "Compilador self-hosted e backend LLVM.")
     links = links + site_doc_link("webui.html", "Web UI", "Construa páginas web estáticas e componentes.")
-    links = links + site_doc_link("design.html", "UI Visual Nativa", "Canvas, janela e helpers de interface imediata.")
+    links = links + site_doc_link("oll.html", "OLL", "Obsidian Layout Language: UI declarativa nativa com janela, canvas e componentes.")
     links = links + site_doc_link("github.html", "Registro no GitHub", "Linguist e reconhecimento de sintaxe no repositório.")
     forge body = site_section_head("docsTitle", "Documentação", "docsLead", "Guias técnicos para linguagem, compilador, bootstrap, UI e publicação.") + odl.div("docs-list", links)
     return odl.section("docs", "band", odl.div("wrap", body))
@@ -596,6 +596,25 @@ vein page_design() -> obsidian {
     return page_shell("Design System", "Como o site oficial é estruturado sem autorar CSS puro como fonte.", content)
 }
 
+vein page_oll() -> obsidian {
+    forge toc = doc_link("modes", "Modos visuais") + doc_link("oll", "Sintaxe OLL") + doc_link("run", "Execução") + doc_link("caps", "Recursos")
+    forge imm_code = "attach {ui}\n\ncore main() {\n    forge cv = canvas.create(96, 64)\n    forge style = ui.dark()\n    forge btn = ui.rect(12, 14, 22, 16)\n    window.create(\"OFS UI\", 96, 64)\n    while (window.poll()) {\n        canvas.clear(cv, style.bg)\n        ui.draw_button(cv, btn, style, false, false)\n        ui.draw_text(cv, 12, 36, \"OFS\", style.text, 1)\n        canvas.present(cv)\n    }\n    window.destroy()\n    canvas.destroy(cv)\n}"
+    forge decl_code = "window \"Painel\" {\n    width: 640\n    height: 480\n    bg_color: #1e1e2e\n    padding: 24\n\n    column {\n        gap: 16\n        header \"Monitor\" { fg_color: #cba6f7 }\n        card {\n            bg_color: #313244\n            border_color: #45475a\n            padding: 16\n            row {\n                label \"CPU\" { fg_color: #89b4fa }\n                badge \"45%\" { fg_color: #a6e3a1 }\n            }\n            progress { value: 45 bg_color: #45475a fg_color: #a6e3a1 }\n        }\n        row {\n            gap: 12\n            button \"Atualizar\" { bg_color: #89b4fa fg_color: #11111b on_click: \"refresh\" }\n            button \"Fechar\" { bg_color: #f38ba8 fg_color: #11111b on_click: \"close\" }\n        }\n    }\n}"
+    forge run_code = "ofs-ui arquivo.oll\n\nofs ui arquivo.oll -o preview.ppm"
+    forge modes = odl.div("grid", site_card("Modo imediato", "Renderização direta sobre buffers de pixel via `canvas`, `window` e `ui`. Controle total do loop de eventos.", "") + site_card("Modo declarativo (OLL)", "Árvore hierárquica de componentes definida em `.oll`. Taxa de quadros gerida pelo runtime.", ""))
+    forge caps = odl.div("module-grid",
+        module_card("window, column, row", "Nós de layout: janela raiz, empilhamento vertical e horizontal.")
+        + module_card("card, header, badge", "Contenedor com borda, título de seção e etiqueta de valor.")
+        + module_card("button, label, input", "Controles interativos com estado: idle, hover, active, disabled.")
+        + module_card("progress, checkbox", "Barra de progresso e caixa de seleção com valor numérico."))
+    forge body = doc_section("modes", "Modos visuais nativos", "O OFS disponibiliza dois modos de UI nativa: imediato, com controle procedural do loop; e declarativo, com arquivo OLL que descreve a hierarquia de componentes.", "", modes)
+    body = body + doc_section("oll", "OLL — Obsidian Layout Language", "Arquivo `.oll` descreve a árvore de interface. O runtime interpreta e renderiza em janela X11 ou Win32 com taxa de quadros estável.", "", site_terminal("painel.oll", decl_code))
+    body = body + doc_section("run", "Execução", "Use `ofs-ui` para abrir a janela interativa ou `ofs ui ... -o preview.ppm` para exportar um raster estático.", "", site_terminal("run", run_code))
+    body = body + doc_section("caps", "Recursos suportados", "Conjunto de nós, estilos e capacidades disponíveis no runtime OLL atual.", "", caps)
+    forge content = doc_page("OLL", "Obsidian Layout Language: UI declarativa nativa para janelas OFS.", toc, body)
+    return page_shell("OLL", "Obsidian Layout Language: UI declarativa nativa para janelas OFS.", content)
+}
+
 vein page_benchmark() -> obsidian {
     forge summary = "<div class=\"metric-summary\"><div class=\"metric-stat\"><strong>5 medições</strong><span>CPU, RSS e build</span></div><div class=\"metric-stat\"><strong>15 medições</strong><span>Inicialização do processo</span></div><div class=\"metric-stat\"><strong>wait4</strong><span>Medição real de processo SO</span></div><div class=\"metric-stat\"><strong>checksum</strong><span>Validação estrita de saída</span></div></div>"
     forge toc = doc_link("method", "Método") + doc_link("metrics", "Métricas") + doc_link("results", "Resultados") + doc_link("web-bench", "Web") + doc_link("limits", "Interpretação")
@@ -640,6 +659,7 @@ vein page_en_index() -> obsidian {
     links = links + site_doc_link("odl.html", "ODL", "The OFS document language for browser documents.")
     links = links + site_doc_link("oes.html", "OES", "The OFS effect language for visual rules and motion.")
     links = links + site_doc_link("web.html", "Web stack", "How OFS, ODL, OES, webui, and webserver work together.")
+    links = links + site_doc_link("oll.html", "OLL", "Obsidian Layout Language: declarative native UI with window, canvas, and components.")
     links = links + site_doc_link("stdlib.html", "Standard library", "Modules shipped with the compiler and installers.")
     links = links + site_doc_link("downloads.html", "Downloads", "Installers, VS Code package, and checksums.")
     links = links + site_doc_link("../benchmark.html", "Performance", "Measured CPU, memory, startup, compiler, build, and web output.")
@@ -713,6 +733,24 @@ vein page_downloads_en() -> obsidian {
     body = body + doc_section_en("checks", "Integrity", "Use CHECKSUMS.sha256 from the release before installing downloaded artifacts.", odl.div("callout", "The current release is published by the Auto Release workflow."))
     forge content = doc_page_en("Downloads", "Installers, VS Code package, and checksums.", toc, body)
     return page_shell_en("Downloads", "Installers, VS Code package, and checksums.", content)
+}
+
+vein page_oll_en() -> obsidian {
+    forge toc = doc_link("modes", "Visual modes") + doc_link("oll", "OLL syntax") + doc_link("run", "Running") + doc_link("caps", "Capabilities")
+    forge decl_code = "window \"Panel\" {\n    width: 640\n    height: 480\n    bg_color: #1e1e2e\n    padding: 24\n\n    column {\n        gap: 16\n        header \"Monitor\" { fg_color: #cba6f7 }\n        card {\n            bg_color: #313244\n            border_color: #45475a\n            padding: 16\n            row {\n                label \"CPU\" { fg_color: #89b4fa }\n                badge \"45%\" { fg_color: #a6e3a1 }\n            }\n            progress { value: 45 bg_color: #45475a fg_color: #a6e3a1 }\n        }\n        row {\n            gap: 12\n            button \"Refresh\" { bg_color: #89b4fa fg_color: #11111b on_click: \"refresh\" }\n            button \"Close\" { bg_color: #f38ba8 fg_color: #11111b on_click: \"close\" }\n        }\n    }\n}"
+    forge run_code = "ofs-ui app.oll\n\nofs ui app.oll -o preview.ppm"
+    forge modes = odl.div("grid", site_card("Immediate mode", "Procedural rendering onto pixel buffers via `canvas`, `window`, and `ui`. Full event loop control.", "") + site_card("Declarative mode (OLL)", "Component tree defined in `.oll`. Frame timing managed by the runtime.", ""))
+    forge caps = odl.div("module-grid",
+        module_card("window, column, row", "Layout nodes: root window, vertical stack, horizontal stack.")
+        + module_card("card, header, badge", "Container with border, section heading, and value label.")
+        + module_card("button, label, input", "Interactive controls with states: idle, hover, active, disabled.")
+        + module_card("progress, checkbox", "Progress bar and checkbox with numeric value."))
+    forge body = doc_section_en("modes", "Native visual modes", "OFS provides two native UI modes: immediate, with procedural event loop control; and declarative, with an OLL file describing the component hierarchy.", modes)
+    body = body + doc_section_en("oll", "OLL — Obsidian Layout Language", "An `.oll` file describes the interface tree. The runtime interprets and renders it in an X11 or Win32 window at a stable frame rate.", site_terminal("panel.oll", decl_code))
+    body = body + doc_section_en("run", "Running", "Use `ofs-ui` to open the interactive window or `ofs ui ... -o preview.ppm` to export a static raster image.", site_terminal("run", run_code))
+    body = body + doc_section_en("caps", "Supported capabilities", "Nodes, styling tokens, and runtime capabilities available in the current OLL runtime.", caps)
+    forge content = doc_page_en("OLL", "Obsidian Layout Language: declarative native UI for OFS windows.", toc, body)
+    return page_shell_en("OLL", "Obsidian Layout Language: declarative native UI for OFS windows.", content)
 }
 
 vein page_nav_es() -> obsidian {
