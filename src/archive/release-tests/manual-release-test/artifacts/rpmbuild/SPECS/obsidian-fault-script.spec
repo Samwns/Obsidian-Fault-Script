@@ -2,7 +2,7 @@ Name:           obsidian-fault-script
 Version:        1.0.97
 Release:        1%{?dist}
 Summary:        Obsidian Fault Script self-hosted compiler and standard library
-License:        CC-BY-NC-SA-4.0
+License:        Apache-2.0
 URL:            https://github.com/Samwns/Obsidian-Fault-Script
 Source0:        %{name}-%{version}.tar.gz
 Requires:       clang

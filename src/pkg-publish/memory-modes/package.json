@@ -2,7 +2,7 @@
   "name": "@samwns/ofs-lib-memory-modes",
   "version": "1.0.0",
   "description": "Helpers and docs for fracture/abyss/fractal memory modes",
-  "license": "CC-BY-NC-SA-4.0",
+  "license": "Apache-2.0",
   "files": [
     "libs",
     "ofspkg.json",

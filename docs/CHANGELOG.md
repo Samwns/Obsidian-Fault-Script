@@ -17,8 +17,8 @@ All notable changes to this project are recorded here.
 
 - `ofs run <file.ofs>` defaults to instant interpreted execution; `ofs run --native <file.ofs>` is available for temporary compilation + execution.
 - Windows PowerShell runner `src/packaging/windows/ofs.ps1` updated with interpreted mode and `--native` flag for complete parity across Linux, macOS, and Windows.
-- Regenerated bootstrap LLVM IR `ofs/dist/ofscc.ll` to include the interpreter backend across all distribution platforms.
-- **License updated to CC BY-NC-SA 4.0** (Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International), protecting the language against commercial exploitation, closed-source privatization, and attribution removal.
+- **License updated to Apache-2.0** (Apache License, Version 2.0), aligning OFS with major systems languages (Rust/LLVM), providing explicit patent protection and attribution requirements.
+- **Trademark Policy added (`TRADEMARK.md`)** protecting official project names ("Obsidian Fault Script", "OFS") and branding against unauthorized commercial re-use and confusing forks.
 
 ---
 

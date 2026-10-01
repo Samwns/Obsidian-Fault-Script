@@ -53,7 +53,7 @@ EOF
 require_license_acceptance() {
   banner
   if [ -f "$LICENSE_SRC" ]; then
-    echo "License: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 (CC BY-NC-SA 4.0)"
+    echo "License: Apache License 2.0"
     echo "License file: $LICENSE_SRC"
   else
     echo "License file was not found in this package."
