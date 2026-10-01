@@ -83,8 +83,8 @@ function Show-Usage {
 ofs - Obsidian Fault Script compiler v$OfsVersion
 
 Usage:
-  ofs <file.ofs>                        Run a script directly
-  ofs run    <file.ofs>                 Compile and run immediately
+  ofs <file.ofs>                        Run a script directly (interpreted)
+  ofs run    <file.ofs> [--native]      Run interpreted (or --native temporary build)
   ofs build  <file.ofs> [-o output]     Compile to native executable
   ofs check  <file.ofs>                 Type-check only (no output)
   ofs tokens <file.ofs>                 Print token stream (debug)
@@ -176,6 +176,8 @@ if ($mode -notin @("check", "tokens", "ast", "ir", "asm", "build", "run", "odl",
     else { $mode = "run" }
 }
 
+$runNative = $false
+
 for ($i = 0; $i -lt $rest.Count; $i++) {
     if ($rest[$i] -in @("-o", "--output")) {
         $i++
@@ -183,6 +185,8 @@ for ($i = 0; $i -lt $rest.Count; $i++) {
     } elseif ($rest[$i] -eq "--to") {
         $i++
         if ($i -lt $rest.Count) { $translateTo = $rest[$i] }
+    } elseif ($rest[$i] -eq "--native") {
+        $runNative = $true
     } elseif (-not $inputFile) {
         $inputFile = $rest[$i]
     }
@@ -251,6 +255,11 @@ if ($mode -eq "asm") {
     & clang -Wno-override-module @LlvmIrFlags -S $ll -o $output
     Remove-Item $ll -ErrorAction SilentlyContinue
     Write-Output "ASM: $output"
+    exit $LASTEXITCODE
+}
+
+if ($mode -eq "run" -and -not $runNative) {
+    Invoke-OfsccEnv -InputPath $inputFile -Mode "run"
     exit $LASTEXITCODE
 }
 

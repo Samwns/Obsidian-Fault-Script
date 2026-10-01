@@ -1,6 +1,6 @@
 # OFS — Beginner's Journey
 
-A step-by-step practical guide to learning Obsidian Fault Script (OFS) from the ground up, starting with primitives and advancing to structures, modules, and closures.
+A step-by-step practical guide to learning Obsidian Fault Script (OFS) from the ground up, starting with primitives and advancing to structures, modules, and collections.
 
 ---
 
@@ -111,11 +111,11 @@ monolith Rectangle {
 }
 
 impl Rectangle {
-    vein area(self) -> stone {
+    vein area(self: Rectangle) -> stone {
         return self.width * self.height
     }
 
-    vein perimeter(self) -> stone {
+    vein perimeter(self: Rectangle) -> stone {
         return (self.width + self.height) * 2
     }
 }
@@ -130,7 +130,7 @@ core main() {
 }
 ```
 
-**Challenge**: Add an `is_square(self) -> bool` method that returns true when width equals height.
+**Challenge**: Add an `is_square(self: Rectangle) -> bool` method that returns true when width equals height.
 
 ---
 
@@ -179,50 +179,43 @@ core main() {
 
 ---
 
-## Module 8: Functions as Values and Closures
+## Module 8: Arrays and Collections (`Array<T>`)
 
-**Goal**: Pass functions as arguments to other functions.
+**Goal**: Store sequential collections of items, access values by index, and inspect array length.
 
 ```ofs
-vein apply(x: stone, op: vein(stone) -> stone) -> stone {
-    return op(x)
-}
-
 core main() {
-    forge triple = vein(n: stone) -> stone {
-        return n * 3
-    }
+    forge scores: Array<stone> = [85, 92, 78]
+    echo(scores[0])
 
-    echo(apply(7, triple))
+    scores[1] = 95
+    echo(scores[1])
+    echo(ofs_array_len(scores))
 }
 ```
+
+**Challenge**: Create an array with 4 numbers and compute their total sum using a loop.
 
 ---
 
-## Module 9: Pattern Matching (`match`) and Constants
+## Module 9: Structured Loops (`cycle`)
 
-**Goal**: Cleanly handle multi-way branching without nested conditionals.
+**Goal**: Iterate cleanly using C-style indexed loops and collection traversal.
 
 ```ofs
-const STATUS_OK: stone = 200
-const STATUS_NOT_FOUND: stone = 404
-
 core main() {
-    forge status = 200
+    cycle (forge i = 0; i < 5; i++) {
+        echo(i)
+    }
 
-    match status {
-        case STATUS_OK: {
-            echo("Request succeeded")
-        }
-        case STATUS_NOT_FOUND: {
-            echo("Resource missing")
-        }
-        default: {
-            echo("Unhandled response code")
-        }
+    forge items: Array<stone> = [10, 20, 30]
+    cycle (val in items) {
+        echo(val)
     }
 }
 ```
+
+**Challenge**: Use `cycle (item in list)` to count how many numbers in an array are greater than 15.
 
 ---
 

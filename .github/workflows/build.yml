@@ -5,9 +5,11 @@ on:
     branches: [main, develop]
     paths:
       - 'ofs/bootstrap/**'
+      - 'ofs/ofscc/**'
       - 'ofs/examples/**'
       - 'ofs/runtime/**'
       - 'ofs/stdlib/**'
+      - 'ofs/tests/**'
       - 'src/packaging/**'
       - 'ofs/dist/ofscc.ll'
       - '.github/workflows/build.yml'
@@ -56,7 +58,14 @@ jobs:
           selfhost/ofs build ofs/tests/ui_stdlib_smoke.ofs -o selfhost/ui-smoke
           selfhost/ui-smoke
           selfhost/ofs build ofs/tests/window_runtime_smoke.ofs -o selfhost/window-smoke
-          DISPLAY= selfhost/window-smoke
+      - name: Run Differential Test Suite (Interpreter vs Native)
+        env:
+          OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
+          OFS_BIN: ${{ github.workspace }}/selfhost/ofs
+          OFSCC: ${{ github.workspace }}/selfhost/ofscc
+        run: |
+          chmod +x ofs/tests/interpreter/test_differential.sh
+          ofs/tests/interpreter/test_differential.sh
 
       - name: Build OFS native wizard installer
         env:
@@ -103,6 +112,15 @@ jobs:
           selfhost/ui-smoke
           selfhost/ofs build ofs/tests/window_runtime_smoke.ofs -o selfhost/window-smoke
           selfhost/window-smoke
+
+      - name: Run Differential Test Suite (Interpreter vs Native)
+        env:
+          OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
+          OFS_BIN: ${{ github.workspace }}/selfhost/ofs
+          OFSCC: ${{ github.workspace }}/selfhost/ofscc
+        run: |
+          chmod +x ofs/tests/interpreter/test_differential.sh
+          ofs/tests/interpreter/test_differential.sh
 
   build-windows:
     name: Build & Test (Windows)

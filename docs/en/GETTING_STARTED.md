@@ -1,6 +1,6 @@
 # Getting Started with OFS
 
-OFS (Obsidian Fault Script) is a compiled, self-hosted programming language that generates LLVM IR and links against a native runtime to produce standalone binaries.
+OFS (Obsidian Fault Script) is a hybrid, self-hosted programming language featuring an integrated AST interpreter for instant execution (`ofs run`) and an LLVM backend for high-performance native binary compilation (`ofs build`).
 
 The ecosystem includes the compiler, a standard library, command-line tools, and domain-specific web languages (ODL and OES).
 
@@ -51,9 +51,10 @@ The `ofs` CLI provides the following subcommands:
 
 | Command | Description |
 |---|---|
-| `ofs build <file.ofs> -o <binary>` | Compiles an OFS source file into a native binary executable. |
+| `ofs <file.ofs>` | Executes the program directly using the integrated AST interpreter. |
+| `ofs run <file.ofs> [--native]` | Executes via the AST interpreter (or with `--native` for temporary compilation). |
+| `ofs build <file.ofs> -o <binary>` | Compiles an OFS source file into a native binary executable via LLVM. |
 | `ofs check <file.ofs>` | Type-checks and validates source code without emitting output. |
-| `ofs run <file.ofs>` | Compiles to a temporary directory and executes immediately. |
 | `ofs tokens <file.ofs>` | Prints tokens produced by the lexical analyzer. |
 | `ofs ast <file.ofs>` | Displays the Abstract Syntax Tree (AST). |
 | `ofs ir <file.ofs>` | Emits native LLVM IR code (`.ll`). |
@@ -73,7 +74,14 @@ core main() {
 }
 ```
 
-Compile and run:
+Direct execution via the AST interpreter:
+
+```bash
+ofs hello.ofs
+# or: ofs run hello.ofs
+```
+
+Or compiling to a standalone native binary:
 
 ```bash
 ofs build hello.ofs -o hello
@@ -148,20 +156,23 @@ core main() {
 }
 ```
 
-Higher-order functions and anonymous expressions (*lambdas*):
+Functions can compose calls and invoke other functions:
 
 ```ofs
-vein apply(x: stone, op: vein(stone) -> stone) -> stone {
-    return op(x)
+vein square(n: stone) -> stone {
+    return n * n
+}
+
+vein sum_of_squares(a: stone, b: stone) -> stone {
+    return square(a) + square(b)
 }
 
 core main() {
-    forge double = vein(n: stone) -> stone {
-        return n * 2
-    }
-    echo(apply(21, double))
+    echo(sum_of_squares(3, 4))
 }
 ```
+
+> **Note**: Anonymous function expressions (*lambdas*) are modeled in the AST specification (`NK_LAMBDA`) and scheduled for an upcoming compiler release. Currently, all functions are declared as named items with `vein`.
 
 ---
 
@@ -176,11 +187,11 @@ monolith Rectangle {
 }
 
 impl Rectangle {
-    vein area(self) -> stone {
+    vein area(self: Rectangle) -> stone {
         return self.width * self.height
     }
 
-    vein perimeter(self) -> stone {
+    vein perimeter(self: Rectangle) -> stone {
         return (self.width + self.height) * 2
     }
 }
@@ -220,48 +231,67 @@ attach {F:./modules/helper.ofs}
 ### Conditionals (`if` / `else`)
 
 ```ofs
-if (x > 0) {
-    echo("positive")
-} else if (x < 0) {
-    echo("negative")
-} else {
-    echo("zero")
+core main() {
+    forge x: stone = 10
+    if (x > 0) {
+        echo("positive")
+    } else if (x < 0) {
+        echo("negative")
+    } else {
+        echo("zero")
+    }
 }
 ```
 
 ### Loops (`while`)
 
 ```ofs
-forge i: stone = 0
-while (i < 5) {
-    echo(i)
-    i = i + 1
+core main() {
+    forge i: stone = 0
+    while (i < 5) {
+        echo(i)
+        i = i + 1
+    }
 }
 ```
 
-### Pattern Matching (`match`)
+### Multi-Branch Selection
+
+Multi-branch decision logic is currently written with chained `if / else if / else`:
 
 ```ofs
-match status_code {
-    case 200: { echo("OK") }
-    case 404: { echo("Not Found") }
-    case 500: { echo("Internal Error") }
-    default:  { echo("Unknown") }
+core main() {
+    forge status_code = 200
+    if (status_code == 200) {
+        echo("OK")
+    } else if (status_code == 404) {
+        echo("Not Found")
+    } else {
+        echo("Unknown code")
+    }
 }
 ```
 
-### Error Handling (`tremor` / `catch` / `throw`)
+> **Note**: Pattern matching with `match` is reserved in the AST specification (`NK_MATCH`) and grammar, with dedicated parser and lowering support planned for an upcoming release.
+
+### Error Handling and Abort (`throw`)
+
+The `throw` statement reports a diagnostic error message and cleanly terminates the process with exit code 1:
 
 ```ofs
-tremor {
+vein divide(dividend: stone, divisor: stone) -> stone {
     if (divisor == 0) {
         throw "Division by zero"
     }
-    echo(dividend / divisor)
-} catch (err: obsidian) {
-    echo("Caught exception: " + err)
+    return dividend / divisor
+}
+
+core main() {
+    echo(divide(10, 2))
 }
 ```
+
+> **Note**: The `tremor { ... } catch (...) { ... }` block structure is modeled in the grammar (`NK_TREMOR`), with non-terminating stack unwinding planned for the upcoming interpreter and runtime stages.
 
 ---
 

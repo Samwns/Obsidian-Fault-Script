@@ -11,6 +11,7 @@ attach {F:parser.ofs}
 attach {F:typeck.ofs}
 attach {F:codegen.ofs}
 attach {F:llvmgen.ofs}
+attach {F:interpreter.ofs}
 
 extern vein getenv(name: obsidian) -> obsidian
 
@@ -185,9 +186,6 @@ vein parse_state_field(state: obsidian, field_idx: stone) -> obsidian {
 }
 
 core main() {
-    echo("ofscc — OFS self-hosted compiler v0.1")
-    echo("")
-    
     forge input_file = "input.ofs"
     forge output_file = "a.out"
     forge c_output = "output.ll"
@@ -210,23 +208,29 @@ core main() {
         compile_mode = "build-ir"
     }
 
+    forge is_run = ofs_str_eq(compile_mode, "run")
+    if (!is_run) {
+        echo("ofscc — OFS self-hosted compiler v0.1")
+        echo("")
+    }
+
     if (ofs_str_eq(input_file, "") || ofs_str_eq(input_file, "--help")) {
         usage()
         return
     }
     
     // Phase 1: Read source
-    echo("[1/6] Reading source...")
+    if (!is_run) { echo("[1/6] Reading source...") }
     forge src: obsidian = ""
     src = read_file(input_file)
     src = expand_attaches(input_file, src)
-    echo("  OK — " + ofs_stone_to_obsidian(ofs_str_len(src)) + " bytes")
+    if (!is_run) { echo("  OK — " + ofs_stone_to_obsidian(ofs_str_len(src)) + " bytes") }
     
     // Phase 2: Lexical analysis
-    echo("[2/6] Lexical analysis...")
+    if (!is_run) { echo("[2/6] Lexical analysis...") }
     forge tokens: Array<Token> = lexer.lex(src)
     forge token_count = ofs_array_len(tokens)
-    echo("  OK — " + ofs_stone_to_obsidian(token_count) + " tokens")
+    if (!is_run) { echo("  OK — " + ofs_stone_to_obsidian(token_count) + " tokens") }
 
     if (print_tokens) {
         forge ti = 0
@@ -239,10 +243,10 @@ core main() {
     }
     
     // Phase 3: Parsing
-    echo("[3/6] Parsing...")
+    if (!is_run) { echo("[3/6] Parsing...") }
     forge root_id = parser.parse(tokens)
     forge node_count = node_pool_len()
-    echo("  OK — " + ofs_stone_to_obsidian(node_count) + " AST nodes")
+    if (!is_run) { echo("  OK — " + ofs_stone_to_obsidian(node_count) + " AST nodes") }
 
     if (print_ast) {
         forge root_node: Node = node_get(root_id)
@@ -251,13 +255,19 @@ core main() {
     }
     
     // Phase 4: Type checking
-    echo("[4/6] Type checking...")
+    if (!is_run) { echo("[4/6] Type checking...") }
     typeck.check(root_id)
-    echo("  OK")
+    if (!is_run) { echo("  OK") }
 
     if (check_only) {
         echo("")
         echo("CHECK OK: semantic validation complete")
+        return
+    }
+
+    if (ofs_str_eq(compile_mode, "run")) {
+        forge exit_code = interpreter.run(root_id)
+        exit(exit_code)
         return
     }
     

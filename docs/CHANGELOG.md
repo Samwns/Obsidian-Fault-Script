@@ -2,6 +2,26 @@
 
 All notable changes to this project are recorded here.
 
+## [1.0.148] - 2026-09-30 — Hybrid Interpreter Backend & Differential Testing
+
+### Added
+
+- **AST Interpreter Backend (`interpreter.ofs`)**: OFS is now a true hybrid language. Running `ofs <file.ofs>` or `ofs run <file.ofs>` directly evaluates the typed AST without invoking LLVM, Clang, or linker phases, providing sub-millisecond execution for scripting and prototyping.
+- **Value Monolith & Dynamic Heap**: Full runtime support for primitives (`stone`, `crystal`, `obsidian`, `bool`), handles for `Array<T>`, heap-allocated `monolith` structs with value-copy semantics, and pointers with the `Location` table.
+- **Lexical Call Frame Scoping**: Frame base tracking (`_current_frame_base` and `_globals_count`) ensuring that local variables in caller functions never leak or shadow global declarations in callees.
+- **Method Dispatch via `impl`**: Support for methods declared in `impl Type { vein method(self: Type) ... }` called directly on instances (`instance.method()`).
+- **Differential Test Suite**: Automated differential runner `ofs/tests/interpreter/test_differential.sh` with 9 end-to-end test suites asserting 1-to-1 output equivalence between interpreted mode and native LLVM builds.
+- **CI Integration**: Added differential test validation to GitHub Actions workflows on Linux and macOS.
+
+### Changed
+
+- `ofs run <file.ofs>` defaults to instant interpreted execution; `ofs run --native <file.ofs>` is available for temporary compilation + execution.
+- Windows PowerShell runner `src/packaging/windows/ofs.ps1` updated with interpreted mode and `--native` flag for complete parity across Linux, macOS, and Windows.
+- Regenerated bootstrap LLVM IR `ofs/dist/ofscc.ll` to include the interpreter backend across all distribution platforms.
+- **License updated to CC BY-NC-SA 4.0** (Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International), protecting the language against commercial exploitation, closed-source privatization, and attribution removal.
+
+---
+
 ## [1.0.101] - 2026-05-31 — Native Installers Release Hardening
 
 ### Fixed

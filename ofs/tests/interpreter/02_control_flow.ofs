@@ -1,0 +1,32 @@
+core main() {
+    forge x = 15
+    if (x < 10) {
+        echo("x < 10")
+    } else if (x == 15) {
+        echo("x == 15")
+    } else {
+        echo("x > 15")
+    }
+
+    // While loop with continue and break
+    forge i = 0
+    forge sum = 0
+    while (i < 10) {
+        i++
+        if (i == 3) {
+            continue
+        }
+        if (i == 8) {
+            break
+        }
+        sum = sum + i
+    }
+    echo(sum)
+
+    // Cycle loop (C-style)
+    forge total = 0
+    cycle (forge k = 1; k <= 5; k++) {
+        total = total + (k * 2)
+    }
+    echo(total)
+}

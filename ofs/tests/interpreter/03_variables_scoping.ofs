@@ -1,0 +1,25 @@
+forge global_val: stone = 100
+
+vein read_global() -> stone {
+    return global_val
+}
+
+vein shadow_test() -> stone {
+    forge global_val: stone = 999
+    return read_global()
+}
+
+vein modify_global() {
+    global_val = 250
+}
+
+core main() {
+    echo(read_global())
+    echo(shadow_test())
+    modify_global()
+    echo(read_global())
+
+    forge local_x: stone = 10
+    forge local_y: stone = 20
+    echo(local_x + local_y)
+}

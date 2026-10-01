@@ -135,22 +135,25 @@ vein log_info(msg: obsidian) -> void {
 }
 ```
 
-### Anonymous Functions (*Lambdas*)
+### Function Composition
 
-Anonymous function literals can be assigned to variables or passed as arguments:
+Functions can call each other, and standard recursion is supported:
 
 ```ofs
-vein apply_op(val: stone, op: vein(stone) -> stone) -> stone {
-    return op(val)
+vein square(n: stone) -> stone {
+    return n * n
+}
+
+vein sum_of_squares(a: stone, b: stone) -> stone {
+    return square(a) + square(b)
 }
 
 core main() {
-    forge square = vein(n: stone) -> stone {
-        return n * n
-    }
-    echo(apply_op(8, square))
+    echo(sum_of_squares(3, 4))
 }
 ```
+
+> **Note**: Anonymous function expressions (`vein(...) -> ...` inline lambdas) are defined in the AST specification (`NK_LAMBDA`) and are planned for an upcoming compiler release. Currently, all functions must be declared as named items with `vein`.
 
 ---
 
@@ -165,11 +168,11 @@ monolith Vector2 {
 }
 
 impl Vector2 {
-    vein length_squared(self) -> stone {
+    vein length_squared(self: Vector2) -> stone {
         return self.x * self.x + self.y * self.y
     }
 
-    vein scale(self, factor: stone) -> void {
+    vein scale(self: Vector2, factor: stone) -> void {
         self.x = self.x * factor
         self.y = self.y * factor
     }
@@ -229,12 +232,12 @@ Array builtins provided by the runtime include indexing and length retrieval.
 
 ### `if` / `else if` / `else`
 
-Conditionals do not require parentheses around the expression, but block braces `{}` are mandatory:
+Conditionals require parentheses around the test expression, and block braces `{}` are mandatory:
 
 ```ofs
-if score >= 90 {
+if (score >= 90) {
     echo("Grade: A")
-} else if score >= 80 {
+} else if (score >= 80) {
     echo("Grade: B")
 } else {
     echo("Grade: C")
@@ -243,39 +246,69 @@ if score >= 90 {
 
 ### `while`
 
-Standard pre-condition iteration loop:
+Standard pre-condition iteration loop requiring parentheses:
 
 ```ofs
 forge idx = 0
-while idx < 10 {
+while (idx < 10) {
     echo(idx)
     idx = idx + 1
 }
 ```
 
-### Pattern Matching (`match`)
+### `cycle` Loops
 
+OFS provides structured loops using the `cycle` keyword:
+
+C-style indexed loop:
 ```ofs
-match status {
-    case 200: { echo("Success") }
-    case 404: { echo("Resource Not Found") }
-    default:  { echo("Unhandled code") }
+cycle (forge i = 0; i < 5; i++) {
+    echo(i)
 }
 ```
 
-### Error Handling (`tremor` / `catch` / `throw`)
+Collection iteration:
+```ofs
+forge items: Array<stone> = [10, 20, 30]
+cycle (item in items) {
+    echo(item)
+}
+```
+
+### Multi-Branch Selection
+
+Multi-way branching is currently handled via chained `if / else if`:
 
 ```ofs
-tremor {
-    if denominator == 0 {
+if (status == 200) {
+    echo("Success")
+} else if (status == 404) {
+    echo("Resource Not Found")
+} else {
+    echo("Unhandled code")
+}
+```
+
+> **Note**: Pattern matching with `match` and `case` is reserved in the AST specification (`NK_MATCH`) and grammar, with full compiler parser support scheduled for an upcoming release.
+
+### Error Handling and Abortion (`throw`)
+
+The `throw` statement prints an error message and cleanly terminates execution with an exit status code of 1:
+
+```ofs
+vein divide(numerator: stone, denominator: stone) -> stone {
+    if (denominator == 0) {
         throw "Division by zero is undefined"
     }
-    forge result = numerator / denominator
-    echo(result)
-} catch (err: obsidian) {
-    echo("Runtime error: " + err)
+    return numerator / denominator
+}
+
+core main() {
+    echo(divide(10, 2))
 }
 ```
+
+> **Note**: Structured `tremor / catch` blocks are recognized by the grammar (`NK_TREMOR`), with full non-terminating stack catch semantics planned for the runtime and interpreter backend.
 
 ---
 

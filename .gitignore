@@ -1,3 +1,4 @@
+# Build & Binary Artifacts
 build/
 build-mingw/
 build-debug/
@@ -10,15 +11,68 @@ build-debug/
 *.out
 /tmp/
 *.exe
+*.ppm
+*.ppdb
+*.dSYM/
+core
+core.*
+vgcore.*
+*.stackdump
+
+# Node & Package Artifacts
+node_modules/
 src/vscode-extension/node_modules/
-# src/vscode-extension/.gitignore
 *.vsix
+
+# Roadmaps & Architecture Drafts
 ROADMAP.md
 ROADMAP.
 docs/roadmap/
-ofs/examples/native_site/dist/
-*.ppm
+docs/IDLE_ARCHITECTURE.md
 idle/
 src/vscode-extension/bin/linux-x64/ofs_idle_linux
-docs/IDLE_ARCHITECTURE.md
-*.ppdb
+ofs/examples/native_site/dist/
+
+# Test & Temporary Files
+*.tmp
+*.temp
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+test_out/
+test_results/
+test_diff_*.txt
+test_differential_out*
+
+# Sensitive & Credential Files
+*.env
+*.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+*id_rsa*
+*id_ed25519*
+*.secret
+*.credentials
+*.token
+
+# OS & Editor Files
+.DS_Store
+Thumbs.db
+*~
+*.swp
+*.swo
+*.bak
+*.patch
+*.orig
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json

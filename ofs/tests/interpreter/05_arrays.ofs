@@ -1,0 +1,20 @@
+core main() {
+    forge arr = [10, 20, 30]
+    echo(ofs_array_len(arr))
+    echo(arr[0])
+    echo(arr[1])
+    echo(arr[2])
+
+    ofs_array_push(arr, 40)
+    echo(ofs_array_len(arr))
+    echo(arr[3])
+
+    forge sum: stone = 0
+    cycle (x in arr) {
+        sum += x
+    }
+    echo(sum)
+
+    ofs_array_set(arr, 1, 99)
+    echo(arr[1])
+}

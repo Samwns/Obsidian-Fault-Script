@@ -1,6 +1,6 @@
 # Guia de Introdução ao OFS
 
-O OFS (Obsidian Fault Script) é uma linguagem de programação compilada, self-hosted, que gera LLVM IR e produz executáveis binários nativos vinculados a um runtime nativo.
+O OFS (Obsidian Fault Script) é uma linguagem de programação híbrida, self-hosted, que conta com um interpretador AST integrado para execução instantânea (`ofs run`) e um backend LLVM para geração de executáveis binários nativos de alta performance (`ofs build`).
 
 O ecossistema inclui compilador, biblioteca padrão, ferramentas de linha de comando e as linguagens de domínio web ODL e OES.
 
@@ -51,9 +51,10 @@ O executável `ofs` expõe os seguintes subcomandos:
 
 | Comando | Descrição |
 |---|---|
-| `ofs build <arquivo.ofs> -o <binário>` | Compila o arquivo para um executável binário nativo. |
+| `ofs <arquivo.ofs>` | Executa o programa diretamente via interpretador AST. |
+| `ofs run <arquivo.ofs> [--native]` | Executa no interpretador (ou com `--native` para compilação temporária). |
+| `ofs build <arquivo.ofs> -o <binário>` | Compila o arquivo para um executável binário nativo via LLVM. |
 | `ofs check <arquivo.ofs>` | Valida a sintaxe e a tipagem sem emitir código. |
-| `ofs run <arquivo.ofs>` | Compila em diretório temporário e executa imediatamente. |
 | `ofs tokens <arquivo.ofs>` | Imprime o fluxo de tokens gerado pela análise léxica. |
 | `ofs ast <arquivo.ofs>` | Exibe a árvore sintática abstrata (AST) do programa. |
 | `ofs ir <arquivo.ofs>` | Emite o código intermediário LLVM IR (`.ll`). |
@@ -73,7 +74,14 @@ core main() {
 }
 ```
 
-Compilação e execução:
+Execução direta no interpretador AST:
+
+```bash
+ofs hello.ofs
+# ou: ofs run hello.ofs
+```
+
+Ou compilação para executável binário nativo:
 
 ```bash
 ofs build hello.ofs -o hello
@@ -148,20 +156,23 @@ core main() {
 }
 ```
 
-Funções de ordem superior e expressões anônimas (*lambdas*):
+Funções podem compor chamadas entre si e invocar outras rotinas:
 
 ```ofs
-vein aplicar(x: stone, operacao: vein(stone) -> stone) -> stone {
-    return operacao(x)
+vein quadrado(n: stone) -> stone {
+    return n * n
+}
+
+vein soma_quadrados(a: stone, b: stone) -> stone {
+    return quadrado(a) + quadrado(b)
 }
 
 core main() {
-    forge dobro = vein(n: stone) -> stone {
-        return n * 2
-    }
-    echo(aplicar(21, dobro))
+    echo(soma_quadrados(3, 4))
 }
 ```
+
+> **Nota**: Expressões anônimas (*lambdas*) estão especificadas na árvore sintática (`NK_LAMBDA`) e em planejamento no roadmap da linguagem. Atualmente todas as funções devem ser nomeadas com `vein`.
 
 ---
 
@@ -176,11 +187,11 @@ monolith Retangulo {
 }
 
 impl Retangulo {
-    vein area(self) -> stone {
+    vein area(self: Retangulo) -> stone {
         return self.largura * self.altura
     }
 
-    vein perimetro(self) -> stone {
+    vein perimetro(self: Retangulo) -> stone {
         return (self.largura + self.altura) * 2
     }
 }
@@ -220,48 +231,67 @@ attach {F:./modulos/auxiliar.ofs}
 ### Condicionais (`if` / `else`)
 
 ```ofs
-if (x > 0) {
-    echo("positivo")
-} else if (x < 0) {
-    echo("negativo")
-} else {
-    echo("zero")
+core main() {
+    forge x: stone = 10
+    if (x > 0) {
+        echo("positivo")
+    } else if (x < 0) {
+        echo("negativo")
+    } else {
+        echo("zero")
+    }
 }
 ```
 
 ### Laços de repetição (`while`)
 
 ```ofs
-forge i: stone = 0
-while (i < 5) {
-    echo(i)
-    i = i + 1
+core main() {
+    forge i: stone = 0
+    while (i < 5) {
+        echo(i)
+        i = i + 1
+    }
 }
 ```
 
-### Seleção múltipla (`match`)
+### Seleção de múltiplos caminhos
+
+Ramificações com múltiplas condições utilizam `if / else if / else`:
 
 ```ofs
-match status_code {
-    case 200: { echo("Sucesso") }
-    case 404: { echo("Não encontrado") }
-    case 500: { echo("Erro interno") }
-    default:  { echo("Desconhecido") }
+core main() {
+    forge status_code = 200
+    if (status_code == 200) {
+        echo("Sucesso")
+    } else if (status_code == 404) {
+        echo("Não encontrado")
+    } else {
+        echo("Outro código")
+    }
 }
 ```
 
-### Tratamento de exceções (`tremor` / `catch` / `throw`)
+> **Nota**: O construto `match` está reservado na especificação da AST (`NK_MATCH`) e no lexer, com parser e desvio dedicados planejados no roadmap.
+
+### Tratamento e validação de erros (`throw`)
+
+A instrução `throw` exibe uma mensagem de falha e encerra o processo com código de erro 1:
 
 ```ofs
-tremor {
+vein dividir(dividendo: stone, divisor: stone) -> stone {
     if (divisor == 0) {
         throw "Divisão por zero inválida"
     }
-    echo(dividendo / divisor)
-} catch (erro: obsidian) {
-    echo("Exceção capturada: " + erro)
+    return dividendo / divisor
+}
+
+core main() {
+    echo(dividir(10, 2))
 }
 ```
+
+> **Nota**: A estrutura `tremor { ... } catch (...) { ... }` está modelada na gramática (`NK_TREMOR`), com desbobinamento estruturado previsto para as próximas etapas de runtime e interpretador.
 
 ---
 

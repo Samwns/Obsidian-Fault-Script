@@ -1,0 +1,32 @@
+monolith Vector {
+    x: stone
+    y: stone
+}
+
+vein add_vectors(a: Vector, b: Vector) -> Vector {
+    forge res: Vector
+    res.x = a.x + b.x
+    res.y = a.y + b.y
+    return res
+}
+
+core main() {
+    forge v1: Vector
+    v1.x = 10
+    v1.y = 20
+
+    forge v2: Vector
+    v2.x = 5
+    v2.y = 15
+
+    forge v3 = add_vectors(v1, v2)
+    echo(v3.x)
+    echo(v3.y)
+
+    // Verify copy-by-value semantics
+    forge copy_v1: Vector
+    copy_v1 = v1
+    copy_v1.x = 999
+    echo(v1.x)
+    echo(copy_v1.x)
+}

@@ -29,17 +29,19 @@ source.ofs
 │   stack)     │
 └──────┬───────┘
        │
-       ▼
-┌──────────────┐
-│  LLVM Gen    │ → output.ll (LLVM IR nativo)
-│ (llvmgen.ofs)│   (mapeamento OFS → LLVM IR SSA)
-└──────┬───────┘
-       │
-       ▼
-   llc -filetype=obj output.ll -o output.o
-       │
-       ▼
-   ld / ld.lld output.o magma.o (Stack Magma) → executável nativo
+       ├─────────────────────────────────┐
+       │ (ofs run / interpreted)         │ (ofs build / native)
+       ▼                                 ▼
+┌──────────────┐                  ┌──────────────┐
+│ Interpreter  │                  │  LLVM Gen    │ → output.ll (LLVM IR nativo)
+│(interpreter  │                  │ (llvmgen.ofs)│   (mapeamento OFS → LLVM IR SSA)
+│    .ofs)     │                  └──────┬───────┘
+└──────┬───────┘                         │
+       │                                 ▼
+       ▼                             llc -filetype=obj output.ll -o output.o
+ Direct Execution                        │
+(instant evaluation)                     ▼
+                             ld / ld.lld output.o magma.o → executável nativo
 ```
 
 ---
@@ -252,11 +254,28 @@ resolve(name)
 
 ---
 
-## Phase 4: LLVM IR Generator (Geração Nativa)
+## Phase 4A: AST Interpreter Backend (Interpretação Direta)
+
+**File**: `ofs/ofscc/interpreter.ofs` (70KB, 1,900+ lines)
+
+O backend interpretador da OFS executa a árvore sintática (AST) tipada diretamente em memória, sem gerar arquivos intermediários, código C ou LLVM IR. É o backend padrão utilizado pelo comando `ofs <arquivo.ofs>` e `ofs run <arquivo.ofs>`.
+
+### Arquitetura do Interpretador
+
+1. **Sistema `Value`**: Monolith universal que unifica valores escalares (`stone`, `crystal`, `obsidian`, `bool`, `null`) e handles virtuais na heap para `Array<T>`, objetos `monolith` e ponteiros.
+2. **Ambiente e Frames de Chamada**: Escopo léxico estrito baseado em marcadores de frame (`_current_frame_base` e `_globals_count`), impedindo vazamento de escopo entre funções chamadoras e variáveis globais.
+3. **Semântica por Valor**: Cópias profundas de campos de estruturas (`clone_value()`) garantindo comportamento idêntico ao modelo de memória nativo.
+4. **Despacho Dinâmico de Métodos**: Resolução automática de métodos definidos em blocos `impl Type` com injeção automática de `self`.
+5. **Ponteiros Virtuais**: Tabela de `Location` que reproduz a semântica de `&` e `*` dentro de blocos `fracture` e declarações `shard`.
+6. **Builtins Integrados**: Resolução imediata de funções de entrada/saída (`echo`), strings (`ofs_str_*`), vetores (`ofs_array_*`) e matemáticas (`ofs_pow`, `ofs_sqrt`).
+
+---
+
+## Phase 4B: LLVM IR Generator (Geração Nativa)
 
 **File**: `ofs/ofscc/llvmgen.ofs` (74KB, 2,000+ lines)
 
-O backend primário da OFS gera diretamente LLVM Intermediate Representation (IR), dispensando transpiladores para C ou dependências do Clang.
+O backend de compilação da OFS gera diretamente LLVM Intermediate Representation (IR), dispensando transpiladores para C ou dependências do Clang. É utilizado pelo comando `ofs build`.
 
 ### Type Mapping (OFS → LLVM IR)
 
@@ -373,10 +392,11 @@ For bootstrap to work (`ofscc_v2 === ofscc_v3`):
 
 ### Planned
 
-1. Add support for impl/namespace/strata
-2. Add tremor/catch error handling
-3. Path-aware error messages
-4. Optimize generated C
+1. Add Interpreter backend (`interpreter.ofs`) for instant evaluation via `ofs run`
+2. Implement OIR (Obsidian Intermediate Representation) lowering layer
+3. Add tremor/catch error handling and unwinding
+4. Path-aware error messages and diagnostics
+5. Native graphics, windowing, and audio standard modules
 
 ---
 

@@ -1,6 +1,6 @@
 # OFS — Jornada do Iniciante
 
-Guia prático para aprender Obsidian Fault Script (OFS) por etapas graduais, do básico até a criação de componentes e módulos.
+Guia prático para aprender Obsidian Fault Script (OFS) por etapas graduais, do básico até a manipulação de estruturas, coleções e módulos.
 
 ---
 
@@ -111,11 +111,11 @@ monolith Retangulo {
 }
 
 impl Retangulo {
-    vein area(self) -> stone {
+    vein area(self: Retangulo) -> stone {
         return self.largura * self.altura
     }
 
-    vein perimetro(self) -> stone {
+    vein perimetro(self: Retangulo) -> stone {
         return (self.largura + self.altura) * 2
     }
 }
@@ -130,7 +130,7 @@ core main() {
 }
 ```
 
-**Desafio**: Crie um método `eh_quadrado(self) -> bool` que retorne verdadeiro caso largura e altura sejam idênticas.
+**Desafio**: Crie um método `eh_quadrado(self: Retangulo) -> bool` que retorne verdadeiro caso largura e altura sejam idênticas.
 
 ---
 
@@ -179,50 +179,43 @@ core main() {
 
 ---
 
-## Módulo 8: Funções como Valores e Lambdas
+## Módulo 8: Vetores e Coleções (`Array<T>`)
 
-**Objetivo**: Passar funções como parâmetros para outras rotinas.
+**Objetivo**: Armazenar coleções sequenciais homogêneas, acessar e alterar elementos por índice e consultar o tamanho do vetor.
 
 ```ofs
-vein aplicar(x: stone, operacao: vein(stone) -> stone) -> stone {
-    return operacao(x)
-}
-
 core main() {
-    forge triplo = vein(n: stone) -> stone {
-        return n * 3
-    }
+    forge notas: Array<stone> = [85, 92, 78]
+    echo(notas[0])
 
-    echo(aplicar(7, triplo))
+    notas[1] = 95
+    echo(notas[1])
+    echo(ofs_array_len(notas))
 }
 ```
+
+**Desafio**: Crie um array com 4 números e calcule a soma total de seus elementos usando um laço.
 
 ---
 
-## Módulo 9: Seleção Múltipla (`match`) e Constantes
+## Módulo 9: Laços Estruturados (`cycle`)
 
-**Objetivo**: Simplificar árvores condicionais através de correspondência de padrões e constantes.
+**Objetivo**: Iterar de forma limpa utilizando laços indexados estilo C e iteração sobre coleções.
 
 ```ofs
-const SUCESSO: stone = 200
-const NAO_ENCONTRADO: stone = 404
-
 core main() {
-    forge status = 200
+    cycle (forge i = 0; i < 5; i++) {
+        echo(i)
+    }
 
-    match status {
-        case SUCESSO: {
-            echo("Requisição atendida com êxito")
-        }
-        case NAO_ENCONTRADO: {
-            echo("Recurso não encontrado")
-        }
-        default: {
-            echo("Código não mapeado")
-        }
+    forge itens: Array<stone> = [10, 20, 30]
+    cycle (valor in itens) {
+        echo(valor)
     }
 }
 ```
+
+**Desafio**: Utilize `cycle (item in lista)` para contar quantos números em um array são maiores que 15.
 
 ---
 

@@ -1,101 +1,89 @@
-# OFS: A Truly Compiled Language
+# OFS: A Truly Hybrid and Native Compiled Language
 
 ## The Fundamental Question: Is OFS Interpreted or Compiled?
 
-**Answer: OFS is COMPILED.**
+**Answer: OFS is HYBRID — High-Performance Native AOT Compilation via LLVM and Instant AST Interpretation.**
 
-OFS is an Ahead-Of-Time (AOT) compiled programming language that directly emits LLVM IR through its self-hosted compiler frontend (`ofscc`), yielding native machine code linked into standalone platform executables.
+OFS unites the strengths of both execution models:
+1. **Native Ahead-Of-Time (AOT) Compilation (`ofs build`)**: Directly generates LLVM IR from its self-hosted compiler frontend (`ofscc`), yielding machine code linked into standalone platform executables without virtual machines or embedded interpreters.
+2. **Instant In-Memory AST Interpretation (`ofs run` / `ofs <file.ofs>`)**: Directly evaluates the typed Abstract Syntax Tree (AST) in memory using an integrated, pure-OFS interpreter backend (`interpreter.ofs`), providing rapid startup and zero compile latency for scripting and experimentation.
 
 ---
 
-## Compilation Pipeline
+## Dual-Backend Architecture
 
 ```text
 ┌─────────────────────────────────────────────────────────────────────┐
-│ OFS Source Code                                                     │
-│ (.ofs)                                                              │
+│ OFS Source Code (.ofs)                                              │
 └────────────────────────┬────────────────────────────────────────────┘
                          │
                     ┌────▼─────┐
                     │  Lexer   │ -> Lexical analysis (tokens)
                     └────┬─────┘
                          │ Array<Token>
-    ┌────────────────────┘
-    │
-    ▼
-┌─────────────────────────┐
-│     parser.ofs          │ -> Syntax parsing
-│ (pure OFS, no C++ deps) │
-└────────┬────────────────┘
-         │ AST (Abstract Syntax Tree)
-         │
-    ┌────▼─────────┐
-    │ Type Checker │ -> Static type validation and inference
-    └────┬─────────┘
-         │ Annotated AST
-         │
-     ┌───▼────────────┐
-     │    LLVM Gen    │ -> Direct LLVM IR emission (.ll)
-     └───┬────────────┘
-         │ Native LLVM IR
-         │
-     ┌───▼───────────────────────────┐
-     │  llc -filetype=obj (.ll -> .o)│ -> Native machine object code
-     └───┬───────────────────────────┘
-         │ Binary object (.o)
-         │
-     ┌───▼────────────────────────────────────┐
-     │  ld / ld.lld (.o + magma.o -> binary)  │ -> Static linkage with runtime
-     └───┬────────────────────────────────────┘
-         │
-     ┌───▼──────────────────┐
-     │ Target Executable    │
-     │ ELF (Linux)          │
-     │ Mach-O (macOS)       │
-     │ PE32+ (Windows)      │
-     └──────────────────────┘
+                         ▼
+                    ┌──────────┐
+                    │  Parser  │ -> Syntactic parsing (pure OFS AST)
+                    └────┬─────┘
+                         │ AST
+                         ▼
+                    ┌──────────┐
+                    │ Typeck   │ -> Static type checking & semantic validation
+                    └────┬─────┘
+                         │ Typed & Annotated AST
+         ┌───────────────┴───────────────┐
+         │                               │
+[ofs run / ofs <file.ofs>]        [ofs build <file.ofs>]
+         │                               │
+         ▼                               ▼
+┌──────────────────┐            ┌──────────────────┐
+│ interpreter.ofs  │            │   llvmgen.ofs    │ -> LLVM IR emission (.ll)
+│ Pure-OFS AST     │            └────────┬─────────┘
+│ Interpreter      │                     │ LLVM IR
+└────────┬─────────┘                     ▼
+         │                      ┌──────────────────┐
+  Immediate run in              │       llc        │ -> Native machine code (.o)
+      memory                    └────────┬─────────┘
+                                         │ Object file (.o)
+                                         ▼
+                                ┌──────────────────┐
+                                │ ld / ld.lld      │ -> Static link with magma.o
+                                └────────┬─────────┘
+                                         │
+                                ┌────────▼─────────┐
+                                │ Native Executable│
+                                │ ELF / Mach-O / PE│
+                                └──────────────────┘
 ```
 
 ---
 
-## What Defines a Compiled Language?
+## What Does the Hybrid Model Provide?
 
-OFS adheres to the strict criteria of compiled systems languages:
-
-1. **Self-hosted compiler**: The `ofscc` compiler is authored entirely in OFS.
-2. **Native machine output**: Execution does not require an interpreter, virtual machine, or runtime bytecode processor.
-3. **Discrete compile step**: `ofs build` produces an architecture-specific executable binary prior to program invocation.
-4. **Direct hardware execution**: Executables dispatch CPU instructions natively on x86_64 and ARM64.
+1. **Instant Feedback**: With `ofs run` or `ofs script.ofs`, code executes immediately in memory without invocation delays from `llc` or linkers.
+2. **Production Performance**: With `ofs build`, the resulting executable runs directly on CPU hardware (x86_64, ARM64) with zero VM overhead.
+3. **Unified Frontend**: Both the interpreter and LLVM code generator consume the exact same lexer, parser, and static type checker, ensuring semantic consistency.
+4. **100% Self-Hosted**: The entire compiler (`ofscc`), including lexer, parser, type checker, LLVM code generator, and AST interpreter, is written in OFS.
 
 ---
 
-## Comparative Analysis
+## Comparative Matrix
 
-| Dimension | OFS | Python | JavaScript / Node.js |
-|---|---|---|---|
-| **Execution Model** | Native machine code (AOT) | Bytecode VM | JIT Engine (V8) |
-| **Compiler** | Self-hosted (written in OFS) | CPython (written in C) | V8 (written in C++) |
-| **Startup Overhead** | ~2 to 10 ms | ~40 to 100 ms | ~50 to 150 ms |
-| **Base Memory Footprint** | Low (~1 to 4 MB) | Moderate (~15 to 30 MB) | High (~30 to 80 MB) |
-| **Runtime Dependency** | Standalone executable | Python interpreter | Node.js runtime |
-
----
-
-## The Compilation Pipeline
-
-The OFS build pipeline executes deterministically:
-
-1. **Direct LLVM IR Emission**: `llvmgen.ofs` translates the typed AST directly into SSA-form LLVM IR, eliminating intermediate transpilations.
-2. **LLC Static Compilation**: The LLVM static compiler `llc` converts `.ll` intermediate code into native `.o` object files.
-3. **Native Linkage**: The platform linker (`ld` on Linux/macOS, `ld.lld` on Windows) statically links the program object with the pre-compiled native runtime (`magma.o`), outputting a self-contained executable.
+| Dimension | OFS (Native) | OFS (Interpreted) | Python | Node.js |
+|---|---|---|---|---|
+| **Model** | Native AOT Machine Code | AST Walk in memory | Bytecode in VM | JIT Engine (V8) |
+| **Execution** | CPU Hardware Direct | Pure-OFS Interpreter | CPython | V8 C++ |
+| **Startup Overhead** | ~2 to 10 ms | ~5 to 15 ms | ~40 to 100 ms | ~50 to 150 ms |
+| **Base Memory** | Lightweight (~1-4 MB) | Lightweight (~4-8 MB)| Moderate (~20 MB) | High (~50 MB) |
+| **Dependencies** | Standalone binary | `ofs` executable | Python interpreter | Node runtime |
 
 ---
 
 ## Conclusion
 
-OFS is a compiled, self-contained language:
+OFS is a modern, hybrid, self-contained programming language:
 
-- Direct compilation to native machine code.
-- Zero virtual machines or production interpreters.
-- Direct LLVM IR generation via the self-hosted frontend.
-- Native integrated runtime (Stack Magma).
+- Instant script and test execution with the AST interpreter (`ofs run`).
+- High-performance native binary compilation with LLVM (`ofs build`).
+- Frontend 100% self-hosted and authored in OFS.
+- Native integrated runtime (Magma Stack).

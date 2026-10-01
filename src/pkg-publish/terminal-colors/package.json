@@ -2,7 +2,7 @@
   "name": "@samwns/ofs-lib-terminal-colors",
   "version": "1.0.0",
   "description": "ANSI color helpers for OFS terminal output",
-  "license": "BSL-1.0",
+  "license": "CC-BY-NC-SA-4.0",
   "files": [
     "libs",
     "ofspkg.json",

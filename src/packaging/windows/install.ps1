@@ -28,7 +28,7 @@ function Show-Banner {
 
 function Confirm-License {
     Show-Banner
-    Write-Host "License: Boost Software License 1.0"
+    Write-Host "License: Creative Commons Attribution-NonCommercial-ShareAlike 4.0 (CC BY-NC-SA 4.0)"
     Write-Host "License file: $PackageDir\LICENSE.txt"
     Write-Host ""
     Write-Host "This installer will install OFS command-line tools, the self-hosted"

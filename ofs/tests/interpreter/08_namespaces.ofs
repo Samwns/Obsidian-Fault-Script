@@ -1,0 +1,21 @@
+namespace math_tools {
+    vein square(x: stone) -> stone {
+        return x * x
+    }
+
+    vein cube(x: stone) -> stone {
+        return x * x * x
+    }
+}
+
+namespace text_tools {
+    vein greet(name: obsidian) -> obsidian {
+        return "Hello, " + name + "!"
+    }
+}
+
+core main() {
+    echo(math_tools.square(6))
+    echo(math_tools.cube(4))
+    echo(text_tools.greet("OFS"))
+}

@@ -1,0 +1,22 @@
+monolith Rect {
+    w: stone
+    h: stone
+}
+
+impl Rect {
+    vein area(self: Rect) -> stone {
+        return self.w * self.h
+    }
+
+    vein perimeter(self: Rect) -> stone {
+        return (self.w + self.h) * 2
+    }
+}
+
+core main() {
+    forge r: Rect
+    r.w = 10
+    r.h = 5
+    echo(r.area())
+    echo(r.perimeter())
+}

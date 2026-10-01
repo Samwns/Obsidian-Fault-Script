@@ -5,7 +5,7 @@
   "version": "1.0.9",
   "publisher": "Obsidian-Fault",
   "icon": "media/ofs.png",
-  "license": "BSL-1.0",
+  "license": "CC-BY-NC-SA-4.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/Samwns/Obsidian-Fault-Script.git"

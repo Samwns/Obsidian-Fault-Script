@@ -1,0 +1,28 @@
+vein factorial(n: stone) -> stone {
+    if (n <= 1) {
+        return 1
+    }
+    return n * factorial(n - 1)
+}
+
+vein fibonacci(n: stone) -> stone {
+    if (n <= 0) {
+        return 0
+    }
+    if (n == 1) {
+        return 1
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+vein add3(a: stone, b: stone, c: stone) -> stone {
+    return a + b + c
+}
+
+core main() {
+    echo(factorial(5))
+    echo(factorial(7))
+    echo(fibonacci(8))
+    echo(fibonacci(10))
+    echo(add3(10, 25, 65))
+}

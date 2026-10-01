@@ -350,7 +350,7 @@ namespace oll_x11 {
         if (ofs_str_len(target_dir) == 0) {
             return list
         }
-        forge cmd = "(find \"" + target_dir + "\" -maxdepth 3 -not -path '*/.*' -not -path '*/dist*' -not -path '*/target*' -not -path '*/guide*' -not -path '*/node_modules*' -not -path '*/.gemini*' \\( -name \"*.ofs\" -o -name \"*.oll\" -o -name \"*.md\" \\) | sort) > /tmp/ofs_idle_scan.txt"
+        forge cmd = "(find \"" + target_dir + "\" -maxdepth 3 -not -path '*/.*' -not -path '*/dist*' -not -path '*/target*' -not -path '*/guide*' -not -path '*/node_modules*' \\( -name \"*.ofs\" -o -name \"*.oll\" -o -name \"*.md\" \\) | sort) > /tmp/ofs_idle_scan.txt"
         system(cmd)
         forge f: *stone = fopen("/tmp/ofs_idle_scan.txt", "r")
         if (f == null) {

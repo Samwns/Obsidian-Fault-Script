@@ -1,0 +1,25 @@
+core main() {
+    forge a = 10
+    forge b = 3
+    echo(a + b)
+    echo(a - b)
+    echo(a * b)
+    echo(a / b)
+    echo(a % b)
+
+    forge c = 2.5
+    forge d = 1.5
+    echo(c + d)
+    echo(c - d)
+
+    echo(a > b)
+    echo(a < b)
+    echo(a == 10)
+    echo(b != 3)
+
+    forge t = true
+    forge f = false
+    echo(t && f)
+    echo(t || f)
+    echo(!t)
+}

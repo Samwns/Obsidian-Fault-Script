@@ -1,0 +1,1943 @@
+// OFS Compiler — AST Interpreter Backend
+// Direct evaluation backend executing typed AST without LLVM or C dependencies
+
+attach {F:ast.ofs}
+attach {F:symbols.ofs}
+
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_str_concat(a: obsidian, b: obsidian) -> obsidian
+extern vein ofs_str_char_at(s: obsidian, idx: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_str_contains(haystack: obsidian, needle: obsidian) -> bool
+extern vein ofs_stone_to_obsidian(v: stone) -> obsidian
+extern vein ofs_crystal_to_obsidian(v: crystal) -> obsidian
+extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
+extern vein ofs_sqrt(v: crystal) -> crystal
+extern vein exit(code: stone) -> void
+
+// ── Value System ──────────────────────────────────────────────────────────
+
+forge VAL_VOID: stone = 0
+forge VAL_INT: stone = 1
+forge VAL_FLOAT: stone = 2
+forge VAL_BOOL: stone = 3
+forge VAL_STRING: stone = 4
+forge VAL_ARRAY: stone = 5
+forge VAL_OBJECT: stone = 6
+forge VAL_POINTER: stone = 7
+forge VAL_NULL: stone = 8
+
+monolith Value {
+    kind: stone
+    type_name: obsidian
+    i: stone
+    f: crystal
+    b: bool
+    s: obsidian
+    ref: stone
+}
+
+forge EXEC_OK: stone = 0
+forge EXEC_RETURN: stone = 1
+forge EXEC_BREAK: stone = 2
+forge EXEC_CONTINUE: stone = 3
+forge EXEC_THROW: stone = 4
+
+forge LOC_INVALID: stone = 0
+forge LOC_VAR: stone = 1
+forge LOC_ARRAY: stone = 2
+forge LOC_FIELD: stone = 3
+forge LOC_PTR: stone = 4
+
+monolith Location {
+    kind: stone
+    var_idx: stone
+    handle: stone
+    index: stone
+    field_name: obsidian
+}
+
+namespace interpreter {
+
+    // ── Global Interpreter State ──────────────────────────────────────────
+
+    // Environment (scoped variables stored in parallel arrays of primitive types)
+    forge _env_name: Array<obsidian> = []
+    forge _env_type_name: Array<obsidian> = []
+    forge _env_kind: Array<stone> = []
+    forge _env_type: Array<obsidian> = []
+    forge _env_i: Array<stone> = []
+    forge _env_f: Array<crystal> = []
+    forge _env_b: Array<bool> = []
+    forge _env_s: Array<obsidian> = []
+    forge _env_ref: Array<stone> = []
+    forge _env_is_const: Array<bool> = []
+    forge _env_depth: Array<stone> = []
+    forge _scope_depth: stone = 0
+    forge _globals_count: stone = 0
+    forge _current_frame_base: stone = 0
+
+    // Heap Arrays (represented as parallel element arrays per array instance)
+    forge _arr_elem_kinds: Array<Array> = []
+    forge _arr_elem_types: Array<Array> = []
+    forge _arr_elem_i: Array<Array> = []
+    forge _arr_elem_f: Array<Array> = []
+    forge _arr_elem_b: Array<Array> = []
+    forge _arr_elem_s: Array<Array> = []
+    forge _arr_elem_ref: Array<Array> = []
+
+    // Heap Objects (monolith instances)
+    forge _obj_types: Array<obsidian> = []
+    forge _obj_fnames: Array<Array> = []
+    forge _obj_fkinds: Array<Array> = []
+    forge _obj_ftypes: Array<Array> = []
+    forge _obj_fi: Array<Array> = []
+    forge _obj_ff: Array<Array> = []
+    forge _obj_fb: Array<Array> = []
+    forge _obj_fs: Array<Array> = []
+    forge _obj_frefs: Array<Array> = []
+
+    // Memory Locations (for pointer references)
+    forge _loc_kinds: Array<stone> = []
+    forge _loc_var_idxs: Array<stone> = []
+    forge _loc_handles: Array<stone> = []
+    forge _loc_indices: Array<stone> = []
+    forge _loc_field_names: Array<obsidian> = []
+
+    // Function Registry
+    forge _func_names: Array<obsidian> = []
+    forge _func_node_ids: Array<stone> = []
+
+    // Monolith Type Registry
+    forge _mono_names: Array<obsidian> = []
+    forge _mono_field_owners: Array<obsidian> = []
+    forge _mono_field_names: Array<obsidian> = []
+    forge _mono_field_types: Array<obsidian> = []
+
+    // Call Argument Stack
+    forge _arg_kinds: Array<stone> = []
+    forge _arg_types: Array<obsidian> = []
+    forge _arg_i: Array<stone> = []
+    forge _arg_f: Array<crystal> = []
+    forge _arg_b: Array<bool> = []
+    forge _arg_s: Array<obsidian> = []
+    forge _arg_refs: Array<stone> = []
+
+    // Return Value Register
+    forge _ret_kind: stone = 0
+    forge _ret_type: obsidian = "void"
+    forge _ret_i: stone = 0
+    forge _ret_f: crystal = 0.0
+    forge _ret_b: bool = false
+    forge _ret_s: obsidian = ""
+    forge _ret_ref: stone = -1
+
+    // ── Value Constructors ────────────────────────────────────────────────
+
+    vein val_void() -> Value {
+        forge v: Value
+        v.kind = VAL_VOID
+        v.type_name = "void"
+        v.i = 0
+        v.f = 0.0
+        v.b = false
+        v.s = ""
+        v.ref = -1
+        return v
+    }
+
+    vein val_int(i: stone) -> Value {
+        forge v: Value
+        v.kind = VAL_INT
+        v.type_name = "stone"
+        v.i = i
+        v.f = 0.0
+        v.b = false
+        v.s = ""
+        v.ref = -1
+        return v
+    }
+
+    vein val_float(f: crystal) -> Value {
+        forge v: Value
+        v.kind = VAL_FLOAT
+        v.type_name = "crystal"
+        v.i = 0
+        v.f = f
+        v.b = false
+        v.s = ""
+        v.ref = -1
+        return v
+    }
+
+    vein val_bool(b: bool) -> Value {
+        forge v: Value
+        v.kind = VAL_BOOL
+        v.type_name = "bool"
+        v.i = 0
+        v.f = 0.0
+        v.b = b
+        v.s = ""
+        v.ref = -1
+        return v
+    }
+
+    vein val_string(s: obsidian) -> Value {
+        forge v: Value
+        v.kind = VAL_STRING
+        v.type_name = "obsidian"
+        v.i = 0
+        v.f = 0.0
+        v.b = false
+        v.s = s
+        v.ref = -1
+        return v
+    }
+
+    vein val_array(h: stone) -> Value {
+        forge v: Value
+        v.kind = VAL_ARRAY
+        v.type_name = "Array"
+        v.i = 0
+        v.f = 0.0
+        v.b = false
+        v.s = ""
+        v.ref = h
+        return v
+    }
+
+    vein val_object(type_name: obsidian, h: stone) -> Value {
+        forge v: Value
+        v.kind = VAL_OBJECT
+        v.type_name = type_name
+        v.i = 0
+        v.f = 0.0
+        v.b = false
+        v.s = ""
+        v.ref = h
+        return v
+    }
+
+    vein val_pointer(type_name: obsidian, loc_id: stone) -> Value {
+        forge v: Value
+        v.kind = VAL_POINTER
+        v.type_name = type_name
+        v.i = 0
+        v.f = 0.0
+        v.b = false
+        v.s = ""
+        v.ref = loc_id
+        return v
+    }
+
+    vein val_null() -> Value {
+        forge v: Value
+        v.kind = VAL_NULL
+        v.type_name = "null"
+        v.i = 0
+        v.f = 0.0
+        v.b = false
+        v.s = ""
+        v.ref = -1
+        return v
+    }
+
+    // ── Value Inspection ──────────────────────────────────────────────────
+
+    vein val_to_string(v: Value) -> obsidian {
+        if (v.kind == VAL_VOID) { return "" }
+        if (v.kind == VAL_INT) { return ofs_stone_to_obsidian(v.i) }
+        if (v.kind == VAL_FLOAT) {
+            forge whole = v.f as stone
+            forge frac = ((v.f - (whole as crystal)) * 1000.0) as stone
+            if (frac < 0) { frac = 0 - frac }
+            return ofs_stone_to_obsidian(whole) + "." + ofs_stone_to_obsidian(frac)
+        }
+        if (v.kind == VAL_BOOL) {
+            if (v.b) { return "true" }
+            return "false"
+        }
+        if (v.kind == VAL_STRING) { return v.s }
+        if (v.kind == VAL_ARRAY) { return "[array]" }
+        if (v.kind == VAL_OBJECT) { return "[" + v.type_name + "]" }
+        if (v.kind == VAL_POINTER) { return "*ptr" }
+        if (v.kind == VAL_NULL) { return "null" }
+        return ""
+    }
+
+    vein val_truthy(v: Value) -> bool {
+        if (v.kind == VAL_BOOL) { return v.b }
+        if (v.kind == VAL_INT) { return v.i != 0 }
+        if (v.kind == VAL_FLOAT) { return v.f != 0.0 }
+        if (v.kind == VAL_STRING) { return ofs_str_len(v.s) > 0 }
+        if (v.kind == VAL_ARRAY) { return v.ref >= 0 }
+        if (v.kind == VAL_OBJECT) { return v.ref >= 0 }
+        if (v.kind == VAL_POINTER) { return v.ref >= 0 }
+        if (v.kind == VAL_NULL) { return false }
+        if (v.kind == VAL_VOID) { return false }
+        return false
+    }
+
+    // ── Return Value Helpers ──────────────────────────────────────────────
+
+    vein set_return_value(v: Value) -> void {
+        _ret_kind = v.kind
+        _ret_type = v.type_name
+        _ret_i = v.i
+        _ret_f = v.f
+        _ret_b = v.b
+        _ret_s = v.s
+        _ret_ref = v.ref
+    }
+
+    vein get_return_value() -> Value {
+        forge v: Value
+        v.kind = _ret_kind
+        v.type_name = _ret_type
+        v.i = _ret_i
+        v.f = _ret_f
+        v.b = _ret_b
+        v.s = _ret_s
+        v.ref = _ret_ref
+        return v
+    }
+
+    // ── Number and Text Parsing ───────────────────────────────────────────
+
+    vein parse_int(s: obsidian) -> stone {
+        forge len = ofs_str_len(s)
+        if (len == 0) { return 0 }
+        forge res = 0
+        forge i = 0
+        forge neg = false
+        if (ofs_str_char_at(s, 0) == 45) {
+            neg = true
+            i = 1
+        }
+        while (i < len) {
+            forge c = ofs_str_char_at(s, i)
+            if (c >= 48 && c <= 57) {
+                res = res * 10 + (c - 48)
+            } else {
+                break
+            }
+            i++
+        }
+        if (neg) { return 0 - res }
+        return res
+    }
+
+    vein parse_float(s: obsidian) -> crystal {
+        forge len = ofs_str_len(s)
+        if (len == 0) { return 0.0 }
+        forge res: crystal = 0.0
+        forge i = 0
+        forge neg = false
+        if (ofs_str_char_at(s, 0) == 45) {
+            neg = true
+            i = 1
+        }
+        forge in_dec = false
+        forge dec_div: crystal = 10.0
+        while (i < len) {
+            forge c = ofs_str_char_at(s, i)
+            if (c == 46) {
+                in_dec = true
+                i++
+                break
+            }
+            if (c >= 48 && c <= 57) {
+                res = res * 10.0 + ((c - 48) as crystal)
+            } else {
+                break
+            }
+            i++
+        }
+        if (in_dec) {
+            while (i < len) {
+                forge c2 = ofs_str_char_at(s, i)
+                if (c2 >= 48 && c2 <= 57) {
+                    res = res + (((c2 - 48) as crystal) / dec_div)
+                    dec_div = dec_div * 10.0
+                } else {
+                    break
+                }
+                i++
+            }
+        }
+        if (neg) { return 0.0 - res }
+        return res
+    }
+
+    // ── Heap Arrays Operations ────────────────────────────────────────────
+
+    vein interp_new_array() -> stone {
+        forge k: Array<stone> = []
+        forge t: Array<obsidian> = []
+        forge i: Array<stone> = []
+        forge f: Array<crystal> = []
+        forge b: Array<bool> = []
+        forge s: Array<obsidian> = []
+        forge r: Array<stone> = []
+
+        ofs_array_push(_arr_elem_kinds, k)
+        ofs_array_push(_arr_elem_types, t)
+        ofs_array_push(_arr_elem_i, i)
+        ofs_array_push(_arr_elem_f, f)
+        ofs_array_push(_arr_elem_b, b)
+        ofs_array_push(_arr_elem_s, s)
+        ofs_array_push(_arr_elem_ref, r)
+
+        return ofs_array_len(_arr_elem_kinds) - 1
+    }
+
+    vein interp_array_push(handle: stone, item: Value) -> void {
+        if (handle < 0 || handle >= ofs_array_len(_arr_elem_kinds)) { return }
+        forge k: Array<stone> = ofs_array_get(_arr_elem_kinds, handle)
+        forge t: Array<obsidian> = ofs_array_get(_arr_elem_types, handle)
+        forge i: Array<stone> = ofs_array_get(_arr_elem_i, handle)
+        forge f: Array<crystal> = ofs_array_get(_arr_elem_f, handle)
+        forge b: Array<bool> = ofs_array_get(_arr_elem_b, handle)
+        forge s: Array<obsidian> = ofs_array_get(_arr_elem_s, handle)
+        forge r: Array<stone> = ofs_array_get(_arr_elem_ref, handle)
+
+        ofs_array_push(k, item.kind)
+        ofs_array_push(t, item.type_name)
+        ofs_array_push(i, item.i)
+        ofs_array_push(f, item.f)
+        ofs_array_push(b, item.b)
+        ofs_array_push(s, item.s)
+        ofs_array_push(r, item.ref)
+    }
+
+    vein interp_array_get(handle: stone, index: stone) -> Value {
+        forge v: Value
+        if (handle < 0 || handle >= ofs_array_len(_arr_elem_kinds)) { return val_null() }
+        forge k: Array<stone> = ofs_array_get(_arr_elem_kinds, handle)
+        if (index < 0 || index >= ofs_array_len(k)) { return val_null() }
+        forge t: Array<obsidian> = ofs_array_get(_arr_elem_types, handle)
+        forge i: Array<stone> = ofs_array_get(_arr_elem_i, handle)
+        forge f: Array<crystal> = ofs_array_get(_arr_elem_f, handle)
+        forge b: Array<bool> = ofs_array_get(_arr_elem_b, handle)
+        forge s: Array<obsidian> = ofs_array_get(_arr_elem_s, handle)
+        forge r: Array<stone> = ofs_array_get(_arr_elem_ref, handle)
+
+        v.kind = ofs_array_get(k, index)
+        v.type_name = ofs_array_get(t, index)
+        v.i = ofs_array_get(i, index)
+        v.f = ofs_array_get(f, index) as crystal
+        v.b = ofs_array_get(b, index)
+        v.s = ofs_array_get(s, index)
+        v.ref = ofs_array_get(r, index)
+        return v
+    }
+
+    vein interp_array_set(handle: stone, index: stone, item: Value) -> void {
+        if (handle < 0 || handle >= ofs_array_len(_arr_elem_kinds)) { return }
+        forge k: Array<stone> = ofs_array_get(_arr_elem_kinds, handle)
+        if (index < 0 || index >= ofs_array_len(k)) { return }
+        forge t: Array<obsidian> = ofs_array_get(_arr_elem_types, handle)
+        forge i: Array<stone> = ofs_array_get(_arr_elem_i, handle)
+        forge f: Array<crystal> = ofs_array_get(_arr_elem_f, handle)
+        forge b: Array<bool> = ofs_array_get(_arr_elem_b, handle)
+        forge s: Array<obsidian> = ofs_array_get(_arr_elem_s, handle)
+        forge r: Array<stone> = ofs_array_get(_arr_elem_ref, handle)
+
+        ofs_array_set(k, index, item.kind)
+        ofs_array_set(t, index, item.type_name)
+        ofs_array_set(i, index, item.i)
+        ofs_array_set(f, index, item.f)
+        ofs_array_set(b, index, item.b)
+        ofs_array_set(s, index, item.s)
+        ofs_array_set(r, index, item.ref)
+    }
+
+    vein interp_array_len(handle: stone) -> stone {
+        if (handle < 0 || handle >= ofs_array_len(_arr_elem_kinds)) { return 0 }
+        forge k: Array<stone> = ofs_array_get(_arr_elem_kinds, handle)
+        return ofs_array_len(k)
+    }
+
+    vein interp_array_pop(handle: stone) -> Value {
+        forge v: Value
+        if (handle < 0 || handle >= ofs_array_len(_arr_elem_kinds)) { return val_null() }
+        forge k: Array<stone> = ofs_array_get(_arr_elem_kinds, handle)
+        forge last = ofs_array_len(k) - 1
+        if (last < 0) { return val_null() }
+        forge t: Array<obsidian> = ofs_array_get(_arr_elem_types, handle)
+        forge i: Array<stone> = ofs_array_get(_arr_elem_i, handle)
+        forge f: Array<crystal> = ofs_array_get(_arr_elem_f, handle)
+        forge b: Array<bool> = ofs_array_get(_arr_elem_b, handle)
+        forge s: Array<obsidian> = ofs_array_get(_arr_elem_s, handle)
+        forge r: Array<stone> = ofs_array_get(_arr_elem_ref, handle)
+
+        v.kind = ofs_array_get(k, last)
+        v.type_name = ofs_array_get(t, last)
+        v.i = ofs_array_get(i, last)
+        v.f = ofs_array_get(f, last) as crystal
+        v.b = ofs_array_get(b, last)
+        v.s = ofs_array_get(s, last)
+        v.ref = ofs_array_get(r, last)
+
+        ofs_array_pop(k)
+        ofs_array_pop(t)
+        ofs_array_pop(i)
+        ofs_array_pop(f)
+        ofs_array_pop(b)
+        ofs_array_pop(s)
+        ofs_array_pop(r)
+        return v
+    }
+
+    // ── Monolith Schema and Heap Objects ──────────────────────────────────
+
+    vein register_monolith(name: obsidian) -> void {
+        forge i = 0
+        while (i < ofs_array_len(_mono_names)) {
+            forge m: obsidian = ofs_array_get(_mono_names, i)
+            if (ofs_str_eq(m, name)) { return }
+            i++
+        }
+        ofs_array_push(_mono_names, name)
+    }
+
+    vein register_monolith_field(owner: obsidian, field_name: obsidian, field_type: obsidian) -> void {
+        ofs_array_push(_mono_field_owners, owner)
+        ofs_array_push(_mono_field_names, field_name)
+        ofs_array_push(_mono_field_types, field_type)
+    }
+
+    vein default_value_for_type(t: obsidian) -> Value {
+        if (ofs_str_eq(t, "stone")) { return val_int(0) }
+        if (ofs_str_eq(t, "crystal")) { return val_float(0.0) }
+        if (ofs_str_eq(t, "bool")) { return val_bool(false) }
+        if (ofs_str_eq(t, "obsidian")) { return val_string("") }
+        if (ofs_str_eq(t, "Array")) {
+            forge h = interp_new_array()
+            return val_array(h)
+        }
+        // Named monolith type: allocate new object
+        forge mi = 0
+        while (mi < ofs_array_len(_mono_names)) {
+            forge mn: obsidian = ofs_array_get(_mono_names, mi)
+            if (ofs_str_eq(mn, t)) {
+                forge oh = interp_new_object(t)
+                return val_object(t, oh)
+            }
+            mi++
+        }
+        return val_null()
+    }
+
+    vein interp_new_object(type_name: obsidian) -> stone {
+        forge f_names: Array<obsidian> = []
+        forge f_kinds: Array<stone> = []
+        forge f_types: Array<obsidian> = []
+        forge f_i: Array<stone> = []
+        forge f_f: Array<crystal> = []
+        forge f_b: Array<bool> = []
+        forge f_s: Array<obsidian> = []
+        forge f_refs: Array<stone> = []
+
+        forge i = 0
+        forge len = ofs_array_len(_mono_field_owners)
+        while (i < len) {
+            forge owner: obsidian = ofs_array_get(_mono_field_owners, i)
+            if (ofs_str_eq(owner, type_name)) {
+                forge fname: obsidian = ofs_array_get(_mono_field_names, i)
+                forge ftype: obsidian = ofs_array_get(_mono_field_types, i)
+                forge def_val = default_value_for_type(ftype)
+
+                ofs_array_push(f_names, fname)
+                ofs_array_push(f_kinds, def_val.kind)
+                ofs_array_push(f_types, def_val.type_name)
+                ofs_array_push(f_i, def_val.i)
+                ofs_array_push(f_f, def_val.f)
+                ofs_array_push(f_b, def_val.b)
+                ofs_array_push(f_s, def_val.s)
+                ofs_array_push(f_refs, def_val.ref)
+            }
+            i++
+        }
+
+        ofs_array_push(_obj_types, type_name)
+        ofs_array_push(_obj_fnames, f_names)
+        ofs_array_push(_obj_fkinds, f_kinds)
+        ofs_array_push(_obj_ftypes, f_types)
+        ofs_array_push(_obj_fi, f_i)
+        ofs_array_push(_obj_ff, f_f)
+        ofs_array_push(_obj_fb, f_b)
+        ofs_array_push(_obj_fs, f_s)
+        ofs_array_push(_obj_frefs, f_refs)
+
+        return ofs_array_len(_obj_types) - 1
+    }
+
+    vein interp_object_get_field(handle: stone, field_name: obsidian) -> Value {
+        forge v: Value
+        if (handle < 0 || handle >= ofs_array_len(_obj_types)) { return val_null() }
+        forge f_names: Array<obsidian> = ofs_array_get(_obj_fnames, handle)
+        forge f_kinds: Array<stone> = ofs_array_get(_obj_fkinds, handle)
+        forge f_types: Array<obsidian> = ofs_array_get(_obj_ftypes, handle)
+        forge f_i: Array<stone> = ofs_array_get(_obj_fi, handle)
+        forge f_f: Array<crystal> = ofs_array_get(_obj_ff, handle)
+        forge f_b: Array<bool> = ofs_array_get(_obj_fb, handle)
+        forge f_s: Array<obsidian> = ofs_array_get(_obj_fs, handle)
+        forge f_refs: Array<stone> = ofs_array_get(_obj_frefs, handle)
+
+        forge i = 0
+        forge len = ofs_array_len(f_names)
+        while (i < len) {
+            forge fn: obsidian = ofs_array_get(f_names, i)
+            if (ofs_str_eq(fn, field_name)) {
+                v.kind = ofs_array_get(f_kinds, i)
+                v.type_name = ofs_array_get(f_types, i)
+                v.i = ofs_array_get(f_i, i)
+                v.f = ofs_array_get(f_f, i) as crystal
+                v.b = ofs_array_get(f_b, i)
+                v.s = ofs_array_get(f_s, i)
+                v.ref = ofs_array_get(f_refs, i)
+                return v
+            }
+            i++
+        }
+        return val_null()
+    }
+
+    vein interp_object_set_field(handle: stone, field_name: obsidian, val: Value) -> void {
+        if (handle < 0 || handle >= ofs_array_len(_obj_types)) { return }
+        forge f_names: Array<obsidian> = ofs_array_get(_obj_fnames, handle)
+        forge f_kinds: Array<stone> = ofs_array_get(_obj_fkinds, handle)
+        forge f_types: Array<obsidian> = ofs_array_get(_obj_ftypes, handle)
+        forge f_i: Array<stone> = ofs_array_get(_obj_fi, handle)
+        forge f_f: Array<crystal> = ofs_array_get(_obj_ff, handle)
+        forge f_b: Array<bool> = ofs_array_get(_obj_fb, handle)
+        forge f_s: Array<obsidian> = ofs_array_get(_obj_fs, handle)
+        forge f_refs: Array<stone> = ofs_array_get(_obj_frefs, handle)
+
+        forge i = 0
+        forge len = ofs_array_len(f_names)
+        while (i < len) {
+            forge fn: obsidian = ofs_array_get(f_names, i)
+            if (ofs_str_eq(fn, field_name)) {
+                ofs_array_set(f_kinds, i, val.kind)
+                ofs_array_set(f_types, i, val.type_name)
+                ofs_array_set(f_i, i, val.i)
+                ofs_array_set(f_f, i, val.f)
+                ofs_array_set(f_b, i, val.b)
+                ofs_array_set(f_s, i, val.s)
+                ofs_array_set(f_refs, i, val.ref)
+                return
+            }
+            i++
+        }
+        // New dynamic field
+        ofs_array_push(f_names, field_name)
+        ofs_array_push(f_kinds, val.kind)
+        ofs_array_push(f_types, val.type_name)
+        ofs_array_push(f_i, val.i)
+        ofs_array_push(f_f, val.f)
+        ofs_array_push(f_b, val.b)
+        ofs_array_push(f_s, val.s)
+        ofs_array_push(f_refs, val.ref)
+    }
+
+    // ── Location & Pointer Operations ─────────────────────────────────────
+
+    vein new_location(kind: stone, var_idx: stone, handle: stone, index: stone, field_name: obsidian) -> stone {
+        ofs_array_push(_loc_kinds, kind)
+        ofs_array_push(_loc_var_idxs, var_idx)
+        ofs_array_push(_loc_handles, handle)
+        ofs_array_push(_loc_indices, index)
+        ofs_array_push(_loc_field_names, field_name)
+        return ofs_array_len(_loc_kinds) - 1
+    }
+
+    vein load_location(loc: Location) -> Value {
+        if (loc.kind == LOC_VAR) {
+            if (loc.var_idx >= 0 && loc.var_idx < ofs_array_len(_env_kind)) {
+                forge v: Value
+                v.kind = ofs_array_get(_env_kind, loc.var_idx)
+                v.type_name = ofs_array_get(_env_type, loc.var_idx)
+                v.i = ofs_array_get(_env_i, loc.var_idx)
+                v.f = ofs_array_get(_env_f, loc.var_idx) as crystal
+                v.b = ofs_array_get(_env_b, loc.var_idx)
+                v.s = ofs_array_get(_env_s, loc.var_idx)
+                v.ref = ofs_array_get(_env_ref, loc.var_idx)
+                return v
+            }
+            return val_null()
+        }
+        if (loc.kind == LOC_ARRAY) {
+            return interp_array_get(loc.handle, loc.index)
+        }
+        if (loc.kind == LOC_FIELD) {
+            return interp_object_get_field(loc.handle, loc.field_name)
+        }
+        if (loc.kind == LOC_PTR) {
+            if (loc.handle >= 0 && loc.handle < ofs_array_len(_loc_kinds)) {
+                forge inner_loc: Location
+                inner_loc.kind = ofs_array_get(_loc_kinds, loc.handle)
+                inner_loc.var_idx = ofs_array_get(_loc_var_idxs, loc.handle)
+                inner_loc.handle = ofs_array_get(_loc_handles, loc.handle)
+                inner_loc.index = ofs_array_get(_loc_indices, loc.handle)
+                inner_loc.field_name = ofs_array_get(_loc_field_names, loc.handle)
+                return load_location(inner_loc)
+            }
+            return val_null()
+        }
+        return val_null()
+    }
+
+    vein clone_value(v: Value) -> Value {
+        if (v.kind == VAL_OBJECT && v.ref >= 0 && v.ref < ofs_array_len(_obj_types)) {
+            forge new_h = interp_new_object(v.type_name)
+            forge src_fnames: Array<obsidian> = ofs_array_get(_obj_fnames, v.ref)
+            forge len = ofs_array_len(src_fnames)
+            forge i = 0
+            while (i < len) {
+                forge fn: obsidian = ofs_array_get(src_fnames, i)
+                forge fval = interp_object_get_field(v.ref, fn)
+                interp_object_set_field(new_h, fn, fval)
+                i++
+            }
+            return val_object(v.type_name, new_h)
+        }
+        return v
+    }
+
+    vein store_lvalue(loc: Location, val: Value) -> void {
+        if (loc.kind == LOC_VAR) {
+            if (loc.var_idx >= 0 && loc.var_idx < ofs_array_len(_env_kind)) {
+                forge cval = clone_value(val)
+                ofs_array_set(_env_kind, loc.var_idx, cval.kind)
+                ofs_array_set(_env_type, loc.var_idx, cval.type_name)
+                ofs_array_set(_env_i, loc.var_idx, cval.i)
+                ofs_array_set(_env_f, loc.var_idx, cval.f)
+                ofs_array_set(_env_b, loc.var_idx, cval.b)
+                ofs_array_set(_env_s, loc.var_idx, cval.s)
+                ofs_array_set(_env_ref, loc.var_idx, cval.ref)
+            }
+            return
+        }
+        if (loc.kind == LOC_ARRAY) {
+            interp_array_set(loc.handle, loc.index, val)
+            return
+        }
+        if (loc.kind == LOC_FIELD) {
+            interp_object_set_field(loc.handle, loc.field_name, val)
+            return
+        }
+        if (loc.kind == LOC_PTR) {
+            if (loc.handle >= 0 && loc.handle < ofs_array_len(_loc_kinds)) {
+                forge inner_loc: Location
+                inner_loc.kind = ofs_array_get(_loc_kinds, loc.handle)
+                inner_loc.var_idx = ofs_array_get(_loc_var_idxs, loc.handle)
+                inner_loc.handle = ofs_array_get(_loc_handles, loc.handle)
+                inner_loc.index = ofs_array_get(_loc_indices, loc.handle)
+                inner_loc.field_name = ofs_array_get(_loc_field_names, loc.handle)
+                store_lvalue(inner_loc, val)
+            }
+            return
+        }
+    }
+
+    // ── Scope & Environment ───────────────────────────────────────────────
+
+    vein push_scope() -> void {
+        _scope_depth++
+    }
+
+    vein pop_scope() -> void {
+        forge len = ofs_array_len(_env_depth)
+        while (len > 0) {
+            forge d: stone = ofs_array_get(_env_depth, len - 1)
+            if (d < _scope_depth) {
+                break
+            }
+            ofs_array_pop(_env_name)
+            ofs_array_pop(_env_type_name)
+            ofs_array_pop(_env_kind)
+            ofs_array_pop(_env_type)
+            ofs_array_pop(_env_i)
+            ofs_array_pop(_env_f)
+            ofs_array_pop(_env_b)
+            ofs_array_pop(_env_s)
+            ofs_array_pop(_env_ref)
+            ofs_array_pop(_env_is_const)
+            ofs_array_pop(_env_depth)
+            len--
+        }
+        if (_scope_depth > 0) {
+            _scope_depth--
+        }
+    }
+
+    vein declare_var(name: obsidian, type_name: obsidian, val: Value, is_const: bool) -> void {
+        forge cval = clone_value(val)
+        ofs_array_push(_env_name, name)
+        ofs_array_push(_env_type_name, type_name)
+        ofs_array_push(_env_kind, cval.kind)
+        ofs_array_push(_env_type, cval.type_name)
+        ofs_array_push(_env_i, cval.i)
+        ofs_array_push(_env_f, cval.f)
+        ofs_array_push(_env_b, cval.b)
+        ofs_array_push(_env_s, cval.s)
+        ofs_array_push(_env_ref, cval.ref)
+        ofs_array_push(_env_is_const, is_const)
+        ofs_array_push(_env_depth, _scope_depth)
+    }
+
+    vein find_var_idx(name: obsidian) -> stone {
+        forge i = ofs_array_len(_env_name) - 1
+        while (i >= _current_frame_base) {
+            forge n: obsidian = ofs_array_get(_env_name, i)
+            if (ofs_str_eq(n, name)) {
+                return i
+            }
+            i--
+        }
+        forge g = _globals_count - 1
+        while (g >= 0) {
+            forge gn: obsidian = ofs_array_get(_env_name, g)
+            if (ofs_str_eq(gn, name)) {
+                return g
+            }
+            g--
+        }
+        return -1
+    }
+
+    vein resolve_var(name: obsidian) -> Value {
+        forge idx = find_var_idx(name)
+        if (idx >= 0) {
+            forge v: Value
+            v.kind = ofs_array_get(_env_kind, idx)
+            v.type_name = ofs_array_get(_env_type, idx)
+            v.i = ofs_array_get(_env_i, idx)
+            v.f = ofs_array_get(_env_f, idx) as crystal
+            v.b = ofs_array_get(_env_b, idx)
+            v.s = ofs_array_get(_env_s, idx)
+            v.ref = ofs_array_get(_env_ref, idx)
+            return v
+        }
+        return val_null()
+    }
+
+    vein assign_var(name: obsidian, val: Value) -> bool {
+        forge idx = find_var_idx(name)
+        if (idx >= 0) {
+            forge cval = clone_value(val)
+            ofs_array_set(_env_kind, idx, cval.kind)
+            ofs_array_set(_env_type, idx, cval.type_name)
+            ofs_array_set(_env_i, idx, cval.i)
+            ofs_array_set(_env_f, idx, cval.f)
+            ofs_array_set(_env_b, idx, cval.b)
+            ofs_array_set(_env_s, idx, cval.s)
+            ofs_array_set(_env_ref, idx, cval.ref)
+            return true
+        }
+        return false
+    }
+
+    // ── Function Registry ─────────────────────────────────────────────────
+
+    vein register_function(name: obsidian, node_id: stone) -> void {
+        ofs_array_push(_func_names, name)
+        ofs_array_push(_func_node_ids, node_id)
+    }
+
+    vein find_function(name: obsidian) -> stone {
+        forge i = ofs_array_len(_func_names) - 1
+        while (i >= 0) {
+            forge fn_name: obsidian = ofs_array_get(_func_names, i)
+            if (ofs_str_eq(fn_name, name)) {
+                return ofs_array_get(_func_node_ids, i)
+            }
+            i--
+        }
+        return -1
+    }
+
+    // ── Call Argument Stack Helpers ───────────────────────────────────────
+
+    vein get_call_arg(base: stone, index: stone) -> Value {
+        forge v: Value
+        forge pos = base + index
+        v.kind = ofs_array_get(_arg_kinds, pos)
+        v.type_name = ofs_array_get(_arg_types, pos)
+        v.i = ofs_array_get(_arg_i, pos)
+        v.f = ofs_array_get(_arg_f, pos) as crystal
+        v.b = ofs_array_get(_arg_b, pos)
+        v.s = ofs_array_get(_arg_s, pos)
+        v.ref = ofs_array_get(_arg_refs, pos)
+        return v
+    }
+
+    // ── Builtin Functions ─────────────────────────────────────────────────
+
+    vein is_builtin(name: obsidian) -> bool {
+        if (ofs_str_eq(name, "echo")) { return true }
+        if (ofs_str_eq(name, "exit")) { return true }
+        if (ofs_str_eq(name, "ofs_str_len")) { return true }
+        if (ofs_str_eq(name, "ofs_str_eq")) { return true }
+        if (ofs_str_eq(name, "ofs_str_concat")) { return true }
+        if (ofs_str_eq(name, "ofs_str_char_at")) { return true }
+        if (ofs_str_eq(name, "ofs_str_substr")) { return true }
+        if (ofs_str_eq(name, "ofs_str_contains")) { return true }
+        if (ofs_str_eq(name, "ofs_stone_to_obsidian")) { return true }
+        if (ofs_str_eq(name, "ofs_crystal_to_obsidian")) { return true }
+        if (ofs_str_eq(name, "ofs_obsidian_to_stone")) { return true }
+        if (ofs_str_eq(name, "ofs_array_new")) { return true }
+        if (ofs_str_eq(name, "ofs_array_len")) { return true }
+        if (ofs_str_eq(name, "ofs_array_push")) { return true }
+        if (ofs_str_eq(name, "ofs_array_get")) { return true }
+        if (ofs_str_eq(name, "ofs_array_set")) { return true }
+        if (ofs_str_eq(name, "ofs_array_pop")) { return true }
+        if (ofs_str_eq(name, "ofs_pow")) { return true }
+        if (ofs_str_eq(name, "ofs_sqrt")) { return true }
+        return false
+    }
+
+    vein call_builtin(name: obsidian, num_args: stone, arg_base: stone) -> Value {
+        if (ofs_str_eq(name, "echo")) {
+            forge s = ""
+            forge i = 0
+            while (i < num_args) {
+                forge a = get_call_arg(arg_base, i)
+                s = s + val_to_string(a)
+                i++
+            }
+            echo(s)
+            return val_void()
+        }
+        if (ofs_str_eq(name, "exit")) {
+            forge code: stone = 0
+            if (num_args > 0) {
+                forge a0 = get_call_arg(arg_base, 0)
+                code = a0.i
+            }
+            exit(code)
+            return val_void()
+        }
+        if (ofs_str_eq(name, "ofs_str_len")) {
+            if (num_args > 0) {
+                forge a0 = get_call_arg(arg_base, 0)
+                return val_int(ofs_str_len(a0.s))
+            }
+            return val_int(0)
+        }
+        if (ofs_str_eq(name, "ofs_str_eq")) {
+            if (num_args >= 2) {
+                forge a0 = get_call_arg(arg_base, 0)
+                forge a1 = get_call_arg(arg_base, 1)
+                return val_bool(ofs_str_eq(a0.s, a1.s))
+            }
+            return val_bool(false)
+        }
+        if (ofs_str_eq(name, "ofs_str_concat")) {
+            if (num_args >= 2) {
+                forge a0 = get_call_arg(arg_base, 0)
+                forge a1 = get_call_arg(arg_base, 1)
+                return val_string(ofs_str_concat(a0.s, a1.s))
+            }
+            return val_string("")
+        }
+        if (ofs_str_eq(name, "ofs_str_char_at")) {
+            if (num_args >= 2) {
+                forge a0 = get_call_arg(arg_base, 0)
+                forge a1 = get_call_arg(arg_base, 1)
+                return val_int(ofs_str_char_at(a0.s, a1.i))
+            }
+            return val_int(-1)
+        }
+        if (ofs_str_eq(name, "ofs_str_substr")) {
+            if (num_args >= 3) {
+                forge a0 = get_call_arg(arg_base, 0)
+                forge a1 = get_call_arg(arg_base, 1)
+                forge a2 = get_call_arg(arg_base, 2)
+                return val_string(ofs_str_substr(a0.s, a1.i, a2.i))
+            }
+            return val_string("")
+        }
+        if (ofs_str_eq(name, "ofs_str_contains")) {
+            if (num_args >= 2) {
+                forge a0 = get_call_arg(arg_base, 0)
+                forge a1 = get_call_arg(arg_base, 1)
+                return val_bool(ofs_str_contains(a0.s, a1.s))
+            }
+            return val_bool(false)
+        }
+        if (ofs_str_eq(name, "ofs_stone_to_obsidian")) {
+            if (num_args > 0) {
+                forge a0 = get_call_arg(arg_base, 0)
+                return val_string(ofs_stone_to_obsidian(a0.i))
+            }
+            return val_string("0")
+        }
+        if (ofs_str_eq(name, "ofs_crystal_to_obsidian")) {
+            if (num_args > 0) {
+                forge a0 = get_call_arg(arg_base, 0)
+                return val_string(val_to_string(a0))
+            }
+            return val_string("0.0")
+        }
+        if (ofs_str_eq(name, "ofs_obsidian_to_stone")) {
+            if (num_args > 0) {
+                forge a0 = get_call_arg(arg_base, 0)
+                return val_int(parse_int(a0.s))
+            }
+            return val_int(0)
+        }
+        if (ofs_str_eq(name, "ofs_array_new")) {
+            forge h = interp_new_array()
+            return val_array(h)
+        }
+        if (ofs_str_eq(name, "ofs_array_len")) {
+            if (num_args > 0) {
+                forge a0 = get_call_arg(arg_base, 0)
+                return val_int(interp_array_len(a0.ref))
+            }
+            return val_int(0)
+        }
+        if (ofs_str_eq(name, "ofs_array_push")) {
+            if (num_args >= 2) {
+                forge a0 = get_call_arg(arg_base, 0)
+                forge a1 = get_call_arg(arg_base, 1)
+                interp_array_push(a0.ref, a1)
+            }
+            return val_void()
+        }
+        if (ofs_str_eq(name, "ofs_array_get")) {
+            if (num_args >= 2) {
+                forge a0 = get_call_arg(arg_base, 0)
+                forge a1 = get_call_arg(arg_base, 1)
+                return interp_array_get(a0.ref, a1.i)
+            }
+            return val_null()
+        }
+        if (ofs_str_eq(name, "ofs_array_set")) {
+            if (num_args >= 3) {
+                forge a0 = get_call_arg(arg_base, 0)
+                forge a1 = get_call_arg(arg_base, 1)
+                forge a2 = get_call_arg(arg_base, 2)
+                interp_array_set(a0.ref, a1.i, a2)
+            }
+            return val_void()
+        }
+        if (ofs_str_eq(name, "ofs_array_pop")) {
+            if (num_args > 0) {
+                forge a0 = get_call_arg(arg_base, 0)
+                return interp_array_pop(a0.ref)
+            }
+            return val_null()
+        }
+        if (ofs_str_eq(name, "ofs_pow")) {
+            if (num_args >= 2) {
+                forge a0 = get_call_arg(arg_base, 0)
+                forge a1 = get_call_arg(arg_base, 1)
+                forge b: crystal = 0.0
+                if (a0.kind == VAL_FLOAT) { b = a0.f } else { b = a0.i as crystal }
+                forge e: crystal = 0.0
+                if (a1.kind == VAL_FLOAT) { e = a1.f } else { e = a1.i as crystal }
+                return val_float(ofs_pow(b, e))
+            }
+            return val_float(0.0)
+        }
+        if (ofs_str_eq(name, "ofs_sqrt")) {
+            if (num_args > 0) {
+                forge a0 = get_call_arg(arg_base, 0)
+                forge v: crystal = 0.0
+                if (a0.kind == VAL_FLOAT) { v = a0.f } else { v = a0.i as crystal }
+                return val_float(ofs_sqrt(v))
+            }
+            return val_float(0.0)
+        }
+        return val_void()
+    }
+
+    // ── LValue Evaluation ─────────────────────────────────────────────────
+
+    vein eval_lvalue(id: stone) -> Location {
+        forge invalid_loc: Location
+        invalid_loc.kind = LOC_INVALID
+        invalid_loc.var_idx = -1
+        invalid_loc.handle = -1
+        invalid_loc.index = -1
+        invalid_loc.field_name = ""
+
+        if (id < 0) { return invalid_loc }
+        forge n: Node = node_get(id)
+
+        if (n.kind == NK_IDENT) {
+            forge idx = find_var_idx(n.val)
+            if (idx >= 0) {
+                forge loc: Location
+                loc.kind = LOC_VAR
+                loc.var_idx = idx
+                loc.handle = -1
+                loc.index = -1
+                loc.field_name = n.val
+                return loc
+            }
+        }
+
+        if (n.kind == NK_INDEX) {
+            forge arr_val = eval_expr(n.c0)
+            forge idx_val = eval_expr(n.c1)
+            if (arr_val.kind == VAL_ARRAY) {
+                forge loc: Location
+                loc.kind = LOC_ARRAY
+                loc.var_idx = -1
+                loc.handle = arr_val.ref
+                loc.index = idx_val.i
+                loc.field_name = ""
+                return loc
+            }
+        }
+
+        if (n.kind == NK_FIELD) {
+            forge base_val = eval_expr(n.c0)
+            if (base_val.kind == VAL_OBJECT) {
+                forge loc: Location
+                loc.kind = LOC_FIELD
+                loc.var_idx = -1
+                loc.handle = base_val.ref
+                loc.index = -1
+                loc.field_name = n.val
+                return loc
+            }
+        }
+
+        if (n.kind == NK_UNARY_OP) {
+            if (ofs_str_eq(n.val, "*")) {
+                forge ptr_val = eval_expr(n.c0)
+                if (ptr_val.kind == VAL_POINTER) {
+                    forge loc: Location
+                    loc.kind = LOC_PTR
+                    loc.var_idx = -1
+                    loc.handle = ptr_val.ref
+                    loc.index = -1
+                    loc.field_name = ""
+                    return loc
+                }
+            }
+        }
+
+        return invalid_loc
+    }
+
+    vein val_equals(left: Value, right: Value) -> bool {
+        if (left.kind == VAL_STRING && right.kind == VAL_STRING) {
+            return ofs_str_eq(left.s, right.s)
+        }
+        if (left.kind == VAL_FLOAT || right.kind == VAL_FLOAT) {
+            forge lf: crystal = 0.0
+            if (left.kind == VAL_FLOAT) { lf = left.f } else { lf = left.i as crystal }
+            forge rf: crystal = 0.0
+            if (right.kind == VAL_FLOAT) { rf = right.f } else { rf = right.i as crystal }
+            return lf == rf
+        }
+        if (left.kind == VAL_BOOL && right.kind == VAL_BOOL) {
+            return left.b == right.b
+        }
+        if (left.kind == VAL_NULL && right.kind == VAL_NULL) {
+            return true
+        }
+        if (left.kind == VAL_NULL || right.kind == VAL_NULL) {
+            return false
+        }
+        if (left.kind == VAL_ARRAY && right.kind == VAL_ARRAY) {
+            return left.ref == right.ref
+        }
+        if (left.kind == VAL_OBJECT && right.kind == VAL_OBJECT) {
+            return left.ref == right.ref
+        }
+        return left.i == right.i
+    }
+
+    vein eval_bin_calc(op: obsidian, left: Value, right: Value) -> Value {
+        if (ofs_str_eq(op, "+")) {
+            if (left.kind == VAL_STRING || right.kind == VAL_STRING) {
+                return val_string(val_to_string(left) + val_to_string(right))
+            }
+            if (left.kind == VAL_FLOAT || right.kind == VAL_FLOAT) {
+                forge lf: crystal = 0.0
+                if (left.kind == VAL_FLOAT) { lf = left.f } else { lf = left.i as crystal }
+                forge rf: crystal = 0.0
+                if (right.kind == VAL_FLOAT) { rf = right.f } else { rf = right.i as crystal }
+                return val_float(lf + rf)
+            }
+            return val_int(left.i + right.i)
+        }
+        if (ofs_str_eq(op, "-")) {
+            if (left.kind == VAL_FLOAT || right.kind == VAL_FLOAT) {
+                forge lf: crystal = 0.0
+                if (left.kind == VAL_FLOAT) { lf = left.f } else { lf = left.i as crystal }
+                forge rf: crystal = 0.0
+                if (right.kind == VAL_FLOAT) { rf = right.f } else { rf = right.i as crystal }
+                return val_float(lf - rf)
+            }
+            return val_int(left.i - right.i)
+        }
+        if (ofs_str_eq(op, "*")) {
+            if (left.kind == VAL_FLOAT || right.kind == VAL_FLOAT) {
+                forge lf: crystal = 0.0
+                if (left.kind == VAL_FLOAT) { lf = left.f } else { lf = left.i as crystal }
+                forge rf: crystal = 0.0
+                if (right.kind == VAL_FLOAT) { rf = right.f } else { rf = right.i as crystal }
+                return val_float(lf * rf)
+            }
+            return val_int(left.i * right.i)
+        }
+        if (ofs_str_eq(op, "/")) {
+            if (left.kind == VAL_FLOAT || right.kind == VAL_FLOAT) {
+                forge lf: crystal = 0.0
+                if (left.kind == VAL_FLOAT) { lf = left.f } else { lf = left.i as crystal }
+                forge rf: crystal = 0.0
+                if (right.kind == VAL_FLOAT) { rf = right.f } else { rf = right.i as crystal }
+                if (rf == 0.0) { return val_float(0.0) }
+                return val_float(lf / rf)
+            }
+            if (right.i == 0) { return val_int(0) }
+            return val_int(left.i / right.i)
+        }
+        if (ofs_str_eq(op, "%")) {
+            if (right.i == 0) { return val_int(0) }
+            return val_int(left.i % right.i)
+        }
+        if (ofs_str_eq(op, "&")) { return val_int(left.i & right.i) }
+        if (ofs_str_eq(op, "|")) { return val_int(left.i | right.i) }
+        if (ofs_str_eq(op, "^")) { return val_int(left.i ^ right.i) }
+        if (ofs_str_eq(op, "<<")) { return val_int(left.i << right.i) }
+        if (ofs_str_eq(op, ">>")) { return val_int(left.i >> right.i) }
+        return val_int(0)
+    }
+
+    // ── Expression Evaluation ─────────────────────────────────────────────
+
+    vein eval_expr(id: stone) -> Value {
+        if (id < 0) { return val_void() }
+        forge n: Node = node_get(id)
+
+        if (n.kind == NK_LIT_INT) {
+            return val_int(parse_int(n.val))
+        }
+
+        if (n.kind == NK_LIT_FLOAT) {
+            return val_float(parse_float(n.val))
+        }
+
+        if (n.kind == NK_LIT_STRING) {
+            return val_string(n.val)
+        }
+
+        if (n.kind == NK_LIT_BOOL) {
+            if (ofs_str_eq(n.val, "true")) {
+                return val_bool(true)
+            }
+            return val_bool(false)
+        }
+
+        if (n.kind == NK_LIT_NULL) {
+            return val_null()
+        }
+
+        if (n.kind == NK_ARRAY_LIT) {
+            forge h = interp_new_array()
+            forge count = node_extra_len(id)
+            forge i = 0
+            while (i < count) {
+                forge elem_id = node_get_extra(id, i)
+                forge ev = eval_expr(elem_id)
+                interp_array_push(h, ev)
+                i++
+            }
+            return val_array(h)
+        }
+
+        if (n.kind == NK_IDENT) {
+            return resolve_var(n.val)
+        }
+
+        if (n.kind == NK_INDEX) {
+            forge arr_v = eval_expr(n.c0)
+            forge idx_v = eval_expr(n.c1)
+            if (arr_v.kind == VAL_ARRAY) {
+                return interp_array_get(arr_v.ref, idx_v.i)
+            }
+            return val_null()
+        }
+
+        if (n.kind == NK_FIELD) {
+            forge base_v = eval_expr(n.c0)
+            if (base_v.kind == VAL_OBJECT) {
+                return interp_object_get_field(base_v.ref, n.val)
+            }
+            return val_null()
+        }
+
+        if (n.kind == NK_POST_OP) {
+            forge loc = eval_lvalue(n.c0)
+            forge cur_v = load_location(loc)
+            forge old_v = cur_v
+            if (ofs_str_eq(n.val, "++")) {
+                store_lvalue(loc, val_int(cur_v.i + 1))
+            } else {
+                store_lvalue(loc, val_int(cur_v.i - 1))
+            }
+            return old_v
+        }
+
+        if (n.kind == NK_UNARY_OP) {
+            if (ofs_str_eq(n.val, "&")) {
+                forge loc = eval_lvalue(n.c0)
+                forge loc_id = new_location(loc.kind, loc.var_idx, loc.handle, loc.index, loc.field_name)
+                return val_pointer("ptr", loc_id)
+            }
+            if (ofs_str_eq(n.val, "*")) {
+                forge ptr_v = eval_expr(n.c0)
+                if (ptr_v.kind == VAL_POINTER && ptr_v.ref >= 0 && ptr_v.ref < ofs_array_len(_loc_kinds)) {
+                    forge loc: Location
+                    loc.kind = ofs_array_get(_loc_kinds, ptr_v.ref)
+                    loc.var_idx = ofs_array_get(_loc_var_idxs, ptr_v.ref)
+                    loc.handle = ofs_array_get(_loc_handles, ptr_v.ref)
+                    loc.index = ofs_array_get(_loc_indices, ptr_v.ref)
+                    loc.field_name = ofs_array_get(_loc_field_names, ptr_v.ref)
+                    return load_location(loc)
+                }
+                return val_null()
+            }
+            forge op_v = eval_expr(n.c0)
+            if (ofs_str_eq(n.val, "-")) {
+                if (op_v.kind == VAL_FLOAT) {
+                    return val_float(0.0 - op_v.f)
+                }
+                return val_int(0 - op_v.i)
+            }
+            if (ofs_str_eq(n.val, "!")) {
+                if (val_truthy(op_v)) {
+                    return val_bool(false)
+                }
+                return val_bool(true)
+            }
+            if (ofs_str_eq(n.val, "~")) {
+                forge ival = op_v.i
+                return val_int(~ival)
+            }
+            return op_v
+        }
+
+        if (n.kind == NK_CAST) {
+            forge src_v = eval_expr(n.c0)
+            if (ofs_str_eq(n.val, "stone")) {
+                if (src_v.kind == VAL_FLOAT) { return val_int(src_v.f as stone) }
+                if (src_v.kind == VAL_BOOL) {
+                    if (src_v.b) { return val_int(1) }
+                    return val_int(0)
+                }
+                if (src_v.kind == VAL_STRING) { return val_int(parse_int(src_v.s)) }
+                return src_v
+            }
+            if (ofs_str_eq(n.val, "crystal")) {
+                if (src_v.kind == VAL_INT) { return val_float(src_v.i as crystal) }
+                if (src_v.kind == VAL_STRING) { return val_float(parse_float(src_v.s)) }
+                return src_v
+            }
+            if (ofs_str_eq(n.val, "bool")) {
+                return val_bool(val_truthy(src_v))
+            }
+            if (ofs_str_eq(n.val, "obsidian")) {
+                return val_string(val_to_string(src_v))
+            }
+            return src_v
+        }
+
+        if (n.kind == NK_BIN_OP) {
+            if (ofs_str_eq(n.val, "=") || ofs_str_eq(n.val, "+=") || ofs_str_eq(n.val, "-=") ||
+                ofs_str_eq(n.val, "*=") || ofs_str_eq(n.val, "/=") || ofs_str_eq(n.val, "%=")) {
+                forge loc = eval_lvalue(n.c0)
+                forge rval = eval_expr(n.c1)
+                if (ofs_str_eq(n.val, "=")) {
+                    store_lvalue(loc, rval)
+                    return rval
+                }
+                forge old_val = load_location(loc)
+                forge op_calc = ofs_str_substr(n.val, 0, 1)
+                forge final_val = eval_bin_calc(op_calc, old_val, rval)
+                store_lvalue(loc, final_val)
+                return final_val
+            }
+
+            if (ofs_str_eq(n.val, "&&")) {
+                forge lv = eval_expr(n.c0)
+                if (!val_truthy(lv)) { return val_bool(false) }
+                forge rv = eval_expr(n.c1)
+                if (val_truthy(rv)) { return val_bool(true) }
+                return val_bool(false)
+            }
+            if (ofs_str_eq(n.val, "||")) {
+                forge lv = eval_expr(n.c0)
+                if (val_truthy(lv)) { return val_bool(true) }
+                forge rv = eval_expr(n.c1)
+                if (val_truthy(rv)) { return val_bool(true) }
+                return val_bool(false)
+            }
+
+            forge left = eval_expr(n.c0)
+            forge right = eval_expr(n.c1)
+
+            if (ofs_str_eq(n.val, "==")) {
+                return val_bool(val_equals(left, right))
+            }
+            if (ofs_str_eq(n.val, "!=")) {
+                return val_bool(!val_equals(left, right))
+            }
+            if (ofs_str_eq(n.val, "<")) {
+                if (left.kind == VAL_FLOAT || right.kind == VAL_FLOAT) {
+                    forge lf: crystal = 0.0
+                    if (left.kind == VAL_FLOAT) { lf = left.f } else { lf = left.i as crystal }
+                    forge rf: crystal = 0.0
+                    if (right.kind == VAL_FLOAT) { rf = right.f } else { rf = right.i as crystal }
+                    if (lf < rf) { return val_bool(true) }
+                    return val_bool(false)
+                }
+                if (left.i < right.i) { return val_bool(true) }
+                return val_bool(false)
+            }
+            if (ofs_str_eq(n.val, "<=")) {
+                if (left.kind == VAL_FLOAT || right.kind == VAL_FLOAT) {
+                    forge lf: crystal = 0.0
+                    if (left.kind == VAL_FLOAT) { lf = left.f } else { lf = left.i as crystal }
+                    forge rf: crystal = 0.0
+                    if (right.kind == VAL_FLOAT) { rf = right.f } else { rf = right.i as crystal }
+                    if (lf <= rf) { return val_bool(true) }
+                    return val_bool(false)
+                }
+                if (left.i <= right.i) { return val_bool(true) }
+                return val_bool(false)
+            }
+            if (ofs_str_eq(n.val, ">")) {
+                if (left.kind == VAL_FLOAT || right.kind == VAL_FLOAT) {
+                    forge lf: crystal = 0.0
+                    if (left.kind == VAL_FLOAT) { lf = left.f } else { lf = left.i as crystal }
+                    forge rf: crystal = 0.0
+                    if (right.kind == VAL_FLOAT) { rf = right.f } else { rf = right.i as crystal }
+                    if (lf > rf) { return val_bool(true) }
+                    return val_bool(false)
+                }
+                if (left.i > right.i) { return val_bool(true) }
+                return val_bool(false)
+            }
+            if (ofs_str_eq(n.val, ">=")) {
+                if (left.kind == VAL_FLOAT || right.kind == VAL_FLOAT) {
+                    forge lf: crystal = 0.0
+                    if (left.kind == VAL_FLOAT) { lf = left.f } else { lf = left.i as crystal }
+                    forge rf: crystal = 0.0
+                    if (right.kind == VAL_FLOAT) { rf = right.f } else { rf = right.i as crystal }
+                    if (lf >= rf) { return val_bool(true) }
+                    return val_bool(false)
+                }
+                if (left.i >= right.i) { return val_bool(true) }
+                return val_bool(false)
+            }
+
+            return eval_bin_calc(n.val, left, right)
+        }
+
+        if (n.kind == NK_CALL) {
+            forge num_args = node_extra_len(id)
+            forge arg_base = ofs_array_len(_arg_kinds)
+            forge ai = 0
+            while (ai < num_args) {
+                forge arg_id = node_get_extra(id, ai)
+                forge av = eval_expr(arg_id)
+                ofs_array_push(_arg_kinds, av.kind)
+                ofs_array_push(_arg_types, av.type_name)
+                ofs_array_push(_arg_i, av.i)
+                ofs_array_push(_arg_f, av.f)
+                ofs_array_push(_arg_b, av.b)
+                ofs_array_push(_arg_s, av.s)
+                ofs_array_push(_arg_refs, av.ref)
+                ai++
+            }
+            forge ret_val = call_function(n.val, num_args, arg_base)
+            // Pop arguments from stack
+            while (ofs_array_len(_arg_kinds) > arg_base) {
+                ofs_array_pop(_arg_kinds)
+                ofs_array_pop(_arg_types)
+                ofs_array_pop(_arg_i)
+                ofs_array_pop(_arg_f)
+                ofs_array_pop(_arg_b)
+                ofs_array_pop(_arg_s)
+                ofs_array_pop(_arg_refs)
+            }
+            return ret_val
+        }
+
+        return val_null()
+    }
+
+    // ── Function Execution ────────────────────────────────────────────────
+
+    vein str_find_substr(s: obsidian, sub: obsidian) -> stone {
+        forge slen = ofs_str_len(s)
+        forge sublen = ofs_str_len(sub)
+        if (sublen == 0) { return 0 }
+        if (slen < sublen) { return -1 }
+        forge i = 0
+        while (i <= slen - sublen) {
+            forge cand = ofs_str_substr(s, i, sublen)
+            if (ofs_str_eq(cand, sub)) {
+                return i
+            }
+            i++
+        }
+        return -1
+    }
+
+    vein call_function(name: obsidian, num_args: stone, arg_base: stone) -> Value {
+        if (is_builtin(name)) {
+            return call_builtin(name, num_args, arg_base)
+        }
+
+        forge fn_id = find_function(name)
+        if (fn_id < 0) {
+            // Check method call (e.g. obj__method or obj.method)
+            forge sep_pos = str_find_substr(name, "__")
+            forge sep_len = 2
+            if (sep_pos < 0) {
+                sep_pos = str_find_substr(name, ".")
+                sep_len = 1
+            }
+            if (sep_pos >= 0) {
+                forge var_part = ofs_str_substr(name, 0, sep_pos)
+                forge method_part = ofs_str_substr(name, sep_pos + sep_len, ofs_str_len(name) - sep_pos - sep_len)
+                forge var_val = resolve_var(var_part)
+                if (var_val.kind == VAL_OBJECT) {
+                    forge mangled_name = var_val.type_name + "__" + method_part
+                    forge m_fn_id = find_function(mangled_name)
+                    if (m_fn_id < 0) {
+                        m_fn_id = find_function(method_part)
+                    }
+                    if (m_fn_id >= 0) {
+                        // Push self as first argument onto _arg_* stack before method args
+                        forge self_base = ofs_array_len(_arg_kinds)
+                        ofs_array_push(_arg_kinds, var_val.kind)
+                        ofs_array_push(_arg_types, var_val.type_name)
+                        ofs_array_push(_arg_i, var_val.i)
+                        ofs_array_push(_arg_f, var_val.f)
+                        ofs_array_push(_arg_b, var_val.b)
+                        ofs_array_push(_arg_s, var_val.s)
+                        ofs_array_push(_arg_refs, var_val.ref)
+
+                        forge ai = 0
+                        while (ai < num_args) {
+                            forge v = get_call_arg(arg_base, ai)
+                            ofs_array_push(_arg_kinds, v.kind)
+                            ofs_array_push(_arg_types, v.type_name)
+                            ofs_array_push(_arg_i, v.i)
+                            ofs_array_push(_arg_f, v.f)
+                            ofs_array_push(_arg_b, v.b)
+                            ofs_array_push(_arg_s, v.s)
+                            ofs_array_push(_arg_refs, v.ref)
+                            ai++
+                        }
+
+                        forge m_ret = call_function_by_id(m_fn_id, num_args + 1, self_base)
+                        while (ofs_array_len(_arg_kinds) > self_base) {
+                            ofs_array_pop(_arg_kinds)
+                            ofs_array_pop(_arg_types)
+                            ofs_array_pop(_arg_i)
+                            ofs_array_pop(_arg_f)
+                            ofs_array_pop(_arg_b)
+                            ofs_array_pop(_arg_s)
+                            ofs_array_pop(_arg_refs)
+                        }
+                        return m_ret
+                    }
+                }
+            }
+            echo("Interpreter runtime error: undefined function '" + name + "'")
+            return val_null()
+        }
+
+        return call_function_by_id(fn_id, num_args, arg_base)
+    }
+
+    vein call_function_by_id(fn_id: stone, num_args: stone, arg_base: stone) -> Value {
+        forge fn_n: Node = node_get(fn_id)
+        forge params_node_id = fn_n.c0
+        forge body_id = fn_n.c2
+
+        forge saved_frame_base = _current_frame_base
+        forge saved_scope_depth = _scope_depth
+        _current_frame_base = ofs_array_len(_env_name)
+
+        push_scope()
+
+        if (params_node_id >= 0) {
+            forge num_params = node_extra_len(params_node_id)
+            forge pi = 0
+            while (pi < num_params) {
+                forge param_id = node_get_extra(params_node_id, pi)
+                forge param: Node = node_get(param_id)
+                if (pi < num_args) {
+                    declare_var(param.val, param.type_str, get_call_arg(arg_base, pi), false)
+                } else {
+                    declare_var(param.val, param.type_str, val_void(), false)
+                }
+                pi++
+            }
+        }
+
+        forge st = EXEC_OK
+        if (body_id >= 0) {
+            forge body_n: Node = node_get(body_id)
+            if (body_n.kind == NK_BLOCK) {
+                forge bi = 0
+                forge b_len = node_extra_len(body_id)
+                while (bi < b_len) {
+                    forge stmt_id = node_get_extra(body_id, bi)
+                    st = execute_stmt(stmt_id)
+                    if (st != EXEC_OK) {
+                        break
+                    }
+                    bi++
+                }
+            } else {
+                st = execute_stmt(body_id)
+            }
+        }
+
+        // Clean up all local variables allocated in this frame
+        while (ofs_array_len(_env_name) > _current_frame_base) {
+            ofs_array_pop(_env_name)
+            ofs_array_pop(_env_type_name)
+            ofs_array_pop(_env_kind)
+            ofs_array_pop(_env_type)
+            ofs_array_pop(_env_i)
+            ofs_array_pop(_env_f)
+            ofs_array_pop(_env_b)
+            ofs_array_pop(_env_s)
+            ofs_array_pop(_env_ref)
+            ofs_array_pop(_env_is_const)
+            ofs_array_pop(_env_depth)
+        }
+        _scope_depth = saved_scope_depth
+        _current_frame_base = saved_frame_base
+
+        if (st == EXEC_RETURN) {
+            return get_return_value()
+        }
+        return val_void()
+    }
+
+    // ── Statement Execution ───────────────────────────────────────────────
+
+    vein execute_stmt(id: stone) -> stone {
+        if (id < 0) { return EXEC_OK }
+        forge n: Node = node_get(id)
+
+        if (n.kind == NK_BLOCK) {
+            push_scope()
+            forge bi = 0
+            forge b_len = node_extra_len(id)
+            while (bi < b_len) {
+                forge s_id = node_get_extra(id, bi)
+                forge st = execute_stmt(s_id)
+                if (st != EXEC_OK) {
+                    pop_scope()
+                    return st
+                }
+                bi++
+            }
+            pop_scope()
+            return EXEC_OK
+        }
+
+        if (n.kind == NK_VAR_DECL || n.kind == NK_CONST_DECL) {
+            forge is_const = false
+            if (n.kind == NK_CONST_DECL) { is_const = true }
+            if (n.c1 >= 0) {
+                declare_var(n.val, n.type_str, eval_expr(n.c1), is_const)
+            } else {
+                declare_var(n.val, n.type_str, default_value_for_type(n.type_str), is_const)
+            }
+            return EXEC_OK
+        }
+
+        if (n.kind == NK_ASSIGN) {
+            forge loc = eval_lvalue(n.c0)
+            forge rval = eval_expr(n.c1)
+            store_lvalue(loc, rval)
+            return EXEC_OK
+        }
+
+        if (n.kind == NK_IF) {
+            forge cond = eval_expr(n.c0)
+            if (val_truthy(cond)) {
+                return execute_stmt(n.c1)
+            } else if (n.c2 >= 0) {
+                return execute_stmt(n.c2)
+            }
+            return EXEC_OK
+        }
+
+        if (n.kind == NK_WHILE) {
+            while (true) {
+                forge cond = eval_expr(n.c0)
+                if (!val_truthy(cond)) { break }
+                forge st = execute_stmt(n.c1)
+                if (st == EXEC_RETURN || st == EXEC_THROW) { return st }
+                if (st == EXEC_BREAK) { break }
+            }
+            return EXEC_OK
+        }
+
+        if (n.kind == NK_CYCLE_C) {
+            push_scope()
+            if (n.c0 >= 0) { execute_stmt(n.c0) }
+            while (true) {
+                if (n.c1 >= 0) {
+                    forge cond = eval_expr(n.c1)
+                    if (!val_truthy(cond)) { break }
+                }
+                forge st = execute_stmt(n.c3)
+                if (st == EXEC_RETURN || st == EXEC_THROW) { pop_scope(); return st }
+                if (st == EXEC_BREAK) { break }
+                if (n.c2 >= 0) { execute_stmt(n.c2) }
+            }
+            pop_scope()
+            return EXEC_OK
+        }
+
+        if (n.kind == NK_CYCLE_RANGE) {
+            push_scope()
+            forge iter_val = eval_expr(n.c0)
+            if (iter_val.kind == VAL_ARRAY) {
+                forge alen = interp_array_len(iter_val.ref)
+                declare_var(n.val, "stone", val_int(0), false)
+                forge k = 0
+                while (k < alen) {
+                    forge elem = interp_array_get(iter_val.ref, k)
+                    assign_var(n.val, elem)
+                    forge st = execute_stmt(n.c1)
+                    if (st == EXEC_RETURN || st == EXEC_THROW) { pop_scope(); return st }
+                    if (st == EXEC_BREAK) { break }
+                    k++
+                }
+            }
+            pop_scope()
+            return EXEC_OK
+        }
+
+        if (n.kind == NK_RETURN) {
+            if (n.c0 >= 0) {
+                set_return_value(eval_expr(n.c0))
+            } else {
+                set_return_value(val_void())
+            }
+            return EXEC_RETURN
+        }
+
+        if (n.kind == NK_BREAK) {
+            return EXEC_BREAK
+        }
+
+        if (n.kind == NK_CONTINUE) {
+            return EXEC_CONTINUE
+        }
+
+        if (n.kind == NK_THROW) {
+            if (n.c0 >= 0) {
+                forge err_val = eval_expr(n.c0)
+                set_return_value(err_val)
+                echo("Runtime throw: " + val_to_string(err_val))
+            } else {
+                forge err_void = val_void()
+                set_return_value(err_void)
+                echo("Runtime throw")
+            }
+            exit(1)
+            return EXEC_THROW
+        }
+
+        // Expression as statement
+        eval_expr(id)
+        return EXEC_OK
+    }
+
+    // ── Declarations Collection ───────────────────────────────────────────
+
+    vein collect_declarations(root_id: stone) -> void {
+        forge len = node_extra_len(root_id)
+        forge i = 0
+        while (i < len) {
+            forge child_id = node_get_extra(root_id, i)
+            forge n: Node = node_get(child_id)
+
+            if (n.kind == NK_FN_DECL || n.kind == NK_CORE_DECL) {
+                register_function(n.val, child_id)
+            }
+
+            if (n.kind == NK_MONOLITH) {
+                register_monolith(n.val)
+                forge num_fields = node_extra_len(child_id)
+                forge fi = 0
+                while (fi < num_fields) {
+                    forge f_id = node_get_extra(child_id, fi)
+                    forge fn: Node = node_get(f_id)
+                    forge ft_str = "stone"
+                    if (fn.c0 >= 0) {
+                        forge ft_node: Node = node_get(fn.c0)
+                        ft_str = ft_node.val
+                    }
+                    register_monolith_field(n.val, fn.val, ft_str)
+                    fi++
+                }
+            }
+
+            if (n.kind == NK_IMPL) {
+                forge mono_name = n.val
+                forge num_methods = node_extra_len(child_id)
+                forge mi = 0
+                while (mi < num_methods) {
+                    forge m_id = node_get_extra(child_id, mi)
+                    forge mn: Node = node_get(m_id)
+                    register_function(mn.val, m_id)
+                    register_function(mono_name + "__" + mn.val, m_id)
+                    mi++
+                }
+            }
+
+            if (n.kind == NK_NAMESPACE) {
+                forge ns_name = n.val
+                forge num_ns_children = node_extra_len(child_id)
+                forge nsi = 0
+                while (nsi < num_ns_children) {
+                    forge nc_id = node_get_extra(child_id, nsi)
+                    forge ncn: Node = node_get(nc_id)
+                    if (ncn.kind == NK_FN_DECL || ncn.kind == NK_CORE_DECL) {
+                        register_function(ncn.val, nc_id)
+                        register_function(ns_name + "__" + ncn.val, nc_id)
+                    }
+                    nsi++
+                }
+            }
+
+            i++
+        }
+    }
+
+    // ── Driver Entry Point ────────────────────────────────────────────────
+
+    vein run(root_id: stone) -> stone {
+        _env_name = []
+        _env_type_name = []
+        _env_kind = []
+        _env_type = []
+        _env_i = []
+        _env_f = []
+        _env_b = []
+        _env_s = []
+        _env_ref = []
+        _env_is_const = []
+        _env_depth = []
+        _scope_depth = 0
+        _globals_count = 0
+        _current_frame_base = 0
+
+        _arr_elem_kinds = []
+        _arr_elem_types = []
+        _arr_elem_i = []
+        _arr_elem_f = []
+        _arr_elem_b = []
+        _arr_elem_s = []
+        _arr_elem_ref = []
+
+        _obj_types = []
+        _obj_fnames = []
+        _obj_fkinds = []
+        _obj_ftypes = []
+        _obj_fi = []
+        _obj_ff = []
+        _obj_fb = []
+        _obj_fs = []
+        _obj_frefs = []
+
+        _loc_kinds = []
+        _loc_var_idxs = []
+        _loc_handles = []
+        _loc_indices = []
+        _loc_field_names = []
+
+        _func_names = []
+        _func_node_ids = []
+
+        _mono_names = []
+        _mono_field_owners = []
+        _mono_field_names = []
+        _mono_field_types = []
+
+        _arg_kinds = []
+        _arg_types = []
+        _arg_i = []
+        _arg_f = []
+        _arg_b = []
+        _arg_s = []
+        _arg_refs = []
+
+        _ret_kind = 0
+        _ret_type = "void"
+        _ret_i = 0
+        _ret_f = 0.0
+        _ret_b = false
+        _ret_s = ""
+        _ret_ref = -1
+
+        collect_declarations(root_id)
+
+        // Initialize global variables at file scope
+        forge i = 0
+        while (i < node_extra_len(root_id)) {
+            forge decl_id = node_get_extra(root_id, i)
+            forge n: Node = node_get(decl_id)
+            if (n.kind == NK_VAR_DECL || n.kind == NK_CONST_DECL) {
+                execute_stmt(decl_id)
+            }
+            i++
+        }
+        _globals_count = ofs_array_len(_env_name)
+        _current_frame_base = _globals_count
+
+        // Locate main entry point
+        forge main_node_id = find_function("main")
+        if (main_node_id < 0) {
+            forge k = 0
+            while (k < node_extra_len(root_id)) {
+                forge top_id = node_get_extra(root_id, k)
+                forge top_n: Node = node_get(top_id)
+                if (top_n.kind == NK_CORE_DECL) {
+                    main_node_id = top_id
+                    break
+                }
+                k++
+            }
+        }
+
+        if (main_node_id < 0) {
+            echo("Interpreter error: entry point 'core main()' or 'vein main()' not found")
+            return 1
+        }
+
+        forge main_node: Node = node_get(main_node_id)
+        forge res = call_function(main_node.val, 0, 0)
+
+        if (res.kind == VAL_INT) {
+            return res.i
+        }
+        return 0
+    }
+}

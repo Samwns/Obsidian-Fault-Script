@@ -9,7 +9,7 @@ Referência prática da linguagem suportada hoje pelo compilador OFS.
 1. Estrutura de programa
 2. Tipos
 3. Variáveis e constantes
-4. Funções, intents e lambdas
+4. Funções e intents
 5. `monolith`, `impl` e layouts
 6. `namespace`
 7. Arrays e coleções
@@ -127,7 +127,7 @@ x--
 
 ---
 
-## 4. Funções, intents e lambdas
+## 4. Funções e intents
 
 ### Funções normais
 
@@ -159,21 +159,25 @@ Intents aceitos:
 - `impure`
 - `fractal`
 
-### Funções como valores
+### Composição de funções
+
+Funções podem invocar outras funções e suportam recursão direta:
 
 ```ofs
-vein aplicar(x: stone, fn: vein(stone) -> stone) -> stone {
-    return fn(x)
+vein quadrado(n: stone) -> stone {
+    return n * n
+}
+
+vein soma_quadrados(a: stone, b: stone) -> stone {
+    return quadrado(a) + quadrado(b)
+}
+
+core main() {
+    echo(soma_quadrados(3, 4))
 }
 ```
 
-### Lambda inline
-
-```ofs
-forge dobrar = vein(x: stone) -> stone {
-    return x * 2
-}
-```
+> **Nota**: Expressões anônimas de função (`vein(...) -> ...` inline) estão especificadas na árvore sintática (`NK_LAMBDA`) e planejadas para o roadmap de evolução da linguagem. Atualmente, todas as funções devem ser declaradas com nome via `vein`.
 
 ---
 
@@ -192,7 +196,7 @@ monolith Rect {
 
 ```ofs
 impl Rect {
-    vein area(self) -> stone {
+    vein area(self: Rect) -> stone {
         return self.w * self.h
     }
 }
@@ -301,31 +305,48 @@ cycle (n in nums) {
 }
 ```
 
-### `match`
+### Seleção de múltiplos caminhos
+
+A seleção de múltiplos ramos é realizada através de cadeias de `if / else if`:
 
 ```ofs
-match code {
-    case 200: { echo("ok") }
-    case 404: { echo("nao encontrado") }
-    default: { echo("erro") }
+if (code == 200) {
+    echo("ok")
+} else if (code == 404) {
+    echo("nao encontrado")
+} else {
+    echo("erro")
 }
 ```
 
-### `tremor/catch/throw`
+> **Nota**: `match` e `case` estão reservados na gramática e no AST (`NK_MATCH`), com suporte completo no parser previsto no roadmap de evolução do compilador.
+
+### Tratamento de erro e interrupção (`throw`)
+
+A instrução `throw` exibe uma mensagem de diagnóstico e encerra a execução com código de saída 1:
 
 ```ofs
-tremor {
-    throw "boom"
-} catch (e: obsidian) {
-    echo(e)
+vein dividir(dividendo: stone, divisor: stone) -> stone {
+    if (divisor == 0) {
+        throw "divisao por zero indefinida"
+    }
+    return dividendo / divisor
+}
+
+core main() {
+    echo(dividir(10, 2))
 }
 ```
 
-### `strata`
+> **Nota**: A sintaxe `tremor { ... } catch (e: obsidian) { ... }` é reconhecida pela gramática (`NK_TREMOR`), com desbobinamento estruturado de pilha e captura em execução planejados para as camadas de interpretador e evolução do runtime.
+
+### `strata` (enumerações de variantes)
 
 ```ofs
 strata Status { Idle, Running, Failed }
 ```
+
+> **Nota**: `strata` é analisada sintaticamente e semanticamente, com geração direta para o backend LLVM prevista no roadmap de tipos algébricos.
 
 ---
 

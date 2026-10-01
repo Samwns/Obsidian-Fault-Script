@@ -62,7 +62,7 @@ namespace llvmgen {
         if (ofs_str_eq(type_str, "stone")) { return "i64" }
         if (ofs_str_eq(type_str, "crystal")) { return "double" }
         if (ofs_str_eq(type_str, "obsidian")) { return "ptr" }
-        if (ofs_str_eq(type_str, "bool")) { return "i32" }
+        if (ofs_str_eq(type_str, "bool") || ofs_str_eq(type_str, "bool1")) { return "i32" }
         if (ofs_str_eq(type_str, "void")) { return "void" }
         if (ofs_str_eq(type_str, "Array")) { return "ptr" }
         if (ofs_str_eq(type_str, "u8") || ofs_str_eq(type_str, "i8")) { return "i8" }
@@ -86,7 +86,7 @@ namespace llvmgen {
         if (ofs_str_eq(t, "u16") || ofs_str_eq(t, "i16")) { return 16 }
         if (ofs_str_eq(t, "u32") || ofs_str_eq(t, "i32") || ofs_str_eq(t, "bool")) { return 32 }
         if (ofs_str_eq(t, "u64") || ofs_str_eq(t, "i64") || ofs_str_eq(t, "stone")) { return 64 }
-        return 64
+        return 0
     }
 
     vein field_index(owner: obsidian, name: obsidian) -> stone {
@@ -316,6 +316,16 @@ namespace llvmgen {
                 cg_emit("  " + cast_i2p + " = inttoptr " + from_llvm + " " + value + " to ptr")
                 return cast_i2p
             }
+            if (ofs_str_eq(from_llvm, "i64") && ofs_str_eq(to_llvm, "double")) {
+                forge cast_i2f = next_tmp("cast")
+                cg_emit("  " + cast_i2f + " = sitofp i64 " + value + " to double")
+                return cast_i2f
+            }
+            if (ofs_str_eq(from_llvm, "double") && ofs_str_eq(to_llvm, "i64")) {
+                forge cast_f2i = next_tmp("cast")
+                cg_emit("  " + cast_f2i + " = fptosi double " + value + " to i64")
+                return cast_f2i
+            }
             forge src_b = int_bitwidth(from_type)
             forge dst_b = int_bitwidth(to_type)
             if (src_b > 0 && dst_b > 0) {
@@ -336,6 +346,14 @@ namespace llvmgen {
         forge n: Node = node_get(id)
         if (n.kind != NK_CALL) { return false }
         return ofs_str_eq(n.val, name)
+    }
+
+    vein is_array_get(id: stone) -> bool {
+        if (id < 0) { return false }
+        forge n: Node = node_get(id)
+        if (n.kind == NK_INDEX) { return true }
+        if (n.kind == NK_CALL && ofs_str_eq(n.val, "ofs_array_get")) { return true }
+        return false
     }
 
     vein emit_array_get(id: stone, expected_type: obsidian) -> void {
@@ -721,7 +739,11 @@ namespace llvmgen {
                     if (ofs_str_char_at(ptr_t, 0) == 42) {
                         pointee = ofs_str_substr(ptr_t, 1, ofs_str_len(ptr_t) - 1)
                     }
-                    emit_expr(n.c1)
+                    if (is_array_get(n.c1)) {
+                        emit_array_get(n.c1, pointee)
+                    } else {
+                        emit_expr(n.c1)
+                    }
                     forge v = coerce_for_store(_expr_val, _expr_type, pointee)
                     cg_emit("  store " + llvm_type(pointee) + " " + v + ", ptr " + dest_ptr)
                     _expr_val = v
@@ -731,7 +753,11 @@ namespace llvmgen {
                 if (assign_target.kind == NK_IDENT) {
                     forge at = var_type(assign_target.val)
                     forge ap = var_ptr(assign_target.val)
-                    emit_expr(n.c1)
+                    if (is_array_get(n.c1)) {
+                        emit_array_get(n.c1, at)
+                    } else {
+                        emit_expr(n.c1)
+                    }
                     forge av = coerce_for_store(_expr_val, _expr_type, at)
                     if (!ofs_str_eq(n.val, "=")) {
                         forge olda = next_tmp("assign_old")
@@ -754,7 +780,13 @@ namespace llvmgen {
                         }
                         av = newa
                     }
-                    cg_emit("  store " + llvm_type(at) + " " + av + ", ptr " + ap)
+                    if (is_named_type(at)) {
+                        forge loaded_named = next_tmp("named_val")
+                        cg_emit("  " + loaded_named + " = load %" + at + ", ptr " + av)
+                        cg_emit("  store %" + at + " " + loaded_named + ", ptr " + ap)
+                    } else {
+                        cg_emit("  store " + llvm_type(at) + " " + av + ", ptr " + ap)
+                    }
                     _expr_val = av
                     _expr_type = at
                     return
@@ -767,9 +799,19 @@ namespace llvmgen {
                     forge idx_assign = field_index(bt, assign_target.val)
                     forge fp_assign = next_tmp("field_ptr")
                     cg_emit("  " + fp_assign + " = getelementptr inbounds %" + bt + ", ptr " + bp + ", i32 0, i32 " + ofs_stone_to_obsidian(idx_assign))
-                    emit_expr(n.c1)
+                    if (is_array_get(n.c1)) {
+                        emit_array_get(n.c1, ft_assign)
+                    } else {
+                        emit_expr(n.c1)
+                    }
                     forge fv_assign = coerce_for_store(_expr_val, _expr_type, ft_assign)
-                    cg_emit("  store " + llvm_type(ft_assign) + " " + fv_assign + ", ptr " + fp_assign)
+                    if (is_named_type(ft_assign)) {
+                        forge loaded_named = next_tmp("named_val")
+                        cg_emit("  " + loaded_named + " = load %" + ft_assign + ", ptr " + fv_assign)
+                        cg_emit("  store %" + ft_assign + " " + loaded_named + ", ptr " + fp_assign)
+                    } else {
+                        cg_emit("  store " + llvm_type(ft_assign) + " " + fv_assign + ", ptr " + fp_assign)
+                    }
                     _expr_val = fv_assign
                     _expr_type = ft_assign
                     return
@@ -954,10 +996,14 @@ namespace llvmgen {
         }
 
         if (n.kind == NK_CAST) {
-            emit_expr(n.c0)
+            forge dst_type = n.val
+            if (is_array_get(n.c0)) {
+                emit_array_get(n.c0, dst_type)
+            } else {
+                emit_expr(n.c0)
+            }
             forge src_val = _expr_val
             forge src_type = _expr_type
-            forge dst_type = n.val
             if (ofs_str_eq(src_type, dst_type)) {
                 return
             }
@@ -1004,7 +1050,11 @@ namespace llvmgen {
                 if (ofs_str_char_at(ptr_t, 0) == 42) {
                     pointee = ofs_str_substr(ptr_t, 1, ofs_str_len(ptr_t) - 1)
                 }
-                emit_expr(n.c1)
+                if (is_array_get(n.c1)) {
+                    emit_array_get(n.c1, pointee)
+                } else {
+                    emit_expr(n.c1)
+                }
                 forge v = coerce_for_store(_expr_val, _expr_type, pointee)
                 cg_emit("  store " + llvm_type(pointee) + " " + v + ", ptr " + dest_ptr)
                 _expr_val = v
@@ -1014,7 +1064,11 @@ namespace llvmgen {
             if (target.kind == NK_IDENT) {
                 forge t = var_type(target.val)
                 forge p = var_ptr(target.val)
-                emit_expr(n.c1)
+                if (is_array_get(n.c1)) {
+                    emit_array_get(n.c1, t)
+                } else {
+                    emit_expr(n.c1)
+                }
                 forge v = coerce_for_store(_expr_val, _expr_type, t)
                 if (!ofs_str_eq(n.val, "=")) {
                     forge oldv = next_tmp("assign_old")
@@ -1032,7 +1086,13 @@ namespace llvmgen {
                     }
                     v = newv
                 }
-                cg_emit("  store " + llvm_type(t) + " " + v + ", ptr " + p)
+                if (is_named_type(t)) {
+                    forge loaded_named = next_tmp("named_val")
+                    cg_emit("  " + loaded_named + " = load %" + t + ", ptr " + v)
+                    cg_emit("  store %" + t + " " + loaded_named + ", ptr " + p)
+                } else {
+                    cg_emit("  store " + llvm_type(t) + " " + v + ", ptr " + p)
+                }
                 _expr_val = v
                 _expr_type = t
                 return
@@ -1046,9 +1106,19 @@ namespace llvmgen {
                 forge idx = field_index(base_type, target.val)
                 forge gep = next_tmp("field_ptr")
                 cg_emit("  " + gep + " = getelementptr inbounds %" + base_type + ", ptr " + base_ptr + ", i32 0, i32 " + ofs_stone_to_obsidian(idx))
-                emit_expr(n.c1)
+                if (is_array_get(n.c1)) {
+                    emit_array_get(n.c1, ft)
+                } else {
+                    emit_expr(n.c1)
+                }
                 forge fv = coerce_for_store(_expr_val, _expr_type, ft)
-                cg_emit("  store " + llvm_type(ft) + " " + fv + ", ptr " + gep)
+                if (is_named_type(ft)) {
+                    forge loaded_named = next_tmp("named_val")
+                    cg_emit("  " + loaded_named + " = load %" + ft + ", ptr " + fv)
+                    cg_emit("  store %" + ft + " " + loaded_named + ", ptr " + gep)
+                } else {
+                    cg_emit("  store " + llvm_type(ft) + " " + fv + ", ptr " + gep)
+                }
                 _expr_val = fv
                 _expr_type = ft
                 return
@@ -1354,6 +1424,12 @@ namespace llvmgen {
                 if (i > 0) { args = args + ", " }
                 forge arg_id = node_get_extra(id, i)
                 emit_expr(arg_id)
+                if (ofs_str_eq(_expr_type, "bool1")) {
+                    forge b_ext = next_tmp("bool_ext")
+                    cg_emit("  " + b_ext + " = zext i1 " + _expr_val + " to i32")
+                    _expr_val = b_ext
+                    _expr_type = "bool"
+                }
                 args = args + llvm_type(_expr_type) + " " + _expr_val
                 i++
             }
@@ -1406,7 +1482,7 @@ namespace llvmgen {
             }
             declare_var(n.val, t, p)
             if (n.c1 >= 0) {
-                if (is_call_name(n.c1, "ofs_array_get")) {
+                if (is_array_get(n.c1)) {
                     emit_array_get(n.c1, t)
                 } else {
                     emit_expr(n.c1)
@@ -1442,7 +1518,7 @@ namespace llvmgen {
             } else if (ofs_str_eq(_current_ret_type, "main")) {
                 cg_emit("  ret i32 0")
             } else {
-                if (is_call_name(n.c0, "ofs_array_get")) {
+                if (is_array_get(n.c0)) {
                     emit_array_get(n.c0, _current_ret_type)
                 } else {
                     emit_expr(n.c0)
