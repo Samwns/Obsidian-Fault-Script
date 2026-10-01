@@ -28,6 +28,7 @@ src/vscode-extension/node_modules/
 ROADMAP.md
 ROADMAP.
 docs/roadmap/
+plans/
 docs/IDLE_ARCHITECTURE.md
 idle/
 src/vscode-extension/bin/linux-x64/ofs_idle_linux
