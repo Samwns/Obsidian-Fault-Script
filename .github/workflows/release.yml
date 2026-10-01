@@ -25,6 +25,7 @@ jobs:
       - name: Bump patch version
         id: bump
         run: |
+          git fetch --tags --force
           LATEST=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
           if [ -z "$LATEST" ]; then
             NEW="v1.0.0"
@@ -34,6 +35,11 @@ jobs:
             PATCH=$(echo "$LATEST" | cut -d. -f3)
             NEW="v${MAJOR}.${MINOR}.$((PATCH + 1))"
           fi
+          # Ensure tag does not already exist on remote
+          while git ls-remote --tags origin "refs/tags/$NEW" | grep -q "$NEW"; do
+            PATCH=$((PATCH + 1))
+            NEW="v${MAJOR}.${MINOR}.${PATCH}"
+          done
           echo "tag=$NEW" >> "$GITHUB_OUTPUT"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
