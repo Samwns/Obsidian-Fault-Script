@@ -262,7 +262,14 @@ namespace llvmgen {
             return "0"
         }
         forge n: Node = node_get(id)
-        if (n.kind == NK_LIT_INT) { return n.val }
+        if (n.kind == NK_LIT_INT) {
+            // Zero literal assigned to a pointer-typed global must be `null`,
+            // not `0`, otherwise llc rejects the constant.
+            if (ofs_str_eq(n.val, "0")) {
+                if (ofs_str_eq(llvm_type(type_str), "ptr")) { return "null" }
+            }
+            return n.val
+        }
         if (n.kind == NK_LIT_FLOAT) { return n.val }
         if (n.kind == NK_LIT_BOOL) {
             if (ofs_str_eq(n.val, "true")) { return "1" }

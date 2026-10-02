@@ -248,12 +248,16 @@ core main() {
     forge verbose = ofs_str_eq(getenv("OFS_VERBOSE"), "1")
     forge msg_fmt = getenv("OFS_PROGRESS")
 
-    // Configura reporter
+    // Configura reporter: locale + cor + tipo (Fase 3 Fancy)
     reporter_detect_locale()
-    if (ofs_str_eq(msg_fmt, "json")) {
-        reporter_set_kind(REPORTER_JSON)
-    } else {
-        reporter_set_kind(REPORTER_PLAIN)
+    reporter_detect_color()
+    if (ofs_str_eq(msg_fmt, "json"))       { reporter_set_kind(REPORTER_JSON) }
+    else if (ofs_str_eq(msg_fmt, "fancy")) { reporter_set_kind(REPORTER_FANCY) }
+    else if (ofs_str_eq(msg_fmt, "plain")) { reporter_set_kind(REPORTER_PLAIN) }
+    else {
+        // auto: Fancy se ha cor (TERM exige), senao Plain
+        if (_use_color) { reporter_set_kind(REPORTER_FANCY) }
+        else            { reporter_set_kind(REPORTER_PLAIN) }
     }
     reporter_set_verbose(verbose)
     event_reset()

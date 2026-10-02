@@ -117,9 +117,104 @@ vein tr_level(l: stone) -> obsidian {
 vein reporter_set_kind(k: stone) -> void { _reporter_kind = k }
 vein reporter_set_verbose(v: bool) -> void { _reporter_verbose = v }
 
+// ── Fancy (Fase 3) ─────────────────────────────────────────────────────
+// Paleta ANSI. Sem NO_COLOR / TERM=dumb; reporter_detect_color resolve.
+forge _ansi_ok:    obsidian = "[32m"
+forge _ansi_run:   obsidian = "[36m"
+forge _ansi_warn:  obsidian = "[33m"
+forge _ansi_fault: obsidian = "[31m"
+forge _ansi_dim:   obsidian = "[2m"
+forge _ansi_reset: obsidian = "[0m"
+forge _ansi_esc:   obsidian = ""   // preenchido por reporter_init_esc()
+forge _use_color:  bool = false
+
+// Inicializa o byte ESC (27) sem escapar na fonte (LLVM IR em OFS nao
+// processa \x1b em literais obsidian). Emite 27 + code.
+vein reporter_init_esc() -> void {
+    if (ofs_str_len(_ansi_esc) > 0) { return }
+    forge buf: obsidian = ofs_alloc(2)
+    forge p: *u8 = buf as *u8
+    fracture { *p = 27 as u8 }
+    forge p1: *u8 = (buf as stone + 1) as *u8
+    fracture { *p1 = 0 as u8 }
+    _ansi_esc = buf
+}
+
+// Prioridade: NO_COLOR != "" → false; TERM=dumb → false; senao ativa.
+// Nota: isatty(stderr) real fica para a Fase 4 (extern reporter_is_tty).
+vein reporter_detect_color() -> void {
+    reporter_init_esc()
+    if (ofs_str_len(getenv("NO_COLOR")) > 0) { _use_color = false; return }
+    if (ofs_str_eq(getenv("TERM"), "dumb"))  { _use_color = false; return }
+    forge t = getenv("TERM")
+    if (ofs_str_eq(t, "")) { _use_color = false; return }
+    _use_color = true
+}
+
+vein _pad(s: obsidian, w: stone) -> obsidian {
+    forge out = s
+    while (ofs_str_len(out) < w) { out = out + " " }
+    return out
+}
+
+vein _colored(ansi: obsidian, txt: obsidian) -> obsidian {
+    if (!_use_color) { return txt }
+    return _ansi_esc + ansi + txt + _ansi_esc + _ansi_reset
+}
+
 // Plain: uma linha por evento, sem ANSI, sem \r.
 // Json: um objeto por linha (NDJSON).
-// Fancy: igual a Plain por ora (placeholder).
+// Fancy: símbolos + coluna fixa de verbo + cores; estágios de início ficam
+// silenciosos (verbose-only), o fim de cada etapa e diagnósticos têm layout.
+
+vein _emit_fancy(e: Event) -> void {
+    if (!_use_color) { _emit_plain(e); return }
+    if (e.kind == EV_STAGE_START) {
+        if (_reporter_verbose) {
+            forge sym = _colored(_ansi_run, "→")
+            forge verb = _pad(tr_stage(e.stage), 12)
+            _emit_line("  " + sym + " " + verb + " " + _colored(_ansi_run, e.target))
+        }
+        return
+    }
+    if (e.kind == EV_STAGE_END) {
+        forge sym = _colored(_ansi_ok, "✓")
+        forge verb = _pad(tr_stage(e.stage), 12)
+        forge info_txt = ""
+        if (ofs_str_len(e.info) > 0) { info_txt = " (" + e.info + ")" }
+        forge ms_txt = _colored(_ansi_dim, ofs_crystal_to_obsidian(e.ms) + " ms")
+        _emit_line("  " + sym + " " + verb + info_txt + " " + ms_txt)
+        return
+    }
+    if (e.kind == EV_DIAGNOSTIC) {
+        forge sym = "ℹ"
+        forge color = _ansi_run
+        if (e.level == LEVEL_WARN)  { sym = "⚠"; color = _ansi_warn }
+        if (e.level == LEVEL_FAULT) { sym = "✗"; color = _ansi_fault }
+        forge loc_txt = ""
+        if (e.line > 0) {
+            loc_txt = ":" + ofs_stone_to_obsidian(e.line) + ":" + ofs_stone_to_obsidian(e.col)
+        }
+        forge head = "  " + _colored(color, sym) + " " + _colored(_ansi_run, e.target + loc_txt)
+        _emit_line(head)
+        forge code_part = ""
+        if (ofs_str_len(e.code) > 0) { code_part = "[" + e.code + "]" }
+        _emit_line("       " + _colored(color, tr_level(e.level) + code_part) + " " + tr_msg(e.msg_key))
+        if (ofs_str_len(e.arg1) > 0) { _emit_line("       " + _colored(_ansi_dim, e.arg1)) }
+        if (ofs_str_len(e.arg2) > 0) { _emit_line("       " + _colored(_ansi_dim, e.arg2)) }
+        return
+    }
+    if (e.kind == EV_FINISHED) {
+        forge ms_txt = _colored(_ansi_dim, ofs_crystal_to_obsidian(e.ms) + " ms")
+        _emit_line(_colored(_ansi_ok, "done") + " " + _colored(_ansi_run, e.target) +
+                   " · " + e.info + " B · " + ms_txt)
+        return
+    }
+    if (e.kind == EV_PROGRAM_OUT) {
+        _emit_line(e.info)
+        return
+    }
+}
 
 vein stage_name(s: stone) -> obsidian {
     if (s == STAGE_ATTACH) { return "attach" }
@@ -221,11 +316,9 @@ vein reporter_flush() -> void {
     forge n = event_count()
     while (i < n) {
         forge e: Event = event_get(i)
-        if (_reporter_kind == REPORTER_JSON) {
-            _emit_json(e)
-        } else {
-            _emit_plain(e)
-        }
+        if (_reporter_kind == REPORTER_JSON)       { _emit_json(e) }
+        else if (_reporter_kind == REPORTER_FANCY) { _emit_fancy(e) }
+        else                                       { _emit_plain(e) }
         i++
     }
     event_reset()
@@ -233,9 +326,7 @@ vein reporter_flush() -> void {
 
 // Conveniente para etapas curtas: emite start+end após execução inline
 vein reporter_emit_now(e: Event) -> void {
-    if (_reporter_kind == REPORTER_JSON) {
-        _emit_json(e)
-    } else {
-        _emit_plain(e)
-    }
+    if (_reporter_kind == REPORTER_JSON)       { _emit_json(e) }
+    else if (_reporter_kind == REPORTER_FANCY) { _emit_fancy(e) }
+    else                                       { _emit_plain(e) }
 }
