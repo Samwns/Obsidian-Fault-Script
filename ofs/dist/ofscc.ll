@@ -390,7 +390,7 @@ source_filename = "ofs_module"
 @str.380 = private unnamed_addr constant [13 x i8] c"  store ptr \00", align 1
 @str.381 = private unnamed_addr constant [8 x i8] c", ptr @\00", align 1
 @str.382 = private unnamed_addr constant [5 x i8] c"gobj\00", align 1
-@str.383 = private unnamed_addr constant [33 x i8] c" = call ptr @ofs_alloc(i64 4096)\00", align 1
+@str.383 = private unnamed_addr constant [32 x i8] c" = call ptr @ofs_alloc(i64 128)\00", align 1
 @str.384 = private unnamed_addr constant [11 x i8] c"  ret void\00", align 1
 @str.385 = private unnamed_addr constant [4 x i8] c"arr\00", align 1
 @str.386 = private unnamed_addr constant [9 x i8] c"arr_elem\00", align 1
@@ -2006,7 +2006,7 @@ entry:
   store i64 %line, ptr %line.addr
   %col.addr = alloca i64, align 8
   store i64 %col, ptr %col.addr
-  %obj334 = call ptr @ofs_alloc(i64 4096)
+  %obj334 = call ptr @ofs_alloc(i64 128)
   %field_ptr335 = getelementptr inbounds %Node, ptr %obj334, i32 0, i32 0
   %kind_val336 = load i64, ptr %kind.addr
   store i64 %kind_val336, ptr %field_ptr335
@@ -2060,7 +2060,7 @@ entry:
   br i1 %logic365, label %if_then180, label %if_else181
 
 if_then180:
-  %obj367 = call ptr @ofs_alloc(i64 4096)
+  %obj367 = call ptr @ofs_alloc(i64 128)
   %field_ptr368 = getelementptr inbounds %Node, ptr %obj367, i32 0, i32 0
   %neg369 = sub i64 0, 1
   store i64 %neg369, ptr %field_ptr368
@@ -2147,7 +2147,7 @@ if_else187:
   br label %if_end188
 
 if_end188:
-  %obj401 = call ptr @ofs_alloc(i64 4096)
+  %obj401 = call ptr @ofs_alloc(i64 128)
   %parent_id_val402 = load i64, ptr %parent_id.addr
   %call403 = call ptr @node_get(i64 %parent_id_val402)
   %named_val404 = load %Node, ptr %call403
@@ -2230,7 +2230,7 @@ if_else202:
   br label %if_end203
 
 if_end203:
-  %obj425 = call ptr @ofs_alloc(i64 4096)
+  %obj425 = call ptr @ofs_alloc(i64 128)
   %parent_id_val426 = load i64, ptr %parent_id.addr
   %call427 = call ptr @node_get(i64 %parent_id_val426)
   %named_val428 = load %Node, ptr %call427
@@ -2252,7 +2252,7 @@ entry:
   store i64 %parent_id, ptr %parent_id.addr
   %index.addr = alloca i64, align 8
   store i64 %index, ptr %index.addr
-  %obj435 = call ptr @ofs_alloc(i64 4096)
+  %obj435 = call ptr @ofs_alloc(i64 128)
   %parent_id_val436 = load i64, ptr %parent_id.addr
   %call437 = call ptr @node_get(i64 %parent_id_val436)
   %named_val438 = load %Node, ptr %call437
@@ -2287,7 +2287,7 @@ define i64 @node_extra_len(i64 %parent_id) {
 entry:
   %parent_id.addr = alloca i64, align 8
   store i64 %parent_id, ptr %parent_id.addr
-  %obj454 = call ptr @ofs_alloc(i64 4096)
+  %obj454 = call ptr @ofs_alloc(i64 128)
   %parent_id_val455 = load i64, ptr %parent_id.addr
   %call456 = call ptr @node_get(i64 %parent_id_val455)
   %named_val457 = load %Node, ptr %call456
@@ -2304,7 +2304,7 @@ entry:
   store i64 %id, ptr %id.addr
   %type_str.addr = alloca ptr, align 8
   store ptr %type_str, ptr %type_str.addr
-  %obj462 = call ptr @ofs_alloc(i64 4096)
+  %obj462 = call ptr @ofs_alloc(i64 128)
   %id_val463 = load i64, ptr %id.addr
   %call464 = call ptr @node_get(i64 %id_val463)
   %named_val465 = load %Node, ptr %call464
@@ -2743,7 +2743,7 @@ define void @node_print_simple(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %obj574 = call ptr @ofs_alloc(i64 4096)
+  %obj574 = call ptr @ofs_alloc(i64 128)
   %id_val575 = load i64, ptr %id.addr
   %call576 = call ptr @node_get(i64 %id_val575)
   %named_val577 = load %Node, ptr %call576
@@ -2987,7 +2987,7 @@ entry:
   store i64 %kind, ptr %kind.addr
   %val.addr = alloca ptr, align 8
   store ptr %val, ptr %val.addr
-  %obj710 = call ptr @ofs_alloc(i64 4096)
+  %obj710 = call ptr @ofs_alloc(i64 128)
   %field_ptr711 = getelementptr inbounds %Token, ptr %obj710, i32 0, i32 0
   %kind_val712 = load i64, ptr %kind.addr
   store i64 %kind_val712, ptr %field_ptr711
@@ -4214,7 +4214,7 @@ entry:
   br i1 %cmp1175, label %if_then528, label %if_else529
 
 if_then528:
-  %obj1177 = call ptr @ofs_alloc(i64 4096)
+  %obj1177 = call ptr @ofs_alloc(i64 128)
   %field_ptr1178 = getelementptr inbounds %Token, ptr %obj1177, i32 0, i32 0
   %TOK_EOF_val1179 = load i64, ptr @TOK_EOF
   store i64 %TOK_EOF_val1179, ptr %field_ptr1178
@@ -4239,7 +4239,7 @@ if_end530:
 
 define i64 @parser___cur_kind() {
 entry:
-  %obj1188 = call ptr @ofs_alloc(i64 4096)
+  %obj1188 = call ptr @ofs_alloc(i64 128)
   %call1189 = call ptr @parser___cur()
   %named_val1190 = load %Token, ptr %call1189
   store %Token %named_val1190, ptr %obj1188
@@ -4250,7 +4250,7 @@ entry:
 
 define ptr @parser___cur_val() {
 entry:
-  %obj1194 = call ptr @ofs_alloc(i64 4096)
+  %obj1194 = call ptr @ofs_alloc(i64 128)
   %call1195 = call ptr @parser___cur()
   %named_val1196 = load %Token, ptr %call1195
   store %Token %named_val1196, ptr %obj1194
@@ -4261,7 +4261,7 @@ entry:
 
 define ptr @parser___advance() {
 entry:
-  %obj1200 = call ptr @ofs_alloc(i64 4096)
+  %obj1200 = call ptr @ofs_alloc(i64 128)
   %call1201 = call ptr @parser___cur()
   %named_val1202 = load %Token, ptr %call1201
   store %Token %named_val1202, ptr %obj1200
@@ -4287,7 +4287,7 @@ if_else532:
   br label %if_end533
 
 if_end533:
-  %obj1211 = call ptr @ofs_alloc(i64 4096)
+  %obj1211 = call ptr @ofs_alloc(i64 128)
   %parser___tokens_val1212 = load ptr, ptr @parser___tokens
   %parser___pos_val1213 = load i64, ptr @parser___pos
   %op1214 = add i64 %parser___pos_val1213, 1
@@ -4316,7 +4316,7 @@ if_else535:
   br label %if_end536
 
 if_end536:
-  %obj1226 = call ptr @ofs_alloc(i64 4096)
+  %obj1226 = call ptr @ofs_alloc(i64 128)
   %parser___tokens_val1227 = load ptr, ptr @parser___tokens
   %parser___pos_val1228 = load i64, ptr @parser___pos
   %op1229 = add i64 %parser___pos_val1228, 2
@@ -4353,7 +4353,7 @@ define void @parser___error(ptr %msg) {
 entry:
   %msg.addr = alloca ptr, align 8
   store ptr %msg, ptr %msg.addr
-  %obj1240 = call ptr @ofs_alloc(i64 4096)
+  %obj1240 = call ptr @ofs_alloc(i64 128)
   %call1241 = call ptr @parser___cur()
   %named_val1242 = load %Token, ptr %call1241
   store %Token %named_val1242, ptr %obj1240
@@ -4621,7 +4621,7 @@ if_end581:
 
 define i64 @parser__parse_primary() {
 entry:
-  %obj1360 = call ptr @ofs_alloc(i64 4096)
+  %obj1360 = call ptr @ofs_alloc(i64 128)
   %call1361 = call ptr @parser___cur()
   %named_val1362 = load %Token, ptr %call1361
   store %Token %named_val1362, ptr %obj1360
@@ -5127,7 +5127,7 @@ define i64 @parser__parse_postfix(i64 %left) {
 entry:
   %left.addr = alloca i64, align 8
   store i64 %left, ptr %left.addr
-  %obj1622 = call ptr @ofs_alloc(i64 4096)
+  %obj1622 = call ptr @ofs_alloc(i64 128)
   %call1623 = call ptr @parser___cur()
   %named_val1624 = load %Token, ptr %call1623
   store %Token %named_val1624, ptr %obj1622
@@ -5141,7 +5141,7 @@ if_then654:
   %call1629 = call ptr @parser___advance()
   %call_name1630 = alloca ptr, align 8
   store ptr @str.63, ptr %call_name1630
-  %obj1632 = call ptr @ofs_alloc(i64 4096)
+  %obj1632 = call ptr @ofs_alloc(i64 128)
   %left_val1633 = load i64, ptr %left.addr
   %call1634 = call ptr @node_get(i64 %left_val1633)
   %named_val1635 = load %Node, ptr %call1634
@@ -5166,7 +5166,7 @@ if_else658:
   br i1 %cmp1645, label %if_then660, label %if_else661
 
 if_then660:
-  %obj1647 = call ptr @ofs_alloc(i64 4096)
+  %obj1647 = call ptr @ofs_alloc(i64 128)
   %field_ptr1648 = getelementptr inbounds %Node, ptr %obj1632, i32 0, i32 5
   %field1649 = load i64, ptr %field_ptr1648
   %call1650 = call ptr @node_get(i64 %field1649)
@@ -5419,7 +5419,7 @@ if_then690:
   %target_type_node1777 = alloca i64, align 8
   %call1778 = call i64 @parser__parse_type()
   store i64 %call1778, ptr %target_type_node1777
-  %obj1780 = call ptr @ofs_alloc(i64 4096)
+  %obj1780 = call ptr @ofs_alloc(i64 128)
   %target_type_node_val1781 = load i64, ptr %target_type_node1777
   %call1782 = call ptr @node_get(i64 %target_type_node_val1781)
   %named_val1783 = load %Node, ptr %call1782
@@ -5506,7 +5506,7 @@ if_else697:
   br label %if_end698
 
 if_end698:
-  %obj1835 = call ptr @ofs_alloc(i64 4096)
+  %obj1835 = call ptr @ofs_alloc(i64 128)
   %call1836 = call ptr @parser___advance()
   %named_val1837 = load %Token, ptr %call1836
   store %Token %named_val1837, ptr %obj1835
@@ -5542,7 +5542,7 @@ while_end695:
 
 define i64 @parser__parse_type() {
 entry:
-  %obj1858 = call ptr @ofs_alloc(i64 4096)
+  %obj1858 = call ptr @ofs_alloc(i64 128)
   %call1859 = call ptr @parser___cur()
   %named_val1860 = load %Token, ptr %call1859
   store %Token %named_val1860, ptr %obj1858
@@ -5557,7 +5557,7 @@ if_then699:
   %inner1866 = alloca i64, align 8
   %call1867 = call i64 @parser__parse_type()
   store i64 %call1867, ptr %inner1866
-  %obj1869 = call ptr @ofs_alloc(i64 4096)
+  %obj1869 = call ptr @ofs_alloc(i64 128)
   %inner_val1870 = load i64, ptr %inner1866
   %call1871 = call ptr @node_get(i64 %inner_val1870)
   %named_val1872 = load %Node, ptr %call1871
@@ -5746,7 +5746,7 @@ if_end722:
 
 define i64 @parser__parse_stmt() {
 entry:
-  %obj1963 = call ptr @ofs_alloc(i64 4096)
+  %obj1963 = call ptr @ofs_alloc(i64 128)
   %call1964 = call ptr @parser___cur()
   %named_val1965 = load %Token, ptr %call1964
   store %Token %named_val1965, ptr %obj1963
@@ -6534,7 +6534,7 @@ if_end836:
   %field_ptr2343 = getelementptr inbounds %Token, ptr %call2342, i32 0, i32 2
   %field2344 = load i64, ptr %field_ptr2343
   store i64 %field2344, ptr %var_line2341
-  %obj2346 = call ptr @ofs_alloc(i64 4096)
+  %obj2346 = call ptr @ofs_alloc(i64 128)
   %call2347 = call ptr @parser___cur()
   %named_val2348 = load %Token, ptr %call2347
   store %Token %named_val2348, ptr %obj2346
@@ -6776,7 +6776,7 @@ if_end854:
 
 define i64 @parser__parse_fn_decl() {
 entry:
-  %obj2451 = call ptr @ofs_alloc(i64 4096)
+  %obj2451 = call ptr @ofs_alloc(i64 128)
   %call2452 = call ptr @parser___cur()
   %named_val2453 = load %Token, ptr %call2452
   store %Token %named_val2453, ptr %obj2451
@@ -6868,7 +6868,7 @@ if_end878:
 
 define i64 @parser__parse_extern_decl() {
 entry:
-  %obj2498 = call ptr @ofs_alloc(i64 4096)
+  %obj2498 = call ptr @ofs_alloc(i64 128)
   %call2499 = call ptr @parser___cur()
   %named_val2500 = load %Token, ptr %call2499
   store %Token %named_val2500, ptr %obj2498
@@ -7034,7 +7034,7 @@ if_end902:
 
 define i64 @parser__parse_monolith_decl() {
 entry:
-  %obj2571 = call ptr @ofs_alloc(i64 4096)
+  %obj2571 = call ptr @ofs_alloc(i64 128)
   %call2572 = call ptr @parser___cur()
   %named_val2573 = load %Token, ptr %call2572
   store %Token %named_val2573, ptr %obj2571
@@ -7200,7 +7200,7 @@ if_end923:
 
 define i64 @parser__parse_impl_decl() {
 entry:
-  %obj2653 = call ptr @ofs_alloc(i64 4096)
+  %obj2653 = call ptr @ofs_alloc(i64 128)
   %call2654 = call ptr @parser___cur()
   %named_val2655 = load %Token, ptr %call2654
   store %Token %named_val2655, ptr %obj2653
@@ -7286,7 +7286,7 @@ if_then933:
   br i1 %cmp2700, label %if_then936, label %if_else937
 
 if_then936:
-  %obj2702 = call ptr @ofs_alloc(i64 4096)
+  %obj2702 = call ptr @ofs_alloc(i64 128)
   %method_id_val2703 = load i64, ptr %method_id2697
   %call2704 = call ptr @node_get(i64 %method_id_val2703)
   %named_val2705 = load %Node, ptr %call2704
@@ -7403,7 +7403,7 @@ if_else949:
   br label %if_end950
 
 if_end950:
-  %obj2740 = call ptr @ofs_alloc(i64 4096)
+  %obj2740 = call ptr @ofs_alloc(i64 128)
   %id_val2741 = load i64, ptr %id.addr
   %call2742 = call ptr @node_get(i64 %id_val2741)
   %named_val2743 = load %Node, ptr %call2742
@@ -7529,7 +7529,7 @@ while_end965:
 
 define i64 @parser__parse_namespace_decl() {
 entry:
-  %obj2805 = call ptr @ofs_alloc(i64 4096)
+  %obj2805 = call ptr @ofs_alloc(i64 128)
   %call2806 = call ptr @parser___cur()
   %named_val2807 = load %Token, ptr %call2806
   store %Token %named_val2807, ptr %obj2805
@@ -7620,7 +7620,7 @@ if_then975:
   br i1 %cmp2855, label %if_then978, label %if_else979
 
 if_then978:
-  %obj2857 = call ptr @ofs_alloc(i64 4096)
+  %obj2857 = call ptr @ofs_alloc(i64 128)
   %member_val2858 = load i64, ptr %member2844
   %call2859 = call ptr @node_get(i64 %member_val2858)
   %named_val2860 = load %Node, ptr %call2859
@@ -7666,7 +7666,7 @@ if_then981:
   br i1 %cmp2881, label %if_then984, label %if_else985
 
 if_then984:
-  %obj2883 = call ptr @ofs_alloc(i64 4096)
+  %obj2883 = call ptr @ofs_alloc(i64 128)
   %member_val2884 = load i64, ptr %member2844
   %call2885 = call ptr @node_get(i64 %member_val2884)
   %named_val2886 = load %Node, ptr %call2885
@@ -7820,7 +7820,7 @@ while_end1007:
 
 define i64 @parser__parse_strata_decl() {
 entry:
-  %obj2937 = call ptr @ofs_alloc(i64 4096)
+  %obj2937 = call ptr @ofs_alloc(i64 128)
   %call2938 = call ptr @parser___cur()
   %named_val2939 = load %Token, ptr %call2938
   store %Token %named_val2939, ptr %obj2937
@@ -8012,7 +8012,7 @@ while_cond1032:
   br i1 %cmp3027, label %while_body1033, label %while_end1034
 
 while_body1033:
-  %obj3029 = call ptr @ofs_alloc(i64 4096)
+  %obj3029 = call ptr @ofs_alloc(i64 128)
   %call3030 = call ptr @parser___cur()
   %named_val3031 = load %Token, ptr %call3030
   store %Token %named_val3031, ptr %obj3029
@@ -8458,7 +8458,7 @@ while_cond1101:
   br i1 %cmp3203, label %while_body1102, label %while_end1103
 
 while_body1102:
-  %obj3205 = call ptr @ofs_alloc(i64 4096)
+  %obj3205 = call ptr @ofs_alloc(i64 128)
   %typeck___symbols_val3206 = load ptr, ptr @typeck___symbols
   %i_val3207 = load i64, ptr %i3198
   %arr_get3208 = call ptr @ofs_array_get(ptr %typeck___symbols_val3206, i64 %i_val3207)
@@ -8485,7 +8485,7 @@ if_end1106:
   br label %while_cond1101
 
 while_end1103:
-  %obj3219 = call ptr @ofs_alloc(i64 4096)
+  %obj3219 = call ptr @ofs_alloc(i64 128)
   %field_ptr3220 = getelementptr inbounds %Symbol, ptr %obj3219, i32 0, i32 0
   store ptr @str.63, ptr %field_ptr3220
   %field_ptr3221 = getelementptr inbounds %Symbol, ptr %obj3219, i32 0, i32 1
@@ -8511,7 +8511,7 @@ if_else1108:
   br label %if_end1109
 
 if_end1109:
-  %obj3227 = call ptr @ofs_alloc(i64 4096)
+  %obj3227 = call ptr @ofs_alloc(i64 128)
   %id_val3228 = load i64, ptr %id.addr
   %call3229 = call ptr @node_get(i64 %id_val3228)
   %named_val3230 = load %Node, ptr %call3229
@@ -8909,7 +8909,7 @@ if_else1171:
   br label %if_end1172
 
 if_end1172:
-  %obj3376 = call ptr @ofs_alloc(i64 4096)
+  %obj3376 = call ptr @ofs_alloc(i64 128)
   %id_val3377 = load i64, ptr %id.addr
   %call3378 = call ptr @node_get(i64 %id_val3377)
   %named_val3379 = load %Node, ptr %call3378
@@ -8996,7 +8996,7 @@ if_end1187:
   br i1 %cmp3408, label %if_then1188, label %if_else1189
 
 if_then1188:
-  %obj3410 = call ptr @ofs_alloc(i64 4096)
+  %obj3410 = call ptr @ofs_alloc(i64 128)
   %field_ptr3411 = getelementptr inbounds %Node, ptr %obj3376, i32 0, i32 1
   %field3412 = load ptr, ptr %field_ptr3411
   %call3413 = call ptr @typeck__resolve(ptr %field3412)
@@ -9551,7 +9551,7 @@ if_else1249:
   br label %if_end1250
 
 if_end1250:
-  %obj3752 = call ptr @ofs_alloc(i64 4096)
+  %obj3752 = call ptr @ofs_alloc(i64 128)
   %field_ptr3753 = getelementptr inbounds %Node, ptr %obj3376, i32 0, i32 1
   %field3754 = load ptr, ptr %field_ptr3753
   %call3755 = call ptr @typeck__resolve(ptr %field3754)
@@ -9648,7 +9648,7 @@ if_end1265:
   br label %if_end1259
 
 if_end1259:
-  %obj3797 = call ptr @ofs_alloc(i64 4096)
+  %obj3797 = call ptr @ofs_alloc(i64 128)
   %field_ptr3798 = getelementptr inbounds %Symbol, ptr %obj3797, i32 0, i32 0
   %field_ptr3799 = getelementptr inbounds %Node, ptr %obj3376, i32 0, i32 1
   %field3800 = load ptr, ptr %field_ptr3799
@@ -9861,7 +9861,7 @@ if_then1299:
   %call3885 = call ptr @typeck__check_node(i64 %field3884)
   store ptr %call3885, ptr %arr_t3882
   call void @typeck__push_scope()
-  %obj3887 = call ptr @ofs_alloc(i64 4096)
+  %obj3887 = call ptr @ofs_alloc(i64 128)
   %field_ptr3888 = getelementptr inbounds %Symbol, ptr %obj3887, i32 0, i32 0
   %field_ptr3889 = getelementptr inbounds %Node, ptr %obj3376, i32 0, i32 1
   %field3890 = load ptr, ptr %field_ptr3889
@@ -9979,13 +9979,13 @@ if_then1317:
   br i1 %cmp3940, label %if_then1320, label %if_else1321
 
 if_then1320:
-  %obj3942 = call ptr @ofs_alloc(i64 4096)
+  %obj3942 = call ptr @ofs_alloc(i64 128)
   %field_ptr3943 = getelementptr inbounds %Node, ptr %obj3376, i32 0, i32 6
   %field3944 = load i64, ptr %field_ptr3943
   %call3945 = call ptr @node_get(i64 %field3944)
   %named_val3946 = load %Node, ptr %call3945
   store %Node %named_val3946, ptr %obj3942
-  %obj3948 = call ptr @ofs_alloc(i64 4096)
+  %obj3948 = call ptr @ofs_alloc(i64 128)
   %field_ptr3949 = getelementptr inbounds %Symbol, ptr %obj3948, i32 0, i32 0
   %field_ptr3950 = getelementptr inbounds %Node, ptr %obj3942, i32 0, i32 1
   %field3951 = load ptr, ptr %field_ptr3950
@@ -10057,7 +10057,7 @@ while_body1330:
   %i_val3979 = load i64, ptr %i3972
   %call3980 = call i64 @node_get_extra(i64 %params_id_val3978, i64 %i_val3979)
   store i64 %call3980, ptr %param_id3977
-  %obj3982 = call ptr @ofs_alloc(i64 4096)
+  %obj3982 = call ptr @ofs_alloc(i64 128)
   %param_id_val3983 = load i64, ptr %param_id3977
   %call3984 = call ptr @node_get(i64 %param_id_val3983)
   %named_val3985 = load %Node, ptr %call3984
@@ -10082,7 +10082,7 @@ if_else1333:
   br label %if_end1334
 
 if_end1334:
-  %obj3995 = call ptr @ofs_alloc(i64 4096)
+  %obj3995 = call ptr @ofs_alloc(i64 128)
   %field_ptr3996 = getelementptr inbounds %Symbol, ptr %obj3995, i32 0, i32 0
   %field_ptr3997 = getelementptr inbounds %Node, ptr %obj3982, i32 0, i32 1
   %field3998 = load ptr, ptr %field_ptr3997
@@ -10137,7 +10137,7 @@ if_end1325:
   br i1 %cmp4015, label %if_then1338, label %if_else1339
 
 if_then1338:
-  %obj4017 = call ptr @ofs_alloc(i64 4096)
+  %obj4017 = call ptr @ofs_alloc(i64 128)
   %field_ptr4018 = getelementptr inbounds %Symbol, ptr %obj4017, i32 0, i32 0
   %field_ptr4019 = getelementptr inbounds %Node, ptr %obj3376, i32 0, i32 1
   %field4020 = load ptr, ptr %field_ptr4019
@@ -10167,7 +10167,7 @@ while_body1342:
   %i_val4033 = load i64, ptr %i4026
   %call4034 = call i64 @node_get_extra(i64 %id_val4032, i64 %i_val4033)
   store i64 %call4034, ptr %field_id4031
-  %obj4036 = call ptr @ofs_alloc(i64 4096)
+  %obj4036 = call ptr @ofs_alloc(i64 128)
   %field_id_val4037 = load i64, ptr %field_id4031
   %call4038 = call ptr @node_get(i64 %field_id_val4037)
   %named_val4039 = load %Node, ptr %call4038
@@ -10312,7 +10312,7 @@ if_end1358:
   br i1 %cmp4101, label %if_then1362, label %if_else1363
 
 if_then1362:
-  %obj4103 = call ptr @ofs_alloc(i64 4096)
+  %obj4103 = call ptr @ofs_alloc(i64 128)
   %field_ptr4104 = getelementptr inbounds %Symbol, ptr %obj4103, i32 0, i32 0
   %field_ptr4105 = getelementptr inbounds %Node, ptr %obj3376, i32 0, i32 1
   %field4106 = load ptr, ptr %field_ptr4105
@@ -10368,7 +10368,7 @@ while_body1372:
   %d_val4127 = load i64, ptr %d4120
   %call4128 = call i64 @node_get_extra(i64 %id_val4126, i64 %d_val4127)
   store i64 %call4128, ptr %decl_id4125
-  %obj4130 = call ptr @ofs_alloc(i64 4096)
+  %obj4130 = call ptr @ofs_alloc(i64 128)
   %decl_id_val4131 = load i64, ptr %decl_id4125
   %call4132 = call ptr @node_get(i64 %decl_id_val4131)
   %named_val4133 = load %Node, ptr %call4132
@@ -10385,7 +10385,7 @@ while_body1372:
   br i1 %logic4142, label %if_then1374, label %if_else1375
 
 if_then1374:
-  %obj4144 = call ptr @ofs_alloc(i64 4096)
+  %obj4144 = call ptr @ofs_alloc(i64 128)
   %field_ptr4145 = getelementptr inbounds %Symbol, ptr %obj4144, i32 0, i32 0
   %field_ptr4146 = getelementptr inbounds %Node, ptr %obj4130, i32 0, i32 1
   %field4147 = load ptr, ptr %field_ptr4146
@@ -10428,7 +10428,7 @@ if_else1375:
   br i1 %logic4166, label %if_then1380, label %if_else1381
 
 if_then1380:
-  %obj4168 = call ptr @ofs_alloc(i64 4096)
+  %obj4168 = call ptr @ofs_alloc(i64 128)
   %field_ptr4169 = getelementptr inbounds %Symbol, ptr %obj4168, i32 0, i32 0
   %field_ptr4170 = getelementptr inbounds %Node, ptr %obj4130, i32 0, i32 1
   %field4171 = load ptr, ptr %field_ptr4170
@@ -10488,7 +10488,7 @@ while_body1390:
   %j_val4198 = load i64, ptr %j4191
   %call4199 = call i64 @node_get_extra(i64 %decl_id_val4197, i64 %j_val4198)
   store i64 %call4199, ptr %member_id4196
-  %obj4201 = call ptr @ofs_alloc(i64 4096)
+  %obj4201 = call ptr @ofs_alloc(i64 128)
   %member_id_val4202 = load i64, ptr %member_id4196
   %call4203 = call ptr @node_get(i64 %member_id_val4202)
   %named_val4204 = load %Node, ptr %call4203
@@ -10515,7 +10515,7 @@ while_body1390:
   br i1 %logic4223, label %if_then1392, label %if_else1393
 
 if_then1392:
-  %obj4225 = call ptr @ofs_alloc(i64 4096)
+  %obj4225 = call ptr @ofs_alloc(i64 128)
   %field_ptr4226 = getelementptr inbounds %Symbol, ptr %obj4225, i32 0, i32 0
   %field_ptr4227 = getelementptr inbounds %Node, ptr %obj4201, i32 0, i32 1
   %field4228 = load ptr, ptr %field_ptr4227
@@ -10787,7 +10787,7 @@ if_else1435:
   br label %if_end1436
 
 if_end1436:
-  %obj4294 = call ptr @ofs_alloc(i64 4096)
+  %obj4294 = call ptr @ofs_alloc(i64 128)
   %decl_id_val4295 = load i64, ptr %decl_id.addr
   %call4296 = call ptr @node_get(i64 %decl_id_val4295)
   %named_val4297 = load %Node, ptr %call4296
@@ -10815,7 +10815,7 @@ if_then1437:
   br i1 %cmp4312, label %if_then1440, label %if_else1441
 
 if_then1440:
-  %obj4314 = call ptr @ofs_alloc(i64 4096)
+  %obj4314 = call ptr @ofs_alloc(i64 128)
   %ret_type_id_val4315 = load i64, ptr %ret_type_id4307
   %call4316 = call ptr @node_get(i64 %ret_type_id_val4315)
   %named_val4317 = load %Node, ptr %call4316
@@ -10870,7 +10870,7 @@ if_end1448:
   %j_val4339 = load i64, ptr %j4330
   %call4340 = call i64 @node_get_extra(i64 %params_id_val4338, i64 %j_val4339)
   store i64 %call4340, ptr %param_id4337
-  %obj4342 = call ptr @ofs_alloc(i64 4096)
+  %obj4342 = call ptr @ofs_alloc(i64 128)
   %param_id_val4343 = load i64, ptr %param_id4337
   %call4344 = call ptr @node_get(i64 %param_id_val4343)
   %named_val4345 = load %Node, ptr %call4344
@@ -10886,7 +10886,7 @@ if_end1448:
   br i1 %cmp4351, label %if_then1449, label %if_else1450
 
 if_then1449:
-  %obj4353 = call ptr @ofs_alloc(i64 4096)
+  %obj4353 = call ptr @ofs_alloc(i64 128)
   %param_type_id_val4354 = load i64, ptr %param_type_id4346
   %call4355 = call ptr @node_get(i64 %param_type_id_val4354)
   %named_val4356 = load %Node, ptr %call4355
@@ -11011,7 +11011,7 @@ if_else1462:
   br label %if_end1463
 
 if_end1463:
-  %obj4401 = call ptr @ofs_alloc(i64 4096)
+  %obj4401 = call ptr @ofs_alloc(i64 128)
   %id_val4402 = load i64, ptr %id.addr
   %call4403 = call ptr @node_get(i64 %id_val4402)
   %named_val4404 = load %Node, ptr %call4403
@@ -11213,7 +11213,7 @@ if_else1507:
   br label %if_end1508
 
 if_end1508:
-  %obj4453 = call ptr @ofs_alloc(i64 4096)
+  %obj4453 = call ptr @ofs_alloc(i64 128)
   %id_val4454 = load i64, ptr %id.addr
   %call4455 = call ptr @node_get(i64 %id_val4454)
   %named_val4456 = load %Node, ptr %call4455
@@ -11584,7 +11584,7 @@ while_body1570:
   store i64 %call4597, ptr %stmt_id4594
   %stmt_id_val4598 = load i64, ptr %stmt_id4594
   call void @codegen__emit_node(i64 %stmt_id_val4598)
-  %obj4600 = call ptr @ofs_alloc(i64 4096)
+  %obj4600 = call ptr @ofs_alloc(i64 128)
   %stmt_id_val4601 = load i64, ptr %stmt_id4594
   %call4602 = call ptr @node_get(i64 %stmt_id_val4601)
   %named_val4603 = load %Node, ptr %call4602
@@ -11819,7 +11819,7 @@ if_then1608:
   br i1 %cmp4680, label %if_then1611, label %if_else1612
 
 if_then1611:
-  %obj4682 = call ptr @ofs_alloc(i64 4096)
+  %obj4682 = call ptr @ofs_alloc(i64 128)
   %ret_type_id_val4683 = load i64, ptr %ret_type_id4675
   %call4684 = call ptr @node_get(i64 %ret_type_id_val4683)
   %named_val4685 = load %Node, ptr %call4684
@@ -11874,7 +11874,7 @@ if_end1619:
   %j_val4707 = load i64, ptr %j4698
   %call4708 = call i64 @node_get_extra(i64 %params_id_val4706, i64 %j_val4707)
   store i64 %call4708, ptr %param_id4705
-  %obj4710 = call ptr @ofs_alloc(i64 4096)
+  %obj4710 = call ptr @ofs_alloc(i64 128)
   %param_id_val4711 = load i64, ptr %param_id4705
   %call4712 = call ptr @node_get(i64 %param_id_val4711)
   %named_val4713 = load %Node, ptr %call4712
@@ -11890,7 +11890,7 @@ if_end1619:
   br i1 %cmp4719, label %if_then1620, label %if_else1621
 
 if_then1620:
-  %obj4721 = call ptr @ofs_alloc(i64 4096)
+  %obj4721 = call ptr @ofs_alloc(i64 128)
   %param_type_id_val4722 = load i64, ptr %param_type_id4714
   %call4723 = call ptr @node_get(i64 %param_type_id_val4722)
   %named_val4724 = load %Node, ptr %call4723
@@ -11971,7 +11971,7 @@ while_body1630:
   %i_val4756 = load i64, ptr %i4749
   %call4757 = call i64 @node_get_extra(i64 %id_val4755, i64 %i_val4756)
   store i64 %call4757, ptr %field_id4754
-  %obj4759 = call ptr @ofs_alloc(i64 4096)
+  %obj4759 = call ptr @ofs_alloc(i64 128)
   %field_id_val4760 = load i64, ptr %field_id4754
   %call4761 = call ptr @node_get(i64 %field_id_val4760)
   %named_val4762 = load %Node, ptr %call4761
@@ -11984,7 +11984,7 @@ while_body1630:
   br i1 %cmp4766, label %if_then1632, label %if_else1633
 
 if_then1632:
-  %obj4768 = call ptr @ofs_alloc(i64 4096)
+  %obj4768 = call ptr @ofs_alloc(i64 128)
   %field_ptr4769 = getelementptr inbounds %Node, ptr %obj4759, i32 0, i32 5
   %field4770 = load i64, ptr %field_ptr4769
   %call4771 = call ptr @node_get(i64 %field4770)
@@ -12095,7 +12095,7 @@ while_body1645:
   %i_val4823 = load i64, ptr %i4816
   %call4824 = call i64 @node_get_extra(i64 %id_val4822, i64 %i_val4823)
   store i64 %call4824, ptr %v_id4821
-  %obj4826 = call ptr @ofs_alloc(i64 4096)
+  %obj4826 = call ptr @ofs_alloc(i64 128)
   %v_id_val4827 = load i64, ptr %v_id4821
   %call4828 = call ptr @node_get(i64 %v_id_val4827)
   %named_val4829 = load %Node, ptr %call4828
@@ -12750,7 +12750,7 @@ if_else1741:
   br label %if_end1742
 
 if_end1742:
-  %obj5079 = call ptr @ofs_alloc(i64 4096)
+  %obj5079 = call ptr @ofs_alloc(i64 128)
   %id_val5080 = load i64, ptr %id.addr
   %call5081 = call ptr @node_get(i64 %id_val5080)
   %named_val5082 = load %Node, ptr %call5081
@@ -12788,7 +12788,7 @@ if_else1747:
   br label %if_end1748
 
 if_end1748:
-  %obj5092 = call ptr @ofs_alloc(i64 4096)
+  %obj5092 = call ptr @ofs_alloc(i64 128)
   %id_val5093 = load i64, ptr %id.addr
   %call5094 = call ptr @node_get(i64 %id_val5093)
   %named_val5095 = load %Node, ptr %call5094
@@ -12823,7 +12823,7 @@ while_body1753:
   %i_val5111 = load i64, ptr %i5104
   %call5112 = call i64 @node_get_extra(i64 %id_val5110, i64 %i_val5111)
   store i64 %call5112, ptr %field_id5109
-  %obj5114 = call ptr @ofs_alloc(i64 4096)
+  %obj5114 = call ptr @ofs_alloc(i64 128)
   %field_id_val5115 = load i64, ptr %field_id5109
   %call5116 = call ptr @node_get(i64 %field_id_val5115)
   %named_val5117 = load %Node, ptr %call5116
@@ -12910,7 +12910,7 @@ while_body1759:
   %i_val5153 = load i64, ptr %i5146
   %call5154 = call i64 @node_get_extra(i64 %root_id_val5152, i64 %i_val5153)
   store i64 %call5154, ptr %id5151
-  %obj5156 = call ptr @ofs_alloc(i64 4096)
+  %obj5156 = call ptr @ofs_alloc(i64 128)
   %id_val5157 = load i64, ptr %id5151
   %call5158 = call ptr @node_get(i64 %id_val5157)
   %named_val5159 = load %Node, ptr %call5158
@@ -13100,7 +13100,7 @@ if_else1777:
   br label %if_end1778
 
 if_end1778:
-  %obj5233 = call ptr @ofs_alloc(i64 4096)
+  %obj5233 = call ptr @ofs_alloc(i64 128)
   %id_val5234 = load i64, ptr %id.addr
   %call5235 = call ptr @node_get(i64 %id_val5234)
   %named_val5236 = load %Node, ptr %call5235
@@ -13904,7 +13904,7 @@ if_else1873:
   br label %if_end1874
 
 if_end1874:
-  %obj5620 = call ptr @ofs_alloc(i64 4096)
+  %obj5620 = call ptr @ofs_alloc(i64 128)
   %id_val5621 = load i64, ptr %id.addr
   %call5622 = call ptr @node_get(i64 %id_val5621)
   %named_val5623 = load %Node, ptr %call5622
@@ -13944,7 +13944,7 @@ if_else1879:
   br label %if_end1880
 
 if_end1880:
-  %obj5635 = call ptr @ofs_alloc(i64 4096)
+  %obj5635 = call ptr @ofs_alloc(i64 128)
   %id_val5636 = load i64, ptr %id.addr
   %call5637 = call ptr @node_get(i64 %id_val5636)
   %named_val5638 = load %Node, ptr %call5637
@@ -13989,7 +13989,7 @@ entry:
   store i64 %id, ptr %id.addr
   %expected_type.addr = alloca ptr, align 8
   store ptr %expected_type, ptr %expected_type.addr
-  %obj5653 = call ptr @ofs_alloc(i64 4096)
+  %obj5653 = call ptr @ofs_alloc(i64 128)
   %id_val5654 = load i64, ptr %id.addr
   %call5655 = call ptr @node_get(i64 %id_val5654)
   %named_val5656 = load %Node, ptr %call5655
@@ -14343,7 +14343,7 @@ if_else1927:
 if_end1928:
   %id_val5816 = load i64, ptr %id.addr
   call void @llvmgen__mark_node(i64 %id_val5816)
-  %obj5818 = call ptr @ofs_alloc(i64 4096)
+  %obj5818 = call ptr @ofs_alloc(i64 128)
   %id_val5819 = load i64, ptr %id.addr
   %call5820 = call ptr @node_get(i64 %id_val5819)
   %named_val5821 = load %Node, ptr %call5820
@@ -14414,7 +14414,7 @@ while_cond1935:
   br i1 %cmp5850, label %while_body1936, label %while_end1937
 
 while_body1936:
-  %obj5852 = call ptr @ofs_alloc(i64 4096)
+  %obj5852 = call ptr @ofs_alloc(i64 128)
   %i_val5853 = load i64, ptr %i5847
   %call5854 = call ptr @node_get(i64 %i_val5853)
   %named_val5855 = load %Node, ptr %call5854
@@ -14503,7 +14503,7 @@ if_else1948:
   br label %if_end1949
 
 if_end1949:
-  %obj5884 = call ptr @ofs_alloc(i64 4096)
+  %obj5884 = call ptr @ofs_alloc(i64 128)
   %id_val5885 = load i64, ptr %id.addr
   %call5886 = call ptr @node_get(i64 %id_val5885)
   %named_val5887 = load %Node, ptr %call5886
@@ -14619,7 +14619,7 @@ while_body1966:
   %j_val5942 = load i64, ptr %j5936
   %call5943 = call i64 @node_get_extra(i64 %params_id_val5941, i64 %j_val5942)
   store i64 %call5943, ptr %pid5940
-  %obj5945 = call ptr @ofs_alloc(i64 4096)
+  %obj5945 = call ptr @ofs_alloc(i64 128)
   %pid_val5946 = load i64, ptr %pid5940
   %call5947 = call ptr @node_get(i64 %pid_val5946)
   %named_val5948 = load %Node, ptr %call5947
@@ -14721,7 +14721,7 @@ while_body1975:
   %i_val5987 = load i64, ptr %i5980
   %call5988 = call i64 @node_get_extra(i64 %root_id_val5986, i64 %i_val5987)
   store i64 %call5988, ptr %decl_id5985
-  %obj5990 = call ptr @ofs_alloc(i64 4096)
+  %obj5990 = call ptr @ofs_alloc(i64 128)
   %decl_id_val5991 = load i64, ptr %decl_id5985
   %call5992 = call ptr @node_get(i64 %decl_id_val5991)
   %named_val5993 = load %Node, ptr %call5992
@@ -14784,7 +14784,7 @@ while_body1987:
   %j_val6024 = load i64, ptr %j6017
   %call6025 = call i64 @node_get_extra(i64 %decl_id_val6023, i64 %j_val6024)
   store i64 %call6025, ptr %mid6022
-  %obj6027 = call ptr @ofs_alloc(i64 4096)
+  %obj6027 = call ptr @ofs_alloc(i64 128)
   %mid_val6028 = load i64, ptr %mid6022
   %call6029 = call ptr @node_get(i64 %mid_val6028)
   %named_val6030 = load %Node, ptr %call6029
@@ -15199,7 +15199,7 @@ while_body2020:
   %arr_get6222 = call ptr @ofs_array_get(ptr %llvmgen___global_inits_val6220, i64 %gi_val6221)
   %arr_item6223 = load i64, ptr %arr_get6222
   store i64 %arr_item6223, ptr %gid6219
-  %obj6225 = call ptr @ofs_alloc(i64 4096)
+  %obj6225 = call ptr @ofs_alloc(i64 128)
   %gid_val6226 = load i64, ptr %gid6219
   %call6227 = call ptr @node_get(i64 %gid_val6226)
   %named_val6228 = load %Node, ptr %call6227
@@ -15283,7 +15283,7 @@ define void @llvmgen__emit_expr(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %obj6271 = call ptr @ofs_alloc(i64 4096)
+  %obj6271 = call ptr @ofs_alloc(i64 128)
   %id_val6272 = load i64, ptr %id.addr
   %call6273 = call ptr @node_get(i64 %id_val6272)
   %named_val6274 = load %Node, ptr %call6273
@@ -15634,7 +15634,7 @@ if_then2064:
   br i1 %logic6470, label %if_then2067, label %if_else2068
 
 if_then2067:
-  %obj6472 = call ptr @ofs_alloc(i64 4096)
+  %obj6472 = call ptr @ofs_alloc(i64 128)
   %field_ptr6473 = getelementptr inbounds %Node, ptr %obj6271, i32 0, i32 5
   %field6474 = load i64, ptr %field_ptr6473
   %call6475 = call ptr @node_get(i64 %field6474)
@@ -17037,7 +17037,7 @@ if_then2247:
   br i1 %cond7189, label %if_then2250, label %if_else2251
 
 if_then2250:
-  %obj7191 = call ptr @ofs_alloc(i64 4096)
+  %obj7191 = call ptr @ofs_alloc(i64 128)
   %field_ptr7192 = getelementptr inbounds %Node, ptr %obj6271, i32 0, i32 5
   %field7193 = load i64, ptr %field_ptr7192
   %call7194 = call ptr @node_get(i64 %field7193)
@@ -17525,7 +17525,7 @@ if_end2273:
   br i1 %cmp7465, label %if_then2304, label %if_else2305
 
 if_then2304:
-  %obj7467 = call ptr @ofs_alloc(i64 4096)
+  %obj7467 = call ptr @ofs_alloc(i64 128)
   %field_ptr7468 = getelementptr inbounds %Node, ptr %obj6271, i32 0, i32 5
   %field7469 = load i64, ptr %field_ptr7468
   %call7470 = call ptr @node_get(i64 %field7469)
@@ -17854,7 +17854,7 @@ if_end2318:
   br i1 %cmp7650, label %if_then2343, label %if_else2344
 
 if_then2343:
-  %obj7652 = call ptr @ofs_alloc(i64 4096)
+  %obj7652 = call ptr @ofs_alloc(i64 128)
   %field_ptr7653 = getelementptr inbounds %Node, ptr %obj7467, i32 0, i32 5
   %field7654 = load i64, ptr %field_ptr7653
   %call7655 = call ptr @node_get(i64 %field7654)
@@ -18072,7 +18072,7 @@ if_end2354:
   br i1 %cmp7788, label %if_then2358, label %if_else2359
 
 if_then2358:
-  %obj7790 = call ptr @ofs_alloc(i64 4096)
+  %obj7790 = call ptr @ofs_alloc(i64 128)
   %field_ptr7791 = getelementptr inbounds %Node, ptr %obj6271, i32 0, i32 5
   %field7792 = load i64, ptr %field_ptr7791
   %call7793 = call ptr @node_get(i64 %field7792)
@@ -19314,7 +19314,7 @@ if_else2470:
   br label %if_end2471
 
 if_end2471:
-  %obj8477 = call ptr @ofs_alloc(i64 4096)
+  %obj8477 = call ptr @ofs_alloc(i64 128)
   %id_val8478 = load i64, ptr %id.addr
   %call8479 = call ptr @node_get(i64 %id_val8478)
   %named_val8480 = load %Node, ptr %call8479
@@ -20391,7 +20391,7 @@ define void @llvmgen__emit_function(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %obj9044 = call ptr @ofs_alloc(i64 4096)
+  %obj9044 = call ptr @ofs_alloc(i64 128)
   %id_val9045 = load i64, ptr %id.addr
   %call9046 = call ptr @node_get(i64 %id_val9045)
   %named_val9047 = load %Node, ptr %call9046
@@ -20498,7 +20498,7 @@ if_then2592:
   br i1 %cmp9092, label %if_then2595, label %if_else2596
 
 if_then2595:
-  %obj9094 = call ptr @ofs_alloc(i64 4096)
+  %obj9094 = call ptr @ofs_alloc(i64 128)
   %field_ptr9095 = getelementptr inbounds %Node, ptr %obj9044, i32 0, i32 6
   %field9096 = load i64, ptr %field_ptr9095
   %call9097 = call ptr @node_get(i64 %field9096)
@@ -20569,7 +20569,7 @@ if_end2606:
   %pi_val9125 = load i64, ptr %pi9116
   %call9126 = call i64 @node_get_extra(i64 %params_id_val9124, i64 %pi_val9125)
   store i64 %call9126, ptr %param_id9123
-  %obj9128 = call ptr @ofs_alloc(i64 4096)
+  %obj9128 = call ptr @ofs_alloc(i64 128)
   %param_id_val9129 = load i64, ptr %param_id9123
   %call9130 = call ptr @node_get(i64 %param_id_val9129)
   %named_val9131 = load %Node, ptr %call9130
@@ -20582,7 +20582,7 @@ if_end2606:
   br i1 %cmp9135, label %if_then2607, label %if_else2608
 
 if_then2607:
-  %obj9137 = call ptr @ofs_alloc(i64 4096)
+  %obj9137 = call ptr @ofs_alloc(i64 128)
   %field_ptr9138 = getelementptr inbounds %Node, ptr %obj9128, i32 0, i32 5
   %field9139 = load i64, ptr %field_ptr9138
   %call9140 = call ptr @node_get(i64 %field9139)
@@ -20643,7 +20643,7 @@ while_body2614:
   %pi_val9162 = load i64, ptr %pi9116
   %call9163 = call i64 @node_get_extra(i64 %params_id_val9161, i64 %pi_val9162)
   store i64 %call9163, ptr %param_id29160
-  %obj9165 = call ptr @ofs_alloc(i64 4096)
+  %obj9165 = call ptr @ofs_alloc(i64 128)
   %param_id2_val9166 = load i64, ptr %param_id29160
   %call9167 = call ptr @node_get(i64 %param_id2_val9166)
   %named_val9168 = load %Node, ptr %call9167
@@ -20656,7 +20656,7 @@ while_body2614:
   br i1 %cmp9172, label %if_then2616, label %if_else2617
 
 if_then2616:
-  %obj9174 = call ptr @ofs_alloc(i64 4096)
+  %obj9174 = call ptr @ofs_alloc(i64 128)
   %field_ptr9175 = getelementptr inbounds %Node, ptr %obj9165, i32 0, i32 5
   %field9176 = load i64, ptr %field_ptr9175
   %call9177 = call ptr @node_get(i64 %field9176)
@@ -20871,7 +20871,7 @@ while_body2635:
   %i_val9271 = load i64, ptr %i9264
   %call9272 = call i64 @node_get_extra(i64 %root_id_val9270, i64 %i_val9271)
   store i64 %call9272, ptr %decl_id9269
-  %obj9274 = call ptr @ofs_alloc(i64 4096)
+  %obj9274 = call ptr @ofs_alloc(i64 128)
   %decl_id_val9275 = load i64, ptr %decl_id9269
   %call9276 = call ptr @node_get(i64 %decl_id_val9275)
   %named_val9277 = load %Node, ptr %call9276
@@ -20922,7 +20922,7 @@ while_body2644:
   %j_val9304 = load i64, ptr %j9297
   %call9305 = call i64 @node_get_extra(i64 %decl_id_val9303, i64 %j_val9304)
   store i64 %call9305, ptr %member_id9302
-  %obj9307 = call ptr @ofs_alloc(i64 4096)
+  %obj9307 = call ptr @ofs_alloc(i64 128)
   %member_id_val9308 = load i64, ptr %member_id9302
   %call9309 = call ptr @node_get(i64 %member_id_val9308)
   %named_val9310 = load %Node, ptr %call9309
@@ -20973,7 +20973,7 @@ while_end2636:
 
 define ptr @interpreter__val_void() {
 entry:
-  %obj9326 = call ptr @ofs_alloc(i64 4096)
+  %obj9326 = call ptr @ofs_alloc(i64 128)
   %field_ptr9327 = getelementptr inbounds %Value, ptr %obj9326, i32 0, i32 0
   %VAL_VOID_val9328 = load i64, ptr @VAL_VOID
   store i64 %VAL_VOID_val9328, ptr %field_ptr9327
@@ -20997,7 +20997,7 @@ define ptr @interpreter__val_int(i64 %i) {
 entry:
   %i.addr = alloca i64, align 8
   store i64 %i, ptr %i.addr
-  %obj9337 = call ptr @ofs_alloc(i64 4096)
+  %obj9337 = call ptr @ofs_alloc(i64 128)
   %field_ptr9338 = getelementptr inbounds %Value, ptr %obj9337, i32 0, i32 0
   %VAL_INT_val9339 = load i64, ptr @VAL_INT
   store i64 %VAL_INT_val9339, ptr %field_ptr9338
@@ -21022,7 +21022,7 @@ define ptr @interpreter__val_float(double %f) {
 entry:
   %f.addr = alloca double, align 8
   store double %f, ptr %f.addr
-  %obj9349 = call ptr @ofs_alloc(i64 4096)
+  %obj9349 = call ptr @ofs_alloc(i64 128)
   %field_ptr9350 = getelementptr inbounds %Value, ptr %obj9349, i32 0, i32 0
   %VAL_FLOAT_val9351 = load i64, ptr @VAL_FLOAT
   store i64 %VAL_FLOAT_val9351, ptr %field_ptr9350
@@ -21047,7 +21047,7 @@ define ptr @interpreter__val_bool(i32 %b) {
 entry:
   %b.addr = alloca i32, align 8
   store i32 %b, ptr %b.addr
-  %obj9361 = call ptr @ofs_alloc(i64 4096)
+  %obj9361 = call ptr @ofs_alloc(i64 128)
   %field_ptr9362 = getelementptr inbounds %Value, ptr %obj9361, i32 0, i32 0
   %VAL_BOOL_val9363 = load i64, ptr @VAL_BOOL
   store i64 %VAL_BOOL_val9363, ptr %field_ptr9362
@@ -21072,7 +21072,7 @@ define ptr @interpreter__val_string(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %obj9373 = call ptr @ofs_alloc(i64 4096)
+  %obj9373 = call ptr @ofs_alloc(i64 128)
   %field_ptr9374 = getelementptr inbounds %Value, ptr %obj9373, i32 0, i32 0
   %VAL_STRING_val9375 = load i64, ptr @VAL_STRING
   store i64 %VAL_STRING_val9375, ptr %field_ptr9374
@@ -21097,7 +21097,7 @@ define ptr @interpreter__val_array(i64 %h) {
 entry:
   %h.addr = alloca i64, align 8
   store i64 %h, ptr %h.addr
-  %obj9385 = call ptr @ofs_alloc(i64 4096)
+  %obj9385 = call ptr @ofs_alloc(i64 128)
   %field_ptr9386 = getelementptr inbounds %Value, ptr %obj9385, i32 0, i32 0
   %VAL_ARRAY_val9387 = load i64, ptr @VAL_ARRAY
   store i64 %VAL_ARRAY_val9387, ptr %field_ptr9386
@@ -21123,7 +21123,7 @@ entry:
   store ptr %type_name, ptr %type_name.addr
   %h.addr = alloca i64, align 8
   store i64 %h, ptr %h.addr
-  %obj9396 = call ptr @ofs_alloc(i64 4096)
+  %obj9396 = call ptr @ofs_alloc(i64 128)
   %field_ptr9397 = getelementptr inbounds %Value, ptr %obj9396, i32 0, i32 0
   %VAL_OBJECT_val9398 = load i64, ptr @VAL_OBJECT
   store i64 %VAL_OBJECT_val9398, ptr %field_ptr9397
@@ -21150,7 +21150,7 @@ entry:
   store ptr %type_name, ptr %type_name.addr
   %loc_id.addr = alloca i64, align 8
   store i64 %loc_id, ptr %loc_id.addr
-  %obj9408 = call ptr @ofs_alloc(i64 4096)
+  %obj9408 = call ptr @ofs_alloc(i64 128)
   %field_ptr9409 = getelementptr inbounds %Value, ptr %obj9408, i32 0, i32 0
   %VAL_POINTER_val9410 = load i64, ptr @VAL_POINTER
   store i64 %VAL_POINTER_val9410, ptr %field_ptr9409
@@ -21173,7 +21173,7 @@ entry:
 
 define ptr @interpreter__val_null() {
 entry:
-  %obj9420 = call ptr @ofs_alloc(i64 4096)
+  %obj9420 = call ptr @ofs_alloc(i64 128)
   %field_ptr9421 = getelementptr inbounds %Value, ptr %obj9420, i32 0, i32 0
   %VAL_NULL_val9422 = load i64, ptr @VAL_NULL
   store i64 %VAL_NULL_val9422, ptr %field_ptr9421
@@ -21547,7 +21547,7 @@ entry:
 
 define ptr @interpreter__get_return_value() {
 entry:
-  %obj9578 = call ptr @ofs_alloc(i64 4096)
+  %obj9578 = call ptr @ofs_alloc(i64 128)
   %field_ptr9579 = getelementptr inbounds %Value, ptr %obj9578, i32 0, i32 0
   %interpreter___ret_kind_val9580 = load i64, ptr @interpreter___ret_kind
   store i64 %interpreter___ret_kind_val9580, ptr %field_ptr9579
@@ -22017,7 +22017,7 @@ entry:
   store i64 %handle, ptr %handle.addr
   %index.addr = alloca i64, align 8
   store i64 %index, ptr %index.addr
-  %obj9804 = call ptr @ofs_alloc(i64 4096)
+  %obj9804 = call ptr @ofs_alloc(i64 128)
   %handle_val9805 = load i64, ptr %handle.addr
   %cmp9806 = icmp slt i64 %handle_val9805, 0
   %handle_val9807 = load i64, ptr %handle.addr
@@ -22306,7 +22306,7 @@ define ptr @interpreter__interp_array_pop(i64 %handle) {
 entry:
   %handle.addr = alloca i64, align 8
   store i64 %handle, ptr %handle.addr
-  %obj9990 = call ptr @ofs_alloc(i64 4096)
+  %obj9990 = call ptr @ofs_alloc(i64 128)
   %handle_val9991 = load i64, ptr %handle.addr
   %cmp9992 = icmp slt i64 %handle_val9991, 0
   %handle_val9993 = load i64, ptr %handle.addr
@@ -22706,7 +22706,7 @@ if_then2805:
   %arr_get10204 = call ptr @ofs_array_get(ptr %interpreter___mono_field_types_val10202, i64 %i_val10203)
   %arr_item10205 = load ptr, ptr %arr_get10204
   store ptr %arr_item10205, ptr %ftype10201
-  %obj10207 = call ptr @ofs_alloc(i64 4096)
+  %obj10207 = call ptr @ofs_alloc(i64 128)
   %ftype_val10208 = load ptr, ptr %ftype10201
   %call10209 = call ptr @interpreter__default_value_for_type(ptr %ftype_val10208)
   %named_val10210 = load %Value, ptr %call10209
@@ -22827,7 +22827,7 @@ entry:
   store i64 %handle, ptr %handle.addr
   %field_name.addr = alloca ptr, align 8
   store ptr %field_name, ptr %field_name.addr
-  %obj10275 = call ptr @ofs_alloc(i64 4096)
+  %obj10275 = call ptr @ofs_alloc(i64 128)
   %handle_val10276 = load i64, ptr %handle.addr
   %cmp10277 = icmp slt i64 %handle_val10276, 0
   %handle_val10278 = load i64, ptr %handle.addr
@@ -23252,7 +23252,7 @@ if_then2826:
   br i1 %logic10539, label %if_then2829, label %if_else2830
 
 if_then2829:
-  %obj10541 = call ptr @ofs_alloc(i64 4096)
+  %obj10541 = call ptr @ofs_alloc(i64 128)
   %field_ptr10542 = getelementptr inbounds %Value, ptr %obj10541, i32 0, i32 0
   %interpreter___env_kind_val10543 = load ptr, ptr @interpreter___env_kind
   %field_ptr10544 = getelementptr inbounds %Location, ptr %loc, i32 0, i32 1
@@ -23370,7 +23370,7 @@ if_then2838:
   br i1 %logic10615, label %if_then2841, label %if_else2842
 
 if_then2841:
-  %obj10617 = call ptr @ofs_alloc(i64 4096)
+  %obj10617 = call ptr @ofs_alloc(i64 128)
   %field_ptr10618 = getelementptr inbounds %Location, ptr %obj10617, i32 0, i32 0
   %interpreter___loc_kinds_val10619 = load ptr, ptr @interpreter___loc_kinds
   %field_ptr10620 = getelementptr inbounds %Location, ptr %loc, i32 0, i32 2
@@ -23476,7 +23476,7 @@ while_body2848:
   %arr_get10685 = call ptr @ofs_array_get(ptr %src_fnames_val10683, i64 %i_val10684)
   %arr_item10686 = load ptr, ptr %arr_get10685
   store ptr %arr_item10686, ptr %fn10682
-  %obj10688 = call ptr @ofs_alloc(i64 4096)
+  %obj10688 = call ptr @ofs_alloc(i64 128)
   %field_ptr10689 = getelementptr inbounds %Value, ptr %v, i32 0, i32 6
   %field10690 = load i64, ptr %field_ptr10689
   %fn_val10691 = load ptr, ptr %fn10682
@@ -23526,7 +23526,7 @@ if_then2850:
   br i1 %logic10714, label %if_then2853, label %if_else2854
 
 if_then2853:
-  %obj10716 = call ptr @ofs_alloc(i64 4096)
+  %obj10716 = call ptr @ofs_alloc(i64 128)
   %call10717 = call ptr @interpreter__clone_value(ptr %val)
   %named_val10718 = load %Value, ptr %call10717
   store %Value %named_val10718, ptr %obj10716
@@ -23653,7 +23653,7 @@ if_then2862:
   br i1 %logic10789, label %if_then2865, label %if_else2866
 
 if_then2865:
-  %obj10791 = call ptr @ofs_alloc(i64 4096)
+  %obj10791 = call ptr @ofs_alloc(i64 128)
   %field_ptr10792 = getelementptr inbounds %Location, ptr %obj10791, i32 0, i32 0
   %interpreter___loc_kinds_val10793 = load ptr, ptr @interpreter___loc_kinds
   %field_ptr10794 = getelementptr inbounds %Location, ptr %loc, i32 0, i32 2
@@ -23799,7 +23799,7 @@ entry:
   store ptr %type_name, ptr %type_name.addr
   %is_const.addr = alloca i32, align 8
   store i32 %is_const, ptr %is_const.addr
-  %obj10867 = call ptr @ofs_alloc(i64 4096)
+  %obj10867 = call ptr @ofs_alloc(i64 128)
   %call10868 = call ptr @interpreter__clone_value(ptr %val)
   %named_val10869 = load %Value, ptr %call10868
   store %Value %named_val10869, ptr %obj10867
@@ -23967,7 +23967,7 @@ entry:
   br i1 %cmp10951, label %if_then2889, label %if_else2890
 
 if_then2889:
-  %obj10953 = call ptr @ofs_alloc(i64 4096)
+  %obj10953 = call ptr @ofs_alloc(i64 128)
   %field_ptr10954 = getelementptr inbounds %Value, ptr %obj10953, i32 0, i32 0
   %interpreter___env_kind_val10955 = load ptr, ptr @interpreter___env_kind
   %idx_val10956 = load i64, ptr %idx10947
@@ -24033,7 +24033,7 @@ entry:
   br i1 %cmp10994, label %if_then2892, label %if_else2893
 
 if_then2892:
-  %obj10996 = call ptr @ofs_alloc(i64 4096)
+  %obj10996 = call ptr @ofs_alloc(i64 128)
   %call10997 = call ptr @interpreter__clone_value(ptr %val)
   %named_val10998 = load %Value, ptr %call10997
   store %Value %named_val10998, ptr %obj10996
@@ -24170,7 +24170,7 @@ entry:
   store i64 %base, ptr %base.addr
   %index.addr = alloca i64, align 8
   store i64 %index, ptr %index.addr
-  %obj11063 = call ptr @ofs_alloc(i64 4096)
+  %obj11063 = call ptr @ofs_alloc(i64 128)
   %pos11064 = alloca i64, align 8
   %base_val11065 = load i64, ptr %base.addr
   %index_val11066 = load i64, ptr %index.addr
@@ -24483,7 +24483,7 @@ while_cond2961:
   br i1 %cmp11167, label %while_body2962, label %while_end2963
 
 while_body2962:
-  %obj11169 = call ptr @ofs_alloc(i64 4096)
+  %obj11169 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11170 = load i64, ptr %arg_base.addr
   %i_val11171 = load i64, ptr %i11164
   %call11172 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11170, i64 %i_val11171)
@@ -24521,7 +24521,7 @@ if_then2964:
   br i1 %cmp11186, label %if_then2967, label %if_else2968
 
 if_then2967:
-  %obj11188 = call ptr @ofs_alloc(i64 4096)
+  %obj11188 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11189 = load i64, ptr %arg_base.addr
   %call11190 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11189, i64 0)
   %named_val11191 = load %Value, ptr %call11190
@@ -24555,7 +24555,7 @@ if_then2970:
   br i1 %cmp11200, label %if_then2973, label %if_else2974
 
 if_then2973:
-  %obj11202 = call ptr @ofs_alloc(i64 4096)
+  %obj11202 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11203 = load i64, ptr %arg_base.addr
   %call11204 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11203, i64 0)
   %named_val11205 = load %Value, ptr %call11204
@@ -24588,12 +24588,12 @@ if_then2976:
   br i1 %cmp11215, label %if_then2979, label %if_else2980
 
 if_then2979:
-  %obj11217 = call ptr @ofs_alloc(i64 4096)
+  %obj11217 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11218 = load i64, ptr %arg_base.addr
   %call11219 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11218, i64 0)
   %named_val11220 = load %Value, ptr %call11219
   store %Value %named_val11220, ptr %obj11217
-  %obj11222 = call ptr @ofs_alloc(i64 4096)
+  %obj11222 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11223 = load i64, ptr %arg_base.addr
   %call11224 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11223, i64 1)
   %named_val11225 = load %Value, ptr %call11224
@@ -24628,12 +24628,12 @@ if_then2982:
   br i1 %cmp11237, label %if_then2985, label %if_else2986
 
 if_then2985:
-  %obj11239 = call ptr @ofs_alloc(i64 4096)
+  %obj11239 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11240 = load i64, ptr %arg_base.addr
   %call11241 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11240, i64 0)
   %named_val11242 = load %Value, ptr %call11241
   store %Value %named_val11242, ptr %obj11239
-  %obj11244 = call ptr @ofs_alloc(i64 4096)
+  %obj11244 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11245 = load i64, ptr %arg_base.addr
   %call11246 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11245, i64 1)
   %named_val11247 = load %Value, ptr %call11246
@@ -24668,12 +24668,12 @@ if_then2988:
   br i1 %cmp11259, label %if_then2991, label %if_else2992
 
 if_then2991:
-  %obj11261 = call ptr @ofs_alloc(i64 4096)
+  %obj11261 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11262 = load i64, ptr %arg_base.addr
   %call11263 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11262, i64 0)
   %named_val11264 = load %Value, ptr %call11263
   store %Value %named_val11264, ptr %obj11261
-  %obj11266 = call ptr @ofs_alloc(i64 4096)
+  %obj11266 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11267 = load i64, ptr %arg_base.addr
   %call11268 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11267, i64 1)
   %named_val11269 = load %Value, ptr %call11268
@@ -24709,17 +24709,17 @@ if_then2994:
   br i1 %cmp11282, label %if_then2997, label %if_else2998
 
 if_then2997:
-  %obj11284 = call ptr @ofs_alloc(i64 4096)
+  %obj11284 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11285 = load i64, ptr %arg_base.addr
   %call11286 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11285, i64 0)
   %named_val11287 = load %Value, ptr %call11286
   store %Value %named_val11287, ptr %obj11284
-  %obj11289 = call ptr @ofs_alloc(i64 4096)
+  %obj11289 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11290 = load i64, ptr %arg_base.addr
   %call11291 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11290, i64 1)
   %named_val11292 = load %Value, ptr %call11291
   store %Value %named_val11292, ptr %obj11289
-  %obj11294 = call ptr @ofs_alloc(i64 4096)
+  %obj11294 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11295 = load i64, ptr %arg_base.addr
   %call11296 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11295, i64 2)
   %named_val11297 = load %Value, ptr %call11296
@@ -24756,12 +24756,12 @@ if_then3000:
   br i1 %cmp11311, label %if_then3003, label %if_else3004
 
 if_then3003:
-  %obj11313 = call ptr @ofs_alloc(i64 4096)
+  %obj11313 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11314 = load i64, ptr %arg_base.addr
   %call11315 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11314, i64 0)
   %named_val11316 = load %Value, ptr %call11315
   store %Value %named_val11316, ptr %obj11313
-  %obj11318 = call ptr @ofs_alloc(i64 4096)
+  %obj11318 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11319 = load i64, ptr %arg_base.addr
   %call11320 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11319, i64 1)
   %named_val11321 = load %Value, ptr %call11320
@@ -24796,7 +24796,7 @@ if_then3006:
   br i1 %cmp11333, label %if_then3009, label %if_else3010
 
 if_then3009:
-  %obj11335 = call ptr @ofs_alloc(i64 4096)
+  %obj11335 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11336 = load i64, ptr %arg_base.addr
   %call11337 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11336, i64 0)
   %named_val11338 = load %Value, ptr %call11337
@@ -24829,7 +24829,7 @@ if_then3012:
   br i1 %cmp11348, label %if_then3015, label %if_else3016
 
 if_then3015:
-  %obj11350 = call ptr @ofs_alloc(i64 4096)
+  %obj11350 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11351 = load i64, ptr %arg_base.addr
   %call11352 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11351, i64 0)
   %named_val11353 = load %Value, ptr %call11352
@@ -24860,7 +24860,7 @@ if_then3018:
   br i1 %cmp11361, label %if_then3021, label %if_else3022
 
 if_then3021:
-  %obj11363 = call ptr @ofs_alloc(i64 4096)
+  %obj11363 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11364 = load i64, ptr %arg_base.addr
   %call11365 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11364, i64 0)
   %named_val11366 = load %Value, ptr %call11365
@@ -24910,7 +24910,7 @@ if_then3027:
   br i1 %cmp11383, label %if_then3030, label %if_else3031
 
 if_then3030:
-  %obj11385 = call ptr @ofs_alloc(i64 4096)
+  %obj11385 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11386 = load i64, ptr %arg_base.addr
   %call11387 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11386, i64 0)
   %named_val11388 = load %Value, ptr %call11387
@@ -24943,12 +24943,12 @@ if_then3033:
   br i1 %cmp11398, label %if_then3036, label %if_else3037
 
 if_then3036:
-  %obj11400 = call ptr @ofs_alloc(i64 4096)
+  %obj11400 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11401 = load i64, ptr %arg_base.addr
   %call11402 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11401, i64 0)
   %named_val11403 = load %Value, ptr %call11402
   store %Value %named_val11403, ptr %obj11400
-  %obj11405 = call ptr @ofs_alloc(i64 4096)
+  %obj11405 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11406 = load i64, ptr %arg_base.addr
   %call11407 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11406, i64 1)
   %named_val11408 = load %Value, ptr %call11407
@@ -24980,12 +24980,12 @@ if_then3039:
   br i1 %cmp11416, label %if_then3042, label %if_else3043
 
 if_then3042:
-  %obj11418 = call ptr @ofs_alloc(i64 4096)
+  %obj11418 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11419 = load i64, ptr %arg_base.addr
   %call11420 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11419, i64 0)
   %named_val11421 = load %Value, ptr %call11420
   store %Value %named_val11421, ptr %obj11418
-  %obj11423 = call ptr @ofs_alloc(i64 4096)
+  %obj11423 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11424 = load i64, ptr %arg_base.addr
   %call11425 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11424, i64 1)
   %named_val11426 = load %Value, ptr %call11425
@@ -25019,17 +25019,17 @@ if_then3045:
   br i1 %cmp11437, label %if_then3048, label %if_else3049
 
 if_then3048:
-  %obj11439 = call ptr @ofs_alloc(i64 4096)
+  %obj11439 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11440 = load i64, ptr %arg_base.addr
   %call11441 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11440, i64 0)
   %named_val11442 = load %Value, ptr %call11441
   store %Value %named_val11442, ptr %obj11439
-  %obj11444 = call ptr @ofs_alloc(i64 4096)
+  %obj11444 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11445 = load i64, ptr %arg_base.addr
   %call11446 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11445, i64 1)
   %named_val11447 = load %Value, ptr %call11446
   store %Value %named_val11447, ptr %obj11444
-  %obj11449 = call ptr @ofs_alloc(i64 4096)
+  %obj11449 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11450 = load i64, ptr %arg_base.addr
   %call11451 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11450, i64 2)
   %named_val11452 = load %Value, ptr %call11451
@@ -25063,7 +25063,7 @@ if_then3051:
   br i1 %cmp11462, label %if_then3054, label %if_else3055
 
 if_then3054:
-  %obj11464 = call ptr @ofs_alloc(i64 4096)
+  %obj11464 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11465 = load i64, ptr %arg_base.addr
   %call11466 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11465, i64 0)
   %named_val11467 = load %Value, ptr %call11466
@@ -25095,12 +25095,12 @@ if_then3057:
   br i1 %cmp11476, label %if_then3060, label %if_else3061
 
 if_then3060:
-  %obj11478 = call ptr @ofs_alloc(i64 4096)
+  %obj11478 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11479 = load i64, ptr %arg_base.addr
   %call11480 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11479, i64 0)
   %named_val11481 = load %Value, ptr %call11480
   store %Value %named_val11481, ptr %obj11478
-  %obj11483 = call ptr @ofs_alloc(i64 4096)
+  %obj11483 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11484 = load i64, ptr %arg_base.addr
   %call11485 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11484, i64 1)
   %named_val11486 = load %Value, ptr %call11485
@@ -25177,7 +25177,7 @@ if_then3069:
   br i1 %cmp11516, label %if_then3072, label %if_else3073
 
 if_then3072:
-  %obj11518 = call ptr @ofs_alloc(i64 4096)
+  %obj11518 = call ptr @ofs_alloc(i64 128)
   %arg_base_val11519 = load i64, ptr %arg_base.addr
   %call11520 = call ptr @interpreter__get_call_arg(i64 %arg_base_val11519, i64 0)
   %named_val11521 = load %Value, ptr %call11520
@@ -25228,7 +25228,7 @@ define ptr @interpreter__eval_lvalue(i64 %id) {
 entry:
   %id.addr = alloca i64, align 8
   store i64 %id, ptr %id.addr
-  %obj11538 = call ptr @ofs_alloc(i64 4096)
+  %obj11538 = call ptr @ofs_alloc(i64 128)
   %field_ptr11539 = getelementptr inbounds %Location, ptr %obj11538, i32 0, i32 0
   %LOC_INVALID_val11540 = load i64, ptr @LOC_INVALID
   store i64 %LOC_INVALID_val11540, ptr %field_ptr11539
@@ -25254,7 +25254,7 @@ if_else3079:
   br label %if_end3080
 
 if_end3080:
-  %obj11551 = call ptr @ofs_alloc(i64 4096)
+  %obj11551 = call ptr @ofs_alloc(i64 128)
   %id_val11552 = load i64, ptr %id.addr
   %call11553 = call ptr @node_get(i64 %id_val11552)
   %named_val11554 = load %Node, ptr %call11553
@@ -25276,7 +25276,7 @@ if_then3081:
   br i1 %cmp11564, label %if_then3084, label %if_else3085
 
 if_then3084:
-  %obj11566 = call ptr @ofs_alloc(i64 4096)
+  %obj11566 = call ptr @ofs_alloc(i64 128)
   %field_ptr11567 = getelementptr inbounds %Location, ptr %obj11566, i32 0, i32 0
   %LOC_VAR_val11568 = load i64, ptr @LOC_VAR
   store i64 %LOC_VAR_val11568, ptr %field_ptr11567
@@ -25312,13 +25312,13 @@ if_end3083:
   br i1 %cmp11581, label %if_then3087, label %if_else3088
 
 if_then3087:
-  %obj11583 = call ptr @ofs_alloc(i64 4096)
+  %obj11583 = call ptr @ofs_alloc(i64 128)
   %field_ptr11584 = getelementptr inbounds %Node, ptr %obj11551, i32 0, i32 5
   %field11585 = load i64, ptr %field_ptr11584
   %call11586 = call ptr @interpreter__eval_expr(i64 %field11585)
   %named_val11587 = load %Value, ptr %call11586
   store %Value %named_val11587, ptr %obj11583
-  %obj11589 = call ptr @ofs_alloc(i64 4096)
+  %obj11589 = call ptr @ofs_alloc(i64 128)
   %field_ptr11590 = getelementptr inbounds %Node, ptr %obj11551, i32 0, i32 6
   %field11591 = load i64, ptr %field_ptr11590
   %call11592 = call ptr @interpreter__eval_expr(i64 %field11591)
@@ -25331,7 +25331,7 @@ if_then3087:
   br i1 %cmp11597, label %if_then3090, label %if_else3091
 
 if_then3090:
-  %obj11599 = call ptr @ofs_alloc(i64 4096)
+  %obj11599 = call ptr @ofs_alloc(i64 128)
   %field_ptr11600 = getelementptr inbounds %Location, ptr %obj11599, i32 0, i32 0
   %LOC_ARRAY_val11601 = load i64, ptr @LOC_ARRAY
   store i64 %LOC_ARRAY_val11601, ptr %field_ptr11600
@@ -25367,7 +25367,7 @@ if_end3089:
   br i1 %cmp11614, label %if_then3093, label %if_else3094
 
 if_then3093:
-  %obj11616 = call ptr @ofs_alloc(i64 4096)
+  %obj11616 = call ptr @ofs_alloc(i64 128)
   %field_ptr11617 = getelementptr inbounds %Node, ptr %obj11551, i32 0, i32 5
   %field11618 = load i64, ptr %field_ptr11617
   %call11619 = call ptr @interpreter__eval_expr(i64 %field11618)
@@ -25380,7 +25380,7 @@ if_then3093:
   br i1 %cmp11624, label %if_then3096, label %if_else3097
 
 if_then3096:
-  %obj11626 = call ptr @ofs_alloc(i64 4096)
+  %obj11626 = call ptr @ofs_alloc(i64 128)
   %field_ptr11627 = getelementptr inbounds %Location, ptr %obj11626, i32 0, i32 0
   %LOC_FIELD_val11628 = load i64, ptr @LOC_FIELD
   store i64 %LOC_FIELD_val11628, ptr %field_ptr11627
@@ -25424,7 +25424,7 @@ if_then3099:
   br i1 %cond11646, label %if_then3102, label %if_else3103
 
 if_then3102:
-  %obj11648 = call ptr @ofs_alloc(i64 4096)
+  %obj11648 = call ptr @ofs_alloc(i64 128)
   %field_ptr11649 = getelementptr inbounds %Node, ptr %obj11551, i32 0, i32 5
   %field11650 = load i64, ptr %field_ptr11649
   %call11651 = call ptr @interpreter__eval_expr(i64 %field11650)
@@ -25437,7 +25437,7 @@ if_then3102:
   br i1 %cmp11656, label %if_then3105, label %if_else3106
 
 if_then3105:
-  %obj11658 = call ptr @ofs_alloc(i64 4096)
+  %obj11658 = call ptr @ofs_alloc(i64 128)
   %field_ptr11659 = getelementptr inbounds %Location, ptr %obj11658, i32 0, i32 0
   %LOC_PTR_val11660 = load i64, ptr @LOC_PTR
   store i64 %LOC_PTR_val11660, ptr %field_ptr11659
@@ -26210,7 +26210,7 @@ if_else3214:
   br label %if_end3215
 
 if_end3215:
-  %obj12036 = call ptr @ofs_alloc(i64 4096)
+  %obj12036 = call ptr @ofs_alloc(i64 128)
   %id_val12037 = load i64, ptr %id.addr
   %call12038 = call ptr @node_get(i64 %id_val12037)
   %named_val12039 = load %Node, ptr %call12038
@@ -26337,7 +26337,7 @@ while_body3238:
   %i_val12093 = load i64, ptr %i12087
   %call12094 = call i64 @node_get_extra(i64 %id_val12092, i64 %i_val12093)
   store i64 %call12094, ptr %elem_id12091
-  %obj12096 = call ptr @ofs_alloc(i64 4096)
+  %obj12096 = call ptr @ofs_alloc(i64 128)
   %elem_id_val12097 = load i64, ptr %elem_id12091
   %call12098 = call ptr @interpreter__eval_expr(i64 %elem_id_val12097)
   %named_val12099 = load %Value, ptr %call12098
@@ -26381,13 +26381,13 @@ if_end3242:
   br i1 %cmp12115, label %if_then3243, label %if_else3244
 
 if_then3243:
-  %obj12117 = call ptr @ofs_alloc(i64 4096)
+  %obj12117 = call ptr @ofs_alloc(i64 128)
   %field_ptr12118 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12119 = load i64, ptr %field_ptr12118
   %call12120 = call ptr @interpreter__eval_expr(i64 %field12119)
   %named_val12121 = load %Value, ptr %call12120
   store %Value %named_val12121, ptr %obj12117
-  %obj12123 = call ptr @ofs_alloc(i64 4096)
+  %obj12123 = call ptr @ofs_alloc(i64 128)
   %field_ptr12124 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 6
   %field12125 = load i64, ptr %field_ptr12124
   %call12126 = call ptr @interpreter__eval_expr(i64 %field12125)
@@ -26425,7 +26425,7 @@ if_end3245:
   br i1 %cmp12141, label %if_then3249, label %if_else3250
 
 if_then3249:
-  %obj12143 = call ptr @ofs_alloc(i64 4096)
+  %obj12143 = call ptr @ofs_alloc(i64 128)
   %field_ptr12144 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12145 = load i64, ptr %field_ptr12144
   %call12146 = call ptr @interpreter__eval_expr(i64 %field12145)
@@ -26463,17 +26463,17 @@ if_end3251:
   br i1 %cmp12161, label %if_then3255, label %if_else3256
 
 if_then3255:
-  %obj12163 = call ptr @ofs_alloc(i64 4096)
+  %obj12163 = call ptr @ofs_alloc(i64 128)
   %field_ptr12164 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12165 = load i64, ptr %field_ptr12164
   %call12166 = call ptr @interpreter__eval_lvalue(i64 %field12165)
   %named_val12167 = load %Location, ptr %call12166
   store %Location %named_val12167, ptr %obj12163
-  %obj12169 = call ptr @ofs_alloc(i64 4096)
+  %obj12169 = call ptr @ofs_alloc(i64 128)
   %call12170 = call ptr @interpreter__load_location(ptr %obj12163)
   %named_val12171 = load %Value, ptr %call12170
   store %Value %named_val12171, ptr %obj12169
-  %obj12173 = call ptr @ofs_alloc(i64 4096)
+  %obj12173 = call ptr @ofs_alloc(i64 128)
   %named_val12174 = load %Value, ptr %obj12169
   store %Value %named_val12174, ptr %obj12173
   %field_ptr12175 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 1
@@ -26519,7 +26519,7 @@ if_then3261:
   br i1 %cond12194, label %if_then3264, label %if_else3265
 
 if_then3264:
-  %obj12196 = call ptr @ofs_alloc(i64 4096)
+  %obj12196 = call ptr @ofs_alloc(i64 128)
   %field_ptr12197 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12198 = load i64, ptr %field_ptr12197
   %call12199 = call ptr @interpreter__eval_lvalue(i64 %field12198)
@@ -26553,7 +26553,7 @@ if_end3266:
   br i1 %cond12218, label %if_then3267, label %if_else3268
 
 if_then3267:
-  %obj12220 = call ptr @ofs_alloc(i64 4096)
+  %obj12220 = call ptr @ofs_alloc(i64 128)
   %field_ptr12221 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12222 = load i64, ptr %field_ptr12221
   %call12223 = call ptr @interpreter__eval_expr(i64 %field12222)
@@ -26576,7 +26576,7 @@ if_then3267:
   br i1 %logic12238, label %if_then3270, label %if_else3271
 
 if_then3270:
-  %obj12240 = call ptr @ofs_alloc(i64 4096)
+  %obj12240 = call ptr @ofs_alloc(i64 128)
   %field_ptr12241 = getelementptr inbounds %Location, ptr %obj12240, i32 0, i32 0
   %interpreter___loc_kinds_val12242 = load ptr, ptr @interpreter___loc_kinds
   %field_ptr12243 = getelementptr inbounds %Value, ptr %obj12220, i32 0, i32 6
@@ -26626,7 +26626,7 @@ if_else3268:
   br label %if_end3269
 
 if_end3269:
-  %obj12274 = call ptr @ofs_alloc(i64 4096)
+  %obj12274 = call ptr @ofs_alloc(i64 128)
   %field_ptr12275 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12276 = load i64, ptr %field_ptr12275
   %call12277 = call ptr @interpreter__eval_expr(i64 %field12276)
@@ -26725,7 +26725,7 @@ if_end3263:
   br i1 %cmp12316, label %if_then3288, label %if_else3289
 
 if_then3288:
-  %obj12318 = call ptr @ofs_alloc(i64 4096)
+  %obj12318 = call ptr @ofs_alloc(i64 128)
   %field_ptr12319 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12320 = load i64, ptr %field_ptr12319
   %call12321 = call ptr @interpreter__eval_expr(i64 %field12320)
@@ -26927,13 +26927,13 @@ if_then3321:
   br i1 %logic12416, label %if_then3324, label %if_else3325
 
 if_then3324:
-  %obj12418 = call ptr @ofs_alloc(i64 4096)
+  %obj12418 = call ptr @ofs_alloc(i64 128)
   %field_ptr12419 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12420 = load i64, ptr %field_ptr12419
   %call12421 = call ptr @interpreter__eval_lvalue(i64 %field12420)
   %named_val12422 = load %Location, ptr %call12421
   store %Location %named_val12422, ptr %obj12418
-  %obj12424 = call ptr @ofs_alloc(i64 4096)
+  %obj12424 = call ptr @ofs_alloc(i64 128)
   %field_ptr12425 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 6
   %field12426 = load i64, ptr %field_ptr12425
   %call12427 = call ptr @interpreter__eval_expr(i64 %field12426)
@@ -26953,7 +26953,7 @@ if_else3328:
   br label %if_end3329
 
 if_end3329:
-  %obj12434 = call ptr @ofs_alloc(i64 4096)
+  %obj12434 = call ptr @ofs_alloc(i64 128)
   %call12435 = call ptr @interpreter__load_location(ptr %obj12418)
   %named_val12436 = load %Value, ptr %call12435
   store %Value %named_val12436, ptr %obj12434
@@ -26962,7 +26962,7 @@ if_end3329:
   %field12439 = load ptr, ptr %field_ptr12438
   %call12440 = call ptr @ofs_str_substr(ptr %field12439, i64 0, i64 1)
   store ptr %call12440, ptr %op_calc12437
-  %obj12442 = call ptr @ofs_alloc(i64 4096)
+  %obj12442 = call ptr @ofs_alloc(i64 128)
   %op_calc_val12443 = load ptr, ptr %op_calc12437
   %call12444 = call ptr @interpreter__eval_bin_calc(ptr %op_calc_val12443, ptr %obj12434, ptr %obj12424)
   %named_val12445 = load %Value, ptr %call12444
@@ -26981,7 +26981,7 @@ if_end3326:
   br i1 %cond12449, label %if_then3330, label %if_else3331
 
 if_then3330:
-  %obj12451 = call ptr @ofs_alloc(i64 4096)
+  %obj12451 = call ptr @ofs_alloc(i64 128)
   %field_ptr12452 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12453 = load i64, ptr %field_ptr12452
   %call12454 = call ptr @interpreter__eval_expr(i64 %field12453)
@@ -27000,7 +27000,7 @@ if_else3334:
   br label %if_end3335
 
 if_end3335:
-  %obj12461 = call ptr @ofs_alloc(i64 4096)
+  %obj12461 = call ptr @ofs_alloc(i64 128)
   %field_ptr12462 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 6
   %field12463 = load i64, ptr %field_ptr12462
   %call12464 = call ptr @interpreter__eval_expr(i64 %field12463)
@@ -27032,7 +27032,7 @@ if_end3332:
   br i1 %cond12473, label %if_then3339, label %if_else3340
 
 if_then3339:
-  %obj12475 = call ptr @ofs_alloc(i64 4096)
+  %obj12475 = call ptr @ofs_alloc(i64 128)
   %field_ptr12476 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12477 = load i64, ptr %field_ptr12476
   %call12478 = call ptr @interpreter__eval_expr(i64 %field12477)
@@ -27050,7 +27050,7 @@ if_else3343:
   br label %if_end3344
 
 if_end3344:
-  %obj12484 = call ptr @ofs_alloc(i64 4096)
+  %obj12484 = call ptr @ofs_alloc(i64 128)
   %field_ptr12485 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 6
   %field12486 = load i64, ptr %field_ptr12485
   %call12487 = call ptr @interpreter__eval_expr(i64 %field12486)
@@ -27075,13 +27075,13 @@ if_else3340:
   br label %if_end3341
 
 if_end3341:
-  %obj12494 = call ptr @ofs_alloc(i64 4096)
+  %obj12494 = call ptr @ofs_alloc(i64 128)
   %field_ptr12495 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 5
   %field12496 = load i64, ptr %field_ptr12495
   %call12497 = call ptr @interpreter__eval_expr(i64 %field12496)
   %named_val12498 = load %Value, ptr %call12497
   store %Value %named_val12498, ptr %obj12494
-  %obj12500 = call ptr @ofs_alloc(i64 4096)
+  %obj12500 = call ptr @ofs_alloc(i64 128)
   %field_ptr12501 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 6
   %field12502 = load i64, ptr %field_ptr12501
   %call12503 = call ptr @interpreter__eval_expr(i64 %field12502)
@@ -27580,7 +27580,7 @@ while_body3430:
   %ai_val12719 = load i64, ptr %ai12713
   %call12720 = call i64 @node_get_extra(i64 %id_val12718, i64 %ai_val12719)
   store i64 %call12720, ptr %arg_id12717
-  %obj12722 = call ptr @ofs_alloc(i64 4096)
+  %obj12722 = call ptr @ofs_alloc(i64 128)
   %arg_id_val12723 = load i64, ptr %arg_id12717
   %call12724 = call ptr @interpreter__eval_expr(i64 %arg_id_val12723)
   %named_val12725 = load %Value, ptr %call12724
@@ -27633,7 +27633,7 @@ while_body3430:
   br label %while_cond3429
 
 while_end3431:
-  %obj12757 = call ptr @ofs_alloc(i64 4096)
+  %obj12757 = call ptr @ofs_alloc(i64 128)
   %field_ptr12758 = getelementptr inbounds %Node, ptr %obj12036, i32 0, i32 1
   %field12759 = load ptr, ptr %field_ptr12758
   %num_args_val12760 = load i64, ptr %num_args12707
@@ -27836,7 +27836,7 @@ if_then3456:
   %op12850 = sub i64 %op12848, %sep_len_val12849
   %call12851 = call ptr @ofs_str_substr(ptr %name_val12841, i64 %op12844, i64 %op12850)
   store ptr %call12851, ptr %method_part12840
-  %obj12853 = call ptr @ofs_alloc(i64 4096)
+  %obj12853 = call ptr @ofs_alloc(i64 128)
   %var_part_val12854 = load ptr, ptr %var_part12836
   %call12855 = call ptr @interpreter__resolve_var(ptr %var_part_val12854)
   %named_val12856 = load %Value, ptr %call12855
@@ -27935,7 +27935,7 @@ while_cond3468:
   br i1 %cmp12910, label %while_body3469, label %while_end3470
 
 while_body3469:
-  %obj12912 = call ptr @ofs_alloc(i64 4096)
+  %obj12912 = call ptr @ofs_alloc(i64 128)
   %arg_base_val12913 = load i64, ptr %arg_base.addr
   %ai_val12914 = load i64, ptr %ai12907
   %call12915 = call ptr @interpreter__get_call_arg(i64 %arg_base_val12913, i64 %ai_val12914)
@@ -27989,7 +27989,7 @@ while_body3469:
   br label %while_cond3468
 
 while_end3470:
-  %obj12948 = call ptr @ofs_alloc(i64 4096)
+  %obj12948 = call ptr @ofs_alloc(i64 128)
   %m_fn_id_val12949 = load i64, ptr %m_fn_id12867
   %num_args_val12950 = load i64, ptr %num_args.addr
   %op12951 = add i64 %num_args_val12950, 1
@@ -28068,7 +28068,7 @@ entry:
   store i64 %num_args, ptr %num_args.addr
   %arg_base.addr = alloca i64, align 8
   store i64 %arg_base, ptr %arg_base.addr
-  %obj12982 = call ptr @ofs_alloc(i64 4096)
+  %obj12982 = call ptr @ofs_alloc(i64 128)
   %fn_id_val12983 = load i64, ptr %fn_id.addr
   %call12984 = call ptr @node_get(i64 %fn_id_val12983)
   %named_val12985 = load %Node, ptr %call12984
@@ -28116,7 +28116,7 @@ while_body3478:
   %pi_val13009 = load i64, ptr %pi13003
   %call13010 = call i64 @node_get_extra(i64 %params_node_id_val13008, i64 %pi_val13009)
   store i64 %call13010, ptr %param_id13007
-  %obj13012 = call ptr @ofs_alloc(i64 4096)
+  %obj13012 = call ptr @ofs_alloc(i64 128)
   %param_id_val13013 = load i64, ptr %param_id13007
   %call13014 = call ptr @node_get(i64 %param_id_val13013)
   %named_val13015 = load %Node, ptr %call13014
@@ -28167,7 +28167,7 @@ if_end3476:
   br i1 %cmp13036, label %if_then3483, label %if_else3484
 
 if_then3483:
-  %obj13038 = call ptr @ofs_alloc(i64 4096)
+  %obj13038 = call ptr @ofs_alloc(i64 128)
   %body_id_val13039 = load i64, ptr %body_id12989
   %call13040 = call ptr @node_get(i64 %body_id_val13039)
   %named_val13041 = load %Node, ptr %call13040
@@ -28307,7 +28307,7 @@ if_else3502:
   br label %if_end3503
 
 if_end3503:
-  %obj13103 = call ptr @ofs_alloc(i64 4096)
+  %obj13103 = call ptr @ofs_alloc(i64 128)
   %id_val13104 = load i64, ptr %id.addr
   %call13105 = call ptr @node_get(i64 %id_val13104)
   %named_val13106 = load %Node, ptr %call13105
@@ -28444,13 +28444,13 @@ if_end3515:
   br i1 %cmp13169, label %if_then3522, label %if_else3523
 
 if_then3522:
-  %obj13171 = call ptr @ofs_alloc(i64 4096)
+  %obj13171 = call ptr @ofs_alloc(i64 128)
   %field_ptr13172 = getelementptr inbounds %Node, ptr %obj13103, i32 0, i32 5
   %field13173 = load i64, ptr %field_ptr13172
   %call13174 = call ptr @interpreter__eval_lvalue(i64 %field13173)
   %named_val13175 = load %Location, ptr %call13174
   store %Location %named_val13175, ptr %obj13171
-  %obj13177 = call ptr @ofs_alloc(i64 4096)
+  %obj13177 = call ptr @ofs_alloc(i64 128)
   %field_ptr13178 = getelementptr inbounds %Node, ptr %obj13103, i32 0, i32 6
   %field13179 = load i64, ptr %field_ptr13178
   %call13180 = call ptr @interpreter__eval_expr(i64 %field13179)
@@ -28471,7 +28471,7 @@ if_end3524:
   br i1 %cmp13186, label %if_then3525, label %if_else3526
 
 if_then3525:
-  %obj13188 = call ptr @ofs_alloc(i64 4096)
+  %obj13188 = call ptr @ofs_alloc(i64 128)
   %field_ptr13189 = getelementptr inbounds %Node, ptr %obj13103, i32 0, i32 5
   %field13190 = load i64, ptr %field_ptr13189
   %call13191 = call ptr @interpreter__eval_expr(i64 %field13190)
@@ -28527,7 +28527,7 @@ while_cond3537:
   br i1 %cond13209, label %while_body3538, label %while_end3539
 
 while_body3538:
-  %obj13211 = call ptr @ofs_alloc(i64 4096)
+  %obj13211 = call ptr @ofs_alloc(i64 128)
   %field_ptr13212 = getelementptr inbounds %Node, ptr %obj13103, i32 0, i32 5
   %field13213 = load i64, ptr %field_ptr13212
   %call13214 = call ptr @interpreter__eval_expr(i64 %field13213)
@@ -28625,7 +28625,7 @@ while_body3556:
   br i1 %cmp13248, label %if_then3558, label %if_else3559
 
 if_then3558:
-  %obj13250 = call ptr @ofs_alloc(i64 4096)
+  %obj13250 = call ptr @ofs_alloc(i64 128)
   %field_ptr13251 = getelementptr inbounds %Node, ptr %obj13103, i32 0, i32 6
   %field13252 = load i64, ptr %field_ptr13251
   %call13253 = call ptr @interpreter__eval_expr(i64 %field13252)
@@ -28718,7 +28718,7 @@ if_end3551:
 
 if_then3573:
   call void @interpreter__push_scope()
-  %obj13285 = call ptr @ofs_alloc(i64 4096)
+  %obj13285 = call ptr @ofs_alloc(i64 128)
   %field_ptr13286 = getelementptr inbounds %Node, ptr %obj13103, i32 0, i32 5
   %field13287 = load i64, ptr %field_ptr13286
   %call13288 = call ptr @interpreter__eval_expr(i64 %field13287)
@@ -28751,7 +28751,7 @@ while_cond3579:
   br i1 %cmp13304, label %while_body3580, label %while_end3581
 
 while_body3580:
-  %obj13306 = call ptr @ofs_alloc(i64 4096)
+  %obj13306 = call ptr @ofs_alloc(i64 128)
   %field_ptr13307 = getelementptr inbounds %Value, ptr %obj13285, i32 0, i32 6
   %field13308 = load i64, ptr %field_ptr13307
   %k_val13309 = load i64, ptr %k13301
@@ -28889,7 +28889,7 @@ if_then3600:
   br i1 %cmp13361, label %if_then3603, label %if_else3604
 
 if_then3603:
-  %obj13363 = call ptr @ofs_alloc(i64 4096)
+  %obj13363 = call ptr @ofs_alloc(i64 128)
   %field_ptr13364 = getelementptr inbounds %Node, ptr %obj13103, i32 0, i32 5
   %field13365 = load i64, ptr %field_ptr13364
   %call13366 = call ptr @interpreter__eval_expr(i64 %field13365)
@@ -28902,7 +28902,7 @@ if_then3603:
   br label %if_end3605
 
 if_else3604:
-  %obj13371 = call ptr @ofs_alloc(i64 4096)
+  %obj13371 = call ptr @ofs_alloc(i64 128)
   %call13372 = call ptr @interpreter__val_void()
   %named_val13373 = load %Value, ptr %call13372
   store %Value %named_val13373, ptr %obj13371
@@ -28949,7 +28949,7 @@ while_body3607:
   %i_val13387 = load i64, ptr %i13381
   %call13388 = call i64 @node_get_extra(i64 %root_id_val13386, i64 %i_val13387)
   store i64 %call13388, ptr %child_id13385
-  %obj13390 = call ptr @ofs_alloc(i64 4096)
+  %obj13390 = call ptr @ofs_alloc(i64 128)
   %child_id_val13391 = load i64, ptr %child_id13385
   %call13392 = call ptr @node_get(i64 %child_id_val13391)
   %named_val13393 = load %Node, ptr %call13392
@@ -29006,7 +29006,7 @@ while_body3616:
   %fi_val13421 = load i64, ptr %fi13415
   %call13422 = call i64 @node_get_extra(i64 %child_id_val13420, i64 %fi_val13421)
   store i64 %call13422, ptr %f_id13419
-  %obj13424 = call ptr @ofs_alloc(i64 4096)
+  %obj13424 = call ptr @ofs_alloc(i64 128)
   %f_id_val13425 = load i64, ptr %f_id13419
   %call13426 = call ptr @node_get(i64 %f_id_val13425)
   %named_val13427 = load %Node, ptr %call13426
@@ -29019,7 +29019,7 @@ while_body3616:
   br i1 %cmp13431, label %if_then3618, label %if_else3619
 
 if_then3618:
-  %obj13433 = call ptr @ofs_alloc(i64 4096)
+  %obj13433 = call ptr @ofs_alloc(i64 128)
   %field_ptr13434 = getelementptr inbounds %Node, ptr %obj13424, i32 0, i32 5
   %field13435 = load i64, ptr %field_ptr13434
   %call13436 = call ptr @node_get(i64 %field13435)
@@ -29083,7 +29083,7 @@ while_body3625:
   %mi_val13463 = load i64, ptr %mi13457
   %call13464 = call i64 @node_get_extra(i64 %child_id_val13462, i64 %mi_val13463)
   store i64 %call13464, ptr %m_id13461
-  %obj13466 = call ptr @ofs_alloc(i64 4096)
+  %obj13466 = call ptr @ofs_alloc(i64 128)
   %m_id_val13467 = load i64, ptr %m_id13461
   %call13468 = call ptr @node_get(i64 %m_id_val13467)
   %named_val13469 = load %Node, ptr %call13468
@@ -29142,7 +29142,7 @@ while_body3631:
   %nsi_val13497 = load i64, ptr %nsi13491
   %call13498 = call i64 @node_get_extra(i64 %child_id_val13496, i64 %nsi_val13497)
   store i64 %call13498, ptr %nc_id13495
-  %obj13500 = call ptr @ofs_alloc(i64 4096)
+  %obj13500 = call ptr @ofs_alloc(i64 128)
   %nc_id_val13501 = load i64, ptr %nc_id13495
   %call13502 = call ptr @node_get(i64 %nc_id_val13501)
   %named_val13503 = load %Node, ptr %call13502
@@ -29321,7 +29321,7 @@ while_body3637:
   %i_val13580 = load i64, ptr %i13573
   %call13581 = call i64 @node_get_extra(i64 %root_id_val13579, i64 %i_val13580)
   store i64 %call13581, ptr %decl_id13578
-  %obj13583 = call ptr @ofs_alloc(i64 4096)
+  %obj13583 = call ptr @ofs_alloc(i64 128)
   %decl_id_val13584 = load i64, ptr %decl_id13578
   %call13585 = call ptr @node_get(i64 %decl_id_val13584)
   %named_val13586 = load %Node, ptr %call13585
@@ -29382,7 +29382,7 @@ while_body3646:
   %k_val13614 = load i64, ptr %k13607
   %call13615 = call i64 @node_get_extra(i64 %root_id_val13613, i64 %k_val13614)
   store i64 %call13615, ptr %top_id13612
-  %obj13617 = call ptr @ofs_alloc(i64 4096)
+  %obj13617 = call ptr @ofs_alloc(i64 128)
   %top_id_val13618 = load i64, ptr %top_id13612
   %call13619 = call ptr @node_get(i64 %top_id_val13618)
   %named_val13620 = load %Node, ptr %call13619
@@ -29426,12 +29426,12 @@ if_else3652:
   br label %if_end3653
 
 if_end3653:
-  %obj13631 = call ptr @ofs_alloc(i64 4096)
+  %obj13631 = call ptr @ofs_alloc(i64 128)
   %main_node_id_val13632 = load i64, ptr %main_node_id13603
   %call13633 = call ptr @node_get(i64 %main_node_id_val13632)
   %named_val13634 = load %Node, ptr %call13633
   store %Node %named_val13634, ptr %obj13631
-  %obj13636 = call ptr @ofs_alloc(i64 4096)
+  %obj13636 = call ptr @ofs_alloc(i64 128)
   %field_ptr13637 = getelementptr inbounds %Node, ptr %obj13631, i32 0, i32 1
   %field13638 = load ptr, ptr %field_ptr13637
   %call13639 = call ptr @interpreter__call_function(ptr %field13638, i64 0, i64 0)
@@ -30344,7 +30344,7 @@ while_cond3774:
   br i1 %cmp14003, label %while_body3775, label %while_end3776
 
 while_body3775:
-  %obj14005 = call ptr @ofs_alloc(i64 4096)
+  %obj14005 = call ptr @ofs_alloc(i64 128)
   %tokens_val14006 = load ptr, ptr %tokens13985
   %ti_val14007 = load i64, ptr %ti14000
   %arr_get14008 = call ptr @ofs_array_get(ptr %tokens_val14006, i64 %ti_val14007)
@@ -30415,7 +30415,7 @@ if_end3782:
   br i1 %cond14038, label %if_then3783, label %if_else3784
 
 if_then3783:
-  %obj14040 = call ptr @ofs_alloc(i64 4096)
+  %obj14040 = call ptr @ofs_alloc(i64 128)
   %root_id_val14041 = load i64, ptr %root_id14025
   %call14042 = call ptr @node_get(i64 %root_id_val14041)
   %named_val14043 = load %Node, ptr %call14042
@@ -30605,4 +30605,3 @@ if_else3808:
 if_end3809:
   ret i32 0
 }
-

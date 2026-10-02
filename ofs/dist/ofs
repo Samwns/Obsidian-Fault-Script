@@ -8,15 +8,35 @@ esac
 OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OFSCC="${OFSCC:-$ROOT/ofscc}"
-RUNTIME="${OFS_RUNTIME:-$ROOT/magma.o}"
+RUNTIME="${OFS_RUNTIME:-}"
+if [ -z "$RUNTIME" ]; then
+  for runtime_candidate in "$ROOT/magma.o" "$ROOT/libofs_runtime.a" "$HOME/.local/lib/ofs/magma.o" "$HOME/.local/lib/ofs/libofs_runtime.a" \
+    "/usr/local/lib/ofs/magma.o" "/usr/local/lib/ofs/libofs_runtime.a" "/usr/lib/ofs/magma.o" "/usr/lib/ofs/libofs_runtime.a"; do
+    if [ -f "$runtime_candidate" ]; then
+      RUNTIME="$runtime_candidate"
+      break
+    fi
+  done
+fi
 
-ulimit -Sv 786432
-ulimit -St 20
+# Keep bootstrap resource use bounded while allowing callers to tighten the
+# limits. OFSCC_MAX_MEM is bytes (4 GiB by default); CPU time is seconds.
+OFSCC_MAX_MEM="${OFSCC_MAX_MEM:-4294967296}"
+OFSCC_MAX_CPU_SECONDS="${OFSCC_MAX_CPU_SECONDS:-60}"
+case "$OFSCC_MAX_MEM" in
+  ''|*[!0-9]*) echo "ofs: OFSCC_MAX_MEM must be a byte count" >&2; exit 2 ;;
+esac
+case "$OFSCC_MAX_CPU_SECONDS" in
+  ''|*[!0-9]*) echo "ofs: OFSCC_MAX_CPU_SECONDS must be a whole number of seconds" >&2; exit 2 ;;
+esac
+ulimit -Sv "$((OFSCC_MAX_MEM / 1024))"
+ulimit -St "$OFSCC_MAX_CPU_SECONDS"
 current_file_limit="$(ulimit -Sf)"
 if [[ "$current_file_limit" == "unlimited" || "$current_file_limit" -gt 524288 ]]; then
   ulimit -Sf 524288
 fi
 ulimit -Sc 0
+export OFS_RUNTIME="$RUNTIME"
 
 if [ -z "${OFS_STDLIB_PATH:-}" ] && [ -n "${OFS_STDLIB:-}" ]; then
   export OFS_STDLIB_PATH="$OFS_STDLIB"

@@ -87,6 +87,54 @@ namespace llvmgen {
         return llvm_type(type_str)
     }
 
+    // Monoliths live behind pointers in generated code.  They used to receive a
+    // fixed 4096-byte allocation, which made normal compiler temporaries consume
+    // several GiB during a self-hosted build.  Keep the LLVM layout calculation
+    // here so every allocation is only as large as its actual fields require.
+    vein type_storage_size(type_str: obsidian) -> stone {
+        if (ofs_str_char_at(type_str, 0) == 42) { return 8 }
+        if (is_named_type(type_str)) { return 8 }
+        if (ofs_str_eq(type_str, "u8") || ofs_str_eq(type_str, "i8")) { return 1 }
+        if (ofs_str_eq(type_str, "u16") || ofs_str_eq(type_str, "i16")) { return 2 }
+        if (ofs_str_eq(type_str, "u32") || ofs_str_eq(type_str, "i32") ||
+            ofs_str_eq(type_str, "bool") || ofs_str_eq(type_str, "bool1") ||
+            ofs_str_eq(type_str, "f32")) { return 4 }
+        return 8
+    }
+
+    vein type_storage_align(type_str: obsidian) -> stone {
+        forge size = type_storage_size(type_str)
+        if (size > 8) { return 8 }
+        return size
+    }
+
+    vein align_storage(offset: stone, align: stone) -> stone {
+        forge remainder = offset % align
+        if (remainder == 0) { return offset }
+        return offset + align - remainder
+    }
+
+    vein monolith_alloc_size(owner: obsidian) -> stone {
+        forge offset = 0
+        forge max_align = 1
+        forge i = 0
+        while (i < ofs_array_len(_field_names)) {
+            forge field_owner: obsidian = ofs_array_get(_field_owners, i)
+            if (ofs_str_eq(field_owner, owner)) {
+                forge field_t: obsidian = ofs_array_get(_field_types, i)
+                forge field_align = type_storage_align(field_t)
+                offset = align_storage(offset, field_align)
+                offset = offset + type_storage_size(field_t)
+                if (field_align > max_align) { max_align = field_align }
+            }
+            i++
+        }
+        offset = align_storage(offset, max_align)
+        // LLVM represents an empty struct with a non-zero addressable object.
+        if (offset < 1) { return 1 }
+        return offset
+    }
+
     vein int_bitwidth(t: obsidian) -> stone {
         if (ofs_str_eq(t, "u8") || ofs_str_eq(t, "i8")) { return 8 }
         if (ofs_str_eq(t, "u16") || ofs_str_eq(t, "i16")) { return 16 }
@@ -726,7 +774,7 @@ namespace llvmgen {
                 cg_emit("  store ptr " + arr + ", ptr @" + gname)
             } else if (is_named_type(gt)) {
                 forge obj = next_tmp("gobj")
-                cg_emit("  " + obj + " = call ptr @ofs_alloc(i64 4096)")
+                cg_emit("  " + obj + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(monolith_alloc_size(gt)) + ")")
                 cg_emit("  store ptr " + obj + ", ptr @" + gname)
             }
             gi++
@@ -1596,7 +1644,7 @@ namespace llvmgen {
             forge p = next_tmp(n.val)
             if (is_named_type(t)) {
                 forge mem = next_tmp("obj")
-                cg_emit("  " + mem + " = call ptr @ofs_alloc(i64 4096)")
+                cg_emit("  " + mem + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(monolith_alloc_size(t)) + ")")
                 p = mem
             } else {
                 cg_emit("  " + p + " = alloca " + storage_type(t) + ", align 8")

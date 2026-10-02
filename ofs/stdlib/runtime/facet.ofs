@@ -65,6 +65,10 @@ vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian {
         forge sp = s as stone + start
         memcpy(res as *stone, sp as *stone, len)
     }
+    // ofs_alloc does NOT zero memory; ensure NUL terminator otherwise
+    // strlen/ofs_str_len see trailing garbage (caused attach-boundary bytes).
+    forge term: *u8 = (res as stone + len) as *u8
+    fracture { *term = 0 as u8 }
     return res
 }
 

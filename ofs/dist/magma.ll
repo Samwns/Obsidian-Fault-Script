@@ -517,8 +517,14 @@ if_else52:
   br label %if_end53
 
 if_end53:
-  %res_val159 = load ptr, ptr %res143
-  ret ptr %res_val159
+  ; OFS fix: ofs_str_substr must NUL-terminate res[len] because ofs_alloc
+  ; does not zero memory (garbage tail was leaking past len into strlen).
+  %len_val160 = load i64, ptr %len.addr
+  %res_val161 = load ptr, ptr %res143
+  %term_ptr162 = getelementptr inbounds i8, ptr %res_val161, i64 %len_val160
+  store i8 0, ptr %term_ptr162
+  %res_val163 = load ptr, ptr %res143
+  ret ptr %res_val163
 }
 
 define i32 @ofs_str_contains(ptr %haystack, ptr %needle) {

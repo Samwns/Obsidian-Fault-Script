@@ -17,6 +17,7 @@ attach {F:reporter.ofs}
 
 extern vein getenv(name: obsidian) -> obsidian
 extern vein clock() -> stone
+extern vein memcpy(dst: *u8, src: *u8, count: stone) -> *u8
 
 forge _expanded_paths: Array<obsidian> = []
 
@@ -35,14 +36,11 @@ vein join_parts(parts: Array<obsidian>) -> obsidian {
     while (i < ofs_array_len(parts)) {
         forge part: obsidian = ofs_array_get(parts, i)
         forge part_len = ofs_str_len(part)
-        forge j = 0
-        while (j < part_len) {
-            forge src: *u8 = (part as stone + j) as *u8
-            forge dst: *u8 = (result as stone + offset + j) as *u8
-            forge byte: u8 = 0 as u8
-            fracture { byte = *src }
-            fracture { *dst = byte }
-            j++
+        if (part_len > 0) {
+            // A libc bulk copy avoids per-character local declarations. The
+            // LLVM backend currently lowers such declarations to `alloca`,
+            // which otherwise grows the stack for the entire source file.
+            memcpy((result as stone + offset) as *u8, part as *u8, part_len)
         }
         offset = offset + part_len
         i++
@@ -133,7 +131,9 @@ vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
                 forge child_src = read_file(child_path)
                 ofs_array_push(out_parts, expand_attaches(child_path, child_src))
             } else {
-                ofs_array_push(out_parts, line + "\n")
+                if (i < len || ofs_str_len(line) > 0) {
+                    ofs_array_push(out_parts, line + "\n")
+                }
             }
             start = i + 1
         }
@@ -276,6 +276,10 @@ core main() {
     forge src: obsidian = ""
     src = read_file(input_file)
     src = expand_attaches(input_file, src)
+    if (ofs_str_eq(getenv("OFS_DUMP_EXPANDED"), "1")) {
+        echo(src)
+        return
+    }
     forge t1 = clock()
     if (!is_run) {
         forge ms: crystal = (t1 - t0) as crystal
