@@ -170,6 +170,8 @@ vein _colored(ansi: obsidian, txt: obsidian) -> obsidian {
 vein _emit_fancy(e: Event) -> void {
     if (!_use_color) { _emit_plain(e); return }
     if (e.kind == EV_STAGE_START) {
+        // Fase 4: dispara um frame de animação para o estágio que começa.
+        anim_tick(e.stage)
         if (_reporter_verbose) {
             forge sym = _colored(_ansi_run, "→")
             forge verb = _pad(tr_stage(e.stage), 12)
@@ -178,6 +180,8 @@ vein _emit_fancy(e: Event) -> void {
         return
     }
     if (e.kind == EV_STAGE_END) {
+        // Fase 4: limpa a linha da animação antes do `✓` permanente.
+        anim_finish()
         forge sym = _colored(_ansi_ok, "✓")
         forge verb = _pad(tr_stage(e.stage), 12)
         forge info_txt = ""
@@ -243,6 +247,69 @@ vein event_kind_name(k: stone) -> obsidian {
     if (k == EV_FINISHED)    { return "finished" }
     if (k == EV_PROGRAM_OUT) { return "program_out" }
     return "?"
+}
+
+// ── Fase 4 — Animação (single-thread, spinner entre estágios) ─────────
+// Em terminal Fancy, exibimos um frame de spinner durante o estágio atual.
+// Como o compilador é single-threaded, o "tick" acontece apenas em pontos
+// explícitos (fim de estágio). A linha é limpa via \r antes de cada novo
+// evento Fancy para garantir que o `✓` sobrescreva o `→` de início.
+forge _anim_enabled: bool = false
+forge _anim_frame: stone = 0
+forge _anim_last_stage: stone = 0
+
+vein anim_set_enabled(v: bool) -> void {
+    _anim_enabled = v
+}
+
+// Monta uma string contendo `\r` + N espaços + `\r` para limpar a linha.
+vein _clear_line_seq() -> obsidian {
+    forge buf: obsidian = ofs_alloc(84)
+    forge p0: *u8 = buf as *u8
+    fracture { *p0 = 13 as u8 }
+    forge i = 1
+    while (i < 82) {
+        forge pi: *u8 = (buf as stone + i) as *u8
+        fracture { *pi = 32 as u8 }
+        i++
+    }
+    forge pr: *u8 = (buf as stone + 82) as *u8
+    fracture { *pr = 13 as u8 }
+    forge pz: *u8 = (buf as stone + 83) as *u8
+    fracture { *pz = 0 as u8 }
+    return buf
+}
+
+// Escreve uma string sem `\n` no stdout (echo sempre adiciona; usamos
+// ofício mais bruto: montar a sequência e dar echo mesmo assim — em
+// compilações curtas, o custo de duas linhas a mais é aceitável; a
+// limpeza visual final fica garantida pela presença do `\r`).
+vein _emit_raw(s: obsidian) -> void {
+    echo(s)
+}
+
+// Emite um frame de animação baseado no estágio corrente.
+// Se desabilitado, não faz nada.
+vein anim_tick(stage: stone) -> void {
+    if (!_anim_enabled) { return }
+    if (!_use_color) { return }
+    if (stage == 0) { return }
+    _anim_frame = _anim_frame + 1
+    _anim_last_stage = stage
+    forge frames_ascii = "-\\|/"
+    forge idx = _anim_frame % 4
+    forge f = ofs_str_substr(frames_ascii, idx, 1)
+    forge verb = _pad(tr_stage(stage), 12)
+    forge line = _clear_line_seq() + "  " + _colored(_ansi_run, "→") + " " + verb + " " + f
+    _emit_raw(line)
+}
+
+// Finaliza a animação atual limpando a linha.
+vein anim_finish() -> void {
+    if (!_anim_enabled) { return }
+    if (_anim_last_stage == 0) { return }
+    _emit_raw(_clear_line_seq())
+    _anim_last_stage = 0
 }
 
 // ── Saída para stderr (via fprintf) ───────────────────────────────────

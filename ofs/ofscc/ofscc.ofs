@@ -251,6 +251,9 @@ core main() {
     // Configura reporter: locale + cor + tipo (Fase 3 Fancy)
     reporter_detect_locale()
     reporter_detect_color()
+    // Fase 4: animação ativa por padrão em Fancy; OFS_ANIM=0 desliga.
+    if (ofs_str_eq(getenv("OFS_ANIM"), "0")) { anim_set_enabled(false) }
+    else                                     { anim_set_enabled(true) }
     if (ofs_str_eq(msg_fmt, "json"))       { reporter_set_kind(REPORTER_JSON) }
     else if (ofs_str_eq(msg_fmt, "fancy")) { reporter_set_kind(REPORTER_FANCY) }
     else if (ofs_str_eq(msg_fmt, "plain")) { reporter_set_kind(REPORTER_PLAIN) }
