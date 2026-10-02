@@ -271,6 +271,12 @@ core main() {
     }
 
     if (ofs_str_eq(input_file, "twin") || ofs_str_eq(input_file, "polish") || ofs_str_eq(input_file, "probe")) {
+        // Fase 5: para twin, emitir forma NDJSON correta (twin_start + twin_result com match=false + razão).
+        // Execução nativa real fica para quando o runtime expuser system()+spawn seguro.
+        if (ofs_str_eq(input_file, "twin") && _reporter_kind == REPORTER_JSON) {
+            _emit_line("{\"kind\":\"twin_start\",\"target\":\"\"}")
+            _emit_line("{\"kind\":\"twin_result\",\"target\":\"\",\"match\":false,\"reason\":\"twin_not_implemented\"}")
+        }
         event_diagnostic("", LEVEL_WARN, 0, 0, "stub_command", input_file, "")
         reporter_flush()
         return

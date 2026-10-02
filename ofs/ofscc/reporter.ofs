@@ -320,8 +320,18 @@ vein _emit_line(s: obsidian) -> void {
     echo(s)
 }
 
+// Fase 5 — acumula o tempo total do pipeline para `duration_ms_total`.
+forge _json_total_ms: crystal = 0.0
+forge _json_locale_emitted: bool = false
+
 vein _emit_json(e: Event) -> void {
+    if (e.kind == EV_STAGE_END) { _json_total_ms = _json_total_ms + e.ms }
     forge line = "{\"kind\":\"" + event_kind_name(e.kind) + "\""
+    // Fase 5: incluir `locale` no primeiro stage_start para consumer saber o idioma.
+    if (e.kind == EV_STAGE_START && !_json_locale_emitted) {
+        line = line + ",\"locale\":\"" + _locale + "\""
+        _json_locale_emitted = true
+    }
     if (e.kind == EV_STAGE_START || e.kind == EV_STAGE_END) {
         line = line + ",\"stage\":\"" + stage_name(e.stage) + "\""
     }
@@ -330,13 +340,27 @@ vein _emit_json(e: Event) -> void {
         line = line + ",\"code\":\"" + e.code + "\""
         line = line + ",\"line\":" + ofs_stone_to_obsidian(e.line)
         line = line + ",\"col\":" + ofs_stone_to_obsidian(e.col)
-        if (ofs_str_len(e.msg_key) > 0) { line = line + ",\"msg\":\"" + e.msg_key + "\"" }
-        if (ofs_str_len(e.arg1) > 0)    { line = line + ",\"arg1\":\"" + e.arg1 + "\"" }
-        if (ofs_str_len(e.arg2) > 0)    { line = line + ",\"arg2\":\"" + e.arg2 + "\"" }
+        // `msg_key` permanece canônico; consumer localiza via `msg_key`.
+        if (ofs_str_len(e.msg_key) > 0) { line = line + ",\"msg_key\":\"" + e.msg_key + "\"" }
+        if (ofs_str_len(e.msg_key) > 0) { line = line + ",\"msg\":\"" + tr_msg(e.msg_key) + "\"" }
+        // args agora é array, compatível com spec Fase 5.
+        forge args_part = ",\"args\":["
+        forge has_args = false
+        if (ofs_str_len(e.arg1) > 0) { args_part = args_part + "\"" + e.arg1 + "\""; has_args = true }
+        if (ofs_str_len(e.arg2) > 0) {
+            if (has_args) { args_part = args_part + "," }
+            args_part = args_part + "\"" + e.arg2 + "\""
+            has_args = true
+        }
+        args_part = args_part + "]"
+        if (has_args) { line = line + args_part }
     }
     if (ofs_str_len(e.target) > 0) { line = line + ",\"target\":\"" + e.target + "\"" }
     if (ofs_str_len(e.info) > 0)   { line = line + ",\"info\":\"" + e.info + "\"" }
     if (e.ms != 0.0)               { line = line + ",\"ms\":" + ofs_crystal_to_obsidian(e.ms) }
+    if (e.kind == EV_FINISHED) {
+        line = line + ",\"duration_ms_total\":" + ofs_crystal_to_obsidian(_json_total_ms)
+    }
     line = line + "}"
     _emit_line(line)
 }
