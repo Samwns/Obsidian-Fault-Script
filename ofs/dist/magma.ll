@@ -52,6 +52,7 @@ declare i64 @strlen(ptr)
 declare i64 @strcmp(ptr, ptr)
 declare ptr @strstr(ptr, ptr)
 declare i64 @sprintf(ptr, ptr, i64)
+declare i64 @snprintf(ptr, i64, ptr, ...)
 declare i64 @strtoll(ptr, ptr, i64)
 declare double @strtod(ptr, ptr)
 declare i64 @puts(ptr)
@@ -731,7 +732,7 @@ entry:
   store ptr %call244, ptr %buf243
   %buf_val245 = load ptr, ptr %buf243
   %v_val246 = load i64, ptr %v.addr
-  %call247 = call i64 @sprintf(ptr %buf_val245, ptr @str.1, i64 %v_val246)
+  %call247 = call i64 (ptr, i64, ptr, ...) @snprintf(ptr %buf_val245, i64 32, ptr @str.1, i64 %v_val246)
   %buf_val248 = load ptr, ptr %buf243
   ret ptr %buf_val248
 }
@@ -745,7 +746,7 @@ entry:
   store ptr %call250, ptr %buf249
   %buf_val251 = load ptr, ptr %buf249
   %v_val252 = load double, ptr %v.addr
-  %call253 = call i64 @sprintf(ptr %buf_val251, ptr @str.2, double %v_val252)
+  %call253 = call i64 (ptr, i64, ptr, ...) @snprintf(ptr %buf_val251, i64 64, ptr @str.2, double %v_val252)
   %buf_val254 = load ptr, ptr %buf249
   ret ptr %buf_val254
 }
