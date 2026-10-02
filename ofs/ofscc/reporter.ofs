@@ -1,0 +1,136 @@
+// OFS Compiler — Reporter
+// Consome eventos de events.ofs e os escreve em stderr (Plain) ou stdout (Json).
+// Fancy fica para fase posterior.
+
+forge REPORTER_PLAIN: stone = 1
+forge REPORTER_FANCY: stone = 2
+forge REPORTER_JSON:  stone = 3
+
+forge _reporter_kind: stone = REPORTER_PLAIN
+forge _reporter_verbose: bool = false
+
+vein reporter_set_kind(k: stone) -> void { _reporter_kind = k }
+vein reporter_set_verbose(v: bool) -> void { _reporter_verbose = v }
+
+// Plain: uma linha por evento, sem ANSI, sem \r.
+// Json: um objeto por linha (NDJSON).
+// Fancy: igual a Plain por ora (placeholder).
+
+vein stage_name(s: stone) -> obsidian {
+    if (s == STAGE_ATTACH) { return "attach" }
+    if (s == STAGE_READ)   { return "read" }
+    if (s == STAGE_LEX)    { return "lex" }
+    if (s == STAGE_PARSE)  { return "parse" }
+    if (s == STAGE_CHECK)  { return "check" }
+    if (s == STAGE_FORGE)  { return "forge" }
+    if (s == STAGE_LINK)   { return "link" }
+    if (s == STAGE_DONE)   { return "done" }
+    if (s == STAGE_RUN)    { return "run" }
+    return "?"
+}
+
+vein level_name(l: stone) -> obsidian {
+    if (l == LEVEL_NOTE)  { return "note" }
+    if (l == LEVEL_WARN)  { return "warn" }
+    if (l == LEVEL_FAULT) { return "fault" }
+    return "?"
+}
+
+vein event_kind_name(k: stone) -> obsidian {
+    if (k == EV_STAGE_START) { return "stage_start" }
+    if (k == EV_STAGE_END)   { return "stage_end" }
+    if (k == EV_DIAGNOSTIC)  { return "diagnostic" }
+    if (k == EV_FINISHED)    { return "finished" }
+    if (k == EV_PROGRAM_OUT) { return "program_out" }
+    return "?"
+}
+
+// ── Saída para stderr (via fprintf) ───────────────────────────────────
+// Temporário: usamos echo (stdout) até expormos fprintf(stderr) no runtime.
+// O contrato do plano é "status → stderr"; por ora logamos e separamos no
+// wrapper ofs depois que o runtime expuser stderr.
+vein _emit_line(s: obsidian) -> void {
+    echo(s)
+}
+
+vein _emit_json(e: Event) -> void {
+    forge line = "{\"kind\":\"" + event_kind_name(e.kind) + "\""
+    if (e.kind == EV_STAGE_START || e.kind == EV_STAGE_END) {
+        line = line + ",\"stage\":\"" + stage_name(e.stage) + "\""
+    }
+    if (e.kind == EV_DIAGNOSTIC) {
+        line = line + ",\"level\":\"" + level_name(e.level) + "\""
+        line = line + ",\"code\":\"" + e.code + "\""
+        line = line + ",\"line\":" + ofs_stone_to_obsidian(e.line)
+        line = line + ",\"col\":" + ofs_stone_to_obsidian(e.col)
+        if (ofs_str_len(e.msg_key) > 0) { line = line + ",\"msg\":\"" + e.msg_key + "\"" }
+        if (ofs_str_len(e.arg1) > 0)    { line = line + ",\"arg1\":\"" + e.arg1 + "\"" }
+        if (ofs_str_len(e.arg2) > 0)    { line = line + ",\"arg2\":\"" + e.arg2 + "\"" }
+    }
+    if (ofs_str_len(e.target) > 0) { line = line + ",\"target\":\"" + e.target + "\"" }
+    if (ofs_str_len(e.info) > 0)   { line = line + ",\"info\":\"" + e.info + "\"" }
+    if (e.ms != 0.0)               { line = line + ",\"ms\":" + ofs_crystal_to_obsidian(e.ms) }
+    line = line + "}"
+    _emit_line(line)
+}
+
+vein _emit_plain(e: Event) -> void {
+    if (e.kind == EV_STAGE_START) {
+        if (_reporter_verbose) {
+            _emit_line("[" + stage_name(e.stage) + "] start " + e.target)
+        }
+        return
+    }
+    if (e.kind == EV_STAGE_END) {
+        forge ms_txt = ofs_crystal_to_obsidian(e.ms)
+        forge info_txt = ""
+        if (ofs_str_len(e.info) > 0) { info_txt = " (" + e.info + ")" }
+        _emit_line("  " + stage_name(e.stage) + " ok" + info_txt + " · " + ms_txt + " ms")
+        return
+    }
+    if (e.kind == EV_DIAGNOSTIC) {
+        forge loc_txt = ""
+        if (e.line > 0) {
+            loc_txt = ":" + ofs_stone_to_obsidian(e.line) + ":" + ofs_stone_to_obsidian(e.col)
+        }
+        forge msg = e.msg_key
+        if (ofs_str_len(e.arg1) > 0) { msg = msg + " " + e.arg1 }
+        if (ofs_str_len(e.arg2) > 0) { msg = msg + " " + e.arg2 }
+        _emit_line(level_name(e.level) + "[" + e.code + "]" + loc_txt + " " + msg)
+        return
+    }
+    if (e.kind == EV_FINISHED) {
+        forge ms_txt = ofs_crystal_to_obsidian(e.ms)
+        forge size_txt = e.info
+        _emit_line("done " + e.target + " · " + size_txt + " B · " + ms_txt + " ms")
+        return
+    }
+    if (e.kind == EV_PROGRAM_OUT) {
+        _emit_line(e.info)
+        return
+    }
+}
+
+vein reporter_flush() -> void {
+    forge i = 0
+    forge n = event_count()
+    while (i < n) {
+        forge e: Event = event_get(i)
+        if (_reporter_kind == REPORTER_JSON) {
+            _emit_json(e)
+        } else {
+            _emit_plain(e)
+        }
+        i++
+    }
+    event_reset()
+}
+
+// Conveniente para etapas curtas: emite start+end após execução inline
+vein reporter_emit_now(e: Event) -> void {
+    if (_reporter_kind == REPORTER_JSON) {
+        _emit_json(e)
+    } else {
+        _emit_plain(e)
+    }
+}

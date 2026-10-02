@@ -1,0 +1,128 @@
+// OFS Compiler — Eventos do pipeline de compilação
+// Eventos são sem idioma; o Reporter traduz IDs para texto.
+
+// ── Estágios do pipeline ────────────────────────────────────────────────
+forge STAGE_ATTACH:  stone = 1
+forge STAGE_READ:    stone = 2
+forge STAGE_LEX:     stone = 3
+forge STAGE_PARSE:   stone = 4
+forge STAGE_CHECK:   stone = 5
+forge STAGE_FORGE:   stone = 6   // codegen (LLVM IR)
+forge STAGE_LINK:    stone = 7
+forge STAGE_DONE:    stone = 8
+forge STAGE_RUN:     stone = 9   // interpretador
+
+// ── Níveis de diagnóstico ───────────────────────────────────────────────
+forge LEVEL_NOTE:  stone = 0
+forge LEVEL_WARN:  stone = 1
+forge LEVEL_FAULT: stone = 2
+
+// ── Tipos de evento ─────────────────────────────────────────────────────
+forge EV_STAGE_START: stone = 1
+forge EV_STAGE_END:   stone = 2
+forge EV_DIAGNOSTIC:  stone = 3
+forge EV_FINISHED:    stone = 4
+forge EV_PROGRAM_OUT: stone = 5   // saída do programa em modo run
+
+// ── Estrutura de evento (registro plano) ────────────────────────────────
+monolith Event {
+    kind: stone,
+    stage: stone,
+    level: stone,
+    code: obsidian,       // ex: "E0012" ou ""
+    target: obsidian,     // arquivo alvo (stage start) ou nome binário (finished)
+    info: obsidian,       // detalhes extras (size, lines, ms textual)
+    ms: crystal,          // duração em ms (stage end / finished)
+    line: stone,
+    col: stone,
+    msg_key: obsidian,    // chave i18n (vazio = sem tradução)
+    arg1: obsidian,
+    arg2: obsidian
+}
+
+// Fila global de eventos (raramente mais que algumas dezenas)
+forge _events: Array<Event> = []
+
+vein event_reset() -> void {
+    _events = []
+}
+
+vein event_push(e: Event) -> void {
+    ofs_array_push(_events, e)
+}
+
+vein event_stage_start(stage: stone, target: obsidian) -> void {
+    forge e: Event
+    e.kind = EV_STAGE_START
+    e.stage = stage
+    e.level = LEVEL_NOTE
+    e.code = ""
+    e.target = target
+    e.info = ""
+    e.ms = 0.0
+    e.line = 0
+    e.col = 0
+    e.msg_key = ""
+    e.arg1 = ""
+    e.arg2 = ""
+    event_push(e)
+}
+
+vein event_stage_end(stage: stone, ms: crystal, info: obsidian) -> void {
+    forge e: Event
+    e.kind = EV_STAGE_END
+    e.stage = stage
+    e.level = LEVEL_NOTE
+    e.code = ""
+    e.target = ""
+    e.info = info
+    e.ms = ms
+    e.line = 0
+    e.col = 0
+    e.msg_key = ""
+    e.arg1 = ""
+    e.arg2 = ""
+    event_push(e)
+}
+
+vein event_diagnostic(code: obsidian, level: stone, line: stone, col: stone, msg_key: obsidian, arg1: obsidian, arg2: obsidian) -> void {
+    forge e: Event
+    e.kind = EV_DIAGNOSTIC
+    e.stage = 0
+    e.level = level
+    e.code = code
+    e.target = ""
+    e.info = ""
+    e.ms = 0.0
+    e.line = line
+    e.col = col
+    e.msg_key = msg_key
+    e.arg1 = arg1
+    e.arg2 = arg2
+    event_push(e)
+}
+
+vein event_finished(target: obsidian, size_bytes: stone, ms: crystal) -> void {
+    forge e: Event
+    e.kind = EV_FINISHED
+    e.stage = STAGE_DONE
+    e.level = LEVEL_NOTE
+    e.code = ""
+    e.target = target
+    e.info = ofs_stone_to_obsidian(size_bytes)
+    e.ms = ms
+    e.line = 0
+    e.col = 0
+    e.msg_key = ""
+    e.arg1 = ""
+    e.arg2 = ""
+    event_push(e)
+}
+
+vein event_count() -> stone {
+    return ofs_array_len(_events)
+}
+
+vein event_get(i: stone) -> Event {
+    return ofs_array_get(_events, i)
+}

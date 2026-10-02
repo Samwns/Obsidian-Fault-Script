@@ -12,8 +12,11 @@ attach {F:typeck.ofs}
 attach {F:codegen.ofs}
 attach {F:llvmgen.ofs}
 attach {F:interpreter.ofs}
+attach {F:events.ofs}
+attach {F:reporter.ofs}
 
 extern vein getenv(name: obsidian) -> obsidian
+extern vein clock() -> stone
 
 forge _expanded_paths: Array<obsidian> = []
 
@@ -242,10 +245,17 @@ core main() {
     }
 
     forge is_run = ofs_str_eq(compile_mode, "run")
-    if (!is_run) {
-        echo("ofscc — OFS self-hosted compiler v0.1")
-        echo("")
+    forge verbose = ofs_str_eq(getenv("OFS_VERBOSE"), "1")
+    forge msg_fmt = getenv("OFS_PROGRESS")
+
+    // Configura reporter
+    if (ofs_str_eq(msg_fmt, "json")) {
+        reporter_set_kind(REPORTER_JSON)
+    } else {
+        reporter_set_kind(REPORTER_PLAIN)
     }
+    reporter_set_verbose(verbose)
+    event_reset()
 
     if (ofs_str_eq(input_file, "") || ofs_str_eq(input_file, "--help")) {
         usage()
@@ -253,22 +263,35 @@ core main() {
     }
 
     if (ofs_str_eq(input_file, "twin") || ofs_str_eq(input_file, "polish") || ofs_str_eq(input_file, "probe")) {
-        echo("[stub] command '" + input_file + "' is reserved for future CLI work")
+        event_diagnostic("", LEVEL_WARN, 0, 0, "stub_command", input_file, "")
+        reporter_flush()
         return
     }
 
     // Phase 1: Read source
-    if (!is_run) { echo("[1/6] Reading source...") }
+    forge t_total0: crystal = 0.0
+    if (!is_run) { event_stage_start(STAGE_READ, input_file) }
+    forge t0 = clock()
     forge src: obsidian = ""
     src = read_file(input_file)
     src = expand_attaches(input_file, src)
-    if (!is_run) { echo("  OK — " + ofs_stone_to_obsidian(ofs_str_len(src)) + " bytes") }
+    forge t1 = clock()
+    if (!is_run) {
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_READ, ms / 1000.0, ofs_stone_to_obsidian(ofs_str_len(src)))
+    }
+    t_total0 = (t1 - t0) as crystal
     
     // Phase 2: Lexical analysis
-    if (!is_run) { echo("[2/6] Lexical analysis...") }
+    if (!is_run) { event_stage_start(STAGE_LEX, "") }
+    t0 = clock()
     forge tokens: Array<Token> = lexer.lex(src)
     forge token_count = ofs_array_len(tokens)
-    if (!is_run) { echo("  OK — " + ofs_stone_to_obsidian(token_count) + " tokens") }
+    t1 = clock()
+    if (!is_run) {
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_LEX, ms / 1000.0, ofs_stone_to_obsidian(token_count))
+    }
 
     if (print_tokens) {
         forge ti = 0
@@ -281,10 +304,15 @@ core main() {
     }
     
     // Phase 3: Parsing
-    if (!is_run) { echo("[3/6] Parsing...") }
+    if (!is_run) { event_stage_start(STAGE_PARSE, "") }
+    t0 = clock()
     forge root_id = parser.parse(tokens)
     forge node_count = node_pool_len()
-    if (!is_run) { echo("  OK — " + ofs_stone_to_obsidian(node_count) + " AST nodes") }
+    t1 = clock()
+    if (!is_run) {
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_PARSE, ms / 1000.0, ofs_stone_to_obsidian(node_count))
+    }
 
     if (print_ast) {
         forge root_node: Node = node_get(root_id)
@@ -293,25 +321,36 @@ core main() {
     }
     
     // Phase 4: Type checking
-    if (!is_run) { echo("[4/6] Type checking...") }
+    if (!is_run) { event_stage_start(STAGE_CHECK, "") }
+    t0 = clock()
     typeck.check(root_id)
-    if (typeck.has_errors()) { exit(1) }
-    if (!is_run) { echo("  OK") }
+    t1 = clock()
+    if (!is_run) {
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_CHECK, ms / 1000.0, "")
+    }
+    if (typeck.has_errors()) {
+        reporter_flush()
+        exit(1)
+    }
 
     if (check_only) {
-        echo("")
-        echo("CHECK OK: semantic validation complete")
+        event_finished(input_file, 0, 0.0)
+        reporter_flush()
         return
     }
 
     if (ofs_str_eq(compile_mode, "run")) {
+        // Em modo run: apenas eventos silenciosos; stdout pertence ao programa
+        reporter_flush()
         forge exit_code = interpreter.run(root_id)
         exit(exit_code)
         return
     }
     
     // Phase 5: Code generation
-    echo("[5/6] Code generation...")
+    event_stage_start(STAGE_FORGE, "")
+    t0 = clock()
     cg_open(c_output)
     if (ofs_str_eq(compile_mode, "c")) {
         codegen.generate(root_id)
@@ -319,13 +358,20 @@ core main() {
         llvmgen.generate(root_id)
     }
     cg_close()
-    echo("  OK — " + c_output + " generated")
+    t1 = clock()
+    {
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_FORGE, ms / 1000.0, "1 module")
+    }
 
     if (ofs_str_eq(compile_mode, "ir")) {
+        reporter_flush()
         return
     }
     
     // Phase 6: Native link from LLVM IR. The C backend is kept only behind OFSCC_MODE=c.
+    event_stage_start(STAGE_LINK, "")
+    t0 = clock()
     forge obj_file = c_output + ".o"
     forge compile_cmd = ""
     if (ofs_str_eq(compile_mode, "c")) {
@@ -334,15 +380,16 @@ core main() {
         compile_cmd = "llc -filetype=obj " + c_output + " -o " + obj_file + " && (ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib64/crt1.o /usr/lib64/crti.o " + obj_file + " -lc -lm /usr/lib64/crtn.o -o " + output_file + " 2>&1 || ld -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o " + obj_file + " -lc -lm /usr/lib/x86_64-linux-gnu/crtn.o -o " + output_file + " 2>&1)"
     }
     forge compile_result = system(compile_cmd)
+    t1 = clock()
     
     if (compile_result == 0) {
-        echo("  OK")
-        echo("")
-        echo("SUCCESS: " + output_file + " ready")
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_LINK, ms / 1000.0, "")
+        event_finished(output_file, 0, ms / 1000.0)
+        reporter_flush()
     } else {
-        echo("  FAILED — check " + c_output)
-        echo("")
-        echo("COMPILATION ERROR: native linker returned " + ofs_stone_to_obsidian(compile_result))
+        event_diagnostic("", LEVEL_FAULT, 0, 0, "link_failed", c_output, ofs_stone_to_obsidian(compile_result))
+        reporter_flush()
         exit(1)
     }
 }
