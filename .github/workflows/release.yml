@@ -68,11 +68,11 @@ jobs:
         run: |
           mkdir -p selfhost
           cp ofs/dist/ofscc.ll selfhost/ofscc.ll
-          clang -O2 -ffunction-sections -fdata-sections -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
-          ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
           LLVM_IR_FLAGS=()
           clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
-          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -O2 selfhost/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
+          cp ofs/dist/magma.ll selfhost/magma.ll
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -c selfhost/magma.ll -o selfhost/magma.o
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -Wl,--allow-multiple-definition -O2 selfhost/ofscc.ll selfhost/magma.o -lm -o selfhost/ofscc
           chmod +x selfhost/ofscc
           ./selfhost/ofscc --help
           OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check ./selfhost/ofscc
@@ -82,22 +82,22 @@ jobs:
           TAG="${{ needs.version.outputs.tag }}"
           VERSION="${TAG#v}"
           chmod +x src/packaging/linux/build-native-packages.sh
-          src/packaging/linux/build-native-packages.sh "$VERSION" "$TAG" selfhost/ofscc selfhost/libofs_runtime.a native-installers
+          src/packaging/linux/build-native-packages.sh "$VERSION" "$TAG" selfhost/ofscc selfhost/magma.o native-installers
 
           mkdir -p deb-test
           dpkg-deb -x "native-installers/ofs-debian-ubuntu-x64-installer-${TAG}.deb" deb-test
           deb-test/usr/bin/ofs version | grep -F "ofs ${VERSION} - Obsidian Fault Script"
-          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs check ofs/examples/webserver_demo.ofs
+          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/magma.o" deb-test/usr/bin/ofs check ofs/examples/webserver_demo.ofs
           (cd ofs/examples && "$GITHUB_WORKSPACE/deb-test/usr/bin/ofs" check bedrock_gateway.ofs)
-          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o deb-test/stdlib-smoke
+          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/magma.o" deb-test/usr/bin/ofs build ofs/tests/selfhost_stdlib_smoke.ofs -o deb-test/stdlib-smoke
           deb-test/stdlib-smoke
-          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build ofs/tests/ui_stdlib_smoke.ofs -o deb-test/ui-smoke
+          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/magma.o" deb-test/usr/bin/ofs build ofs/tests/ui_stdlib_smoke.ofs -o deb-test/ui-smoke
           deb-test/ui-smoke
-          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build ofs/tests/window_runtime_smoke.ofs -o deb-test/window-smoke
+          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/magma.o" deb-test/usr/bin/ofs build ofs/tests/window_runtime_smoke.ofs -o deb-test/window-smoke
           DISPLAY= deb-test/window-smoke
 
           echo "Building OFS native wizard installer..."
-          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/libofs_runtime.a" deb-test/usr/bin/ofs build src/packaging/installer_wizard_linux.ofs -o "native-installers/ofs-installer-wizard-linux-${TAG}"
+          OFS_RUNTIME="$PWD/deb-test/usr/lib/ofs/magma.o" deb-test/usr/bin/ofs build src/packaging/installer_wizard_linux.ofs -o "native-installers/ofs-installer-wizard-linux-${TAG}"
           chmod +x "native-installers/ofs-installer-wizard-linux-${TAG}"
           cp src/packaging/installer_wizard_linux.oll "native-installers/"
 
@@ -124,11 +124,11 @@ jobs:
         run: |
           mkdir -p selfhost
           cp ofs/dist/ofscc.ll selfhost/ofscc.ll
-          clang -O2 -ffunction-sections -fdata-sections -c ofs/runtime/ofs_runtime.c -o selfhost/ofs_runtime.o
-          ar rcs selfhost/libofs_runtime.a selfhost/ofs_runtime.o
+          cp ofs/dist/magma.ll selfhost/magma.ll
           LLVM_IR_FLAGS=()
           clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
-          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -O2 selfhost/ofscc.ll selfhost/libofs_runtime.a -lm -o selfhost/ofscc
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -c selfhost/magma.ll -o selfhost/magma.o
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -Wl,-multiply_defined,suppress -O2 selfhost/ofscc.ll selfhost/magma.o -lm -o selfhost/ofscc
           chmod +x selfhost/ofscc
           ./selfhost/ofscc --help
           OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check ./selfhost/ofscc
@@ -152,17 +152,17 @@ jobs:
           cp ofs/tools/*.ofs "$ROOT/usr/local/share/ofs/tools/" 2>/dev/null || true
           cp ofs/ofscc/fileio.ofs "$ROOT/usr/local/share/ofs/ofscc/" 2>/dev/null || true
           cp -r ofs/bootstrap/* "$ROOT/usr/local/share/ofs/ofscc-src/" 2>/dev/null || true
-          mkdir -p "$ROOT/usr/local/lib"
-          cp selfhost/libofs_runtime.a "$ROOT/usr/local/lib/"
+          mkdir -p "$ROOT/usr/local/lib/ofs"
+          cp selfhost/magma.o "$ROOT/usr/local/lib/ofs/magma.o"
 
           "$ROOT/usr/local/bin/ofs" version | grep -F "ofs ${VERSION} - Obsidian Fault Script"
-          OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" check ofs/examples/webserver_demo.ofs
+          OFS_RUNTIME="$ROOT/usr/local/lib/ofs/magma.o" "$ROOT/usr/local/bin/ofs" check ofs/examples/webserver_demo.ofs
           (cd ofs/examples && "$GITHUB_WORKSPACE/$ROOT/usr/local/bin/ofs" check bedrock_gateway.ofs)
-          OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" build ofs/tests/selfhost_stdlib_smoke.ofs -o "$ROOT/usr/local/bin/stdlib-smoke"
+          OFS_RUNTIME="$ROOT/usr/local/lib/ofs/magma.o" "$ROOT/usr/local/bin/ofs" build ofs/tests/selfhost_stdlib_smoke.ofs -o "$ROOT/usr/local/bin/stdlib-smoke"
           "$ROOT/usr/local/bin/stdlib-smoke"
-          OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" build ofs/tests/ui_stdlib_smoke.ofs -o "$ROOT/usr/local/bin/ui-smoke"
+          OFS_RUNTIME="$ROOT/usr/local/lib/ofs/magma.o" "$ROOT/usr/local/bin/ofs" build ofs/tests/ui_stdlib_smoke.ofs -o "$ROOT/usr/local/bin/ui-smoke"
           "$ROOT/usr/local/bin/ui-smoke"
-          OFS_RUNTIME="$ROOT/usr/local/lib/libofs_runtime.a" "$ROOT/usr/local/bin/ofs" build ofs/tests/window_runtime_smoke.ofs -o "$ROOT/usr/local/bin/window-smoke"
+          OFS_RUNTIME="$ROOT/usr/local/lib/ofs/magma.o" "$ROOT/usr/local/bin/ofs" build ofs/tests/window_runtime_smoke.ofs -o "$ROOT/usr/local/bin/window-smoke"
           "$ROOT/usr/local/bin/window-smoke"
           rm -f "$ROOT/usr/local/bin/stdlib-smoke"
           rm -f "$ROOT/usr/local/bin/ui-smoke" "$ROOT/usr/local/bin/window-smoke"
@@ -239,14 +239,12 @@ jobs:
           }
           New-Item -ItemType Directory -Path selfhost -Force | Out-Null
           Copy-Item "ofs\dist\ofscc.ll" "selfhost\ofscc.ll"
-          & clang -O2 -ffunction-sections -fdata-sections -c "ofs\runtime\ofs_runtime.c" -o "selfhost\ofs_runtime.obj"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & llvm-ar rcs "selfhost\libofs_runtime.a" "selfhost\ofs_runtime.obj"
+          & clang -Wno-override-module -c "ofs\dist\magma_windows.ll" -o "selfhost\magma.o"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $llvmIrFlags = @()
           $clangVersion = (& clang --version | Out-String)
           if ($clangVersion -match 'version 14\.') { $llvmIrFlags = @("-mllvm", "-opaque-pointers") }
-          & clang -Wno-override-module @llvmIrFlags -O2 "selfhost\ofscc.ll" "selfhost\libofs_runtime.a" -o "selfhost\ofscc.exe"
+          & clang -Wno-override-module @llvmIrFlags -Wl,/force:multiple -O2 "selfhost\ofscc.ll" "selfhost\magma.o" -lws2_32 -o "selfhost\ofscc.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if (-not (Test-Path "selfhost\ofscc.exe")) {
             Write-Error "Self-hosted compiler was not produced."
@@ -268,7 +266,7 @@ jobs:
           New-Item -ItemType Directory -Path $Dist -Force | Out-Null
 
           Copy-Item "selfhost\ofscc.exe" "$Dist\ofscc.exe"
-          Copy-Item "selfhost\libofs_runtime.a" "$Dist\libofs_runtime.a"
+          Copy-Item "selfhost\magma.o" "$Dist\magma.o"
           Copy-Item "src/packaging\windows\ofs.cmd" "$Dist\ofs.cmd"
           (Get-Content "src/packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", $Version) | Set-Content "$Dist\ofs.ps1"
           Copy-Item "src/packaging\windows\install.cmd" "$Dist\install.cmd"

@@ -1325,7 +1325,7 @@ vein clamp(val: stone, lo: stone, hi: stone) -> stone  // clamp to range
 
 ### Runtime Nativo OFS (Stack Magma)
 
-A implementação principal do runtime e da biblioteca padrão da OFS é escrita em OFS (`stdlib/runtime/`), dispensando a biblioteca externa `libofs_runtime.a`:
+A implementação principal do runtime e da biblioteca padrão da OFS é escrita em OFS (`stdlib/runtime/`), sem uma implementação de runtime em outra linguagem:
 
 | Subsistema | Módulo | Responsabilidade |
 |---|---|---|

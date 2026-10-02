@@ -1,0 +1,47 @@
+vein _ofs_webserver_response_windows(content_type: obsidian, body: obsidian) -> obsidian {
+    forge type = content_type
+    if (type == null || type == "") { type = "text/plain; charset=utf-8" }
+    forge payload = body
+    if (payload == null) { payload = "" }
+    forge response = "HTTP/1.1 200 OK\r\nContent-Type: " + type
+    response = response + "\r\nContent-Length: " + ofs_stone_to_obsidian(ofs_str_len(payload))
+    response = response + "\r\nConnection: close\r\nCache-Control: no-store\r\n\r\n" + payload
+    return response
+}
+
+vein ofs_webserver_serve_once(port: stone, content_type: obsidian, body: obsidian) -> stone {
+    if (port <= 0 || port > 65535) { port = 8080 }
+    forge response = _ofs_webserver_response_windows(content_type, body)
+    forge server = net_windows__tcp_listen(port, 16)
+    if (server < 0) { return 2 }
+
+    forge client = net_windows__tcp_accept(server)
+    if (client < 0) {
+        net_windows__tcp_close_server(server)
+        return 3
+    }
+    net_windows__tcp_drain_request(client)
+    forge sent = net_windows__tcp_send_all(client, response)
+    net_windows__tcp_close(client)
+    net_windows__tcp_close_server(server)
+    if (sent < ofs_str_len(response)) { return 3 }
+    return 0
+}
+
+vein ofs_webserver_serve_forever(port: stone, content_type: obsidian, body: obsidian) -> stone {
+    if (port <= 0 || port > 65535) { port = 8080 }
+    forge response = _ofs_webserver_response_windows(content_type, body)
+    forge server = net_windows__tcp_listen(port, 16)
+    if (server < 0) { return 2 }
+
+    echo("OFS web server listening on http://127.0.0.1/" + ofs_stone_to_obsidian(port))
+    while (true) {
+        forge client = net_windows__tcp_accept(server)
+        if (client >= 0) {
+            net_windows__tcp_drain_request(client)
+            net_windows__tcp_send_all(client, response)
+            net_windows__tcp_close(client)
+        }
+    }
+    return 0
+}

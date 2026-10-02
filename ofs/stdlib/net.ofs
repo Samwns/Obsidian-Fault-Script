@@ -2,15 +2,12 @@ rift vein socket(domain: stone, type: stone, protocol: stone) -> stone abi c
 rift vein close(fd: stone) -> stone abi c
 rift vein htons(port: stone) -> stone abi c
 rift vein inet_addr(ip: obsidian) -> stone abi c
-rift vein ofs_alloc(sz: stone) -> *stone abi c
 rift vein connect(fd: stone, addr: *stone, addrlen: stone) -> stone abi c
 rift vein bind(fd: stone, addr: *stone, addrlen: stone) -> stone abi c
 rift vein listen(fd: stone, backlog: stone) -> stone abi c
 rift vein accept(fd: stone, addr: *stone, addrlen: *stone) -> stone abi c
 rift vein send(fd: stone, buf: obsidian, len: stone, flags: stone) -> stone abi c
 rift vein recv(fd: stone, buf: obsidian, len: stone, flags: stone) -> stone abi c
-extern vein ofs_str_len(s: obsidian) -> stone
-
 namespace net {
     vein tcp_connect(ip: obsidian, port: stone) -> stone {
         forge s = socket(2, 1, 0)

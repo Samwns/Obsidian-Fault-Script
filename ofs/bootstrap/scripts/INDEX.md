@@ -88,7 +88,7 @@ version                   Mostrar versão
 
 **Inclusão:**
 - Compilador ofscc
-- Runtime library (libofs_runtime.a)
+- Runtime OFS nativo (magma.o)
 - Stdlib completa
 - Documentação
 - version.json com metadata

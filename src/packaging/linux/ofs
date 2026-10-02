@@ -10,6 +10,14 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OFSCC="${OFSCC:-$ROOT/ofscc}"
 RUNTIME="${OFS_RUNTIME:-$ROOT/magma.o}"
 
+ulimit -Sv 786432
+ulimit -St 20
+current_file_limit="$(ulimit -Sf)"
+if [[ "$current_file_limit" == "unlimited" || "$current_file_limit" -gt 524288 ]]; then
+  ulimit -Sf 524288
+fi
+ulimit -Sc 0
+
 if [ -z "${OFS_STDLIB_PATH:-}" ] && [ -n "${OFS_STDLIB:-}" ]; then
   export OFS_STDLIB_PATH="$OFS_STDLIB"
 fi
@@ -90,20 +98,10 @@ native_link() {
     runtime_file="${RUNTIME}"
   else
     for candidate in \
-      "$ROOT/libofs_runtime.a" \
-      "$ROOT/ofs_runtime.o" \
       "$ROOT/magma.o" \
-      "$ROOT/../ofs/dist/libofs_runtime.a" \
       "$ROOT/../ofs/dist/magma.o" \
-      "$ROOT/../selfhost/libofs_runtime.a" \
-      "$ROOT/../selfhost/ofs_runtime.o" \
-      "$HOME/.local/lib/ofs/libofs_runtime.a" \
       "$HOME/.local/lib/ofs/magma.o" \
-      "/usr/local/lib/ofs/libofs_runtime.a" \
-      "/usr/local/lib/libofs_runtime.a" \
       "/usr/local/lib/ofs/magma.o" \
-      "/usr/lib/ofs/libofs_runtime.a" \
-      "/usr/lib/libofs_runtime.a" \
       "/usr/lib/ofs/magma.o"; do
       if [ -f "$candidate" ]; then
         runtime_file="$candidate"

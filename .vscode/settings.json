@@ -1,0 +1,15 @@
+{
+  "files.watcherExclude": {
+    "**/idle/**": true,
+    "**/src/archive/**": true,
+    "**/ofs/dist/**": true,
+    "**/src/site/benchmarks/**": true
+  },
+  "search.exclude": {
+    "**/idle/**": true,
+    "**/src/archive/**": true,
+    "**/ofs/dist/**": true,
+    "**/src/site/benchmarks/**": true
+  },
+  "dotnet.defaultSolution": "disable"
+}

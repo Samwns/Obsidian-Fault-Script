@@ -78,7 +78,7 @@ vein generate_nsis_script(version: obsidian) -> obsidian {
     script = script + "Section \"OFS Compiler\"\n"
     script = script + "  SetOutPath \"$INSTDIR\\bin\"\n"
     script = script + "  File \"build/ofs.exe\"\n"
-    script = script + "  File \"build/ofs_runtime.a\"\n"
+    script = script + "  File \"build/magma.o\"\n"
     script = script + "  SetOutPath \"$INSTDIR\\lib\"\n"
     script = script + "  File \"ofs/stdlib/*\"\n"
     script = script + "  SetOutPath \"$INSTDIR\"\n"
@@ -223,7 +223,7 @@ vein generate_homebrew_formula(version: obsidian) -> obsidian {
     formula = formula + "    end\n\n"
     
     formula = formula + "    bin.install \"build/ofs\"\n"
-    formula = formula + "    lib.install \"build/libofs_runtime.a\"\n"
+    formula = formula + "    lib.install \"build/magma.o\"\n"
     formula = formula + "    (share/\"ofs\").install \"ofs/stdlib\"\n"
     formula = formula + "    doc.install \"README.md\", \"docs/legal/LICENSE\"\n"
     formula = formula + "  end\n\n"

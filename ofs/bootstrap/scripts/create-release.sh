@@ -53,10 +53,10 @@ cp "$DIST_DIR/ofscc" "$RELEASE_STAGING/bin/"
 chmod +x "$RELEASE_STAGING/bin/ofscc"
 print_success "Compiler binary copied"
 
-# Copy runtime libs
-if [ -f "$DIST_DIR/libofs_runtime.a" ]; then
-    cp "$DIST_DIR/libofs_runtime.a" "$RELEASE_STAGING/lib/"
-    print_success "Runtime library copied"
+# Copy native OFS runtime object
+if [ -f "$DIST_DIR/magma.o" ]; then
+    cp "$DIST_DIR/magma.o" "$RELEASE_STAGING/lib/"
+    print_success "Native OFS runtime copied"
 fi
 
 # Copy stdlib

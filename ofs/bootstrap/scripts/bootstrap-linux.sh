@@ -190,13 +190,12 @@ cp "$FINAL_COMPILER" "$INSTALL_DIR/ofscc"
 chmod +x "$INSTALL_DIR/ofscc"
 print_success "Compiler ready: $INSTALL_DIR/ofscc"
 
-# Copy runtime library
-if [ -f "$BUILD_DIR/libofs_runtime.a" ]; then
-    cp "$BUILD_DIR/libofs_runtime.a" "$INSTALL_DIR/"
-    print_success "Runtime library copied"
-elif [ -f "$BUILD_DIR/Release/libofs_runtime.a" ]; then
-    cp "$BUILD_DIR/Release/libofs_runtime.a" "$INSTALL_DIR/"
-    print_success "Runtime library copied"
+# Copy native OFS runtime
+if [ -f "ofs/dist/magma.o" ]; then
+    cp "ofs/dist/magma.o" "$INSTALL_DIR/"
+    print_success "Native OFS runtime copied"
+else
+    print_error "Native OFS runtime not found: ofs/dist/magma.o"
 fi
 
 # Copy standard library

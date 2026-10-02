@@ -159,7 +159,7 @@ ofscc_v3 (OFS compiled by OFS)
 ```
 ofscc_v3 → ofs/dist/ofscc (final compiler)
 stdlib → ofs/dist/stdlib/
-runtime → ofs/dist/libofs_runtime.a
+runtime OFS → ofs/dist/magma.o
 metadata → dist/version.json
   ↓
 Package creation (tar.gz, zip, dmg)

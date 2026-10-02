@@ -135,16 +135,16 @@ for cmd in "--help" "--version" "tokens --help" "ast --help"; do
 done
 
 # ──────────────────────────────────────────────────────────────────────────
-# Check 7: Runtime library
+# Check 7: Native OFS runtime
 # ──────────────────────────────────────────────────────────────────────────
 
-print_info "Check 7: Runtime library"
+print_info "Check 7: Native OFS runtime"
 
-if [ -f "ofs/dist/libofs_runtime.a" ]; then
-    RUNTIME_SIZE=$(du -k ofs/dist/libofs_runtime.a | cut -f1)
-    print_success "Runtime library found (${RUNTIME_SIZE}KB)"
+if [ -f "ofs/dist/magma.o" ]; then
+    RUNTIME_SIZE=$(du -k ofs/dist/magma.o | cut -f1)
+    print_success "Native OFS runtime found (${RUNTIME_SIZE}KB)"
 else
-    print_warn "Runtime library not found: ofs/dist/libofs_runtime.a"
+    print_warn "Native OFS runtime not found: ofs/dist/magma.o"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────

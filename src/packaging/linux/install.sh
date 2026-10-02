@@ -6,9 +6,9 @@ BIN="$SCRIPT_DIR/ofs"
 TARGET="/usr/local/bin/ofs"
 OFSCC_SRC="$SCRIPT_DIR/ofscc"
 OFSCC_TARGET="/usr/local/bin/ofscc"
-RUNTIME_SRC="$SCRIPT_DIR/libofs_runtime.a"
-RUNTIME_TARGET_DIR="/usr/local/lib"
-RUNTIME_TARGET="$RUNTIME_TARGET_DIR/libofs_runtime.a"
+RUNTIME_SRC="$SCRIPT_DIR/magma.o"
+RUNTIME_TARGET_DIR="/usr/local/lib/ofs"
+RUNTIME_TARGET="$RUNTIME_TARGET_DIR/magma.o"
 ICON_SRC="$SCRIPT_DIR/ofs.png"
 ICON_TARGET="/usr/share/icons/hicolor/256x256/apps/ofs.png"
 LICENSE_SRC="$SCRIPT_DIR/LICENSE"
@@ -105,9 +105,12 @@ echo "[OFS] Installing self-hosted compiler..."
 sudo install -m 0755 "$OFSCC_SRC" "$OFSCC_TARGET"
 
 if [ -f "$RUNTIME_SRC" ]; then
-  echo "[OFS] Installing native runtime library..."
+  echo "[OFS] Installing native OFS runtime..."
   sudo install -d "$RUNTIME_TARGET_DIR"
   sudo install -m 0644 "$RUNTIME_SRC" "$RUNTIME_TARGET"
+else
+  echo "[OFS] Native OFS runtime not found: $RUNTIME_SRC" >&2
+  exit 1
 fi
 
 if [ -f "$ICON_SRC" ]; then

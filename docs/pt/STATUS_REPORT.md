@@ -325,6 +325,47 @@ Isso significa:
 
 ---
 
-**Status Final**: OFS Compiler Self-Hosted v0.1 ✅  
-**Próximo Release**: v1.1.0 (Verified Bootstrap)  
+**Status Final**: OFS Compiler Self-Hosted v0.1 ✅
+**Próximo Release**: v1.1.0 (Verified Bootstrap)
 **Timeline**: 2 semanas para verificação + release
+
+---
+
+## 🧱 Marco 6 — Bugfixes de Codegen (Concluído)
+
+**Data**: 02 de Outubro de 2026
+
+### 6a — Loops `mine` + `anchor` (defer)
+
+**Sintoma**: `10_geological_flow.ofs` imprimia os `anchor`s em ordem FIFO (`40 30 8 50 7 10 20`).
+**Causa**: `emit_anchors_from_depth` iterava do início ao fim da pilha de anchors.
+**Fix**: iteração invertida (LIFO), alinhado à semântica de `defer` de Go/Zig.
+**Validação**: saída agora é `1 2 3 4 5 40 30 8 50 7 20 10` — ordem exata esperada.
+
+### 6b — `assay` + `strata` variants
+
+**Sintomas**:
+- `12_outcome_lode.ofs` gerava IR inválido (`icmp eq i64` contra `ptr`).
+- `13_question_propagation.ofs` referenciava `@Crack` indefinido ao chamar `Crack("boom")`.
+
+**Causa raiz**:
+1. Variantes de `strata` não tinham representação em tempo de execução.
+2. `type_node_name` truncava genéricos (`Array<obsidian>` → `Array`), impedindo o codegen de inferir o tipo do elemento.
+3. `is_variant_name` classificava constantes `SCREAMING_SNAKE` (`EXEC_OK`, `NK_CORE_DECL`) como variantes, forçando `ptr` alloca e quebrando o codegen em cascata.
+
+**Fix**:
+- Variantes viram `global i64` registrados em `_variant_names`/`_variant_tags` com tag incremental; constructors `Variant(...)` reduzem para a tag.
+- `type_node_name` retorna o genérico completo (`Array<obsidian>`).
+- `emit_array_get` infere o tipo do elemento para `Array<obsidian>`/`Array<crystal>`/`Array<bool>`.
+- `is_variant_name` agora exige PascalCase estrita (inicial maiúscula, ao menos uma minúscula, sem `_`).
+- `llvm_type("variant")` mapeia para `i64`.
+
+**Validação**:
+- `10_geological_flow.ofs` → `1 2 3 4 5 40 30 8 50 7 20 10` ✓
+- `11_assay_basic.ofs` → `20` ✓
+- `12_outcome_lode.ofs` → `7` e `2` ✓
+- `13_question_propagation.ofs` → `0` e `1` ✓
+
+**Arquivos alterados**: `ofs/ofscc/llvmgen.ofs`, `ofs/ofscc/typeck.ofs`.
+
+**Próximos passos (fora do escopo do Marco 6)**: otimizações mensuráveis de memória/CPU no compilador e no runtime gerado.

@@ -1,0 +1,19 @@
+strata Outcome {
+    Solid,
+    Crack
+}
+
+vein ok() -> stone {
+    forge v = Solid(7)?
+    return v
+}
+
+vein bad() -> stone {
+    forge v = Crack("boom")?
+    return v
+}
+
+core main() {
+    echo(ok())
+    echo(bad())
+}

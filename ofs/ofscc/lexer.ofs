@@ -215,6 +215,9 @@ namespace lexer {
             if (_peek() == CH_EQ) {
                 _advance()
                 _push(TOK_EQEQ, "==")
+            } else if (_peek() == CH_GT) {
+                _advance()
+                _push(TOK_ARROW, "=>")
             } else {
                 _push(TOK_EQ, "=")
             }
@@ -263,6 +266,8 @@ namespace lexer {
             _push(TOK_CARET, "^")
         } else if (c == CH_TILDE) {
             _push(TOK_TILDE, "~")
+        } else if (c == CH_QUESTION) {
+            _push(TOK_QUESTION, "?")
         }
     }
     
@@ -385,7 +390,7 @@ namespace lexer {
                 c == CH_SLASH || c == CH_EQ || c == CH_BANG ||
                 c == CH_LT || c == CH_GT || c == CH_AMP ||
                 c == CH_PIPE || c == CH_CARET || c == CH_TILDE ||
-                c == CH_PERCENT) {
+                c == CH_PERCENT || c == CH_QUESTION) {
                 _scan_operators()
                 continue
             }

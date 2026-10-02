@@ -1,0 +1,31 @@
+vein return_anchor() -> stone {
+    anchor echo(50);
+    return 7;
+}
+
+core main() {
+    forge values = [1, 2, 3, 4, 5]
+    forge total = 0
+
+    mine (value in values) {
+        anchor echo(value);
+        if (value == 2) {
+            erode;
+        }
+        if (value == 5) {
+            shatter;
+        }
+        total = total + value
+    }
+
+    anchor echo(10);
+    anchor echo(20);
+    {
+        anchor echo(30);
+        anchor echo(40);
+    }
+
+    echo(total)
+    forge returned = return_anchor()
+    echo(returned)
+}

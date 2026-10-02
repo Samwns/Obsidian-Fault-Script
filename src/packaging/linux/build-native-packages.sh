@@ -4,7 +4,7 @@ set -euo pipefail
 VERSION="${1:?usage: build-native-packages.sh <version> <tag> <ofscc> <runtime> <out-dir>}"
 TAG="${2:?usage: build-native-packages.sh <version> <tag> <ofscc> <runtime> <out-dir>}"
 OFSCC_BIN="${3:?usage: build-native-packages.sh <version> <tag> <ofscc> <runtime> <out-dir>}"
-RUNTIME_LIB="${4:?usage: build-native-packages.sh <version> <tag> <ofscc> <runtime> <out-dir>}"
+RUNTIME_OBJ="${4:?usage: build-native-packages.sh <version> <tag> <ofscc> <runtime-object> <out-dir>}"
 OUT_DIR="${5:?usage: build-native-packages.sh <version> <tag> <ofscc> <runtime> <out-dir>}"
 mkdir -p "$OUT_DIR"
 OUT_DIR="$(cd "$OUT_DIR" && pwd)"
@@ -38,7 +38,7 @@ install_payload() {
 
   sed "s/__OFS_VERSION__/${VERSION}/g" "$ROOT/src/packaging/linux/ofs" > "$dest/usr/bin/ofs"
   install -m 0755 "$OFSCC_BIN" "$dest/usr/lib/ofs/ofscc"
-  install -m 0644 "$RUNTIME_LIB" "$dest/usr/lib/ofs/libofs_runtime.a"
+  install -m 0644 "$RUNTIME_OBJ" "$dest/usr/lib/ofs/magma.o"
   ln -s ../lib/ofs/ofscc "$dest/usr/bin/ofscc"
   chmod 0755 "$dest/usr/bin/ofs"
 
@@ -103,7 +103,7 @@ tar xzf %{SOURCE0} -C %{buildroot}
 /usr/bin/ofs
 /usr/bin/ofscc
 /usr/lib/ofs/ofscc
-/usr/lib/ofs/libofs_runtime.a
+/usr/lib/ofs/magma.o
 /usr/share/ofs/stdlib
 /usr/share/ofs/tools
 /usr/share/ofs/ofscc

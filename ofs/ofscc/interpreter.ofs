@@ -27,6 +27,7 @@ forge VAL_ARRAY: stone = 5
 forge VAL_OBJECT: stone = 6
 forge VAL_POINTER: stone = 7
 forge VAL_NULL: stone = 8
+forge VAL_VARIANT: stone = 9
 
 monolith Value {
     kind: stone
@@ -77,6 +78,8 @@ namespace interpreter {
     forge _scope_depth: stone = 0
     forge _globals_count: stone = 0
     forge _current_frame_base: stone = 0
+    forge _anchor_nodes: Array<stone> = []
+    forge _anchor_depths: Array<stone> = []
 
     // Heap Arrays (represented as parallel element arrays per array instance)
     forge _arr_elem_kinds: Array<Array> = []
@@ -243,6 +246,25 @@ namespace interpreter {
         return v
     }
 
+    vein val_variant(tag: obsidian, payload: Value) -> Value {
+        forge v: Value
+        v.kind = VAL_VARIANT
+        v.type_name = tag
+        v.i = 0
+        v.f = 0.0
+        v.b = false
+        v.s = tag
+        v.ref = -1
+        if (payload.kind == VAL_INT) { v.i = payload.i }
+        else if (payload.kind == VAL_FLOAT) { v.f = payload.f }
+        else if (payload.kind == VAL_BOOL) { v.b = payload.b }
+        else if (payload.kind == VAL_STRING) { v.s = payload.s }
+        else if (payload.kind == VAL_OBJECT || payload.kind == VAL_ARRAY || payload.kind == VAL_POINTER || payload.kind == VAL_NULL) {
+            v.ref = payload.ref
+        }
+        return v
+    }
+
     // ── Value Inspection ──────────────────────────────────────────────────
 
     vein val_to_string(v: Value) -> obsidian {
@@ -263,6 +285,7 @@ namespace interpreter {
         if (v.kind == VAL_OBJECT) { return "[" + v.type_name + "]" }
         if (v.kind == VAL_POINTER) { return "*ptr" }
         if (v.kind == VAL_NULL) { return "null" }
+        if (v.kind == VAL_VARIANT) { return v.type_name }
         return ""
     }
 
@@ -276,6 +299,7 @@ namespace interpreter {
         if (v.kind == VAL_POINTER) { return v.ref >= 0 }
         if (v.kind == VAL_NULL) { return false }
         if (v.kind == VAL_VOID) { return false }
+        if (v.kind == VAL_VARIANT) { return true }
         return false
     }
 
@@ -749,7 +773,21 @@ namespace interpreter {
         _scope_depth++
     }
 
+    vein run_anchors_from_depth(min_depth: stone) -> void {
+        forge len = ofs_array_len(_anchor_nodes)
+        while (len > 0) {
+            forge depth: stone = ofs_array_get(_anchor_depths, len - 1)
+            if (depth < min_depth) { break }
+            forge action: stone = ofs_array_get(_anchor_nodes, len - 1)
+            ofs_array_pop(_anchor_nodes)
+            ofs_array_pop(_anchor_depths)
+            execute_stmt(action)
+            len--
+        }
+    }
+
     vein pop_scope() -> void {
+        run_anchors_from_depth(_scope_depth)
         forge len = ofs_array_len(_env_depth)
         while (len > 0) {
             forge d: stone = ofs_array_get(_env_depth, len - 1)
@@ -879,6 +917,9 @@ namespace interpreter {
 
     vein is_builtin(name: obsidian) -> bool {
         if (ofs_str_eq(name, "echo")) { return true }
+        if (ofs_str_eq(name, "etch")) { return true }
+        if (ofs_str_eq(name, "etchln")) { return true }
+        if (ofs_str_eq(name, "mold")) { return true }
         if (ofs_str_eq(name, "exit")) { return true }
         if (ofs_str_eq(name, "ofs_str_len")) { return true }
         if (ofs_str_eq(name, "ofs_str_eq")) { return true }
@@ -911,6 +952,28 @@ namespace interpreter {
             }
             echo(s)
             return val_void()
+        }
+        if (ofs_str_eq(name, "etch") || ofs_str_eq(name, "etchln")) {
+            forge s = ""
+            forge i = 0
+            while (i < num_args) {
+                forge a = get_call_arg(arg_base, i)
+                s = s + val_to_string(a)
+                i++
+            }
+            if (ofs_str_eq(name, "etchln")) { s = s + "\n" }
+            echo(s)
+            return val_void()
+        }
+        if (ofs_str_eq(name, "mold")) {
+            forge s = ""
+            forge i = 0
+            while (i < num_args) {
+                forge a = get_call_arg(arg_base, i)
+                s = s + val_to_string(a)
+                i++
+            }
+            return val_string(s)
         }
         if (ofs_str_eq(name, "exit")) {
             forge code: stone = 0
@@ -1129,6 +1192,9 @@ namespace interpreter {
     }
 
     vein val_equals(left: Value, right: Value) -> bool {
+        if (left.kind == VAL_VARIANT && right.kind == VAL_VARIANT) {
+            return ofs_str_eq(left.type_name, right.type_name)
+        }
         if (left.kind == VAL_STRING && right.kind == VAL_STRING) {
             return ofs_str_eq(left.s, right.s)
         }
@@ -1258,6 +1324,9 @@ namespace interpreter {
         }
 
         if (n.kind == NK_IDENT) {
+            if (ofs_str_len(n.val) > 0 && ofs_str_char_at(n.val, 0) >= 65 && ofs_str_char_at(n.val, 0) <= 90) {
+                return val_variant(n.val, val_null())
+            }
             return resolve_var(n.val)
         }
 
@@ -1279,6 +1348,25 @@ namespace interpreter {
         }
 
         if (n.kind == NK_POST_OP) {
+            if (ofs_str_eq(n.val, "?")) {
+                forge base = eval_expr(n.c0)
+                if (base.kind == VAL_VARIANT) {
+                    if (ofs_str_eq(base.type_name, "Crack") || ofs_str_eq(base.type_name, "Barren")) {
+                        return val_null()
+                    }
+                    if (base.i != 0 || ofs_str_eq(base.type_name, "Solid") || ofs_str_eq(base.type_name, "Ore")) {
+                        return val_int(base.i)
+                    }
+                    if (base.s != "") {
+                        return val_string(base.s)
+                    }
+                    if (base.ref >= 0) {
+                        return val_object(base.type_name, base.ref)
+                    }
+                    return val_null()
+                }
+                return base
+            }
             forge loc = eval_lvalue(n.c0)
             forge cur_v = load_location(loc)
             forge old_v = cur_v
@@ -1502,6 +1590,14 @@ namespace interpreter {
             return call_builtin(name, num_args, arg_base)
         }
 
+        if (ofs_str_len(name) > 0 && ofs_str_char_at(name, 0) >= 65 && ofs_str_char_at(name, 0) <= 90) {
+            forge payload: Value = val_null()
+            if (num_args > 0) {
+                payload = get_call_arg(arg_base, 0)
+            }
+            return val_variant(name, payload)
+        }
+
         forge fn_id = find_function(name)
         if (fn_id < 0) {
             // Check method call (e.g. obj__method or obj.method)
@@ -1610,6 +1706,8 @@ namespace interpreter {
                 st = execute_stmt(body_id)
             }
         }
+
+        run_anchors_from_depth(saved_scope_depth + 1)
 
         // Clean up all local variables allocated in this frame
         while (ofs_array_len(_env_name) > _current_frame_base) {
@@ -1748,6 +1846,40 @@ namespace interpreter {
 
         if (n.kind == NK_CONTINUE) {
             return EXEC_CONTINUE
+        }
+
+        if (n.kind == NK_ANCHOR) {
+            if (n.c0 >= 0) {
+                ofs_array_push(_anchor_nodes, n.c0)
+                ofs_array_push(_anchor_depths, _scope_depth)
+            }
+            return EXEC_OK
+        }
+
+        if (n.kind == NK_MATCH) {
+            forge scrutinee = eval_expr(n.c0)
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                forge case_id = node_get_extra(id, i)
+                forge ci: Node = node_get(case_id)
+                if (ci.kind == NK_DEFAULT) {
+                    return execute_stmt(ci.c0)
+                }
+                if (ci.kind == NK_CASE) {
+                    forge case_val = eval_expr(ci.c0)
+                    if (val_equals(scrutinee, case_val)) {
+                        return execute_stmt(ci.c1)
+                    }
+                }
+                i++
+            }
+            return EXEC_OK
+        }
+
+        if (n.kind == NK_CASE || n.kind == NK_DEFAULT) {
+            if (n.kind == NK_CASE && n.c1 >= 0) { return execute_stmt(n.c1) }
+            if (n.kind == NK_DEFAULT && n.c0 >= 0) { return execute_stmt(n.c0) }
+            return EXEC_OK
         }
 
         if (n.kind == NK_THROW) {

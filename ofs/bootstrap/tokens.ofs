@@ -37,6 +37,10 @@ forge TOK_SHARD:    stone = 31
 forge TOK_TECTONIC: stone = 32
 forge TOK_INTENT:   stone = 33
 forge TOK_LAYOUT:   stone = 34
+forge TOK_SHATTER:  stone = 35
+forge TOK_ERODE:    stone = 36
+forge TOK_MINE:     stone = 37
+forge TOK_ANCHOR:   stone = 38
 
 // Literals
 forge TOK_IDENT:    stone = 50
@@ -142,6 +146,10 @@ vein keyword_to_kind(s: obsidian) -> stone {
     if (ofs_str_eq(s, "tectonic"))  { return TOK_TECTONIC }
     if (ofs_str_eq(s, "intent"))    { return TOK_INTENT }
     if (ofs_str_eq(s, "layout"))    { return TOK_LAYOUT }
+    if (ofs_str_eq(s, "shatter"))   { return TOK_SHATTER }
+    if (ofs_str_eq(s, "erode"))     { return TOK_ERODE }
+    if (ofs_str_eq(s, "mine"))      { return TOK_MINE }
+    if (ofs_str_eq(s, "anchor"))    { return TOK_ANCHOR }
     if (ofs_str_eq(s, "true"))      { return TOK_TRUE }
     if (ofs_str_eq(s, "false"))     { return TOK_FALSE }
     if (ofs_str_eq(s, "null"))      { return TOK_NULL }
@@ -158,6 +166,10 @@ vein kind_to_name(k: stone) -> obsidian {
     if (k == TOK_CYCLE)    { return "CYCLE" }
     if (k == TOK_RETURN)   { return "RETURN" }
     if (k == TOK_CONST)    { return "CONST" }
+    if (k == TOK_SHATTER)  { return "SHATTER" }
+    if (k == TOK_ERODE)    { return "ERODE" }
+    if (k == TOK_MINE)     { return "MINE" }
+    if (k == TOK_ANCHOR)   { return "ANCHOR" }
     if (k == TOK_IDENT)    { return "IDENT" }
     if (k == TOK_INT)      { return "INT" }
     if (k == TOK_FLOAT)    { return "FLOAT" }

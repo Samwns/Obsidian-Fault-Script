@@ -31,6 +31,7 @@ forge NK_BREAK:      stone = 28
 forge NK_CONTINUE:   stone = 29
 forge NK_THROW:      stone = 30   // c0=expr
 forge NK_TREMOR:     stone = 31   // c0=body, c1=catch_var(ident), c2=catch_body
+forge NK_ANCHOR:     stone = 32   // c0=action_stmt_or_block
 
 // ── Expressions ─────────────────────────────────────────────────────────
 forge NK_BLOCK:      stone = 40   // extra=statements

@@ -448,11 +448,7 @@ function compilerHasNativeRuntime(ofsPath) {
   }
 
   const compilerDir = path.dirname(ofsPath);
-  return [
-    path.join(compilerDir, 'libofs_runtime.a'),
-    path.join(compilerDir, 'ofs_runtime.lib'),
-    path.join(compilerDir, 'ofs_runtime.o')
-  ].some((candidate) => fs.existsSync(candidate));
+  return fs.existsSync(path.join(compilerDir, 'magma.o'));
 }
 
 function ensureDir(dirPath) {
@@ -583,7 +579,7 @@ async function installCompilerFromRelease(progress) {
     fs.chmodSync(managedPath, 0o755);
 
     const installDir = path.dirname(managedPath);
-    for (const runtimeFile of ['libofs_runtime.a', 'ofs_runtime.o', 'ofs_runtime.lib']) {
+    for (const runtimeFile of ['magma.o']) {
       const sourcePath = path.join(unpackDir, runtimeFile);
       if (fs.existsSync(sourcePath)) {
         fs.copyFileSync(sourcePath, path.join(installDir, runtimeFile));

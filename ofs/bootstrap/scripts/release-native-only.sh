@@ -101,11 +101,11 @@ mkdir -p "$RELEASE_STAGING/stdlib"
 cp -r "$INSTALL_DIR/stdlib"/* "$RELEASE_STAGING/stdlib/"
 print_success "Stdlib copiada"
 
-# Copy runtime (if exists)
-if [ -f "$INSTALL_DIR/libofs_runtime.a" ]; then
+# Copy native OFS runtime (if exists)
+if [ -f "$INSTALL_DIR/magma.o" ]; then
     mkdir -p "$RELEASE_STAGING/lib"
-    cp "$INSTALL_DIR/libofs_runtime.a" "$RELEASE_STAGING/lib/"
-    print_success "Runtime library copiada"
+    cp "$INSTALL_DIR/magma.o" "$RELEASE_STAGING/lib/"
+    print_success "Runtime OFS nativo copiado"
 fi
 
 # Copy documentation

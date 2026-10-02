@@ -148,13 +148,13 @@ if (Test-Path $FinalCompiler) {
     Write-Error_Custom "Final compiler not found: $FinalCompiler"
 }
 
-# Copy runtime library
-if (Test-Path "$BuildDir\ofs_runtime.a") {
-    Copy-Item "$BuildDir\ofs_runtime.a" "$InstallDir\" -Force
-    Write-Success "Runtime library copied"
-} elseif (Test-Path "$BuildDir\Release\ofs_runtime.a") {
-    Copy-Item "$BuildDir\Release\ofs_runtime.a" "$InstallDir\" -Force
-    Write-Success "Runtime library copied"
+# Copy OFS runtime object
+if (Test-Path "$BuildDir\magma.o") {
+    Copy-Item "$BuildDir\magma.o" "$InstallDir\" -Force
+    Write-Success "OFS runtime copied"
+} elseif (Test-Path "$BuildDir\Release\magma.o") {
+    Copy-Item "$BuildDir\Release\magma.o" "$InstallDir\" -Force
+    Write-Success "OFS runtime copied"
 }
 
 # Copy standard library

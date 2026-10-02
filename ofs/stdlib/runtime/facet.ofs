@@ -25,6 +25,13 @@ vein ofs_str_char_at(s: obsidian, idx: stone) -> stone {
     return b as stone
 }
 
+vein ofs_str_char_at_known(s: obsidian, idx: stone) -> stone {
+    forge p: *u8 = (s as stone + idx) as *u8
+    forge b: u8 = 0 as u8
+    fracture { b = *p }
+    return b as stone
+}
+
 vein ofs_str_eq(a: obsidian, b: obsidian) -> bool {
     if (a == null && b == null) { return true }
     if (a == null || b == null) { return false }

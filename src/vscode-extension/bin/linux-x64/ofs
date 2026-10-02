@@ -90,20 +90,10 @@ native_link() {
     runtime_file="${RUNTIME}"
   else
     for candidate in \
-      "$ROOT/libofs_runtime.a" \
-      "$ROOT/ofs_runtime.o" \
       "$ROOT/magma.o" \
-      "$ROOT/../ofs/dist/libofs_runtime.a" \
       "$ROOT/../ofs/dist/magma.o" \
-      "$ROOT/../selfhost/libofs_runtime.a" \
-      "$ROOT/../selfhost/ofs_runtime.o" \
-      "$HOME/.local/lib/ofs/libofs_runtime.a" \
       "$HOME/.local/lib/ofs/magma.o" \
-      "/usr/local/lib/ofs/libofs_runtime.a" \
-      "/usr/local/lib/libofs_runtime.a" \
       "/usr/local/lib/ofs/magma.o" \
-      "/usr/lib/ofs/libofs_runtime.a" \
-      "/usr/lib/libofs_runtime.a" \
       "/usr/lib/ofs/magma.o"; do
       if [ -f "$candidate" ]; then
         runtime_file="$candidate"

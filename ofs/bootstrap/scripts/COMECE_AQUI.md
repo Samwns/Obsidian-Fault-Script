@@ -84,7 +84,7 @@ ofs/bootstrap/scripts/
 Depois de fazer bootstrap, você tem:
 - ✅ `ofs/dist/ofscc` — Compilador nativo
 - ✅ `ofs/dist/stdlib/` — Biblioteca padrão completa
-- ✅ `ofs/dist/libofs_runtime.a` — Runtime library
+- ✅ `ofs/dist/magma.o` — Runtime nativo implementado em OFS
 
 ### Compilar Programa
 ```bash

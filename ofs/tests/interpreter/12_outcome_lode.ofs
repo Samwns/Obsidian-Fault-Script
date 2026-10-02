@@ -1,0 +1,27 @@
+strata Outcome {
+    Solid,
+    Crack
+}
+
+strata Lode {
+    Ore,
+    Barren
+}
+
+core main() {
+    forge solid = Solid
+    forge crack = Crack
+    forge barren = Barren
+
+    assay (solid) {
+        Solid => { echo(7) }
+        Crack => { echo(8) }
+        _ => { echo(9) }
+    }
+
+    assay (barren) {
+        Ore => { echo(1) }
+        Barren => { echo(2) }
+        _ => { echo(3) }
+    }
+}

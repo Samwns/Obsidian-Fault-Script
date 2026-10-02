@@ -213,7 +213,7 @@ if ($mode -in @("odl", "oes", "translate")) {
     $toolExe = "$work-tool.exe"
     Invoke-OfsccEnv -InputPath $tool -Mode "ir" -IrOutput $toolLl
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-    $runtime = Join-Path $PSScriptRoot "libofs_runtime.a"
+    $runtime = Join-Path $PSScriptRoot "magma.o"
     & clang -Wno-override-module @LlvmIrFlags -O3 "-Wl,/OPT:REF" $toolLl $runtime -lm -o $toolExe
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     if (-not $output) {
@@ -265,8 +265,7 @@ if ($mode -eq "run" -and -not $runNative) {
 
 if ($mode -in @("build", "run")) {
     if (-not $output) { $output = $name }
-    $runtime = Join-Path $PSScriptRoot "libofs_runtime.a"
-    if (-not (Test-Path $runtime)) { $runtime = Join-Path $PSScriptRoot "ofs_runtime.lib" }
+    $runtime = Join-Path $PSScriptRoot "magma.o"
     Invoke-OfsccEnv -InputPath $inputFile -Mode "ir" -IrOutput $ll
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     & clang -Wno-override-module @LlvmIrFlags -O3 "-Wl,/OPT:REF" $ll $runtime -lm -o $output

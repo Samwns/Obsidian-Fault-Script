@@ -81,7 +81,7 @@ $files = @(
     "infuse.cmd", "infuse.ps1",
     "uncover.cmd", "uncover.ps1",
     "reinfuse.cmd", "reinfuse.ps1",
-    "libofs_runtime.a", "ofs_runtime.lib",
+    "magma.o",
     "LICENSE.txt"
 )
 

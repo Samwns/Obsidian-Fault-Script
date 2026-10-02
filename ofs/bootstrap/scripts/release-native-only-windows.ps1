@@ -91,13 +91,6 @@ if (Test-Path "$OutputDir\stdlib") {
     Write-Success "Stdlib copiada"
 }
 
-# Copy runtime
-if (Test-Path "$OutputDir\libofs_runtime.a") {
-    New-Item -ItemType Directory -Path "$ReleaseStagingDir\lib" | Out-Null
-    Copy-Item "$OutputDir\libofs_runtime.a" "$ReleaseStagingDir\lib\" -Force
-    Write-Success "Runtime library copiada"
-}
-
 # Copy documentation
 New-Item -ItemType Directory -Path "$ReleaseStagingDir\doc" | Out-Null
 if (Test-Path "..\docs\LANGUAGE_REFERENCE.md") {

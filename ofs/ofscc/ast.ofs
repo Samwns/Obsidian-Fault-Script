@@ -98,15 +98,56 @@ vein node_get_extra(parent_id: stone, index: stone) -> stone {
     return ofs_array_get(n.extra, index)
 }
 
+// Field accessors that avoid copying the whole Node struct.
+// These read fields in-place by indexing the pool once and are
+// the preferred way in hot loops (typeck/llvmgen traverse 20k+ nodes).
+
+vein node_kind_of(id: stone) -> stone {
+    if (id < 0 || id >= ofs_array_len(_node_pool)) { return -1 }
+    forge n: Node = ofs_array_get(_node_pool, id)
+    return n.kind
+}
+
+vein node_val_of(id: stone) -> obsidian {
+    if (id < 0 || id >= ofs_array_len(_node_pool)) { return "" }
+    forge n: Node = ofs_array_get(_node_pool, id)
+    return n.val
+}
+
+vein node_type_of(id: stone) -> obsidian {
+    if (id < 0 || id >= ofs_array_len(_node_pool)) { return "" }
+    forge n: Node = ofs_array_get(_node_pool, id)
+    return n.type_str
+}
+
+vein node_child(id: stone, slot: stone) -> stone {
+    if (id < 0 || id >= ofs_array_len(_node_pool)) { return -1 }
+    forge n: Node = ofs_array_get(_node_pool, id)
+    if (slot == 0) { return n.c0 }
+    if (slot == 1) { return n.c1 }
+    if (slot == 2) { return n.c2 }
+    if (slot == 3) { return n.c3 }
+    return -1
+}
+
 vein node_extra_len(parent_id: stone) -> stone {
-    forge n: Node = node_get(parent_id)
+    if (parent_id < 0 || parent_id >= ofs_array_len(_node_pool)) { return 0 }
+    forge n: Node = ofs_array_get(_node_pool, parent_id)
     return ofs_array_len(n.extra)
 }
 
+vein node_extra_at(parent_id: stone, index: stone) -> stone {
+    if (parent_id < 0 || parent_id >= ofs_array_len(_node_pool)) { return -1 }
+    forge n: Node = ofs_array_get(_node_pool, parent_id)
+    if (index < 0 || index >= ofs_array_len(n.extra)) { return -1 }
+    return ofs_array_get(n.extra, index)
+}
+
 vein node_set_type(id: stone, type_str: obsidian) -> void {
-    forge n: Node = node_get(id)
+    if (id < 0 || id >= ofs_array_len(_node_pool)) { return }
+    forge n: Node = ofs_array_get(_node_pool, id)
     n.type_str = type_str
-    node_set(id, n)
+    ofs_array_set(_node_pool, id, n)
 }
 
 vein node_pool_len() -> stone {

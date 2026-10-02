@@ -4,10 +4,10 @@ build-mingw/
 build-debug/
 *.o
 *.a
-!ofs/dist/libofs_runtime.a
-!src/vscode-extension/bin/linux-x64/libofs_runtime.a
 *.ll
 !ofs/dist/ofscc.ll
+!ofs/dist/magma.ll
+!ofs/dist/magma_windows.ll
 *.out
 /tmp/
 *.exe

@@ -17,6 +17,39 @@ extern vein getenv(name: obsidian) -> obsidian
 
 forge _expanded_paths: Array<obsidian> = []
 
+vein join_parts(parts: Array<obsidian>) -> obsidian {
+    forge total = 0
+    forge i = 0
+    while (i < ofs_array_len(parts)) {
+        forge part: obsidian = ofs_array_get(parts, i)
+        total = total + ofs_str_len(part)
+        i++
+    }
+
+    forge result: obsidian = ofs_alloc(total + 1)
+    forge offset = 0
+    i = 0
+    while (i < ofs_array_len(parts)) {
+        forge part: obsidian = ofs_array_get(parts, i)
+        forge part_len = ofs_str_len(part)
+        forge j = 0
+        while (j < part_len) {
+            forge src: *u8 = (part as stone + j) as *u8
+            forge dst: *u8 = (result as stone + offset + j) as *u8
+            forge byte: u8 = 0 as u8
+            fracture { byte = *src }
+            fracture { *dst = byte }
+            j++
+        }
+        offset = offset + part_len
+        i++
+    }
+
+    forge terminator: *u8 = (result as stone + total) as *u8
+    fracture { *terminator = 0 as u8 }
+    return result
+}
+
 vein path_seen(path: obsidian) -> bool {
     forge i = 0
     while (i < ofs_array_len(_expanded_paths)) {
@@ -69,7 +102,7 @@ vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
     remember_path(path)
 
     forge base = dirname(path)
-    forge out = ""
+    forge out_parts: Array<obsidian> = []
     forge start = 0
     forge i = 0
     forge len = ofs_str_len(src)
@@ -93,18 +126,18 @@ vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
                             child_path = std_cand
                         }
                     }
-                }
+        }
                 forge child_src = read_file(child_path)
-                out = out + expand_attaches(child_path, child_src)
+                ofs_array_push(out_parts, expand_attaches(child_path, child_src))
             } else {
-                out = out + line + "\n"
+                ofs_array_push(out_parts, line + "\n")
             }
             start = i + 1
         }
         i++
     }
 
-    return out
+    return join_parts(out_parts)
 }
 
 vein usage() -> void {
@@ -173,7 +206,7 @@ vein parse_state_field(state: obsidian, field_idx: stone) -> obsidian {
             if (cur == field_idx) {
                 return ofs_str_substr(state, start, i - start)
             }
-                cur = cur + 1
+            cur = cur + 1
             start = i + 1
         }
         i++
@@ -218,7 +251,12 @@ core main() {
         usage()
         return
     }
-    
+
+    if (ofs_str_eq(input_file, "twin") || ofs_str_eq(input_file, "polish") || ofs_str_eq(input_file, "probe")) {
+        echo("[stub] command '" + input_file + "' is reserved for future CLI work")
+        return
+    }
+
     // Phase 1: Read source
     if (!is_run) { echo("[1/6] Reading source...") }
     forge src: obsidian = ""
@@ -257,6 +295,7 @@ core main() {
     // Phase 4: Type checking
     if (!is_run) { echo("[4/6] Type checking...") }
     typeck.check(root_id)
+    if (typeck.has_errors()) { exit(1) }
     if (!is_run) { echo("  OK") }
 
     if (check_only) {

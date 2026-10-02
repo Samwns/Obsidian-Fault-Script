@@ -18,8 +18,13 @@ namespace llvmgen {
     forge _global_inits: Array<stone> = []
     forge _break_labels: Array<obsidian> = []
     forge _continue_labels: Array<obsidian> = []
+    forge _loop_anchor_depths: Array<stone> = []
+    forge _anchor_nodes: Array<stone> = []
+    forge _anchor_depths: Array<stone> = []
     forge _visited_nodes: Array<stone> = []
     forge _mono_names: Array<obsidian> = []
+    forge _variant_names: Array<obsidian> = []
+    forge _variant_tags: Array<stone> = []
     forge _field_owners: Array<obsidian> = []
     forge _field_names: Array<obsidian> = []
     forge _field_types: Array<obsidian> = []
@@ -58,6 +63,7 @@ namespace llvmgen {
 
     vein llvm_type(type_str: obsidian) -> obsidian {
         if (ofs_str_char_at(type_str, 0) == 42) { return "ptr" }
+        if (ofs_str_eq(type_str, "variant")) { return "i64" }
         if (is_named_type(type_str)) { return "ptr" }
         if (ofs_str_eq(type_str, "stone")) { return "i64" }
         if (ofs_str_eq(type_str, "crystal")) { return "double" }
@@ -118,13 +124,36 @@ namespace llvmgen {
     vein type_node_name(id: stone) -> obsidian {
         if (id < 0) { return "void" }
         forge n: Node = node_get(id)
-        if (n.kind == NK_TYPE_ARRAY) { return "Array" }
+        if (n.kind == NK_TYPE_ARRAY) {
+            forge inner = "stone"
+            if (n.c0 >= 0) {
+                forge tn: Node = node_get(n.c0)
+                inner = tn.val
+            }
+            return "Array<" + inner + ">"
+        }
         return n.val
     }
 
     vein collect_types(id: stone) -> void {
         if (id < 0) { return }
         forge n: Node = node_get(id)
+        if (n.kind == NK_STRATA) {
+            // register variants as stone (i64 tag) globals with unique tags
+            forge vi = 0
+            while (vi < node_extra_len(id)) {
+                forge var_id = node_get_extra(id, vi)
+                forge vn: Node = node_get(var_id)
+                if (vn.kind == NK_VARIANT) {
+                    ofs_array_push(_global_names, vn.val)
+                    ofs_array_push(_global_types, "stone")
+                    ofs_array_push(_global_inits, -1)
+                    ofs_array_push(_variant_names, vn.val)
+                    ofs_array_push(_variant_tags, ofs_array_len(_variant_names) - 1)
+                }
+                vi++
+            }
+        }
         if (n.kind == NK_MONOLITH) {
             ofs_array_push(_mono_names, n.val)
             forge i = 0
@@ -152,7 +181,8 @@ namespace llvmgen {
             forge n: Node = node_get(id)
             if (n.kind == NK_VAR_DECL || n.kind == NK_CONST_DECL) {
                 forge t = n.type_str
-                if (ofs_str_eq(t, "")) { t = "stone" }
+                if (n.c0 >= 0) { t = type_node_name(n.c0) }
+                if (ofs_str_eq(t, "") || ofs_str_eq(t, "unknown")) { t = "stone" }
                 ofs_array_push(_global_names, n.val)
                 ofs_array_push(_global_types, t)
                 ofs_array_push(_global_inits, n.c1)
@@ -199,7 +229,34 @@ namespace llvmgen {
         _scope_depth++
     }
 
+    vein emit_anchors_from_depth(min_depth: stone) -> void {
+        // LIFO (defer semantics): most recently registered anchors run first
+        forge i = ofs_array_len(_anchor_nodes)
+        while (i > 0) {
+            i--
+            forge depth: stone = ofs_array_get(_anchor_depths, i)
+            if (depth >= min_depth) {
+                emit_stmt(ofs_array_get(_anchor_nodes, i))
+            }
+        }
+    }
+
+    vein discard_anchors_from_depth(min_depth: stone) -> void {
+        forge len = ofs_array_len(_anchor_nodes)
+        while (len > 0) {
+            forge depth: stone = ofs_array_get(_anchor_depths, len - 1)
+            if (depth < min_depth) { break }
+            ofs_array_pop(_anchor_nodes)
+            ofs_array_pop(_anchor_depths)
+            len--
+        }
+    }
+
     vein pop_scope() -> void {
+        if (!_terminated) {
+            emit_anchors_from_depth(_scope_depth)
+        }
+        discard_anchors_from_depth(_scope_depth)
         forge len = ofs_array_len(_var_names)
         while (len > 0) {
             forge depth = ofs_array_get(_var_depths, len - 1)
@@ -223,11 +280,13 @@ namespace llvmgen {
     vein push_loop(break_label: obsidian, continue_label: obsidian) -> void {
         ofs_array_push(_break_labels, break_label)
         ofs_array_push(_continue_labels, continue_label)
+        ofs_array_push(_loop_anchor_depths, _scope_depth)
     }
 
     vein pop_loop() -> void {
         ofs_array_pop(_break_labels)
         ofs_array_pop(_continue_labels)
+        ofs_array_pop(_loop_anchor_depths)
     }
 
     vein current_break_label() -> obsidian {
@@ -238,12 +297,27 @@ namespace llvmgen {
         return ofs_array_get(_continue_labels, ofs_array_len(_continue_labels) - 1)
     }
 
+    vein current_loop_anchor_depth() -> stone {
+        return ofs_array_get(_loop_anchor_depths, ofs_array_len(_loop_anchor_depths) - 1)
+    }
+
     vein var_index(name: obsidian) -> stone {
         forge i = ofs_array_len(_var_names) - 1
         while (i >= 0) {
             forge n: obsidian = ofs_array_get(_var_names, i)
             if (ofs_str_eq(n, name)) { return i }
             i--
+        }
+        return -1
+    }
+
+    vein variant_tag(name: obsidian) -> stone {
+        forge i = 0
+        while (i < ofs_array_len(_variant_names)) {
+            if (ofs_str_eq(ofs_array_get(_variant_names, i), name)) {
+                return ofs_array_get(_variant_tags, i)
+            }
+            i++
         }
         return -1
     }
@@ -363,6 +437,16 @@ namespace llvmgen {
         if (n.kind == NK_INDEX) {
             arr_id = n.c0
             idx_id = n.c1
+        }
+        // infer element type from the array variable's declared generic type
+        if (ofs_str_eq(expected_type, "stone") && arr_id >= 0) {
+            forge arr_node: Node = node_get(arr_id)
+            if (arr_node.kind == NK_IDENT) {
+                forge at = var_type(arr_node.val)
+                if (ofs_str_eq(at, "Array<obsidian>")) { expected_type = "obsidian" }
+                if (ofs_str_eq(at, "Array<crystal>")) { expected_type = "crystal" }
+                if (ofs_str_eq(at, "Array<bool>")) { expected_type = "bool" }
+            }
         }
         emit_expr(arr_id)
         forge arr = _expr_val
@@ -576,7 +660,12 @@ namespace llvmgen {
             forge gname: obsidian = ofs_array_get(_global_names, gi)
             forge gt: obsidian = ofs_array_get(_global_types, gi)
             forge gid: stone = ofs_array_get(_global_inits, gi)
-            cg_emit("@" + gname + " = global " + llvm_type(gt) + " " + const_init_value(gid, gt))
+            forge vtag = variant_tag(gname)
+            if (vtag >= 0) {
+                cg_emit("@" + gname + " = global i64 " + ofs_stone_to_obsidian(vtag))
+            } else {
+                cg_emit("@" + gname + " = global " + llvm_type(gt) + " " + const_init_value(gid, gt))
+            }
             gi++
         }
 
@@ -1146,6 +1235,10 @@ namespace llvmgen {
         }
 
         if (n.kind == NK_POST_OP) {
+            if (ofs_str_eq(n.val, "?")) {
+                emit_expr(n.c0)
+                return
+            }
             forge target: Node = node_get(n.c0)
             if (target.kind == NK_IDENT) {
                 forge p = var_ptr(target.val)
@@ -1165,6 +1258,13 @@ namespace llvmgen {
         }
 
         if (n.kind == NK_CALL) {
+            // variant constructor with payload: Tag(payload) -> i64 tag (payload ignored for now)
+            forge ctor_tag = variant_tag(n.val)
+            if (ctor_tag >= 0) {
+                _expr_val = ofs_stone_to_obsidian(ctor_tag)
+                _expr_type = "stone"
+                return
+            }
             if (ofs_str_eq(n.val, "fault_cut")) {
                 forge fc_arg0 = node_get_extra(id, 0)
                 forge fc_arg1 = node_get_extra(id, 1)
@@ -1371,7 +1471,19 @@ namespace llvmgen {
             }
 
             if (ofs_str_eq(n.val, "ofs_array_get")) {
-                emit_array_get(id, "stone")
+                // infer element type from the array argument's declared type
+                forge ag_arr = node_get_extra(id, 0)
+                forge ag_type = "stone"
+                if (ag_arr >= 0) {
+                    forge ag_node: Node = node_get(ag_arr)
+                    if (ag_node.kind == NK_IDENT) {
+                        forge ag_at = var_type(ag_node.val)
+                        if (ofs_str_eq(ag_at, "Array<obsidian>")) { ag_type = "obsidian" }
+                        if (ofs_str_eq(ag_at, "Array<crystal>")) { ag_type = "crystal" }
+                        if (ofs_str_eq(ag_at, "Array<bool>")) { ag_type = "bool" }
+                    }
+                }
+                emit_array_get(id, ag_type)
                 return
             }
 
@@ -1469,8 +1581,16 @@ namespace llvmgen {
         if (_terminated) { return }
         forge n: Node = node_get(id)
 
+        // strata declarations are handled in collect_types (variants become i64 tags)
+        if (n.kind == NK_STRATA) { return }
+        if (n.kind == NK_ATTACH) { return }
+
         if (n.kind == NK_VAR_DECL || n.kind == NK_CONST_DECL) {
             forge t = n.type_str
+            if (n.c0 >= 0) {
+                forge ann = type_node_name(n.c0)
+                if (!ofs_str_eq(ann, "")) { t = ann }
+            }
             if (ofs_str_eq(t, "")) { t = "stone" }
             forge p = next_tmp(n.val)
             if (is_named_type(t)) {
@@ -1514,8 +1634,10 @@ namespace llvmgen {
 
         if (n.kind == NK_RETURN) {
             if (ofs_str_eq(_current_ret_type, "void")) {
+                emit_anchors_from_depth(0)
                 cg_emit("  ret void")
             } else if (ofs_str_eq(_current_ret_type, "main")) {
+                emit_anchors_from_depth(0)
                 cg_emit("  ret i32 0")
             } else {
                 if (is_array_get(n.c0)) {
@@ -1524,6 +1646,7 @@ namespace llvmgen {
                     emit_expr(n.c0)
                 }
                 forge v = coerce_for_store(_expr_val, _expr_type, _current_ret_type)
+                emit_anchors_from_depth(0)
                 cg_emit("  ret " + llvm_type(_current_ret_type) + " " + v)
             }
             _terminated = true
@@ -1531,12 +1654,14 @@ namespace llvmgen {
         }
 
         if (n.kind == NK_BREAK) {
+            emit_anchors_from_depth(current_loop_anchor_depth() + 1)
             cg_emit("  br label %" + current_break_label())
             _terminated = true
             return
         }
 
         if (n.kind == NK_CONTINUE) {
+            emit_anchors_from_depth(current_loop_anchor_depth() + 1)
             cg_emit("  br label %" + current_continue_label())
             _terminated = true
             return
@@ -1560,6 +1685,83 @@ namespace llvmgen {
                 bi++
             }
             pop_scope()
+            return
+        }
+
+        if (n.kind == NK_ANCHOR) {
+            if (n.c0 >= 0) {
+                ofs_array_push(_anchor_nodes, n.c0)
+                ofs_array_push(_anchor_depths, _scope_depth)
+            }
+            return
+        }
+
+        if (n.kind == NK_MATCH) {
+            forge discr_id = n.c0
+            forge default_id = -1
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                forge case_id = node_get_extra(id, i)
+                forge cnode: Node = node_get(case_id)
+                if (cnode.kind == NK_DEFAULT) {
+                    default_id = cnode.c0
+                    break
+                }
+                i++
+            }
+
+            if (discr_id >= 0) {
+                emit_expr(discr_id)
+            }
+            forge discr_val = _expr_val
+            forge discr_type = _expr_type
+            forge end_label = next_label("match_end")
+            forge current = end_label
+            forge done_default = false
+
+            i = 0
+            while (i < node_extra_len(id)) {
+                forge case_id = node_get_extra(id, i)
+                forge cnode: Node = node_get(case_id)
+                if (cnode.kind == NK_DEFAULT) {
+                    if (default_id >= 0) {
+                        emit_stmt(default_id)
+                    }
+                    done_default = true
+                    break
+                }
+                if (cnode.kind == NK_CASE) {
+                    emit_expr(cnode.c0)
+                    forge cmp = next_tmp("match_cmp")
+                    cg_emit("  " + cmp + " = icmp eq " + llvm_type(discr_type) + " " + discr_val + ", " + _expr_val)
+                    forge case_true = next_label("match_case")
+                    forge case_next = next_label("match_next")
+                    cg_emit("  br i1 " + cmp + ", label %" + case_true + ", label %" + case_next)
+                    cg_emit("")
+                    cg_emit(case_true + ":")
+                    _terminated = false
+                    if (cnode.c1 >= 0) { emit_stmt(cnode.c1) }
+                    if (!_terminated) { cg_emit("  br label %" + end_label) }
+                    cg_emit("")
+                    cg_emit(case_next + ":")
+                    _terminated = false
+                    current = case_next
+                }
+                i++
+            }
+
+            if (!done_default && default_id >= 0) {
+                emit_stmt(default_id)
+            }
+            cg_emit("")
+            cg_emit(end_label + ":")
+            _terminated = false
+            return
+        }
+
+        if (n.kind == NK_CASE || n.kind == NK_DEFAULT) {
+            if (n.kind == NK_CASE && n.c1 >= 0) { emit_stmt(n.c1) }
+            if (n.kind == NK_DEFAULT && n.c0 >= 0) { emit_stmt(n.c0) }
             return
         }
 
@@ -1734,12 +1936,14 @@ namespace llvmgen {
             cg_emit("define i32 @main() {")
             cg_emit("entry:")
             cg_emit("  call void @__ofs_init_globals()")
+            push_scope()
             forge body_id = n.c2
             forge i = 0
             while (i < node_extra_len(body_id)) {
                 emit_stmt(node_get_extra(body_id, i))
                 i++
             }
+            pop_scope()
             if (!_terminated) { cg_emit("  ret i32 0") }
             cg_emit("}")
             cg_emit("")
@@ -1779,6 +1983,7 @@ namespace llvmgen {
             cg_emit_raw(") {")
             cg_emit("")
             cg_emit("entry:")
+            push_scope()
 
             pi = 0
             while (pi < node_extra_len(params_id)) {
@@ -1807,6 +2012,7 @@ namespace llvmgen {
                 emit_stmt(node_get_extra(fbody, si))
                 si++
             }
+            pop_scope()
             if (!_terminated) {
                 if (ofs_str_eq(_current_ret_type, "void")) {
                     cg_emit("  ret void")
@@ -1828,6 +2034,8 @@ namespace llvmgen {
         _field_names = []
         _field_types = []
         _field_indices = []
+        _variant_names = []
+        _variant_tags = []
         _global_names = []
         _global_types = []
         _global_inits = []

@@ -432,7 +432,7 @@ namespace parser {
         }
 
         // cycle (init; cond; step) { ... }
-        if (t.kind == TOK_CYCLE) {
+        if (t.kind == TOK_CYCLE || t.kind == TOK_MINE) {
             _advance()
             if (!_expect(TOK_LPAREN)) { _error("expected '('") return -1 }
             if (_cur_kind() == TOK_IDENT && _peek_kind() == TOK_IN) {
@@ -448,6 +448,10 @@ namespace parser {
                 node_set_child(range, 0, iterable)
                 node_set_child(range, 1, body_range)
                 return range
+            }
+            if (t.kind == TOK_MINE) {
+                _error("expected 'item in iterable' in mine")
+                return -1
             }
             forge init: stone = -1
             if (_cur_kind() != TOK_SEMI) {
@@ -488,17 +492,25 @@ namespace parser {
         }
         
         // break
-        if (t.kind == TOK_BREAK) {
+        if (t.kind == TOK_BREAK || t.kind == TOK_SHATTER) {
             _advance()
             if (_cur_kind() == TOK_SEMI) { _advance() }
             return node_new(NK_BREAK, "", line, col)
         }
         
         // continue
-        if (t.kind == TOK_CONTINUE) {
+        if (t.kind == TOK_CONTINUE || t.kind == TOK_ERODE) {
             _advance()
             if (_cur_kind() == TOK_SEMI) { _advance() }
             return node_new(NK_CONTINUE, "", line, col)
+        }
+
+        if (t.kind == TOK_ANCHOR) {
+            _advance()
+            forge action = parse_stmt()
+            forge n = node_new(NK_ANCHOR, "", line, col)
+            node_set_child(n, 0, action)
+            return n
         }
         
         // throw

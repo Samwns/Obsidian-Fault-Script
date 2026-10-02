@@ -155,6 +155,7 @@ namespace parser {
             }
             return expr
         }
+
         
         // Array literal [...]
         if (t.kind == TOK_LBRACKET) {
@@ -293,7 +294,7 @@ namespace parser {
             return parse_postfix(n)
         }
         
-        if (t.kind == TOK_PLUSPLUS || t.kind == TOK_MINUSMINUS) {
+        if (t.kind == TOK_PLUSPLUS || t.kind == TOK_MINUSMINUS || t.kind == TOK_QUESTION) {
             _advance()
             forge n = node_new(NK_POST_OP, t.val, t.line, t.col)
             node_set_child(n, 0, left)
@@ -447,7 +448,7 @@ namespace parser {
             return n
         }
 
-        if (t.kind == TOK_CYCLE) {
+        if (t.kind == TOK_CYCLE || t.kind == TOK_MINE) {
             _advance()
             if (!_expect(TOK_LPAREN)) { _error("expected '('") return -1 }
             if (_cur_kind() == TOK_FORGE && _peek_kind() == TOK_IDENT && _peek2_kind() == TOK_IN) {
@@ -464,6 +465,10 @@ namespace parser {
                 node_set_child(n, 0, iter)
                 node_set_child(n, 1, body)
                 return n
+            }
+            if (t.kind == TOK_MINE) {
+                _error("expected 'item in iterable' in mine")
+                return -1
             }
             forge init: stone = -1
             if (_cur_kind() != TOK_SEMI) {
@@ -503,18 +508,101 @@ namespace parser {
             return n
         }
         
+        if (t.kind == TOK_MATCH) {
+            _advance()
+            if (!_expect(TOK_LPAREN)) { _error("expected '(' after match") return -1 }
+            forge expr = parse_expr(0)
+            if (!_expect(TOK_RPAREN)) { _error("expected ')' after match") return -1 }
+            if (!_expect(TOK_LBRACE)) { _error("expected '{' after match") return -1 }
+
+            forge default_body: stone = -1
+            forge case_count = 0
+            forge condition_list: Array<stone> = []
+            forge body_list: Array<stone> = []
+
+            while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
+                forge pattern_is_default = false
+                forge case_value: stone = -1
+                if (_cur_kind() == TOK_IDENT && ofs_str_eq(_cur_val(), "_")) {
+                    pattern_is_default = true
+                    _advance()
+                } else {
+                    case_value = parse_expr(0)
+                }
+
+                if (!_expect(TOK_ARROW)) { _error("expected '=>' in match arm") }
+
+                forge arm_body: stone = -1
+                if (_cur_kind() == TOK_LBRACE) {
+                    arm_body = parse_block()
+                } else {
+                    arm_body = parse_stmt()
+                }
+
+                if (pattern_is_default) {
+                    default_body = arm_body
+                } else {
+                    ofs_array_push(condition_list, node_new(NK_BIN_OP, "==", _cur().line, _cur().col))
+                    forge cmp = ofs_array_get(condition_list, ofs_array_len(condition_list) - 1)
+                    node_set_child(cmp, 0, expr)
+                    node_set_child(cmp, 1, case_value)
+                    ofs_array_push(body_list, arm_body)
+                    case_count++
+                }
+            }
+
+            if (!_expect(TOK_RBRACE)) { _error("expected '}' after match") }
+
+            forge result: stone = -1
+            forge i = case_count - 1
+            while (i >= 0) {
+                forge cmp = ofs_array_get(condition_list, i)
+                forge body = ofs_array_get(body_list, i)
+                forge then_block = body
+                forge else_block: stone = -1
+                if (i == case_count - 1 && default_body >= 0) {
+                    else_block = default_body
+                } else if (i + 1 < case_count) {
+                    else_block = result
+                }
+
+                forge n = node_new(NK_IF, "", t.line, t.col)
+                node_set_child(n, 0, cmp)
+                node_set_child(n, 1, then_block)
+                node_set_child(n, 2, else_block)
+                result = n
+                i--
+            }
+
+            if (default_body >= 0 && case_count == 0) {
+                return default_body
+            }
+            if (case_count == 0) {
+                return node_new(NK_BLOCK, "", t.line, t.col)
+            }
+            return result
+        }
+
         // break
-        if (t.kind == TOK_BREAK) {
+        if (t.kind == TOK_BREAK || t.kind == TOK_SHATTER) {
             _advance()
             if (_cur_kind() == TOK_SEMI) { _advance() }
             return node_new(NK_BREAK, "", line, col)
         }
         
         // continue
-        if (t.kind == TOK_CONTINUE) {
+        if (t.kind == TOK_CONTINUE || t.kind == TOK_ERODE) {
             _advance()
             if (_cur_kind() == TOK_SEMI) { _advance() }
             return node_new(NK_CONTINUE, "", line, col)
+        }
+
+        if (t.kind == TOK_ANCHOR) {
+            _advance()
+            forge action = parse_stmt()
+            forge n = node_new(NK_ANCHOR, "", line, col)
+            node_set_child(n, 0, action)
+            return n
         }
         
         // throw

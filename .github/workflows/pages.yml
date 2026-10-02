@@ -34,13 +34,13 @@ jobs:
         env:
           OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
         run: |
-          clang -O2 -ffunction-sections -fdata-sections -c ofs/runtime/ofs_runtime.c -o /tmp/ofs_runtime.o
-          ar rcs /tmp/libofs_runtime.a /tmp/ofs_runtime.o
-          clang -Wno-override-module -O2 ofs/dist/ofscc.ll /tmp/libofs_runtime.a -lm -o /tmp/ofscc
+          cp ofs/dist/magma.ll /tmp/magma.ll
+          clang -Wno-override-module -c /tmp/magma.ll -o /tmp/magma.o
+          clang -Wno-override-module -Wl,--allow-multiple-definition -O2 ofs/dist/ofscc.ll /tmp/magma.o -lm -o /tmp/ofscc
           chmod +x /tmp/ofscc
           sed 's/__OFS_VERSION__/pages/g' src/packaging/linux/ofs > /tmp/ofs
           chmod +x /tmp/ofs
-          OFS_RUNTIME=/tmp/libofs_runtime.a /tmp/ofs build src/site/src/build_site.ofs -o /tmp/ofs-build-site
+          OFS_RUNTIME=/tmp/magma.o /tmp/ofs build src/site/src/build_site.ofs -o /tmp/ofs-build-site
           /tmp/ofs-build-site
           cp src/packaging/assets/ofs-256.png docs/assets/ofs-256.png
           cp src/packaging/assets/ofs-256.png docs/ofs-256.png

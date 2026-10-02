@@ -1,0 +1,5 @@
+attach {F:../../stdlib/io.ofs}
+
+core main() {
+    echo(prompt("input>"))
+}

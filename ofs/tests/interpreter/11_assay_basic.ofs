@@ -1,0 +1,9 @@
+vein main() -> stone {
+    forge x = 2
+    assay (x) {
+        1 => { echo(10) }
+        2 => { echo(20) }
+        _ => { echo(99) }
+    }
+    return 0
+}

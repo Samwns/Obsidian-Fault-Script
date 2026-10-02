@@ -2,6 +2,24 @@
 
 All notable changes to this project are recorded here.
 
+## [Unreleased] — Self-Hosted Compiler Milestones 1–6
+
+### Fixed
+
+- **Marco 5**: Typechecker no longer OOMs on deep AST paths — hot accessor functions extracted to keep stack pressure bounded during diagnostic walks.
+- **Marco 6a (mine loops)**: Deferred `anchor` statements were emitted at scope-exit in FIFO order, breaking `defer`-style semantics. The LLVM generator now walks the anchor stack in reverse (LIFO) so that the most recently registered anchor runs first, matching Go/Zig conventions.
+- **Marco 6b (assay / strata)**: `strata` variants had no object representation, producing invalid `icmp eq i64` against `ptr` loads and undefined symbols when constructors like `Crack("boom")` were called. Variants are now global `i64` tags registered in `_variant_names`/`_variant_tags` and variant constructors lower to the tag constant.
+- **Codegen**: `Array<T>` element loads now infer the right scalar type (`ptr` for `Array<obsidian>`, `double` for `Array<crystal>`, `i1` for `Array<bool>`), avoiding invalid `call i64 @ofs_str_eq(ptr %x)` patterns after reading from a stone-typed slot.
+- **Typeck**: `is_variant_name` tightened to strict PascalCase (starts uppercase, contains at least one lowercase, no underscores). This prevents `EXEC_OK`, `NK_CORE_DECL` and other `SCREAMING_SNAKE` constants from being typed as variants (which previously forced a `ptr` alloca and corrupted downstream code).
+- **Typeck / Codegen**: `type_node_name` now preserves the full generic spelling (`Array<obsidian>` instead of bare `Array`), enabling downstream consumers (collect_globals, VAR_DECL emission, array indexing) to pick the correct value type.
+
+### Validated
+
+- `ofs/tests/interpreter/10_geological_flow.ofs` → prints `1 2 3 4 5 40 30 8 50 7 20 10` (exact LIFO anchor ordering across nested scopes and loops).
+- `ofs/tests/interpreter/11_assay_basic.ofs` → prints `20`.
+- `ofs/tests/interpreter/12_outcome_lode.ofs` → prints `7` and `2` (strata variants used in `assay`).
+- `ofs/tests/interpreter/13_question_propagation.ofs` → prints `0` and `1` (basic `?` propagation semantics).
+
 ## [1.0.148] - 2026-09-30 — Hybrid Interpreter Backend & Differential Testing
 
 ### Added

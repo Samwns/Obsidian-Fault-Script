@@ -12,7 +12,7 @@ print_info() { echo -e "\033[0;37mℹ️  $1\033[0m"; }
 
 EXISTING_COMPILER="${EXISTING_COMPILER:-ofs/dist/ofscc}"
 BUILD_OUTPUT="${BUILD_OUTPUT:-dist}"
-RUNTIME="${OFS_RUNTIME:-ofs/dist/libofs_runtime.a}"
+RUNTIME="${OFS_RUNTIME:-ofs/dist/magma.o}"
 
 echo ""
 echo "╔════════════════════════════════════════════════════════════╗"
@@ -63,11 +63,9 @@ COMPILER_SIZE=$(du -h "$EXISTING_COMPILER" | cut -f1)
 print_success "Compilador pronto: $EXISTING_COMPILER ($COMPILER_SIZE)"
 
 if [ ! -f "$RUNTIME" ]; then
-    print_info "Runtime não encontrado em $RUNTIME. Compilando runtime C..."
-    mkdir -p "$(dirname "$RUNTIME")"
-    clang -O2 -ffunction-sections -fdata-sections -c ofs/runtime/ofs_runtime.c -o "$BUILD_OUTPUT/ofs_runtime.o"
-    ar rcs "$RUNTIME" "$BUILD_OUTPUT/ofs_runtime.o"
+    print_error "Runtime OFS nativo não encontrado: $RUNTIME"
 fi
+print_success "Runtime OFS nativo: $RUNTIME"
 
 detect_llvm_ir_flags() {
     if [ -n "${OFS_LLVM_IR_FLAGS:-}" ]; then
