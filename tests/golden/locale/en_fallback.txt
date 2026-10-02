@@ -1,0 +1,4 @@
+  Reading ok (NNNN) · N.NNN ms
+  Lexing ok (NNNN) · N.NNN ms
+  Parsing ok (NNNN) · N.NNN ms
+  Checking ok · N.NNN ms

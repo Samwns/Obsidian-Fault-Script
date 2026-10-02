@@ -1,0 +1,5 @@
+<ESC>[32m✓<ESC>[0m Reading      (NNNN) <ESC>[2mN.NNN ms<ESC>[0m
+<ESC>[32m✓<ESC>[0m Lexing       (NNNN) <ESC>[2mN.NNN ms<ESC>[0m
+<ESC>[32m✓<ESC>[0m Parsing      (NNNN) <ESC>[2mN.NNN ms<ESC>[0m
+<ESC>[32m✓<ESC>[0m Checking     <ESC>[2mN.NNN ms<ESC>[0m
+<ESC>[32mdone<ESC>[0m <ESC>[36m<target><ESC>[0m · 0 B · <ESC>[2mN ms<ESC>[0m

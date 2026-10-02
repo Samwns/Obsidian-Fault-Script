@@ -1,0 +1,5 @@
+# Exemplo de saída Plain quando `check` falha.
+# Conteúdo exato depende do arquivo com erro; a invariante é:
+#   - prefixo `fault[E....]` ou `warn[E....]` na linha do diagnóstico
+#   - palavra `Checking` ausente de "ok"
+#   - exit code != 0

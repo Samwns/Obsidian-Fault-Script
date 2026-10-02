@@ -1,0 +1,4 @@
+  Lendo ok (NNNN) · N.NNN ms
+  Lexando ok (NNNN) · N.NNN ms
+  Analisando ok (NNNN) · N.NNN ms
+  Verificando ok · N.NNN ms

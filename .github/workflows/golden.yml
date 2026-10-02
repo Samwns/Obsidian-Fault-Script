@@ -1,0 +1,47 @@
+name: golden
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  golden:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang llvm jq
+
+      - name: Build seed ofscc (stage0)
+        run: |
+          set -e
+          mkdir -p /tmp/ofs-logs
+          # Link do seed atual + magma runtime
+          llc -O2 -filetype=obj ofs/dist/ofscc.ll -o /tmp/ofs-logs/seed.o
+          llc -O2 -filetype=obj ofs/dist/magma.ll -o /tmp/ofs-logs/magma.o
+          clang /tmp/ofs-logs/seed.o /tmp/ofs-logs/magma.o -lm -o /tmp/ofs-logs/ofscc-seed
+          ls -la /tmp/ofs-logs/ofscc-seed
+
+      - name: Compile current ofscc.ofs via seed
+        run: |
+          set -e
+          OFSCC_MODE=ir \
+          OFSCC_INPUT=ofs/ofscc/ofscc.ofs \
+          OFSCC_C_OUT=/tmp/ofs-logs/ofscc.ll \
+            timeout 300 /tmp/ofs-logs/ofscc-seed
+          llc -O2 -filetype=obj /tmp/ofs-logs/ofscc.ll -o /tmp/ofs-logs/ofscc.o
+          clang /tmp/ofs-logs/ofscc.o /tmp/ofs-logs/magma.o -lm -o /tmp/ofs-logs/ofscc
+          ls -la /tmp/ofs-logs/ofscc
+
+      - name: Run golden checks
+        env:
+          OFSCC_BIN: /tmp/ofs-logs/ofscc
+          OFS_PROGRESS: plain
+          NO_COLOR: "1"
+          TERM: dumb
+        run: bash tests/golden/run.sh

@@ -1,0 +1,9 @@
+{"kind":"stage_start","locale":"en","stage":"read","target":"<target>"}
+{"kind":"stage_end","stage":"read","info":"NNNN","ms":N.NNN}
+{"kind":"stage_start","stage":"lex"}
+{"kind":"stage_end","stage":"lex","info":"NNNN","ms":N.NNN}
+{"kind":"stage_start","stage":"parse"}
+{"kind":"stage_end","stage":"parse","info":"NNNN","ms":N.NNN}
+{"kind":"stage_start","stage":"check"}
+{"kind":"stage_end","stage":"check","ms":N.NNN}
+{"kind":"finished","target":"<target>","info":"0","duration_ms_total":N.NNN}
