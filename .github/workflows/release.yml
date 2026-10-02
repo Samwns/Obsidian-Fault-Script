@@ -244,7 +244,7 @@ jobs:
           $llvmIrFlags = @()
           $clangVersion = (& clang --version | Out-String)
           if ($clangVersion -match 'version 14\.') { $llvmIrFlags = @("-mllvm", "-opaque-pointers") }
-          & clang -Wno-override-module @llvmIrFlags -Wl,/force:multiple -O2 "selfhost\ofscc.ll" "selfhost\magma.o" -lws2_32 -o "selfhost\ofscc.exe"
+          & clang -Wno-override-module @llvmIrFlags "-Wl,/force:multiple" -O2 "selfhost\ofscc.ll" "selfhost\magma.o" -lws2_32 -o "selfhost\ofscc.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           if (-not (Test-Path "selfhost\ofscc.exe")) {
             Write-Error "Self-hosted compiler was not produced."

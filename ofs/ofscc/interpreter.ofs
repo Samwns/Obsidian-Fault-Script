@@ -271,10 +271,7 @@ namespace interpreter {
         if (v.kind == VAL_VOID) { return "" }
         if (v.kind == VAL_INT) { return ofs_stone_to_obsidian(v.i) }
         if (v.kind == VAL_FLOAT) {
-            forge whole = v.f as stone
-            forge frac = ((v.f - (whole as crystal)) * 1000.0) as stone
-            if (frac < 0) { frac = 0 - frac }
-            return ofs_stone_to_obsidian(whole) + "." + ofs_stone_to_obsidian(frac)
+            return ofs_crystal_to_obsidian(v.f)
         }
         if (v.kind == VAL_BOOL) {
             if (v.b) { return "true" }

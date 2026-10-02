@@ -146,7 +146,7 @@ jobs:
           $llvmIrFlags = @()
           $clangVersion = (& clang --version | Out-String)
           if ($clangVersion -match 'version 14\.') { $llvmIrFlags = @("-mllvm", "-opaque-pointers") }
-          & clang -Wno-override-module @llvmIrFlags -Wl,/force:multiple -O2 "ofs\dist\ofscc.ll" "selfhost\magma.o" -lws2_32 -o "selfhost\ofscc.exe"
+          & clang -Wno-override-module @llvmIrFlags "-Wl,/force:multiple" -O2 "ofs\dist\ofscc.ll" "selfhost\magma.o" -lws2_32 -o "selfhost\ofscc.exe"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           Copy-Item "src/packaging\windows\ofs.cmd" "selfhost\ofs.cmd"
           (Get-Content "src/packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", "ci") | Set-Content "selfhost\ofs.ps1"

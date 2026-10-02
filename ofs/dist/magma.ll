@@ -75,11 +75,6 @@ declare i64 @getchar()
 declare double @pow(double, double)
 declare double @sqrt(double)
 
-define void @__ofs_init_globals() {
-entry:
-  ret void
-}
-
 define ptr @ofs_alloc(i64 %size) {
 entry:
   %size.addr = alloca i64, align 8
