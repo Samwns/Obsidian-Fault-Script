@@ -314,7 +314,8 @@ namespace llvmgen {
     vein variant_tag(name: obsidian) -> stone {
         forge i = 0
         while (i < ofs_array_len(_variant_names)) {
-            if (ofs_str_eq(ofs_array_get(_variant_names, i), name)) {
+            forge vn: obsidian = ofs_array_get(_variant_names, i)
+            if (ofs_str_eq(vn, name)) {
                 return ofs_array_get(_variant_tags, i)
             }
             i++

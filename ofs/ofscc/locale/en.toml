@@ -1,0 +1,31 @@
+# OFS compiler messages — English (default)
+
+[stage]
+attach = "Attaching"
+read   = "Reading"
+lex    = "Lexing"
+parse  = "Parsing"
+check  = "Checking"
+forge  = "Forging"
+link   = "Linking"
+run    = "Running"
+done   = "Finished"
+
+[msg]
+built           = "{bin} · {size} · {time}"
+check_ok        = "check ok"
+link_failed        = "link failed (see {ir})"
+stub_command       = "command `{name}` is reserved for future CLI work"
+runtime_not_found  = "OFS runtime not found: {path} (set OFS_RUNTIME)"
+tests_total_one   = "{n} test"
+tests_total_other = "{n} tests"
+
+[level]
+note  = "note"
+warn  = "warning"
+fault = "fault"
+
+[E0012]
+title = "mismatched types"
+label = "expected `{expected}`, found `{found}`"
+help  = "convert with `to_stone(...)`"

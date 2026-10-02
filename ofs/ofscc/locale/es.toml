@@ -1,0 +1,32 @@
+# OFS locale: Español (es)
+# Espelha as chaves de en.toml. CI valida paridade de chaves.
+
+[stage]
+attach = "Importando"
+read   = "Leyendo"
+lex    = "Lexando"
+parse  = "Analizando"
+check  = "Verificando"
+forge  = "Forjando"
+link   = "Enlazando"
+run    = "Ejecutando"
+done   = "Terminado"
+
+[msg]
+built       = "{bin} · {size} · {time}"
+check_ok    = "{count} ok ({elapsed})"
+link_failed        = "enlace falló (rc={code})"
+stub_command       = "{cmd}"
+runtime_not_found  = "runtime OFS no encontrado: {path} (define OFS_RUNTIME)"
+tests_total_one   = "{n} prueba"
+tests_total_other = "{n} pruebas"
+
+[level]
+note  = "nota"
+warn  = "aviso"
+fault = "fallo"
+
+[E0012]
+title = "tipos incompatibles"
+label = "se esperaba `{expected}`, se encontró `{found}`"
+help  = "convierte con `to_stone(...)`"

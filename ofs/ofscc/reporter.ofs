@@ -9,6 +9,111 @@ forge REPORTER_JSON:  stone = 3
 forge _reporter_kind: stone = REPORTER_PLAIN
 forge _reporter_verbose: bool = false
 
+// ── Locale (Fase 2) ────────────────────────────────────────────────────
+// Catálogo embutido (binário único). Os arquivos ofs/ofscc/locale/*.toml
+// são a fonte de verdade para tradutores e para o CI de paridade de chaves;
+// aqui mantemos tabelas equivalentes indexadas por idioma.
+forge _locale: obsidian = "en"
+
+vein reporter_set_locale(l: obsidian) -> void {
+    if (ofs_str_eq(l, "pt") || ofs_str_eq(l, "es") || ofs_str_eq(l, "en")) {
+        _locale = l
+    } else {
+        _locale = "en"
+    }
+}
+
+// Prioridade: OFS_LANG > LANG (prefixo de 2 letras, ex.: pt_BR.UTF-8) > en
+vein reporter_detect_locale() -> void {
+    forge l = getenv("OFS_LANG")
+    if (ofs_str_eq(l, "")) { l = getenv("LANG") }
+    if (ofs_str_len(l) >= 2) { l = ofs_str_substr(l, 0, 2) }
+    reporter_set_locale(l)
+}
+
+vein locale_is_pt() -> bool { return ofs_str_eq(_locale, "pt") }
+vein locale_is_es() -> bool { return ofs_str_eq(_locale, "es") }
+
+vein tr_stage(s: stone) -> obsidian {
+    if (locale_is_pt()) { return tr_stage_pt(s) }
+    if (locale_is_es()) { return tr_stage_es(s) }
+    return tr_stage_en(s)
+}
+
+vein tr_stage_en(s: stone) -> obsidian {
+    if (s == STAGE_ATTACH) { return "Attaching" }
+    if (s == STAGE_READ)   { return "Reading" }
+    if (s == STAGE_LEX)    { return "Lexing" }
+    if (s == STAGE_PARSE)  { return "Parsing" }
+    if (s == STAGE_CHECK)  { return "Checking" }
+    if (s == STAGE_FORGE)  { return "Forging" }
+    if (s == STAGE_LINK)   { return "Linking" }
+    if (s == STAGE_RUN)    { return "Running" }
+    if (s == STAGE_DONE)   { return "Finished" }
+    return "?"
+}
+
+vein tr_stage_pt(s: stone) -> obsidian {
+    if (s == STAGE_ATTACH) { return "Importando" }
+    if (s == STAGE_READ)   { return "Lendo" }
+    if (s == STAGE_LEX)    { return "Lexando" }
+    if (s == STAGE_PARSE)  { return "Analisando" }
+    if (s == STAGE_CHECK)  { return "Verificando" }
+    if (s == STAGE_FORGE)  { return "Forjando" }
+    if (s == STAGE_LINK)   { return "Ligando" }
+    if (s == STAGE_RUN)    { return "Executando" }
+    if (s == STAGE_DONE)   { return "Concluído" }
+    return "?"
+}
+
+vein tr_stage_es(s: stone) -> obsidian {
+    if (s == STAGE_ATTACH) { return "Importando" }
+    if (s == STAGE_READ)   { return "Leyendo" }
+    if (s == STAGE_LEX)    { return "Lexando" }
+    if (s == STAGE_PARSE)  { return "Analizando" }
+    if (s == STAGE_CHECK)  { return "Verificando" }
+    if (s == STAGE_FORGE)  { return "Forjando" }
+    if (s == STAGE_LINK)   { return "Enlazando" }
+    if (s == STAGE_RUN)    { return "Ejecutando" }
+    if (s == STAGE_DONE)   { return "Terminado" }
+    return "?"
+}
+
+// Tradução de mensagens (Fase 2). Placeholders `{name}`/`{path}` são rendidos
+// pelo chamador via arg1/arg2 em Plain; Fancy fará substituição de verdade.
+vein tr_msg(key: obsidian) -> obsidian {
+    if (ofs_str_eq(key, "stub_command")) {
+        if (locale_is_pt()) { return "comando reservado para trabalho futuro da CLI" }
+        if (locale_is_es()) { return "comando reservado para trabajo futuro de la CLI" }
+        return "command is reserved for future CLI work"
+    }
+    if (ofs_str_eq(key, "runtime_not_found")) {
+        if (locale_is_pt()) { return "runtime OFS não encontrado (defina OFS_RUNTIME):" }
+        if (locale_is_es()) { return "runtime OFS no encontrado (define OFS_RUNTIME):" }
+        return "OFS runtime not found (set OFS_RUNTIME):"
+    }
+    if (ofs_str_eq(key, "link_failed")) {
+        if (locale_is_pt()) { return "ligação falhou" }
+        if (locale_is_es()) { return "enlace falló" }
+        return "link failed"
+    }
+    return key
+}
+
+vein tr_level(l: stone) -> obsidian {
+    if (l == LEVEL_NOTE)  { return "note" }
+    if (l == LEVEL_WARN) {
+        if (locale_is_pt() || locale_is_es()) { return "aviso" }
+        return "warn"
+    }
+    if (l == LEVEL_FAULT) {
+        if (locale_is_pt()) { return "falha" }
+        if (locale_is_es()) { return "fallo" }
+        return "fault"
+    }
+    return "?"
+}
+
 vein reporter_set_kind(k: stone) -> void { _reporter_kind = k }
 vein reporter_set_verbose(v: bool) -> void { _reporter_verbose = v }
 
@@ -77,7 +182,7 @@ vein _emit_json(e: Event) -> void {
 vein _emit_plain(e: Event) -> void {
     if (e.kind == EV_STAGE_START) {
         if (_reporter_verbose) {
-            _emit_line("[" + stage_name(e.stage) + "] start " + e.target)
+            _emit_line("[" + tr_stage(e.stage) + "] start " + e.target)
         }
         return
     }
@@ -85,7 +190,7 @@ vein _emit_plain(e: Event) -> void {
         forge ms_txt = ofs_crystal_to_obsidian(e.ms)
         forge info_txt = ""
         if (ofs_str_len(e.info) > 0) { info_txt = " (" + e.info + ")" }
-        _emit_line("  " + stage_name(e.stage) + " ok" + info_txt + " · " + ms_txt + " ms")
+        _emit_line("  " + tr_stage(e.stage) + " ok" + info_txt + " · " + ms_txt + " ms")
         return
     }
     if (e.kind == EV_DIAGNOSTIC) {
@@ -93,10 +198,10 @@ vein _emit_plain(e: Event) -> void {
         if (e.line > 0) {
             loc_txt = ":" + ofs_stone_to_obsidian(e.line) + ":" + ofs_stone_to_obsidian(e.col)
         }
-        forge msg = e.msg_key
+        forge msg = tr_msg(e.msg_key)
         if (ofs_str_len(e.arg1) > 0) { msg = msg + " " + e.arg1 }
         if (ofs_str_len(e.arg2) > 0) { msg = msg + " " + e.arg2 }
-        _emit_line(level_name(e.level) + "[" + e.code + "]" + loc_txt + " " + msg)
+        _emit_line(tr_level(e.level) + "[" + e.code + "]" + loc_txt + " " + msg)
         return
     }
     if (e.kind == EV_FINISHED) {

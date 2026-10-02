@@ -249,6 +249,7 @@ core main() {
     forge msg_fmt = getenv("OFS_PROGRESS")
 
     // Configura reporter
+    reporter_detect_locale()
     if (ofs_str_eq(msg_fmt, "json")) {
         reporter_set_kind(REPORTER_JSON)
     } else {
@@ -373,11 +374,27 @@ core main() {
     event_stage_start(STAGE_LINK, "")
     t0 = clock()
     forge obj_file = c_output + ".o"
+    // Localiza runtime OFS (magma.o / libofs_runtime.a) — necessário para echo_obsidian,
+    // ofs_str_*, ofs_array_*, etc. O wrapper `ofs` exporta OFS_RUNTIME; senão, caminho
+    // padrão da instalação. Não há probe de arquivo para evitar syscall extra no OFS.
+    forge rt = getenv("OFS_RUNTIME")
+    if (ofs_str_eq(rt, "")) { rt = "/usr/local/lib/ofs/libofs_runtime.a" }
+
+    // Diagnóstico claro quando o runtime não está acessível (evita 'undefined reference'
+    // crú do ld em símbolos como echo_obsidian).
+    forge rt_probe = fopen(rt, "rb")
+    if (rt_probe == null) {
+        event_diagnostic("", LEVEL_FAULT, 0, 0, "runtime_not_found", rt, "")
+        reporter_flush()
+        exit(1)
+    }
+    fclose(rt_probe)
+
     forge compile_cmd = ""
     if (ofs_str_eq(compile_mode, "c")) {
-        compile_cmd = "gcc " + c_opt + " -o " + output_file + " " + c_output + " 2>&1"
+        compile_cmd = "gcc " + c_opt + " -o " + output_file + " " + c_output + " " + rt + " 2>&1"
     } else {
-        compile_cmd = "llc -filetype=obj " + c_output + " -o " + obj_file + " && (ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib64/crt1.o /usr/lib64/crti.o " + obj_file + " -lc -lm /usr/lib64/crtn.o -o " + output_file + " 2>&1 || ld -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o " + obj_file + " -lc -lm /usr/lib/x86_64-linux-gnu/crtn.o -o " + output_file + " 2>&1)"
+        compile_cmd = "llc -filetype=obj " + c_output + " -o " + obj_file + " && (ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib64/crt1.o /usr/lib64/crti.o " + obj_file + " " + rt + " -lc -lm /usr/lib64/crtn.o -o " + output_file + " 2>&1 || ld -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o " + obj_file + " " + rt + " -lc -lm /usr/lib/x86_64-linux-gnu/crtn.o -o " + output_file + " 2>&1)"
     }
     forge compile_result = system(compile_cmd)
     t1 = clock()
