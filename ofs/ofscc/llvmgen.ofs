@@ -18,6 +18,10 @@ namespace llvmgen {
     forge _global_inits: Array<stone> = []
     forge _break_labels: Array<obsidian> = []
     forge _continue_labels: Array<obsidian> = []
+    // Token llvm.stacksave por loop: stackrestore garante que allocas de
+    // variaveis criadas dentro do corpo nao acumulem stack entre iteracoes
+    // (sem isso, loops grandes estouram a pilha em builds -O0/llc).
+    forge _loop_saves: Array<obsidian> = []
     forge _loop_anchor_depths: Array<stone> = []
     forge _anchor_nodes: Array<stone> = []
     forge _anchor_depths: Array<stone> = []
@@ -341,11 +345,13 @@ namespace llvmgen {
         ofs_array_push(_break_labels, break_label)
         ofs_array_push(_continue_labels, continue_label)
         ofs_array_push(_loop_anchor_depths, _scope_depth)
+        ofs_array_push(_loop_saves, "")
     }
 
     vein pop_loop() -> void {
         ofs_array_pop(_break_labels)
         ofs_array_pop(_continue_labels)
+        ofs_array_pop(_loop_saves)
         ofs_array_pop(_loop_anchor_depths)
     }
 
@@ -359,6 +365,14 @@ namespace llvmgen {
 
     vein current_loop_anchor_depth() -> stone {
         return ofs_array_get(_loop_anchor_depths, ofs_array_len(_loop_anchor_depths) - 1)
+    }
+
+    vein set_loop_save(tok: obsidian) -> void {
+        ofs_array_set(_loop_saves, ofs_array_len(_loop_saves) - 1, tok)
+    }
+
+    vein current_loop_save() -> obsidian {
+        return ofs_array_get(_loop_saves, ofs_array_len(_loop_saves) - 1)
     }
 
     vein var_index(name: obsidian) -> stone {
@@ -762,9 +776,13 @@ namespace llvmgen {
         emit_decl_if_missing(root_id, "exit", "declare void @exit(i64)")
         emit_decl_if_missing(root_id, "getenv", "declare ptr @getenv(ptr)")
         cg_emit("declare void @llvm.prefetch.p0(ptr, i32, i32, i32)")
+        cg_emit("declare ptr @llvm.stacksave()")
+        cg_emit("declare void @llvm.stackrestore(ptr)")
         cg_emit("declare i64 @llvm.bswap.i64(i64)")
         cg_emit("declare void @llvm.trap()")
         ofs_array_push(_extern_names, "llvm.prefetch.p0")
+        ofs_array_push(_extern_names, "llvm.stacksave")
+        ofs_array_push(_extern_names, "llvm.stackrestore")
         ofs_array_push(_extern_names, "llvm.bswap.i64")
         ofs_array_push(_extern_names, "llvm.trap")
         emit_extern_decls(root_id)
@@ -1742,6 +1760,10 @@ namespace llvmgen {
 
         if (n.kind == NK_CONTINUE) {
             emit_anchors_from_depth(current_loop_anchor_depth() + 1)
+            forge cstk = current_loop_save()
+            if (ofs_str_len(cstk) > 0) {
+                cg_emit("  call void @llvm.stackrestore(ptr " + cstk + ")")
+            }
             cg_emit("  br label %" + current_continue_label())
             _terminated = true
             return
@@ -1886,9 +1908,17 @@ namespace llvmgen {
             cg_emit("  br i1 " + cond2 + ", label %" + body_label + ", label %" + end_label2)
             cg_emit("")
             cg_emit(body_label + ":")
+            // Loop-body allocas must be reclaimed every iteration, otherwise
+            // long loops blow the stack in unoptimized (-O0) codegen.
+            forge wstk = next_tmp("loop_stk")
+            cg_emit("  " + wstk + " = call ptr @llvm.stacksave()")
+            set_loop_save(wstk)
             _terminated = false
             emit_stmt(n.c1)
-            if (!_terminated) { cg_emit("  br label %" + cond_label) }
+            if (!_terminated) {
+                cg_emit("  call void @llvm.stackrestore(ptr " + wstk + ")")
+                cg_emit("  br label %" + cond_label)
+            }
             cg_emit("")
             cg_emit(end_label2 + ":")
             _terminated = false
@@ -1916,9 +1946,15 @@ namespace llvmgen {
             }
             cg_emit("")
             cg_emit(body_label2 + ":")
+            forge cstk2 = next_tmp("loop_stk")
+            cg_emit("  " + cstk2 + " = call ptr @llvm.stacksave()")
+            set_loop_save(cstk2)
             _terminated = false
             if (n.c3 >= 0) { emit_stmt(n.c3) }
-            if (!_terminated) { cg_emit("  br label %" + step_label2) }
+            if (!_terminated) {
+                cg_emit("  call void @llvm.stackrestore(ptr " + cstk2 + ")")
+                cg_emit("  br label %" + step_label2)
+            }
             cg_emit("")
             cg_emit(step_label2 + ":")
             _terminated = false
@@ -1980,9 +2016,15 @@ namespace llvmgen {
             forge elem_val = next_tmp("elem_val")
             cg_emit("  " + elem_val + " = load " + llvm_type(elem_t) + ", ptr " + elem_slot)
             cg_emit("  store " + llvm_type(elem_t) + " " + elem_val + ", ptr " + item_ptr)
+            forge rstk = next_tmp("loop_stk")
+            cg_emit("  " + rstk + " = call ptr @llvm.stacksave()")
+            set_loop_save(rstk)
             _terminated = false
             if (n.c1 >= 0) { emit_stmt(n.c1) }
-            if (!_terminated) { cg_emit("  br label %" + step_lbl) }
+            if (!_terminated) {
+                cg_emit("  call void @llvm.stackrestore(ptr " + rstk + ")")
+                cg_emit("  br label %" + step_lbl)
+            }
 
             cg_emit("")
             cg_emit(step_lbl + ":")
@@ -2121,6 +2163,7 @@ namespace llvmgen {
         _global_inits = []
         _break_labels = []
         _continue_labels = []
+        _loop_saves = []
         _visited_nodes = []
         _string_vals = []
         _string_names = []
