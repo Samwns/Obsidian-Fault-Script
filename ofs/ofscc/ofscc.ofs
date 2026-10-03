@@ -143,19 +143,96 @@ vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
     return join_parts(out_parts)
 }
 
+vein _u(indent: obsidian, left: obsidian, right: obsidian) -> void {
+    echo(indent + _colored(_ansi_run, _pad(left, 24)) + right)
+}
+
 vein usage() -> void {
-    echo("Usage: ofscc [options] <input.ofs>")
-    echo("Options:")
-    echo("  -o <output>      Output executable (default: a.out)")
-    echo("  -O0/-O2/-O3      LLVM optimization level (default: -O2)")
-    echo("  --emit-ir <file> LLVM IR output path (default: output.ll)")
-    echo("  --check          Type-check only (no codegen)")
-    echo("  --tokens         Print tokens and exit")
-    echo("  --ast            Print AST and exit")
-    echo("  --help           Show this message")
+    // Help padrão: subcomandos coloridos (reporter_detect_color já resolve
+    // NO_COLOR / TERM=dumb) e texto conforme locale (en/pt/es).
+    reporter_detect_locale()
+    reporter_detect_color()
+    if (locale_is_pt()) {
+        echo(_colored(_ansi_ok, "ofs") + " - compilador Obsidian Fault Script")
+        echo("")
+        echo(_colored(_ansi_run, "Uso:") + " ofs <arquivo.ofs>   (equivale a 'ofs run')")
+        echo("")
+        echo(_colored(_ansi_run, "Subcomandos:"))
+        _u("  ", "run <arq.ofs>",     "executa interpretado (--native compila temporario)")
+        _u("  ", "build <arq.ofs>",   "compila para executavel nativo (-o saida)")
+        _u("  ", "check <arq.ofs>",   "somente verificacao de tipos")
+        _u("  ", "test <arq.ofs>",    "executa testes (assay) do arquivo")
+        _u("  ", "twin <arq.ofs>",    "roda interpretado + nativo e compara saidas")
+        _u("  ", "polish <arq.ofs>",  "verifica estilo e padroes do codigo")
+        _u("  ", "language [en|pt|es]", "mostra/altera o idioma da CLI")
+        _u("  ", "ir|asm|tokens|ast", "artefatos de depuracao do compilador")
+        _u("  ", "ui <arq.oll>",      "renderiza layout OLL nativo (-o saida.ppm)")
+        _u("  ", "clean",             "limpa artefatos temporarios de build")
+        _u("  ", "version",           "mostra a versao")
+        _u("  ", "update",            "atualiza para a ultima release")
+        echo("")
+        echo(_colored(_ansi_run, "Opcoes do ofscc (nivel baixo):"))
+        _u("  ", "-o <saida>",        "executavel de saida (padrao: a.out)")
+        _u("  ", "-O0/-O2/-O3",       "otimizacao LLVM (padrao: -O2)")
+        _u("  ", "--emit-ir <arq>",   "caminho do LLVM IR (padrao: output.ll)")
+        _u("  ", "--check/--tokens/--ast", "modos de inspecao")
+        echo("")
+        echo(_colored(_ansi_dim, "Env: OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT, OFS_LANG, OFS_PROGRESS, OFS_VERBOSE"))
+        return
+    }
+    if (locale_is_es()) {
+        echo(_colored(_ansi_ok, "ofs") + " - compilador Obsidian Fault Script")
+        echo("")
+        echo(_colored(_ansi_run, "Uso:") + " ofs <archivo.ofs>   (equivale a 'ofs run')")
+        echo("")
+        echo(_colored(_ansi_run, "Subcomandos:"))
+        _u("  ", "run <arq.ofs>",     "ejecuta interpretado (--native compila temporal)")
+        _u("  ", "build <arq.ofs>",   "compila a ejecutable nativo (-o salida)")
+        _u("  ", "check <arq.ofs>",   "solo verificacion de tipos")
+        _u("  ", "test <arq.ofs>",    "ejecuta las pruebas (assay) del archivo")
+        _u("  ", "twin <arq.ofs>",    "ejecuta interpretado + nativo y compara salidas")
+        _u("  ", "polish <arq.ofs>",  "verifica estilo y patrones del codigo")
+        _u("  ", "language [en|pt|es]", "muestra/cambia el idioma de la CLI")
+        _u("  ", "ir|asm|tokens|ast", "artefactos de depuracion del compilador")
+        _u("  ", "ui <arq.oll>",      "renderiza layout OLL nativo (-o salida.ppm)")
+        _u("  ", "clean",             "limpia artefactos temporales de build")
+        _u("  ", "version",           "muestra la version")
+        _u("  ", "update",            "actualiza a la ultima release")
+        echo("")
+        echo(_colored(_ansi_run, "Opciones de ofscc (bajo nivel):"))
+        _u("  ", "-o <salida>",       "ejecutable de salida (defecto: a.out)")
+        _u("  ", "-O0/-O2/-O3",       "optimizacion LLVM (defecto: -O2)")
+        _u("  ", "--emit-ir <arq>",   "ruta del LLVM IR (defecto: output.ll)")
+        _u("  ", "--check/--tokens/--ast", "modos de inspeccion")
+        echo("")
+        echo(_colored(_ansi_dim, "Env: OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT, OFS_LANG, OFS_PROGRESS, OFS_VERBOSE"))
+        return
+    }
+    echo(_colored(_ansi_ok, "ofs") + " - Obsidian Fault Script compiler")
     echo("")
-    echo("Env fallback:")
-    echo("  OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT")
+    echo(_colored(_ansi_run, "Usage:") + " ofs <file.ofs>   (same as 'ofs run')")
+    echo("")
+    echo(_colored(_ansi_run, "Subcommands:"))
+    _u("  ", "run <file.ofs>",     "run interpreted (--native builds a temp binary)")
+    _u("  ", "build <file.ofs>",   "compile to a native executable (-o output)")
+    _u("  ", "check <file.ofs>",   "type-check only")
+    _u("  ", "test <file.ofs>",    "run file tests (assay)")
+    _u("  ", "twin <file.ofs>",    "run interpreted + native and diff outputs")
+    _u("  ", "polish <file.ofs>",  "style and pattern checks")
+    _u("  ", "language [en|pt|es]", "show/change the CLI language")
+    _u("  ", "ir|asm|tokens|ast",  "compiler debug artifacts")
+    _u("  ", "ui <file.oll>",      "render native OLL layout (-o output.ppm)")
+    _u("  ", "clean",              "clean temporary build artifacts")
+    _u("  ", "version",            "print the compiler version")
+    _u("  ", "update",             "update to the latest release")
+    echo("")
+    echo(_colored(_ansi_run, "Low-level ofscc options:"))
+    _u("  ", "-o <output>",        "output executable (default: a.out)")
+    _u("  ", "-O0/-O2/-O3",        "LLVM optimization level (default: -O2)")
+    _u("  ", "--emit-ir <file>",   "LLVM IR output path (default: output.ll)")
+    _u("  ", "--check/--tokens/--ast", "inspection modes")
+    echo("")
+    echo(_colored(_ansi_dim, "Env: OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT, OFS_LANG, OFS_PROGRESS, OFS_VERBOSE"))
 }
 
 vein apply_env_overrides(
@@ -270,15 +347,24 @@ core main() {
         return
     }
 
-    if (ofs_str_eq(input_file, "twin") || ofs_str_eq(input_file, "polish") || ofs_str_eq(input_file, "probe")) {
+    if (ofs_str_eq(input_file, "twin") || ofs_str_eq(input_file, "polish") || ofs_str_eq(input_file, "test") || ofs_str_eq(input_file, "probe")) {
         // Fase 5: para twin, emitir forma NDJSON correta (twin_start + twin_result com match=false + razão).
         // Execução nativa real fica para quando o runtime expuser system()+spawn seguro.
+        forge twin_target = getenv("OFSCC_TWIN_TARGET")
         if (ofs_str_eq(input_file, "twin") && _reporter_kind == REPORTER_JSON) {
-            _emit_line("{\"kind\":\"twin_start\",\"target\":\"\"}")
-            _emit_line("{\"kind\":\"twin_result\",\"target\":\"\",\"match\":false,\"reason\":\"twin_not_implemented\"}")
+            _emit_line("{\"kind\":\"twin_start\",\"target\":\"" + twin_target + "\"}")
+            _emit_line("{\"kind\":\"twin_result\",\"target\":\"" + twin_target + "\",\"match\":false,\"reason\":\"twin_not_implemented\"}")
         }
-        event_diagnostic("", LEVEL_WARN, 0, 0, "stub_command", input_file, "")
+        event_diagnostic("", LEVEL_WARN, 0, 0, "stub_command", input_file, twin_target)
         reporter_flush()
+        return
+    }
+
+    if (ofs_str_eq(input_file, "language")) {
+        // 'ofs language' e resolvido no launcher (persistencia em
+        // ~/.config/ofs/lang); aqui apenas espelhamos o estado atual.
+        reporter_detect_locale()
+        echo("ofs language: " + _locale)
         return
     }
 

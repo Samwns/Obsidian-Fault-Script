@@ -367,13 +367,13 @@ Used for:
 
 For bootstrap to work (`ofscc_v2 === ofscc_v3`):
 
-✓ **Deterministic**:
+**Deterministic**:
 - Token order matches source order
 - AST order matches source order  
 - Symbol table ordered byInsertion
 - No timestamps or random data
 
-✗ **Non-deterministic** (avoid):
+**Non-deterministic** (avoid):
 - Hash tables (unpredictable iteration)
 - Floating-point without rounding
 - Embedded timestamps
@@ -442,5 +442,5 @@ Benefits:
 
 ---
 
-**Architecture Status**: ✅ Production & Self-Hosted
+**Architecture Status**: Production & Self-Hosted
 **Verification**: Verified via `cmp -s v3.ll v4.ll` (zero diff)

@@ -2,13 +2,13 @@
 
 **Última Atualização:** 13 de Abril de 2026
 
-## 📂 Conteúdo da Pasta
+##  Conteúdo da Pasta
 
-### 🔨 Build e Bootstrap
+###  Build e Bootstrap
 
 #### `bootstrap-windows.ps1` (275 linhas)
-**Descrição:** Script principal de bootstrap para Windows PowerShell  
-**Uso:** `.\bootstrap-windows.ps1 [opções]`  
+**Descrição:** Script principal de bootstrap para Windows PowerShell 
+**Uso:** `.\bootstrap-windows.ps1 [opções]` 
 **Fases:**
 1. Compila compilador C++ (CMake)
 2. Bootstrap OFS (v1→v2→v3)
@@ -24,9 +24,9 @@
 ---
 
 #### `bootstrap-linux.sh` (355 linhas)
-**Descrição:** Script principal de bootstrap para Linux/macOS  
-**Uso:** `bash bootstrap-linux.sh [opções]`  
-**Fases:** Idênticas ao Windows  
+**Descrição:** Script principal de bootstrap para Linux/macOS 
+**Uso:** `bash bootstrap-linux.sh [opções]` 
+**Fases:** Idênticas ao Windows 
 
 **Opções:**
 - `--skip-cpp-build` — Pula compilação C++
@@ -39,11 +39,11 @@
 
 ---
 
-### 🛠️ Utilitários
+###  Utilitários
 
 #### `utils.ps1` (270 linhas)
-**Descrição:** Utilitários de desenvolvimento para Windows  
-**Uso:** `.\utils.ps1 <comando> [args]`  
+**Descrição:** Utilitários de desenvolvimento para Windows 
+**Uso:** `.\utils.ps1 <comando> [args]` 
 
 **Comandos:**
 ```
@@ -68,17 +68,17 @@ version                   Mostrar versão
 ---
 
 #### `utils.sh` (330 linhas)
-**Descrição:** Utilitários de desenvolvimento para Linux/macOS  
-**Uso:** `bash utils.sh <comando> [args]`  
+**Descrição:** Utilitários de desenvolvimento para Linux/macOS 
+**Uso:** `bash utils.sh <comando> [args]` 
 **Comandos:** Idênticos ao utils.ps1
 
 ---
 
-### 📦 Release e Packaging
+###  Release e Packaging
 
 #### `create-release.sh` (180 linhas)
-**Descrição:** Gera pacotes de release multi-plataforma  
-**Uso:** `bash create-release.sh [VERSION]`  
+**Descrição:** Gera pacotes de release multi-plataforma 
+**Uso:** `bash create-release.sh [VERSION]` 
 
 **Saída:**
 - `releases/ofs-linux-x64-{VERSION}.tar.gz`
@@ -95,11 +95,11 @@ version                   Mostrar versão
 
 ---
 
-### ✅ Validação
+###  Validação
 
 #### `validate.sh` (200 linhas)
-**Descrição:** Valida build do compilador  
-**Uso:** `bash validate.sh [-v|--verbose]`  
+**Descrição:** Valida build do compilador 
+**Uso:** `bash validate.sh [-v|--verbose]` 
 
 **Checks:**
 1. Compilador existe e é executável
@@ -112,11 +112,11 @@ version                   Mostrar versão
 
 ---
 
-### 🤖 CI/CD
+###  CI/CD
 
 #### `ci-build.sh` (180 linhas)
-**Descrição:** Automação para CI/CD pipelines  
-**Uso:** `bash ci-build.sh`  
+**Descrição:** Automação para CI/CD pipelines 
+**Uso:** `bash ci-build.sh` 
 
 **Variáveis de Ambiente:**
 - `VERSION` — Versão do release
@@ -128,11 +128,11 @@ version                   Mostrar versão
 
 ---
 
-### 📋 Make (Unix)
+###  Make (Unix)
 
 #### `Makefile` (280 linhas)
-**Descrição:** Makefile com targets convenientes  
-**Uso:** `make <target> [options]`  
+**Descrição:** Makefile com targets convenientes 
+**Uso:** `make <target> [options]` 
 
 **Targets principais:**
 ```
@@ -158,10 +158,10 @@ make install DESTDIR=/opt
 
 ---
 
-### 📚 Documentação
+###  Documentação
 
 #### `README.md` (500+ linhas)
-**Descrição:** Guia completo de uso dos scripts  
+**Descrição:** Guia completo de uso dos scripts 
 **Conteúdo:**
 - Setup rápido por plataforma
 - Fluxo de compilação explicado
@@ -172,7 +172,7 @@ make install DESTDIR=/opt
 ---
 
 #### `QUICKSTART.md` (200+ linhas)
-**Descrição:** Quick start 5 minutos  
+**Descrição:** Quick start 5 minutos 
 **Conteúdo:**
 - Comandos essenciais
 - Features suportados
@@ -182,7 +182,7 @@ make install DESTDIR=/opt
 ---
 
 #### `MIGRATION_SUMMARY.md` (este arquivo +400 linhas)
-**Descrição:** Summary técnico da migração  
+**Descrição:** Summary técnico da migração 
 **Conteúdo:**
 - O que foi implementado
 - Arquitetura de build
@@ -193,7 +193,7 @@ make install DESTDIR=/opt
 ---
 
 #### `INDEX.md` (este arquivo)
-**Descrição:** Índice de todos os scripts  
+**Descrição:** Índice de todos os scripts 
 **Conteúdo:**
 - Descrição de cada arquivo
 - Opções e commands
@@ -201,7 +201,7 @@ make install DESTDIR=/opt
 
 ---
 
-## 🎯 Fluxo Recomendado
+##  Fluxo Recomendado
 
 ### Primeira Execução (Bootstrap Completo)
 
@@ -209,7 +209,7 @@ make install DESTDIR=/opt
 # Windows
 .\bootstrap-windows.ps1
 
-# Linux/macOS  
+# Linux/macOS 
 bash bootstrap-linux.sh
 ```
 
@@ -245,7 +245,7 @@ bash src/scripts/ci-build.sh
 
 ---
 
-## 🔗 Relações entre Scripts
+##  Relações entre Scripts
 
 ```
 bootstrap-windows.ps1/linux.sh  ← Scripts principais
@@ -285,7 +285,7 @@ Makefile  ← Interface Make
 
 ---
 
-## 📊 Estatísticas
+##  Estatísticas
 
 ### Tamanho dos Scripts
 | Arquivo | Linhas | Tipo |
@@ -310,24 +310,24 @@ Makefile  ← Interface Make
 
 ---
 
-## ✨ Features Suportados
+##  Features Suportados
 
 Todos os features da linguagem OFS estão 100% suportados:
 
-- ✅ Type system completo (stone, float, bool, obsidian, small ints)
-- ✅ Pattern matching
-- ✅ Error handling (throw/catch/tremor)
-- ✅ Monolith + impl
-- ✅ Namespace
-- ✅ Lambda e function values
-- ✅ Package system (attach)
-- ✅ External C bindings (extern vein, rift vein)
-- ✅ Low-level blocks (fracture, abyss, bedrock, fractal)
-- ✅ Complete stdlib (core, io, math, canvas, bedrock)
+-  Type system completo (stone, float, bool, obsidian, small ints)
+-  Pattern matching
+-  Error handling (throw/catch/tremor)
+-  Monolith + impl
+-  Namespace
+-  Lambda e function values
+-  Package system (attach)
+-  External C bindings (extern vein, rift vein)
+-  Low-level blocks (fracture, abyss, bedrock, fractal)
+-  Complete stdlib (core, io, math, canvas, bedrock)
 
 ---
 
-## 🚀 Próximos Passos
+##  Próximos Passos
 
 1. **Ler README.md** para visão geral completa
 2. **Executar bootstrap** com script apropriado
@@ -337,25 +337,25 @@ Todos os features da linguagem OFS estão 100% suportados:
 
 ---
 
-## 📞 Perguntas Frequentes
+##  Perguntas Frequentes
 
-**P: Qual script devo usar?**  
+**P: Qual script devo usar?** 
 R: Primeira vez? Use `bootstrap-windows.ps1` (Windows) ou `bootstrap-linux.sh` (Unix)
 
-**P: Como compilar programas?**  
+**P: Como compilar programas?** 
 R: Use `utils.ps1 compile file.ofs` ou `bash utils.sh compile file.ofs`
 
-**P: Como criar releases?**  
+**P: Como criar releases?** 
 R: `bash src/scripts/create-release.sh 1.0.0`
 
-**P: Qual é a diferença entre v2 e v3?**  
+**P: Qual é a diferença entre v2 e v3?** 
 R: v2 = OFS compilado por C++; v3 = OFS compilado por OFS. Devem ser idênticos.
 
-**P: Posso usar Make?**  
+**P: Posso usar Make?** 
 R: Sim! `make bootstrap`, `make test`, `make release`, etc.
 
 ---
 
-**Status:** ✅ Compilador nativo completo e funcional  
-**Data:** 13 de Abril de 2026  
+**Status:**  Compilador nativo completo e funcional 
+**Data:** 13 de Abril de 2026 
 **Versão:** 1.0.0-native

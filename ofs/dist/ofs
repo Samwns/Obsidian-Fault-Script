@@ -274,26 +274,74 @@ show_version() {
   printf 'status: stable\n'
 }
 
+# Cores do help: ativadas por padrao; NO_COLOR (qualquer valor) ou TERM=dumb
+# desligam. Espelha reporter_detect_color() do ofscc.ofs.
+ofs_color_on() {
+  [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != "dumb" ] && [ -n "${TERM:-}" ]
+}
+
 usage() {
   banner
+  local c_cmd='' c_head='' c_dim='' c_off=''
+  if ofs_color_on; then
+    c_cmd=$'\033[36m'
+    c_head=$'\033[32m'
+    c_dim=$'\033[2m'
+    c_off=$'\033[0m'
+  fi
   cat <<EOF
-ofs - Obsidian Fault Script compiler v$OFS_VERSION
+${c_head}ofs${c_off} - Obsidian Fault Script compiler v$OFS_VERSION
 
-Usage:
-  ofs <file.ofs>                        Run a script directly (interpreted)
-  ofs run    <file.ofs> [--native]      Run interpreted (or --native temporary build)
-  ofs build  <file.ofs> [-o output]     Compile to native executable
-  ofs check  <file.ofs>                 Type-check only (no output)
-  ofs tokens <file.ofs>                 Print token stream (debug)
-  ofs ast    <file.ofs>                 Print AST (debug)
-  ofs ir     <file.ofs>                 Emit LLVM IR (debug)
-  ofs asm    <file.ofs>                 Emit target-native assembly
-  ofs ui     <file.oll> [-o output.ppm] Parse and render native UI layout
-  ofs clean                             Clean temporary build artifacts
-  ofs version                           Print compiler version
-  ofs update                            Update to the latest release
-  ofs help                              Show this help message
+${c_head}Usage:${c_off} ofs <file.ofs>   (same as 'ofs run')
+
+${c_head}Subcommands:${c_off}
+  ${c_cmd}run <file.ofs>${c_off}      Run interpreted (--native builds a temp binary)
+  ${c_cmd}build <file.ofs>${c_off}    Compile to a native executable (-o output)
+  ${c_cmd}check <file.ofs>${c_off}    Type-check only (no output)
+  ${c_cmd}test <file.ofs>${c_off}     Run file tests (assay)
+  ${c_cmd}twin <file.ofs>${c_off}     Run interpreted + native and diff outputs
+  ${c_cmd}polish <file.ofs>${c_off}   Style and pattern checks
+  ${c_cmd}language [en|pt|es]${c_off} Show/change the CLI language
+  ${c_cmd}ir|asm|tokens|ast${c_off}   Compiler debug artifacts
+  ${c_cmd}ui <file.oll>${c_off}       Render native OLL layout (-o output.ppm)
+  ${c_cmd}clean${c_off}               Clean temporary build artifacts
+  ${c_cmd}version${c_off}             Print compiler version
+  ${c_cmd}update${c_off}              Update to the latest release
+  ${c_cmd}help${c_off}                Show this help message
+
+${c_dim}Env: OFS_LANG, OFS_PROGRESS, OFS_VERBOSE, OFS_RUNTIME, OFS_STDLIB_PATH${c_off}
 EOF
+}
+
+# Persistencia de idioma da CLI: $XDG_CONFIG_HOME/ofs/lang ou ~/.config/ofs/lang.
+ofs_lang_file() {
+  local cfg="${XDG_CONFIG_HOME:-$HOME/.config}/ofs"
+  printf '%s\n' "$cfg/lang"
+}
+
+cmd_language() {
+  local cfg_dir cfg_file current
+  cfg_dir="$(dirname "$(ofs_lang_file)")"
+  cfg_file="$(ofs_lang_file)"
+  current="${OFS_LANG:-}"
+  if [ -z "$current" ] && [ -f "$cfg_file" ]; then
+    current="$(head -n 1 "$cfg_file")"
+  fi
+  [ -z "$current" ] && current="en"
+  local want="${1:-}"
+  if [ -z "$want" ]; then
+    printf 'ofs language: %s\n' "$current"
+    printf 'available: en pt es\n'
+    printf 'usage: ofs language <en|pt|es>\n'
+    return 0
+  fi
+  case "$want" in
+    en|pt|es) ;;
+    *) echo "ofs language: idioma invalido '$want' (use en, pt ou es)" >&2; return 2 ;;
+  esac
+  mkdir -p "$cfg_dir"
+  printf '%s\n' "$want" > "$cfg_file"
+  echo "ofs language: $want"
 }
 
 latest_tag() {
@@ -404,6 +452,12 @@ need_ofscc() {
   fi
 }
 
+# Idioma persistido via 'ofs language' alimenta OFS_LANG quando a env nao
+# estiver definida (o reporter faz OFS_LANG > LANG > en).
+if [ -z "${OFS_LANG:-}" ] && [ -f "$(ofs_lang_file)" ]; then
+  export OFS_LANG="$(head -n 1 "$(ofs_lang_file)")"
+fi
+
 cmd="${1:-help}"
 case "$cmd" in
   version|--version|-v)
@@ -418,6 +472,11 @@ case "$cmd" in
     run_update
     exit $?
     ;;
+  language)
+    shift || true
+    cmd_language "${1:-}"
+    exit $?
+    ;;
 esac
 
 need_ofscc
@@ -430,7 +489,7 @@ target_os="linux"
 run_native=false
 
 case "$mode" in
-  check|tokens|ast|ir|asm|build|run|clean|ui) ;;
+  check|tokens|ast|ir|asm|build|run|clean|ui|test|twin|polish) ;;
   *)
     input="$mode"
     mode="run"
@@ -485,6 +544,15 @@ bc="$work.bc"
 case "$mode" in
   check|tokens|ast)
     OFSCC_INPUT="$input" OFSCC_MODE="$mode" "$OFSCC"
+    ;;
+  test|twin|polish)
+    # Subcomandos reservados: o ofscc reconhece o stub via OFSCC_MODE e emite
+    # o diagnostico i18n (twin tambem emite twin_start/twin_result em NDJSON).
+    if [ -z "$input" ]; then
+      usage
+      exit 2
+    fi
+    OFSCC_INPUT="$mode" OFSCC_MODE="$mode" OFSCC_TWIN_TARGET="$input" "$OFSCC"
     ;;
   ir)
     [ -n "$output" ] || output="$name.ll"

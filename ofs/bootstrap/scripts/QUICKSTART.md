@@ -33,18 +33,18 @@ bash src/scripts/utils.sh compile ofs/examples/hello.ofs -o hello
 ## O Que Foi Criado?
 
 ### Scripts de Build
-- ✅ **bootstrap-windows.ps1** (275 linhas)
-- ✅ **bootstrap-linux.sh** (355 linhas)
-- ✅ **create-release.sh** (180 linhas)
-- ✅ **utils.ps1** (270 linhas)
-- ✅ **utils.sh** (330 linhas)
-- ✅ **validate.sh** (200 linhas)
-- ✅ **ci-build.sh** (180 linhas)
-- ✅ **Makefile** (280 linhas)
+-  **bootstrap-windows.ps1** (275 linhas)
+-  **bootstrap-linux.sh** (355 linhas)
+-  **create-release.sh** (180 linhas)
+-  **utils.ps1** (270 linhas)
+-  **utils.sh** (330 linhas)
+-  **validate.sh** (200 linhas)
+-  **ci-build.sh** (180 linhas)
+-  **Makefile** (280 linhas)
 
 ### Documentação
-- ✅ **README.md** (500+ linhas) - Guia completo
-- ✅ **QUICKSTART.md** (este arquivo)
+-  **README.md** (500+ linhas) - Guia completo
+-  **QUICKSTART.md** (este arquivo)
 
 ### Total de Código
 **~2080 linhas de scripts** profissionais, testados e documentados.
@@ -84,11 +84,11 @@ ofs/bootstrap/scripts/
 
 | Plataforma | Status | Script |
 |---|---|---|
-| Windows x64 | ✅ Completo | bootstrap-windows.ps1 |
-| Linux x64 | ✅ Completo | bootstrap-linux.sh |
-| macOS ARM64 | ✅ Completo | bootstrap-linux.sh |
-| Linux ARM64 | ✅ Funcional | bootstrap-linux.sh (com ajustes) |
-| Windows ARM64 | ⚠️  Em progresso | - |
+| Windows x64 |  Completo | bootstrap-windows.ps1 |
+| Linux x64 |  Completo | bootstrap-linux.sh |
+| macOS ARM64 |  Completo | bootstrap-linux.sh |
+| Linux ARM64 |  Funcional | bootstrap-linux.sh (com ajustes) |
+| Windows ARM64 |   Em progresso | - |
 
 ## Próximos Passos
 
@@ -96,7 +96,7 @@ ofs/bootstrap/scripts/
    ```bash
    # Windows
    .\scripts\bootstrap-windows.ps1
-   
+ 
    # Linux/macOS
    bash src/scripts/bootstrap-linux.sh
    ```
@@ -105,7 +105,7 @@ ofs/bootstrap/scripts/
    ```bash
    # Windows
    .\scripts\utils.ps1 version
-   
+ 
    # Linux/macOS
    bash src/scripts/utils.sh version
    ```
@@ -114,7 +114,7 @@ ofs/bootstrap/scripts/
    ```bash
    # Windows
    .\scripts\utils.ps1 compile ofs/examples/calculator.ofs -o calc
-   
+ 
    # Linux/macOS
    bash src/scripts/utils.sh compile ofs/examples/calculator.ofs -o calc
    ```
@@ -123,7 +123,7 @@ ofs/bootstrap/scripts/
    ```bash
    # Windows
    .\scripts\utils.ps1 test
-   
+ 
    # Linux/macOS
    bash src/scripts/utils.sh test
    ```
@@ -167,28 +167,28 @@ INSTALL_DIR=/mylibs bash src/scripts/bootstrap-linux.sh
 
 ## Features 100% Suportados
 
-✅ Type checking e inference  
-✅ Pattern matching (match/case)  
-✅ Error handling (throw/catch/tremor)  
-✅ Monolith com impl blocks  
-✅ Namespace organization  
-✅ Lambda e function values  
-✅ Package system (attach)  
-✅ External bindings (extern vein, rift vein)  
-✅ Low-level blocks (fracture, abyss, bedrock, fractal)  
-✅ Small int types (u8, u16, u32, i8, i16, i32)  
-✅ Complete standard library  
+ Type checking e inference 
+ Pattern matching (match/case) 
+ Error handling (throw/catch/tremor) 
+ Monolith com impl blocks 
+ Namespace organization 
+ Lambda e function values 
+ Package system (attach) 
+ External bindings (extern vein, rift vein) 
+ Low-level blocks (fracture, abyss, bedrock, fractal) 
+ Small int types (u8, u16, u32, i8, i16, i32) 
+ Complete standard library 
 
 ## Status Final
 
-✅ **COMPILADOR NATIVO FUNCIONAL**  
-✅ **TODAS AS FEATURES SUPORTADAS**  
-✅ **BOOTSTRAP DETERMINÍSTICO**  
-✅ **MULTI-PLATAFORMA PRONTO**  
-✅ **RELEASES AUTOMATED**  
+ **COMPILADOR NATIVO FUNCIONAL** 
+ **TODAS AS FEATURES SUPORTADAS** 
+ **BOOTSTRAP DETERMINÍSTICO** 
+ **MULTI-PLATAFORMA PRONTO** 
+ **RELEASES AUTOMATED** 
 
 ---
 
-**Data:** 13 de Abril de 2026  
-**Version:** 1.0.0-native  
-**Status:** 🚀 Production Ready
+**Data:** 13 de Abril de 2026 
+**Version:** 1.0.0-native 
+**Status:**  Production Ready

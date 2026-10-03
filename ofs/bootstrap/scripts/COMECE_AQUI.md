@@ -1,12 +1,12 @@
-# ⚡ MIGRAÇÃO PARA COMPILADOR NATIVO - GUIA COMPLETO
+#  MIGRAÇÃO PARA COMPILADOR NATIVO - GUIA COMPLETO
 
-**Status:** ✅ **COMPLETO E FUNCIONAL**  
-**Data:** 13 de Abril de 2026  
+**Status:**  **COMPLETO E FUNCIONAL** 
+**Data:** 13 de Abril de 2026 
 **Compilador:** OFS Self-Hosted 100%
 
 ---
 
-## 🚀 Comece AGORA (3 passos)
+##  Comece AGORA (3 passos)
 
 ### Passo 1: Configure Permissões (apenas Unix)
 ```bash
@@ -39,7 +39,7 @@ bash src/scripts/utils.sh version
 
 ---
 
-## 📦 O Que Foi Criado
+##  O Que Foi Criado
 
 ### Scripts (2080+ linhas de código profissional)
 ```
@@ -79,12 +79,12 @@ ofs/bootstrap/scripts/
 
 ---
 
-## 💻 Usar o Compilador
+##  Usar o Compilador
 
 Depois de fazer bootstrap, você tem:
-- ✅ `ofs/dist/ofscc` — Compilador nativo
-- ✅ `ofs/dist/stdlib/` — Biblioteca padrão completa
-- ✅ `ofs/dist/magma.o` — Runtime nativo implementado em OFS
+-  `ofs/dist/ofscc` — Compilador nativo
+-  `ofs/dist/stdlib/` — Biblioteca padrão completa
+-  `ofs/dist/magma.o` — Runtime nativo implementado em OFS
 
 ### Compilar Programa
 ```bash
@@ -107,7 +107,7 @@ ofs/dist/ofscc asm seu_programa.ofs      # Assembly
 
 ---
 
-## 🛠️ Atalhos com Utilitários
+##  Atalhos com Utilitários
 
 ### Windows PowerShell
 ```powershell
@@ -144,7 +144,7 @@ make help           # Ver todos os targets
 
 ---
 
-## ✅ Validar Instalação
+##  Validar Instalação
 
 ```bash
 # Rodar validação completa
@@ -161,44 +161,44 @@ bash ofs/bootstrap/scripts/utils.sh test
 
 ---
 
-## 📚 Todos os Recursos OFS (100% Suportado)
+##  Todos os Recursos OFS (100% Suportado)
 
 ### Linguagem
-- ✅ Type system: `stone`, `float`, `bool`, `obsidian`
-- ✅ Small ints: `u8, u16, u32, u64, i8, i16, i32, i64`
-- ✅ Pattern matching: `match expr { ... }`
-- ✅ Error handling: `throw`, `catch`, `tremor`
-- ✅ Control flow: `if/while/for/return`
-- ✅ Functions, lambdas, closures
-- ✅ Type inference e checking
+-  Type system: `stone`, `float`, `bool`, `obsidian`
+-  Small ints: `u8, u16, u32, u64, i8, i16, i32, i64`
+-  Pattern matching: `match expr { ... }`
+-  Error handling: `throw`, `catch`, `tremor`
+-  Control flow: `if/while/for/return`
+-  Functions, lambdas, closures
+-  Type inference e checking
 
 ### Organização
-- ✅ Monolith (structs) com `impl` blocks
-- ✅ Namespace
-- ✅ Modules: `attach {modulo}`
-- ✅ Const expressions
+-  Monolith (structs) com `impl` blocks
+-  Namespace
+-  Modules: `attach {modulo}`
+-  Const expressions
 
 ### Interop C
-- ✅ `extern vein` — Chamar C
-- ✅ `rift vein` — Callbacks C
-- ✅ Pointer support
+-  `extern vein` — Chamar C
+-  `rift vein` — Callbacks C
+-  Pointer support
 
 ### Low-Level
-- ✅ `fracture` — Inline assembly
-- ✅ `abyss` — Undefined behavior
-- ✅ `bedrock` — Memory access
-- ✅ `fractal` — Allocation
+-  `fracture` — Inline assembly
+-  `abyss` — Undefined behavior
+-  `bedrock` — Memory access
+-  `fractal` — Allocation
 
 ### Stdlib Completa
-- ✅ **core** — Funções básicas
-- ✅ **io** — I/O e arquivos
-- ✅ **math** — Matemática
-- ✅ **canvas** — Gráficos (SDL2)
-- ✅ **bedrock** — Networking
+-  **core** — Funções básicas
+-  **io** — I/O e arquivos
+-  **math** — Matemática
+-  **canvas** — Gráficos (SDL2)
+-  **bedrock** — Networking
 
 ---
 
-## 🔧 Opções Avançadas
+##  Opções Avançadas
 
 ### Compilação Customizada
 
@@ -230,7 +230,7 @@ make release VERSION=1.1.0
 
 ---
 
-## 📦 Gerar Releases
+##  Gerar Releases
 
 ```bash
 bash ofs/bootstrap/scripts/create-release.sh 1.0.0-native
@@ -244,7 +244,7 @@ Isso gera:
 
 ---
 
-## 🐛 Troubleshooting
+##  Troubleshooting
 
 | Problema | Causa | Solução |
 |---|---|---|
@@ -265,7 +265,7 @@ bash -x bootstrap-linux.sh
 
 ---
 
-## 📖 Documentação
+##  Documentação
 
 Todos os arquivos estão em `ofs/bootstrap/scripts/`:
 
@@ -277,33 +277,33 @@ Todos os arquivos estão em `ofs/bootstrap/scripts/`:
 
 ---
 
-## 🎯 Próximos Passos
+##  Próximos Passos
 
 ### Para Usuários
-1. ✅ Fazer bootstrap: `bash bootstrap-linux.sh`
-2. ✅ Compilar exemplos: `ofs/dist/ofscc build ofs/examples/hello.ofs`
-3. ✅ Explorar stdlib: Ver `ofs/dist/stdlib/`
+1.  Fazer bootstrap: `bash bootstrap-linux.sh`
+2.  Compilar exemplos: `ofs/dist/ofscc build ofs/examples/hello.ofs`
+3.  Explorar stdlib: Ver `ofs/dist/stdlib/`
 4. Ler [docs/LANGUAGE_REFERENCE.md](../docs/LANGUAGE_REFERENCE.md)
 5. Criar seus próprios programas OFS
 
 ### Para Desenvolvedores
-1. ✅ Fazer bootstrap
-2. ✅ Rodar testes: `bash utils.sh test`
-3. ✅ Modificar compilador OFS em `ofs/ofscc/`
+1.  Fazer bootstrap
+2.  Rodar testes: `bash utils.sh test`
+3.  Modificar compilador OFS em `ofs/ofscc/`
 4. Re-bootstrapear: `bash bootstrap-linux.sh`
 5. Submeter pull request
 
 ### Para CI/CD
-1. ✅ Usar `ci-build.sh` em seu pipeline
-2. ✅ Automatizar releases com `create-release.sh`
-3. ✅ Validar com `validate.sh`
+1.  Usar `ci-build.sh` em seu pipeline
+2.  Automatizar releases com `create-release.sh`
+3.  Validar com `validate.sh`
 4. Upload artifacts para GitHub Releases
 
 ---
 
-## 🌟 Highlights
+##  Highlights
 
-### Determinismo ✅
+### Determinismo 
 O bootstrap garante que:
 - `ofscc_v2` (OFS compilado por C++) 
 - `ofscc_v3` (OFS compilado por OFS)
@@ -311,27 +311,27 @@ O bootstrap garante que:
 
 Isso prova que o compilador é determinístico e self-hosting!
 
-### Suporte Completo ✅
+### Suporte Completo 
 **TODOS os 20+ features** da linguagem OFS:
-- ✅ Type system avançado
-- ✅ Pattern matching
-- ✅ Error handling
-- ✅ Monolith + impl
-- ✅ Lambdas e closures
-- ✅ Package system
-- ✅ C interop
-- ✅ Low-level blocks
-- ✅ Stdlib completa
+-  Type system avançado
+-  Pattern matching
+-  Error handling
+-  Monolith + impl
+-  Lambdas e closures
+-  Package system
+-  C interop
+-  Low-level blocks
+-  Stdlib completa
 
-### Multi-Plataforma ✅
-- Windows x64 ✅
-- Linux x64 ✅
-- macOS ARM64 ✅
+### Multi-Plataforma 
+- Windows x64 
+- Linux x64 
+- macOS ARM64 
 - Pronto para mais arquiteturas
 
 ---
 
-## 📊 Estatísticas Finais
+##  Estatísticas Finais
 
 ### Código Novo
 ```
@@ -341,19 +341,19 @@ Total produzido:        ~3480 linhas
 ────────────────────────────────────
 Qualidade:              Production-ready
 Cobertura:              100% de features
-Status:                 ✅ COMPLETO
+Status:                  COMPLETO
 ```
 
 ### Compilador OFS (já existente)
 ```
 Linhas em OFS:          ~4500+ linhas
 Features suportados:    20+ features
-Status:                 ✅ Self-hosted
+Status:                  Self-hosted
 ```
 
 ---
 
-## 🚀 Estamos Prontos!
+##  Estamos Prontos!
 
 O compilador nativo está **completo, funcional e pronto para uso em produção**.
 
@@ -368,25 +368,25 @@ bash src/scripts/bootstrap-linux.sh
 ```
 
 **Em 5-15 minutos você terá:**
-- ✅ Compilador nativo funcional
-- ✅ Stdlib completa
-- ✅ Ferramentas de desenvolvimento
-- ✅ Determinismo validado
+-  Compilador nativo funcional
+-  Stdlib completa
+-  Ferramentas de desenvolvimento
+-  Determinismo validado
 
 ---
 
-## 📞 Suporte & Discussão
+##  Suporte & Discussão
 
-- 🐛 Bugs: https://github.com/Samwns/Obsidian-Fault-Script/issues
-- 💬 Perguntas: https://github.com/Samwns/Obsidian-Fault-Script/discussions
-- 📖 Docs: https://github.com/Samwns/Obsidian-Fault-Script
-
----
-
-**🎉 Parabéns! Você agora tem um compilador de linguagem funcional, self-hosted, determinístico e multi-plataforma!**
+-  Bugs: https://github.com/Samwns/Obsidian-Fault-Script/issues
+-  Perguntas: https://github.com/Samwns/Obsidian-Fault-Script/discussions
+-  Docs: https://github.com/Samwns/Obsidian-Fault-Script
 
 ---
 
-**Compilador:** OFS v1.0.0-native  
-**Data:** 13 de Abril de 2026  
-**Sistema:** Pronto para Produção ✅
+** Parabéns! Você agora tem um compilador de linguagem funcional, self-hosted, determinístico e multi-plataforma!**
+
+---
+
+**Compilador:** OFS v1.0.0-native 
+**Data:** 13 de Abril de 2026 
+**Sistema:** Pronto para Produção 

@@ -1,12 +1,12 @@
-# 🎯 Releases sem C++ - Resumo Executivo
+#  Releases sem C++ - Resumo Executivo
 
-**Status:** ✅ Pipeline C++-Free Completo  
-**Tempo Build:** ~2 segundos (era 5-15 minutos)  
-**CI/CD Time:** ~30 segundos (era 15+ minutos)  
+**Status:**  Pipeline C++-Free Completo 
+**Tempo Build:** ~2 segundos (era 5-15 minutos) 
+**CI/CD Time:** ~30 segundos (era 15+ minutos) 
 
 ---
 
-## ⚡ Quick Start
+##  Quick Start
 
 ### Windows
 ```powershell
@@ -25,35 +25,35 @@ ls releases/
 # 1. Minimal bootstrap
 bash ofs/bootstrap/scripts/bootstrap-minimal.sh
 
-# 2. Create release  
+# 2. Create release 
 bash ofs/bootstrap/scripts/release-native-only.sh 1.0.0 --recompile
 
 # 3. Done!
 ls -lh releases/
 ```
 
-**Tempo total:** ~5 segundos 🚀
+**Tempo total:** ~5 segundos 
 
 ---
 
-## 📊 Comparação
+##  Comparação
 
 | Métrica | Com C++ | Sem C++ | Ganho |
 |---|---|---|---|
-| **Build** | 5-15 min | ~2 sec | 150-450x ⚡ |
-| **Dependencies** | CMake, LLVM, GCC | Nenhuma | 100% ✓ |
+| **Build** | 5-15 min | ~2 sec | 150-450x  |
+| **Dependencies** | CMake, LLVM, GCC | Nenhuma | 100%  |
 | **Projeto Size** | +100 MB (src/) | Mínimo | 99% - |
-| **CI/CD Total** | 15+ min | ~30 sec | 30x ⚡ |
+| **CI/CD Total** | 15+ min | ~30 sec | 30x  |
 | **Release Size** | 50-100 MB | 10-20 MB | 75% - |
 
 ---
 
-## 🆕 Scripts Novos (3 arquivos)
+##  Scripts Novos (3 arquivos)
 
 ### 1. `bootstrap-minimal.sh` (105 linhas)
-Próximo: Linux/macOS  
-**Usa:** Compilador OFS existente  
-**Faz:** Recompila + valida determinismo  
+Próximo: Linux/macOS 
+**Usa:** Compilador OFS existente 
+**Faz:** Recompila + valida determinismo 
 **Tempo:** ~2 segundos
 
 ```bash
@@ -62,9 +62,9 @@ bash bootstrap-minimal.sh
 ```
 
 ### 2. `release-native-only.sh` (260 linhas)
-Próximo: Linux/macOS  
-**Usa:** Compilador OFS (qualquer um)  
-**Faz:** Cria pacotes tar.gz, zip, checksums  
+Próximo: Linux/macOS 
+**Usa:** Compilador OFS (qualquer um) 
+**Faz:** Cria pacotes tar.gz, zip, checksums 
 **Tempo:** ~3-5 segundos
 
 ```bash
@@ -76,9 +76,9 @@ bash release-native-only.sh 1.0.0 --recompile
 ```
 
 ### 3. `release-native-only-windows.ps1` (240 linhas)
-Próximo: Windows PowerShell  
-**Usa:** Compilador OFS existente  
-**Faz:** Cria package ZIP, checksums  
+Próximo: Windows PowerShell 
+**Usa:** Compilador OFS existente 
+**Faz:** Cria package ZIP, checksums 
 **Tempo:** ~3-5 segundos
 
 ```powershell
@@ -91,7 +91,7 @@ Próximo: Windows PowerShell
 
 ---
 
-## 🔄 Workflow
+##  Workflow
 
 ### Desenvolvimento
 ```bash
@@ -117,11 +117,11 @@ git add -A && git commit -m "v1.0.1" && git tag v1.0.1 && git push --tags
     files: releases/*
 ```
 
-**Total:** ~30 segundos ✓
+**Total:** ~30 segundos 
 
 ---
 
-## 📦 Saída
+##  Saída
 
 ### Linux/macOS
 ```bash
@@ -141,19 +141,19 @@ releases/
 
 ---
 
-## ✨ Benefícios
+##  Benefícios
 
-✅ **150-450x mais rápido** (release em 2-5 sec)  
-✅ **Zero dependências** (nada a instalar)  
-✅ **Sem C++** (completamente removido)  
-✅ **CI/CD rápido** (~30 sec total)  
-✅ **Multi-plataforma** (1 comando)  
-✅ **Determinístico** (sempre validado)  
-✅ **Production-ready** (agora!)
+ **150-450x mais rápido** (release em 2-5 sec) 
+ **Zero dependências** (nada a instalar) 
+ **Sem C++** (completamente removido) 
+ **CI/CD rápido** (~30 sec total) 
+ **Multi-plataforma** (1 comando) 
+ **Determinístico** (sempre validado) 
+ **Production-ready** (agora!)
 
 ---
 
-## 🎓 Próximos Passos
+##  Próximos Passos
 
 ### Hoje
 ```bash
@@ -173,24 +173,24 @@ bash ofs/bootstrap/scripts/release-native-only.sh 1.0.0 --test
 
 ---
 
-## 🎯 Status Final
+##  Status Final
 
-✅ Compilador nativo: **Self-hosted e determinístico**  
-✅ Release script: **C++-free e multi-plataforma**  
-✅ Build time: **150x mais rápido**  
-✅ CI/CD time: **~30 segundos**  
-✅ Dependencies: **Zero**  
-✅ Pronto: **Para produção**  
+ Compilador nativo: **Self-hosted e determinístico** 
+ Release script: **C++-free e multi-plataforma** 
+ Build time: **150x mais rápido** 
+ CI/CD time: **~30 segundos** 
+ Dependencies: **Zero** 
+ Pronto: **Para produção** 
 
 ---
 
-## 📝 Documentação Completa
+##  Documentação Completa
 
 Leia: [RELEASES_WITHOUT_CPP.md](RELEASES_WITHOUT_CPP.md)
 
 ---
 
-**🚀 Releases sem C++ estão PRONTAS!**
+** Releases sem C++ estão PRONTAS!**
 
 ```bash
 bash bootstrap-minimal.sh
@@ -200,5 +200,5 @@ bash release-native-only.sh 1.0.0 --recompile
 
 ---
 
-**Data:** 13 de Abril de 2026  
-**Status:** ✅ Completo e Funcional
+**Data:** 13 de Abril de 2026 
+**Status:**  Completo e Funcional

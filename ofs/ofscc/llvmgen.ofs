@@ -277,6 +277,11 @@ namespace llvmgen {
         }
         if (n.kind == NK_LIT_STRING) { return string_name_for(n.val) }
         if (ofs_str_eq(type_str, "obsidian") || ofs_str_eq(type_str, "Array") || is_named_type(type_str)) { return "null" }
+        // Any other constant initialiser assigned to a pointer-typed global
+        // (e.g. `forge x: Array<T> = []`) must be `null`, not integer `0`,
+        // otherwise llc rejects the module with
+        // "integer constant must have integer type".
+        if (ofs_str_eq(llvm_type(type_str), "ptr")) { return "null" }
         return "0"
     }
 

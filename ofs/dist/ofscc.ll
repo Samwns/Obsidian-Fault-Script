@@ -701,77 +701,83 @@ source_filename = "ofs_module"
 @str.690 = private unnamed_addr constant [11 x i8] c"diagnostic\00", align 1
 @str.691 = private unnamed_addr constant [9 x i8] c"finished\00", align 1
 @str.692 = private unnamed_addr constant [12 x i8] c"program_out\00", align 1
-@str.693 = private unnamed_addr constant [10 x i8] c"{\22kind\22:\22\00", align 1
-@str.694 = private unnamed_addr constant [11 x i8] c",\22stage\22:\22\00", align 1
-@str.695 = private unnamed_addr constant [11 x i8] c",\22level\22:\22\00", align 1
-@str.696 = private unnamed_addr constant [10 x i8] c",\22code\22:\22\00", align 1
-@str.697 = private unnamed_addr constant [9 x i8] c",\22line\22:\00", align 1
-@str.698 = private unnamed_addr constant [8 x i8] c",\22col\22:\00", align 1
-@str.699 = private unnamed_addr constant [9 x i8] c",\22msg\22:\22\00", align 1
-@str.700 = private unnamed_addr constant [10 x i8] c",\22arg1\22:\22\00", align 1
-@str.701 = private unnamed_addr constant [10 x i8] c",\22arg2\22:\22\00", align 1
-@str.702 = private unnamed_addr constant [12 x i8] c",\22target\22:\22\00", align 1
-@str.703 = private unnamed_addr constant [10 x i8] c",\22info\22:\22\00", align 1
-@str.704 = private unnamed_addr constant [7 x i8] c",\22ms\22:\00", align 1
-@str.705 = private unnamed_addr constant [9 x i8] c"] start \00", align 1
-@str.706 = private unnamed_addr constant [4 x i8] c" ok\00", align 1
-@str.707 = private unnamed_addr constant [6 x i8] c"done \00", align 1
-@str.708 = private unnamed_addr constant [11 x i8] c"attach {F:\00", align 1
-@str.709 = private unnamed_addr constant [16 x i8] c"OFS_STDLIB_PATH\00", align 1
-@str.710 = private unnamed_addr constant [35 x i8] c"Usage: ofscc [options] <input.ofs>\00", align 1
-@str.711 = private unnamed_addr constant [9 x i8] c"Options:\00", align 1
-@str.712 = private unnamed_addr constant [54 x i8] c"  -o <output>      Output executable (default: a.out)\00", align 1
-@str.713 = private unnamed_addr constant [58 x i8] c"  -O0/-O2/-O3      LLVM optimization level (default: -O2)\00", align 1
-@str.714 = private unnamed_addr constant [60 x i8] c"  --emit-ir <file> LLVM IR output path (default: output.ll)\00", align 1
-@str.715 = private unnamed_addr constant [48 x i8] c"  --check          Type-check only (no codegen)\00", align 1
-@str.716 = private unnamed_addr constant [41 x i8] c"  --tokens         Print tokens and exit\00", align 1
-@str.717 = private unnamed_addr constant [38 x i8] c"  --ast            Print AST and exit\00", align 1
-@str.718 = private unnamed_addr constant [37 x i8] c"  --help           Show this message\00", align 1
-@str.719 = private unnamed_addr constant [14 x i8] c"Env fallback:\00", align 1
-@str.720 = private unnamed_addr constant [64 x i8] c"  OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT\00", align 1
-@str.721 = private unnamed_addr constant [12 x i8] c"OFSCC_INPUT\00", align 1
-@str.722 = private unnamed_addr constant [13 x i8] c"OFSCC_OUTPUT\00", align 1
-@str.723 = private unnamed_addr constant [12 x i8] c"OFSCC_C_OUT\00", align 1
-@str.724 = private unnamed_addr constant [11 x i8] c"OFSCC_MODE\00", align 1
-@str.725 = private unnamed_addr constant [7 x i8] c"tokens\00", align 1
-@str.726 = private unnamed_addr constant [4 x i8] c"ast\00", align 1
-@str.727 = private unnamed_addr constant [3 x i8] c"ir\00", align 1
-@str.728 = private unnamed_addr constant [10 x i8] c"OFSCC_OPT\00", align 1
-@str.729 = private unnamed_addr constant [4 x i8] c"-O0\00", align 1
-@str.730 = private unnamed_addr constant [4 x i8] c"-O2\00", align 1
-@str.731 = private unnamed_addr constant [4 x i8] c"-O3\00", align 1
-@str.732 = private unnamed_addr constant [10 x i8] c"input.ofs\00", align 1
-@str.733 = private unnamed_addr constant [6 x i8] c"a.out\00", align 1
-@str.734 = private unnamed_addr constant [10 x i8] c"output.ll\00", align 1
-@str.735 = private unnamed_addr constant [9 x i8] c"build-ir\00", align 1
-@str.736 = private unnamed_addr constant [12 x i8] c"OFS_VERBOSE\00", align 1
-@str.737 = private unnamed_addr constant [13 x i8] c"OFS_PROGRESS\00", align 1
-@str.738 = private unnamed_addr constant [5 x i8] c"json\00", align 1
-@str.739 = private unnamed_addr constant [6 x i8] c"fancy\00", align 1
-@str.740 = private unnamed_addr constant [6 x i8] c"plain\00", align 1
-@str.741 = private unnamed_addr constant [7 x i8] c"--help\00", align 1
-@str.742 = private unnamed_addr constant [5 x i8] c"twin\00", align 1
-@str.743 = private unnamed_addr constant [7 x i8] c"polish\00", align 1
-@str.744 = private unnamed_addr constant [6 x i8] c"probe\00", align 1
-@str.745 = private unnamed_addr constant [18 x i8] c"OFS_DUMP_EXPANDED\00", align 1
-@str.746 = private unnamed_addr constant [5 x i8] c"tok(\00", align 1
-@str.747 = private unnamed_addr constant [4 x i8] c") '\00", align 1
-@str.748 = private unnamed_addr constant [16 x i8] c"AST root kind: \00", align 1
-@str.749 = private unnamed_addr constant [2 x i8] c"c\00", align 1
-@str.750 = private unnamed_addr constant [9 x i8] c"1 module\00", align 1
-@str.751 = private unnamed_addr constant [3 x i8] c".o\00", align 1
-@str.752 = private unnamed_addr constant [12 x i8] c"OFS_RUNTIME\00", align 1
-@str.753 = private unnamed_addr constant [36 x i8] c"/usr/local/lib/ofs/libofs_runtime.a\00", align 1
-@str.754 = private unnamed_addr constant [3 x i8] c"rb\00", align 1
-@str.755 = private unnamed_addr constant [5 x i8] c"gcc \00", align 1
-@str.756 = private unnamed_addr constant [5 x i8] c" -o \00", align 1
-@str.757 = private unnamed_addr constant [6 x i8] c" 2>&1\00", align 1
-@str.758 = private unnamed_addr constant [19 x i8] c"llc -filetype=obj \00", align 1
-@str.759 = private unnamed_addr constant [89 x i8] c" && (ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib64/crt1.o /usr/lib64/crti.o \00", align 1
-@str.760 = private unnamed_addr constant [31 x i8] c" -lc -lm /usr/lib64/crtn.o -o \00", align 1
-@str.761 = private unnamed_addr constant [138 x i8] c" 2>&1 || ld -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o \00", align 1
-@str.762 = private unnamed_addr constant [46 x i8] c" -lc -lm /usr/lib/x86_64-linux-gnu/crtn.o -o \00", align 1
-@str.763 = private unnamed_addr constant [7 x i8] c" 2>&1)\00", align 1
+@str.693 = private unnamed_addr constant [5 x i8] c"-\5C|/\00", align 1
+@str.694 = private unnamed_addr constant [10 x i8] c"{\22kind\22:\22\00", align 1
+@str.695 = private unnamed_addr constant [12 x i8] c",\22locale\22:\22\00", align 1
+@str.696 = private unnamed_addr constant [11 x i8] c",\22stage\22:\22\00", align 1
+@str.697 = private unnamed_addr constant [11 x i8] c",\22level\22:\22\00", align 1
+@str.698 = private unnamed_addr constant [10 x i8] c",\22code\22:\22\00", align 1
+@str.699 = private unnamed_addr constant [9 x i8] c",\22line\22:\00", align 1
+@str.700 = private unnamed_addr constant [8 x i8] c",\22col\22:\00", align 1
+@str.701 = private unnamed_addr constant [13 x i8] c",\22msg_key\22:\22\00", align 1
+@str.702 = private unnamed_addr constant [9 x i8] c",\22msg\22:\22\00", align 1
+@str.703 = private unnamed_addr constant [10 x i8] c",\22args\22:[\00", align 1
+@str.704 = private unnamed_addr constant [12 x i8] c",\22target\22:\22\00", align 1
+@str.705 = private unnamed_addr constant [10 x i8] c",\22info\22:\22\00", align 1
+@str.706 = private unnamed_addr constant [7 x i8] c",\22ms\22:\00", align 1
+@str.707 = private unnamed_addr constant [22 x i8] c",\22duration_ms_total\22:\00", align 1
+@str.708 = private unnamed_addr constant [9 x i8] c"] start \00", align 1
+@str.709 = private unnamed_addr constant [4 x i8] c" ok\00", align 1
+@str.710 = private unnamed_addr constant [6 x i8] c"done \00", align 1
+@str.711 = private unnamed_addr constant [11 x i8] c"attach {F:\00", align 1
+@str.712 = private unnamed_addr constant [16 x i8] c"OFS_STDLIB_PATH\00", align 1
+@str.713 = private unnamed_addr constant [35 x i8] c"Usage: ofscc [options] <input.ofs>\00", align 1
+@str.714 = private unnamed_addr constant [9 x i8] c"Options:\00", align 1
+@str.715 = private unnamed_addr constant [54 x i8] c"  -o <output>      Output executable (default: a.out)\00", align 1
+@str.716 = private unnamed_addr constant [58 x i8] c"  -O0/-O2/-O3      LLVM optimization level (default: -O2)\00", align 1
+@str.717 = private unnamed_addr constant [60 x i8] c"  --emit-ir <file> LLVM IR output path (default: output.ll)\00", align 1
+@str.718 = private unnamed_addr constant [48 x i8] c"  --check          Type-check only (no codegen)\00", align 1
+@str.719 = private unnamed_addr constant [41 x i8] c"  --tokens         Print tokens and exit\00", align 1
+@str.720 = private unnamed_addr constant [38 x i8] c"  --ast            Print AST and exit\00", align 1
+@str.721 = private unnamed_addr constant [37 x i8] c"  --help           Show this message\00", align 1
+@str.722 = private unnamed_addr constant [14 x i8] c"Env fallback:\00", align 1
+@str.723 = private unnamed_addr constant [64 x i8] c"  OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT\00", align 1
+@str.724 = private unnamed_addr constant [12 x i8] c"OFSCC_INPUT\00", align 1
+@str.725 = private unnamed_addr constant [13 x i8] c"OFSCC_OUTPUT\00", align 1
+@str.726 = private unnamed_addr constant [12 x i8] c"OFSCC_C_OUT\00", align 1
+@str.727 = private unnamed_addr constant [11 x i8] c"OFSCC_MODE\00", align 1
+@str.728 = private unnamed_addr constant [7 x i8] c"tokens\00", align 1
+@str.729 = private unnamed_addr constant [4 x i8] c"ast\00", align 1
+@str.730 = private unnamed_addr constant [3 x i8] c"ir\00", align 1
+@str.731 = private unnamed_addr constant [10 x i8] c"OFSCC_OPT\00", align 1
+@str.732 = private unnamed_addr constant [4 x i8] c"-O0\00", align 1
+@str.733 = private unnamed_addr constant [4 x i8] c"-O2\00", align 1
+@str.734 = private unnamed_addr constant [4 x i8] c"-O3\00", align 1
+@str.735 = private unnamed_addr constant [10 x i8] c"input.ofs\00", align 1
+@str.736 = private unnamed_addr constant [6 x i8] c"a.out\00", align 1
+@str.737 = private unnamed_addr constant [10 x i8] c"output.ll\00", align 1
+@str.738 = private unnamed_addr constant [9 x i8] c"build-ir\00", align 1
+@str.739 = private unnamed_addr constant [12 x i8] c"OFS_VERBOSE\00", align 1
+@str.740 = private unnamed_addr constant [13 x i8] c"OFS_PROGRESS\00", align 1
+@str.741 = private unnamed_addr constant [9 x i8] c"OFS_ANIM\00", align 1
+@str.742 = private unnamed_addr constant [5 x i8] c"json\00", align 1
+@str.743 = private unnamed_addr constant [6 x i8] c"fancy\00", align 1
+@str.744 = private unnamed_addr constant [6 x i8] c"plain\00", align 1
+@str.745 = private unnamed_addr constant [7 x i8] c"--help\00", align 1
+@str.746 = private unnamed_addr constant [5 x i8] c"twin\00", align 1
+@str.747 = private unnamed_addr constant [7 x i8] c"polish\00", align 1
+@str.748 = private unnamed_addr constant [6 x i8] c"probe\00", align 1
+@str.749 = private unnamed_addr constant [34 x i8] c"{\22kind\22:\22twin_start\22,\22target\22:\22\22}\00", align 1
+@str.750 = private unnamed_addr constant [81 x i8] c"{\22kind\22:\22twin_result\22,\22target\22:\22\22,\22match\22:false,\22reason\22:\22twin_not_implemented\22}\00", align 1
+@str.751 = private unnamed_addr constant [18 x i8] c"OFS_DUMP_EXPANDED\00", align 1
+@str.752 = private unnamed_addr constant [5 x i8] c"tok(\00", align 1
+@str.753 = private unnamed_addr constant [4 x i8] c") '\00", align 1
+@str.754 = private unnamed_addr constant [16 x i8] c"AST root kind: \00", align 1
+@str.755 = private unnamed_addr constant [2 x i8] c"c\00", align 1
+@str.756 = private unnamed_addr constant [9 x i8] c"1 module\00", align 1
+@str.757 = private unnamed_addr constant [3 x i8] c".o\00", align 1
+@str.758 = private unnamed_addr constant [12 x i8] c"OFS_RUNTIME\00", align 1
+@str.759 = private unnamed_addr constant [36 x i8] c"/usr/local/lib/ofs/libofs_runtime.a\00", align 1
+@str.760 = private unnamed_addr constant [3 x i8] c"rb\00", align 1
+@str.761 = private unnamed_addr constant [5 x i8] c"gcc \00", align 1
+@str.762 = private unnamed_addr constant [5 x i8] c" -o \00", align 1
+@str.763 = private unnamed_addr constant [6 x i8] c" 2>&1\00", align 1
+@str.764 = private unnamed_addr constant [19 x i8] c"llc -filetype=obj \00", align 1
+@str.765 = private unnamed_addr constant [89 x i8] c" && (ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib64/crt1.o /usr/lib64/crti.o \00", align 1
+@str.766 = private unnamed_addr constant [31 x i8] c" -lc -lm /usr/lib64/crtn.o -o \00", align 1
+@str.767 = private unnamed_addr constant [138 x i8] c" 2>&1 || ld -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o \00", align 1
+@str.768 = private unnamed_addr constant [46 x i8] c" -lc -lm /usr/lib/x86_64-linux-gnu/crtn.o -o \00", align 1
+@str.769 = private unnamed_addr constant [7 x i8] c" 2>&1)\00", align 1
 @_out_file = global ptr null
 @TOK_FORGE = global i64 1
 @TOK_VEIN = global i64 2
@@ -1119,6 +1125,11 @@ source_filename = "ofs_module"
 @_ansi_reset = global ptr @str.667
 @_ansi_esc = global ptr @str.72
 @_use_color = global i32 0
+@_anim_enabled = global i32 0
+@_anim_frame = global i64 0
+@_anim_last_stage = global i64 0
+@_json_total_ms = global double 0.0
+@_json_locale_emitted = global i32 0
 @_expanded_paths = global ptr null
 
 declare void @echo_stone(i64)
@@ -34002,33 +34013,36 @@ if_end4310:
   br i1 %cmp15421, label %if_then4311, label %if_else4312
 
 if_then4311:
-  %_reporter_verbose_val15422 = load i32, ptr @_reporter_verbose
-  %cond15423 = icmp ne i32 %_reporter_verbose_val15422, 0
-  br i1 %cond15423, label %if_then4314, label %if_else4315
+  %field_ptr15422 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
+  %field15423 = load i64, ptr %field_ptr15422
+  call void @anim_tick(i64 %field15423)
+  %_reporter_verbose_val15424 = load i32, ptr @_reporter_verbose
+  %cond15425 = icmp ne i32 %_reporter_verbose_val15424, 0
+  br i1 %cond15425, label %if_then4314, label %if_else4315
 
 if_then4314:
-  %sym15424 = alloca ptr, align 8
-  %_ansi_run_val15425 = load ptr, ptr @_ansi_run
-  %call15426 = call ptr @_colored(ptr %_ansi_run_val15425, ptr @str.671)
-  store ptr %call15426, ptr %sym15424
-  %verb15427 = alloca ptr, align 8
-  %field_ptr15428 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
-  %field15429 = load i64, ptr %field_ptr15428
-  %call15430 = call ptr @tr_stage(i64 %field15429)
-  %call15431 = call ptr @_pad(ptr %call15430, i64 12)
-  store ptr %call15431, ptr %verb15427
-  %sym_val15432 = load ptr, ptr %sym15424
-  %concat15433 = call ptr @ofs_str_concat(ptr @str.274, ptr %sym_val15432)
-  %concat15434 = call ptr @ofs_str_concat(ptr %concat15433, ptr @str.257)
-  %verb_val15435 = load ptr, ptr %verb15427
-  %concat15436 = call ptr @ofs_str_concat(ptr %concat15434, ptr %verb_val15435)
-  %concat15437 = call ptr @ofs_str_concat(ptr %concat15436, ptr @str.257)
-  %_ansi_run_val15438 = load ptr, ptr @_ansi_run
-  %field_ptr15439 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
-  %field15440 = load ptr, ptr %field_ptr15439
-  %call15441 = call ptr @_colored(ptr %_ansi_run_val15438, ptr %field15440)
-  %concat15442 = call ptr @ofs_str_concat(ptr %concat15437, ptr %call15441)
-  call void @_emit_line(ptr %concat15442)
+  %sym15426 = alloca ptr, align 8
+  %_ansi_run_val15427 = load ptr, ptr @_ansi_run
+  %call15428 = call ptr @_colored(ptr %_ansi_run_val15427, ptr @str.671)
+  store ptr %call15428, ptr %sym15426
+  %verb15429 = alloca ptr, align 8
+  %field_ptr15430 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
+  %field15431 = load i64, ptr %field_ptr15430
+  %call15432 = call ptr @tr_stage(i64 %field15431)
+  %call15433 = call ptr @_pad(ptr %call15432, i64 12)
+  store ptr %call15433, ptr %verb15429
+  %sym_val15434 = load ptr, ptr %sym15426
+  %concat15435 = call ptr @ofs_str_concat(ptr @str.274, ptr %sym_val15434)
+  %concat15436 = call ptr @ofs_str_concat(ptr %concat15435, ptr @str.257)
+  %verb_val15437 = load ptr, ptr %verb15429
+  %concat15438 = call ptr @ofs_str_concat(ptr %concat15436, ptr %verb_val15437)
+  %concat15439 = call ptr @ofs_str_concat(ptr %concat15438, ptr @str.257)
+  %_ansi_run_val15440 = load ptr, ptr @_ansi_run
+  %field_ptr15441 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
+  %field15442 = load ptr, ptr %field_ptr15441
+  %call15443 = call ptr @_colored(ptr %_ansi_run_val15440, ptr %field15442)
+  %concat15444 = call ptr @ofs_str_concat(ptr %concat15439, ptr %call15443)
+  call void @_emit_line(ptr %concat15444)
   br label %if_end4316
 
 if_else4315:
@@ -34041,218 +34055,219 @@ if_else4312:
   br label %if_end4313
 
 if_end4313:
-  %field_ptr15443 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15444 = load i64, ptr %field_ptr15443
-  %EV_STAGE_END_val15445 = load i64, ptr @EV_STAGE_END
-  %cmp15446 = icmp eq i64 %field15444, %EV_STAGE_END_val15445
-  br i1 %cmp15446, label %if_then4317, label %if_else4318
+  %field_ptr15445 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15446 = load i64, ptr %field_ptr15445
+  %EV_STAGE_END_val15447 = load i64, ptr @EV_STAGE_END
+  %cmp15448 = icmp eq i64 %field15446, %EV_STAGE_END_val15447
+  br i1 %cmp15448, label %if_then4317, label %if_else4318
 
 if_then4317:
-  %sym15447 = alloca ptr, align 8
-  %_ansi_ok_val15448 = load ptr, ptr @_ansi_ok
-  %call15449 = call ptr @_colored(ptr %_ansi_ok_val15448, ptr @str.672)
-  store ptr %call15449, ptr %sym15447
-  %verb15450 = alloca ptr, align 8
-  %field_ptr15451 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
-  %field15452 = load i64, ptr %field_ptr15451
-  %call15453 = call ptr @tr_stage(i64 %field15452)
-  %call15454 = call ptr @_pad(ptr %call15453, i64 12)
-  store ptr %call15454, ptr %verb15450
-  %info_txt15455 = alloca ptr, align 8
-  store ptr @str.72, ptr %info_txt15455
-  %field_ptr15456 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
-  %field15457 = load ptr, ptr %field_ptr15456
-  %strlen15458 = call i64 @ofs_str_len(ptr %field15457)
-  %cmp15459 = icmp sgt i64 %strlen15458, 0
-  br i1 %cmp15459, label %if_then4320, label %if_else4321
+  call void @anim_finish()
+  %sym15449 = alloca ptr, align 8
+  %_ansi_ok_val15450 = load ptr, ptr @_ansi_ok
+  %call15451 = call ptr @_colored(ptr %_ansi_ok_val15450, ptr @str.672)
+  store ptr %call15451, ptr %sym15449
+  %verb15452 = alloca ptr, align 8
+  %field_ptr15453 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
+  %field15454 = load i64, ptr %field_ptr15453
+  %call15455 = call ptr @tr_stage(i64 %field15454)
+  %call15456 = call ptr @_pad(ptr %call15455, i64 12)
+  store ptr %call15456, ptr %verb15452
+  %info_txt15457 = alloca ptr, align 8
+  store ptr @str.72, ptr %info_txt15457
+  %field_ptr15458 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
+  %field15459 = load ptr, ptr %field_ptr15458
+  %strlen15460 = call i64 @ofs_str_len(ptr %field15459)
+  %cmp15461 = icmp sgt i64 %strlen15460, 0
+  br i1 %cmp15461, label %if_then4320, label %if_else4321
 
 if_then4320:
-  %field_ptr15460 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
-  %field15461 = load ptr, ptr %field_ptr15460
-  %concat15462 = call ptr @ofs_str_concat(ptr @str.673, ptr %field15461)
-  %concat15463 = call ptr @ofs_str_concat(ptr %concat15462, ptr @str.135)
-  store ptr %concat15463, ptr %info_txt15455
+  %field_ptr15462 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
+  %field15463 = load ptr, ptr %field_ptr15462
+  %concat15464 = call ptr @ofs_str_concat(ptr @str.673, ptr %field15463)
+  %concat15465 = call ptr @ofs_str_concat(ptr %concat15464, ptr @str.135)
+  store ptr %concat15465, ptr %info_txt15457
   br label %if_end4322
 
 if_else4321:
   br label %if_end4322
 
 if_end4322:
-  %ms_txt15464 = alloca ptr, align 8
-  %_ansi_dim_val15465 = load ptr, ptr @_ansi_dim
-  %field_ptr15466 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
-  %field15467 = load double, ptr %field_ptr15466
-  %call15468 = call ptr @ofs_crystal_to_obsidian(double %field15467)
-  %concat15469 = call ptr @ofs_str_concat(ptr %call15468, ptr @str.674)
-  %call15470 = call ptr @_colored(ptr %_ansi_dim_val15465, ptr %concat15469)
-  store ptr %call15470, ptr %ms_txt15464
-  %sym_val15471 = load ptr, ptr %sym15447
-  %concat15472 = call ptr @ofs_str_concat(ptr @str.274, ptr %sym_val15471)
-  %concat15473 = call ptr @ofs_str_concat(ptr %concat15472, ptr @str.257)
-  %verb_val15474 = load ptr, ptr %verb15450
-  %concat15475 = call ptr @ofs_str_concat(ptr %concat15473, ptr %verb_val15474)
-  %info_txt_val15476 = load ptr, ptr %info_txt15455
-  %concat15477 = call ptr @ofs_str_concat(ptr %concat15475, ptr %info_txt_val15476)
-  %concat15478 = call ptr @ofs_str_concat(ptr %concat15477, ptr @str.257)
-  %ms_txt_val15479 = load ptr, ptr %ms_txt15464
-  %concat15480 = call ptr @ofs_str_concat(ptr %concat15478, ptr %ms_txt_val15479)
-  call void @_emit_line(ptr %concat15480)
+  %ms_txt15466 = alloca ptr, align 8
+  %_ansi_dim_val15467 = load ptr, ptr @_ansi_dim
+  %field_ptr15468 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
+  %field15469 = load double, ptr %field_ptr15468
+  %call15470 = call ptr @ofs_crystal_to_obsidian(double %field15469)
+  %concat15471 = call ptr @ofs_str_concat(ptr %call15470, ptr @str.674)
+  %call15472 = call ptr @_colored(ptr %_ansi_dim_val15467, ptr %concat15471)
+  store ptr %call15472, ptr %ms_txt15466
+  %sym_val15473 = load ptr, ptr %sym15449
+  %concat15474 = call ptr @ofs_str_concat(ptr @str.274, ptr %sym_val15473)
+  %concat15475 = call ptr @ofs_str_concat(ptr %concat15474, ptr @str.257)
+  %verb_val15476 = load ptr, ptr %verb15452
+  %concat15477 = call ptr @ofs_str_concat(ptr %concat15475, ptr %verb_val15476)
+  %info_txt_val15478 = load ptr, ptr %info_txt15457
+  %concat15479 = call ptr @ofs_str_concat(ptr %concat15477, ptr %info_txt_val15478)
+  %concat15480 = call ptr @ofs_str_concat(ptr %concat15479, ptr @str.257)
+  %ms_txt_val15481 = load ptr, ptr %ms_txt15466
+  %concat15482 = call ptr @ofs_str_concat(ptr %concat15480, ptr %ms_txt_val15481)
+  call void @_emit_line(ptr %concat15482)
   ret void
 
 if_else4318:
   br label %if_end4319
 
 if_end4319:
-  %field_ptr15481 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15482 = load i64, ptr %field_ptr15481
-  %EV_DIAGNOSTIC_val15483 = load i64, ptr @EV_DIAGNOSTIC
-  %cmp15484 = icmp eq i64 %field15482, %EV_DIAGNOSTIC_val15483
-  br i1 %cmp15484, label %if_then4323, label %if_else4324
+  %field_ptr15483 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15484 = load i64, ptr %field_ptr15483
+  %EV_DIAGNOSTIC_val15485 = load i64, ptr @EV_DIAGNOSTIC
+  %cmp15486 = icmp eq i64 %field15484, %EV_DIAGNOSTIC_val15485
+  br i1 %cmp15486, label %if_then4323, label %if_else4324
 
 if_then4323:
-  %sym15485 = alloca ptr, align 8
-  store ptr @str.675, ptr %sym15485
-  %color15486 = alloca ptr, align 8
-  %_ansi_run_val15487 = load ptr, ptr @_ansi_run
-  store ptr %_ansi_run_val15487, ptr %color15486
-  %field_ptr15488 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
-  %field15489 = load i64, ptr %field_ptr15488
-  %LEVEL_WARN_val15490 = load i64, ptr @LEVEL_WARN
-  %cmp15491 = icmp eq i64 %field15489, %LEVEL_WARN_val15490
-  br i1 %cmp15491, label %if_then4326, label %if_else4327
+  %sym15487 = alloca ptr, align 8
+  store ptr @str.675, ptr %sym15487
+  %color15488 = alloca ptr, align 8
+  %_ansi_run_val15489 = load ptr, ptr @_ansi_run
+  store ptr %_ansi_run_val15489, ptr %color15488
+  %field_ptr15490 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
+  %field15491 = load i64, ptr %field_ptr15490
+  %LEVEL_WARN_val15492 = load i64, ptr @LEVEL_WARN
+  %cmp15493 = icmp eq i64 %field15491, %LEVEL_WARN_val15492
+  br i1 %cmp15493, label %if_then4326, label %if_else4327
 
 if_then4326:
-  store ptr @str.676, ptr %sym15485
-  %_ansi_warn_val15492 = load ptr, ptr @_ansi_warn
-  store ptr %_ansi_warn_val15492, ptr %color15486
+  store ptr @str.676, ptr %sym15487
+  %_ansi_warn_val15494 = load ptr, ptr @_ansi_warn
+  store ptr %_ansi_warn_val15494, ptr %color15488
   br label %if_end4328
 
 if_else4327:
   br label %if_end4328
 
 if_end4328:
-  %field_ptr15493 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
-  %field15494 = load i64, ptr %field_ptr15493
-  %LEVEL_FAULT_val15495 = load i64, ptr @LEVEL_FAULT
-  %cmp15496 = icmp eq i64 %field15494, %LEVEL_FAULT_val15495
-  br i1 %cmp15496, label %if_then4329, label %if_else4330
+  %field_ptr15495 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
+  %field15496 = load i64, ptr %field_ptr15495
+  %LEVEL_FAULT_val15497 = load i64, ptr @LEVEL_FAULT
+  %cmp15498 = icmp eq i64 %field15496, %LEVEL_FAULT_val15497
+  br i1 %cmp15498, label %if_then4329, label %if_else4330
 
 if_then4329:
-  store ptr @str.677, ptr %sym15485
-  %_ansi_fault_val15497 = load ptr, ptr @_ansi_fault
-  store ptr %_ansi_fault_val15497, ptr %color15486
+  store ptr @str.677, ptr %sym15487
+  %_ansi_fault_val15499 = load ptr, ptr @_ansi_fault
+  store ptr %_ansi_fault_val15499, ptr %color15488
   br label %if_end4331
 
 if_else4330:
   br label %if_end4331
 
 if_end4331:
-  %loc_txt15498 = alloca ptr, align 8
-  store ptr @str.72, ptr %loc_txt15498
-  %field_ptr15499 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
-  %field15500 = load i64, ptr %field_ptr15499
-  %cmp15501 = icmp sgt i64 %field15500, 0
-  br i1 %cmp15501, label %if_then4332, label %if_else4333
+  %loc_txt15500 = alloca ptr, align 8
+  store ptr @str.72, ptr %loc_txt15500
+  %field_ptr15501 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
+  %field15502 = load i64, ptr %field_ptr15501
+  %cmp15503 = icmp sgt i64 %field15502, 0
+  br i1 %cmp15503, label %if_then4332, label %if_else4333
 
 if_then4332:
-  %field_ptr15502 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
-  %field15503 = load i64, ptr %field_ptr15502
-  %stone_to_str15504 = call ptr @ofs_stone_to_obsidian(i64 %field15503)
-  %concat15505 = call ptr @ofs_str_concat(ptr @str.103, ptr %stone_to_str15504)
-  %concat15506 = call ptr @ofs_str_concat(ptr %concat15505, ptr @str.103)
-  %field_ptr15507 = getelementptr inbounds %Event, ptr %e, i32 0, i32 8
-  %field15508 = load i64, ptr %field_ptr15507
-  %stone_to_str15509 = call ptr @ofs_stone_to_obsidian(i64 %field15508)
-  %concat15510 = call ptr @ofs_str_concat(ptr %concat15506, ptr %stone_to_str15509)
-  store ptr %concat15510, ptr %loc_txt15498
+  %field_ptr15504 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
+  %field15505 = load i64, ptr %field_ptr15504
+  %stone_to_str15506 = call ptr @ofs_stone_to_obsidian(i64 %field15505)
+  %concat15507 = call ptr @ofs_str_concat(ptr @str.103, ptr %stone_to_str15506)
+  %concat15508 = call ptr @ofs_str_concat(ptr %concat15507, ptr @str.103)
+  %field_ptr15509 = getelementptr inbounds %Event, ptr %e, i32 0, i32 8
+  %field15510 = load i64, ptr %field_ptr15509
+  %stone_to_str15511 = call ptr @ofs_stone_to_obsidian(i64 %field15510)
+  %concat15512 = call ptr @ofs_str_concat(ptr %concat15508, ptr %stone_to_str15511)
+  store ptr %concat15512, ptr %loc_txt15500
   br label %if_end4334
 
 if_else4333:
   br label %if_end4334
 
 if_end4334:
-  %head15511 = alloca ptr, align 8
-  %color_val15512 = load ptr, ptr %color15486
-  %sym_val15513 = load ptr, ptr %sym15485
-  %call15514 = call ptr @_colored(ptr %color_val15512, ptr %sym_val15513)
-  %concat15515 = call ptr @ofs_str_concat(ptr @str.274, ptr %call15514)
-  %concat15516 = call ptr @ofs_str_concat(ptr %concat15515, ptr @str.257)
-  %_ansi_run_val15517 = load ptr, ptr @_ansi_run
-  %field_ptr15518 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
-  %field15519 = load ptr, ptr %field_ptr15518
-  %loc_txt_val15520 = load ptr, ptr %loc_txt15498
-  %concat15521 = call ptr @ofs_str_concat(ptr %field15519, ptr %loc_txt_val15520)
-  %call15522 = call ptr @_colored(ptr %_ansi_run_val15517, ptr %concat15521)
-  %concat15523 = call ptr @ofs_str_concat(ptr %concat15516, ptr %call15522)
-  store ptr %concat15523, ptr %head15511
-  %head_val15524 = load ptr, ptr %head15511
-  call void @_emit_line(ptr %head_val15524)
-  %code_part15525 = alloca ptr, align 8
-  store ptr @str.72, ptr %code_part15525
-  %field_ptr15526 = getelementptr inbounds %Event, ptr %e, i32 0, i32 3
-  %field15527 = load ptr, ptr %field_ptr15526
-  %strlen15528 = call i64 @ofs_str_len(ptr %field15527)
-  %cmp15529 = icmp sgt i64 %strlen15528, 0
-  br i1 %cmp15529, label %if_then4335, label %if_else4336
+  %head15513 = alloca ptr, align 8
+  %color_val15514 = load ptr, ptr %color15488
+  %sym_val15515 = load ptr, ptr %sym15487
+  %call15516 = call ptr @_colored(ptr %color_val15514, ptr %sym_val15515)
+  %concat15517 = call ptr @ofs_str_concat(ptr @str.274, ptr %call15516)
+  %concat15518 = call ptr @ofs_str_concat(ptr %concat15517, ptr @str.257)
+  %_ansi_run_val15519 = load ptr, ptr @_ansi_run
+  %field_ptr15520 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
+  %field15521 = load ptr, ptr %field_ptr15520
+  %loc_txt_val15522 = load ptr, ptr %loc_txt15500
+  %concat15523 = call ptr @ofs_str_concat(ptr %field15521, ptr %loc_txt_val15522)
+  %call15524 = call ptr @_colored(ptr %_ansi_run_val15519, ptr %concat15523)
+  %concat15525 = call ptr @ofs_str_concat(ptr %concat15518, ptr %call15524)
+  store ptr %concat15525, ptr %head15513
+  %head_val15526 = load ptr, ptr %head15513
+  call void @_emit_line(ptr %head_val15526)
+  %code_part15527 = alloca ptr, align 8
+  store ptr @str.72, ptr %code_part15527
+  %field_ptr15528 = getelementptr inbounds %Event, ptr %e, i32 0, i32 3
+  %field15529 = load ptr, ptr %field_ptr15528
+  %strlen15530 = call i64 @ofs_str_len(ptr %field15529)
+  %cmp15531 = icmp sgt i64 %strlen15530, 0
+  br i1 %cmp15531, label %if_then4335, label %if_else4336
 
 if_then4335:
-  %field_ptr15530 = getelementptr inbounds %Event, ptr %e, i32 0, i32 3
-  %field15531 = load ptr, ptr %field_ptr15530
-  %concat15532 = call ptr @ofs_str_concat(ptr @str.102, ptr %field15531)
-  %concat15533 = call ptr @ofs_str_concat(ptr %concat15532, ptr @str.136)
-  store ptr %concat15533, ptr %code_part15525
+  %field_ptr15532 = getelementptr inbounds %Event, ptr %e, i32 0, i32 3
+  %field15533 = load ptr, ptr %field_ptr15532
+  %concat15534 = call ptr @ofs_str_concat(ptr @str.102, ptr %field15533)
+  %concat15535 = call ptr @ofs_str_concat(ptr %concat15534, ptr @str.136)
+  store ptr %concat15535, ptr %code_part15527
   br label %if_end4337
 
 if_else4336:
   br label %if_end4337
 
 if_end4337:
-  %color_val15534 = load ptr, ptr %color15486
-  %field_ptr15535 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
-  %field15536 = load i64, ptr %field_ptr15535
-  %call15537 = call ptr @tr_level(i64 %field15536)
-  %code_part_val15538 = load ptr, ptr %code_part15525
-  %concat15539 = call ptr @ofs_str_concat(ptr %call15537, ptr %code_part_val15538)
-  %call15540 = call ptr @_colored(ptr %color_val15534, ptr %concat15539)
-  %concat15541 = call ptr @ofs_str_concat(ptr @str.678, ptr %call15540)
-  %concat15542 = call ptr @ofs_str_concat(ptr %concat15541, ptr @str.257)
-  %field_ptr15543 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
-  %field15544 = load ptr, ptr %field_ptr15543
-  %call15545 = call ptr @tr_msg(ptr %field15544)
-  %concat15546 = call ptr @ofs_str_concat(ptr %concat15542, ptr %call15545)
-  call void @_emit_line(ptr %concat15546)
-  %field_ptr15547 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
-  %field15548 = load ptr, ptr %field_ptr15547
-  %strlen15549 = call i64 @ofs_str_len(ptr %field15548)
-  %cmp15550 = icmp sgt i64 %strlen15549, 0
-  br i1 %cmp15550, label %if_then4338, label %if_else4339
+  %color_val15536 = load ptr, ptr %color15488
+  %field_ptr15537 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
+  %field15538 = load i64, ptr %field_ptr15537
+  %call15539 = call ptr @tr_level(i64 %field15538)
+  %code_part_val15540 = load ptr, ptr %code_part15527
+  %concat15541 = call ptr @ofs_str_concat(ptr %call15539, ptr %code_part_val15540)
+  %call15542 = call ptr @_colored(ptr %color_val15536, ptr %concat15541)
+  %concat15543 = call ptr @ofs_str_concat(ptr @str.678, ptr %call15542)
+  %concat15544 = call ptr @ofs_str_concat(ptr %concat15543, ptr @str.257)
+  %field_ptr15545 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
+  %field15546 = load ptr, ptr %field_ptr15545
+  %call15547 = call ptr @tr_msg(ptr %field15546)
+  %concat15548 = call ptr @ofs_str_concat(ptr %concat15544, ptr %call15547)
+  call void @_emit_line(ptr %concat15548)
+  %field_ptr15549 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
+  %field15550 = load ptr, ptr %field_ptr15549
+  %strlen15551 = call i64 @ofs_str_len(ptr %field15550)
+  %cmp15552 = icmp sgt i64 %strlen15551, 0
+  br i1 %cmp15552, label %if_then4338, label %if_else4339
 
 if_then4338:
-  %_ansi_dim_val15551 = load ptr, ptr @_ansi_dim
-  %field_ptr15552 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
-  %field15553 = load ptr, ptr %field_ptr15552
-  %call15554 = call ptr @_colored(ptr %_ansi_dim_val15551, ptr %field15553)
-  %concat15555 = call ptr @ofs_str_concat(ptr @str.678, ptr %call15554)
-  call void @_emit_line(ptr %concat15555)
+  %_ansi_dim_val15553 = load ptr, ptr @_ansi_dim
+  %field_ptr15554 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
+  %field15555 = load ptr, ptr %field_ptr15554
+  %call15556 = call ptr @_colored(ptr %_ansi_dim_val15553, ptr %field15555)
+  %concat15557 = call ptr @ofs_str_concat(ptr @str.678, ptr %call15556)
+  call void @_emit_line(ptr %concat15557)
   br label %if_end4340
 
 if_else4339:
   br label %if_end4340
 
 if_end4340:
-  %field_ptr15556 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
-  %field15557 = load ptr, ptr %field_ptr15556
-  %strlen15558 = call i64 @ofs_str_len(ptr %field15557)
-  %cmp15559 = icmp sgt i64 %strlen15558, 0
-  br i1 %cmp15559, label %if_then4341, label %if_else4342
+  %field_ptr15558 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
+  %field15559 = load ptr, ptr %field_ptr15558
+  %strlen15560 = call i64 @ofs_str_len(ptr %field15559)
+  %cmp15561 = icmp sgt i64 %strlen15560, 0
+  br i1 %cmp15561, label %if_then4341, label %if_else4342
 
 if_then4341:
-  %_ansi_dim_val15560 = load ptr, ptr @_ansi_dim
-  %field_ptr15561 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
-  %field15562 = load ptr, ptr %field_ptr15561
-  %call15563 = call ptr @_colored(ptr %_ansi_dim_val15560, ptr %field15562)
-  %concat15564 = call ptr @ofs_str_concat(ptr @str.678, ptr %call15563)
-  call void @_emit_line(ptr %concat15564)
+  %_ansi_dim_val15562 = load ptr, ptr @_ansi_dim
+  %field_ptr15563 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
+  %field15564 = load ptr, ptr %field_ptr15563
+  %call15565 = call ptr @_colored(ptr %_ansi_dim_val15562, ptr %field15564)
+  %concat15566 = call ptr @ofs_str_concat(ptr @str.678, ptr %call15565)
+  call void @_emit_line(ptr %concat15566)
   br label %if_end4343
 
 if_else4342:
@@ -34265,53 +34280,53 @@ if_else4324:
   br label %if_end4325
 
 if_end4325:
-  %field_ptr15565 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15566 = load i64, ptr %field_ptr15565
-  %EV_FINISHED_val15567 = load i64, ptr @EV_FINISHED
-  %cmp15568 = icmp eq i64 %field15566, %EV_FINISHED_val15567
-  br i1 %cmp15568, label %if_then4344, label %if_else4345
+  %field_ptr15567 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15568 = load i64, ptr %field_ptr15567
+  %EV_FINISHED_val15569 = load i64, ptr @EV_FINISHED
+  %cmp15570 = icmp eq i64 %field15568, %EV_FINISHED_val15569
+  br i1 %cmp15570, label %if_then4344, label %if_else4345
 
 if_then4344:
-  %ms_txt15569 = alloca ptr, align 8
-  %_ansi_dim_val15570 = load ptr, ptr @_ansi_dim
-  %field_ptr15571 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
-  %field15572 = load double, ptr %field_ptr15571
-  %call15573 = call ptr @ofs_crystal_to_obsidian(double %field15572)
-  %concat15574 = call ptr @ofs_str_concat(ptr %call15573, ptr @str.674)
-  %call15575 = call ptr @_colored(ptr %_ansi_dim_val15570, ptr %concat15574)
-  store ptr %call15575, ptr %ms_txt15569
-  %_ansi_ok_val15576 = load ptr, ptr @_ansi_ok
-  %call15577 = call ptr @_colored(ptr %_ansi_ok_val15576, ptr @str.679)
-  %concat15578 = call ptr @ofs_str_concat(ptr %call15577, ptr @str.257)
-  %_ansi_run_val15579 = load ptr, ptr @_ansi_run
-  %field_ptr15580 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
-  %field15581 = load ptr, ptr %field_ptr15580
-  %call15582 = call ptr @_colored(ptr %_ansi_run_val15579, ptr %field15581)
-  %concat15583 = call ptr @ofs_str_concat(ptr %concat15578, ptr %call15582)
-  %concat15584 = call ptr @ofs_str_concat(ptr %concat15583, ptr @str.680)
-  %field_ptr15585 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
-  %field15586 = load ptr, ptr %field_ptr15585
-  %concat15587 = call ptr @ofs_str_concat(ptr %concat15584, ptr %field15586)
-  %concat15588 = call ptr @ofs_str_concat(ptr %concat15587, ptr @str.681)
-  %ms_txt_val15589 = load ptr, ptr %ms_txt15569
-  %concat15590 = call ptr @ofs_str_concat(ptr %concat15588, ptr %ms_txt_val15589)
-  call void @_emit_line(ptr %concat15590)
+  %ms_txt15571 = alloca ptr, align 8
+  %_ansi_dim_val15572 = load ptr, ptr @_ansi_dim
+  %field_ptr15573 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
+  %field15574 = load double, ptr %field_ptr15573
+  %call15575 = call ptr @ofs_crystal_to_obsidian(double %field15574)
+  %concat15576 = call ptr @ofs_str_concat(ptr %call15575, ptr @str.674)
+  %call15577 = call ptr @_colored(ptr %_ansi_dim_val15572, ptr %concat15576)
+  store ptr %call15577, ptr %ms_txt15571
+  %_ansi_ok_val15578 = load ptr, ptr @_ansi_ok
+  %call15579 = call ptr @_colored(ptr %_ansi_ok_val15578, ptr @str.679)
+  %concat15580 = call ptr @ofs_str_concat(ptr %call15579, ptr @str.257)
+  %_ansi_run_val15581 = load ptr, ptr @_ansi_run
+  %field_ptr15582 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
+  %field15583 = load ptr, ptr %field_ptr15582
+  %call15584 = call ptr @_colored(ptr %_ansi_run_val15581, ptr %field15583)
+  %concat15585 = call ptr @ofs_str_concat(ptr %concat15580, ptr %call15584)
+  %concat15586 = call ptr @ofs_str_concat(ptr %concat15585, ptr @str.680)
+  %field_ptr15587 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
+  %field15588 = load ptr, ptr %field_ptr15587
+  %concat15589 = call ptr @ofs_str_concat(ptr %concat15586, ptr %field15588)
+  %concat15590 = call ptr @ofs_str_concat(ptr %concat15589, ptr @str.681)
+  %ms_txt_val15591 = load ptr, ptr %ms_txt15571
+  %concat15592 = call ptr @ofs_str_concat(ptr %concat15590, ptr %ms_txt_val15591)
+  call void @_emit_line(ptr %concat15592)
   ret void
 
 if_else4345:
   br label %if_end4346
 
 if_end4346:
-  %field_ptr15591 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15592 = load i64, ptr %field_ptr15591
-  %EV_PROGRAM_OUT_val15593 = load i64, ptr @EV_PROGRAM_OUT
-  %cmp15594 = icmp eq i64 %field15592, %EV_PROGRAM_OUT_val15593
-  br i1 %cmp15594, label %if_then4347, label %if_else4348
+  %field_ptr15593 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15594 = load i64, ptr %field_ptr15593
+  %EV_PROGRAM_OUT_val15595 = load i64, ptr @EV_PROGRAM_OUT
+  %cmp15596 = icmp eq i64 %field15594, %EV_PROGRAM_OUT_val15595
+  br i1 %cmp15596, label %if_then4347, label %if_else4348
 
 if_then4347:
-  %field_ptr15595 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
-  %field15596 = load ptr, ptr %field_ptr15595
-  call void @_emit_line(ptr %field15596)
+  %field_ptr15597 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
+  %field15598 = load ptr, ptr %field_ptr15597
+  call void @_emit_line(ptr %field15598)
   ret void
 
 if_else4348:
@@ -34325,10 +34340,10 @@ define ptr @stage_name(i64 %s) {
 entry:
   %s.addr = alloca i64, align 8
   store i64 %s, ptr %s.addr
-  %s_val15597 = load i64, ptr %s.addr
-  %STAGE_ATTACH_val15598 = load i64, ptr @STAGE_ATTACH
-  %cmp15599 = icmp eq i64 %s_val15597, %STAGE_ATTACH_val15598
-  br i1 %cmp15599, label %if_then4350, label %if_else4351
+  %s_val15599 = load i64, ptr %s.addr
+  %STAGE_ATTACH_val15600 = load i64, ptr @STAGE_ATTACH
+  %cmp15601 = icmp eq i64 %s_val15599, %STAGE_ATTACH_val15600
+  br i1 %cmp15601, label %if_then4350, label %if_else4351
 
 if_then4350:
   ret ptr @str.21
@@ -34337,10 +34352,10 @@ if_else4351:
   br label %if_end4352
 
 if_end4352:
-  %s_val15600 = load i64, ptr %s.addr
-  %STAGE_READ_val15601 = load i64, ptr @STAGE_READ
-  %cmp15602 = icmp eq i64 %s_val15600, %STAGE_READ_val15601
-  br i1 %cmp15602, label %if_then4353, label %if_else4354
+  %s_val15602 = load i64, ptr %s.addr
+  %STAGE_READ_val15603 = load i64, ptr @STAGE_READ
+  %cmp15604 = icmp eq i64 %s_val15602, %STAGE_READ_val15603
+  br i1 %cmp15604, label %if_then4353, label %if_else4354
 
 if_then4353:
   ret ptr @str.682
@@ -34349,10 +34364,10 @@ if_else4354:
   br label %if_end4355
 
 if_end4355:
-  %s_val15603 = load i64, ptr %s.addr
-  %STAGE_LEX_val15604 = load i64, ptr @STAGE_LEX
-  %cmp15605 = icmp eq i64 %s_val15603, %STAGE_LEX_val15604
-  br i1 %cmp15605, label %if_then4356, label %if_else4357
+  %s_val15605 = load i64, ptr %s.addr
+  %STAGE_LEX_val15606 = load i64, ptr @STAGE_LEX
+  %cmp15607 = icmp eq i64 %s_val15605, %STAGE_LEX_val15606
+  br i1 %cmp15607, label %if_then4356, label %if_else4357
 
 if_then4356:
   ret ptr @str.683
@@ -34361,10 +34376,10 @@ if_else4357:
   br label %if_end4358
 
 if_end4358:
-  %s_val15606 = load i64, ptr %s.addr
-  %STAGE_PARSE_val15607 = load i64, ptr @STAGE_PARSE
-  %cmp15608 = icmp eq i64 %s_val15606, %STAGE_PARSE_val15607
-  br i1 %cmp15608, label %if_then4359, label %if_else4360
+  %s_val15608 = load i64, ptr %s.addr
+  %STAGE_PARSE_val15609 = load i64, ptr @STAGE_PARSE
+  %cmp15610 = icmp eq i64 %s_val15608, %STAGE_PARSE_val15609
+  br i1 %cmp15610, label %if_then4359, label %if_else4360
 
 if_then4359:
   ret ptr @str.684
@@ -34373,10 +34388,10 @@ if_else4360:
   br label %if_end4361
 
 if_end4361:
-  %s_val15609 = load i64, ptr %s.addr
-  %STAGE_CHECK_val15610 = load i64, ptr @STAGE_CHECK
-  %cmp15611 = icmp eq i64 %s_val15609, %STAGE_CHECK_val15610
-  br i1 %cmp15611, label %if_then4362, label %if_else4363
+  %s_val15611 = load i64, ptr %s.addr
+  %STAGE_CHECK_val15612 = load i64, ptr @STAGE_CHECK
+  %cmp15613 = icmp eq i64 %s_val15611, %STAGE_CHECK_val15612
+  br i1 %cmp15613, label %if_then4362, label %if_else4363
 
 if_then4362:
   ret ptr @str.685
@@ -34385,10 +34400,10 @@ if_else4363:
   br label %if_end4364
 
 if_end4364:
-  %s_val15612 = load i64, ptr %s.addr
-  %STAGE_FORGE_val15613 = load i64, ptr @STAGE_FORGE
-  %cmp15614 = icmp eq i64 %s_val15612, %STAGE_FORGE_val15613
-  br i1 %cmp15614, label %if_then4365, label %if_else4366
+  %s_val15614 = load i64, ptr %s.addr
+  %STAGE_FORGE_val15615 = load i64, ptr @STAGE_FORGE
+  %cmp15616 = icmp eq i64 %s_val15614, %STAGE_FORGE_val15615
+  br i1 %cmp15616, label %if_then4365, label %if_else4366
 
 if_then4365:
   ret ptr @str.4
@@ -34397,10 +34412,10 @@ if_else4366:
   br label %if_end4367
 
 if_end4367:
-  %s_val15615 = load i64, ptr %s.addr
-  %STAGE_LINK_val15616 = load i64, ptr @STAGE_LINK
-  %cmp15617 = icmp eq i64 %s_val15615, %STAGE_LINK_val15616
-  br i1 %cmp15617, label %if_then4368, label %if_else4369
+  %s_val15617 = load i64, ptr %s.addr
+  %STAGE_LINK_val15618 = load i64, ptr @STAGE_LINK
+  %cmp15619 = icmp eq i64 %s_val15617, %STAGE_LINK_val15618
+  br i1 %cmp15619, label %if_then4368, label %if_else4369
 
 if_then4368:
   ret ptr @str.686
@@ -34409,10 +34424,10 @@ if_else4369:
   br label %if_end4370
 
 if_end4370:
-  %s_val15618 = load i64, ptr %s.addr
-  %STAGE_DONE_val15619 = load i64, ptr @STAGE_DONE
-  %cmp15620 = icmp eq i64 %s_val15618, %STAGE_DONE_val15619
-  br i1 %cmp15620, label %if_then4371, label %if_else4372
+  %s_val15620 = load i64, ptr %s.addr
+  %STAGE_DONE_val15621 = load i64, ptr @STAGE_DONE
+  %cmp15622 = icmp eq i64 %s_val15620, %STAGE_DONE_val15621
+  br i1 %cmp15622, label %if_then4371, label %if_else4372
 
 if_then4371:
   ret ptr @str.679
@@ -34421,10 +34436,10 @@ if_else4372:
   br label %if_end4373
 
 if_end4373:
-  %s_val15621 = load i64, ptr %s.addr
-  %STAGE_RUN_val15622 = load i64, ptr @STAGE_RUN
-  %cmp15623 = icmp eq i64 %s_val15621, %STAGE_RUN_val15622
-  br i1 %cmp15623, label %if_then4374, label %if_else4375
+  %s_val15623 = load i64, ptr %s.addr
+  %STAGE_RUN_val15624 = load i64, ptr @STAGE_RUN
+  %cmp15625 = icmp eq i64 %s_val15623, %STAGE_RUN_val15624
+  br i1 %cmp15625, label %if_then4374, label %if_else4375
 
 if_then4374:
   ret ptr @str.687
@@ -34440,10 +34455,10 @@ define ptr @level_name(i64 %l) {
 entry:
   %l.addr = alloca i64, align 8
   store i64 %l, ptr %l.addr
-  %l_val15624 = load i64, ptr %l.addr
-  %LEVEL_NOTE_val15625 = load i64, ptr @LEVEL_NOTE
-  %cmp15626 = icmp eq i64 %l_val15624, %LEVEL_NOTE_val15625
-  br i1 %cmp15626, label %if_then4377, label %if_else4378
+  %l_val15626 = load i64, ptr %l.addr
+  %LEVEL_NOTE_val15627 = load i64, ptr @LEVEL_NOTE
+  %cmp15628 = icmp eq i64 %l_val15626, %LEVEL_NOTE_val15627
+  br i1 %cmp15628, label %if_then4377, label %if_else4378
 
 if_then4377:
   ret ptr @str.656
@@ -34452,10 +34467,10 @@ if_else4378:
   br label %if_end4379
 
 if_end4379:
-  %l_val15627 = load i64, ptr %l.addr
-  %LEVEL_WARN_val15628 = load i64, ptr @LEVEL_WARN
-  %cmp15629 = icmp eq i64 %l_val15627, %LEVEL_WARN_val15628
-  br i1 %cmp15629, label %if_then4380, label %if_else4381
+  %l_val15629 = load i64, ptr %l.addr
+  %LEVEL_WARN_val15630 = load i64, ptr @LEVEL_WARN
+  %cmp15631 = icmp eq i64 %l_val15629, %LEVEL_WARN_val15630
+  br i1 %cmp15631, label %if_then4380, label %if_else4381
 
 if_then4380:
   ret ptr @str.658
@@ -34464,10 +34479,10 @@ if_else4381:
   br label %if_end4382
 
 if_end4382:
-  %l_val15630 = load i64, ptr %l.addr
-  %LEVEL_FAULT_val15631 = load i64, ptr @LEVEL_FAULT
-  %cmp15632 = icmp eq i64 %l_val15630, %LEVEL_FAULT_val15631
-  br i1 %cmp15632, label %if_then4383, label %if_else4384
+  %l_val15632 = load i64, ptr %l.addr
+  %LEVEL_FAULT_val15633 = load i64, ptr @LEVEL_FAULT
+  %cmp15634 = icmp eq i64 %l_val15632, %LEVEL_FAULT_val15633
+  br i1 %cmp15634, label %if_then4383, label %if_else4384
 
 if_then4383:
   ret ptr @str.661
@@ -34483,10 +34498,10 @@ define ptr @event_kind_name(i64 %k) {
 entry:
   %k.addr = alloca i64, align 8
   store i64 %k, ptr %k.addr
-  %k_val15633 = load i64, ptr %k.addr
-  %EV_STAGE_START_val15634 = load i64, ptr @EV_STAGE_START
-  %cmp15635 = icmp eq i64 %k_val15633, %EV_STAGE_START_val15634
-  br i1 %cmp15635, label %if_then4386, label %if_else4387
+  %k_val15635 = load i64, ptr %k.addr
+  %EV_STAGE_START_val15636 = load i64, ptr @EV_STAGE_START
+  %cmp15637 = icmp eq i64 %k_val15635, %EV_STAGE_START_val15636
+  br i1 %cmp15637, label %if_then4386, label %if_else4387
 
 if_then4386:
   ret ptr @str.688
@@ -34495,10 +34510,10 @@ if_else4387:
   br label %if_end4388
 
 if_end4388:
-  %k_val15636 = load i64, ptr %k.addr
-  %EV_STAGE_END_val15637 = load i64, ptr @EV_STAGE_END
-  %cmp15638 = icmp eq i64 %k_val15636, %EV_STAGE_END_val15637
-  br i1 %cmp15638, label %if_then4389, label %if_else4390
+  %k_val15638 = load i64, ptr %k.addr
+  %EV_STAGE_END_val15639 = load i64, ptr @EV_STAGE_END
+  %cmp15640 = icmp eq i64 %k_val15638, %EV_STAGE_END_val15639
+  br i1 %cmp15640, label %if_then4389, label %if_else4390
 
 if_then4389:
   ret ptr @str.689
@@ -34507,10 +34522,10 @@ if_else4390:
   br label %if_end4391
 
 if_end4391:
-  %k_val15639 = load i64, ptr %k.addr
-  %EV_DIAGNOSTIC_val15640 = load i64, ptr @EV_DIAGNOSTIC
-  %cmp15641 = icmp eq i64 %k_val15639, %EV_DIAGNOSTIC_val15640
-  br i1 %cmp15641, label %if_then4392, label %if_else4393
+  %k_val15641 = load i64, ptr %k.addr
+  %EV_DIAGNOSTIC_val15642 = load i64, ptr @EV_DIAGNOSTIC
+  %cmp15643 = icmp eq i64 %k_val15641, %EV_DIAGNOSTIC_val15642
+  br i1 %cmp15643, label %if_then4392, label %if_else4393
 
 if_then4392:
   ret ptr @str.690
@@ -34519,10 +34534,10 @@ if_else4393:
   br label %if_end4394
 
 if_end4394:
-  %k_val15642 = load i64, ptr %k.addr
-  %EV_FINISHED_val15643 = load i64, ptr @EV_FINISHED
-  %cmp15644 = icmp eq i64 %k_val15642, %EV_FINISHED_val15643
-  br i1 %cmp15644, label %if_then4395, label %if_else4396
+  %k_val15644 = load i64, ptr %k.addr
+  %EV_FINISHED_val15645 = load i64, ptr @EV_FINISHED
+  %cmp15646 = icmp eq i64 %k_val15644, %EV_FINISHED_val15645
+  br i1 %cmp15646, label %if_then4395, label %if_else4396
 
 if_then4395:
   ret ptr @str.691
@@ -34531,10 +34546,10 @@ if_else4396:
   br label %if_end4397
 
 if_end4397:
-  %k_val15645 = load i64, ptr %k.addr
-  %EV_PROGRAM_OUT_val15646 = load i64, ptr @EV_PROGRAM_OUT
-  %cmp15647 = icmp eq i64 %k_val15645, %EV_PROGRAM_OUT_val15646
-  br i1 %cmp15647, label %if_then4398, label %if_else4399
+  %k_val15647 = load i64, ptr %k.addr
+  %EV_PROGRAM_OUT_val15648 = load i64, ptr @EV_PROGRAM_OUT
+  %cmp15649 = icmp eq i64 %k_val15647, %EV_PROGRAM_OUT_val15648
+  br i1 %cmp15649, label %if_then4398, label %if_else4399
 
 if_then4398:
   ret ptr @str.692
@@ -34546,537 +34561,843 @@ if_end4400:
   ret ptr @str.69
 }
 
-define void @_emit_line(ptr %s) {
+define void @anim_set_enabled(i32 %v) {
 entry:
-  %s.addr = alloca ptr, align 8
-  store ptr %s, ptr %s.addr
-  %s_val15648 = load ptr, ptr %s.addr
-  call void @echo_obsidian(ptr %s_val15648)
+  %v.addr = alloca i32, align 8
+  store i32 %v, ptr %v.addr
+  %v_val15650 = load i32, ptr %v.addr
+  store i32 %v_val15650, ptr @_anim_enabled
   ret void
 }
 
-define void @_emit_json(ptr %e) {
+define ptr @_clear_line_seq() {
 entry:
-  %line15649 = alloca ptr, align 8
-  %field_ptr15650 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15651 = load i64, ptr %field_ptr15650
-  %call15652 = call ptr @event_kind_name(i64 %field15651)
-  %concat15653 = call ptr @ofs_str_concat(ptr @str.693, ptr %call15652)
-  %concat15654 = call ptr @ofs_str_concat(ptr %concat15653, ptr @str.109)
-  store ptr %concat15654, ptr %line15649
-  %field_ptr15655 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15656 = load i64, ptr %field_ptr15655
-  %EV_STAGE_START_val15657 = load i64, ptr @EV_STAGE_START
-  %cmp15658 = icmp eq i64 %field15656, %EV_STAGE_START_val15657
-  %field_ptr15659 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15660 = load i64, ptr %field_ptr15659
-  %EV_STAGE_END_val15661 = load i64, ptr @EV_STAGE_END
-  %cmp15662 = icmp eq i64 %field15660, %EV_STAGE_END_val15661
-  %logic15663 = or i1 %cmp15658, %cmp15662
-  br i1 %logic15663, label %if_then4401, label %if_else4402
+  %buf15651 = alloca ptr, align 8
+  %call15652 = call ptr @ofs_alloc(i64 84)
+  store ptr %call15652, ptr %buf15651
+  %p015653 = alloca ptr, align 8
+  %buf_val15654 = load ptr, ptr %buf15651
+  store ptr %buf_val15654, ptr %p015653
+  %p0_val15655 = load ptr, ptr %p015653
+  %cast15656 = trunc i64 13 to i8
+  store i8 %cast15656, ptr %p0_val15655
+  %i15657 = alloca i64, align 8
+  store i64 1, ptr %i15657
+  br label %while_cond4401
 
-if_then4401:
-  %line_val15664 = load ptr, ptr %line15649
-  %concat15665 = call ptr @ofs_str_concat(ptr %line_val15664, ptr @str.694)
-  %field_ptr15666 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
-  %field15667 = load i64, ptr %field_ptr15666
-  %call15668 = call ptr @stage_name(i64 %field15667)
-  %concat15669 = call ptr @ofs_str_concat(ptr %concat15665, ptr %call15668)
-  %concat15670 = call ptr @ofs_str_concat(ptr %concat15669, ptr @str.109)
-  store ptr %concat15670, ptr %line15649
-  br label %if_end4403
+while_cond4401:
+  %i_val15658 = load i64, ptr %i15657
+  %cmp15659 = icmp slt i64 %i_val15658, 82
+  br i1 %cmp15659, label %while_body4402, label %while_end4403
 
-if_else4402:
-  br label %if_end4403
+while_body4402:
+  %pi15660 = alloca ptr, align 8
+  %buf_val15661 = load ptr, ptr %buf15651
+  %cast15662 = ptrtoint ptr %buf_val15661 to i64
+  %i_val15663 = load i64, ptr %i15657
+  %op15664 = add i64 %cast15662, %i_val15663
+  %cast15665 = inttoptr i64 %op15664 to ptr
+  store ptr %cast15665, ptr %pi15660
+  %pi_val15666 = load ptr, ptr %pi15660
+  %cast15667 = trunc i64 32 to i8
+  store i8 %cast15667, ptr %pi_val15666
+  %post_old15668 = load i64, ptr %i15657
+  %post_new15669 = add i64 %post_old15668, 1
+  store i64 %post_new15669, ptr %i15657
+  br label %while_cond4401
 
-if_end4403:
-  %field_ptr15671 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15672 = load i64, ptr %field_ptr15671
-  %EV_DIAGNOSTIC_val15673 = load i64, ptr @EV_DIAGNOSTIC
-  %cmp15674 = icmp eq i64 %field15672, %EV_DIAGNOSTIC_val15673
-  br i1 %cmp15674, label %if_then4404, label %if_else4405
+while_end4403:
+  %pr15670 = alloca ptr, align 8
+  %buf_val15671 = load ptr, ptr %buf15651
+  %cast15672 = ptrtoint ptr %buf_val15671 to i64
+  %op15673 = add i64 %cast15672, 82
+  %cast15674 = inttoptr i64 %op15673 to ptr
+  store ptr %cast15674, ptr %pr15670
+  %pr_val15675 = load ptr, ptr %pr15670
+  %cast15676 = trunc i64 13 to i8
+  store i8 %cast15676, ptr %pr_val15675
+  %pz15677 = alloca ptr, align 8
+  %buf_val15678 = load ptr, ptr %buf15651
+  %cast15679 = ptrtoint ptr %buf_val15678 to i64
+  %op15680 = add i64 %cast15679, 83
+  %cast15681 = inttoptr i64 %op15680 to ptr
+  store ptr %cast15681, ptr %pz15677
+  %pz_val15682 = load ptr, ptr %pz15677
+  %cast15683 = trunc i64 0 to i8
+  store i8 %cast15683, ptr %pz_val15682
+  %buf_val15684 = load ptr, ptr %buf15651
+  ret ptr %buf_val15684
+}
+
+define void @_emit_raw(ptr %s) {
+entry:
+  %s.addr = alloca ptr, align 8
+  store ptr %s, ptr %s.addr
+  %s_val15685 = load ptr, ptr %s.addr
+  call void @echo_obsidian(ptr %s_val15685)
+  ret void
+}
+
+define void @anim_tick(i64 %stage) {
+entry:
+  %stage.addr = alloca i64, align 8
+  store i64 %stage, ptr %stage.addr
+  %_anim_enabled_val15686 = load i32, ptr @_anim_enabled
+  %cond15687 = icmp ne i32 %_anim_enabled_val15686, 0
+  %not15688 = xor i1 %cond15687, true
+  br i1 %not15688, label %if_then4404, label %if_else4405
 
 if_then4404:
-  %line_val15675 = load ptr, ptr %line15649
-  %concat15676 = call ptr @ofs_str_concat(ptr %line_val15675, ptr @str.695)
-  %field_ptr15677 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
-  %field15678 = load i64, ptr %field_ptr15677
-  %call15679 = call ptr @level_name(i64 %field15678)
-  %concat15680 = call ptr @ofs_str_concat(ptr %concat15676, ptr %call15679)
-  %concat15681 = call ptr @ofs_str_concat(ptr %concat15680, ptr @str.109)
-  store ptr %concat15681, ptr %line15649
-  %line_val15682 = load ptr, ptr %line15649
-  %concat15683 = call ptr @ofs_str_concat(ptr %line_val15682, ptr @str.696)
-  %field_ptr15684 = getelementptr inbounds %Event, ptr %e, i32 0, i32 3
-  %field15685 = load ptr, ptr %field_ptr15684
-  %concat15686 = call ptr @ofs_str_concat(ptr %concat15683, ptr %field15685)
-  %concat15687 = call ptr @ofs_str_concat(ptr %concat15686, ptr @str.109)
-  store ptr %concat15687, ptr %line15649
-  %line_val15688 = load ptr, ptr %line15649
-  %concat15689 = call ptr @ofs_str_concat(ptr %line_val15688, ptr @str.697)
-  %field_ptr15690 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
-  %field15691 = load i64, ptr %field_ptr15690
-  %stone_to_str15692 = call ptr @ofs_stone_to_obsidian(i64 %field15691)
-  %concat15693 = call ptr @ofs_str_concat(ptr %concat15689, ptr %stone_to_str15692)
-  store ptr %concat15693, ptr %line15649
-  %line_val15694 = load ptr, ptr %line15649
-  %concat15695 = call ptr @ofs_str_concat(ptr %line_val15694, ptr @str.698)
-  %field_ptr15696 = getelementptr inbounds %Event, ptr %e, i32 0, i32 8
-  %field15697 = load i64, ptr %field_ptr15696
-  %stone_to_str15698 = call ptr @ofs_stone_to_obsidian(i64 %field15697)
-  %concat15699 = call ptr @ofs_str_concat(ptr %concat15695, ptr %stone_to_str15698)
-  store ptr %concat15699, ptr %line15649
-  %field_ptr15700 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
-  %field15701 = load ptr, ptr %field_ptr15700
-  %strlen15702 = call i64 @ofs_str_len(ptr %field15701)
-  %cmp15703 = icmp sgt i64 %strlen15702, 0
-  br i1 %cmp15703, label %if_then4407, label %if_else4408
-
-if_then4407:
-  %line_val15704 = load ptr, ptr %line15649
-  %concat15705 = call ptr @ofs_str_concat(ptr %line_val15704, ptr @str.699)
-  %field_ptr15706 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
-  %field15707 = load ptr, ptr %field_ptr15706
-  %concat15708 = call ptr @ofs_str_concat(ptr %concat15705, ptr %field15707)
-  %concat15709 = call ptr @ofs_str_concat(ptr %concat15708, ptr @str.109)
-  store ptr %concat15709, ptr %line15649
-  br label %if_end4409
-
-if_else4408:
-  br label %if_end4409
-
-if_end4409:
-  %field_ptr15710 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
-  %field15711 = load ptr, ptr %field_ptr15710
-  %strlen15712 = call i64 @ofs_str_len(ptr %field15711)
-  %cmp15713 = icmp sgt i64 %strlen15712, 0
-  br i1 %cmp15713, label %if_then4410, label %if_else4411
-
-if_then4410:
-  %line_val15714 = load ptr, ptr %line15649
-  %concat15715 = call ptr @ofs_str_concat(ptr %line_val15714, ptr @str.700)
-  %field_ptr15716 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
-  %field15717 = load ptr, ptr %field_ptr15716
-  %concat15718 = call ptr @ofs_str_concat(ptr %concat15715, ptr %field15717)
-  %concat15719 = call ptr @ofs_str_concat(ptr %concat15718, ptr @str.109)
-  store ptr %concat15719, ptr %line15649
-  br label %if_end4412
-
-if_else4411:
-  br label %if_end4412
-
-if_end4412:
-  %field_ptr15720 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
-  %field15721 = load ptr, ptr %field_ptr15720
-  %strlen15722 = call i64 @ofs_str_len(ptr %field15721)
-  %cmp15723 = icmp sgt i64 %strlen15722, 0
-  br i1 %cmp15723, label %if_then4413, label %if_else4414
-
-if_then4413:
-  %line_val15724 = load ptr, ptr %line15649
-  %concat15725 = call ptr @ofs_str_concat(ptr %line_val15724, ptr @str.701)
-  %field_ptr15726 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
-  %field15727 = load ptr, ptr %field_ptr15726
-  %concat15728 = call ptr @ofs_str_concat(ptr %concat15725, ptr %field15727)
-  %concat15729 = call ptr @ofs_str_concat(ptr %concat15728, ptr @str.109)
-  store ptr %concat15729, ptr %line15649
-  br label %if_end4415
-
-if_else4414:
-  br label %if_end4415
-
-if_end4415:
-  br label %if_end4406
+  ret void
 
 if_else4405:
   br label %if_end4406
 
 if_end4406:
-  %field_ptr15730 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
-  %field15731 = load ptr, ptr %field_ptr15730
-  %strlen15732 = call i64 @ofs_str_len(ptr %field15731)
-  %cmp15733 = icmp sgt i64 %strlen15732, 0
-  br i1 %cmp15733, label %if_then4416, label %if_else4417
+  %_use_color_val15689 = load i32, ptr @_use_color
+  %cond15690 = icmp ne i32 %_use_color_val15689, 0
+  %not15691 = xor i1 %cond15690, true
+  br i1 %not15691, label %if_then4407, label %if_else4408
+
+if_then4407:
+  ret void
+
+if_else4408:
+  br label %if_end4409
+
+if_end4409:
+  %stage_val15692 = load i64, ptr %stage.addr
+  %cmp15693 = icmp eq i64 %stage_val15692, 0
+  br i1 %cmp15693, label %if_then4410, label %if_else4411
+
+if_then4410:
+  ret void
+
+if_else4411:
+  br label %if_end4412
+
+if_end4412:
+  %_anim_frame_val15694 = load i64, ptr @_anim_frame
+  %op15695 = add i64 %_anim_frame_val15694, 1
+  store i64 %op15695, ptr @_anim_frame
+  %stage_val15696 = load i64, ptr %stage.addr
+  store i64 %stage_val15696, ptr @_anim_last_stage
+  %frames_ascii15697 = alloca ptr, align 8
+  store ptr @str.693, ptr %frames_ascii15697
+  %idx15698 = alloca i64, align 8
+  %_anim_frame_val15699 = load i64, ptr @_anim_frame
+  %op15700 = srem i64 %_anim_frame_val15699, 4
+  store i64 %op15700, ptr %idx15698
+  %f15701 = alloca ptr, align 8
+  %frames_ascii_val15702 = load ptr, ptr %frames_ascii15697
+  %idx_val15703 = load i64, ptr %idx15698
+  %call15704 = call ptr @ofs_str_substr(ptr %frames_ascii_val15702, i64 %idx_val15703, i64 1)
+  store ptr %call15704, ptr %f15701
+  %verb15705 = alloca ptr, align 8
+  %stage_val15706 = load i64, ptr %stage.addr
+  %call15707 = call ptr @tr_stage(i64 %stage_val15706)
+  %call15708 = call ptr @_pad(ptr %call15707, i64 12)
+  store ptr %call15708, ptr %verb15705
+  %line15709 = alloca ptr, align 8
+  %call15710 = call ptr @_clear_line_seq()
+  %concat15711 = call ptr @ofs_str_concat(ptr %call15710, ptr @str.274)
+  %_ansi_run_val15712 = load ptr, ptr @_ansi_run
+  %call15713 = call ptr @_colored(ptr %_ansi_run_val15712, ptr @str.671)
+  %concat15714 = call ptr @ofs_str_concat(ptr %concat15711, ptr %call15713)
+  %concat15715 = call ptr @ofs_str_concat(ptr %concat15714, ptr @str.257)
+  %verb_val15716 = load ptr, ptr %verb15705
+  %concat15717 = call ptr @ofs_str_concat(ptr %concat15715, ptr %verb_val15716)
+  %concat15718 = call ptr @ofs_str_concat(ptr %concat15717, ptr @str.257)
+  %f_val15719 = load ptr, ptr %f15701
+  %concat15720 = call ptr @ofs_str_concat(ptr %concat15718, ptr %f_val15719)
+  store ptr %concat15720, ptr %line15709
+  %line_val15721 = load ptr, ptr %line15709
+  call void @_emit_raw(ptr %line_val15721)
+  ret void
+}
+
+define void @anim_finish() {
+entry:
+  %_anim_enabled_val15722 = load i32, ptr @_anim_enabled
+  %cond15723 = icmp ne i32 %_anim_enabled_val15722, 0
+  %not15724 = xor i1 %cond15723, true
+  br i1 %not15724, label %if_then4413, label %if_else4414
+
+if_then4413:
+  ret void
+
+if_else4414:
+  br label %if_end4415
+
+if_end4415:
+  %_anim_last_stage_val15725 = load i64, ptr @_anim_last_stage
+  %cmp15726 = icmp eq i64 %_anim_last_stage_val15725, 0
+  br i1 %cmp15726, label %if_then4416, label %if_else4417
 
 if_then4416:
-  %line_val15734 = load ptr, ptr %line15649
-  %concat15735 = call ptr @ofs_str_concat(ptr %line_val15734, ptr @str.702)
-  %field_ptr15736 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
-  %field15737 = load ptr, ptr %field_ptr15736
-  %concat15738 = call ptr @ofs_str_concat(ptr %concat15735, ptr %field15737)
-  %concat15739 = call ptr @ofs_str_concat(ptr %concat15738, ptr @str.109)
-  store ptr %concat15739, ptr %line15649
-  br label %if_end4418
+  ret void
 
 if_else4417:
   br label %if_end4418
 
 if_end4418:
-  %field_ptr15740 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
-  %field15741 = load ptr, ptr %field_ptr15740
-  %strlen15742 = call i64 @ofs_str_len(ptr %field15741)
-  %cmp15743 = icmp sgt i64 %strlen15742, 0
-  br i1 %cmp15743, label %if_then4419, label %if_else4420
+  %call15727 = call ptr @_clear_line_seq()
+  call void @_emit_raw(ptr %call15727)
+  store i64 0, ptr @_anim_last_stage
+  ret void
+}
+
+define void @_emit_line(ptr %s) {
+entry:
+  %s.addr = alloca ptr, align 8
+  store ptr %s, ptr %s.addr
+  %s_val15728 = load ptr, ptr %s.addr
+  call void @echo_obsidian(ptr %s_val15728)
+  ret void
+}
+
+define void @_emit_json(ptr %e) {
+entry:
+  %field_ptr15729 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15730 = load i64, ptr %field_ptr15729
+  %EV_STAGE_END_val15731 = load i64, ptr @EV_STAGE_END
+  %cmp15732 = icmp eq i64 %field15730, %EV_STAGE_END_val15731
+  br i1 %cmp15732, label %if_then4419, label %if_else4420
 
 if_then4419:
-  %line_val15744 = load ptr, ptr %line15649
-  %concat15745 = call ptr @ofs_str_concat(ptr %line_val15744, ptr @str.703)
-  %field_ptr15746 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
-  %field15747 = load ptr, ptr %field_ptr15746
-  %concat15748 = call ptr @ofs_str_concat(ptr %concat15745, ptr %field15747)
-  %concat15749 = call ptr @ofs_str_concat(ptr %concat15748, ptr @str.109)
-  store ptr %concat15749, ptr %line15649
+  %_json_total_ms_val15733 = load double, ptr @_json_total_ms
+  %field_ptr15734 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
+  %field15735 = load double, ptr %field_ptr15734
+  %fop15736 = fadd double %_json_total_ms_val15733, %field15735
+  store double %fop15736, ptr @_json_total_ms
   br label %if_end4421
 
 if_else4420:
   br label %if_end4421
 
 if_end4421:
-  %field_ptr15750 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
-  %field15751 = load double, ptr %field_ptr15750
-  %cmp15752 = fcmp one double %field15751, 0.0
-  br i1 %cmp15752, label %if_then4422, label %if_else4423
+  %line15737 = alloca ptr, align 8
+  %field_ptr15738 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15739 = load i64, ptr %field_ptr15738
+  %call15740 = call ptr @event_kind_name(i64 %field15739)
+  %concat15741 = call ptr @ofs_str_concat(ptr @str.694, ptr %call15740)
+  %concat15742 = call ptr @ofs_str_concat(ptr %concat15741, ptr @str.109)
+  store ptr %concat15742, ptr %line15737
+  %field_ptr15743 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15744 = load i64, ptr %field_ptr15743
+  %EV_STAGE_START_val15745 = load i64, ptr @EV_STAGE_START
+  %cmp15746 = icmp eq i64 %field15744, %EV_STAGE_START_val15745
+  %_json_locale_emitted_val15747 = load i32, ptr @_json_locale_emitted
+  %cond15748 = icmp ne i32 %_json_locale_emitted_val15747, 0
+  %not15749 = xor i1 %cond15748, true
+  %logic15750 = and i1 %cmp15746, %not15749
+  br i1 %logic15750, label %if_then4422, label %if_else4423
 
 if_then4422:
-  %line_val15753 = load ptr, ptr %line15649
-  %concat15754 = call ptr @ofs_str_concat(ptr %line_val15753, ptr @str.704)
-  %field_ptr15755 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
-  %field15756 = load double, ptr %field_ptr15755
-  %call15757 = call ptr @ofs_crystal_to_obsidian(double %field15756)
-  %concat15758 = call ptr @ofs_str_concat(ptr %concat15754, ptr %call15757)
-  store ptr %concat15758, ptr %line15649
+  %line_val15751 = load ptr, ptr %line15737
+  %concat15752 = call ptr @ofs_str_concat(ptr %line_val15751, ptr @str.695)
+  %_locale_val15753 = load ptr, ptr @_locale
+  %concat15754 = call ptr @ofs_str_concat(ptr %concat15752, ptr %_locale_val15753)
+  %concat15755 = call ptr @ofs_str_concat(ptr %concat15754, ptr @str.109)
+  store ptr %concat15755, ptr %line15737
+  store i32 1, ptr @_json_locale_emitted
   br label %if_end4424
 
 if_else4423:
   br label %if_end4424
 
 if_end4424:
-  %line_val15759 = load ptr, ptr %line15649
-  %concat15760 = call ptr @ofs_str_concat(ptr %line_val15759, ptr @str.138)
-  store ptr %concat15760, ptr %line15649
-  %line_val15761 = load ptr, ptr %line15649
-  call void @_emit_line(ptr %line_val15761)
-  ret void
-}
-
-define void @_emit_plain(ptr %e) {
-entry:
-  %field_ptr15762 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15763 = load i64, ptr %field_ptr15762
-  %EV_STAGE_START_val15764 = load i64, ptr @EV_STAGE_START
-  %cmp15765 = icmp eq i64 %field15763, %EV_STAGE_START_val15764
-  br i1 %cmp15765, label %if_then4425, label %if_else4426
+  %field_ptr15756 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15757 = load i64, ptr %field_ptr15756
+  %EV_STAGE_START_val15758 = load i64, ptr @EV_STAGE_START
+  %cmp15759 = icmp eq i64 %field15757, %EV_STAGE_START_val15758
+  %field_ptr15760 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15761 = load i64, ptr %field_ptr15760
+  %EV_STAGE_END_val15762 = load i64, ptr @EV_STAGE_END
+  %cmp15763 = icmp eq i64 %field15761, %EV_STAGE_END_val15762
+  %logic15764 = or i1 %cmp15759, %cmp15763
+  br i1 %logic15764, label %if_then4425, label %if_else4426
 
 if_then4425:
-  %_reporter_verbose_val15766 = load i32, ptr @_reporter_verbose
-  %cond15767 = icmp ne i32 %_reporter_verbose_val15766, 0
-  br i1 %cond15767, label %if_then4428, label %if_else4429
-
-if_then4428:
-  %field_ptr15768 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
-  %field15769 = load i64, ptr %field_ptr15768
-  %call15770 = call ptr @tr_stage(i64 %field15769)
-  %concat15771 = call ptr @ofs_str_concat(ptr @str.102, ptr %call15770)
-  %concat15772 = call ptr @ofs_str_concat(ptr %concat15771, ptr @str.705)
-  %field_ptr15773 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
-  %field15774 = load ptr, ptr %field_ptr15773
-  %concat15775 = call ptr @ofs_str_concat(ptr %concat15772, ptr %field15774)
-  call void @_emit_line(ptr %concat15775)
-  br label %if_end4430
-
-if_else4429:
-  br label %if_end4430
-
-if_end4430:
-  ret void
+  %line_val15765 = load ptr, ptr %line15737
+  %concat15766 = call ptr @ofs_str_concat(ptr %line_val15765, ptr @str.696)
+  %field_ptr15767 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
+  %field15768 = load i64, ptr %field_ptr15767
+  %call15769 = call ptr @stage_name(i64 %field15768)
+  %concat15770 = call ptr @ofs_str_concat(ptr %concat15766, ptr %call15769)
+  %concat15771 = call ptr @ofs_str_concat(ptr %concat15770, ptr @str.109)
+  store ptr %concat15771, ptr %line15737
+  br label %if_end4427
 
 if_else4426:
   br label %if_end4427
 
 if_end4427:
-  %field_ptr15776 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15777 = load i64, ptr %field_ptr15776
-  %EV_STAGE_END_val15778 = load i64, ptr @EV_STAGE_END
-  %cmp15779 = icmp eq i64 %field15777, %EV_STAGE_END_val15778
-  br i1 %cmp15779, label %if_then4431, label %if_else4432
+  %field_ptr15772 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15773 = load i64, ptr %field_ptr15772
+  %EV_DIAGNOSTIC_val15774 = load i64, ptr @EV_DIAGNOSTIC
+  %cmp15775 = icmp eq i64 %field15773, %EV_DIAGNOSTIC_val15774
+  br i1 %cmp15775, label %if_then4428, label %if_else4429
+
+if_then4428:
+  %line_val15776 = load ptr, ptr %line15737
+  %concat15777 = call ptr @ofs_str_concat(ptr %line_val15776, ptr @str.697)
+  %field_ptr15778 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
+  %field15779 = load i64, ptr %field_ptr15778
+  %call15780 = call ptr @level_name(i64 %field15779)
+  %concat15781 = call ptr @ofs_str_concat(ptr %concat15777, ptr %call15780)
+  %concat15782 = call ptr @ofs_str_concat(ptr %concat15781, ptr @str.109)
+  store ptr %concat15782, ptr %line15737
+  %line_val15783 = load ptr, ptr %line15737
+  %concat15784 = call ptr @ofs_str_concat(ptr %line_val15783, ptr @str.698)
+  %field_ptr15785 = getelementptr inbounds %Event, ptr %e, i32 0, i32 3
+  %field15786 = load ptr, ptr %field_ptr15785
+  %concat15787 = call ptr @ofs_str_concat(ptr %concat15784, ptr %field15786)
+  %concat15788 = call ptr @ofs_str_concat(ptr %concat15787, ptr @str.109)
+  store ptr %concat15788, ptr %line15737
+  %line_val15789 = load ptr, ptr %line15737
+  %concat15790 = call ptr @ofs_str_concat(ptr %line_val15789, ptr @str.699)
+  %field_ptr15791 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
+  %field15792 = load i64, ptr %field_ptr15791
+  %stone_to_str15793 = call ptr @ofs_stone_to_obsidian(i64 %field15792)
+  %concat15794 = call ptr @ofs_str_concat(ptr %concat15790, ptr %stone_to_str15793)
+  store ptr %concat15794, ptr %line15737
+  %line_val15795 = load ptr, ptr %line15737
+  %concat15796 = call ptr @ofs_str_concat(ptr %line_val15795, ptr @str.700)
+  %field_ptr15797 = getelementptr inbounds %Event, ptr %e, i32 0, i32 8
+  %field15798 = load i64, ptr %field_ptr15797
+  %stone_to_str15799 = call ptr @ofs_stone_to_obsidian(i64 %field15798)
+  %concat15800 = call ptr @ofs_str_concat(ptr %concat15796, ptr %stone_to_str15799)
+  store ptr %concat15800, ptr %line15737
+  %field_ptr15801 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
+  %field15802 = load ptr, ptr %field_ptr15801
+  %strlen15803 = call i64 @ofs_str_len(ptr %field15802)
+  %cmp15804 = icmp sgt i64 %strlen15803, 0
+  br i1 %cmp15804, label %if_then4431, label %if_else4432
 
 if_then4431:
-  %ms_txt15780 = alloca ptr, align 8
-  %field_ptr15781 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
-  %field15782 = load double, ptr %field_ptr15781
-  %call15783 = call ptr @ofs_crystal_to_obsidian(double %field15782)
-  store ptr %call15783, ptr %ms_txt15780
-  %info_txt15784 = alloca ptr, align 8
-  store ptr @str.72, ptr %info_txt15784
-  %field_ptr15785 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
-  %field15786 = load ptr, ptr %field_ptr15785
-  %strlen15787 = call i64 @ofs_str_len(ptr %field15786)
-  %cmp15788 = icmp sgt i64 %strlen15787, 0
-  br i1 %cmp15788, label %if_then4434, label %if_else4435
+  %line_val15805 = load ptr, ptr %line15737
+  %concat15806 = call ptr @ofs_str_concat(ptr %line_val15805, ptr @str.701)
+  %field_ptr15807 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
+  %field15808 = load ptr, ptr %field_ptr15807
+  %concat15809 = call ptr @ofs_str_concat(ptr %concat15806, ptr %field15808)
+  %concat15810 = call ptr @ofs_str_concat(ptr %concat15809, ptr @str.109)
+  store ptr %concat15810, ptr %line15737
+  br label %if_end4433
+
+if_else4432:
+  br label %if_end4433
+
+if_end4433:
+  %field_ptr15811 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
+  %field15812 = load ptr, ptr %field_ptr15811
+  %strlen15813 = call i64 @ofs_str_len(ptr %field15812)
+  %cmp15814 = icmp sgt i64 %strlen15813, 0
+  br i1 %cmp15814, label %if_then4434, label %if_else4435
 
 if_then4434:
-  %field_ptr15789 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
-  %field15790 = load ptr, ptr %field_ptr15789
-  %concat15791 = call ptr @ofs_str_concat(ptr @str.673, ptr %field15790)
-  %concat15792 = call ptr @ofs_str_concat(ptr %concat15791, ptr @str.135)
-  store ptr %concat15792, ptr %info_txt15784
+  %line_val15815 = load ptr, ptr %line15737
+  %concat15816 = call ptr @ofs_str_concat(ptr %line_val15815, ptr @str.702)
+  %field_ptr15817 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
+  %field15818 = load ptr, ptr %field_ptr15817
+  %call15819 = call ptr @tr_msg(ptr %field15818)
+  %concat15820 = call ptr @ofs_str_concat(ptr %concat15816, ptr %call15819)
+  %concat15821 = call ptr @ofs_str_concat(ptr %concat15820, ptr @str.109)
+  store ptr %concat15821, ptr %line15737
   br label %if_end4436
 
 if_else4435:
   br label %if_end4436
 
 if_end4436:
-  %field_ptr15793 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
-  %field15794 = load i64, ptr %field_ptr15793
-  %call15795 = call ptr @tr_stage(i64 %field15794)
-  %concat15796 = call ptr @ofs_str_concat(ptr @str.274, ptr %call15795)
-  %concat15797 = call ptr @ofs_str_concat(ptr %concat15796, ptr @str.706)
-  %info_txt_val15798 = load ptr, ptr %info_txt15784
-  %concat15799 = call ptr @ofs_str_concat(ptr %concat15797, ptr %info_txt_val15798)
-  %concat15800 = call ptr @ofs_str_concat(ptr %concat15799, ptr @str.680)
-  %ms_txt_val15801 = load ptr, ptr %ms_txt15780
-  %concat15802 = call ptr @ofs_str_concat(ptr %concat15800, ptr %ms_txt_val15801)
-  %concat15803 = call ptr @ofs_str_concat(ptr %concat15802, ptr @str.674)
-  call void @_emit_line(ptr %concat15803)
-  ret void
-
-if_else4432:
-  br label %if_end4433
-
-if_end4433:
-  %field_ptr15804 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15805 = load i64, ptr %field_ptr15804
-  %EV_DIAGNOSTIC_val15806 = load i64, ptr @EV_DIAGNOSTIC
-  %cmp15807 = icmp eq i64 %field15805, %EV_DIAGNOSTIC_val15806
-  br i1 %cmp15807, label %if_then4437, label %if_else4438
+  %args_part15822 = alloca ptr, align 8
+  store ptr @str.703, ptr %args_part15822
+  %has_args15823 = alloca i32, align 8
+  store i32 0, ptr %has_args15823
+  %field_ptr15824 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
+  %field15825 = load ptr, ptr %field_ptr15824
+  %strlen15826 = call i64 @ofs_str_len(ptr %field15825)
+  %cmp15827 = icmp sgt i64 %strlen15826, 0
+  br i1 %cmp15827, label %if_then4437, label %if_else4438
 
 if_then4437:
-  %loc_txt15808 = alloca ptr, align 8
-  store ptr @str.72, ptr %loc_txt15808
-  %field_ptr15809 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
-  %field15810 = load i64, ptr %field_ptr15809
-  %cmp15811 = icmp sgt i64 %field15810, 0
-  br i1 %cmp15811, label %if_then4440, label %if_else4441
+  %args_part_val15828 = load ptr, ptr %args_part15822
+  %concat15829 = call ptr @ofs_str_concat(ptr %args_part_val15828, ptr @str.109)
+  %field_ptr15830 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
+  %field15831 = load ptr, ptr %field_ptr15830
+  %concat15832 = call ptr @ofs_str_concat(ptr %concat15829, ptr %field15831)
+  %concat15833 = call ptr @ofs_str_concat(ptr %concat15832, ptr @str.109)
+  store ptr %concat15833, ptr %args_part15822
+  store i32 1, ptr %has_args15823
+  br label %if_end4439
+
+if_else4438:
+  br label %if_end4439
+
+if_end4439:
+  %field_ptr15834 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
+  %field15835 = load ptr, ptr %field_ptr15834
+  %strlen15836 = call i64 @ofs_str_len(ptr %field15835)
+  %cmp15837 = icmp sgt i64 %strlen15836, 0
+  br i1 %cmp15837, label %if_then4440, label %if_else4441
 
 if_then4440:
-  %field_ptr15812 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
-  %field15813 = load i64, ptr %field_ptr15812
-  %stone_to_str15814 = call ptr @ofs_stone_to_obsidian(i64 %field15813)
-  %concat15815 = call ptr @ofs_str_concat(ptr @str.103, ptr %stone_to_str15814)
-  %concat15816 = call ptr @ofs_str_concat(ptr %concat15815, ptr @str.103)
-  %field_ptr15817 = getelementptr inbounds %Event, ptr %e, i32 0, i32 8
-  %field15818 = load i64, ptr %field_ptr15817
-  %stone_to_str15819 = call ptr @ofs_stone_to_obsidian(i64 %field15818)
-  %concat15820 = call ptr @ofs_str_concat(ptr %concat15816, ptr %stone_to_str15819)
-  store ptr %concat15820, ptr %loc_txt15808
-  br label %if_end4442
-
-if_else4441:
-  br label %if_end4442
-
-if_end4442:
-  %msg15821 = alloca ptr, align 8
-  %field_ptr15822 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
-  %field15823 = load ptr, ptr %field_ptr15822
-  %call15824 = call ptr @tr_msg(ptr %field15823)
-  store ptr %call15824, ptr %msg15821
-  %field_ptr15825 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
-  %field15826 = load ptr, ptr %field_ptr15825
-  %strlen15827 = call i64 @ofs_str_len(ptr %field15826)
-  %cmp15828 = icmp sgt i64 %strlen15827, 0
-  br i1 %cmp15828, label %if_then4443, label %if_else4444
+  %has_args_val15838 = load i32, ptr %has_args15823
+  %cond15839 = icmp ne i32 %has_args_val15838, 0
+  br i1 %cond15839, label %if_then4443, label %if_else4444
 
 if_then4443:
-  %msg_val15829 = load ptr, ptr %msg15821
-  %concat15830 = call ptr @ofs_str_concat(ptr %msg_val15829, ptr @str.257)
-  %field_ptr15831 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
-  %field15832 = load ptr, ptr %field_ptr15831
-  %concat15833 = call ptr @ofs_str_concat(ptr %concat15830, ptr %field15832)
-  store ptr %concat15833, ptr %msg15821
+  %args_part_val15840 = load ptr, ptr %args_part15822
+  %concat15841 = call ptr @ofs_str_concat(ptr %args_part_val15840, ptr @str.140)
+  store ptr %concat15841, ptr %args_part15822
   br label %if_end4445
 
 if_else4444:
   br label %if_end4445
 
 if_end4445:
-  %field_ptr15834 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
-  %field15835 = load ptr, ptr %field_ptr15834
-  %strlen15836 = call i64 @ofs_str_len(ptr %field15835)
-  %cmp15837 = icmp sgt i64 %strlen15836, 0
-  br i1 %cmp15837, label %if_then4446, label %if_else4447
+  %args_part_val15842 = load ptr, ptr %args_part15822
+  %concat15843 = call ptr @ofs_str_concat(ptr %args_part_val15842, ptr @str.109)
+  %field_ptr15844 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
+  %field15845 = load ptr, ptr %field_ptr15844
+  %concat15846 = call ptr @ofs_str_concat(ptr %concat15843, ptr %field15845)
+  %concat15847 = call ptr @ofs_str_concat(ptr %concat15846, ptr @str.109)
+  store ptr %concat15847, ptr %args_part15822
+  store i32 1, ptr %has_args15823
+  br label %if_end4442
+
+if_else4441:
+  br label %if_end4442
+
+if_end4442:
+  %args_part_val15848 = load ptr, ptr %args_part15822
+  %concat15849 = call ptr @ofs_str_concat(ptr %args_part_val15848, ptr @str.136)
+  store ptr %concat15849, ptr %args_part15822
+  %has_args_val15850 = load i32, ptr %has_args15823
+  %cond15851 = icmp ne i32 %has_args_val15850, 0
+  br i1 %cond15851, label %if_then4446, label %if_else4447
 
 if_then4446:
-  %msg_val15838 = load ptr, ptr %msg15821
-  %concat15839 = call ptr @ofs_str_concat(ptr %msg_val15838, ptr @str.257)
-  %field_ptr15840 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
-  %field15841 = load ptr, ptr %field_ptr15840
-  %concat15842 = call ptr @ofs_str_concat(ptr %concat15839, ptr %field15841)
-  store ptr %concat15842, ptr %msg15821
+  %line_val15852 = load ptr, ptr %line15737
+  %args_part_val15853 = load ptr, ptr %args_part15822
+  %concat15854 = call ptr @ofs_str_concat(ptr %line_val15852, ptr %args_part_val15853)
+  store ptr %concat15854, ptr %line15737
   br label %if_end4448
 
 if_else4447:
   br label %if_end4448
 
 if_end4448:
-  %field_ptr15843 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
-  %field15844 = load i64, ptr %field_ptr15843
-  %call15845 = call ptr @tr_level(i64 %field15844)
-  %concat15846 = call ptr @ofs_str_concat(ptr %call15845, ptr @str.102)
-  %field_ptr15847 = getelementptr inbounds %Event, ptr %e, i32 0, i32 3
-  %field15848 = load ptr, ptr %field_ptr15847
-  %concat15849 = call ptr @ofs_str_concat(ptr %concat15846, ptr %field15848)
-  %concat15850 = call ptr @ofs_str_concat(ptr %concat15849, ptr @str.136)
-  %loc_txt_val15851 = load ptr, ptr %loc_txt15808
-  %concat15852 = call ptr @ofs_str_concat(ptr %concat15850, ptr %loc_txt_val15851)
-  %concat15853 = call ptr @ofs_str_concat(ptr %concat15852, ptr @str.257)
-  %msg_val15854 = load ptr, ptr %msg15821
-  %concat15855 = call ptr @ofs_str_concat(ptr %concat15853, ptr %msg_val15854)
-  call void @_emit_line(ptr %concat15855)
-  ret void
+  br label %if_end4430
 
-if_else4438:
-  br label %if_end4439
+if_else4429:
+  br label %if_end4430
 
-if_end4439:
-  %field_ptr15856 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15857 = load i64, ptr %field_ptr15856
-  %EV_FINISHED_val15858 = load i64, ptr @EV_FINISHED
-  %cmp15859 = icmp eq i64 %field15857, %EV_FINISHED_val15858
-  br i1 %cmp15859, label %if_then4449, label %if_else4450
+if_end4430:
+  %field_ptr15855 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
+  %field15856 = load ptr, ptr %field_ptr15855
+  %strlen15857 = call i64 @ofs_str_len(ptr %field15856)
+  %cmp15858 = icmp sgt i64 %strlen15857, 0
+  br i1 %cmp15858, label %if_then4449, label %if_else4450
 
 if_then4449:
-  %ms_txt15860 = alloca ptr, align 8
-  %field_ptr15861 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
-  %field15862 = load double, ptr %field_ptr15861
-  %call15863 = call ptr @ofs_crystal_to_obsidian(double %field15862)
-  store ptr %call15863, ptr %ms_txt15860
-  %size_txt15864 = alloca ptr, align 8
-  %field_ptr15865 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
-  %field15866 = load ptr, ptr %field_ptr15865
-  store ptr %field15866, ptr %size_txt15864
-  %field_ptr15867 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
-  %field15868 = load ptr, ptr %field_ptr15867
-  %concat15869 = call ptr @ofs_str_concat(ptr @str.707, ptr %field15868)
-  %concat15870 = call ptr @ofs_str_concat(ptr %concat15869, ptr @str.680)
-  %size_txt_val15871 = load ptr, ptr %size_txt15864
-  %concat15872 = call ptr @ofs_str_concat(ptr %concat15870, ptr %size_txt_val15871)
-  %concat15873 = call ptr @ofs_str_concat(ptr %concat15872, ptr @str.681)
-  %ms_txt_val15874 = load ptr, ptr %ms_txt15860
-  %concat15875 = call ptr @ofs_str_concat(ptr %concat15873, ptr %ms_txt_val15874)
-  %concat15876 = call ptr @ofs_str_concat(ptr %concat15875, ptr @str.674)
-  call void @_emit_line(ptr %concat15876)
-  ret void
+  %line_val15859 = load ptr, ptr %line15737
+  %concat15860 = call ptr @ofs_str_concat(ptr %line_val15859, ptr @str.704)
+  %field_ptr15861 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
+  %field15862 = load ptr, ptr %field_ptr15861
+  %concat15863 = call ptr @ofs_str_concat(ptr %concat15860, ptr %field15862)
+  %concat15864 = call ptr @ofs_str_concat(ptr %concat15863, ptr @str.109)
+  store ptr %concat15864, ptr %line15737
+  br label %if_end4451
 
 if_else4450:
   br label %if_end4451
 
 if_end4451:
-  %field_ptr15877 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
-  %field15878 = load i64, ptr %field_ptr15877
-  %EV_PROGRAM_OUT_val15879 = load i64, ptr @EV_PROGRAM_OUT
-  %cmp15880 = icmp eq i64 %field15878, %EV_PROGRAM_OUT_val15879
-  br i1 %cmp15880, label %if_then4452, label %if_else4453
+  %field_ptr15865 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
+  %field15866 = load ptr, ptr %field_ptr15865
+  %strlen15867 = call i64 @ofs_str_len(ptr %field15866)
+  %cmp15868 = icmp sgt i64 %strlen15867, 0
+  br i1 %cmp15868, label %if_then4452, label %if_else4453
 
 if_then4452:
-  %field_ptr15881 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
-  %field15882 = load ptr, ptr %field_ptr15881
-  call void @_emit_line(ptr %field15882)
-  ret void
+  %line_val15869 = load ptr, ptr %line15737
+  %concat15870 = call ptr @ofs_str_concat(ptr %line_val15869, ptr @str.705)
+  %field_ptr15871 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
+  %field15872 = load ptr, ptr %field_ptr15871
+  %concat15873 = call ptr @ofs_str_concat(ptr %concat15870, ptr %field15872)
+  %concat15874 = call ptr @ofs_str_concat(ptr %concat15873, ptr @str.109)
+  store ptr %concat15874, ptr %line15737
+  br label %if_end4454
 
 if_else4453:
   br label %if_end4454
 
 if_end4454:
+  %field_ptr15875 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
+  %field15876 = load double, ptr %field_ptr15875
+  %cmp15877 = fcmp one double %field15876, 0.0
+  br i1 %cmp15877, label %if_then4455, label %if_else4456
+
+if_then4455:
+  %line_val15878 = load ptr, ptr %line15737
+  %concat15879 = call ptr @ofs_str_concat(ptr %line_val15878, ptr @str.706)
+  %field_ptr15880 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
+  %field15881 = load double, ptr %field_ptr15880
+  %call15882 = call ptr @ofs_crystal_to_obsidian(double %field15881)
+  %concat15883 = call ptr @ofs_str_concat(ptr %concat15879, ptr %call15882)
+  store ptr %concat15883, ptr %line15737
+  br label %if_end4457
+
+if_else4456:
+  br label %if_end4457
+
+if_end4457:
+  %field_ptr15884 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15885 = load i64, ptr %field_ptr15884
+  %EV_FINISHED_val15886 = load i64, ptr @EV_FINISHED
+  %cmp15887 = icmp eq i64 %field15885, %EV_FINISHED_val15886
+  br i1 %cmp15887, label %if_then4458, label %if_else4459
+
+if_then4458:
+  %line_val15888 = load ptr, ptr %line15737
+  %concat15889 = call ptr @ofs_str_concat(ptr %line_val15888, ptr @str.707)
+  %_json_total_ms_val15890 = load double, ptr @_json_total_ms
+  %call15891 = call ptr @ofs_crystal_to_obsidian(double %_json_total_ms_val15890)
+  %concat15892 = call ptr @ofs_str_concat(ptr %concat15889, ptr %call15891)
+  store ptr %concat15892, ptr %line15737
+  br label %if_end4460
+
+if_else4459:
+  br label %if_end4460
+
+if_end4460:
+  %line_val15893 = load ptr, ptr %line15737
+  %concat15894 = call ptr @ofs_str_concat(ptr %line_val15893, ptr @str.138)
+  store ptr %concat15894, ptr %line15737
+  %line_val15895 = load ptr, ptr %line15737
+  call void @_emit_line(ptr %line_val15895)
+  ret void
+}
+
+define void @_emit_plain(ptr %e) {
+entry:
+  %field_ptr15896 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15897 = load i64, ptr %field_ptr15896
+  %EV_STAGE_START_val15898 = load i64, ptr @EV_STAGE_START
+  %cmp15899 = icmp eq i64 %field15897, %EV_STAGE_START_val15898
+  br i1 %cmp15899, label %if_then4461, label %if_else4462
+
+if_then4461:
+  %_reporter_verbose_val15900 = load i32, ptr @_reporter_verbose
+  %cond15901 = icmp ne i32 %_reporter_verbose_val15900, 0
+  br i1 %cond15901, label %if_then4464, label %if_else4465
+
+if_then4464:
+  %field_ptr15902 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
+  %field15903 = load i64, ptr %field_ptr15902
+  %call15904 = call ptr @tr_stage(i64 %field15903)
+  %concat15905 = call ptr @ofs_str_concat(ptr @str.102, ptr %call15904)
+  %concat15906 = call ptr @ofs_str_concat(ptr %concat15905, ptr @str.708)
+  %field_ptr15907 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
+  %field15908 = load ptr, ptr %field_ptr15907
+  %concat15909 = call ptr @ofs_str_concat(ptr %concat15906, ptr %field15908)
+  call void @_emit_line(ptr %concat15909)
+  br label %if_end4466
+
+if_else4465:
+  br label %if_end4466
+
+if_end4466:
+  ret void
+
+if_else4462:
+  br label %if_end4463
+
+if_end4463:
+  %field_ptr15910 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15911 = load i64, ptr %field_ptr15910
+  %EV_STAGE_END_val15912 = load i64, ptr @EV_STAGE_END
+  %cmp15913 = icmp eq i64 %field15911, %EV_STAGE_END_val15912
+  br i1 %cmp15913, label %if_then4467, label %if_else4468
+
+if_then4467:
+  %ms_txt15914 = alloca ptr, align 8
+  %field_ptr15915 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
+  %field15916 = load double, ptr %field_ptr15915
+  %call15917 = call ptr @ofs_crystal_to_obsidian(double %field15916)
+  store ptr %call15917, ptr %ms_txt15914
+  %info_txt15918 = alloca ptr, align 8
+  store ptr @str.72, ptr %info_txt15918
+  %field_ptr15919 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
+  %field15920 = load ptr, ptr %field_ptr15919
+  %strlen15921 = call i64 @ofs_str_len(ptr %field15920)
+  %cmp15922 = icmp sgt i64 %strlen15921, 0
+  br i1 %cmp15922, label %if_then4470, label %if_else4471
+
+if_then4470:
+  %field_ptr15923 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
+  %field15924 = load ptr, ptr %field_ptr15923
+  %concat15925 = call ptr @ofs_str_concat(ptr @str.673, ptr %field15924)
+  %concat15926 = call ptr @ofs_str_concat(ptr %concat15925, ptr @str.135)
+  store ptr %concat15926, ptr %info_txt15918
+  br label %if_end4472
+
+if_else4471:
+  br label %if_end4472
+
+if_end4472:
+  %field_ptr15927 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
+  %field15928 = load i64, ptr %field_ptr15927
+  %call15929 = call ptr @tr_stage(i64 %field15928)
+  %concat15930 = call ptr @ofs_str_concat(ptr @str.274, ptr %call15929)
+  %concat15931 = call ptr @ofs_str_concat(ptr %concat15930, ptr @str.709)
+  %info_txt_val15932 = load ptr, ptr %info_txt15918
+  %concat15933 = call ptr @ofs_str_concat(ptr %concat15931, ptr %info_txt_val15932)
+  %concat15934 = call ptr @ofs_str_concat(ptr %concat15933, ptr @str.680)
+  %ms_txt_val15935 = load ptr, ptr %ms_txt15914
+  %concat15936 = call ptr @ofs_str_concat(ptr %concat15934, ptr %ms_txt_val15935)
+  %concat15937 = call ptr @ofs_str_concat(ptr %concat15936, ptr @str.674)
+  call void @_emit_line(ptr %concat15937)
+  ret void
+
+if_else4468:
+  br label %if_end4469
+
+if_end4469:
+  %field_ptr15938 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15939 = load i64, ptr %field_ptr15938
+  %EV_DIAGNOSTIC_val15940 = load i64, ptr @EV_DIAGNOSTIC
+  %cmp15941 = icmp eq i64 %field15939, %EV_DIAGNOSTIC_val15940
+  br i1 %cmp15941, label %if_then4473, label %if_else4474
+
+if_then4473:
+  %loc_txt15942 = alloca ptr, align 8
+  store ptr @str.72, ptr %loc_txt15942
+  %field_ptr15943 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
+  %field15944 = load i64, ptr %field_ptr15943
+  %cmp15945 = icmp sgt i64 %field15944, 0
+  br i1 %cmp15945, label %if_then4476, label %if_else4477
+
+if_then4476:
+  %field_ptr15946 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
+  %field15947 = load i64, ptr %field_ptr15946
+  %stone_to_str15948 = call ptr @ofs_stone_to_obsidian(i64 %field15947)
+  %concat15949 = call ptr @ofs_str_concat(ptr @str.103, ptr %stone_to_str15948)
+  %concat15950 = call ptr @ofs_str_concat(ptr %concat15949, ptr @str.103)
+  %field_ptr15951 = getelementptr inbounds %Event, ptr %e, i32 0, i32 8
+  %field15952 = load i64, ptr %field_ptr15951
+  %stone_to_str15953 = call ptr @ofs_stone_to_obsidian(i64 %field15952)
+  %concat15954 = call ptr @ofs_str_concat(ptr %concat15950, ptr %stone_to_str15953)
+  store ptr %concat15954, ptr %loc_txt15942
+  br label %if_end4478
+
+if_else4477:
+  br label %if_end4478
+
+if_end4478:
+  %msg15955 = alloca ptr, align 8
+  %field_ptr15956 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
+  %field15957 = load ptr, ptr %field_ptr15956
+  %call15958 = call ptr @tr_msg(ptr %field15957)
+  store ptr %call15958, ptr %msg15955
+  %field_ptr15959 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
+  %field15960 = load ptr, ptr %field_ptr15959
+  %strlen15961 = call i64 @ofs_str_len(ptr %field15960)
+  %cmp15962 = icmp sgt i64 %strlen15961, 0
+  br i1 %cmp15962, label %if_then4479, label %if_else4480
+
+if_then4479:
+  %msg_val15963 = load ptr, ptr %msg15955
+  %concat15964 = call ptr @ofs_str_concat(ptr %msg_val15963, ptr @str.257)
+  %field_ptr15965 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
+  %field15966 = load ptr, ptr %field_ptr15965
+  %concat15967 = call ptr @ofs_str_concat(ptr %concat15964, ptr %field15966)
+  store ptr %concat15967, ptr %msg15955
+  br label %if_end4481
+
+if_else4480:
+  br label %if_end4481
+
+if_end4481:
+  %field_ptr15968 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
+  %field15969 = load ptr, ptr %field_ptr15968
+  %strlen15970 = call i64 @ofs_str_len(ptr %field15969)
+  %cmp15971 = icmp sgt i64 %strlen15970, 0
+  br i1 %cmp15971, label %if_then4482, label %if_else4483
+
+if_then4482:
+  %msg_val15972 = load ptr, ptr %msg15955
+  %concat15973 = call ptr @ofs_str_concat(ptr %msg_val15972, ptr @str.257)
+  %field_ptr15974 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
+  %field15975 = load ptr, ptr %field_ptr15974
+  %concat15976 = call ptr @ofs_str_concat(ptr %concat15973, ptr %field15975)
+  store ptr %concat15976, ptr %msg15955
+  br label %if_end4484
+
+if_else4483:
+  br label %if_end4484
+
+if_end4484:
+  %field_ptr15977 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
+  %field15978 = load i64, ptr %field_ptr15977
+  %call15979 = call ptr @tr_level(i64 %field15978)
+  %concat15980 = call ptr @ofs_str_concat(ptr %call15979, ptr @str.102)
+  %field_ptr15981 = getelementptr inbounds %Event, ptr %e, i32 0, i32 3
+  %field15982 = load ptr, ptr %field_ptr15981
+  %concat15983 = call ptr @ofs_str_concat(ptr %concat15980, ptr %field15982)
+  %concat15984 = call ptr @ofs_str_concat(ptr %concat15983, ptr @str.136)
+  %loc_txt_val15985 = load ptr, ptr %loc_txt15942
+  %concat15986 = call ptr @ofs_str_concat(ptr %concat15984, ptr %loc_txt_val15985)
+  %concat15987 = call ptr @ofs_str_concat(ptr %concat15986, ptr @str.257)
+  %msg_val15988 = load ptr, ptr %msg15955
+  %concat15989 = call ptr @ofs_str_concat(ptr %concat15987, ptr %msg_val15988)
+  call void @_emit_line(ptr %concat15989)
+  ret void
+
+if_else4474:
+  br label %if_end4475
+
+if_end4475:
+  %field_ptr15990 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field15991 = load i64, ptr %field_ptr15990
+  %EV_FINISHED_val15992 = load i64, ptr @EV_FINISHED
+  %cmp15993 = icmp eq i64 %field15991, %EV_FINISHED_val15992
+  br i1 %cmp15993, label %if_then4485, label %if_else4486
+
+if_then4485:
+  %ms_txt15994 = alloca ptr, align 8
+  %field_ptr15995 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
+  %field15996 = load double, ptr %field_ptr15995
+  %call15997 = call ptr @ofs_crystal_to_obsidian(double %field15996)
+  store ptr %call15997, ptr %ms_txt15994
+  %size_txt15998 = alloca ptr, align 8
+  %field_ptr15999 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
+  %field16000 = load ptr, ptr %field_ptr15999
+  store ptr %field16000, ptr %size_txt15998
+  %field_ptr16001 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
+  %field16002 = load ptr, ptr %field_ptr16001
+  %concat16003 = call ptr @ofs_str_concat(ptr @str.710, ptr %field16002)
+  %concat16004 = call ptr @ofs_str_concat(ptr %concat16003, ptr @str.680)
+  %size_txt_val16005 = load ptr, ptr %size_txt15998
+  %concat16006 = call ptr @ofs_str_concat(ptr %concat16004, ptr %size_txt_val16005)
+  %concat16007 = call ptr @ofs_str_concat(ptr %concat16006, ptr @str.681)
+  %ms_txt_val16008 = load ptr, ptr %ms_txt15994
+  %concat16009 = call ptr @ofs_str_concat(ptr %concat16007, ptr %ms_txt_val16008)
+  %concat16010 = call ptr @ofs_str_concat(ptr %concat16009, ptr @str.674)
+  call void @_emit_line(ptr %concat16010)
+  ret void
+
+if_else4486:
+  br label %if_end4487
+
+if_end4487:
+  %field_ptr16011 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
+  %field16012 = load i64, ptr %field_ptr16011
+  %EV_PROGRAM_OUT_val16013 = load i64, ptr @EV_PROGRAM_OUT
+  %cmp16014 = icmp eq i64 %field16012, %EV_PROGRAM_OUT_val16013
+  br i1 %cmp16014, label %if_then4488, label %if_else4489
+
+if_then4488:
+  %field_ptr16015 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
+  %field16016 = load ptr, ptr %field_ptr16015
+  call void @_emit_line(ptr %field16016)
+  ret void
+
+if_else4489:
+  br label %if_end4490
+
+if_end4490:
   ret void
 }
 
 define void @reporter_flush() {
 entry:
-  %i15883 = alloca i64, align 8
-  store i64 0, ptr %i15883
-  %n15884 = alloca i64, align 8
-  %call15885 = call i64 @event_count()
-  store i64 %call15885, ptr %n15884
-  br label %while_cond4455
+  %i16017 = alloca i64, align 8
+  store i64 0, ptr %i16017
+  %n16018 = alloca i64, align 8
+  %call16019 = call i64 @event_count()
+  store i64 %call16019, ptr %n16018
+  br label %while_cond4491
 
-while_cond4455:
-  %i_val15886 = load i64, ptr %i15883
-  %n_val15887 = load i64, ptr %n15884
-  %cmp15888 = icmp slt i64 %i_val15886, %n_val15887
-  br i1 %cmp15888, label %while_body4456, label %while_end4457
+while_cond4491:
+  %i_val16020 = load i64, ptr %i16017
+  %n_val16021 = load i64, ptr %n16018
+  %cmp16022 = icmp slt i64 %i_val16020, %n_val16021
+  br i1 %cmp16022, label %while_body4492, label %while_end4493
 
-while_body4456:
-  %obj15890 = call ptr @ofs_alloc(i64 128)
-  %i_val15891 = load i64, ptr %i15883
-  %call15892 = call ptr @event_get(i64 %i_val15891)
-  %named_val15893 = load %Event, ptr %call15892
-  store %Event %named_val15893, ptr %obj15890
-  %_reporter_kind_val15894 = load i64, ptr @_reporter_kind
-  %REPORTER_JSON_val15895 = load i64, ptr @REPORTER_JSON
-  %cmp15896 = icmp eq i64 %_reporter_kind_val15894, %REPORTER_JSON_val15895
-  br i1 %cmp15896, label %if_then4458, label %if_else4459
+while_body4492:
+  %obj16024 = call ptr @ofs_alloc(i64 128)
+  %i_val16025 = load i64, ptr %i16017
+  %call16026 = call ptr @event_get(i64 %i_val16025)
+  %named_val16027 = load %Event, ptr %call16026
+  store %Event %named_val16027, ptr %obj16024
+  %_reporter_kind_val16028 = load i64, ptr @_reporter_kind
+  %REPORTER_JSON_val16029 = load i64, ptr @REPORTER_JSON
+  %cmp16030 = icmp eq i64 %_reporter_kind_val16028, %REPORTER_JSON_val16029
+  br i1 %cmp16030, label %if_then4494, label %if_else4495
 
-if_then4458:
-  call void @_emit_json(ptr %obj15890)
-  br label %if_end4460
+if_then4494:
+  call void @_emit_json(ptr %obj16024)
+  br label %if_end4496
 
-if_else4459:
-  %_reporter_kind_val15897 = load i64, ptr @_reporter_kind
-  %REPORTER_FANCY_val15898 = load i64, ptr @REPORTER_FANCY
-  %cmp15899 = icmp eq i64 %_reporter_kind_val15897, %REPORTER_FANCY_val15898
-  br i1 %cmp15899, label %if_then4461, label %if_else4462
+if_else4495:
+  %_reporter_kind_val16031 = load i64, ptr @_reporter_kind
+  %REPORTER_FANCY_val16032 = load i64, ptr @REPORTER_FANCY
+  %cmp16033 = icmp eq i64 %_reporter_kind_val16031, %REPORTER_FANCY_val16032
+  br i1 %cmp16033, label %if_then4497, label %if_else4498
 
-if_then4461:
-  call void @_emit_fancy(ptr %obj15890)
-  br label %if_end4463
+if_then4497:
+  call void @_emit_fancy(ptr %obj16024)
+  br label %if_end4499
 
-if_else4462:
-  call void @_emit_plain(ptr %obj15890)
-  br label %if_end4463
+if_else4498:
+  call void @_emit_plain(ptr %obj16024)
+  br label %if_end4499
 
-if_end4463:
-  br label %if_end4460
+if_end4499:
+  br label %if_end4496
 
-if_end4460:
-  %post_old15900 = load i64, ptr %i15883
-  %post_new15901 = add i64 %post_old15900, 1
-  store i64 %post_new15901, ptr %i15883
-  br label %while_cond4455
+if_end4496:
+  %post_old16034 = load i64, ptr %i16017
+  %post_new16035 = add i64 %post_old16034, 1
+  store i64 %post_new16035, ptr %i16017
+  br label %while_cond4491
 
-while_end4457:
+while_end4493:
   call void @event_reset()
   ret void
 }
 
 define void @reporter_emit_now(ptr %e) {
 entry:
-  %_reporter_kind_val15902 = load i64, ptr @_reporter_kind
-  %REPORTER_JSON_val15903 = load i64, ptr @REPORTER_JSON
-  %cmp15904 = icmp eq i64 %_reporter_kind_val15902, %REPORTER_JSON_val15903
-  br i1 %cmp15904, label %if_then4464, label %if_else4465
+  %_reporter_kind_val16036 = load i64, ptr @_reporter_kind
+  %REPORTER_JSON_val16037 = load i64, ptr @REPORTER_JSON
+  %cmp16038 = icmp eq i64 %_reporter_kind_val16036, %REPORTER_JSON_val16037
+  br i1 %cmp16038, label %if_then4500, label %if_else4501
 
-if_then4464:
+if_then4500:
   call void @_emit_json(ptr %e)
-  br label %if_end4466
+  br label %if_end4502
 
-if_else4465:
-  %_reporter_kind_val15905 = load i64, ptr @_reporter_kind
-  %REPORTER_FANCY_val15906 = load i64, ptr @REPORTER_FANCY
-  %cmp15907 = icmp eq i64 %_reporter_kind_val15905, %REPORTER_FANCY_val15906
-  br i1 %cmp15907, label %if_then4467, label %if_else4468
+if_else4501:
+  %_reporter_kind_val16039 = load i64, ptr @_reporter_kind
+  %REPORTER_FANCY_val16040 = load i64, ptr @REPORTER_FANCY
+  %cmp16041 = icmp eq i64 %_reporter_kind_val16039, %REPORTER_FANCY_val16040
+  br i1 %cmp16041, label %if_then4503, label %if_else4504
 
-if_then4467:
+if_then4503:
   call void @_emit_fancy(ptr %e)
-  br label %if_end4469
+  br label %if_end4505
 
-if_else4468:
+if_else4504:
   call void @_emit_plain(ptr %e)
-  br label %if_end4469
+  br label %if_end4505
 
-if_end4469:
-  br label %if_end4466
+if_end4505:
+  br label %if_end4502
 
-if_end4466:
+if_end4502:
   ret void
 }
 
@@ -35084,149 +35405,149 @@ define ptr @join_parts(ptr %parts) {
 entry:
   %parts.addr = alloca ptr, align 8
   store ptr %parts, ptr %parts.addr
-  %total15908 = alloca i64, align 8
-  store i64 0, ptr %total15908
-  %i15909 = alloca i64, align 8
-  store i64 0, ptr %i15909
-  br label %while_cond4470
+  %total16042 = alloca i64, align 8
+  store i64 0, ptr %total16042
+  %i16043 = alloca i64, align 8
+  store i64 0, ptr %i16043
+  br label %while_cond4506
 
-while_cond4470:
-  %i_val15910 = load i64, ptr %i15909
-  %parts_val15911 = load ptr, ptr %parts.addr
-  %arr_len15912 = call i64 @ofs_array_len(ptr %parts_val15911)
-  %cmp15913 = icmp slt i64 %i_val15910, %arr_len15912
-  br i1 %cmp15913, label %while_body4471, label %while_end4472
+while_cond4506:
+  %i_val16044 = load i64, ptr %i16043
+  %parts_val16045 = load ptr, ptr %parts.addr
+  %arr_len16046 = call i64 @ofs_array_len(ptr %parts_val16045)
+  %cmp16047 = icmp slt i64 %i_val16044, %arr_len16046
+  br i1 %cmp16047, label %while_body4507, label %while_end4508
 
-while_body4471:
-  %part15914 = alloca ptr, align 8
-  %parts_val15915 = load ptr, ptr %parts.addr
-  %i_val15916 = load i64, ptr %i15909
-  %arr_get15917 = call ptr @ofs_array_get(ptr %parts_val15915, i64 %i_val15916)
-  %arr_item15918 = load ptr, ptr %arr_get15917
-  store ptr %arr_item15918, ptr %part15914
-  %total_val15919 = load i64, ptr %total15908
-  %part_val15920 = load ptr, ptr %part15914
-  %strlen15921 = call i64 @ofs_str_len(ptr %part_val15920)
-  %op15922 = add i64 %total_val15919, %strlen15921
-  store i64 %op15922, ptr %total15908
-  %post_old15923 = load i64, ptr %i15909
-  %post_new15924 = add i64 %post_old15923, 1
-  store i64 %post_new15924, ptr %i15909
-  br label %while_cond4470
+while_body4507:
+  %part16048 = alloca ptr, align 8
+  %parts_val16049 = load ptr, ptr %parts.addr
+  %i_val16050 = load i64, ptr %i16043
+  %arr_get16051 = call ptr @ofs_array_get(ptr %parts_val16049, i64 %i_val16050)
+  %arr_item16052 = load ptr, ptr %arr_get16051
+  store ptr %arr_item16052, ptr %part16048
+  %total_val16053 = load i64, ptr %total16042
+  %part_val16054 = load ptr, ptr %part16048
+  %strlen16055 = call i64 @ofs_str_len(ptr %part_val16054)
+  %op16056 = add i64 %total_val16053, %strlen16055
+  store i64 %op16056, ptr %total16042
+  %post_old16057 = load i64, ptr %i16043
+  %post_new16058 = add i64 %post_old16057, 1
+  store i64 %post_new16058, ptr %i16043
+  br label %while_cond4506
 
-while_end4472:
-  %result15925 = alloca ptr, align 8
-  %total_val15926 = load i64, ptr %total15908
-  %op15927 = add i64 %total_val15926, 1
-  %call15928 = call ptr @ofs_alloc(i64 %op15927)
-  store ptr %call15928, ptr %result15925
-  %offset15929 = alloca i64, align 8
-  store i64 0, ptr %offset15929
-  store i64 0, ptr %i15909
-  br label %while_cond4473
+while_end4508:
+  %result16059 = alloca ptr, align 8
+  %total_val16060 = load i64, ptr %total16042
+  %op16061 = add i64 %total_val16060, 1
+  %call16062 = call ptr @ofs_alloc(i64 %op16061)
+  store ptr %call16062, ptr %result16059
+  %offset16063 = alloca i64, align 8
+  store i64 0, ptr %offset16063
+  store i64 0, ptr %i16043
+  br label %while_cond4509
 
-while_cond4473:
-  %i_val15930 = load i64, ptr %i15909
-  %parts_val15931 = load ptr, ptr %parts.addr
-  %arr_len15932 = call i64 @ofs_array_len(ptr %parts_val15931)
-  %cmp15933 = icmp slt i64 %i_val15930, %arr_len15932
-  br i1 %cmp15933, label %while_body4474, label %while_end4475
+while_cond4509:
+  %i_val16064 = load i64, ptr %i16043
+  %parts_val16065 = load ptr, ptr %parts.addr
+  %arr_len16066 = call i64 @ofs_array_len(ptr %parts_val16065)
+  %cmp16067 = icmp slt i64 %i_val16064, %arr_len16066
+  br i1 %cmp16067, label %while_body4510, label %while_end4511
 
-while_body4474:
-  %part15934 = alloca ptr, align 8
-  %parts_val15935 = load ptr, ptr %parts.addr
-  %i_val15936 = load i64, ptr %i15909
-  %arr_get15937 = call ptr @ofs_array_get(ptr %parts_val15935, i64 %i_val15936)
-  %arr_item15938 = load ptr, ptr %arr_get15937
-  store ptr %arr_item15938, ptr %part15934
-  %part_len15939 = alloca i64, align 8
-  %part_val15940 = load ptr, ptr %part15934
-  %strlen15941 = call i64 @ofs_str_len(ptr %part_val15940)
-  store i64 %strlen15941, ptr %part_len15939
-  %part_len_val15942 = load i64, ptr %part_len15939
-  %cmp15943 = icmp sgt i64 %part_len_val15942, 0
-  br i1 %cmp15943, label %if_then4476, label %if_else4477
+while_body4510:
+  %part16068 = alloca ptr, align 8
+  %parts_val16069 = load ptr, ptr %parts.addr
+  %i_val16070 = load i64, ptr %i16043
+  %arr_get16071 = call ptr @ofs_array_get(ptr %parts_val16069, i64 %i_val16070)
+  %arr_item16072 = load ptr, ptr %arr_get16071
+  store ptr %arr_item16072, ptr %part16068
+  %part_len16073 = alloca i64, align 8
+  %part_val16074 = load ptr, ptr %part16068
+  %strlen16075 = call i64 @ofs_str_len(ptr %part_val16074)
+  store i64 %strlen16075, ptr %part_len16073
+  %part_len_val16076 = load i64, ptr %part_len16073
+  %cmp16077 = icmp sgt i64 %part_len_val16076, 0
+  br i1 %cmp16077, label %if_then4512, label %if_else4513
 
-if_then4476:
-  %result_val15944 = load ptr, ptr %result15925
-  %cast15945 = ptrtoint ptr %result_val15944 to i64
-  %offset_val15946 = load i64, ptr %offset15929
-  %op15947 = add i64 %cast15945, %offset_val15946
-  %cast15948 = inttoptr i64 %op15947 to ptr
-  %part_val15949 = load ptr, ptr %part15934
-  %part_len_val15950 = load i64, ptr %part_len15939
-  %call15951 = call ptr @memcpy(ptr %cast15948, ptr %part_val15949, i64 %part_len_val15950)
-  br label %if_end4478
+if_then4512:
+  %result_val16078 = load ptr, ptr %result16059
+  %cast16079 = ptrtoint ptr %result_val16078 to i64
+  %offset_val16080 = load i64, ptr %offset16063
+  %op16081 = add i64 %cast16079, %offset_val16080
+  %cast16082 = inttoptr i64 %op16081 to ptr
+  %part_val16083 = load ptr, ptr %part16068
+  %part_len_val16084 = load i64, ptr %part_len16073
+  %call16085 = call ptr @memcpy(ptr %cast16082, ptr %part_val16083, i64 %part_len_val16084)
+  br label %if_end4514
 
-if_else4477:
-  br label %if_end4478
+if_else4513:
+  br label %if_end4514
 
-if_end4478:
-  %offset_val15952 = load i64, ptr %offset15929
-  %part_len_val15953 = load i64, ptr %part_len15939
-  %op15954 = add i64 %offset_val15952, %part_len_val15953
-  store i64 %op15954, ptr %offset15929
-  %post_old15955 = load i64, ptr %i15909
-  %post_new15956 = add i64 %post_old15955, 1
-  store i64 %post_new15956, ptr %i15909
-  br label %while_cond4473
+if_end4514:
+  %offset_val16086 = load i64, ptr %offset16063
+  %part_len_val16087 = load i64, ptr %part_len16073
+  %op16088 = add i64 %offset_val16086, %part_len_val16087
+  store i64 %op16088, ptr %offset16063
+  %post_old16089 = load i64, ptr %i16043
+  %post_new16090 = add i64 %post_old16089, 1
+  store i64 %post_new16090, ptr %i16043
+  br label %while_cond4509
 
-while_end4475:
-  %terminator15957 = alloca ptr, align 8
-  %result_val15958 = load ptr, ptr %result15925
-  %cast15959 = ptrtoint ptr %result_val15958 to i64
-  %total_val15960 = load i64, ptr %total15908
-  %op15961 = add i64 %cast15959, %total_val15960
-  %cast15962 = inttoptr i64 %op15961 to ptr
-  store ptr %cast15962, ptr %terminator15957
-  %terminator_val15963 = load ptr, ptr %terminator15957
-  %cast15964 = trunc i64 0 to i8
-  store i8 %cast15964, ptr %terminator_val15963
-  %result_val15965 = load ptr, ptr %result15925
-  ret ptr %result_val15965
+while_end4511:
+  %terminator16091 = alloca ptr, align 8
+  %result_val16092 = load ptr, ptr %result16059
+  %cast16093 = ptrtoint ptr %result_val16092 to i64
+  %total_val16094 = load i64, ptr %total16042
+  %op16095 = add i64 %cast16093, %total_val16094
+  %cast16096 = inttoptr i64 %op16095 to ptr
+  store ptr %cast16096, ptr %terminator16091
+  %terminator_val16097 = load ptr, ptr %terminator16091
+  %cast16098 = trunc i64 0 to i8
+  store i8 %cast16098, ptr %terminator_val16097
+  %result_val16099 = load ptr, ptr %result16059
+  ret ptr %result_val16099
 }
 
 define i32 @path_seen(ptr %path) {
 entry:
   %path.addr = alloca ptr, align 8
   store ptr %path, ptr %path.addr
-  %i15966 = alloca i64, align 8
-  store i64 0, ptr %i15966
-  br label %while_cond4479
+  %i16100 = alloca i64, align 8
+  store i64 0, ptr %i16100
+  br label %while_cond4515
 
-while_cond4479:
-  %i_val15967 = load i64, ptr %i15966
-  %_expanded_paths_val15968 = load ptr, ptr @_expanded_paths
-  %arr_len15969 = call i64 @ofs_array_len(ptr %_expanded_paths_val15968)
-  %cmp15970 = icmp slt i64 %i_val15967, %arr_len15969
-  br i1 %cmp15970, label %while_body4480, label %while_end4481
+while_cond4515:
+  %i_val16101 = load i64, ptr %i16100
+  %_expanded_paths_val16102 = load ptr, ptr @_expanded_paths
+  %arr_len16103 = call i64 @ofs_array_len(ptr %_expanded_paths_val16102)
+  %cmp16104 = icmp slt i64 %i_val16101, %arr_len16103
+  br i1 %cmp16104, label %while_body4516, label %while_end4517
 
-while_body4480:
-  %p15971 = alloca ptr, align 8
-  %_expanded_paths_val15972 = load ptr, ptr @_expanded_paths
-  %i_val15973 = load i64, ptr %i15966
-  %arr_get15974 = call ptr @ofs_array_get(ptr %_expanded_paths_val15972, i64 %i_val15973)
-  %arr_item15975 = load ptr, ptr %arr_get15974
-  store ptr %arr_item15975, ptr %p15971
-  %p_val15976 = load ptr, ptr %p15971
-  %path_val15977 = load ptr, ptr %path.addr
-  %streq15978 = call i32 @ofs_str_eq(ptr %p_val15976, ptr %path_val15977)
-  %cond15979 = icmp ne i32 %streq15978, 0
-  br i1 %cond15979, label %if_then4482, label %if_else4483
+while_body4516:
+  %p16105 = alloca ptr, align 8
+  %_expanded_paths_val16106 = load ptr, ptr @_expanded_paths
+  %i_val16107 = load i64, ptr %i16100
+  %arr_get16108 = call ptr @ofs_array_get(ptr %_expanded_paths_val16106, i64 %i_val16107)
+  %arr_item16109 = load ptr, ptr %arr_get16108
+  store ptr %arr_item16109, ptr %p16105
+  %p_val16110 = load ptr, ptr %p16105
+  %path_val16111 = load ptr, ptr %path.addr
+  %streq16112 = call i32 @ofs_str_eq(ptr %p_val16110, ptr %path_val16111)
+  %cond16113 = icmp ne i32 %streq16112, 0
+  br i1 %cond16113, label %if_then4518, label %if_else4519
 
-if_then4482:
+if_then4518:
   ret i32 1
 
-if_else4483:
-  br label %if_end4484
+if_else4519:
+  br label %if_end4520
 
-if_end4484:
-  %post_old15980 = load i64, ptr %i15966
-  %post_new15981 = add i64 %post_old15980, 1
-  store i64 %post_new15981, ptr %i15966
-  br label %while_cond4479
+if_end4520:
+  %post_old16114 = load i64, ptr %i16100
+  %post_new16115 = add i64 %post_old16114, 1
+  store i64 %post_new16115, ptr %i16100
+  br label %while_cond4515
 
-while_end4481:
+while_end4517:
   ret i32 0
 }
 
@@ -35234,24 +35555,24 @@ define void @remember_path(ptr %path) {
 entry:
   %path.addr = alloca ptr, align 8
   store ptr %path, ptr %path.addr
-  %path_val15982 = load ptr, ptr %path.addr
-  %call15983 = call i32 @path_seen(ptr %path_val15982)
-  %cond15984 = icmp ne i32 %call15983, 0
-  %not15985 = xor i1 %cond15984, true
-  br i1 %not15985, label %if_then4485, label %if_else4486
+  %path_val16116 = load ptr, ptr %path.addr
+  %call16117 = call i32 @path_seen(ptr %path_val16116)
+  %cond16118 = icmp ne i32 %call16117, 0
+  %not16119 = xor i1 %cond16118, true
+  br i1 %not16119, label %if_then4521, label %if_else4522
 
-if_then4485:
-  %_expanded_paths_val15986 = load ptr, ptr @_expanded_paths
-  %path_val15987 = load ptr, ptr %path.addr
-  %arr_push15988 = alloca ptr, align 8
-  store ptr %path_val15987, ptr %arr_push15988
-  call void @ofs_array_push(ptr %_expanded_paths_val15986, ptr %arr_push15988)
-  br label %if_end4487
+if_then4521:
+  %_expanded_paths_val16120 = load ptr, ptr @_expanded_paths
+  %path_val16121 = load ptr, ptr %path.addr
+  %arr_push16122 = alloca ptr, align 8
+  store ptr %path_val16121, ptr %arr_push16122
+  call void @ofs_array_push(ptr %_expanded_paths_val16120, ptr %arr_push16122)
+  br label %if_end4523
 
-if_else4486:
-  br label %if_end4487
+if_else4522:
+  br label %if_end4523
 
-if_end4487:
+if_end4523:
   ret void
 }
 
@@ -35259,127 +35580,127 @@ define ptr @dirname(ptr %path) {
 entry:
   %path.addr = alloca ptr, align 8
   store ptr %path, ptr %path.addr
-  %i15989 = alloca i64, align 8
-  store i64 0, ptr %i15989
-  %last15990 = alloca i64, align 8
-  %neg15991 = sub i64 0, 1
-  store i64 %neg15991, ptr %last15990
-  %len15992 = alloca i64, align 8
-  %path_val15993 = load ptr, ptr %path.addr
-  %strlen15994 = call i64 @ofs_str_len(ptr %path_val15993)
-  store i64 %strlen15994, ptr %len15992
-  br label %while_cond4488
+  %i16123 = alloca i64, align 8
+  store i64 0, ptr %i16123
+  %last16124 = alloca i64, align 8
+  %neg16125 = sub i64 0, 1
+  store i64 %neg16125, ptr %last16124
+  %len16126 = alloca i64, align 8
+  %path_val16127 = load ptr, ptr %path.addr
+  %strlen16128 = call i64 @ofs_str_len(ptr %path_val16127)
+  store i64 %strlen16128, ptr %len16126
+  br label %while_cond4524
 
-while_cond4488:
-  %i_val15995 = load i64, ptr %i15989
-  %len_val15996 = load i64, ptr %len15992
-  %cmp15997 = icmp slt i64 %i_val15995, %len_val15996
-  br i1 %cmp15997, label %while_body4489, label %while_end4490
+while_cond4524:
+  %i_val16129 = load i64, ptr %i16123
+  %len_val16130 = load i64, ptr %len16126
+  %cmp16131 = icmp slt i64 %i_val16129, %len_val16130
+  br i1 %cmp16131, label %while_body4525, label %while_end4526
 
-while_body4489:
-  %path_val15998 = load ptr, ptr %path.addr
-  %i_val15999 = load i64, ptr %i15989
-  %call16000 = call i64 @ofs_str_char_at(ptr %path_val15998, i64 %i_val15999)
-  %cmp16001 = icmp eq i64 %call16000, 47
-  br i1 %cmp16001, label %if_then4491, label %if_else4492
+while_body4525:
+  %path_val16132 = load ptr, ptr %path.addr
+  %i_val16133 = load i64, ptr %i16123
+  %call16134 = call i64 @ofs_str_char_at(ptr %path_val16132, i64 %i_val16133)
+  %cmp16135 = icmp eq i64 %call16134, 47
+  br i1 %cmp16135, label %if_then4527, label %if_else4528
 
-if_then4491:
-  %i_val16002 = load i64, ptr %i15989
-  store i64 %i_val16002, ptr %last15990
-  br label %if_end4493
+if_then4527:
+  %i_val16136 = load i64, ptr %i16123
+  store i64 %i_val16136, ptr %last16124
+  br label %if_end4529
 
-if_else4492:
-  br label %if_end4493
+if_else4528:
+  br label %if_end4529
 
-if_end4493:
-  %post_old16003 = load i64, ptr %i15989
-  %post_new16004 = add i64 %post_old16003, 1
-  store i64 %post_new16004, ptr %i15989
-  br label %while_cond4488
+if_end4529:
+  %post_old16137 = load i64, ptr %i16123
+  %post_new16138 = add i64 %post_old16137, 1
+  store i64 %post_new16138, ptr %i16123
+  br label %while_cond4524
 
-while_end4490:
-  %last_val16005 = load i64, ptr %last15990
-  %cmp16006 = icmp slt i64 %last_val16005, 0
-  br i1 %cmp16006, label %if_then4494, label %if_else4495
+while_end4526:
+  %last_val16139 = load i64, ptr %last16124
+  %cmp16140 = icmp slt i64 %last_val16139, 0
+  br i1 %cmp16140, label %if_then4530, label %if_else4531
 
-if_then4494:
+if_then4530:
   ret ptr @str.72
 
-if_else4495:
-  br label %if_end4496
+if_else4531:
+  br label %if_end4532
 
-if_end4496:
-  %path_val16007 = load ptr, ptr %path.addr
-  %last_val16008 = load i64, ptr %last15990
-  %op16009 = add i64 %last_val16008, 1
-  %call16010 = call ptr @ofs_str_substr(ptr %path_val16007, i64 0, i64 %op16009)
-  ret ptr %call16010
+if_end4532:
+  %path_val16141 = load ptr, ptr %path.addr
+  %last_val16142 = load i64, ptr %last16124
+  %op16143 = add i64 %last_val16142, 1
+  %call16144 = call ptr @ofs_str_substr(ptr %path_val16141, i64 0, i64 %op16143)
+  ret ptr %call16144
 }
 
 define i32 @is_attach_line(ptr %line) {
 entry:
   %line.addr = alloca ptr, align 8
   store ptr %line, ptr %line.addr
-  %line_val16011 = load ptr, ptr %line.addr
-  %strlen16012 = call i64 @ofs_str_len(ptr %line_val16011)
-  %cmp16013 = icmp slt i64 %strlen16012, 11
-  br i1 %cmp16013, label %if_then4497, label %if_else4498
+  %line_val16145 = load ptr, ptr %line.addr
+  %strlen16146 = call i64 @ofs_str_len(ptr %line_val16145)
+  %cmp16147 = icmp slt i64 %strlen16146, 11
+  br i1 %cmp16147, label %if_then4533, label %if_else4534
 
-if_then4497:
+if_then4533:
   ret i32 0
 
-if_else4498:
-  br label %if_end4499
+if_else4534:
+  br label %if_end4535
 
-if_end4499:
-  %line_val16014 = load ptr, ptr %line.addr
-  %call16015 = call ptr @ofs_str_substr(ptr %line_val16014, i64 0, i64 10)
-  %streq16016 = call i32 @ofs_str_eq(ptr %call16015, ptr @str.708)
-  ret i32 %streq16016
+if_end4535:
+  %line_val16148 = load ptr, ptr %line.addr
+  %call16149 = call ptr @ofs_str_substr(ptr %line_val16148, i64 0, i64 10)
+  %streq16150 = call i32 @ofs_str_eq(ptr %call16149, ptr @str.711)
+  ret i32 %streq16150
 }
 
 define ptr @attach_path_from_line(ptr %line) {
 entry:
   %line.addr = alloca ptr, align 8
   store ptr %line, ptr %line.addr
-  %i16017 = alloca i64, align 8
-  store i64 10, ptr %i16017
-  %len16018 = alloca i64, align 8
-  %line_val16019 = load ptr, ptr %line.addr
-  %strlen16020 = call i64 @ofs_str_len(ptr %line_val16019)
-  store i64 %strlen16020, ptr %len16018
-  br label %while_cond4500
+  %i16151 = alloca i64, align 8
+  store i64 10, ptr %i16151
+  %len16152 = alloca i64, align 8
+  %line_val16153 = load ptr, ptr %line.addr
+  %strlen16154 = call i64 @ofs_str_len(ptr %line_val16153)
+  store i64 %strlen16154, ptr %len16152
+  br label %while_cond4536
 
-while_cond4500:
-  %i_val16021 = load i64, ptr %i16017
-  %len_val16022 = load i64, ptr %len16018
-  %cmp16023 = icmp slt i64 %i_val16021, %len_val16022
-  br i1 %cmp16023, label %while_body4501, label %while_end4502
+while_cond4536:
+  %i_val16155 = load i64, ptr %i16151
+  %len_val16156 = load i64, ptr %len16152
+  %cmp16157 = icmp slt i64 %i_val16155, %len_val16156
+  br i1 %cmp16157, label %while_body4537, label %while_end4538
 
-while_body4501:
-  %line_val16024 = load ptr, ptr %line.addr
-  %i_val16025 = load i64, ptr %i16017
-  %call16026 = call i64 @ofs_str_char_at(ptr %line_val16024, i64 %i_val16025)
-  %cmp16027 = icmp eq i64 %call16026, 125
-  br i1 %cmp16027, label %if_then4503, label %if_else4504
+while_body4537:
+  %line_val16158 = load ptr, ptr %line.addr
+  %i_val16159 = load i64, ptr %i16151
+  %call16160 = call i64 @ofs_str_char_at(ptr %line_val16158, i64 %i_val16159)
+  %cmp16161 = icmp eq i64 %call16160, 125
+  br i1 %cmp16161, label %if_then4539, label %if_else4540
 
-if_then4503:
-  %line_val16028 = load ptr, ptr %line.addr
-  %i_val16029 = load i64, ptr %i16017
-  %op16030 = sub i64 %i_val16029, 10
-  %call16031 = call ptr @ofs_str_substr(ptr %line_val16028, i64 10, i64 %op16030)
-  ret ptr %call16031
+if_then4539:
+  %line_val16162 = load ptr, ptr %line.addr
+  %i_val16163 = load i64, ptr %i16151
+  %op16164 = sub i64 %i_val16163, 10
+  %call16165 = call ptr @ofs_str_substr(ptr %line_val16162, i64 10, i64 %op16164)
+  ret ptr %call16165
 
-if_else4504:
-  br label %if_end4505
+if_else4540:
+  br label %if_end4541
 
-if_end4505:
-  %post_old16032 = load i64, ptr %i16017
-  %post_new16033 = add i64 %post_old16032, 1
-  store i64 %post_new16033, ptr %i16017
-  br label %while_cond4500
+if_end4541:
+  %post_old16166 = load i64, ptr %i16151
+  %post_new16167 = add i64 %post_old16166, 1
+  store i64 %post_new16167, ptr %i16151
+  br label %while_cond4536
 
-while_end4502:
+while_end4538:
   ret ptr @str.72
 }
 
@@ -35389,209 +35710,209 @@ entry:
   store ptr %path, ptr %path.addr
   %src.addr = alloca ptr, align 8
   store ptr %src, ptr %src.addr
-  %path_val16034 = load ptr, ptr %path.addr
-  %call16035 = call i32 @path_seen(ptr %path_val16034)
-  %cond16036 = icmp ne i32 %call16035, 0
-  br i1 %cond16036, label %if_then4506, label %if_else4507
+  %path_val16168 = load ptr, ptr %path.addr
+  %call16169 = call i32 @path_seen(ptr %path_val16168)
+  %cond16170 = icmp ne i32 %call16169, 0
+  br i1 %cond16170, label %if_then4542, label %if_else4543
 
-if_then4506:
+if_then4542:
   ret ptr @str.72
 
-if_else4507:
-  br label %if_end4508
+if_else4543:
+  br label %if_end4544
 
-if_end4508:
-  %path_val16037 = load ptr, ptr %path.addr
-  call void @remember_path(ptr %path_val16037)
-  %base16038 = alloca ptr, align 8
-  %path_val16039 = load ptr, ptr %path.addr
-  %call16040 = call ptr @dirname(ptr %path_val16039)
-  store ptr %call16040, ptr %base16038
-  %out_parts16041 = alloca ptr, align 8
-  %arr16042 = call ptr @ofs_array_new(i64 0, i64 8)
-  store ptr %arr16042, ptr %out_parts16041
-  %start16043 = alloca i64, align 8
-  store i64 0, ptr %start16043
-  %i16044 = alloca i64, align 8
-  store i64 0, ptr %i16044
-  %len16045 = alloca i64, align 8
-  %src_val16046 = load ptr, ptr %src.addr
-  %strlen16047 = call i64 @ofs_str_len(ptr %src_val16046)
-  store i64 %strlen16047, ptr %len16045
-  br label %while_cond4509
+if_end4544:
+  %path_val16171 = load ptr, ptr %path.addr
+  call void @remember_path(ptr %path_val16171)
+  %base16172 = alloca ptr, align 8
+  %path_val16173 = load ptr, ptr %path.addr
+  %call16174 = call ptr @dirname(ptr %path_val16173)
+  store ptr %call16174, ptr %base16172
+  %out_parts16175 = alloca ptr, align 8
+  %arr16176 = call ptr @ofs_array_new(i64 0, i64 8)
+  store ptr %arr16176, ptr %out_parts16175
+  %start16177 = alloca i64, align 8
+  store i64 0, ptr %start16177
+  %i16178 = alloca i64, align 8
+  store i64 0, ptr %i16178
+  %len16179 = alloca i64, align 8
+  %src_val16180 = load ptr, ptr %src.addr
+  %strlen16181 = call i64 @ofs_str_len(ptr %src_val16180)
+  store i64 %strlen16181, ptr %len16179
+  br label %while_cond4545
 
-while_cond4509:
-  %i_val16048 = load i64, ptr %i16044
-  %len_val16049 = load i64, ptr %len16045
-  %cmp16050 = icmp sle i64 %i_val16048, %len_val16049
-  br i1 %cmp16050, label %while_body4510, label %while_end4511
+while_cond4545:
+  %i_val16182 = load i64, ptr %i16178
+  %len_val16183 = load i64, ptr %len16179
+  %cmp16184 = icmp sle i64 %i_val16182, %len_val16183
+  br i1 %cmp16184, label %while_body4546, label %while_end4547
 
-while_body4510:
-  %i_val16051 = load i64, ptr %i16044
-  %len_val16052 = load i64, ptr %len16045
-  %cmp16053 = icmp eq i64 %i_val16051, %len_val16052
-  %src_val16054 = load ptr, ptr %src.addr
-  %i_val16055 = load i64, ptr %i16044
-  %call16056 = call i64 @ofs_str_char_at(ptr %src_val16054, i64 %i_val16055)
-  %cmp16057 = icmp eq i64 %call16056, 10
-  %logic16058 = or i1 %cmp16053, %cmp16057
-  br i1 %logic16058, label %if_then4512, label %if_else4513
+while_body4546:
+  %i_val16185 = load i64, ptr %i16178
+  %len_val16186 = load i64, ptr %len16179
+  %cmp16187 = icmp eq i64 %i_val16185, %len_val16186
+  %src_val16188 = load ptr, ptr %src.addr
+  %i_val16189 = load i64, ptr %i16178
+  %call16190 = call i64 @ofs_str_char_at(ptr %src_val16188, i64 %i_val16189)
+  %cmp16191 = icmp eq i64 %call16190, 10
+  %logic16192 = or i1 %cmp16187, %cmp16191
+  br i1 %logic16192, label %if_then4548, label %if_else4549
 
-if_then4512:
-  %line16059 = alloca ptr, align 8
-  %src_val16060 = load ptr, ptr %src.addr
-  %start_val16061 = load i64, ptr %start16043
-  %i_val16062 = load i64, ptr %i16044
-  %start_val16063 = load i64, ptr %start16043
-  %op16064 = sub i64 %i_val16062, %start_val16063
-  %call16065 = call ptr @ofs_str_substr(ptr %src_val16060, i64 %start_val16061, i64 %op16064)
-  store ptr %call16065, ptr %line16059
-  %line_val16066 = load ptr, ptr %line16059
-  %call16067 = call i32 @is_attach_line(ptr %line_val16066)
-  %cond16068 = icmp ne i32 %call16067, 0
-  br i1 %cond16068, label %if_then4515, label %if_else4516
+if_then4548:
+  %line16193 = alloca ptr, align 8
+  %src_val16194 = load ptr, ptr %src.addr
+  %start_val16195 = load i64, ptr %start16177
+  %i_val16196 = load i64, ptr %i16178
+  %start_val16197 = load i64, ptr %start16177
+  %op16198 = sub i64 %i_val16196, %start_val16197
+  %call16199 = call ptr @ofs_str_substr(ptr %src_val16194, i64 %start_val16195, i64 %op16198)
+  store ptr %call16199, ptr %line16193
+  %line_val16200 = load ptr, ptr %line16193
+  %call16201 = call i32 @is_attach_line(ptr %line_val16200)
+  %cond16202 = icmp ne i32 %call16201, 0
+  br i1 %cond16202, label %if_then4551, label %if_else4552
 
-if_then4515:
-  %rel16069 = alloca ptr, align 8
-  %line_val16070 = load ptr, ptr %line16059
-  %call16071 = call ptr @attach_path_from_line(ptr %line_val16070)
-  store ptr %call16071, ptr %rel16069
-  %child_path16072 = alloca ptr, align 8
-  %base_val16073 = load ptr, ptr %base16038
-  %rel_val16074 = load ptr, ptr %rel16069
-  %concat16075 = call ptr @ofs_str_concat(ptr %base_val16073, ptr %rel_val16074)
-  store ptr %concat16075, ptr %child_path16072
-  %f_chk16076 = alloca ptr, align 8
-  %child_path_val16077 = load ptr, ptr %child_path16072
-  %call16078 = call ptr @fopen(ptr %child_path_val16077, ptr @str.0)
-  store ptr %call16078, ptr %f_chk16076
-  %f_chk_val16079 = load ptr, ptr %f_chk16076
-  %cmp16080 = icmp ne ptr %f_chk_val16079, null
-  br i1 %cmp16080, label %if_then4518, label %if_else4519
+if_then4551:
+  %rel16203 = alloca ptr, align 8
+  %line_val16204 = load ptr, ptr %line16193
+  %call16205 = call ptr @attach_path_from_line(ptr %line_val16204)
+  store ptr %call16205, ptr %rel16203
+  %child_path16206 = alloca ptr, align 8
+  %base_val16207 = load ptr, ptr %base16172
+  %rel_val16208 = load ptr, ptr %rel16203
+  %concat16209 = call ptr @ofs_str_concat(ptr %base_val16207, ptr %rel_val16208)
+  store ptr %concat16209, ptr %child_path16206
+  %f_chk16210 = alloca ptr, align 8
+  %child_path_val16211 = load ptr, ptr %child_path16206
+  %call16212 = call ptr @fopen(ptr %child_path_val16211, ptr @str.0)
+  store ptr %call16212, ptr %f_chk16210
+  %f_chk_val16213 = load ptr, ptr %f_chk16210
+  %cmp16214 = icmp ne ptr %f_chk_val16213, null
+  br i1 %cmp16214, label %if_then4554, label %if_else4555
 
-if_then4518:
-  %f_chk_val16081 = load ptr, ptr %f_chk16076
-  %call16082 = call i64 @fclose(ptr %f_chk_val16081)
-  br label %if_end4520
+if_then4554:
+  %f_chk_val16215 = load ptr, ptr %f_chk16210
+  %call16216 = call i64 @fclose(ptr %f_chk_val16215)
+  br label %if_end4556
 
-if_else4519:
-  %env_std16083 = alloca ptr, align 8
-  %call16084 = call ptr @getenv(ptr @str.709)
-  store ptr %call16084, ptr %env_std16083
-  %env_std_val16085 = load ptr, ptr %env_std16083
-  %streq16086 = call i32 @ofs_str_eq(ptr %env_std_val16085, ptr @str.72)
-  %cond16087 = icmp ne i32 %streq16086, 0
-  %not16088 = xor i1 %cond16087, true
-  br i1 %not16088, label %if_then4521, label %if_else4522
+if_else4555:
+  %env_std16217 = alloca ptr, align 8
+  %call16218 = call ptr @getenv(ptr @str.712)
+  store ptr %call16218, ptr %env_std16217
+  %env_std_val16219 = load ptr, ptr %env_std16217
+  %streq16220 = call i32 @ofs_str_eq(ptr %env_std_val16219, ptr @str.72)
+  %cond16221 = icmp ne i32 %streq16220, 0
+  %not16222 = xor i1 %cond16221, true
+  br i1 %not16222, label %if_then4557, label %if_else4558
 
-if_then4521:
-  %std_cand16089 = alloca ptr, align 8
-  %env_std_val16090 = load ptr, ptr %env_std16083
-  %concat16091 = call ptr @ofs_str_concat(ptr %env_std_val16090, ptr @str.66)
-  %rel_val16092 = load ptr, ptr %rel16069
-  %concat16093 = call ptr @ofs_str_concat(ptr %concat16091, ptr %rel_val16092)
-  store ptr %concat16093, ptr %std_cand16089
-  %f_std16094 = alloca ptr, align 8
-  %std_cand_val16095 = load ptr, ptr %std_cand16089
-  %call16096 = call ptr @fopen(ptr %std_cand_val16095, ptr @str.0)
-  store ptr %call16096, ptr %f_std16094
-  %f_std_val16097 = load ptr, ptr %f_std16094
-  %cmp16098 = icmp ne ptr %f_std_val16097, null
-  br i1 %cmp16098, label %if_then4524, label %if_else4525
+if_then4557:
+  %std_cand16223 = alloca ptr, align 8
+  %env_std_val16224 = load ptr, ptr %env_std16217
+  %concat16225 = call ptr @ofs_str_concat(ptr %env_std_val16224, ptr @str.66)
+  %rel_val16226 = load ptr, ptr %rel16203
+  %concat16227 = call ptr @ofs_str_concat(ptr %concat16225, ptr %rel_val16226)
+  store ptr %concat16227, ptr %std_cand16223
+  %f_std16228 = alloca ptr, align 8
+  %std_cand_val16229 = load ptr, ptr %std_cand16223
+  %call16230 = call ptr @fopen(ptr %std_cand_val16229, ptr @str.0)
+  store ptr %call16230, ptr %f_std16228
+  %f_std_val16231 = load ptr, ptr %f_std16228
+  %cmp16232 = icmp ne ptr %f_std_val16231, null
+  br i1 %cmp16232, label %if_then4560, label %if_else4561
 
-if_then4524:
-  %f_std_val16099 = load ptr, ptr %f_std16094
-  %call16100 = call i64 @fclose(ptr %f_std_val16099)
-  %std_cand_val16101 = load ptr, ptr %std_cand16089
-  store ptr %std_cand_val16101, ptr %child_path16072
-  br label %if_end4526
+if_then4560:
+  %f_std_val16233 = load ptr, ptr %f_std16228
+  %call16234 = call i64 @fclose(ptr %f_std_val16233)
+  %std_cand_val16235 = load ptr, ptr %std_cand16223
+  store ptr %std_cand_val16235, ptr %child_path16206
+  br label %if_end4562
 
-if_else4525:
-  br label %if_end4526
+if_else4561:
+  br label %if_end4562
 
-if_end4526:
-  br label %if_end4523
+if_end4562:
+  br label %if_end4559
 
-if_else4522:
-  br label %if_end4523
+if_else4558:
+  br label %if_end4559
 
-if_end4523:
-  br label %if_end4520
+if_end4559:
+  br label %if_end4556
 
-if_end4520:
-  %child_src16102 = alloca ptr, align 8
-  %child_path_val16103 = load ptr, ptr %child_path16072
-  %call16104 = call ptr @read_file(ptr %child_path_val16103)
-  store ptr %call16104, ptr %child_src16102
-  %out_parts_val16105 = load ptr, ptr %out_parts16041
-  %child_path_val16106 = load ptr, ptr %child_path16072
-  %child_src_val16107 = load ptr, ptr %child_src16102
-  %call16108 = call ptr @expand_attaches(ptr %child_path_val16106, ptr %child_src_val16107)
-  %arr_push16109 = alloca ptr, align 8
-  store ptr %call16108, ptr %arr_push16109
-  call void @ofs_array_push(ptr %out_parts_val16105, ptr %arr_push16109)
-  br label %if_end4517
+if_end4556:
+  %child_src16236 = alloca ptr, align 8
+  %child_path_val16237 = load ptr, ptr %child_path16206
+  %call16238 = call ptr @read_file(ptr %child_path_val16237)
+  store ptr %call16238, ptr %child_src16236
+  %out_parts_val16239 = load ptr, ptr %out_parts16175
+  %child_path_val16240 = load ptr, ptr %child_path16206
+  %child_src_val16241 = load ptr, ptr %child_src16236
+  %call16242 = call ptr @expand_attaches(ptr %child_path_val16240, ptr %child_src_val16241)
+  %arr_push16243 = alloca ptr, align 8
+  store ptr %call16242, ptr %arr_push16243
+  call void @ofs_array_push(ptr %out_parts_val16239, ptr %arr_push16243)
+  br label %if_end4553
 
-if_else4516:
-  %i_val16110 = load i64, ptr %i16044
-  %len_val16111 = load i64, ptr %len16045
-  %cmp16112 = icmp slt i64 %i_val16110, %len_val16111
-  %line_val16113 = load ptr, ptr %line16059
-  %strlen16114 = call i64 @ofs_str_len(ptr %line_val16113)
-  %cmp16115 = icmp sgt i64 %strlen16114, 0
-  %logic16116 = or i1 %cmp16112, %cmp16115
-  br i1 %logic16116, label %if_then4527, label %if_else4528
+if_else4552:
+  %i_val16244 = load i64, ptr %i16178
+  %len_val16245 = load i64, ptr %len16179
+  %cmp16246 = icmp slt i64 %i_val16244, %len_val16245
+  %line_val16247 = load ptr, ptr %line16193
+  %strlen16248 = call i64 @ofs_str_len(ptr %line_val16247)
+  %cmp16249 = icmp sgt i64 %strlen16248, 0
+  %logic16250 = or i1 %cmp16246, %cmp16249
+  br i1 %logic16250, label %if_then4563, label %if_else4564
 
-if_then4527:
-  %out_parts_val16117 = load ptr, ptr %out_parts16041
-  %line_val16118 = load ptr, ptr %line16059
-  %concat16119 = call ptr @ofs_str_concat(ptr %line_val16118, ptr @str.3)
-  %arr_push16120 = alloca ptr, align 8
-  store ptr %concat16119, ptr %arr_push16120
-  call void @ofs_array_push(ptr %out_parts_val16117, ptr %arr_push16120)
-  br label %if_end4529
+if_then4563:
+  %out_parts_val16251 = load ptr, ptr %out_parts16175
+  %line_val16252 = load ptr, ptr %line16193
+  %concat16253 = call ptr @ofs_str_concat(ptr %line_val16252, ptr @str.3)
+  %arr_push16254 = alloca ptr, align 8
+  store ptr %concat16253, ptr %arr_push16254
+  call void @ofs_array_push(ptr %out_parts_val16251, ptr %arr_push16254)
+  br label %if_end4565
 
-if_else4528:
-  br label %if_end4529
+if_else4564:
+  br label %if_end4565
 
-if_end4529:
-  br label %if_end4517
+if_end4565:
+  br label %if_end4553
 
-if_end4517:
-  %i_val16121 = load i64, ptr %i16044
-  %op16122 = add i64 %i_val16121, 1
-  store i64 %op16122, ptr %start16043
-  br label %if_end4514
+if_end4553:
+  %i_val16255 = load i64, ptr %i16178
+  %op16256 = add i64 %i_val16255, 1
+  store i64 %op16256, ptr %start16177
+  br label %if_end4550
 
-if_else4513:
-  br label %if_end4514
+if_else4549:
+  br label %if_end4550
 
-if_end4514:
-  %post_old16123 = load i64, ptr %i16044
-  %post_new16124 = add i64 %post_old16123, 1
-  store i64 %post_new16124, ptr %i16044
-  br label %while_cond4509
+if_end4550:
+  %post_old16257 = load i64, ptr %i16178
+  %post_new16258 = add i64 %post_old16257, 1
+  store i64 %post_new16258, ptr %i16178
+  br label %while_cond4545
 
-while_end4511:
-  %out_parts_val16125 = load ptr, ptr %out_parts16041
-  %call16126 = call ptr @join_parts(ptr %out_parts_val16125)
-  ret ptr %call16126
+while_end4547:
+  %out_parts_val16259 = load ptr, ptr %out_parts16175
+  %call16260 = call ptr @join_parts(ptr %out_parts_val16259)
+  ret ptr %call16260
 }
 
 define void @usage() {
 entry:
-  call void @echo_obsidian(ptr @str.710)
-  call void @echo_obsidian(ptr @str.711)
-  call void @echo_obsidian(ptr @str.712)
   call void @echo_obsidian(ptr @str.713)
   call void @echo_obsidian(ptr @str.714)
   call void @echo_obsidian(ptr @str.715)
   call void @echo_obsidian(ptr @str.716)
   call void @echo_obsidian(ptr @str.717)
   call void @echo_obsidian(ptr @str.718)
-  call void @echo_obsidian(ptr @str.72)
   call void @echo_obsidian(ptr @str.719)
   call void @echo_obsidian(ptr @str.720)
+  call void @echo_obsidian(ptr @str.721)
+  call void @echo_obsidian(ptr @str.72)
+  call void @echo_obsidian(ptr @str.722)
+  call void @echo_obsidian(ptr @str.723)
   ret void
 }
 
@@ -35611,203 +35932,203 @@ entry:
   store i32 %print_ast, ptr %print_ast.addr
   %c_opt.addr = alloca ptr, align 8
   store ptr %c_opt, ptr %c_opt.addr
-  %e_in16127 = alloca ptr, align 8
-  %call16128 = call ptr @getenv(ptr @str.721)
-  store ptr %call16128, ptr %e_in16127
-  %e_in_val16129 = load ptr, ptr %e_in16127
-  %streq16130 = call i32 @ofs_str_eq(ptr %e_in_val16129, ptr @str.72)
-  %cond16131 = icmp ne i32 %streq16130, 0
-  %not16132 = xor i1 %cond16131, true
-  br i1 %not16132, label %if_then4530, label %if_else4531
+  %e_in16261 = alloca ptr, align 8
+  %call16262 = call ptr @getenv(ptr @str.724)
+  store ptr %call16262, ptr %e_in16261
+  %e_in_val16263 = load ptr, ptr %e_in16261
+  %streq16264 = call i32 @ofs_str_eq(ptr %e_in_val16263, ptr @str.72)
+  %cond16265 = icmp ne i32 %streq16264, 0
+  %not16266 = xor i1 %cond16265, true
+  br i1 %not16266, label %if_then4566, label %if_else4567
 
-if_then4530:
-  %e_in_val16133 = load ptr, ptr %e_in16127
-  store ptr %e_in_val16133, ptr %input_file.addr
-  br label %if_end4532
+if_then4566:
+  %e_in_val16267 = load ptr, ptr %e_in16261
+  store ptr %e_in_val16267, ptr %input_file.addr
+  br label %if_end4568
 
-if_else4531:
-  br label %if_end4532
+if_else4567:
+  br label %if_end4568
 
-if_end4532:
-  %e_out16134 = alloca ptr, align 8
-  %call16135 = call ptr @getenv(ptr @str.722)
-  store ptr %call16135, ptr %e_out16134
-  %e_out_val16136 = load ptr, ptr %e_out16134
-  %streq16137 = call i32 @ofs_str_eq(ptr %e_out_val16136, ptr @str.72)
-  %cond16138 = icmp ne i32 %streq16137, 0
-  %not16139 = xor i1 %cond16138, true
-  br i1 %not16139, label %if_then4533, label %if_else4534
+if_end4568:
+  %e_out16268 = alloca ptr, align 8
+  %call16269 = call ptr @getenv(ptr @str.725)
+  store ptr %call16269, ptr %e_out16268
+  %e_out_val16270 = load ptr, ptr %e_out16268
+  %streq16271 = call i32 @ofs_str_eq(ptr %e_out_val16270, ptr @str.72)
+  %cond16272 = icmp ne i32 %streq16271, 0
+  %not16273 = xor i1 %cond16272, true
+  br i1 %not16273, label %if_then4569, label %if_else4570
 
-if_then4533:
-  %e_out_val16140 = load ptr, ptr %e_out16134
-  store ptr %e_out_val16140, ptr %output_file.addr
-  br label %if_end4535
+if_then4569:
+  %e_out_val16274 = load ptr, ptr %e_out16268
+  store ptr %e_out_val16274, ptr %output_file.addr
+  br label %if_end4571
 
-if_else4534:
-  br label %if_end4535
+if_else4570:
+  br label %if_end4571
 
-if_end4535:
-  %e_c16141 = alloca ptr, align 8
-  %call16142 = call ptr @getenv(ptr @str.723)
-  store ptr %call16142, ptr %e_c16141
-  %e_c_val16143 = load ptr, ptr %e_c16141
-  %streq16144 = call i32 @ofs_str_eq(ptr %e_c_val16143, ptr @str.72)
-  %cond16145 = icmp ne i32 %streq16144, 0
-  %not16146 = xor i1 %cond16145, true
-  br i1 %not16146, label %if_then4536, label %if_else4537
+if_end4571:
+  %e_c16275 = alloca ptr, align 8
+  %call16276 = call ptr @getenv(ptr @str.726)
+  store ptr %call16276, ptr %e_c16275
+  %e_c_val16277 = load ptr, ptr %e_c16275
+  %streq16278 = call i32 @ofs_str_eq(ptr %e_c_val16277, ptr @str.72)
+  %cond16279 = icmp ne i32 %streq16278, 0
+  %not16280 = xor i1 %cond16279, true
+  br i1 %not16280, label %if_then4572, label %if_else4573
 
-if_then4536:
-  %e_c_val16147 = load ptr, ptr %e_c16141
-  store ptr %e_c_val16147, ptr %c_output.addr
-  br label %if_end4538
+if_then4572:
+  %e_c_val16281 = load ptr, ptr %e_c16275
+  store ptr %e_c_val16281, ptr %c_output.addr
+  br label %if_end4574
 
-if_else4537:
-  br label %if_end4538
+if_else4573:
+  br label %if_end4574
 
-if_end4538:
-  %e_mode16148 = alloca ptr, align 8
-  %call16149 = call ptr @getenv(ptr @str.724)
-  store ptr %call16149, ptr %e_mode16148
-  %e_mode_val16150 = load ptr, ptr %e_mode16148
-  %streq16151 = call i32 @ofs_str_eq(ptr %e_mode_val16150, ptr @str.685)
-  %cond16152 = icmp ne i32 %streq16151, 0
-  br i1 %cond16152, label %if_then4539, label %if_else4540
+if_end4574:
+  %e_mode16282 = alloca ptr, align 8
+  %call16283 = call ptr @getenv(ptr @str.727)
+  store ptr %call16283, ptr %e_mode16282
+  %e_mode_val16284 = load ptr, ptr %e_mode16282
+  %streq16285 = call i32 @ofs_str_eq(ptr %e_mode_val16284, ptr @str.685)
+  %cond16286 = icmp ne i32 %streq16285, 0
+  br i1 %cond16286, label %if_then4575, label %if_else4576
 
-if_then4539:
+if_then4575:
   store i32 1, ptr %check_only.addr
-  br label %if_end4541
+  br label %if_end4577
 
-if_else4540:
-  br label %if_end4541
+if_else4576:
+  br label %if_end4577
 
-if_end4541:
-  %e_mode_val16153 = load ptr, ptr %e_mode16148
-  %streq16154 = call i32 @ofs_str_eq(ptr %e_mode_val16153, ptr @str.725)
-  %cond16155 = icmp ne i32 %streq16154, 0
-  br i1 %cond16155, label %if_then4542, label %if_else4543
+if_end4577:
+  %e_mode_val16287 = load ptr, ptr %e_mode16282
+  %streq16288 = call i32 @ofs_str_eq(ptr %e_mode_val16287, ptr @str.728)
+  %cond16289 = icmp ne i32 %streq16288, 0
+  br i1 %cond16289, label %if_then4578, label %if_else4579
 
-if_then4542:
+if_then4578:
   store i32 1, ptr %print_tokens.addr
-  br label %if_end4544
+  br label %if_end4580
 
-if_else4543:
-  br label %if_end4544
+if_else4579:
+  br label %if_end4580
 
-if_end4544:
-  %e_mode_val16156 = load ptr, ptr %e_mode16148
-  %streq16157 = call i32 @ofs_str_eq(ptr %e_mode_val16156, ptr @str.726)
-  %cond16158 = icmp ne i32 %streq16157, 0
-  br i1 %cond16158, label %if_then4545, label %if_else4546
+if_end4580:
+  %e_mode_val16290 = load ptr, ptr %e_mode16282
+  %streq16291 = call i32 @ofs_str_eq(ptr %e_mode_val16290, ptr @str.729)
+  %cond16292 = icmp ne i32 %streq16291, 0
+  br i1 %cond16292, label %if_then4581, label %if_else4582
 
-if_then4545:
+if_then4581:
   store i32 1, ptr %print_ast.addr
-  br label %if_end4547
+  br label %if_end4583
 
-if_else4546:
-  br label %if_end4547
+if_else4582:
+  br label %if_end4583
 
-if_end4547:
-  %e_mode_val16159 = load ptr, ptr %e_mode16148
-  %streq16160 = call i32 @ofs_str_eq(ptr %e_mode_val16159, ptr @str.727)
-  %cond16161 = icmp ne i32 %streq16160, 0
-  br i1 %cond16161, label %if_then4548, label %if_else4549
+if_end4583:
+  %e_mode_val16293 = load ptr, ptr %e_mode16282
+  %streq16294 = call i32 @ofs_str_eq(ptr %e_mode_val16293, ptr @str.730)
+  %cond16295 = icmp ne i32 %streq16294, 0
+  br i1 %cond16295, label %if_then4584, label %if_else4585
 
-if_then4548:
-  %c_opt_val16162 = load ptr, ptr %c_opt.addr
-  store ptr %c_opt_val16162, ptr %c_opt.addr
-  br label %if_end4550
+if_then4584:
+  %c_opt_val16296 = load ptr, ptr %c_opt.addr
+  store ptr %c_opt_val16296, ptr %c_opt.addr
+  br label %if_end4586
 
-if_else4549:
-  br label %if_end4550
+if_else4585:
+  br label %if_end4586
 
-if_end4550:
-  %e_opt16163 = alloca ptr, align 8
-  %call16164 = call ptr @getenv(ptr @str.728)
-  store ptr %call16164, ptr %e_opt16163
-  %e_opt_val16165 = load ptr, ptr %e_opt16163
-  %streq16166 = call i32 @ofs_str_eq(ptr %e_opt_val16165, ptr @str.729)
-  %e_opt_val16167 = load ptr, ptr %e_opt16163
-  %streq16168 = call i32 @ofs_str_eq(ptr %e_opt_val16167, ptr @str.730)
-  %cond16169 = icmp ne i32 %streq16166, 0
-  %cond16170 = icmp ne i32 %streq16168, 0
-  %logic16171 = or i1 %cond16169, %cond16170
-  %e_opt_val16172 = load ptr, ptr %e_opt16163
-  %streq16173 = call i32 @ofs_str_eq(ptr %e_opt_val16172, ptr @str.731)
-  %cond16174 = icmp ne i32 %streq16173, 0
-  %logic16175 = or i1 %logic16171, %cond16174
-  br i1 %logic16175, label %if_then4551, label %if_else4552
+if_end4586:
+  %e_opt16297 = alloca ptr, align 8
+  %call16298 = call ptr @getenv(ptr @str.731)
+  store ptr %call16298, ptr %e_opt16297
+  %e_opt_val16299 = load ptr, ptr %e_opt16297
+  %streq16300 = call i32 @ofs_str_eq(ptr %e_opt_val16299, ptr @str.732)
+  %e_opt_val16301 = load ptr, ptr %e_opt16297
+  %streq16302 = call i32 @ofs_str_eq(ptr %e_opt_val16301, ptr @str.733)
+  %cond16303 = icmp ne i32 %streq16300, 0
+  %cond16304 = icmp ne i32 %streq16302, 0
+  %logic16305 = or i1 %cond16303, %cond16304
+  %e_opt_val16306 = load ptr, ptr %e_opt16297
+  %streq16307 = call i32 @ofs_str_eq(ptr %e_opt_val16306, ptr @str.734)
+  %cond16308 = icmp ne i32 %streq16307, 0
+  %logic16309 = or i1 %logic16305, %cond16308
+  br i1 %logic16309, label %if_then4587, label %if_else4588
 
-if_then4551:
-  %e_opt_val16176 = load ptr, ptr %e_opt16163
-  store ptr %e_opt_val16176, ptr %c_opt.addr
-  br label %if_end4553
+if_then4587:
+  %e_opt_val16310 = load ptr, ptr %e_opt16297
+  store ptr %e_opt_val16310, ptr %c_opt.addr
+  br label %if_end4589
 
-if_else4552:
-  br label %if_end4553
+if_else4588:
+  br label %if_end4589
 
-if_end4553:
-  %check_flag16177 = alloca ptr, align 8
-  store ptr @str.152, ptr %check_flag16177
-  %tokens_flag16178 = alloca ptr, align 8
-  store ptr @str.152, ptr %tokens_flag16178
-  %ast_flag16179 = alloca ptr, align 8
-  store ptr @str.152, ptr %ast_flag16179
-  %check_only_val16180 = load i32, ptr %check_only.addr
-  %cond16181 = icmp ne i32 %check_only_val16180, 0
-  br i1 %cond16181, label %if_then4554, label %if_else4555
+if_end4589:
+  %check_flag16311 = alloca ptr, align 8
+  store ptr @str.152, ptr %check_flag16311
+  %tokens_flag16312 = alloca ptr, align 8
+  store ptr @str.152, ptr %tokens_flag16312
+  %ast_flag16313 = alloca ptr, align 8
+  store ptr @str.152, ptr %ast_flag16313
+  %check_only_val16314 = load i32, ptr %check_only.addr
+  %cond16315 = icmp ne i32 %check_only_val16314, 0
+  br i1 %cond16315, label %if_then4590, label %if_else4591
 
-if_then4554:
-  store ptr @str.260, ptr %check_flag16177
-  br label %if_end4556
+if_then4590:
+  store ptr @str.260, ptr %check_flag16311
+  br label %if_end4592
 
-if_else4555:
-  br label %if_end4556
+if_else4591:
+  br label %if_end4592
 
-if_end4556:
-  %print_tokens_val16182 = load i32, ptr %print_tokens.addr
-  %cond16183 = icmp ne i32 %print_tokens_val16182, 0
-  br i1 %cond16183, label %if_then4557, label %if_else4558
+if_end4592:
+  %print_tokens_val16316 = load i32, ptr %print_tokens.addr
+  %cond16317 = icmp ne i32 %print_tokens_val16316, 0
+  br i1 %cond16317, label %if_then4593, label %if_else4594
 
-if_then4557:
-  store ptr @str.260, ptr %tokens_flag16178
-  br label %if_end4559
+if_then4593:
+  store ptr @str.260, ptr %tokens_flag16312
+  br label %if_end4595
 
-if_else4558:
-  br label %if_end4559
+if_else4594:
+  br label %if_end4595
 
-if_end4559:
-  %print_ast_val16184 = load i32, ptr %print_ast.addr
-  %cond16185 = icmp ne i32 %print_ast_val16184, 0
-  br i1 %cond16185, label %if_then4560, label %if_else4561
+if_end4595:
+  %print_ast_val16318 = load i32, ptr %print_ast.addr
+  %cond16319 = icmp ne i32 %print_ast_val16318, 0
+  br i1 %cond16319, label %if_then4596, label %if_else4597
 
-if_then4560:
-  store ptr @str.260, ptr %ast_flag16179
-  br label %if_end4562
+if_then4596:
+  store ptr @str.260, ptr %ast_flag16313
+  br label %if_end4598
 
-if_else4561:
-  br label %if_end4562
+if_else4597:
+  br label %if_end4598
 
-if_end4562:
-  %input_file_val16186 = load ptr, ptr %input_file.addr
-  %concat16187 = call ptr @ofs_str_concat(ptr %input_file_val16186, ptr @str.131)
-  %output_file_val16188 = load ptr, ptr %output_file.addr
-  %concat16189 = call ptr @ofs_str_concat(ptr %concat16187, ptr %output_file_val16188)
-  %concat16190 = call ptr @ofs_str_concat(ptr %concat16189, ptr @str.131)
-  %c_output_val16191 = load ptr, ptr %c_output.addr
-  %concat16192 = call ptr @ofs_str_concat(ptr %concat16190, ptr %c_output_val16191)
-  %concat16193 = call ptr @ofs_str_concat(ptr %concat16192, ptr @str.131)
-  %check_flag_val16194 = load ptr, ptr %check_flag16177
-  %concat16195 = call ptr @ofs_str_concat(ptr %concat16193, ptr %check_flag_val16194)
-  %concat16196 = call ptr @ofs_str_concat(ptr %concat16195, ptr @str.131)
-  %tokens_flag_val16197 = load ptr, ptr %tokens_flag16178
-  %concat16198 = call ptr @ofs_str_concat(ptr %concat16196, ptr %tokens_flag_val16197)
-  %concat16199 = call ptr @ofs_str_concat(ptr %concat16198, ptr @str.131)
-  %ast_flag_val16200 = load ptr, ptr %ast_flag16179
-  %concat16201 = call ptr @ofs_str_concat(ptr %concat16199, ptr %ast_flag_val16200)
-  %concat16202 = call ptr @ofs_str_concat(ptr %concat16201, ptr @str.131)
-  %c_opt_val16203 = load ptr, ptr %c_opt.addr
-  %concat16204 = call ptr @ofs_str_concat(ptr %concat16202, ptr %c_opt_val16203)
-  ret ptr %concat16204
+if_end4598:
+  %input_file_val16320 = load ptr, ptr %input_file.addr
+  %concat16321 = call ptr @ofs_str_concat(ptr %input_file_val16320, ptr @str.131)
+  %output_file_val16322 = load ptr, ptr %output_file.addr
+  %concat16323 = call ptr @ofs_str_concat(ptr %concat16321, ptr %output_file_val16322)
+  %concat16324 = call ptr @ofs_str_concat(ptr %concat16323, ptr @str.131)
+  %c_output_val16325 = load ptr, ptr %c_output.addr
+  %concat16326 = call ptr @ofs_str_concat(ptr %concat16324, ptr %c_output_val16325)
+  %concat16327 = call ptr @ofs_str_concat(ptr %concat16326, ptr @str.131)
+  %check_flag_val16328 = load ptr, ptr %check_flag16311
+  %concat16329 = call ptr @ofs_str_concat(ptr %concat16327, ptr %check_flag_val16328)
+  %concat16330 = call ptr @ofs_str_concat(ptr %concat16329, ptr @str.131)
+  %tokens_flag_val16331 = load ptr, ptr %tokens_flag16312
+  %concat16332 = call ptr @ofs_str_concat(ptr %concat16330, ptr %tokens_flag_val16331)
+  %concat16333 = call ptr @ofs_str_concat(ptr %concat16332, ptr @str.131)
+  %ast_flag_val16334 = load ptr, ptr %ast_flag16313
+  %concat16335 = call ptr @ofs_str_concat(ptr %concat16333, ptr %ast_flag_val16334)
+  %concat16336 = call ptr @ofs_str_concat(ptr %concat16335, ptr @str.131)
+  %c_opt_val16337 = load ptr, ptr %c_opt.addr
+  %concat16338 = call ptr @ofs_str_concat(ptr %concat16336, ptr %c_opt_val16337)
+  ret ptr %concat16338
 }
 
 define ptr @parse_state_field(ptr %state, i64 %field_idx) {
@@ -35816,784 +36137,816 @@ entry:
   store ptr %state, ptr %state.addr
   %field_idx.addr = alloca i64, align 8
   store i64 %field_idx, ptr %field_idx.addr
-  %i16205 = alloca i64, align 8
-  store i64 0, ptr %i16205
-  %start16206 = alloca i64, align 8
-  store i64 0, ptr %start16206
-  %cur16207 = alloca i64, align 8
-  store i64 0, ptr %cur16207
-  %len16208 = alloca i64, align 8
-  %state_val16209 = load ptr, ptr %state.addr
-  %strlen16210 = call i64 @ofs_str_len(ptr %state_val16209)
-  store i64 %strlen16210, ptr %len16208
-  br label %while_cond4563
+  %i16339 = alloca i64, align 8
+  store i64 0, ptr %i16339
+  %start16340 = alloca i64, align 8
+  store i64 0, ptr %start16340
+  %cur16341 = alloca i64, align 8
+  store i64 0, ptr %cur16341
+  %len16342 = alloca i64, align 8
+  %state_val16343 = load ptr, ptr %state.addr
+  %strlen16344 = call i64 @ofs_str_len(ptr %state_val16343)
+  store i64 %strlen16344, ptr %len16342
+  br label %while_cond4599
 
-while_cond4563:
-  %i_val16211 = load i64, ptr %i16205
-  %len_val16212 = load i64, ptr %len16208
-  %cmp16213 = icmp slt i64 %i_val16211, %len_val16212
-  br i1 %cmp16213, label %while_body4564, label %while_end4565
+while_cond4599:
+  %i_val16345 = load i64, ptr %i16339
+  %len_val16346 = load i64, ptr %len16342
+  %cmp16347 = icmp slt i64 %i_val16345, %len_val16346
+  br i1 %cmp16347, label %while_body4600, label %while_end4601
 
-while_body4564:
-  %state_val16214 = load ptr, ptr %state.addr
-  %i_val16215 = load i64, ptr %i16205
-  %call16216 = call i64 @ofs_str_char_at(ptr %state_val16214, i64 %i_val16215)
-  %cmp16217 = icmp eq i64 %call16216, 124
-  br i1 %cmp16217, label %if_then4566, label %if_else4567
-
-if_then4566:
-  %cur_val16218 = load i64, ptr %cur16207
-  %field_idx_val16219 = load i64, ptr %field_idx.addr
-  %cmp16220 = icmp eq i64 %cur_val16218, %field_idx_val16219
-  br i1 %cmp16220, label %if_then4569, label %if_else4570
-
-if_then4569:
-  %state_val16221 = load ptr, ptr %state.addr
-  %start_val16222 = load i64, ptr %start16206
-  %i_val16223 = load i64, ptr %i16205
-  %start_val16224 = load i64, ptr %start16206
-  %op16225 = sub i64 %i_val16223, %start_val16224
-  %call16226 = call ptr @ofs_str_substr(ptr %state_val16221, i64 %start_val16222, i64 %op16225)
-  ret ptr %call16226
-
-if_else4570:
-  br label %if_end4571
-
-if_end4571:
-  %cur_val16227 = load i64, ptr %cur16207
-  %op16228 = add i64 %cur_val16227, 1
-  store i64 %op16228, ptr %cur16207
-  %i_val16229 = load i64, ptr %i16205
-  %op16230 = add i64 %i_val16229, 1
-  store i64 %op16230, ptr %start16206
-  br label %if_end4568
-
-if_else4567:
-  br label %if_end4568
-
-if_end4568:
-  %post_old16231 = load i64, ptr %i16205
-  %post_new16232 = add i64 %post_old16231, 1
-  store i64 %post_new16232, ptr %i16205
-  br label %while_cond4563
-
-while_end4565:
-  %cur_val16233 = load i64, ptr %cur16207
-  %field_idx_val16234 = load i64, ptr %field_idx.addr
-  %cmp16235 = icmp eq i64 %cur_val16233, %field_idx_val16234
-  br i1 %cmp16235, label %if_then4572, label %if_else4573
-
-if_then4572:
-  %state_val16236 = load ptr, ptr %state.addr
-  %start_val16237 = load i64, ptr %start16206
-  %len_val16238 = load i64, ptr %len16208
-  %start_val16239 = load i64, ptr %start16206
-  %op16240 = sub i64 %len_val16238, %start_val16239
-  %call16241 = call ptr @ofs_str_substr(ptr %state_val16236, i64 %start_val16237, i64 %op16240)
-  ret ptr %call16241
-
-if_else4573:
-  br label %if_end4574
-
-if_end4574:
-  ret ptr @str.72
-}
-
-define i32 @main() {
-entry:
-  call void @__ofs_init_globals()
-  %input_file16242 = alloca ptr, align 8
-  store ptr @str.732, ptr %input_file16242
-  %output_file16243 = alloca ptr, align 8
-  store ptr @str.733, ptr %output_file16243
-  %c_output16244 = alloca ptr, align 8
-  store ptr @str.734, ptr %c_output16244
-  %check_only16245 = alloca i32, align 8
-  store i32 0, ptr %check_only16245
-  %print_tokens16246 = alloca i32, align 8
-  store i32 0, ptr %print_tokens16246
-  %print_ast16247 = alloca i32, align 8
-  store i32 0, ptr %print_ast16247
-  %c_opt16248 = alloca ptr, align 8
-  store ptr @str.730, ptr %c_opt16248
-  %state16249 = alloca ptr, align 8
-  %input_file_val16250 = load ptr, ptr %input_file16242
-  %output_file_val16251 = load ptr, ptr %output_file16243
-  %c_output_val16252 = load ptr, ptr %c_output16244
-  %check_only_val16253 = load i32, ptr %check_only16245
-  %print_tokens_val16254 = load i32, ptr %print_tokens16246
-  %print_ast_val16255 = load i32, ptr %print_ast16247
-  %c_opt_val16256 = load ptr, ptr %c_opt16248
-  %call16257 = call ptr @apply_env_overrides(ptr %input_file_val16250, ptr %output_file_val16251, ptr %c_output_val16252, i32 %check_only_val16253, i32 %print_tokens_val16254, i32 %print_ast_val16255, ptr %c_opt_val16256)
-  store ptr %call16257, ptr %state16249
-  %state_val16258 = load ptr, ptr %state16249
-  %call16259 = call ptr @parse_state_field(ptr %state_val16258, i64 0)
-  store ptr %call16259, ptr %input_file16242
-  %state_val16260 = load ptr, ptr %state16249
-  %call16261 = call ptr @parse_state_field(ptr %state_val16260, i64 1)
-  store ptr %call16261, ptr %output_file16243
-  %state_val16262 = load ptr, ptr %state16249
-  %call16263 = call ptr @parse_state_field(ptr %state_val16262, i64 2)
-  store ptr %call16263, ptr %c_output16244
-  %state_val16264 = load ptr, ptr %state16249
-  %call16265 = call ptr @parse_state_field(ptr %state_val16264, i64 3)
-  %streq16266 = call i32 @ofs_str_eq(ptr %call16265, ptr @str.260)
-  store i32 %streq16266, ptr %check_only16245
-  %state_val16267 = load ptr, ptr %state16249
-  %call16268 = call ptr @parse_state_field(ptr %state_val16267, i64 4)
-  %streq16269 = call i32 @ofs_str_eq(ptr %call16268, ptr @str.260)
-  store i32 %streq16269, ptr %print_tokens16246
-  %state_val16270 = load ptr, ptr %state16249
-  %call16271 = call ptr @parse_state_field(ptr %state_val16270, i64 5)
-  %streq16272 = call i32 @ofs_str_eq(ptr %call16271, ptr @str.260)
-  store i32 %streq16272, ptr %print_ast16247
-  %state_val16273 = load ptr, ptr %state16249
-  %call16274 = call ptr @parse_state_field(ptr %state_val16273, i64 6)
-  store ptr %call16274, ptr %c_opt16248
-  %compile_mode16275 = alloca ptr, align 8
-  %call16276 = call ptr @getenv(ptr @str.724)
-  store ptr %call16276, ptr %compile_mode16275
-  %compile_mode_val16277 = load ptr, ptr %compile_mode16275
-  %streq16278 = call i32 @ofs_str_eq(ptr %compile_mode_val16277, ptr @str.72)
-  %cond16279 = icmp ne i32 %streq16278, 0
-  br i1 %cond16279, label %if_then4575, label %if_else4576
-
-if_then4575:
-  store ptr @str.735, ptr %compile_mode16275
-  br label %if_end4577
-
-if_else4576:
-  br label %if_end4577
-
-if_end4577:
-  %is_run16280 = alloca i32, align 8
-  %compile_mode_val16281 = load ptr, ptr %compile_mode16275
-  %streq16282 = call i32 @ofs_str_eq(ptr %compile_mode_val16281, ptr @str.687)
-  store i32 %streq16282, ptr %is_run16280
-  %verbose16283 = alloca i32, align 8
-  %call16284 = call ptr @getenv(ptr @str.736)
-  %streq16285 = call i32 @ofs_str_eq(ptr %call16284, ptr @str.260)
-  store i32 %streq16285, ptr %verbose16283
-  %msg_fmt16286 = alloca ptr, align 8
-  %call16287 = call ptr @getenv(ptr @str.737)
-  store ptr %call16287, ptr %msg_fmt16286
-  call void @reporter_detect_locale()
-  call void @reporter_detect_color()
-  %msg_fmt_val16288 = load ptr, ptr %msg_fmt16286
-  %streq16289 = call i32 @ofs_str_eq(ptr %msg_fmt_val16288, ptr @str.738)
-  %cond16290 = icmp ne i32 %streq16289, 0
-  br i1 %cond16290, label %if_then4578, label %if_else4579
-
-if_then4578:
-  %REPORTER_JSON_val16291 = load i64, ptr @REPORTER_JSON
-  call void @reporter_set_kind(i64 %REPORTER_JSON_val16291)
-  br label %if_end4580
-
-if_else4579:
-  %msg_fmt_val16292 = load ptr, ptr %msg_fmt16286
-  %streq16293 = call i32 @ofs_str_eq(ptr %msg_fmt_val16292, ptr @str.739)
-  %cond16294 = icmp ne i32 %streq16293, 0
-  br i1 %cond16294, label %if_then4581, label %if_else4582
-
-if_then4581:
-  %REPORTER_FANCY_val16295 = load i64, ptr @REPORTER_FANCY
-  call void @reporter_set_kind(i64 %REPORTER_FANCY_val16295)
-  br label %if_end4583
-
-if_else4582:
-  %msg_fmt_val16296 = load ptr, ptr %msg_fmt16286
-  %streq16297 = call i32 @ofs_str_eq(ptr %msg_fmt_val16296, ptr @str.740)
-  %cond16298 = icmp ne i32 %streq16297, 0
-  br i1 %cond16298, label %if_then4584, label %if_else4585
-
-if_then4584:
-  %REPORTER_PLAIN_val16299 = load i64, ptr @REPORTER_PLAIN
-  call void @reporter_set_kind(i64 %REPORTER_PLAIN_val16299)
-  br label %if_end4586
-
-if_else4585:
-  %_use_color_val16300 = load i32, ptr @_use_color
-  %cond16301 = icmp ne i32 %_use_color_val16300, 0
-  br i1 %cond16301, label %if_then4587, label %if_else4588
-
-if_then4587:
-  %REPORTER_FANCY_val16302 = load i64, ptr @REPORTER_FANCY
-  call void @reporter_set_kind(i64 %REPORTER_FANCY_val16302)
-  br label %if_end4589
-
-if_else4588:
-  %REPORTER_PLAIN_val16303 = load i64, ptr @REPORTER_PLAIN
-  call void @reporter_set_kind(i64 %REPORTER_PLAIN_val16303)
-  br label %if_end4589
-
-if_end4589:
-  br label %if_end4586
-
-if_end4586:
-  br label %if_end4583
-
-if_end4583:
-  br label %if_end4580
-
-if_end4580:
-  %verbose_val16304 = load i32, ptr %verbose16283
-  call void @reporter_set_verbose(i32 %verbose_val16304)
-  call void @event_reset()
-  %input_file_val16305 = load ptr, ptr %input_file16242
-  %streq16306 = call i32 @ofs_str_eq(ptr %input_file_val16305, ptr @str.72)
-  %input_file_val16307 = load ptr, ptr %input_file16242
-  %streq16308 = call i32 @ofs_str_eq(ptr %input_file_val16307, ptr @str.741)
-  %cond16309 = icmp ne i32 %streq16306, 0
-  %cond16310 = icmp ne i32 %streq16308, 0
-  %logic16311 = or i1 %cond16309, %cond16310
-  br i1 %logic16311, label %if_then4590, label %if_else4591
-
-if_then4590:
-  call void @usage()
-  ret i32 0
-
-if_else4591:
-  br label %if_end4592
-
-if_end4592:
-  %input_file_val16312 = load ptr, ptr %input_file16242
-  %streq16313 = call i32 @ofs_str_eq(ptr %input_file_val16312, ptr @str.742)
-  %input_file_val16314 = load ptr, ptr %input_file16242
-  %streq16315 = call i32 @ofs_str_eq(ptr %input_file_val16314, ptr @str.743)
-  %cond16316 = icmp ne i32 %streq16313, 0
-  %cond16317 = icmp ne i32 %streq16315, 0
-  %logic16318 = or i1 %cond16316, %cond16317
-  %input_file_val16319 = load ptr, ptr %input_file16242
-  %streq16320 = call i32 @ofs_str_eq(ptr %input_file_val16319, ptr @str.744)
-  %cond16321 = icmp ne i32 %streq16320, 0
-  %logic16322 = or i1 %logic16318, %cond16321
-  br i1 %logic16322, label %if_then4593, label %if_else4594
-
-if_then4593:
-  %LEVEL_WARN_val16323 = load i64, ptr @LEVEL_WARN
-  %input_file_val16324 = load ptr, ptr %input_file16242
-  call void @event_diagnostic(ptr @str.72, i64 %LEVEL_WARN_val16323, i64 0, i64 0, ptr @str.644, ptr %input_file_val16324, ptr @str.72)
-  call void @reporter_flush()
-  ret i32 0
-
-if_else4594:
-  br label %if_end4595
-
-if_end4595:
-  %t_total016325 = alloca double, align 8
-  store double 0.0, ptr %t_total016325
-  %is_run_val16326 = load i32, ptr %is_run16280
-  %cond16327 = icmp ne i32 %is_run_val16326, 0
-  %not16328 = xor i1 %cond16327, true
-  br i1 %not16328, label %if_then4596, label %if_else4597
-
-if_then4596:
-  %STAGE_READ_val16329 = load i64, ptr @STAGE_READ
-  %input_file_val16330 = load ptr, ptr %input_file16242
-  call void @event_stage_start(i64 %STAGE_READ_val16329, ptr %input_file_val16330)
-  br label %if_end4598
-
-if_else4597:
-  br label %if_end4598
-
-if_end4598:
-  %t016331 = alloca i64, align 8
-  %call16332 = call i64 @clock()
-  store i64 %call16332, ptr %t016331
-  %src16333 = alloca ptr, align 8
-  store ptr @str.72, ptr %src16333
-  %input_file_val16334 = load ptr, ptr %input_file16242
-  %call16335 = call ptr @read_file(ptr %input_file_val16334)
-  store ptr %call16335, ptr %src16333
-  %input_file_val16336 = load ptr, ptr %input_file16242
-  %src_val16337 = load ptr, ptr %src16333
-  %call16338 = call ptr @expand_attaches(ptr %input_file_val16336, ptr %src_val16337)
-  store ptr %call16338, ptr %src16333
-  %call16339 = call ptr @getenv(ptr @str.745)
-  %streq16340 = call i32 @ofs_str_eq(ptr %call16339, ptr @str.260)
-  %cond16341 = icmp ne i32 %streq16340, 0
-  br i1 %cond16341, label %if_then4599, label %if_else4600
-
-if_then4599:
-  %src_val16342 = load ptr, ptr %src16333
-  call void @echo_obsidian(ptr %src_val16342)
-  ret i32 0
-
-if_else4600:
-  br label %if_end4601
-
-if_end4601:
-  %t116343 = alloca i64, align 8
-  %call16344 = call i64 @clock()
-  store i64 %call16344, ptr %t116343
-  %is_run_val16345 = load i32, ptr %is_run16280
-  %cond16346 = icmp ne i32 %is_run_val16345, 0
-  %not16347 = xor i1 %cond16346, true
-  br i1 %not16347, label %if_then4602, label %if_else4603
+while_body4600:
+  %state_val16348 = load ptr, ptr %state.addr
+  %i_val16349 = load i64, ptr %i16339
+  %call16350 = call i64 @ofs_str_char_at(ptr %state_val16348, i64 %i_val16349)
+  %cmp16351 = icmp eq i64 %call16350, 124
+  br i1 %cmp16351, label %if_then4602, label %if_else4603
 
 if_then4602:
-  %ms16348 = alloca double, align 8
-  %t1_val16349 = load i64, ptr %t116343
-  %t0_val16350 = load i64, ptr %t016331
-  %op16351 = sub i64 %t1_val16349, %t0_val16350
-  %cast16352 = sitofp i64 %op16351 to double
-  store double %cast16352, ptr %ms16348
-  %STAGE_READ_val16353 = load i64, ptr @STAGE_READ
-  %ms_val16354 = load double, ptr %ms16348
-  %fop16355 = fdiv double %ms_val16354, 1000.0
-  %src_val16356 = load ptr, ptr %src16333
-  %strlen16357 = call i64 @ofs_str_len(ptr %src_val16356)
-  %stone_to_str16358 = call ptr @ofs_stone_to_obsidian(i64 %strlen16357)
-  call void @event_stage_end(i64 %STAGE_READ_val16353, double %fop16355, ptr %stone_to_str16358)
+  %cur_val16352 = load i64, ptr %cur16341
+  %field_idx_val16353 = load i64, ptr %field_idx.addr
+  %cmp16354 = icmp eq i64 %cur_val16352, %field_idx_val16353
+  br i1 %cmp16354, label %if_then4605, label %if_else4606
+
+if_then4605:
+  %state_val16355 = load ptr, ptr %state.addr
+  %start_val16356 = load i64, ptr %start16340
+  %i_val16357 = load i64, ptr %i16339
+  %start_val16358 = load i64, ptr %start16340
+  %op16359 = sub i64 %i_val16357, %start_val16358
+  %call16360 = call ptr @ofs_str_substr(ptr %state_val16355, i64 %start_val16356, i64 %op16359)
+  ret ptr %call16360
+
+if_else4606:
+  br label %if_end4607
+
+if_end4607:
+  %cur_val16361 = load i64, ptr %cur16341
+  %op16362 = add i64 %cur_val16361, 1
+  store i64 %op16362, ptr %cur16341
+  %i_val16363 = load i64, ptr %i16339
+  %op16364 = add i64 %i_val16363, 1
+  store i64 %op16364, ptr %start16340
   br label %if_end4604
 
 if_else4603:
   br label %if_end4604
 
 if_end4604:
-  %t1_val16359 = load i64, ptr %t116343
-  %t0_val16360 = load i64, ptr %t016331
-  %op16361 = sub i64 %t1_val16359, %t0_val16360
-  %cast16362 = sitofp i64 %op16361 to double
-  store double %cast16362, ptr %t_total016325
-  %is_run_val16363 = load i32, ptr %is_run16280
-  %cond16364 = icmp ne i32 %is_run_val16363, 0
-  %not16365 = xor i1 %cond16364, true
-  br i1 %not16365, label %if_then4605, label %if_else4606
+  %post_old16365 = load i64, ptr %i16339
+  %post_new16366 = add i64 %post_old16365, 1
+  store i64 %post_new16366, ptr %i16339
+  br label %while_cond4599
 
-if_then4605:
-  %STAGE_LEX_val16366 = load i64, ptr @STAGE_LEX
-  call void @event_stage_start(i64 %STAGE_LEX_val16366, ptr @str.72)
-  br label %if_end4607
-
-if_else4606:
-  br label %if_end4607
-
-if_end4607:
-  %call16367 = call i64 @clock()
-  store i64 %call16367, ptr %t016331
-  %tokens16368 = alloca ptr, align 8
-  %src_val16369 = load ptr, ptr %src16333
-  %call16370 = call ptr @lexer__lex(ptr %src_val16369)
-  store ptr %call16370, ptr %tokens16368
-  %token_count16371 = alloca i64, align 8
-  %tokens_val16372 = load ptr, ptr %tokens16368
-  %arr_len16373 = call i64 @ofs_array_len(ptr %tokens_val16372)
-  store i64 %arr_len16373, ptr %token_count16371
-  %call16374 = call i64 @clock()
-  store i64 %call16374, ptr %t116343
-  %is_run_val16375 = load i32, ptr %is_run16280
-  %cond16376 = icmp ne i32 %is_run_val16375, 0
-  %not16377 = xor i1 %cond16376, true
-  br i1 %not16377, label %if_then4608, label %if_else4609
+while_end4601:
+  %cur_val16367 = load i64, ptr %cur16341
+  %field_idx_val16368 = load i64, ptr %field_idx.addr
+  %cmp16369 = icmp eq i64 %cur_val16367, %field_idx_val16368
+  br i1 %cmp16369, label %if_then4608, label %if_else4609
 
 if_then4608:
-  %ms16378 = alloca double, align 8
-  %t1_val16379 = load i64, ptr %t116343
-  %t0_val16380 = load i64, ptr %t016331
-  %op16381 = sub i64 %t1_val16379, %t0_val16380
-  %cast16382 = sitofp i64 %op16381 to double
-  store double %cast16382, ptr %ms16378
-  %STAGE_LEX_val16383 = load i64, ptr @STAGE_LEX
-  %ms_val16384 = load double, ptr %ms16378
-  %fop16385 = fdiv double %ms_val16384, 1000.0
-  %token_count_val16386 = load i64, ptr %token_count16371
-  %stone_to_str16387 = call ptr @ofs_stone_to_obsidian(i64 %token_count_val16386)
-  call void @event_stage_end(i64 %STAGE_LEX_val16383, double %fop16385, ptr %stone_to_str16387)
-  br label %if_end4610
+  %state_val16370 = load ptr, ptr %state.addr
+  %start_val16371 = load i64, ptr %start16340
+  %len_val16372 = load i64, ptr %len16342
+  %start_val16373 = load i64, ptr %start16340
+  %op16374 = sub i64 %len_val16372, %start_val16373
+  %call16375 = call ptr @ofs_str_substr(ptr %state_val16370, i64 %start_val16371, i64 %op16374)
+  ret ptr %call16375
 
 if_else4609:
   br label %if_end4610
 
 if_end4610:
-  %print_tokens_val16388 = load i32, ptr %print_tokens16246
-  %cond16389 = icmp ne i32 %print_tokens_val16388, 0
-  br i1 %cond16389, label %if_then4611, label %if_else4612
+  ret ptr @str.72
+}
+
+define i32 @main() {
+entry:
+  call void @__ofs_init_globals()
+  %input_file16376 = alloca ptr, align 8
+  store ptr @str.735, ptr %input_file16376
+  %output_file16377 = alloca ptr, align 8
+  store ptr @str.736, ptr %output_file16377
+  %c_output16378 = alloca ptr, align 8
+  store ptr @str.737, ptr %c_output16378
+  %check_only16379 = alloca i32, align 8
+  store i32 0, ptr %check_only16379
+  %print_tokens16380 = alloca i32, align 8
+  store i32 0, ptr %print_tokens16380
+  %print_ast16381 = alloca i32, align 8
+  store i32 0, ptr %print_ast16381
+  %c_opt16382 = alloca ptr, align 8
+  store ptr @str.733, ptr %c_opt16382
+  %state16383 = alloca ptr, align 8
+  %input_file_val16384 = load ptr, ptr %input_file16376
+  %output_file_val16385 = load ptr, ptr %output_file16377
+  %c_output_val16386 = load ptr, ptr %c_output16378
+  %check_only_val16387 = load i32, ptr %check_only16379
+  %print_tokens_val16388 = load i32, ptr %print_tokens16380
+  %print_ast_val16389 = load i32, ptr %print_ast16381
+  %c_opt_val16390 = load ptr, ptr %c_opt16382
+  %call16391 = call ptr @apply_env_overrides(ptr %input_file_val16384, ptr %output_file_val16385, ptr %c_output_val16386, i32 %check_only_val16387, i32 %print_tokens_val16388, i32 %print_ast_val16389, ptr %c_opt_val16390)
+  store ptr %call16391, ptr %state16383
+  %state_val16392 = load ptr, ptr %state16383
+  %call16393 = call ptr @parse_state_field(ptr %state_val16392, i64 0)
+  store ptr %call16393, ptr %input_file16376
+  %state_val16394 = load ptr, ptr %state16383
+  %call16395 = call ptr @parse_state_field(ptr %state_val16394, i64 1)
+  store ptr %call16395, ptr %output_file16377
+  %state_val16396 = load ptr, ptr %state16383
+  %call16397 = call ptr @parse_state_field(ptr %state_val16396, i64 2)
+  store ptr %call16397, ptr %c_output16378
+  %state_val16398 = load ptr, ptr %state16383
+  %call16399 = call ptr @parse_state_field(ptr %state_val16398, i64 3)
+  %streq16400 = call i32 @ofs_str_eq(ptr %call16399, ptr @str.260)
+  store i32 %streq16400, ptr %check_only16379
+  %state_val16401 = load ptr, ptr %state16383
+  %call16402 = call ptr @parse_state_field(ptr %state_val16401, i64 4)
+  %streq16403 = call i32 @ofs_str_eq(ptr %call16402, ptr @str.260)
+  store i32 %streq16403, ptr %print_tokens16380
+  %state_val16404 = load ptr, ptr %state16383
+  %call16405 = call ptr @parse_state_field(ptr %state_val16404, i64 5)
+  %streq16406 = call i32 @ofs_str_eq(ptr %call16405, ptr @str.260)
+  store i32 %streq16406, ptr %print_ast16381
+  %state_val16407 = load ptr, ptr %state16383
+  %call16408 = call ptr @parse_state_field(ptr %state_val16407, i64 6)
+  store ptr %call16408, ptr %c_opt16382
+  %compile_mode16409 = alloca ptr, align 8
+  %call16410 = call ptr @getenv(ptr @str.727)
+  store ptr %call16410, ptr %compile_mode16409
+  %compile_mode_val16411 = load ptr, ptr %compile_mode16409
+  %streq16412 = call i32 @ofs_str_eq(ptr %compile_mode_val16411, ptr @str.72)
+  %cond16413 = icmp ne i32 %streq16412, 0
+  br i1 %cond16413, label %if_then4611, label %if_else4612
 
 if_then4611:
-  %ti16390 = alloca i64, align 8
-  store i64 0, ptr %ti16390
-  br label %while_cond4614
-
-while_cond4614:
-  %ti_val16391 = load i64, ptr %ti16390
-  %token_count_val16392 = load i64, ptr %token_count16371
-  %cmp16393 = icmp slt i64 %ti_val16391, %token_count_val16392
-  br i1 %cmp16393, label %while_body4615, label %while_end4616
-
-while_body4615:
-  %obj16395 = call ptr @ofs_alloc(i64 128)
-  %tokens_val16396 = load ptr, ptr %tokens16368
-  %ti_val16397 = load i64, ptr %ti16390
-  %arr_get16398 = call ptr @ofs_array_get(ptr %tokens_val16396, i64 %ti_val16397)
-  %arr_item16399 = load ptr, ptr %arr_get16398
-  %named_val16400 = load %Token, ptr %arr_item16399
-  store %Token %named_val16400, ptr %obj16395
-  %field_ptr16401 = getelementptr inbounds %Token, ptr %obj16395, i32 0, i32 0
-  %field16402 = load i64, ptr %field_ptr16401
-  %stone_to_str16403 = call ptr @ofs_stone_to_obsidian(i64 %field16402)
-  %concat16404 = call ptr @ofs_str_concat(ptr @str.746, ptr %stone_to_str16403)
-  %concat16405 = call ptr @ofs_str_concat(ptr %concat16404, ptr @str.747)
-  %field_ptr16406 = getelementptr inbounds %Token, ptr %obj16395, i32 0, i32 1
-  %field16407 = load ptr, ptr %field_ptr16406
-  %concat16408 = call ptr @ofs_str_concat(ptr %concat16405, ptr %field16407)
-  %concat16409 = call ptr @ofs_str_concat(ptr %concat16408, ptr @str.146)
-  call void @echo_obsidian(ptr %concat16409)
-  %post_old16410 = load i64, ptr %ti16390
-  %post_new16411 = add i64 %post_old16410, 1
-  store i64 %post_new16411, ptr %ti16390
-  br label %while_cond4614
-
-while_end4616:
-  ret i32 0
+  store ptr @str.738, ptr %compile_mode16409
+  br label %if_end4613
 
 if_else4612:
   br label %if_end4613
 
 if_end4613:
-  %is_run_val16412 = load i32, ptr %is_run16280
-  %cond16413 = icmp ne i32 %is_run_val16412, 0
-  %not16414 = xor i1 %cond16413, true
-  br i1 %not16414, label %if_then4617, label %if_else4618
+  %is_run16414 = alloca i32, align 8
+  %compile_mode_val16415 = load ptr, ptr %compile_mode16409
+  %streq16416 = call i32 @ofs_str_eq(ptr %compile_mode_val16415, ptr @str.687)
+  store i32 %streq16416, ptr %is_run16414
+  %verbose16417 = alloca i32, align 8
+  %call16418 = call ptr @getenv(ptr @str.739)
+  %streq16419 = call i32 @ofs_str_eq(ptr %call16418, ptr @str.260)
+  store i32 %streq16419, ptr %verbose16417
+  %msg_fmt16420 = alloca ptr, align 8
+  %call16421 = call ptr @getenv(ptr @str.740)
+  store ptr %call16421, ptr %msg_fmt16420
+  call void @reporter_detect_locale()
+  call void @reporter_detect_color()
+  %call16422 = call ptr @getenv(ptr @str.741)
+  %streq16423 = call i32 @ofs_str_eq(ptr %call16422, ptr @str.152)
+  %cond16424 = icmp ne i32 %streq16423, 0
+  br i1 %cond16424, label %if_then4614, label %if_else4615
+
+if_then4614:
+  call void @anim_set_enabled(i32 0)
+  br label %if_end4616
+
+if_else4615:
+  call void @anim_set_enabled(i32 1)
+  br label %if_end4616
+
+if_end4616:
+  %msg_fmt_val16425 = load ptr, ptr %msg_fmt16420
+  %streq16426 = call i32 @ofs_str_eq(ptr %msg_fmt_val16425, ptr @str.742)
+  %cond16427 = icmp ne i32 %streq16426, 0
+  br i1 %cond16427, label %if_then4617, label %if_else4618
 
 if_then4617:
-  %STAGE_PARSE_val16415 = load i64, ptr @STAGE_PARSE
-  call void @event_stage_start(i64 %STAGE_PARSE_val16415, ptr @str.72)
+  %REPORTER_JSON_val16428 = load i64, ptr @REPORTER_JSON
+  call void @reporter_set_kind(i64 %REPORTER_JSON_val16428)
   br label %if_end4619
 
 if_else4618:
-  br label %if_end4619
-
-if_end4619:
-  %call16416 = call i64 @clock()
-  store i64 %call16416, ptr %t016331
-  %root_id16417 = alloca i64, align 8
-  %tokens_val16418 = load ptr, ptr %tokens16368
-  %call16419 = call i64 @parser__parse(ptr %tokens_val16418)
-  store i64 %call16419, ptr %root_id16417
-  %node_count16420 = alloca i64, align 8
-  %call16421 = call i64 @node_pool_len()
-  store i64 %call16421, ptr %node_count16420
-  %call16422 = call i64 @clock()
-  store i64 %call16422, ptr %t116343
-  %is_run_val16423 = load i32, ptr %is_run16280
-  %cond16424 = icmp ne i32 %is_run_val16423, 0
-  %not16425 = xor i1 %cond16424, true
-  br i1 %not16425, label %if_then4620, label %if_else4621
+  %msg_fmt_val16429 = load ptr, ptr %msg_fmt16420
+  %streq16430 = call i32 @ofs_str_eq(ptr %msg_fmt_val16429, ptr @str.743)
+  %cond16431 = icmp ne i32 %streq16430, 0
+  br i1 %cond16431, label %if_then4620, label %if_else4621
 
 if_then4620:
-  %ms16426 = alloca double, align 8
-  %t1_val16427 = load i64, ptr %t116343
-  %t0_val16428 = load i64, ptr %t016331
-  %op16429 = sub i64 %t1_val16427, %t0_val16428
-  %cast16430 = sitofp i64 %op16429 to double
-  store double %cast16430, ptr %ms16426
-  %STAGE_PARSE_val16431 = load i64, ptr @STAGE_PARSE
-  %ms_val16432 = load double, ptr %ms16426
-  %fop16433 = fdiv double %ms_val16432, 1000.0
-  %node_count_val16434 = load i64, ptr %node_count16420
-  %stone_to_str16435 = call ptr @ofs_stone_to_obsidian(i64 %node_count_val16434)
-  call void @event_stage_end(i64 %STAGE_PARSE_val16431, double %fop16433, ptr %stone_to_str16435)
+  %REPORTER_FANCY_val16432 = load i64, ptr @REPORTER_FANCY
+  call void @reporter_set_kind(i64 %REPORTER_FANCY_val16432)
   br label %if_end4622
 
 if_else4621:
-  br label %if_end4622
-
-if_end4622:
-  %print_ast_val16436 = load i32, ptr %print_ast16247
-  %cond16437 = icmp ne i32 %print_ast_val16436, 0
-  br i1 %cond16437, label %if_then4623, label %if_else4624
+  %msg_fmt_val16433 = load ptr, ptr %msg_fmt16420
+  %streq16434 = call i32 @ofs_str_eq(ptr %msg_fmt_val16433, ptr @str.744)
+  %cond16435 = icmp ne i32 %streq16434, 0
+  br i1 %cond16435, label %if_then4623, label %if_else4624
 
 if_then4623:
-  %obj16439 = call ptr @ofs_alloc(i64 128)
-  %root_id_val16440 = load i64, ptr %root_id16417
-  %call16441 = call ptr @node_get(i64 %root_id_val16440)
-  %named_val16442 = load %Node, ptr %call16441
-  store %Node %named_val16442, ptr %obj16439
-  %field_ptr16443 = getelementptr inbounds %Node, ptr %obj16439, i32 0, i32 0
-  %field16444 = load i64, ptr %field_ptr16443
-  %call16445 = call ptr @node_kind_name(i64 %field16444)
-  %concat16446 = call ptr @ofs_str_concat(ptr @str.748, ptr %call16445)
-  call void @echo_obsidian(ptr %concat16446)
-  ret i32 0
-
-if_else4624:
+  %REPORTER_PLAIN_val16436 = load i64, ptr @REPORTER_PLAIN
+  call void @reporter_set_kind(i64 %REPORTER_PLAIN_val16436)
   br label %if_end4625
 
-if_end4625:
-  %is_run_val16447 = load i32, ptr %is_run16280
-  %cond16448 = icmp ne i32 %is_run_val16447, 0
-  %not16449 = xor i1 %cond16448, true
-  br i1 %not16449, label %if_then4626, label %if_else4627
+if_else4624:
+  %_use_color_val16437 = load i32, ptr @_use_color
+  %cond16438 = icmp ne i32 %_use_color_val16437, 0
+  br i1 %cond16438, label %if_then4626, label %if_else4627
 
 if_then4626:
-  %STAGE_CHECK_val16450 = load i64, ptr @STAGE_CHECK
-  call void @event_stage_start(i64 %STAGE_CHECK_val16450, ptr @str.72)
+  %REPORTER_FANCY_val16439 = load i64, ptr @REPORTER_FANCY
+  call void @reporter_set_kind(i64 %REPORTER_FANCY_val16439)
   br label %if_end4628
 
 if_else4627:
+  %REPORTER_PLAIN_val16440 = load i64, ptr @REPORTER_PLAIN
+  call void @reporter_set_kind(i64 %REPORTER_PLAIN_val16440)
   br label %if_end4628
 
 if_end4628:
-  %call16451 = call i64 @clock()
-  store i64 %call16451, ptr %t016331
-  %root_id_val16452 = load i64, ptr %root_id16417
-  call void @typeck__check(i64 %root_id_val16452)
-  %call16453 = call i64 @clock()
-  store i64 %call16453, ptr %t116343
-  %is_run_val16454 = load i32, ptr %is_run16280
-  %cond16455 = icmp ne i32 %is_run_val16454, 0
-  %not16456 = xor i1 %cond16455, true
-  br i1 %not16456, label %if_then4629, label %if_else4630
+  br label %if_end4625
+
+if_end4625:
+  br label %if_end4622
+
+if_end4622:
+  br label %if_end4619
+
+if_end4619:
+  %verbose_val16441 = load i32, ptr %verbose16417
+  call void @reporter_set_verbose(i32 %verbose_val16441)
+  call void @event_reset()
+  %input_file_val16442 = load ptr, ptr %input_file16376
+  %streq16443 = call i32 @ofs_str_eq(ptr %input_file_val16442, ptr @str.72)
+  %input_file_val16444 = load ptr, ptr %input_file16376
+  %streq16445 = call i32 @ofs_str_eq(ptr %input_file_val16444, ptr @str.745)
+  %cond16446 = icmp ne i32 %streq16443, 0
+  %cond16447 = icmp ne i32 %streq16445, 0
+  %logic16448 = or i1 %cond16446, %cond16447
+  br i1 %logic16448, label %if_then4629, label %if_else4630
 
 if_then4629:
-  %ms16457 = alloca double, align 8
-  %t1_val16458 = load i64, ptr %t116343
-  %t0_val16459 = load i64, ptr %t016331
-  %op16460 = sub i64 %t1_val16458, %t0_val16459
-  %cast16461 = sitofp i64 %op16460 to double
-  store double %cast16461, ptr %ms16457
-  %STAGE_CHECK_val16462 = load i64, ptr @STAGE_CHECK
-  %ms_val16463 = load double, ptr %ms16457
-  %fop16464 = fdiv double %ms_val16463, 1000.0
-  call void @event_stage_end(i64 %STAGE_CHECK_val16462, double %fop16464, ptr @str.72)
-  br label %if_end4631
+  call void @usage()
+  ret i32 0
 
 if_else4630:
   br label %if_end4631
 
 if_end4631:
-  %call16465 = call i32 @typeck__has_errors()
-  %cond16466 = icmp ne i32 %call16465, 0
-  br i1 %cond16466, label %if_then4632, label %if_else4633
+  %input_file_val16449 = load ptr, ptr %input_file16376
+  %streq16450 = call i32 @ofs_str_eq(ptr %input_file_val16449, ptr @str.746)
+  %input_file_val16451 = load ptr, ptr %input_file16376
+  %streq16452 = call i32 @ofs_str_eq(ptr %input_file_val16451, ptr @str.747)
+  %cond16453 = icmp ne i32 %streq16450, 0
+  %cond16454 = icmp ne i32 %streq16452, 0
+  %logic16455 = or i1 %cond16453, %cond16454
+  %input_file_val16456 = load ptr, ptr %input_file16376
+  %streq16457 = call i32 @ofs_str_eq(ptr %input_file_val16456, ptr @str.748)
+  %cond16458 = icmp ne i32 %streq16457, 0
+  %logic16459 = or i1 %logic16455, %cond16458
+  br i1 %logic16459, label %if_then4632, label %if_else4633
 
 if_then4632:
-  call void @reporter_flush()
-  call void @exit(i64 1)
-  br label %if_end4634
-
-if_else4633:
-  br label %if_end4634
-
-if_end4634:
-  %check_only_val16467 = load i32, ptr %check_only16245
-  %cond16468 = icmp ne i32 %check_only_val16467, 0
-  br i1 %cond16468, label %if_then4635, label %if_else4636
+  %input_file_val16460 = load ptr, ptr %input_file16376
+  %streq16461 = call i32 @ofs_str_eq(ptr %input_file_val16460, ptr @str.746)
+  %_reporter_kind_val16462 = load i64, ptr @_reporter_kind
+  %REPORTER_JSON_val16463 = load i64, ptr @REPORTER_JSON
+  %cmp16464 = icmp eq i64 %_reporter_kind_val16462, %REPORTER_JSON_val16463
+  %cond16465 = icmp ne i32 %streq16461, 0
+  %logic16466 = and i1 %cond16465, %cmp16464
+  br i1 %logic16466, label %if_then4635, label %if_else4636
 
 if_then4635:
-  %input_file_val16469 = load ptr, ptr %input_file16242
-  call void @event_finished(ptr %input_file_val16469, i64 0, double 0.0)
-  call void @reporter_flush()
-  ret i32 0
+  call void @_emit_line(ptr @str.749)
+  call void @_emit_line(ptr @str.750)
+  br label %if_end4637
 
 if_else4636:
   br label %if_end4637
 
 if_end4637:
-  %compile_mode_val16470 = load ptr, ptr %compile_mode16275
-  %streq16471 = call i32 @ofs_str_eq(ptr %compile_mode_val16470, ptr @str.687)
-  %cond16472 = icmp ne i32 %streq16471, 0
-  br i1 %cond16472, label %if_then4638, label %if_else4639
+  %LEVEL_WARN_val16467 = load i64, ptr @LEVEL_WARN
+  %input_file_val16468 = load ptr, ptr %input_file16376
+  call void @event_diagnostic(ptr @str.72, i64 %LEVEL_WARN_val16467, i64 0, i64 0, ptr @str.644, ptr %input_file_val16468, ptr @str.72)
+  call void @reporter_flush()
+  ret i32 0
+
+if_else4633:
+  br label %if_end4634
+
+if_end4634:
+  %t_total016469 = alloca double, align 8
+  store double 0.0, ptr %t_total016469
+  %is_run_val16470 = load i32, ptr %is_run16414
+  %cond16471 = icmp ne i32 %is_run_val16470, 0
+  %not16472 = xor i1 %cond16471, true
+  br i1 %not16472, label %if_then4638, label %if_else4639
 
 if_then4638:
-  call void @reporter_flush()
-  %exit_code16473 = alloca i64, align 8
-  %root_id_val16474 = load i64, ptr %root_id16417
-  %call16475 = call i64 @interpreter__run(i64 %root_id_val16474)
-  store i64 %call16475, ptr %exit_code16473
-  %exit_code_val16476 = load i64, ptr %exit_code16473
-  call void @exit(i64 %exit_code_val16476)
-  ret i32 0
+  %STAGE_READ_val16473 = load i64, ptr @STAGE_READ
+  %input_file_val16474 = load ptr, ptr %input_file16376
+  call void @event_stage_start(i64 %STAGE_READ_val16473, ptr %input_file_val16474)
+  br label %if_end4640
 
 if_else4639:
   br label %if_end4640
 
 if_end4640:
-  %STAGE_FORGE_val16477 = load i64, ptr @STAGE_FORGE
-  call void @event_stage_start(i64 %STAGE_FORGE_val16477, ptr @str.72)
-  %call16478 = call i64 @clock()
-  store i64 %call16478, ptr %t016331
-  %c_output_val16479 = load ptr, ptr %c_output16244
-  call void @cg_open(ptr %c_output_val16479)
-  %compile_mode_val16480 = load ptr, ptr %compile_mode16275
-  %streq16481 = call i32 @ofs_str_eq(ptr %compile_mode_val16480, ptr @str.749)
-  %cond16482 = icmp ne i32 %streq16481, 0
-  br i1 %cond16482, label %if_then4641, label %if_else4642
+  %t016475 = alloca i64, align 8
+  %call16476 = call i64 @clock()
+  store i64 %call16476, ptr %t016475
+  %src16477 = alloca ptr, align 8
+  store ptr @str.72, ptr %src16477
+  %input_file_val16478 = load ptr, ptr %input_file16376
+  %call16479 = call ptr @read_file(ptr %input_file_val16478)
+  store ptr %call16479, ptr %src16477
+  %input_file_val16480 = load ptr, ptr %input_file16376
+  %src_val16481 = load ptr, ptr %src16477
+  %call16482 = call ptr @expand_attaches(ptr %input_file_val16480, ptr %src_val16481)
+  store ptr %call16482, ptr %src16477
+  %call16483 = call ptr @getenv(ptr @str.751)
+  %streq16484 = call i32 @ofs_str_eq(ptr %call16483, ptr @str.260)
+  %cond16485 = icmp ne i32 %streq16484, 0
+  br i1 %cond16485, label %if_then4641, label %if_else4642
 
 if_then4641:
-  %root_id_val16483 = load i64, ptr %root_id16417
-  call void @codegen__generate(i64 %root_id_val16483)
-  br label %if_end4643
+  %src_val16486 = load ptr, ptr %src16477
+  call void @echo_obsidian(ptr %src_val16486)
+  ret i32 0
 
 if_else4642:
-  %root_id_val16484 = load i64, ptr %root_id16417
-  call void @llvmgen__generate(i64 %root_id_val16484)
   br label %if_end4643
 
 if_end4643:
-  call void @cg_close()
-  %call16485 = call i64 @clock()
-  store i64 %call16485, ptr %t116343
-  %ms16486 = alloca double, align 8
-  %t1_val16487 = load i64, ptr %t116343
-  %t0_val16488 = load i64, ptr %t016331
-  %op16489 = sub i64 %t1_val16487, %t0_val16488
-  %cast16490 = sitofp i64 %op16489 to double
-  store double %cast16490, ptr %ms16486
-  %STAGE_FORGE_val16491 = load i64, ptr @STAGE_FORGE
-  %ms_val16492 = load double, ptr %ms16486
-  %fop16493 = fdiv double %ms_val16492, 1000.0
-  call void @event_stage_end(i64 %STAGE_FORGE_val16491, double %fop16493, ptr @str.750)
-  %compile_mode_val16494 = load ptr, ptr %compile_mode16275
-  %streq16495 = call i32 @ofs_str_eq(ptr %compile_mode_val16494, ptr @str.727)
-  %cond16496 = icmp ne i32 %streq16495, 0
-  br i1 %cond16496, label %if_then4644, label %if_else4645
+  %t116487 = alloca i64, align 8
+  %call16488 = call i64 @clock()
+  store i64 %call16488, ptr %t116487
+  %is_run_val16489 = load i32, ptr %is_run16414
+  %cond16490 = icmp ne i32 %is_run_val16489, 0
+  %not16491 = xor i1 %cond16490, true
+  br i1 %not16491, label %if_then4644, label %if_else4645
 
 if_then4644:
-  call void @reporter_flush()
-  ret i32 0
+  %ms16492 = alloca double, align 8
+  %t1_val16493 = load i64, ptr %t116487
+  %t0_val16494 = load i64, ptr %t016475
+  %op16495 = sub i64 %t1_val16493, %t0_val16494
+  %cast16496 = sitofp i64 %op16495 to double
+  store double %cast16496, ptr %ms16492
+  %STAGE_READ_val16497 = load i64, ptr @STAGE_READ
+  %ms_val16498 = load double, ptr %ms16492
+  %fop16499 = fdiv double %ms_val16498, 1000.0
+  %src_val16500 = load ptr, ptr %src16477
+  %strlen16501 = call i64 @ofs_str_len(ptr %src_val16500)
+  %stone_to_str16502 = call ptr @ofs_stone_to_obsidian(i64 %strlen16501)
+  call void @event_stage_end(i64 %STAGE_READ_val16497, double %fop16499, ptr %stone_to_str16502)
+  br label %if_end4646
 
 if_else4645:
   br label %if_end4646
 
 if_end4646:
-  %STAGE_LINK_val16497 = load i64, ptr @STAGE_LINK
-  call void @event_stage_start(i64 %STAGE_LINK_val16497, ptr @str.72)
-  %call16498 = call i64 @clock()
-  store i64 %call16498, ptr %t016331
-  %obj_file16499 = alloca ptr, align 8
-  %c_output_val16500 = load ptr, ptr %c_output16244
-  %concat16501 = call ptr @ofs_str_concat(ptr %c_output_val16500, ptr @str.751)
-  store ptr %concat16501, ptr %obj_file16499
-  %rt16502 = alloca ptr, align 8
-  %call16503 = call ptr @getenv(ptr @str.752)
-  store ptr %call16503, ptr %rt16502
-  %rt_val16504 = load ptr, ptr %rt16502
-  %streq16505 = call i32 @ofs_str_eq(ptr %rt_val16504, ptr @str.72)
-  %cond16506 = icmp ne i32 %streq16505, 0
-  br i1 %cond16506, label %if_then4647, label %if_else4648
+  %t1_val16503 = load i64, ptr %t116487
+  %t0_val16504 = load i64, ptr %t016475
+  %op16505 = sub i64 %t1_val16503, %t0_val16504
+  %cast16506 = sitofp i64 %op16505 to double
+  store double %cast16506, ptr %t_total016469
+  %is_run_val16507 = load i32, ptr %is_run16414
+  %cond16508 = icmp ne i32 %is_run_val16507, 0
+  %not16509 = xor i1 %cond16508, true
+  br i1 %not16509, label %if_then4647, label %if_else4648
 
 if_then4647:
-  store ptr @str.753, ptr %rt16502
+  %STAGE_LEX_val16510 = load i64, ptr @STAGE_LEX
+  call void @event_stage_start(i64 %STAGE_LEX_val16510, ptr @str.72)
   br label %if_end4649
 
 if_else4648:
   br label %if_end4649
 
 if_end4649:
-  %rt_probe16507 = alloca ptr, align 8
-  %rt_val16508 = load ptr, ptr %rt16502
-  %call16509 = call ptr @fopen(ptr %rt_val16508, ptr @str.754)
-  store ptr %call16509, ptr %rt_probe16507
-  %rt_probe_val16510 = load ptr, ptr %rt_probe16507
-  %cmp16511 = icmp eq ptr %rt_probe_val16510, null
-  br i1 %cmp16511, label %if_then4650, label %if_else4651
+  %call16511 = call i64 @clock()
+  store i64 %call16511, ptr %t016475
+  %tokens16512 = alloca ptr, align 8
+  %src_val16513 = load ptr, ptr %src16477
+  %call16514 = call ptr @lexer__lex(ptr %src_val16513)
+  store ptr %call16514, ptr %tokens16512
+  %token_count16515 = alloca i64, align 8
+  %tokens_val16516 = load ptr, ptr %tokens16512
+  %arr_len16517 = call i64 @ofs_array_len(ptr %tokens_val16516)
+  store i64 %arr_len16517, ptr %token_count16515
+  %call16518 = call i64 @clock()
+  store i64 %call16518, ptr %t116487
+  %is_run_val16519 = load i32, ptr %is_run16414
+  %cond16520 = icmp ne i32 %is_run_val16519, 0
+  %not16521 = xor i1 %cond16520, true
+  br i1 %not16521, label %if_then4650, label %if_else4651
 
 if_then4650:
-  %LEVEL_FAULT_val16512 = load i64, ptr @LEVEL_FAULT
-  %rt_val16513 = load ptr, ptr %rt16502
-  call void @event_diagnostic(ptr @str.72, i64 %LEVEL_FAULT_val16512, i64 0, i64 0, ptr @str.648, ptr %rt_val16513, ptr @str.72)
-  call void @reporter_flush()
-  call void @exit(i64 1)
+  %ms16522 = alloca double, align 8
+  %t1_val16523 = load i64, ptr %t116487
+  %t0_val16524 = load i64, ptr %t016475
+  %op16525 = sub i64 %t1_val16523, %t0_val16524
+  %cast16526 = sitofp i64 %op16525 to double
+  store double %cast16526, ptr %ms16522
+  %STAGE_LEX_val16527 = load i64, ptr @STAGE_LEX
+  %ms_val16528 = load double, ptr %ms16522
+  %fop16529 = fdiv double %ms_val16528, 1000.0
+  %token_count_val16530 = load i64, ptr %token_count16515
+  %stone_to_str16531 = call ptr @ofs_stone_to_obsidian(i64 %token_count_val16530)
+  call void @event_stage_end(i64 %STAGE_LEX_val16527, double %fop16529, ptr %stone_to_str16531)
   br label %if_end4652
 
 if_else4651:
   br label %if_end4652
 
 if_end4652:
-  %rt_probe_val16514 = load ptr, ptr %rt_probe16507
-  %call16515 = call i64 @fclose(ptr %rt_probe_val16514)
-  %compile_cmd16516 = alloca ptr, align 8
-  store ptr @str.72, ptr %compile_cmd16516
-  %compile_mode_val16517 = load ptr, ptr %compile_mode16275
-  %streq16518 = call i32 @ofs_str_eq(ptr %compile_mode_val16517, ptr @str.749)
-  %cond16519 = icmp ne i32 %streq16518, 0
-  br i1 %cond16519, label %if_then4653, label %if_else4654
+  %print_tokens_val16532 = load i32, ptr %print_tokens16380
+  %cond16533 = icmp ne i32 %print_tokens_val16532, 0
+  br i1 %cond16533, label %if_then4653, label %if_else4654
 
 if_then4653:
-  %c_opt_val16520 = load ptr, ptr %c_opt16248
-  %concat16521 = call ptr @ofs_str_concat(ptr @str.755, ptr %c_opt_val16520)
-  %concat16522 = call ptr @ofs_str_concat(ptr %concat16521, ptr @str.756)
-  %output_file_val16523 = load ptr, ptr %output_file16243
-  %concat16524 = call ptr @ofs_str_concat(ptr %concat16522, ptr %output_file_val16523)
-  %concat16525 = call ptr @ofs_str_concat(ptr %concat16524, ptr @str.257)
-  %c_output_val16526 = load ptr, ptr %c_output16244
-  %concat16527 = call ptr @ofs_str_concat(ptr %concat16525, ptr %c_output_val16526)
-  %concat16528 = call ptr @ofs_str_concat(ptr %concat16527, ptr @str.257)
-  %rt_val16529 = load ptr, ptr %rt16502
-  %concat16530 = call ptr @ofs_str_concat(ptr %concat16528, ptr %rt_val16529)
-  %concat16531 = call ptr @ofs_str_concat(ptr %concat16530, ptr @str.757)
-  store ptr %concat16531, ptr %compile_cmd16516
-  br label %if_end4655
+  %ti16534 = alloca i64, align 8
+  store i64 0, ptr %ti16534
+  br label %while_cond4656
+
+while_cond4656:
+  %ti_val16535 = load i64, ptr %ti16534
+  %token_count_val16536 = load i64, ptr %token_count16515
+  %cmp16537 = icmp slt i64 %ti_val16535, %token_count_val16536
+  br i1 %cmp16537, label %while_body4657, label %while_end4658
+
+while_body4657:
+  %obj16539 = call ptr @ofs_alloc(i64 128)
+  %tokens_val16540 = load ptr, ptr %tokens16512
+  %ti_val16541 = load i64, ptr %ti16534
+  %arr_get16542 = call ptr @ofs_array_get(ptr %tokens_val16540, i64 %ti_val16541)
+  %arr_item16543 = load ptr, ptr %arr_get16542
+  %named_val16544 = load %Token, ptr %arr_item16543
+  store %Token %named_val16544, ptr %obj16539
+  %field_ptr16545 = getelementptr inbounds %Token, ptr %obj16539, i32 0, i32 0
+  %field16546 = load i64, ptr %field_ptr16545
+  %stone_to_str16547 = call ptr @ofs_stone_to_obsidian(i64 %field16546)
+  %concat16548 = call ptr @ofs_str_concat(ptr @str.752, ptr %stone_to_str16547)
+  %concat16549 = call ptr @ofs_str_concat(ptr %concat16548, ptr @str.753)
+  %field_ptr16550 = getelementptr inbounds %Token, ptr %obj16539, i32 0, i32 1
+  %field16551 = load ptr, ptr %field_ptr16550
+  %concat16552 = call ptr @ofs_str_concat(ptr %concat16549, ptr %field16551)
+  %concat16553 = call ptr @ofs_str_concat(ptr %concat16552, ptr @str.146)
+  call void @echo_obsidian(ptr %concat16553)
+  %post_old16554 = load i64, ptr %ti16534
+  %post_new16555 = add i64 %post_old16554, 1
+  store i64 %post_new16555, ptr %ti16534
+  br label %while_cond4656
+
+while_end4658:
+  ret i32 0
 
 if_else4654:
-  %c_output_val16532 = load ptr, ptr %c_output16244
-  %concat16533 = call ptr @ofs_str_concat(ptr @str.758, ptr %c_output_val16532)
-  %concat16534 = call ptr @ofs_str_concat(ptr %concat16533, ptr @str.756)
-  %obj_file_val16535 = load ptr, ptr %obj_file16499
-  %concat16536 = call ptr @ofs_str_concat(ptr %concat16534, ptr %obj_file_val16535)
-  %concat16537 = call ptr @ofs_str_concat(ptr %concat16536, ptr @str.759)
-  %obj_file_val16538 = load ptr, ptr %obj_file16499
-  %concat16539 = call ptr @ofs_str_concat(ptr %concat16537, ptr %obj_file_val16538)
-  %concat16540 = call ptr @ofs_str_concat(ptr %concat16539, ptr @str.257)
-  %rt_val16541 = load ptr, ptr %rt16502
-  %concat16542 = call ptr @ofs_str_concat(ptr %concat16540, ptr %rt_val16541)
-  %concat16543 = call ptr @ofs_str_concat(ptr %concat16542, ptr @str.760)
-  %output_file_val16544 = load ptr, ptr %output_file16243
-  %concat16545 = call ptr @ofs_str_concat(ptr %concat16543, ptr %output_file_val16544)
-  %concat16546 = call ptr @ofs_str_concat(ptr %concat16545, ptr @str.761)
-  %obj_file_val16547 = load ptr, ptr %obj_file16499
-  %concat16548 = call ptr @ofs_str_concat(ptr %concat16546, ptr %obj_file_val16547)
-  %concat16549 = call ptr @ofs_str_concat(ptr %concat16548, ptr @str.257)
-  %rt_val16550 = load ptr, ptr %rt16502
-  %concat16551 = call ptr @ofs_str_concat(ptr %concat16549, ptr %rt_val16550)
-  %concat16552 = call ptr @ofs_str_concat(ptr %concat16551, ptr @str.762)
-  %output_file_val16553 = load ptr, ptr %output_file16243
-  %concat16554 = call ptr @ofs_str_concat(ptr %concat16552, ptr %output_file_val16553)
-  %concat16555 = call ptr @ofs_str_concat(ptr %concat16554, ptr @str.763)
-  store ptr %concat16555, ptr %compile_cmd16516
   br label %if_end4655
 
 if_end4655:
-  %compile_result16556 = alloca i64, align 8
-  %compile_cmd_val16557 = load ptr, ptr %compile_cmd16516
-  %call16558 = call i64 @system(ptr %compile_cmd_val16557)
-  store i64 %call16558, ptr %compile_result16556
-  %call16559 = call i64 @clock()
-  store i64 %call16559, ptr %t116343
-  %compile_result_val16560 = load i64, ptr %compile_result16556
-  %cmp16561 = icmp eq i64 %compile_result_val16560, 0
-  br i1 %cmp16561, label %if_then4656, label %if_else4657
+  %is_run_val16556 = load i32, ptr %is_run16414
+  %cond16557 = icmp ne i32 %is_run_val16556, 0
+  %not16558 = xor i1 %cond16557, true
+  br i1 %not16558, label %if_then4659, label %if_else4660
 
-if_then4656:
-  %ms16562 = alloca double, align 8
-  %t1_val16563 = load i64, ptr %t116343
-  %t0_val16564 = load i64, ptr %t016331
-  %op16565 = sub i64 %t1_val16563, %t0_val16564
-  %cast16566 = sitofp i64 %op16565 to double
-  store double %cast16566, ptr %ms16562
-  %STAGE_LINK_val16567 = load i64, ptr @STAGE_LINK
-  %ms_val16568 = load double, ptr %ms16562
-  %fop16569 = fdiv double %ms_val16568, 1000.0
-  call void @event_stage_end(i64 %STAGE_LINK_val16567, double %fop16569, ptr @str.72)
-  %output_file_val16570 = load ptr, ptr %output_file16243
-  %ms_val16571 = load double, ptr %ms16562
-  %fop16572 = fdiv double %ms_val16571, 1000.0
-  call void @event_finished(ptr %output_file_val16570, i64 0, double %fop16572)
-  call void @reporter_flush()
-  br label %if_end4658
+if_then4659:
+  %STAGE_PARSE_val16559 = load i64, ptr @STAGE_PARSE
+  call void @event_stage_start(i64 %STAGE_PARSE_val16559, ptr @str.72)
+  br label %if_end4661
 
-if_else4657:
-  %LEVEL_FAULT_val16573 = load i64, ptr @LEVEL_FAULT
-  %c_output_val16574 = load ptr, ptr %c_output16244
-  %compile_result_val16575 = load i64, ptr %compile_result16556
-  %stone_to_str16576 = call ptr @ofs_stone_to_obsidian(i64 %compile_result_val16575)
-  call void @event_diagnostic(ptr @str.72, i64 %LEVEL_FAULT_val16573, i64 0, i64 0, ptr @str.652, ptr %c_output_val16574, ptr %stone_to_str16576)
+if_else4660:
+  br label %if_end4661
+
+if_end4661:
+  %call16560 = call i64 @clock()
+  store i64 %call16560, ptr %t016475
+  %root_id16561 = alloca i64, align 8
+  %tokens_val16562 = load ptr, ptr %tokens16512
+  %call16563 = call i64 @parser__parse(ptr %tokens_val16562)
+  store i64 %call16563, ptr %root_id16561
+  %node_count16564 = alloca i64, align 8
+  %call16565 = call i64 @node_pool_len()
+  store i64 %call16565, ptr %node_count16564
+  %call16566 = call i64 @clock()
+  store i64 %call16566, ptr %t116487
+  %is_run_val16567 = load i32, ptr %is_run16414
+  %cond16568 = icmp ne i32 %is_run_val16567, 0
+  %not16569 = xor i1 %cond16568, true
+  br i1 %not16569, label %if_then4662, label %if_else4663
+
+if_then4662:
+  %ms16570 = alloca double, align 8
+  %t1_val16571 = load i64, ptr %t116487
+  %t0_val16572 = load i64, ptr %t016475
+  %op16573 = sub i64 %t1_val16571, %t0_val16572
+  %cast16574 = sitofp i64 %op16573 to double
+  store double %cast16574, ptr %ms16570
+  %STAGE_PARSE_val16575 = load i64, ptr @STAGE_PARSE
+  %ms_val16576 = load double, ptr %ms16570
+  %fop16577 = fdiv double %ms_val16576, 1000.0
+  %node_count_val16578 = load i64, ptr %node_count16564
+  %stone_to_str16579 = call ptr @ofs_stone_to_obsidian(i64 %node_count_val16578)
+  call void @event_stage_end(i64 %STAGE_PARSE_val16575, double %fop16577, ptr %stone_to_str16579)
+  br label %if_end4664
+
+if_else4663:
+  br label %if_end4664
+
+if_end4664:
+  %print_ast_val16580 = load i32, ptr %print_ast16381
+  %cond16581 = icmp ne i32 %print_ast_val16580, 0
+  br i1 %cond16581, label %if_then4665, label %if_else4666
+
+if_then4665:
+  %obj16583 = call ptr @ofs_alloc(i64 128)
+  %root_id_val16584 = load i64, ptr %root_id16561
+  %call16585 = call ptr @node_get(i64 %root_id_val16584)
+  %named_val16586 = load %Node, ptr %call16585
+  store %Node %named_val16586, ptr %obj16583
+  %field_ptr16587 = getelementptr inbounds %Node, ptr %obj16583, i32 0, i32 0
+  %field16588 = load i64, ptr %field_ptr16587
+  %call16589 = call ptr @node_kind_name(i64 %field16588)
+  %concat16590 = call ptr @ofs_str_concat(ptr @str.754, ptr %call16589)
+  call void @echo_obsidian(ptr %concat16590)
+  ret i32 0
+
+if_else4666:
+  br label %if_end4667
+
+if_end4667:
+  %is_run_val16591 = load i32, ptr %is_run16414
+  %cond16592 = icmp ne i32 %is_run_val16591, 0
+  %not16593 = xor i1 %cond16592, true
+  br i1 %not16593, label %if_then4668, label %if_else4669
+
+if_then4668:
+  %STAGE_CHECK_val16594 = load i64, ptr @STAGE_CHECK
+  call void @event_stage_start(i64 %STAGE_CHECK_val16594, ptr @str.72)
+  br label %if_end4670
+
+if_else4669:
+  br label %if_end4670
+
+if_end4670:
+  %call16595 = call i64 @clock()
+  store i64 %call16595, ptr %t016475
+  %root_id_val16596 = load i64, ptr %root_id16561
+  call void @typeck__check(i64 %root_id_val16596)
+  %call16597 = call i64 @clock()
+  store i64 %call16597, ptr %t116487
+  %is_run_val16598 = load i32, ptr %is_run16414
+  %cond16599 = icmp ne i32 %is_run_val16598, 0
+  %not16600 = xor i1 %cond16599, true
+  br i1 %not16600, label %if_then4671, label %if_else4672
+
+if_then4671:
+  %ms16601 = alloca double, align 8
+  %t1_val16602 = load i64, ptr %t116487
+  %t0_val16603 = load i64, ptr %t016475
+  %op16604 = sub i64 %t1_val16602, %t0_val16603
+  %cast16605 = sitofp i64 %op16604 to double
+  store double %cast16605, ptr %ms16601
+  %STAGE_CHECK_val16606 = load i64, ptr @STAGE_CHECK
+  %ms_val16607 = load double, ptr %ms16601
+  %fop16608 = fdiv double %ms_val16607, 1000.0
+  call void @event_stage_end(i64 %STAGE_CHECK_val16606, double %fop16608, ptr @str.72)
+  br label %if_end4673
+
+if_else4672:
+  br label %if_end4673
+
+if_end4673:
+  %call16609 = call i32 @typeck__has_errors()
+  %cond16610 = icmp ne i32 %call16609, 0
+  br i1 %cond16610, label %if_then4674, label %if_else4675
+
+if_then4674:
   call void @reporter_flush()
   call void @exit(i64 1)
-  br label %if_end4658
+  br label %if_end4676
 
-if_end4658:
+if_else4675:
+  br label %if_end4676
+
+if_end4676:
+  %check_only_val16611 = load i32, ptr %check_only16379
+  %cond16612 = icmp ne i32 %check_only_val16611, 0
+  br i1 %cond16612, label %if_then4677, label %if_else4678
+
+if_then4677:
+  %input_file_val16613 = load ptr, ptr %input_file16376
+  call void @event_finished(ptr %input_file_val16613, i64 0, double 0.0)
+  call void @reporter_flush()
+  ret i32 0
+
+if_else4678:
+  br label %if_end4679
+
+if_end4679:
+  %compile_mode_val16614 = load ptr, ptr %compile_mode16409
+  %streq16615 = call i32 @ofs_str_eq(ptr %compile_mode_val16614, ptr @str.687)
+  %cond16616 = icmp ne i32 %streq16615, 0
+  br i1 %cond16616, label %if_then4680, label %if_else4681
+
+if_then4680:
+  call void @reporter_flush()
+  %exit_code16617 = alloca i64, align 8
+  %root_id_val16618 = load i64, ptr %root_id16561
+  %call16619 = call i64 @interpreter__run(i64 %root_id_val16618)
+  store i64 %call16619, ptr %exit_code16617
+  %exit_code_val16620 = load i64, ptr %exit_code16617
+  call void @exit(i64 %exit_code_val16620)
+  ret i32 0
+
+if_else4681:
+  br label %if_end4682
+
+if_end4682:
+  %STAGE_FORGE_val16621 = load i64, ptr @STAGE_FORGE
+  call void @event_stage_start(i64 %STAGE_FORGE_val16621, ptr @str.72)
+  %call16622 = call i64 @clock()
+  store i64 %call16622, ptr %t016475
+  %c_output_val16623 = load ptr, ptr %c_output16378
+  call void @cg_open(ptr %c_output_val16623)
+  %compile_mode_val16624 = load ptr, ptr %compile_mode16409
+  %streq16625 = call i32 @ofs_str_eq(ptr %compile_mode_val16624, ptr @str.755)
+  %cond16626 = icmp ne i32 %streq16625, 0
+  br i1 %cond16626, label %if_then4683, label %if_else4684
+
+if_then4683:
+  %root_id_val16627 = load i64, ptr %root_id16561
+  call void @codegen__generate(i64 %root_id_val16627)
+  br label %if_end4685
+
+if_else4684:
+  %root_id_val16628 = load i64, ptr %root_id16561
+  call void @llvmgen__generate(i64 %root_id_val16628)
+  br label %if_end4685
+
+if_end4685:
+  call void @cg_close()
+  %call16629 = call i64 @clock()
+  store i64 %call16629, ptr %t116487
+  %ms16630 = alloca double, align 8
+  %t1_val16631 = load i64, ptr %t116487
+  %t0_val16632 = load i64, ptr %t016475
+  %op16633 = sub i64 %t1_val16631, %t0_val16632
+  %cast16634 = sitofp i64 %op16633 to double
+  store double %cast16634, ptr %ms16630
+  %STAGE_FORGE_val16635 = load i64, ptr @STAGE_FORGE
+  %ms_val16636 = load double, ptr %ms16630
+  %fop16637 = fdiv double %ms_val16636, 1000.0
+  call void @event_stage_end(i64 %STAGE_FORGE_val16635, double %fop16637, ptr @str.756)
+  %compile_mode_val16638 = load ptr, ptr %compile_mode16409
+  %streq16639 = call i32 @ofs_str_eq(ptr %compile_mode_val16638, ptr @str.730)
+  %cond16640 = icmp ne i32 %streq16639, 0
+  br i1 %cond16640, label %if_then4686, label %if_else4687
+
+if_then4686:
+  call void @reporter_flush()
+  ret i32 0
+
+if_else4687:
+  br label %if_end4688
+
+if_end4688:
+  %STAGE_LINK_val16641 = load i64, ptr @STAGE_LINK
+  call void @event_stage_start(i64 %STAGE_LINK_val16641, ptr @str.72)
+  %call16642 = call i64 @clock()
+  store i64 %call16642, ptr %t016475
+  %obj_file16643 = alloca ptr, align 8
+  %c_output_val16644 = load ptr, ptr %c_output16378
+  %concat16645 = call ptr @ofs_str_concat(ptr %c_output_val16644, ptr @str.757)
+  store ptr %concat16645, ptr %obj_file16643
+  %rt16646 = alloca ptr, align 8
+  %call16647 = call ptr @getenv(ptr @str.758)
+  store ptr %call16647, ptr %rt16646
+  %rt_val16648 = load ptr, ptr %rt16646
+  %streq16649 = call i32 @ofs_str_eq(ptr %rt_val16648, ptr @str.72)
+  %cond16650 = icmp ne i32 %streq16649, 0
+  br i1 %cond16650, label %if_then4689, label %if_else4690
+
+if_then4689:
+  store ptr @str.759, ptr %rt16646
+  br label %if_end4691
+
+if_else4690:
+  br label %if_end4691
+
+if_end4691:
+  %rt_probe16651 = alloca ptr, align 8
+  %rt_val16652 = load ptr, ptr %rt16646
+  %call16653 = call ptr @fopen(ptr %rt_val16652, ptr @str.760)
+  store ptr %call16653, ptr %rt_probe16651
+  %rt_probe_val16654 = load ptr, ptr %rt_probe16651
+  %cmp16655 = icmp eq ptr %rt_probe_val16654, null
+  br i1 %cmp16655, label %if_then4692, label %if_else4693
+
+if_then4692:
+  %LEVEL_FAULT_val16656 = load i64, ptr @LEVEL_FAULT
+  %rt_val16657 = load ptr, ptr %rt16646
+  call void @event_diagnostic(ptr @str.72, i64 %LEVEL_FAULT_val16656, i64 0, i64 0, ptr @str.648, ptr %rt_val16657, ptr @str.72)
+  call void @reporter_flush()
+  call void @exit(i64 1)
+  br label %if_end4694
+
+if_else4693:
+  br label %if_end4694
+
+if_end4694:
+  %rt_probe_val16658 = load ptr, ptr %rt_probe16651
+  %call16659 = call i64 @fclose(ptr %rt_probe_val16658)
+  %compile_cmd16660 = alloca ptr, align 8
+  store ptr @str.72, ptr %compile_cmd16660
+  %compile_mode_val16661 = load ptr, ptr %compile_mode16409
+  %streq16662 = call i32 @ofs_str_eq(ptr %compile_mode_val16661, ptr @str.755)
+  %cond16663 = icmp ne i32 %streq16662, 0
+  br i1 %cond16663, label %if_then4695, label %if_else4696
+
+if_then4695:
+  %c_opt_val16664 = load ptr, ptr %c_opt16382
+  %concat16665 = call ptr @ofs_str_concat(ptr @str.761, ptr %c_opt_val16664)
+  %concat16666 = call ptr @ofs_str_concat(ptr %concat16665, ptr @str.762)
+  %output_file_val16667 = load ptr, ptr %output_file16377
+  %concat16668 = call ptr @ofs_str_concat(ptr %concat16666, ptr %output_file_val16667)
+  %concat16669 = call ptr @ofs_str_concat(ptr %concat16668, ptr @str.257)
+  %c_output_val16670 = load ptr, ptr %c_output16378
+  %concat16671 = call ptr @ofs_str_concat(ptr %concat16669, ptr %c_output_val16670)
+  %concat16672 = call ptr @ofs_str_concat(ptr %concat16671, ptr @str.257)
+  %rt_val16673 = load ptr, ptr %rt16646
+  %concat16674 = call ptr @ofs_str_concat(ptr %concat16672, ptr %rt_val16673)
+  %concat16675 = call ptr @ofs_str_concat(ptr %concat16674, ptr @str.763)
+  store ptr %concat16675, ptr %compile_cmd16660
+  br label %if_end4697
+
+if_else4696:
+  %c_output_val16676 = load ptr, ptr %c_output16378
+  %concat16677 = call ptr @ofs_str_concat(ptr @str.764, ptr %c_output_val16676)
+  %concat16678 = call ptr @ofs_str_concat(ptr %concat16677, ptr @str.762)
+  %obj_file_val16679 = load ptr, ptr %obj_file16643
+  %concat16680 = call ptr @ofs_str_concat(ptr %concat16678, ptr %obj_file_val16679)
+  %concat16681 = call ptr @ofs_str_concat(ptr %concat16680, ptr @str.765)
+  %obj_file_val16682 = load ptr, ptr %obj_file16643
+  %concat16683 = call ptr @ofs_str_concat(ptr %concat16681, ptr %obj_file_val16682)
+  %concat16684 = call ptr @ofs_str_concat(ptr %concat16683, ptr @str.257)
+  %rt_val16685 = load ptr, ptr %rt16646
+  %concat16686 = call ptr @ofs_str_concat(ptr %concat16684, ptr %rt_val16685)
+  %concat16687 = call ptr @ofs_str_concat(ptr %concat16686, ptr @str.766)
+  %output_file_val16688 = load ptr, ptr %output_file16377
+  %concat16689 = call ptr @ofs_str_concat(ptr %concat16687, ptr %output_file_val16688)
+  %concat16690 = call ptr @ofs_str_concat(ptr %concat16689, ptr @str.767)
+  %obj_file_val16691 = load ptr, ptr %obj_file16643
+  %concat16692 = call ptr @ofs_str_concat(ptr %concat16690, ptr %obj_file_val16691)
+  %concat16693 = call ptr @ofs_str_concat(ptr %concat16692, ptr @str.257)
+  %rt_val16694 = load ptr, ptr %rt16646
+  %concat16695 = call ptr @ofs_str_concat(ptr %concat16693, ptr %rt_val16694)
+  %concat16696 = call ptr @ofs_str_concat(ptr %concat16695, ptr @str.768)
+  %output_file_val16697 = load ptr, ptr %output_file16377
+  %concat16698 = call ptr @ofs_str_concat(ptr %concat16696, ptr %output_file_val16697)
+  %concat16699 = call ptr @ofs_str_concat(ptr %concat16698, ptr @str.769)
+  store ptr %concat16699, ptr %compile_cmd16660
+  br label %if_end4697
+
+if_end4697:
+  %compile_result16700 = alloca i64, align 8
+  %compile_cmd_val16701 = load ptr, ptr %compile_cmd16660
+  %call16702 = call i64 @system(ptr %compile_cmd_val16701)
+  store i64 %call16702, ptr %compile_result16700
+  %call16703 = call i64 @clock()
+  store i64 %call16703, ptr %t116487
+  %compile_result_val16704 = load i64, ptr %compile_result16700
+  %cmp16705 = icmp eq i64 %compile_result_val16704, 0
+  br i1 %cmp16705, label %if_then4698, label %if_else4699
+
+if_then4698:
+  %ms16706 = alloca double, align 8
+  %t1_val16707 = load i64, ptr %t116487
+  %t0_val16708 = load i64, ptr %t016475
+  %op16709 = sub i64 %t1_val16707, %t0_val16708
+  %cast16710 = sitofp i64 %op16709 to double
+  store double %cast16710, ptr %ms16706
+  %STAGE_LINK_val16711 = load i64, ptr @STAGE_LINK
+  %ms_val16712 = load double, ptr %ms16706
+  %fop16713 = fdiv double %ms_val16712, 1000.0
+  call void @event_stage_end(i64 %STAGE_LINK_val16711, double %fop16713, ptr @str.72)
+  %output_file_val16714 = load ptr, ptr %output_file16377
+  %ms_val16715 = load double, ptr %ms16706
+  %fop16716 = fdiv double %ms_val16715, 1000.0
+  call void @event_finished(ptr %output_file_val16714, i64 0, double %fop16716)
+  call void @reporter_flush()
+  br label %if_end4700
+
+if_else4699:
+  %LEVEL_FAULT_val16717 = load i64, ptr @LEVEL_FAULT
+  %c_output_val16718 = load ptr, ptr %c_output16378
+  %compile_result_val16719 = load i64, ptr %compile_result16700
+  %stone_to_str16720 = call ptr @ofs_stone_to_obsidian(i64 %compile_result_val16719)
+  call void @event_diagnostic(ptr @str.72, i64 %LEVEL_FAULT_val16717, i64 0, i64 0, ptr @str.652, ptr %c_output_val16718, ptr %stone_to_str16720)
+  call void @reporter_flush()
+  call void @exit(i64 1)
+  br label %if_end4700
+
+if_end4700:
   ret i32 0
 }
 

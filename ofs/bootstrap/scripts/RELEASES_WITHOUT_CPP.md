@@ -1,7 +1,7 @@
-# 🚀 OFS Releases sem C++ - Guia Completo
+#  OFS Releases sem C++ - Guia Completo
 
-**Status:** ✅ C++ Removido do Pipeline  
-**Data:** 13 de Abril de 2026  
+**Status:**  C++ Removido do Pipeline 
+**Data:** 13 de Abril de 2026 
 **Build Time:** ~2 segundos (vs 5-15 minutos)
 
 ---
@@ -19,7 +19,7 @@ bash src/scripts/release-native-only.sh 1.0.0
 ls -lh releases/
 ```
 
-**Tempo total:** ~5 segundos 🚀
+**Tempo total:** ~5 segundos 
 
 ---
 
@@ -40,7 +40,7 @@ ls -lh releases/
 │ • Validação de determinismo            │
 └────────────────┬──────────────────────┘
                  ↓
-        ✓ Release pronto
+         Release pronto
 
 Total: 6-16 minutos
 ```
@@ -54,7 +54,7 @@ Total: 6-16 minutos
 │ • ZERO dependências                    │
 └────────────────┬──────────────────────┘
                  ↓
-        ✓ Release pronto
+         Release pronto
 
 Total: ~2 segundos
 ```
@@ -66,10 +66,10 @@ Total: ~2 segundos
 ### 1. `bootstrap-minimal.sh` (105 linhas)
 **Uso:** `bash bootstrap-minimal.sh`
 
-- ✅ Valida compilador OFS existente
-- ✅ Recompila ofscc.ofs
-- ✅ Valida determinismo
-- ✅ Prepara artifacts
+-  Valida compilador OFS existente
+-  Recompila ofscc.ofs
+-  Valida determinismo
+-  Prepara artifacts
 - **Tempo:** ~2 segundos
 
 **Opções:**
@@ -81,10 +81,10 @@ BUILD_OUTPUT=myinstall bash bootstrap-minimal.sh
 ### 2. `release-native-only.sh` (260 linhas)
 **Uso:** `bash release-native-only.sh [VERSION] [--recompile]`
 
-- ✅ Cria pacotes multi-plataforma
-- ✅ Gera checksums
-- ✅ Cria metadata JSON
-- ✅ Zero dependências de C++
+-  Cria pacotes multi-plataforma
+-  Gera checksums
+-  Cria metadata JSON
+-  Zero dependências de C++
 
 **Opções:**
 ```bash
@@ -159,13 +159,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+ 
       # Minimal bootstrap (< 5 sec)
       - run: bash ofs/bootstrap/scripts/bootstrap-minimal.sh
-      
+ 
       # Create release (< 10 sec)
       - run: bash ofs/bootstrap/scripts/release-native-only.sh ${GITHUB_REF#refs/tags/} --recompile
-      
+ 
       # Upload
       - uses: softprops/action-gh-release@v1
         with:
@@ -192,13 +192,13 @@ release:
 
 | Aspecto | Com C++ | Sem C++ | Melhoria |
 |---|---|---|---|
-| **Build Time** | 5-15 min | ~2 sec | 150-450x ⚡ |
-| **Dependências** | CMake, LLVM, GCC | Nenhuma | 100% ✓ |
+| **Build Time** | 5-15 min | ~2 sec | 150-450x  |
+| **Dependências** | CMake, LLVM, GCC | Nenhuma | 100%  |
 | **Tamanho CI image** | 2+ GB | <100MB | 95% -  |
 | **Release size** | 50-100 MB | 10-20 MB | 75% - |
-| **Cacheable** | Difícil | Trivial | ✓ |
-| **Parallelizável** | Não | Sim | ✓ |
-| **Windows/Linux/Mac** | 3x build | 1x build | ✓ |
+| **Cacheable** | Difícil | Trivial |  |
+| **Parallelizável** | Não | Sim |  |
+| **Windows/Linux/Mac** | 3x build | 1x build |  |
 
 ---
 
@@ -222,10 +222,10 @@ rm -f ofs/CMakeLists.txt
 ```
 
 **Resultado:**
-- ✅ Projeto 99% menor
-- ✅ Zero dependências build
-- ✅ Compilador sempre pronto
-- ✅ Release em segundos
+-  Projeto 99% menor
+-  Zero dependências build
+-  Compilador sempre pronto
+-  Release em segundos
 
 ---
 
@@ -313,9 +313,9 @@ R: Nenhuma! Apenas bash + tar/zip (já vêm nos sistemas)
 ## Próximos Passos
 
 ### Hoje
-1. ✅ `bash src/scripts/bootstrap-minimal.sh`
-2. ✅ `bash src/scripts/release-native-only.sh 1.0.0 --test`
-3. ✅ Validar releases
+1.  `bash src/scripts/bootstrap-minimal.sh`
+2.  `bash src/scripts/release-native-only.sh 1.0.0 --test`
+3.  Validar releases
 
 ### Amanhã
 1. Atualizar CI/CD (GitHub Actions, GitLab CI)
@@ -331,30 +331,30 @@ R: Nenhuma! Apenas bash + tar/zip (já vêm nos sistemas)
 
 ## Benefícios Resumidos
 
-✅ **150-450x mais rápido** (2 sec vs 5-15 min)  
-✅ **Zero dependências** (sem CMake, LLVM, GCC)  
-✅ **Releases em seconds** (vs minutos)  
-✅ **Multi-plataforma simples** (1 comando)  
-✅ **CI/CD super rápido** (~30 seg total)  
-✅ **Projeto 99% menor** (sem ofs/src/)  
-✅ **Determinismo validado** (sempre)  
-✅ **Production ready** (agora!)  
+ **150-450x mais rápido** (2 sec vs 5-15 min) 
+ **Zero dependências** (sem CMake, LLVM, GCC) 
+ **Releases em seconds** (vs minutos) 
+ **Multi-plataforma simples** (1 comando) 
+ **CI/CD super rápido** (~30 seg total) 
+ **Projeto 99% menor** (sem ofs/src/) 
+ **Determinismo validado** (sempre) 
+ **Production ready** (agora!) 
 
 ---
 
 ## Checklist Final
 
-- ✅ Scripts criados: `bootstrap-minimal.sh`, `release-native-only.sh`
-- ✅ Sem dependência C++
-- ✅ Multi-plataforma
-- ✅ Determinismo validado
-- ✅ Pronto para CI/CD
-- ✅ Documentado
-- ✅ Testado
+-  Scripts criados: `bootstrap-minimal.sh`, `release-native-only.sh`
+-  Sem dependência C++
+-  Multi-plataforma
+-  Determinismo validado
+-  Pronto para CI/CD
+-  Documentado
+-  Testado
 
 ---
 
-**Estamos prontos para releases sem C++! 🚀**
+**Estamos prontos para releases sem C++! **
 
 ```bash
 bash src/scripts/bootstrap-minimal.sh
@@ -364,5 +364,5 @@ bash src/scripts/release-native-only.sh 1.0.0 --recompile
 
 ---
 
-**Data:** 13 de Abril de 2026  
-**Status:** ✅ C++-Free Release Pipeline Completo
+**Data:** 13 de Abril de 2026 
+**Status:**  C++-Free Release Pipeline Completo

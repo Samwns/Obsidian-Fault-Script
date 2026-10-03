@@ -2,9 +2,30 @@
 
 All notable changes to this project are recorded here.
 
-## [Unreleased] — Self-Hosted Compiler Milestones 1–6
+## [Unreleased]
+
+### Added
+
+- **Reporter Fases 2–5 (ofscc)**:
+  - **Fase 2 — i18n**: catálogo embutido en/pt/es com detecção automática de locale (`OFS_LANG` > `LANG` > `en`) e TOMLs espelho em `ofs/ofscc/locale/` para tradutores e CI de paridade.
+  - **Fase 3 — Reporter Fancy**: verbos alinhados em coluna fixa, símbolos ANSI, cores com degradação automática (`NO_COLOR` / `TERM=dumb`).
+  - **Fase 4 — animação**: spinner single-thread entre estágios, `\r` + clear line, desligável via `OFS_ANIM=0`.
+  - **Fase 5 — Json NDJSON**: eventos extras (`locale`, `msg_key` + `args[]`, `duration_ms_total`) e stub de saída `twin` em NDJSON.
+- **CI golden files**: workflow `golden.yml` re-bootstrapa o compilador e compara saídas Plain/Fancy/Json e de locale contra binário recém-gerado.
 
 ### Fixed
+
+- **llvmgen**: constante inteira `0` em global com tipo ponteiro (ex.: `forge x: Array<T> = []`) emitia `global ptr 0`, rejeitado pelo llc — agora emite `global ptr null`.
+- **bootstrap**: `ofs_str_substr` sem terminação NUL, contagem de limites de `attach {F:...}` e tamanhos de allocação de `monolith` corrigidos.
+- **portabilidade**: `snprintf` e `ofs_stone_to_obsidian` reescritos em OFS puro; `crystal` formata como `%.15g` com sufixo `.0` (paridade).
+- **CI**: `clang -no-pie` (Linux) e `-Wl,-no_pie` (macOS) ao linkar `ofscc.ll` gerado por llc non-PIE; `-Wl,/force:multiple` (Windows).
+
+### Changed
+
+- **Licença v1.0.151**: adoção de **Apache-2.0** (`LICENSE`, `docs/legal/LICENSE`) e **Política de Marca** (`TRADEMARK.md`).
+- **`docs/pt/STATUS_REPORT.md`** movido para `src/archive/STATUS_REPORT.md`; site passa a apontar apenas para o CHANGELOG.
+
+### Self-Hosted Compiler — Marcos 5–6 (Fixed)
 
 - **Marco 5**: Typechecker no longer OOMs on deep AST paths — hot accessor functions extracted to keep stack pressure bounded during diagnostic walks.
 - **Marco 6a (mine loops)**: Deferred `anchor` statements were emitted at scope-exit in FIFO order, breaking `defer`-style semantics. The LLVM generator now walks the anchor stack in reverse (LIFO) so that the most recently registered anchor runs first, matching Go/Zig conventions.
@@ -13,49 +34,62 @@ All notable changes to this project are recorded here.
 - **Typeck**: `is_variant_name` tightened to strict PascalCase (starts uppercase, contains at least one lowercase, no underscores). This prevents `EXEC_OK`, `NK_CORE_DECL` and other `SCREAMING_SNAKE` constants from being typed as variants (which previously forced a `ptr` alloca and corrupted downstream code).
 - **Typeck / Codegen**: `type_node_name` now preserves the full generic spelling (`Array<obsidian>` instead of bare `Array`), enabling downstream consumers (collect_globals, VAR_DECL emission, array indexing) to pick the correct value type.
 
-### Validated
+### Self-Hosted Compiler — Marcos 5–6 (Validated)
 
 - `ofs/tests/interpreter/10_geological_flow.ofs` → prints `1 2 3 4 5 40 30 8 50 7 20 10` (exact LIFO anchor ordering across nested scopes and loops).
 - `ofs/tests/interpreter/11_assay_basic.ofs` → prints `20`.
 - `ofs/tests/interpreter/12_outcome_lode.ofs` → prints `7` and `2` (strata variants used in `assay`).
 - `ofs/tests/interpreter/13_question_propagation.ofs` → prints `0` and `1` (basic `?` propagation semantics).
 
-## [1.0.148] - 2026-09-30 — Hybrid Interpreter Backend & Differential Testing
-
+## [Unreleased — track 1 & low-level]
 ### Added
-
-- **AST Interpreter Backend (`interpreter.ofs`)**: OFS is now a true hybrid language. Running `ofs <file.ofs>` or `ofs run <file.ofs>` directly evaluates the typed AST without invoking LLVM, Clang, or linker phases, providing sub-millisecond execution for scripting and prototyping.
-- **Value Monolith & Dynamic Heap**: Full runtime support for primitives (`stone`, `crystal`, `obsidian`, `bool`), handles for `Array<T>`, heap-allocated `monolith` structs with value-copy semantics, and pointers with the `Location` table.
-- **Lexical Call Frame Scoping**: Frame base tracking (`_current_frame_base` and `_globals_count`) ensuring that local variables in caller functions never leak or shadow global declarations in callees.
-- **Method Dispatch via `impl`**: Support for methods declared in `impl Type { vein method(self: Type) ... }` called directly on instances (`instance.method()`).
-- **Differential Test Suite**: Automated differential runner `ofs/tests/interpreter/test_differential.sh` with 9 end-to-end test suites asserting 1-to-1 output equivalence between interpreted mode and native LLVM builds.
-- **CI Integration**: Added differential test validation to GitHub Actions workflows on Linux and macOS.
+- Track 1 language update documented and available in the compiler: small integers (`u8`, `u16`, `u32`, `u64`, `i8`, `i32`), `impl`, namespaces, function values/lambdas, and `window` runtime bridge.
+- `window.ofs` standard-library module and `window` package entry for native window/input access.
+- `canvas.ofs` standard-library module and `canvas` package entry for pixel-buffer drawing on top of `window`.
+- VS Code extension grammar, snippets, hover docs, and README updated to cover Track 1 syntax and the canvas/window workflow.
+- New `fault_unreachable()` intrinsic: marks the current code path as unreachable; lowers to `llvm.trap` followed by an LLVM `unreachable` instruction, letting the optimizer eliminate dead branches.
+- New `fault_memcpy(dst, src, len)` intrinsic: lowers to `llvm.memcpy` for bulk memory copies inside `fracture`/`abyss`/`bedrock` blocks.
+- New `fault_memset(dst, val, len)` intrinsic: lowers to `llvm.memset` for bulk memory initialisation inside low-level blocks.
+- Variadic `...` syntax on `extern vein` declarations: `extern vein printf(fmt: obsidian, ...) -> stone` now compiles correctly. The `ELLIPSIS` token (`...`) was added to the lexer and parser.
+- Implemented `ofs_webserver_serve_once` and `ofs_webserver_serve_forever` in the runtime (POSIX sockets on Linux/macOS; Winsock on Windows). These were previously declared in the header but had no implementation, causing linker errors in any program that called them.
 
 ### Changed
-
-- `ofs run <file.ofs>` defaults to instant interpreted execution; `ofs run --native <file.ofs>` is available for temporary compilation + execution.
-- Windows PowerShell runner `src/packaging/windows/ofs.ps1` updated with interpreted mode and `--native` flag for complete parity across Linux, macOS, and Windows.
-- **License updated to Apache-2.0** (Apache License, Version 2.0), aligning OFS with major systems languages (Rust/LLVM), providing explicit patent protection and attribution requirements.
-- **Trademark Policy added (`TRADEMARK.md`)** protecting official project names ("Obsidian Fault Script", "OFS") and branding against unauthorized commercial re-use and confusing forks.
-
----
-
-## [1.0.101] - 2026-05-31 — Native Installers Release Hardening
+- `match` statement codegen is now fully implemented. Previously only the `default` arm was generated; all `case` arms now compile to a chain of compare-and-branch instructions. String arms use `ofs_str_eq`, numeric arms use integer/float comparison.
+- Inline assembly (`asm "..."`) is now correctly lowered to LLVM `InlineAsm`. Previously the `gen_inline_asm` handler existed but was never called from `gen_expr`, so all `asm` statements were silently discarded. Input operands are now forwarded with default register constraints.
+- `fault_step` symbol type in the built-in symbol table corrected from `stone` to `*stone` (shard of stone), matching what `check_call` already returned at call sites.
+- `register_builtin_symbols` rewritten for clarity: each intrinsic now has its exact return type recorded in a table rather than a catch-all `stone` fallback.
 
 ### Fixed
+- Windows updater now resolves the latest release tag more robustly by following redirects and falling back to the GitHub API when needed.
+- **Critical**: String equality (`==`) and inequality (`!=`) on `obsidian` values now use `ofs_str_eq` (content comparison). Previously they compared raw pointer addresses, so two string literals with equal content could compare as unequal.
+- **Critical**: `asm "..."` expressions were never lowered to IR (the dispatch case was missing in `gen_expr`). Fixed by adding the `InlineAsmExpr` branch to `gen_expr` and to `check_expr` in the semantic analyser.
+- Semantic check for `void` function returning a value now raises a proper error (`void function cannot return a value`) instead of silently producing invalid LLVM IR that fails verifier checks.
+- `gen_return` now has a codegen-level safety guard: if a void function somehow passes semantic analysis with a return value expression, codegen evaluates the expression for side effects and emits `ret void`, preventing an LLVM verifier crash.
+- `examples/baremetal_minimal.ofs` corrected: `vein main()` (void, no core entry) with `return 42` was replaced with a proper `core main()` + helper function structure.
+- `gen_inline_asm` previously ignored `inputs` entirely (empty constraint string) and used only the first output name as the constraint. Now builds the constraint string from outputs, per-input `"r"` constraints, and clobber sections.
 
-- Fixed LLVM 14 opaque pointer handling in CI and release builds.
-- Fixed Bash 3/macOS wrapper behavior when LLVM IR flags are empty.
-- Fixed example checks so relative `attach {F:...}` paths run from each example directory.
-- Fixed Windows release src/packaging collision by using a dedicated `windows-dist` staging directory.
-
-### Release
-
-- Release automation now produces native installers for Debian/Ubuntu, Fedora, Arch, macOS, and Windows.
-- VS Code extension src/packaging is included in the release assets.
-- Windows CI validates the native compiler binary and installer package; Linux/macOS continue to run full example and stdlib smoke checks.
-
----
+### Added
+- New `ofs asm <file.ofs>` command to emit target-native assembly from the current LLVM backend.
+- Low-level roadmap document focused on OFS-native coexistence between high-level and low-level code in the same program.
+- `bedrock` standard-library module with OFS-first heap cell helpers for manual state handling.
+- VS Code extension command to emit native assembly from the active OFS file.
+- Expanded language direction docs covering OFS-native low-level goals and foreign interop roadmap.
+- New `bedrock { ... }` typed low-level block in the language.
+- New `rift vein` declaration form for OFS-native foreign interop boundaries.
+- New `fault_*` intrinsics for machine-like low-level operations with OFS-native naming.
+- New `fault_step` intrinsic for typed pointer stepping.
+- New `bedrock_region_*` helpers for explicit low-level storage regions.
+- New `rift.ofs` module for OFS-native wrappers around foreign runtime boundaries.
+- New `fault_cut` and `fault_patch` intrinsics for field extraction and patching.
+- New `bedrock_view_*` helpers for OFS-native low-level views over regions.
+- New `fault_fence` and `fault_trap` intrinsics for machine-level barrier/trap hooks.
+- New `fault_prefetch` intrinsic and `bedrock_prefetch` helper for cache-aware pointer staging in low-level OFS code.
+- New lane helpers such as `bedrock_lane8_get` and `bedrock_lane8_set`.
+- New endian-aware lane helpers such as `bedrock_lane16_le_get`, `bedrock_lane16_be_get`, `bedrock_lane32_le_set`, and `bedrock_lane32_be_set`.
+- New `bedrock_packet.ofs` module for packet/header views over low-level regions.
+- New packet helpers for endian-aware header windows such as `bedrock_packet_opcode_be16` and `bedrock_packet_tail_le16`.
+- New `bind`/`abi` metadata on `rift vein` and `extern vein` declarations for more explicit interop boundaries.
+- New `layout native|packed|c` support on `monolith` declarations.
 
 ## [1.2.0] - 2026-04-13 — C++ Compiler Removed 
 
@@ -67,9 +101,9 @@ All language implementation and compilation pipeline now solely uses OFS.
 
 ### Removed
 
-- ❌ `ofs/src/` - Legacy C++ compiler source (main.cpp, lexer, parser, codegen, semantic, runtime, ast)
-- ❌ `ofs/CMakeLists.txt` - CMake build configuration
-- ❌ All C++ dependencies from codebase
+- `ofs/src/` - Legacy C++ compiler source (main.cpp, lexer, parser, codegen, semantic, runtime, ast)
+- `ofs/CMakeLists.txt` - CMake build configuration
+- All C++ dependencies from codebase
 
 ### Repository Structure (Simplified)
 
@@ -91,7 +125,8 @@ ofs/
 
 ---
 
-## [1.1.1] - 2024-12-XX — Automated Native-Only Releases 🚀
+
+## [1.1.1] - 2024-12-XX — Automated Native-Only Releases
 
 ### Major Milestone: CI/CD Automation & Zero C++ Dependencies
 
@@ -132,10 +167,10 @@ ofs/
 
 ### Removed
 
-- ❌ C++ compilation step from release pipeline
-- ❌ LLVM/Clang dependencies from CI/CD
-- ❌ CMake build requirements for releases
-- ❌ Old `ofs` command references (replaced with native approach)
+- C++ compilation step from release pipeline
+- LLVM/Clang dependencies from CI/CD
+- CMake build requirements for releases
+- Old `ofs` command references (replaced with native approach)
 
 ### Technical Details
 
@@ -152,7 +187,8 @@ Git Tag → GitHub Actions → (Linux/macOS/Windows parallel bootstrap-minimal)
 
 ---
 
-## [1.1.0] - 2026-04-12 — Self-Hosted Compiler 🎉
+
+## [1.1.0] - 2026-04-12 — Self-Hosted Compiler
 
 ### Major Milestone: OFS Compiler is Self-Hosting
 
@@ -238,21 +274,21 @@ After implementing a complete compiler pipeline in pure OFS (lexer, parser, type
 - **Phase 6: Output** — Native executable
 
 **Features Supported**:
-- ✅ All primitive types (stone, crystal, obsidian, bool, u8-u64, i32)
-- ✅ Functions, variables, constants
-- ✅ Arrays, monoliths (structs)
-- ✅ Control flow (if/else, while, cycle, match, break, continue, return)
-- ✅ Operators (arithmetic, logical, bitwise, comparison)
-- ✅ String literals with escape sequences
-- ✅ Comments (//, /* */)
-- ⚠️  Type inference (basic)
-- ⚠️  Error messages (simple)
+- All primitive types (stone, crystal, obsidian, bool, u8-u64, i32)
+- Functions, variables, constants
+- Arrays, monoliths (structs)
+- Control flow (if/else, while, cycle, match, break, continue, return)
+- Operators (arithmetic, logical, bitwise, comparison)
+- String literals with escape sequences
+- Comments (//, /* */)
+-  Type inference (basic)
+-  Error messages (simple)
 
 **Limitations (Addressed in v1.2)**:
-- ❌ Command-line argument parsing
-- ❌ impl/namespace/strata (parsing only)
-- ❌ Full error recovery
-- ❌ Diagnostics beyond stderr
+- Command-line argument parsing
+- impl/namespace/strata (parsing only)
+- Full error recovery
+- Diagnostics beyond stderr
 
 ### Performance
 
@@ -302,77 +338,51 @@ ofs build input.ofs -o output
 
 ---
 
-## [Unreleased]
-### Added
-- Track 1 language update documented and available in the compiler: small integers (`u8`, `u16`, `u32`, `u64`, `i8`, `i32`), `impl`, namespaces, function values/lambdas, and `window` runtime bridge.
-- `window.ofs` standard-library module and `window` package entry for native window/input access.
-- `canvas.ofs` standard-library module and `canvas` package entry for pixel-buffer drawing on top of `window`.
-- VS Code extension grammar, snippets, hover docs, and README updated to cover Track 1 syntax and the canvas/window workflow.
-- New `fault_unreachable()` intrinsic: marks the current code path as unreachable; lowers to `llvm.trap` followed by an LLVM `unreachable` instruction, letting the optimizer eliminate dead branches.
-- New `fault_memcpy(dst, src, len)` intrinsic: lowers to `llvm.memcpy` for bulk memory copies inside `fracture`/`abyss`/`bedrock` blocks.
-- New `fault_memset(dst, val, len)` intrinsic: lowers to `llvm.memset` for bulk memory initialisation inside low-level blocks.
-- Variadic `...` syntax on `extern vein` declarations: `extern vein printf(fmt: obsidian, ...) -> stone` now compiles correctly. The `ELLIPSIS` token (`...`) was added to the lexer and parser.
-- Implemented `ofs_webserver_serve_once` and `ofs_webserver_serve_forever` in the runtime (POSIX sockets on Linux/macOS; Winsock on Windows). These were previously declared in the header but had no implementation, causing linker errors in any program that called them.
+
+
+## [1.0.151] - 2026-10-01 — Apache-2.0 License & Trademark Policy
 
 ### Changed
-- `match` statement codegen is now fully implemented. Previously only the `default` arm was generated; all `case` arms now compile to a chain of compare-and-branch instructions. String arms use `ofs_str_eq`, numeric arms use integer/float comparison.
-- Inline assembly (`asm "..."`) is now correctly lowered to LLVM `InlineAsm`. Previously the `gen_inline_asm` handler existed but was never called from `gen_expr`, so all `asm` statements were silently discarded. Input operands are now forwarded with default register constraints.
-- `fault_step` symbol type in the built-in symbol table corrected from `stone` to `*stone` (shard of stone), matching what `check_call` already returned at call sites.
-- `register_builtin_symbols` rewritten for clarity: each intrinsic now has its exact return type recorded in a table rather than a catch-all `stone` fallback.
+
+- License updated to **Apache-2.0** (Apache License, Version 2.0), aligning OFS with major systems languages (Rust/LLVM), providing explicit patent protection and attribution requirements.
+- **Trademark Policy** added (`TRADEMARK.md`) protecting official project names ("Obsidian Fault Script", "OFS") and branding against unauthorized commercial re-use and confusing forks.
+
+## [1.0.148] - 2026-09-30 — Hybrid Interpreter Backend & Differential Testing
+
+### Added
+
+- **AST Interpreter Backend (`interpreter.ofs`)**: OFS is now a true hybrid language. Running `ofs <file.ofs>` or `ofs run <file.ofs>` directly evaluates the typed AST without invoking LLVM, Clang, or linker phases, providing sub-millisecond execution for scripting and prototyping.
+- **Value Monolith & Dynamic Heap**: Full runtime support for primitives (`stone`, `crystal`, `obsidian`, `bool`), handles for `Array<T>`, heap-allocated `monolith` structs with value-copy semantics, and pointers with the `Location` table.
+- **Lexical Call Frame Scoping**: Frame base tracking (`_current_frame_base` and `_globals_count`) ensuring that local variables in caller functions never leak or shadow global declarations in callees.
+- **Method Dispatch via `impl`**: Support for methods declared in `impl Type { vein method(self: Type) ... }` called directly on instances (`instance.method()`).
+- **Differential Test Suite**: Automated differential runner `ofs/tests/interpreter/test_differential.sh` with 9 end-to-end test suites asserting 1-to-1 output equivalence between interpreted mode and native LLVM builds.
+- **CI Integration**: Added differential test validation to GitHub Actions workflows on Linux and macOS.
+
+### Changed
+
+- `ofs run <file.ofs>` defaults to instant interpreted execution; `ofs run --native <file.ofs>` is available for temporary compilation + execution.
+- Windows PowerShell runner `src/packaging/windows/ofs.ps1` updated with interpreted mode and `--native` flag for complete parity across Linux, macOS, and Windows.
+
+---
+
+
+## [1.0.101] - 2026-05-31 — Native Installers Release Hardening
 
 ### Fixed
-- Windows updater now resolves the latest release tag more robustly by following redirects and falling back to the GitHub API when needed.
-- **Critical**: String equality (`==`) and inequality (`!=`) on `obsidian` values now use `ofs_str_eq` (content comparison). Previously they compared raw pointer addresses, so two string literals with equal content could compare as unequal.
-- **Critical**: `asm "..."` expressions were never lowered to IR (the dispatch case was missing in `gen_expr`). Fixed by adding the `InlineAsmExpr` branch to `gen_expr` and to `check_expr` in the semantic analyser.
-- Semantic check for `void` function returning a value now raises a proper error (`void function cannot return a value`) instead of silently producing invalid LLVM IR that fails verifier checks.
-- `gen_return` now has a codegen-level safety guard: if a void function somehow passes semantic analysis with a return value expression, codegen evaluates the expression for side effects and emits `ret void`, preventing an LLVM verifier crash.
-- `examples/baremetal_minimal.ofs` corrected: `vein main()` (void, no core entry) with `return 42` was replaced with a proper `core main()` + helper function structure.
-- `gen_inline_asm` previously ignored `inputs` entirely (empty constraint string) and used only the first output name as the constraint. Now builds the constraint string from outputs, per-input `"r"` constraints, and clobber sections.
 
-## [Unreleased — previous]
-### Added
-- New `ofs asm <file.ofs>` command to emit target-native assembly from the current LLVM backend.
-- Low-level roadmap document focused on OFS-native coexistence between high-level and low-level code in the same program.
-- `bedrock` standard-library module with OFS-first heap cell helpers for manual state handling.
-- VS Code extension command to emit native assembly from the active OFS file.
-- Expanded language direction docs covering OFS-native low-level goals and foreign interop roadmap.
-- New `bedrock { ... }` typed low-level block in the language.
-- New `rift vein` declaration form for OFS-native foreign interop boundaries.
-- New `fault_*` intrinsics for machine-like low-level operations with OFS-native naming.
-- New `fault_step` intrinsic for typed pointer stepping.
-- New `bedrock_region_*` helpers for explicit low-level storage regions.
-- New `rift.ofs` module for OFS-native wrappers around foreign runtime boundaries.
-- New `fault_cut` and `fault_patch` intrinsics for field extraction and patching.
-- New `bedrock_view_*` helpers for OFS-native low-level views over regions.
-- New `fault_fence` and `fault_trap` intrinsics for machine-level barrier/trap hooks.
-- New `fault_prefetch` intrinsic and `bedrock_prefetch` helper for cache-aware pointer staging in low-level OFS code.
-- New lane helpers such as `bedrock_lane8_get` and `bedrock_lane8_set`.
-- New endian-aware lane helpers such as `bedrock_lane16_le_get`, `bedrock_lane16_be_get`, `bedrock_lane32_le_set`, and `bedrock_lane32_be_set`.
-- New `bedrock_packet.ofs` module for packet/header views over low-level regions.
-- New packet helpers for endian-aware header windows such as `bedrock_packet_opcode_be16` and `bedrock_packet_tail_le16`.
-- New `bind`/`abi` metadata on `rift vein` and `extern vein` declarations for more explicit interop boundaries.
-- New `layout native|packed|c` support on `monolith` declarations.
+- Fixed LLVM 14 opaque pointer handling in CI and release builds.
+- Fixed Bash 3/macOS wrapper behavior when LLVM IR flags are empty.
+- Fixed example checks so relative `attach {F:...}` paths run from each example directory.
+- Fixed Windows release src/packaging collision by using a dedicated `windows-dist` staging directory.
 
-- Low-level roadmap document focused on OFS-native coexistence between high-level and low-level code in the same program.
-- `bedrock` standard-library module with OFS-first heap cell helpers for manual state handling.
-- VS Code extension command to emit native assembly from the active OFS file.
-- Expanded language direction docs covering OFS-native low-level goals and foreign interop roadmap.
-- New `bedrock { ... }` typed low-level block in the language.
-- New `rift vein` declaration form for OFS-native foreign interop boundaries.
-- New `fault_*` intrinsics for machine-like low-level operations with OFS-native naming.
-- New `fault_step` intrinsic for typed pointer stepping.
-- New `bedrock_region_*` helpers for explicit low-level storage regions.
-- New `rift.ofs` module for OFS-native wrappers around foreign runtime boundaries.
-- New `fault_cut` and `fault_patch` intrinsics for field extraction and patching.
-- New `bedrock_view_*` helpers for OFS-native low-level views over regions.
-- New `fault_fence` and `fault_trap` intrinsics for machine-level barrier/trap hooks.
-- New `fault_prefetch` intrinsic and `bedrock_prefetch` helper for cache-aware pointer staging in low-level OFS code.
-- New lane helpers such as `bedrock_lane8_get` and `bedrock_lane8_set`.
-- New endian-aware lane helpers such as `bedrock_lane16_le_get`, `bedrock_lane16_be_get`, `bedrock_lane32_le_set`, and `bedrock_lane32_be_set`.
-- New `bedrock_packet.ofs` module for packet/header views over low-level regions.
-- New packet helpers for endian-aware header windows such as `bedrock_packet_opcode_be16` and `bedrock_packet_tail_le16`.
-- New `bind`/`abi` metadata on `rift vein` and `extern vein` declarations for more explicit interop boundaries.
-- New `layout native|packed|c` support on `monolith` declarations.
+### Release
+
+- Release automation now produces native installers for Debian/Ubuntu, Fedora, Arch, macOS, and Windows.
+- VS Code extension src/packaging is included in the release assets.
+- Windows CI validates the native compiler binary and installer package; Linux/macOS continue to run full example and stdlib smoke checks.
+
+---
+
 
 ## [1.0.3] - 2026-04-01
 ### Added
@@ -398,14 +408,18 @@ ofs build input.ofs -o output
 - CMake: LLVM backend chosen by architecture (x86_64 vs arm64).
 - Codegen: compatibility with LLVM 15/17+ for `Reloc::Model` (`llvm::Optional` vs `std::optional`).
 
+
 ## [1.0.2] - 2026-04-01
 ### Added
 - Automated release pipeline with binaries for Linux, Windows, and macOS.
+
 
 ## [1.0.1] - 2026-04-01
 ### Changed
 - README simplified for quick installation and usage.
 
+
 ## [1.0.0] - 2026-04-01
 ### Added
 - First stable release of the OFS language (lexer, parser, semantic analysis, LLVM codegen, runtime, and examples).
+
