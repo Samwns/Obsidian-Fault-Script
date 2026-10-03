@@ -650,17 +650,57 @@ vein doc_page_en(title: obsidian, subtitle: obsidian, toc: obsidian, body: obsid
     return odl.section("", "band", odl.div("wrap doc-layout", doc_toc_en(toc) + odl.div("doc-main", body)))
 }
 
-vein page_en_index() -> obsidian {
-    forge links = site_doc_link("language.html", "Language", "Syntax, types, modules, compiler modes, and program structure.")
-    links = links + site_doc_link("odl.html", "ODL", "The OFS document language for browser documents.")
-    links = links + site_doc_link("oes.html", "OES", "The OFS effect language for visual rules and motion.")
+vein site_hero_en() -> obsidian {
+    forge left = "<h1>OFS: a compiled language, native runtime, and its own web DSLs.</h1>"
+    left = left + "<p class=\"lead\">Obsidian Fault Script ships a self-hosted compiler that emits LLVM IR, links a native runtime, and includes ODL/OES as source languages for websites.</p>"
+    left = left + odl.div("actions", site_button("Get started", "getting-started.html", false) + site_button("Downloads", "downloads.html", true) + site_button("GitHub", "https://github.com/Samwns/Obsidian-Fault-Script", true))
+    forge code = "attach {odl}\nattach {oes}\n\nvein page() -> obsidian {\n    forge head = odl.css(\"site.css\")\n    forge body = odl.h1(\"OFS Web\")\n    return odl.document(\"pt\", \"OFS\", \"site oficial\", head, body)\n}"
+    return odl.section("", "hero", odl.div("wrap hero-grid", odl.div("", left) + site_terminal("example.ofs", code)))
+}
+
+vein site_pillars_en() -> obsidian {
+    forge cards = site_card("Self-hosted", "The lexer, parser, type checker, and LLVM generation all live in the OFS compiler itself.", "p1")
+    cards = cards + site_card("Native", "The output is LLVM IR linked with the native OFS runtime, producing real executables.", "p2")
+    cards = cards + site_card("Hybrid", "Console, native canvas/window, and websites via webserver and webui in one ecosystem.", "p3")
+    forge body = site_section_head("", "Technical components", "", "The ecosystem separates compiler, runtime, standard library, web tooling, and packaging.") + odl.div("grid", cards)
+    return odl.section("", "band", odl.div("wrap", body))
+}
+
+vein site_web_en() -> obsidian {
+    forge code = "attach {odl}\nattach {oes}\nattach {webserver}\n\ncore main() {\n    forge head = odl.css(\"site.css\")\n    forge body = odl.main(\"app\", odl.h1(\"OFS Web\"))\n    webserver.serve_html_forever(8080, odl.document(\"en\", \"OFS\", \"site\", head, body))\n}"
+    forge body = site_section_head("", "ODL + OES", "", "ODL describes documents; OES defines style, effects, responsiveness, and motion.") + site_terminal("site.ofs", code)
+    return odl.section("web", "band", odl.div("wrap", body))
+}
+
+vein site_docs_en() -> obsidian {
+    forge links = site_doc_link("getting-started.html", "Getting started", "Install, run, and compile OFS programs.")
+    links = links + site_doc_link("language.html", "Language reference", "Syntax, types, control flow, and modules.")
+    links = links + site_doc_link("commands.html", "CLI commands", "run, build, check, test, twin, polish, ui and more.")
+    links = links + site_doc_link("odl.html", "ODL", "The document language compiled to HTML.")
+    links = links + site_doc_link("oes.html", "OES", "The style and motion language compiled to CSS.")
     links = links + site_doc_link("web.html", "Web stack", "How OFS, ODL, OES, webui, and webserver work together.")
-    links = links + site_doc_link("oll.html", "OLL", "Obsidian Layout Language: declarative native UI with window, canvas, and components.")
+    links = links + site_doc_link("oll.html", "OLL", "Declarative native UI with window, canvas, and components.")
     links = links + site_doc_link("stdlib.html", "Standard library", "Modules shipped with the compiler and installers.")
     links = links + site_doc_link("downloads.html", "Downloads", "Installers, VS Code package, and checksums.")
-    links = links + site_doc_link("../benchmark.html", "Performance", "Measured CPU, memory, startup, compiler, build, and web output.")
-    forge content = odl.section("", "band", odl.div("wrap", site_section_head("", "Documentation", "", "Technical documentation for the OFS language and its web stack.") + odl.div("docs-list", links)))
-    return page_shell_en("OFS Documentation", "English documentation pages for Obsidian Fault Script.", content)
+    links = links + site_doc_link("../compiler.html", "Compiler", "Self-hosted compiler pipeline and LLVM backend.")
+    links = links + site_doc_link("../playground.html", "Web translator", "Translate ODL, OES, HTML, and CSS in the browser.")
+    links = links + site_doc_link("../benchmark.html", "Benchmark", "CPU, memory, startup, build, and web output.")
+    forge body = site_section_head("", "Documentation", "", "Technical guides for the language, compiler, UI, and publishing.") + odl.div("docs-list", links)
+    return odl.section("docs", "band", odl.div("wrap", body))
+}
+
+vein site_release_en_full() -> obsidian {
+    forge inner = site_release_en()
+    forge body = site_section_head("", "Downloads", "", "Download the official installers, the VS Code package, and the release checksums.") + inner
+    return odl.section("release", "band", odl.div("wrap", body))
+}
+
+vein page_en_index() -> obsidian {
+    forge head = odl.icon("../ofs-256.png") + odl.css("../site.css")
+    forge body = page_nav_en()
+    body = body + odl.main("top", site_hero_en() + site_pillars_en() + site_web_en() + site_docs_en() + site_release_en_full())
+    body = body + odl.footer("footer", "<div class=\"wrap\">Generated by ODL and OES in OFS.</div>") + odl.script("../site.js")
+    return odl.document("en", "Obsidian Fault Script", "Official site and documentation for Obsidian Fault Script.", head, body)
 }
 
 vein page_language_en() -> obsidian {
@@ -767,13 +807,63 @@ vein doc_section_es(id: obsidian, title: obsidian, text: obsidian, extra: obsidi
     return odl.section(id, "doc-section", odl.h2(title) + odl.div("doc-intro", odl.p("", text)) + extra)
 }
 
-vein page_es_index() -> obsidian {
-    forge links = site_doc_link("language.html", "Lenguaje", "Sintaxis, tipos, funciones, modulos y compilacion.")
+vein site_hero_es() -> obsidian {
+    forge left = "<h1>OFS: lenguaje compilado, runtime nativo y DSLs web propios.</h1>"
+    left = left + "<p class=\"lead\">Obsidian Fault Script incluye un compilador self-hosted que genera LLVM IR, enlaza un runtime nativo y trae ODL/OES como lenguajes fuente para sitios web.</p>"
+    left = left + odl.div("actions", site_button("Empezar", "getting-started.html", false) + site_button("Descargas", "downloads.html", true) + site_button("GitHub", "https://github.com/Samwns/Obsidian-Fault-Script", true))
+    forge code = "attach {odl}\nattach {oes}\n\nvein page() -> obsidian {\n    forge head = odl.css(\"site.css\")\n    forge body = odl.h1(\"OFS Web\")\n    return odl.document(\"pt\", \"OFS\", \"site oficial\", head, body)\n}"
+    return odl.section("", "hero", odl.div("wrap hero-grid", odl.div("", left) + site_terminal("example.ofs", code)))
+}
+
+vein site_pillars_es() -> obsidian {
+    forge cards = site_card("Self-hosted", "El lexer, el parser, el verificador de tipos y la generacion LLVM viven en el propio compilador OFS.", "p1")
+    cards = cards + site_card("Nativo", "La salida es LLVM IR enlazado con el runtime nativo de OFS para generar ejecutables.", "p2")
+    cards = cards + site_card("Hibrido", "Consola, canvas/window nativo y sitios con webserver y webui en el mismo ecosistema.", "p3")
+    forge body = site_section_head("", "Componentes tecnicos", "", "El ecosistema separa compilador, runtime, biblioteca estandar, herramientas web y empaquetado.") + odl.div("grid", cards)
+    return odl.section("", "band", odl.div("wrap", body))
+}
+
+vein site_web_es() -> obsidian {
+    forge code = "attach {odl}\nattach {oes}\nattach {webserver}\n\ncore main() {\n    forge head = odl.css(\"site.css\")\n    forge body = odl.main(\"app\", odl.h1(\"OFS Web\"))\n    webserver.serve_html_forever(8080, odl.document(\"es\", \"OFS\", \"site\", head, body))\n}"
+    forge body = site_section_head("", "ODL + OES", "", "ODL describe documentos; OES define estilo, efectos, responsividad y animaciones.") + site_terminal("site.ofs", code)
+    return odl.section("web", "band", odl.div("wrap", body))
+}
+
+vein site_docs_es() -> obsidian {
+    forge links = site_doc_link("getting-started.html", "Primeros pasos", "Instala, ejecuta y compila programas OFS.")
+    links = links + site_doc_link("language.html", "Referencia del lenguaje", "Sintaxis, tipos, control de flujo y modulos.")
+    links = links + site_doc_link("commands.html", "Comandos CLI", "run, build, check, test, twin, polish, ui y mas.")
     links = links + site_doc_link("web.html", "Web", "OFS, ODL, OES, servidor y alojamiento.")
+    links = links + site_doc_link("oll.html", "OLL", "UI declarativa nativa con ventana, canvas y componentes.")
     links = links + site_doc_link("stdlib.html", "Biblioteca estandar", "Modulos incluidos con el compilador.")
     links = links + site_doc_link("downloads.html", "Descargas", "Instaladores, extension y checksums.")
-    forge content = odl.section("", "band", odl.div("wrap", odl.div("docs-list", links)))
-    return page_shell_es("Documentacion OFS", "Documentacion tecnica en espanol.", content)
+    links = links + site_doc_link("../odl.html", "ODL", "Lenguaje de documentos compilado a HTML.")
+    links = links + site_doc_link("../oes.html", "OES", "Lenguaje de estilos y movimiento compilado a CSS.")
+    links = links + site_doc_link("../compiler.html", "Compilador", "Pipeline self-hosted y backend LLVM.")
+    links = links + site_doc_link("../playground.html", "Traductor web", "Traduce ODL, OES, HTML y CSS en el navegador.")
+    links = links + site_doc_link("../benchmark.html", "Benchmark", "CPU, memoria, arranque, build y salida web.")
+    forge body = site_section_head("", "Documentacion", "", "Guias tecnicas del lenguaje, compilador, UI y publicacion.") + odl.div("docs-list", links)
+    return odl.section("docs", "band", odl.div("wrap", body))
+}
+
+vein site_release_es() -> obsidian {
+    forge cards = "<a class=\"download-card\" data-release-asset=\"debian-ubuntu\" href=\"https://github.com/Samwns/Obsidian-Fault-Script/releases/latest\"><strong>Debian / Ubuntu</strong><span>Paquete .deb x64 con OFS, ODL, OES y stdlib.</span><code data-release-version>latest</code></a>"
+    cards = cards + "<a class=\"download-card\" data-release-asset=\"fedora\" href=\"https://github.com/Samwns/Obsidian-Fault-Script/releases/latest\"><strong>Fedora / RHEL / openSUSE</strong><span>Paquete .rpm x64 para la familia Red Hat y compatibles.</span><code data-release-version>latest</code></a>"
+    cards = cards + "<a class=\"download-card\" data-release-asset=\"arch\" href=\"https://github.com/Samwns/Obsidian-Fault-Script/releases/latest\"><strong>Arch / Manjaro</strong><span>Paquete pacman con herramientas nativas.</span><code data-release-version>latest</code></a>"
+    cards = cards + "<a class=\"download-card\" data-release-asset=\"macos-arm64\" href=\"https://github.com/Samwns/Obsidian-Fault-Script/releases/latest\"><strong>macOS ARM64</strong><span>Instalador para Apple Silicon.</span><code data-release-version>latest</code></a>"
+    cards = cards + "<a class=\"download-card\" data-release-asset=\"windows-x64\" href=\"https://github.com/Samwns/Obsidian-Fault-Script/releases/latest\"><strong>Windows x64</strong><span>Instalador con launcher y runtime.</span><code data-release-version>latest</code></a>"
+    cards = cards + "<a class=\"download-card\" data-release-asset=\".vsix\" href=\"https://github.com/Samwns/Obsidian-Fault-Script/releases/latest\"><strong>VS Code</strong><span>Extension con OFS, ODL, OES, Go Live y traductor.</span><code data-release-version>latest</code></a>"
+    forge body = site_section_head("", "Descargas", "", "Descarga instaladores oficiales, el paquete de VS Code y los checksums de la release.") + odl.div("download-grid", cards)
+    body = body + odl.div("actions", "<a class=\"btn\" data-release-asset=\"CHECKSUMS\" href=\"https://github.com/Samwns/Obsidian-Fault-Script/releases/latest\">Checksums</a>" + site_button("Todas las releases", "https://github.com/Samwns/Obsidian-Fault-Script/releases", true))
+    return odl.section("release", "band", odl.div("wrap", body))
+}
+
+vein page_es_index() -> obsidian {
+    forge head = odl.icon("../ofs-256.png") + odl.css("../site.css")
+    forge body = page_nav_es()
+    body = body + odl.main("top", site_hero_es() + site_pillars_es() + site_web_es() + site_docs_es() + site_release_es())
+    body = body + odl.footer("footer", "<div class=\"wrap\">Generado por ODL y OES en OFS.</div>") + odl.script("../site.js")
+    return odl.document("es", "Obsidian Fault Script", "Sitio oficial y documentacion de Obsidian Fault Script.", head, body)
 }
 
 vein page_language_es() -> obsidian {
@@ -800,4 +890,35 @@ vein page_stdlib_es() -> obsidian {
 vein page_downloads_es() -> obsidian {
     forge content = odl.section("", "band", odl.div("wrap doc-main", doc_section_es("install", "Descargas", "La release incluye paquetes para Debian/Ubuntu, Fedora/RHEL/openSUSE, Arch/Manjaro, macOS ARM64, Windows x64 y VS Code.", site_terminal("terminal", "sudo dpkg -i ofs-debian-ubuntu-x64-installer-v*.deb\nsudo rpm -Uvh ofs-fedora-x64-installer-v*.rpm\nsudo pacman -U ofs-arch-x64-installer-v*.pkg.tar.zst"))))
     return page_shell_es("Descargas", "Instaladores oficiales y checksums.", content)
+}
+
+
+vein page_getting_started_en() -> obsidian {
+    forge code = "ofs check app.ofs\nofs run app.ofs\nofs build app.ofs -o app\n./app"
+    forge body = doc_section_en("install", "Installation", "Get the package for your system from the downloads page and use the `ofs` command.", odl.div("actions", site_button("Open downloads", "downloads.html", false) + site_button("CLI commands", "commands.html", true)))
+    body = body + doc_section_en("native", "First executable", "Create `app.ofs`, verify it with `check`, run it with `run`, and build a native binary with `build`.", site_terminal("terminal", code))
+    body = body + doc_section_en("web", "First web document", "Write an OFS program that uses `attach {odl}` and `attach {oes}` to build documents and styles, then compile and run it to emit HTML and CSS ready for static hosting.", "")
+    forge content = odl.section("", "band", odl.div("wrap doc-main", body))
+    return page_shell_en("Getting started", "From installation to the first executable and web page in OFS.", content)
+}
+
+vein page_getting_started_es() -> obsidian {
+    forge code = "ofs check app.ofs\nofs run app.ofs\nofs build app.ofs -o app\n./app"
+    forge body = doc_section_es("install", "Instalacion", "Descarga el paquete para tu sistema desde la pagina de descargas y usa el comando `ofs`.", odl.div("actions", site_button("Abrir descargas", "downloads.html", false) + site_button("Comandos CLI", "commands.html", true)))
+    body = body + doc_section_es("native", "Primer ejecutable", "Crea `app.ofs`, verificalo con `check`, ejecutalo con `run` y genera un binario nativo con `build`.", site_terminal("terminal", code))
+    body = body + doc_section_es("web", "Primer documento web", "Escribe un programa OFS que use `attach {odl}` y `attach {oes}` para construir documentos y estilos, compilalo y ejecútalo para emitir HTML y CSS listos para alojamiento estatico.", "")
+    forge content = odl.section("", "band", odl.div("wrap doc-main", body))
+    return page_shell_es("Primeros pasos", "De la instalacion al primer ejecutable y pagina web en OFS.", content)
+}
+
+vein page_commands_en() -> obsidian {
+    forge t = "<table class=\"api-table\"><thead><tr><th>Comando</th><th>Purpose</th></tr></thead><tbody><tr><td><code>run app.ofs</code></td><td>Runs interpreted; with --native builds a temporary binary first.</td></tr><tr><td><code>build app.ofs</code></td><td>Compiles to a native executable (-o output).</td></tr><tr><td><code>check app.ofs</code></td><td>Type-checks without emitting code.</td></tr><tr><td><code>test app.ofs</code></td><td>Runs the file tests (assay).</td></tr><tr><td><code>twin app.ofs</code></td><td>Runs interpreted and native, comparing outputs.</td></tr><tr><td><code>polish app.ofs</code></td><td>Style and pattern checks.</td></tr><tr><td><code>language [en|pt|es]</code></td><td>Shows or changes the CLI language.</td></tr><tr><td><code>ir / asm / tokens / ast</code></td><td>Compiler debug artifacts.</td></tr><tr><td><code>ui app.oll</code></td><td>Renders a native OLL layout (-o output.ppm).</td></tr><tr><td><code>clean</code></td><td>Cleans temporary build artifacts.</td></tr><tr><td><code>version</code></td><td>Prints the compiler version.</td></tr><tr><td><code>update</code></td><td>Updates to the latest release.</td></tr></tbody></table>"
+    forge content = odl.section("", "band", odl.div("wrap doc-main", doc_section_en("cli", "CLI commands", "`ofs app.ofs` is the same as `ofs run app.ofs`.", odl.div("table-wrap", t))))
+    return page_shell_en("CLI commands", "Commands and environment variables of the OFS compiler.", content)
+}
+
+vein page_commands_es() -> obsidian {
+    forge t = "<table class=\"api-table\"><thead><tr><th>Comando</th><th>Proposito</th></tr></thead><tbody><tr><td><code>run app.ofs</code></td><td>Ejecuta interpretado; con --native compila un binario temporal.</td></tr><tr><td><code>build app.ofs</code></td><td>Compila a un ejecutable nativo (-o salida).</td></tr><tr><td><code>check app.ofs</code></td><td>Verificacion de tipos sin emitir codigo.</td></tr><tr><td><code>test app.ofs</code></td><td>Ejecuta las pruebas (assay) del archivo.</td></tr><tr><td><code>twin app.ofs</code></td><td>Ejecuta interpretado y nativo comparando salidas.</td></tr><tr><td><code>polish app.ofs</code></td><td>Verifica estilo y patrones del codigo.</td></tr><tr><td><code>language [en|pt|es]</code></td><td>Muestra o cambia el idioma de la CLI.</td></tr><tr><td><code>ir / asm / tokens / ast</code></td><td>Artefactos de depuracion del compilador.</td></tr><tr><td><code>ui app.oll</code></td><td>Renderiza un layout OLL nativo (-o salida.ppm).</td></tr><tr><td><code>clean</code></td><td>Limpia artefactos temporales de build.</td></tr><tr><td><code>version</code></td><td>Muestra la version del compilador.</td></tr><tr><td><code>update</code></td><td>Actualiza a la ultima release.</td></tr></tbody></table>"
+    forge content = odl.section("", "band", odl.div("wrap doc-main", doc_section_es("cli", "Comandos CLI", "`ofs app.ofs` equivale a `ofs run app.ofs`.", odl.div("table-wrap", t))))
+    return page_shell_es("Comandos CLI", "Comandos y variables de entorno del compilador OFS.", content)
 }

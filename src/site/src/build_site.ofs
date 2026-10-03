@@ -35,6 +35,8 @@ vein write_english_pages(prefix: obsidian) {
     write_file(prefix + "en/stdlib.html", page_stdlib_en())
     write_file(prefix + "en/oll.html", page_oll_en())
     write_file(prefix + "en/downloads.html", page_downloads_en())
+    write_file(prefix + "en/getting-started.html", page_getting_started_en())
+    write_file(prefix + "en/commands.html", page_commands_en())
 }
 
 vein write_spanish_pages(prefix: obsidian) {
@@ -43,6 +45,8 @@ vein write_spanish_pages(prefix: obsidian) {
     write_file(prefix + "es/web.html", page_web_es())
     write_file(prefix + "es/stdlib.html", page_stdlib_es())
     write_file(prefix + "es/downloads.html", page_downloads_es())
+    write_file(prefix + "es/getting-started.html", page_getting_started_es())
+    write_file(prefix + "es/commands.html", page_commands_es())
 }
 
 core main() {
