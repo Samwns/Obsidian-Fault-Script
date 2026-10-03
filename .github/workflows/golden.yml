@@ -24,7 +24,8 @@ jobs:
           # Link do seed atual + magma runtime
           llc -O2 -filetype=obj ofs/dist/ofscc.ll -o /tmp/ofs-logs/seed.o
           llc -O2 -filetype=obj ofs/dist/magma.ll -o /tmp/ofs-logs/magma.o
-          clang /tmp/ofs-logs/seed.o /tmp/ofs-logs/magma.o -lm -o /tmp/ofs-logs/ofscc-seed
+          # llc gera reloc non-PIE; precisamos de -no-pie no link (ubuntu-latest tem PIE default)
+          clang -no-pie /tmp/ofs-logs/seed.o /tmp/ofs-logs/magma.o -lm -o /tmp/ofs-logs/ofscc-seed
           ls -la /tmp/ofs-logs/ofscc-seed
 
       - name: Compile current ofscc.ofs via seed
@@ -35,7 +36,7 @@ jobs:
           OFSCC_C_OUT=/tmp/ofs-logs/ofscc.ll \
             timeout 300 /tmp/ofs-logs/ofscc-seed
           llc -O2 -filetype=obj /tmp/ofs-logs/ofscc.ll -o /tmp/ofs-logs/ofscc.o
-          clang /tmp/ofs-logs/ofscc.o /tmp/ofs-logs/magma.o -lm -o /tmp/ofs-logs/ofscc
+          clang -no-pie /tmp/ofs-logs/ofscc.o /tmp/ofs-logs/magma.o -lm -o /tmp/ofs-logs/ofscc
           ls -la /tmp/ofs-logs/ofscc
 
       - name: Run golden checks
