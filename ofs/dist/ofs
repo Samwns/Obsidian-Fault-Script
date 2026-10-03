@@ -289,7 +289,57 @@ usage() {
     c_dim=$'\033[2m'
     c_off=$'\033[0m'
   fi
-  cat <<EOF
+  case "${OFS_LANG:-en}" in
+  pt*)
+    cat <<EOF
+${c_head}ofs${c_off} - compilador Obsidian Fault Script v$OFS_VERSION
+
+${c_head}Uso:${c_off} ofs <arquivo.ofs>   (equivale a 'ofs run')
+
+${c_head}Subcomandos:${c_off}
+  ${c_cmd}run <arq.ofs>${c_off}       Executa interpretado (--native compila temporario)
+  ${c_cmd}build <arq.ofs>${c_off}     Compila para executavel nativo (-o saida)
+  ${c_cmd}check <arq.ofs>${c_off}     Somente verificacao de tipos
+  ${c_cmd}test <arq.ofs>${c_off}      Executa os testes (assay) do arquivo
+  ${c_cmd}twin <arq.ofs>${c_off}      Roda interpretado + nativo e compara saidas
+  ${c_cmd}polish <arq.ofs>${c_off}    Verifica estilo e padroes do codigo
+  ${c_cmd}language [en|pt|es]${c_off} Mostra/altera o idioma da CLI
+  ${c_cmd}ir|asm|tokens|ast${c_off}   Artefatos de depuracao do compilador
+  ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o saida.ppm)
+  ${c_cmd}clean${c_off}               Limpa artefatos temporarios de build
+  ${c_cmd}version${c_off}             Mostra a versao
+  ${c_cmd}update${c_off}              Atualiza para a ultima release
+  ${c_cmd}help${c_off}                Mostra esta ajuda
+
+${c_dim}Env: OFS_LANG, OFS_PROGRESS, OFS_VERBOSE, OFS_RUNTIME, OFS_STDLIB_PATH${c_off}
+EOF
+    ;;
+  es*)
+    cat <<EOF
+${c_head}ofs${c_off} - compilador Obsidian Fault Script v$OFS_VERSION
+
+${c_head}Uso:${c_off} ofs <archivo.ofs>   (equivale a 'ofs run')
+
+${c_head}Subcomandos:${c_off}
+  ${c_cmd}run <arq.ofs>${c_off}       Ejecuta interpretado (--native compila temporal)
+  ${c_cmd}build <arq.ofs>${c_off}     Compila a ejecutable nativo (-o salida)
+  ${c_cmd}check <arq.ofs>${c_off}     Solo verificacion de tipos
+  ${c_cmd}test <arq.ofs>${c_off}      Ejecuta las pruebas (assay) del archivo
+  ${c_cmd}twin <arq.ofs>${c_off}      Ejecuta interpretado + nativo y compara salidas
+  ${c_cmd}polish <arq.ofs>${c_off}    Verifica estilo y patrones del codigo
+  ${c_cmd}language [en|pt|es]${c_off} Muestra/cambia el idioma de la CLI
+  ${c_cmd}ir|asm|tokens|ast${c_off}   Artefactos de depuracion del compilador
+  ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o salida.ppm)
+  ${c_cmd}clean${c_off}               Limpia artefactos temporales de build
+  ${c_cmd}version${c_off}             Muestra la version
+  ${c_cmd}update${c_off}              Actualiza a la ultima release
+  ${c_cmd}help${c_off}                Muestra esta ayuda
+
+${c_dim}Env: OFS_LANG, OFS_PROGRESS, OFS_VERBOSE, OFS_RUNTIME, OFS_STDLIB_PATH${c_off}
+EOF
+    ;;
+  *)
+    cat <<EOF
 ${c_head}ofs${c_off} - Obsidian Fault Script compiler v$OFS_VERSION
 
 ${c_head}Usage:${c_off} ofs <file.ofs>   (same as 'ofs run')
@@ -311,6 +361,8 @@ ${c_head}Subcommands:${c_off}
 
 ${c_dim}Env: OFS_LANG, OFS_PROGRESS, OFS_VERBOSE, OFS_RUNTIME, OFS_STDLIB_PATH${c_off}
 EOF
+    ;;
+  esac
 }
 
 # Persistencia de idioma da CLI: $XDG_CONFIG_HOME/ofs/lang ou ~/.config/ofs/lang.
