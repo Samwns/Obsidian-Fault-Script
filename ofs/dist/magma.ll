@@ -5,7 +5,7 @@ source_filename = "ofs_module"
 
 @str.0 = private unnamed_addr constant [1 x i8] c"\00", align 1
 @str.1 = private unnamed_addr constant [5 x i8] c"%lld\00", align 1
-@str.2 = private unnamed_addr constant [3 x i8] c"%g\00", align 1
+@str.2 = private unnamed_addr constant [6 x i8] c"%.15g\00", align 1
 @str.3 = private unnamed_addr constant [7 x i8] c"(null)\00", align 1
 @str.4 = private unnamed_addr constant [5 x i8] c"true\00", align 1
 @str.5 = private unnamed_addr constant [6 x i8] c"false\00", align 1
@@ -49,9 +49,9 @@ declare ptr @malloc(i64)
 declare ptr @memcpy(ptr, ptr, i64)
 declare ptr @memset(ptr, i64, i64)
 declare i64 @strlen(ptr)
+declare ptr @strchr(ptr, i64)
 declare i64 @strcmp(ptr, ptr)
 declare ptr @strstr(ptr, ptr)
-declare i64 @sprintf(ptr, ptr, i64)
 declare i64 @snprintf(ptr, i64, ptr, ...)
 declare i64 @strtoll(ptr, ptr, i64)
 declare double @strtod(ptr, ptr)
@@ -747,8 +747,45 @@ entry:
   %buf_val251 = load ptr, ptr %buf249
   %v_val252 = load double, ptr %v.addr
   %call253 = call i64 (ptr, i64, ptr, ...) @snprintf(ptr %buf_val251, i64 64, ptr @str.2, double %v_val252)
-  %buf_val254 = load ptr, ptr %buf249
-  ret ptr %buf_val254
+  ; pós-fix: se o texto não contém '.', 'e', 'E', 'N' (nan), 'n' (inf/minus handled), anexa ".0"
+  %buf_val255 = load ptr, ptr %buf249
+  %hasdot256 = call ptr @strchr(ptr %buf_val255, i64 46)
+  %hasdot257 = icmp ne ptr %hasdot256, null
+  br i1 %hasdot257, label %done, label %chk_e
+chk_e:
+  %buf_val258 = load ptr, ptr %buf249
+  %hase259 = call ptr @strchr(ptr %buf_val258, i64 101)
+  %hase260 = icmp ne ptr %hase259, null
+  br i1 %hase260, label %done, label %chk_E
+chk_E:
+  %buf_val261 = load ptr, ptr %buf249
+  %hasE262 = call ptr @strchr(ptr %buf_val261, i64 69)
+  %hasE263 = icmp ne ptr %hasE262, null
+  br i1 %hasE263, label %done, label %chk_n
+chk_n:
+  %buf_val264 = load ptr, ptr %buf249
+  %hasn265 = call ptr @strchr(ptr %buf_val264, i64 110)
+  %hasn266 = icmp ne ptr %hasn265, null
+  br i1 %hasn266, label %done, label %chk_N
+chk_N:
+  %buf_val267 = load ptr, ptr %buf249
+  %hasN268 = call ptr @strchr(ptr %buf_val267, i64 78)
+  %hasN269 = icmp ne ptr %hasN268, null
+  br i1 %hasN269, label %done, label %append
+append:
+  %buf_val270 = load ptr, ptr %buf249
+  %len271 = call i64 @strlen(ptr %buf_val270)
+  %buf_val272 = load ptr, ptr %buf249
+  %dotptr273 = getelementptr i8, ptr %buf_val272, i64 %len271
+  store i8 46, ptr %dotptr273
+  %zeroptr274 = getelementptr i8, ptr %dotptr273, i64 1
+  store i8 48, ptr %zeroptr274
+  %nulptr275 = getelementptr i8, ptr %zeroptr274, i64 1
+  store i8 0, ptr %nulptr275
+  br label %done
+done:
+  %buf_val276 = load ptr, ptr %buf249
+  ret ptr %buf_val276
 }
 
 define i64 @ofs_obsidian_to_stone(ptr %s) {

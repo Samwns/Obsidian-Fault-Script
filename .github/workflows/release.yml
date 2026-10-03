@@ -239,6 +239,10 @@ jobs:
           }
           New-Item -ItemType Directory -Path selfhost -Force | Out-Null
           Copy-Item "ofs\dist\ofscc.ll" "selfhost\ofscc.ll"
+          if (Select-String -Path "ofs\dist\magma_windows.ll" -Pattern '@sprintf' -SimpleMatch -Quiet) {
+            Write-Error "magma_windows.ll referencia @sprintf (ausente no UCRT). Use snprintf."
+            exit 1
+          }
           & clang -Wno-override-module -c "ofs\dist\magma_windows.ll" -o "selfhost\magma.o"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $llvmIrFlags = @()

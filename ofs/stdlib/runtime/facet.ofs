@@ -154,7 +154,31 @@ vein ofs_stone_to_obsidian(v: stone) -> obsidian {
 vein ofs_crystal_to_obsidian(v: crystal) -> obsidian {
     forge buf: obsidian = ofs_alloc(64)
     // snprintf existe em POSIX e em MSVC a partir do VS2015 (via UCRT).
-    ofs_facet_snprintf_double(buf, 64, "%g", v)
+    ofs_facet_snprintf_double(buf, 64, "%.15g", v)
+    // Paridade intérprete × nativo: inteiro precisa mostrar ".0".
+    // Só anexa se não houver '.', 'e'/'E' (expoente), nem 'n'/'N' (nan/inf).
+    forge slen: stone = ofs_str_len(buf)
+    if (slen < 61) {
+        forge has_special = false
+        forge i: stone = 0
+        while (i < slen) {
+            forge c: stone = ofs_str_char_at_known(buf, i)
+            if (c == 46) { has_special = true }
+            if (c == 101) { has_special = true }
+            if (c == 69) { has_special = true }
+            if (c == 110) { has_special = true }
+            if (c == 78) { has_special = true }
+            i++
+        }
+        if (!has_special) {
+            forge pd: *u8 = (buf as stone + slen) as *u8
+            fracture { *pd = 46 as u8 }
+            forge pz: *u8 = (buf as stone + slen + 1) as *u8
+            fracture { *pz = 48 as u8 }
+            forge pn: *u8 = (buf as stone + slen + 2) as *u8
+            fracture { *pn = 0 as u8 }
+        }
+    }
     return buf
 }
 
