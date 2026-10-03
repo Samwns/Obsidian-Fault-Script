@@ -34,7 +34,7 @@ jobs:
           clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
           cp ofs/dist/magma.ll selfhost/magma.ll
           clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -c selfhost/magma.ll -o selfhost/magma.o
-          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -Wl,--allow-multiple-definition -O2 ofs/dist/ofscc.ll selfhost/magma.o -lm -o selfhost/ofscc
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -Wl,--allow-multiple-definition -no-pie -O2 ofs/dist/ofscc.ll selfhost/magma.o -lm -o selfhost/ofscc
           sed 's/__OFS_VERSION__/ci/g' src/packaging/linux/ofs > selfhost/ofs
           chmod +x selfhost/ofs selfhost/ofscc
           selfhost/ofs version
@@ -87,7 +87,7 @@ jobs:
           LLVM_IR_FLAGS=()
           clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
           clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -c selfhost/magma.ll -o selfhost/magma.o
-          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -Wl,-multiply_defined,suppress -O2 ofs/dist/ofscc.ll selfhost/magma.o -lm -o selfhost/ofscc
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -Wl,-multiply_defined,suppress -Wl,-no_pie -O2 ofs/dist/ofscc.ll selfhost/magma.o -lm -o selfhost/ofscc
           sed 's/__OFS_VERSION__/ci/g' src/packaging/linux/ofs > selfhost/ofs
           chmod +x selfhost/ofs selfhost/ofscc
           selfhost/ofs version
