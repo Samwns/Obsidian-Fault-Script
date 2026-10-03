@@ -39,21 +39,28 @@ for test_file in "${DIFF_TESTS[@]}"; do
     TOTAL=$((TOTAL + 1))
     printf "[%d/%d] Testing %s... " "$TOTAL" "${#DIFF_TESTS[@]}" "$test_name"
 
-    # 1. Interpreter execution
-    interp_out="$("$OFS_BIN" "$test_file" 2>&1)" || {
+    # 1. Interpreter execution (stdout only; reporter progress/diagnostics live on stderr)
+    interp_err="$(mktemp)"
+    interp_out="$("$OFS_BIN" "$test_file" 2>"$interp_err")" || {
         echo "FAIL (interpreter crashed)"
         echo "$interp_out"
+        cat "$interp_err"
+        rm -f "$interp_err"
         FAILED=$((FAILED + 1))
         continue
     }
 
-    # 2. Native execution (filter out compiler progress banners if any)
-    native_raw="$("$OFS_BIN" run --native "$test_file" 2>&1)" || {
+    # 2. Native execution (stdout only; the compiler progress reporter writes to stderr)
+    native_err="$(mktemp)"
+    native_raw="$("$OFS_BIN" run --native "$test_file" 2>"$native_err")" || {
         echo "FAIL (native build/run failed)"
         echo "$native_raw"
+        cat "$native_err"
+        rm -f "$native_err"
         FAILED=$((FAILED + 1))
         continue
     }
+    rm -f "$interp_err" "$native_err"
 
     # Strip compile progress lines and leading blank lines from native run output
     native_out="$(echo "$native_raw" | grep -v '^ofscc —' | grep -v '^\[' | grep -v '^  OK' | sed -e '/./,$!d')"

@@ -780,9 +780,28 @@ namespace llvmgen {
             forge gt: obsidian = ofs_array_get(_global_types, gi)
             forge gid: stone = ofs_array_get(_global_inits, gi)
             forge init: Node = node_get(gid)
-            if (ofs_str_eq(gt, "Array") && gid >= 0 && init.kind == NK_ARRAY_LIT) {
+            // Global arrays may carry generic annotations (Array<Node> etc.),
+            // so match the "Array<" prefix, not just the bare "Array" name,
+            // otherwise the backing buffer is never allocated and every push
+            // on the global array becomes a no-op (parser/lexer state lost).
+            forge is_arr = ofs_str_eq(gt, "Array")
+            if (!is_arr && ofs_str_len(gt) > 6) {
+                if (ofs_str_eq(ofs_str_substr(gt, 0, 6), "Array<")) { is_arr = true }
+            }
+            if (is_arr && gid >= 0 && init.kind == NK_ARRAY_LIT) {
                 forge arr = next_tmp("garr")
-                cg_emit("  " + arr + " = call ptr @ofs_array_new(i64 " + ofs_stone_to_obsidian(node_extra_len(gid)) + ", i64 8)")
+                forge cnt = node_extra_len(gid)
+                cg_emit("  " + arr + " = call ptr @ofs_array_new(i64 " + ofs_stone_to_obsidian(cnt) + ", i64 8)")
+                forge ai = 0
+                while (ai < cnt) {
+                    forge elem_id = node_get_extra(gid, ai)
+                    emit_expr(elem_id)
+                    forge slot = next_tmp("garr_elem")
+                    cg_emit("  " + slot + " = alloca " + llvm_type(_expr_type) + ", align 8")
+                    cg_emit("  store " + llvm_type(_expr_type) + " " + _expr_val + ", ptr " + slot)
+                    cg_emit("  call void @ofs_array_push(ptr " + arr + ", ptr " + slot + ")")
+                    ai++
+                }
                 cg_emit("  store ptr " + arr + ", ptr @" + gname)
             } else if (is_named_type(gt)) {
                 forge obj = next_tmp("gobj")

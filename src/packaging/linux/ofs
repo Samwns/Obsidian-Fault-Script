@@ -3,7 +3,7 @@ set -euo pipefail
 
 OFS_VERSION="__OFS_VERSION__"
 case "$OFS_VERSION" in
-  __*__) OFS_VERSION="1.0.141" ;;
+  __*__) OFS_VERSION="1.0.169" ;;
 esac
 OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -532,10 +532,10 @@ core main() {
     oll_x11.run_window("$abs_input")
 }
 EOF
-          OFSCC_INPUT="$oll_src" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC"
+          OFSCC_INPUT="$oll_src" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC" >&2
           ;;
         *)
-          OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC"
+          OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC" >&2
           ;;
       esac
       native_link "$run_ll" "$run_bin" "linux"

@@ -16,6 +16,9 @@ All notable changes to this project are recorded here.
 ### Fixed
 
 - **llvmgen**: constante inteira `0` em global com tipo ponteiro (ex.: `forge x: Array<T> = []`) emitia `global ptr 0`, rejeitado pelo llc — agora emite `global ptr null`.
+- **llvmgen (`emit_global_init`)**: globais com tipo genérico `Array<T>` nunca passavam no teste `ofs_str_eq(gt, "Array")`, então o buffer interno não era alocado no `__ofs_init_globals` e todo `ofs_array_push` virava no-op (parser/lexer do compilador auto-hospedado perdiam estado). Agora o prefixo `Array<` é reconhecido e os elementos literais são inicializados. Corrige o bootstrap v3→v4 e a compilação nativa de `installer_wizard_linux.ofs` no release.
+- **cli (`ofs run --native`)**: saída do reporter de compilação redirecionada para stderr, deixando o stdout do programa limpo (paridade com `ofs run` interpretado).
+- **tests/golden**: caso Fancy ANSI neutraliza explicitamente `NO_COLOR`/`OFS_LANG`, que vazavam das variáveis do step de CI; o bootstrap do seed volta a gerar IR válido (82 buffers de arrays globais restaurados).
 - **bootstrap**: `ofs_str_substr` sem terminação NUL, contagem de limites de `attach {F:...}` e tamanhos de allocação de `monolith` corrigidos.
 - **portabilidade**: `snprintf` e `ofs_stone_to_obsidian` reescritos em OFS puro; `crystal` formata como `%.15g` com sufixo `.0` (paridade).
 - **CI**: `clang -no-pie` (Linux) e `-Wl,-no_pie` (macOS) ao linkar `ofscc.ll` gerado por llc non-PIE; `-Wl,/force:multiple` (Windows).

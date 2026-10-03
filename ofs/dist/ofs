@@ -3,42 +3,22 @@ set -euo pipefail
 
 OFS_VERSION="__OFS_VERSION__"
 case "$OFS_VERSION" in
-  __*__) OFS_VERSION="1.0.141" ;;
+  __*__) OFS_VERSION="1.0.169" ;;
 esac
 OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OFSCC="${OFSCC:-$ROOT/ofscc}"
-RUNTIME="${OFS_RUNTIME:-}"
-if [ -z "$RUNTIME" ]; then
-  for runtime_candidate in "$ROOT/magma.o" "$ROOT/libofs_runtime.a" "$HOME/.local/lib/ofs/magma.o" "$HOME/.local/lib/ofs/libofs_runtime.a" \
-    "/usr/local/lib/ofs/magma.o" "/usr/local/lib/ofs/libofs_runtime.a" "/usr/lib/ofs/magma.o" "/usr/lib/ofs/libofs_runtime.a"; do
-    if [ -f "$runtime_candidate" ]; then
-      RUNTIME="$runtime_candidate"
-      break
-    fi
-  done
-fi
+RUNTIME="${OFS_RUNTIME:-$ROOT/magma.o}"
 
-# Keep bootstrap resource use bounded while allowing callers to tighten the
-# limits. OFSCC_MAX_MEM is bytes (4 GiB by default); CPU time is seconds.
-OFSCC_MAX_MEM="${OFSCC_MAX_MEM:-4294967296}"
-OFSCC_MAX_CPU_SECONDS="${OFSCC_MAX_CPU_SECONDS:-60}"
-case "$OFSCC_MAX_MEM" in
-  ''|*[!0-9]*) echo "ofs: OFSCC_MAX_MEM must be a byte count" >&2; exit 2 ;;
-esac
-case "$OFSCC_MAX_CPU_SECONDS" in
-  ''|*[!0-9]*) echo "ofs: OFSCC_MAX_CPU_SECONDS must be a whole number of seconds" >&2; exit 2 ;;
-esac
-# ulimit -v (RLIMIT_AS) não é suportado no builtin de alguns shells não-Linux
-# (macOS, *BSD). Tenta e silenciosamente pula caso retorne "Invalid argument".
-ulimit -Sv "$((OFSCC_MAX_MEM / 1024))" 2>/dev/null || true
-ulimit -St "$OFSCC_MAX_CPU_SECONDS" 2>/dev/null || true
+# ulimit -v (RLIMIT_AS) não é suportado no builtin de shells não-Linux
+# (macOS, *BSD). Silenciosamente pula quando o shell recusa.
+ulimit -Sv 786432 2>/dev/null || true
+ulimit -St 20    2>/dev/null || true
 current_file_limit="$(ulimit -Sf 2>/dev/null || echo unlimited)"
 if [[ "$current_file_limit" == "unlimited" || "$current_file_limit" -gt 524288 ]]; then
   ulimit -Sf 524288 2>/dev/null || true
 fi
 ulimit -Sc 0 2>/dev/null || true
-export OFS_RUNTIME="$RUNTIME"
 
 if [ -z "${OFS_STDLIB_PATH:-}" ] && [ -n "${OFS_STDLIB:-}" ]; then
   export OFS_STDLIB_PATH="$OFS_STDLIB"
@@ -274,126 +254,26 @@ show_version() {
   printf 'status: stable\n'
 }
 
-# Cores do help: ativadas por padrao; NO_COLOR (qualquer valor) ou TERM=dumb
-# desligam. Espelha reporter_detect_color() do ofscc.ofs.
-ofs_color_on() {
-  [ -z "${NO_COLOR:-}" ] && [ "${TERM:-}" != "dumb" ] && [ -n "${TERM:-}" ]
-}
-
 usage() {
   banner
-  local c_cmd='' c_head='' c_dim='' c_off=''
-  if ofs_color_on; then
-    c_cmd=$'\033[36m'
-    c_head=$'\033[32m'
-    c_dim=$'\033[2m'
-    c_off=$'\033[0m'
-  fi
-  case "${OFS_LANG:-en}" in
-  pt*)
-    cat <<EOF
-${c_head}ofs${c_off} - compilador Obsidian Fault Script v$OFS_VERSION
+  cat <<EOF
+ofs - Obsidian Fault Script compiler v$OFS_VERSION
 
-${c_head}Uso:${c_off} ofs <arquivo.ofs>   (equivale a 'ofs run')
-
-${c_head}Subcomandos:${c_off}
-  ${c_cmd}run <arq.ofs>${c_off}       Executa interpretado (--native compila temporario)
-  ${c_cmd}build <arq.ofs>${c_off}     Compila para executavel nativo (-o saida)
-  ${c_cmd}check <arq.ofs>${c_off}     Somente verificacao de tipos
-  ${c_cmd}test <arq.ofs>${c_off}      Executa os testes (assay) do arquivo
-  ${c_cmd}twin <arq.ofs>${c_off}      Roda interpretado + nativo e compara saidas
-  ${c_cmd}polish <arq.ofs>${c_off}    Verifica estilo e padroes do codigo
-  ${c_cmd}language [en|pt|es]${c_off} Mostra/altera o idioma da CLI
-  ${c_cmd}ir|asm|tokens|ast${c_off}   Artefatos de depuracao do compilador
-  ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o saida.ppm)
-  ${c_cmd}clean${c_off}               Limpa artefatos temporarios de build
-  ${c_cmd}version${c_off}             Mostra a versao
-  ${c_cmd}update${c_off}              Atualiza para a ultima release
-  ${c_cmd}help${c_off}                Mostra esta ajuda
-
-${c_dim}Env: OFS_LANG, OFS_PROGRESS, OFS_VERBOSE, OFS_RUNTIME, OFS_STDLIB_PATH${c_off}
+Usage:
+  ofs <file.ofs>                        Run a script directly (interpreted)
+  ofs run    <file.ofs> [--native]      Run interpreted (or --native temporary build)
+  ofs build  <file.ofs> [-o output]     Compile to native executable
+  ofs check  <file.ofs>                 Type-check only (no output)
+  ofs tokens <file.ofs>                 Print token stream (debug)
+  ofs ast    <file.ofs>                 Print AST (debug)
+  ofs ir     <file.ofs>                 Emit LLVM IR (debug)
+  ofs asm    <file.ofs>                 Emit target-native assembly
+  ofs ui     <file.oll> [-o output.ppm] Parse and render native UI layout
+  ofs clean                             Clean temporary build artifacts
+  ofs version                           Print compiler version
+  ofs update                            Update to the latest release
+  ofs help                              Show this help message
 EOF
-    ;;
-  es*)
-    cat <<EOF
-${c_head}ofs${c_off} - compilador Obsidian Fault Script v$OFS_VERSION
-
-${c_head}Uso:${c_off} ofs <archivo.ofs>   (equivale a 'ofs run')
-
-${c_head}Subcomandos:${c_off}
-  ${c_cmd}run <arq.ofs>${c_off}       Ejecuta interpretado (--native compila temporal)
-  ${c_cmd}build <arq.ofs>${c_off}     Compila a ejecutable nativo (-o salida)
-  ${c_cmd}check <arq.ofs>${c_off}     Solo verificacion de tipos
-  ${c_cmd}test <arq.ofs>${c_off}      Ejecuta las pruebas (assay) del archivo
-  ${c_cmd}twin <arq.ofs>${c_off}      Ejecuta interpretado + nativo y compara salidas
-  ${c_cmd}polish <arq.ofs>${c_off}    Verifica estilo y patrones del codigo
-  ${c_cmd}language [en|pt|es]${c_off} Muestra/cambia el idioma de la CLI
-  ${c_cmd}ir|asm|tokens|ast${c_off}   Artefactos de depuracion del compilador
-  ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o salida.ppm)
-  ${c_cmd}clean${c_off}               Limpia artefactos temporales de build
-  ${c_cmd}version${c_off}             Muestra la version
-  ${c_cmd}update${c_off}              Actualiza a la ultima release
-  ${c_cmd}help${c_off}                Muestra esta ayuda
-
-${c_dim}Env: OFS_LANG, OFS_PROGRESS, OFS_VERBOSE, OFS_RUNTIME, OFS_STDLIB_PATH${c_off}
-EOF
-    ;;
-  *)
-    cat <<EOF
-${c_head}ofs${c_off} - Obsidian Fault Script compiler v$OFS_VERSION
-
-${c_head}Usage:${c_off} ofs <file.ofs>   (same as 'ofs run')
-
-${c_head}Subcommands:${c_off}
-  ${c_cmd}run <file.ofs>${c_off}      Run interpreted (--native builds a temp binary)
-  ${c_cmd}build <file.ofs>${c_off}    Compile to a native executable (-o output)
-  ${c_cmd}check <file.ofs>${c_off}    Type-check only (no output)
-  ${c_cmd}test <file.ofs>${c_off}     Run file tests (assay)
-  ${c_cmd}twin <file.ofs>${c_off}     Run interpreted + native and diff outputs
-  ${c_cmd}polish <file.ofs>${c_off}   Style and pattern checks
-  ${c_cmd}language [en|pt|es]${c_off} Show/change the CLI language
-  ${c_cmd}ir|asm|tokens|ast${c_off}   Compiler debug artifacts
-  ${c_cmd}ui <file.oll>${c_off}       Render native OLL layout (-o output.ppm)
-  ${c_cmd}clean${c_off}               Clean temporary build artifacts
-  ${c_cmd}version${c_off}             Print compiler version
-  ${c_cmd}update${c_off}              Update to the latest release
-  ${c_cmd}help${c_off}                Show this help message
-
-${c_dim}Env: OFS_LANG, OFS_PROGRESS, OFS_VERBOSE, OFS_RUNTIME, OFS_STDLIB_PATH${c_off}
-EOF
-    ;;
-  esac
-}
-
-# Persistencia de idioma da CLI: $XDG_CONFIG_HOME/ofs/lang ou ~/.config/ofs/lang.
-ofs_lang_file() {
-  local cfg="${XDG_CONFIG_HOME:-$HOME/.config}/ofs"
-  printf '%s\n' "$cfg/lang"
-}
-
-cmd_language() {
-  local cfg_dir cfg_file current
-  cfg_dir="$(dirname "$(ofs_lang_file)")"
-  cfg_file="$(ofs_lang_file)"
-  current="${OFS_LANG:-}"
-  if [ -z "$current" ] && [ -f "$cfg_file" ]; then
-    current="$(head -n 1 "$cfg_file")"
-  fi
-  [ -z "$current" ] && current="en"
-  local want="${1:-}"
-  if [ -z "$want" ]; then
-    printf 'ofs language: %s\n' "$current"
-    printf 'available: en pt es\n'
-    printf 'usage: ofs language <en|pt|es>\n'
-    return 0
-  fi
-  case "$want" in
-    en|pt|es) ;;
-    *) echo "ofs language: idioma invalido '$want' (use en, pt ou es)" >&2; return 2 ;;
-  esac
-  mkdir -p "$cfg_dir"
-  printf '%s\n' "$want" > "$cfg_file"
-  echo "ofs language: $want"
 }
 
 latest_tag() {
@@ -504,12 +384,6 @@ need_ofscc() {
   fi
 }
 
-# Idioma persistido via 'ofs language' alimenta OFS_LANG quando a env nao
-# estiver definida (o reporter faz OFS_LANG > LANG > en).
-if [ -z "${OFS_LANG:-}" ] && [ -f "$(ofs_lang_file)" ]; then
-  export OFS_LANG="$(head -n 1 "$(ofs_lang_file)")"
-fi
-
 cmd="${1:-help}"
 case "$cmd" in
   version|--version|-v)
@@ -524,11 +398,6 @@ case "$cmd" in
     run_update
     exit $?
     ;;
-  language)
-    shift || true
-    cmd_language "${1:-}"
-    exit $?
-    ;;
 esac
 
 need_ofscc
@@ -541,7 +410,7 @@ target_os="linux"
 run_native=false
 
 case "$mode" in
-  check|tokens|ast|ir|asm|build|run|clean|ui|test|twin|polish) ;;
+  check|tokens|ast|ir|asm|build|run|clean|ui) ;;
   *)
     input="$mode"
     mode="run"
@@ -596,15 +465,6 @@ bc="$work.bc"
 case "$mode" in
   check|tokens|ast)
     OFSCC_INPUT="$input" OFSCC_MODE="$mode" "$OFSCC"
-    ;;
-  test|twin|polish)
-    # Subcomandos reservados: o ofscc reconhece o stub via OFSCC_MODE e emite
-    # o diagnostico i18n (twin tambem emite twin_start/twin_result em NDJSON).
-    if [ -z "$input" ]; then
-      usage
-      exit 2
-    fi
-    OFSCC_INPUT="$mode" OFSCC_MODE="$mode" OFSCC_TWIN_TARGET="$input" "$OFSCC"
     ;;
   ir)
     [ -n "$output" ] || output="$name.ll"
@@ -672,10 +532,10 @@ core main() {
     oll_x11.run_window("$abs_input")
 }
 EOF
-          OFSCC_INPUT="$oll_src" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC"
+          OFSCC_INPUT="$oll_src" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC" >&2
           ;;
         *)
-          OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC"
+          OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC" >&2
           ;;
       esac
       native_link "$run_ll" "$run_bin" "linux"

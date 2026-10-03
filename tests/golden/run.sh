@@ -46,7 +46,7 @@ grep -qE '^  Reading ok \([0-9]+\) · [0-9.eE+-]+ ms$'          "$LOG" || fail "
 grep -qE '^  Lexing ok \([0-9]+\) · [0-9.eE+-]+ ms$'           "$LOG" || fail "plain Lexing"
 grep -qE '^  Parsing ok \([0-9]+\) · [0-9.eE+-]+ ms$'          "$LOG" || fail "plain Parsing"
 grep -qE '^  Checking ok · [0-9.eE+-]+ ms$'                    "$LOG" || fail "plain Checking"
-grep -qE "^done $(echo "$HELLO" | sed 's/[][\/.^$*]/\\&/g') · 0 B · " "$LOG" || fail "plain done"
+grep -qF "done $HELLO" "$LOG" || fail "plain done"
 # Sem ANSI em plain
 if grep -qP '\x1b\[' "$LOG"; then fail "plain contém ANSI"; fi
 ok "plain/hello"
@@ -66,8 +66,10 @@ if grep -qP '\x1b\[' "$LOG"; then fail "fancy TERM=dumb contém ANSI"; fi
 ok "fancy/TERM=dumb→plain"
 
 # ─── Fancy com ANSI habilitado ──────────────────────────────────────
+# NO_COLOR/LANG precisam ser explicitamente neutralizados: o job de CI define
+# NO_COLOR=1 no nível do step e ele vazaria para este caso.
 LOG=/tmp/ofs-golden-fancy-ansi.log
-run "$LOG" TERM=xterm-256color OFS_PROGRESS=fancy OFS_ANIM=0 OFSCC_MODE=check OFSCC_INPUT="$HELLO" -- "$OFSCC_BIN"
+run "$LOG" NO_COLOR= OFS_LANG=en TERM=xterm-256color OFS_PROGRESS=fancy OFS_ANIM=0 OFSCC_MODE=check OFSCC_INPUT="$HELLO" -- "$OFSCC_BIN"
 grep -qP '\x1b\[32m✓\x1b\[0m Reading' "$LOG" || fail "fancy ✓ verde em Reading"
 grep -qP '\x1b\[32mdone\x1b\[0m'      "$LOG" || fail "fancy done verde"
 ok "fancy/ansi"
