@@ -2,7 +2,7 @@
 
 ODL (Obsidian Document Language) is the structural document language of the OFS ecosystem.
 
-You write `.odl` source files, `ofs odl` compiles them into standard HTML5, and the browser consumes the resulting artifact. ODL remains the project's source of truth; HTML is only the web distribution target.
+You write `.odl` source files. The `odlc` tool from the standard library compiles them into standard HTML5 (`ofs run ofs/tools/odlc.ofs`, with `ODLC_INPUT`/`ODLC_OUTPUT`), and the browser consumes the resulting artifact. ODL remains the project's source of truth; HTML is only the web distribution target.
 
 ---
 
@@ -105,5 +105,5 @@ Legacy keywords including `document`, `style`, `body`, `markdown`, `html`, `scri
 Compile an ODL document to HTML5:
 
 ```bash
-ofs odl document.odl -o public/index.html
+ODLC_INPUT=document.odl ODLC_OUTPUT=public/index.html ofs run ofs/tools/odlc.ofs
 ```

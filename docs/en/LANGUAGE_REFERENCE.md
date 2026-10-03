@@ -423,6 +423,6 @@ ofs ir app.ofs                 # Emits LLVM IR (.ll)
 ofs asm app.ofs                # Emits target assembly
 
 # Web DSLs
-ofs odl page.odl -o index.html # Compiles ODL to HTML5
-ofs oes theme.oes -o theme.css # Compiles OES to CSS
+ODLC_INPUT=page.odl ODLC_OUTPUT=index.html ofs run ofs/tools/odlc.ofs  # compiles ODL to HTML5
+OESC_INPUT=theme.oes OESC_OUTPUT=theme.css ofs run ofs/tools/oesc.ofs  # compiles OES to CSS
 ```

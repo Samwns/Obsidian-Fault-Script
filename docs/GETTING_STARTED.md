@@ -51,16 +51,20 @@ O executável `ofs` expõe os seguintes subcomandos:
 
 | Comando | Descrição |
 |---|---|
-| `ofs <arquivo.ofs>` | Executa o programa diretamente via interpretador AST. |
+| `ofs <arquivo.ofs>` | Executa o programa diretamente (equivale a `ofs run`). |
 | `ofs run <arquivo.ofs> [--native]` | Executa no interpretador (ou com `--native` para compilação temporária). |
 | `ofs build <arquivo.ofs> -o <binário>` | Compila o arquivo para um executável binário nativo via LLVM. |
 | `ofs check <arquivo.ofs>` | Valida a sintaxe e a tipagem sem emitir código. |
-| `ofs tokens <arquivo.ofs>` | Imprime o fluxo de tokens gerado pela análise léxica. |
-| `ofs ast <arquivo.ofs>` | Exibe a árvore sintática abstrata (AST) do programa. |
-| `ofs ir <arquivo.ofs>` | Emite o código intermediário LLVM IR (`.ll`). |
-| `ofs asm <arquivo.ofs>` | Emite o assembly nativo da arquitetura alvo. |
-| `ofs odl <arquivo.odl> -o <saída.html>` | Compila um documento ODL para HTML5. |
-| `ofs oes <arquivo.oes> -o <saída.css>` | Compila regras de estilo OES para CSS. |
+| `ofs test <arquivo.ofs>` | Executa os testes (assay) do arquivo. |
+| `ofs twin <arquivo.ofs>` | Roda interpretado e nativo, comparando as saídas. |
+| `ofs polish <arquivo.ofs>` | Verifica estilo e padrões do código. |
+| `ofs language [en\|pt\|es]` | Mostra ou altera o idioma da CLI. |
+| `ofs ir <arquivo.ofs>` / `ofs asm` / `ofs tokens` / `ofs ast` | Artefatos de depuração: LLVM IR, assembly, tokens e AST. |
+| `ofs ui <arquivo.oll> [-o saída.ppm]` | Renderiza um layout OLL nativo para imagem. |
+| `ofs clean` | Limpa artefatos temporários de build. |
+| `ofs version` / `ofs update` / `ofs help` | Versão, atualização para a última release e ajuda. |
+
+Variáveis de ambiente reconhecidas pelo launcher: `OFS_LANG` (idioma en/pt/es), `OFS_PROGRESS` (reporter fancy/plain/json), `OFS_VERBOSE` (logs de link/build), `OFS_RUNTIME` e `OFS_STDLIB_PATH` (caminhos da runtime e da biblioteca padrão).
 
 ---
 
@@ -333,9 +337,11 @@ flow
   spark "app.js"
 ```
 
-Compilação do ODL:
+Compilação do ODL (a ferramenta `odlc` faz parte da biblioteca padrão de ferramentas e roda com o próprio `ofs`):
+
 ```bash
-ofs odl documento.odl -o public/index.html
+# no repositório OFS (ou com as tools instaladas em /usr/share/ofs/tools)
+ODLC_INPUT=documento.odl ODLC_OUTPUT=public/index.html ofs run ofs/tools/odlc.ofs
 ```
 
 ### OES (Obsidian Effect Scripts)
@@ -363,9 +369,10 @@ pulse "surgir"
     opacity "1"
 ```
 
-Compilação do OES:
+Compilação do OES (mesmo padrão, usando a ferramenta `oesc`):
+
 ```bash
-ofs oes estilo.oes -o public/estilo.css
+OESC_INPUT=estilo.oes OESC_OUTPUT=public/estilo.css ofs run ofs/tools/oesc.ofs
 ```
 
 ### Servidor HTTP nativo (`webserver`)

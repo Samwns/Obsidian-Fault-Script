@@ -59,8 +59,20 @@ The `ofs` CLI provides the following subcommands:
 | `ofs ast <file.ofs>` | Displays the Abstract Syntax Tree (AST). |
 | `ofs ir <file.ofs>` | Emits native LLVM IR code (`.ll`). |
 | `ofs asm <file.ofs>` | Emits assembly code for the target architecture. |
-| `ofs odl <file.odl> -o <output.html>` | Compiles an ODL document into standard HTML5. |
-| `ofs oes <file.oes> -o <output.css>` | Compiles OES styling rules into standard CSS. |
+| `ofs <file.ofs>` | Runs the program directly (same as `ofs run`). |
+| `ofs run <file.ofs> [--native]` | Runs via the interpreter (or a temporary native build with `--native`). |
+| `ofs build <file.ofs> -o <binary>` | Compiles the file to a native binary via LLVM. |
+| `ofs check <file.ofs>` | Type-checks without emitting code. |
+| `ofs test <file.ofs>` | Runs the file's tests (assay). |
+| `ofs twin <file.ofs>` | Runs interpreted and native, comparing outputs. |
+| `ofs polish <file.ofs>` | Style and pattern checks. |
+| `ofs language [en\|pt\|es]` | Shows or changes the CLI language. |
+| `ofs ir` / `ofs asm` / `ofs tokens` / `ofs ast` | Compiler debug artifacts (LLVM IR, assembly, tokens, AST). |
+| `ofs ui <file.oll> [-o output.ppm]` | Renders a native OLL layout to an image. |
+| `ofs clean` | Cleans temporary build artifacts. |
+| `ofs version` / `ofs update` / `ofs help` | Version, update to the latest release, and help. |
+
+Environment variables recognized by the launcher: `OFS_LANG` (en/pt/es), `OFS_PROGRESS` (fancy/plain/json), `OFS_VERBOSE` (verbose link/build logs), `OFS_RUNTIME` and `OFS_STDLIB_PATH` (runtime and standard library paths).
 
 ---
 
@@ -333,9 +345,11 @@ flow
   spark "app.js"
 ```
 
-Compile ODL:
+Compile ODL (the `odlc` tool ships with the standard library and runs on `ofs` itself):
+
 ```bash
-ofs odl document.odl -o public/index.html
+# inside the OFS repository (or with tools installed at /usr/share/ofs/tools)
+ODLC_INPUT=document.odl ODLC_OUTPUT=public/index.html ofs run ofs/tools/odlc.ofs
 ```
 
 ### OES (Obsidian Effect Scripts)
@@ -363,9 +377,10 @@ pulse "appear"
     opacity "1"
 ```
 
-Compile OES:
+Compile OES (same pattern, with the `oesc` tool):
+
 ```bash
-ofs oes style.oes -o public/style.css
+OESC_INPUT=style.oes OESC_OUTPUT=public/style.css ofs run ofs/tools/oesc.ofs
 ```
 
 ### Native HTTP Web Server (`webserver`)

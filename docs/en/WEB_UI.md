@@ -17,8 +17,8 @@ ODL and OES are standalone languages compiled by the OFS toolchain, rather than 
 The toolchain compiles ODL and OES source files directly into production-ready browser assets:
 
 ```bash
-ofs odl page.odl -o public/index.html
-ofs oes theme.oes -o public/theme.css
+ODLC_INPUT=page.odl ODLC_OUTPUT=public/index.html ofs run ofs/tools/odlc.ofs
+OESC_INPUT=theme.oes OESC_OUTPUT=public/theme.css ofs run ofs/tools/oesc.ofs
 ```
 
 The output can be deployed to standard static hosting providers, such as GitHub Pages, Cloudflare Pages, or traditional web servers (Nginx/Apache).

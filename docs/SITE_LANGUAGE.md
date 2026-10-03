@@ -68,10 +68,8 @@ OES provides tokens, selector blocks, property aliases, responsive groups, featu
 ## CLI
 
 ```bash
-ofs odl page.odl -o index.html
-ofs oes theme.oes -o theme.css
-ofs translate legacy.html --to odl
-ofs translate legacy.css --to oes
+ODLC_INPUT=page.odl ODLC_OUTPUT=index.html ofs run ofs/tools/odlc.ofs
+OESC_INPUT=theme.oes OESC_OUTPUT=theme.css ofs run ofs/tools/oesc.ofs
 ```
 
 Direct invocation also works:

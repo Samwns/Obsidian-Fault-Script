@@ -2,7 +2,7 @@
 
 OES (Obsidian Effect Scripts) é a linguagem de efeitos, estilos visuais e movimento do ecossistema OFS.
 
-O desenvolvedor escreve arquivos `.oes`, o comando `ofs oes` compila as regras para CSS padrão, e o navegador consome a folha de estilos gerada. O código OES é a fonte de verdade do sistema de design.
+O desenvolvedor escreve arquivos `.oes`. A ferramenta `oesc` da biblioteca padrão compila as regras para CSS padrão (`ofs run ofs/tools/oesc.ofs`, com `OESC_INPUT`/`OESC_OUTPUT`), e o navegador consome a folha de estilos gerada. O código OES é a fonte de verdade do sistema de design.
 
 ---
 
@@ -104,5 +104,5 @@ O analisador OES reconhece propriedades CSS nativas quando não há um atalho pr
 Para compilar um arquivo OES para folha de estilos CSS:
 
 ```bash
-ofs oes tema.oes -o public/tema.css
+OESC_INPUT=tema.oes OESC_OUTPUT=public/tema.css ofs run ofs/tools/oesc.ofs
 ```

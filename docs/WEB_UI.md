@@ -17,8 +17,8 @@ ODL e OES são linguagens compiladas pelo próprio toolchain do OFS, e não mero
 O toolchain compila os arquivos de código-fonte ODL e OES diretamente para artefatos consumíveis por qualquer servidor ou CDN:
 
 ```bash
-ofs odl page.odl -o public/index.html
-ofs oes theme.oes -o public/theme.css
+ODLC_INPUT=page.odl ODLC_OUTPUT=public/index.html ofs run ofs/tools/odlc.ofs
+OESC_INPUT=theme.oes OESC_OUTPUT=public/theme.css ofs run ofs/tools/oesc.ofs
 ```
 
 A saída gerada pode ser hospedada em plataformas estáticas convencionais, como GitHub Pages, Cloudflare Pages ou servidores Nginx/Apache.
