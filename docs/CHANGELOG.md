@@ -13,6 +13,12 @@ All notable changes to this project are recorded here.
   - **Fase 5 — Json NDJSON**: eventos extras (`locale`, `msg_key` + `args[]`, `duration_ms_total`) e stub de saída `twin` em NDJSON.
 - **CI golden files**: workflow `golden.yml` re-bootstrapa o compilador e compara saídas Plain/Fancy/Json e de locale contra binário recém-gerado.
 
+### Added
+
+- **canvas (camada de pintura)**: mistura alfa ARGB (`argb`, `blend_pixel`), antialiasing por SDF de 1px (`fill_rounded_rect_aa`, `stroke_rounded_rect_aa`, `fill_circle_aa`, `stroke_arc`), pilha de clip retangular (`push_clip`/`pop_clip`/`clear_clips`), sombra suave em camadas (`draw_shadow`) e gradiente vertical (`fill_gradient_v`). `set_pixel` respeita clip e normaliza cores ARGB.
+- **OLL**: constantes nomeadas `OLL_WINDOW…OLL_PROGRESS`, `tabs` agora usa layout horizontal, `stack`/`container` sobrepõem os filhos, campo `progress: stone` próprio no `OllNode` (`value:`/`progress:`), barras de progresso desenhadas de fato (trilha + preenchimento AA), render com bordas arredondadas antialiased e sombra suave por `elevation`, e cores `#RRGGBBAA` com canal alfa.
+- **CI**: golden de render (`tests/render/run.sh`) compara o PPM da cena (`attach {canvas}` + `attach {oll}`) bit a bit no job Linux.
+
 ### Fixed
 
 - **llvmgen**: constante inteira `0` em global com tipo ponteiro (ex.: `forge x: Array<T> = []`) emitia `global ptr 0`, rejeitado pelo llc — agora emite `global ptr null`.

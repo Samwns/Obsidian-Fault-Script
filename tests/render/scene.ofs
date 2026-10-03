@@ -1,0 +1,25 @@
+attach {F:../../ofs/stdlib/canvas.ofs}
+attach {F:../../ofs/stdlib/oll.ofs}
+
+core main() {
+    forge cv: Canvas = canvas.create(420, 300)
+    canvas.clear(cv, 1579045)
+    canvas.fill_gradient_v(cv, 0, 180, 420, 120, 2031666, 1118481)
+    canvas.draw_shadow(cv, 30, 30, 160, 60, 12, 8, canvas.argb(80, 0, 0, 0))
+    canvas.fill_rounded_rect_aa(cv, 30, 30, 160, 60, 12, 3233850)
+    canvas.stroke_rounded_rect_aa(cv, 30, 30, 160, 60, 12, 2, 11184810)
+    canvas.fill_rounded_rect_aa(cv, 200, 30, 60, 60, 30, 9109504)
+    canvas.fill_circle_aa(cv, 320, 60, 30, 15929903)
+    canvas.stroke_arc(cv, 370, 60, 24, 0, 270, 6, 8978431)
+    canvas.push_clip(cv, 0, 0, 210, 300)
+    canvas.fill_rect(cv, 200, 100, 60, 60, 16711680)
+    canvas.pop_clip(cv)
+
+    forge root: stone = oll.parse("window Demo { width: 420  height: 300  bg_color: #11111b  column { row { height: 36  gap: 4  bg_color: #1e1e2e  tabs { tab \"A\" { width: 80  active: true }  tab \"B\" { width: 80 } } }  row { height: 30  gap: 6  bg_color: #181825  progress { width: 160  height: 14  value: 65 }  badge \"OK\" { width: 46  height: 22  bg_color: #1e3a2f  fg_color: #a6e3a1 } }  stack { card { bg_color: #313244  radius: 10  elevation: 2 }  label \"overlay\" { fg_color: #f9e2af  padding: 6 } } } }")
+    if (root < 0) { echo("FAIL: parse"); exit(1) }
+    oll.compute_layout(root)
+    oll.render(cv)
+    forge ok = canvas.save_ppm(cv, "tests/render/scene.ppm")
+    if (!ok) { echo("FAIL: save") }
+    echo("scene.ppm renderizado")
+}

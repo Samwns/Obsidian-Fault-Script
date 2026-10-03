@@ -67,6 +67,12 @@ jobs:
           chmod +x ofs/tests/interpreter/test_differential.sh
           ofs/tests/interpreter/test_differential.sh
 
+      - name: Render golden (Canvas/OLL paint layer)
+        env:
+          OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
+          OFS_BIN: ${{ github.workspace }}/selfhost/ofs
+        run: bash tests/render/run.sh
+
       - name: Build OFS native wizard installer
         env:
           OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib

@@ -70,9 +70,25 @@ monolith OllNode {
     icon: obsidian
     radius: stone
     elevation: stone
+    progress: stone
 }
 
 namespace oll {
+    // Tipos de no (mantidos em 1..13 para compat com layouts existentes)
+    forge OLL_WINDOW: stone = 1
+    forge OLL_ROW: stone = 2
+    forge OLL_COLUMN: stone = 3
+    forge OLL_STACK: stone = 4
+    forge OLL_LABEL: stone = 5
+    forge OLL_BUTTON: stone = 6
+    forge OLL_INPUT: stone = 7
+    forge OLL_TABS: stone = 8
+    forge OLL_TAB: stone = 9
+    forge OLL_CARD: stone = 10
+    forge OLL_HEADER: stone = 11
+    forge OLL_BADGE: stone = 12
+    forge OLL_PROGRESS: stone = 13
+
     forge _nodes: Array<OllNode> = []
     forge _children_parent: Array<stone> = []
     forge _children_child: Array<stone> = []
@@ -321,6 +337,7 @@ namespace oll {
         n.icon = ""
         n.radius = -1
         n.elevation = 0
+        n.progress = 0
 
         forge cur_th = get_theme()
 
@@ -376,8 +393,12 @@ namespace oll {
             start = 1
         }
         forge color = 0
+        forge digits = len - start
         forge i = start
-        while (i < len) {
+        // #RRGGBBAA: move o par final para o canal alfa (ARGB interno)
+        forge color_len = len
+        if (digits == 8) { color_len = len - 2 }
+        while (i < color_len) {
             forge c = ofs_str_char_at(hex_str, i)
             forge v = 0
             if (c >= 48 && c <= 57) {
@@ -389,6 +410,16 @@ namespace oll {
             }
             color = (color * 16) + v
             i++
+        }
+        if (digits == 8) {
+            forge alpha = 0
+            forge c9 = ofs_str_char_at(hex_str, len - 2)
+            if (c9 >= 48 && c9 <= 57) { alpha = c9 - 48 } else if (c9 >= 97 && c9 <= 102) { alpha = 10 + (c9 - 97) } else if (c9 >= 65 && c9 <= 70) { alpha = 10 + (c9 - 65) }
+            forge c10 = ofs_str_char_at(hex_str, len - 1)
+            forge a10 = 0
+            if (c10 >= 48 && c10 <= 57) { a10 = c10 - 48 } else if (c10 >= 97 && c10 <= 102) { a10 = 10 + (c10 - 97) } else if (c10 >= 65 && c10 <= 70) { a10 = 10 + (c10 - 65) }
+            alpha = (alpha * 16) + a10
+            color = color + (alpha * 16777216)
         }
         return color
     }
@@ -580,8 +611,8 @@ namespace oll {
                         cur_node.border_width = parse_int(prop_val)
                     } else if (ofs_str_eq(prop_name, "border_color") || ofs_str_eq(prop_name, "border-color")) {
                         cur_node.border_color = parse_hex_color(prop_val)
-                    } else if (ofs_str_eq(prop_name, "value")) {
-                        cur_node.gap = parse_int(prop_val)
+                    } else if (ofs_str_eq(prop_name, "value") || ofs_str_eq(prop_name, "progress")) {
+                        cur_node.progress = parse_int(prop_val)
                     } else if (ofs_str_eq(prop_name, "on_click")) {
                         cur_node.on_click = prop_val
                     } else if (ofs_str_eq(prop_name, "on_change")) {
@@ -664,7 +695,18 @@ namespace oll {
         forge inner_w = n.box_w - (n.padding * 2)
         forge inner_h = n.box_h - (n.padding * 2)
 
-        if (n.kind == 2) {
+        if (n.kind == 4) {
+            // stack/container: filhos sobrepostos ocupando a caixa inteira
+            forge si = 0
+            while (si < count) {
+                forge sid = get_child_at(id, si)
+                layout_node(sid, inner_x, inner_y, inner_w, inner_h)
+                si++
+            }
+            return
+        }
+
+        if (n.kind == 2 || n.kind == 8) {
             forge fixed_w_total = 0
             forge auto_count = 0
             forge ci = 0
@@ -771,20 +813,44 @@ namespace oll {
                 if (n.hover_border_color >= 0) { bcol = n.hover_border_color }
             }
 
+            // sombra suave em camadas (elevation N = blur 2N+2)
             if (n.elevation > 0 && n.box_w > 0 && n.box_h > 0) {
-                canvas.fill_rounded_rect(cv, n.box_x + 1, n.box_y + 2, n.box_w, n.box_h, n.radius, 657930)
+                forge sh_r = n.radius
+                if (sh_r < 0) { sh_r = 0 }
+                canvas.draw_shadow(cv, n.box_x, n.box_y, n.box_w, n.box_h, sh_r, n.elevation * 2 + 2, 872415232)
             }
 
+            // fundo com antialiasing (raio via SDF)
             if (bg >= 0) {
                 if (n.radius > 0) {
-                    canvas.fill_rounded_rect(cv, n.box_x, n.box_y, n.box_w, n.box_h, n.radius, bg)
+                    canvas.fill_rounded_rect_aa(cv, n.box_x, n.box_y, n.box_w, n.box_h, n.radius, bg)
                 } else {
                     canvas.fill_rect(cv, n.box_x, n.box_y, n.box_w, n.box_h, bg)
                 }
             }
+
+            // barra de progresso: trilha + preenchimento
+            if (n.kind == 13 && n.box_w > 6 && n.box_h > 6) {
+                forge track_x = n.box_x + 3
+                forge track_y = n.box_y + (n.box_h - 6) / 2
+                forge track_w = n.box_w - 6
+                forge track_r = 3
+                canvas.fill_rounded_rect_aa(cv, track_x, track_y, track_w, 6, track_r, 3487029)
+                forge pct = n.progress
+                if (pct < 0) { pct = 0 }
+                if (pct > 100) { pct = 100 }
+                forge fill_w = (track_w * pct) / 100
+                if (fill_w > 0) {
+                    forge fill_col = fg
+                    if (fill_col < 0) { fill_col = n.fg_color }
+                    if (fill_col < 0) { fill_col = 11321547 }
+                    canvas.fill_rounded_rect_aa(cv, track_x, track_y, fill_w, 6, track_r, fill_col)
+                }
+            }
+
             if (n.border_width > 0) {
                 if (n.radius > 0) {
-                    canvas.draw_rounded_border(cv, n.box_x, n.box_y, n.box_w, n.box_h, n.radius, bcol)
+                    canvas.stroke_rounded_rect_aa(cv, n.box_x, n.box_y, n.box_w, n.box_h, n.radius, n.border_width, bcol)
                 } else {
                     canvas.draw_rect(cv, n.box_x, n.box_y, n.box_w, n.box_h, bcol)
                 }
