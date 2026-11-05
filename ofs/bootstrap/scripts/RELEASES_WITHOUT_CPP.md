@@ -233,7 +233,7 @@ rm -f ofs/CMakeLists.txt
 
 ```bash
 # Modificou compilador OFS?
-nano ofs/ofs/bootstrap/ofscc.ofs
+nano ofs/ofscc/ofscc.ofs
 
 # Test change
 bash src/scripts/bootstrap-minimal.sh

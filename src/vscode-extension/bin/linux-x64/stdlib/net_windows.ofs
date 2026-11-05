@@ -1,0 +1,91 @@
+rift vein WSAStartup(version: stone, data: *stone) -> stone abi c
+rift vein WSACleanup() -> stone abi c
+rift vein socket(domain: stone, kind: stone, protocol: stone) -> stone abi c
+rift vein closesocket(fd: stone) -> stone abi c
+rift vein htons(port: stone) -> stone abi c
+rift vein bind(fd: stone, addr: *stone, len: stone) -> stone abi c
+rift vein listen(fd: stone, backlog: stone) -> stone abi c
+rift vein accept(fd: stone, addr: *stone, len: *stone) -> stone abi c
+rift vein send(fd: stone, buf: obsidian, len: stone, flags: stone) -> stone abi c
+rift vein recv(fd: stone, buf: obsidian, len: stone, flags: stone) -> stone abi c
+namespace net_windows {
+    vein tcp_listen(port: stone, backlog: stone) -> stone {
+        forge startup_data: *stone = ofs_alloc(512)
+        forge server: stone = -1
+        forge address: *stone = ofs_alloc(16)
+        forge portnet: stone = 0
+        forge bindresult: stone = -1
+        forge listenresult: stone = -1
+        if (WSAStartup(514, startup_data) != 0) {
+            ofs_free(startup_data)
+            return -1
+        }
+
+        server = socket(2, 1, 6)
+        if (server < 0) {
+            WSACleanup()
+            ofs_free(startup_data)
+            return -1
+        }
+
+        portnet = htons(port);
+        *address = 2 + (portnet * 65536)
+        bindresult = bind(server, address, 16)
+        if (bindresult != 0) {
+            closesocket(server)
+            WSACleanup()
+            ofs_free(address)
+            ofs_free(startup_data)
+            return -1
+        }
+        listenresult = listen(server, backlog)
+        if (listenresult != 0) {
+            closesocket(server)
+            WSACleanup()
+            ofs_free(address)
+            ofs_free(startup_data)
+            return -1
+        }
+        ofs_free(address)
+        ofs_free(startup_data)
+        return server
+    }
+
+    vein tcp_accept(server: stone) -> stone {
+        forge address: *stone = ofs_alloc(16)
+        forge addresslen: *stone = ofs_alloc(8);
+        forge client: stone = -1;
+        *addresslen = 16
+        client = accept(server, address, addresslen)
+        ofs_free(address)
+        ofs_free(addresslen)
+        return client
+    }
+
+    vein tcp_send_all(client: stone, data: obsidian) -> stone {
+        forge length = ofs_str_len(data)
+        forge sent = 0
+        while (sent < length) {
+            forge chunk: obsidian = (data as stone + sent) as obsidian
+            forge count = send(client, chunk, length - sent, 0)
+            if (count <= 0) { return -1 }
+            sent = sent + count
+        }
+        return sent
+    }
+
+    vein tcp_drain_request(client: stone) -> void {
+        forge buffer: obsidian = ofs_alloc(2048)
+        recv(client, buffer, 2047, 0)
+        ofs_free(buffer as *stone)
+    }
+
+    vein tcp_close(client: stone) -> void {
+        closesocket(client)
+    }
+
+    vein tcp_close_server(server: stone) -> void {
+        closesocket(server)
+        WSACleanup()
+    }
+}

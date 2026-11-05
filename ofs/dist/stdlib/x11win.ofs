@@ -1,0 +1,501 @@
+// OFS Standard Library — X11 Window Module
+// Janela nativa X11 escrita 100% em OFS (Xlib via extern), sem runtime C.
+// Apresenta um Canvas na tela e entrega eventos de teclado (com texto UTF-8
+// e acentos por tecla morta), mouse, roda, redimensionamento e fechamento.
+//
+//   x11win.open("Meu App", 1280, 800)
+//   while (x11win.is_open()) {
+//       forge ev = x11win.poll()
+//       while (ev != 0) { ... ev = x11win.poll() }
+//       x11win.present(cv)
+//       x11win.sleep_ms(8)
+//   }
+
+attach {F:canvas.ofs}
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+extern vein usleep(us: stone) -> stone
+extern vein clock_gettime(clk: stone, ts: *stone) -> stone
+
+extern vein XOpenDisplay(name: obsidian) -> *stone
+extern vein XCloseDisplay(disp: *stone) -> stone
+extern vein XDefaultScreen(disp: *stone) -> stone
+extern vein XDefaultDepth(disp: *stone, s: stone) -> stone
+extern vein XDefaultVisual(disp: *stone, s: stone) -> *stone
+extern vein XRootWindow(disp: *stone, s: stone) -> stone
+extern vein XCreateSimpleWindow(disp: *stone, parent: stone, x: stone, y: stone, w: stone, h: stone, bw: stone, border: stone, bg: stone) -> stone
+extern vein XDestroyWindow(disp: *stone, win: stone) -> stone
+extern vein XStoreName(disp: *stone, win: stone, title: obsidian) -> stone
+extern vein XSelectInput(disp: *stone, win: stone, mask: stone) -> stone
+extern vein XMapWindow(disp: *stone, win: stone) -> stone
+extern vein XFlush(disp: *stone) -> stone
+extern vein XCreateGC(disp: *stone, win: stone, mask: stone, values: *stone) -> *stone
+extern vein XPending(disp: *stone) -> stone
+extern vein XNextEvent(disp: *stone, event: *stone) -> stone
+extern vein XCreateImage(disp: *stone, visual: *stone, depth: stone, format: stone, offset: stone, data: *stone, w: stone, h: stone, pad: stone, bpl: stone) -> *stone
+extern vein XPutImage(disp: *stone, d: stone, gc: *stone, img: *stone, sx: stone, sy: stone, dx: stone, dy: stone, w: stone, h: stone) -> stone
+extern vein XInternAtom(disp: *stone, name: obsidian, only_if_exists: stone) -> stone
+extern vein XSetWMProtocols(disp: *stone, win: stone, protocols: *stone, count: stone) -> stone
+extern vein XLookupString(event: *stone, buf: *stone, len: stone, keysym: *stone, status: *stone) -> stone
+extern vein XCreateFontCursor(disp: *stone, shape: stone) -> stone
+extern vein XDefineCursor(disp: *stone, win: stone, cursor: stone) -> stone
+extern vein XChangeProperty(disp: *stone, win: stone, prop: stone, type: stone, format: stone, mode: stone, data: *stone, n: stone) -> stone
+
+namespace x11win {
+    // Tipos de evento devolvidos por poll()
+    forge EV_NONE: stone = 0
+    forge EV_KEY: stone = 1
+    forge EV_MOUSE_DOWN: stone = 2
+    forge EV_MOUSE_UP: stone = 3
+    forge EV_MOUSE_MOVE: stone = 4
+    forge EV_WHEEL: stone = 5
+    forge EV_RESIZE: stone = 6
+    forge EV_CLOSE: stone = 7
+    forge EV_EXPOSE: stone = 8
+    forge EV_LEAVE: stone = 9
+
+    // Cursores
+    forge CURSOR_ARROW: stone = 0
+    forge CURSOR_HAND: stone = 1
+    forge CURSOR_TEXT: stone = 2
+
+    forge _disp: *stone = null
+    forge _win: stone = 0
+    forge _gc: *stone = null
+    forge _visual: *stone = null
+    forge _depth: stone = 24
+    forge _w: stone = 0
+    forge _h: stone = 0
+    forge _open: bool = false
+    forge _ev: *stone = null
+    forge _img: *stone = null
+    forge _img_data: *stone = null
+    forge _img_w: stone = 0
+    forge _img_h: stone = 0
+    forge _wm_delete: stone = 0
+    forge _cursors: Array<stone> = []
+    forge _cur_cursor: stone = -1
+    forge _keybuf: *stone = null
+    forge _keysym_cell: *stone = null
+    forge _ts: *stone = null
+
+    // Dados do ultimo evento
+    forge ev_x: stone = 0
+    forge ev_y: stone = 0
+    forge ev_button: stone = 0
+    forge ev_key: stone = 0
+    forge ev_text: obsidian = ""
+    forge ev_mods: stone = 0
+    forge _mx: stone = 0
+    forge _my: stone = 0
+    forge _dead: stone = 0
+
+    vein _word(i: stone) -> stone {
+        forge p: *stone = fault_step(_ev, i)
+        forge v = 0
+        fracture {
+            v = *p;
+        }
+        return v
+    }
+
+    vein _lo32(v: stone) -> stone {
+        forge r = v & 4294967295
+        if (r >= 2147483648) { r = r - 4294967296 }
+        return r
+    }
+
+    vein _hi32(v: stone) -> stone {
+        return _lo32(v >> 32)
+    }
+
+    vein open(title: obsidian, w: stone, h: stone) -> bool {
+        _disp = XOpenDisplay(null)
+        if (_disp == null) {
+            echo("[x11win] sem display X11 (DISPLAY nao definido?)")
+            return false
+        }
+        forge scr = XDefaultScreen(_disp)
+        _depth = XDefaultDepth(_disp, scr)
+        _visual = XDefaultVisual(_disp, scr)
+        forge root = XRootWindow(_disp, scr)
+        _win = XCreateSimpleWindow(_disp, root, 60, 40, w, h, 0, 0, 1118481)
+        XStoreName(_disp, _win, title)
+        // Key, Button, Motion, Leave, Exposure, StructureNotify, FocusChange
+        XSelectInput(_disp, _win, 1 + 2 + 4 + 8 + 32 + 64 + 32768 + 131072 + 2097152)
+        _wm_delete = XInternAtom(_disp, "WM_DELETE_WINDOW", 0)
+        forge atom_cell: *stone = ofs_alloc(8)
+        fracture {
+            *atom_cell = _wm_delete;
+        }
+        XSetWMProtocols(_disp, _win, atom_cell, 1)
+        _gc = XCreateGC(_disp, _win, 0, null)
+        XMapWindow(_disp, _win)
+        XFlush(_disp)
+        _ev = ofs_alloc(256)
+        _keybuf = ofs_alloc(64)
+        _keysym_cell = ofs_alloc(16)
+        _ts = ofs_alloc(16)
+        _w = w
+        _h = h
+        _open = true
+        _cursors = []
+        ofs_array_push(_cursors, XCreateFontCursor(_disp, 68))
+        ofs_array_push(_cursors, XCreateFontCursor(_disp, 60))
+        ofs_array_push(_cursors, XCreateFontCursor(_disp, 152))
+        return true
+    }
+
+    vein close() -> void {
+        if (_disp != null) {
+            XDestroyWindow(_disp, _win)
+            XCloseDisplay(_disp)
+        }
+        _disp = null
+        _open = false
+    }
+
+    vein is_open() -> bool {
+        return _open
+    }
+
+    vein width() -> stone {
+        return _w
+    }
+
+    vein height() -> stone {
+        return _h
+    }
+
+    vein mouse_x() -> stone {
+        return _mx
+    }
+
+    vein mouse_y() -> stone {
+        return _my
+    }
+
+    vein set_title(t: obsidian) -> void {
+        if (_disp != null) {
+            XStoreName(_disp, _win, t)
+        }
+    }
+
+    vein set_cursor(kind: stone) -> void {
+        if (_disp == null || kind == _cur_cursor) { return }
+        if (kind < 0 || kind >= ofs_array_len(_cursors)) { return }
+        XDefineCursor(_disp, _win, ofs_array_get(_cursors, kind))
+        _cur_cursor = kind
+    }
+
+    // Define o icone da janela (_NET_WM_ICON) a partir de um canvas quadrado.
+    vein set_icon(icon: Canvas) -> void {
+        if (_disp == null) { return }
+        forge n = icon.width * icon.height
+        forge data: *stone = ofs_alloc((n + 2) * 8)
+        forge p0: *stone = data
+        forge p1: *stone = fault_step(data, 1)
+        fracture {
+            *p0 = icon.width;
+            *p1 = icon.height;
+        }
+        forge i = 0
+        while (i < n) {
+            forge px = canvas.get_pixel(icon, i % icon.width, i / icon.width)
+            forge q: *stone = fault_step(data, i + 2)
+            fracture {
+                *q = px;
+            }
+            i++
+        }
+        forge prop = XInternAtom(_disp, "_NET_WM_ICON", 0)
+        // XA_CARDINAL = 6, formato 32 (long), PropModeReplace = 0
+        XChangeProperty(_disp, _win, prop, 6, 32, 0, data, n + 2)
+        ofs_free(data)
+    }
+
+    // ── Tempo ────────────────────────────────────────────────────────────
+    vein now_ms() -> stone {
+        clock_gettime(1, _ts)
+        forge ps: *stone = _ts
+        forge pn: *stone = fault_step(_ts, 1)
+        forge sec = 0
+        forge nsec = 0
+        fracture {
+            sec = *ps;
+            nsec = *pn;
+        }
+        return sec * 1000 + nsec / 1000000
+    }
+
+    vein sleep_ms(ms: stone) -> void {
+        usleep(ms * 1000)
+    }
+
+    // ── Apresentacao ─────────────────────────────────────────────────────
+    vein _ensure_image(w: stone, h: stone) -> void {
+        if (_img != null && _img_w == w && _img_h == h) { return }
+        // A struct XImage antiga e pequena; os dados sao reaproveitados
+        // apenas quando o tamanho coincide.
+        _img_data = ofs_alloc(w * h * 4 + 16)
+        // ZPixmap = 2, 32 bits por pixel, bytes_per_line = w * 4
+        _img = XCreateImage(_disp, _visual, _depth, 2, 0, _img_data, w, h, 32, w * 4)
+        _img_w = w
+        _img_h = h
+    }
+
+    vein present(cv: Canvas) -> void {
+        if (_disp == null) { return }
+        forge w = cv.width
+        forge h = cv.height
+        _ensure_image(w, h)
+        // canvas: 1 stone (0xRRGGBB) por pixel -> XImage: 1 u32 por pixel.
+        // Empacota dois pixels por palavra de 64 bits.
+        forge total = w * h
+        forge pairs = total / 2
+        forge i = 0
+        while (i < pairs) {
+            forge sp0: *stone = fault_step(cv.buffer, i * 2)
+            forge sp1: *stone = fault_step(cv.buffer, i * 2 + 1)
+            forge a = 0
+            forge b = 0
+            fracture {
+                a = *sp0;
+                b = *sp1;
+            }
+            forge dp: *stone = fault_step(_img_data, i)
+            fracture {
+                *dp = (a & 16777215) | ((b & 16777215) << 32);
+            }
+            i++
+        }
+        if (total % 2 == 1) {
+            forge spl: *stone = fault_step(cv.buffer, total - 1)
+            forge last = 0
+            fracture {
+                last = *spl;
+            }
+            forge dpl: *u32 = (((_img_data as stone) + (total - 1) * 4) as *u32)
+            forge lv: u32 = (last & 16777215) as u32
+            fracture {
+                *dpl = lv;
+            }
+        }
+        XPutImage(_disp, _win, _gc, _img, 0, 0, 0, 0, w, h)
+        XFlush(_disp)
+    }
+
+    // ── Teclado: keysym -> Unicode, com teclas mortas (pt-BR) ────────────
+    vein _keysym_to_cp(ks: stone) -> stone {
+        if (ks >= 32 && ks <= 255) { return ks }
+        if (ks >= 16777216 && ks < 16777216 + 1114112) { return ks - 16777216 }
+        return 0
+    }
+
+    vein _compose(dead: stone, cp: stone) -> stone {
+        // dead_grave 65104, dead_acute 65105, dead_circumflex 65106,
+        // dead_tilde 65107, dead_diaeresis 65111, dead_cedilla 65115
+        if (dead == 65105) {
+            if (cp == 97) { return 225 }
+            if (cp == 101) { return 233 }
+            if (cp == 105) { return 237 }
+            if (cp == 111) { return 243 }
+            if (cp == 117) { return 250 }
+            if (cp == 65) { return 193 }
+            if (cp == 69) { return 201 }
+            if (cp == 73) { return 205 }
+            if (cp == 79) { return 211 }
+            if (cp == 85) { return 218 }
+            if (cp == 99) { return 231 }
+            if (cp == 67) { return 199 }
+        }
+        if (dead == 65104) {
+            if (cp == 97) { return 224 }
+            if (cp == 65) { return 192 }
+            if (cp == 101) { return 232 }
+            if (cp == 111) { return 242 }
+        }
+        if (dead == 65106) {
+            if (cp == 97) { return 226 }
+            if (cp == 101) { return 234 }
+            if (cp == 111) { return 244 }
+            if (cp == 65) { return 194 }
+            if (cp == 69) { return 202 }
+            if (cp == 79) { return 212 }
+        }
+        if (dead == 65107) {
+            if (cp == 97) { return 227 }
+            if (cp == 111) { return 245 }
+            if (cp == 110) { return 241 }
+            if (cp == 65) { return 195 }
+            if (cp == 79) { return 213 }
+            if (cp == 78) { return 209 }
+        }
+        if (dead == 65111) {
+            if (cp == 117) { return 252 }
+            if (cp == 85) { return 220 }
+            if (cp == 97) { return 228 }
+            if (cp == 111) { return 246 }
+            if (cp == 101) { return 235 }
+            if (cp == 105) { return 239 }
+        }
+        if (dead == 65115) {
+            if (cp == 99) { return 231 }
+            if (cp == 67) { return 199 }
+        }
+        return 0
+    }
+
+    vein _dead_char(dead: stone) -> stone {
+        if (dead == 65104) { return 96 }
+        if (dead == 65105) { return 180 }
+        if (dead == 65106) { return 94 }
+        if (dead == 65107) { return 126 }
+        if (dead == 65111) { return 168 }
+        if (dead == 65115) { return 184 }
+        return 0
+    }
+
+    vein utf8(cp: stone) -> obsidian {
+        forge buf: *u8 = ofs_alloc(8) as *u8
+        forge base = buf as stone
+        forge n = 0
+        if (cp < 128) {
+            _put(base, 0, cp)
+            n = 1
+        } else if (cp < 2048) {
+            _put(base, 0, 192 | (cp >> 6))
+            _put(base, 1, 128 | (cp & 63))
+            n = 2
+        } else if (cp < 65536) {
+            _put(base, 0, 224 | (cp >> 12))
+            _put(base, 1, 128 | ((cp >> 6) & 63))
+            _put(base, 2, 128 | (cp & 63))
+            n = 3
+        } else {
+            _put(base, 0, 240 | (cp >> 18))
+            _put(base, 1, 128 | ((cp >> 12) & 63))
+            _put(base, 2, 128 | ((cp >> 6) & 63))
+            _put(base, 3, 128 | (cp & 63))
+            n = 4
+        }
+        _put(base, n, 0)
+        return base as obsidian
+    }
+
+    vein _put(base: stone, i: stone, v: stone) -> void {
+        forge p: *u8 = (base + i) as *u8
+        forge b: u8 = (v & 255) as u8
+        fracture {
+            *p = b;
+        }
+    }
+
+    vein _decode_key() -> void {
+        forge w10 = _word(10)
+        ev_mods = w10 & 4294967295
+        XLookupString(_ev, _keybuf, 32, _keysym_cell, null)
+        forge ks = 0
+        fracture {
+            ks = *_keysym_cell;
+        }
+        ev_key = ks
+        ev_text = ""
+        // modificadores sozinhos (Shift, Ctrl, Alt, Super...) nao geram texto
+        if (ks >= 65505 && ks <= 65518) { return }
+        if (ks >= 65104 && ks <= 65120) {
+            if (_dead != 0) {
+                // tecla morta repetida: emite o proprio acento
+                forge dc = _dead_char(_dead)
+                _dead = 0
+                if (dc > 0) { ev_text = utf8(dc) }
+                return
+            }
+            _dead = ks
+            ev_key = 0
+            return
+        }
+        // Ctrl/Alt + tecla: atalho, sem texto
+        if ((ev_mods & 4) != 0 || (ev_mods & 8) != 0) {
+            _dead = 0
+            return
+        }
+        forge cp = _keysym_to_cp(ks)
+        if (_dead != 0) {
+            forge composed = _compose(_dead, cp)
+            if (composed > 0) {
+                ev_text = utf8(composed)
+            } else if (cp > 0) {
+                forge dch = _dead_char(_dead)
+                ev_text = utf8(dch) + utf8(cp)
+            }
+            _dead = 0
+            return
+        }
+        if (cp >= 32 && cp != 127) {
+            ev_text = utf8(cp)
+        }
+    }
+
+    // ── Eventos ──────────────────────────────────────────────────────────
+    // Retorna o proximo evento (EV_*) ou EV_NONE se a fila estiver vazia.
+    vein poll() -> stone {
+        if (_disp == null) { return EV_NONE }
+        while (XPending(_disp) > 0) {
+            XNextEvent(_disp, _ev)
+            forge t = _word(0) & 4294967295
+            if (t == 2) {
+                _decode_key()
+                if (ev_key != 0 || ofs_str_len(ev_text) > 0) { return EV_KEY }
+            } else if (t == 4 || t == 5) {
+                forge xy = _word(8)
+                ev_x = _lo32(xy)
+                ev_y = _hi32(xy)
+                _mx = ev_x
+                _my = ev_y
+                forge w10b = _word(10)
+                ev_mods = w10b & 4294967295
+                ev_button = _hi32(w10b)
+                if (ev_button == 4 || ev_button == 5 || ev_button == 6 || ev_button == 7) {
+                    if (t == 4) {
+                        if (ev_button == 4) { ev_button = 0 - 1 } else if (ev_button == 5) { ev_button = 1 } else if (ev_button == 6) { ev_button = 0 - 2 } else { ev_button = 2 }
+                        return EV_WHEEL
+                    }
+                } else {
+                    if (t == 4) { return EV_MOUSE_DOWN }
+                    return EV_MOUSE_UP
+                }
+            } else if (t == 6) {
+                forge mxy = _word(8)
+                ev_x = _lo32(mxy)
+                ev_y = _hi32(mxy)
+                _mx = ev_x
+                _my = ev_y
+                ev_mods = _word(10) & 4294967295
+                return EV_MOUSE_MOVE
+            } else if (t == 8) {
+                _mx = 0 - 1
+                _my = 0 - 1
+                return EV_LEAVE
+            } else if (t == 12) {
+                return EV_EXPOSE
+            } else if (t == 22) {
+                forge wh = _word(7)
+                forge nw = _lo32(wh)
+                forge nh = _hi32(wh)
+                if (nw > 0 && nh > 0 && (nw != _w || nh != _h)) {
+                    _w = nw
+                    _h = nh
+                    return EV_RESIZE
+                }
+            } else if (t == 33) {
+                if (_word(7) == _wm_delete) {
+                    _open = false
+                    return EV_CLOSE
+                }
+            }
+        }
+        return EV_NONE
+    }
+}

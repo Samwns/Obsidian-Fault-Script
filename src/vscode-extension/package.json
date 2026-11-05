@@ -2,7 +2,7 @@
   "name": "obsidian-fault-script",
   "displayName": "Obsidian Fault Script",
   "description": "Language support, diagnostics, autocomplete and embedded self-hosted LLVM compiler for OFS",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "publisher": "Obsidian-Fault",
   "icon": "media/ofs.png",
   "license": "Apache-2.0",

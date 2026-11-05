@@ -1,0 +1,674 @@
+// OFS Standard Library — TrueType Module
+// Leitor de fontes TrueType (.ttf com tabela glyf) e renderizador de texto
+// com antialiasing e posicionamento subpixel, escrito 100% em OFS.
+//
+//   forge ui = ttf.load("/usr/share/fonts/rsms-inter-fonts/Inter-Regular.ttf")
+//   ttf.draw(cv, ui, 14, x, baseline_y, "Olá, mundo — ação!", 15132390)
+//   forge w = ttf.width(ui, 14, "texto")
+//
+// Suporta: cmap formatos 4 e 12 (Unicode/BMP e alem), glifos simples e
+// compostos (acentos), metricas horizontais (hhea/hmtx), UTF-8.
+// Glifos rasterizados ficam em cache por (fonte, glifo, tamanho, subpixel).
+
+attach {F:raster.ofs}
+attach {F:hashmap.ofs}
+
+extern vein fopen(path: obsidian, mode: obsidian) -> *stone
+extern vein fclose(f: *stone) -> stone
+extern vein fread(buf: *stone, sz: stone, n: stone, f: *stone) -> stone
+extern vein fseek(f: *stone, offset: stone, whence: stone) -> stone
+extern vein ftell(f: *stone) -> stone
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+extern vein memcpy(dst: *stone, src: *stone, size: stone) -> *stone
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at_known(s: obsidian, idx: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+
+namespace ttf {
+    // ── Fontes carregadas (indice = id da fonte) ─────────────────────────
+    forge _base: Array<stone> = []
+    forge _upem: Array<stone> = []
+    forge _locfmt: Array<stone> = []
+    forge _nglyphs: Array<stone> = []
+    forge _nhm: Array<stone> = []
+    forge _asc: Array<stone> = []
+    forge _desc: Array<stone> = []
+    forge _gap: Array<stone> = []
+    forge _cmap: Array<stone> = []
+    forge _cmapfmt: Array<stone> = []
+    forge _loca: Array<stone> = []
+    forge _glyf: Array<stone> = []
+    forge _hmtx: Array<stone> = []
+
+    // ── Caches ───────────────────────────────────────────────────────────
+    forge _glyph_map: stone = -1
+    forge _cache: stone = -1
+    forge _e_off: Array<stone> = []
+    forge _e_w: Array<stone> = []
+    forge _e_h: Array<stone> = []
+    forge _e_left: Array<stone> = []
+    forge _e_top: Array<stone> = []
+    forge _pool: *stone = null
+    forge _pool_cap: stone = 0
+    forge _pool_len: stone = 0
+    // Escurecimento de hastes (0 = linear). Deixa texto pequeno mais legivel.
+    forge stem_darkening: stone = 35
+
+    // ── Leitura big-endian ───────────────────────────────────────────────
+    vein _u8(b: stone, o: stone) -> stone {
+        forge p: *u8 = (b + o) as *u8
+        forge v: u8 = 0 as u8
+        fracture {
+            v = *p;
+        }
+        return (v as stone) & 255
+    }
+
+    vein _u16(b: stone, o: stone) -> stone {
+        return (_u8(b, o) << 8) | _u8(b, o + 1)
+    }
+
+    vein _i16(b: stone, o: stone) -> stone {
+        forge v = _u16(b, o)
+        if (v >= 32768) { v = v - 65536 }
+        return v
+    }
+
+    vein _i8(b: stone, o: stone) -> stone {
+        forge v = _u8(b, o)
+        if (v >= 128) { v = v - 256 }
+        return v
+    }
+
+    vein _u32(b: stone, o: stone) -> stone {
+        return (_u16(b, o) << 16) | _u16(b, o + 2)
+    }
+
+    vein _get(a: Array<stone>, i: stone) -> stone {
+        return ofs_array_get(a, i)
+    }
+
+    // ── Carregamento ─────────────────────────────────────────────────────
+    vein _read_file(path: obsidian) -> stone {
+        forge f = fopen(path, "rb")
+        if (f == null) { return 0 }
+        fseek(f, 0, 2)
+        forge n = ftell(f)
+        fseek(f, 0, 0)
+        if (n <= 12) {
+            fclose(f)
+            return 0
+        }
+        forge buf: *stone = ofs_alloc(n + 16)
+        fread(buf, 1, n, f)
+        fclose(f)
+        return buf as stone
+    }
+
+    vein _find_table(b: stone, tag: stone) -> stone {
+        forge n = _u16(b, 4)
+        forge i = 0
+        while (i < n) {
+            forge rec = 12 + 16 * i
+            if (_u32(b, rec) == tag) { return _u32(b, rec + 8) }
+            i++
+        }
+        return -1
+    }
+
+    // Escolhe a melhor subtabela Unicode do cmap.
+    vein _pick_cmap(b: stone, cmap: stone, want_fmt: stone) -> stone {
+        forge n = _u16(b, cmap + 2)
+        forge best = -1
+        forge i = 0
+        while (i < n) {
+            forge rec = cmap + 4 + 8 * i
+            forge plat = _u16(b, rec)
+            forge enc = _u16(b, rec + 2)
+            forge sub = cmap + _u32(b, rec + 4)
+            forge fmt = _u16(b, sub)
+            if (fmt == want_fmt && (plat == 0 || (plat == 3 && (enc == 1 || enc == 10)))) {
+                best = sub
+            }
+            i++
+        }
+        return best
+    }
+
+    // Retorna o id da fonte, ou -1 se o arquivo nao puder ser lido.
+    vein load(path: obsidian) -> stone {
+        forge b = _read_file(path)
+        if (b == 0) { return -1 }
+        forge head = _find_table(b, 1751474532)
+        forge hhea = _find_table(b, 1751672161)
+        forge hmtx = _find_table(b, 1752003704)
+        forge maxp = _find_table(b, 1835104368)
+        forge cmap = _find_table(b, 1668112752)
+        forge loca = _find_table(b, 1819239265)
+        forge glyf = _find_table(b, 1735162214)
+        if (head < 0 || hhea < 0 || hmtx < 0 || maxp < 0 || cmap < 0 || loca < 0 || glyf < 0) {
+            ofs_free(b as *stone)
+            return -1
+        }
+        forge sub = _pick_cmap(b, cmap, 12)
+        forge fmt = 12
+        if (sub < 0) {
+            sub = _pick_cmap(b, cmap, 4)
+            fmt = 4
+        }
+        if (sub < 0) {
+            ofs_free(b as *stone)
+            return -1
+        }
+        if (_glyph_map < 0) {
+            _glyph_map = hashmap.new(512)
+            _cache = hashmap.new(1024)
+        }
+        ofs_array_push(_base, b)
+        ofs_array_push(_upem, _u16(b, head + 18))
+        ofs_array_push(_locfmt, _i16(b, head + 50))
+        ofs_array_push(_nglyphs, _u16(b, maxp + 4))
+        ofs_array_push(_nhm, _u16(b, hhea + 34))
+        ofs_array_push(_asc, _i16(b, hhea + 4))
+        ofs_array_push(_desc, _i16(b, hhea + 6))
+        ofs_array_push(_gap, _i16(b, hhea + 8))
+        ofs_array_push(_cmap, sub)
+        ofs_array_push(_cmapfmt, fmt)
+        ofs_array_push(_loca, loca)
+        ofs_array_push(_glyf, glyf)
+        ofs_array_push(_hmtx, hmtx)
+        return ofs_array_len(_base) - 1
+    }
+
+    // Tenta varios caminhos e retorna a primeira fonte que carregar.
+    vein load_first(p1: obsidian, p2: obsidian, p3: obsidian) -> stone {
+        forge f = load(p1)
+        if (f < 0) { f = load(p2) }
+        if (f < 0) { f = load(p3) }
+        return f
+    }
+
+    // ── cmap ─────────────────────────────────────────────────────────────
+    vein _lookup_fmt4(b: stone, sub: stone, cp: stone) -> stone {
+        if (cp > 65535) { return 0 }
+        forge segx2 = _u16(b, sub + 6)
+        forge ends = sub + 14
+        forge starts = ends + segx2 + 2
+        forge deltas = starts + segx2
+        forge ranges = deltas + segx2
+        // busca binaria pelo primeiro segmento com end >= cp
+        forge lo = 0
+        forge hi = segx2 / 2 - 1
+        while (lo < hi) {
+            forge mid = (lo + hi) / 2
+            if (_u16(b, ends + mid * 2) < cp) {
+                lo = mid + 1
+            } else {
+                hi = mid
+            }
+        }
+        forge i = lo
+        forge st = _u16(b, starts + i * 2)
+        if (cp < st || cp > _u16(b, ends + i * 2)) { return 0 }
+        forge delta = _u16(b, deltas + i * 2)
+        forge ro = _u16(b, ranges + i * 2)
+        if (ro == 0) { return (cp + delta) & 65535 }
+        forge g = _u16(b, ranges + i * 2 + ro + 2 * (cp - st))
+        if (g == 0) { return 0 }
+        return (g + delta) & 65535
+    }
+
+    vein _lookup_fmt12(b: stone, sub: stone, cp: stone) -> stone {
+        forge n = _u32(b, sub + 12)
+        forge lo = 0
+        forge hi = n - 1
+        while (lo <= hi) {
+            forge mid = (lo + hi) / 2
+            forge g = sub + 16 + mid * 12
+            forge s = _u32(b, g)
+            forge e = _u32(b, g + 4)
+            if (cp < s) {
+                hi = mid - 1
+            } else if (cp > e) {
+                lo = mid + 1
+            } else {
+                return _u32(b, g + 8) + (cp - s)
+            }
+        }
+        return 0
+    }
+
+    vein glyph_index(font: stone, cp: stone) -> stone {
+        forge key = font * 2097152 + cp
+        forge cached = hashmap.get(_glyph_map, key, -1)
+        if (cached >= 0) { return cached }
+        forge b = _get(_base, font)
+        forge sub = _get(_cmap, font)
+        forge g = 0
+        if (_get(_cmapfmt, font) == 12) {
+            g = _lookup_fmt12(b, sub, cp)
+        } else {
+            g = _lookup_fmt4(b, sub, cp)
+        }
+        hashmap.set(_glyph_map, key, g)
+        return g
+    }
+
+    // ── Metricas ─────────────────────────────────────────────────────────
+    vein advance_units(font: stone, g: stone) -> stone {
+        forge b = _get(_base, font)
+        forge nhm = _get(_nhm, font)
+        forge hm = _get(_hmtx, font)
+        if (g < nhm) { return _u16(b, hm + 4 * g) }
+        return _u16(b, hm + 4 * (nhm - 1))
+    }
+
+    // Avanco em 1/64 de pixel.
+    vein advance64(font: stone, g: stone, size: stone) -> stone {
+        forge up = _get(_upem, font)
+        return (advance_units(font, g) * size * 64 + up / 2) / up
+    }
+
+    vein ascent(font: stone, size: stone) -> stone {
+        forge up = _get(_upem, font)
+        return (_get(_asc, font) * size + up - 1) / up
+    }
+
+    vein descent(font: stone, size: stone) -> stone {
+        forge up = _get(_upem, font)
+        forge d = _get(_desc, font)
+        if (d < 0) { d = 0 - d }
+        return (d * size + up - 1) / up
+    }
+
+    vein line_height(font: stone, size: stone) -> stone {
+        forge up = _get(_upem, font)
+        return ((_get(_asc, font) - _get(_desc, font) + _get(_gap, font)) * size + up - 1) / up
+    }
+
+    // ── Contornos ────────────────────────────────────────────────────────
+    vein _glyph_offset(font: stone, g: stone) -> stone {
+        forge b = _get(_base, font)
+        forge loca = _get(_loca, font)
+        if (_get(_locfmt, font) == 0) {
+            return _u16(b, loca + g * 2) * 2
+        }
+        return _u32(b, loca + g * 4)
+    }
+
+    vein _glyph_len(font: stone, g: stone) -> stone {
+        if (g + 1 > _get(_nglyphs, font)) { return 0 }
+        return _glyph_offset(font, g + 1) - _glyph_offset(font, g)
+    }
+
+    // Emite o contorno do glifo no rasterizador. (ox, oy) = origem do
+    // glifo na linha de base, s = pixels por unidade da fonte.
+    vein _emit_glyph(font: stone, g: stone, ox: crystal, oy: crystal, s: crystal, depth: stone) -> void {
+        if (depth > 6) { return }
+        if (_glyph_len(font, g) <= 0) { return }
+        forge b = _get(_base, font)
+        forge gp = _get(_glyf, font) + _glyph_offset(font, g)
+        forge nc = _i16(b, gp)
+        if (nc < 0) {
+            _emit_composite(font, b, gp + 10, ox, oy, s, depth)
+            return
+        }
+        if (nc == 0) { return }
+        forge npts = _u16(b, gp + 10 + 2 * (nc - 1)) + 1
+        forge off = gp + 10 + 2 * nc
+        forge ninstr = _u16(b, off)
+        off = off + 2 + ninstr
+
+        forge flags: Array<stone> = []
+        forge i = 0
+        while (i < npts) {
+            forge f = _u8(b, off)
+            off++
+            ofs_array_push(flags, f)
+            i++
+            if ((f & 8) != 0) {
+                forge r = _u8(b, off)
+                off++
+                while (r > 0 && i < npts) {
+                    ofs_array_push(flags, f)
+                    i++
+                    r--
+                }
+            }
+        }
+
+        forge xs: Array<stone> = []
+        forge x = 0
+        i = 0
+        while (i < npts) {
+            forge fx = ofs_array_get(flags, i)
+            if ((fx & 2) != 0) {
+                forge dx = _u8(b, off)
+                off++
+                if ((fx & 16) == 0) { dx = 0 - dx }
+                x = x + dx
+            } else if ((fx & 16) == 0) {
+                x = x + _i16(b, off)
+                off = off + 2
+            }
+            ofs_array_push(xs, x)
+            i++
+        }
+
+        forge ys: Array<stone> = []
+        forge y = 0
+        i = 0
+        while (i < npts) {
+            forge fy = ofs_array_get(flags, i)
+            if ((fy & 4) != 0) {
+                forge dy = _u8(b, off)
+                off++
+                if ((fy & 32) == 0) { dy = 0 - dy }
+                y = y + dy
+            } else if ((fy & 32) == 0) {
+                y = y + _i16(b, off)
+                off = off + 2
+            }
+            ofs_array_push(ys, y)
+            i++
+        }
+
+        forge c = 0
+        forge start = 0
+        while (c < nc) {
+            forge end = _u16(b, gp + 10 + 2 * c)
+            _emit_contour(flags, xs, ys, start, end, ox, oy, s)
+            start = end + 1
+            c++
+        }
+    }
+
+    vein _px(xs: Array<stone>, i: stone, ox: crystal, s: crystal) -> crystal {
+        forge v: stone = ofs_array_get(xs, i)
+        return ox + (v as crystal) * s
+    }
+
+    vein _py(ys: Array<stone>, i: stone, oy: crystal, s: crystal) -> crystal {
+        forge v: stone = ofs_array_get(ys, i)
+        return oy - (v as crystal) * s
+    }
+
+    vein _on(flags: Array<stone>, i: stone) -> bool {
+        forge f: stone = ofs_array_get(flags, i)
+        return (f & 1) != 0
+    }
+
+    // Converte um contorno TrueType (quadraticas com pontos implicitos).
+    vein _emit_contour(flags: Array<stone>, xs: Array<stone>, ys: Array<stone>, s0: stone, e0: stone, ox: crystal, oy: crystal, s: crystal) -> void {
+        forge n = e0 - s0 + 1
+        if (n < 2) { return }
+        forge stx = 0.0
+        forge sty = 0.0
+        forge first = 0
+        forge count = 0
+        if (_on(flags, s0)) {
+            stx = _px(xs, s0, ox, s)
+            sty = _py(ys, s0, oy, s)
+            first = 1
+            count = n - 1
+        } else if (_on(flags, e0)) {
+            stx = _px(xs, e0, ox, s)
+            sty = _py(ys, e0, oy, s)
+            first = 0
+            count = n - 1
+        } else {
+            stx = (_px(xs, s0, ox, s) + _px(xs, e0, ox, s)) / 2.0
+            sty = (_py(ys, s0, oy, s) + _py(ys, e0, oy, s)) / 2.0
+            first = 0
+            count = n
+        }
+        raster.move_to(stx, sty)
+        forge has_ctrl = false
+        forge cx = 0.0
+        forge cy = 0.0
+        forge k = 0
+        while (k < count) {
+            forge idx = s0 + first + k
+            forge px = _px(xs, idx, ox, s)
+            forge py = _py(ys, idx, oy, s)
+            if (_on(flags, idx)) {
+                if (has_ctrl) {
+                    raster.quad_to(cx, cy, px, py)
+                    has_ctrl = false
+                } else {
+                    raster.line_to(px, py)
+                }
+            } else {
+                if (has_ctrl) {
+                    forge mx = (cx + px) / 2.0
+                    forge my = (cy + py) / 2.0
+                    raster.quad_to(cx, cy, mx, my)
+                }
+                cx = px
+                cy = py
+                has_ctrl = true
+            }
+            k++
+        }
+        if (has_ctrl) {
+            raster.quad_to(cx, cy, stx, sty)
+        }
+        raster.close()
+    }
+
+    vein _emit_composite(font: stone, b: stone, p0: stone, ox: crystal, oy: crystal, s: crystal, depth: stone) -> void {
+        forge p = p0
+        forge more = true
+        while (more) {
+            forge flags = _u16(b, p)
+            forge g = _u16(b, p + 2)
+            p = p + 4
+            forge dx = 0
+            forge dy = 0
+            if ((flags & 1) != 0) {
+                dx = _i16(b, p)
+                dy = _i16(b, p + 2)
+                p = p + 4
+            } else {
+                dx = _i8(b, p)
+                dy = _i8(b, p + 1)
+                p = p + 2
+            }
+            if ((flags & 2) == 0) {
+                // alinhamento por pontos: raro em fontes de UI, ignora deslocamento
+                dx = 0
+                dy = 0
+            }
+            if ((flags & 8) != 0) {
+                p = p + 2
+            } else if ((flags & 64) != 0) {
+                p = p + 4
+            } else if ((flags & 128) != 0) {
+                p = p + 8
+            }
+            _emit_glyph(font, g, ox + (dx as crystal) * s, oy - (dy as crystal) * s, s, depth + 1)
+            more = (flags & 32) != 0
+        }
+    }
+
+    // ── Cache de glifos rasterizados ─────────────────────────────────────
+    vein _pool_reserve(n: stone) -> stone {
+        if (_pool_len + n > _pool_cap) {
+            forge nc = _pool_cap * 2
+            if (nc < 65536) { nc = 65536 }
+            while (nc < _pool_len + n) { nc = nc * 2 }
+            forge np: *stone = ofs_alloc(nc * 8)
+            if (_pool != null) {
+                memcpy(np, _pool, _pool_len * 8)
+                ofs_free(_pool)
+            }
+            _pool = np
+            _pool_cap = nc
+        }
+        forge at = _pool_len
+        _pool_len = _pool_len + n
+        return at
+    }
+
+    // Retorna o indice da entrada de cache (rasteriza se necessario).
+    vein _entry(font: stone, g: stone, size: stone, sub: stone) -> stone {
+        forge key = ((font * 65536 + g) * 256 + size) * 4 + sub
+        forge hit = hashmap.get(_cache, key, -1)
+        if (hit >= 0) { return hit }
+
+        forge b = _get(_base, font)
+        forge s = (size as crystal) / (_get(_upem, font) as crystal)
+        forge subx = (sub as crystal) / 4.0
+        forge w = 0
+        forge h = 0
+        forge left = 0
+        forge top = 0
+        forge off = 0
+        if (_glyph_len(font, g) > 0) {
+            forge gp = _get(_glyf, font) + _glyph_offset(font, g)
+            forge xmin = (_i16(b, gp + 2) as crystal) * s + subx
+            forge ymin = (_i16(b, gp + 4) as crystal) * s
+            forge xmax = (_i16(b, gp + 6) as crystal) * s + subx
+            forge ymax = (_i16(b, gp + 8) as crystal) * s
+            forge bx0 = raster.floor_i(xmin)
+            forge bx1 = raster.ceil_i(xmax)
+            forge by0 = raster.floor_i(0.0 - ymax)
+            forge by1 = raster.ceil_i(0.0 - ymin)
+            w = bx1 - bx0 + 2
+            h = by1 - by0 + 2
+            left = bx0 - 1
+            top = by0 - 1
+            off = _pool_reserve(w * h)
+            raster.begin(0, 0, w, h)
+            _emit_glyph(font, g, (1 - bx0) as crystal + subx, (1 - by0) as crystal, s, 0)
+            raster.to_alpha(fault_step(_pool, off), stem_darkening)
+        }
+        ofs_array_push(_e_off, off)
+        ofs_array_push(_e_w, w)
+        ofs_array_push(_e_h, h)
+        ofs_array_push(_e_left, left)
+        ofs_array_push(_e_top, top)
+        forge idx = ofs_array_len(_e_off) - 1
+        hashmap.set(_cache, key, idx)
+        return idx
+    }
+
+    vein _blit(cv: Canvas, e: stone, x: stone, y: stone, color: stone) -> void {
+        forge w = _get(_e_w, e)
+        if (w <= 0) { return }
+        forge h = _get(_e_h, e)
+        forge off = _get(_e_off, e)
+        forge gx = x + _get(_e_left, e)
+        forge gy = y + _get(_e_top, e)
+        forge yy = 0
+        while (yy < h) {
+            forge xx = 0
+            while (xx < w) {
+                forge p: *stone = fault_step(_pool, off + yy * w + xx)
+                forge a = 0
+                fracture {
+                    a = *p;
+                }
+                if (a > 0) {
+                    canvas.blend_pixel(cv, gx + xx, gy + yy, color, a)
+                }
+                xx++
+            }
+            yy++
+        }
+    }
+
+    // ── UTF-8 ────────────────────────────────────────────────────────────
+    forge _u8_len: stone = 0
+
+    // Decodifica o codepoint em text[i]; _u8_len recebe o tamanho em bytes.
+    vein decode(text: obsidian, i: stone, n: stone) -> stone {
+        forge c = ofs_str_char_at_known(text, i) & 255
+        if (c < 128) {
+            _u8_len = 1
+            return c
+        }
+        if (c >= 240 && i + 3 < n) {
+            _u8_len = 4
+            return ((c & 7) << 18) | ((ofs_str_char_at_known(text, i + 1) & 63) << 12) | ((ofs_str_char_at_known(text, i + 2) & 63) << 6) | (ofs_str_char_at_known(text, i + 3) & 63)
+        }
+        if (c >= 224 && i + 2 < n) {
+            _u8_len = 3
+            return ((c & 15) << 12) | ((ofs_str_char_at_known(text, i + 1) & 63) << 6) | (ofs_str_char_at_known(text, i + 2) & 63)
+        }
+        if (c >= 192 && i + 1 < n) {
+            _u8_len = 2
+            return ((c & 31) << 6) | (ofs_str_char_at_known(text, i + 1) & 63)
+        }
+        _u8_len = 1
+        return 65533
+    }
+
+    // ── API de texto ─────────────────────────────────────────────────────
+
+    // Largura do texto em 1/64 px.
+    vein width64(font: stone, size: stone, text: obsidian) -> stone {
+        if (font < 0) { return 0 }
+        forge n = ofs_str_len(text)
+        forge i = 0
+        forge pen = 0
+        while (i < n) {
+            forge cp = decode(text, i, n)
+            i = i + _u8_len
+            pen = pen + advance64(font, glyph_index(font, cp), size)
+        }
+        return pen
+    }
+
+    vein width(font: stone, size: stone, text: obsidian) -> stone {
+        return (width64(font, size, text) + 63) / 64
+    }
+
+    // Desenha o texto com a linha de base em y. Retorna a largura em px.
+    vein draw(cv: Canvas, font: stone, size: stone, x: stone, y: stone, text: obsidian, color: stone) -> stone {
+        if (font < 0) { return 0 }
+        forge n = ofs_str_len(text)
+        forge i = 0
+        forge pen = x * 64
+        while (i < n) {
+            forge cp = decode(text, i, n)
+            i = i + _u8_len
+            forge g = glyph_index(font, cp)
+            forge ix = pen / 64
+            forge sub = ((pen - ix * 64) * 4) / 64
+            if (cp != 32) {
+                _blit(cv, _entry(font, g, size, sub), ix, y, color)
+            }
+            pen = pen + advance64(font, g, size)
+        }
+        return (pen + 63) / 64 - x
+    }
+
+    // Corta o texto para caber em max_w px, terminando com reticencias.
+    vein ellipsize(font: stone, size: stone, text: obsidian, max_w: stone) -> obsidian {
+        if (width(font, size, text) <= max_w) { return text }
+        forge dots = "…"
+        forge dw = width64(font, size, dots)
+        forge limit = max_w * 64 - dw
+        forge n = ofs_str_len(text)
+        forge i = 0
+        forge pen = 0
+        forge cut = 0
+        while (i < n) {
+            forge cp = decode(text, i, n)
+            forge adv = advance64(font, glyph_index(font, cp), size)
+            if (pen + adv > limit) { break }
+            pen = pen + adv
+            i = i + _u8_len
+            cut = i
+        }
+        return ofs_str_substr(text, 0, cut) + dots
+    }
+
+    // Desenha centralizado horizontalmente em [x, x+w).
+    vein draw_centered(cv: Canvas, font: stone, size: stone, x: stone, w: stone, y: stone, text: obsidian, color: stone) -> void {
+        forge tw = width(font, size, text)
+        draw(cv, font, size, x + (w - tw) / 2, y, text, color)
+    }
+}

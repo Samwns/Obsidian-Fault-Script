@@ -21,7 +21,8 @@ const TYPES = ['stone', 'crystal', 'obsidian', 'bool', 'void', 'Array', 'u8', 'u
 
 const MODULES = [
   'core', 'math', 'string', 'io', 'oes', 'ofshtml', 'odl', 'webserver', 'webui', 'bedrock', 'bedrock-packet',
-  'terminal-colors', 'memory-modes', 'rift', 'canvas', 'window', 'fmt', 'test-lib'
+  'terminal-colors', 'memory-modes', 'rift', 'canvas', 'window', 'fmt', 'test-lib',
+  'fs', 'net', 'http', 'oll', 'ui', 'raster', 'ttf', 'x11win', 'icons', 'hashmap'
 ];
 
 const BUILTINS = [
@@ -63,7 +64,19 @@ const STDLIB_COMPLETIONS = [
   'canvas.get_pixel', 'canvas.fill_rect', 'canvas.present',
   'window.create', 'window.destroy', 'window.poll', 'window.is_open',
   'window.width', 'window.height', 'window.set_title',
-  'input.mouse_x', 'input.mouse_y', 'input.is_down', 'input.key'
+  'input.mouse_x', 'input.mouse_y', 'input.is_down', 'input.key',
+  'ofs_str_char_at_known',
+  'raster.begin', 'raster.move_to', 'raster.line_to', 'raster.quad_to', 'raster.cubic_to',
+  'raster.close', 'raster.fill', 'raster.fill_round_rect', 'raster.fill_circle',
+  'raster.stroke_line', 'raster.stroke_round_rect', 'raster.add_round_rect', 'raster.add_circle',
+  'raster.add_capsule', 'raster.add_arc_stroke',
+  'ttf.load', 'ttf.draw', 'ttf.width', 'ttf.ascent', 'ttf.descent', 'ttf.line_height',
+  'ttf.ellipsize', 'ttf.draw_centered', 'ttf.glyph_index',
+  'x11win.open', 'x11win.close', 'x11win.is_open', 'x11win.present', 'x11win.poll',
+  'x11win.width', 'x11win.height', 'x11win.set_title', 'x11win.set_cursor', 'x11win.set_icon',
+  'x11win.now_ms', 'x11win.sleep_ms', 'x11win.mouse_x', 'x11win.mouse_y',
+  'icons.draw', 'icons.draw_centered',
+  'hashmap.new', 'hashmap.set', 'hashmap.get', 'hashmap.has', 'hashmap.count', 'hashmap.clear'
 ];
 
 const HOVER_DOCS = {
@@ -326,6 +339,31 @@ const HOVER_DOCS = {
     description: 'Modulo nativo de janela e input da OFS.',
     context: 'Use `attach {window}` para criar janela, ler input e apresentar um buffer.',
     example: 'attach {window}\nwindow.create("demo", 640, 480)'
+  },
+  raster: {
+    description: 'Rasterizador vetorial com antialiasing (100% OFS).',
+    context: 'Use `attach {raster}` para caminhos, retangulos arredondados, circulos e tracos suaves sobre um Canvas.',
+    example: 'attach {raster}\nraster.fill_round_rect(cv, 10.0, 10.0, 120.0, 40.0, 12.0, 3355494)'
+  },
+  ttf: {
+    description: 'Fontes TrueType com UTF-8, acentos e cache de glifos (100% OFS).',
+    context: 'Use `attach {ttf}` para desenhar texto real (Inter, Noto, DejaVu) em um Canvas.',
+    example: 'attach {ttf}\nforge f = ttf.load("/usr/share/fonts/rsms-inter-fonts/Inter-Regular.ttf")\nttf.draw(cv, f, 14, 10, 30, "Ola, acao!", 15132390)'
+  },
+  x11win: {
+    description: 'Janela X11 nativa com teclado (UTF-8, teclas mortas), mouse, roda e resize.',
+    context: 'Use `attach {x11win}` para abrir uma janela real e apresentar um Canvas.',
+    example: 'attach {x11win}\nx11win.open("App", 800, 600)\nwhile (x11win.is_open()) {\n    forge ev = x11win.poll()\n    x11win.present(cv)\n    x11win.sleep_ms(16)\n}'
+  },
+  icons: {
+    description: 'Icones vetoriais de interface (grade 24x24).',
+    context: 'Use `attach {icons}` com constantes como icons.BACK, icons.RELOAD, icons.HOME.',
+    example: 'attach {icons}\nicons.draw(cv, icons.RELOAD, 12, 12, 20, 13421772)'
+  },
+  hashmap: {
+    description: 'Tabela hash inteiro -> inteiro com crescimento automatico.',
+    context: 'Use `attach {hashmap}` para caches e indices rapidos.',
+    example: 'attach {hashmap}\nforge m = hashmap.new(64)\nhashmap.set(m, 42, 7)\necho(hashmap.get(m, 42, -1))'
   },
   canvas: {
     description: 'Modulo nativo/instavel de canvas da OFS.',
@@ -1146,6 +1184,16 @@ const STDLIB_NAMES = {
   'window':          'window.ofs',
   'fmt':             'fmt.ofs',
   'test-lib':        'test_lib.ofs',
+  'fs':              'fs.ofs',
+  'net':             'net.ofs',
+  'http':            'http.ofs',
+  'oll':             'oll.ofs',
+  'ui':              'ui.ofs',
+  'raster':          'raster.ofs',
+  'ttf':             'ttf.ofs',
+  'x11win':          'x11win.ofs',
+  'icons':           'icons.ofs',
+  'hashmap':         'hashmap.ofs',
 };
 
 function getStdlibSearchDirs(docDir) {

@@ -78,7 +78,7 @@ if [ ! -f "ofscc_v2" ] || [ ! -f "ofscc_v3" ]; then
     print_warn "Bootstrap binaries (v2/v3) not found. Running bootstrap test..."
     print_info "This will recompile the compiler to verify determinism"
     
-    if bash ofs/ofs/bootstrap/test_bootstrap.sh > /dev/null 2>&1; then
+    if bash ofs/ofscc/test_bootstrap.sh > /dev/null 2>&1; then
         print_success "Bootstrap test passed"
     else
         print_warn "Bootstrap test not available or failed"

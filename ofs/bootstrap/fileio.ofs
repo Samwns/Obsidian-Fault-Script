@@ -18,7 +18,6 @@ extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
 extern vein ofs_str_concat(a: obsidian, b: obsidian) -> obsidian
 extern vein ofs_str_len(s: obsidian) -> stone
 extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
-extern vein ofs_str_char_at_known(s: obsidian, index: stone) -> stone
 extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
 extern vein ofs_stone_to_obsidian(value: stone) -> obsidian
 extern vein ofs_array_len(a: Array) -> stone
@@ -32,7 +31,8 @@ extern vein ofs_array_pop(a: Array) -> stone
 vein read_file(path: obsidian) -> obsidian {
     forge f = fopen(path, "r")
     if (f == null) {
-        throw "erro: nao foi possivel abrir " + path
+        echo("erro: nao foi possivel abrir arquivo: " + path)
+        exit(1)
     }
     
     // seek to end to get size

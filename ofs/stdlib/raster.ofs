@@ -1,0 +1,506 @@
+// OFS Standard Library — Raster Module
+// Rasterizador vetorial com antialiasing, escrito 100% em OFS.
+//
+// Algoritmo: acumulacao de area assinalada por scanline (estilo font-rs).
+// Cada segmento de reta deposita, em um buffer de acumulacao, a area que
+// cobre em cada celula; a soma prefixada de cada linha resulta na cobertura
+// exata (0..1) de cada pixel. Curvas quadraticas e cubicas sao achatadas em
+// retas. Formas sobrepostas com a mesma orientacao se unem (cobertura e
+// limitada a 1), o que permite tracos (strokes) montados por capsulas.
+//
+// Uso tipico:
+//   raster.begin(x, y, w, h)          // area da mascara em coordenadas do canvas
+//   raster.move_to(...) / line_to / quad_to / cubic_to / close()
+//   raster.fill(cv, cor)              // compoe a mascara no canvas e limpa
+//
+// Coordenadas sao crystal em pixels do canvas. Cor no formato do canvas:
+// 0xRRGGBB opaco, ou argb(a, r, g, b) com alfa no byte alto.
+
+attach {F:canvas.ofs}
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+extern vein ofs_sqrt(v: crystal) -> crystal
+extern vein memset(dst: *stone, val: stone, size: stone) -> *stone
+
+namespace raster {
+    // Escala de ponto fixo da acumulacao: 1.0 de cobertura = 65536.
+    forge _acc: *stone = null
+    forge _acc_cap: stone = 0
+    forge _ox: stone = 0
+    forge _oy: stone = 0
+    forge _w: stone = 0
+    forge _h: stone = 0
+    forge _stride: stone = 0
+    // Ponto corrente e inicio do subcaminho (em coordenadas locais da mascara).
+    forge _cx: crystal = 0.0
+    forge _cy: crystal = 0.0
+    forge _sx: crystal = 0.0
+    forge _sy: crystal = 0.0
+    forge _open: bool = false
+
+    vein floor_i(v: crystal) -> stone {
+        forge i = v as stone
+        if ((i as crystal) > v) { i = i - 1 }
+        return i
+    }
+
+    vein ceil_i(v: crystal) -> stone {
+        forge i = v as stone
+        if ((i as crystal) < v) { i = i + 1 }
+        return i
+    }
+
+    vein _acc_add(idx: stone, v: crystal) -> void {
+        forge p: *stone = fault_step(_acc, idx)
+        forge sc = v * 65536.0
+        if (sc >= 0.0) { sc = sc + 0.5 } else { sc = sc - 0.5 }
+        forge add = sc as stone
+        fracture {
+            *p = *p + add;
+        }
+    }
+
+    // Prepara a mascara cobrindo o retangulo (x, y, w, h) do canvas.
+    vein begin(x: stone, y: stone, w: stone, h: stone) -> void {
+        if (w < 1) { w = 1 }
+        if (h < 1) { h = 1 }
+        forge need = (w + 2) * h
+        if (need > _acc_cap) {
+            if (_acc != null) { ofs_free(_acc) }
+            _acc = ofs_alloc(need * 8)
+            // garante buffer de acumulacao zerado
+            memset(_acc, 0, need * 8)
+            _acc_cap = need
+        }
+        _ox = x
+        _oy = y
+        _w = w
+        _h = h
+        _stride = w + 2
+        _open = false
+    }
+
+    // Deposita um segmento (coordenadas locais da mascara).
+    vein _line(ax: crystal, ay: crystal, bx: crystal, by: crystal) -> void {
+        if (ay == by) { return }
+        forge x0 = ax
+        forge y0 = ay
+        forge x1 = bx
+        forge y1 = by
+        forge dir = 1.0
+        if (y0 > y1) {
+            x0 = bx
+            y0 = by
+            x1 = ax
+            y1 = ay
+            dir = 0.0 - 1.0
+        }
+        forge hf = _h as crystal
+        forge wf = _w as crystal
+        forge ys = y0
+        if (ys < 0.0) { ys = 0.0 }
+        forge ye = y1
+        if (ye > hf) { ye = hf }
+        if (ys >= ye) { return }
+        forge dxdy = (x1 - x0) / (y1 - y0)
+        forge x = x0 + dxdy * (ys - y0)
+        forge yi = floor_i(ys)
+        forge yend = ceil_i(ye)
+        while (yi < yend) {
+            forge top = yi as crystal
+            if (top < ys) { top = ys }
+            forge bot = (yi + 1) as crystal
+            if (bot > ye) { bot = ye }
+            forge dy = bot - top
+            forge xnext = x + dxdy * dy
+            forge d = dy * dir
+            forge xa = x
+            forge xb = xnext
+            if (xa > xb) {
+                xa = xnext
+                xb = x
+            }
+            if (xa < 0.0) { xa = 0.0 }
+            if (xb < 0.0) { xb = 0.0 }
+            if (xa > wf) { xa = wf }
+            if (xb > wf) { xb = wf }
+            forge row = yi * _stride
+            forge xaf = floor_i(xa)
+            forge xbc = ceil_i(xb)
+            if (xbc <= xaf + 1) {
+                forge xmf = 0.5 * (xa + xb) - (xaf as crystal)
+                _acc_add(row + xaf, d - d * xmf)
+                _acc_add(row + xaf + 1, d * xmf)
+            } else {
+                forge s = 1.0 / (xb - xa)
+                forge x0f = xa - (xaf as crystal)
+                forge a0 = 0.5 * s * (1.0 - x0f) * (1.0 - x0f)
+                forge x1f = xb - (xbc as crystal) + 1.0
+                forge am = 0.5 * s * x1f * x1f
+                _acc_add(row + xaf, d * a0)
+                if (xbc == xaf + 2) {
+                    _acc_add(row + xaf + 1, d * (1.0 - a0 - am))
+                } else {
+                    forge a1 = s * (1.5 - x0f)
+                    _acc_add(row + xaf + 1, d * (a1 - a0))
+                    forge xi = xaf + 2
+                    while (xi < xbc - 1) {
+                        _acc_add(row + xi, d * s)
+                        xi++
+                    }
+                    forge a2 = a1 + ((xbc - xaf - 3) as crystal) * s
+                    _acc_add(row + xbc - 1, d * (1.0 - a2 - am))
+                }
+                _acc_add(row + xbc, d * am)
+            }
+            x = xnext
+            yi++
+        }
+    }
+
+    // ── API de caminhos (coordenadas do canvas) ──────────────────────────
+
+    vein move_to(x: crystal, y: crystal) -> void {
+        if (_open) { close() }
+        _cx = x - (_ox as crystal)
+        _cy = y - (_oy as crystal)
+        _sx = _cx
+        _sy = _cy
+        _open = true
+    }
+
+    vein line_to(x: crystal, y: crystal) -> void {
+        forge lx = x - (_ox as crystal)
+        forge ly = y - (_oy as crystal)
+        _line(_cx, _cy, lx, ly)
+        _cx = lx
+        _cy = ly
+    }
+
+    vein quad_to(qx: crystal, qy: crystal, x: crystal, y: crystal) -> void {
+        forge x0 = _cx + (_ox as crystal)
+        forge y0 = _cy + (_oy as crystal)
+        forge ddx = x0 - 2.0 * qx + x
+        forge ddy = y0 - 2.0 * qy + y
+        forge dd = ofs_sqrt(ddx * ddx + ddy * ddy)
+        forge n = (ofs_sqrt(dd * 4.0) as stone) + 1
+        if (n > 32) { n = 32 }
+        forge i = 1
+        while (i <= n) {
+            forge t = (i as crystal) / (n as crystal)
+            forge mt = 1.0 - t
+            forge px = mt * mt * x0 + 2.0 * mt * t * qx + t * t * x
+            forge py = mt * mt * y0 + 2.0 * mt * t * qy + t * t * y
+            line_to(px, py)
+            i++
+        }
+    }
+
+    vein cubic_to(c1x: crystal, c1y: crystal, c2x: crystal, c2y: crystal, x: crystal, y: crystal) -> void {
+        forge x0 = _cx + (_ox as crystal)
+        forge y0 = _cy + (_oy as crystal)
+        forge ex = x0 - 2.0 * c1x + c2x
+        forge ey = y0 - 2.0 * c1y + c2y
+        forge fx = c1x - 2.0 * c2x + x
+        forge fy = c1y - 2.0 * c2y + y
+        forge m1 = ofs_sqrt(ex * ex + ey * ey)
+        forge m2 = ofs_sqrt(fx * fx + fy * fy)
+        if (m2 > m1) { m1 = m2 }
+        forge n = (ofs_sqrt(m1 * 6.0) as stone) + 1
+        if (n > 48) { n = 48 }
+        forge i = 1
+        while (i <= n) {
+            forge t = (i as crystal) / (n as crystal)
+            forge mt = 1.0 - t
+            forge a = mt * mt * mt
+            forge b = 3.0 * mt * mt * t
+            forge c = 3.0 * mt * t * t
+            forge d = t * t * t
+            line_to(a * x0 + b * c1x + c * c2x + d * x, a * y0 + b * c1y + c * c2y + d * y)
+            i++
+        }
+    }
+
+    vein close() -> void {
+        if (!_open) { return }
+        _line(_cx, _cy, _sx, _sy)
+        _cx = _sx
+        _cy = _sy
+        _open = false
+    }
+
+    // ── Composicao ───────────────────────────────────────────────────────
+
+    // Converte a acumulacao em cobertura e compoe no canvas com a cor dada.
+    vein fill(cv: Canvas, color: stone) -> void {
+        if (_open) { close() }
+        forge base_a = canvas.color_alpha(color)
+        forge rgb = color % 16777216
+        forge y = 0
+        while (y < _h) {
+            forge row = y * _stride
+            forge acc = 0
+            forge x = 0
+            while (x < _w) {
+                forge p: *stone = fault_step(_acc, row + x)
+                forge v = 0
+                fracture {
+                    v = *p;
+                    *p = 0;
+                }
+                acc = acc + v
+                forge cov = acc
+                if (cov < 0) { cov = 0 - cov }
+                if (cov > 65536) { cov = 65536 }
+                if (cov > 0) {
+                    forge a = (cov * base_a) / 65536
+                    if (a > 0) {
+                        canvas.blend_pixel(cv, _ox + x, _oy + y, argb_or_rgb(a, rgb), 255)
+                    }
+                }
+                x++
+            }
+            // limpa as celulas de transbordo da linha
+            forge pe: *stone = fault_step(_acc, row + _w)
+            forge pe2: *stone = fault_step(_acc, row + _w + 1)
+            fracture {
+                *pe = 0;
+                *pe2 = 0;
+            }
+            y++
+        }
+    }
+
+    vein argb_or_rgb(a: stone, rgb: stone) -> stone {
+        if (a >= 255) { return rgb }
+        return a * 16777216 + rgb
+    }
+
+    // Converte a acumulacao em alfa 0..255 gravado em dst (1 stone por pixel,
+    // linha a linha com largura _w) e limpa o buffer. Usado pelo cache de glifos.
+    vein to_alpha(dst: *stone, gamma_boost: stone) -> void {
+        if (_open) { close() }
+        forge y = 0
+        while (y < _h) {
+            forge row = y * _stride
+            forge acc = 0
+            forge x = 0
+            while (x < _w) {
+                forge p: *stone = fault_step(_acc, row + x)
+                forge v = 0
+                fracture {
+                    v = *p;
+                    *p = 0;
+                }
+                acc = acc + v
+                forge cov = acc
+                if (cov < 0) { cov = 0 - cov }
+                if (cov > 65536) { cov = 65536 }
+                forge a = (cov * 255) / 65536
+                if (gamma_boost > 0 && a > 0 && a < 255) {
+                    // escurecimento leve de hastes (aproxima a gama de texto)
+                    a = a + ((255 - a) * a * gamma_boost) / (255 * 100)
+                    if (a > 255) { a = 255 }
+                }
+                forge q: *stone = fault_step(dst, y * _w + x)
+                fracture {
+                    *q = a;
+                }
+                x++
+            }
+            forge pe: *stone = fault_step(_acc, row + _w)
+            forge pe2: *stone = fault_step(_acc, row + _w + 1)
+            fracture {
+                *pe = 0;
+                *pe2 = 0;
+            }
+            y++
+        }
+    }
+
+    // ── Formas prontas (adicionam ao caminho atual) ─────────────────────
+
+    vein add_rect(x: crystal, y: crystal, w: crystal, h: crystal) -> void {
+        move_to(x, y)
+        line_to(x + w, y)
+        line_to(x + w, y + h)
+        line_to(x, y + h)
+        close()
+    }
+
+    // Constante kappa para aproximar quarto de circulo com cubica.
+    vein _k() -> crystal {
+        return 0.5522847498
+    }
+
+    vein add_round_rect(x: crystal, y: crystal, w: crystal, h: crystal, r: crystal) -> void {
+        forge rr = r
+        if (rr * 2.0 > w) { rr = w / 2.0 }
+        if (rr * 2.0 > h) { rr = h / 2.0 }
+        if (rr <= 0.0) {
+            add_rect(x, y, w, h)
+            return
+        }
+        forge k = rr * _k()
+        move_to(x + rr, y)
+        line_to(x + w - rr, y)
+        cubic_to(x + w - rr + k, y, x + w, y + rr - k, x + w, y + rr)
+        line_to(x + w, y + h - rr)
+        cubic_to(x + w, y + h - rr + k, x + w - rr + k, y + h, x + w - rr, y + h)
+        line_to(x + rr, y + h)
+        cubic_to(x + rr - k, y + h, x, y + h - rr + k, x, y + h - rr)
+        line_to(x, y + rr)
+        cubic_to(x, y + rr - k, x + rr - k, y, x + rr, y)
+        close()
+    }
+
+    // Retangulo com cantos superiores arredondados (abas).
+    vein add_top_round_rect(x: crystal, y: crystal, w: crystal, h: crystal, r: crystal) -> void {
+        forge rr = r
+        if (rr * 2.0 > w) { rr = w / 2.0 }
+        if (rr > h) { rr = h }
+        forge k = rr * _k()
+        move_to(x, y + h)
+        line_to(x, y + rr)
+        cubic_to(x, y + rr - k, x + rr - k, y, x + rr, y)
+        line_to(x + w - rr, y)
+        cubic_to(x + w - rr + k, y, x + w, y + rr - k, x + w, y + rr)
+        line_to(x + w, y + h)
+        close()
+    }
+
+    vein add_circle(cx: crystal, cy: crystal, r: crystal) -> void {
+        forge k = r * _k()
+        move_to(cx + r, cy)
+        cubic_to(cx + r, cy + k, cx + k, cy + r, cx, cy + r)
+        cubic_to(cx - k, cy + r, cx - r, cy + k, cx - r, cy)
+        cubic_to(cx - r, cy - k, cx - k, cy - r, cx, cy - r)
+        cubic_to(cx + k, cy - r, cx + r, cy - k, cx + r, cy)
+        close()
+    }
+
+    // Circulo no sentido inverso: subtrai da forma (aneis, furos).
+    vein add_circle_hole(cx: crystal, cy: crystal, r: crystal) -> void {
+        forge k = r * _k()
+        move_to(cx + r, cy)
+        cubic_to(cx + r, cy - k, cx + k, cy - r, cx, cy - r)
+        cubic_to(cx - k, cy - r, cx - r, cy - k, cx - r, cy)
+        cubic_to(cx - r, cy + k, cx - k, cy + r, cx, cy + r)
+        cubic_to(cx + k, cy + r, cx + r, cy + k, cx + r, cy)
+        close()
+    }
+
+    // Segmento de traco com pontas arredondadas (capsula), largura lw.
+    // Sempre emitido na mesma orientacao, entao capsulas se unem.
+    vein add_capsule(x0: crystal, y0: crystal, x1: crystal, y1: crystal, lw: crystal) -> void {
+        forge dx = x1 - x0
+        forge dy = y1 - y0
+        forge len = ofs_sqrt(dx * dx + dy * dy)
+        forge r = lw / 2.0
+        if (len < 0.0001) {
+            add_circle(x0, y0, r)
+            return
+        }
+        forge ux = dx / len
+        forge uy = dy / len
+        // normal
+        forge nx = 0.0 - uy * r
+        forge ny = ux * r
+        forge k = _k()
+        // lado 1 -> semicirculo em p1 -> lado 2 -> semicirculo em p0
+        move_to(x0 + nx, y0 + ny)
+        line_to(x1 + nx, y1 + ny)
+        forge ex = ux * r
+        forge ey = uy * r
+        cubic_to(x1 + nx + ex * k, y1 + ny + ey * k, x1 + ex + nx * k, y1 + ey + ny * k, x1 + ex, y1 + ey)
+        cubic_to(x1 + ex - nx * k, y1 + ey - ny * k, x1 - nx + ex * k, y1 - ny + ey * k, x1 - nx, y1 - ny)
+        line_to(x0 - nx, y0 - ny)
+        cubic_to(x0 - nx - ex * k, y0 - ny - ey * k, x0 - ex - nx * k, y0 - ey - ny * k, x0 - ex, y0 - ey)
+        cubic_to(x0 - ex + nx * k, y0 - ey + ny * k, x0 + nx - ex * k, y0 + ny - ey * k, x0 + nx, y0 + ny)
+        close()
+    }
+
+    vein _cos(deg: crystal) -> crystal {
+        return canvas._cos_deg(deg)
+    }
+
+    vein _sin(deg: crystal) -> crystal {
+        return canvas._sin_deg(deg)
+    }
+
+    // Arco tracado (graus, 0 = leste, sentido horario na tela).
+    vein add_arc_stroke(cx: crystal, cy: crystal, r: crystal, a0: crystal, a1: crystal, lw: crystal) -> void {
+        forge span = a1 - a0
+        if (span < 0.0) { span = 0.0 - span }
+        forge steps = ((span / 12.0) as stone) + 2
+        forge i = 0
+        forge px = cx + r * _cos(a0)
+        forge py = cy + r * _sin(a0)
+        while (i < steps) {
+            forge t = ((i + 1) as crystal) / (steps as crystal)
+            forge a = a0 + (a1 - a0) * t
+            forge qx = cx + r * _cos(a)
+            forge qy = cy + r * _sin(a)
+            add_capsule(px, py, qx, qy, lw)
+            px = qx
+            py = qy
+            i++
+        }
+    }
+
+    // ── Atalhos de uma chamada ──────────────────────────────────────────
+
+    vein fill_round_rect(cv: Canvas, x: crystal, y: crystal, w: crystal, h: crystal, r: crystal, color: stone) -> void {
+        begin(floor_i(x) - 1, floor_i(y) - 1, ceil_i(w) + 3, ceil_i(h) + 3)
+        add_round_rect(x, y, w, h, r)
+        fill(cv, color)
+    }
+
+    vein fill_circle(cv: Canvas, cx: crystal, cy: crystal, r: crystal, color: stone) -> void {
+        begin(floor_i(cx - r) - 1, floor_i(cy - r) - 1, ceil_i(r * 2.0) + 3, ceil_i(r * 2.0) + 3)
+        add_circle(cx, cy, r)
+        fill(cv, color)
+    }
+
+    vein stroke_line(cv: Canvas, x0: crystal, y0: crystal, x1: crystal, y1: crystal, lw: crystal, color: stone) -> void {
+        forge mnx = x0
+        if (x1 < mnx) { mnx = x1 }
+        forge mny = y0
+        if (y1 < mny) { mny = y1 }
+        forge mxx = x0
+        if (x1 > mxx) { mxx = x1 }
+        forge mxy = y0
+        if (y1 > mxy) { mxy = y1 }
+        begin(floor_i(mnx - lw) - 1, floor_i(mny - lw) - 1, ceil_i(mxx - mnx + lw * 2.0) + 3, ceil_i(mxy - mny + lw * 2.0) + 3)
+        add_capsule(x0, y0, x1, y1, lw)
+        fill(cv, color)
+    }
+
+    // Borda de retangulo arredondado com espessura lw (anel = externo - interno).
+    vein stroke_round_rect(cv: Canvas, x: crystal, y: crystal, w: crystal, h: crystal, r: crystal, lw: crystal, color: stone) -> void {
+        begin(floor_i(x) - 1, floor_i(y) - 1, ceil_i(w) + 3, ceil_i(h) + 3)
+        add_round_rect(x, y, w, h, r)
+        forge ir = r - lw
+        if (ir < 0.0) { ir = 0.0 }
+        _add_round_rect_rev(x + lw, y + lw, w - lw * 2.0, h - lw * 2.0, ir)
+        fill(cv, color)
+    }
+
+    vein _add_round_rect_rev(x: crystal, y: crystal, w: crystal, h: crystal, r: crystal) -> void {
+        forge rr = r
+        if (rr * 2.0 > w) { rr = w / 2.0 }
+        if (rr * 2.0 > h) { rr = h / 2.0 }
+        if (rr < 0.0) { rr = 0.0 }
+        forge k = rr * _k()
+        move_to(x + rr, y)
+        cubic_to(x + rr - k, y, x, y + rr - k, x, y + rr)
+        line_to(x, y + h - rr)
+        cubic_to(x, y + h - rr + k, x + rr - k, y + h, x + rr, y + h)
+        line_to(x + w - rr, y + h)
+        cubic_to(x + w - rr + k, y + h, x + w, y + h - rr + k, x + w, y + h - rr)
+        line_to(x + w, y + rr)
+        cubic_to(x + w, y + rr - k, x + w - rr + k, y, x + w - rr, y)
+        close()
+    }
+}

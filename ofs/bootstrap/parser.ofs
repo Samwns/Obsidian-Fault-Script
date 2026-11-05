@@ -47,6 +47,12 @@ namespace parser {
         forge t: Token = ofs_array_get(_tokens, _pos + 1)
         return t.kind
     }
+
+    vein _peek2_kind() -> stone {
+        if (_pos + 2 >= _len) { return TOK_EOF }
+        forge t: Token = ofs_array_get(_tokens, _pos + 2)
+        return t.kind
+    }
     
     vein _expect(kind: stone) -> bool {
         if (_cur_kind() != kind) { return false }
@@ -60,7 +66,9 @@ namespace parser {
         forge t = _cur()
         forge line_str = ofs_stone_to_obsidian(t.line)
         forge col_str = ofs_stone_to_obsidian(t.col)
-        echo("[parse err " + line_str + ":" + col_str + "] " + msg + " (got '" + t.val + "')")
+        echo("[ERRO SINTATICO " + line_str + ":" + col_str + "]: " + msg)
+        echo("  --> token encontrado: '" + t.val + "'")
+        echo("  dica: confira delimitadores ({}, (), []), pontuacao ou palavras reservadas.")
     }
     
     vein _sync() -> void {
@@ -91,7 +99,6 @@ namespace parser {
         if (kind == TOK_LSHIFT || kind == TOK_RSHIFT) { return 90 }
         if (kind == TOK_PLUS || kind == TOK_MINUS) { return 100 }
         if (kind == TOK_STAR || kind == TOK_SLASH || kind == TOK_PERCENT) { return 110 }
-        if (kind == TOK_AS) { return 120 }
         return 0
     }
     
@@ -133,7 +140,9 @@ namespace parser {
             t.kind == TOK_STAR) {
             _advance()
             forge op = t.val
-            forge operand = parse_primary()
+            // O operando inclui os pos-fixos (chamada, campo, indice, cast):
+            // `!ns.fn(x)` e `!(ns.fn(x))`, nao `(!ns).fn(x)`.
+            forge operand = parse_postfix(parse_primary())
             forge n = node_new(NK_UNARY_OP, op, t.line, t.col)
             node_set_child(n, 0, operand)
             return n
@@ -148,6 +157,7 @@ namespace parser {
             }
             return expr
         }
+
         
         // Array literal [...]
         if (t.kind == TOK_LBRACKET) {
@@ -286,10 +296,18 @@ namespace parser {
             return parse_postfix(n)
         }
         
-        // Post-increment/decrement
-        if (t.kind == TOK_PLUSPLUS || t.kind == TOK_MINUSMINUS) {
+        if (t.kind == TOK_PLUSPLUS || t.kind == TOK_MINUSMINUS || t.kind == TOK_QUESTION) {
             _advance()
             forge n = node_new(NK_POST_OP, t.val, t.line, t.col)
+            node_set_child(n, 0, left)
+            return parse_postfix(n)
+        }
+
+        if (t.kind == TOK_AS) {
+            _advance()
+            forge target_type_node = parse_type()
+            forge type_n: Node = node_get(target_type_node)
+            forge n = node_new(NK_CAST, type_n.val, t.line, t.col)
             node_set_child(n, 0, left)
             return parse_postfix(n)
         }
@@ -309,15 +327,18 @@ namespace parser {
             
             forge prec = _get_prec(_cur_kind())
             if (prec == 0 || prec < min_prec) { break }
-            
-            forge op = _advance()
-            if (op.kind == TOK_AS) {
-                forge cast_type = parse_type()
-                forge cast = node_new(NK_CAST, node_get(cast_type).val, op.line, op.col)
-                node_set_child(cast, 0, left)
-                left = cast
-                continue
+
+            // Operadores que tambem sao prefixos (*p, -x, &v) no inicio de uma
+            // nova linha iniciam um novo comando, nao continuam a expressao:
+            //   v = *p
+            //   *p = 0      <- antes virava "v = *p * p = 0"
+            forge opk = _cur_kind()
+            if ((opk == TOK_STAR || opk == TOK_MINUS || opk == TOK_AMP) && _pos > 0) {
+                forge prev_tok: Token = ofs_array_get(_tokens, _pos - 1)
+                if (_cur().line > prev_tok.line) { break }
             }
+
+            forge op = _advance()
             forge right = parse_expr(prec + 1)
             
             forge n = node_new(NK_BIN_OP, op.val, op.line, op.col)
@@ -335,7 +356,8 @@ namespace parser {
             _advance()
             forge inner = parse_type()
             forge inner_node: Node = node_get(inner)
-            return node_new(NK_TYPE, "*" + inner_node.val, t.line, t.col)
+            forge ptr_type_name = "*" + inner_node.val
+            return node_new(NK_TYPE, ptr_type_name, t.line, t.col)
         }
         if (t.kind != TOK_IDENT) {
             _error("expected type")
@@ -395,7 +417,14 @@ namespace parser {
         forge line = t.line
         forge col = t.col
         
-        // if statement
+        if (t.kind == TOK_FRACTURE || t.kind == TOK_BEDROCK || t.kind == TOK_ABYSS || t.kind == TOK_TECTONIC) {
+            _advance()
+            if (_cur_kind() == TOK_FRACTURE || _cur_kind() == TOK_BEDROCK || _cur_kind() == TOK_ABYSS) {
+                _advance()
+            }
+            return parse_block()
+        }
+
         if (t.kind == TOK_IF) {
             _advance()
             if (!_expect(TOK_LPAREN)) { _error("expected '('")  return -1 }
@@ -431,23 +460,23 @@ namespace parser {
             return n
         }
 
-        // cycle (init; cond; step) { ... }
         if (t.kind == TOK_CYCLE || t.kind == TOK_MINE) {
             _advance()
             if (!_expect(TOK_LPAREN)) { _error("expected '('") return -1 }
+            if (_cur_kind() == TOK_FORGE && _peek_kind() == TOK_IDENT && _peek2_kind() == TOK_IN) {
+                _advance()
+            }
             if (_cur_kind() == TOK_IDENT && _peek_kind() == TOK_IN) {
                 forge var_name = _cur_val()
-                forge var_line = _cur().line
-                forge var_col = _cur().col
                 _advance()
                 _advance()
-                forge iterable = parse_expr(0)
+                forge iter = parse_expr(0)
                 if (!_expect(TOK_RPAREN)) { _error("expected ')'") return -1 }
-                forge body_range = parse_block()
-                forge range = node_new(NK_CYCLE_RANGE, var_name, var_line, var_col)
-                node_set_child(range, 0, iterable)
-                node_set_child(range, 1, body_range)
-                return range
+                forge body = parse_block()
+                forge n = node_new(NK_CYCLE_RANGE, var_name, line, col)
+                node_set_child(n, 0, iter)
+                node_set_child(n, 1, body)
+                return n
             }
             if (t.kind == TOK_MINE) {
                 _error("expected 'item in iterable' in mine")
@@ -491,6 +520,81 @@ namespace parser {
             return n
         }
         
+        if (t.kind == TOK_MATCH) {
+            _advance()
+            if (!_expect(TOK_LPAREN)) { _error("expected '(' after match") return -1 }
+            forge expr = parse_expr(0)
+            if (!_expect(TOK_RPAREN)) { _error("expected ')' after match") return -1 }
+            if (!_expect(TOK_LBRACE)) { _error("expected '{' after match") return -1 }
+
+            forge default_body: stone = -1
+            forge case_count = 0
+            forge condition_list: Array<stone> = []
+            forge body_list: Array<stone> = []
+
+            while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
+                forge pattern_is_default = false
+                forge case_value: stone = -1
+                if (_cur_kind() == TOK_IDENT && ofs_str_eq(_cur_val(), "_")) {
+                    pattern_is_default = true
+                    _advance()
+                } else {
+                    case_value = parse_expr(0)
+                }
+
+                if (!_expect(TOK_ARROW)) { _error("expected '=>' in match arm") }
+
+                forge arm_body: stone = -1
+                if (_cur_kind() == TOK_LBRACE) {
+                    arm_body = parse_block()
+                } else {
+                    arm_body = parse_stmt()
+                }
+
+                if (pattern_is_default) {
+                    default_body = arm_body
+                } else {
+                    ofs_array_push(condition_list, node_new(NK_BIN_OP, "==", _cur().line, _cur().col))
+                    forge cmp = ofs_array_get(condition_list, ofs_array_len(condition_list) - 1)
+                    node_set_child(cmp, 0, expr)
+                    node_set_child(cmp, 1, case_value)
+                    ofs_array_push(body_list, arm_body)
+                    case_count++
+                }
+            }
+
+            if (!_expect(TOK_RBRACE)) { _error("expected '}' after match") }
+
+            forge result: stone = -1
+            forge i = case_count - 1
+            while (i >= 0) {
+                forge cmp = ofs_array_get(condition_list, i)
+                forge body = ofs_array_get(body_list, i)
+                forge then_block = body
+                forge else_block: stone = -1
+                if (i == case_count - 1 && default_body >= 0) {
+                    else_block = default_body
+                } else if (i + 1 < case_count) {
+                    else_block = result
+                }
+
+                forge n = node_new(NK_IF, "", t.line, t.col)
+                node_set_child(n, 0, cmp)
+                node_set_child(n, 1, then_block)
+                node_set_child(n, 2, else_block)
+                result = n
+                i--
+            }
+
+            if (default_body >= 0 && case_count == 0) {
+                return default_body
+            }
+            if (case_count == 0) {
+                return node_new(NK_BLOCK, "", t.line, t.col)
+            }
+            return result
+        }
+
         // break
         if (t.kind == TOK_BREAK || t.kind == TOK_SHATTER) {
             _advance()
@@ -563,21 +667,7 @@ namespace parser {
         if (t.kind == TOK_LBRACE) {
             return parse_block()
         }
-
-        if (t.kind == TOK_FRACTURE || t.kind == TOK_BEDROCK || t.kind == TOK_ABYSS) {
-            _advance()
-            return parse_block()
-        }
-
-        if (t.kind == TOK_TECTONIC) {
-            _advance()
-            if (_cur_kind() == TOK_FRACTURE || _cur_kind() == TOK_BEDROCK || _cur_kind() == TOK_ABYSS) {
-                _advance()
-            }
-            return parse_block()
-        }
         
-        // Variable/const declaration or expression statement
         if (t.kind == TOK_FORGE || t.kind == TOK_CONST || t.kind == TOK_SHARD) {
             forge is_const = (t.kind == TOK_CONST)
             _advance()
@@ -727,24 +817,29 @@ namespace parser {
             ret_type = parse_type()
         }
 
-        while (_cur_kind() == TOK_IDENT && (ofs_str_eq(_cur_val(), "bind") || ofs_str_eq(_cur_val(), "abi"))) {
+        forge bind_sym = fn_name
+        if (ofs_str_eq(_cur_val(), "bind")) {
             _advance()
-            if (_cur_kind() == TOK_IDENT || _cur_kind() == TOK_STRING) {
+            if (_cur_kind() == TOK_STRING) {
+                bind_sym = _cur_val()
+                _advance()
+            }
+        }
+        if (ofs_str_eq(_cur_val(), "abi")) {
+            _advance()
+            if (_cur_kind() == TOK_IDENT) {
                 _advance()
             }
         }
 
-        forge n = node_new(NK_EXTERN_VN, fn_name, fn_line, fn_col)
+        forge node_kind = NK_EXTERN_VN
+        if (t.kind == TOK_RIFT) {
+            node_kind = NK_RIFT_VN
+        }
+        forge n = node_new(node_kind, fn_name, fn_line, fn_col)
+        node_set_type(n, bind_sym)
         node_set_child(n, 0, params)
         node_set_child(n, 1, ret_type)
-        return n
-    }
-
-    vein parse_rift_decl() -> stone {
-        forge n = parse_extern_decl()
-        forge r: Node = node_get(n)
-        r.kind = NK_RIFT_VN
-        node_set(n, r)
         return n
     }
 
@@ -855,6 +950,24 @@ namespace parser {
         return false
     }
 
+    // Nomes declarados localmente numa funcao (parametros, forge, const).
+    vein _collect_locals(id: stone, out: Array<obsidian>) -> void {
+        if (id < 0) { return }
+        forge n: Node = node_get(id)
+        if (n.kind == NK_PARAM || n.kind == NK_VAR_DECL || n.kind == NK_CONST_DECL) {
+            ofs_array_push(out, n.val)
+        }
+        _collect_locals(n.c0, out)
+        _collect_locals(n.c1, out)
+        _collect_locals(n.c2, out)
+        _collect_locals(n.c3, out)
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            _collect_locals(node_get_extra(id, i), out)
+            i++
+        }
+    }
+
     vein _prefix_namespace_refs(id: stone, ns_name: obsidian, names: Array<obsidian>) -> void {
         if (id < 0) { return }
         forge n: Node = node_get(id)
@@ -928,8 +1041,6 @@ namespace parser {
                 member = parse_monolith_decl()
             } else if (_cur_kind() == TOK_EXTERN) {
                 member = parse_extern_decl()
-            } else if (_cur_kind() == TOK_RIFT) {
-                member = parse_rift_decl()
             } else if (_cur_kind() == TOK_IMPL) {
                 member = parse_impl_decl()
             } else if (_cur_kind() == TOK_STRATA) {
@@ -950,7 +1061,25 @@ namespace parser {
 
         forge i = 0
         while (i < node_extra_len(ns)) {
-            _prefix_namespace_refs(node_get_extra(ns, i), ns_name, local_names)
+            forge mid = node_get_extra(ns, i)
+            forge mk = node_kind_of(mid)
+            if (mk == NK_FN_DECL || mk == NK_CORE_DECL) {
+                // Parametros e variaveis locais sombreiam globais do namespace:
+                // antes `forge bg = ...` dentro de uma funcao virava o global
+                // ns__bg (lia e sobrescrevia o global).
+                forge locals: Array<obsidian> = []
+                _collect_locals(mid, locals)
+                forge visible: Array<obsidian> = []
+                forge j = 0
+                while (j < ofs_array_len(local_names)) {
+                    forge nm: obsidian = ofs_array_get(local_names, j)
+                    if (!_name_in_list(nm, locals)) { ofs_array_push(visible, nm) }
+                    j++
+                }
+                _prefix_namespace_refs(mid, ns_name, visible)
+            } else {
+                _prefix_namespace_refs(mid, ns_name, local_names)
+            }
             i++
         }
 
@@ -1043,17 +1172,12 @@ namespace parser {
                 if (decl >= 0) {
                     node_add_extra(program, decl)
                 }
-            } else if (t.kind == TOK_EXTERN) {
+            } else if (t.kind == TOK_EXTERN || t.kind == TOK_RIFT) {
                 forge decl = parse_extern_decl()
                 if (decl >= 0) {
                     node_add_extra(program, decl)
                 }
-            } else if (t.kind == TOK_RIFT) {
-                forge decl = parse_rift_decl()
-                if (decl >= 0) {
-                    node_add_extra(program, decl)
-                }
-            } else if (t.kind == TOK_FORGE || t.kind == TOK_CONST) {
+            } else if (t.kind == TOK_FORGE || t.kind == TOK_CONST || t.kind == TOK_SHARD) {
                 forge stmt = parse_stmt()
                 if (stmt >= 0) {
                     node_add_extra(program, stmt)
@@ -1061,17 +1185,13 @@ namespace parser {
             } else if (t.kind == TOK_ATTACH) {
                 _advance()
                 if (!_expect(TOK_LBRACE)) { _error("expected '{'") }
-                forge path = ""
-                if (_cur_kind() == TOK_IDENT) {
-                    forge path_val: obsidian = ""
-                    while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
-                        path_val = path_val + _cur_val()
-                        _advance()
-                    }
-                    path = path_val
+                forge path_val: obsidian = ""
+                while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
+                    path_val = path_val + _cur_val()
+                    _advance()
                 }
                 if (!_expect(TOK_RBRACE)) { _error("expected '}'") }
-                forge attach_node = node_new(NK_ATTACH, path, t.line, t.col)
+                forge attach_node = node_new(NK_ATTACH, path_val, t.line, t.col)
                 node_add_extra(program, attach_node)
             } else if (t.kind == TOK_EOF) {
                 break

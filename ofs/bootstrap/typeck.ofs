@@ -13,6 +13,9 @@ namespace typeck {
     forge _field_owners: Array<obsidian> = []
     forge _field_names: Array<obsidian> = []
     forge _field_types: Array<obsidian> = []
+    forge _anchor_depth: stone = 0
+    forge _semantic_errors: stone = 0
+    forge _check_visits: stone = 0
     
     vein push_scope() -> void {
         _scope_depth++
@@ -60,7 +63,14 @@ namespace typeck {
     vein type_node_name(id: stone) -> obsidian {
         if (id < 0) { return "void" }
         forge t: Node = node_get(id)
-        if (t.kind == NK_TYPE_ARRAY) { return "Array" }
+        if (t.kind == NK_TYPE_ARRAY) {
+            forge inner = "stone"
+            if (t.c0 >= 0) {
+                forge tn: Node = node_get(t.c0)
+                inner = tn.val
+            }
+            return "Array<" + inner + ">"
+        }
         return t.val
     }
 
@@ -86,6 +96,7 @@ namespace typeck {
     // ── Type Checking Core ───────────────────────────────────────────
     
     vein check_type_string(type_str: obsidian) -> bool {
+        if (ofs_str_len(type_str) > 0 && ofs_str_char_at(type_str, 0) == 42) { return true }
         if (ofs_str_eq(type_str, "stone")) { return true }
         if (ofs_str_eq(type_str, "crystal")) { return true }
         if (ofs_str_eq(type_str, "obsidian")) { return true }
@@ -100,15 +111,60 @@ namespace typeck {
         if (ofs_str_eq(type_str, "i32")) { return true }
         return false
     }
-    
+
+    vein is_int_type(t: obsidian) -> bool {
+        if (ofs_str_eq(t, "stone") || ofs_str_eq(t, "u8") || ofs_str_eq(t, "u16") ||
+            ofs_str_eq(t, "u32") || ofs_str_eq(t, "u64") || ofs_str_eq(t, "i8") || ofs_str_eq(t, "i32")) {
+            return true
+        }
+        return false
+    }
+
+    vein is_variant_name(name: obsidian) -> bool {
+        // variant names are PascalCase (UpperCamel): start uppercase, contain a
+        // lowercase letter, and have no underscores (excludes CONST_STYLE idents)
+        if (ofs_str_len(name) < 2) { return false }
+        forge c0 = ofs_str_char_at(name, 0)
+        if (c0 < 65 || c0 > 90) { return false }
+        forge has_lower = false
+        forge i = 1
+        while (i < ofs_str_len(name)) {
+            forge c = ofs_str_char_at(name, i)
+            if (c == 95) { return false }
+            if (c >= 97 && c <= 122) { has_lower = true }
+            i++
+        }
+        return has_lower
+    }
+
     vein check_type_compat(from: obsidian, to: obsidian) -> bool {
         if (ofs_str_eq(from, to)) { return true }
-        if (ofs_str_eq(to, "stone") && ofs_str_eq(from, "i32")) { return true }
+        if (is_int_type(from) && is_int_type(to)) { return true }
+        if (ofs_str_len(from) > 0 && ofs_str_char_at(from, 0) == 42 &&
+            ofs_str_len(to) > 0 && ofs_str_char_at(to, 0) == 42) {
+            return true
+        }
         return false
+    }
+
+    vein report_anchor_control(n: Node, control: obsidian) -> void {
+        _semantic_errors++
+        echo("[fault E0042] " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) +
+            ": '" + control + "' is not allowed inside anchor")
     }
     
     vein check_node(id: stone) -> obsidian {
         if (id < 0) { return "void" }
+
+        _check_visits++
+        if (_check_visits > node_pool_len() * 4 + 256) {
+            _semantic_errors++
+            echo("[fault E9001] typechecker traversal limit exceeded at node " + ofs_stone_to_obsidian(id))
+            return "unknown"
+        }
+        if (_check_visits % 5000 == 0) {
+            echo("[typeck trace] visited " + ofs_stone_to_obsidian(_check_visits) + " nodes")
+        }
         
         forge n: Node = node_get(id)
         
@@ -138,9 +194,14 @@ namespace typeck {
         }
         
         if (n.kind == NK_IDENT) {
+            if (is_variant_name(n.val)) {
+                node_set_type(id, "variant")
+                return "variant"
+            }
             forge sym: Symbol = resolve(n.val)
             if (ofs_str_eq(sym.name, "")) {
-                echo("[typeck warn " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "] unknown identifier '" + n.val + "'")
+                echo("[AVISO SEMANTICO " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "]: identificador desconhecido '" + n.val + "'")
+                echo("  dica: declare a variavel com 'forge' ou importe o modulo com 'attach'.")
                 return "unknown"
             }
             node_set_type(id, sym.type_str)
@@ -152,13 +213,16 @@ namespace typeck {
             forge right_type = check_node(n.c1)
             
             if (ofs_str_eq(n.val, "+") || ofs_str_eq(n.val, "-") ||
-                ofs_str_eq(n.val, "*") || ofs_str_eq(n.val, "/")) {
+                ofs_str_eq(n.val, "*") || ofs_str_eq(n.val, "/") ||
+                ofs_str_eq(n.val, "%") || ofs_str_eq(n.val, "&") ||
+                ofs_str_eq(n.val, "|") || ofs_str_eq(n.val, "^") ||
+                ofs_str_eq(n.val, "<<") || ofs_str_eq(n.val, ">>")) {
                 if (ofs_str_eq(n.val, "+") && (ofs_str_eq(left_type, "obsidian") || ofs_str_eq(right_type, "obsidian"))) {
                     node_set_type(id, "obsidian")
                     return "obsidian"
                 }
                 if (!check_type_compat(left_type, right_type)) {
-                    echo("[typeck warn] type mismatch in " + n.val)
+                    echo("[AVISO DE TIPO " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "]: tipos incompativeis na operacao '" + n.val + "' (" + left_type + " vs " + right_type + ")")
                 }
                 node_set_type(id, left_type)
                 return left_type
@@ -181,6 +245,26 @@ namespace typeck {
         }
 
         if (n.kind == NK_FIELD) {
+            // `ns.global` acessado de fora do namespace: reescreve para o
+            // identificador mangled `ns__global` (o parser ja faz isso para
+            // chamadas `ns.fn()`). Vale para llvmgen e para o interpretador.
+            if (n.c0 >= 0) {
+                forge fb: Node = node_get(n.c0)
+                if (fb.kind == NK_IDENT) {
+                    forge base_sym: Symbol = resolve(fb.val)
+                    if (ofs_str_eq(base_sym.name, "")) {
+                        forge ns_sym: Symbol = resolve(fb.val + "__" + n.val)
+                        if (!ofs_str_eq(ns_sym.name, "")) {
+                            n.kind = NK_IDENT
+                            n.val = fb.val + "__" + n.val
+                            n.c0 = -1
+                            node_set(id, n)
+                            node_set_type(id, ns_sym.type_str)
+                            return ns_sym.type_str
+                        }
+                    }
+                }
+            }
             forge base_type = check_node(n.c0)
             forge ft = field_type(base_type, n.val)
             node_set_type(id, ft)
@@ -194,31 +278,44 @@ namespace typeck {
             return "stone"
         }
 
-        if (n.kind == NK_CAST) {
-            check_node(n.c0)
-            node_set_type(id, n.val)
-            return n.val
-        }
-
         if (n.kind == NK_ASSIGN) {
             forge target_type = check_node(n.c0)
             check_node(n.c1)
             node_set_type(id, target_type)
             return target_type
         }
+
+        if (n.kind == NK_POST_OP) {
+            forge operand_type = check_node(n.c0)
+            if (ofs_str_eq(n.val, "?")) {
+                node_set_type(id, operand_type)
+                return operand_type
+            }
+            node_set_type(id, operand_type)
+            return operand_type
+        }
         
+        if (n.kind == NK_CAST) {
+            check_node(n.c0)
+            forge target_type = n.val
+            node_set_type(id, target_type)
+            return target_type
+        }
+
         if (n.kind == NK_UNARY_OP) {
             forge operand_type = check_node(n.c0)
             if (ofs_str_eq(n.val, "&")) {
-                node_set_type(id, "*" + operand_type)
-                return "*" + operand_type
+                forge ptr_t = "*" + operand_type
+                node_set_type(id, ptr_t)
+                return ptr_t
             }
             if (ofs_str_eq(n.val, "*")) {
-                if (ofs_str_len(operand_type) > 1 && ofs_str_eq(ofs_str_substr(operand_type, 0, 1), "*")) {
-                    forge inner = ofs_str_substr(operand_type, 1, ofs_str_len(operand_type) - 1)
-                    node_set_type(id, inner)
-                    return inner
+                forge deref_t = "stone"
+                if (ofs_str_len(operand_type) > 1 && ofs_str_char_at(operand_type, 0) == 42) {
+                    deref_t = ofs_str_substr(operand_type, 1, ofs_str_len(operand_type) - 1)
                 }
+                node_set_type(id, deref_t)
+                return deref_t
             }
             node_set_type(id, operand_type)
             return operand_type
@@ -226,15 +323,65 @@ namespace typeck {
         
         if (n.kind == NK_CALL) {
             forge i = 0
-            while (i < node_extra_len(id)) {
-                forge arg_id = node_get_extra(id, i)
+            forge argc = node_extra_len(id)
+            while (i < argc) {
+                forge arg_id = node_extra_at(id, i)
                 check_node(arg_id)
                 i++
+            }
+            if (ofs_str_eq(n.val, "fault_cut") || ofs_str_eq(n.val, "fault_patch") || ofs_str_eq(n.val, "fault_swap") || ofs_str_eq(n.val, "fault_count") || ofs_str_eq(n.val, "fault_lead") || ofs_str_eq(n.val, "fault_trail")) {
+                node_set_type(id, "stone")
+                return "stone"
+            }
+            if (ofs_str_eq(n.val, "fault_fence") || ofs_str_eq(n.val, "fault_prefetch") || ofs_str_eq(n.val, "fault_trap")) {
+                node_set_type(id, "void")
+                return "void"
+            }
+            if (ofs_str_eq(n.val, "fault_step")) {
+                forge st_t = check_node(node_get_extra(id, 0))
+                node_set_type(id, st_t)
+                return st_t
             }
             forge fn_sym: Symbol = resolve(n.val)
             if (!ofs_str_eq(fn_sym.name, "")) {
                 node_set_type(id, fn_sym.type_str)
                 return fn_sym.type_str
+            }
+            // Builtins de Array sem `extern` declarado: antes caiam em
+            // "unknown" (= ponteiro no LLVM) e `forge n = ofs_array_get(a, i)`
+            // gerava IR invalido. Infere o elemento a partir de Array<T>.
+            if (ofs_str_eq(n.val, "ofs_array_get") || ofs_str_eq(n.val, "ofs_array_pop")) {
+                forge elem_t = "stone"
+                if (argc > 0) {
+                    forge arr_t = node_type_of(node_extra_at(id, 0))
+                    forge alen = ofs_str_len(arr_t)
+                    if (alen > 7 && ofs_str_eq(ofs_str_substr(arr_t, 0, 6), "Array<")) {
+                        elem_t = ofs_str_substr(arr_t, 6, alen - 7)
+                    }
+                }
+                node_set_type(id, elem_t)
+                return elem_t
+            }
+            // Builtins de string do runtime (declarados implicitamente pelo llvmgen).
+            if (ofs_str_eq(n.val, "ofs_str_len") || ofs_str_eq(n.val, "ofs_str_char_at") || ofs_str_eq(n.val, "ofs_str_char_at_known")) {
+                node_set_type(id, "stone")
+                return "stone"
+            }
+            if (ofs_str_eq(n.val, "ofs_str_eq") || ofs_str_eq(n.val, "ofs_str_contains")) {
+                node_set_type(id, "bool")
+                return "bool"
+            }
+            if (ofs_str_eq(n.val, "ofs_str_concat") || ofs_str_eq(n.val, "ofs_str_substr") || ofs_str_eq(n.val, "ofs_stone_to_obsidian")) {
+                node_set_type(id, "obsidian")
+                return "obsidian"
+            }
+            if (ofs_str_eq(n.val, "ofs_array_len")) {
+                node_set_type(id, "stone")
+                return "stone"
+            }
+            if (ofs_str_eq(n.val, "ofs_array_push") || ofs_str_eq(n.val, "ofs_array_set")) {
+                node_set_type(id, "void")
+                return "void"
             }
             node_set_type(id, "unknown")
             return "unknown"
@@ -271,9 +418,54 @@ namespace typeck {
         }
         
         if (n.kind == NK_RETURN) {
+            if (_anchor_depth > 0) { report_anchor_control(n, "return") }
             if (n.c0 >= 0) {
                 return check_node(n.c0)
             }
+            return "void"
+        }
+
+        if (n.kind == NK_BREAK || n.kind == NK_CONTINUE) {
+            if (_anchor_depth > 0) {
+                if (n.kind == NK_BREAK) { report_anchor_control(n, "shatter") }
+                else { report_anchor_control(n, "erode") }
+            }
+            return "void"
+        }
+
+        if (n.kind == NK_THROW) {
+            if (_anchor_depth > 0) { report_anchor_control(n, "throw") }
+            if (n.c0 >= 0) { check_node(n.c0) }
+            return "void"
+        }
+
+        if (n.kind == NK_ANCHOR) {
+            _anchor_depth++
+            if (n.c0 >= 0) { check_node(n.c0) }
+            _anchor_depth--
+            return "void"
+        }
+
+        if (n.kind == NK_MATCH) {
+            if (n.c0 >= 0) { check_node(n.c0) }
+            forge i = 0
+            forge casec = node_extra_len(id)
+            while (i < casec) {
+                forge case_id = node_extra_at(id, i)
+                check_node(case_id)
+                i++
+            }
+            return "void"
+        }
+
+        if (n.kind == NK_CASE) {
+            if (n.c0 >= 0) { check_node(n.c0) }
+            if (n.c1 >= 0) { check_node(n.c1) }
+            return "void"
+        }
+
+        if (n.kind == NK_DEFAULT) {
+            if (n.c0 >= 0) { check_node(n.c0) }
             return "void"
         }
         
@@ -309,22 +501,27 @@ namespace typeck {
         }
 
         if (n.kind == NK_CYCLE_RANGE) {
-            check_node(n.c0)
+            forge arr_t = check_node(n.c0)
             push_scope()
-            forge sym: Symbol
-            sym.name = n.val
-            sym.type_str = "stone"
-            sym.kind = SYM_VAR
-            declare(sym)
-            if (n.c1 >= 0) { check_node(n.c1) }
+            forge rsym: Symbol
+            rsym.name = n.val
+            rsym.type_str = "stone"
+            if (ofs_str_eq(arr_t, "Array<obsidian>") || ofs_str_eq(arr_t, "obsidian")) {
+                rsym.type_str = "obsidian"
+            }
+            rsym.kind = SYM_VAR
+            declare(rsym)
+            node_set_type(id, rsym.type_str)
+            check_node(n.c1)
             pop_scope()
             return "void"
         }
         
         if (n.kind == NK_BLOCK) {
             forge i = 0
-            while (i < node_extra_len(id)) {
-                forge stmt_id = node_get_extra(id, i)
+            forge stmtc = node_extra_len(id)
+            while (i < stmtc) {
+                forge stmt_id = node_extra_at(id, i)
                 check_node(stmt_id)
                 i++
             }
@@ -359,16 +556,16 @@ namespace typeck {
             forge params_id = n.c0
             if (params_id >= 0) {
                 forge i = 0
-                while (i < node_extra_len(params_id)) {
-                    forge param_id = node_get_extra(params_id, i)
-                    forge param: Node = node_get(param_id)
-                    forge param_type_id = param.c0
+                forge paramc = node_extra_len(params_id)
+                while (i < paramc) {
+                    forge param_id = node_extra_at(params_id, i)
+                    forge param_type_id = node_child(param_id, 0)
                     forge param_type_str = "unknown"
                     if (param_type_id >= 0) {
                         param_type_str = type_node_name(param_type_id)
                     }
                     forge sym: Symbol
-                    sym.name = param.val
+                    sym.name = node_val_of(param_id)
                     sym.type_str = param_type_str
                     sym.kind = SYM_PARAM
                     declare(sym)
@@ -394,12 +591,13 @@ namespace typeck {
             declare(type_sym)
 
             forge i = 0
-            while (i < node_extra_len(id)) {
-                forge field_id = node_get_extra(id, i)
-                forge field: Node = node_get(field_id)
-                if (field.c0 >= 0) {
-                    forge field_type_str = type_node_name(field.c0)
-                    register_field(n.val, field.val, field_type_str)
+            forge fieldc = node_extra_len(id)
+            while (i < fieldc) {
+                forge field_id = node_extra_at(id, i)
+                forge field_type_id = node_child(field_id, 0)
+                if (field_type_id >= 0) {
+                    forge field_type_str = type_node_name(field_type_id)
+                    register_field(n.val, node_val_of(field_id), field_type_str)
                     if (!check_type_string(field_type_str)) {
                         echo("[typeck warn] unknown field type '" + field_type_str + "' in monolith " + n.val)
                     }
@@ -411,8 +609,9 @@ namespace typeck {
 
         if (n.kind == NK_IMPL) {
             forge i = 0
-            while (i < node_extra_len(id)) {
-                forge method_id = node_get_extra(id, i)
+            forge mc = node_extra_len(id)
+            while (i < mc) {
+                forge method_id = node_extra_at(id, i)
                 check_node(method_id)
                 i++
             }
@@ -422,8 +621,9 @@ namespace typeck {
         if (n.kind == NK_NAMESPACE) {
             push_scope()
             forge i = 0
-            while (i < node_extra_len(id)) {
-                forge member_id = node_get_extra(id, i)
+            forge mc = node_extra_len(id)
+            while (i < mc) {
+                forge member_id = node_extra_at(id, i)
                 check_node(member_id)
                 i++
             }
@@ -447,41 +647,65 @@ namespace typeck {
         if (n.kind == NK_PROGRAM) {
             // predeclare top-level functions for call resolution
             forge d = 0
-            while (d < node_extra_len(id)) {
-                forge decl_id = node_get_extra(id, d)
-                forge decl: Node = node_get(decl_id)
-                if (decl.kind == NK_FN_DECL || decl.kind == NK_CORE_DECL) {
+            forge dcount = node_extra_len(id)
+            while (d < dcount) {
+                forge decl_id = node_extra_at(id, d)
+                forge decl_kind = node_kind_of(decl_id)
+                if (decl_kind == NK_FN_DECL || decl_kind == NK_CORE_DECL) {
                     forge fn_sym: Symbol
-                    fn_sym.name = decl.val
+                    fn_sym.name = node_val_of(decl_id)
                     fn_sym.type_str = "unknown"
-                    if (decl.c1 >= 0) {
-                        fn_sym.type_str = type_node_name(decl.c1)
+                    forge decl_c1 = node_child(decl_id, 1)
+                    if (decl_c1 >= 0) {
+                        fn_sym.type_str = type_node_name(decl_c1)
                     }
                     fn_sym.kind = SYM_FN
                     declare(fn_sym)
-                } else if (decl.kind == NK_EXTERN_VN || decl.kind == NK_RIFT_VN) {
+                } else if (decl_kind == NK_EXTERN_VN || decl_kind == NK_RIFT_VN) {
                     forge ext_sym: Symbol
-                    ext_sym.name = decl.val
+                    ext_sym.name = node_val_of(decl_id)
                     ext_sym.type_str = "unknown"
-                    if (decl.c1 >= 0) {
-                        ext_sym.type_str = type_node_name(decl.c1)
+                    forge decl_c1e = node_child(decl_id, 1)
+                    if (decl_c1e >= 0) {
+                        ext_sym.type_str = type_node_name(decl_c1e)
                     }
                     ext_sym.kind = SYM_FN
                     declare(ext_sym)
-                } else if (decl.kind == NK_NAMESPACE || decl.kind == NK_IMPL) {
+                } else if (decl_kind == NK_NAMESPACE || decl_kind == NK_IMPL) {
                     forge j = 0
-                    while (j < node_extra_len(decl_id)) {
-                        forge member_id = node_get_extra(decl_id, j)
-                        forge member: Node = node_get(member_id)
-                        if (member.kind == NK_FN_DECL || member.kind == NK_CORE_DECL || member.kind == NK_EXTERN_VN || member.kind == NK_RIFT_VN) {
+                    forge mcount = node_extra_len(decl_id)
+                    while (j < mcount) {
+                        forge member_id = node_extra_at(decl_id, j)
+                        forge member_kind = node_kind_of(member_id)
+                        if (member_kind == NK_FN_DECL || member_kind == NK_CORE_DECL || member_kind == NK_EXTERN_VN || member_kind == NK_RIFT_VN) {
                             forge member_sym: Symbol
-                            member_sym.name = member.val
+                            member_sym.name = node_val_of(member_id)
                             member_sym.type_str = "unknown"
-                            if (member.c1 >= 0) {
-                                member_sym.type_str = type_node_name(member.c1)
+                            forge mc1 = node_child(member_id, 1)
+                            if (mc1 >= 0) {
+                                member_sym.type_str = type_node_name(mc1)
                             }
                             member_sym.kind = SYM_FN
                             declare(member_sym)
+                        } else if (member_kind == NK_VAR_DECL || member_kind == NK_CONST_DECL) {
+                            // globais de namespace (nome ja mangled ns__nome),
+                            // visiveis de fora como `ns.nome`
+                            forge gv_sym: Symbol
+                            gv_sym.name = node_val_of(member_id)
+                            gv_sym.type_str = "unknown"
+                            forge gv_ann = node_child(member_id, 0)
+                            forge gv_init = node_child(member_id, 1)
+                            if (gv_ann >= 0) {
+                                gv_sym.type_str = type_node_name(gv_ann)
+                            } else if (gv_init >= 0) {
+                                forge gik = node_kind_of(gv_init)
+                                if (gik == NK_LIT_INT) { gv_sym.type_str = "stone" }
+                                if (gik == NK_LIT_FLOAT) { gv_sym.type_str = "crystal" }
+                                if (gik == NK_LIT_STRING) { gv_sym.type_str = "obsidian" }
+                                if (gik == NK_LIT_BOOL) { gv_sym.type_str = "bool" }
+                            }
+                            gv_sym.kind = SYM_VAR
+                            declare(gv_sym)
                         }
                         j++
                     }
@@ -490,8 +714,9 @@ namespace typeck {
             }
 
             forge i = 0
-            while (i < node_extra_len(id)) {
-                forge decl_id = node_get_extra(id, i)
+            forge body_c = node_extra_len(id)
+            while (i < body_c) {
+                forge decl_id = node_extra_at(id, i)
                 check_node(decl_id)
                 i++
             }
@@ -502,8 +727,15 @@ namespace typeck {
     }
     
     vein check(root_id: stone) -> void {
+        _anchor_depth = 0
+        _semantic_errors = 0
+        _check_visits = 0
         push_scope()
         check_node(root_id)
         pop_scope()
+    }
+
+    vein has_errors() -> bool {
+        return _semantic_errors > 0
     }
 }

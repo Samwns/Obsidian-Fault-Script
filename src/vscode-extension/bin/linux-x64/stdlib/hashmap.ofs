@@ -1,0 +1,158 @@
+// OFS Standard Library — Hashmap Module
+// Tabela hash inteiro -> inteiro com enderecamento aberto (sondagem linear),
+// escrita 100% em OFS. Cresce automaticamente (fator de carga 0.5).
+//
+//   forge m = hashmap.new(64)
+//   hashmap.set(m, 42, 7)
+//   forge v = hashmap.get(m, 42, -1)   // 7
+//   hashmap.has(m, 99)                 // false
+//
+// Valores que sao ponteiros ou strings podem ser guardados como stone
+// (`p as stone`) ou como indice para um Array mantido pelo chamador.
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+
+namespace hashmap {
+    forge _keys: Array<stone> = []
+    forge _vals: Array<stone> = []
+    forge _caps: Array<stone> = []
+    forge _counts: Array<stone> = []
+
+    // Marcador de slot vazio (um valor de chave praticamente impossivel).
+    vein _empty() -> stone {
+        return 0 - 9223372036854775807
+    }
+
+    vein _hash(k: stone) -> stone {
+        // multiplicacao de Fibonacci (2^64 / phi), mistura dos bits altos
+        forge h = k * (0 - 7046029254386353131)
+        h = h ^ (h >> 29)
+        if (h < 0) { h = 0 - (h + 1) }
+        return h
+    }
+
+    vein _slot_ptr(base: stone, i: stone) -> *stone {
+        return fault_step(base as *stone, i)
+    }
+
+    vein _rd(base: stone, i: stone) -> stone {
+        forge p: *stone = fault_step(base as *stone, i)
+        forge v = 0
+        fracture {
+            v = *p;
+        }
+        return v
+    }
+
+    vein _wr(base: stone, i: stone, v: stone) -> void {
+        forge p: *stone = fault_step(base as *stone, i)
+        fracture {
+            *p = v;
+        }
+    }
+
+    vein _alloc_table(cap: stone) -> stone {
+        forge k: *stone = ofs_alloc(cap * 8)
+        forge kb = k as stone
+        forge e = _empty()
+        forge i = 0
+        while (i < cap) {
+            _wr(kb, i, e)
+            i++
+        }
+        return kb
+    }
+
+    vein new(initial_cap: stone) -> stone {
+        forge cap = 16
+        while (cap < initial_cap * 2) { cap = cap * 2 }
+        ofs_array_push(_keys, _alloc_table(cap))
+        forge v: *stone = ofs_alloc(cap * 8)
+        ofs_array_push(_vals, v as stone)
+        ofs_array_push(_caps, cap)
+        ofs_array_push(_counts, 0)
+        return ofs_array_len(_caps) - 1
+    }
+
+    vein count(m: stone) -> stone {
+        return ofs_array_get(_counts, m)
+    }
+
+    vein _find(m: stone, key: stone) -> stone {
+        forge kb = ofs_array_get(_keys, m)
+        forge cap = ofs_array_get(_caps, m)
+        forge mask = cap - 1
+        forge i = _hash(key) & mask
+        forge e = _empty()
+        while (true) {
+            forge k = _rd(kb, i)
+            if (k == key || k == e) { return i }
+            i = (i + 1) & mask
+        }
+        return -1
+    }
+
+    vein _grow(m: stone) -> void {
+        forge old_k = ofs_array_get(_keys, m)
+        forge old_v = ofs_array_get(_vals, m)
+        forge old_cap = ofs_array_get(_caps, m)
+        forge cap = old_cap * 2
+        forge nk = _alloc_table(cap)
+        forge nvp: *stone = ofs_alloc(cap * 8)
+        ofs_array_set(_keys, m, nk)
+        ofs_array_set(_vals, m, nvp as stone)
+        ofs_array_set(_caps, m, cap)
+        forge e = _empty()
+        forge i = 0
+        while (i < old_cap) {
+            forge k = _rd(old_k, i)
+            if (k != e) {
+                forge s = _find(m, k)
+                _wr(nk, s, k)
+                _wr(nvp as stone, s, _rd(old_v, i))
+            }
+            i++
+        }
+        ofs_free(old_k as *stone)
+        ofs_free(old_v as *stone)
+    }
+
+    vein set(m: stone, key: stone, val: stone) -> void {
+        forge cnt = ofs_array_get(_counts, m)
+        if ((cnt + 1) * 2 > ofs_array_get(_caps, m)) {
+            _grow(m)
+        }
+        forge s = _find(m, key)
+        forge kb = ofs_array_get(_keys, m)
+        if (_rd(kb, s) != key) {
+            _wr(kb, s, key)
+            ofs_array_set(_counts, m, cnt + 1)
+        }
+        _wr(ofs_array_get(_vals, m), s, val)
+    }
+
+    vein get(m: stone, key: stone, fallback: stone) -> stone {
+        forge s = _find(m, key)
+        if (_rd(ofs_array_get(_keys, m), s) != key) { return fallback }
+        return _rd(ofs_array_get(_vals, m), s)
+    }
+
+    vein has(m: stone, key: stone) -> bool {
+        forge s = _find(m, key)
+        return _rd(ofs_array_get(_keys, m), s) == key
+    }
+
+    // Remove todas as entradas (mantem a capacidade).
+    vein clear(m: stone) -> void {
+        forge kb = ofs_array_get(_keys, m)
+        forge cap = ofs_array_get(_caps, m)
+        forge e = _empty()
+        forge i = 0
+        while (i < cap) {
+            _wr(kb, i, e)
+            i++
+        }
+        ofs_array_set(_counts, m, 0)
+    }
+}

@@ -1,7 +1,9 @@
 // OFS Standard Library — I/O Module
 // Input/Output utility functions
 
-// Note: echo() is a built-in. ofs_read_line() is a runtime builtin.
+extern vein ofs_read_line() -> obsidian
+
+// Note: echo() is a built-in. ofs_read_line() is provided by the runtime.
 
 vein prompt(message: obsidian) -> obsidian {
     echo(message)

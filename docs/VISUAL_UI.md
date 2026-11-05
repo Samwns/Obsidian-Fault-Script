@@ -97,3 +97,38 @@ ofs ui arquivo.oll -o preview.ppm
 - Renderização tipográfica bitmap 5x7 integrada para caracteres alfanuméricos e pontuação básica.
 - Captura de eventos de ponteiro com `input.mouse_x`, `input.mouse_y` e `input.is_down`.
 - Drivers nativos de janela para Win32 no Windows e X11 no Linux.
+
+## Stack gráfica 100% OFS
+
+Além do `canvas`/`window`/OLL, a stdlib traz uma stack gráfica escrita inteiramente em OFS, sem runtime C:
+
+| Módulo | Papel |
+|---|---|
+| `x11win.ofs` | Janela X11 real, teclado UTF-8 com teclas mortas (pt-BR), mouse, roda, resize, cursores |
+| `raster.ofs` | Desenho vetorial com antialiasing (caminhos, curvas, cantos arredondados, traços) |
+| `ttf.ofs` | Texto TrueType (Inter, Noto, DejaVu) com acentos e cache de glifos |
+| `icons.ofs` | Ícones vetoriais de interface |
+
+```ofs
+attach {x11win}
+attach {ttf}
+attach {icons}
+
+core main() {
+    if (!x11win.open("App", 800, 500)) { return }
+    forge font = ttf.load("/usr/share/fonts/rsms-inter-fonts/Inter-Regular.ttf")
+    forge cv: Canvas = canvas.create(800, 500)
+    while (x11win.is_open()) {
+        forge ev = x11win.poll()
+        while (ev != 0) { ev = x11win.poll() }
+        canvas.clear(cv, 1776415)
+        raster.fill_round_rect(cv, 24.0, 24.0, 320.0, 64.0, 14.0, 2829617)
+        icons.draw(cv, icons.HOME, 40, 44, 24, 9090296)
+        ttf.draw(cv, font, 18, 76, 63, "Olá, OFS!", 15264493)
+        x11win.present(cv)
+        x11win.sleep_ms(16)
+    }
+}
+```
+
+Observação: `window.ofs` usa o runtime `magma.o`, cuja janela é um stub; para janelas reais use `x11win.ofs`.

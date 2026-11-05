@@ -140,7 +140,9 @@ namespace parser {
             t.kind == TOK_STAR) {
             _advance()
             forge op = t.val
-            forge operand = parse_primary()
+            // O operando inclui os pos-fixos (chamada, campo, indice, cast):
+            // `!ns.fn(x)` e `!(ns.fn(x))`, nao `(!ns).fn(x)`.
+            forge operand = parse_postfix(parse_primary())
             forge n = node_new(NK_UNARY_OP, op, t.line, t.col)
             node_set_child(n, 0, operand)
             return n
@@ -325,7 +327,17 @@ namespace parser {
             
             forge prec = _get_prec(_cur_kind())
             if (prec == 0 || prec < min_prec) { break }
-            
+
+            // Operadores que tambem sao prefixos (*p, -x, &v) no inicio de uma
+            // nova linha iniciam um novo comando, nao continuam a expressao:
+            //   v = *p
+            //   *p = 0      <- antes virava "v = *p * p = 0"
+            forge opk = _cur_kind()
+            if ((opk == TOK_STAR || opk == TOK_MINUS || opk == TOK_AMP) && _pos > 0) {
+                forge prev_tok: Token = ofs_array_get(_tokens, _pos - 1)
+                if (_cur().line > prev_tok.line) { break }
+            }
+
             forge op = _advance()
             forge right = parse_expr(prec + 1)
             
@@ -938,6 +950,24 @@ namespace parser {
         return false
     }
 
+    // Nomes declarados localmente numa funcao (parametros, forge, const).
+    vein _collect_locals(id: stone, out: Array<obsidian>) -> void {
+        if (id < 0) { return }
+        forge n: Node = node_get(id)
+        if (n.kind == NK_PARAM || n.kind == NK_VAR_DECL || n.kind == NK_CONST_DECL) {
+            ofs_array_push(out, n.val)
+        }
+        _collect_locals(n.c0, out)
+        _collect_locals(n.c1, out)
+        _collect_locals(n.c2, out)
+        _collect_locals(n.c3, out)
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            _collect_locals(node_get_extra(id, i), out)
+            i++
+        }
+    }
+
     vein _prefix_namespace_refs(id: stone, ns_name: obsidian, names: Array<obsidian>) -> void {
         if (id < 0) { return }
         forge n: Node = node_get(id)
@@ -1031,7 +1061,25 @@ namespace parser {
 
         forge i = 0
         while (i < node_extra_len(ns)) {
-            _prefix_namespace_refs(node_get_extra(ns, i), ns_name, local_names)
+            forge mid = node_get_extra(ns, i)
+            forge mk = node_kind_of(mid)
+            if (mk == NK_FN_DECL || mk == NK_CORE_DECL) {
+                // Parametros e variaveis locais sombreiam globais do namespace:
+                // antes `forge bg = ...` dentro de uma funcao virava o global
+                // ns__bg (lia e sobrescrevia o global).
+                forge locals: Array<obsidian> = []
+                _collect_locals(mid, locals)
+                forge visible: Array<obsidian> = []
+                forge j = 0
+                while (j < ofs_array_len(local_names)) {
+                    forge nm: obsidian = ofs_array_get(local_names, j)
+                    if (!_name_in_list(nm, locals)) { ofs_array_push(visible, nm) }
+                    j++
+                }
+                _prefix_namespace_refs(mid, ns_name, visible)
+            } else {
+                _prefix_namespace_refs(mid, ns_name, local_names)
+            }
             i++
         }
 

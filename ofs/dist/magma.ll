@@ -228,60 +228,49 @@ if_end17:
   ret i64 %call37
 }
 
+@__ofs_charat_s = internal global ptr null
+@__ofs_charat_n = internal global i64 0
+
+; ofs_str_char_at: O(1) amortizado. Guarda (ponteiro, comprimento) da ultima
+; string consultada; o cache so vale se s[n] ainda for o terminador NUL.
 define i64 @ofs_str_char_at(ptr %s, i64 %idx) {
 entry:
-  %s.addr = alloca ptr, align 8
-  store ptr %s, ptr %s.addr
-  %idx.addr = alloca i64, align 8
-  store i64 %idx, ptr %idx.addr
-  %s_val38 = load ptr, ptr %s.addr
-  %cmp39 = icmp eq ptr %s_val38, null
-  %idx_val40 = load i64, ptr %idx.addr
-  %cmp41 = icmp slt i64 %idx_val40, 0
-  %logic42 = or i1 %cmp39, %cmp41
-  br i1 %logic42, label %if_then18, label %if_else19
+  %isnull = icmp eq ptr %s, null
+  %neg = icmp slt i64 %idx, 0
+  %bad = or i1 %isnull, %neg
+  br i1 %bad, label %ret_neg, label %check_cache
 
-if_then18:
-  %neg43 = sub i64 0, 1
-  ret i64 %neg43
+check_cache:
+  %cs = load ptr, ptr @__ofs_charat_s
+  %cn = load i64, ptr @__ofs_charat_n
+  %same = icmp eq ptr %cs, %s
+  br i1 %same, label %verify, label %recompute
 
-if_else19:
-  br label %if_end20
+verify:
+  %tp = getelementptr inbounds i8, ptr %s, i64 %cn
+  %tb = load i8, ptr %tp
+  %tz = icmp eq i8 %tb, 0
+  br i1 %tz, label %have_len, label %recompute
 
-if_end20:
-  %slen44 = alloca i64, align 8
-  %s_val45 = load ptr, ptr %s.addr
-  %strlen46 = call i64 @ofs_str_len(ptr %s_val45)
-  store i64 %strlen46, ptr %slen44
-  %idx_val47 = load i64, ptr %idx.addr
-  %slen_val48 = load i64, ptr %slen44
-  %cmp49 = icmp sge i64 %idx_val47, %slen_val48
-  br i1 %cmp49, label %if_then21, label %if_else22
+recompute:
+  %len = call i64 @ofs_str_len(ptr %s)
+  store ptr %s, ptr @__ofs_charat_s
+  store i64 %len, ptr @__ofs_charat_n
+  br label %have_len
 
-if_then21:
-  %neg50 = sub i64 0, 1
-  ret i64 %neg50
+have_len:
+  %n = phi i64 [ %cn, %verify ], [ %len, %recompute ]
+  %oob = icmp sge i64 %idx, %n
+  br i1 %oob, label %ret_neg, label %read
 
-if_else22:
-  br label %if_end23
+read:
+  %bp = getelementptr inbounds i8, ptr %s, i64 %idx
+  %b = load i8, ptr %bp
+  %bz = zext i8 %b to i64
+  ret i64 %bz
 
-if_end23:
-  %p51 = alloca ptr, align 8
-  %s_val52 = load ptr, ptr %s.addr
-  %cast53 = ptrtoint ptr %s_val52 to i64
-  %idx_val54 = load i64, ptr %idx.addr
-  %op55 = add i64 %cast53, %idx_val54
-  %cast56 = inttoptr i64 %op55 to ptr
-  store ptr %cast56, ptr %p51
-  %b57 = alloca i8, align 8
-  %cast58 = trunc i64 0 to i8
-  store i8 %cast58, ptr %b57
-  %p_val59 = load ptr, ptr %p51
-  %deref60 = load i8, ptr %p_val59
-  store i8 %deref60, ptr %b57
-  %b_val61 = load i8, ptr %b57
-  %cast62 = zext i8 %b_val61 to i64
-  ret i64 %cast62
+ret_neg:
+  ret i64 -1
 }
 
 define i64 @ofs_str_char_at_known(ptr %s, i64 %idx) {

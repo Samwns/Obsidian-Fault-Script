@@ -13,9 +13,33 @@ vein ofs_str_len(s: obsidian) -> stone {
     return strlen(s)
 }
 
+// Cache (ponteiro, comprimento) da ultima string consultada: laços que
+// percorrem a mesma string deixam de chamar strlen a cada caractere (O(n^2)).
+// O cache so e usado se s[n] ainda for o terminador NUL.
+// Espelhado a mao em ofs/dist/magma.ll (que tem ajustes manuais).
+forge __ofs_charat_s: obsidian = null
+forge __ofs_charat_n: stone = 0
+
 vein ofs_str_char_at(s: obsidian, idx: stone) -> stone {
     if (s == null || idx < 0) { return -1 }
-    forge slen = ofs_str_len(s)
+    forge slen = 0
+    forge cached = false
+    if (s == __ofs_charat_s) {
+        forge tp: *u8 = (s as stone + __ofs_charat_n) as *u8
+        forge tb: u8 = 1 as u8
+        fracture {
+            tb = *tp;
+        }
+        if ((tb as stone) == 0) {
+            slen = __ofs_charat_n
+            cached = true
+        }
+    }
+    if (!cached) {
+        slen = ofs_str_len(s)
+        __ofs_charat_s = s
+        __ofs_charat_n = slen
+    }
     if (idx >= slen) { return -1 }
     forge p: *u8 = (s as stone + idx) as *u8
     forge b: u8 = 0 as u8

@@ -105,7 +105,7 @@ compile_ofs_program() {
     clang_opt="$(detect_clang_opt_level)"
 
     if ! OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ir" OFSCC_OPT="$opt" "$EXISTING_COMPILER"; then
-        if [ "$input" = "ofs/ofs/bootstrap/ofscc.ofs" ] && [ -f "ofs/dist/ofscc.ll" ]; then
+        if [ "$input" = "ofs/ofscc/ofscc.ofs" ] && [ -f "ofs/dist/ofscc.ll" ]; then
             print_info "Recompilação OFS direta falhou neste ambiente; usando ofs/dist/ofscc.ll versionado como fallback de instalação."
             if [ "${#llvm_flags[@]}" -gt 0 ]; then
                 clang -Wno-override-module "$clang_opt" "ofs/dist/ofscc.ll" "$RUNTIME" -lm -o "$output" "${llvm_flags[@]}"
@@ -157,7 +157,7 @@ compile_versioned_compiler_ir() {
 
 print_step "Fase 2: Instalar compilador OFS completo"
 
-OFSCC_SRC="ofs/ofs/bootstrap/ofscc.ofs"
+OFSCC_SRC="ofs/ofscc/ofscc.ofs"
 if [ ! -f "$OFSCC_SRC" ]; then
     print_error "Fonte do compilador não encontrada: $OFSCC_SRC"
 fi

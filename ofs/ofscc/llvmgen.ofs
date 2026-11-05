@@ -280,6 +280,14 @@ namespace llvmgen {
             return "0"
         }
         if (n.kind == NK_LIT_STRING) { return string_name_for(n.val) }
+        // Literal numerico negativo (`forge x: stone = -1`): antes caia no
+        // "return 0" final e o global nascia com 0 em vez do valor.
+        if (n.kind == NK_UNARY_OP && ofs_str_eq(n.val, "-") && n.c0 >= 0) {
+            forge inner: Node = node_get(n.c0)
+            if (inner.kind == NK_LIT_INT || inner.kind == NK_LIT_FLOAT) {
+                return "-" + inner.val
+            }
+        }
         if (ofs_str_eq(type_str, "obsidian") || ofs_str_eq(type_str, "Array") || is_named_type(type_str)) { return "null" }
         // Any other constant initialiser assigned to a pointer-typed global
         // (e.g. `forge x: Array<T> = []`) must be `null`, not integer `0`,
@@ -754,6 +762,7 @@ namespace llvmgen {
         emit_decl_if_missing(root_id, "ofs_str_contains", "declare i32 @ofs_str_contains(ptr, ptr)")
         emit_decl_if_missing(root_id, "ofs_str_len", "declare i64 @ofs_str_len(ptr)")
         emit_decl_if_missing(root_id, "ofs_str_char_at", "declare i64 @ofs_str_char_at(ptr, i64)")
+        emit_decl_if_missing(root_id, "ofs_str_char_at_known", "declare i64 @ofs_str_char_at_known(ptr, i64)")
         emit_decl_if_missing(root_id, "ofs_str_substr", "declare ptr @ofs_str_substr(ptr, i64, i64)")
         emit_decl_if_missing(root_id, "ofs_stone_to_obsidian", "declare ptr @ofs_stone_to_obsidian(i64)")
         emit_decl_if_missing(root_id, "ofs_alloc", "declare ptr @ofs_alloc(i64)")
@@ -833,7 +842,55 @@ namespace llvmgen {
         cg_emit("")
     }
 
+    // Acesso a global de namespace a partir de fora dele: `ns.nome` (NK_FIELD
+    // sobre um identificador que nao e variavel) vira o global `ns__nome`.
+    // Antes isso gerava um GEP sobre o tipo %unknown e o llc rejeitava o IR.
+    vein lower_ns_global(id: stone) -> bool {
+        if (id < 0) { return false }
+        forge n: Node = node_get(id)
+        if (n.kind != NK_FIELD || n.c0 < 0) { return false }
+        forge b: Node = node_get(n.c0)
+        if (b.kind != NK_IDENT) { return false }
+        if (var_index(b.val) >= 0 || global_index(b.val) >= 0) { return false }
+        forge gname = b.val + "__" + n.val
+        if (global_index(gname) < 0) { return false }
+        n.kind = NK_IDENT
+        n.val = gname
+        node_set(id, n)
+        return true
+    }
+
+    // Inteiros pequenos (u8..u32, i8..i32) sao estendidos para i64 antes de
+    // operacoes binarias: antes saia "shl i64 %x" com %x do tipo i32 e o llc
+    // rejeitava o IR (ex.: (r as u32 << 16) | ...).
+    forge _widened_type: obsidian = ""
+
+    vein widen_int(v: obsidian, t: obsidian) -> obsidian {
+        _widened_type = t
+        forge lt = llvm_type(t)
+        if (ofs_str_eq(t, "bool") || ofs_str_eq(t, "bool1")) { return v }
+        if (!(ofs_str_eq(lt, "i8") || ofs_str_eq(lt, "i16") || ofs_str_eq(lt, "i32"))) { return v }
+        forge ext = "sext"
+        if (ofs_str_eq(t, "u8") || ofs_str_eq(t, "u16") || ofs_str_eq(t, "u32")) { ext = "zext" }
+        forge w = next_tmp("widen")
+        cg_emit("  " + w + " = " + ext + " " + lt + " " + v + " to i64")
+        _widened_type = "stone"
+        return w
+    }
+
+    // Resultado logico (i1, tipo "bool1") vira bool i32 antes de ir para
+    // um slot de memoria (ofs_array_push/ofs_array_set).
+    vein normalize_bool1() -> void {
+        if (ofs_str_eq(_expr_type, "bool1")) {
+            forge z = next_tmp("b32")
+            cg_emit("  " + z + " = zext i1 " + _expr_val + " to i32")
+            _expr_val = z
+            _expr_type = "bool"
+        }
+    }
+
     vein emit_expr(id: stone) -> void {
+        lower_ns_global(id)
         forge n: Node = node_get(id)
 
         if (n.kind == NK_LIT_INT) {
@@ -917,6 +974,7 @@ namespace llvmgen {
 
         if (n.kind == NK_BIN_OP) {
             if (ofs_str_eq(n.val, "=") || ofs_str_eq(n.val, "+=") || ofs_str_eq(n.val, "-=") || ofs_str_eq(n.val, "*=") || ofs_str_eq(n.val, "/=") || ofs_str_eq(n.val, "%=") || ofs_str_eq(n.val, "&=") || ofs_str_eq(n.val, "|=") || ofs_str_eq(n.val, "^=") || ofs_str_eq(n.val, "<<=") || ofs_str_eq(n.val, ">>=")) {
+                lower_ns_global(n.c0)
                 forge assign_target: Node = node_get(n.c0)
                 if (assign_target.kind == NK_UNARY_OP && ofs_str_eq(assign_target.val, "*")) {
                     emit_expr(assign_target.c0)
@@ -1005,12 +1063,45 @@ namespace llvmgen {
                 }
             }
 
+            // && e || com curto-circuito: o lado direito so e avaliado quando
+            // necessario (antes os dois lados sempre rodavam no codigo nativo,
+            // e `i >= 0 && arr[i]` lia fora do array).
+            if (ofs_str_eq(n.val, "&&") || ofs_str_eq(n.val, "||")) {
+                forge sc_slot = next_tmp("sc_slot")
+                forge sc_rhs = next_label("sc_rhs")
+                forge sc_end = next_label("sc_end")
+                cg_emit("  " + sc_slot + " = alloca i1, align 1")
+                emit_expr(n.c0)
+                forge sc_l = _expr_val
+                if (!ofs_str_eq(_expr_type, "bool1")) { sc_l = expr_as_i1() }
+                cg_emit("  store i1 " + sc_l + ", ptr " + sc_slot)
+                if (ofs_str_eq(n.val, "&&")) {
+                    cg_emit("  br i1 " + sc_l + ", label %" + sc_rhs + ", label %" + sc_end)
+                } else {
+                    cg_emit("  br i1 " + sc_l + ", label %" + sc_end + ", label %" + sc_rhs)
+                }
+                cg_emit("")
+                cg_emit(sc_rhs + ":")
+                emit_expr(n.c1)
+                forge sc_r = _expr_val
+                if (!ofs_str_eq(_expr_type, "bool1")) { sc_r = expr_as_i1() }
+                cg_emit("  store i1 " + sc_r + ", ptr " + sc_slot)
+                cg_emit("  br label %" + sc_end)
+                cg_emit("")
+                cg_emit(sc_end + ":")
+                forge sc_res = next_tmp("sc")
+                cg_emit("  " + sc_res + " = load i1, ptr " + sc_slot)
+                _expr_val = sc_res
+                _expr_type = "bool1"
+                return
+            }
+
             emit_expr(n.c0)
-            forge left = _expr_val
-            forge left_type = _expr_type
+            forge left = widen_int(_expr_val, _expr_type)
+            forge left_type = _widened_type
             emit_expr(n.c1)
-            forge right = _expr_val
-            forge right_type = _expr_type
+            forge right = widen_int(_expr_val, _expr_type)
+            forge right_type = _widened_type
 
             if (ofs_str_eq(n.val, "+") && (ofs_str_eq(left_type, "obsidian") || ofs_str_eq(right_type, "obsidian"))) {
                 if (!ofs_str_eq(left_type, "obsidian")) {
@@ -1228,6 +1319,7 @@ namespace llvmgen {
         }
 
         if (n.kind == NK_ASSIGN) {
+            lower_ns_global(n.c0)
             forge target: Node = node_get(n.c0)
             if (target.kind == NK_UNARY_OP && ofs_str_eq(target.val, "*")) {
                 emit_expr(target.c0)
@@ -1337,6 +1429,7 @@ namespace llvmgen {
                 emit_expr(n.c0)
                 return
             }
+            lower_ns_global(n.c0)
             forge target: Node = node_get(n.c0)
             if (target.kind == NK_IDENT) {
                 forge p = var_ptr(target.val)
@@ -1540,7 +1633,10 @@ namespace llvmgen {
             if (ofs_str_eq(n.val, "echo")) {
                 forge arg_id = node_get_extra(id, 0)
                 emit_expr(arg_id)
-                if (ofs_str_eq(_expr_type, "stone")) {
+                // inteiros pequenos (u8, u32...) imprimem como numero, nao ponteiro
+                _expr_val = widen_int(_expr_val, _expr_type)
+                _expr_type = _widened_type
+                if (ofs_str_eq(_expr_type, "stone") || ofs_str_eq(_expr_type, "u64") || ofs_str_eq(_expr_type, "i64")) {
                     cg_emit("  call void @echo_stone(i64 " + _expr_val + ")")
                 } else if (ofs_str_eq(_expr_type, "crystal")) {
                     cg_emit("  call void @echo_crystal(double " + _expr_val + ")")
@@ -1591,6 +1687,7 @@ namespace llvmgen {
                 forge arr2 = _expr_val
                 forge val_id2 = node_get_extra(id, 1)
                 emit_expr(val_id2)
+                normalize_bool1()
                 forge slot2 = next_tmp("arr_push")
                 cg_emit("  " + slot2 + " = alloca " + llvm_type(_expr_type) + ", align 8")
                 cg_emit("  store " + llvm_type(_expr_type) + " " + _expr_val + ", ptr " + slot2)
@@ -1609,6 +1706,7 @@ namespace llvmgen {
                 forge idx3 = _expr_val
                 forge val_id3 = node_get_extra(id, 2)
                 emit_expr(val_id3)
+                normalize_bool1()
                 forge slot3 = next_tmp("arr_set")
                 cg_emit("  " + slot3 + " = alloca " + llvm_type(_expr_type) + ", align 8")
                 cg_emit("  store " + llvm_type(_expr_type) + " " + _expr_val + ", ptr " + slot3)

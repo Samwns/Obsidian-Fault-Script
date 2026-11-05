@@ -11,10 +11,45 @@ attach {F:parser.ofs}
 attach {F:typeck.ofs}
 attach {F:codegen.ofs}
 attach {F:llvmgen.ofs}
+attach {F:interpreter.ofs}
+attach {F:events.ofs}
+attach {F:reporter.ofs}
 
 extern vein getenv(name: obsidian) -> obsidian
+extern vein clock() -> stone
+extern vein memcpy(dst: *u8, src: *u8, count: stone) -> *u8
 
 forge _expanded_paths: Array<obsidian> = []
+
+vein join_parts(parts: Array<obsidian>) -> obsidian {
+    forge total = 0
+    forge i = 0
+    while (i < ofs_array_len(parts)) {
+        forge part: obsidian = ofs_array_get(parts, i)
+        total = total + ofs_str_len(part)
+        i++
+    }
+
+    forge result: obsidian = ofs_alloc(total + 1)
+    forge offset = 0
+    i = 0
+    while (i < ofs_array_len(parts)) {
+        forge part: obsidian = ofs_array_get(parts, i)
+        forge part_len = ofs_str_len(part)
+        if (part_len > 0) {
+            // A libc bulk copy avoids per-character local declarations. The
+            // LLVM backend currently lowers such declarations to `alloca`,
+            // which otherwise grows the stack for the entire source file.
+            memcpy((result as stone + offset) as *u8, part as *u8, part_len)
+        }
+        offset = offset + part_len
+        i++
+    }
+
+    forge terminator: *u8 = (result as stone + total) as *u8
+    fracture { *terminator = 0 as u8 }
+    return result
+}
 
 vein path_seen(path: obsidian) -> bool {
     forge i = 0
@@ -47,63 +82,65 @@ vein dirname(path: obsidian) -> obsidian {
 }
 
 vein is_attach_line(line: obsidian) -> bool {
-    if (ofs_str_len(line) < 9) { return false }
-    return ofs_str_eq(ofs_str_substr(line, 0, 8), "attach {")
+    if (ofs_str_len(line) < 11) { return false }
+    return ofs_str_eq(ofs_str_substr(line, 0, 10), "attach {F:")
 }
 
-vein attach_path_from_line(line: obsidian) -> obsidian {
+// Forma curta `attach {modulo}`: modulo da stdlib (hifen vira underscore,
+// ex.: terminal-colors -> terminal_colors.ofs). Documentada desde sempre,
+// mas antes era ignorada aqui e o modulo nunca era carregado.
+vein is_short_attach_line(line: obsidian) -> bool {
+    forge len = ofs_str_len(line)
+    if (len < 10) { return false }
+    if (!ofs_str_eq(ofs_str_substr(line, 0, 8), "attach {")) { return false }
+    if (ofs_str_eq(ofs_str_substr(line, 0, 10), "attach {F:")) { return false }
+    forge i = 8
+    forge saw = false
+    while (i < len) {
+        forge c = ofs_str_char_at(line, i)
+        if (c == 125) { return saw }
+        forge ok = (c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c == 95 || c == 45
+        if (!ok) { return false }
+        saw = true
+        i++
+    }
+    return false
+}
+
+vein short_attach_file(line: obsidian) -> obsidian {
+    forge out = ""
     forge i = 8
     forge len = ofs_str_len(line)
     while (i < len) {
+        forge c = ofs_str_char_at(line, i)
+        if (c == 125) { return out + ".ofs" }
+        if (c == 45) {
+            out = out + "_"
+        } else {
+            out = out + ofs_str_substr(line, i, 1)
+        }
+        i++
+    }
+    return out + ".ofs"
+}
+
+vein attach_path_from_line(line: obsidian) -> obsidian {
+    forge i = 10
+    forge len = ofs_str_len(line)
+    while (i < len) {
         if (ofs_str_char_at(line, i) == 125) {
-            return ofs_str_substr(line, 8, i - 8)
+            return ofs_str_substr(line, 10, i - 10)
         }
         i++
     }
     return ""
 }
 
-vein package_file_name(name: obsidian) -> obsidian {
-    if (ofs_str_eq(name, "terminal-colors")) { return "terminal_colors" }
-    if (ofs_str_eq(name, "memory-modes")) { return "memory_modes" }
-    if (ofs_str_eq(name, "bedrock-packet")) { return "bedrock_packet" }
-    if (ofs_str_eq(name, "test-lib")) { return "test_lib" }
-    return name
-}
-
-vein stdlib_path(file_name: obsidian) -> obsidian {
-    forge root = getenv("OFS_STDLIB")
-    if (!ofs_str_eq(root, "")) {
-        return root + "/" + file_name + ".ofs"
-    }
-    return "ofs/stdlib/" + file_name + ".ofs"
-}
-
-vein resolve_attach_path(base: obsidian, spec: obsidian) -> obsidian {
-    if (ofs_str_len(spec) > 2 && ofs_str_eq(ofs_str_substr(spec, 0, 2), "F:")) {
-        forge rel = ofs_str_substr(spec, 2, ofs_str_len(spec) - 2)
-        if (ofs_str_len(rel) > 0 && ofs_str_eq(ofs_str_substr(rel, 0, 1), "/")) {
-            return rel
-        }
-        return base + rel
-    }
-
-    forge file_name = package_file_name(spec)
-    if (ofs_str_eq(spec, "bedrock") || ofs_str_eq(spec, "bedrock-packet") ||
-        ofs_str_eq(spec, "canvas") || ofs_str_eq(spec, "core") ||
-        ofs_str_eq(spec, "io") || ofs_str_eq(spec, "math") ||
-        ofs_str_eq(spec, "oes") ||
-        ofs_str_eq(spec, "ofshtml") ||
-        ofs_str_eq(spec, "odl") ||
-        ofs_str_eq(spec, "memory-modes") || ofs_str_eq(spec, "rift") ||
-        ofs_str_eq(spec, "string") || ofs_str_eq(spec, "terminal-colors") ||
-        ofs_str_eq(spec, "test-lib") || ofs_str_eq(spec, "webserver") ||
-        ofs_str_eq(spec, "webui") ||
-        ofs_str_eq(spec, "window")) {
-        return stdlib_path(file_name)
-    }
-
-    return "src/packages/src/" + spec + "/libs/" + file_name + ".ofs"
+vein file_exists(p: obsidian) -> bool {
+    forge f = fopen(p, "r")
+    if (f == null) { return false }
+    fclose(f)
+    return true
 }
 
 vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
@@ -111,7 +148,7 @@ vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
     remember_path(path)
 
     forge base = dirname(path)
-    forge out = ""
+    forge out_parts: Array<obsidian> = []
     forge start = 0
     forge i = 0
     forge len = ofs_str_len(src)
@@ -119,35 +156,146 @@ vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
     while (i <= len) {
         if (i == len || ofs_str_char_at(src, i) == 10) {
             forge line = ofs_str_substr(src, start, i - start)
-            if (is_attach_line(line)) {
-                forge spec = attach_path_from_line(line)
-                forge child_path = resolve_attach_path(base, spec)
+            if (is_short_attach_line(line)) {
+                forge mod_file = short_attach_file(line)
+                forge mod_path = ""
+                forge env_std2 = getenv("OFS_STDLIB_PATH")
+                if (env_std2 != null && !ofs_str_eq(env_std2, "")) {
+                    if (file_exists(env_std2 + "/" + mod_file)) { mod_path = env_std2 + "/" + mod_file }
+                }
+                if (ofs_str_eq(mod_path, "") && file_exists(base + mod_file)) {
+                    mod_path = base + mod_file
+                }
+                if (!ofs_str_eq(mod_path, "")) {
+                    ofs_array_push(out_parts, expand_attaches(mod_path, read_file(mod_path)))
+                } else {
+                    // modulo desconhecido: mantem a linha (o parser a ignora)
+                    ofs_array_push(out_parts, line + "\n")
+                }
+            } else if (is_attach_line(line)) {
+                forge rel = attach_path_from_line(line)
+                forge child_path = base + rel
+                // caminho absoluto: usa como esta
+                if (ofs_str_len(rel) > 0 && ofs_str_char_at(rel, 0) == 47) { child_path = rel }
+                forge f_chk = fopen(child_path, "r")
+                if (f_chk != null) {
+                    fclose(f_chk)
+                } else {
+                    forge env_std = getenv("OFS_STDLIB_PATH")
+                    if (!ofs_str_eq(env_std, "")) {
+                        forge std_cand = env_std + "/" + rel
+                        forge f_std = fopen(std_cand, "r")
+                        if (f_std != null) {
+                            fclose(f_std)
+                            child_path = std_cand
+                        }
+                    }
+        }
                 forge child_src = read_file(child_path)
-                out = out + expand_attaches(child_path, child_src)
+                ofs_array_push(out_parts, expand_attaches(child_path, child_src))
             } else {
-                out = out + line + "\n"
+                if (i < len || ofs_str_len(line) > 0) {
+                    ofs_array_push(out_parts, line + "\n")
+                }
             }
             start = i + 1
         }
         i++
     }
 
-    return out
+    return join_parts(out_parts)
+}
+
+vein _u(indent: obsidian, left: obsidian, right: obsidian) -> void {
+    echo(indent + _colored(_ansi_run, _pad(left, 24)) + right)
 }
 
 vein usage() -> void {
-    echo("Usage: ofscc [options] <input.ofs>")
-    echo("Options:")
-    echo("  -o <output>      Output executable (default: a.out)")
-    echo("  -O0/-O2/-O3      LLVM optimization level (default: -O2)")
-    echo("  --emit-ir <file> LLVM IR output path (default: output.ll)")
-    echo("  --check          Type-check only (no codegen)")
-    echo("  --tokens         Print tokens and exit")
-    echo("  --ast            Print AST and exit")
-    echo("  --help           Show this message")
+    // Help padrão: subcomandos coloridos (reporter_detect_color já resolve
+    // NO_COLOR / TERM=dumb) e texto conforme locale (en/pt/es).
+    reporter_detect_locale()
+    reporter_detect_color()
+    if (locale_is_pt()) {
+        echo(_colored(_ansi_ok, "ofs") + " - compilador Obsidian Fault Script")
+        echo("")
+        echo(_colored(_ansi_run, "Uso:") + " ofs <arquivo.ofs>   (equivale a 'ofs run')")
+        echo("")
+        echo(_colored(_ansi_run, "Subcomandos:"))
+        _u("  ", "run <arq.ofs>",     "executa interpretado (--native compila temporario)")
+        _u("  ", "build <arq.ofs>",   "compila para executavel nativo (-o saida)")
+        _u("  ", "check <arq.ofs>",   "somente verificacao de tipos")
+        _u("  ", "test <arq.ofs>",    "executa testes (assay) do arquivo")
+        _u("  ", "twin <arq.ofs>",    "roda interpretado + nativo e compara saidas")
+        _u("  ", "polish <arq.ofs>",  "verifica estilo e padroes do codigo")
+        _u("  ", "language [en|pt|es]", "mostra/altera o idioma da CLI")
+        _u("  ", "ir|asm|tokens|ast", "artefatos de depuracao do compilador")
+        _u("  ", "ui <arq.oll>",      "renderiza layout OLL nativo (-o saida.ppm)")
+        _u("  ", "clean",             "limpa artefatos temporarios de build")
+        _u("  ", "version",           "mostra a versao")
+        _u("  ", "update",            "atualiza para a ultima release")
+        echo("")
+        echo(_colored(_ansi_run, "Opcoes do ofscc (nivel baixo):"))
+        _u("  ", "-o <saida>",        "executavel de saida (padrao: a.out)")
+        _u("  ", "-O0/-O2/-O3",       "otimizacao LLVM (padrao: -O2)")
+        _u("  ", "--emit-ir <arq>",   "caminho do LLVM IR (padrao: output.ll)")
+        _u("  ", "--check/--tokens/--ast", "modos de inspecao")
+        echo("")
+        echo(_colored(_ansi_dim, "Env: OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT, OFS_LANG, OFS_PROGRESS, OFS_VERBOSE"))
+        return
+    }
+    if (locale_is_es()) {
+        echo(_colored(_ansi_ok, "ofs") + " - compilador Obsidian Fault Script")
+        echo("")
+        echo(_colored(_ansi_run, "Uso:") + " ofs <archivo.ofs>   (equivale a 'ofs run')")
+        echo("")
+        echo(_colored(_ansi_run, "Subcomandos:"))
+        _u("  ", "run <arq.ofs>",     "ejecuta interpretado (--native compila temporal)")
+        _u("  ", "build <arq.ofs>",   "compila a ejecutable nativo (-o salida)")
+        _u("  ", "check <arq.ofs>",   "solo verificacion de tipos")
+        _u("  ", "test <arq.ofs>",    "ejecuta las pruebas (assay) del archivo")
+        _u("  ", "twin <arq.ofs>",    "ejecuta interpretado + nativo y compara salidas")
+        _u("  ", "polish <arq.ofs>",  "verifica estilo y patrones del codigo")
+        _u("  ", "language [en|pt|es]", "muestra/cambia el idioma de la CLI")
+        _u("  ", "ir|asm|tokens|ast", "artefactos de depuracion del compilador")
+        _u("  ", "ui <arq.oll>",      "renderiza layout OLL nativo (-o salida.ppm)")
+        _u("  ", "clean",             "limpia artefactos temporales de build")
+        _u("  ", "version",           "muestra la version")
+        _u("  ", "update",            "actualiza a la ultima release")
+        echo("")
+        echo(_colored(_ansi_run, "Opciones de ofscc (bajo nivel):"))
+        _u("  ", "-o <salida>",       "ejecutable de salida (defecto: a.out)")
+        _u("  ", "-O0/-O2/-O3",       "optimizacion LLVM (defecto: -O2)")
+        _u("  ", "--emit-ir <arq>",   "ruta del LLVM IR (defecto: output.ll)")
+        _u("  ", "--check/--tokens/--ast", "modos de inspeccion")
+        echo("")
+        echo(_colored(_ansi_dim, "Env: OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT, OFS_LANG, OFS_PROGRESS, OFS_VERBOSE"))
+        return
+    }
+    echo(_colored(_ansi_ok, "ofs") + " - Obsidian Fault Script compiler")
     echo("")
-    echo("Env fallback:")
-    echo("  OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT")
+    echo(_colored(_ansi_run, "Usage:") + " ofs <file.ofs>   (same as 'ofs run')")
+    echo("")
+    echo(_colored(_ansi_run, "Subcommands:"))
+    _u("  ", "run <file.ofs>",     "run interpreted (--native builds a temp binary)")
+    _u("  ", "build <file.ofs>",   "compile to a native executable (-o output)")
+    _u("  ", "check <file.ofs>",   "type-check only")
+    _u("  ", "test <file.ofs>",    "run file tests (assay)")
+    _u("  ", "twin <file.ofs>",    "run interpreted + native and diff outputs")
+    _u("  ", "polish <file.ofs>",  "style and pattern checks")
+    _u("  ", "language [en|pt|es]", "show/change the CLI language")
+    _u("  ", "ir|asm|tokens|ast",  "compiler debug artifacts")
+    _u("  ", "ui <file.oll>",      "render native OLL layout (-o output.ppm)")
+    _u("  ", "clean",              "clean temporary build artifacts")
+    _u("  ", "version",            "print the compiler version")
+    _u("  ", "update",             "update to the latest release")
+    echo("")
+    echo(_colored(_ansi_run, "Low-level ofscc options:"))
+    _u("  ", "-o <output>",        "output executable (default: a.out)")
+    _u("  ", "-O0/-O2/-O3",        "LLVM optimization level (default: -O2)")
+    _u("  ", "--emit-ir <file>",   "LLVM IR output path (default: output.ll)")
+    _u("  ", "--check/--tokens/--ast", "inspection modes")
+    echo("")
+    echo(_colored(_ansi_dim, "Env: OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT, OFS_LANG, OFS_PROGRESS, OFS_VERBOSE"))
 }
 
 vein apply_env_overrides(
@@ -201,7 +349,7 @@ vein parse_state_field(state: obsidian, field_idx: stone) -> obsidian {
             if (cur == field_idx) {
                 return ofs_str_substr(state, start, i - start)
             }
-                cur = cur + 1
+            cur = cur + 1
             start = i + 1
         }
         i++
@@ -214,9 +362,6 @@ vein parse_state_field(state: obsidian, field_idx: stone) -> obsidian {
 }
 
 core main() {
-    echo("ofscc — OFS self-hosted compiler v0.1")
-    echo("")
-    
     forge input_file = "input.ofs"
     forge output_file = "a.out"
     forge c_output = "output.ll"
@@ -239,23 +384,81 @@ core main() {
         compile_mode = "build-ir"
     }
 
+    forge is_run = ofs_str_eq(compile_mode, "run")
+    forge verbose = ofs_str_eq(getenv("OFS_VERBOSE"), "1")
+    forge msg_fmt = getenv("OFS_PROGRESS")
+
+    // Configura reporter: locale + cor + tipo (Fase 3 Fancy)
+    reporter_detect_locale()
+    reporter_detect_color()
+    // Fase 4: animação ativa por padrão em Fancy; OFS_ANIM=0 desliga.
+    if (ofs_str_eq(getenv("OFS_ANIM"), "0")) { anim_set_enabled(false) }
+    else                                     { anim_set_enabled(true) }
+    if (ofs_str_eq(msg_fmt, "json"))       { reporter_set_kind(REPORTER_JSON) }
+    else if (ofs_str_eq(msg_fmt, "fancy")) { reporter_set_kind(REPORTER_FANCY) }
+    else if (ofs_str_eq(msg_fmt, "plain")) { reporter_set_kind(REPORTER_PLAIN) }
+    else {
+        // auto: Fancy se ha cor (TERM exige), senao Plain
+        if (_use_color) { reporter_set_kind(REPORTER_FANCY) }
+        else            { reporter_set_kind(REPORTER_PLAIN) }
+    }
+    reporter_set_verbose(verbose)
+    event_reset()
+
     if (ofs_str_eq(input_file, "") || ofs_str_eq(input_file, "--help")) {
         usage()
         return
     }
-    
+
+    if (ofs_str_eq(input_file, "twin") || ofs_str_eq(input_file, "polish") || ofs_str_eq(input_file, "test") || ofs_str_eq(input_file, "probe")) {
+        // Fase 5: para twin, emitir forma NDJSON correta (twin_start + twin_result com match=false + razão).
+        // Execução nativa real fica para quando o runtime expuser system()+spawn seguro.
+        forge twin_target = getenv("OFSCC_TWIN_TARGET")
+        if (ofs_str_eq(input_file, "twin") && _reporter_kind == REPORTER_JSON) {
+            _emit_line("{\"kind\":\"twin_start\",\"target\":\"" + twin_target + "\"}")
+            _emit_line("{\"kind\":\"twin_result\",\"target\":\"" + twin_target + "\",\"match\":false,\"reason\":\"twin_not_implemented\"}")
+        }
+        event_diagnostic("", LEVEL_WARN, 0, 0, "stub_command", input_file, twin_target)
+        reporter_flush()
+        return
+    }
+
+    if (ofs_str_eq(input_file, "language")) {
+        // 'ofs language' e resolvido no launcher (persistencia em
+        // ~/.config/ofs/lang); aqui apenas espelhamos o estado atual.
+        reporter_detect_locale()
+        echo("ofs language: " + _locale)
+        return
+    }
+
     // Phase 1: Read source
-    echo("[1/6] Reading source...")
+    forge t_total0: crystal = 0.0
+    if (!is_run) { event_stage_start(STAGE_READ, input_file) }
+    forge t0 = clock()
     forge src: obsidian = ""
     src = read_file(input_file)
     src = expand_attaches(input_file, src)
-    echo("  OK — " + ofs_stone_to_obsidian(ofs_str_len(src)) + " bytes")
+    if (ofs_str_eq(getenv("OFS_DUMP_EXPANDED"), "1")) {
+        echo(src)
+        return
+    }
+    forge t1 = clock()
+    if (!is_run) {
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_READ, ms / 1000.0, ofs_stone_to_obsidian(ofs_str_len(src)))
+    }
+    t_total0 = (t1 - t0) as crystal
     
     // Phase 2: Lexical analysis
-    echo("[2/6] Lexical analysis...")
+    if (!is_run) { event_stage_start(STAGE_LEX, "") }
+    t0 = clock()
     forge tokens: Array<Token> = lexer.lex(src)
     forge token_count = ofs_array_len(tokens)
-    echo("  OK — " + ofs_stone_to_obsidian(token_count) + " tokens")
+    t1 = clock()
+    if (!is_run) {
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_LEX, ms / 1000.0, ofs_stone_to_obsidian(token_count))
+    }
 
     if (print_tokens) {
         forge ti = 0
@@ -268,10 +471,15 @@ core main() {
     }
     
     // Phase 3: Parsing
-    echo("[3/6] Parsing...")
+    if (!is_run) { event_stage_start(STAGE_PARSE, "") }
+    t0 = clock()
     forge root_id = parser.parse(tokens)
     forge node_count = node_pool_len()
-    echo("  OK — " + ofs_stone_to_obsidian(node_count) + " AST nodes")
+    t1 = clock()
+    if (!is_run) {
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_PARSE, ms / 1000.0, ofs_stone_to_obsidian(node_count))
+    }
 
     if (print_ast) {
         forge root_node: Node = node_get(root_id)
@@ -280,18 +488,36 @@ core main() {
     }
     
     // Phase 4: Type checking
-    echo("[4/6] Type checking...")
+    if (!is_run) { event_stage_start(STAGE_CHECK, "") }
+    t0 = clock()
     typeck.check(root_id)
-    echo("  OK")
+    t1 = clock()
+    if (!is_run) {
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_CHECK, ms / 1000.0, "")
+    }
+    if (typeck.has_errors()) {
+        reporter_flush()
+        exit(1)
+    }
 
     if (check_only) {
-        echo("")
-        echo("CHECK OK: semantic validation complete")
+        event_finished(input_file, 0, 0.0)
+        reporter_flush()
+        return
+    }
+
+    if (ofs_str_eq(compile_mode, "run")) {
+        // Em modo run: apenas eventos silenciosos; stdout pertence ao programa
+        reporter_flush()
+        forge exit_code = interpreter.run(root_id)
+        exit(exit_code)
         return
     }
     
     // Phase 5: Code generation
-    echo("[5/6] Code generation...")
+    event_stage_start(STAGE_FORGE, "")
+    t0 = clock()
     cg_open(c_output)
     if (ofs_str_eq(compile_mode, "c")) {
         codegen.generate(root_id)
@@ -299,30 +525,54 @@ core main() {
         llvmgen.generate(root_id)
     }
     cg_close()
-    echo("  OK — " + c_output + " generated")
+    t1 = clock()
+    {
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_FORGE, ms / 1000.0, "1 module")
+    }
 
     if (ofs_str_eq(compile_mode, "ir")) {
+        reporter_flush()
         return
     }
     
     // Phase 6: Native link from LLVM IR. The C backend is kept only behind OFSCC_MODE=c.
-    echo("[6/6] Native link...")
+    event_stage_start(STAGE_LINK, "")
+    t0 = clock()
+    forge obj_file = c_output + ".o"
+    // Localiza runtime OFS (magma.o / libofs_runtime.a) — necessário para echo_obsidian,
+    // ofs_str_*, ofs_array_*, etc. O wrapper `ofs` exporta OFS_RUNTIME; senão, caminho
+    // padrão da instalação. Não há probe de arquivo para evitar syscall extra no OFS.
+    forge rt = getenv("OFS_RUNTIME")
+    if (ofs_str_eq(rt, "")) { rt = "/usr/local/lib/ofs/libofs_runtime.a" }
+
+    // Diagnóstico claro quando o runtime não está acessível (evita 'undefined reference'
+    // crú do ld em símbolos como echo_obsidian).
+    forge rt_probe = fopen(rt, "rb")
+    if (rt_probe == null) {
+        event_diagnostic("", LEVEL_FAULT, 0, 0, "runtime_not_found", rt, "")
+        reporter_flush()
+        exit(1)
+    }
+    fclose(rt_probe)
+
     forge compile_cmd = ""
     if (ofs_str_eq(compile_mode, "c")) {
-        compile_cmd = "gcc " + c_opt + " -o " + output_file + " " + c_output + " 2>&1"
+        compile_cmd = "gcc " + c_opt + " -o " + output_file + " " + c_output + " " + rt + " 2>&1"
     } else {
-        compile_cmd = "clang -Wno-override-module " + c_opt + " " + c_output + " /usr/local/lib/ofs/magma.o -lm -o " + output_file + " 2>&1"
+        compile_cmd = "llc -filetype=obj " + c_output + " -o " + obj_file + " && (ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib64/crt1.o /usr/lib64/crti.o " + obj_file + " " + rt + " -lc -lm /usr/lib64/crtn.o -o " + output_file + " 2>&1 || ld -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o " + obj_file + " " + rt + " -lc -lm /usr/lib/x86_64-linux-gnu/crtn.o -o " + output_file + " 2>&1)"
     }
     forge compile_result = system(compile_cmd)
+    t1 = clock()
     
     if (compile_result == 0) {
-        echo("  OK")
-        echo("")
-        echo("SUCCESS: " + output_file + " ready")
+        forge ms: crystal = (t1 - t0) as crystal
+        event_stage_end(STAGE_LINK, ms / 1000.0, "")
+        event_finished(output_file, 0, ms / 1000.0)
+        reporter_flush()
     } else {
-        echo("  FAILED — check " + c_output)
-        echo("")
-        echo("COMPILATION ERROR: native linker returned " + ofs_stone_to_obsidian(compile_result))
+        event_diagnostic("", LEVEL_FAULT, 0, 0, "link_failed", c_output, ofs_stone_to_obsidian(compile_result))
+        reporter_flush()
         exit(1)
     }
 }

@@ -374,23 +374,40 @@ namespace canvas {
         }
     }
 
-    // sin/cos por serie de Taylor (graus -> radianos), suficiente para UI.
-    vein _cos_deg(deg: crystal) -> crystal {
-        forge rad = deg * 3.14159265358979 / 180.0
-        forge wrap = 6.28318530717959
-        while (rad > 3.14159265358979) { rad = rad - wrap }
-        while (rad < 0.0 - 3.14159265358979) { rad = rad + wrap }
-        forge x2 = rad * rad
-        return 1.0 - x2 / 2.0 + (x2 * x2) / 24.0 - (x2 * x2 * x2) / 720.0
+    // sin/cos por serie de Taylor (graus -> radianos).
+    // O angulo e reduzido a [-pi/2, pi/2] por simetria antes da serie; sem
+    // isso a serie truncada erra ~20% perto de 180 graus (arcos deformados).
+    vein _sin_rad_half(x: crystal) -> crystal {
+        forge x2 = x * x
+        forge t = x
+        forge s = x
+        t = (0.0 - t) * x2 / 6.0
+        s = s + t
+        t = (0.0 - t) * x2 / 20.0
+        s = s + t
+        t = (0.0 - t) * x2 / 42.0
+        s = s + t
+        t = (0.0 - t) * x2 / 72.0
+        s = s + t
+        t = (0.0 - t) * x2 / 110.0
+        s = s + t
+        return s
     }
 
     vein _sin_deg(deg: crystal) -> crystal {
-        forge rad = deg * 3.14159265358979 / 180.0
+        forge pi = 3.14159265358979
+        forge rad = deg * pi / 180.0
         forge wrap = 6.28318530717959
-        while (rad > 3.14159265358979) { rad = rad - wrap }
-        while (rad < 0.0 - 3.14159265358979) { rad = rad + wrap }
-        forge x2 = rad * rad
-        return rad - (rad * x2) / 6.0 + (rad * x2 * x2) / 120.0 - (rad * x2 * x2 * x2) / 5040.0
+        while (rad > pi) { rad = rad - wrap }
+        while (rad < 0.0 - pi) { rad = rad + wrap }
+        // sin(x) = sin(pi - x): leva [pi/2, pi] para [0, pi/2]
+        if (rad > pi / 2.0) { rad = pi - rad }
+        if (rad < 0.0 - pi / 2.0) { rad = (0.0 - pi) - rad }
+        return _sin_rad_half(rad)
+    }
+
+    vein _cos_deg(deg: crystal) -> crystal {
+        return _sin_deg(deg + 90.0)
     }
 
     // Arco com antialiasing (graus; 0 = leste, sentido horario, Y para baixo).

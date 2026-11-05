@@ -214,7 +214,7 @@ Build Process:
 
 Compiler Details:
 - Type: Self-hosted OFS compiler
-- Source: ofs/ofs/bootstrap/ofscc.ofs (~4500 LOC)
+- Source: ofs/ofscc/ofscc.ofs (~4500 LOC)
 - Deterministic: YES (v2 == v3)
 - C++ Dependencies: REMOVED
 - Bootstrap Status: COMPLETE

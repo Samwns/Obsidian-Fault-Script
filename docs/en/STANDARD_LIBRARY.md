@@ -140,6 +140,21 @@ Immediate-mode graphical user interface controls:
 
 ---
 
+### `raster.ofs`
+Antialiased vector rasterizer (signed-area accumulation). Paths (`move_to`, `line_to`, `quad_to`, `cubic_to`, `close`), shapes (`add_round_rect`, `add_circle`, `add_capsule`, `add_arc_stroke`) and one-call helpers (`fill_round_rect`, `fill_circle`, `stroke_line`, `stroke_round_rect`). Composites onto a Canvas honoring alpha and clipping.
+
+### `ttf.ofs`
+Pure-OFS TrueType fonts: `ttf.load(path)`, `ttf.draw(cv, font, size, x, baseline, text, color)`, `ttf.width`, `ttf.ascent`/`descent`/`line_height`, `ttf.ellipsize`, `ttf.draw_centered`. UTF-8, composite glyphs (accents), glyph cache and subpixel positioning.
+
+### `x11win.ofs`
+Native X11 window: `open`, `present(canvas)`, `poll()` → `EV_KEY`/`EV_MOUSE_DOWN`/`EV_MOUSE_UP`/`EV_MOUSE_MOVE`/`EV_WHEEL`/`EV_RESIZE`/`EV_CLOSE`, fields `ev_x`, `ev_y`, `ev_button`, `ev_key` (keysym), `ev_text` (UTF-8, with dead keys), `ev_mods`; `set_cursor`, `set_icon`, `set_title`, `now_ms`, `sleep_ms`.
+
+### `icons.ofs`
+24×24 vector icons: `icons.draw(cv, icons.BACK, x, y, size, color)` and `icons.draw_centered`. Constants `BACK`, `FORWARD`, `RELOAD`, `HOME`, `PLUS`, `CLOSE`, `LOCK`, `INFO`, `STAR`, `MENU`, `SEARCH`, `GLOBE`, `DOWNLOAD`, `HISTORY`, `SETTINGS`, `PROFILE`, `STOP`, `FILE`, `BOOKMARK`, `SHIELD`.
+
+### `hashmap.ofs`
+Integer-to-integer hash table: `hashmap.new(cap)`, `set`, `get(m, key, fallback)`, `has`, `count`, `clear`.
+
 ## 4. Systems and Low-Level Modules
 
 ### `bedrock.ofs`

@@ -2035,6 +2035,18 @@ namespace interpreter {
             forge n: Node = node_get(decl_id)
             if (n.kind == NK_VAR_DECL || n.kind == NK_CONST_DECL) {
                 execute_stmt(decl_id)
+            } else if (n.kind == NK_NAMESPACE) {
+                // globais declarados dentro de namespace (nomes ja mangled
+                // pelo parser como ns__nome) tambem precisam existir
+                forge nsj = 0
+                while (nsj < node_extra_len(decl_id)) {
+                    forge ns_decl = node_get_extra(decl_id, nsj)
+                    forge nsn: Node = node_get(ns_decl)
+                    if (nsn.kind == NK_VAR_DECL || nsn.kind == NK_CONST_DECL) {
+                        execute_stmt(ns_decl)
+                    }
+                    nsj++
+                }
             }
             i++
         }

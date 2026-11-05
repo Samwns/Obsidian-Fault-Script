@@ -1,4 +1,46 @@
 {
+  "OFS Native Window App": {
+    "prefix": "x11win-app",
+    "body": [
+      "attach {x11win}",
+      "attach {ttf}",
+      "attach {icons}",
+      "",
+      "core main() {",
+      "    if (!x11win.open(\"${1:Meu App}\", ${2:960}, ${3:600})) { return }",
+      "    forge font = ttf.load(\"/usr/share/fonts/rsms-inter-fonts/Inter-Regular.ttf\")",
+      "    forge cv: Canvas = canvas.create(x11win.width(), x11win.height())",
+      "    while (x11win.is_open()) {",
+      "        forge ev = x11win.poll()",
+      "        while (ev != 0) {",
+      "            if (ev == x11win.EV_RESIZE) {",
+      "                canvas.destroy(cv)",
+      "                cv = canvas.create(x11win.width(), x11win.height())",
+      "            }",
+      "            ev = x11win.poll()",
+      "        }",
+      "        canvas.clear(cv, ${4:1776415})",
+      "        raster.fill_round_rect(cv, 24.0, 24.0, 320.0, 64.0, 14.0, 2829617)",
+      "        icons.draw(cv, icons.HOME, 40, 44, 24, 9090296)",
+      "        ttf.draw(cv, font, 18, 76, 63, \"${5:Olá, OFS!}\", 15264493)",
+      "        x11win.present(cv)",
+      "        x11win.sleep_ms(16)",
+      "    }",
+      "    x11win.close()",
+      "}"
+    ],
+    "description": "Aplicativo com janela nativa X11, texto TrueType e icones (100% OFS)"
+  },
+  "OFS Hashmap": {
+    "prefix": "hashmap",
+    "body": [
+      "attach {hashmap}",
+      "forge ${1:m} = hashmap.new(${2:64})",
+      "hashmap.set(${1:m}, ${3:chave}, ${4:valor})",
+      "forge ${5:v} = hashmap.get(${1:m}, ${3:chave}, -1)"
+    ],
+    "description": "Tabela hash inteiro -> inteiro"
+  },
   "Core Main": {
     "prefix": "main",
     "body": [
@@ -80,7 +122,7 @@
   "Attach Stdlib": {
     "prefix": "attach-stdlib",
     "body": [
-      "attach {${1|core,math,string,io,odl,oes,ofshtml,webserver,webui,bedrock,bedrock-packet,terminal-colors,memory-modes,rift,canvas,window,fmt,test-lib|}}"
+      "attach {${1|core,math,string,io,odl,oes,ofshtml,webserver,webui,bedrock,bedrock-packet,terminal-colors,memory-modes,rift,canvas,window,fmt,test-lib,fs,net,http,oll,ui,raster,ttf,x11win,icons,hashmap|}}"
     ]
   },
   "Web UI Site": {

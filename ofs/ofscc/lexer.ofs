@@ -71,8 +71,21 @@ namespace lexer {
             while (is_hex_digit(_peek())) {
                 _advance()
             }
-            forge s = ofs_str_substr(_src, start, _pos - start)
-            _push(TOK_INT, s)
+            // Converte para decimal: o LLVM IR le "0x..." como ponto flutuante
+            // e o interpretador so entende base 10. Valores acima de 2^63
+            // dao a volta como em C (0xFFFFFFFFFFFFFFFF == -1).
+            forge hv = 0
+            forge hi = start + 2
+            while (hi < _pos) {
+                forge hc = ofs_str_char_at(_src, hi)
+                forge hd = 0
+                if (hc >= 48 && hc <= 57) { hd = hc - 48 }
+                if (hc >= 97 && hc <= 102) { hd = hc - 87 }
+                if (hc >= 65 && hc <= 70) { hd = hc - 55 }
+                hv = hv * 16 + hd
+                hi++
+            }
+            _push(TOK_INT, ofs_stone_to_obsidian(hv))
             return
         }
         
@@ -112,6 +125,15 @@ namespace lexer {
     
     // ── String Scanning ────────────────────────────────────────────────
     
+    vein _byte_str(b: stone) -> obsidian {
+        forge buf: *u8 = ofs_alloc(2) as *u8
+        forge v: u8 = b as u8
+        fracture {
+            *buf = v;
+        }
+        return buf as obsidian
+    }
+
     vein _scan_string() -> void {
         forge buf: obsidian = ""
         
@@ -120,12 +142,15 @@ namespace lexer {
             
             if (c == 92) {  // backslash — escape sequence
                 forge esc = _advance()
+                // Bytes de controle sao construidos por codigo: um literal
+                // "\r" aqui dependeria do compilador anterior e o erro se
+                // perpetuava no bootstrap (\r virava os bytes '\' 'r').
                 if (esc == 110) {           // \n
-                    buf = ofs_str_concat(buf, "\n")
+                    buf = ofs_str_concat(buf, _byte_str(10))
                 } else if (esc == 116) {   // \t
-                    buf = ofs_str_concat(buf, "\t")
+                    buf = ofs_str_concat(buf, _byte_str(9))
                 } else if (esc == 114) {   // \r
-                    buf = ofs_str_concat(buf, "\r")
+                    buf = ofs_str_concat(buf, _byte_str(13))
                 } else if (esc == 34) {    // \"
                     buf = ofs_str_concat(buf, "\"")
                 } else if (esc == 92) {    // \\

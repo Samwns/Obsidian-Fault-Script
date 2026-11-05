@@ -86,6 +86,44 @@ vein is_attach_line(line: obsidian) -> bool {
     return ofs_str_eq(ofs_str_substr(line, 0, 10), "attach {F:")
 }
 
+// Forma curta `attach {modulo}`: modulo da stdlib (hifen vira underscore,
+// ex.: terminal-colors -> terminal_colors.ofs). Documentada desde sempre,
+// mas antes era ignorada aqui e o modulo nunca era carregado.
+vein is_short_attach_line(line: obsidian) -> bool {
+    forge len = ofs_str_len(line)
+    if (len < 10) { return false }
+    if (!ofs_str_eq(ofs_str_substr(line, 0, 8), "attach {")) { return false }
+    if (ofs_str_eq(ofs_str_substr(line, 0, 10), "attach {F:")) { return false }
+    forge i = 8
+    forge saw = false
+    while (i < len) {
+        forge c = ofs_str_char_at(line, i)
+        if (c == 125) { return saw }
+        forge ok = (c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c == 95 || c == 45
+        if (!ok) { return false }
+        saw = true
+        i++
+    }
+    return false
+}
+
+vein short_attach_file(line: obsidian) -> obsidian {
+    forge out = ""
+    forge i = 8
+    forge len = ofs_str_len(line)
+    while (i < len) {
+        forge c = ofs_str_char_at(line, i)
+        if (c == 125) { return out + ".ofs" }
+        if (c == 45) {
+            out = out + "_"
+        } else {
+            out = out + ofs_str_substr(line, i, 1)
+        }
+        i++
+    }
+    return out + ".ofs"
+}
+
 vein attach_path_from_line(line: obsidian) -> obsidian {
     forge i = 10
     forge len = ofs_str_len(line)
@@ -96,6 +134,13 @@ vein attach_path_from_line(line: obsidian) -> obsidian {
         i++
     }
     return ""
+}
+
+vein file_exists(p: obsidian) -> bool {
+    forge f = fopen(p, "r")
+    if (f == null) { return false }
+    fclose(f)
+    return true
 }
 
 vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
@@ -111,9 +156,27 @@ vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
     while (i <= len) {
         if (i == len || ofs_str_char_at(src, i) == 10) {
             forge line = ofs_str_substr(src, start, i - start)
-            if (is_attach_line(line)) {
+            if (is_short_attach_line(line)) {
+                forge mod_file = short_attach_file(line)
+                forge mod_path = ""
+                forge env_std2 = getenv("OFS_STDLIB_PATH")
+                if (env_std2 != null && !ofs_str_eq(env_std2, "")) {
+                    if (file_exists(env_std2 + "/" + mod_file)) { mod_path = env_std2 + "/" + mod_file }
+                }
+                if (ofs_str_eq(mod_path, "") && file_exists(base + mod_file)) {
+                    mod_path = base + mod_file
+                }
+                if (!ofs_str_eq(mod_path, "")) {
+                    ofs_array_push(out_parts, expand_attaches(mod_path, read_file(mod_path)))
+                } else {
+                    // modulo desconhecido: mantem a linha (o parser a ignora)
+                    ofs_array_push(out_parts, line + "\n")
+                }
+            } else if (is_attach_line(line)) {
                 forge rel = attach_path_from_line(line)
                 forge child_path = base + rel
+                // caminho absoluto: usa como esta
+                if (ofs_str_len(rel) > 0 && ofs_str_char_at(rel, 0) == 47) { child_path = rel }
                 forge f_chk = fopen(child_path, "r")
                 if (f_chk != null) {
                     fclose(f_chk)

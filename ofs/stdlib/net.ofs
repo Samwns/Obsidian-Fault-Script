@@ -8,12 +8,87 @@ rift vein listen(fd: stone, backlog: stone) -> stone abi c
 rift vein accept(fd: stone, addr: *stone, addrlen: *stone) -> stone abi c
 rift vein send(fd: stone, buf: obsidian, len: stone, flags: stone) -> stone abi c
 rift vein recv(fd: stone, buf: obsidian, len: stone, flags: stone) -> stone abi c
+rift vein getaddrinfo(node: obsidian, service: obsidian, hints: *stone, res: *stone) -> stone abi c
+rift vein freeaddrinfo(res: *stone) -> void abi c
+rift vein setsockopt(fd: stone, level: stone, name: stone, val: *stone, len: stone) -> stone abi c
+extern vein memcpy(dst: *stone, src: *stone, size: stone) -> *stone
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+
 namespace net {
+    // true se `host` ja e um IPv4 literal (so digitos e pontos).
+    vein is_ipv4(host: obsidian) -> bool {
+        forge n = ofs_str_len(host)
+        if (n == 0) { return false }
+        forge dots = 0
+        forge i = 0
+        while (i < n) {
+            forge c = ofs_str_char_at_known(host, i)
+            if (c == 46) {
+                dots++
+            } else if (c < 48 || c > 57) {
+                return false
+            }
+            i++
+        }
+        return dots == 3
+    }
+
+    // Resolve um nome (DNS / /etc/hosts) para IPv4 "a.b.c.d" via getaddrinfo.
+    // Retorna "" se nao resolver. IPs literais voltam inalterados.
+    vein resolve(host: obsidian) -> obsidian {
+        if (is_ipv4(host)) { return host }
+        forge hints: *stone = ofs_alloc(48)
+        forge h1: *stone = fault_step(hints, 1)
+        fracture {
+            *hints = 2 << 32;
+            *h1 = 1;
+        }
+        forge res: *stone = ofs_alloc(8)
+        if (getaddrinfo(host, null, hints, res) != 0) { return "" }
+        forge ai = 0
+        fracture {
+            ai = *res;
+        }
+        if (ai == 0) { return "" }
+        forge pa: *stone = fault_step(ai as *stone, 3)
+        forge sa = 0
+        fracture {
+            sa = *pa;
+        }
+        forge w = 0
+        forge psa: *stone = sa as *stone
+        fracture {
+            w = *psa;
+        }
+        freeaddrinfo(ai as *stone)
+        forge b0 = (w >> 32) & 255
+        forge b1 = (w >> 40) & 255
+        forge b2 = (w >> 48) & 255
+        forge b3 = (w >> 56) & 255
+        return ofs_stone_to_obsidian(b0) + "." + ofs_stone_to_obsidian(b1) + "." + ofs_stone_to_obsidian(b2) + "." + ofs_stone_to_obsidian(b3)
+    }
+
+    // Tempo maximo (segundos) para conectar, enviar e receber. 0 = sem limite.
+    forge timeout_s: stone = 15
+
+    // Aplica SO_RCVTIMEO/SO_SNDTIMEO (no Linux o SNDTIMEO tambem limita connect).
+    vein set_timeout(fd: stone, secs: stone) -> void {
+        if (secs <= 0) { return }
+        forge tv: *stone = ofs_alloc(16)
+        fracture {
+            *tv = secs;
+        }
+        setsockopt(fd, 1, 20, tv, 16)
+        setsockopt(fd, 1, 21, tv, 16)
+    }
+
     vein tcp_connect(ip: obsidian, port: stone) -> stone {
         forge s = socket(2, 1, 0)
         if (s < 0) {
             return -1
         }
+        set_timeout(s, timeout_s)
         forge addr: *stone = ofs_alloc(16)
         forge port_net = htons(port)
         forge ip_net = inet_addr(ip)
@@ -38,6 +113,33 @@ namespace net {
         if (n <= 0) {
             return ""
         }
+        return buf
+    }
+
+    // Tamanho em bytes do ultimo recv_all.
+    forge last_len: stone = 0
+
+    // Recebe ate o fim da conexao em um buffer binario (seguro para bytes
+    // zero: arquivos, imagens). O buffer termina com um NUL extra, entao
+    // conteudo textual pode ser usado direto como obsidian.
+    vein recv_all(fd: stone) -> *stone {
+        forge cap = 65536
+        forge buf: *stone = ofs_alloc(cap + 1)
+        forge len = 0
+        while (true) {
+            if (cap - len < 16384) {
+                forge ncap = cap * 2
+                forge nb: *stone = ofs_alloc(ncap + 1)
+                memcpy(nb, buf, len)
+                ofs_free(buf)
+                buf = nb
+                cap = ncap
+            }
+            forge n = recv(fd, (((buf as stone) + len) as obsidian), cap - len, 0)
+            if (n <= 0) { break }
+            len = len + n
+        }
+        last_len = len
         return buf
     }
 

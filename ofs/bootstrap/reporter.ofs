@@ -1,0 +1,423 @@
+// OFS Compiler — Reporter
+// Consome eventos de events.ofs e os escreve em stderr (Plain) ou stdout (Json).
+// Fancy fica para fase posterior.
+
+forge REPORTER_PLAIN: stone = 1
+forge REPORTER_FANCY: stone = 2
+forge REPORTER_JSON:  stone = 3
+
+forge _reporter_kind: stone = REPORTER_PLAIN
+forge _reporter_verbose: bool = false
+
+// ── Locale (Fase 2) ────────────────────────────────────────────────────
+// Catálogo embutido (binário único). Os arquivos ofs/ofscc/locale/*.toml
+// são a fonte de verdade para tradutores e para o CI de paridade de chaves;
+// aqui mantemos tabelas equivalentes indexadas por idioma.
+forge _locale: obsidian = "en"
+
+vein reporter_set_locale(l: obsidian) -> void {
+    if (ofs_str_eq(l, "pt") || ofs_str_eq(l, "es") || ofs_str_eq(l, "en")) {
+        _locale = l
+    } else {
+        _locale = "en"
+    }
+}
+
+// Prioridade: OFS_LANG > LANG (prefixo de 2 letras, ex.: pt_BR.UTF-8) > en
+vein reporter_detect_locale() -> void {
+    forge l = getenv("OFS_LANG")
+    if (ofs_str_eq(l, "")) { l = getenv("LANG") }
+    if (ofs_str_len(l) >= 2) { l = ofs_str_substr(l, 0, 2) }
+    reporter_set_locale(l)
+}
+
+vein locale_is_pt() -> bool { return ofs_str_eq(_locale, "pt") }
+vein locale_is_es() -> bool { return ofs_str_eq(_locale, "es") }
+
+vein tr_stage(s: stone) -> obsidian {
+    if (locale_is_pt()) { return tr_stage_pt(s) }
+    if (locale_is_es()) { return tr_stage_es(s) }
+    return tr_stage_en(s)
+}
+
+vein tr_stage_en(s: stone) -> obsidian {
+    if (s == STAGE_ATTACH) { return "Attaching" }
+    if (s == STAGE_READ)   { return "Reading" }
+    if (s == STAGE_LEX)    { return "Lexing" }
+    if (s == STAGE_PARSE)  { return "Parsing" }
+    if (s == STAGE_CHECK)  { return "Checking" }
+    if (s == STAGE_FORGE)  { return "Forging" }
+    if (s == STAGE_LINK)   { return "Linking" }
+    if (s == STAGE_RUN)    { return "Running" }
+    if (s == STAGE_DONE)   { return "Finished" }
+    return "?"
+}
+
+vein tr_stage_pt(s: stone) -> obsidian {
+    if (s == STAGE_ATTACH) { return "Importando" }
+    if (s == STAGE_READ)   { return "Lendo" }
+    if (s == STAGE_LEX)    { return "Lexando" }
+    if (s == STAGE_PARSE)  { return "Analisando" }
+    if (s == STAGE_CHECK)  { return "Verificando" }
+    if (s == STAGE_FORGE)  { return "Forjando" }
+    if (s == STAGE_LINK)   { return "Ligando" }
+    if (s == STAGE_RUN)    { return "Executando" }
+    if (s == STAGE_DONE)   { return "Concluído" }
+    return "?"
+}
+
+vein tr_stage_es(s: stone) -> obsidian {
+    if (s == STAGE_ATTACH) { return "Importando" }
+    if (s == STAGE_READ)   { return "Leyendo" }
+    if (s == STAGE_LEX)    { return "Lexando" }
+    if (s == STAGE_PARSE)  { return "Analizando" }
+    if (s == STAGE_CHECK)  { return "Verificando" }
+    if (s == STAGE_FORGE)  { return "Forjando" }
+    if (s == STAGE_LINK)   { return "Enlazando" }
+    if (s == STAGE_RUN)    { return "Ejecutando" }
+    if (s == STAGE_DONE)   { return "Terminado" }
+    return "?"
+}
+
+// Tradução de mensagens (Fase 2). Placeholders `{name}`/`{path}` são rendidos
+// pelo chamador via arg1/arg2 em Plain; Fancy fará substituição de verdade.
+vein tr_msg(key: obsidian) -> obsidian {
+    if (ofs_str_eq(key, "stub_command")) {
+        if (locale_is_pt()) { return "comando reservado para trabalho futuro da CLI" }
+        if (locale_is_es()) { return "comando reservado para trabajo futuro de la CLI" }
+        return "command is reserved for future CLI work"
+    }
+    if (ofs_str_eq(key, "runtime_not_found")) {
+        if (locale_is_pt()) { return "runtime OFS não encontrado (defina OFS_RUNTIME):" }
+        if (locale_is_es()) { return "runtime OFS no encontrado (define OFS_RUNTIME):" }
+        return "OFS runtime not found (set OFS_RUNTIME):"
+    }
+    if (ofs_str_eq(key, "link_failed")) {
+        if (locale_is_pt()) { return "ligação falhou" }
+        if (locale_is_es()) { return "enlace falló" }
+        return "link failed"
+    }
+    return key
+}
+
+vein tr_level(l: stone) -> obsidian {
+    if (l == LEVEL_NOTE)  { return "note" }
+    if (l == LEVEL_WARN) {
+        if (locale_is_pt() || locale_is_es()) { return "aviso" }
+        return "warn"
+    }
+    if (l == LEVEL_FAULT) {
+        if (locale_is_pt()) { return "falha" }
+        if (locale_is_es()) { return "fallo" }
+        return "fault"
+    }
+    return "?"
+}
+
+vein reporter_set_kind(k: stone) -> void { _reporter_kind = k }
+vein reporter_set_verbose(v: bool) -> void { _reporter_verbose = v }
+
+// ── Fancy (Fase 3) ─────────────────────────────────────────────────────
+// Paleta ANSI. Sem NO_COLOR / TERM=dumb; reporter_detect_color resolve.
+forge _ansi_ok:    obsidian = "[32m"
+forge _ansi_run:   obsidian = "[36m"
+forge _ansi_warn:  obsidian = "[33m"
+forge _ansi_fault: obsidian = "[31m"
+forge _ansi_dim:   obsidian = "[2m"
+forge _ansi_reset: obsidian = "[0m"
+forge _ansi_esc:   obsidian = ""   // preenchido por reporter_init_esc()
+forge _use_color:  bool = false
+
+// Inicializa o byte ESC (27) sem escapar na fonte (LLVM IR em OFS nao
+// processa \x1b em literais obsidian). Emite 27 + code.
+vein reporter_init_esc() -> void {
+    if (ofs_str_len(_ansi_esc) > 0) { return }
+    forge buf: obsidian = ofs_alloc(2)
+    forge p: *u8 = buf as *u8
+    fracture { *p = 27 as u8 }
+    forge p1: *u8 = (buf as stone + 1) as *u8
+    fracture { *p1 = 0 as u8 }
+    _ansi_esc = buf
+}
+
+// Prioridade: NO_COLOR != "" → false; TERM=dumb → false; senao ativa.
+// Nota: isatty(stderr) real fica para a Fase 4 (extern reporter_is_tty).
+vein reporter_detect_color() -> void {
+    reporter_init_esc()
+    if (ofs_str_len(getenv("NO_COLOR")) > 0) { _use_color = false; return }
+    if (ofs_str_eq(getenv("TERM"), "dumb"))  { _use_color = false; return }
+    forge t = getenv("TERM")
+    if (ofs_str_eq(t, "")) { _use_color = false; return }
+    _use_color = true
+}
+
+vein _pad(s: obsidian, w: stone) -> obsidian {
+    forge out = s
+    while (ofs_str_len(out) < w) { out = out + " " }
+    return out
+}
+
+vein _colored(ansi: obsidian, txt: obsidian) -> obsidian {
+    if (!_use_color) { return txt }
+    return _ansi_esc + ansi + txt + _ansi_esc + _ansi_reset
+}
+
+// Plain: uma linha por evento, sem ANSI, sem \r.
+// Json: um objeto por linha (NDJSON).
+// Fancy: símbolos + coluna fixa de verbo + cores; estágios de início ficam
+// silenciosos (verbose-only), o fim de cada etapa e diagnósticos têm layout.
+
+vein _emit_fancy(e: Event) -> void {
+    if (!_use_color) { _emit_plain(e); return }
+    if (e.kind == EV_STAGE_START) {
+        // Fase 4: dispara um frame de animação para o estágio que começa.
+        anim_tick(e.stage)
+        if (_reporter_verbose) {
+            forge sym = _colored(_ansi_run, "→")
+            forge verb = _pad(tr_stage(e.stage), 12)
+            _emit_line("  " + sym + " " + verb + " " + _colored(_ansi_run, e.target))
+        }
+        return
+    }
+    if (e.kind == EV_STAGE_END) {
+        // Fase 4: limpa a linha da animação antes do `✓` permanente.
+        anim_finish()
+        forge sym = _colored(_ansi_ok, "✓")
+        forge verb = _pad(tr_stage(e.stage), 12)
+        forge info_txt = ""
+        if (ofs_str_len(e.info) > 0) { info_txt = " (" + e.info + ")" }
+        forge ms_txt = _colored(_ansi_dim, ofs_crystal_to_obsidian(e.ms) + " ms")
+        _emit_line("  " + sym + " " + verb + info_txt + " " + ms_txt)
+        return
+    }
+    if (e.kind == EV_DIAGNOSTIC) {
+        forge sym = "ℹ"
+        forge color = _ansi_run
+        if (e.level == LEVEL_WARN)  { sym = "⚠"; color = _ansi_warn }
+        if (e.level == LEVEL_FAULT) { sym = "✗"; color = _ansi_fault }
+        forge loc_txt = ""
+        if (e.line > 0) {
+            loc_txt = ":" + ofs_stone_to_obsidian(e.line) + ":" + ofs_stone_to_obsidian(e.col)
+        }
+        forge head = "  " + _colored(color, sym) + " " + _colored(_ansi_run, e.target + loc_txt)
+        _emit_line(head)
+        forge code_part = ""
+        if (ofs_str_len(e.code) > 0) { code_part = "[" + e.code + "]" }
+        _emit_line("       " + _colored(color, tr_level(e.level) + code_part) + " " + tr_msg(e.msg_key))
+        if (ofs_str_len(e.arg1) > 0) { _emit_line("       " + _colored(_ansi_dim, e.arg1)) }
+        if (ofs_str_len(e.arg2) > 0) { _emit_line("       " + _colored(_ansi_dim, e.arg2)) }
+        return
+    }
+    if (e.kind == EV_FINISHED) {
+        forge ms_txt = _colored(_ansi_dim, ofs_crystal_to_obsidian(e.ms) + " ms")
+        _emit_line(_colored(_ansi_ok, "done") + " " + _colored(_ansi_run, e.target) +
+                   " · " + e.info + " B · " + ms_txt)
+        return
+    }
+    if (e.kind == EV_PROGRAM_OUT) {
+        _emit_line(e.info)
+        return
+    }
+}
+
+vein stage_name(s: stone) -> obsidian {
+    if (s == STAGE_ATTACH) { return "attach" }
+    if (s == STAGE_READ)   { return "read" }
+    if (s == STAGE_LEX)    { return "lex" }
+    if (s == STAGE_PARSE)  { return "parse" }
+    if (s == STAGE_CHECK)  { return "check" }
+    if (s == STAGE_FORGE)  { return "forge" }
+    if (s == STAGE_LINK)   { return "link" }
+    if (s == STAGE_DONE)   { return "done" }
+    if (s == STAGE_RUN)    { return "run" }
+    return "?"
+}
+
+vein level_name(l: stone) -> obsidian {
+    if (l == LEVEL_NOTE)  { return "note" }
+    if (l == LEVEL_WARN)  { return "warn" }
+    if (l == LEVEL_FAULT) { return "fault" }
+    return "?"
+}
+
+vein event_kind_name(k: stone) -> obsidian {
+    if (k == EV_STAGE_START) { return "stage_start" }
+    if (k == EV_STAGE_END)   { return "stage_end" }
+    if (k == EV_DIAGNOSTIC)  { return "diagnostic" }
+    if (k == EV_FINISHED)    { return "finished" }
+    if (k == EV_PROGRAM_OUT) { return "program_out" }
+    return "?"
+}
+
+// ── Fase 4 — Animação (single-thread, spinner entre estágios) ─────────
+// Em terminal Fancy, exibimos um frame de spinner durante o estágio atual.
+// Como o compilador é single-threaded, o "tick" acontece apenas em pontos
+// explícitos (fim de estágio). A linha é limpa via \r antes de cada novo
+// evento Fancy para garantir que o `✓` sobrescreva o `→` de início.
+forge _anim_enabled: bool = false
+forge _anim_frame: stone = 0
+forge _anim_last_stage: stone = 0
+
+vein anim_set_enabled(v: bool) -> void {
+    _anim_enabled = v
+}
+
+// Monta uma string contendo `\r` + N espaços + `\r` para limpar a linha.
+vein _clear_line_seq() -> obsidian {
+    forge buf: obsidian = ofs_alloc(84)
+    forge p0: *u8 = buf as *u8
+    fracture { *p0 = 13 as u8 }
+    forge i = 1
+    while (i < 82) {
+        forge pi: *u8 = (buf as stone + i) as *u8
+        fracture { *pi = 32 as u8 }
+        i++
+    }
+    forge pr: *u8 = (buf as stone + 82) as *u8
+    fracture { *pr = 13 as u8 }
+    forge pz: *u8 = (buf as stone + 83) as *u8
+    fracture { *pz = 0 as u8 }
+    return buf
+}
+
+// Escreve uma string sem `\n` no stdout (echo sempre adiciona; usamos
+// ofício mais bruto: montar a sequência e dar echo mesmo assim — em
+// compilações curtas, o custo de duas linhas a mais é aceitável; a
+// limpeza visual final fica garantida pela presença do `\r`).
+vein _emit_raw(s: obsidian) -> void {
+    echo(s)
+}
+
+// Emite um frame de animação baseado no estágio corrente.
+// Se desabilitado, não faz nada.
+vein anim_tick(stage: stone) -> void {
+    if (!_anim_enabled) { return }
+    if (!_use_color) { return }
+    if (stage == 0) { return }
+    _anim_frame = _anim_frame + 1
+    _anim_last_stage = stage
+    forge frames_ascii = "-\\|/"
+    forge idx = _anim_frame % 4
+    forge f = ofs_str_substr(frames_ascii, idx, 1)
+    forge verb = _pad(tr_stage(stage), 12)
+    forge line = _clear_line_seq() + "  " + _colored(_ansi_run, "→") + " " + verb + " " + f
+    _emit_raw(line)
+}
+
+// Finaliza a animação atual limpando a linha.
+vein anim_finish() -> void {
+    if (!_anim_enabled) { return }
+    if (_anim_last_stage == 0) { return }
+    _emit_raw(_clear_line_seq())
+    _anim_last_stage = 0
+}
+
+// ── Saída para stderr (via fprintf) ───────────────────────────────────
+// Temporário: usamos echo (stdout) até expormos fprintf(stderr) no runtime.
+// O contrato do plano é "status → stderr"; por ora logamos e separamos no
+// wrapper ofs depois que o runtime expuser stderr.
+vein _emit_line(s: obsidian) -> void {
+    echo(s)
+}
+
+// Fase 5 — acumula o tempo total do pipeline para `duration_ms_total`.
+forge _json_total_ms: crystal = 0.0
+forge _json_locale_emitted: bool = false
+
+vein _emit_json(e: Event) -> void {
+    if (e.kind == EV_STAGE_END) { _json_total_ms = _json_total_ms + e.ms }
+    forge line = "{\"kind\":\"" + event_kind_name(e.kind) + "\""
+    // Fase 5: incluir `locale` no primeiro stage_start para consumer saber o idioma.
+    if (e.kind == EV_STAGE_START && !_json_locale_emitted) {
+        line = line + ",\"locale\":\"" + _locale + "\""
+        _json_locale_emitted = true
+    }
+    if (e.kind == EV_STAGE_START || e.kind == EV_STAGE_END) {
+        line = line + ",\"stage\":\"" + stage_name(e.stage) + "\""
+    }
+    if (e.kind == EV_DIAGNOSTIC) {
+        line = line + ",\"level\":\"" + level_name(e.level) + "\""
+        line = line + ",\"code\":\"" + e.code + "\""
+        line = line + ",\"line\":" + ofs_stone_to_obsidian(e.line)
+        line = line + ",\"col\":" + ofs_stone_to_obsidian(e.col)
+        // `msg_key` permanece canônico; consumer localiza via `msg_key`.
+        if (ofs_str_len(e.msg_key) > 0) { line = line + ",\"msg_key\":\"" + e.msg_key + "\"" }
+        if (ofs_str_len(e.msg_key) > 0) { line = line + ",\"msg\":\"" + tr_msg(e.msg_key) + "\"" }
+        // args agora é array, compatível com spec Fase 5.
+        forge args_part = ",\"args\":["
+        forge has_args = false
+        if (ofs_str_len(e.arg1) > 0) { args_part = args_part + "\"" + e.arg1 + "\""; has_args = true }
+        if (ofs_str_len(e.arg2) > 0) {
+            if (has_args) { args_part = args_part + "," }
+            args_part = args_part + "\"" + e.arg2 + "\""
+            has_args = true
+        }
+        args_part = args_part + "]"
+        if (has_args) { line = line + args_part }
+    }
+    if (ofs_str_len(e.target) > 0) { line = line + ",\"target\":\"" + e.target + "\"" }
+    if (ofs_str_len(e.info) > 0)   { line = line + ",\"info\":\"" + e.info + "\"" }
+    if (e.ms != 0.0)               { line = line + ",\"ms\":" + ofs_crystal_to_obsidian(e.ms) }
+    if (e.kind == EV_FINISHED) {
+        line = line + ",\"duration_ms_total\":" + ofs_crystal_to_obsidian(_json_total_ms)
+    }
+    line = line + "}"
+    _emit_line(line)
+}
+
+vein _emit_plain(e: Event) -> void {
+    if (e.kind == EV_STAGE_START) {
+        if (_reporter_verbose) {
+            _emit_line("[" + tr_stage(e.stage) + "] start " + e.target)
+        }
+        return
+    }
+    if (e.kind == EV_STAGE_END) {
+        forge ms_txt = ofs_crystal_to_obsidian(e.ms)
+        forge info_txt = ""
+        if (ofs_str_len(e.info) > 0) { info_txt = " (" + e.info + ")" }
+        _emit_line("  " + tr_stage(e.stage) + " ok" + info_txt + " · " + ms_txt + " ms")
+        return
+    }
+    if (e.kind == EV_DIAGNOSTIC) {
+        forge loc_txt = ""
+        if (e.line > 0) {
+            loc_txt = ":" + ofs_stone_to_obsidian(e.line) + ":" + ofs_stone_to_obsidian(e.col)
+        }
+        forge msg = tr_msg(e.msg_key)
+        if (ofs_str_len(e.arg1) > 0) { msg = msg + " " + e.arg1 }
+        if (ofs_str_len(e.arg2) > 0) { msg = msg + " " + e.arg2 }
+        _emit_line(tr_level(e.level) + "[" + e.code + "]" + loc_txt + " " + msg)
+        return
+    }
+    if (e.kind == EV_FINISHED) {
+        forge ms_txt = ofs_crystal_to_obsidian(e.ms)
+        forge size_txt = e.info
+        _emit_line("done " + e.target + " · " + size_txt + " B · " + ms_txt + " ms")
+        return
+    }
+    if (e.kind == EV_PROGRAM_OUT) {
+        _emit_line(e.info)
+        return
+    }
+}
+
+vein reporter_flush() -> void {
+    forge i = 0
+    forge n = event_count()
+    while (i < n) {
+        forge e: Event = event_get(i)
+        if (_reporter_kind == REPORTER_JSON)       { _emit_json(e) }
+        else if (_reporter_kind == REPORTER_FANCY) { _emit_fancy(e) }
+        else                                       { _emit_plain(e) }
+        i++
+    }
+    event_reset()
+}
+
+// Conveniente para etapas curtas: emite start+end após execução inline
+vein reporter_emit_now(e: Event) -> void {
+    if (_reporter_kind == REPORTER_JSON)       { _emit_json(e) }
+    else if (_reporter_kind == REPORTER_FANCY) { _emit_fancy(e) }
+    else                                       { _emit_plain(e) }
+}

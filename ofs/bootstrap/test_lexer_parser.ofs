@@ -1,11 +1,11 @@
 // OFS Compiler — Lexer + Parser Integration Test
 
-attach {F:ofs/bootstrap/fileio.ofs}
-attach {F:ofs/bootstrap/tokens.ofs}
-attach {F:ofs/bootstrap/nodes.ofs}
-attach {F:ofs/bootstrap/ast.ofs}
-attach {F:ofs/bootstrap/lexer.ofs}
-attach {F:ofs/bootstrap/parser.ofs}
+attach {F:ofscc/fileio.ofs}
+attach {F:ofscc/tokens.ofs}
+attach {F:ofscc/nodes.ofs}
+attach {F:ofscc/ast.ofs}
+attach {F:ofscc/lexer.ofs}
+attach {F:ofscc/parser.ofs}
 
 core main() {
     echo("=== OFS Lexer + Parser Integration Test ===")

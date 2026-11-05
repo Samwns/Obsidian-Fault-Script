@@ -96,7 +96,7 @@ Próximo: Windows PowerShell
 ### Desenvolvimento
 ```bash
 # Modifique compilador
-vim ofs/ofs/bootstrap/ofscc.ofs
+vim ofs/ofscc/ofscc.ofs
 
 # Test
 bash ofs/bootstrap/scripts/bootstrap-minimal.sh

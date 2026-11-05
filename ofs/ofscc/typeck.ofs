@@ -245,6 +245,26 @@ namespace typeck {
         }
 
         if (n.kind == NK_FIELD) {
+            // `ns.global` acessado de fora do namespace: reescreve para o
+            // identificador mangled `ns__global` (o parser ja faz isso para
+            // chamadas `ns.fn()`). Vale para llvmgen e para o interpretador.
+            if (n.c0 >= 0) {
+                forge fb: Node = node_get(n.c0)
+                if (fb.kind == NK_IDENT) {
+                    forge base_sym: Symbol = resolve(fb.val)
+                    if (ofs_str_eq(base_sym.name, "")) {
+                        forge ns_sym: Symbol = resolve(fb.val + "__" + n.val)
+                        if (!ofs_str_eq(ns_sym.name, "")) {
+                            n.kind = NK_IDENT
+                            n.val = fb.val + "__" + n.val
+                            n.c0 = -1
+                            node_set(id, n)
+                            node_set_type(id, ns_sym.type_str)
+                            return ns_sym.type_str
+                        }
+                    }
+                }
+            }
             forge base_type = check_node(n.c0)
             forge ft = field_type(base_type, n.val)
             node_set_type(id, ft)
@@ -326,6 +346,42 @@ namespace typeck {
             if (!ofs_str_eq(fn_sym.name, "")) {
                 node_set_type(id, fn_sym.type_str)
                 return fn_sym.type_str
+            }
+            // Builtins de Array sem `extern` declarado: antes caiam em
+            // "unknown" (= ponteiro no LLVM) e `forge n = ofs_array_get(a, i)`
+            // gerava IR invalido. Infere o elemento a partir de Array<T>.
+            if (ofs_str_eq(n.val, "ofs_array_get") || ofs_str_eq(n.val, "ofs_array_pop")) {
+                forge elem_t = "stone"
+                if (argc > 0) {
+                    forge arr_t = node_type_of(node_extra_at(id, 0))
+                    forge alen = ofs_str_len(arr_t)
+                    if (alen > 7 && ofs_str_eq(ofs_str_substr(arr_t, 0, 6), "Array<")) {
+                        elem_t = ofs_str_substr(arr_t, 6, alen - 7)
+                    }
+                }
+                node_set_type(id, elem_t)
+                return elem_t
+            }
+            // Builtins de string do runtime (declarados implicitamente pelo llvmgen).
+            if (ofs_str_eq(n.val, "ofs_str_len") || ofs_str_eq(n.val, "ofs_str_char_at") || ofs_str_eq(n.val, "ofs_str_char_at_known")) {
+                node_set_type(id, "stone")
+                return "stone"
+            }
+            if (ofs_str_eq(n.val, "ofs_str_eq") || ofs_str_eq(n.val, "ofs_str_contains")) {
+                node_set_type(id, "bool")
+                return "bool"
+            }
+            if (ofs_str_eq(n.val, "ofs_str_concat") || ofs_str_eq(n.val, "ofs_str_substr") || ofs_str_eq(n.val, "ofs_stone_to_obsidian")) {
+                node_set_type(id, "obsidian")
+                return "obsidian"
+            }
+            if (ofs_str_eq(n.val, "ofs_array_len")) {
+                node_set_type(id, "stone")
+                return "stone"
+            }
+            if (ofs_str_eq(n.val, "ofs_array_push") || ofs_str_eq(n.val, "ofs_array_set")) {
+                node_set_type(id, "void")
+                return "void"
             }
             node_set_type(id, "unknown")
             return "unknown"
@@ -631,6 +687,25 @@ namespace typeck {
                             }
                             member_sym.kind = SYM_FN
                             declare(member_sym)
+                        } else if (member_kind == NK_VAR_DECL || member_kind == NK_CONST_DECL) {
+                            // globais de namespace (nome ja mangled ns__nome),
+                            // visiveis de fora como `ns.nome`
+                            forge gv_sym: Symbol
+                            gv_sym.name = node_val_of(member_id)
+                            gv_sym.type_str = "unknown"
+                            forge gv_ann = node_child(member_id, 0)
+                            forge gv_init = node_child(member_id, 1)
+                            if (gv_ann >= 0) {
+                                gv_sym.type_str = type_node_name(gv_ann)
+                            } else if (gv_init >= 0) {
+                                forge gik = node_kind_of(gv_init)
+                                if (gik == NK_LIT_INT) { gv_sym.type_str = "stone" }
+                                if (gik == NK_LIT_FLOAT) { gv_sym.type_str = "crystal" }
+                                if (gik == NK_LIT_STRING) { gv_sym.type_str = "obsidian" }
+                                if (gik == NK_LIT_BOOL) { gv_sym.type_str = "bool" }
+                            }
+                            gv_sym.kind = SYM_VAR
+                            declare(gv_sym)
                         }
                         j++
                     }

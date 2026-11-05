@@ -140,6 +140,21 @@ Controles de interface de usuário em modo imediato:
 
 ---
 
+### `raster.ofs`
+Rasterizador vetorial com antialiasing (acumulação de área assinalada). Caminhos (`move_to`, `line_to`, `quad_to`, `cubic_to`, `close`), formas (`add_round_rect`, `add_circle`, `add_capsule`, `add_arc_stroke`) e atalhos (`fill_round_rect`, `fill_circle`, `stroke_line`, `stroke_round_rect`). Compõe no Canvas respeitando alfa e clip.
+
+### `ttf.ofs`
+Fontes TrueType em OFS puro: `ttf.load(caminho)`, `ttf.draw(cv, fonte, tamanho, x, linha_base, texto, cor)`, `ttf.width`, `ttf.ascent`/`descent`/`line_height`, `ttf.ellipsize`, `ttf.draw_centered`. UTF-8, glifos compostos (acentos), cache e posicionamento subpixel.
+
+### `x11win.ofs`
+Janela X11 nativa: `open`, `present(canvas)`, `poll()` → `EV_KEY`/`EV_MOUSE_DOWN`/`EV_MOUSE_UP`/`EV_MOUSE_MOVE`/`EV_WHEEL`/`EV_RESIZE`/`EV_CLOSE`, campos `ev_x`, `ev_y`, `ev_button`, `ev_key` (keysym), `ev_text` (UTF-8, com teclas mortas pt-BR), `ev_mods`; `set_cursor`, `set_icon`, `set_title`, `now_ms`, `sleep_ms`.
+
+### `icons.ofs`
+Ícones vetoriais 24×24: `icons.draw(cv, icons.BACK, x, y, tamanho, cor)` e `icons.draw_centered`. Constantes `BACK`, `FORWARD`, `RELOAD`, `HOME`, `PLUS`, `CLOSE`, `LOCK`, `INFO`, `STAR`, `MENU`, `SEARCH`, `GLOBE`, `DOWNLOAD`, `HISTORY`, `SETTINGS`, `PROFILE`, `STOP`, `FILE`, `BOOKMARK`, `SHIELD`.
+
+### `hashmap.ofs`
+Tabela hash inteiro→inteiro: `hashmap.new(cap)`, `set`, `get(m, chave, padrao)`, `has`, `count`, `clear`.
+
 ## 4. Módulos de Baixo Nível e Sistema
 
 ### `bedrock.ofs`

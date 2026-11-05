@@ -1,0 +1,20 @@
+attach {F:reservoir.ofs}
+
+extern vein getchar() -> stone
+
+vein ofs_read_line() -> obsidian {
+    forge buffer: obsidian = ofs_alloc(4096)
+    forge length = 0
+    while (length < 4095) {
+        forge ch = getchar()
+        if (ch < 0 || ch == 10) { break }
+        forge dst: *u8 = (buffer as stone + length) as *u8
+        forge byte = ch as u8
+        fracture { *dst = byte }
+        length++
+    }
+    forge terminator: *u8 = (buffer as stone + length) as *u8
+    forge zero: u8 = 0 as u8
+    fracture { *terminator = zero }
+    return buffer
+}

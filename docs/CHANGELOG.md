@@ -4,6 +4,57 @@ All notable changes to this project are recorded here.
 
 ## [Unreleased]
 
+### Added — stack gráfica 100% OFS (base do Catalyst Browser)
+
+- **`raster.ofs`**: rasterizador vetorial com antialiasing por acumulação de área (estilo font-rs): `move_to`/`line_to`/`quad_to`/`cubic_to`/`close`, retângulos arredondados, círculos, cápsulas (traços), arcos, anéis, e composição no Canvas com alfa.
+- **`ttf.ofs`**: leitor TrueType (cmap 4/12, glifos simples e compostos, hhea/hmtx) com UTF-8, cache de glifos, posicionamento subpixel (1/4 px), escurecimento de hastes, `width`, `ellipsize`, `draw_centered`. Texto real (Inter, Noto, DejaVu) com acentos.
+- **`x11win.ofs`**: janela X11 nativa em OFS puro (Xlib via `extern`): apresentação do Canvas por `XPutImage`, eventos de teclado com texto UTF-8 e teclas mortas pt-BR (´ ` ^ ~ ¨ ç), mouse, roda, resize, fechar (`WM_DELETE_WINDOW`), cursores (seta/mão/texto), ícone da janela (`_NET_WM_ICON`), `now_ms`/`sleep_ms`.
+- **`icons.ofs`**: 20 ícones vetoriais de interface (voltar, avançar, recarregar, casa, +, fechar, cadeado, info, estrela, menu, busca, globo, download, histórico, engrenagem, perfil, parar, arquivo, favorito, escudo) com cache por tamanho.
+- **`hashmap.ofs`**: tabela hash inteiro→inteiro com endereçamento aberto e crescimento automático.
+
+### Fixed — compilador (`ofscc`), verificado por bootstrap com ponto fixo (vN.ll == vN+1.ll)
+
+- **parser**: `*`, `-` ou `&` no início de uma nova linha agora iniciam um novo comando. Antes, `v = *p` seguido de `*p = 0` virava `v = *p * p = 0`.
+- **parser**: operadores unários aplicam-se à expressão pós-fixa completa — `!ns.fn(x)` é `!(ns.fn(x))`, não `(!ns).fn(x)` (gerava chamada para `@fn` inexistente).
+- **llvmgen**: globais de `namespace` acessíveis de fora (`raster._acc`, `cfg.contador = ...`, `cfg.contador++`); antes geravam GEP sobre `%unknown`.
+- **llvmgen**: globais com literal negativo (`forge x: stone = -1`) eram emitidos como `0`. Afetava o próprio compilador (`interpreter___ret_ref`).
+- **typeck**: `ofs_array_get`/`ofs_array_pop`/`ofs_array_len`/`ofs_array_push`/`ofs_array_set` sem `extern` declarado agora têm tipo inferido de `Array<T>` (antes `unknown` → ponteiro → IR inválido).
+- **canvas**: `_sin_deg`/`_cos_deg` com redução de ângulo a [-π/2, π/2] e série de 6 termos (erro de ~20% perto de 180° deformava arcos).
+- **dist**: `ofs/dist/ofscc`, `ofs/dist/ofscc.ll` e `ofs/dist/stdlib/` estavam dessincronizados do fonte — o driver usava um `canvas.ofs` antigo sem `draw_shadow` (segfault no Catalyst) e um `ofscc` sem `stacksave` nos loops. Regenerados a partir do fonte.
+- **runtime (`ofs_str_char_at`)**: chamava `strlen` a cada caractere (O(n²) em laços sobre strings). Agora guarda em cache (ponteiro, comprimento) da última string, validado pelo terminador NUL. Laço sobre 164 KB: 0,203 s → 0,014 s. Aplicado à mão em `ofs/dist/magma.ll` e `ofs/dist/magma_windows.ll` (que têm ajustes manuais) e espelhado em `stdlib/runtime/facet.ofs`; `magma.o` regenerado.
+- **typeck**: builtins de string sem `extern` (`ofs_str_len`, `ofs_str_char_at`, `ofs_str_eq`, `ofs_str_contains`, `ofs_str_concat`, `ofs_str_substr`, `ofs_stone_to_obsidian`) têm tipo inferido (antes `unknown` → IR inválido em `forge n = ofs_str_len(s)`).
+- **typeck/interpreter (`ofs run`)**: globais de `namespace` são pré-declarados com o nome mangled e `ns.global` é reescrito para `ns__global` antes dos backends — some o falso aviso "identificador desconhecido" e `ofs run` passa a ler/escrever esses globais. O interpretador também passa a inicializar globais declarados dentro de `namespace` (antes ficavam nulos até para o próprio namespace).
+- **bootstrap**: `ofs/bootstrap/*.ofs` sincronizado com `ofs/ofscc/` (era um retrato antigo sem `interpreter`, `events`, `reporter`); scripts apontavam para `ofs/ofs/bootstrap/ofscc.ofs` (inexistente — `bootstrap-minimal.sh` falhava na Fase 2) e agora usam `ofs/ofscc/ofscc.ofs`. `OFS_BOOTSTRAP_SELFHOST=1 bootstrap-minimal.sh --validate` passa com determinismo validado.
+
+- **driver (`attach {modulo}`)**: a forma curta documentada (`attach {canvas}`, `attach {terminal-colors}`) nunca carregava o módulo — só `attach {F:arquivo.ofs}` funcionava. Agora resolve `modulo.ofs` na stdlib (hífen → underscore), com prioridade sobre arquivo local homônimo; vale para `build` e `run`.
+- **lexer (literais hex)**: `0xFF`, `0x1A1A2E` iam crus para o LLVM IR (lidos como ponto flutuante → "floating point constant invalid") e não funcionavam no interpretador. Agora viram decimal no lexer; `0xFFFFFFFFFFFFFFFF == -1` como em C.
+- **llvmgen (inteiros pequenos)**: `u8`/`u16`/`u32`/`i8`/`i16`/`i32` são estendidos para `i64` (zext/sext) em operações binárias e no `echo` — `(r as u32 << 16) | ...` gerava IR inválido e `echo(pixel: u32)` chamava `echo_obsidian` com inteiro.
+- **examples**: 28 de 33 compilam (antes 21). Restam 3 exclusivos de Windows, `attach_local_lib.ofs` (biblioteca sem `main`) e `hybrid_fault_console.ofs` (`fault_count` sem implementação no llvmgen).
+- **VS Code (1.0.10)**: autocompletar, hover e mapa de arquivos com `fs`, `net`, `http`, `oll`, `ui`, `raster`, `ttf`, `x11win`, `icons`, `hashmap`; snippets `x11win-app` e `hashmap`; toolchain empacotado (`bin/linux-x64`: `ofs`, `ofscc`, `magma.o`, stdlib) atualizado.
+- **site/docs**: páginas de stdlib (PT/EN/ES) regeneradas pelo `build_site.ofs` com os novos módulos; `docs/en/STANDARD_LIBRARY.md` e `VISUAL_UI.md` (PT/EN) com a stack gráfica 100% OFS.
+
+- **lexer (`\r` e `\t` em strings)**: o caso existia, mas usava os literais `"\r"`/`"\t"`, que dependem do compilador anterior; como a semente não os convertia, o erro se perpetuava no bootstrap e `"\r\n"` gerava os bytes `\` `r`. Cabeçalhos HTTP de `http.ofs`/`webserver.ofs` saíam inválidos (servidores respondiam 400). Agora os bytes são construídos por código.
+- **llvmgen (bool em arrays)**: `ofs_array_set/push(a, i, x || y)` gravava um `i1` num slot `i32` (IR inválido); o valor agora é estendido.
+- **llvmgen**: `ofs_str_char_at_known` passa a ser declarada automaticamente como as demais funções de string.
+- **driver**: `attach {F:/caminho/absoluto.ofs}` aceita caminho absoluto.
+- **net.ofs**: `net.resolve(host)` — DNS via `getaddrinfo` em OFS (`net.is_ipv4`).
+- **Catalyst 3.0.0**: reescrito sobre a stack gráfica OFS — interface estilo Chrome, abas com histórico próprio, omnibox editável, favoritos, menu, parser HTML/CSS novo, layout com quebra de linha, flex, links, rolagem, DNS e redirecionamentos HTTP.
+
+- **net.ofs**: `net.recv_all(fd)` (recepção binária segura, `net.last_len`), `net.set_timeout` e `net.timeout_s` (15 s padrão em `tcp_connect`; antes um servidor mudo travava o programa para sempre).
+- **Catalyst 3.1.0**: histórico e downloads persistentes em `~/.catalyst` / `~/Downloads` (downloads binários reais), sistema de plugins `.cai` (estilos, bloqueio, redirecionamento, busca, páginas `ofs://ext/`, botões, atalhos, página inicial), página `ofs://plugins`, Google como busca padrão, ícone de cristal (`assets/catalyst.svg`).
+
+- **llvmgen (`&&` / `||`)**: o código nativo avaliava sempre os dois lados (sem curto-circuito); `i >= 0 && arr[i]` lia fora do array. Agora o lado direito só roda quando necessário, como no interpretador e em C.
+- **parser (sombreamento)**: parâmetros e variáveis locais de funções num `namespace` eram renomeados para o global homônimo (`forge bg = ...` lia e sobrescrevia `ns__bg`). Agora locais sombreiam globais.
+- **stdlib**: `icons.by_name(nome)`.
+- **Catalyst 3.2.0**: configurações redesenhadas (barra lateral estilo Chrome, busca estilo Firefox, cartões, interruptores, opções e botões com ícones), tema claro/escuro, tamanho de fonte, barra de favoritos opcional, idiomas pt/en/es, escolha do mecanismo de busca, nova aba com caixa de pesquisa, formulários (`<input>`, `<button>`, envio GET) e a tag `<icon name>` nas páginas.
+
+- **Catalyst 3.3.0**: Catalyst Shield (bloqueio nativo de anúncios/rastreadores: rede, cosmético estilo EasyList, heurística, filtros do usuário, liberação por site, contador e painel na omnibox), Visão Essência (páginas dependentes de JavaScript exibidas a partir de JSON-LD, `__NEXT_DATA__`, OpenGraph e links, sem executar scripts), 6 cores de destaque, tema dinâmico por `theme-color`, famílias de fonte (Inter, Noto Sans, DejaVu, Serif), favoritos persistentes com gerenciador `ofs://bookmarks`.
+
+### Known issues
+
+- Global de tipo `monolith` (`forge cv: Canvas` em escopo de namespace) reserva só um ponteiro; atribuir a struct inteira corrompe memória. Use variável local ou passe por parâmetro.
+- `stdlib/runtime/frame.ofs` (janela do `magma.o`) é um stub; use `x11win.ofs` para janelas reais.
+
 ### Added
 
 - **Reporter Fases 2–5 (ofscc)**:

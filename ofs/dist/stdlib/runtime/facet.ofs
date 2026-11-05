@@ -13,15 +13,46 @@ vein ofs_str_len(s: obsidian) -> stone {
     return strlen(s)
 }
 
+// Cache (ponteiro, comprimento) da ultima string consultada: laços que
+// percorrem a mesma string deixam de chamar strlen a cada caractere (O(n^2)).
+// O cache so e usado se s[n] ainda for o terminador NUL.
+// Espelhado a mao em ofs/dist/magma.ll (que tem ajustes manuais).
+forge __ofs_charat_s: obsidian = null
+forge __ofs_charat_n: stone = 0
+
 vein ofs_str_char_at(s: obsidian, idx: stone) -> stone {
     if (s == null || idx < 0) { return -1 }
-    forge slen = ofs_str_len(s)
+    forge slen = 0
+    forge cached = false
+    if (s == __ofs_charat_s) {
+        forge tp: *u8 = (s as stone + __ofs_charat_n) as *u8
+        forge tb: u8 = 1 as u8
+        fracture {
+            tb = *tp;
+        }
+        if ((tb as stone) == 0) {
+            slen = __ofs_charat_n
+            cached = true
+        }
+    }
+    if (!cached) {
+        slen = ofs_str_len(s)
+        __ofs_charat_s = s
+        __ofs_charat_n = slen
+    }
     if (idx >= slen) { return -1 }
     forge p: *u8 = (s as stone + idx) as *u8
     forge b: u8 = 0 as u8
     fracture {
         b = *p
     }
+    return b as stone
+}
+
+vein ofs_str_char_at_known(s: obsidian, idx: stone) -> stone {
+    forge p: *u8 = (s as stone + idx) as *u8
+    forge b: u8 = 0 as u8
+    fracture { b = *p }
     return b as stone
 }
 
@@ -58,6 +89,8 @@ vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian {
         forge sp = s as stone + start
         memcpy(res as *stone, sp as *stone, len)
     }
+    // ofs_alloc does NOT zero memory; ensure NUL terminator otherwise
+    // strlen/ofs_str_len see trailing garbage (caused attach-boundary bytes).
     forge term: *u8 = (res as stone + len) as *u8
     fracture { *term = 0 as u8 }
     return res
@@ -104,7 +137,9 @@ vein ofs_str_lower(s: obsidian) -> obsidian {
     return res
 }
 
-// Implementação portátil (sem sprintf — ausente no MSVC puro).
+// Implementação portátil (sem sprintf — ausente no MSVC puro):
+// escreve os dígitos em ordem reversa no fim do buffer e devolve
+// um ponteiro para o primeiro dígito. Suficiente para i64.
 vein ofs_stone_to_obsidian(v: stone) -> obsidian {
     forge buf: obsidian = ofs_alloc(32)
     forge base: stone = buf as stone
@@ -115,6 +150,7 @@ vein ofs_stone_to_obsidian(v: stone) -> obsidian {
     forge neg = false
     if (n < 0) {
         neg = true
+        // evita overflow no caso n == MIN_I64
         n = 0 - (n + 1)
         n = n + 1
     }
@@ -141,8 +177,10 @@ vein ofs_stone_to_obsidian(v: stone) -> obsidian {
 
 vein ofs_crystal_to_obsidian(v: crystal) -> obsidian {
     forge buf: obsidian = ofs_alloc(64)
+    // snprintf existe em POSIX e em MSVC a partir do VS2015 (via UCRT).
     ofs_facet_snprintf_double(buf, 64, "%.15g", v)
     // Paridade intérprete × nativo: inteiro precisa mostrar ".0".
+    // Só anexa se não houver '.', 'e'/'E' (expoente), nem 'n'/'N' (nan/inf).
     forge slen: stone = ofs_str_len(buf)
     if (slen < 61) {
         forge has_special = false

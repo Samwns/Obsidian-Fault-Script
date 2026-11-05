@@ -306,7 +306,7 @@ bash bootstrap-linux.sh \
 | "CMake not found" | CMake não instalado | `apt install cmake` / `brew install cmake` |
 | "LLVM not found" | LLVM dev files faltam | Instalar LLVM 17+ dev |
 | "ofscc_v1 failed" | Compilação C++ falhou | Verificar cmake, gcc, LLVM |
-| "ofscc_v2 failed" | ofscc.ofs não encontrado | Verificar `ofs/ofs/bootstrap/ofscc.ofs` |
+| "ofscc_v2 failed" | ofscc.ofs não encontrado | Verificar `ofs/ofscc/ofscc.ofs` |
 | "Permission denied" | Scripts não executáveis | `chmod +x src/scripts/*.sh` |
 | Non-deterministic | v2 ≠ v3 | Normal em dev, valide que v3 foi criado |
 
