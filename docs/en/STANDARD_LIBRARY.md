@@ -155,6 +155,12 @@ Native X11 window: `open`, `present(canvas)`, `poll()` → `EV_KEY`/`EV_MOUSE_DO
 ### `hashmap.ofs`
 Integer-to-integer hash table: `hashmap.new(cap)`, `set`, `get(m, key, fallback)`, `has`, `count`, `clear`.
 
+### `tls.ofs`
+HTTPS connections using the system OpenSSL: `tls.connect(fd, host)` (SNI + certificate and hostname verification), `tls.send`, `tls.recv_all` (`tls.last_len`), `tls.close`, `tls.last_error`. Link with `OFS_LINK_LIBS="-lssl -lcrypto"`.
+
+### `png.ofs`
+Pure-OFS PNG decoder (own inflate/zlib): `png.load(path)`, `png.width`, `png.height`, `png.draw(cv, img, x, y, w, h)`, `png.draw_cover`, `png.draw_region`. Pixels as `0xAARRGGBB`.
+
 ## 4. Systems and Low-Level Modules
 
 ### `bedrock.ofs`

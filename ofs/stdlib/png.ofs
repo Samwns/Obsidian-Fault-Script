@@ -1,0 +1,581 @@
+// OFS Standard Library — PNG Module
+// Decodificador PNG escrito 100% em OFS, com inflate (zlib/DEFLATE) proprio.
+// Suporta: tons de cinza, RGB, paleta (1/2/4/8 bits), cinza+alfa, RGBA,
+// profundidade 8 (16 bits usa o byte alto). Nao suporta entrelacado (Adam7).
+//
+//   forge img = png.load("/caminho/foto.png")     // -1 se falhar
+//   png.draw(cv, img, x, y, w, h)                  // desenha escalado
+//   png.draw_cover(cv, img, x, y, w, h)            // preenche cortando (papel de parede)
+//
+// Pixels ficam como 0xAARRGGBB (alfa 255 = opaco).
+
+attach {canvas}
+
+extern vein fopen(path: obsidian, mode: obsidian) -> *stone
+extern vein fclose(f: *stone) -> stone
+extern vein fread(buf: *stone, sz: stone, n: stone, f: *stone) -> stone
+extern vein fseek(f: *stone, offset: stone, whence: stone) -> stone
+extern vein ftell(f: *stone) -> stone
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+extern vein memcpy(dst: *stone, src: *stone, size: stone) -> *stone
+
+namespace png {
+    forge img_w: Array<stone> = []
+    forge img_h: Array<stone> = []
+    forge img_px: Array<stone> = []
+    forge last_error: obsidian = ""
+
+    // ── bytes ────────────────────────────────────────────────────────────
+    vein _gb(base: stone, i: stone) -> stone {
+        forge p: *u8 = (base + i) as *u8
+        forge v: u8 = 0 as u8
+        fracture {
+            v = *p;
+        }
+        return (v as stone) & 255
+    }
+
+    vein _pb(base: stone, i: stone, v: stone) -> void {
+        forge p: *u8 = (base + i) as *u8
+        forge b: u8 = (v & 255) as u8
+        fracture {
+            *p = b;
+        }
+    }
+
+    vein _rw(base: stone, i: stone) -> stone {
+        forge p: *stone = fault_step(base as *stone, i)
+        forge v = 0
+        fracture {
+            v = *p;
+        }
+        return v
+    }
+
+    vein _ww(base: stone, i: stone, v: stone) -> void {
+        forge p: *stone = fault_step(base as *stone, i)
+        fracture {
+            *p = v;
+        }
+    }
+
+    vein _be32(base: stone, i: stone) -> stone {
+        return (_gb(base, i) << 24) | (_gb(base, i + 1) << 16) | (_gb(base, i + 2) << 8) | _gb(base, i + 3)
+    }
+
+    // ── inflate (estilo puff.c) ──────────────────────────────────────────
+    forge _in: stone = 0
+    forge _in_len: stone = 0
+    forge _pos: stone = 0
+    forge _bitbuf: stone = 0
+    forge _bitcnt: stone = 0
+    forge _out: stone = 0
+    forge _out_cap: stone = 0
+    forge _out_len: stone = 0
+    forge _err: bool = false
+    // tabelas de Huffman: contagens (16) e simbolos (288/30/19)
+    forge _lcount: stone = 0
+    forge _lsym: stone = 0
+    forge _dcount: stone = 0
+    forge _dsym: stone = 0
+
+    vein _bits(n: stone) -> stone {
+        while (_bitcnt < n) {
+            if (_pos >= _in_len) {
+                _err = true
+                return 0
+            }
+            _bitbuf = _bitbuf | (_gb(_in, _pos) << _bitcnt)
+            _pos++
+            _bitcnt = _bitcnt + 8
+        }
+        forge v = _bitbuf & ((1 << n) - 1)
+        _bitbuf = _bitbuf >> n
+        _bitcnt = _bitcnt - n
+        return v
+    }
+
+    vein _emit(b: stone) -> void {
+        if (_out_len >= _out_cap) {
+            forge nc = _out_cap * 2
+            forge nb: *stone = ofs_alloc(nc + 8)
+            memcpy(nb, _out as *stone, _out_len)
+            ofs_free(_out as *stone)
+            _out = nb as stone
+            _out_cap = nc
+        }
+        _pb(_out, _out_len, b)
+        _out_len++
+    }
+
+    // Constroi tabela canonica a partir de comprimentos (lens[0..n)).
+    vein _build(count: stone, sym: stone, lens: stone, n: stone) -> void {
+        forge i = 0
+        while (i < 16) {
+            _ww(count, i, 0)
+            i++
+        }
+        i = 0
+        while (i < n) {
+            forge l = _rw(lens, i)
+            _ww(count, l, _rw(count, l) + 1)
+            i++
+        }
+        forge offs: *stone = ofs_alloc(16 * 8)
+        forge ob = offs as stone
+        _ww(ob, 1, 0)
+        i = 1
+        while (i < 15) {
+            _ww(ob, i + 1, _rw(ob, i) + _rw(count, i))
+            i++
+        }
+        i = 0
+        while (i < n) {
+            forge l2 = _rw(lens, i)
+            if (l2 != 0) {
+                forge o = _rw(ob, l2)
+                _ww(sym, o, i)
+                _ww(ob, l2, o + 1)
+            }
+            i++
+        }
+        ofs_free(offs)
+    }
+
+    vein _decode(count: stone, sym: stone) -> stone {
+        forge code = 0
+        forge first = 0
+        forge index = 0
+        forge len = 1
+        while (len <= 15) {
+            code = code | _bits(1)
+            if (_err) { return -1 }
+            forge cnt = _rw(count, len)
+            if (code - cnt < first) { return _rw(sym, index + (code - first)) }
+            index = index + cnt
+            first = first + cnt
+            first = first << 1
+            code = code << 1
+            len++
+        }
+        _err = true
+        return -1
+    }
+
+    vein _len_base(i: stone) -> stone {
+        if (i < 8) { return 3 + i }
+        if (i == 28) { return 258 }
+        forge e = (i - 4) / 4
+        return ((4 + (i - 4) % 4) << e) + 3
+    }
+
+    vein _len_extra(i: stone) -> stone {
+        if (i < 8 || i == 28) { return 0 }
+        return (i - 4) / 4
+    }
+
+    vein _dist_base(i: stone) -> stone {
+        if (i < 4) { return 1 + i }
+        forge e = (i - 2) / 2
+        return ((2 + (i - 2) % 2) << e) + 1
+    }
+
+    vein _dist_extra(i: stone) -> stone {
+        if (i < 4) { return 0 }
+        return (i - 2) / 2
+    }
+
+    vein _codes() -> bool {
+        while (true) {
+            forge s = _decode(_lcount, _lsym)
+            if (s < 0 || _err) { return false }
+            if (s < 256) {
+                _emit(s)
+            } else if (s == 256) {
+                return true
+            } else {
+                forge li = s - 257
+                if (li >= 29) { return false }
+                forge len = _len_base(li) + _bits(_len_extra(li))
+                forge ds = _decode(_dcount, _dsym)
+                if (ds < 0 || ds >= 30) { return false }
+                forge dist = _dist_base(ds) + _bits(_dist_extra(ds))
+                if (dist > _out_len) { return false }
+                forge k = 0
+                while (k < len) {
+                    _emit(_gb(_out, _out_len - dist))
+                    k++
+                }
+            }
+        }
+        return true
+    }
+
+    vein _fixed() -> bool {
+        forge lens: *stone = ofs_alloc(320 * 8)
+        forge lb = lens as stone
+        forge i = 0
+        while (i < 288) {
+            forge v = 8
+            if (i >= 144 && i < 256) { v = 9 }
+            if (i >= 256 && i < 280) { v = 7 }
+            _ww(lb, i, v)
+            i++
+        }
+        _build(_lcount, _lsym, lb, 288)
+        i = 0
+        while (i < 30) {
+            _ww(lb, i, 5)
+            i++
+        }
+        _build(_dcount, _dsym, lb, 30)
+        ofs_free(lens)
+        return _codes()
+    }
+
+    vein _dynamic() -> bool {
+        forge nlen = _bits(5) + 257
+        forge ndist = _bits(5) + 1
+        forge ncode = _bits(4) + 4
+        if (nlen > 286 || ndist > 30) { return false }
+        forge lens: *stone = ofs_alloc(320 * 8)
+        forge lb = lens as stone
+        forge order = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15]
+        forge i = 0
+        while (i < 19) {
+            _ww(lb, i, 0)
+            i++
+        }
+        i = 0
+        while (i < ncode) {
+            forge oi: stone = ofs_array_get(order, i)
+            _ww(lb, oi, _bits(3))
+            i++
+        }
+        _build(_lcount, _lsym, lb, 19)
+        forge idx = 0
+        while (idx < nlen + ndist) {
+            forge sym = _decode(_lcount, _lsym)
+            if (sym < 0 || _err) {
+                ofs_free(lens)
+                return false
+            }
+            if (sym < 16) {
+                _ww(lb, idx, sym)
+                idx++
+            } else {
+                forge rep_len = 0
+                forge rep_val = 0
+                if (sym == 16) {
+                    if (idx == 0) {
+                        ofs_free(lens)
+                        return false
+                    }
+                    rep_val = _rw(lb, idx - 1)
+                    rep_len = 3 + _bits(2)
+                } else if (sym == 17) {
+                    rep_len = 3 + _bits(3)
+                } else {
+                    rep_len = 11 + _bits(7)
+                }
+                while (rep_len > 0 && idx < nlen + ndist) {
+                    _ww(lb, idx, rep_val)
+                    idx++
+                    rep_len--
+                }
+            }
+        }
+        _build(_lcount, _lsym, lb, nlen)
+        // distancias: lens[nlen..] copiados para o inicio de uma area temporaria
+        forge dl: *stone = ofs_alloc(32 * 8)
+        forge dlb = dl as stone
+        i = 0
+        while (i < ndist) {
+            _ww(dlb, i, _rw(lb, nlen + i))
+            i++
+        }
+        _build(_dcount, _dsym, dlb, ndist)
+        ofs_free(dl)
+        ofs_free(lens)
+        return _codes()
+    }
+
+    // Descomprime um stream zlib; retorna ponteiro e tamanho em _out/_out_len.
+    vein inflate_zlib(data: stone, len: stone) -> bool {
+        _in = data + 2
+        _in_len = len - 2
+        _pos = 0
+        _bitbuf = 0
+        _bitcnt = 0
+        _err = false
+        _out_cap = len * 4 + 1024
+        _out = ofs_alloc(_out_cap + 8) as stone
+        _out_len = 0
+        if (_lcount == 0) {
+            _lcount = ofs_alloc(16 * 8) as stone
+            _lsym = ofs_alloc(320 * 8) as stone
+            _dcount = ofs_alloc(16 * 8) as stone
+            _dsym = ofs_alloc(32 * 8) as stone
+        }
+        forge last = 0
+        while (last == 0) {
+            last = _bits(1)
+            forge type = _bits(2)
+            if (_err) { return false }
+            if (type == 0) {
+                _bitbuf = 0
+                _bitcnt = 0
+                if (_pos + 4 > _in_len) { return false }
+                forge n = _gb(_in, _pos) | (_gb(_in, _pos + 1) << 8)
+                _pos = _pos + 4
+                forge k = 0
+                while (k < n && _pos < _in_len) {
+                    _emit(_gb(_in, _pos))
+                    _pos++
+                    k++
+                }
+            } else if (type == 1) {
+                if (!_fixed()) { return false }
+            } else if (type == 2) {
+                if (!_dynamic()) { return false }
+            } else {
+                return false
+            }
+        }
+        return true
+    }
+
+    // ── PNG ──────────────────────────────────────────────────────────────
+    vein _paeth(a: stone, b: stone, c: stone) -> stone {
+        forge p = a + b - c
+        forge pa = p - a
+        if (pa < 0) { pa = 0 - pa }
+        forge pb = p - b
+        if (pb < 0) { pb = 0 - pb }
+        forge pc = p - c
+        if (pc < 0) { pc = 0 - pc }
+        if (pa <= pb && pa <= pc) { return a }
+        if (pb <= pc) { return b }
+        return c
+    }
+
+    vein _fail(msg: obsidian) -> stone {
+        last_error = msg
+        return -1
+    }
+
+    vein load(path: obsidian) -> stone {
+        forge f = fopen(path, "rb")
+        if (f == null) { return _fail("arquivo nao encontrado") }
+        fseek(f, 0, 2)
+        forge flen = ftell(f)
+        fseek(f, 0, 0)
+        forge fb: *stone = ofs_alloc(flen + 8)
+        fread(fb, 1, flen, f)
+        fclose(f)
+        forge id = decode(fb as stone, flen)
+        ofs_free(fb)
+        return id
+    }
+
+    vein decode(b: stone, n: stone) -> stone {
+        if (n < 33 || _gb(b, 1) != 80 || _gb(b, 2) != 78 || _gb(b, 3) != 71) { return _fail("nao e PNG") }
+        forge w = 0
+        forge h = 0
+        forge depth = 0
+        forge ctype = 0
+        forge interlace = 0
+        forge pal: *stone = ofs_alloc(256 * 8)
+        forge palb = pal as stone
+        forge trns: *stone = ofs_alloc(256 * 8)
+        forge trb = trns as stone
+        forge k = 0
+        while (k < 256) {
+            _ww(trb, k, 255)
+            k++
+        }
+        forge idat: *stone = ofs_alloc(n + 8)
+        forge idb = idat as stone
+        forge idlen = 0
+        forge p = 8
+        while (p + 8 <= n) {
+            forge clen = _be32(b, p)
+            forge ct = _be32(b, p + 4)
+            forge d = p + 8
+            if (d + clen > n) { break }
+            if (ct == 1229472850) {
+                w = _be32(b, d)
+                h = _be32(b, d + 4)
+                depth = _gb(b, d + 8)
+                ctype = _gb(b, d + 9)
+                interlace = _gb(b, d + 12)
+            } else if (ct == 1347179589) {
+                forge pi = 0
+                while (pi * 3 + 2 < clen && pi < 256) {
+                    _ww(palb, pi, (_gb(b, d + pi * 3) << 16) | (_gb(b, d + pi * 3 + 1) << 8) | _gb(b, d + pi * 3 + 2))
+                    pi++
+                }
+            } else if (ct == 1951551059) {
+                forge ti = 0
+                while (ti < clen && ti < 256) {
+                    _ww(trb, ti, _gb(b, d + ti))
+                    ti++
+                }
+            } else if (ct == 1229209940) {
+                memcpy(((idb + idlen) as *stone), ((b + d) as *stone), clen)
+                idlen = idlen + clen
+            } else if (ct == 1229278788) {
+                break
+            }
+            p = d + clen + 4
+        }
+        if (w <= 0 || h <= 0 || w > 8192 || h > 8192) { return _fail("dimensoes invalidas") }
+        if (interlace != 0) { return _fail("PNG entrelacado nao suportado") }
+        if (!inflate_zlib(idb, idlen)) { return _fail("dados comprimidos invalidos") }
+        ofs_free(idat)
+        // canais e bits por pixel
+        forge ch = 1
+        if (ctype == 2) { ch = 3 }
+        if (ctype == 4) { ch = 2 }
+        if (ctype == 6) { ch = 4 }
+        forge bpp_bits = ch * depth
+        forge stride = (w * bpp_bits + 7) / 8
+        forge bpp = (bpp_bits + 7) / 8
+        if (_out_len < h * (stride + 1)) { return _fail("dados incompletos") }
+        // desfaz os filtros linha a linha (in place, sobre _out)
+        forge raw = _out
+        forge y = 0
+        while (y < h) {
+            forge rs = y * (stride + 1)
+            forge ft = _gb(raw, rs)
+            forge x = 0
+            while (x < stride) {
+                forge cur = _gb(raw, rs + 1 + x)
+                forge a = 0
+                if (x >= bpp) { a = _gb(raw, rs + 1 + x - bpp) }
+                forge up = 0
+                if (y > 0) { up = _gb(raw, rs - stride + x) }
+                forge c = 0
+                if (y > 0 && x >= bpp) { c = _gb(raw, rs - stride + x - bpp) }
+                forge v = cur
+                if (ft == 1) { v = cur + a }
+                if (ft == 2) { v = cur + up }
+                if (ft == 3) { v = cur + (a + up) / 2 }
+                if (ft == 4) { v = cur + _paeth(a, up, c) }
+                _pb(raw, rs + 1 + x, v & 255)
+                x++
+            }
+            y++
+        }
+        // converte para 0xAARRGGBB
+        forge px: *stone = ofs_alloc(w * h * 8 + 8)
+        forge pxb = px as stone
+        y = 0
+        while (y < h) {
+            forge row = y * (stride + 1) + 1
+            forge x2 = 0
+            while (x2 < w) {
+                forge r = 0
+                forge g = 0
+                forge bl = 0
+                forge al = 255
+                if (ctype == 3) {
+                    forge pix_bits = x2 * depth
+                    forge byte = _gb(raw, row + pix_bits / 8)
+                    forge shift = 8 - depth - (pix_bits % 8)
+                    forge ix = (byte >> shift) & ((1 << depth) - 1)
+                    forge pc = _rw(palb, ix)
+                    r = (pc >> 16) & 255
+                    g = (pc >> 8) & 255
+                    bl = pc & 255
+                    al = _rw(trb, ix)
+                } else if (depth < 8 && ctype == 0) {
+                    forge pbits = x2 * depth
+                    forge gbyte = _gb(raw, row + pbits / 8)
+                    forge gsh = 8 - depth - (pbits % 8)
+                    forge gv = (gbyte >> gsh) & ((1 << depth) - 1)
+                    gv = gv * 255 / ((1 << depth) - 1)
+                    r = gv
+                    g = gv
+                    bl = gv
+                } else {
+                    forge step = depth / 8
+                    forge o = row + x2 * ch * step
+                    if (ctype == 0 || ctype == 4) {
+                        r = _gb(raw, o)
+                        g = r
+                        bl = r
+                        if (ctype == 4) { al = _gb(raw, o + step) }
+                    } else {
+                        r = _gb(raw, o)
+                        g = _gb(raw, o + step)
+                        bl = _gb(raw, o + 2 * step)
+                        if (ctype == 6) { al = _gb(raw, o + 3 * step) }
+                    }
+                }
+                _ww(pxb, y * w + x2, (al << 24) | (r << 16) | (g << 8) | bl)
+                x2++
+            }
+            y++
+        }
+        ofs_free(raw as *stone)
+        ofs_free(pal)
+        ofs_free(trns)
+        ofs_array_push(img_w, w)
+        ofs_array_push(img_h, h)
+        ofs_array_push(img_px, pxb)
+        return ofs_array_len(img_w) - 1
+    }
+
+    vein width(id: stone) -> stone {
+        return ofs_array_get(img_w, id)
+    }
+
+    vein height(id: stone) -> stone {
+        return ofs_array_get(img_h, id)
+    }
+
+    // Desenha a regiao (sx, sy, sw, sh) da imagem em (x, y, w, h) (vizinho mais proximo).
+    vein draw_region(cv: Canvas, id: stone, sx: stone, sy: stone, sw: stone, sh: stone, x: stone, y: stone, w: stone, h: stone) -> void {
+        if (id < 0 || w <= 0 || h <= 0) { return }
+        forge iw: stone = ofs_array_get(img_w, id)
+        forge pxb: stone = ofs_array_get(img_px, id)
+        forge yy = 0
+        while (yy < h) {
+            forge srcy = sy + yy * sh / h
+            forge xx = 0
+            while (xx < w) {
+                forge srcx = sx + xx * sw / w
+                forge v = _rw(pxb, srcy * iw + srcx)
+                forge a = (v >> 24) & 255
+                if (a >= 255) {
+                    canvas.set_pixel(cv, x + xx, y + yy, v & 16777215)
+                } else if (a > 0) {
+                    canvas.blend_pixel(cv, x + xx, y + yy, v & 16777215, a)
+                }
+                xx++
+            }
+            yy++
+        }
+    }
+
+    vein draw(cv: Canvas, id: stone, x: stone, y: stone, w: stone, h: stone) -> void {
+        if (id < 0) { return }
+        draw_region(cv, id, 0, 0, width(id), height(id), x, y, w, h)
+    }
+
+    // Preenche (x, y, w, h) mantendo a proporcao e cortando o excesso.
+    vein draw_cover(cv: Canvas, id: stone, x: stone, y: stone, w: stone, h: stone) -> void {
+        if (id < 0) { return }
+        forge iw = width(id)
+        forge ih = height(id)
+        forge sw = iw
+        forge sh = iw * h / w
+        if (sh > ih) {
+            sh = ih
+            sw = ih * w / h
+        }
+        draw_region(cv, id, (iw - sw) / 2, (ih - sh) / 2, sw, sh, x, y, w, h)
+    }
+}

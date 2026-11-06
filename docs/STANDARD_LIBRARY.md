@@ -155,6 +155,12 @@ Janela X11 nativa: `open`, `present(canvas)`, `poll()` → `EV_KEY`/`EV_MOUSE_DO
 ### `hashmap.ofs`
 Tabela hash inteiro→inteiro: `hashmap.new(cap)`, `set`, `get(m, chave, padrao)`, `has`, `count`, `clear`.
 
+### `tls.ofs`
+Conexões HTTPS usando o OpenSSL do sistema: `tls.connect(fd, host)` (SNI + verificação de certificado e nome), `tls.send`, `tls.recv_all` (`tls.last_len`), `tls.close`, `tls.last_error`. Linkar com `OFS_LINK_LIBS="-lssl -lcrypto"`.
+
+### `png.ofs`
+Decodificador PNG em OFS puro (inflate/zlib próprio): `png.load(caminho)`, `png.width`, `png.height`, `png.draw(cv, img, x, y, w, h)`, `png.draw_cover`, `png.draw_region`. Pixels em `0xAARRGGBB`.
+
 ## 4. Módulos de Baixo Nível e Sistema
 
 ### `bedrock.ofs`

@@ -217,6 +217,8 @@ namespace x11win {
 
     // ── Tempo ────────────────────────────────────────────────────────────
     vein now_ms() -> stone {
+        // funciona tambem sem janela aberta (modo headless)
+        if (_ts == null) { _ts = ofs_alloc(16) }
         clock_gettime(1, _ts)
         forge ps: *stone = _ts
         forge pn: *stone = fault_step(_ts, 1)

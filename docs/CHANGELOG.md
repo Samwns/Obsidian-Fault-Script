@@ -50,6 +50,13 @@ All notable changes to this project are recorded here.
 
 - **Catalyst 3.3.0**: Catalyst Shield (bloqueio nativo de anúncios/rastreadores: rede, cosmético estilo EasyList, heurística, filtros do usuário, liberação por site, contador e painel na omnibox), Visão Essência (páginas dependentes de JavaScript exibidas a partir de JSON-LD, `__NEXT_DATA__`, OpenGraph e links, sem executar scripts), 6 cores de destaque, tema dinâmico por `theme-color`, famílias de fonte (Inter, Noto Sans, DejaVu, Serif), favoritos persistentes com gerenciador `ofs://bookmarks`.
 
+- **stdlib `tls.ofs`**: HTTPS via OpenSSL do sistema (SNI, verificação de certificado e de nome); linkar com `OFS_LINK_LIBS="-lssl -lcrypto"`.
+- **stdlib `png.ofs`**: decodificador PNG 100% OFS com inflate/zlib próprio (cinza, RGB, paleta 1–8 bits, alfa); decodificação idêntica pixel a pixel nos testes; `draw`, `draw_cover`, `draw_region`.
+- **driver `ofs`**: variável `OFS_LINK_LIBS` para bibliotecas extras do sistema no link.
+- **stdlib `x11win.now_ms`**: funciona sem janela aberta (antes travava no modo headless).
+- **CI**: runner `macos-14` foi aposentado pelo GitHub ("configuration 'macos-14-arm64-us-default' is not supported"); `build.yml` e `release.yml` passam a usar `macos-latest`.
+- **Catalyst 3.4.0**: HTTPS, HTTP/1.1 com chunked, CSS externo com cache, `@media`/`@supports`, cascata indexada por seletor (G1: CSS de 40 ms), parser HTML 20× mais rápido em páginas com JS inline, perfilador `CATALYST_PROFILE=1`, quebra de palavras longas, `flex-shrink`, usuários com exportar/importar (`.catprofile`), cores livres de destaque e fundo, papel de parede PNG/gradiente na nova aba.
+
 ### Known issues
 
 - Global de tipo `monolith` (`forge cv: Canvas` em escopo de namespace) reserva só um ponteiro; atribuir a struct inteira corrompe memória. Use variável local ou passe por parâmetro.
