@@ -322,6 +322,34 @@ namespace typeck {
         }
         
         if (n.kind == NK_CALL) {
+            // fault_addr(vein): endereco de uma vein como `stone` (ponteiro de
+            // funcao C). O argumento e um nome de vein, nao uma expressao:
+            // `ns.fn` vira o simbolo `ns__fn` e nao passa por check_node.
+            if (ofs_str_eq(n.val, "fault_addr")) {
+                if (node_extra_len(id) == 1) {
+                    forge fa_id = node_get_extra(id, 0)
+                    forge fa: Node = node_get(fa_id)
+                    forge fa_name = ""
+                    if (fa.kind == NK_IDENT) { fa_name = fa.val }
+                    if (fa.kind == NK_FIELD && fa.c0 >= 0) {
+                        forge fa_base: Node = node_get(fa.c0)
+                        if (fa_base.kind == NK_IDENT) { fa_name = fa_base.val + "__" + fa.val }
+                    }
+                    forge fa_sym: Symbol = resolve(fa_name)
+                    if (!ofs_str_eq(fa_name, "") && fa_sym.kind == SYM_FN) {
+                        fa.kind = NK_IDENT
+                        fa.val = fa_name
+                        fa.c0 = -1
+                        node_set(fa_id, fa)
+                        node_set_type(id, "stone")
+                        return "stone"
+                    }
+                }
+                _semantic_errors++
+                echo("[ERRO SEMANTICO " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "]: fault_addr espera o nome de uma vein")
+                node_set_type(id, "stone")
+                return "stone"
+            }
             forge i = 0
             forge argc = node_extra_len(id)
             while (i < argc) {
@@ -329,7 +357,7 @@ namespace typeck {
                 check_node(arg_id)
                 i++
             }
-            if (ofs_str_eq(n.val, "fault_cut") || ofs_str_eq(n.val, "fault_patch") || ofs_str_eq(n.val, "fault_swap") || ofs_str_eq(n.val, "fault_count") || ofs_str_eq(n.val, "fault_lead") || ofs_str_eq(n.val, "fault_trail")) {
+            if (ofs_str_eq(n.val, "fault_call") || ofs_str_eq(n.val, "fault_cut") || ofs_str_eq(n.val, "fault_patch") || ofs_str_eq(n.val, "fault_swap") || ofs_str_eq(n.val, "fault_count") || ofs_str_eq(n.val, "fault_lead") || ofs_str_eq(n.val, "fault_trail")) {
                 node_set_type(id, "stone")
                 return "stone"
             }

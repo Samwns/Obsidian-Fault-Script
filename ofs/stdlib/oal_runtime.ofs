@@ -1,0 +1,2036 @@
+// OFS stdlib — oal_runtime: nucleo de UI de toque da OAL (Obsidian Android Language)
+//
+// Desenha a tela de um app OAL num buffer RGBA em software (canvas + raster
+// + ttf) e trata toque, rolagem e navegacao. Nao depende de plataforma:
+//   - oal_android.ofs  -> NativeActivity / ANativeWindow (stdlib android.ofs)
+//   - oal_x11.ofs      -> janela X11 do tamanho de um celular (testar no PC)
+//
+// Layout: arvore de nos do nucleo neutro do OLL (oll.new_node/add_child/
+// layout_node), com alturas fixas medidas aqui. Retrato e paisagem mudam as
+// colunas da grade, os blocos `portrait`/`landscape` e a largura util.
+//
+// Contrato (sem ponteiro de funcao para o codigo do app): o arquivo gerado
+// pelo oalc define as veins abaixo; o backend define as oal_backend_*.
+extern vein oal_app_init() -> void
+extern vein oal_app_build(screen: stone) -> void
+extern vein oal_app_action(action: stone, item: stone) -> void
+extern vein oal_app_event(ev: stone) -> bool
+extern vein oal_backend_quit() -> void
+extern vein oal_backend_request_frame() -> void
+extern vein oal_backend_log(text: obsidian) -> void
+extern vein oal_backend_orientation(req: stone) -> bool
+// canvas: o app desenha (paint) e recebe os toques (kind 0 desce, 1 move,
+// 2 sobe; finger = id do dedo; x/y relativos ao canvas). O oalc sempre gera.
+extern vein oal_app_paint(canvas: stone, x: stone, y: stone, w: stone, h: stone) -> void
+extern vein oal_app_touch(canvas: stone, kind: stone, finger: stone, x: stone, y: stone) -> void
+
+attach {F:oll.ofs}
+attach {F:raster.ofs}
+attach {F:ttf.ofs}
+attach {F:icons.ofs}
+attach {F:png.ofs}
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+
+namespace oal {
+    // Eventos de ciclo de vida repassados a oal_app_event (on ...).
+    forge ON_BACK: stone = 1
+    forge ON_PAUSE: stone = 2
+    forge ON_RESUME: stone = 3
+    forge ON_ROTATE: stone = 4
+    forge ON_LOW_MEMORY: stone = 5
+    forge ON_START: stone = 6
+    forge ON_FRAME: stone = 7            // a cada quadro, com oal.set_animating(true)
+
+    // Tipos de no da OAL (o tipo OLL fica no proprio no).
+    forge K_ROOT: stone = 1
+    forge K_BAR: stone = 2
+    forge K_BAR_TITLE: stone = 3
+    forge K_BAR_BUTTON: stone = 4
+    forge K_TITLE: stone = 5
+    forge K_TEXT: stone = 6
+    forge K_BUTTON: stone = 7
+    forge K_LIST: stone = 8
+    forge K_LIST_ITEM: stone = 9
+    forge K_GRID: stone = 10
+    forge K_GRID_ROW: stone = 11
+    forge K_CARD: stone = 12
+    forge K_EMPTY: stone = 13
+    forge K_ROW: stone = 14
+    forge K_SPACER: stone = 15
+    forge K_FAB: stone = 16              // botao flutuante (camada 2)
+    forge K_DPAD: stone = 17             // D-pad virtual (camada 2)
+    forge K_CANVAS: stone = 18           // area desenhada pelo app (oal_app_paint)
+    forge K_IMAGE: stone = 19            // imagem PNG (caminho)
+    forge K_TABS: stone = 20             // barra de abas / segmentos
+    forge K_TAB: stone = 21
+    forge K_SLIDER: stone = 22
+    forge K_TOGGLE: stone = 23
+    forge K_PROGRESS: stone = 24
+    forge K_KEYBOARD: stone = 25         // teclado na tela
+    forge K_FIELD: stone = 26            // campo de texto (toque -> acao)
+
+    // Cantos para fab/dpad
+    forge BOTTOM_RIGHT: stone = 0
+    forge BOTTOM_LEFT: stone = 1
+    forge TOP_RIGHT: stone = 2
+    forge TOP_LEFT: stone = 3
+    forge BOTTOM_ROW: stone = 4          // fileira horizontal centrada embaixo
+    forge TOP_ROW: stone = 5             // fileira horizontal centrada no topo
+    forge RIGHT_COLUMN: stone = 6        // coluna centrada na direita
+    forge LEFT_COLUMN: stone = 7         // coluna centrada na esquerda
+
+    // Orientacao pedida (set_orientation)
+    forge ORIENT_AUTO: stone = 0
+    forge ORIENT_PORTRAIT: stone = 1
+    forge ORIENT_LANDSCAPE: stone = 2
+
+    // Direcao do D-pad (dpad_dir); dpad_x/dpad_y vao de -100 a 100
+    forge DIR_NONE: stone = 0
+    forge DIR_UP: stone = 1
+    forge DIR_RIGHT: stone = 2
+    forge DIR_DOWN: stone = 3
+    forge DIR_LEFT: stone = 4
+    forge dpad_dir: stone = 0
+    forge dpad_x: stone = 0
+    forge dpad_y: stone = 0
+
+    // Opacidade da camada flutuante (0-100), ajustavel em tempo de execucao
+    forge overlay_opacity: stone = 100
+    forge overlay_scale: stone = 100      // tamanho de fab/dpad (%)
+    forge text_scale: stone = 100         // tamanho do texto (%)
+    forge animating: bool = false         // true: ON_FRAME a cada quadro
+    forge now_ms: stone = 0               // relogio do backend (oal.frame)
+    forge _toast_text: obsidian = ""
+    forge _toast_until: stone = 0
+    forge kb_shift: bool = false          // teclado: maiusculas
+    forge kb_layer: stone = 0             // 0 letras, 1 numeros/acentos
+
+    // Tema (0xRRGGBB)
+    forge c_bg: stone = 1052704
+    forge c_bar: stone = 1513768
+    forge c_bar_fg: stone = 15790320
+    forge c_surface: stone = 2105394
+    forge c_surface_hi: stone = 2894916
+    forge c_fg: stone = 15132390
+    forge c_muted: stone = 9474224
+    forge c_accent: stone = 9136639
+    forge c_accent_hi: stone = 7031007
+    forge c_accent_fg: stone = 1052704
+    forge c_divider: stone = 3026488
+
+    // Estilos (papel do CSS/OES): fill = fundo, ink = texto, curve = raio
+    // em dp, pressed_* = estado pressionado. -1 = herda do tema.
+    // Ids fixos: 0 button, 1 card, 2 bar, 3 list, 4 screen; o oalc cria os
+    // estilos com classe (button.primario) a partir do 5.
+    forge ST_BUTTON: stone = 0
+    forge ST_CARD: stone = 1
+    forge ST_BAR: stone = 2
+    forge ST_LIST: stone = 3
+    forge ST_SCREEN: stone = 4
+    forge _st_fill: Array<stone> = []
+    forge _st_ink: Array<stone> = []
+    forge _st_curve: Array<stone> = []
+    forge _st_pfill: Array<stone> = []
+    forge _st_pink: Array<stone> = []
+    forge _next_style: stone = -1
+
+    // Superficie de desenho (pixels 0xRRGGBB, 1 stone por pixel)
+    forge width: stone = 0
+    forge height: stone = 0
+    forge pixels: *stone = null
+    forge scale: stone = 100              // px por dp x100
+    forge density_dpi: stone = 160
+
+    forge _font: stone = -1
+    forge _font_bold: stone = -1
+    forge _ready: bool = false
+
+    // Navegacao
+    forge screen: stone = 0
+    forge _stack: Array<stone> = []
+
+    // Arvore atual (ids do OLL) e dados paralelos da OAL
+    forge _k: Array<stone> = []
+    forge _act: Array<stone> = []
+    forge _item: Array<stone> = []
+    forge _sub: Array<obsidian> = []
+    forge _style: Array<stone> = []
+    forge _icon: Array<stone> = []
+    forge _corner: Array<stone> = []
+    forge _next_icon: stone = -1
+    forge _img: Array<obsidian> = []      // caminho de imagem do no
+    forge _bicon: Array<stone> = []       // selo: icone
+    forge _btxt: Array<obsidian> = []     // selo: texto
+    forge _vmin: Array<stone> = []        // slider: minimo / aba: selecionada
+    forge _vmax: Array<stone> = []
+    forge _next_img: obsidian = ""
+    forge _next_bicon: stone = -1
+    forge _next_btxt: obsidian = ""
+    forge _canvas_full: stone = -1        // no K_CANVAS de tela cheia
+    forge _st_alpha: Array<stone> = []
+    forge _layer: Array<stone> = []       // 0 = conteudo (rola), 1 = barra
+    forge _parents: Array<stone> = []
+    forge _grid_cols: Array<stone> = []   // por grade aberta
+    forge _grid_row: Array<stone> = []
+    forge _grid_count: Array<stone> = []
+    forge _root: stone = -1
+    forge _bar: stone = -1
+    forge _bar_h: stone = 0
+    // Areas cobertas pelas barras do sistema (px); o backend preenche.
+    forge inset_top: stone = 0
+    forge inset_bottom: stone = 0
+    forge inset_left: stone = 0
+    forge inset_right: stone = 0
+    forge _content_h: stone = 0
+    forge _build_mode: stone = 0          // 0 conteudo, 1 barra
+
+    // Estado de toque/rolagem
+    forge scroll: stone = 0
+    forge _down_x: stone = 0
+    forge _down_y: stone = 0
+    forge _down_scroll: stone = 0
+
+    // dedos na tela (multitoque): id do backend, no tocado, ponto inicial,
+    // arrasto (0/1) e rolagem no inicio. O 1o dedo e o unico que rola.
+    forge _f_id: Array<stone> = []
+    forge _f_node: Array<stone> = []
+    forge _f_x: Array<stone> = []
+    forge _f_y: Array<stone> = []
+    forge _f_drag: Array<stone> = []
+    forge _f_scroll: Array<stone> = []
+
+    forge _need_build: bool = true
+    forge _dirty: bool = true
+
+    // ── utilidades ───────────────────────────────────────────────────────
+    vein dp(v: stone) -> stone {
+        return (v * scale) / 100
+    }
+
+    // tamanho de fonte em px com a escala de texto do usuario
+    vein _fs(v: stone) -> stone {
+        return (dp(v) * text_scale) / 100
+    }
+
+    // Canvas do buffer da tela (para o app desenhar em oal_app_paint).
+    vein cv() -> Canvas { return _canvas() }
+
+    vein font() -> stone { return _font }
+    vein font_bold() -> stone { return _font_bold }
+
+    vein is_portrait() -> bool { return height >= width }
+    vein is_landscape() -> bool { return width > height }
+
+    vein log(text: obsidian) -> void { oal_backend_log(text) }
+
+    vein _canvas() -> Canvas {
+        forge cv: Canvas
+        cv.width = width
+        cv.height = height
+        cv.buffer = pixels
+        return cv
+    }
+
+    // ── inicializacao / superficie ───────────────────────────────────────
+    vein start(font: obsidian, font_bold: obsidian, fallback: obsidian) -> void {
+        if (_ready) { return }
+        _font = ttf.load_first(font, fallback, "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf")
+        _font_bold = ttf.load_first(font_bold, font, fallback)
+        if (_font_bold < 0) { _font_bold = _font }
+        if (_font < 0) { log("oal: nenhuma fonte TTF carregou") }
+        _stack = []
+        screen = 0
+        scroll = 0
+        _ready = true
+        oal_app_init()
+        oal_app_event(ON_START)
+    }
+
+    vein set_density(dpi: stone) -> void {
+        if (dpi <= 0) { dpi = 160 }
+        density_dpi = dpi
+        scale = (dpi * 100) / 160
+        _need_build = true
+        _dirty = true
+    }
+
+    // Ajusta o buffer ao tamanho da janela. Retorna true se mudou.
+    vein set_insets(top: stone, bottom: stone) -> void {
+        set_insets4(top, bottom, inset_left, inset_right)
+    }
+
+    vein set_insets4(top: stone, bottom: stone, left: stone, right: stone) -> void {
+        if (top < 0) { top = 0 }
+        if (bottom < 0) { bottom = 0 }
+        if (left < 0) { left = 0 }
+        if (right < 0) { right = 0 }
+        if (top == inset_top && bottom == inset_bottom && left == inset_left && right == inset_right) { return }
+        inset_top = top
+        inset_bottom = bottom
+        inset_left = left
+        inset_right = right
+        _need_build = true
+        _dirty = true
+    }
+
+    vein resize(w: stone, h: stone) -> bool {
+        if (w == width && h == height && pixels != null) { return false }
+        forge was_portrait = is_portrait()
+        forge had = pixels != null
+        if (pixels != null) { ofs_free(pixels) }
+        width = w
+        height = h
+        pixels = ofs_alloc(w * h * 8)
+        _need_build = true
+        _dirty = true
+        if (had && was_portrait != is_portrait()) {
+            oal_app_event(ON_ROTATE)
+        }
+        return true
+    }
+
+    // ── estilos ──────────────────────────────────────────────────────────
+    vein style_def(id: stone, fill: stone, ink: stone, curve: stone, pfill: stone, pink: stone) -> void {
+        while (ofs_array_len(_st_fill) <= id) {
+            ofs_array_push(_st_fill, -1)
+            ofs_array_push(_st_ink, -1)
+            ofs_array_push(_st_curve, -1)
+            ofs_array_push(_st_pfill, -1)
+            ofs_array_push(_st_pink, -1)
+        }
+        ofs_array_set(_st_fill, id, fill)
+        ofs_array_set(_st_ink, id, ink)
+        ofs_array_set(_st_curve, id, curve)
+        ofs_array_set(_st_pfill, id, pfill)
+        ofs_array_set(_st_pink, id, pink)
+        if (id == ST_SCREEN) {
+            if (fill >= 0) { c_bg = fill }
+            if (ink >= 0) { c_fg = ink }
+        }
+        if (id == ST_BAR) {
+            if (fill >= 0) { c_bar = fill }
+            if (ink >= 0) { c_bar_fg = ink }
+        }
+    }
+
+    // O proximo widget criado usa este estilo.
+    vein use_style(id: stone) -> void { _next_style = id }
+
+    // Opacidade do estilo (0-100); vale para fill, ink e icone.
+    vein style_opacity(id: stone, pct: stone) -> void {
+        while (ofs_array_len(_st_alpha) <= id) { ofs_array_push(_st_alpha, -1) }
+        ofs_array_set(_st_alpha, id, pct)
+    }
+
+    // O proximo widget leva este icone (nome do stdlib icons.ofs).
+    vein use_icon(name: obsidian) -> void {
+        _next_icon = icons.by_name(name)
+        if (_next_icon < 0) { log("oal: icone desconhecido: " + name) }
+    }
+
+    // Aplica a opacidade (estilo do no x camada flutuante) a uma cor RGB.
+    vein _alpha(id: stone, color: stone) -> stone {
+        if (color < 0) { return color }
+        forge pct = _st(_st_alpha, ofs_array_get(_style, id))
+        if (pct < 0) { pct = 100 }
+        if (ofs_array_get(_layer, id) == 2) { pct = (pct * overlay_opacity) / 100 }
+        if (pct >= 100) { return color % 16777216 }
+        if (pct < 1) { pct = 1 }
+        return ((pct * 255) / 100) * 16777216 + (color % 16777216)
+    }
+
+    vein set_overlay_opacity(pct: stone) -> void {
+        if (pct < 0) { pct = 0 }
+        if (pct > 100) { pct = 100 }
+        overlay_opacity = pct
+        redraw()
+    }
+
+    // Forca retrato/paisagem/auto (ORIENT_*). No Android usa
+    // Activity.setRequestedOrientation via JNI.
+    vein set_orientation(o: stone) -> bool {
+        return oal_backend_orientation(o)
+    }
+
+    vein _st(arr: Array<stone>, sid: stone) -> stone {
+        if (sid < 0 || sid >= ofs_array_len(arr)) { return -1 }
+        return ofs_array_get(arr, sid)
+    }
+
+    // Valor do estilo do no; se nao houver, o do estilo base do tipo; senao def.
+    vein _sv(arr: Array<stone>, id: stone, base: stone, def: stone) -> stone {
+        forge v = _st(arr, ofs_array_get(_style, id))
+        if (v < 0) { v = _st(arr, base) }
+        if (v < 0) { return def }
+        return v
+    }
+
+    vein _fill(id: stone, base: stone, def: stone, pressed_def: stone, pressed: bool) -> stone {
+        if (pressed) { return _sv(_st_pfill, id, base, pressed_def) }
+        return _sv(_st_fill, id, base, def)
+    }
+
+    vein _ink(id: stone, base: stone, def: stone, pressed: bool) -> stone {
+        forge c = _sv(_st_ink, id, base, def)
+        if (pressed) { return _sv(_st_pink, id, base, c) }
+        return c
+    }
+
+    vein _curve(id: stone, base: stone, def_dp: stone) -> stone {
+        return dp(_sv(_st_curve, id, base, def_dp))
+    }
+
+    // ── API de construcao (chamada pelo codigo gerado em oal_app_build) ──
+    vein _push_node(kind: stone, oll_kind: stone, text: obsidian, h: stone) -> stone {
+        forge id = oll.new_node(oll_kind, "", text)
+        forge n = oll.get_node(id)
+        n.height = h
+        n.width = -1
+        n.bg_color = -1
+        n.padding = 0
+        n.margin = 0
+        n.gap = 0
+        oll.set_node(id, n)
+        ofs_array_push(_k, kind)
+        ofs_array_push(_act, -1)
+        ofs_array_push(_item, -1)
+        ofs_array_push(_sub, "")
+        ofs_array_push(_layer, _build_mode)
+        ofs_array_push(_style, _next_style)
+        ofs_array_push(_icon, _next_icon)
+        ofs_array_push(_corner, 0)
+        ofs_array_push(_img, _next_img)
+        ofs_array_push(_bicon, _next_bicon)
+        ofs_array_push(_btxt, _next_btxt)
+        ofs_array_push(_vmin, 0)
+        ofs_array_push(_vmax, 0)
+        _next_style = -1
+        _next_icon = -1
+        _next_img = ""
+        _next_bicon = -1
+        _next_btxt = ""
+        forge np = ofs_array_len(_parents)
+        if (np > 0 && kind != K_BAR && _build_mode != 2 && _build_mode != 3) {
+            oll.add_child(ofs_array_get(_parents, np - 1), id)
+        }
+        return id
+    }
+
+    vein _set_action(id: stone, action: stone, item: stone) -> void {
+        ofs_array_set(_act, id, action)
+        ofs_array_set(_item, id, item)
+    }
+
+    vein _top() -> stone {
+        forge np = ofs_array_len(_parents)
+        if (np == 0) { return -1 }
+        return ofs_array_get(_parents, np - 1)
+    }
+
+    vein _set_h(id: stone, h: stone) -> void {
+        forge n = oll.get_node(id)
+        n.height = h
+        oll.set_node(id, n)
+    }
+
+    vein _set_w(id: stone, w: stone) -> void {
+        forge n = oll.get_node(id)
+        n.width = w
+        oll.set_node(id, n)
+    }
+
+    vein _set_gap(id: stone, gap: stone, pad: stone) -> void {
+        forge n = oll.get_node(id)
+        n.gap = gap
+        n.padding = pad
+        oll.set_node(id, n)
+    }
+
+    // Soma as alturas dos filhos (coluna) ou pega a maior (linha).
+    vein _fit(id: stone, vertical: bool) -> void {
+        forge n = oll.get_node(id)
+        forge cnt = oll.child_count(id)
+        forge total = 0
+        forge i = 0
+        while (i < cnt) {
+            forge c = oll.get_node(oll.get_child_at(id, i))
+            if (vertical) {
+                total = total + c.height
+                if (i > 0) { total = total + n.gap }
+            } else {
+                if (c.height > total) { total = c.height }
+            }
+            i++
+        }
+        n.height = total + n.padding * 2
+        oll.set_node(id, n)
+    }
+
+    vein bar(title: obsidian) -> void {
+        forge save = _build_mode
+        _build_mode = 1
+        _bar_h = dp(56)
+        _bar = _push_node(K_BAR, oll.OLL_ROW, "", _bar_h)
+        _set_w(_bar, width - inset_left - inset_right)
+        _set_gap(_bar, dp(4), dp(8))
+        ofs_array_push(_parents, _bar)
+        _push_node(K_BAR_TITLE, oll.OLL_LABEL, title, dp(40))
+        ofs_array_pop(_parents)
+        _build_mode = save
+    }
+
+    vein bar_button(label: obsidian, action: stone) -> void {
+        if (_bar < 0) { bar("") }
+        _build_mode = 1
+        ofs_array_push(_parents, _bar)
+        forge id = _push_node(K_BAR_BUTTON, oll.OLL_BUTTON, label, dp(40))
+        _set_w(id, ttf.width(_font_bold, dp(15), label) + dp(28))
+        _set_action(id, action, -1)
+        ofs_array_pop(_parents)
+        _build_mode = 0
+    }
+
+    vein title(text: obsidian) -> void {
+        _push_node(K_TITLE, oll.OLL_LABEL, text, dp(36))
+    }
+
+    // Texto em varias linhas (quebra na largura util da tela).
+    vein text(text: obsidian) -> void {
+        forge fs = _fs(15)
+        forge lh = ttf.line_height(_font, fs)
+        if (lh < fs) { lh = (fs * 13) / 10 }
+        forge lines = ttf.wrap(_font, fs, text, _avail_w())
+        forge n = ofs_array_len(lines)
+        if (n < 1) { n = 1 }
+        _push_node(K_TEXT, oll.OLL_LABEL, text, n * lh + dp(6))
+    }
+
+    // largura util do conteudo (sem margens laterais)
+    vein _avail_w() -> stone {
+        return width - inset_left - inset_right - dp(32)
+    }
+
+    vein button(label: obsidian, action: stone) -> void {
+        forge id = _push_node(K_BUTTON, oll.OLL_BUTTON, label, dp(48))
+        _set_action(id, action, -1)
+    }
+
+    vein card(title: obsidian, sub: obsidian, action: stone, item: stone) -> void {
+        if (ofs_array_len(_grid_cols) > 0) {
+            _grid_card(title, sub, action, item)
+            return
+        }
+        forge id = _push_node(K_CARD, oll.OLL_CARD, title, dp(96))
+        ofs_array_set(_sub, id, sub)
+        _set_action(id, action, item)
+    }
+
+    // ── lista ────────────────────────────────────────────────────────────
+    vein list_begin() -> void {
+        forge id = _push_node(K_LIST, oll.OLL_COLUMN, "", 0)
+        ofs_array_push(_parents, id)
+    }
+
+    vein list_item(text: obsidian, sub: obsidian, action: stone, item: stone) -> void {
+        forge h = dp(56)
+        if (ofs_str_len(sub) > 0) { h = dp(72) }
+        forge id = _push_node(K_LIST_ITEM, oll.OLL_LABEL, text, h)
+        ofs_array_set(_sub, id, sub)
+        _set_action(id, action, item)
+    }
+
+    vein list_empty(text: obsidian) -> void {
+        _push_node(K_EMPTY, oll.OLL_LABEL, text, _empty_h(text))
+    }
+
+    // altura do aviso de lista vazia (varias linhas, centralizado)
+    vein _empty_h(text: obsidian) -> stone {
+        forge es = _fs(15)
+        forge lh = ttf.line_height(_font, es)
+        if (lh < es) { lh = (es * 13) / 10 }
+        forge n = ofs_array_len(ttf.wrap(_font, es, text, _avail_w() - dp(32)))
+        return n * lh + dp(64)
+    }
+
+    vein list_end() -> void {
+        forge id = _top()
+        ofs_array_pop(_parents)
+        _fit(id, true)
+    }
+
+    // ── grade (colunas por orientacao) ───────────────────────────────────
+    vein grid_begin(cols_portrait: stone, cols_landscape: stone) -> void {
+        forge cols = cols_portrait
+        if (is_landscape()) { cols = cols_landscape }
+        if (cols < 1) { cols = 1 }
+        forge id = _push_node(K_GRID, oll.OLL_COLUMN, "", 0)
+        _set_gap(id, dp(12), 0)
+        ofs_array_push(_parents, id)
+        ofs_array_push(_grid_cols, cols)
+        ofs_array_push(_grid_row, -1)
+        ofs_array_push(_grid_count, 0)
+    }
+
+    vein _grid_card(title: obsidian, sub: obsidian, action: stone, item: stone) -> void {
+        forge g = ofs_array_len(_grid_cols) - 1
+        forge cols = ofs_array_get(_grid_cols, g)
+        forge count = ofs_array_get(_grid_count, g)
+        forge row = ofs_array_get(_grid_row, g)
+        if (row < 0 || count % cols == 0) {
+            forge keep_img = _next_img
+            forge keep_icon = _next_icon
+            forge keep_bicon = _next_bicon
+            forge keep_btxt = _next_btxt
+            forge keep_style = _next_style
+            _next_img = ""
+            _next_icon = -1
+            _next_bicon = -1
+            _next_btxt = ""
+            _next_style = -1
+            forge avail = width - inset_left - inset_right - dp(32)
+            forge cell_w = (avail - dp(12) * (cols - 1)) / cols
+            forge cell_h = (cell_w * 3) / 4 + dp(56)
+            row = _push_node(K_GRID_ROW, oll.OLL_ROW, "", cell_h)
+            _set_gap(row, dp(12), 0)
+            ofs_array_set(_grid_row, g, row)
+            _next_img = keep_img
+            _next_icon = keep_icon
+            _next_bicon = keep_bicon
+            _next_btxt = keep_btxt
+            _next_style = keep_style
+        }
+        ofs_array_push(_parents, row)
+        forge rn = oll.get_node(row)
+        forge id = _push_node(K_CARD, oll.OLL_CARD, title, rn.height)
+        ofs_array_set(_sub, id, sub)
+        _set_action(id, action, item)
+        ofs_array_pop(_parents)
+        ofs_array_set(_grid_count, g, count + 1)
+    }
+
+    vein grid_empty(text: obsidian) -> void {
+        _push_node(K_EMPTY, oll.OLL_LABEL, text, _empty_h(text))
+    }
+
+    vein grid_end() -> void {
+        forge g = ofs_array_len(_grid_cols) - 1
+        forge cols = ofs_array_get(_grid_cols, g)
+        forge count = ofs_array_get(_grid_count, g)
+        forge row = ofs_array_get(_grid_row, g)
+        // completa a ultima linha para as celulas manterem a largura
+        if (row >= 0 && count % cols != 0) {
+            ofs_array_push(_parents, row)
+            forge rn = oll.get_node(row)
+            forge k = count % cols
+            while (k < cols) {
+                _push_node(K_SPACER, oll.OLL_LABEL, "", rn.height)
+                k++
+            }
+            ofs_array_pop(_parents)
+        }
+        ofs_array_pop(_grid_cols)
+        ofs_array_pop(_grid_row)
+        ofs_array_pop(_grid_count)
+        forge id = _top()
+        ofs_array_pop(_parents)
+        _fit(id, true)
+    }
+
+    // ── linha horizontal (botoes lado a lado) ────────────────────────────
+    vein row_begin() -> void {
+        forge id = _push_node(K_ROW, oll.OLL_ROW, "", 0)
+        _set_gap(id, dp(12), 0)
+        ofs_array_push(_parents, id)
+    }
+
+    vein row_end() -> void {
+        forge id = _top()
+        ofs_array_pop(_parents)
+        _fit(id, false)
+    }
+
+    // ── camada flutuante (nao rola, fica por cima) ──────────────────────
+    vein fab(label: obsidian, action: stone, corner: stone) -> void {
+        forge save = _build_mode
+        _build_mode = 2
+        forge fsz = (dp(56) * overlay_scale) / 100
+        forge id = _push_node(K_FAB, oll.OLL_BUTTON, label, fsz)
+        _set_w(id, fsz)
+        if (ofs_str_len(label) > 0 && ofs_array_get(_icon, id) < 0) {
+            _set_w(id, ttf.width(_font_bold, dp(15), label) + dp(40))
+        }
+        ofs_array_set(_corner, id, corner)
+        _set_action(id, action, -1)
+        _build_mode = save
+    }
+
+    // D-pad: a acao recebe item = DIR_* a cada mudanca de direcao (e
+    // DIR_NONE ao soltar); dpad_x/dpad_y tem o vetor (-100..100).
+    vein dpad(action: stone, corner: stone) -> void {
+        forge save = _build_mode
+        _build_mode = 2
+        forge dsz = (dp(150) * overlay_scale) / 100
+        forge id = _push_node(K_DPAD, oll.OLL_STACK, "", dsz)
+        _set_w(id, dsz)
+        ofs_array_set(_corner, id, corner)
+        _set_action(id, action, 0)
+        _build_mode = save
+    }
+
+    vein _place_floating() -> void {
+        forge m = dp(16)
+        forge gap = dp(12)
+        // 1a passada: tamanho total das fileiras/colunas centradas
+        forge tot: Array<stone> = [0, 0, 0, 0, 0, 0, 0, 0]
+        forge i = 0
+        while (i < ofs_array_len(_k)) {
+            if (ofs_array_get(_layer, i) == 2) {
+                forge n0 = oll.get_node(i)
+                forge c0 = ofs_array_get(_corner, i)
+                if (c0 == BOTTOM_ROW || c0 == TOP_ROW) { ofs_array_set(tot, c0, ofs_array_get(tot, c0) + n0.width + gap) }
+                if (c0 == RIGHT_COLUMN || c0 == LEFT_COLUMN) { ofs_array_set(tot, c0, ofs_array_get(tot, c0) + n0.height + gap) }
+            }
+            i++
+        }
+        // os cantos de baixo ficam acima da fileira inferior (nao se cobrem)
+        forge row_h = 0
+        forge r0 = 0
+        while (r0 < ofs_array_len(_k)) {
+            if (ofs_array_get(_layer, r0) == 2 && ofs_array_get(_corner, r0) == BOTTOM_ROW) {
+                forge rn0 = oll.get_node(r0)
+                if (rn0.height + gap > row_h) { row_h = rn0.height + gap }
+            }
+            r0++
+        }
+        forge acc: Array<stone> = [0, 0, 0, 0, 0, 0, 0, 0]
+        ofs_array_set(acc, BOTTOM_RIGHT, row_h)
+        ofs_array_set(acc, BOTTOM_LEFT, row_h)
+        forge area_top = _top_h()
+        forge area_h = height - area_top - inset_bottom
+        forge area_w = width - inset_left - inset_right
+        i = 0
+        while (i < ofs_array_len(_k)) {
+            if (ofs_array_get(_layer, i) == 2) {
+                forge n = oll.get_node(i)
+                forge c = ofs_array_get(_corner, i)
+                forge w = n.width
+                forge h = n.height
+                forge st = ofs_array_get(acc, c)
+                forge x = width - inset_right - m - w
+                forge y = height - inset_bottom - m - h - st
+                forge step = h + gap
+                if (c == BOTTOM_LEFT) {
+                    x = inset_left + m
+                }
+                if (c == TOP_RIGHT) {
+                    y = area_top + m + st
+                }
+                if (c == TOP_LEFT) {
+                    x = inset_left + m
+                    y = area_top + m + st
+                }
+                if (c == BOTTOM_ROW || c == TOP_ROW) {
+                    forge row_w = ofs_array_get(tot, c) - gap
+                    x = inset_left + (area_w - row_w) / 2 + st
+                    y = height - inset_bottom - m - h
+                    if (c == TOP_ROW) { y = area_top + m }
+                    step = w + gap
+                }
+                if (c == RIGHT_COLUMN || c == LEFT_COLUMN) {
+                    forge col_h = ofs_array_get(tot, c) - gap
+                    y = area_top + (area_h - col_h) / 2 + st
+                    if (c == LEFT_COLUMN) { x = inset_left + m }
+                }
+                ofs_array_set(acc, c, st + step)
+                n.box_x = x
+                n.box_y = y
+                n.box_w = w
+                n.box_h = h
+                oll.set_node(i, n)
+            }
+            i++
+        }
+    }
+
+    // ── widgets novos ────────────────────────────────────────────────────
+    // O proximo widget usa esta imagem (PNG): capa de card, miniatura de item.
+    vein use_image(path: obsidian) -> void { _next_img = path }
+
+    // Selo do proximo card/item: icone (nome do icons.ofs) + texto curto.
+    vein use_badge(icon_name: obsidian, text: obsidian) -> void {
+        _next_bicon = icons.by_name(icon_name)
+        _next_btxt = text
+    }
+
+    // Icone escolhido em tempo de execucao (nome vindo dos dados).
+    vein use_icon_name(name: obsidian) -> void {
+        _next_icon = icons.by_name(name)
+    }
+
+    // Imagem PNG ajustada a largura util; h_dp = altura (0 = proporcional).
+    vein image(path: obsidian, h_dp: stone) -> void {
+        forge h = dp(h_dp)
+        if (h_dp <= 0) {
+            forge im = image_get(path)
+            h = dp(120)
+            if (im >= 0 && png.width(im) > 0) {
+                h = (_avail_w() * png.height(im)) / png.width(im)
+                if (h > (height * 6) / 10) { h = (height * 6) / 10 }
+            }
+        }
+        _next_img = path
+        _push_node(K_IMAGE, oll.OLL_LABEL, "", h)
+    }
+
+    // Area desenhada pelo app. full = ocupa toda a area abaixo da barra (nao
+    // rola; os fab/dpad ficam por cima); senao altura h_dp no conteudo.
+    vein canvas(cid: stone, full: bool, h_dp: stone) -> void {
+        if (full) {
+            forge save = _build_mode
+            _build_mode = 3
+            forge id = _push_node(K_CANVAS, oll.OLL_LABEL, "", 0)
+            _build_mode = save
+            ofs_array_set(_item, id, cid)
+            ofs_array_set(_act, id, -2)
+            _canvas_full = id
+            return
+        }
+        forge id2 = _push_node(K_CANVAS, oll.OLL_LABEL, "", dp(h_dp))
+        ofs_array_set(_item, id2, cid)
+        ofs_array_set(_act, id2, -2)
+    }
+
+    // Abas (segmentos lado a lado): tab() entre tabs_begin/tabs_end.
+    vein tabs_begin() -> void {
+        forge id = _push_node(K_TABS, oll.OLL_ROW, "", dp(48))
+        _set_gap(id, dp(4), dp(4))
+        ofs_array_push(_parents, id)
+    }
+    vein tab(label: obsidian, action: stone, selected: bool) -> void {
+        forge id = _push_node(K_TAB, oll.OLL_BUTTON, label, dp(40))
+        _set_action(id, action, -1)
+        if (selected) { ofs_array_set(_vmin, id, 1) }
+    }
+    vein tabs_end() -> void {
+        forge id = _top()
+        ofs_array_pop(_parents)
+        _fit(id, false)
+        _set_h(id, dp(48))
+    }
+
+    // Slider: a acao recebe item = novo valor (min..max) enquanto arrasta.
+    vein slider(label: obsidian, value: stone, vmin: stone, vmax: stone, action: stone) -> void {
+        forge id = _push_node(K_SLIDER, oll.OLL_LABEL, label, dp(64))
+        if (vmax <= vmin) { vmax = vmin + 1 }
+        if (value < vmin) { value = vmin }
+        if (value > vmax) { value = vmax }
+        _set_action(id, action, value)
+        ofs_array_set(_vmin, id, vmin)
+        ofs_array_set(_vmax, id, vmax)
+    }
+
+    // Interruptor: a acao recebe item = 1 (ligar) ou 0 (desligar).
+    vein toggle(label: obsidian, on: bool, action: stone) -> void {
+        forge id = _push_node(K_TOGGLE, oll.OLL_LABEL, label, dp(56))
+        forge nv = 1
+        if (on) { nv = 0 }
+        _set_action(id, action, nv)
+        if (on) { ofs_array_set(_vmin, id, 1) }
+    }
+
+    // Barra de progresso (0-100) com rotulo.
+    vein progress(label: obsidian, pct: stone) -> void {
+        forge id = _push_node(K_PROGRESS, oll.OLL_LABEL, label, dp(52))
+        if (pct < 0) { pct = 0 }
+        if (pct > 100) { pct = 100 }
+        ofs_array_set(_vmin, id, pct)
+    }
+
+    // Campo: mostra o valor (ou a dica em cinza); tocar chama a acao.
+    vein field(hint: obsidian, value: obsidian, action: stone) -> void {
+        forge id = _push_node(K_FIELD, oll.OLL_LABEL, value, dp(52))
+        ofs_array_set(_sub, id, hint)
+        _set_action(id, action, -1)
+    }
+
+    // Teclado na tela: a acao recebe item = codigo Unicode da tecla,
+    // 8 = apagar, 10 = confirmar.
+    vein keyboard(action: stone) -> void {
+        forge kh = dp(52)
+        if (is_landscape()) { kh = dp(40) }
+        forge id = _push_node(K_KEYBOARD, oll.OLL_LABEL, "", kh * 4 + dp(8) * 3)
+        _set_action(id, action, -1)
+    }
+
+    // Mensagem curta por cima de tudo (some sozinha).
+    vein toast(text: obsidian) -> void {
+        _toast_text = text
+        _toast_until = now_ms + 2200
+        redraw()
+    }
+
+    // Quadros continuos (ON_FRAME a cada vsync) enquanto true.
+    vein set_animating(on: bool) -> void {
+        animating = on
+        if (on) { oal_backend_request_frame() }
+    }
+
+    vein set_overlay_scale(pct: stone) -> void {
+        if (pct < 50) { pct = 50 }
+        if (pct > 200) { pct = 200 }
+        overlay_scale = pct
+        refresh()
+    }
+
+    vein set_text_scale(pct: stone) -> void {
+        if (pct < 70) { pct = 70 }
+        if (pct > 180) { pct = 180 }
+        text_scale = pct
+        refresh()
+    }
+
+    // Tema: todas as cores base de uma vez (0xRRGGBB).
+    vein set_palette(bg: stone, bar: stone, surface: stone, surface_hi: stone, fg: stone, muted: stone, accent: stone, accent_fg: stone) -> void {
+        c_bg = bg
+        c_bar = bar
+        c_bar_fg = fg
+        c_surface = surface
+        c_surface_hi = surface_hi
+        c_fg = fg
+        c_muted = muted
+        c_accent = accent
+        c_accent_hi = (accent & 16711422) / 2 + (surface & 16711422) / 2
+        c_accent_fg = accent_fg
+        c_divider = (surface_hi & 16711422) / 2 + (bg & 16711422) / 2
+        refresh()
+    }
+
+    // O backend deve pedir quadros continuos? (animacao ou toast na tela)
+    vein wants_frames() -> bool {
+        return animating || ofs_str_len(_toast_text) > 0
+    }
+
+    // Chamado pelo backend no inicio de cada quadro.
+    vein frame(t_ms: stone) -> void {
+        now_ms = t_ms
+        if (ofs_str_len(_toast_text) > 0 && now_ms >= _toast_until) {
+            _toast_text = ""
+            _dirty = true
+        }
+        if (animating) { oal_app_event(ON_FRAME) }
+    }
+
+    // ── cache de imagens (PNG decodificado e reduzido) ───────────────────
+    forge _ic_path: Array<obsidian> = []
+    forge _ic_id: Array<stone> = []
+    forge image_max: stone = 480          // lado maximo guardado no cache
+
+    // id do png.* (reduzido) para o caminho; -1 se nao abrir. Cache LRU simples.
+    vein image_get(path: obsidian) -> stone {
+        if (ofs_str_len(path) == 0) { return -1 }
+        forge i = 0
+        while (i < ofs_array_len(_ic_path)) {
+            forge pth: obsidian = ofs_array_get(_ic_path, i)
+            if (ofs_str_eq(pth, path)) { return ofs_array_get(_ic_id, i) }
+            i++
+        }
+        forge im = png.load(path)
+        if (im >= 0) { im = _shrink(im, image_max) }
+        if (ofs_array_len(_ic_path) >= 40) { image_cache_clear() }
+        ofs_array_push(_ic_path, path)
+        ofs_array_push(_ic_id, im)
+        return im
+    }
+
+    // Esquece o caminho (ex.: arquivo regravado: miniatura de save nova).
+    vein image_forget(path: obsidian) -> void {
+        forge i = 0
+        while (i < ofs_array_len(_ic_path)) {
+            forge pth: obsidian = ofs_array_get(_ic_path, i)
+            if (ofs_str_eq(pth, path)) {
+                ofs_array_set(_ic_path, i, "")
+                _free_png(ofs_array_get(_ic_id, i))
+                ofs_array_set(_ic_id, i, -1)
+            }
+            i++
+        }
+    }
+
+    vein image_cache_clear() -> void {
+        forge i = 0
+        while (i < ofs_array_len(_ic_id)) {
+            _free_png(ofs_array_get(_ic_id, i))
+            i++
+        }
+        _ic_path = []
+        _ic_id = []
+    }
+
+    vein _free_png(im: stone) -> void {
+        if (im < 0 || im >= ofs_array_len(png.img_px)) { return }
+        forge p = ofs_array_get(png.img_px, im)
+        if (p != 0) { ofs_free(p as *stone) }
+        ofs_array_set(png.img_px, im, 0)
+        ofs_array_set(png.img_w, im, 0)
+        ofs_array_set(png.img_h, im, 0)
+    }
+
+    // Reduz a imagem (vizinho mais proximo com media 2x2) para caber em max px.
+    vein _shrink(im: stone, max: stone) -> stone {
+        forge w = png.width(im)
+        forge h = png.height(im)
+        if (w <= max && h <= max) { return im }
+        forge nw = max
+        forge nh = (h * max) / w
+        if (h > w) {
+            nh = max
+            nw = (w * max) / h
+        }
+        if (nw < 1) { nw = 1 }
+        if (nh < 1) { nh = 1 }
+        forge src = ofs_array_get(png.img_px, im)
+        forge dst = ofs_alloc(nw * nh * 8) as stone
+        forge y = 0
+        while (y < nh) {
+            forge sy = (y * h) / nh
+            forge x = 0
+            while (x < nw) {
+                forge sx = (x * w) / nw
+                forge sp: *stone = (src + (sy * w + sx) * 8) as *stone
+                forge dp2: *stone = (dst + (y * nw + x) * 8) as *stone
+                forge v = 0
+                fracture {
+                    v = *sp;
+                    *dp2 = v;
+                }
+                x++
+            }
+            y++
+        }
+        _free_png(im)
+        ofs_array_set(png.img_px, im, dst)
+        ofs_array_set(png.img_w, im, nw)
+        ofs_array_set(png.img_h, im, nh)
+        return im
+    }
+
+    // ── navegacao ────────────────────────────────────────────────────────
+    vein go(target: stone) -> void {
+        ofs_array_push(_stack, screen)
+        screen = target
+        scroll = 0
+        refresh()
+    }
+
+    vein back() -> void {
+        if (ofs_array_len(_stack) > 0) {
+            screen = ofs_array_get(_stack, ofs_array_len(_stack) - 1)
+            ofs_array_pop(_stack)
+            scroll = 0
+            refresh()
+            return
+        }
+        quit()
+    }
+
+    vein quit() -> void {
+        oal_backend_quit()
+    }
+
+    // Volta para a tela n esvaziando a pilha (ex.: sair do jogo para a biblioteca).
+    vein reset_to(target: stone) -> void {
+        _stack = []
+        screen = target
+        scroll = 0
+        refresh()
+    }
+
+    // Troca a tela atual sem empilhar.
+    vein replace(target: stone) -> void {
+        screen = target
+        scroll = 0
+        refresh()
+    }
+
+    vein stack_depth() -> stone { return ofs_array_len(_stack) }
+
+    // Pede reconstrucao (dados mudaram) e redesenho.
+    vein refresh() -> void {
+        _need_build = true
+        _dirty = true
+        oal_backend_request_frame()
+    }
+
+    vein redraw() -> void {
+        _dirty = true
+        oal_backend_request_frame()
+    }
+
+    // ── construcao + layout ──────────────────────────────────────────────
+    vein _build() -> void {
+        oll.reset()
+        _k = []
+        _act = []
+        _item = []
+        _sub = []
+        _layer = []
+        _style = []
+        _icon = []
+        _corner = []
+        _img = []
+        _bicon = []
+        _btxt = []
+        _vmin = []
+        _vmax = []
+        _canvas_full = -1
+        _parents = []
+        _grid_cols = []
+        _grid_row = []
+        _grid_count = []
+        _bar = -1
+        _bar_h = 0
+        _build_mode = 0
+        _root = _push_node(K_ROOT, oll.OLL_COLUMN, "", 0)
+        _set_w(_root, width - inset_left - inset_right)
+        _set_gap(_root, dp(12), dp(16))
+        ofs_array_push(_parents, _root)
+        oal_app_build(screen)
+        _parents = []
+        _place_floating()
+        _fit(_root, true)
+        forge rn = oll.get_node(_root)
+        _content_h = rn.height
+        // largura total para o conteudo; altura total calculada
+        oll.layout_node(_root, inset_left, 0, width - inset_left - inset_right, _content_h)
+        if (_bar >= 0) {
+            oll.layout_node(_bar, inset_left, inset_top, width - inset_left - inset_right, _bar_h)
+        }
+        _clamp_scroll()
+        _need_build = false
+    }
+
+    vein _view_h() -> stone {
+        return height - _top_h() - inset_bottom
+    }
+
+    vein _top_h() -> stone {
+        return inset_top + _bar_h
+    }
+
+    vein _clamp_scroll() -> void {
+        forge max_s = _content_h - _view_h()
+        if (max_s < 0) { max_s = 0 }
+        if (scroll > max_s) { scroll = max_s }
+        if (scroll < 0) { scroll = 0 }
+    }
+
+    // ── desenho ──────────────────────────────────────────────────────────
+    // Renderiza se preciso. Retorna true se os pixels mudaram.
+    vein render() -> bool {
+        if (pixels == null) { return false }
+        if (_need_build) { _build() }
+        if (!_dirty) { return false }
+        forge cv = _canvas()
+        if (_canvas_full >= 0) {
+            forge cx0 = inset_left
+            forge cy0 = _top_h()
+            forge cw0 = width - inset_left - inset_right
+            forge ch0 = height - cy0 - inset_bottom
+            forge cn = oll.get_node(_canvas_full)
+            cn.box_x = cx0
+            cn.box_y = cy0
+            cn.box_w = cw0
+            cn.box_h = ch0
+            oll.set_node(_canvas_full, cn)
+            // faixas fora da area util (barras do sistema)
+            canvas.fill_rect(cv, 0, 0, width, cy0, 0)
+            canvas.fill_rect(cv, 0, cy0 + ch0, width, height - cy0 - ch0, 0)
+            canvas.fill_rect(cv, 0, cy0, cx0, ch0, 0)
+            canvas.fill_rect(cv, cx0 + cw0, cy0, width - cx0 - cw0, ch0, 0)
+            oal_app_paint(ofs_array_get(_item, _canvas_full), cx0, cy0, cw0, ch0)
+        } else {
+            canvas.fill_rect(cv, 0, 0, width, height, c_bg)
+        }
+        forge n_nodes = ofs_array_len(_k)
+        forge oy = _top_h() - scroll
+        forge i = 0
+        while (i < n_nodes) {
+            if (ofs_array_get(_layer, i) == 0) { _draw_node(cv, i, oy) }
+            i++
+        }
+        if (_bar < 0 && inset_top > 0) {
+            canvas.fill_rect(cv, 0, 0, width, inset_top, c_bg)
+        }
+        // o conteudo nao aparece sob a barra de navegacao/recortes
+        if (_canvas_full < 0) {
+            if (inset_bottom > 0) { canvas.fill_rect(cv, 0, height - inset_bottom, width, inset_bottom, c_bg) }
+            if (inset_left > 0) { canvas.fill_rect(cv, 0, 0, inset_left, height, c_bg) }
+            if (inset_right > 0) { canvas.fill_rect(cv, width - inset_right, 0, inset_right, height, c_bg) }
+        }
+        if (_bar >= 0) {
+            i = 0
+            while (i < n_nodes) {
+                if (ofs_array_get(_layer, i) == 1) { _draw_node(cv, i, 0) }
+                i++
+            }
+        }
+        i = 0
+        while (i < n_nodes) {
+            if (ofs_array_get(_layer, i) == 2) { _draw_node(cv, i, 0) }
+            i++
+        }
+        if (_canvas_full < 0) { _draw_scrollbar(cv) }
+        _draw_toast(cv)
+        _dirty = false
+        return true
+    }
+
+    vein _draw_toast(cv: Canvas) -> void {
+        if (ofs_str_len(_toast_text) == 0) { return }
+        forge ts = _fs(15)
+        forge lines = ttf.wrap(_font, ts, _toast_text, width - dp(80))
+        forge lh = ttf.line_height(_font, ts)
+        if (lh < ts) { lh = (ts * 13) / 10 }
+        forge tw = 0
+        forge k = 0
+        while (k < ofs_array_len(lines)) {
+            forge lw = ttf.width(_font, ts, ofs_array_get(lines, k))
+            if (lw > tw) { tw = lw }
+            k++
+        }
+        forge bw = tw + dp(40)
+        forge bh = ofs_array_len(lines) * lh + dp(24)
+        forge bx = (width - bw) / 2
+        forge by = height - inset_bottom - bh - dp(96)
+        raster.fill_round_rect(cv, bx as crystal, by as crystal, bw as crystal, bh as crystal, (bh / 2) as crystal, 3860865072)
+        ttf.draw_wrapped(cv, _font, ts, bx + dp(20), by + dp(12), tw + 2, lh, _toast_text, 16777215, -1)
+    }
+
+    vein _draw_scrollbar(cv: Canvas) -> void {
+        forge vh = _view_h()
+        if (_content_h <= vh || vh <= 0) { return }
+        forge th = (vh * vh) / _content_h
+        if (th < dp(24)) { th = dp(24) }
+        forge ty = _top_h() + ((vh - th) * scroll) / (_content_h - vh)
+        canvas.fill_rect(cv, width - inset_right - dp(4), ty, dp(3), th, c_muted)
+    }
+
+    vein _baseline(font: stone, size: stone, y: stone, h: stone) -> stone {
+        forge asc = ttf.ascent(font, size)
+        forge desc = ttf.descent(font, size)
+        if (desc < 0) { desc = 0 - desc }
+        return y + (h - (asc + desc)) / 2 + asc
+    }
+
+    vein _draw_node(cv: Canvas, id: stone, oy: stone) -> void {
+        forge k = ofs_array_get(_k, id)
+        if (k == K_ROOT || k == K_LIST || k == K_GRID || k == K_GRID_ROW || k == K_ROW || k == K_SPACER) {
+            if (k == K_LIST) {
+                forge ln = oll.get_node(id)
+                if (ln.box_y + oy > height || ln.box_y + ln.box_h + oy < 0) { return }
+                raster.fill_round_rect(cv, ln.box_x as crystal, (ln.box_y + oy) as crystal, ln.box_w as crystal, ln.box_h as crystal, _curve(id, ST_LIST, 12) as crystal, _fill(id, ST_LIST, c_surface, c_surface, false))
+            }
+            return
+        }
+        forge n = oll.get_node(id)
+        forge x = n.box_x
+        forge y = n.box_y + oy
+        forge w = n.box_w
+        forge h = n.box_h
+        if (y > height || y + h < 0) { return }
+        forge pressed = _is_pressed(id)
+
+        if (k == K_BAR) {
+            canvas.fill_rect(cv, 0, 0, width, y + h, c_bar)
+            canvas.fill_rect(cv, 0, y + h - 1, width, 1, c_divider)
+            return
+        }
+        if (k == K_BAR_TITLE) {
+            forge ts = dp(20)
+            ttf.draw(cv, _font_bold, ts, x + dp(8), _baseline(_font_bold, ts, y, h), ttf.ellipsize(_font_bold, ts, n.text, w - dp(8)), c_bar_fg)
+            return
+        }
+        if (k == K_BAR_BUTTON) {
+            forge bbf = _fill(id, -1, -1, c_surface_hi, pressed)
+            if (bbf >= 0) {
+                raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, _curve(id, -1, 20) as crystal, bbf)
+            }
+            forge bink = _ink(id, -1, c_accent, pressed)
+            forge bic = ofs_array_get(_icon, id)
+            if (bic >= 0) {
+                icons.draw_centered(cv, bic, x, y, w, h, dp(24), _alpha(id, bink))
+                return
+            }
+            forge bs = dp(15)
+            ttf.draw_centered(cv, _font_bold, bs, x, w, _baseline(_font_bold, bs, y, h), n.text, _alpha(id, bink))
+            return
+        }
+        if (k == K_TITLE) {
+            forge tts = _fs(22)
+            ttf.draw(cv, _font_bold, tts, x, _baseline(_font_bold, tts, y, h), ttf.ellipsize(_font_bold, tts, n.text, w), c_fg)
+            return
+        }
+        if (k == K_TEXT) {
+            forge txs = _fs(15)
+            forge tlh = ttf.line_height(_font, txs)
+            if (tlh < txs) { tlh = (txs * 13) / 10 }
+            forge tcol = _sv(_st_ink, id, -1, c_muted)
+            ttf.draw_wrapped(cv, _font, txs, x, y + dp(3), w, tlh, n.text, tcol, -1)
+            return
+        }
+        if (k >= K_CANVAS) {
+            _draw_new(cv, id, k, n.text, x, y, w, h, pressed)
+            return
+        }
+        if (k == K_BUTTON) {
+            forge bc = _fill(id, ST_BUTTON, c_accent, c_accent_hi, pressed)
+            raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, _curve(id, ST_BUTTON, 24) as crystal, bc)
+            forge bts = _fs(16)
+            forge btink = _alpha(id, _ink(id, ST_BUTTON, c_accent_fg, pressed))
+            forge btic = ofs_array_get(_icon, id)
+            if (btic >= 0) {
+                forge isz = dp(22)
+                if (ofs_str_len(n.text) == 0) {
+                    icons.draw_centered(cv, btic, x, y, w, h, isz, btink)
+                    return
+                }
+                forge tw = ttf.width(_font_bold, bts, n.text)
+                forge gx = x + (w - (isz + dp(8) + tw)) / 2
+                icons.draw(cv, btic, gx, y + (h - isz) / 2, isz, btink)
+                ttf.draw(cv, _font_bold, bts, gx + isz + dp(8), _baseline(_font_bold, bts, y, h), n.text, btink)
+                return
+            }
+            ttf.draw_centered(cv, _font_bold, bts, x, w, _baseline(_font_bold, bts, y, h), ttf.ellipsize(_font_bold, bts, n.text, w - dp(16)), btink)
+            return
+        }
+        if (k == K_FAB) {
+            forge ff = _alpha(id, _fill(id, ST_BUTTON, c_accent, c_accent_hi, pressed))
+            forge fink = _alpha(id, _ink(id, ST_BUTTON, c_accent_fg, pressed))
+            raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, _curve(id, ST_BUTTON, 28) as crystal, ff)
+            forge fic = ofs_array_get(_icon, id)
+            if (fic >= 0) {
+                icons.draw_centered(cv, fic, x, y, w, h, dp(24), fink)
+            } else {
+                forge fs = dp(15)
+                ttf.draw_centered(cv, _font_bold, fs, x, w, _baseline(_font_bold, fs, y, h), n.text, fink)
+            }
+            return
+        }
+        if (k == K_DPAD) {
+            _draw_dpad(cv, id, x, y, w, h)
+            return
+        }
+        if (k == K_LIST_ITEM) {
+            if (pressed) {
+                canvas.fill_rect(cv, x, y, w, h, _sv(_st_pfill, id, ST_LIST, c_surface_hi))
+            }
+            forge lfg = _sv(_st_ink, id, ST_LIST, c_fg)
+            forge sub: obsidian = ofs_array_get(_sub, id)
+            forge lts = _fs(16)
+            forge pad = dp(16)
+            forge lic = ofs_array_get(_icon, id)
+            forge limg: obsidian = ofs_array_get(_img, id)
+            if (ofs_str_len(limg) > 0) {
+                forge th = h - dp(16)
+                forge tw2 = (th * 4) / 3
+                forge lim = image_get(limg)
+                if (lim >= 0) {
+                    png.draw_cover(cv, lim, x + pad, y + dp(8), tw2, th)
+                } else {
+                    raster.fill_round_rect(cv, (x + pad) as crystal, (y + dp(8)) as crystal, tw2 as crystal, th as crystal, dp(6) as crystal, c_surface_hi)
+                    if (lic >= 0) { icons.draw_centered(cv, lic, x + pad, y + dp(8), tw2, th, dp(24), c_muted) }
+                }
+                x = x + tw2 + dp(12)
+                w = w - tw2 - dp(12)
+            } else if (lic >= 0) {
+                icons.draw_centered(cv, lic, x + pad - dp(4), y, dp(32), h, dp(24), c_accent)
+                x = x + dp(36)
+                w = w - dp(36)
+            }
+            forge lbi = ofs_array_get(_bicon, id)
+            forge lbt: obsidian = ofs_array_get(_btxt, id)
+            if (lbi >= 0 || ofs_str_len(lbt) > 0) {
+                forge bw2 = _badge_w(lbi, lbt)
+                _draw_badge(cv, lbi, lbt, x + w - pad - bw2, y + (h - dp(24)) / 2)
+                w = w - bw2 - dp(8)
+            }
+            if (ofs_str_len(sub) > 0) {
+                ttf.draw(cv, _font, lts, x + pad, y + dp(30), ttf.ellipsize(_font, lts, n.text, w - pad * 2), lfg)
+                ttf.draw(cv, _font, _fs(13), x + pad, y + dp(54), ttf.ellipsize(_font, _fs(13), sub, w - pad * 2), c_muted)
+            } else {
+                ttf.draw(cv, _font, lts, x + pad, _baseline(_font, lts, y, h), ttf.ellipsize(_font, lts, n.text, w - pad * 2), lfg)
+            }
+            // divisoria (menos no ultimo item)
+            forge parent = n.parent
+            if (parent >= 0) {
+                forge pn = oll.get_node(parent)
+                if (n.box_y + n.box_h < pn.box_y + pn.box_h - 1) {
+                    canvas.fill_rect(cv, x + pad, y + h - 1, w - pad * 2, 1, c_divider)
+                }
+            }
+            return
+        }
+        if (k == K_EMPTY) {
+            forge es = _fs(15)
+            forge elh = ttf.line_height(_font, es)
+            if (elh < es) { elh = (es * 13) / 10 }
+            forge el = ttf.wrap(_font, es, n.text, w - dp(32))
+            forge ey = y + (h - ofs_array_len(el) * elh) / 2 + ttf.ascent(_font, es)
+            forge ek = 0
+            while (ek < ofs_array_len(el)) {
+                ttf.draw_centered(cv, _font, es, x, w, ey + ek * elh, ofs_array_get(el, ek), c_muted)
+                ek++
+            }
+            return
+        }
+        if (k == K_CARD) {
+            forge cc = _fill(id, ST_CARD, c_surface, c_surface_hi, pressed)
+            forge cink = _ink(id, ST_CARD, c_fg, pressed)
+            raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, _curve(id, ST_CARD, 12) as crystal, cc)
+            forge csub: obsidian = ofs_array_get(_sub, id)
+            forge text_h = dp(56)
+            forge cover_h = h - text_h
+            forge cimg: obsidian = ofs_array_get(_img, id)
+            forge cim = image_get(cimg)
+            if (cover_h > dp(16) && cim >= 0) {
+                png.draw_cover(cv, cim, x + dp(6), y + dp(6), w - dp(12), cover_h - dp(6))
+            } else if (cover_h > dp(16)) {
+                // sem imagem: icone do card (ou a inicial do titulo)
+                raster.fill_round_rect(cv, (x + dp(6)) as crystal, (y + dp(6)) as crystal, (w - dp(12)) as crystal, (cover_h - dp(6)) as crystal, dp(8) as crystal, c_surface_hi)
+                forge cic = ofs_array_get(_icon, id)
+                if (cic >= 0) {
+                    icons.draw_centered(cv, cic, x, y + dp(6), w, cover_h - dp(6), cover_h / 2, c_accent)
+                } else if (ofs_str_len(n.text) > 0) {
+                    forge ini = ofs_str_substr(n.text, 0, 1)
+                    forge isz = cover_h / 2
+                    ttf.draw_centered(cv, _font_bold, isz, x, w, _baseline(_font_bold, isz, y + dp(6), cover_h - dp(6)), ini, c_accent)
+                }
+            } else {
+                text_h = h
+                cover_h = 0
+            }
+            forge cbi = ofs_array_get(_bicon, id)
+            forge cbt: obsidian = ofs_array_get(_btxt, id)
+            if (cover_h > 0 && (cbi >= 0 || ofs_str_len(cbt) > 0)) {
+                _draw_badge(cv, cbi, cbt, x + dp(12), y + dp(12))
+            }
+            forge cts = _fs(15)
+            forge cx = x + dp(12)
+            forge cw = w - dp(24)
+            if (ofs_str_len(csub) > 0) {
+                ttf.draw(cv, _font_bold, cts, cx, y + cover_h + dp(24), ttf.ellipsize(_font_bold, cts, n.text, cw), cink)
+                ttf.draw(cv, _font, _fs(12), cx, y + cover_h + dp(44), ttf.ellipsize(_font, _fs(12), csub, cw), c_muted)
+            } else {
+                ttf.draw(cv, _font_bold, cts, cx, _baseline(_font_bold, cts, y + cover_h, text_h), ttf.ellipsize(_font_bold, cts, n.text, cw), cink)
+            }
+            return
+        }
+    }
+
+    vein _draw_dpad(cv: Canvas, id: stone, x: stone, y: stone, w: stone, h: stone) -> void {
+        forge base = _alpha(id, _fill(id, ST_BUTTON, c_surface, c_surface, false))
+        forge hi = _alpha(id, _fill(id, ST_BUTTON, c_surface_hi, c_accent, true))
+        forge ink = _alpha(id, _ink(id, ST_BUTTON, c_fg, false))
+        forge t = w / 3
+        forge r = _curve(id, ST_BUTTON, 10)
+        // cruz: vertical + horizontal
+        raster.fill_round_rect(cv, (x + t) as crystal, y as crystal, t as crystal, h as crystal, r as crystal, base)
+        raster.fill_round_rect(cv, x as crystal, (y + t) as crystal, w as crystal, t as crystal, r as crystal, base)
+        if (_is_pressed(id)) {
+            if (dpad_dir == DIR_UP) { raster.fill_round_rect(cv, (x + t) as crystal, y as crystal, t as crystal, t as crystal, r as crystal, hi) }
+            if (dpad_dir == DIR_DOWN) { raster.fill_round_rect(cv, (x + t) as crystal, (y + 2 * t) as crystal, t as crystal, t as crystal, r as crystal, hi) }
+            if (dpad_dir == DIR_LEFT) { raster.fill_round_rect(cv, x as crystal, (y + t) as crystal, t as crystal, t as crystal, r as crystal, hi) }
+            if (dpad_dir == DIR_RIGHT) { raster.fill_round_rect(cv, (x + 2 * t) as crystal, (y + t) as crystal, t as crystal, t as crystal, r as crystal, hi) }
+        }
+        forge cx = x + w / 2
+        forge cy = y + h / 2
+        forge a = t / 5
+        // setas
+        raster.fill_circle(cv, cx as crystal, (y + t / 2) as crystal, a as crystal, ink)
+        raster.fill_circle(cv, cx as crystal, (y + h - t / 2) as crystal, a as crystal, ink)
+        raster.fill_circle(cv, (x + t / 2) as crystal, cy as crystal, a as crystal, ink)
+        raster.fill_circle(cv, (x + w - t / 2) as crystal, cy as crystal, a as crystal, ink)
+    }
+
+    // Atualiza o D-pad com o toque em (x, y); chama a acao se a direcao mudou.
+    vein _dpad_track(id: stone, x: stone, y: stone, active: bool) -> void {
+        forge n = oll.get_node(id)
+        forge dir = DIR_NONE
+        forge vx = 0
+        forge vy = 0
+        if (active) {
+            forge half = n.box_w / 2
+            vx = ((x - (n.box_x + half)) * 100) / half
+            vy = ((y - (n.box_y + half)) * 100) / half
+            if (vx > 100) { vx = 100 }
+            if (vx < 0 - 100) { vx = 0 - 100 }
+            if (vy > 100) { vy = 100 }
+            if (vy < 0 - 100) { vy = 0 - 100 }
+            forge ax = vx
+            forge ay = vy
+            if (ax < 0) { ax = 0 - ax }
+            if (ay < 0) { ay = 0 - ay }
+            if (ax > 25 || ay > 25) {
+                if (ax > ay) {
+                    dir = DIR_RIGHT
+                    if (vx < 0) { dir = DIR_LEFT }
+                } else {
+                    dir = DIR_DOWN
+                    if (vy < 0) { dir = DIR_UP }
+                }
+            }
+        }
+        dpad_x = vx
+        dpad_y = vy
+        if (dir != dpad_dir) {
+            dpad_dir = dir
+            redraw()
+            oal_app_action(ofs_array_get(_act, id), dir)
+        }
+    }
+
+    // ── selos, widgets novos ─────────────────────────────────────────────
+    vein _badge_w(ic: stone, t: obsidian) -> stone {
+        forge w = dp(12)
+        if (ic >= 0) { w = w + dp(16) }
+        if (ofs_str_len(t) > 0) {
+            w = w + ttf.width(_font_bold, _fs(11), t)
+            if (ic >= 0) { w = w + dp(4) }
+        }
+        return w
+    }
+
+    vein _draw_badge(cv: Canvas, ic: stone, t: obsidian, x: stone, y: stone) -> void {
+        forge bw = _badge_w(ic, t)
+        forge bh = dp(24)
+        raster.fill_round_rect(cv, x as crystal, y as crystal, bw as crystal, bh as crystal, (bh / 2) as crystal, 3858759680 + (c_bar & 16777215))
+        forge tx0 = x + dp(6)
+        if (ic >= 0) {
+            icons.draw(cv, ic, tx0, y + dp(4), dp(16), c_accent)
+            tx0 = tx0 + dp(20)
+        }
+        if (ofs_str_len(t) > 0) {
+            ttf.draw(cv, _font_bold, _fs(11), tx0, _baseline(_font_bold, _fs(11), y, bh), t, c_fg)
+        }
+    }
+
+    vein _is_pressed(id: stone) -> bool {
+        forge i = 0
+        while (i < ofs_array_len(_f_node)) {
+            if (ofs_array_get(_f_node, i) == id && ofs_array_get(_f_drag, i) == 0) { return true }
+            i++
+        }
+        return false
+    }
+
+    vein _draw_new(cv: Canvas, id: stone, k: stone, text: obsidian, x: stone, y: stone, w: stone, h: stone, pressed: bool) -> void {
+        if (k == K_CANVAS) {
+            if (id != _canvas_full) { oal_app_paint(ofs_array_get(_item, id), x, y, w, h) }
+            return
+        }
+        if (k == K_IMAGE) {
+            forge im = image_get(ofs_array_get(_img, id))
+            if (im < 0) {
+                raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, dp(8) as crystal, c_surface)
+                icons.draw_centered(cv, icons.IMAGE, x, y, w, h, dp(32), c_muted)
+                return
+            }
+            // contem a imagem centralizada
+            forge iw = png.width(im)
+            forge ih = png.height(im)
+            forge dw = w
+            forge dh = (ih * w) / iw
+            if (dh > h) {
+                dh = h
+                dw = (iw * h) / ih
+            }
+            png.draw(cv, im, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh)
+            return
+        }
+        if (k == K_TABS) {
+            raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, (h / 2) as crystal, c_surface)
+            return
+        }
+        if (k == K_TAB) {
+            forge sel = ofs_array_get(_vmin, id) == 1
+            forge tf = -1
+            forge tink = c_muted
+            if (sel) {
+                tf = c_accent
+                tink = c_accent_fg
+            } else if (pressed) {
+                tf = c_surface_hi
+            }
+            if (tf >= 0) { raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, (h / 2) as crystal, tf) }
+            forge tic = ofs_array_get(_icon, id)
+            forge ts = _fs(14)
+            if (tic >= 0 && ofs_str_len(text) > 0) {
+                forge isz = dp(18)
+                forge lbl = ttf.ellipsize(_font_bold, ts, text, w - isz - dp(20))
+                forge tw = ttf.width(_font_bold, ts, lbl)
+                forge gx = x + (w - (isz + dp(6) + tw)) / 2
+                icons.draw(cv, tic, gx, y + (h - isz) / 2, isz, tink)
+                ttf.draw(cv, _font_bold, ts, gx + isz + dp(6), _baseline(_font_bold, ts, y, h), lbl, tink)
+            } else if (tic >= 0) {
+                icons.draw_centered(cv, tic, x, y, w, h, dp(20), tink)
+            } else {
+                ttf.draw_centered(cv, _font_bold, ts, x, w, _baseline(_font_bold, ts, y, h), ttf.ellipsize(_font_bold, ts, text, w - dp(12)), tink)
+            }
+            return
+        }
+        if (k == K_SLIDER) {
+            forge vmin = ofs_array_get(_vmin, id)
+            forge vmax = ofs_array_get(_vmax, id)
+            forge val = ofs_array_get(_item, id)
+            forge ls = _fs(14)
+            forge ic2 = ofs_array_get(_icon, id)
+            forge lx = x
+            if (ic2 >= 0) {
+                icons.draw(cv, ic2, x, y + dp(4), dp(20), c_accent)
+                lx = x + dp(28)
+            }
+            ttf.draw(cv, _font, ls, lx, y + dp(20), ttf.ellipsize(_font, ls, text, w - dp(80)), c_fg)
+            forge vt = ofs_stone_to_obsidian(val)
+            ttf.draw(cv, _font_bold, ls, x + w - ttf.width(_font_bold, ls, vt), y + dp(20), vt, c_accent)
+            forge ty = y + dp(42)
+            forge kx = x + dp(10) + ((w - dp(20)) * (val - vmin)) / (vmax - vmin)
+            raster.fill_round_rect(cv, (x + dp(10)) as crystal, (ty - dp(2)) as crystal, (w - dp(20)) as crystal, dp(4) as crystal, dp(2) as crystal, c_surface_hi)
+            raster.fill_round_rect(cv, (x + dp(10)) as crystal, (ty - dp(2)) as crystal, (kx - x - dp(10)) as crystal, dp(4) as crystal, dp(2) as crystal, c_accent)
+            forge kr = dp(10)
+            if (pressed) { kr = dp(13) }
+            raster.fill_circle(cv, kx as crystal, ty as crystal, kr as crystal, c_accent)
+            return
+        }
+        if (k == K_TOGGLE) {
+            forge on = ofs_array_get(_vmin, id) == 1
+            if (pressed) { raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, dp(10) as crystal, c_surface) }
+            forge ic3 = ofs_array_get(_icon, id)
+            forge lx3 = x + dp(4)
+            if (ic3 >= 0) {
+                icons.draw(cv, ic3, lx3, y + (h - dp(20)) / 2, dp(20), c_accent)
+                lx3 = lx3 + dp(28)
+            }
+            forge ls3 = _fs(15)
+            ttf.draw(cv, _font, ls3, lx3, _baseline(_font, ls3, y, h), ttf.ellipsize(_font, ls3, text, w - dp(90)), c_fg)
+            forge sw = dp(48)
+            forge sh = dp(26)
+            forge sx = x + w - sw - dp(4)
+            forge sy = y + (h - sh) / 2
+            forge trk = c_surface_hi
+            if (on) { trk = c_accent }
+            raster.fill_round_rect(cv, sx as crystal, sy as crystal, sw as crystal, sh as crystal, (sh / 2) as crystal, trk)
+            forge kx3 = sx + sh / 2
+            if (on) { kx3 = sx + sw - sh / 2 }
+            raster.fill_circle(cv, kx3 as crystal, (sy + sh / 2) as crystal, (sh / 2 - dp(3)) as crystal, 16777215)
+            return
+        }
+        if (k == K_PROGRESS) {
+            forge pct = ofs_array_get(_vmin, id)
+            forge ps = _fs(14)
+            ttf.draw(cv, _font, ps, x, y + dp(18), ttf.ellipsize(_font, ps, text, w - dp(56)), c_fg)
+            forge pt = ofs_stone_to_obsidian(pct) + "%"
+            ttf.draw(cv, _font_bold, ps, x + w - ttf.width(_font_bold, ps, pt), y + dp(18), pt, c_accent)
+            raster.fill_round_rect(cv, x as crystal, (y + dp(32)) as crystal, w as crystal, dp(10) as crystal, dp(5) as crystal, c_surface_hi)
+            forge fw = (w * pct) / 100
+            if (fw > dp(10)) { raster.fill_round_rect(cv, x as crystal, (y + dp(32)) as crystal, fw as crystal, dp(10) as crystal, dp(5) as crystal, c_accent) }
+            return
+        }
+        if (k == K_FIELD) {
+            forge ff = c_surface
+            if (pressed) { ff = c_surface_hi }
+            raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, (h / 2) as crystal, ff)
+            forge fic = ofs_array_get(_icon, id)
+            forge fx = x + dp(16)
+            if (fic >= 0) {
+                icons.draw(cv, fic, fx, y + (h - dp(20)) / 2, dp(20), c_muted)
+                fx = fx + dp(30)
+            }
+            forge fs2 = _fs(15)
+            forge hint: obsidian = ofs_array_get(_sub, id)
+            if (ofs_str_len(text) > 0) {
+                ttf.draw(cv, _font, fs2, fx, _baseline(_font, fs2, y, h), ttf.ellipsize(_font, fs2, text, x + w - fx - dp(16)), c_fg)
+            } else {
+                ttf.draw(cv, _font, fs2, fx, _baseline(_font, fs2, y, h), ttf.ellipsize(_font, fs2, hint, x + w - fx - dp(16)), c_muted)
+            }
+            return
+        }
+        if (k == K_KEYBOARD) {
+            _draw_keyboard(cv, id, x, y, w, h)
+            return
+        }
+    }
+
+    // ── teclado na tela ──────────────────────────────────────────────────
+    // Linhas do teclado: letras (com shift) ou numeros/acentos. Teclas
+    // especiais: "^" shift, "<" apagar, "#" troca de camada, " " espaco,
+    // "!" confirmar.
+    vein _kb_rows() -> Array<obsidian> {
+        if (kb_layer == 1) {
+            forge r1: Array<obsidian> = ["1234567890", "-/:;()&@\"'", "#.,?!áéíóú<", "^ãõçêô ↵"]
+            return r1
+        }
+        forge r0: Array<obsidian> = ["qwertyuiop", "asdfghjkl", "^zxcvbnm<", "#, .↵"]
+        return r0
+    }
+
+    // teclas da linha como array de textos (UTF-8 por caractere)
+    vein _kb_keys(row: obsidian) -> Array<obsidian> {
+        forge out: Array<obsidian> = []
+        forge n = ofs_str_len(row)
+        forge i = 0
+        while (i < n) {
+            ttf.decode(row, i, n)
+            forge l = ttf._u8_len
+            ofs_array_push(out, ofs_str_substr(row, i, l))
+            i = i + l
+        }
+        return out
+    }
+
+    // largura relativa (x4) da tecla
+    vein _kb_weight(key: obsidian, last_row: bool) -> stone {
+        if (last_row && ofs_str_eq(key, " ")) { return 20 }
+        if (ofs_str_eq(key, "^") || ofs_str_eq(key, "<") || ofs_str_eq(key, "#") || ofs_str_eq(key, "↵")) { return 6 }
+        return 4
+    }
+
+    forge _kb_hit_key: obsidian = ""
+
+    // Percorre as teclas; com draw = true desenha, senao procura a tecla em (px, py).
+    vein _kb_walk(cv: Canvas, id: stone, x: stone, y: stone, w: stone, h: stone, draw: bool, px: stone, py: stone) -> void {
+        forge rows = _kb_rows()
+        forge nr = ofs_array_len(rows)
+        forge gap = dp(6)
+        forge kh = (h - gap * (nr - 1)) / nr
+        forge r = 0
+        _kb_hit_key = ""
+        while (r < nr) {
+            forge keys = _kb_keys(ofs_array_get(rows, r))
+            forge last = r == nr - 1
+            forge tot = 0
+            forge i = 0
+            while (i < ofs_array_len(keys)) {
+                tot = tot + _kb_weight(ofs_array_get(keys, i), last)
+                i++
+            }
+            forge unit = (w - gap * (ofs_array_len(keys) - 1)) * 100 / tot
+            forge maxu = ((w - gap * 9) * 100) / 40
+            if (unit > maxu) { unit = maxu }
+            forge row_w = (unit * tot) / 100 + gap * (ofs_array_len(keys) - 1)
+            forge kx = x + (w - row_w) / 2
+            forge ky = y + r * (kh + gap)
+            i = 0
+            while (i < ofs_array_len(keys)) {
+                forge key: obsidian = ofs_array_get(keys, i)
+                forge kw = (unit * _kb_weight(key, last)) / 100
+                if (draw) {
+                    forge special = ofs_str_eq(key, "^") || ofs_str_eq(key, "<") || ofs_str_eq(key, "#") || ofs_str_eq(key, "↵")
+                    forge kf = c_surface_hi
+                    if (special) { kf = c_surface }
+                    if (ofs_str_eq(key, "↵")) { kf = c_accent }
+                    if (ofs_str_eq(key, "^") && kb_shift) { kf = c_accent }
+                    raster.fill_round_rect(cv, kx as crystal, ky as crystal, kw as crystal, kh as crystal, dp(8) as crystal, kf)
+                    forge ink = c_fg
+                    if (ofs_str_eq(key, "↵") || (ofs_str_eq(key, "^") && kb_shift)) { ink = c_accent_fg }
+                    forge ic = -1
+                    if (ofs_str_eq(key, "^")) { ic = icons.SHIFT }
+                    if (ofs_str_eq(key, "<")) { ic = icons.BACKSPACE }
+                    if (ofs_str_eq(key, "↵")) { ic = icons.CHECK }
+                    if (ofs_str_eq(key, " ")) { ic = icons.SPACE }
+                    if (ic >= 0) {
+                        icons.draw_centered(cv, ic, kx, ky, kw, kh, dp(22), ink)
+                    } else {
+                        forge lab = key
+                        if (ofs_str_eq(key, "#")) {
+                            lab = "123"
+                            if (kb_layer == 1) { lab = "abc" }
+                        } else if (kb_shift) {
+                            lab = _kb_upper(key)
+                        }
+                        forge ks = _fs(18)
+                        if (ofs_str_eq(key, "#")) { ks = _fs(13) }
+                        ttf.draw_centered(cv, _font, ks, kx, kw, _baseline(_font, ks, ky, kh), lab, ink)
+                    }
+                } else if (px >= kx && px < kx + kw + gap && py >= ky && py < ky + kh + gap) {
+                    _kb_hit_key = key
+                    return
+                }
+                kx = kx + kw + gap
+                i++
+            }
+            r++
+        }
+    }
+
+    vein _kb_upper(k: obsidian) -> obsidian {
+        forge c = ofs_str_char_at(k, 0) & 255
+        if (ofs_str_len(k) == 1 && c >= 97 && c <= 122) { return ofs_str_substr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", c - 97, 1) }
+        if (ofs_str_eq(k, "á")) { return "Á" }
+        if (ofs_str_eq(k, "é")) { return "É" }
+        if (ofs_str_eq(k, "í")) { return "Í" }
+        if (ofs_str_eq(k, "ó")) { return "Ó" }
+        if (ofs_str_eq(k, "ú")) { return "Ú" }
+        if (ofs_str_eq(k, "ã")) { return "Ã" }
+        if (ofs_str_eq(k, "õ")) { return "Õ" }
+        if (ofs_str_eq(k, "ç")) { return "Ç" }
+        if (ofs_str_eq(k, "ê")) { return "Ê" }
+        if (ofs_str_eq(k, "ô")) { return "Ô" }
+        return k
+    }
+
+    vein _draw_keyboard(cv: Canvas, id: stone, x: stone, y: stone, w: stone, h: stone) -> void {
+        _kb_walk(cv, id, x, y, w, h, true, 0, 0)
+    }
+
+    // Toque solto no teclado: resolve a tecla e chama a acao.
+    vein _kb_press(id: stone, px: stone, py: stone) -> void {
+        forge n = oll.get_node(id)
+        forge cv0 = _canvas()
+        forge oy = 0
+        if (ofs_array_get(_layer, id) == 0) { oy = _top_h() - scroll }
+        _kb_walk(cv0, id, n.box_x, n.box_y + oy, n.box_w, n.box_h, false, px, py)
+        forge key = _kb_hit_key
+        if (ofs_str_len(key) == 0) { return }
+        forge a = ofs_array_get(_act, id)
+        if (ofs_str_eq(key, "^")) {
+            kb_shift = !kb_shift
+            redraw()
+            return
+        }
+        if (ofs_str_eq(key, "#")) {
+            kb_layer = 1 - kb_layer
+            redraw()
+            return
+        }
+        forge code = 0
+        if (ofs_str_eq(key, "<")) { code = 8 }
+        else if (ofs_str_eq(key, "↵")) { code = 10 }
+        else {
+            forge kk = key
+            if (kb_shift) { kk = _kb_upper(key) }
+            code = ttf.decode(kk, 0, ofs_str_len(kk))
+            if (kb_shift) {
+                kb_shift = false
+                redraw()
+            }
+        }
+        oal_app_action(a, code)
+    }
+
+
+    // ── toque (multitoque: um registro por dedo) ─────────────────────────
+    vein hit(x: stone, y: stone) -> stone {
+        forge n_nodes = ofs_array_len(_k)
+        forge f = n_nodes - 1
+        while (f >= 0) {
+            if (ofs_array_get(_layer, f) == 2 && ofs_array_get(_act, f) >= 0) {
+                forge fnode = oll.get_node(f)
+                if (x >= fnode.box_x && x < fnode.box_x + fnode.box_w && y >= fnode.box_y && y < fnode.box_y + fnode.box_h) {
+                    return f
+                }
+            }
+            f--
+        }
+        forge i = n_nodes - 1
+        forge in_bar = y < _top_h()
+        while (i >= 0) {
+            if (ofs_array_get(_act, i) >= 0 || ofs_array_get(_act, i) == -2) {
+                forge layer = ofs_array_get(_layer, i)
+                forge n = oll.get_node(i)
+                forge ny = n.box_y
+                if (layer == 0) { ny = ny + _top_h() - scroll }
+                forge same = (layer == 0 && !in_bar) || (layer == 1 && in_bar)
+                if (same) {
+                    if (x >= n.box_x && x < n.box_x + n.box_w && y >= ny && y < ny + n.box_h) {
+                        return i
+                    }
+                }
+            }
+            i--
+        }
+        if (_canvas_full >= 0 && !in_bar) { return _canvas_full }
+        return -1
+    }
+
+    vein _finger(fid: stone) -> stone {
+        forge i = 0
+        while (i < ofs_array_len(_f_id)) {
+            if (ofs_array_get(_f_id, i) == fid) { return i }
+            i++
+        }
+        return -1
+    }
+
+    vein _drop_finger(fi: stone) -> void {
+        forge last = ofs_array_len(_f_id) - 1
+        if (fi < 0 || fi > last) { return }
+        // mantem a ordem (o 1o dedo e o que rola)
+        forge i = fi
+        while (i < last) {
+            ofs_array_set(_f_id, i, ofs_array_get(_f_id, i + 1))
+            ofs_array_set(_f_node, i, ofs_array_get(_f_node, i + 1))
+            ofs_array_set(_f_x, i, ofs_array_get(_f_x, i + 1))
+            ofs_array_set(_f_y, i, ofs_array_get(_f_y, i + 1))
+            ofs_array_set(_f_drag, i, ofs_array_get(_f_drag, i + 1))
+            ofs_array_set(_f_scroll, i, ofs_array_get(_f_scroll, i + 1))
+            i++
+        }
+        ofs_array_pop(_f_id)
+        ofs_array_pop(_f_node)
+        ofs_array_pop(_f_x)
+        ofs_array_pop(_f_y)
+        ofs_array_pop(_f_drag)
+        ofs_array_pop(_f_scroll)
+    }
+
+    vein _node_oy(id: stone) -> stone {
+        if (ofs_array_get(_layer, id) == 0) { return _top_h() - scroll }
+        return 0
+    }
+
+    vein _canvas_touch(id: stone, kind: stone, fid: stone, x: stone, y: stone) -> void {
+        forge n = oll.get_node(id)
+        oal_app_touch(ofs_array_get(_item, id), kind, fid, x - n.box_x, y - (n.box_y + _node_oy(id)))
+    }
+
+    vein _slider_track(id: stone, x: stone) -> void {
+        forge n = oll.get_node(id)
+        forge vmin = ofs_array_get(_vmin, id)
+        forge vmax = ofs_array_get(_vmax, id)
+        forge tw = n.box_w - dp(20)
+        if (tw < 1) { tw = 1 }
+        forge v = vmin + ((x - n.box_x - dp(10)) * (vmax - vmin) + tw / 2) / tw
+        if (v < vmin) { v = vmin }
+        if (v > vmax) { v = vmax }
+        if (v != ofs_array_get(_item, id)) {
+            ofs_array_set(_item, id, v)
+            redraw()
+            oal_app_action(ofs_array_get(_act, id), v)
+        }
+    }
+
+    vein touch_down_id(fid: stone, x: stone, y: stone) -> void {
+        if (_need_build) { _build() }
+        forge old = _finger(fid)
+        if (old >= 0) { _drop_finger(old) }
+        forge node = hit(x, y)
+        ofs_array_push(_f_id, fid)
+        ofs_array_push(_f_node, node)
+        ofs_array_push(_f_x, x)
+        ofs_array_push(_f_y, y)
+        ofs_array_push(_f_drag, 0)
+        ofs_array_push(_f_scroll, scroll)
+        if (node >= 0) {
+            forge k = ofs_array_get(_k, node)
+            if (k == K_DPAD) { _dpad_track(node, x, y, true) }
+            if (k == K_CANVAS) { _canvas_touch(node, 0, fid, x, y) }
+            if (k == K_SLIDER) { _slider_track(node, x) }
+        }
+        redraw()
+    }
+
+    vein touch_move_id(fid: stone, x: stone, y: stone) -> void {
+        forge fi = _finger(fid)
+        if (fi < 0) { return }
+        forge node = ofs_array_get(_f_node, fi)
+        if (node >= 0) {
+            forge k = ofs_array_get(_k, node)
+            if (k == K_DPAD) {
+                _dpad_track(node, x, y, true)
+                return
+            }
+            if (k == K_CANVAS) {
+                _canvas_touch(node, 1, fid, x, y)
+                return
+            }
+            if (k == K_SLIDER) {
+                _slider_track(node, x)
+                return
+            }
+            if (ofs_array_get(_layer, node) == 2) { return }
+        }
+        // so o 1o dedo rola o conteudo
+        if (fi != 0) { return }
+        forge dy = y - ofs_array_get(_f_y, fi)
+        forge dx = x - ofs_array_get(_f_x, fi)
+        if (ofs_array_get(_f_drag, fi) == 0) {
+            forge slop = dp(8)
+            if (dy > slop || dy < 0 - slop || dx > slop || dx < 0 - slop) {
+                ofs_array_set(_f_drag, fi, 1)
+            }
+        }
+        if (ofs_array_get(_f_drag, fi) == 1) {
+            scroll = ofs_array_get(_f_scroll, fi) - dy
+            _clamp_scroll()
+        }
+        redraw()
+    }
+
+    vein touch_up_id(fid: stone, x: stone, y: stone) -> void {
+        forge fi = _finger(fid)
+        if (fi < 0) { return }
+        forge target = ofs_array_get(_f_node, fi)
+        forge dragged = ofs_array_get(_f_drag, fi) == 1
+        _drop_finger(fi)
+        redraw()
+        if (target < 0) { return }
+        forge k = ofs_array_get(_k, target)
+        if (k == K_DPAD) {
+            _dpad_track(target, x, y, false)
+            return
+        }
+        if (k == K_CANVAS) {
+            _canvas_touch(target, 2, fid, x, y)
+            return
+        }
+        if (k == K_SLIDER) { return }
+        if (dragged) { return }
+        if (hit(x, y) != target) { return }
+        if (k == K_KEYBOARD) {
+            _kb_press(target, x, y)
+            return
+        }
+        forge a = ofs_array_get(_act, target)
+        forge it = ofs_array_get(_item, target)
+        log("oal: acao " + ofs_stone_to_obsidian(a) + " item " + ofs_stone_to_obsidian(it))
+        oal_app_action(a, it)
+    }
+
+    // Todos os dedos cancelados (o sistema tomou o gesto).
+    vein touch_cancel() -> void {
+        while (ofs_array_len(_f_id) > 0) {
+            forge node = ofs_array_get(_f_node, 0)
+            forge fid = ofs_array_get(_f_id, 0)
+            _drop_finger(0)
+            if (node >= 0) {
+                forge k = ofs_array_get(_k, node)
+                if (k == K_DPAD) { _dpad_track(node, 0, 0, false) }
+                if (k == K_CANVAS) { _canvas_touch(node, 2, fid, -1, -1) }
+            }
+        }
+        redraw()
+    }
+
+    // Um dedo so (backends sem multitoque, ex. X11): dedo 0.
+    vein touch_down(x: stone, y: stone) -> void { touch_down_id(0, x, y) }
+    vein touch_move(x: stone, y: stone) -> void { touch_move_id(0, x, y) }
+    vein touch_up(x: stone, y: stone) -> void { touch_up_id(0, x, y) }
+
+    vein wheel(dy: stone) -> void {
+        scroll = scroll + dy
+        _clamp_scroll()
+        redraw()
+    }
+
+    // ── ciclo de vida vindo do backend ───────────────────────────────────
+    vein on_back() -> void {
+        if (oal_app_event(ON_BACK)) { return }
+        back()
+    }
+
+    vein on_lifecycle(ev: stone) -> void {
+        oal_app_event(ev)
+    }
+}

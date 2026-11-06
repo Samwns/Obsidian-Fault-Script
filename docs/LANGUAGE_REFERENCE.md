@@ -423,6 +423,37 @@ rift vein ofs_window_create(title: obsidian, w: stone, h: stone) -> void abi c
 rift vein text_size(s: obsidian) -> stone bind "strlen" abi c
 ```
 
+### Endereço de função e chamada indireta (`fault_addr`, `fault_call`)
+
+O OFS não tem tipo "ponteiro de função", mas pode obter o endereço de uma `vein` como `stone` e chamar um endereço com a ABI C. Serve para callbacks de bibliotecas C (`qsort`, `ANativeActivity`, `ALooper`, `AChoreographer`) e para tabelas de funções C (JNI).
+
+```ofs
+rift vein c_qsort(base: *stone, n: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
+
+vein crescente(a: *stone, b: *stone) -> stone {
+    forge x = 0
+    forge y = 0
+    fracture { x = *a; y = *b; }
+    if (x < y) { return -1 }
+    if (x > y) { return 1 }
+    return 0
+}
+
+core main() {
+    forge buf = ofs_alloc(64)
+    // ...preenche 8 valores...
+    c_qsort(buf, 8, 8, fault_addr(crescente))
+    forge r = fault_call(fault_addr(crescente), buf, fault_step(buf, 1))
+}
+```
+
+- `fault_addr(nome)` → `stone`: endereço da vein. Aceita `vein` do módulo, `ns.vein` e `extern`/`rift vein` (com `bind`, devolve o símbolo C). Em IR: `ptrtoint ptr @simbolo to i64`. Fora de uma vein, é erro semântico.
+- `fault_call(endereco, args...)` → `stone`: chamada indireta com a ABI C (`inttoptr` + `call i64`). Argumentos inteiros, ponteiros e `obsidian`; o retorno é lido como `i64` (funções `void` devolvem lixo, ignore). Sem `float`/`double`.
+- A vein usada como callback deve ter parâmetros compatíveis com a ABI C: `stone` para inteiros (inteiros de 32 bits chegam com o topo indefinido; mascare com `& 4294967295`) e `*stone` para ponteiros.
+- Só no build nativo (`ofs build`); o interpretador (`ofs run`) não implementa `fault_*`.
+- Teste: `ofs/tests/runtime/test_fault_addr_qsort.ofs`.
+
+
 Campos importantes:
 
 - `bind "..."` define o símbolo nativo real
@@ -1156,6 +1187,8 @@ Available intrinsics:
 - `fault_spin_left(stone, stone)` -> rotate left
 - `fault_spin_right(stone, stone)` -> rotate right
 - `fault_step(*stone, stone)` -> typed pointer stepping in elements
+- `fault_addr(vein)` -> endereço da vein como `stone` (ver FFI)
+- `fault_call(endereco, args...)` -> chamada indireta com ABI C (ver FFI)
 - `fault_cut(value, shift, width)` -> extract a bit field
 - `fault_patch(base, shift, width, insert)` -> replace a bit field
 - `fault_weave(mask, left, right)` -> blend bits from `left` and `right` using `mask`

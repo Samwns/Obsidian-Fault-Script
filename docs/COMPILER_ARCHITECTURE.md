@@ -318,6 +318,16 @@ entry:
 
 ---
 
+### Alvos (`OFSCC_TARGET`)
+
+Sem a variável, o IR sai com o triple do host (x86-64 Linux/Windows/macOS), idêntico ao de antes. `OFSCC_TARGET=android` emite `aarch64-unknown-linux-android26` (ou passe um triple completo). O runtime `magma` usa só a libc, então para o Android basta gerar o IR do `magma.ofs` com o mesmo triple e compilar com o clang do NDK; a `.so` é linkada com `-Wl,-init,__ofs_init_globals` porque não há `main()`. Ver [ANDROID.md](ANDROID.md).
+
+Um `extern vein` que o próprio módulo define não é mais declarado de novo (antes: `invalid redefinition`).
+
+### Endereço de função (`fault_addr`, `fault_call`)
+
+`fault_addr(nome)`: o typeck troca o argumento pelo símbolo mangled (`ns.fn` → `ns__fn`) e exige que seja uma vein (`SYM_FN`); o llvmgen resolve `bind` de `extern`/`rift` e emite `ptrtoint ptr @simbolo to i64`. `fault_call(endereco, args...)` emite `inttoptr` + `call i64 %p(...)` com os tipos LLVM dos argumentos. Ver [LANGUAGE_REFERENCE.md](LANGUAGE_REFERENCE.md).
+
 ## Phase 5: Driver do Compilador
 
 **File**: `ofs/ofscc/ofscc.ofs`

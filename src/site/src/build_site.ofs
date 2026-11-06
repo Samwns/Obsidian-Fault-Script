@@ -1,8 +1,9 @@
 attach {F:../../../ofs/ofscc/fileio.ofs}
 attach {F:sitekit.ofs}
+attach {F:book.ofs}
 
 vein write_pages(prefix: obsidian) {
-    write_file(prefix + "index.html", site_page_root())
+    write_file(prefix + "index.html", bk_page("pt"))
     write_file(prefix + "language.html", page_language())
     write_file(prefix + "getting-started.html", page_getting_started())
     write_file(prefix + "compiler.html", page_compiler())
@@ -19,6 +20,7 @@ vein write_pages(prefix: obsidian) {
     write_file(prefix + "commands.html", page_commands())
     write_file(prefix + "design.html", page_design())
     write_file(prefix + "oll.html", page_oll())
+    write_file(prefix + "oal.html", page_oal())
     write_file(prefix + "benchmark.html", page_benchmark())
     write_file(prefix + "github.html", page_github())
     write_file(prefix + "site.css", site_css())
@@ -27,20 +29,21 @@ vein write_pages(prefix: obsidian) {
 }
 
 vein write_english_pages(prefix: obsidian) {
-    write_file(prefix + "en/index.html", page_en_index())
+    write_file(prefix + "en/index.html", bk_page("en"))
     write_file(prefix + "en/language.html", page_language_en())
     write_file(prefix + "en/odl.html", page_odl_en())
     write_file(prefix + "en/oes.html", page_oes_en())
     write_file(prefix + "en/web.html", page_web_en())
     write_file(prefix + "en/stdlib.html", page_stdlib_en())
     write_file(prefix + "en/oll.html", page_oll_en())
+    write_file(prefix + "en/oal.html", page_oal_en())
     write_file(prefix + "en/downloads.html", page_downloads_en())
     write_file(prefix + "en/getting-started.html", page_getting_started_en())
     write_file(prefix + "en/commands.html", page_commands_en())
 }
 
 vein write_spanish_pages(prefix: obsidian) {
-    write_file(prefix + "es/index.html", page_es_index())
+    write_file(prefix + "es/index.html", bk_page("es"))
     write_file(prefix + "es/language.html", page_language_es())
     write_file(prefix + "es/web.html", page_web_es())
     write_file(prefix + "es/stdlib.html", page_stdlib_es())
@@ -57,6 +60,8 @@ core main() {
     write_file("src/site/public/.nojekyll", "")
     write_file("src/site/public/assets/site.css", site_css())
     write_file("src/site/public/assets/site.js", site_runtime_js())
+    write_file("src/site/public/assets/book.css", read_file("src/site/book/book.css"))
+    write_file("src/site/public/assets/book.js", read_file("src/site/book/book.js"))
     write_file("src/site/public/assets/benchmark.json", read_file("src/site/benchmarks/results.json"))
 
     write_pages("docs/")
@@ -65,6 +70,8 @@ core main() {
     write_file("docs/.nojekyll", "")
     write_file("docs/assets/site.css", site_css())
     write_file("docs/assets/site.js", site_runtime_js())
+    write_file("docs/assets/book.css", read_file("src/site/book/book.css"))
+    write_file("docs/assets/book.js", read_file("src/site/book/book.js"))
     write_file("docs/assets/benchmark.json", read_file("src/site/benchmarks/results.json"))
 
     echo("OFS site generated in src/site/public and docs")

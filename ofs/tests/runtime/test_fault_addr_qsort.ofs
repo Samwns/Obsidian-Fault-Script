@@ -1,0 +1,71 @@
+// fault_addr: passa o endereco de uma vein OFS para o qsort da libc;
+// fault_call: chama uma funcao pelo endereco.
+// So no build nativo (o interpretador nao tem fault_*).
+//   ofs build ofs/tests/runtime/test_fault_addr_qsort.ofs -o /tmp/t && /tmp/t
+// Saida esperada: "1 2 3 5 8 13 21 34" e "ok"; codigo de saida 0.
+
+rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
+extern vein ofs_alloc(size: stone) -> *stone
+rift vein c_strlen(s: obsidian) -> stone bind "strlen" abi c
+
+namespace ordem {
+    // int (*)(const void*, const void*): o C le w0; devolver -1/0/1 em i64 serve.
+    vein crescente(a: *stone, b: *stone) -> stone {
+        forge x = 0
+        forge y = 0
+        fracture { x = *a; y = *b; }
+        if (x < y) { return -1 }
+        if (x > y) { return 1 }
+        return 0
+    }
+}
+
+vein decrescente(a: *stone, b: *stone) -> stone {
+    return 0 - ordem.crescente(a, b)
+}
+
+vein fill(buf: *stone) -> void {
+    forge vals: Array<stone> = [21, 3, 34, 1, 13, 8, 2, 5]
+    forge i = 0
+    while (i < 8) {
+        forge p: *stone = fault_step(buf, i)
+        forge v: stone = ofs_array_get(vals, i)
+        fracture { *p = v; }
+        i++
+    }
+}
+
+vein at(buf: *stone, i: stone) -> stone {
+    forge p: *stone = fault_step(buf, i)
+    forge v = 0
+    fracture { v = *p; }
+    return v
+}
+
+core main() {
+    forge buf = ofs_alloc(64)
+    fill(buf)
+    c_qsort(buf, 8, 8, fault_addr(ordem.crescente))
+    forge line = ""
+    forge i = 0
+    while (i < 8) {
+        if (i > 0) { line = line + " " }
+        line = line + ofs_stone_to_obsidian(at(buf, i))
+        i++
+    }
+    echo(line)
+    if (at(buf, 0) != 1 || at(buf, 7) != 34) { exit(1) }
+
+    c_qsort(buf, 8, 8, fault_addr(decrescente))
+    if (at(buf, 0) != 34 || at(buf, 7) != 1) { exit(2) }
+
+    // endereco de um simbolo C via bind: o proprio qsort
+    if (fault_addr(c_qsort) == 0) { exit(3) }
+
+    // fault_call: chamada indireta (vein OFS e funcao C pelo endereco)
+    forge x = 5
+    forge y = 9
+    if (fault_call(fault_addr(ordem.crescente), &x, &y) != -1) { exit(4) }
+    if (fault_call(fault_addr(c_strlen), "abcd") != 4) { exit(5) }
+    echo("ok")
+}

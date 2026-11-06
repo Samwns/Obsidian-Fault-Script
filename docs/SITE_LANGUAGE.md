@@ -9,6 +9,7 @@ The OFS toolchain compiles them natively. Browsers receive generated HTML, CSS, 
 | `.odl` | document structure, content, components, interop | HTML |
 | `.oes` | tokens, layout, responsive rules, motion | CSS |
 | `.oll` | native desktop UI components, layouts, windows | native UI (60 FPS) / PPM preview |
+| `.oal` | Android app: manifest, touch screens, styles, actions, lifecycle ([OAL_REFERENCE.md](OAL_REFERENCE.md)) | `AndroidManifest.xml` + OFS → APK |
 | `.ofs` | native logic, generators, servers, build tools | executable |
 
 ## ODL

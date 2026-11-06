@@ -259,6 +259,7 @@ vein site_docs() -> obsidian {
     links = links + site_doc_link("compiler.html", "Arquitetura do Compilador", "Compilador self-hosted e backend LLVM.")
     links = links + site_doc_link("webui.html", "Web UI", "Construa páginas web estáticas e componentes.")
     links = links + site_doc_link("oll.html", "OLL", "Obsidian Layout Language: UI declarativa nativa com janela, canvas e componentes.")
+    links = links + site_doc_link("oal.html", "OAL e Android", "Obsidian Android Language: apps Android (APK) em OFS puro, telas de toque e estilos.")
     links = links + site_doc_link("github.html", "Registro no GitHub", "Linguist e reconhecimento de sintaxe no repositório.")
     forge body = site_section_head("docsTitle", "Documentação", "docsLead", "Guias técnicos para linguagem, compilador, bootstrap, UI e publicação.") + odl.div("docs-list", links)
     return odl.section("docs", "band", odl.div("wrap", body))
@@ -616,6 +617,46 @@ vein page_oll() -> obsidian {
     return page_shell("OLL", "Obsidian Layout Language: UI declarativa nativa para janelas OFS.", content)
 }
 
+vein _oal_example() -> obsidian {
+    return "use \"biblioteca.ofs\"\n\napp \"M.O.O.N\" \"com.fixedseat.moon\"\n  version \"0.1.0\"\n  permission internet\n\nstyle button.primario\n  fill #8b6cff\n  ink #101020\n  curve 24\n  pressed fill #5f45c8\n\nscreen biblioteca\n  bar \"M.O.O.N\"\n    button.icon \"plugins\" -> abrir_plugins\n  button.primario \"Importar jogo\" icon=import -> importar\n  list jogos from biblioteca.jogos\n    item title=item.nome sub=item.motor -> abrir_jogo(item)\n    empty \"Nenhum jogo ainda.\"\n\non back -> voltar"
+}
+
+vein page_oal() -> obsidian {
+    forge toc = doc_link("oal", "Sintaxe OAL") + doc_link("build", "APK") + doc_link("runtime", "Runtime") + doc_link("caps", "Recursos")
+    forge build_code = "ofs build --target android app.oal -o app.apk\nofs build --target android app.oal --install --serial <aparelho>\nofs build --target android jogo.ofs --manifest AndroidManifest.xml"
+    forge caps = odl.div("module-grid",
+        module_card("app", "Manifesto: nome, pacote, versão, ícone, orientação, permissões, tela cheia.")
+        + module_card("screen", "bar, button, button.icon, title, text, list, grid, card, row, portrait, landscape.")
+        + module_card("fab, dpad", "Camada flutuante com opacidade: botões flutuantes e D-pad virtual.")
+        + module_card("style", "fill, ink, curve, opacity e estado pressed: o papel do CSS/OES no Android.")
+        + module_card("on", "back, pause, resume, rotate, low_memory despachados para funções .ofs.")
+        + module_card("android.ofs", "NativeActivity em OFS puro: fault_addr, ALooper, AChoreographer, ANativeWindow, JNI."))
+    forge body = doc_section("oal", "OAL — Obsidian Android Language", "Um arquivo `.oal` descreve manifesto, telas de toque, estilos, ações e ciclo de vida; a lógica fica em `.ofs` (importada com `use` ou `attach`). O `oalc` gera `AndroidManifest.xml` e o código OFS das telas.", "", site_terminal("app.oal", _oal_example()))
+    body = body + doc_section("build", "Gerar o APK", "A CLI compila para aarch64 com o clang do NDK, linka uma `.so` sem nenhum arquivo C e empacota com aapt2, zipalign e apksigner. Requisitos e limites em docs/ANDROID.md.", "", site_terminal("terminal", build_code))
+    body = body + doc_section("runtime", "Runtime", "Tudo roda na thread principal do Android: callbacks do NativeActivity ligados com `fault_addr`, entrada pelo looper, frames pelo AChoreographer e desenho em software (canvas, raster, ttf, icons) sobre o núcleo de layout do OLL.", "", "")
+    body = body + doc_section("caps", "Recursos do v0", "Referência completa em docs/OAL_REFERENCE.md.", "", caps)
+    forge content = doc_page("OAL", "Obsidian Android Language: apps Android em OFS puro.", toc, body)
+    return page_shell("OAL", "Obsidian Android Language: apps Android em OFS puro.", content)
+}
+
+vein page_oal_en() -> obsidian {
+    forge toc = doc_link("oal", "OAL syntax") + doc_link("build", "APK") + doc_link("runtime", "Runtime") + doc_link("caps", "Capabilities")
+    forge build_code = "ofs build --target android app.oal -o app.apk\nofs build --target android app.oal --install --serial <device>\nofs build --target android game.ofs --manifest AndroidManifest.xml"
+    forge caps = odl.div("module-grid",
+        module_card("app", "Manifest: name, package, version, icon, orientation, permissions, fullscreen.")
+        + module_card("screen", "bar, button, button.icon, title, text, list, grid, card, row, portrait, landscape.")
+        + module_card("fab, dpad", "Floating layer with opacity: floating buttons and a virtual D-pad.")
+        + module_card("style", "fill, ink, curve, opacity and the pressed state: the CSS/OES role on Android.")
+        + module_card("on", "back, pause, resume, rotate, low_memory dispatched to .ofs functions.")
+        + module_card("android.ofs", "Pure-OFS NativeActivity: fault_addr, ALooper, AChoreographer, ANativeWindow, JNI."))
+    forge body = doc_section_en("oal", "OAL — Obsidian Android Language", "An `.oal` file describes the manifest, touch screens, styles, actions and lifecycle; logic stays in `.ofs` (imported with `use` or `attach`). `oalc` generates `AndroidManifest.xml` and the OFS screen code.", site_terminal("app.oal", _oal_example()))
+    body = body + doc_section_en("build", "Building the APK", "The CLI compiles for aarch64 with the NDK clang, links a `.so` with no C files and packages it with aapt2, zipalign and apksigner. Requirements and limits in docs/en/ANDROID.md.", site_terminal("terminal", build_code))
+    body = body + doc_section_en("runtime", "Runtime", "Everything runs on the Android main thread: NativeActivity callbacks wired with `fault_addr`, input from the looper, frames from AChoreographer, software drawing (canvas, raster, ttf, icons) on the OLL layout core.", "")
+    body = body + doc_section_en("caps", "v0 capabilities", "Full reference in docs/en/OAL_REFERENCE.md.", caps)
+    forge content = doc_page_en("OAL", "Obsidian Android Language: pure-OFS Android apps.", toc, body)
+    return page_shell_en("OAL", "Obsidian Android Language: pure-OFS Android apps.", content)
+}
+
 vein page_benchmark() -> obsidian {
     forge summary = "<div class=\"metric-summary\"><div class=\"metric-stat\"><strong>5 medições</strong><span>CPU, RSS e build</span></div><div class=\"metric-stat\"><strong>15 medições</strong><span>Inicialização do processo</span></div><div class=\"metric-stat\"><strong>wait4</strong><span>Medição real de processo SO</span></div><div class=\"metric-stat\"><strong>checksum</strong><span>Validação estrita de saída</span></div></div>"
     forge toc = doc_link("method", "Método") + doc_link("metrics", "Métricas") + doc_link("results", "Resultados") + doc_link("web-bench", "Web") + doc_link("limits", "Interpretação")
@@ -685,6 +726,7 @@ vein site_docs_en() -> obsidian {
     links = links + site_doc_link("oes.html", "OES", "The style and motion language compiled to CSS.")
     links = links + site_doc_link("web.html", "Web stack", "How OFS, ODL, OES, webui, and webserver work together.")
     links = links + site_doc_link("oll.html", "OLL", "Declarative native UI with window, canvas, and components.")
+    links = links + site_doc_link("oal.html", "OAL and Android", "Obsidian Android Language: pure-OFS Android apps (APK), touch screens and styles.")
     links = links + site_doc_link("stdlib.html", "Standard library", "Modules shipped with the compiler and installers.")
     links = links + site_doc_link("downloads.html", "Downloads", "Installers, VS Code package, and checksums.")
     links = links + site_doc_link("../compiler.html", "Compiler", "Self-hosted compiler pipeline and LLVM backend.")

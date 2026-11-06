@@ -2,7 +2,26 @@
 
 All notable changes to this project are recorded here.
 
+> **Esquema de versão.** As versões oficiais são as tags `vMAJOR.MINOR.PATCH` do GitHub (`v1.0.0` ... `v1.0.178`), com o patch incrementado automaticamente pelo workflow `release.yml`; é esse número que `ofs version` mostra num pacote instalado. Os rótulos `1.1.0`, `1.1.1` e `1.2.0` mais abaixo são marcos históricos de abril de 2026 que **nunca foram tags**; as entradas foram mantidas por ordem de assunto, não de versão. O texto "Unreleased" cobre tudo o que veio depois da `v1.0.151`.
+
 ## [Unreleased]
+
+### Added — Android (aarch64) e OAL v0
+
+- **Alvo Android**: `OFSCC_TARGET=android` emite `aarch64-unknown-linux-android26`; o runtime `magma` compila para aarch64 sem mudanças (só usa a libc/bionic). `net.resolve` agora lê `struct addrinfo` do bionic (ordem `ai_addr`/`ai_canonname` invertida em relação à glibc). Doc: `docs/ANDROID.md` (+ `en/`, `es/`).
+- **`ofs build --target android app.ofs|app.oal`**: gera o APK sem Gradle/Java (`clang` do NDK, `-Wl,-init,__ofs_init_globals`, `aapt2`, `zipalign -P 16`, `apksigner`), com `--install`, `--serial` e `--manifest`. Se o `ofscc` instalado não tiver `OFSCC_TARGET`, compila um do fonte (`~/.cache/ofs/android/`). O wrapper rodando do repo usa a stdlib do repo.
+- **`fault_addr(vein)` e `fault_call(endereco, args...)`**: endereço de uma vein como `stone` (`ptrtoint`) e chamada indireta com ABI C (`inttoptr` + `call`). Permite callbacks C (`qsort`, NativeActivity, ALooper, AChoreographer) e tabelas de funções (JNI). Teste: `ofs/tests/runtime/test_fault_addr_qsort.ofs`. Ponto fixo do self-host mantido (IR gen1 == gen2).
+- **stdlib `android.ofs`**: backend NativeActivity **100% OFS, sem nenhum `.c`** (o `android_native_app_glue` saiu): exporta `ANativeActivity_onCreate`, preenche `activity->callbacks` com `fault_addr`, entrada por `AInputQueue_attachLooper`, frames por `AChoreographer_postFrameCallback`, tudo na thread principal; ciclo de vida, toque, voltar, rotação, áreas das barras do sistema, `ANativeWindow` RGBA, `set_orientation` via JNI, caminhos do app, log.
+- **OAL v0 (Obsidian Android Language, `.oal`)**: `ofs/tools/oalc.ofs` gera `AndroidManifest.xml` + `<nome>_oal.ofs`; `app`, `use`/`attach`, `style` (`fill`, `ink`, `curve`, `opacity`, `pressed`), `screen` com `bar`, `button`, `button.icon`, `title`, `text`, `list`/`grid` com `from`, `card`, `row`, `portrait`/`landscape`, `fab`, `dpad`; ações `-> funcao(item)`, `@tela`, `@back`, `@quit`, `@portrait`/`@landscape`/`@auto`; `on back/pause/resume/rotate/low_memory`. Runtime `oal_runtime.ofs` (núcleo de layout do `oll.ofs`, `canvas`/`raster`/`ttf`/`icons`) + `oal_android.ofs`; `oal_x11.ofs` é experimental. Doc: `docs/OAL_REFERENCE.md` (+ `en/`, `es/`); teste: `ofs/tests/oal/run.sh`.
+- **`icons.ofs`**: ícones `PLUGIN`, `SAVE`, `FOLDER`, `PLAY`, `HAMBURGER`, `GAMEPAD` e apelidos em `by_name` (`plugins`, `import`, `load`, `config`...).
+- **stdlib**: novos `wav.ofs` (decodificador WAV PCM 8/16 bits e Microsoft ADPCM) e `audio_android.ofs` (saída AAudio com mixer na thread de áudio); `ttf.ofs` ganhou texto em várias linhas (`ttf.wrap`, `ttf.draw_wrapped`); `icons.ofs` ganhou ícones de interface (`AUTO`, `SKIP`, `EYE`, `ROTATE`, `TRASH`, `VOLUME`, `KEYBOARD`, `JOYSTICK`, `TABS` ...) e de motor (`WINDOWS`, `RENPY`, `UNITY`, `MOON`, `UNKNOWN`).
+
+### Fixed — compilador
+
+- **runtime**: `ofs_array_pop` agora devolve o elemento removido (antes devolvia lixo/0 para quem usava o valor).
+- **driver (`attach`)**: o caminho de `attach {F:...}` é normalizado (`./`, `../`, barras duplicadas) antes de checar duplicidade, então o mesmo arquivo não é incluído duas vezes.
+- **net**: `net.resolve` lê `struct addrinfo` do bionic (Android), onde `ai_addr`/`ai_canonname` estão em ordem diferente da glibc.
+- **llvmgen**: um `extern vein` definido no próprio módulo não é mais redeclarado (`invalid redefinition of 'ofs_alloc'` no `magma.ofs` e no `test_magma_full`).
 
 ### Added — stack gráfica 100% OFS (base do Catalyst Browser)
 

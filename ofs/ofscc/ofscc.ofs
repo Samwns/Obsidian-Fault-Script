@@ -143,7 +143,45 @@ vein file_exists(p: obsidian) -> bool {
     return true
 }
 
-vein expand_attaches(path: obsidian, src: obsidian) -> obsidian {
+// "a/b/../c/./d.ofs" -> "a/c/d.ofs": o mesmo arquivo alcancado por caminhos
+// diferentes (../core/x.ofs e x.ofs) so pode ser incluido uma vez.
+vein normalize_path(p: obsidian) -> obsidian {
+    forge parts: Array<obsidian> = []
+    forge n = ofs_str_len(p)
+    forge abs = n > 0 && ofs_str_char_at(p, 0) == 47
+    forge start = 0
+    forge i = 0
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(p, i) == 47) {
+            forge seg = ofs_str_substr(p, start, i - start)
+            if (ofs_str_eq(seg, "..")) {
+                forge np = ofs_array_len(parts)
+                if (np > 0 && !ofs_str_eq(ofs_array_get(parts, np - 1), "..")) {
+                    ofs_array_pop(parts)
+                } else if (!abs) {
+                    ofs_array_push(parts, seg)
+                }
+            } else if (ofs_str_len(seg) > 0 && !ofs_str_eq(seg, ".")) {
+                ofs_array_push(parts, seg)
+            }
+            start = i + 1
+        }
+        i++
+    }
+    forge out = ""
+    if (abs) { out = "/" }
+    forge k = 0
+    while (k < ofs_array_len(parts)) {
+        if (k > 0) { out = out + "/" }
+        out = out + ofs_array_get(parts, k)
+        k++
+    }
+    if (ofs_str_len(out) == 0) { return p }
+    return out
+}
+
+vein expand_attaches(path_in: obsidian, src: obsidian) -> obsidian {
+    forge path = normalize_path(path_in)
     if (path_seen(path)) { return "" }
     remember_path(path)
 
@@ -519,6 +557,8 @@ core main() {
     event_stage_start(STAGE_FORGE, "")
     t0 = clock()
     cg_open(c_output)
+    // OFSCC_TARGET: "android" -> aarch64-unknown-linux-android26, ou triple LLVM completo.
+    llvmgen.set_target(getenv("OFSCC_TARGET"))
     if (ofs_str_eq(compile_mode, "c")) {
         codegen.generate(root_id)
     } else {

@@ -364,6 +364,36 @@ Explicit FFI boundary with customizable symbol binding:
 rift vein c_strlen(s: obsidian) -> stone bind "strlen" abi c
 ```
 
+### Function addresses and indirect calls (`fault_addr`, `fault_call`)
+
+OFS has no function-pointer type, but it can take the address of a `vein` as a `stone` and call an address with the C ABI. Use it for C library callbacks (`qsort`, `ANativeActivity`, `ALooper`, `AChoreographer`) and C function tables (JNI).
+
+```ofs
+rift vein c_qsort(base: *stone, n: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
+
+vein ascending(a: *stone, b: *stone) -> stone {
+    forge x = 0
+    forge y = 0
+    fracture { x = *a; y = *b; }
+    if (x < y) { return -1 }
+    if (x > y) { return 1 }
+    return 0
+}
+
+core main() {
+    forge buf = ofs_alloc(64)
+    c_qsort(buf, 8, 8, fault_addr(ascending))
+    forge r = fault_call(fault_addr(ascending), buf, fault_step(buf, 1))
+}
+```
+
+- `fault_addr(name)` → `stone`: address of a module vein, `ns.vein` or `extern`/`rift vein` (with `bind`, the C symbol). IR: `ptrtoint ptr @symbol to i64`. Anything else is a semantic error.
+- `fault_call(address, args...)` → `stone`: indirect C-ABI call (`inttoptr` + `call i64`). Integer, pointer and `obsidian` arguments; the result is read as `i64`. No `float`/`double`.
+- Callback veins must use C-compatible parameters: `stone` for integers (32-bit ints arrive with undefined upper bits) and `*stone` for pointers.
+- Native builds only; the interpreter does not implement `fault_*`.
+- Test: `ofs/tests/runtime/test_fault_addr_qsort.ofs`.
+
+
 ---
 
 ## 12. Low-Level Execution Contexts

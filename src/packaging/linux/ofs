@@ -52,6 +52,9 @@ if [ -z "${OFS_STDLIB_PATH:-}" ]; then
     export OFS_STDLIB_PATH="$ROOT/stdlib"
   elif [ -d "$ROOT/../ofs/stdlib" ]; then
     export OFS_STDLIB_PATH="$ROOT/../ofs/stdlib"
+  elif [ -f "$ROOT/../../../ofs/stdlib/core.ofs" ]; then
+    # wrapper rodando direto do repo (src/packaging/linux/ofs)
+    export OFS_STDLIB_PATH="$(cd "$ROOT/../../../ofs/stdlib" && pwd)"
   elif [ -d "$HOME/.local/lib/ofs/stdlib" ]; then
     export OFS_STDLIB_PATH="$HOME/.local/lib/ofs/stdlib"
   elif [ -d "$HOME/.local/share/ofs/stdlib" ]; then
@@ -312,6 +315,8 @@ ${c_head}Subcomandos:${c_off}
   ${c_cmd}language [en|pt|es]${c_off} Mostra/altera o idioma da CLI
   ${c_cmd}ir|asm|tokens|ast${c_off}   Artefatos de depuracao do compilador
   ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o saida.ppm)
+  ${c_cmd}build --target android${c_off} APK Android de um .ofs ou .oal (--install, --serial, --manifest)
+  ${c_cmd}run <app.oal>${c_off}       Abre o app OAL numa janela de celular (X11)
   ${c_cmd}clean${c_off}               Limpa artefatos temporarios de build
   ${c_cmd}version${c_off}             Mostra a versao
   ${c_cmd}update${c_off}              Atualiza para a ultima release
@@ -336,6 +341,8 @@ ${c_head}Subcomandos:${c_off}
   ${c_cmd}language [en|pt|es]${c_off} Muestra/cambia el idioma de la CLI
   ${c_cmd}ir|asm|tokens|ast${c_off}   Artefactos de depuracion del compilador
   ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o salida.ppm)
+  ${c_cmd}build --target android${c_off} APK Android de un .ofs o .oal (--install, --serial, --manifest)
+  ${c_cmd}run <app.oal>${c_off}       Abre la app OAL en una ventana de movil (X11)
   ${c_cmd}clean${c_off}               Limpia artefactos temporales de build
   ${c_cmd}version${c_off}             Muestra la version
   ${c_cmd}update${c_off}              Actualiza a la ultima release
@@ -360,6 +367,8 @@ ${c_head}Subcommands:${c_off}
   ${c_cmd}language [en|pt|es]${c_off} Show/change the CLI language
   ${c_cmd}ir|asm|tokens|ast${c_off}   Compiler debug artifacts
   ${c_cmd}ui <file.oll>${c_off}       Render native OLL layout (-o output.ppm)
+  ${c_cmd}build --target android${c_off} Android APK from a .ofs or .oal (--install, --serial, --manifest)
+  ${c_cmd}run <app.oal>${c_off}       Open an OAL app in a phone-sized X11 window
   ${c_cmd}clean${c_off}               Clean temporary build artifacts
   ${c_cmd}version${c_off}             Print compiler version
   ${c_cmd}update${c_off}              Update to the latest release
@@ -503,6 +512,245 @@ run_update() {
   echo "Update completed to $latest"
 }
 
+# ---------------------------------------------------------------------------
+# Alvo Android (aarch64, API 26+): `ofs build --target android app.ofs|app.oal`
+# gera um APK sem Gradle/Java: NativeActivity + lib<nome>.so feita so de OFS
+# (stdlib android.ofs exporta ANativeActivity_onCreate; nenhum .c).
+#   --manifest <AndroidManifest.xml>  manifesto (padrao: o do .oal, o que esta
+#                                     ao lado do fonte, ou um gerado)
+#   --install                         adb install -r + abre a activity
+#   --serial <id>                     adb -s <id> (ou ANDROID_SERIAL)
+# Env: ANDROID_SDK/ANDROID_HOME/ANDROID_SDK_ROOT, OFS_SOURCE (pasta ofs/ do
+#      repo, para compilar ofscc/oalc do fonte), OFS_ANDROID_KEYSTORE.
+# ---------------------------------------------------------------------------
+android_die() { echo "ofs android: $*" >&2; exit 1; }
+android_step() { echo "==> $*" >&2; }
+
+android_src_dir() {
+  local c
+  for c in "${OFS_SOURCE:-}" "$ROOT/../../../ofs" "$ROOT/../ofs" "$ROOT/.." "$HOME/.local/lib/ofs/src"; do
+    if [ -n "$c" ] && [ -f "$c/ofscc/ofscc.ofs" ]; then
+      (cd "$c" && pwd)
+      return 0
+    fi
+  done
+  return 1
+}
+
+# ofscc com suporte a OFSCC_TARGET (o instalado pode ser anterior a isso).
+android_ofscc() {
+  local probe="$ANDROID_CACHE/probe.ofs"
+  printf 'core main() { echo("x") }\n' > "$probe"
+  if OFSCC_TARGET=android OFSCC_INPUT="$probe" OFSCC_MODE=ir OFSCC_C_OUT="$ANDROID_CACHE/probe.ll" "$OFSCC" >/dev/null 2>&1 \
+     && grep -q 'aarch64' "$ANDROID_CACHE/probe.ll" 2>/dev/null; then
+    A_OFSCC="$OFSCC"
+    return
+  fi
+  local src
+  src="$(android_src_dir)" || android_die "o ofscc instalado nao tem OFSCC_TARGET e o fonte do OFS nao foi achado (defina OFS_SOURCE=<repo>/ofs)"
+  A_OFSCC="$ANDROID_CACHE/ofscc"
+  if [ -x "$A_OFSCC" ] && [ -z "$(find "$src/ofscc" -name '*.ofs' -newer "$A_OFSCC" -print -quit)" ]; then
+    return
+  fi
+  android_step "compilando ofscc do fonte ($src/ofscc)"
+  local ll="$ANDROID_CACHE/ofscc.ll"
+  ( ulimit -St 300 2>/dev/null || true
+    OFSCC_INPUT="$src/ofscc/ofscc.ofs" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" >"$ANDROID_CACHE/ofscc.log" 2>&1 ) \
+    || { tail -20 "$ANDROID_CACHE/ofscc.log" >&2; android_die "falha ao compilar o ofscc"; }
+  native_link "$ll" "$A_OFSCC" linux
+  chmod +x "$A_OFSCC"
+  rm -f "$ll"
+}
+
+# Compila uma ferramenta .ofs do repo (ex.: tools/oalc.ofs) para o host.
+android_tool() {
+  local name="$1" src
+  src="$(android_src_dir)" || android_die "fonte do OFS nao encontrado para $name (defina OFS_SOURCE)"
+  local tool_src="$src/tools/$name.ofs"
+  [ -f "$tool_src" ] || android_die "$tool_src nao existe"
+  local bin="$ANDROID_CACHE/$name"
+  if [ ! -x "$bin" ] || [ -n "$(find "$src/tools" "$OFS_STDLIB_PATH" -name '*.ofs' -newer "$bin" -print -quit)" ]; then
+    android_step "compilando $name"
+    local ll="$ANDROID_CACHE/$name.ll"
+    OFSCC_INPUT="$tool_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$A_OFSCC" >"$ANDROID_CACHE/$name.log" 2>&1 \
+      || { tail -20 "$ANDROID_CACHE/$name.log" >&2; android_die "falha ao compilar $name"; }
+    native_link "$ll" "$bin" linux
+    chmod +x "$bin"
+    rm -f "$ll"
+  fi
+  printf '%s\n' "$bin"
+}
+
+android_ir() {
+  OFSCC_TARGET=android OFSCC_INPUT="$1" OFSCC_MODE=ir OFSCC_C_OUT="$2" "$A_OFSCC" >"$2.log" 2>&1 \
+    || { cat "$2.log" >&2; android_die "ofscc falhou em $1"; }
+  [ -s "$2" ] || { cat "$2.log" >&2; android_die "ofscc nao gerou $2"; }
+}
+
+android_build() {
+  local input="$1" output="$2"
+  local SDK="${ANDROID_SDK:-${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}}"
+  [ -d "$SDK" ] || android_die "Android SDK nao encontrado (defina ANDROID_SDK); precisa de ndk/, build-tools/ e platforms/"
+  local NDK BT PLAT
+  NDK="$(ls -d "$SDK"/ndk/* 2>/dev/null | sort -V | tail -1)"
+  BT="$(ls -d "$SDK"/build-tools/* 2>/dev/null | sort -V | tail -1)"
+  PLAT="$(ls -d "$SDK"/platforms/android-* 2>/dev/null | sort -V | tail -1)"
+  [ -n "$NDK" ] && [ -d "$NDK" ] || android_die "NDK nao encontrado em $SDK/ndk"
+  [ -x "$BT/aapt2" ] || android_die "build-tools (aapt2/zipalign/apksigner) nao encontrado em $SDK/build-tools"
+  [ -f "$PLAT/android.jar" ] || android_die "android.jar nao encontrado em $SDK/platforms"
+  local TRIPLE="aarch64-linux-android26"
+  local CC="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+  [ -x "$CC" ] || android_die "clang do NDK nao encontrado: $CC"
+
+  ANDROID_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/ofs/android"
+  mkdir -p "$ANDROID_CACHE"
+  android_ofscc
+
+  local abs_input
+  abs_input="$(cd "$(dirname "$input")" && pwd)/$(basename "$input")"
+  local in_dir; in_dir="$(dirname "$abs_input")"
+  local base="${abs_input##*/}"; local app="${base%.*}"
+  local OUT="${OFS_ANDROID_BUILD:-$in_dir/build/android/$app}"
+  rm -rf "$OUT/obj" "$OUT/apk"
+  mkdir -p "$OUT/obj" "$OUT/apk/lib/arm64-v8a"
+  local entry="$abs_input"
+  local manifest="$android_manifest"
+
+  case "$abs_input" in
+    *.oal)
+      local oalc; oalc="$(android_tool oalc)"
+      android_step "oalc: $base -> AndroidManifest.xml + ${app}_oal.ofs"
+      OALC_INPUT="$abs_input" OALC_OUT_DIR="$OUT" OALC_TARGET=android "$oalc" \
+        || android_die "oalc falhou em $abs_input"
+      entry="$OUT/${app}_oal.ofs"
+      [ -n "$manifest" ] || manifest="$OUT/AndroidManifest.xml"
+      # icone (app icon "x.png") -> res/mipmap/ic_launcher.png; assets "dir" -> assets/
+      rm -rf "$OUT/res" "$OUT/assets"
+      if [ -f "$OUT/oal_icon.txt" ]; then
+        mkdir -p "$OUT/res/mipmap"
+        cp "$(cat "$OUT/oal_icon.txt")" "$OUT/res/mipmap/ic_launcher.png" || android_die "icone nao encontrado"
+      fi
+      if [ -f "$OUT/oal_assets.txt" ]; then
+        mkdir -p "$OUT/assets"
+        cp -r "$(cat "$OUT/oal_assets.txt")"/. "$OUT/assets/" || android_die "pasta de assets nao encontrada"
+      fi
+      ;;
+  esac
+  if [ -z "$manifest" ]; then
+    if [ -f "$in_dir/AndroidManifest.xml" ]; then
+      manifest="$in_dir/AndroidManifest.xml"
+    elif [ -f "$in_dir/android/AndroidManifest.xml" ]; then
+      manifest="$in_dir/android/AndroidManifest.xml"
+    else
+      manifest="$OUT/AndroidManifest.xml"
+      local pkgname; pkgname="$(printf '%s' "$app" | tr -c 'a-zA-Z0-9\n' '_' | tr 'A-Z' 'a-z')"
+      cat > "$manifest" <<MAN
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.ofs.$pkgname" android:versionCode="1" android:versionName="0.1.0">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
+    <application android:label="$app" android:hasCode="false" android:extractNativeLibs="true"
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        <activity android:name="android.app.NativeActivity" android:label="$app" android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode">
+            <meta-data android:name="android.app.lib_name" android:value="$pkgname" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+MAN
+    fi
+  fi
+  [ -f "$manifest" ] || android_die "manifesto nao encontrado: $manifest"
+  local libname pkg
+  libname="$(sed -n 's/.*android.app.lib_name"[^>]*android:value="\([^"]*\)".*/\1/p' "$manifest" | head -1)"
+  [ -n "$libname" ] || libname="main"
+  pkg="$(sed -n 's/.*package="\([^"]*\)".*/\1/p' "$manifest" | head -1)"
+  [ -n "$output" ] || output="$OUT/$app-debug.apk"
+  case "$output" in /*) ;; *) output="$PWD/$output" ;; esac
+
+  android_step "IR aarch64: runtime magma"
+  local magma_src="$OFS_STDLIB_PATH/runtime/magma.ofs"
+  [ -f "$magma_src" ] || android_die "runtime nao encontrado: $magma_src"
+  local magma_o="$ANDROID_CACHE/magma-aarch64.o"
+  if [ ! -f "$magma_o" ] || [ "$magma_src" -nt "$magma_o" ] || [ "$A_OFSCC" -nt "$magma_o" ]; then
+    android_ir "$magma_src" "$ANDROID_CACHE/magma.ll"
+    "$CC" --target="$TRIPLE" -O2 -fPIC -Wno-override-module -c "$ANDROID_CACHE/magma.ll" -o "$magma_o"
+  fi
+  android_step "IR aarch64: $(basename "$entry")"
+  android_ir "$entry" "$OUT/obj/app.ll"
+
+  android_step "clang do NDK ($TRIPLE) -> lib$libname.so"
+  "$CC" --target="$TRIPLE" -O2 -fPIC -Wno-override-module -c "$OUT/obj/app.ll" -o "$OUT/obj/app.o"
+  # -init: o loader roda __ofs_init_globals (numa .so nao ha main()).
+  # app.o antes do magma.o: com --allow-multiple-definition vale o do app.
+  # 16 KB de pagina (Android 15+; inofensivo antes).
+  "$CC" --target="$TRIPLE" -shared -o "$OUT/apk/lib/arm64-v8a/lib$libname.so" \
+    "$OUT/obj/app.o" "$magma_o" \
+    -Wl,--allow-multiple-definition -Wl,-init,__ofs_init_globals \
+    -u ANativeActivity_onCreate -Wl,-z,max-page-size=16384 \
+    -landroid -llog -laaudio -lm
+
+  android_step "APK: aapt2 + zip + zipalign + apksigner"
+  local res_args=()
+  if [ -d "$OUT/res" ]; then
+    "$BT/aapt2" compile --dir "$OUT/res" -o "$OUT/res.zip"
+    res_args=("$OUT/res.zip")
+  fi
+  rm -f "$OUT/unsigned.apk" "$OUT/aligned.apk"
+  "$BT/aapt2" link -o "$OUT/unsigned.apk" --manifest "$manifest" -I "$PLAT/android.jar" "${res_args[@]}"
+  if [ -d "$OUT/assets" ]; then
+    (cd "$OUT" && zip -q -r "$OUT/unsigned.apk" assets)
+  fi
+  (cd "$OUT/apk" && zip -q -0 -r "$OUT/unsigned.apk" lib)
+  "$BT/zipalign" -f -P 16 4 "$OUT/unsigned.apk" "$OUT/aligned.apk"
+  local KS="${OFS_ANDROID_KEYSTORE:-$HOME/.android/debug.keystore}"
+  if [ ! -f "$KS" ]; then
+    KS="$ANDROID_CACHE/debug.keystore"
+    if [ ! -f "$KS" ]; then
+      android_step "gerando keystore de debug ($KS)"
+      keytool -genkeypair -keystore "$KS" -storepass android -keypass android \
+        -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+        -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
+    fi
+  fi
+  mkdir -p "$(dirname "$output")"
+  "$BT/apksigner" sign --ks "$KS" --ks-pass pass:android --key-pass pass:android \
+    --ks-key-alias androiddebugkey --out "$output" "$OUT/aligned.apk"
+  rm -f "$OUT/unsigned.apk" "$OUT/aligned.apk" "$output.idsig"
+  echo "APK: $output"
+
+  if [ "$android_install" = true ]; then
+    local ADB="$SDK/platform-tools/adb"
+    [ -x "$ADB" ] || ADB="$(command -v adb || true)"
+    [ -n "$ADB" ] || android_die "adb nao encontrado"
+    local ADBS=("$ADB")
+    local serial="${android_serial:-${ANDROID_SERIAL:-}}"
+    [ -n "$serial" ] && ADBS+=(-s "$serial")
+    android_step "instalando e abrindo $pkg"
+    "${ADBS[@]}" install -r "$output"
+    "${ADBS[@]}" shell am start -n "$pkg/android.app.NativeActivity"
+  fi
+}
+
+# .oal no desktop: oalc (OALC_TARGET=desktop) gera <nome>_oal.ofs com main()
+# que abre a janela X11 do tamanho de um celular (backend oal_x11.ofs).
+oal_desktop_entry() {
+  local in="$1" dir="$2"
+  ANDROID_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/ofs/android"
+  mkdir -p "$ANDROID_CACHE" "$dir"
+  android_ofscc
+  local oalc; oalc="$(android_tool oalc)"
+  local abs; abs="$(cd "$(dirname "$in")" && pwd)/$(basename "$in")"
+  OALC_INPUT="$abs" OALC_OUT_DIR="$dir" OALC_TARGET=desktop "$oalc" >&2 || android_die "oalc falhou em $in"
+  local b="${abs##*/}"
+  OAL_ENTRY="$dir/${b%.*}_oal.ofs"
+  OFSCC="$A_OFSCC"
+}
+
 need_ofscc() {
   if [ ! -x "$OFSCC" ]; then
     echo "ofs: self-hosted compiler not found next to wrapper: $OFSCC" >&2
@@ -545,6 +793,9 @@ input=""
 output=""
 target_os="linux"
 run_native=false
+android_manifest=""
+android_install=false
+android_serial=""
 
 case "$mode" in
   check|tokens|ast|ir|asm|build|run|clean|ui|test|twin|polish) ;;
@@ -571,6 +822,18 @@ while [ "$#" -gt 0 ]; do
     --native)
       run_native=true
       shift
+      ;;
+    --manifest)
+      android_manifest="${2:-}"
+      shift 2
+      ;;
+    --install)
+      android_install=true
+      shift
+      ;;
+    --serial)
+      android_serial="${2:-}"
+      shift 2
       ;;
     *)
       if [ -z "$input" ]; then
@@ -630,6 +893,10 @@ case "$mode" in
     echo "Clean complete."
     ;;
   build)
+    if [ "$target_os" = "android" ]; then
+      android_build "$input" "$output"
+      exit 0
+    fi
     if [ "$target_os" = "windows" ] || [ "$target_os" = "win64" ]; then
       case "${output:-$name}" in *.exe) output="${output:-$name}" ;; *) output="${output:-$name}.exe" ;; esac
     else
@@ -648,6 +915,10 @@ EOF
         OFSCC_INPUT="$oll_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
         rm -f "$oll_src"
         ;;
+      *.oal)
+        oal_desktop_entry "$input" "$work-oal"
+        OFSCC_INPUT="$OAL_ENTRY" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
+        ;;
       *)
         OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
         ;;
@@ -655,11 +926,12 @@ EOF
     native_link "$ll" "$output" "$target_os"
     chmod +x "$output" 2>/dev/null || true
     rm -f "$ll"
+    rm -rf "$work-oal"
     echo "Built: $output"
     ;;
   run)
     case "$input" in
-      *.oll)
+      *.oll|*.oal)
         run_native=true
         ;;
     esac
@@ -679,6 +951,10 @@ core main() {
 }
 EOF
           OFSCC_INPUT="$oll_src" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC" >&2
+          ;;
+        *.oal)
+          oal_desktop_entry "$input" "$run_tmp/oal"
+          OFSCC_INPUT="$OAL_ENTRY" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC" >&2
           ;;
         *)
           OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC" >&2

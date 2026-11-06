@@ -1,0 +1,7 @@
+// Logica de teste da OAL (usada por use_form.oal e attach_form.oal).
+namespace dados {
+    vein itens_count() -> stone { return 3 }
+    vein itens_nome(i: stone) -> obsidian { return "Item " + ofs_stone_to_obsidian(i) }
+}
+vein tocar(i: stone) -> void { oal.log("tocou " + ofs_stone_to_obsidian(i)) }
+vein sair() -> void { oal.quit() }

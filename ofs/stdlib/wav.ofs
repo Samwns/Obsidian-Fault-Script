@@ -1,0 +1,298 @@
+// OFS Standard Library — wav: decodificador WAV (RIFF) em OFS puro
+//
+//   forge s = wav.load("/caminho/som.wav")          // -1 se falhar
+//   forge s2 = wav.decode(ptr, len)                  // de um bloco na memoria
+//   wav.pcm(s)      // ponteiro para amostras i16 little-endian intercaladas
+//   wav.frames(s)   // quadros (amostras por canal)
+//   wav.channels(s) // 1 ou 2
+//   wav.rate(s)     // Hz
+//   wav.free(s)
+//
+// Formatos: PCM 8/16 bits (formato 1) e Microsoft ADPCM (formato 2, usado
+// por muitos jogos de PC dos anos 90). Sem dependencias de plataforma: a
+// saida de som fica em audio_android.ofs (AAudio).
+
+extern vein fopen(path: obsidian, mode: obsidian) -> *stone
+extern vein fclose(f: *stone) -> stone
+extern vein fread(buf: *stone, sz: stone, n: stone, f: *stone) -> stone
+extern vein fseek(f: *stone, offset: stone, whence: stone) -> stone
+extern vein ftell(f: *stone) -> stone
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+
+namespace wav {
+    forge _pcm: Array<stone> = []
+    forge _frames: Array<stone> = []
+    forge _ch: Array<stone> = []
+    forge _rate: Array<stone> = []
+    forge last_error: obsidian = ""
+
+    vein _gb(base: stone, i: stone) -> stone {
+        forge p: *u8 = (base + i) as *u8
+        forge v: u8 = 0 as u8
+        fracture {
+            v = *p;
+        }
+        return (v as stone) & 255
+    }
+
+    vein _pb(base: stone, i: stone, v: stone) -> void {
+        forge p: *u8 = (base + i) as *u8
+        forge b: u8 = (v & 255) as u8
+        fracture {
+            *p = b;
+        }
+    }
+
+    vein _u16(b: stone, i: stone) -> stone { return _gb(b, i) | (_gb(b, i + 1) << 8) }
+    vein _i16(b: stone, i: stone) -> stone {
+        forge v = _u16(b, i)
+        if (v >= 32768) { return v - 65536 }
+        return v
+    }
+    vein _u32(b: stone, i: stone) -> stone { return _u16(b, i) | (_u16(b, i + 2) << 16) }
+
+    // amostra i16 em out[k] (k em amostras)
+    vein _put(out: stone, k: stone, v: stone) -> void {
+        if (v > 32767) { v = 32767 }
+        if (v < 0 - 32768) { v = 0 - 32768 }
+        forge u = v & 65535
+        _pb(out, k * 2, u)
+        _pb(out, k * 2 + 1, u >> 8)
+    }
+
+    // divisao por 256 truncando para zero (como o decodificador de referencia)
+    vein _sar8(v: stone) -> stone {
+        if (v >= 0) { return v / 256 }
+        return 0 - ((0 - v) / 256)
+    }
+
+    vein pcm(id: stone) -> stone { return ofs_array_get(_pcm, id) }
+    vein frames(id: stone) -> stone { return ofs_array_get(_frames, id) }
+    vein channels(id: stone) -> stone { return ofs_array_get(_ch, id) }
+    vein rate(id: stone) -> stone { return ofs_array_get(_rate, id) }
+
+    vein free(id: stone) -> void {
+        if (id < 0 || id >= ofs_array_len(_pcm)) { return }
+        forge p = ofs_array_get(_pcm, id)
+        if (p != 0) { ofs_free(p as *stone) }
+        ofs_array_set(_pcm, id, 0)
+        ofs_array_set(_frames, id, 0)
+    }
+
+    vein _new(p: stone, frames: stone, ch: stone, rate: stone) -> stone {
+        // reaproveita uma entrada livre
+        forge i = 0
+        while (i < ofs_array_len(_pcm)) {
+            if (ofs_array_get(_pcm, i) == 0) {
+                ofs_array_set(_pcm, i, p)
+                ofs_array_set(_frames, i, frames)
+                ofs_array_set(_ch, i, ch)
+                ofs_array_set(_rate, i, rate)
+                return i
+            }
+            i++
+        }
+        ofs_array_push(_pcm, p)
+        ofs_array_push(_frames, frames)
+        ofs_array_push(_ch, ch)
+        ofs_array_push(_rate, rate)
+        return ofs_array_len(_pcm) - 1
+    }
+
+    vein load(path: obsidian) -> stone {
+        forge f = fopen(path, "rb")
+        if (f == null) {
+            last_error = "nao abriu " + path
+            return -1
+        }
+        fseek(f, 0, 2)
+        forge n = ftell(f)
+        fseek(f, 0, 0)
+        forge buf = ofs_alloc(n + 16)
+        fread(buf, 1, n, f)
+        fclose(f)
+        forge id = decode(buf as stone, n)
+        ofs_free(buf)
+        return id
+    }
+
+    vein decode(b: stone, n: stone) -> stone {
+        if (n < 44 || _u32(b, 0) != 1179011410 || _u32(b, 8) != 1163280727) {
+            last_error = "nao e RIFF/WAVE"
+            return -1
+        }
+        forge fmt = -1
+        forge data = -1
+        forge dlen = 0
+        forge p = 12
+        while (p + 8 <= n) {
+            forge tag = _u32(b, p)
+            forge len = _u32(b, p + 4)
+            if (tag == 544501094) { fmt = p + 8 }          // "fmt "
+            if (tag == 1635017060) {                        // "data"
+                data = p + 8
+                dlen = len
+                if (data + dlen > n) { dlen = n - data }
+            }
+            p = p + 8 + len + (len & 1)
+        }
+        if (fmt < 0 || data < 0) {
+            last_error = "sem fmt/data"
+            return -1
+        }
+        forge tagf = _u16(b, fmt)
+        forge ch = _u16(b, fmt + 2)
+        forge rate = _u32(b, fmt + 4)
+        forge align = _u16(b, fmt + 12)
+        forge bits = _u16(b, fmt + 14)
+        if (ch < 1 || ch > 2) {
+            last_error = "canais nao suportados"
+            return -1
+        }
+        if (tagf == 1 && bits == 16) {
+            forge fr = dlen / (2 * ch)
+            forge out = ofs_alloc(fr * ch * 2 + 8) as stone
+            forge i = 0
+            forge nb = fr * ch * 2
+            while (i + 8 <= nb) {
+                forge sp: *stone = (b + data + i) as *stone
+                forge dp: *stone = (out + i) as *stone
+                forge w = 0
+                fracture {
+                    w = *sp;
+                    *dp = w;
+                }
+                i = i + 8
+            }
+            while (i < nb) {
+                _pb(out, i, _gb(b, data + i))
+                i++
+            }
+            return _new(out, fr, ch, rate)
+        }
+        if (tagf == 1 && bits == 8) {
+            forge fr8 = dlen / ch
+            forge out8 = ofs_alloc(fr8 * ch * 2 + 8) as stone
+            forge k = 0
+            while (k < fr8 * ch) {
+                _put(out8, k, (_gb(b, data + k) - 128) * 256)
+                k++
+            }
+            return _new(out8, fr8, ch, rate)
+        }
+        if (tagf == 2) { return _adpcm(b, fmt, data, dlen, ch, rate, align) }
+        last_error = "formato WAV nao suportado: " + ofs_stone_to_obsidian(tagf) + "/" + ofs_stone_to_obsidian(bits)
+        return -1
+    }
+
+    // ── Microsoft ADPCM ──────────────────────────────────────────────────
+    forge _adapt: Array<stone> = [230, 230, 230, 230, 307, 409, 512, 614, 768, 614, 512, 409, 307, 230, 230, 230]
+
+    vein _adpcm(b: stone, fmt: stone, data: stone, dlen: stone, ch: stone, rate: stone, align: stone) -> stone {
+        forge spb = _u16(b, fmt + 18)                 // amostras por bloco
+        forge ncoef = _u16(b, fmt + 20)
+        forge c1: Array<stone> = []
+        forge c2: Array<stone> = []
+        forge i = 0
+        while (i < ncoef) {
+            ofs_array_push(c1, _i16(b, fmt + 22 + i * 4))
+            ofs_array_push(c2, _i16(b, fmt + 24 + i * 4))
+            i++
+        }
+        if (ncoef == 0 || align <= 0 || spb <= 0) {
+            last_error = "ADPCM sem coeficientes"
+            return -1
+        }
+        forge blocks = dlen / align
+        forge rest = dlen - blocks * align
+        forge total = blocks * spb
+        if (rest > 7 * ch) { total = total + 2 + ((rest - 7 * ch) * 2) / ch }
+        forge out = ofs_alloc(total * ch * 2 + 16) as stone
+        forge k = 0                                   // amostras escritas (todas as faixas)
+        forge pred: Array<stone> = [0, 0]
+        forge delta: Array<stone> = [0, 0]
+        forge s1: Array<stone> = [0, 0]
+        forge s2: Array<stone> = [0, 0]
+        forge bp = data
+        forge end = data + dlen
+        while (bp + 7 * ch <= end) {
+            forge bend = bp + align
+            if (bend > end) { bend = end }
+            forge q = bp
+            forge c = 0
+            while (c < ch) {
+                forge pi = _gb(b, q + c)
+                if (pi >= ncoef) { pi = 0 }
+                ofs_array_set(pred, c, pi)
+                c++
+            }
+            q = q + ch
+            c = 0
+            while (c < ch) {
+                ofs_array_set(delta, c, _i16(b, q + c * 2))
+                c++
+            }
+            q = q + 2 * ch
+            c = 0
+            while (c < ch) {
+                ofs_array_set(s1, c, _i16(b, q + c * 2))
+                c++
+            }
+            q = q + 2 * ch
+            c = 0
+            while (c < ch) {
+                ofs_array_set(s2, c, _i16(b, q + c * 2))
+                c++
+            }
+            q = q + 2 * ch
+            // as duas primeiras amostras do bloco: s2 e depois s1
+            c = 0
+            while (c < ch) {
+                _put(out, k, ofs_array_get(s2, c))
+                k++
+                c++
+            }
+            c = 0
+            while (c < ch) {
+                _put(out, k, ofs_array_get(s1, c))
+                k++
+                c++
+            }
+            // nibbles: alto primeiro; em estereo alternam canal 0/1
+            forge nib_i = 0
+            while (q < bend) {
+                forge byte = _gb(b, q)
+                forge h = 0
+                while (h < 2) {
+                    forge nib = (byte >> 4) & 15
+                    if (h == 1) { nib = byte & 15 }
+                    forge cc = nib_i % ch
+                    forge sn = nib
+                    if (sn >= 8) { sn = sn - 16 }
+                    forge pc = ofs_array_get(pred, cc)
+                    forge a1 = ofs_array_get(s1, cc)
+                    forge a2 = ofs_array_get(s2, cc)
+                    forge d = ofs_array_get(delta, cc)
+                    forge pv = _sar8(a1 * ofs_array_get(c1, pc) + a2 * ofs_array_get(c2, pc)) + sn * d
+                    if (pv > 32767) { pv = 32767 }
+                    if (pv < 0 - 32768) { pv = 0 - 32768 }
+                    ofs_array_set(s2, cc, a1)
+                    ofs_array_set(s1, cc, pv)
+                    forge nd = _sar8(ofs_array_get(_adapt, nib) * d)
+                    if (nd < 16) { nd = 16 }
+                    ofs_array_set(delta, cc, nd)
+                    if (k < total * ch) { _put(out, k, pv) }
+                    k++
+                    nib_i++
+                    h++
+                }
+                q++
+            }
+            bp = bp + align
+        }
+        forge fr = k / ch
+        if (fr > total) { fr = total }
+        return _new(out, fr, ch, rate)
+    }
+}

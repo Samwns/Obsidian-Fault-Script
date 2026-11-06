@@ -51,10 +51,19 @@ namespace net {
             ai = *res;
         }
         if (ai == 0) { return "" }
+        // struct addrinfo: glibc tem ai_addr em +24 e ai_canonname em +32;
+        // bionic (Android) inverte (ai_canonname em +24, ai_addr em +32).
+        // Sem AI_CANONNAME o canonname e NULL, entao: +24 se nao-nulo, senao +32.
         forge pa: *stone = fault_step(ai as *stone, 3)
+        forge pb: *stone = fault_step(ai as *stone, 4)
         forge sa = 0
         fracture {
             sa = *pa;
+        }
+        if (sa == 0) {
+            fracture {
+                sa = *pb;
+            }
         }
         forge w = 0
         forge psa: *stone = sa as *stone

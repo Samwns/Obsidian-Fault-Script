@@ -1,0 +1,1212 @@
+// oalc — compilador da OAL (Obsidian Android Language), v0
+//
+//   OALC_INPUT=app.oal OALC_OUT_DIR=build OALC_TARGET=android|desktop oalc
+//
+// Gera, em OALC_OUT_DIR:
+//   AndroidManifest.xml   (bloco `app`)
+//   <nome>_oal.ofs        (telas, estilos, acoes e ciclo de vida em OFS; usa
+//                          o stdlib oal_runtime + backend oal_android/oal_x11)
+//   oal_icon.txt          (caminho absoluto do icone PNG, se houver; a CLI
+//                          copia para res/mipmap)
+// Sintaxe: docs/OAL_REFERENCE.md.
+
+attach {F:web_language_common.ofs}
+attach {F:fileio.ofs}
+
+extern vein getenv(name: obsidian) -> obsidian
+extern vein exit(code: stone) -> void
+
+forge _errors: stone = 0
+forge _line_no: stone = 0
+forge _code: Array<obsidian> = []
+forge _actions: Array<obsidian> = []
+forge _screens: Array<obsidian> = []
+forge _styles: Array<obsidian> = []      // nomes de classe; id = indice + 5
+forge _style_code: Array<obsidian> = []
+forge _uses: Array<obsidian> = []
+forge _events: Array<obsidian> = []      // "ON_BACK|chamada"
+forge _tmp: stone = 0
+forge _canvas_draw: Array<obsidian> = []    // por canvas: funcao de desenho
+forge _canvas_touch: Array<obsidian> = []   // por canvas: funcao de toque
+forge _base_dir: obsidian = ""
+
+// app
+forge _app_name: obsidian = "App"
+forge _app_pkg: obsidian = "org.ofs.app"
+forge _app_version: obsidian = "0.1.0"
+forge _app_code: obsidian = ""
+forge _app_icon: obsidian = ""
+forge _app_assets: obsidian = ""
+forge _app_orientation: obsidian = "any"
+forge _app_fullscreen: bool = false
+forge _app_perms: Array<obsidian> = []
+
+// linhas de entrada (sem comentarios/vazias), indentacao e numero
+forge _lines: Array<obsidian> = []
+forge _indents: Array<stone> = []
+forge _numbers: Array<stone> = []
+
+vein err(msg: obsidian) -> void {
+    echo("oalc: linha " + ofs_stone_to_obsidian(_line_no) + ": " + msg)
+    _errors++
+}
+
+vein emit(line: obsidian) -> void { ofs_array_push(_code, line) }
+
+vein new_tmp() -> obsidian {
+    _tmp++
+    return "_oal_v" + ofs_stone_to_obsidian(_tmp)
+}
+
+// ── tokens ───────────────────────────────────────────────────────────────
+// Palavras separadas por espaco; "texto" (com \" dentro) e um token so,
+// mesmo colado: titulo="Meu jogo". O token guarda as aspas.
+vein tokens(line: obsidian) -> Array<obsidian> {
+    forge out: Array<obsidian> = []
+    forge n = ofs_str_len(line)
+    forge i = 0
+    while (i < n) {
+        forge c = ofs_str_char_at(line, i)
+        if (c == 32 || c == 9) {
+            i++
+            continue
+        }
+        forge start = i
+        forge in_q = false
+        while (i < n) {
+            forge d = ofs_str_char_at(line, i)
+            if (in_q) {
+                if (d == 92) {
+                    i = i + 2
+                    continue
+                }
+                if (d == 34) { in_q = false }
+            } else {
+                if (d == 32 || d == 9) { break }
+                if (d == 34) { in_q = true }
+            }
+            i++
+        }
+        if (i > n) { i = n }
+        ofs_array_push(out, ofs_str_substr(line, start, i - start))
+    }
+    return out
+}
+
+vein tok(t: Array<obsidian>, i: stone) -> obsidian {
+    if (i < 0 || i >= ofs_array_len(t)) { return "" }
+    return ofs_array_get(t, i)
+}
+
+vein is_str(t: obsidian) -> bool {
+    return ofs_str_len(t) >= 2 && ofs_str_char_at(t, 0) == 34
+}
+
+// Conteudo de um token "..." sem as aspas (escapes preservados).
+vein str_inner(t: obsidian) -> obsidian {
+    if (!is_str(t)) { return t }
+    return ofs_str_substr(t, 1, ofs_str_len(t) - 2)
+}
+
+vein index_of_char(s: obsidian, ch: stone) -> stone {
+    forge i = 0
+    forge n = ofs_str_len(s)
+    while (i < n) {
+        if (ofs_str_char_at(s, i) == ch) { return i }
+        i++
+    }
+    return -1
+}
+
+// Nome do widget sem classe: "button.primario" -> "button"
+vein kind_of(word: obsidian) -> obsidian {
+    forge p = index_of_char(word, 46)
+    forge k = word
+    if (p >= 0) { k = ofs_str_substr(word, 0, p) }
+    if (ofs_str_eq(k, "botao")) { return "button" }
+    if (ofs_str_eq(k, "barra")) { return "bar" }
+    if (ofs_str_eq(k, "texto")) { return "text" }
+    if (ofs_str_eq(k, "titulo")) { return "title" }
+    if (ofs_str_eq(k, "lista")) { return "list" }
+    if (ofs_str_eq(k, "grade")) { return "grid" }
+    if (ofs_str_eq(k, "cartao")) { return "card" }
+    if (ofs_str_eq(k, "linha")) { return "row" }
+    if (ofs_str_eq(k, "vazio")) { return "empty" }
+    if (ofs_str_eq(k, "tela")) { return "screen" }
+    if (ofs_str_eq(k, "retrato")) { return "portrait" }
+    if (ofs_str_eq(k, "paisagem")) { return "landscape" }
+    if (ofs_str_eq(k, "estilo")) { return "style" }
+    return k
+}
+
+// Classe do widget: "button.primario" -> "primario". Com estilo e icone
+// juntos ("fab.ctrl.icon") a classe e "ctrl" e is_icon_word() diz que e so icone.
+vein class_of(word: obsidian) -> obsidian {
+    forge p = index_of_char(word, 46)
+    if (p < 0) { return "" }
+    forge c = ofs_str_substr(word, p + 1, ofs_str_len(word) - p - 1)
+    forge n = ofs_str_len(c)
+    if (n > 5 && ofs_str_eq(ofs_str_substr(c, n - 5, 5), ".icon")) { return ofs_str_substr(c, 0, n - 5) }
+    if (n > 6 && ofs_str_eq(ofs_str_substr(c, n - 6, 6), ".icone")) { return ofs_str_substr(c, 0, n - 6) }
+    return c
+}
+
+vein is_icon_word(word: obsidian) -> bool {
+    forge n = ofs_str_len(word)
+    if (n > 5 && ofs_str_eq(ofs_str_substr(word, n - 5, 5), ".icon")) { return true }
+    if (n > 6 && ofs_str_eq(ofs_str_substr(word, n - 6, 6), ".icone")) { return true }
+    return false
+}
+
+// ── valores ──────────────────────────────────────────────────────────────
+// "texto" -> literal; item.campo -> <fonte>_campo(<idx>); outro -> expressao OFS.
+vein value_expr(v: obsidian, src: obsidian, idx: obsidian) -> obsidian {
+    if (is_str(v)) { return v }
+    if (ofs_str_len(v) == 0) { return "\"\"" }
+    if (wl_starts_with(v, "item.")) {
+        if (ofs_str_len(src) == 0) {
+            err("'" + v + "' fora de list/grid com 'from'")
+            return "\"\""
+        }
+        return src + "_" + ofs_str_substr(v, 5, ofs_str_len(v) - 5) + "(" + idx + ")"
+    }
+    return v
+}
+
+// key=valor nos tokens a partir de `from`; "" se nao houver.
+vein attr(t: Array<obsidian>, from: stone, key: obsidian) -> obsidian {
+    forge i = from
+    forge kl = ofs_str_len(key)
+    while (i < ofs_array_len(t)) {
+        forge w = tok(t, i)
+        if (ofs_str_eq(w, "->")) { return "" }
+        if (ofs_str_len(w) > kl + 1 && ofs_str_eq(ofs_str_substr(w, 0, kl + 1), key + "=")) {
+            return ofs_str_substr(w, kl + 1, ofs_str_len(w) - kl - 1)
+        }
+        i++
+    }
+    return ""
+}
+
+vein attr2(t: Array<obsidian>, from: stone, k1: obsidian, k2: obsidian) -> obsidian {
+    forge v = attr(t, from, k1)
+    if (ofs_str_len(v) == 0) { v = attr(t, from, k2) }
+    return v
+}
+
+// n-esimo token "..." posicional (antes de ->), ou "".
+vein positional_str(t: Array<obsidian>, from: stone, n: stone) -> obsidian {
+    forge i = from
+    forge seen = 0
+    while (i < ofs_array_len(t)) {
+        forge w = tok(t, i)
+        if (ofs_str_eq(w, "->")) { return "" }
+        if (is_str(w)) {
+            if (seen == n) { return w }
+            seen++
+        }
+        i++
+    }
+    return ""
+}
+
+vein word_after(t: Array<obsidian>, key: obsidian) -> obsidian {
+    forge i = 0
+    while (i < ofs_array_len(t) - 1) {
+        if (ofs_str_eq(tok(t, i), key)) { return tok(t, i + 1) }
+        i++
+    }
+    return ""
+}
+
+// ── acoes ────────────────────────────────────────────────────────────────
+vein screen_index(name: obsidian) -> stone {
+    forge i = 0
+    while (i < ofs_array_len(_screens)) {
+        if (ofs_str_eq(ofs_array_get(_screens, i), name)) { return i }
+        i++
+    }
+    return -1
+}
+
+vein action_call(a: obsidian) -> obsidian {
+    if (ofs_str_eq(a, "@back") || ofs_str_eq(a, "@voltar")) { return "oal.back()" }
+    if (ofs_str_eq(a, "@quit") || ofs_str_eq(a, "@sair")) { return "oal.quit()" }
+    if (ofs_str_eq(a, "@portrait") || ofs_str_eq(a, "@retrato")) { return "oal.set_orientation(oal.ORIENT_PORTRAIT)" }
+    if (ofs_str_eq(a, "@landscape") || ofs_str_eq(a, "@paisagem")) { return "oal.set_orientation(oal.ORIENT_LANDSCAPE)" }
+    if (ofs_str_eq(a, "@auto")) { return "oal.set_orientation(oal.ORIENT_AUTO)" }
+    if (wl_starts_with(a, "@")) {
+        forge si = screen_index(ofs_str_substr(a, 1, ofs_str_len(a) - 1))
+        if (si < 0) {
+            err("tela desconhecida: " + a)
+            return "oal.refresh()"
+        }
+        return "oal.go(" + ofs_stone_to_obsidian(si) + ")"
+    }
+    if (index_of_char(a, 40) >= 0) { return a }
+    return a + "()"
+}
+
+// Registra a acao depois de "->" e devolve o id ("-1" se nao houver).
+vein action_id(t: Array<obsidian>) -> obsidian {
+    forge i = 0
+    while (i < ofs_array_len(t)) {
+        if (ofs_str_eq(tok(t, i), "->")) {
+            forge rest = ""
+            forge j = i + 1
+            while (j < ofs_array_len(t)) {
+                rest = rest + tok(t, j)
+                j++
+            }
+            if (ofs_str_len(rest) == 0) {
+                err("'->' sem destino")
+                return "-1"
+            }
+            ofs_array_push(_actions, action_call(rest))
+            return ofs_stone_to_obsidian(ofs_array_len(_actions) - 1)
+        }
+        i++
+    }
+    return "-1"
+}
+
+// ── estilos ──────────────────────────────────────────────────────────────
+vein style_base_id(kind: obsidian) -> stone {
+    if (ofs_str_eq(kind, "button")) { return 0 }
+    if (ofs_str_eq(kind, "card")) { return 1 }
+    if (ofs_str_eq(kind, "bar")) { return 2 }
+    if (ofs_str_eq(kind, "list")) { return 3 }
+    if (ofs_str_eq(kind, "screen")) { return 4 }
+    return -1
+}
+
+vein style_class_id(cls: obsidian) -> stone {
+    forge i = 0
+    while (i < ofs_array_len(_styles)) {
+        if (ofs_str_eq(ofs_array_get(_styles, i), cls)) { return i + 5 }
+        i++
+    }
+    ofs_array_push(_styles, cls)
+    return ofs_array_len(_styles) + 4
+}
+
+vein hex_digit(c: stone) -> stone {
+    if (c >= 48 && c <= 57) { return c - 48 }
+    if (c >= 97 && c <= 102) { return c - 87 }
+    if (c >= 65 && c <= 70) { return c - 55 }
+    return -1
+}
+
+// #rgb, #rrggbb -> 0xRRGGBB; numero decimal tambem vale.
+vein color_value(v: obsidian) -> stone {
+    forge s = str_inner(v)
+    forge n = ofs_str_len(s)
+    if (n > 0 && ofs_str_char_at(s, 0) == 35) {
+        forge out = 0
+        if (n == 4) {
+            forge k = 1
+            while (k < 4) {
+                forge d = hex_digit(ofs_str_char_at(s, k))
+                if (d < 0) {
+                    err("cor invalida: " + v)
+                    return -1
+                }
+                out = out * 256 + d * 17
+                k++
+            }
+            return out
+        }
+        if (n == 7) {
+            forge k2 = 1
+            while (k2 < 7) {
+                forge d2 = hex_digit(ofs_str_char_at(s, k2))
+                if (d2 < 0) {
+                    err("cor invalida: " + v)
+                    return -1
+                }
+                out = out * 16 + d2
+                k2++
+            }
+            return out
+        }
+        err("cor invalida: " + v)
+        return -1
+    }
+    return num_value(s)
+}
+
+vein num_value(s: obsidian) -> stone {
+    forge out = 0
+    forge i = 0
+    forge n = ofs_str_len(s)
+    if (n == 0) { return -1 }
+    while (i < n) {
+        forge c = ofs_str_char_at(s, i)
+        if (c < 48 || c > 57) {
+            err("numero invalido: " + s)
+            return -1
+        }
+        out = out * 10 + (c - 48)
+        i++
+    }
+    return out
+}
+
+// style <tipo>[.<classe>] | style <classe>   + linhas fill/ink/curve/pressed
+vein parse_style(start: stone) -> stone {
+    forge t = tokens(ofs_array_get(_lines, start))
+    forge target = tok(t, 1)
+    forge kind = kind_of(target)
+    forge cls = class_of(target)
+    forge sid = -1
+    if (ofs_str_len(cls) > 0) {
+        sid = style_class_id(cls)
+    } else {
+        sid = style_base_id(kind)
+        if (sid < 0) { sid = style_class_id(kind) }
+    }
+    forge fill = -1
+    forge ink = -1
+    forge curve = -1
+    forge pfill = -1
+    forge pink = -1
+    forge opacity = -1
+    forge base = ofs_array_get(_indents, start)
+    forge i = start + 1
+    while (i < ofs_array_len(_lines) && ofs_array_get(_indents, i) > base) {
+        _line_no = ofs_array_get(_numbers, i)
+        forge p = tokens(ofs_array_get(_lines, i))
+        forge key = tok(p, 0)
+        forge val = tok(p, 1)
+        forge pressed = false
+        if (ofs_str_eq(key, "pressed") || ofs_str_eq(key, "pressionado")) {
+            pressed = true
+            key = tok(p, 1)
+            val = tok(p, 2)
+        }
+        if (ofs_str_eq(key, "fill") || ofs_str_eq(key, "fundo")) {
+            if (pressed) { pfill = color_value(val) } else { fill = color_value(val) }
+        } else if (ofs_str_eq(key, "ink") || ofs_str_eq(key, "tinta")) {
+            if (pressed) { pink = color_value(val) } else { ink = color_value(val) }
+        } else if (ofs_str_eq(key, "curve") || ofs_str_eq(key, "curva")) {
+            curve = num_value(str_inner(val))
+        } else if (ofs_str_eq(key, "opacity") || ofs_str_eq(key, "opacidade")) {
+            opacity = num_value(str_inner(val))
+        } else {
+            err("propriedade de estilo desconhecida: " + key + " (use fill, ink, curve, opacity, pressed fill, pressed ink)")
+        }
+        i++
+    }
+    if (opacity >= 0) {
+        ofs_array_push(_style_code, "    oal.style_opacity(" + ofs_stone_to_obsidian(sid) + ", " + ofs_stone_to_obsidian(opacity) + ")")
+    }
+    ofs_array_push(_style_code, "    oal.style_def(" + ofs_stone_to_obsidian(sid) + ", " + ofs_stone_to_obsidian(fill) + ", " + ofs_stone_to_obsidian(ink) + ", " + ofs_stone_to_obsidian(curve) + ", " + ofs_stone_to_obsidian(pfill) + ", " + ofs_stone_to_obsidian(pink) + ")")
+    return i
+}
+
+vein style_prefix(word: obsidian, ind: obsidian) -> void {
+    forge cls = class_of(word)
+    if (ofs_str_len(cls) > 0 && !ofs_str_eq(cls, "icon") && !ofs_str_eq(cls, "icone")) {
+        emit(ind + "oal.use_style(" + ofs_stone_to_obsidian(style_class_id(cls)) + ")")
+    }
+}
+
+// Icone do widget: `button.icon "nome"` (so icone) ou `icon="nome"` (icone +
+// texto). Emite oal.use_icon e devolve o texto do rotulo ("" = so icone).
+vein icon_prefix(t: Array<obsidian>, ind: obsidian) -> obsidian {
+    forge cls = class_of(tok(t, 0))
+    forge label = positional_str(t, 1, 0)
+    if (ofs_str_eq(cls, "icon") || ofs_str_eq(cls, "icone") || is_icon_word(tok(t, 0))) {
+        if (ofs_str_len(label) == 0) {
+            // nome dinamico: fab.icon player.icone_auto() -> ...
+            if (is_dynamic(tok(t, 1))) {
+                emit(ind + "oal.use_icon_name(" + value_expr(tok(t, 1), "", "") + ")")
+                return "\"\""
+            }
+            err("button.icon precisa do nome do icone: button.icon \"plugins\"")
+            return "\"\""
+        }
+        emit(ind + "oal.use_icon(" + label + ")")
+        return "\"\""
+    }
+    forge ic = attr2(t, 1, "icon", "icone")
+    if (ofs_str_len(ic) > 0) {
+        if (is_dynamic(ic)) {
+            emit(ind + "oal.use_icon_name(" + value_expr(ic, "", "") + ")")
+        } else {
+            if (!is_str(ic)) { ic = "\"" + ic + "\"" }
+            emit(ind + "oal.use_icon(" + ic + ")")
+        }
+    }
+    if (ofs_str_len(label) == 0) { return "\"\"" }
+    return label
+}
+
+// valor de atributo que e expressao (chamada, item.campo) e nao nome fixo
+vein is_dynamic(v: obsidian) -> bool {
+    if (is_str(v)) { return false }
+    return index_of_char(v, 40) >= 0 || wl_starts_with(v, "item.")
+}
+
+// Rotulo do widget: 1o "texto" posicional, ou o 1o token como expressao.
+vein label_of(t: Array<obsidian>) -> obsidian {
+    forge l = positional_str(t, 1, 0)
+    if (ofs_str_len(l) > 0) { return l }
+    forge w = tok(t, 1)
+    if (ofs_str_len(w) > 0 && !ofs_str_eq(w, "->") && index_of_char(w, 61) < 0) { return value_expr(w, "", "") }
+    return "\"\""
+}
+
+// Atributo (k1/k2) como expressao; def se nao houver.
+vein attr_expr(t: Array<obsidian>, k1: obsidian, k2: obsidian, src: obsidian, idx: obsidian, def: obsidian) -> obsidian {
+    forge v = attr2(t, 1, k1, k2)
+    if (ofs_str_len(v) == 0) { return def }
+    return value_expr(v, src, idx)
+}
+
+// image=, badge=, badge_icon=, icon= (dinamico) de item/card
+vein item_extras(t: Array<obsidian>, src: obsidian, idx: obsidian, ind: obsidian) -> void {
+    forge im = attr2(t, 1, "image", "imagem")
+    if (ofs_str_len(im) > 0) { emit(ind + "oal.use_image(" + value_expr(im, src, idx) + ")") }
+    forge ic = attr2(t, 1, "icon", "icone")
+    if (ofs_str_len(ic) > 0) {
+        if (is_dynamic(ic)) {
+            emit(ind + "oal.use_icon_name(" + value_expr(ic, src, idx) + ")")
+        } else {
+            if (!is_str(ic)) { ic = "\"" + ic + "\"" }
+            emit(ind + "oal.use_icon(" + ic + ")")
+        }
+    }
+    forge bt = attr2(t, 1, "badge", "selo")
+    forge bi = attr2(t, 1, "badge_icon", "selo_icone")
+    if (ofs_str_len(bt) > 0 || ofs_str_len(bi) > 0) {
+        forge bte = "\"\""
+        forge bie = "\"\""
+        if (ofs_str_len(bt) > 0) { bte = value_expr(bt, src, idx) }
+        if (ofs_str_len(bi) > 0) {
+            if (is_dynamic(bi) || is_str(bi)) { bie = value_expr(bi, src, idx) } else { bie = "\"" + bi + "\"" }
+        }
+        emit(ind + "oal.use_badge(" + bie + ", " + bte + ")")
+    }
+}
+
+vein corner_value(t: Array<obsidian>, def: obsidian) -> obsidian {
+    forge c = str_inner(attr2(t, 1, "corner", "canto"))
+    if (ofs_str_len(c) == 0) { return def }
+    if (ofs_str_eq(c, "bottom_right") || ofs_str_eq(c, "inferior_direito")) { return "oal.BOTTOM_RIGHT" }
+    if (ofs_str_eq(c, "bottom_left") || ofs_str_eq(c, "inferior_esquerdo")) { return "oal.BOTTOM_LEFT" }
+    if (ofs_str_eq(c, "top_right") || ofs_str_eq(c, "superior_direito")) { return "oal.TOP_RIGHT" }
+    if (ofs_str_eq(c, "top_left") || ofs_str_eq(c, "superior_esquerdo")) { return "oal.TOP_LEFT" }
+    if (ofs_str_eq(c, "bottom_row") || ofs_str_eq(c, "fileira_inferior")) { return "oal.BOTTOM_ROW" }
+    if (ofs_str_eq(c, "top_row") || ofs_str_eq(c, "fileira_superior")) { return "oal.TOP_ROW" }
+    if (ofs_str_eq(c, "right_column") || ofs_str_eq(c, "coluna_direita")) { return "oal.RIGHT_COLUMN" }
+    if (ofs_str_eq(c, "left_column") || ofs_str_eq(c, "coluna_esquerda")) { return "oal.LEFT_COLUMN" }
+    // expressao OFS (canto escolhido em tempo de execucao)
+    if (index_of_char(c, 40) >= 0 || index_of_char(c, 46) >= 0) { return c }
+    err("canto invalido: " + c + " (bottom_right, bottom_left, top_right, top_left, bottom_row, top_row, right_column, left_column ou expressao)")
+    return def
+}
+
+// ── app ──────────────────────────────────────────────────────────────────
+vein parse_app(start: stone) -> stone {
+    forge t = tokens(ofs_array_get(_lines, start))
+    if (ofs_str_len(positional_str(t, 1, 0)) > 0) { _app_name = str_inner(positional_str(t, 1, 0)) }
+    if (ofs_str_len(positional_str(t, 1, 1)) > 0) { _app_pkg = str_inner(positional_str(t, 1, 1)) }
+    forge base = ofs_array_get(_indents, start)
+    forge i = start + 1
+    while (i < ofs_array_len(_lines) && ofs_array_get(_indents, i) > base) {
+        _line_no = ofs_array_get(_numbers, i)
+        forge p = tokens(ofs_array_get(_lines, i))
+        forge key = tok(p, 0)
+        forge val = str_inner(tok(p, 1))
+        if (ofs_str_eq(key, "version") || ofs_str_eq(key, "versao")) {
+            _app_version = val
+        } else if (ofs_str_eq(key, "code") || ofs_str_eq(key, "codigo")) {
+            _app_code = val
+        } else if (ofs_str_eq(key, "icon") || ofs_str_eq(key, "icone")) {
+            _app_icon = val
+        } else if (ofs_str_eq(key, "orientation") || ofs_str_eq(key, "orientacao")) {
+            _app_orientation = val
+        } else if (ofs_str_eq(key, "permission") || ofs_str_eq(key, "permissao")) {
+            forge k = 1
+            while (k < ofs_array_len(p)) {
+                ofs_array_push(_app_perms, str_inner(tok(p, k)))
+                k++
+            }
+        } else if (ofs_str_eq(key, "assets") || ofs_str_eq(key, "arquivos")) {
+            _app_assets = val
+        } else if (ofs_str_eq(key, "fullscreen") || ofs_str_eq(key, "tela_cheia")) {
+            _app_fullscreen = true
+        } else {
+            err("propriedade de app desconhecida: " + key)
+        }
+        i++
+    }
+    return i
+}
+
+vein version_code() -> obsidian {
+    if (ofs_str_len(_app_code) > 0) { return _app_code }
+    // "a.b.c" -> a*10000 + b*100 + c
+    forge parts: Array<stone> = [0, 0, 0]
+    forge idx = 0
+    forge i = 0
+    forge cur = 0
+    forge n = ofs_str_len(_app_version)
+    while (i <= n) {
+        forge c = 46
+        if (i < n) { c = ofs_str_char_at(_app_version, i) }
+        if (c == 46) {
+            if (idx < 3) { ofs_array_set(parts, idx, cur) }
+            idx++
+            cur = 0
+        } else if (c >= 48 && c <= 57) {
+            cur = cur * 10 + (c - 48)
+        }
+        i++
+    }
+    forge code = ofs_array_get(parts, 0) * 10000 + ofs_array_get(parts, 1) * 100 + ofs_array_get(parts, 2)
+    if (code <= 0) { code = 1 }
+    return ofs_stone_to_obsidian(code)
+}
+
+vein upper(s: obsidian) -> obsidian {
+    forge out = ""
+    forge i = 0
+    while (i < ofs_str_len(s)) {
+        forge c = ofs_str_char_at(s, i)
+        if (c >= 97 && c <= 122) {
+            out = out + ofs_str_substr("ABCDEFGHIJKLMNOPQRSTUVWXYZ", c - 97, 1)
+        } else {
+            out = out + ofs_str_substr(s, i, 1)
+        }
+        i++
+    }
+    return out
+}
+
+vein lib_name() -> obsidian {
+    forge last = _app_pkg
+    forge i = 0
+    while (i < ofs_str_len(_app_pkg)) {
+        if (ofs_str_char_at(_app_pkg, i) == 46) {
+            last = ofs_str_substr(_app_pkg, i + 1, ofs_str_len(_app_pkg) - i - 1)
+        }
+        i++
+    }
+    forge out = ""
+    i = 0
+    while (i < ofs_str_len(last)) {
+        forge c = ofs_str_char_at(last, i)
+        if ((c >= 97 && c <= 122) || (c >= 48 && c <= 57) || c == 95) {
+            out = out + ofs_str_substr(last, i, 1)
+        }
+        i++
+    }
+    if (ofs_str_len(out) == 0) { out = "main" }
+    return out
+}
+
+vein xml(s: obsidian) -> obsidian {
+    forge out = wl_replace(s, "&", "&amp;")
+    out = wl_replace(out, "<", "&lt;")
+    out = wl_replace(out, "\"", "&quot;")
+    return out
+}
+
+vein manifest() -> obsidian {
+    forge m = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
+    m = m + "<!-- gerado pelo oalc (OAL v0) - nao edite -->\n"
+    m = m + "<manifest xmlns:android=\"http://schemas.android.com/apk/res/android\"\n"
+    m = m + "    package=\"" + xml(_app_pkg) + "\"\n"
+    m = m + "    android:versionCode=\"" + version_code() + "\"\n"
+    m = m + "    android:versionName=\"" + xml(_app_version) + "\">\n"
+    m = m + "    <uses-sdk android:minSdkVersion=\"26\" android:targetSdkVersion=\"34\" />\n"
+    forge i = 0
+    while (i < ofs_array_len(_app_perms)) {
+        forge p: obsidian = ofs_array_get(_app_perms, i)
+        forge full = p
+        if (ofs_str_eq(p, "storage") || ofs_str_eq(p, "armazenamento")) {
+            m = m + "    <uses-permission android:name=\"android.permission.READ_EXTERNAL_STORAGE\" />\n"
+            full = "android.permission.WRITE_EXTERNAL_STORAGE"
+        } else if (index_of_char(p, 46) < 0) {
+            full = "android.permission." + upper(p)
+        }
+        m = m + "    <uses-permission android:name=\"" + xml(full) + "\" />\n"
+        i++
+    }
+    forge theme = "@android:style/Theme.NoTitleBar"
+    if (_app_fullscreen) { theme = "@android:style/Theme.NoTitleBar.Fullscreen" }
+    forge icon_attr = ""
+    if (ofs_str_len(_app_icon) > 0) { icon_attr = " android:icon=\"@mipmap/ic_launcher\"" }
+    m = m + "    <application android:label=\"" + xml(_app_name) + "\" android:hasCode=\"false\" android:extractNativeLibs=\"true\"" + icon_attr + "\n"
+    m = m + "        android:theme=\"" + theme + "\">\n"
+    forge orient = ""
+    if (ofs_str_eq(_app_orientation, "portrait") || ofs_str_eq(_app_orientation, "retrato")) { orient = " android:screenOrientation=\"portrait\"" }
+    if (ofs_str_eq(_app_orientation, "landscape") || ofs_str_eq(_app_orientation, "paisagem")) { orient = " android:screenOrientation=\"sensorLandscape\"" }
+    m = m + "        <activity android:name=\"android.app.NativeActivity\" android:label=\"" + xml(_app_name) + "\" android:exported=\"true\"" + orient + "\n"
+    m = m + "            android:configChanges=\"orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode|density\">\n"
+    m = m + "            <meta-data android:name=\"android.app.lib_name\" android:value=\"" + lib_name() + "\" />\n"
+    m = m + "            <intent-filter>\n"
+    m = m + "                <action android:name=\"android.intent.action.MAIN\" />\n"
+    m = m + "                <category android:name=\"android.intent.category.LAUNCHER\" />\n"
+    m = m + "            </intent-filter>\n"
+    m = m + "        </activity>\n"
+    m = m + "    </application>\n"
+    m = m + "</manifest>\n"
+    return m
+}
+
+// ── telas ────────────────────────────────────────────────────────────────
+vein pad(level: stone) -> obsidian {
+    forge s = ""
+    forge i = 0
+    while (i < level) {
+        s = s + "    "
+        i++
+    }
+    return s
+}
+
+// Item de list/grid (estatico ou modelo com `from`).
+vein gen_item(t: Array<obsidian>, kind: obsidian, src: obsidian, idx: obsidian, in_grid: bool, ind: obsidian) -> void {
+    forge title = attr2(t, 1, "title", "titulo")
+    forge sub = attr2(t, 1, "sub", "subtitulo")
+    if (ofs_str_len(title) == 0) { title = positional_str(t, 1, 0) }
+    if (ofs_str_len(sub) == 0) { sub = positional_str(t, 1, 1) }
+    if (ofs_str_len(title) == 0 && ofs_str_len(src) > 0) { title = "item.item" }
+    forge te = value_expr(title, src, idx)
+    forge se = value_expr(sub, src, idx)
+    forge a = action_id(t)
+    forge item_arg = idx
+    if (ofs_str_len(src) == 0) { item_arg = "-1" }
+    style_prefix(tok(t, 0), ind)
+    item_extras(t, src, idx, ind)
+    if (in_grid || ofs_str_eq(kind, "card")) {
+        emit(ind + "oal.card(" + te + ", " + se + ", " + a + ", " + item_arg + ")")
+    } else {
+        emit(ind + "oal.list_item(" + te + ", " + se + ", " + a + ", " + item_arg + ")")
+    }
+}
+
+// list/grid: filhos item/card/empty; com `from fonte` repete o modelo.
+vein gen_collection(start: stone, level: stone, is_grid: bool) -> stone {
+    forge t = tokens(ofs_array_get(_lines, start))
+    forge ind = pad(level)
+    forge src = word_after(t, "from")
+    if (ofs_str_len(src) == 0) { src = word_after(t, "de") }
+    style_prefix(tok(t, 0), ind)
+    if (is_grid) {
+        forge cp = attr2(t, 1, "columns", "colunas")
+        forge cl = attr2(t, 1, "landscape", "paisagem")
+        if (ofs_str_len(cp) == 0) { cp = "2" }
+        if (ofs_str_len(cl) == 0) { cl = "4" }
+        emit(ind + "oal.grid_begin(" + cp + ", " + cl + ")")
+    } else {
+        emit(ind + "oal.list_begin()")
+    }
+    forge base = ofs_array_get(_indents, start)
+    forge template = -1
+    forge empty_text = ""
+    forge i = start + 1
+    while (i < ofs_array_len(_lines) && ofs_array_get(_indents, i) > base) {
+        _line_no = ofs_array_get(_numbers, i)
+        forge c = tokens(ofs_array_get(_lines, i))
+        forge k = kind_of(tok(c, 0))
+        if (ofs_str_eq(k, "empty") || ofs_str_eq(k, "vazio")) {
+            empty_text = label_of(c)
+        } else if (ofs_str_eq(k, "item") || ofs_str_eq(k, "card")) {
+            if (ofs_str_len(src) > 0) {
+                template = i
+            } else {
+                gen_item(c, k, "", "-1", is_grid, ind)
+            }
+        } else {
+            err("dentro de list/grid use item, card ou empty (achei '" + tok(c, 0) + "')")
+        }
+        i++
+    }
+    if (ofs_str_len(src) > 0) {
+        forge nv = new_tmp()
+        forge iv = new_tmp()
+        emit(ind + "forge " + nv + " = " + src + "_count()")
+        if (ofs_str_len(empty_text) > 0) {
+            if (is_grid) {
+                emit(ind + "if (" + nv + " == 0) { oal.grid_empty(" + empty_text + ") }")
+            } else {
+                emit(ind + "if (" + nv + " == 0) { oal.list_empty(" + empty_text + ") }")
+            }
+        }
+        emit(ind + "forge " + iv + " = 0")
+        emit(ind + "while (" + iv + " < " + nv + ") {")
+        if (template >= 0) {
+            _line_no = ofs_array_get(_numbers, template)
+            forge tt = tokens(ofs_array_get(_lines, template))
+            gen_item(tt, kind_of(tok(tt, 0)), src, iv, is_grid, ind + "    ")
+        } else {
+            forge dummy: Array<obsidian> = ["item"]
+            gen_item(dummy, "item", src, iv, is_grid, ind + "    ")
+        }
+        emit(ind + "    " + iv + "++")
+        emit(ind + "}")
+    } else if (ofs_str_len(empty_text) > 0) {
+        if (is_grid) {
+            emit(ind + "oal.grid_empty(" + empty_text + ")")
+        } else {
+            emit(ind + "oal.list_empty(" + empty_text + ")")
+        }
+    }
+    if (is_grid) { emit(ind + "oal.grid_end()") } else { emit(ind + "oal.list_end()") }
+    return i
+}
+
+// Bloco de widgets com indentacao > base. Retorna a proxima linha.
+vein gen_block(start: stone, base: stone, level: stone) -> stone {
+    forge i = start
+    forge ind = pad(level)
+    while (i < ofs_array_len(_lines) && ofs_array_get(_indents, i) > base) {
+        _line_no = ofs_array_get(_numbers, i)
+        forge my_indent = ofs_array_get(_indents, i)
+        forge t = tokens(ofs_array_get(_lines, i))
+        forge w = tok(t, 0)
+        forge k = kind_of(w)
+        if (ofs_str_eq(k, "bar")) {
+            forge bt = positional_str(t, 1, 0)
+            if (ofs_str_len(bt) == 0) { bt = value_expr(tok(t, 1), "", "") }
+            emit(ind + "oal.bar(" + bt + ")")
+            i++
+            while (i < ofs_array_len(_lines) && ofs_array_get(_indents, i) > my_indent) {
+                _line_no = ofs_array_get(_numbers, i)
+                forge bb = tokens(ofs_array_get(_lines, i))
+                if (!ofs_str_eq(kind_of(tok(bb, 0)), "button")) {
+                    err("dentro de bar so vale button")
+                } else {
+                    style_prefix(tok(bb, 0), ind)
+                    forge bl = icon_prefix(bb, ind)
+                    emit(ind + "oal.bar_button(" + bl + ", " + action_id(bb) + ")")
+                }
+                i++
+            }
+            continue
+        }
+        if (ofs_str_eq(k, "title") || ofs_str_eq(k, "text")) {
+            forge tv = positional_str(t, 1, 0)
+            if (ofs_str_len(tv) == 0) { tv = value_expr(tok(t, 1), "", "") }
+            style_prefix(w, ind)
+            emit(ind + "oal." + k + "(" + tv + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "fab")) {
+            style_prefix(w, ind)
+            forge fl = icon_prefix(t, ind)
+            emit(ind + "oal.fab(" + fl + ", " + action_id(t) + ", " + corner_value(t, "oal.BOTTOM_RIGHT") + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "dpad")) {
+            style_prefix(w, ind)
+            forge da = action_id(t)
+            if (ofs_str_eq(da, "-1")) { err("dpad precisa de acao: dpad -> mover(item)") }
+            emit(ind + "oal.dpad(" + da + ", " + corner_value(t, "oal.BOTTOM_LEFT") + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "button")) {
+            style_prefix(w, ind)
+            forge lb = ""
+            if (ofs_str_len(positional_str(t, 1, 0)) == 0 && ofs_str_len(tok(t, 1)) > 0 && !ofs_str_eq(tok(t, 1), "->") && index_of_char(tok(t, 1), 61) < 0) {
+                lb = value_expr(tok(t, 1), "", "")
+                // rotulo-expressao: o icone= continua valendo
+                forge bic = attr2(t, 1, "icon", "icone")
+                if (ofs_str_len(bic) > 0) {
+                    if (is_dynamic(bic)) {
+                        emit(ind + "oal.use_icon_name(" + value_expr(bic, "", "") + ")")
+                    } else {
+                        if (!is_str(bic)) { bic = "\"" + bic + "\"" }
+                        emit(ind + "oal.use_icon(" + bic + ")")
+                    }
+                }
+            } else {
+                lb = icon_prefix(t, ind)
+            }
+            emit(ind + "oal.button(" + lb + ", " + action_id(t) + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "card")) {
+            gen_item(t, "card", "", "-1", false, ind)
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "list")) {
+            i = gen_collection(i, level, false)
+            continue
+        }
+        if (ofs_str_eq(k, "grid")) {
+            i = gen_collection(i, level, true)
+            continue
+        }
+        if (ofs_str_eq(k, "row")) {
+            emit(ind + "oal.row_begin()")
+            i = gen_block(i + 1, my_indent, level)
+            emit(ind + "oal.row_end()")
+            continue
+        }
+        if (ofs_str_eq(k, "if") || ofs_str_eq(k, "se")) {
+            forge cond = ""
+            forge ci = 1
+            while (ci < ofs_array_len(t)) {
+                if (ci > 1) { cond = cond + " " }
+                cond = cond + tok(t, ci)
+                ci++
+            }
+            if (ofs_str_len(cond) == 0) { err("if precisa de condicao: if biblioteca.vazia()") }
+            emit(ind + "if (" + cond + ") {")
+            i = gen_block(i + 1, my_indent, level + 1)
+            // else / senao no mesmo nivel
+            if (i < ofs_array_len(_lines) && ofs_array_get(_indents, i) == my_indent) {
+                forge te = tokens(ofs_array_get(_lines, i))
+                if (ofs_str_eq(tok(te, 0), "else") || ofs_str_eq(tok(te, 0), "senao")) {
+                    emit(ind + "} else {")
+                    i = gen_block(i + 1, my_indent, level + 1)
+                }
+            }
+            emit(ind + "}")
+            continue
+        }
+        if (ofs_str_eq(k, "canvas") || ofs_str_eq(k, "tela_livre")) {
+            forge cid = ofs_stone_to_obsidian(ofs_array_len(_canvas_draw))
+            forge dr = attr2(t, 1, "draw", "desenha")
+            forge to = attr2(t, 1, "touch", "toque")
+            ofs_array_push(_canvas_draw, dr)
+            ofs_array_push(_canvas_touch, to)
+            forge full = "false"
+            if (ofs_str_eq(tok(t, 1), "full") || ofs_str_eq(tok(t, 1), "cheia")) { full = "true" }
+            forge chh = attr2(t, 1, "height", "altura")
+            if (ofs_str_len(chh) == 0) { chh = "200" }
+            emit(ind + "oal.canvas(" + cid + ", " + full + ", " + chh + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "image") || ofs_str_eq(k, "imagem")) {
+            forge ip = label_of(t)
+            forge ih = attr2(t, 1, "height", "altura")
+            if (ofs_str_len(ih) == 0) { ih = "0" }
+            emit(ind + "oal.image(" + ip + ", " + ih + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "tabs") || ofs_str_eq(k, "abas")) {
+            emit(ind + "oal.tabs_begin()")
+            i++
+            while (i < ofs_array_len(_lines) && ofs_array_get(_indents, i) > my_indent) {
+                _line_no = ofs_array_get(_numbers, i)
+                forge tt = tokens(ofs_array_get(_lines, i))
+                if (!ofs_str_eq(tok(tt, 0), "tab") && !ofs_str_eq(tok(tt, 0), "aba")) {
+                    err("dentro de tabs so vale tab")
+                } else {
+                    forge tl = label_of(tt)
+                    icon_prefix(tt, ind)
+                    forge tsel = attr_expr(tt, "selected", "selecionada", "", "", "false")
+                    emit(ind + "oal.tab(" + tl + ", " + action_id(tt) + ", " + tsel + ")")
+                }
+                i++
+            }
+            emit(ind + "oal.tabs_end()")
+            continue
+        }
+        if (ofs_str_eq(k, "slider") || ofs_str_eq(k, "deslizante")) {
+            forge sl = label_of(t)
+            icon_prefix(t, ind)
+            forge sv = attr_expr(t, "value", "valor", "", "", "0")
+            forge smin = attr_expr(t, "min", "min", "", "", "0")
+            forge smax = attr_expr(t, "max", "max", "", "", "100")
+            emit(ind + "oal.slider(" + sl + ", " + sv + ", " + smin + ", " + smax + ", " + action_id(t) + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "toggle") || ofs_str_eq(k, "chave")) {
+            forge gl = label_of(t)
+            icon_prefix(t, ind)
+            forge gv = attr_expr(t, "value", "valor", "", "", "false")
+            emit(ind + "oal.toggle(" + gl + ", " + gv + ", " + action_id(t) + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "progress") || ofs_str_eq(k, "progresso")) {
+            forge pl = label_of(t)
+            forge pv = attr_expr(t, "value", "valor", "", "", "0")
+            emit(ind + "oal.progress(" + pl + ", " + pv + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "keyboard") || ofs_str_eq(k, "teclado")) {
+            forge ka = action_id(t)
+            if (ofs_str_eq(ka, "-1")) { err("keyboard precisa de acao: keyboard -> digitar(item)") }
+            emit(ind + "oal.keyboard(" + ka + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "field") || ofs_str_eq(k, "campo")) {
+            forge fh = label_of(t)
+            icon_prefix(t, ind)
+            forge fv = attr_expr(t, "value", "valor", "", "", "\"\"")
+            emit(ind + "oal.field(" + fh + ", " + fv + ", " + action_id(t) + ")")
+            i++
+            continue
+        }
+        if (ofs_str_eq(k, "portrait") || ofs_str_eq(k, "landscape")) {
+            forge fnq = "is_portrait"
+            if (ofs_str_eq(k, "landscape")) { fnq = "is_landscape" }
+            emit(ind + "if (oal." + fnq + "()) {")
+            i = gen_block(i + 1, my_indent, level + 1)
+            emit(ind + "}")
+            continue
+        }
+        err("widget desconhecido: " + w)
+        i++
+    }
+    return i
+}
+
+vein event_const(name: obsidian) -> obsidian {
+    if (ofs_str_eq(name, "back") || ofs_str_eq(name, "voltar")) { return "ON_BACK" }
+    if (ofs_str_eq(name, "pause") || ofs_str_eq(name, "pausa")) { return "ON_PAUSE" }
+    if (ofs_str_eq(name, "resume") || ofs_str_eq(name, "retoma")) { return "ON_RESUME" }
+    if (ofs_str_eq(name, "rotate") || ofs_str_eq(name, "gira")) { return "ON_ROTATE" }
+    if (ofs_str_eq(name, "low_memory") || ofs_str_eq(name, "pouca_memoria")) { return "ON_LOW_MEMORY" }
+    if (ofs_str_eq(name, "frame") || ofs_str_eq(name, "quadro")) { return "ON_FRAME" }
+    if (ofs_str_eq(name, "start") || ofs_str_eq(name, "inicio")) { return "ON_START" }
+    return ""
+}
+
+// `attach {F:caminho}` (relativo ao .oal) ou `attach {modulo}` (forma curta
+// do OFS: modulo.ofs ao lado do .oal ou da stdlib; hifen vira underscore).
+// Devolve a linha de attach para o arquivo gerado, com caminho absoluto.
+vein attach_line(line: obsidian) -> obsidian {
+    forge close = index_of_char(line, 125)
+    if (!wl_starts_with(line, "attach {") || close < 0) {
+        err("attach invalido: use attach {F:arquivo.ofs} ou attach {modulo}")
+        return ""
+    }
+    if (wl_starts_with(line, "attach {F:")) {
+        return "attach {F:" + abs_path(ofs_str_substr(line, 10, close - 10)) + "}"
+    }
+    forge mod_file = wl_replace(ofs_str_substr(line, 8, close - 8), "-", "_") + ".ofs"
+    forge local_path = abs_path(mod_file)
+    forge f = fopen(local_path, "r")
+    if (f != null) {
+        fclose(f)
+        return "attach {F:" + local_path + "}"
+    }
+    return ofs_str_substr(line, 0, close + 1)
+}
+
+vein abs_path(p: obsidian) -> obsidian {
+    if (ofs_str_len(p) > 0 && ofs_str_char_at(p, 0) == 47) { return p }
+    return _base_dir + p
+}
+
+vein dirname_of(p: obsidian) -> obsidian {
+    forge i = ofs_str_len(p) - 1
+    while (i >= 0) {
+        if (ofs_str_char_at(p, i) == 47) { return ofs_str_substr(p, 0, i + 1) }
+        i--
+    }
+    return "./"
+}
+
+vein basename_noext(p: obsidian) -> obsidian {
+    forge start = 0
+    forge i = 0
+    forge dot = ofs_str_len(p)
+    while (i < ofs_str_len(p)) {
+        forge c = ofs_str_char_at(p, i)
+        if (c == 47) { start = i + 1 }
+        if (c == 46) { dot = i }
+        i++
+    }
+    if (dot < start) { dot = ofs_str_len(p) }
+    return ofs_str_substr(p, start, dot - start)
+}
+
+core main() {
+    forge input = getenv("OALC_INPUT")
+    if (input == null || ofs_str_len(input) == 0) {
+        echo("oalc: defina OALC_INPUT=<app.oal> (e OALC_OUT_DIR, OALC_TARGET=android|desktop)")
+        exit(2)
+    }
+    forge out_dir = getenv("OALC_OUT_DIR")
+    if (out_dir == null || ofs_str_len(out_dir) == 0) { out_dir = "." }
+    forge target = getenv("OALC_TARGET")
+    if (target == null || ofs_str_len(target) == 0) { target = "android" }
+    _base_dir = dirname_of(input)
+    forge name = basename_noext(input)
+
+    // linhas uteis
+    forge raw = wl_lines(read_file(input))
+    forge li = 0
+    while (li < ofs_array_len(raw)) {
+        forge line: obsidian = ofs_array_get(raw, li)
+        forge clean = wl_trim(line)
+        if (ofs_str_len(clean) > 0 && !wl_starts_with(clean, "//") && !wl_starts_with(clean, "#")) {
+            ofs_array_push(_lines, clean)
+            ofs_array_push(_indents, wl_indent(line))
+            ofs_array_push(_numbers, li + 1)
+        }
+        li++
+    }
+
+    // 1a passada: nomes de tela (para @tela antes da definicao)
+    forge i = 0
+    while (i < ofs_array_len(_lines)) {
+        if (ofs_array_get(_indents, i) == 0) {
+            forge t0 = tokens(ofs_array_get(_lines, i))
+            if (ofs_str_eq(kind_of(tok(t0, 0)), "screen")) { ofs_array_push(_screens, tok(t0, 1)) }
+        }
+        i++
+    }
+
+    // 2a passada
+    forge screen_n = 0
+    i = 0
+    while (i < ofs_array_len(_lines)) {
+        _line_no = ofs_array_get(_numbers, i)
+        if (ofs_array_get(_indents, i) != 0) {
+            err("indentacao inesperada")
+            i++
+            continue
+        }
+        forge t = tokens(ofs_array_get(_lines, i))
+        forge k = kind_of(tok(t, 0))
+        if (ofs_str_eq(k, "app")) {
+            i = parse_app(i)
+        } else if (ofs_str_eq(k, "use") || ofs_str_eq(k, "usa")) {
+            ofs_array_push(_uses, "attach {F:" + abs_path(str_inner(tok(t, 1))) + "}")
+            i++
+        } else if (ofs_str_eq(k, "attach")) {
+            ofs_array_push(_uses, attach_line(ofs_array_get(_lines, i)))
+            i++
+        } else if (ofs_str_eq(k, "style")) {
+            i = parse_style(i)
+        } else if (ofs_str_eq(k, "screen")) {
+            emit("vein _oal_screen_" + ofs_stone_to_obsidian(screen_n) + "() -> void {")
+            emit("    // screen " + tok(t, 1))
+            i = gen_block(i + 1, 0, 1)
+            emit("}")
+            emit("")
+            screen_n++
+        } else if (ofs_str_eq(k, "on") || ofs_str_eq(k, "ao")) {
+            forge ec = event_const(tok(t, 1))
+            if (ofs_str_len(ec) == 0) {
+                err("evento desconhecido: " + tok(t, 1) + " (back, pause, resume, rotate, low_memory)")
+            } else {
+                forge arrow = 2
+                if (!ofs_str_eq(tok(t, 2), "->")) { err("use: on " + tok(t, 1) + " -> funcao") }
+                forge rest = ""
+                forge j = arrow + 1
+                while (j < ofs_array_len(t)) {
+                    rest = rest + tok(t, j)
+                    j++
+                }
+                ofs_array_push(_events, ec + "|" + action_call(rest))
+            }
+            i++
+        } else {
+            err("declaracao desconhecida no topo: " + tok(t, 0) + " (app, use, style, screen, on)")
+            i++
+        }
+    }
+    if (screen_n == 0) {
+        _line_no = 0
+        err("nenhuma screen declarada")
+    }
+    if (_errors > 0) {
+        echo("oalc: " + ofs_stone_to_obsidian(_errors) + " erro(s); nada foi gerado")
+        exit(1)
+    }
+
+    // ── arquivo OFS ──
+    forge o = "// Gerado pelo oalc (OAL v0) a partir de " + input + " - nao edite.\n"
+    if (ofs_str_eq(target, "desktop")) {
+        o = o + "attach {F:oal_x11.ofs}\n"
+    } else {
+        o = o + "attach {F:oal_android.ofs}\n"
+    }
+    forge u = 0
+    while (u < ofs_array_len(_uses)) {
+        o = o + ofs_array_get(_uses, u) + "\n"
+        u++
+    }
+    o = o + "\nvein oal_app_init() -> void {\n"
+    o = o + "    oal.log(\"OAL: " + wl_replace(_app_name, "\"", "\\\"") + " (" + _app_pkg + ")\")\n"
+    forge s = 0
+    while (s < ofs_array_len(_style_code)) {
+        o = o + ofs_array_get(_style_code, s) + "\n"
+        s++
+    }
+    o = o + "}\n\n"
+    o = o + "vein oal_app_build(screen: stone) -> void {\n"
+    s = 0
+    while (s < screen_n) {
+        o = o + "    if (screen == " + ofs_stone_to_obsidian(s) + ") { _oal_screen_" + ofs_stone_to_obsidian(s) + "() }\n"
+        s++
+    }
+    o = o + "}\n\n"
+    o = o + "vein oal_app_action(action: stone, item: stone) -> void {\n"
+    s = 0
+    while (s < ofs_array_len(_actions)) {
+        o = o + "    if (action == " + ofs_stone_to_obsidian(s) + ") {\n        " + ofs_array_get(_actions, s) + "\n        return\n    }\n"
+        s++
+    }
+    o = o + "}\n\n"
+    o = o + "vein oal_app_event(ev: stone) -> bool {\n"
+    s = 0
+    while (s < ofs_array_len(_events)) {
+        forge e: obsidian = ofs_array_get(_events, s)
+        forge bar_at = index_of_char(e, 124)
+        forge cname = ofs_str_substr(e, 0, bar_at)
+        forge call = ofs_str_substr(e, bar_at + 1, ofs_str_len(e) - bar_at - 1)
+        o = o + "    if (ev == oal." + cname + ") {\n        " + call + "\n        return true\n    }\n"
+        s++
+    }
+    o = o + "    return false\n}\n\n"
+    o = o + "vein oal_app_paint(canvas: stone, x: stone, y: stone, w: stone, h: stone) -> void {\n"
+    s = 0
+    while (s < ofs_array_len(_canvas_draw)) {
+        forge cd: obsidian = ofs_array_get(_canvas_draw, s)
+        if (ofs_str_len(cd) > 0) { o = o + "    if (canvas == " + ofs_stone_to_obsidian(s) + ") { " + cd + "(x, y, w, h) }\n" }
+        s++
+    }
+    o = o + "}\n\n"
+    o = o + "vein oal_app_touch(canvas: stone, kind: stone, finger: stone, x: stone, y: stone) -> void {\n"
+    s = 0
+    while (s < ofs_array_len(_canvas_touch)) {
+        forge ct: obsidian = ofs_array_get(_canvas_touch, s)
+        if (ofs_str_len(ct) > 0) { o = o + "    if (canvas == " + ofs_stone_to_obsidian(s) + ") { " + ct + "(kind, finger, x, y) }\n" }
+        s++
+    }
+    o = o + "}\n\n"
+    forge c = 0
+    while (c < ofs_array_len(_code)) {
+        o = o + ofs_array_get(_code, c) + "\n"
+        c++
+    }
+    if (ofs_str_eq(target, "desktop")) {
+        o = o + "core main() {\n    oal_x11.run(\"" + wl_replace(_app_name, "\"", "\\\"") + "\")\n}\n"
+    }
+    forge ofs_out = out_dir + "/" + name + "_oal.ofs"
+    write_file(ofs_out, o)
+    if (ofs_str_len(_app_icon) > 4) {
+        if (ofs_str_eq(ofs_str_substr(_app_icon, ofs_str_len(_app_icon) - 4, 4), ".png")) {
+            write_file(out_dir + "/oal_icon.txt", abs_path(_app_icon))
+        } else {
+            echo("oalc: aviso: icone '" + _app_icon + "' ignorado (v0 so aceita .png)")
+            _app_icon = ""
+        }
+    }
+    if (ofs_str_len(_app_assets) > 0) { write_file(out_dir + "/oal_assets.txt", abs_path(_app_assets)) }
+    write_file(out_dir + "/AndroidManifest.xml", manifest())
+    echo("OAL: " + ofs_out + " + AndroidManifest.xml (" + ofs_stone_to_obsidian(screen_n) + " tela(s), " + ofs_stone_to_obsidian(ofs_array_len(_actions)) + " acao(oes))")
+}

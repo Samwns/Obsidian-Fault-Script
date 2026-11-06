@@ -1,0 +1,495 @@
+// Gerador do site-livro: le os .md de docs/ e monta paginas (folhas) HTML.
+extern vein ofs_str_lower(s: obsidian) -> obsidian
+
+forge bk_cur: obsidian = ""
+forge bk_all: obsidian = ""
+forge bk_para: obsidian = ""
+forge bk_list: obsidian = ""
+forge bk_tab: stone = 0
+forge bk_code: bool = false
+forge bk_open: bool = false
+forge bk_quote: bool = false
+forge bk_toc: obsidian = ""
+forge bk_doc_id: obsidian = ""
+forge bk_chapter: obsidian = ""
+
+vein bk_find(s: obsidian, needle: obsidian, from: stone) -> stone {
+    forge n = ofs_str_len(s)
+    forge m = ofs_str_len(needle)
+    cycle (forge i = from; i + m <= n; i++) {
+        if (ofs_str_eq(ofs_str_substr(s, i, m), needle)) { return i }
+    }
+    return -1
+}
+
+vein bk_esc(s: obsidian) -> obsidian {
+    forge out = ""
+    forge start = 0
+    forge n = ofs_str_len(s)
+    cycle (forge i = 0; i < n; i++) {
+        forge c = ofs_str_substr(s, i, 1)
+        forge rep = ""
+        if (ofs_str_eq(c, "&")) { rep = "&amp;" } else if (ofs_str_eq(c, "<")) { rep = "&lt;" } else if (ofs_str_eq(c, ">")) { rep = "&gt;" } else if (ofs_str_eq(c, "\"")) { rep = "&quot;" }
+        if (ofs_str_len(rep) > 0) {
+            out = out + ofs_str_substr(s, start, i - start) + rep
+            start = i + 1
+        }
+    }
+    return out + ofs_str_substr(s, start, n - start)
+}
+
+vein bk_slug(s: obsidian) -> obsidian {
+    forge low = ofs_str_lower(s)
+    forge out = ""
+    forge dash = true
+    forge n = ofs_str_len(low)
+    cycle (forge i = 0; i < n; i++) {
+        forge c = ofs_str_char_at(low, i)
+        if ((c >= 97 && c <= 122) || (c >= 48 && c <= 57)) {
+            out = out + ofs_str_substr(low, i, 1)
+            dash = false
+        } else if (dash == false) {
+            out = out + "-"
+            dash = true
+        }
+    }
+    if (ofs_str_len(out) == 0) { return "s" }
+    return out
+}
+
+vein bk_link_target(u: obsidian) -> obsidian {
+    // links para outro .md viram ancora interna do livro
+    forge p = bk_find(u, ".md", 0)
+    if (p > 0 && bk_find(u, "http", 0) != 0) {
+        forge base = ofs_str_substr(u, 0, p)
+        forge q = base
+        forge sl = bk_find(base, "/", 0)
+        cycle (forge k = 0; k < 6; k++) {
+            if (sl >= 0) {
+                q = ofs_str_substr(q, sl + 1, ofs_str_len(q) - sl - 1)
+                sl = bk_find(q, "/", 0)
+            }
+        }
+        return "#doc-" + bk_slug(q)
+    }
+    return u
+}
+
+vein bk_inline(s: obsidian) -> obsidian {
+    forge out = ""
+    forge start = 0
+    forge n = ofs_str_len(s)
+    forge i = 0
+    cycle (forge guard = 0; guard < n + 1; guard++) {
+        if (i >= n) { break }
+        forge c = ofs_str_substr(s, i, 1)
+        forge done = false
+        if (ofs_str_eq(c, "`")) {
+            forge e = bk_find(s, "`", i + 1)
+            if (e > i) {
+                out = out + bk_esc(ofs_str_substr(s, start, i - start)) + "<code>" + bk_esc(ofs_str_substr(s, i + 1, e - i - 1)) + "</code>"
+                i = e + 1
+                start = i
+                done = true
+            }
+        } else if (ofs_str_eq(c, "*") && ofs_str_eq(ofs_str_substr(s, i, 2), "**")) {
+            forge e = bk_find(s, "**", i + 2)
+            if (e > i) {
+                out = out + bk_esc(ofs_str_substr(s, start, i - start)) + "<strong>" + bk_esc(ofs_str_substr(s, i + 2, e - i - 2)) + "</strong>"
+                i = e + 2
+                start = i
+                done = true
+            }
+        } else if (ofs_str_eq(c, "[")) {
+            forge m = bk_find(s, "](", i + 1)
+            if (m > i) {
+                forge e = bk_find(s, ")", m + 2)
+                if (e > m) {
+                    out = out + bk_esc(ofs_str_substr(s, start, i - start)) + "<a href=\"" + bk_esc(bk_link_target(ofs_str_substr(s, m + 2, e - m - 2))) + "\">" + bk_esc(ofs_str_substr(s, i + 1, m - i - 1)) + "</a>"
+                    i = e + 1
+                    start = i
+                    done = true
+                }
+            }
+        }
+        if (done == false) { i = i + 1 }
+    }
+    return out + bk_esc(ofs_str_substr(s, start, n - start))
+}
+
+vein bk_flush_para() -> void {
+    if (ofs_str_len(bk_para) > 0) {
+        bk_cur = bk_cur + "<p>" + bk_inline(bk_para) + "</p>\n"
+        bk_para = ""
+    }
+}
+
+vein bk_close_blocks() -> void {
+    bk_flush_para()
+    if (ofs_str_len(bk_list) > 0) {
+        bk_cur = bk_cur + "</" + bk_list + ">\n"
+        bk_list = ""
+    }
+    if (bk_tab > 0) {
+        bk_cur = bk_cur + "</tbody></table></div>\n"
+        bk_tab = 0
+    }
+    if (bk_quote) {
+        bk_cur = bk_cur + "</blockquote>\n"
+        bk_quote = false
+    }
+}
+
+vein bk_end_leaf() -> void {
+    if (bk_open) {
+        bk_close_blocks()
+        bk_all = bk_all + bk_cur + "</div></article>\n"
+        bk_cur = ""
+        bk_open = false
+    }
+}
+
+vein bk_begin_leaf(id: obsidian, title: obsidian) -> void {
+    bk_end_leaf()
+    forge idattr = ""
+    if (ofs_str_len(id) > 0) { idattr = " id=\"" + id + "\"" }
+    bk_cur = "<article class=\"leaf\"" + idattr + " data-ch=\"" + bk_esc(bk_chapter) + "\" data-t=\"" + bk_esc(title) + "\"><div class=\"leaf-in\">"
+    bk_open = true
+}
+
+vein bk_row(line: obsidian, tag: obsidian) -> obsidian {
+    forge out = "<tr>"
+    forge t = line
+    forge n = ofs_str_len(t)
+    forge from = 0
+    if (n > 0 && ofs_str_eq(ofs_str_substr(t, 0, 1), "|")) { from = 1 }
+    forge end = n
+    if (n > 0 && ofs_str_eq(ofs_str_substr(t, n - 1, 1), "|")) { end = n - 1 }
+    forge cell = ofs_str_substr(t, from, end - from)
+    forge cn = ofs_str_len(cell)
+    forge st = 0
+    cycle (forge i = 0; i <= cn; i++) {
+        if (i == cn || ofs_str_eq(ofs_str_substr(cell, i, 1), "|")) {
+            forge txt = ofs_str_substr(cell, st, i - st)
+            out = out + "<" + tag + ">" + bk_inline(bk_trim(txt)) + "</" + tag + ">"
+            st = i + 1
+        }
+    }
+    return out + "</tr>"
+}
+
+vein bk_trim(s: obsidian) -> obsidian {
+    forge a = 0
+    forge b = ofs_str_len(s)
+    cycle (forge k = 0; k < b; k++) {
+        if (a < b && (ofs_str_eq(ofs_str_substr(s, a, 1), " ") || ofs_str_eq(ofs_str_substr(s, a, 1), "\t") || ofs_str_eq(ofs_str_substr(s, a, 1), "\r"))) { a = a + 1 }
+    }
+    cycle (forge k = 0; k < b; k++) {
+        if (b > a && (ofs_str_eq(ofs_str_substr(s, b - 1, 1), " ") || ofs_str_eq(ofs_str_substr(s, b - 1, 1), "\t") || ofs_str_eq(ofs_str_substr(s, b - 1, 1), "\r"))) { b = b - 1 }
+    }
+    return ofs_str_substr(s, a, b - a)
+}
+
+vein bk_is_digit(c: stone) -> bool { return c >= 48 && c <= 57 }
+
+vein bk_line(raw: obsidian) -> void {
+    forge line = raw
+    forge ln = ofs_str_len(line)
+    if (ln > 0 && ofs_str_char_at(line, ln - 1) == 13) { line = ofs_str_substr(line, 0, ln - 1) }
+    forge t = bk_trim(line)
+    forge tn = ofs_str_len(t)
+    if (ofs_str_eq(ofs_str_substr(t, 0, 3), "```")) {
+        if (bk_code) {
+            bk_cur = bk_cur + "</code></pre>\n"
+            bk_code = false
+        } else {
+            bk_close_blocks()
+            bk_cur = bk_cur + "<pre><code>"
+            bk_code = true
+        }
+        return
+    }
+    if (bk_code) {
+        bk_cur = bk_cur + bk_esc(line) + "\n"
+        return
+    }
+    if (tn == 0) {
+        bk_close_blocks()
+        return
+    }
+    // titulos
+    forge lvl = 0
+    cycle (forge i = 0; i < 6; i++) {
+        if (i == lvl && i < tn && ofs_str_eq(ofs_str_substr(t, i, 1), "#")) { lvl = lvl + 1 }
+    }
+    if (lvl > 0 && lvl < tn && ofs_str_eq(ofs_str_substr(t, lvl, 1), " ")) {
+        forge title = bk_trim(ofs_str_substr(t, lvl, tn - lvl))
+        forge sl = bk_slug(title)
+        if (lvl == 1) {
+            bk_begin_leaf(bk_doc_id, title)
+            bk_cur = bk_cur + "<p class=\"eyebrow\">" + bk_esc(bk_chapter) + "</p><h2 class=\"doc-title\">" + bk_inline(title) + "</h2>\n"
+            bk_toc = bk_toc + "<li class=\"toc-doc\"><a href=\"#" + bk_doc_id + "\">" + bk_inline(title) + "</a></li>"
+        } else if (lvl == 2 || (lvl == 3 && ofs_str_len(bk_cur) > 3200)) {
+            bk_begin_leaf(bk_doc_id + "-" + sl, title)
+            bk_cur = bk_cur + "<h3 id=\"h-" + bk_doc_id + "-" + sl + "\">" + bk_inline(title) + "</h3>\n"
+        } else {
+            bk_close_blocks()
+            bk_cur = bk_cur + "<h" + ofs_stone_to_obsidian(lvl + 1) + ">" + bk_inline(title) + "</h" + ofs_stone_to_obsidian(lvl + 1) + ">\n"
+        }
+        return
+    }
+    if (bk_open == false) { bk_begin_leaf("", bk_chapter) }
+    if (ofs_str_eq(ofs_str_substr(t, 0, 3), "---") || ofs_str_eq(ofs_str_substr(t, 0, 3), "***")) {
+        bk_close_blocks()
+        return
+    }
+    // tabela
+    if (ofs_str_eq(ofs_str_substr(t, 0, 1), "|")) {
+        bk_flush_para()
+        if (bk_tab == 0) {
+            if (ofs_str_len(bk_list) > 0) { bk_close_blocks() }
+            bk_cur = bk_cur + "<div class=\"tw\"><table><thead>" + bk_row(t, "th") + "</thead><tbody>"
+            bk_tab = 1
+            return
+        }
+        if (bk_tab == 1 && bk_find(t, "---", 0) >= 0) {
+            bk_tab = 2
+            return
+        }
+        bk_tab = 2
+        bk_cur = bk_cur + bk_row(t, "td")
+        return
+    }
+    if (bk_tab > 0) { bk_close_blocks() }
+    // citacao
+    if (ofs_str_eq(ofs_str_substr(t, 0, 1), ">")) {
+        bk_flush_para()
+        if (bk_quote == false) {
+            bk_cur = bk_cur + "<blockquote>"
+            bk_quote = true
+        }
+        bk_para = bk_para + bk_trim(ofs_str_substr(t, 1, tn - 1)) + " "
+        return
+    }
+    // listas
+    forge item = ""
+    forge kind = ""
+    if ((ofs_str_eq(ofs_str_substr(t, 0, 2), "- ") || ofs_str_eq(ofs_str_substr(t, 0, 2), "* ")) ) {
+        item = ofs_str_substr(t, 2, tn - 2)
+        kind = "ul"
+    } else if (bk_is_digit(ofs_str_char_at(t, 0))) {
+        forge d = 0
+        cycle (forge i = 0; i < tn; i++) {
+            if (i == d && bk_is_digit(ofs_str_char_at(t, i))) { d = d + 1 }
+        }
+        if (d < tn - 1 && ofs_str_eq(ofs_str_substr(t, d, 2), ". ")) {
+            item = ofs_str_substr(t, d + 2, tn - d - 2)
+            kind = "ol"
+        }
+    }
+    if (ofs_str_len(kind) > 0) {
+        bk_flush_para()
+        if (ofs_str_eq(bk_list, kind) == false) {
+            if (ofs_str_len(bk_list) > 0) { bk_cur = bk_cur + "</" + bk_list + ">\n" }
+            bk_cur = bk_cur + "<" + kind + ">"
+            bk_list = kind
+        }
+        forge indent = ""
+        if (ofs_str_eq(ofs_str_substr(line, 0, 2), "  ")) { indent = " class=\"sub\"" }
+        bk_cur = bk_cur + "<li" + indent + ">" + bk_inline(item) + "</li>"
+        return
+    }
+    if (ofs_str_len(bk_list) > 0 && ofs_str_eq(ofs_str_substr(line, 0, 1), " ")) {
+        bk_cur = bk_cur + "<li class=\"sub\">" + bk_inline(t) + "</li>"
+        return
+    }
+    if (ofs_str_len(bk_list) > 0) { bk_close_blocks() }
+    bk_para = bk_para + t + " "
+}
+
+vein bk_exists(path: obsidian) -> bool {
+    return system("test -f '" + path + "'") == 0
+}
+
+vein bk_resolve(lang: obsidian, name: obsidian) -> obsidian {
+    forge pt = "docs/" + name + ".md"
+    forge en = "docs/en/" + name + ".md"
+    forge es = "docs/es/" + name + ".md"
+    if (ofs_str_eq(lang, "es") && bk_exists(es)) { return es }
+    if (ofs_str_eq(lang, "pt") == false && bk_exists(en)) { return en }
+    if (ofs_str_eq(lang, "pt") && bk_exists(pt)) { return pt }
+    if (bk_exists(pt)) { return pt }
+    return ""
+}
+
+vein bk_add_doc(lang: obsidian, name: obsidian) -> void {
+    forge path = bk_resolve(lang, name)
+    if (ofs_str_len(path) == 0) { return }
+    bk_doc_id = "doc-" + bk_slug(name)
+    forge src = read_file(path)
+    forge n = ofs_str_len(src)
+    bk_para = ""
+    bk_list = ""
+    bk_tab = 0
+    bk_code = false
+    bk_quote = false
+    bk_open = false
+    forge st = 0
+    forge first = true
+    cycle (forge i = 0; i <= n; i++) {
+        if (i == n || ofs_str_char_at(src, i) == 10) {
+            bk_line(ofs_str_substr(src, st, i - st))
+            st = i + 1
+        }
+    }
+    bk_end_leaf()
+    // aviso de idioma de origem
+    forge fell = false
+    if (ofs_str_eq(lang, "en") && bk_find(path, "docs/en/", 0) != 0) { fell = true }
+    if (ofs_str_eq(lang, "es") && bk_find(path, "docs/es/", 0) != 0) { fell = true }
+    if (fell) {
+        forge note = "<span class=\"lang-note\">[" + bk_find_lang_note(lang, path) + "]</span>"
+        bk_toc = bk_toc + note
+    }
+}
+
+vein bk_find_lang_note(lang: obsidian, path: obsidian) -> obsidian {
+    if (bk_find(path, "docs/en/", 0) == 0) { return "en" }
+    return "pt"
+}
+
+vein bk_ui(lang: obsidian, key: obsidian) -> obsidian {
+    forge pt = ofs_str_eq(lang, "pt")
+    forge es = ofs_str_eq(lang, "es")
+    if (ofs_str_eq(key, "tagline")) {
+        if (pt) { return "Um livro sobre a linguagem Obsidian Fault Script" }
+        if (es) { return "Un libro sobre el lenguaje Obsidian Fault Script" }
+        return "A book about the Obsidian Fault Script language"
+    }
+    if (ofs_str_eq(key, "open")) {
+        if (pt) { return "Abrir o livro" }
+        if (es) { return "Abrir el libro" }
+        return "Open the book"
+    }
+    if (ofs_str_eq(key, "toc")) {
+        if (pt) { return "Sumário" }
+        if (es) { return "Índice" }
+        return "Contents"
+    }
+    if (ofs_str_eq(key, "family")) {
+        if (pt) { return "Família: OFS, ODL (HTML), OES (CSS), OLL (UI desktop) e OAL (Android)." }
+        if (es) { return "Familia: OFS, ODL (HTML), OES (CSS), OLL (UI de escritorio) y OAL (Android)." }
+        return "Family: OFS, ODL (HTML), OES (CSS), OLL (desktop UI) and OAL (Android)."
+    }
+    if (ofs_str_eq(key, "nojs")) {
+        if (pt) { return "Sem JavaScript o livro é exibido como uma página única com rolagem." }
+        if (es) { return "Sin JavaScript el libro se muestra como una página única con desplazamiento." }
+        return "Without JavaScript the book is shown as one scrolling page."
+    }
+    if (ofs_str_eq(key, "ch1")) {
+        if (pt) { return "Começando" }
+        if (es) { return "Empezando" }
+        return "Getting Started"
+    }
+    if (ofs_str_eq(key, "ch2")) {
+        if (pt) { return "Linguagem" }
+        if (es) { return "Lenguaje" }
+        return "Language"
+    }
+    if (ofs_str_eq(key, "ch3")) { return "Stdlib" }
+    if (ofs_str_eq(key, "ch4")) {
+        if (pt) { return "Compilador" }
+        if (es) { return "Compilador" }
+        return "Compiler"
+    }
+    if (ofs_str_eq(key, "ch5")) { return "ODL / OES / OLL / OAL" }
+    if (ofs_str_eq(key, "ch6")) { return "Android" }
+    if (ofs_str_eq(key, "ch7")) {
+        if (pt) { return "Ferramentas" }
+        if (es) { return "Herramientas" }
+        return "Tools"
+    }
+    if (ofs_str_eq(key, "ch8")) {
+        if (pt) { return "Changelog" }
+        return "Changelog"
+    }
+    return key
+}
+
+vein bk_chapter_leaf(num: stone, title: obsidian) -> obsidian {
+    return "<article class=\"leaf chapter-page\" data-ch=\"" + bk_esc(title) + "\" data-t=\"" + bk_esc(title) + "\" data-chapter=\"1\"><div class=\"leaf-in\"><p class=\"eyebrow\">" + ofs_stone_to_obsidian(num) + "</p><h2 class=\"chapter-name\">" + bk_esc(title) + "</h2></div></article>\n"
+}
+
+vein bk_chap(lang: obsidian, num: stone, docs: obsidian) -> void {
+    // docs: nomes separados por espaco
+    bk_chapter = bk_ui(lang, "ch" + ofs_stone_to_obsidian(num))
+    bk_toc = bk_toc + "<li class=\"toc-chapter\"><span>" + ofs_stone_to_obsidian(num) + ". " + bk_esc(bk_chapter) + "</span></li>"
+    bk_all = bk_all + bk_chapter_leaf(num, bk_chapter)
+    forge n = ofs_str_len(docs)
+    forge st = 0
+    cycle (forge i = 0; i <= n; i++) {
+        if (i == n || ofs_str_eq(ofs_str_substr(docs, i, 1), " ")) {
+            if (i > st) { bk_add_doc(lang, ofs_str_substr(docs, st, i - st)) }
+            st = i + 1
+        }
+    }
+}
+
+vein bk_page(lang: obsidian) -> obsidian {
+    bk_all = ""
+    bk_toc = ""
+    bk_cur = ""
+    bk_open = false
+    bk_chap(lang, 1, "GETTING_STARTED BEGINNER_JOURNEY")
+    bk_chap(lang, 2, "LANGUAGE_REFERENCE COMPILED_LANGUAGE")
+    bk_chap(lang, 3, "STANDARD_LIBRARY")
+    bk_chap(lang, 4, "COMPILER_ARCHITECTURE BOOTSTRAP PERFORMANCE")
+    bk_chap(lang, 5, "ODL_REFERENCE OES_REFERENCE VISUAL_UI OAL_REFERENCE WEB_UI")
+    bk_chap(lang, 6, "ANDROID")
+    bk_chap(lang, 7, "IDLE_ARCHITECTURE SITE_LANGUAGE")
+    bk_chap(lang, 8, "CHANGELOG")
+
+    forge pre = ""
+    if (ofs_str_eq(lang, "pt") == false) { pre = "../" }
+    forge langs = "<nav class=\"langs\" aria-label=\"Language\"><a href=\"" + pre + "index.html\" hreflang=\"pt\"" + bk_cur_attr(lang, "pt") + ">PT</a><a href=\"" + pre + "en/index.html\" hreflang=\"en\"" + bk_cur_attr(lang, "en") + ">EN</a><a href=\"" + pre + "es/index.html\" hreflang=\"es\"" + bk_cur_attr(lang, "es") + ">ES</a></nav>"
+    forge cover = "<article class=\"leaf cover\" data-t=\"OFS\" data-ch=\"\"><div class=\"leaf-in\"><img class=\"cover-logo\" src=\"" + pre + "assets/ofs-256.png\" alt=\"OFS\" width=\"128\" height=\"128\"><h1>Obsidian<br>Fault Script</h1><p class=\"cover-sub\">" + bk_ui(lang, "tagline") + "</p><p class=\"cover-fam\">" + bk_ui(lang, "family") + "</p><p class=\"cover-ver\"><span data-relver>v" + bk_version() + "</span><small data-relsrc> (local)</small></p><a class=\"btn open-book\" href=\"#toc\">" + bk_ui(lang, "open") + "</a>" + bk_rel_card(lang, bk_version()) + "<p class=\"nojs\">" + bk_ui(lang, "nojs") + "</p></div></article>\n"
+    forge toc = "<article class=\"leaf toc-page\" id=\"toc\" data-t=\"" + bk_ui(lang, "toc") + "\" data-ch=\"\"><div class=\"leaf-in\"><h2>" + bk_ui(lang, "toc") + "</h2><ol class=\"toc-list\">" + bk_toc + "</ol></div></article>\n"
+    forge head = "<!doctype html><html lang=\"" + lang + "\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Obsidian Fault Script - " + bk_ui(lang, "tagline") + "</title><link rel=\"icon\" href=\"" + pre + "assets/ofs-256.png\"><link rel=\"stylesheet\" href=\"" + pre + "assets/book.css\"><script>document.documentElement.className='js'</script></head>"
+    forge body = "<body data-lang=\"" + lang + "\" data-toc=\"" + bk_ui(lang, "toc") + "\"><header class=\"bar\"><a class=\"brand\" href=\"#top\"><img src=\"" + pre + "assets/ofs-256.png\" alt=\"\" width=\"28\" height=\"28\"><span>OFS</span></a><button class=\"dlbtn\" type=\"button\" aria-expanded=\"false\">↓ Download</button>" + langs + "</header><div id=\"dlpop\" hidden>" + bk_rel_card(lang, bk_version()) + "</div><main id=\"book\"><div id=\"leaves\">" + cover + toc + bk_all + "</div></main><script src=\"" + pre + "assets/book.js\"></script></body></html>\n"
+    return head + body
+}
+
+vein bk_cur_attr(lang: obsidian, l: obsidian) -> obsidian {
+    if (ofs_str_eq(lang, l)) { return " aria-current=\"true\"" }
+    return ""
+}
+
+vein bk_version() -> obsidian {
+    forge s = read_file("src/packaging/linux/ofs")
+    forge needle = "__*__) OFS_VERSION=\""
+    forge a = bk_find(s, needle, 0)
+    if (a < 0) { return "0.0.0" }
+    forge st = a + ofs_str_len(needle)
+    forge e = bk_find(s, "\"", st)
+    return ofs_str_substr(s, st, e - st)
+}
+
+vein bk_dl(label: obsidian, prefix: obsidian, ext: obsidian, ver: obsidian) -> obsidian {
+    forge base = "https://github.com/Samwns/Obsidian-Fault-Script/releases/latest/download/"
+    return "<a class=\"dl\" data-asset=\"" + prefix + "\" data-ext=\"" + ext + "\" href=\"" + base + prefix + "v" + ver + ext + "\">" + label + "</a>"
+}
+
+vein bk_rel_card(lang: obsidian, ver: obsidian) -> obsidian {
+    forge pt = ofs_str_eq(lang, "pt")
+    forge es = ofs_str_eq(lang, "es")
+    forge h = "Download"
+    forge all = "All releases"
+    forge lat = "Latest version"
+    if (pt) { h = "Baixar" all = "Todas as releases" lat = "Versão mais recente" }
+    if (es) { h = "Descargar" all = "Todas las releases" lat = "Última versión" }
+    forge repo = "https://github.com/Samwns/Obsidian-Fault-Script/releases"
+    forge pre = ""
+    if (ofs_str_eq(lang, "pt") == false) { pre = "../" }
+    forge box = "<div class=\"box\" role=\"button\" tabindex=\"0\" aria-expanded=\"false\" aria-label=\"" + h + " OFS\"><div class=\"cube\"><div class=\"f back\"></div><div class=\"f left\"></div><div class=\"f side\"></div><div class=\"f front\"><img src=\"" + pre + "assets/ofs-256.png\" alt=\"\" width=\"56\" height=\"56\"><b>OFS</b><span data-relver>v" + ver + "</span></div><div class=\"f lid\"><i></i></div></div><div class=\"floor\"></div></div>"
+    return "<div class=\"relcard\">" + box + "<span class=\"relver\">" + lat + ": <b data-relver>v" + ver + "</b><small data-relsrc> (local)</small></span><div class=\"dls\">" + bk_dl("Linux .deb", "ofs-debian-ubuntu-x64-installer-", ".deb", ver) + bk_dl("Linux .rpm", "ofs-fedora-x64-installer-", ".rpm", ver) + bk_dl("Arch .pkg.tar.zst", "ofs-arch-x64-installer-", ".pkg.tar.zst", ver) + bk_dl("Windows .exe", "ofs-windows-x64-installer-", ".exe", ver) + bk_dl("macOS .pkg", "ofs-macos-arm64-installer-", ".pkg", ver) + "<a class=\"dl\" data-ext=\".vsix\" href=\"" + repo + "/latest\">VS Code .vsix</a></div><a class=\"allrel\" href=\"" + repo + "\">" + all + "</a></div>"
+}

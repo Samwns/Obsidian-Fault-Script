@@ -144,13 +144,25 @@ Controles de interface de usuário em modo imediato:
 Rasterizador vetorial com antialiasing (acumulação de área assinalada). Caminhos (`move_to`, `line_to`, `quad_to`, `cubic_to`, `close`), formas (`add_round_rect`, `add_circle`, `add_capsule`, `add_arc_stroke`) e atalhos (`fill_round_rect`, `fill_circle`, `stroke_line`, `stroke_round_rect`). Compõe no Canvas respeitando alfa e clip.
 
 ### `ttf.ofs`
-Fontes TrueType em OFS puro: `ttf.load(caminho)`, `ttf.draw(cv, fonte, tamanho, x, linha_base, texto, cor)`, `ttf.width`, `ttf.ascent`/`descent`/`line_height`, `ttf.ellipsize`, `ttf.draw_centered`. UTF-8, glifos compostos (acentos), cache e posicionamento subpixel.
+Fontes TrueType em OFS puro: `ttf.load(caminho)`, `ttf.draw(cv, fonte, tamanho, x, linha_base, texto, cor)`, `ttf.width`, `ttf.ascent`/`descent`/`line_height`, `ttf.ellipsize`, `ttf.draw_centered`. UTF-8, glifos compostos (acentos), cache e posicionamento subpixel. Texto em várias linhas: `ttf.wrap(fonte, tamanho, texto, largura_max)` quebra por palavras e devolve `Array<obsidian>` (respeita `\n`); `ttf.draw_wrapped(cv, fonte, tamanho, x, y, largura_max, altura_linha, texto, cor, max_chars)` desenha o texto quebrado a partir do topo `y` e devolve o número de linhas (`max_chars < 0` desenha tudo; útil para efeito de máquina de escrever).
 
 ### `x11win.ofs`
 Janela X11 nativa: `open`, `present(canvas)`, `poll()` → `EV_KEY`/`EV_MOUSE_DOWN`/`EV_MOUSE_UP`/`EV_MOUSE_MOVE`/`EV_WHEEL`/`EV_RESIZE`/`EV_CLOSE`, campos `ev_x`, `ev_y`, `ev_button`, `ev_key` (keysym), `ev_text` (UTF-8, com teclas mortas pt-BR), `ev_mods`; `set_cursor`, `set_icon`, `set_title`, `now_ms`, `sleep_ms`.
 
 ### `icons.ofs`
-Ícones vetoriais 24×24: `icons.draw(cv, icons.BACK, x, y, tamanho, cor)` e `icons.draw_centered`. Constantes `BACK`, `FORWARD`, `RELOAD`, `HOME`, `PLUS`, `CLOSE`, `LOCK`, `INFO`, `STAR`, `MENU`, `SEARCH`, `GLOBE`, `DOWNLOAD`, `HISTORY`, `SETTINGS`, `PROFILE`, `STOP`, `FILE`, `BOOKMARK`, `SHIELD`.
+Ícones vetoriais 24×24: `icons.draw(cv, icons.BACK, x, y, tamanho, cor)` e `icons.draw_centered`. Constantes `BACK`, `FORWARD`, `RELOAD`, `HOME`, `PLUS`, `CLOSE`, `LOCK`, `INFO`, `STAR`, `MENU`, `SEARCH`, `GLOBE`, `DOWNLOAD`, `HISTORY`, `SETTINGS`, `PROFILE`, `STOP`, `FILE`, `BOOKMARK`, `SHIELD`, `PLUGIN`, `SAVE`, `FOLDER`, `PLAY`, `HAMBURGER`, `GAMEPAD`; `icons.by_name("plugins")` aceita nomes e apelidos (`import`, `load`, `config`...). Ícones de interface adicionados para o OAL e o Moon: `AUTO`, `SKIP`, `BACKLOG`, `EYE`, `EYE_OFF`, `ROTATE`, `PORTRAIT`, `LANDSCAPE`, `TRASH`, `EDIT`, `IMAGE`, `VOLUME`, `TEXT`, `PALETTE`, `CHECK`, `STORAGE`, `KEYBOARD`, `BACKSPACE`, `SHIFT`, `PAUSE`, `JOYSTICK`, `SPACE`, `CHEVRON`, `RESIZE`, `TABS`. Ícones de **motor/engine** de jogo: `WINDOWS` (janela de programa de PC), `RENPY` (balão de fala: visual novel), `UNITY` (cubo isométrico: motor 3D), `MOON`, `UNKNOWN`. `icons.by_name` aceita também nomes em português (`lixeira`, `retrato`, `paisagem`, `teclado`, `joystick`...).
+
+### `android.ofs`
+Backend Android em OFS puro (NativeActivity, aarch64, API 26+): exporta `ANativeActivity_onCreate`, liga os callbacks com `fault_addr`, entrada por `AInputQueue_attachLooper`, frames por `AChoreographer`. O programa define `android_event(ev)`. Funções: `lock`/`unlock_post`/`fill_rect`/`blit` (ANativeWindow RGBA), `request_frame`, `finish`, `set_orientation` (JNI), `internal_data_path`, `external_data_path`, `log`/`log_tag`. Ver [ANDROID.md](ANDROID.md).
+
+### `oal_runtime.ofs`, `oal_android.ofs`, `oal_x11.ofs`
+Runtime da OAL: widgets de toque (barra, botão, ícone, lista, grade, cartão, `fab`, D-pad), estilos com estado pressionado e opacidade, rolagem, navegação, retrato/paisagem, desenhados em `canvas`/`raster`/`ttf`/`icons` sobre o núcleo de layout do `oll.ofs`. `oal_android.ofs` é o backend Android; `oal_x11.ofs` (janela de celular no desktop) é experimental. Ver [OAL_REFERENCE.md](OAL_REFERENCE.md).
+
+### `wav.ofs`
+Decodificador WAV (RIFF) em OFS puro, sem dependência de plataforma: `wav.load(caminho)` (`-1` se falhar), `wav.decode(ptr, tamanho)`, `wav.pcm(s)` (ponteiro para amostras i16 intercaladas), `wav.frames`, `wav.channels`, `wav.rate`, `wav.free`. Suporta PCM 8/16 bits e Microsoft ADPCM.
+
+### `audio_android.ofs`
+Saída de som com AAudio (Android 8+): `audio.open()` (44,1 kHz, estéreo, i16), `audio.play(canal, som, loop)`, `stop`, `stop_all`, `set_volume(canal, 0-100)`, `set_master`, `playing`, `pause`/`resume`/`close` e `audio.pump()` uma vez por quadro. O mixer roda na thread de áudio e só usa memória crua; a CLI linka `-laaudio` com `ofs build --target android`. Ver [ANDROID.md](ANDROID.md).
 
 ### `hashmap.ofs`
 Tabela hash inteiro→inteiro: `hashmap.new(cap)`, `set`, `get(m, chave, padrao)`, `has`, `count`, `clear`.

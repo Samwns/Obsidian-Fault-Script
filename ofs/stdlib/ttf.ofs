@@ -671,4 +671,104 @@ namespace ttf {
         forge tw = width(font, size, text)
         draw(cv, font, size, x + (w - tw) / 2, y, text, color)
     }
+
+    // ── texto em varias linhas ───────────────────────────────────────────
+    // Quebra o texto em linhas de no maximo max_w px: quebra nos espacos,
+    // respeita "\n" e corta palavras maiores que a linha. Sem espacos (ex.:
+    // japones) quebra em qualquer caractere.
+    vein wrap(font: stone, size: stone, text: obsidian, max_w: stone) -> Array<obsidian> {
+        forge out: Array<obsidian> = []
+        forge n = ofs_str_len(text)
+        if (n == 0 || font < 0) {
+            ofs_array_push(out, text)
+            return out
+        }
+        forge limit = max_w * 64
+        forge start = 0          // inicio da linha atual (byte)
+        forge last_sp = -1       // ultimo espaco na linha (byte)
+        forge pen = 0
+        forge pen_at_sp = 0
+        forge i = 0
+        while (i < n) {
+            forge cp = decode(text, i, n)
+            forge len = _u8_len
+            if (cp == 10) {
+                ofs_array_push(out, ofs_str_substr(text, start, i - start))
+                i = i + len
+                start = i
+                last_sp = -1
+                pen = 0
+                continue
+            }
+            forge adv = advance64(font, glyph_index(font, cp), size)
+            if (cp == 32) {
+                last_sp = i
+                pen_at_sp = pen + adv
+            }
+            if (pen + adv > limit && i > start && cp != 32) {
+                if (last_sp > start) {
+                    ofs_array_push(out, ofs_str_substr(text, start, last_sp - start))
+                    start = last_sp + 1
+                    pen = pen - pen_at_sp
+                } else {
+                    ofs_array_push(out, ofs_str_substr(text, start, i - start))
+                    start = i
+                    pen = 0
+                }
+                last_sp = -1
+            }
+            pen = pen + adv
+            i = i + len
+        }
+        ofs_array_push(out, ofs_str_substr(text, start, n - start))
+        return out
+    }
+
+    // Numero de codepoints (caracteres) do texto.
+    vein chars(text: obsidian) -> stone {
+        forge n = ofs_str_len(text)
+        forge i = 0
+        forge c = 0
+        while (i < n) {
+            decode(text, i, n)
+            i = i + _u8_len
+            c++
+        }
+        return c
+    }
+
+    // Prefixo com os primeiros k caracteres (efeito maquina de escrever).
+    vein prefix(text: obsidian, k: stone) -> obsidian {
+        forge n = ofs_str_len(text)
+        forge i = 0
+        forge c = 0
+        while (i < n && c < k) {
+            decode(text, i, n)
+            i = i + _u8_len
+            c++
+        }
+        return ofs_str_substr(text, 0, i)
+    }
+
+    // Desenha o texto quebrado em linhas a partir do topo y (line_h px por
+    // linha). max_chars < 0 = tudo; senao so os primeiros max_chars caracteres.
+    // Devolve o numero de linhas.
+    vein draw_wrapped(cv: Canvas, font: stone, size: stone, x: stone, y: stone, max_w: stone, line_h: stone, text: obsidian, color: stone, max_chars: stone) -> stone {
+        forge lines = wrap(font, size, text, max_w)
+        forge asc = ascent(font, size)
+        forge left = max_chars
+        forge k = 0
+        while (k < ofs_array_len(lines)) {
+            forge ln: obsidian = ofs_array_get(lines, k)
+            if (max_chars >= 0) {
+                if (left <= 0) { return ofs_array_len(lines) }
+                forge lc = chars(ln)
+                if (lc > left) { ln = prefix(ln, left) }
+                left = left - lc - 1
+            }
+            draw(cv, font, size, x, y + asc + k * line_h, ln, color)
+            k++
+        }
+        return ofs_array_len(lines)
+    }
 }

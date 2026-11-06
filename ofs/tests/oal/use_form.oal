@@ -1,0 +1,34 @@
+// Teste do oalc: logica importada com `use`.
+use "logica.ofs"
+app "Teste OAL" "org.ofs.teste_oal"
+  version "1.2.3"
+  permission internet vibrate
+style button.forte
+  fill #ff8800
+  ink #000
+  curve 8
+  pressed fill #aa5500
+
+style controle
+  fill #ffffff
+  opacity 40
+screen inicio
+  bar "Teste"
+    button "Sair" -> @quit
+    button.icon "settings" -> @landscape
+  title "OAL v0"
+  button.forte "Tocar" -> tocar(7)
+  row
+    button "A" -> @outra
+    button "B" -> sair
+  list from dados.itens
+    item title=item.nome sub="fixo" -> tocar(item)
+    empty "vazio"
+  grid columns=2 landscape=3
+    card "C1" "s" -> tocar(1)
+screen outra
+  text "outra tela"
+  button "Salvar" icon=save -> @auto
+  fab.icon "play" -> tocar(2)
+  dpad.controle corner=bottom_left -> tocar(item)
+on back -> sair
