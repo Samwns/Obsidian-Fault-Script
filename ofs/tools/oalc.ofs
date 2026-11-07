@@ -682,6 +682,11 @@ vein gen_item(t: Array<obsidian>, kind: obsidian, src: obsidian, idx: obsidian, 
     if (ofs_str_len(src) == 0) { item_arg = "-1" }
     style_prefix(tok(t, 0), ind)
     item_extras(t, src, idx, ind)
+    forge lg = attr2(t, 1, "long", "segurar")
+    if (ofs_str_len(lg) > 0) {
+        ofs_array_push(_actions, action_call(lg))
+        emit(ind + "oal.use_long(" + ofs_stone_to_obsidian(ofs_array_len(_actions) - 1) + ")")
+    }
     if (in_grid || ofs_str_eq(kind, "card")) {
         emit(ind + "oal.card(" + te + ", " + se + ", " + a + ", " + item_arg + ")")
     } else {
@@ -774,6 +779,11 @@ vein gen_block(start: stone, base: stone, level: stone) -> stone {
             forge bt = positional_str(t, 1, 0)
             if (ofs_str_len(bt) == 0) { bt = value_expr(tok(t, 1), "", "") }
             emit(ind + "oal.bar(" + bt + ")")
+            forge blogo = attr2(t, 1, "logo", "logotipo")
+            if (ofs_str_len(blogo) > 0) {
+                if (!is_str(blogo)) { blogo = "\"" + blogo + "\"" }
+                emit(ind + "oal.bar_logo(" + blogo + ")")
+            }
             i++
             while (i < ofs_array_len(_lines) && ofs_array_get(_indents, i) > my_indent) {
                 _line_no = ofs_array_get(_numbers, i)
@@ -903,6 +913,57 @@ vein gen_block(start: stone, base: stone, level: stone) -> stone {
             if (ofs_str_len(ih) == 0) { ih = "0" }
             emit(ind + "oal.image(" + ip + ", " + ih + ")")
             i++
+            continue
+        }
+        if (ofs_str_eq(k, "navbar") || ofs_str_eq(k, "navegacao")) {
+            emit(ind + "oal.nav_begin()")
+            i++
+            while (i < ofs_array_len(_lines) && ofs_array_get(_indents, i) > my_indent) {
+                _line_no = ofs_array_get(_numbers, i)
+                forge nt = tokens(ofs_array_get(_lines, i))
+                if (!ofs_str_eq(tok(nt, 0), "tab") && !ofs_str_eq(tok(nt, 0), "aba")) {
+                    err("dentro de navbar so vale tab")
+                } else {
+                    forge nl = label_of(nt)
+                    icon_prefix(nt, ind)
+                    forge nsel = attr_expr(nt, "selected", "selecionada", "", "", "false")
+                    emit(ind + "oal.nav_tab(" + nl + ", " + action_id(nt) + ", " + nsel + ")")
+                }
+                i++
+            }
+            emit(ind + "oal.nav_end()")
+            continue
+        }
+        if (ofs_str_eq(k, "popup") || ofs_str_eq(k, "menu")) {
+            // popup [sheet|menu] [title=expr] -> acao_fechar; filhos: item title= icon= [show=cond] -> acao
+            forge psheet = "false"
+            if (ofs_str_eq(tok(t, 1), "sheet")) { psheet = "true" }
+            forge ptitle = attr2(t, 1, "title", "titulo")
+            if (ofs_str_len(ptitle) == 0) { ptitle = "\"\"" } else { ptitle = value_expr(ptitle, "", "") }
+            emit(ind + "oal.popup_begin(" + psheet + ", " + ptitle + ", " + action_id(t) + ")")
+            i++
+            while (i < ofs_array_len(_lines) && ofs_array_get(_indents, i) > my_indent) {
+                _line_no = ofs_array_get(_numbers, i)
+                forge pc = tokens(ofs_array_get(_lines, i))
+                if (!ofs_str_eq(kind_of(tok(pc, 0)), "item")) {
+                    err("dentro de popup so vale item")
+                } else {
+                    forge pshow = attr2(pc, 1, "show", "se")
+                    forge pind = ind
+                    if (ofs_str_len(pshow) > 0) {
+                        emit(ind + "if (" + pshow + ") {")
+                        pind = ind + "    "
+                    }
+                    forge pit = attr2(pc, 1, "title", "titulo")
+                    if (ofs_str_len(pit) == 0) { pit = positional_str(pc, 1, 0) }
+                    style_prefix(tok(pc, 0), pind)
+                    item_extras(pc, "", "", pind)
+                    emit(pind + "oal.popup_item(" + value_expr(pit, "", "") + ", " + action_id(pc) + ")")
+                    if (ofs_str_len(pshow) > 0) { emit(ind + "}") }
+                }
+                i++
+            }
+            emit(ind + "oal.popup_end()")
             continue
         }
         if (ofs_str_eq(k, "tabs") || ofs_str_eq(k, "abas")) {

@@ -73,6 +73,11 @@ namespace oal {
     forge K_FIELD: stone = 26            // campo de texto (toque -> acao)
     forge K_DIAMOND: stone = 28          // 4 botoes de acao em losango (camada 2)
     forge K_COLOR: stone = 27            // seletor de cor (quadrado S/V + barra de matiz)
+    forge K_NAV: stone = 29              // barra de navegacao inferior (camada 2)
+    forge K_NAVTAB: stone = 30
+    forge K_POP: stone = 31              // fundo escurecido do menu suspenso / bottom sheet (camada 4)
+    forge K_POPPANEL: stone = 32
+    forge K_POPITEM: stone = 33
 
     // Estilos do losango (diamond) e posicoes dos botoes
     forge PAD_KEYS: stone = 0            // teclas de teclado
@@ -124,7 +129,7 @@ namespace oal {
     forge _toast_text: obsidian = ""
     forge _toast_until: stone = 0
     forge kb_shift: bool = false          // teclado: maiusculas
-    forge kb_layer: stone = 0             // 0 letras, 1 numeros/acentos
+    forge kb_layer: stone = 0             // 0 letras, 1 numeros/acentos, 2 hex (0-9 A-F)
 
     // Tema (0xRRGGBB)
     forge c_bg: stone = 1052704
@@ -188,6 +193,18 @@ namespace oal {
     forge _btxt: Array<obsidian> = []     // selo: texto
     forge _vmin: Array<stone> = []        // slider: minimo / aba: selecionada
     forge _vmax: Array<stone> = []
+    forge _lact: Array<stone> = []        // acao de "segurar" (long press) por no; -1 nenhuma
+    forge _next_long: stone = -1
+    forge _bar_logo: stone = -1           // icone no lugar do titulo da barra
+    forge _nav_h: stone = 0               // altura da barra inferior (0 = sem barra)
+    forge _nav_first: stone = -1
+    forge _pop_on: bool = false
+    forge _pop_scrim: stone = -1
+    forge _pop_panel: stone = -1
+    forge _pop_sheet: bool = false
+    forge _lp_fid: stone = -1             // dedo aguardando o "segurar"
+    forge _lp_start: stone = -1
+    forge LONG_MS: stone = 450
     forge _next_img: obsidian = ""
     forge _next_bicon: stone = -1
     forge _next_btxt: obsidian = ""
@@ -429,13 +446,15 @@ namespace oal {
         ofs_array_push(_btxt, _next_btxt)
         ofs_array_push(_vmin, 0)
         ofs_array_push(_vmax, 0)
+        ofs_array_push(_lact, _next_long)
+        _next_long = -1
         _next_style = -1
         _next_icon = -1
         _next_img = ""
         _next_bicon = -1
         _next_btxt = ""
         forge np = ofs_array_len(_parents)
-        if (np > 0 && kind != K_BAR && _build_mode != 2 && _build_mode != 3) {
+        if (np > 0 && kind != K_BAR && _build_mode != 2 && _build_mode != 3 && _build_mode != 4) {
             oll.add_child(ofs_array_get(_parents, np - 1), id)
         }
         return id
@@ -503,6 +522,12 @@ namespace oal {
         ofs_array_pop(_parents)
         _build_mode = save
     }
+
+    // Icone (nome do icons.ofs) no lugar do texto do titulo da barra.
+    vein bar_logo(name: obsidian) -> void { _bar_logo = icons.by_name(name) }
+
+    // Acao de "segurar" do proximo card/item (long press).
+    vein use_long(action: stone) -> void { _next_long = action }
 
     vein bar_button(label: obsidian, action: stone) -> void {
         if (_bar < 0) { bar("") }
@@ -609,6 +634,8 @@ namespace oal {
             forge keep_bicon = _next_bicon
             forge keep_btxt = _next_btxt
             forge keep_style = _next_style
+            forge keep_long = _next_long
+            _next_long = -1
             _next_img = ""
             _next_icon = -1
             _next_bicon = -1
@@ -625,6 +652,7 @@ namespace oal {
             _next_bicon = keep_bicon
             _next_btxt = keep_btxt
             _next_style = keep_style
+            _next_long = keep_long
         }
         ofs_array_push(_parents, row)
         forge rn = oll.get_node(row)
@@ -880,12 +908,13 @@ namespace oal {
 
     vein _place_floating() -> void {
         forge m = dp(16)
+        forge ib = inset_bottom + _nav_h
         forge gap = dp(12)
         // 1a passada: tamanho total das fileiras/colunas centradas
         forge tot: Array<stone> = [0, 0, 0, 0, 0, 0, 0, 0]
         forge i = 0
         while (i < ofs_array_len(_k)) {
-            if (ofs_array_get(_layer, i) == 2) {
+            if (ofs_array_get(_layer, i) == 2 && ofs_array_get(_k, i) < K_NAV) {
                 forge n0 = oll.get_node(i)
                 forge c0 = ofs_array_get(_corner, i)
                 if (c0 == BOTTOM_ROW || c0 == TOP_ROW) { ofs_array_set(tot, c0, ofs_array_get(tot, c0) + n0.width + gap) }
@@ -897,7 +926,7 @@ namespace oal {
         forge row_h = 0
         forge r0 = 0
         while (r0 < ofs_array_len(_k)) {
-            if (ofs_array_get(_layer, r0) == 2 && ofs_array_get(_corner, r0) == BOTTOM_ROW) {
+            if (ofs_array_get(_layer, r0) == 2 && ofs_array_get(_k, r0) < K_NAV && ofs_array_get(_corner, r0) == BOTTOM_ROW) {
                 forge rn0 = oll.get_node(r0)
                 if (rn0.height + gap > row_h) { row_h = rn0.height + gap }
             }
@@ -907,18 +936,18 @@ namespace oal {
         ofs_array_set(acc, BOTTOM_RIGHT, row_h)
         ofs_array_set(acc, BOTTOM_LEFT, row_h)
         forge area_top = _top_h()
-        forge area_h = height - area_top - inset_bottom
+        forge area_h = height - area_top - ib
         forge area_w = width - inset_left - inset_right
         i = 0
         while (i < ofs_array_len(_k)) {
-            if (ofs_array_get(_layer, i) == 2) {
+            if (ofs_array_get(_layer, i) == 2 && ofs_array_get(_k, i) < K_NAV) {
                 forge n = oll.get_node(i)
                 forge c = ofs_array_get(_corner, i)
                 forge w = n.width
                 forge h = n.height
                 forge st = ofs_array_get(acc, c)
                 forge x = width - inset_right - m - w
-                forge y = height - inset_bottom - m - h - st
+                forge y = height - ib - m - h - st
                 forge step = h + gap
                 if (c == BOTTOM_LEFT) {
                     x = inset_left + m
@@ -933,7 +962,7 @@ namespace oal {
                 if (c == BOTTOM_ROW || c == TOP_ROW) {
                     forge row_w = ofs_array_get(tot, c) - gap
                     x = inset_left + (area_w - row_w) / 2 + st
-                    y = height - inset_bottom - m - h
+                    y = height - ib - m - h
                     if (c == TOP_ROW) { y = area_top + m }
                     step = w + gap
                 }
@@ -950,6 +979,63 @@ namespace oal {
                 oll.set_node(i, n)
             }
             i++
+        }
+        // a pilha do topo nao pode cobrir o D-pad / losango do mesmo lado:
+        // se passar, encolhe os botoes e o espaco entre eles
+        forge sd = 0
+        while (sd < 2) {
+            forge tc = TOP_LEFT
+            forge bc = BOTTOM_LEFT
+            if (sd == 1) {
+                tc = TOP_RIGHT
+                bc = BOTTOM_RIGHT
+            }
+            forge limit = 1000000
+            forge scnt = 0
+            forge sy0 = 0
+            forge send = 0
+            forge sh0 = 0
+            forge q = 0
+            while (q < ofs_array_len(_k)) {
+                if (ofs_array_get(_layer, q) == 2) {
+                    forge qn = oll.get_node(q)
+                    forge qc = ofs_array_get(_corner, q)
+                    forge qk = ofs_array_get(_k, q)
+                    if (qc == bc && (qk == K_DPAD || qk == K_DIAMOND)) {
+                        if (qn.box_y - dp(8) < limit) { limit = qn.box_y - dp(8) }
+                    }
+                    if (qc == tc && qk == K_FAB) {
+                        if (scnt == 0) {
+                            sy0 = qn.box_y
+                            sh0 = qn.box_h
+                        }
+                        scnt++
+                        send = qn.box_y + qn.box_h
+                    }
+                }
+                q++
+            }
+            if (scnt >= 2 && send > limit) {
+                forge sgap = dp(6)
+                forge nh = (limit - sy0 - (scnt - 1) * sgap) / scnt
+                if (nh < dp(36)) { nh = dp(36) }
+                if (nh > sh0) { nh = sh0 }
+                forge si = 0
+                q = 0
+                while (q < ofs_array_len(_k)) {
+                    if (ofs_array_get(_layer, q) == 2 && ofs_array_get(_corner, q) == tc && ofs_array_get(_k, q) == K_FAB) {
+                        forge rn = oll.get_node(q)
+                        if (rn.box_w == rn.box_h) { rn.box_w = nh }
+                        rn.box_h = nh
+                        rn.box_y = sy0 + si * (nh + sgap)
+                        if (sd == 1) { rn.box_x = width - inset_right - m - rn.box_w }
+                        oll.set_node(q, rn)
+                        si++
+                    }
+                    q++
+                }
+            }
+            sd++
         }
     }
 
@@ -1017,6 +1103,132 @@ namespace oal {
         ofs_array_pop(_parents)
         _fit(id, false)
         _set_h(id, dp(48))
+    }
+
+
+    // ── barra de navegacao inferior (bottom nav) ─────────────────────────
+    // nav_begin / nav_tab(rotulo, acao, selecionada) / nav_end. Fica fixa
+    // embaixo; o conteudo rola acima dela e os fab sobem junto.
+    vein nav_begin() -> void {
+        _nav_h = dp(64)
+        forge save = _build_mode
+        _build_mode = 2
+        forge id = _push_node(K_NAV, oll.OLL_ROW, "", _nav_h)
+        _build_mode = save
+        _nav_first = id
+        ofs_array_set(_corner, id, 0)
+    }
+    vein nav_tab(label: obsidian, action: stone, selected: bool) -> void {
+        forge save = _build_mode
+        _build_mode = 2
+        forge id = _push_node(K_NAVTAB, oll.OLL_BUTTON, label, _nav_h)
+        _build_mode = save
+        _set_action(id, action, -1)
+        if (selected) { ofs_array_set(_vmin, id, 1) }
+    }
+    vein nav_end() -> void {
+        forge first = _nav_first
+        forge cnt = ofs_array_len(_k) - first - 1
+        if (cnt < 1) { cnt = 1 }
+        forge aw = width - inset_left - inset_right
+        forge top = height - inset_bottom - _nav_h
+        forge nb = oll.get_node(first)
+        nb.box_x = inset_left
+        nb.box_y = top
+        nb.box_w = aw
+        nb.box_h = _nav_h
+        oll.set_node(first, nb)
+        forge i = 0
+        while (i < cnt) {
+            forge tn = oll.get_node(first + 1 + i)
+            tn.box_x = inset_left + (aw * i) / cnt
+            tn.box_w = (aw * (i + 1)) / cnt - (aw * i) / cnt
+            tn.box_y = top
+            tn.box_h = _nav_h
+            oll.set_node(first + 1 + i, tn)
+            i++
+        }
+    }
+
+    // ── menu suspenso (sheet=false, sob a barra, a direita) e bottom sheet ──
+    // popup_begin(sheet, titulo, acao_fechar) / popup_item(rotulo, acao) / popup_end.
+    // Cobre a tela com um fundo escuro; tocar fora chama a acao de fechar.
+    vein popup_begin(sheet: bool, title: obsidian, close: stone) -> void {
+        forge save = _build_mode
+        _build_mode = 4
+        _pop_scrim = _push_node(K_POP, oll.OLL_LABEL, "", height)
+        _set_action(_pop_scrim, close, -1)
+        ofs_array_set(_vmin, _pop_scrim, 0)
+        if (sheet) { ofs_array_set(_vmin, _pop_scrim, 1) }
+        forge sn = oll.get_node(_pop_scrim)
+        sn.box_x = 0
+        sn.box_y = 0
+        sn.box_w = width
+        sn.box_h = height
+        oll.set_node(_pop_scrim, sn)
+        _next_icon = -1
+        _pop_panel = _push_node(K_POPPANEL, oll.OLL_LABEL, title, 0)
+        _pop_sheet = sheet
+        _pop_on = true
+        _build_mode = save
+    }
+    vein popup_item(label: obsidian, action: stone) -> void {
+        forge save = _build_mode
+        _build_mode = 4
+        forge id = _push_node(K_POPITEM, oll.OLL_BUTTON, label, dp(48))
+        _set_action(id, action, -1)
+        _build_mode = save
+    }
+    vein popup_end() -> void {
+        forge first = _pop_panel + 1
+        forge cnt = ofs_array_len(_k) - first
+        forge aw = width - inset_left - inset_right
+        forge ih = dp(48)
+        if (_pop_sheet) { ih = dp(54) }
+        forge ptn = oll.get_node(_pop_panel)
+        forge title = ptn.text
+        forge th = 0
+        if (ofs_str_len(title) > 0) { th = dp(52) }
+        forge ph = th + cnt * ih + dp(8)
+        forge pw = 0
+        forge px = 0
+        forge py = 0
+        if (_pop_sheet) {
+            pw = aw - dp(16)
+            if (pw > dp(520)) { pw = dp(520) }
+            px = inset_left + (aw - pw) / 2
+            py = height - inset_bottom - dp(8) - ph
+        } else {
+            forge widest = 0
+            forge w0 = 0
+            while (w0 < cnt) {
+                forge wn = oll.get_node(first + w0)
+                forge tw = ttf.width(_font_bold, _fs(16), wn.text)
+                if (tw > widest) { widest = tw }
+                w0++
+            }
+            pw = widest + dp(88)
+            if (pw < dp(220)) { pw = dp(220) }
+            if (pw > aw - dp(16)) { pw = aw - dp(16) }
+            px = width - inset_right - dp(8) - pw
+            py = _top_h() + dp(2)
+        }
+        forge pn = oll.get_node(_pop_panel)
+        pn.box_x = px
+        pn.box_y = py
+        pn.box_w = pw
+        pn.box_h = ph
+        oll.set_node(_pop_panel, pn)
+        forge i = 0
+        while (i < cnt) {
+            forge it = oll.get_node(first + i)
+            it.box_x = px
+            it.box_y = py + th + dp(4) + i * ih
+            it.box_w = pw
+            it.box_h = ih
+            oll.set_node(first + i, it)
+            i++
+        }
     }
 
     // Slider: a acao recebe item = novo valor (min..max) enquanto arrasta.
@@ -1137,7 +1349,7 @@ namespace oal {
 
     // O backend deve pedir quadros continuos? (animacao ou toast na tela)
     vein wants_frames() -> bool {
-        return animating || ofs_str_len(_toast_text) > 0
+        return animating || ofs_str_len(_toast_text) > 0 || _lp_fid >= 0
     }
 
     // Chamado pelo backend no inicio de cada quadro.
@@ -1147,7 +1359,34 @@ namespace oal {
             _toast_text = ""
             _dirty = true
         }
+        if (_lp_fid >= 0) { _long_tick() }
         if (animating) { oal_app_event(ON_FRAME) }
+    }
+
+    // "Segurar": dispara a acao longa do no sob o dedo depois de LONG_MS parado.
+    vein _long_tick() -> void {
+        forge fi = _finger(_lp_fid)
+        if (fi < 0 || ofs_array_get(_f_drag, fi) != 0) {
+            _lp_fid = -1
+            return
+        }
+        if (_lp_start < 0) {
+            _lp_start = now_ms
+            oal_backend_request_frame()
+            return
+        }
+        if (now_ms - _lp_start < LONG_MS) {
+            oal_backend_request_frame()
+            return
+        }
+        forge node = ofs_array_get(_f_node, fi)
+        _lp_fid = -1
+        if (node < 0) { return }
+        forge la = ofs_array_get(_lact, node)
+        forge it = ofs_array_get(_item, node)
+        ofs_array_set(_f_drag, fi, 2)
+        ofs_array_set(_f_node, fi, -1)
+        if (la >= 0) { oal_app_action(la, it) }
     }
 
     // ── cache de imagens (PNG decodificado e reduzido) ───────────────────
@@ -1312,6 +1551,14 @@ namespace oal {
         _btxt = []
         _vmin = []
         _vmax = []
+        _lact = []
+        _next_long = -1
+        _bar_logo = -1
+        _nav_h = 0
+        _nav_first = -1
+        _pop_on = false
+        _pop_scrim = -1
+        _pop_panel = -1
         _canvas_full = -1
         _parents = []
         _grid_cols = []
@@ -1340,7 +1587,7 @@ namespace oal {
     }
 
     vein _view_h() -> stone {
-        return height - _top_h() - inset_bottom
+        return height - _top_h() - inset_bottom - _nav_h
     }
 
     vein _top_h() -> stone {
@@ -1410,6 +1657,13 @@ namespace oal {
             i++
         }
         if (_canvas_full < 0) { _draw_scrollbar(cv) }
+        if (_pop_on) {
+            i = 0
+            while (i < n_nodes) {
+                if (ofs_array_get(_layer, i) == 4) { _draw_node(cv, i, 0) }
+                i++
+            }
+        }
         _draw_toast(cv)
         _dirty = false
         return true
@@ -1431,7 +1685,7 @@ namespace oal {
         forge bw = tw + dp(40)
         forge bh = ofs_array_len(lines) * lh + dp(24)
         forge bx = (width - bw) / 2
-        forge by = height - inset_bottom - bh - dp(96)
+        forge by = height - inset_bottom - _nav_h - bh - dp(96)
         raster.fill_round_rect(cv, bx as crystal, by as crystal, bw as crystal, bh as crystal, (bh / 2) as crystal, 3860865072)
         ttf.draw_wrapped(cv, _font, ts, bx + dp(20), by + dp(12), tw + 2, lh, _toast_text, 16777215, -1)
     }
@@ -1476,6 +1730,10 @@ namespace oal {
             return
         }
         if (k == K_BAR_TITLE) {
+            if (_bar_logo >= 0) {
+                icons.draw_centered(cv, _bar_logo, x, y, dp(40), h, dp(30), c_bar_fg)
+                return
+            }
             forge ts = dp(20)
             ttf.draw(cv, _font_bold, ts, x + dp(8), _baseline(_font_bold, ts, y, h), ttf.ellipsize(_font_bold, ts, n.text, w - dp(8)), c_bar_fg)
             return
@@ -1785,6 +2043,62 @@ namespace oal {
             raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, (h / 2) as crystal, c_surface)
             return
         }
+        if (k == K_NAV) {
+            canvas.fill_rect(cv, 0, y, width, h + inset_bottom, c_bar)
+            canvas.fill_rect(cv, 0, y, width, 1, c_divider)
+            return
+        }
+        if (k == K_NAVTAB) {
+            forge nsel = ofs_array_get(_vmin, id) == 1
+            forge nink = c_muted
+            if (nsel) { nink = c_accent }
+            forge nic = ofs_array_get(_icon, id)
+            forge isz = dp(24)
+            forge ns = _fs(12)
+            forge pw0 = dp(56)
+            forge ph0 = dp(30)
+            forge px0 = x + (w - pw0) / 2
+            forge py0 = y + dp(8)
+            if (nsel) {
+                raster.fill_round_rect(cv, px0 as crystal, py0 as crystal, pw0 as crystal, ph0 as crystal, (ph0 / 2) as crystal, c_surface_hi)
+            } else if (pressed) {
+                raster.fill_round_rect(cv, px0 as crystal, py0 as crystal, pw0 as crystal, ph0 as crystal, (ph0 / 2) as crystal, c_surface)
+            }
+            if (nic >= 0) { icons.draw_centered(cv, nic, px0, py0, pw0, ph0, isz, nink) }
+            forge nl = ttf.ellipsize(_font_bold, ns, text, w - dp(4))
+            ttf.draw_centered(cv, _font_bold, ns, x, w, _baseline(_font_bold, ns, y + dp(40), dp(18)), nl, nink)
+            return
+        }
+        if (k == K_POP) {
+            forge dim = 1711276032
+            if (ofs_array_get(_vmin, id) == 1) { dim = 2566914048 }
+            raster.fill_round_rect(cv, 0 as crystal, 0 as crystal, width as crystal, height as crystal, 1 as crystal, dim)
+            return
+        }
+        if (k == K_POPPANEL) {
+            raster.fill_round_rect(cv, x as crystal, y as crystal, w as crystal, h as crystal, dp(18) as crystal, c_divider)
+            raster.fill_round_rect(cv, (x + 1) as crystal, (y + 1) as crystal, (w - 2) as crystal, (h - 2) as crystal, dp(17) as crystal, c_surface)
+            if (ofs_str_len(text) > 0) {
+                forge pts = _fs(14)
+                ttf.draw(cv, _font_bold, pts, x + dp(20), _baseline(_font_bold, pts, y + dp(6), dp(44)), ttf.ellipsize(_font_bold, pts, text, w - dp(40)), c_muted)
+            }
+            return
+        }
+        if (k == K_POPITEM) {
+            if (pressed) {
+                raster.fill_round_rect(cv, (x + dp(6)) as crystal, y as crystal, (w - dp(12)) as crystal, h as crystal, dp(12) as crystal, c_surface_hi)
+            }
+            forge pink = _ink(id, -1, c_fg, pressed)
+            forge pic = ofs_array_get(_icon, id)
+            forge ps = _fs(16)
+            forge tx0 = x + dp(20)
+            if (pic >= 0) {
+                icons.draw(cv, pic, x + dp(20), y + (h - dp(22)) / 2, dp(22), pink)
+                tx0 = x + dp(54)
+            }
+            ttf.draw(cv, _font_bold, ps, tx0, _baseline(_font_bold, ps, y, h), ttf.ellipsize(_font_bold, ps, text, w - (tx0 - x) - dp(16)), pink)
+            return
+        }
         if (k == K_TAB) {
             forge sel = ofs_array_get(_vmin, id) == 1
             forge tf = -1
@@ -1903,6 +2217,10 @@ namespace oal {
     // especiais: "^" shift, "<" apagar, "#" troca de camada, " " espaco,
     // "!" confirmar.
     vein _kb_rows() -> Array<obsidian> {
+        if (kb_layer == 2) {
+            forge rh: Array<obsidian> = ["1234567890", "ABCDEF<", "#↵"]
+            return rh
+        }
         if (kb_layer == 1) {
             forge r1: Array<obsidian> = ["1234567890", "-/:;()&@\"'", "#.,?!áéíóú<", "^ãõçêô ↵"]
             return r1
@@ -1981,7 +2299,7 @@ namespace oal {
                         forge lab = key
                         if (ofs_str_eq(key, "#")) {
                             lab = "123"
-                            if (kb_layer == 1) { lab = "abc" }
+                            if (kb_layer != 0) { lab = "abc" }
                         } else if (kb_shift) {
                             lab = _kb_upper(key)
                         }
@@ -2036,7 +2354,7 @@ namespace oal {
             return
         }
         if (ofs_str_eq(key, "#")) {
-            kb_layer = 1 - kb_layer
+            if (kb_layer == 2) { kb_layer = 0 } else { kb_layer = 1 - kb_layer }
             redraw()
             return
         }
@@ -2059,6 +2377,20 @@ namespace oal {
     // ── toque (multitoque: um registro por dedo) ─────────────────────────
     vein hit(x: stone, y: stone) -> stone {
         forge n_nodes = ofs_array_len(_k)
+        if (_pop_on) {
+            // popup aberto: so ele recebe toques (fora dele = fecha)
+            forge pq = n_nodes - 1
+            while (pq >= 0) {
+                if (ofs_array_get(_k, pq) == K_POPITEM) {
+                    forge pn = oll.get_node(pq)
+                    if (x >= pn.box_x && x < pn.box_x + pn.box_w && y >= pn.box_y && y < pn.box_y + pn.box_h) { return pq }
+                }
+                pq--
+            }
+            forge pp = oll.get_node(_pop_panel)
+            if (x >= pp.box_x && x < pp.box_x + pp.box_w && y >= pp.box_y && y < pp.box_y + pp.box_h) { return _pop_panel }
+            return _pop_scrim
+        }
         forge f = n_nodes - 1
         while (f >= 0) {
             if (ofs_array_get(_layer, f) == 2 && ofs_array_get(_act, f) >= 0) {
@@ -2069,6 +2401,7 @@ namespace oal {
             }
             f--
         }
+        if (_nav_h > 0 && y >= height - inset_bottom - _nav_h) { return -1 }
         forge i = n_nodes - 1
         forge in_bar = y < _top_h()
         while (i >= 0) {
@@ -2102,6 +2435,7 @@ namespace oal {
     vein _drop_finger(fi: stone) -> void {
         forge last = ofs_array_len(_f_id) - 1
         if (fi < 0 || fi > last) { return }
+        if (ofs_array_get(_f_id, fi) == _lp_fid) { _lp_fid = -1 }
         // mantem a ordem (o 1o dedo e o que rola)
         forge i = fi
         while (i < last) {
@@ -2317,6 +2651,11 @@ namespace oal {
         ofs_array_push(_f_scroll, scroll)
         if (node >= 0) {
             forge k = ofs_array_get(_k, node)
+            if (ofs_array_get(_lact, node) >= 0) {
+                _lp_fid = fid
+                _lp_start = -1
+                oal_backend_request_frame()
+            }
             if (k == K_DPAD) { _dpad_track(node, x, y, true) }
             if (k == K_DIAMOND) { _diamond_press(node, x, y) }
             if (k == K_CANVAS) { _canvas_touch(node, 0, fid, x, y) }
@@ -2348,7 +2687,7 @@ namespace oal {
                 _cp_track(node, x, y, false)
                 return
             }
-            if (ofs_array_get(_layer, node) == 2) { return }
+            if (ofs_array_get(_layer, node) >= 2 && ofs_array_get(_layer, node) != 3) { return }
         }
         // so o 1o dedo rola o conteudo
         if (fi != 0) { return }
@@ -2358,6 +2697,7 @@ namespace oal {
             forge slop = dp(8)
             if (dy > slop || dy < 0 - slop || dx > slop || dx < 0 - slop) {
                 ofs_array_set(_f_drag, fi, 1)
+                if (_lp_fid == fid) { _lp_fid = -1 }
             }
         }
         if (ofs_array_get(_f_drag, fi) == 1) {
@@ -2371,7 +2711,7 @@ namespace oal {
         forge fi = _finger(fid)
         if (fi < 0) { return }
         forge target = ofs_array_get(_f_node, fi)
-        forge dragged = ofs_array_get(_f_drag, fi) == 1
+        forge dragged = ofs_array_get(_f_drag, fi) != 0
         _drop_finger(fi)
         redraw()
         if (target < 0) { return }
@@ -2385,7 +2725,7 @@ namespace oal {
             _canvas_touch(target, 2, fid, x, y)
             return
         }
-        if (k == K_SLIDER || k == K_COLOR) { return }
+        if (k == K_SLIDER || k == K_COLOR || k == K_POPPANEL) { return }
         if (dragged) { return }
         if (hit(x, y) != target) { return }
         if (k == K_KEYBOARD) {
