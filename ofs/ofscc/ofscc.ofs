@@ -518,6 +518,10 @@ core main() {
         forge ms: crystal = (t1 - t0) as crystal
         event_stage_end(STAGE_PARSE, ms / 1000.0, ofs_stone_to_obsidian(node_count))
     }
+    if (parser.error_count() > 0) {
+        reporter_flush()
+        exit(1)
+    }
 
     if (print_ast) {
         forge root_node: Node = node_get(root_id)

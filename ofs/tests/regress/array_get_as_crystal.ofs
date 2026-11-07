@@ -1,0 +1,15 @@
+// `ofs_array_get(a, i) as crystal` com `a: Array<stone>` converte o inteiro
+// (sitofp), como `(x: stone) as crystal`. Antes lia os bits como double.
+core main() {
+    forge a: Array<stone> = []
+    ofs_array_push(a, 3)
+    ofs_array_push(a, -7)
+    forge x: crystal = ofs_array_get(a, 0) as crystal
+    echo(x * 2.0)
+    echo(ofs_array_get(a, 1) as crystal)
+    echo(a[0] as crystal + 0.5)
+    forge c: Array<crystal> = []
+    ofs_array_push(c, 2.5)
+    echo(ofs_array_get(c, 0) as crystal)
+    echo(ofs_array_get(c, 0) as stone)
+}

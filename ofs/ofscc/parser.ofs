@@ -11,6 +11,7 @@ namespace parser {
     forge _tokens: Array<Token> = []
     forge _pos: stone = 0
     forge _len: stone = 0
+    forge _error_count: stone = 0
     
     // ── Token Navigation ────────────────────────────────────────────────
     
@@ -62,7 +63,12 @@ namespace parser {
     
     // ── Error Handling ──────────────────────────────────────────────────
     
+    vein error_count() -> stone {
+        return _error_count
+    }
+
     vein _error(msg: obsidian) -> void {
+        _error_count = _error_count + 1
         forge t = _cur()
         forge line_str = ofs_stone_to_obsidian(t.line)
         forge col_str = ofs_stone_to_obsidian(t.col)
@@ -223,7 +229,11 @@ namespace parser {
             return ident
         }
         
-        _error("expected expression")
+        if (t.kind == TOK_CORE) {
+            _error("`core` e palavra reservada (marca o ponto de entrada `core main()`) e nao pode ser usada como nome")
+        } else {
+            _error("expected expression")
+        }
         if (t.kind != TOK_EOF) {
             _advance()
         }
@@ -761,9 +771,16 @@ namespace parser {
         
         _advance()  // skip 'vein' or 'core'
         
-        if (_cur_kind() != TOK_IDENT) {
-            _error("expected function name")
-            return -1
+        if (_cur_kind() == TOK_CORE) {
+            // `core` declara o ponto de entrada (`core main()`); como nome de
+            // funcao o corpo era descartado. Erro claro e segue o parse com o
+            // nome para nao gerar uma cascata de erros.
+            _error("`core` e palavra reservada (marca o ponto de entrada `core main()`) e nao pode ser nome de funcao; renomeie a funcao")
+        } else {
+            if (_cur_kind() != TOK_IDENT) {
+                _error("expected function name")
+                return -1
+            }
         }
         
         forge fn_name = _cur_val()
@@ -1210,6 +1227,7 @@ namespace parser {
         _tokens = tokens
         _pos = 0
         _len = ofs_array_len(tokens)
+        _error_count = 0
         
         return parse_program()
     }

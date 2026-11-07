@@ -1,0 +1,11 @@
+// Deve FALHAR na compilacao: `core` e palavra reservada (ponto de entrada).
+// Antes o corpo de `vein core()` era descartado e o build seguia (rc=0).
+namespace util {
+    vein core(x: stone) -> stone {
+        return x + 1
+    }
+}
+
+core main() {
+    echo(1)
+}

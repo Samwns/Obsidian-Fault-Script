@@ -1587,7 +1587,9 @@ namespace interpreter {
             return call_builtin(name, num_args, arg_base)
         }
 
-        if (ofs_str_len(name) > 0 && ofs_str_char_at(name, 0) >= 65 && ofs_str_char_at(name, 0) <= 90) {
+        // Nome com inicial maiuscula e construtor de variante, exceto se for
+        // uma vein registrada (metodo de impl ja reescrito: `Rect__area`).
+        if (ofs_str_len(name) > 0 && ofs_str_char_at(name, 0) >= 65 && ofs_str_char_at(name, 0) <= 90 && find_function(name) < 0) {
             forge payload: Value = val_null()
             if (num_args > 0) {
                 payload = get_call_arg(arg_base, 0)

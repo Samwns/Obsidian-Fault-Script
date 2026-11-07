@@ -17,6 +17,10 @@ vein ofs_str_len(s: obsidian) -> stone {
 // percorrem a mesma string deixam de chamar strlen a cada caractere (O(n^2)).
 // O cache so e usado se s[n] ainda for o terminador NUL.
 // Espelhado a mao em ofs/dist/magma.ll (que tem ajustes manuais).
+// O indice e de BYTE (nao de caractere UTF-8): O(1) amortizado para varrer a
+// mesma string. A comparacao do cache e de PONTEIRO: `s == __ofs_charat_s`
+// entre `obsidian` vira strcmp (O(n) por chamada; laco sobre 1 MB = ANR no
+// Android, onde o runtime e compilado deste fonte).
 forge __ofs_charat_s: obsidian = null
 forge __ofs_charat_n: stone = 0
 
@@ -24,7 +28,7 @@ vein ofs_str_char_at(s: obsidian, idx: stone) -> stone {
     if (s == null || idx < 0) { return -1 }
     forge slen = 0
     forge cached = false
-    if (s == __ofs_charat_s) {
+    if ((s as stone) == (__ofs_charat_s as stone)) {
         forge tp: *u8 = (s as stone + __ofs_charat_n) as *u8
         forge tb: u8 = 1 as u8
         fracture {

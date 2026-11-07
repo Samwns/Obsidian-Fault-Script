@@ -153,6 +153,48 @@ namespace typeck {
             ": '" + control + "' is not allowed inside anchor")
     }
     
+    // Reescreve `recv__metodo(args)` (chamada `recv.metodo(args)`) para
+    // `Tipo__metodo(recv, args)` quando `recv` e uma variavel de tipo `Tipo`
+    // com metodo em `impl Tipo`. Devolve o tipo de retorno, ou "" se nao for.
+    vein check_method_call(id: stone, name: obsidian, argc: stone) -> obsidian {
+        forge nlen = ofs_str_len(name)
+        forge sep = -1
+        forge k = nlen - 2
+        while (k > 0 && sep < 0) {
+            if (ofs_str_char_at(name, k) == 95 && ofs_str_char_at(name, k + 1) == 95) { sep = k }
+            k--
+        }
+        if (sep <= 0 || sep + 2 >= nlen) { return "" }
+        forge recv_name = ofs_str_substr(name, 0, sep)
+        forge meth = ofs_str_substr(name, sep + 2, nlen - sep - 2)
+        forge recv_sym: Symbol = resolve(recv_name)
+        if (ofs_str_eq(recv_sym.name, "")) { return "" }
+        if (recv_sym.kind == SYM_FN || recv_sym.kind == SYM_MONOLITH) { return "" }
+        forge rt = recv_sym.type_str
+        if (ofs_str_char_at(rt, 0) == 42) { rt = ofs_str_substr(rt, 1, ofs_str_len(rt) - 1) }
+        if (ofs_str_eq(rt, "") || ofs_str_eq(rt, "unknown")) { return "" }
+        forge mname = rt + "__" + meth
+        forge m_sym: Symbol = resolve(mname)
+        if (ofs_str_eq(m_sym.name, "") || m_sym.kind != SYM_FN) { return "" }
+        forge cn: Node = node_get(id)
+        if (m_sym.fn_arity == argc + 1) {
+            forge recv_id = node_new(NK_IDENT, recv_name, cn.line, cn.col)
+            check_node(recv_id)
+            forge new_extra: Array<stone> = []
+            ofs_array_push(new_extra, recv_id)
+            forge ai = 0
+            while (ai < argc) {
+                ofs_array_push(new_extra, node_extra_at(id, ai))
+                ai++
+            }
+            cn = node_get(id)
+            cn.extra = new_extra
+        }
+        cn.val = mname
+        node_set(id, cn)
+        return m_sym.type_str
+    }
+
     vein check_node(id: stone) -> obsidian {
         if (id < 0) { return "void" }
 
@@ -374,6 +416,14 @@ namespace typeck {
             if (!ofs_str_eq(fn_sym.name, "")) {
                 node_set_type(id, fn_sym.type_str)
                 return fn_sym.type_str
+            }
+            // Metodo de `impl`: o parser baixa `r.area()` para `r__area()`.
+            // Se `r` e uma variavel de tipo T e existe `T__area`, reescreve
+            // para `T__area(r, ...)` (receptor como primeiro argumento).
+            forge mt = check_method_call(id, n.val, argc)
+            if (!ofs_str_eq(mt, "")) {
+                node_set_type(id, mt)
+                return mt
             }
             // Builtins de Array sem `extern` declarado: antes caiam em
             // "unknown" (= ponteiro no LLVM) e `forge n = ofs_array_get(a, i)`
@@ -714,6 +764,9 @@ namespace typeck {
                                 member_sym.type_str = type_node_name(mc1)
                             }
                             member_sym.kind = SYM_FN
+                            member_sym.fn_arity = -1
+                            forge mc0 = node_child(member_id, 0)
+                            if (mc0 >= 0) { member_sym.fn_arity = node_extra_len(mc0) }
                             declare(member_sym)
                         } else if (member_kind == NK_VAR_DECL || member_kind == NK_CONST_DECL) {
                             // globais de namespace (nome ja mangled ns__nome),

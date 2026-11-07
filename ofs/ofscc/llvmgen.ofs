@@ -537,6 +537,33 @@ namespace llvmgen {
         return false
     }
 
+    // Tipo do elemento de `ofs_array_get(a, i)` / `a[i]` quando `a` e uma
+    // variavel com tipo `Array<T>` declarado e T e um tipo conhecido; "" se
+    // nao der para saber (ai o `as T` continua servindo de dica de leitura).
+    vein array_get_elem_type(id: stone) -> obsidian {
+        forge n: Node = node_get(id)
+        forge arr_id = node_get_extra(id, 0)
+        if (n.kind == NK_INDEX) { arr_id = n.c0 }
+        if (arr_id < 0) { return "" }
+        forge arr_node: Node = node_get(arr_id)
+        if (arr_node.kind != NK_IDENT) { return "" }
+        forge at = var_type(arr_node.val)
+        forge alen = ofs_str_len(at)
+        if (alen < 8) { return "" }
+        if (!ofs_str_eq(ofs_str_substr(at, 0, 6), "Array<")) { return "" }
+        if (ofs_str_char_at(at, alen - 1) != 62) { return "" }
+        forge et = ofs_str_substr(at, 6, alen - 7)
+        if (is_named_type(et)) { return et }
+        if (ofs_str_eq(et, "stone") || ofs_str_eq(et, "crystal") || ofs_str_eq(et, "bool") ||
+            ofs_str_eq(et, "obsidian") || ofs_str_eq(et, "u8") || ofs_str_eq(et, "i8") ||
+            ofs_str_eq(et, "u16") || ofs_str_eq(et, "i16") || ofs_str_eq(et, "u32") ||
+            ofs_str_eq(et, "i32") || ofs_str_eq(et, "u64") || ofs_str_eq(et, "i64") ||
+            ofs_str_eq(et, "f32") || ofs_str_eq(et, "f64")) {
+            return et
+        }
+        return ""
+    }
+
     vein emit_array_get(id: stone, expected_type: obsidian) -> void {
         forge n: Node = node_get(id)
         forge arr_id = node_get_extra(id, 0)
@@ -1306,7 +1333,15 @@ namespace llvmgen {
         if (n.kind == NK_CAST) {
             forge dst_type = n.val
             if (is_array_get(n.c0)) {
-                emit_array_get(n.c0, dst_type)
+                // Le o elemento no tipo real do array e depois converte
+                // (`ofs_array_get(a_stone, i) as crystal` == sitofp, como
+                // `(x: stone) as crystal`). Sem tipo conhecido, `as` e a dica.
+                forge elem_t = array_get_elem_type(n.c0)
+                if (ofs_str_len(elem_t) > 0) {
+                    emit_array_get(n.c0, elem_t)
+                } else {
+                    emit_array_get(n.c0, dst_type)
+                }
             } else {
                 emit_expr(n.c0)
             }

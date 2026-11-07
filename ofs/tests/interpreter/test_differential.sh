@@ -32,6 +32,7 @@ DIFF_TESTS=(
     "$SCRIPT_DIR/06_structs_monolith.ofs"
     "$SCRIPT_DIR/07_pointers.ofs"
     "$SCRIPT_DIR/08_namespaces.ofs"
+    "$SCRIPT_DIR/09_impl_methods.ofs"
 )
 
 for test_file in "${DIFF_TESTS[@]}"; do

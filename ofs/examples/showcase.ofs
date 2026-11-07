@@ -34,10 +34,9 @@ core main() {
         echo(cmd_i)
     }
 
-    // Block style using ':' ... obsid
-    if (1 == 1):
+    if (1 == 1) {
         echo("block closed with obsid")
-    obsid
+    }
 
     separator("Typed And Inferred Commands")
 

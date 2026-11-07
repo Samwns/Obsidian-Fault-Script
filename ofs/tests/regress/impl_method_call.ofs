@@ -1,0 +1,28 @@
+// `r.area()` de `impl Rect` vira `Rect__area(r)`; antes gerava `@r__area`
+// indefinido no build nativo.
+monolith Rect {
+    w: stone
+    h: stone
+}
+
+impl Rect {
+    vein area(self: Rect) -> stone {
+        return self.w * self.h
+    }
+    vein scaled(self: Rect, k: stone) -> stone {
+        return self.w * self.h * k
+    }
+}
+
+vein total(q: Rect) -> stone {
+    return q.area() + q.scaled(2)
+}
+
+core main() {
+    forge r: Rect
+    r.w = 10
+    r.h = 5
+    echo(r.area())
+    echo(r.scaled(3))
+    echo(total(r))
+}

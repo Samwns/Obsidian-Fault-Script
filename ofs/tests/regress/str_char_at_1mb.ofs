@@ -1,0 +1,21 @@
+// Varre 1 MiB com ofs_str_char_at. Com o runtime compilado de magma.ofs
+// (caso do Android), o cache comparava strings com strcmp: O(n) por
+// chamada, O(n^2) no laco (ANR). Agora e O(1) amortizado.
+core main() {
+    forge s: obsidian = "abcdefghijklmnop"
+    forge k = 0
+    while (k < 16) {
+        s = s + s
+        k++
+    }
+    forge n = ofs_str_len(s)
+    forge i = 0
+    forge sum = 0
+    while (i < n) {
+        sum = sum + ofs_str_char_at(s, i)
+        i++
+    }
+    echo(n)
+    echo(sum)
+    echo(ofs_str_char_at(s, n))
+}
