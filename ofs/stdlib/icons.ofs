@@ -71,6 +71,14 @@ namespace icons {
     forge CHEVRON: stone = 54
     forge RESIZE: stone = 55
     forge TABS: stone = 56
+    forge RPGM: stone = 57
+    forge TYRANO: stone = 58
+    // Formas de botao de controle (genericas, sem logotipos)
+    forge BTN_CROSS: stone = 59          // x
+    forge BTN_CIRCLE: stone = 60         // o
+    forge BTN_SQUARE: stone = 61
+    forge BTN_TRIANGLE: stone = 62
+    forge KEY_ENTER: stone = 63          // seta de Enter
 
     // Espessura do traco na grade 24x24.
     forge stroke: crystal = 2.0
@@ -562,6 +570,47 @@ namespace icons {
             _line(20.5, 10.0, 20.5, 20.0)
             _line(20.5, 20.0, 3.5, 20.0)
             _line(12.5, 6.0, 18.5, 6.0)
+        } else if (id == RPGM) {
+            // hexagono com pontos de dado (RPG de mesa; desenho proprio)
+            _line(12.0, 3.0, 20.0, 7.5)
+            _line(20.0, 7.5, 20.0, 16.5)
+            _line(20.0, 16.5, 12.0, 21.0)
+            _line(12.0, 21.0, 4.0, 16.5)
+            _line(4.0, 16.5, 4.0, 7.5)
+            _line(4.0, 7.5, 12.0, 3.0)
+            _dot(12.0, 12.0, 1.5)
+            _dot(8.5, 9.5, 1.2)
+            _dot(15.5, 14.5, 1.2)
+        } else if (id == TYRANO) {
+            // pergaminho de roteiro com linhas de texto e cursor
+            _line(6.0, 4.0, 18.0, 4.0)
+            _line(18.0, 4.0, 18.0, 17.0)
+            _line(18.0, 17.0, 6.0, 17.0)
+            _line(6.0, 17.0, 6.0, 4.0)
+            _arc(6.0, 19.0, 2.0, 90.0, 270.0)
+            _arc(18.0, 19.0, 2.0, 270.0, 450.0)
+            _line(6.0, 21.0, 18.0, 21.0)
+            _line(8.5, 8.0, 15.5, 8.0)
+            _line(8.5, 11.0, 13.0, 11.0)
+            _line(8.5, 14.0, 15.5, 14.0)
+        } else if (id == BTN_CROSS) {
+            _line(6.0, 6.0, 18.0, 18.0)
+            _line(18.0, 6.0, 6.0, 18.0)
+        } else if (id == BTN_CIRCLE) {
+            _ring(12.0, 12.0, 7.0)
+        } else if (id == BTN_SQUARE) {
+            _line(5.5, 5.5, 18.5, 5.5)
+            _line(18.5, 5.5, 18.5, 18.5)
+            _line(18.5, 18.5, 5.5, 18.5)
+            _line(5.5, 18.5, 5.5, 5.5)
+        } else if (id == BTN_TRIANGLE) {
+            _line(12.0, 4.5, 20.0, 18.5)
+            _line(20.0, 18.5, 4.0, 18.5)
+            _line(4.0, 18.5, 12.0, 4.5)
+        } else if (id == KEY_ENTER) {
+            _line(19.0, 5.0, 19.0, 13.0)
+            _line(19.0, 13.0, 6.0, 13.0)
+            _poly2(10.0, 8.5, 5.0, 13.0, 10.0, 17.5)
         }
     }
 
@@ -661,7 +710,14 @@ namespace icons {
         if (ofs_str_eq(n, "chevron") || ofs_str_eq(n, "next") || ofs_str_eq(n, "abrir")) { return CHEVRON }
         if (ofs_str_eq(n, "resize") || ofs_str_eq(n, "tamanho") || ofs_str_eq(n, "size")) { return RESIZE }
         if (ofs_str_eq(n, "tabs") || ofs_str_eq(n, "abas")) { return TABS }
+        if (ofs_str_eq(n, "rpgm") || ofs_str_eq(n, "dice") || ofs_str_eq(n, "dado")) { return RPGM }
+        if (ofs_str_eq(n, "tyrano") || ofs_str_eq(n, "scroll") || ofs_str_eq(n, "pergaminho")) { return TYRANO }
         if (ofs_str_eq(n, "language") || ofs_str_eq(n, "idioma") || ofs_str_eq(n, "translate") || ofs_str_eq(n, "traducao")) { return 12 }
+        if (ofs_str_eq(n, "btn_cross") || ofs_str_eq(n, "cross")) { return BTN_CROSS }
+        if (ofs_str_eq(n, "btn_circle")) { return BTN_CIRCLE }
+        if (ofs_str_eq(n, "btn_square")) { return BTN_SQUARE }
+        if (ofs_str_eq(n, "btn_triangle")) { return BTN_TRIANGLE }
+        if (ofs_str_eq(n, "key_enter") || ofs_str_eq(n, "enter")) { return KEY_ENTER }
         if (ofs_str_eq(n, "about") || ofs_str_eq(n, "sobre")) { return 8 }
         if (ofs_str_eq(n, "permission") || ofs_str_eq(n, "permissao")) { return 20 }
         return -1

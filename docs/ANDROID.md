@@ -89,6 +89,9 @@ Funções: `lock()`/`unlock_post()` (buffer RGBA_8888 do `ANativeWindow`: `buf_w
 - `android.is_external_storage_manager()` — `Environment.isExternalStorageManager()` (Android 11+; antes devolve true).
 - `android.open_all_files_settings()` — abre `Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION` com `package:<pacote>` (com alternativas). No `.oal`: `permission android.permission.MANAGE_EXTERNAL_STORAGE`.
 - `android.keep_screen_on(bool)` — `FLAG_KEEP_SCREEN_ON`.
+- `android.set_immersive(bool)` — tela cheia imersiva (esconde status e navegação; `setSystemUiVisibility` com `IMMERSIVE_STICKY` via JNI); reaplicada sozinha quando a janela recupera o foco.
+- `android.set_cutout_short_edges(bool)` — Android 9+: desenhar também na faixa do recorte da câmera (`layoutInDisplayCutoutMode = SHORT_EDGES`), sem a faixa preta em paisagem.
+- `android.jni_call_object(obj, nome, assinatura)` / `jni_call_void1(obj, nome, assinatura, arg)` — chamadas genéricas sem argumento / com 1 argumento.
 - `android.asset_read("arquivo")` — lê `assets/` do APK (`AAssetManager`); tamanho em `android.asset_len`.
 - `android.redraw_needed` — a janela foi criada/redimensionada/redesenhada: o programa deve copiar o quadro de novo (o backend da OAL só copia quando algo mudou).
 
@@ -108,3 +111,20 @@ O botão voltar é entregue como `EV_BACK` e **não** fecha o app sozinho: chame
 - Inteiros C de 32 bits chegam como `stone` com o topo indefinido: use `android.s32()`.
 - `fault_call` só passa inteiros e ponteiros (sem `float`/`double`).
 - O `ofs/dist/magma.o` e o `ofscc` instalados ainda são de antes do alvo Android: até o próximo release, a CLI compila o `ofscc` do fonte.
+
+## JNI genérico, WebView, HTTP (stdlib)
+
+- **JNI genérico** (`android.ofs`): `jni_call(obj, nome, assinatura, a..f)` (o retorno vem da assinatura: `V`, `Z`, `I`, `J`, objeto), `jni_new(classe, assinatura, a..d)`, `jni_scall(classe, nome, assinatura, a..d)` (estático), `jni_static_int_field`, `jni_global`/`jni_delete_global`, `jni_new_byte_array`/`jni_get_bytes`/`jni_set_bytes`, `jni_new_object_array`/`jni_set_object_elem`; `android.jni_failed` diz se houve exceção Java. Só na thread principal.
+- **`android_webview.ofs`**: `webview.open(base_url, html)` abre uma `WebView` (JS, DOM storage, acesso a arquivos, mídia sem gesto) num `android.app.Dialog` em tela cheia imersiva; `poll()` (o botão voltar fecha o Dialog), `eval(js)`, `title()`, `pause(on)`, `close()`. **Por que Dialog:** a `NativeActivity` toma a superfície da janela principal (`takeSurface`), então uma `View` adicionada à janela dela não é desenhada; o Dialog tem janela própria e recebe toque direto (sem passar pela `AInputQueue`). Sem subclasse Java: o shim entra como `<script>` no HTML (`loadDataWithBaseURL("file:///pasta/", html)`), e o retorno do JS para o OFS vai pelo `document.title` (o Chromium corta o título em 4096 caracteres e colapsa espaços/controles: mande em pedaços e com `encodeURIComponent`). Com a janela principal coberta o `EV_FRAME` continua chegando. `ofs_str_char_at` é O(n): em textos grandes leia bytes por ponteiro.
+- **`android_http.ofs`**: `ahttp.open(url)`/`read(buf)`/`close()` e `get_text(url)` por `HttpURLConnection` (HTTPS com verificação de certificado e redirecionamentos; o OpenSSL do `tls.ofs` não é ligável num APK). Bloqueia até ~4 s por chamada na thread principal (use passos curtos por quadro; o `StrictMode` é liberado). Precisa de `permission INTERNET` no `.oal`. Aceita `file:///...` e caminhos absolutos.
+
+## Modo motor: hospedar outro código/View na NativeActivity (stdlib `android.ofs`)
+
+Para rodar um motor de jogo (SDL, Godot) **dentro** do app, sem instalar APK e sem Java no APK (`hasCode=false`):
+
+- `release_window()`: chama `getWindow().takeSurface(null)` e `takeInputQueue(null)`. **Chame em `EV_CREATE`** (a janela só é anexada depois do `onResume`). A partir daí a `NativeActivity` não reserva mais a superfície nem a fila de entrada: `set_content_view(view)` (ou o `setContentView` de um adaptador Java) desenha normalmente e recebe toque/teclado pelo Java. O OFS deixa de receber `EV_WINDOW_*` e toques; o ciclo de vida continua chegando. Testado no Android 11 (Moto G8 Power). No `NativeActivity.java` do AOSP o `onCreate` faz `takeSurface(this)`/`takeInputQueue(this)` e só depois chama o `ANativeActivity_onCreate`; o `ViewRootImpl` lê esses callbacks ao anexar a janela, então o `null` vale.
+- `dex_load_class(dex, pasta_libs, "pacote.Classe")`: `DexClassLoader` (pai: o class loader da activity) e `loadClass`; devolve referência **global** da classe ou 0 (motivo em `jni_error`). `dex` aceita vários arquivos separados por `:`. O `.dex` deve estar na área interna do app e, no Android 14+, ser somente leitura (`set_read_only(caminho)`). `pasta_libs` é o caminho de busca do `System.loadLibrary` desse loader.
+- `jni_scall_cls(classe, nome, assinatura, a..d)`: método estático numa `jclass` já obtida (ex.: de `dex_load_class`).
+- `jni_take_error()`: se há exceção Java pendente, guarda o `toString()` em `jni_error`, imprime a pilha no logcat (`System.err`) e limpa.
+- `intent_extra(chave)`: `getIntent().getStringExtra(chave)` ("" se não houver).
+- `self_intent(chaves, valores)` / `restart_process(chaves, valores)`: `Intent` para esta mesma activity com extras `String` e `FLAG_ACTIVITY_NEW_TASK|CLEAR_TASK`; `restart_process` faz `startActivity` e encerra o processo (`Process.killProcess(myPid)`): o sistema abre a activity num processo novo (~60 ms no Moto G8). Usado pelo M.O.O.N para entrar e sair do "modo motor" (um motor por processo).

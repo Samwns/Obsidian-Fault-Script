@@ -6,6 +6,7 @@
 //   audio.play(audio.CH_MUSIC, s, true)   // canal, som (wav.*), em loop
 //   audio.set_volume(audio.CH_MUSIC, 80)  // 0-100
 //   audio.stop(audio.CH_MUSIC)
+//   audio.position(audio.CH_MUSIC)        // quadros ja tocados (relogio)
 //   audio.pump()                          // 1x por quadro: libera sons trocados
 //   audio.pause() / audio.resume() / audio.close()
 //
@@ -140,6 +141,13 @@ namespace audio {
         if (pct > 100) { pct = 100 }
         ofs_array_set(_vol, ch, pct)
         if (_ctl != null) { _set(8 + ch * 8 + 5, (pct * 256) / 100) }
+    }
+
+    // Posicao do canal, em quadros do som que ele toca (relogio para
+    // sincronizar video com audio).
+    vein position(ch: stone) -> stone {
+        if (_ctl == null || ch < 0 || ch >= CHANNELS) { return 0 }
+        return _w(8 + ch * 8 + 2) >> 16
     }
 
     vein playing(ch: stone) -> bool {

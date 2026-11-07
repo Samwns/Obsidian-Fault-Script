@@ -173,6 +173,15 @@ Conexões HTTPS usando o OpenSSL do sistema: `tls.connect(fd, host)` (SNI + veri
 ### `png.ofs`
 Decodificador PNG em OFS puro (inflate/zlib próprio): `png.load(caminho)`, `png.width`, `png.height`, `png.draw(cv, img, x, y, w, h)`, `png.draw_cover`, `png.draw_region`. Pixels em `0xAARRGGBB`.
 
+### `zip.ofs`
+Ler e criar `.zip` em OFS puro (inflate do `png.ofs`): `zip.open(caminho)`, `count`, `name(i)`, `size(i)`, `is_dir(i)`, `find(nome)`, `read(i)` (`zip.data_ptr`/`data_len`, `free_data`), `read_text(nome)`, `extract(i, destino)`, `extract_all(pasta)` (recusa `..` e caminhos absolutos; confere o CRC), `close`; escrita sem compressão: `create`, `add_file`, `add_text`, `add_bytes`, `finish`. Sem zip64/criptografia. `png.inflate_raw` expõe o deflate cru.
+
+### `sha256.ofs`
+`sha256.file(caminho)` e `sha256.bytes(ptr, n)` (64 hex minúsculos; blocos de 64 KB), `sha256.crc32_update(crc, ptr, n)`.
+
+### `android_http.ofs`, `android_webview.ofs`
+HTTP/HTTPS por `HttpURLConnection` via JNI e WebView em tela cheia num `Dialog`, sem Java nosso. Ver [ANDROID.md](ANDROID.md). `icons.ofs` ganhou `RPGM` e `TYRANO`; `oal_runtime.ofs` ganhou `colorpicker`, `set_palette_full`, `hsv_to_rgb`.
+
 ## 4. Módulos de Baixo Nível e Sistema
 
 ### `bedrock.ofs`

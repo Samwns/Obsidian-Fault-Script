@@ -812,6 +812,14 @@ vein gen_block(start: stone, base: stone, level: stone) -> stone {
             i++
             continue
         }
+        if (ofs_str_eq(k, "diamond") || ofs_str_eq(k, "losango")) {
+            style_prefix(w, ind)
+            forge dma = action_id(t)
+            if (ofs_str_eq(dma, "-1")) { err("diamond precisa de acao: diamond -> botao(item)") }
+            emit(ind + "oal.diamond(" + dma + ", " + corner_value(t, "oal.BOTTOM_RIGHT") + ", " + attr_expr(t, "look", "visual", "", "", "oal.PAD_XBOX") + ")")
+            i++
+            continue
+        }
         if (ofs_str_eq(k, "button")) {
             style_prefix(w, ind)
             forge lb = ""
@@ -926,6 +934,12 @@ vein gen_block(start: stone, base: stone, level: stone) -> stone {
             i++
             continue
         }
+        if (ofs_str_eq(k, "colorpicker") || ofs_str_eq(k, "seletor_cor")) {
+            forge cpv = attr_expr(t, "value", "valor", "", "", "0")
+            emit(ind + "oal.colorpicker(" + cpv + ", " + action_id(t) + ")")
+            i++
+            continue
+        }
         if (ofs_str_eq(k, "toggle") || ofs_str_eq(k, "chave")) {
             forge gl = label_of(t)
             icon_prefix(t, ind)
@@ -977,6 +991,7 @@ vein event_const(name: obsidian) -> obsidian {
     if (ofs_str_eq(name, "rotate") || ofs_str_eq(name, "gira")) { return "ON_ROTATE" }
     if (ofs_str_eq(name, "low_memory") || ofs_str_eq(name, "pouca_memoria")) { return "ON_LOW_MEMORY" }
     if (ofs_str_eq(name, "frame") || ofs_str_eq(name, "quadro")) { return "ON_FRAME" }
+    if (ofs_str_eq(name, "key") || ofs_str_eq(name, "tecla")) { return "ON_KEY" }
     if (ofs_str_eq(name, "start") || ofs_str_eq(name, "inicio")) { return "ON_START" }
     return ""
 }

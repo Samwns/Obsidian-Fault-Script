@@ -89,10 +89,13 @@ on pause -> quick_save
 | `canvas [full] draw=f touch=g` | area drawn by the app: `f(x, y, w, h)` paints into `oal.cv()`, `g(kind, finger, x, y)` gets touches (0 down, 1 move, 2 up); `full` fills the screen below the bar |
 | `tabs` | children `tab "label" icon= selected=expr -> action` (tabs / segmented control) |
 | `slider "label" value=expr min= max= -> action(item)` | `item` = new value |
+| `colorpicker value=expr -> action(item)` | | touch color picker: saturation/value square, hue bar, preview and hex; `value`/`item` = `0xRRGGBB`; the action runs while dragging |
 | `toggle "label" value=expr -> action(item)` | `item` = 1 (on) or 0 |
 | `progress "label" value=expr` | progress bar 0-100 |
 | `field "hint" value=expr -> action` | text field look; tap calls the action |
 | `keyboard -> action(item)` | on-screen keyboard; `item` = Unicode code, 8 = backspace, 10 = enter |
+
+**Color picker (`colorpicker`).** Reusable touch widget: drag in the square (saturation × value) and on the hue bar; the preview and the `#RRGGBB` code appear below. `value=` is the current color (`0xRRGGBB` integer) and `-> action(item)` receives the new color on every move. Typed hex is up to the app (a `field` + `keyboard` calling the same action). Fixed height (~280 dp). Theme: `oal.set_palette_full(bg, bar, surface, surface_hi, text, muted, accent, button, button_pressed, border, badge)`; text over accent/button is chosen by contrast (`oal.contrast_ink`). A bar button with the `back` icon is placed on the **left side**, before the title.
 | `if expr` / `else` | conditional blocks (OFS expression) |
 
 `corner`: `bottom_right` (fab default), `bottom_left` (dpad default), `top_right`, `top_left`, `bottom_row`, `top_row`, `right_column`, `left_column`, or an OFS expression. Bottom corners sit above the `bottom_row`.

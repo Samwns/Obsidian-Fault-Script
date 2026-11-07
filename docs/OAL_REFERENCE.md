@@ -122,10 +122,13 @@ O nome da `.so` (`android.app.lib_name`) é o último segmento do pacote. A acti
 | `canvas [full] draw=f touch=g` | `height=` | área desenhada pelo app (ver abaixo) |
 | `tabs` | filhos: `tab "rótulo" icon= selected=expr -> ação` | abas / segmentos lado a lado |
 | `slider "rótulo" value=expr min= max= -> ação(item)` | `icon=` | controle deslizante; `item` = novo valor |
+| `colorpicker value=expr -> ação(item)` | | seletor de cor (toque): quadrado saturação/valor, barra de matiz, prévia e hex; `value`/`item` = `0xRRGGBB`; a ação roda enquanto arrasta |
 | `toggle "rótulo" value=expr -> ação(item)` | `icon=` | interruptor; `item` = 1 (ligar) ou 0 |
 | `progress "rótulo" value=expr` | | barra de progresso 0–100 |
 | `field "dica" value=expr -> ação` | `icon=` | campo de texto (toque chama a ação) |
 | `keyboard -> ação(item)` | | teclado na tela; `item` = código Unicode, 8 = apagar, 10 = confirmar |
+
+**Seletor de cor (`colorpicker`).** Widget reutilizável de toque: arraste no quadrado (saturação × valor) e na barra de matiz; a prévia e o código `#RRGGBB` aparecem embaixo. `value=` é a cor atual (`0xRRGGBB`, inteiro) e `-> ação(item)` recebe a nova cor a cada movimento. O hex digitado fica por conta do app (um `field` + `keyboard` que chamam a mesma ação). Altura fixa (~280 dp). Tema: `oal.set_palette_full(fundo, barra, superfície, superfície_realçada, texto, secundário, destaque, botão, botão_pressionado, borda, selo)`; o texto sobre destaque/botão é escolhido por contraste (`oal.contrast_ink`). O botão da barra com ícone `back` é posicionado no **lado esquerdo**, antes do título.
 | `if expr` / `else` | filhos | blocos condicionais (expressão OFS) |
 
 `corner`: `bottom_right` (padrão do `fab`), `bottom_left` (padrão do `dpad`), `top_right`, `top_left`, `bottom_row` (fileira centrada embaixo), `top_row`, `right_column`, `left_column` (colunas centradas) ou uma **expressão OFS** (`corner=app.lado_dpad()`). Os cantos de baixo ficam acima da `bottom_row`.

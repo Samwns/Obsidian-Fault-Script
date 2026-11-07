@@ -65,11 +65,14 @@ vein android_event(ev: stone) -> void {
         oal.touch_up_id(android.touch_id, android.touch_x, android.touch_y)
     } else if (ev == android.EV_TOUCH_CANCEL) {
         oal.touch_cancel()
+    } else if (ev == android.EV_KEY) {
+        if (oal.on_key(android.key_code, android.key_action, android.key_source)) { android.key_handled = true }
     } else if (ev == android.EV_BACK) {
         oal.on_back()
     } else if (ev == android.EV_PAUSE) {
         oal.on_lifecycle(oal.ON_PAUSE)
     } else if (ev == android.EV_RESUME) {
+        oal.pad_connected = false
         oal.on_lifecycle(oal.ON_RESUME)
     } else if (ev == android.EV_LOW_MEMORY) {
         oal.on_lifecycle(oal.ON_LOW_MEMORY)

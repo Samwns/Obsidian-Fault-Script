@@ -27,3 +27,19 @@
     <img src="https://storage.ko-fi.com/cdn/kofi3.png?v=3" height="36" alt="Apoie no Ko-fi / Support on Ko-fi" />
   </a>
 </div>
+
+## Android (aarch64) e OAL
+
+O OFS também gera APKs para Android (aarch64):
+
+```sh
+ofs build --target android app.oal -o app-debug.apk
+```
+
+- **APK 100% OFS:** sem Java e sem C no código do app. O `NativeActivity` é exportado por `android.ofs`, e a chamada à API do Android (JNI) sai de `fault_addr`/`fault_call`.
+- **OAL (Obsidian Android Language, `.oal`):** sub-linguagem que descreve o que é próprio do Android: manifesto, telas de toque, estilos, ações e ciclo de vida. A lógica continua em `.ofs`. Ela é irmã da ODL, da OES e da OLL.
+- **Exemplo real:** o [M.O.O.N](Moon/README.md), um executor de visual novels para Android escrito inteiramente em OFS, com a interface em OAL.
+
+Documentação:
+- [docs/ANDROID.md](docs/ANDROID.md): requisitos, build, instalação e como o app roda.
+- [docs/OAL_REFERENCE.md](docs/OAL_REFERENCE.md): referência da OAL v1.

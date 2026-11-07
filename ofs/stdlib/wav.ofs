@@ -2,6 +2,7 @@
 //
 //   forge s = wav.load("/caminho/som.wav")          // -1 se falhar
 //   forge s2 = wav.decode(ptr, len)                  // de um bloco na memoria
+//   forge s3 = wav.from_pcm(pcm, quadros, canais, hz) // PCM i16 ja decodificado
 //   wav.pcm(s)      // ponteiro para amostras i16 little-endian intercaladas
 //   wav.frames(s)   // quadros (amostras por canal)
 //   wav.channels(s) // 1 ou 2
@@ -78,6 +79,13 @@ namespace wav {
         if (p != 0) { ofs_free(p as *stone) }
         ofs_array_set(_pcm, id, 0)
         ofs_array_set(_frames, id, 0)
+    }
+
+    // Registra um PCM i16 intercalado que ja esta na memoria (alocado com
+    // ofs_alloc; passa a ser do wav e e liberado por wav.free).
+    vein from_pcm(p: stone, frames: stone, ch: stone, rate: stone) -> stone {
+        if (p == 0 || frames <= 0) { return -1 }
+        return _new(p, frames, ch, rate)
     }
 
     vein _new(p: stone, frames: stone, ch: stone, rate: stone) -> stone {

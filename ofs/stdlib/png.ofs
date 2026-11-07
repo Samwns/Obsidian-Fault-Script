@@ -186,8 +186,18 @@ namespace png {
         return (i - 2) / 2
     }
 
+    forge _paused: bool = false
+    forge _limit: stone = 0
+
+    // Decodifica simbolos do bloco atual. Se _out_len chegar a _limit, para com
+    // _paused = true (retome chamando de novo: o estado do bit e das tabelas fica nos globais).
     vein _codes() -> bool {
+        _paused = false
         while (true) {
+            if (_out_len >= _limit) {
+                _paused = true
+                return true
+            }
             forge s = _decode(_lcount, _lsym)
             if (s < 0 || _err) { return false }
             if (s < 256) {
@@ -231,7 +241,7 @@ namespace png {
         }
         _build(_dcount, _dsym, lb, 30)
         ofs_free(lens)
-        return _codes()
+        return true
     }
 
     vein _dynamic() -> bool {
@@ -298,11 +308,218 @@ namespace png {
         _build(_dcount, _dsym, dlb, ndist)
         ofs_free(dl)
         ofs_free(lens)
-        return _codes()
+        return true
+    }
+
+    // ── inflate em passos ────────────────────────────────────────────────
+    // inflate_begin(data, len, expect) + inflate_step(n) descomprimem pouco a pouco:
+    // cada passo produz ~n bytes (passa em ate 258 bytes) e devolve 0 (tem mais),
+    // 1 (terminou: png.out_ptr()/out_len()) ou -1 (erro). O estado (bits, tabelas,
+    // saida) e proprio de cada inflate em andamento; entre passos pode-se usar png.load.
+    forge _st: stone = 4
+    forge _last: stone = 0
+    forge _left: stone = 0
+    forge _p_lcount: stone = 0
+    forge _p_lsym: stone = 0
+    forge _p_dcount: stone = 0
+    forge _p_dsym: stone = 0
+    // estado salvo entre passos
+    forge _s_in: stone = 0
+    forge _s_in_len: stone = 0
+    forge _s_pos: stone = 0
+    forge _s_bitbuf: stone = 0
+    forge _s_bitcnt: stone = 0
+    forge _s_out: stone = 0
+    forge _s_cap: stone = 0
+    forge _s_len: stone = 0
+    forge _s_st: stone = 4
+    forge _s_last: stone = 0
+    forge _s_left: stone = 0
+    forge _s_lc: stone = 0
+    forge _s_ls: stone = 0
+    forge _s_dc: stone = 0
+    forge _s_ds: stone = 0
+
+    vein _tables_alloc() -> void {
+        _lcount = ofs_alloc(16 * 8) as stone
+        _lsym = ofs_alloc(320 * 8) as stone
+        _dcount = ofs_alloc(16 * 8) as stone
+        _dsym = ofs_alloc(32 * 8) as stone
+    }
+
+    vein _block() -> bool {
+        _last = _bits(1)
+        forge type = _bits(2)
+        if (_err) { return false }
+        if (type == 0) {
+            _bitbuf = 0
+            _bitcnt = 0
+            if (_pos + 4 > _in_len) { return false }
+            _left = _gb(_in, _pos) | (_gb(_in, _pos + 1) << 8)
+            _pos = _pos + 4
+            _st = 2
+        } else if (type == 1) {
+            if (!_fixed()) { return false }
+            _st = 1
+        } else if (type == 2) {
+            if (!_dynamic()) { return false }
+            _st = 1
+        } else {
+            return false
+        }
+        return true
+    }
+
+    // roda ate _out_len >= _limit; devolve 0 / 1 / -1
+    vein _run() -> stone {
+        while (_st != 4) {
+            if (_st == 0) {
+                if (_last == 1) {
+                    _st = 4
+                } else if (!_block()) {
+                    return -1
+                }
+            } else if (_st == 1) {
+                if (!_codes()) { return -1 }
+                if (_paused) { return 0 }
+                _st = 0
+            } else {
+                while (_left > 0 && _pos < _in_len && _out_len < _limit) {
+                    _emit(_gb(_in, _pos))
+                    _pos++
+                    _left--
+                }
+                if (_left > 0) {
+                    if (_pos >= _in_len) { return -1 }
+                    return 0
+                }
+                _st = 0
+            }
+            if (_st != 4 && _out_len >= _limit) { return 0 }
+        }
+        return 1
+    }
+
+    // Comeca um inflate zlib (data com cabecalho de 2 bytes). expect = tamanho de saida
+    // esperado (0 = desconhecido), para alocar de uma vez.
+    vein inflate_begin(data: stone, len: stone, expect: stone) -> bool {
+        _in = data + 2
+        _in_len = len - 2
+        _pos = 0
+        _bitbuf = 0
+        _bitcnt = 0
+        _err = false
+        _out_cap = len * 4 + 1024
+        if (expect > 0) { _out_cap = expect + 1024 }
+        _out = ofs_alloc(_out_cap + 8) as stone
+        _out_len = 0
+        _st = 0
+        _last = 0
+        _left = 0
+        _p_lcount = _lcount
+        _p_lsym = _lsym
+        _p_dcount = _dcount
+        _p_dsym = _dsym
+        _tables_alloc()
+        _save_inc()
+        _lcount = _p_lcount
+        _lsym = _p_lsym
+        _dcount = _p_dcount
+        _dsym = _p_dsym
+        return true
+    }
+
+    vein _save_inc() -> void {
+        _s_in = _in
+        _s_in_len = _in_len
+        _s_pos = _pos
+        _s_bitbuf = _bitbuf
+        _s_bitcnt = _bitcnt
+        _s_out = _out
+        _s_cap = _out_cap
+        _s_len = _out_len
+        _s_st = _st
+        _s_last = _last
+        _s_left = _left
+        _s_lc = _lcount
+        _s_ls = _lsym
+        _s_dc = _dcount
+        _s_ds = _dsym
+    }
+
+    vein _free_inc_tables() -> void {
+        if (_s_lc != 0) {
+            ofs_free(_s_lc as *stone)
+            ofs_free(_s_ls as *stone)
+            ofs_free(_s_dc as *stone)
+            ofs_free(_s_ds as *stone)
+        }
+        _s_lc = 0
+    }
+
+    vein inflate_step(n: stone) -> stone {
+        if (_s_st == 4 && _s_out == 0) { return -1 }
+        // carrega o estado deste inflate; guarda as tabelas do png
+        _p_lcount = _lcount
+        _p_lsym = _lsym
+        _p_dcount = _dcount
+        _p_dsym = _dsym
+        _in = _s_in
+        _in_len = _s_in_len
+        _pos = _s_pos
+        _bitbuf = _s_bitbuf
+        _bitcnt = _s_bitcnt
+        _out = _s_out
+        _out_cap = _s_cap
+        _out_len = _s_len
+        _st = _s_st
+        _last = _s_last
+        _left = _s_left
+        _lcount = _s_lc
+        _lsym = _s_ls
+        _dcount = _s_dc
+        _dsym = _s_ds
+        _err = false
+        _limit = _out_len + n
+        forge r = _run()
+        _save_inc()
+        _lcount = _p_lcount
+        _lsym = _p_lsym
+        _dcount = _p_dcount
+        _dsym = _p_dsym
+        if (r != 0) {
+            _free_inc_tables()
+            if (r < 0) {
+                ofs_free(_out as *stone)
+                _out = 0
+                _s_out = 0
+            }
+            _s_st = 4
+            // _out/_out_len ficam com o resultado (r == 1)
+        }
+        return r
+    }
+
+    // resultado parcial (para CRC e escrita incremental)
+    vein inc_ptr() -> stone { return _s_out }
+    vein inc_len() -> stone { return _s_len }
+    // entrega o buffer do resultado final (o chamador libera com ofs_free); zera o estado
+    vein inflate_take() -> stone {
+        forge p = _s_out
+        _s_out = 0
+        return p
+    }
+    // cancela um inflate em andamento
+    vein inflate_abort() -> void {
+        _free_inc_tables()
+        if (_s_out != 0) { ofs_free(_s_out as *stone) }
+        _s_out = 0
+        _s_st = 4
     }
 
     // Descomprime um stream zlib; retorna ponteiro e tamanho em _out/_out_len.
     vein inflate_zlib(data: stone, len: stone) -> bool {
+        if (_lcount == 0) { _tables_alloc() }
         _in = data + 2
         _in_len = len - 2
         _pos = 0
@@ -312,39 +529,20 @@ namespace png {
         _out_cap = len * 4 + 1024
         _out = ofs_alloc(_out_cap + 8) as stone
         _out_len = 0
-        if (_lcount == 0) {
-            _lcount = ofs_alloc(16 * 8) as stone
-            _lsym = ofs_alloc(320 * 8) as stone
-            _dcount = ofs_alloc(16 * 8) as stone
-            _dsym = ofs_alloc(32 * 8) as stone
-        }
-        forge last = 0
-        while (last == 0) {
-            last = _bits(1)
-            forge type = _bits(2)
-            if (_err) { return false }
-            if (type == 0) {
-                _bitbuf = 0
-                _bitcnt = 0
-                if (_pos + 4 > _in_len) { return false }
-                forge n = _gb(_in, _pos) | (_gb(_in, _pos + 1) << 8)
-                _pos = _pos + 4
-                forge k = 0
-                while (k < n && _pos < _in_len) {
-                    _emit(_gb(_in, _pos))
-                    _pos++
-                    k++
-                }
-            } else if (type == 1) {
-                if (!_fixed()) { return false }
-            } else if (type == 2) {
-                if (!_dynamic()) { return false }
-            } else {
-                return false
-            }
-        }
-        return true
+        _st = 0
+        _last = 0
+        _left = 0
+        _limit = 9223372036854775807
+        return _run() == 1
     }
+
+    // Deflate "cru" (sem cabecalho zlib; zip, gzip sem cabecalho). Mesmo retorno
+    // de inflate_zlib: resultado em png.out_ptr()/png.out_len() (libere com ofs_free).
+    vein inflate_raw(data: stone, len: stone) -> bool {
+        return inflate_zlib(data - 2, len + 2)
+    }
+    vein out_ptr() -> stone { return _out }
+    vein out_len() -> stone { return _out_len }
 
     // ── PNG ──────────────────────────────────────────────────────────────
     vein _paeth(a: stone, b: stone, c: stone) -> stone {
