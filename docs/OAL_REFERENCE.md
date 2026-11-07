@@ -118,6 +118,7 @@ O nome da `.so` (`android.app.lib_name`) é o último segmento do pacote. A acti
 | `portrait` / `landscape` | filhos | só aparecem naquela orientação |
 | `fab "rótulo" -> ação` / `fab.icon "nome" -> ação` | `corner=` | botão flutuante (camada por cima, não rola) |
 | `dpad -> ação(item)` | `corner=` | D-pad virtual (camada flutuante) |
+| `diamond -> ação(item)` | `corner=`, `look=` | 4 botões de ação em losango (camada flutuante); `item` = botão tocado (`oal.SLOT_TOP/RIGHT/BOTTOM/LEFT`); `look` = `oal.PAD_KEYS` (teclas), `PAD_XBOX` (A B X Y), `PAD_PLAY` (✕ ○ □ △ em vetor, sem logotipos), `PAD_NINTENDO` (A B X Y espelhado) |
 | `image expr` | `height=` (dp; 0 = proporcional) | imagem PNG (caminho) ajustada à largura |
 | `canvas [full] draw=f touch=g` | `height=` | área desenhada pelo app (ver abaixo) |
 | `tabs` | filhos: `tab "rótulo" icon= selected=expr -> ação` | abas / segmentos lado a lado |
@@ -176,7 +177,7 @@ Depois de mudar os dados, chame `oal.refresh()` para reconstruir a tela.
 
 ## Ciclo de vida (`on`)
 
-`on start|back|pause|resume|rotate|low_memory|frame -> ação`. `start` roda uma vez, depois dos estilos. `frame` roda a cada quadro enquanto `oal.set_animating(true)` (trabalho em pedaços sem travar a tela, animações, relógio do player). Sem `on back`, o voltar desempilha a tela ou fecha o app. Com `on back`, o app decide (chame `oal.back()` ou `oal.quit()`).
+`on start|back|pause|resume|rotate|low_memory|frame|key -> ação`. `key` (tecla/botão): o runtime só repassa teclas de controle (D-pad, A/B/X/Y, START/SELECT, Enter, Espaço, Esc, M, H); o app lê `oal.key_code` (códigos Android) e as repetições de tecla segurada são filtradas. O sistema trata as demais (volume etc.). Teclas de **controle físico** (fonte gamepad) ou o analógico marcam `oal.pad_connected = true` (zerado ao retomar o app), para esconder o gamepad virtual. `start` roda uma vez, depois dos estilos. `frame` roda a cada quadro enquanto `oal.set_animating(true)` (trabalho em pedaços sem travar a tela, animações, relógio do player). Sem `on back`, o voltar desempilha a tela ou fecha o app. Com `on back`, o app decide (chame `oal.back()` ou `oal.quit()`).
 
 ## Estilos (`style`)
 
@@ -199,6 +200,7 @@ Alvos sem classe mudam o padrão do tipo: `style button`, `style card`, `style l
 | `oal.refresh()` / `oal.redraw()` | reconstrói / redesenha |
 | `oal.go(n)`, `oal.back()`, `oal.quit()` | navegação (índice da tela na ordem do arquivo) |
 | `oal.set_orientation(oal.ORIENT_PORTRAIT\|ORIENT_LANDSCAPE\|ORIENT_AUTO)` | força a orientação (JNI `setRequestedOrientation`) |
+| `oal.pad_label(estilo, slot)`, `oal.pad_shape(estilo, slot)` | texto (A/B/Enter…) ou ícone (`icons.BTN_CROSS/CIRCLE/SQUARE/TRIANGLE`) de cada botão do `diamond` |
 | `oal.set_overlay_opacity(0..100)` | opacidade da camada flutuante (`fab`, `dpad`) |
 | `oal.dpad_dir`, `oal.dpad_x`, `oal.dpad_y` | direção (`DIR_NONE/UP/RIGHT/DOWN/LEFT`) e vetor (-100..100) do D-pad |
 | `oal.width`, `oal.height`, `oal.is_portrait()`, `oal.dp(v)` | tamanho em px e conversão dp → px |

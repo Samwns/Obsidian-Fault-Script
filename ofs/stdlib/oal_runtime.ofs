@@ -806,6 +806,7 @@ namespace oal {
     vein _draw_diamond(cv: Canvas, id: stone, x: stone, y: stone, w: stone, h: stone) -> void {
         forge style = ofs_array_get(_item, id)
         forge d = (w * 40) / 100
+        if (style == PAD_KEYS) { d = (w * 33) / 100 }
         forge down = _is_pressed(id)
         forge m = x + (w - d) / 2
         forge mv = y + (h - d) / 2
@@ -852,7 +853,10 @@ namespace oal {
     // fonte Android; controles (0x401 gamepad) marcam pad_connected.
     // Devolve true se consumiu.
     vein on_key(code: stone, action: stone, source: stone) -> bool {
-        if ((source & 1025) == 1025) { pad_connected = true }
+        if ((source & 1025) == 1025) {
+            if (!pad_connected) { log("oal: controle fisico detectado (tecla " + ofs_stone_to_obsidian(code) + ")") }
+            pad_connected = true
+        }
         if (!_is_pad_key(code)) { return false }
         forge hi = -1
         forge i = 0
@@ -1504,6 +1508,10 @@ namespace oal {
             ttf.draw_wrapped(cv, _font, txs, x, y + dp(3), w, tlh, n.text, tcol, -1)
             return
         }
+        if (k == K_DIAMOND) {
+            _draw_diamond(cv, id, x, y, w, h)
+            return
+        }
         if (k >= K_CANVAS) {
             _draw_new(cv, id, k, n.text, x, y, w, h, pressed)
             return
@@ -1544,10 +1552,6 @@ namespace oal {
         }
         if (k == K_DPAD) {
             _draw_dpad(cv, id, x, y, w, h)
-            return
-        }
-        if (k == K_DIAMOND) {
-            _draw_diamond(cv, id, x, y, w, h)
             return
         }
         if (k == K_LIST_ITEM) {

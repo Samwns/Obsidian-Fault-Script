@@ -144,7 +144,7 @@ Immediate-mode graphical user interface controls:
 Antialiased vector rasterizer (signed-area accumulation). Paths (`move_to`, `line_to`, `quad_to`, `cubic_to`, `close`), shapes (`add_round_rect`, `add_circle`, `add_capsule`, `add_arc_stroke`) and one-call helpers (`fill_round_rect`, `fill_circle`, `stroke_line`, `stroke_round_rect`). Composites onto a Canvas honoring alpha and clipping.
 
 ### `ttf.ofs`
-Pure-OFS TrueType fonts: `ttf.load(path)`, `ttf.draw(cv, font, size, x, baseline, text, color)`, `ttf.width`, `ttf.ascent`/`descent`/`line_height`, `ttf.ellipsize`, `ttf.draw_centered`. UTF-8, composite glyphs (accents), glyph cache and subpixel positioning. Multi-line text: `ttf.wrap(font, size, text, max_width)` word-wraps and returns an `Array<obsidian>` (honours `\n`); `ttf.draw_wrapped(cv, font, size, x, y, max_width, line_height, text, color, max_chars)` draws the wrapped text from top `y` and returns the line count (`max_chars < 0` draws everything; useful for a typewriter effect).
+Pure-OFS TrueType fonts: `ttf.load(path)`, `ttf.draw(cv, font, size, x, baseline, text, color)`, `ttf.width`, `ttf.ascent`/`descent`/`line_height`, `ttf.ellipsize`, `ttf.draw_centered`. UTF-8, composite glyphs (accents), glyph cache and subpixel positioning. Multi-line text: `ttf.wrap(font, size, text, max_width)` word-wraps and returns an `Array<obsidian>` (honours `\n`); `ttf.draw_wrapped(cv, font, size, x, y, max_width, line_height, text, color, max_chars)` draws the wrapped text from top `y` and returns the line count (`max_chars < 0` draws everything; useful for a typewriter effect). **CFF** outlines (OpenType/PostScript, Type 2 charstrings with local/global subrs and CID fonts with FDArray/FDSelect, hints ignored) besides `glyf`. **TTC collections**: `ttf.load_face(path, i)`, `ttf.load_face_named(path, "CJK JP")` (matches the face name), `ttf.face_count`. **Per-glyph fallback**: `ttf.set_fallback(font)` or `ttf.set_fallback_file(path, face_name)` (loaded only when the first glyph is missing); `draw`/`width`/`wrap`/`ellipsize` use the fallback when the font lacks the character; `ttf.has_glyph(font, cp)`. The rasterized glyph cache restarts past `ttf.pool_limit` pixels (`ttf.clear_cache()`). E.g. Roboto + `/system/fonts/NotoSansCJK-Regular.ttc` on Android for Japanese and arrows.
 
 ### `x11win.ofs`
 Native X11 window: `open`, `present(canvas)`, `poll()` → `EV_KEY`/`EV_MOUSE_DOWN`/`EV_MOUSE_UP`/`EV_MOUSE_MOVE`/`EV_WHEEL`/`EV_RESIZE`/`EV_CLOSE`, fields `ev_x`, `ev_y`, `ev_button`, `ev_key` (keysym), `ev_text` (UTF-8, with dead keys), `ev_mods`; `set_cursor`, `set_icon`, `set_title`, `now_ms`, `sleep_ms`.
@@ -159,10 +159,13 @@ Pure-OFS Android backend (NativeActivity, aarch64, API 26+): exports `ANativeAct
 OAL runtime: touch widgets (bar, button, icon, list, grid, card, `fab`, D-pad), styles with pressed state and opacity, scrolling, navigation, portrait/landscape, drawn with `canvas`/`raster`/`ttf`/`icons` on top of the neutral `oll.ofs` layout core. `oal_android.ofs` is the Android backend; `oal_x11.ofs` (phone-sized desktop window) is experimental. See [OAL_REFERENCE.md](OAL_REFERENCE.md).
 
 ### `wav.ofs`
-Pure-OFS WAV (RIFF) decoder with no platform dependency: `wav.load(path)` (`-1` on failure), `wav.decode(ptr, len)`, `wav.pcm(s)` (pointer to interleaved i16 samples), `wav.frames`, `wav.channels`, `wav.rate`, `wav.free`. Supports 8/16-bit PCM and Microsoft ADPCM.
+Pure-OFS WAV (RIFF) decoder with no platform dependency: `wav.load(path)` (`-1` on failure), `wav.decode(ptr, len)`, `wav.pcm(s)` (pointer to interleaved i16 samples), `wav.frames`, `wav.channels`, `wav.rate`, `wav.free`. Supports 8/16-bit PCM and Microsoft ADPCM. `wav.from_pcm(ptr, frames, channels, hz)` registers i16 PCM already in memory.
 
 ### `audio_android.ofs`
-AAudio sound output (Android 8+): `audio.open()` (44.1 kHz, stereo, i16), `audio.play(channel, sound, loop)`, `stop`, `stop_all`, `set_volume(channel, 0-100)`, `set_master`, `playing`, `pause`/`resume`/`close`, and `audio.pump()` once per frame. The mixer runs on the audio thread and only touches raw memory; `ofs build --target android` links `-laaudio`. See [ANDROID.md](ANDROID.md).
+AAudio sound output (Android 8+): `audio.open()` (44.1 kHz, stereo, i16), `audio.play(channel, sound, loop)`, `stop`, `stop_all`, `set_volume(channel, 0-100)`, `set_master`, `playing`, `pause`/`resume`/`close`, and `audio.pump()` once per frame. The mixer runs on the audio thread and only touches raw memory; `ofs build --target android` links `-laaudio`. See [ANDROID.md](ANDROID.md). `audio.position(channel)`: frames already played of the channel's sound (clock for video sync).
+
+### `avi.ofs`
+AVI reader (RIFF/OpenDML) and **Microsoft Video 1** decoder (CRAM/MSVC, 16-bit) in pure OFS: `avi.open(path)`, `codec` (FourCC), `supported`, `width`/`height`/`frames`/`us_per_frame`, `avi.decode(v, frame, dst)` (0xRRGGBB per pixel; sequential, delta frames), `audio_format`/`audio_channels`/`audio_rate`/`audio_bits`, `read_audio` (PCM of all `##wb` chunks) + `audio_bytes`, `close`. Each frame is read from disk on demand. Output is bit-identical to ffmpeg. Other codecs (Xvid/MPEG-4, Indeo) are not decoded.
 
 ### `hashmap.ofs`
 Integer-to-integer hash table: `hashmap.new(cap)`, `set`, `get(m, key, fallback)`, `has`, `count`, `clear`.
@@ -175,6 +178,7 @@ Pure-OFS PNG decoder (own inflate/zlib): `png.load(path)`, `png.width`, `png.hei
 
 ### `zip.ofs`
 Read and create `.zip` in pure OFS (inflate from `png.ofs`): `zip.open(path)`, `count`, `name(i)`, `size(i)`, `is_dir(i)`, `find(name)`, `read(i)` (`zip.data_ptr`/`data_len`, `free_data`), `read_text(name)`, `extract(i, dest)`, `extract_all(dir)` (refuses `..` and absolute paths; checks CRC), `close`; stored (uncompressed) writing: `create`, `add_file`, `add_text`, `add_bytes`, `finish`. No zip64/encryption. `png.inflate_raw` exposes raw deflate.
+**Chunked extraction** (keeps the UI responsive): `zip.xbegin(i, dest, hash)` opens the entry; call `zip.xstep(bytes)` or `zip.xstep_ms(ms)` once per frame until it returns `1` (written, CRC checked, `zip.x_sha` holds the sha256 if `hash`) or `-1` (`zip.last_error`; the partial file is removed); `zip.xpct()` gives 0..100 and `zip.xabort()` cancels. Inflate resumes where it stopped (`png.inflate_begin/inflate_step/inflate_take/inflate_abort`) with its own state, so `png.load` may run between steps.
 
 ### `sha256.ofs`
 `sha256.file(path)` and `sha256.bytes(ptr, n)` (64 lowercase hex; 64 KB blocks), `sha256.crc32_update(crc, ptr, n)`.

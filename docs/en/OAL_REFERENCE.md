@@ -85,6 +85,7 @@ on pause -> quick_save
 | `portrait` / `landscape` | children shown only in that orientation |
 | `fab "label" -> action` / `fab.icon "name" -> action` | floating button (`corner=`) |
 | `dpad -> action(item)` | virtual D-pad (`corner=`) |
+| `diamond -> action(item)` | 4 face buttons in a diamond (`corner=`, `look=`); `item` = tapped slot (`oal.SLOT_TOP/RIGHT/BOTTOM/LEFT`); `look` = `oal.PAD_KEYS` (keycaps), `PAD_XBOX` (A B X Y), `PAD_PLAY` (vector cross/circle/square/triangle, no logos), `PAD_NINTENDO` (mirrored A B X Y) |
 | `image expr` | PNG image fitted to the width (`height=` dp; 0 = proportional) |
 | `canvas [full] draw=f touch=g` | area drawn by the app: `f(x, y, w, h)` paints into `oal.cv()`, `g(kind, finger, x, y)` gets touches (0 down, 1 move, 2 up); `full` fills the screen below the bar |
 | `tabs` | children `tab "label" icon= selected=expr -> action` (tabs / segmented control) |
@@ -114,7 +115,7 @@ Labels, titles, `empty` texts and icon names may be expressions (`button tr("pla
 
 ## Lifecycle
 
-`on start|back|pause|resume|rotate|low_memory|frame -> action`. `start` runs once after styles; `frame` runs every frame while `oal.set_animating(true)` (chunked work, animation). Without `on back`, back pops the screen or closes the app.
+`on start|back|pause|resume|rotate|low_memory|frame|key -> action`. `key` only forwards controller/keyboard keys (D-pad, A/B/X/Y, START/SELECT, Enter, Space, Esc, M, H); the app reads `oal.key_code` (Android codes), held-key repeats are filtered, other keys (volume...) stay with the system. Keys from a **physical gamepad** (or its analog stick) set `oal.pad_connected = true` (cleared on resume) so the on-screen pad can hide. `start` runs once after styles; `frame` runs every frame while `oal.set_animating(true)` (chunked work, animation). Without `on back`, back pops the screen or closes the app.
 
 **Multitouch:** each finger is tracked separately (D-pad held while tapping a `fab`); only the first finger scrolls; `canvas` receives every finger.
 

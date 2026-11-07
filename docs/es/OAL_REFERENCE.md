@@ -39,7 +39,7 @@ on back -> volver
 - Texto entre comillas; sin comillas, el valor es una expresión OFS.
 - Nivel superior: `use "x.ofs"` = `attach {F:x.ofs}` = `attach {x}` (forma corta del OFS), `app`, `style`, `screen`, `on`.
 - `app`: `version`, `code`, `icon` (PNG), `orientation any|portrait|landscape`, `permission ...`, `fullscreen`.
-- Widgets: `bar`, `title`, `text`, `button` (`icon=`, `.clase`), `button.icon "nombre"`, `card`, `list`/`grid` (`from fuente`, `item`, `card`, `empty`, `columns=`, `landscape=`), `row`, `portrait`, `landscape`, `fab`, `dpad` (`corner=`).
+- Widgets: `bar`, `title`, `text`, `button` (`icon=`, `.clase`), `button.icon "nombre"`, `card`, `list`/`grid` (`from fuente`, `item`, `card`, `empty`, `columns=`, `landscape=`), `row`, `portrait`, `landscape`, `fab`, `dpad` (`corner=`), `diamond` (`corner=`, `look=`: 4 botones de acción en rombo, estilos `oal.PAD_KEYS/XBOX/PLAY/NINTENDO`; formas vectoriales sin logotipos).
 - `from fuente`: llama `fuente_count()` y `fuente_campo(i)` por cada `x=item.campo`.
 - Acciones: `funcion`, `funcion(item)`, `@pantalla`, `@back`, `@quit`, `@portrait`, `@landscape`, `@auto`.
 - Ciclo de vida: `on back|pause|resume|rotate|low_memory -> accion`.
@@ -51,7 +51,7 @@ on back -> volver
   - `item`/`card`: `image=`, `icon=` dinámico, `badge=` + `badge_icon=` (sello).
   - `text` y `empty` en varias líneas; etiquetas e iconos como expresiones; `fab.clase.icon`.
   - `corner`: además `bottom_row`, `top_row`, `right_column`, `left_column` o una expresión.
-  - Eventos `on start` y `on frame`; `app`: `assets "carpeta"`, `icon` PNG copiado a `res/mipmap/`.
+  - Eventos `on start`, `on frame` y `on key` (teclas de mando/teclado en `oal.key_code`; `oal.pad_connected` indica mando físico); `app`: `assets "carpeta"`, `icon` PNG copiado a `res/mipmap/`.
   - Multitáctil: cada dedo por separado (D-pad + `fab` a la vez).
 
 ## Escritorio
