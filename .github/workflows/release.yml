@@ -46,6 +46,23 @@ jobs:
           git tag "$NEW"
           git push origin "$NEW"
 
+      # OPCIONAL, DESLIGADO (if: false). Commita a versao de volta no main com o bot
+      # do Actions. Desligado porque o main pode ter regra de protecao e o usuario
+      # decide se quer o commit extra. Os pacotes ja saem com a versao certa sem ele.
+      # Para ligar: troque "if: false" por "if: always()" (ou outra condicao).
+      - name: Gravar versao no main (desligado)
+        if: false
+        run: |
+          VERSION="${{ steps.bump.outputs.tag }}"
+          VERSION="${VERSION#v}"
+          sed -i "s/^OFS_VERSION=\"[^\"]*\"/OFS_VERSION=\"${VERSION}\"/" src/packaging/linux/ofs
+          sed -i "s/^\$OfsVersion = \"[^\"]*\"/\$OfsVersion = \"${VERSION}\"/" src/packaging/windows/ofs.ps1
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/packaging/linux/ofs src/packaging/windows/ofs.ps1
+          git commit -m "chore: versao ${VERSION} [skip ci]" || exit 0
+          git push origin HEAD:main
+
   # ── Linux ────────────────────────────────────────────────────────────
   build-linux:
     name: Build (linux-x64)
@@ -76,6 +93,13 @@ jobs:
           chmod +x selfhost/ofscc
           ./selfhost/ofscc --help
           OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check ./selfhost/ofscc
+
+      - name: Gravar versao nos scripts Linux
+        run: |
+          VERSION="${{ needs.version.outputs.tag }}"
+          VERSION="${VERSION#v}"
+          sed -i "s/^OFS_VERSION=\"[^\"]*\"/OFS_VERSION=\"${VERSION}\"/" src/packaging/linux/ofs
+          grep -F "OFS_VERSION=\"${VERSION}\"" src/packaging/linux/ofs
 
       - name: Build native Linux installers
         run: |
@@ -258,6 +282,19 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & "selfhost\ofscc.exe" --help
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Gravar versao nos scripts Windows
+        shell: powershell
+        run: |
+          $Version = "${{ needs.version.outputs.tag }}".TrimStart("v")
+          $p = "src/packaging/windows/ofs.ps1"
+          $c = [IO.File]::ReadAllText($p)
+          $c = [regex]::Replace($c, '(?m)^\$OfsVersion = ".*"', { param($m) '$OfsVersion = "' + $Version + '"' })
+          [IO.File]::WriteAllText($p, $c, (New-Object System.Text.UTF8Encoding $false))
+          if (-not (Select-String -Path $p -Pattern ('OfsVersion = "' + $Version + '"') -SimpleMatch -Quiet)) {
+            Write-Error "Nao gravou a versao em ofs.ps1"
+            exit 1
+          }
 
       - name: Build NSIS installer
         shell: powershell
