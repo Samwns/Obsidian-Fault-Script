@@ -1,25 +1,26 @@
 (function(){
 'use strict';
 var root=document.getElementById('leaves');if(!root)return;
-var leaves=[].slice.call(root.children),N=leaves.length,KEY='ofs-book-marks',cur=0,busy=false,drag=null;
+var leaves=[].slice.call(root.children),orig=leaves.map(function(l){return l.cloneNode(true)}),N=leaves.length,KEY='ofs-book-marks',cur=0,busy=false,drag=null;
 var lang=document.body.dataset.lang||'pt';
 var marks=[];try{marks=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
 function saveMarks(){try{localStorage.setItem(KEY,JSON.stringify(marks))}catch(e){}}
-function key(i){return lang+':'+i}
+function key(i){var l=leaves[i];return lang+':'+(l?l.dataset.o+'-'+l.dataset.part:i)}
+function idxOfKey(k){for(var i=0;i<leaves.length;i++)if(key(i)===k)return i;return -1}
 var rmq=window.matchMedia('(prefers-reduced-motion:reduce)');
 function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
 function div(c){var d=document.createElement('div');d.className=c;return d}
 function btn(c,t,l){var b=document.createElement('button');b.className=c;b.textContent=t;b.setAttribute('aria-label',l);return b}
 
 // ---- Estrutura 3D do livro (Referência Codrops 3D)
-var main=document.getElementById('book');
+var main=document.getElementById('book');var VER=((document.querySelector('[data-relver]')||{}).textContent||'').replace(/^v/,'');
 var stage=div('stage');
 var book=div('book closed');
 book.innerHTML=[
   '<div class="ground"></div>',
   '<ul class="hardcover_front">',
   '  <li>',
-  '    <span class="ribbon">v1.0</span>',
+  '    <span class="ribbon">v'+VER+'</span>',
   '    <div class="coverDesign"></div>',
   '  </li>',
   '  <li>',
@@ -80,7 +81,6 @@ function mkPage(){
 
 function clean(p){
   p.body.querySelectorAll('[id]').forEach(function(e){e.removeAttribute('id')});
-  p.body.scrollTop=0;
 }
 
 function fill(p,i,mode){
@@ -115,9 +115,10 @@ function setBookState(c){
 
 // Chapters & tabs
 var chapters=[];
-leaves.forEach(function(l,i){
+function calcChapters(){chapters=[];leaves.forEach(function(l,i){
   if(l.classList.contains('chapter-page'))chapters.push({i:i,t:l.dataset.t});
-});
+})}
+calcChapters();
 
 function render(){
   fill(R,cur,'n');
@@ -139,7 +140,7 @@ function buildStabs(){
   });
   marks.forEach(function(k){
     var p=k.split(':');if(p[0]!==lang)return;
-    var i=+p[1];if(!leaves[i])return;
+    var i=idxOfKey(k);if(i<0)return;
     var t=leaves[i].dataset.t||'';
     h+='<button class="stab mk" data-i="'+i+'" title="'+esc(t)+'" aria-label="'+esc(t)+'"><span class="n">★</span><span class="t"> '+(i+1)+' '+esc(t)+'</span></button>';
   });
@@ -406,19 +407,119 @@ book.addEventListener('touchend',function(e){
 },{passive:true});
 
 window.addEventListener('hashchange',function(){route(location.hash.slice(1))});
-document.querySelectorAll('.toc-doc a').forEach(function(a){
-  var t=document.getElementById(a.getAttribute('href').slice(1));
-  if(t){
-    var s=document.createElement('span');s.className='pn';s.textContent=leaves.indexOf(t)+1;
-    a.parentNode.appendChild(s);
-  }
-});
+function tocNums(){
+  root.querySelectorAll('.toc-doc a').forEach(function(a){
+    var t=document.getElementById(a.getAttribute('href').slice(1));
+    while(t&&t.parentNode!==root)t=t.parentNode;
+    var o=a.parentNode.querySelector('.pn');if(o)o.remove();
+    if(t){
+      var s=document.createElement('span');s.className='pn';s.textContent=leaves.indexOf(t)+1;
+      a.parentNode.appendChild(s);
+    }
+  });
+}
 
-buildSide();
+// ---- Paginação pelo tamanho real da página
+var meas=null,ready=false,lastSig='',rt=null;
+function paginate(){
+  if(!meas){
+    meas=mkPage();meas.el.style.cssText='visibility:hidden;pointer-events:none;z-index:-1';
+    p2.appendChild(meas.el);
+  }
+  var B=meas.body,out=[];
+  function fits(){return B.scrollHeight<=B.clientHeight+1}
+  function mk(src,part){
+    var a=src.cloneNode(false);a.removeAttribute('id');
+    a.dataset.o=src.dataset.o;a.dataset.part=part;
+    var inn=document.createElement('div');inn.className='leaf-in';a.appendChild(inn);
+    return a;
+  }
+  orig.forEach(function(src,oi){
+    var keep=oi===0||src.classList.contains('chapter-page')||!src.querySelector('.leaf-in');
+    if(keep){var c=src.cloneNode(true);c.dataset.o=oi;c.dataset.part=0;out.push(c);return}
+    src.dataset.o=oi;
+    var kids=[].slice.call(src.querySelector('.leaf-in').children).map(function(k){return k.cloneNode(true)});
+    var part=0,cp=mk(src,part),inn=cp.firstChild;
+    if(src.id)cp.id=src.id;
+    B.innerHTML='';B.appendChild(cp);
+    function next(){
+      if(!inn.children.length)return;
+      out.push(cp);part++;cp=mk(src,part);inn=cp.firstChild;
+      B.innerHTML='';B.appendChild(cp);
+    }
+    function add(k){
+      inn.appendChild(k);
+      if(fits())return true;
+      inn.removeChild(k);return false;
+    }
+    function splitK(k){
+      var tag=k.tagName,items=null,mkc=null;
+      if(tag==='PRE'){
+        var code=k.querySelector('code')||k;
+        items=code.textContent.split('\n');
+        mkc=function(ls){var p=k.cloneNode(false),c=document.createElement('code');c.textContent=ls.join('\n');p.appendChild(c);return p};
+      }else if(tag==='UL'||tag==='OL'){
+        items=[].slice.call(k.children);
+        mkc=function(ls){var u=k.cloneNode(false);ls.forEach(function(x){u.appendChild(x.cloneNode(true))});return u};
+      }else if(k.classList.contains('tw')&&k.querySelector('tbody')){
+        var tb=k.querySelector('tbody'),tbl=k.querySelector('table');
+        items=[].slice.call(tb.children);
+        mkc=function(ls){var w=k.cloneNode(false),t=tbl.cloneNode(false);
+          var th=tbl.querySelector('thead');if(th)t.appendChild(th.cloneNode(true));
+          var b=tb.cloneNode(false);ls.forEach(function(x){b.appendChild(x.cloneNode(true))});t.appendChild(b);w.appendChild(t);return w};
+      }
+      if(!items||items.length<2){inn.appendChild(k);return}
+      var buf=[],node=null;
+      for(var q=0;q<items.length;q++){
+        buf.push(items[q]);
+        var nn=mkc(buf);
+        if(node)inn.removeChild(node);
+        inn.appendChild(nn);node=nn;
+        if(!fits()&&buf.length>1){
+          inn.removeChild(nn);buf.pop();
+          node=null;
+          if(buf.length)inn.appendChild(mkc(buf));
+          next();buf=[items[q]];
+          node=mkc(buf);inn.appendChild(node);
+        }
+      }
+    }
+    kids.forEach(function(k){
+      if(add(k))return;
+      var splittable=/^(PRE|UL|OL)$/.test(k.tagName)||k.classList.contains('tw');
+      if(splittable){splitK(k);return}
+      if(inn.children.length){next();if(add(k))return}
+      inn.appendChild(k);
+    });
+    out.push(cp);
+  });
+  B.innerHTML='';
+  var keepO=leaves[cur]?leaves[cur].dataset.o:'0',keepP=leaves[cur]?leaves[cur].dataset.part:'0';
+  root.innerHTML='';out.forEach(function(l){root.appendChild(l)});
+  leaves=out;N=leaves.length;
+  var ni=0;
+  for(var i=0;i<N;i++){if(leaves[i].dataset.o===keepO){if(!ni||leaves[i].dataset.part===keepP)ni=i;if(leaves[i].dataset.part===keepP)break}}
+  cur=ni;
+}
+function repaginate(){
+  paginate();calcChapters();tocNums();buildSide();
+  cur=Math.max(0,Math.min(N-1,cur));
+  lastSig=p2.clientWidth+'x'+p2.clientHeight;
+  render();
+}
+window.addEventListener('resize',function(){
+  clearTimeout(rt);rt=setTimeout(function(){
+    if(p2.clientWidth+'x'+p2.clientHeight!==lastSig&&!busy&&!drag)repaginate();
+  },200);
+});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){if(ready)repaginate()});
+
 var start=0,m=/^#p(\d+)$/.exec(location.hash);
 if(m)start=+m[1]-1;
 else try{start=+localStorage.getItem('ofs-book-last:'+lang)||0}catch(e){}
+cur=0;paginate();calcChapters();tocNums();buildSide();ready=true;
 cur=Math.max(0,Math.min(N-1,start));
+lastSig=p2.clientWidth+'x'+p2.clientHeight;
 render();
 if(location.hash&&!m)route(location.hash.slice(1));
 })();

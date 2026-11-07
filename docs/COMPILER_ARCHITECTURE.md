@@ -1,6 +1,6 @@
-# OFS Compiler Architecture
+# Arquitetura do Compilador OFS
 
-## High-Level Overview
+## Visão geral
 
 ```
 source.ofs
@@ -46,33 +46,33 @@ source.ofs
 
 ---
 
-## Phase 1: Lexer (Tokenization)
+## Fase 1: Lexer (tokenização)
 
-**File**: `ofs/ofscc/lexer.ofs` (660 lines)
+**Arquivo**: `ofs/ofscc/lexer.ofs` (660 linhas)
 
-### Input
+### Entrada
 ```ofs
 forge x: stone = 42
 ```
 
-### Processing
+### Processamento
 
-1. **Character classification** (`chars.ofs`):
+1. **Classificação de caracteres** (`chars.ofs`):
    ```ofs
    is_digit(c), is_alpha(c), is_alnum(c), is_space(c)
    ```
 
-2. **Token recognition**:
-   - Keywords (34): forge, vein, if, while, match, etc.
-   - Operators (25+): +, -, *, /, ==, !=, &&, ||, [], etc.
-   - Literals: 42, 3.14, "hello\n", true, false, null
-   - Identifiers: x, _var, CamelCase
-   - Comments: // and /* */
+2. **Reconhecimento de tokens**:
+   - Palavras-chave (34): forge, vein, if, while, match, etc.
+   - Operadores (25+): +, -, *, /, ==, !=, &&, ||, [], etc.
+   - Literais: 42, 3.14, "hello\n", true, false, null
+   - Identificadores: x, _var, CamelCase
+   - Comentários: // and /* */
 
-3. **Multi-character operators**:
+3. **Operadores de vários caracteres**:
    - ++ / -- / += / -= / *= /= / == / != / <= / >= / && / || / << / >> / ->
 
-### Output
+### Saída
 ```
 Token { kind: TOK_FORGE, val: "forge", line: 1, col: 1 }
 Token { kind: TOK_IDENT, val: "x", line: 1, col: 7 }
@@ -83,26 +83,26 @@ Token { kind: TOK_INT, val: "42", line: 1, col: 18 }
 Token { kind: TOK_EOF, val: "", line: 1, col: 21 }
 ```
 
-### Key Design Decisions
+### Decisões de projeto
 
-- **No lexer actions** — Just tokenize, don't parse yet
-- **Line/column tracking** — For error messages
-- **Escape sequences** — \n, \t, \\, \", \0 handled
-- **Hex/float literals** — 0xFF, 1.0e-5 supported
+- **Sem ações no lexer** — apenas tokeniza, sem analisar ainda
+- **Rastreio de linha/coluna** — para mensagens de erro
+- **Sequências de escape** — \n, \t, \\, \", \0 tratadas
+- **Literais hex/float** — 0xFF, 1.0e-5 suportados
 
 ---
 
-## Phase 2: Parser (AST Construction)
+## Fase 2: Parser (construção da AST)
 
-**file**: `ofs/ofscc/parser.ofs` (650+ lines)
+**Arquivo**: `ofs/ofscc/parser.ofs` (650+ linhas)
 
-### Strategy
+### Estratégia
 
-1. **Recursive Descent** for statements + declarations
-2. **Pratt Parser** for expressions (operator precedence)
-3. **Pool-based AST** — nodes stored in global Array<Node>
+1. **Descida recursiva** para comandos e declarações
+2. **Parser de Pratt** para expressões (precedência de operadores)
+3. **AST em pool** — nós guardados em um `Array<Node>` global
 
-### Grammar (Simplified)
+### Gramática (simplificada)
 
 ```
 program     ::= (decl | stmt)*
@@ -130,133 +130,133 @@ primary_expr::= IDENT | INT | FLOAT | STRING | "true" | "false" | "null"
              | "(" expr ")" | "[" expr_list "]" | call_expr
 ```
 
-### AST Node Pool
+### Pool de nós da AST
 
-All nodes stored in global array with numeric IDs:
+Todos os nós ficam num array global, com IDs numéricos:
 
 ```ofs
 monolith Node {
-    kind: stone        // NK_* constant
-    val: obsidian      // name or literal value
-    type_str: obsidian // from type checker
-    line, col: stone   // source position
-    c0, c1, c2, c3: stone  // child indices (fixed)
-    extra: Array<stone>    // additional children
+    kind: stone        // constante NK_*
+    val: obsidian      // nome ou valor literal
+    type_str: obsidian // vindo do verificador de tipos
+    line, col: stone   // posição no fonte
+    c0, c1, c2, c3: stone  // índices dos filhos (fixos)
+    extra: Array<stone>    // filhos adicionais
 }
 
 forge _node_pool: Array<Node> = []
 ```
 
-### Example: Parse `vein add(a: stone) -> stone { return a }`
+### Exemplo: análise de `vein add(a: stone) -> stone { return a }`
 
 ```
 NK_FN_DECL
 ├─ val: "add"
-├─ c0: 2 (params block)
-│  └─ extra: [3] (param node)
+├─ c0: 2 (bloco de parâmetros)
+│  └─ extra: [3] (nó de parâmetro)
 │     ├─ kind: NK_PARAM
 │     ├─ val: "a"
-│     └─ c0: 4 (type node)
+│     └─ c0: 4 (nó de tipo)
 │        └─ kind: NK_TYPE, val: "stone"
-├─ c1: 5 (return type)
+├─ c1: 5 (tipo de retorno)
 │  └─ kind: NK_TYPE, val: "stone"
-└─ c2: 6 (body block)
+└─ c2: 6 (bloco do corpo)
    └─ kind: NK_BLOCK
-      └─ extra: [7] (return stmt)
+      └─ extra: [7] (comando return)
          ├─ kind: NK_RETURN
-         └─ c0: 8 (ident node)
+         └─ c0: 8 (nó de identificador)
             └─ kind: NK_IDENT, val: "a"
 ```
 
-### Precedence Table (Pratt Parser)
+### Tabela de precedência (parser de Pratt)
 
 ```
-Precedence Order (lowest to highest):
-1.  = += -= *= /=   (assignment)
-2.  ||              (logical OR)
-3.  &&              (logical AND)
-4.  == !=           (equality)
-5.  < <= > >=       (comparison)
-6.  |               (bitwise OR)
-7.  ^               (bitwise XOR)
-8.  &               (bitwise AND)
-9.  << >>           (bit shift)
-10. + -             (addition)
-11. * / %           (multiplication)
-12. Unary - ! ~     (prefix)
-13. ++ --           (postfix)
-14. [] . ()         (postfix: index, field, call)
+Ordem de precedência (da menor para a maior):
+1.  = += -= *= /=   (atribuição)
+2.  ||              (OU lógico)
+3.  &&              (E lógico)
+4.  == !=           (igualdade)
+5.  < <= > >=       (comparação)
+6.  |               (OU bit a bit)
+7.  ^               (XOR bit a bit)
+8.  &               (E bit a bit)
+9.  << >>           (deslocamento de bits)
+10. + -             (adição)
+11. * / %           (multiplicação)
+12. Unário - ! ~    (prefixo)
+13. ++ --           (pós-fixo)
+14. [] . ()         (pós-fixo: índice, campo, chamada)
 ```
 
 ---
 
-## Phase 3: Type Checker
+## Fase 3: Verificador de tipos
 
-**File**: `ofs/ofscc/typeck.ofs` (350+ lines)
+**Arquivo**: `ofs/ofscc/typeck.ofs` (350+ linhas)
 
-### Symbol Table
+### Tabela de símbolos
 
 ```ofs
 monolith Symbol {
-    name: obsidian       // variable/function name
-    type_str: obsidian   // "stone", "obsidian", "Array<stone>", etc
+    name: obsidian       // nome da variável/função
+    type_str: obsidian   // "stone", "obsidian", "Array<stone>", etc.
     kind: stone          // SYM_VAR, SYM_CONST, SYM_FN, SYM_PARAM
-    fn_arity: stone      // number of parameters
-    is_const: bool       // immutable?
+    fn_arity: stone      // número de parâmetros
+    is_const: bool       // imutável?
 }
 ```
 
-### Scope Stack
+### Pilha de escopos
 
 ```ofs
 forge _scopes: Array<Array<Symbol>> = []
 
-// Push scope when entering block/function
+// Empilha escopo ao entrar em bloco/função
 push_scope()
 
-// Pop scope when exiting
+// Desempilha ao sair
 pop_scope()
 
-// Declare symbol in current scope
+// Declara símbolo no escopo atual
 declare(sym)
 
-// Resolve symbol (searches outer scopes)
+// Resolve símbolo (busca nos escopos externos)
 resolve(name)
 ```
 
-### Type Checking Rules
+### Regras de verificação de tipos
 
-1. **Literals**:
+1. **Literais**:
    - `42` → stone
    - `3.14` → crystal
    - `"hello"` → obsidian
    - `true`/`false` → bool
 
-2. **Binary operations**:
-   - Arithmetic (+ - * /): both operands must be numeric
-   - Comparison (== != < <= > >=): return bool
-   - Logical (&& ||): operands and result are bool
+2. **Operações binárias**:
+   - Aritmética (+ - * /): os dois operandos devem ser numéricos
+   - Comparação (== != < <= > >=): retorna bool
+   - Lógicos (&& ||): operandos e resultado são bool
 
-3. **Variable declarations**:
-   - `forge x: stone = 42` → explicit type
-   - `forge y = 42` → inferred as stone
-   - `const z = 100` → inferred, immutable
+3. **Declarações de variáveis**:
+   - `forge x: stone = 42` → tipo explícito
+   - `forge y = 42` → inferido como stone
+   - `const z = 100` → inferido, imutável
 
-4. **Function calls**:
-   - Arguments count must match parameters
-   - Argument types should be compatible with parameters
+4. **Chamadas de função**:
+   - O número de argumentos deve bater com os parâmetros
+   - Os tipos dos argumentos devem ser compatíveis com os parâmetros
 
-### Error Handling (Current)
+### Tratamento de erros (atual)
 
-- Warnings only (no `tremor`/`catch` yet)
-- Line/column reported
-- Message: `[typeck warn line:col] description`
+- Apenas avisos (ainda sem `tremor`/`catch`)
+- Linha/coluna reportadas
+- Mensagem: `[typeck warn line:col] description`
 
 ---
 
-## Phase 4A: AST Interpreter Backend (Interpretação Direta)
+## Fase 4A: Backend interpretador de AST (interpretação direta)
 
-**File**: `ofs/ofscc/interpreter.ofs` (70KB, 1,900+ lines)
+**Arquivo**: `ofs/ofscc/interpreter.ofs` (70 KB, 1.900+ linhas)
 
 O backend interpretador da OFS executa a árvore sintática (AST) tipada diretamente em memória, sem gerar arquivos intermediários, código C ou LLVM IR. É o backend padrão utilizado pelo comando `ofs <arquivo.ofs>` e `ofs run <arquivo.ofs>`.
 
@@ -271,13 +271,13 @@ O backend interpretador da OFS executa a árvore sintática (AST) tipada diretam
 
 ---
 
-## Phase 4B: LLVM IR Generator (Geração Nativa)
+## Fase 4B: Gerador de LLVM IR (geração nativa)
 
-**File**: `ofs/ofscc/llvmgen.ofs` (74KB, 2,000+ lines)
+**Arquivo**: `ofs/ofscc/llvmgen.ofs` (74 KB, 2.000+ linhas)
 
 O backend de compilação da OFS gera diretamente LLVM Intermediate Representation (IR), dispensando transpiladores para C ou dependências do Clang. É utilizado pelo comando `ofs build`.
 
-### Type Mapping (OFS → LLVM IR)
+### Mapeamento de tipos (OFS → LLVM IR)
 
 ```ofs
 stone      → i64
@@ -290,7 +290,7 @@ i8, i32    → i8, i32
 Array<T>   → %struct.Array* (vetor dinâmico do Stack Magma)
 ```
 
-### Estratégia de Emissão LLVM IR
+### Estratégia de emissão de LLVM IR
 
 1. **Target Datalayout & Triple** — Configuração da arquitetura de destino (x86_64 ELF ou Windows PE32+)
 2. **Declarações Externas** — Protótipos das rotinas do Stack Magma (`ofs_alloc`, `ofs_str_concat`, `ofs_array_push`, etc.)
@@ -328,9 +328,9 @@ Um `extern vein` que o próprio módulo define não é mais declarado de novo (a
 
 `fault_addr(nome)`: o typeck troca o argumento pelo símbolo mangled (`ns.fn` → `ns__fn`) e exige que seja uma vein (`SYM_FN`); o llvmgen resolve `bind` de `extern`/`rift` e emite `ptrtoint ptr @simbolo to i64`. `fault_call(endereco, args...)` emite `inttoptr` + `call i64 %p(...)` com os tipos LLVM dos argumentos. Ver [LANGUAGE_REFERENCE.md](LANGUAGE_REFERENCE.md).
 
-## Phase 5: Driver do Compilador
+## Fase 5: Driver do compilador
 
-**File**: `ofs/ofscc/ofscc.ofs`
+**Arquivo**: `ofs/ofscc/ofscc.ofs`
 
 ### Pipeline de Execução Self-Hosted
 
@@ -352,105 +352,105 @@ core main() {
 
 ---
 
-## Memory Model
+## Modelo de memória
 
-### Static Allocation
+### Alocação estática
 
-- Token array: ~10KB (typical)
-- Node pool: ~1MB (large programs)
-- Symbol table: ~100KB
+- Array de tokens: ~10 KB (típico)
+- Pool de nós: ~1 MB (programas grandes)
+- Tabela de símbolos: ~100 KB
 
-### Dynamic Allocation (via FFI)
+### Alocação dinâmica (via FFI)
 
 ```ofs
 extern vein ofs_alloc(size: stone) -> stone
 extern vein ofs_free(ptr: stone) -> void
 ```
 
-Used for:
-- String concatenation (minimal)
-- Array growth (Array<stone> etc)
+Usada para:
+- Concatenação de strings (mínima)
+- Crescimento de arrays (`Array<stone>` etc.)
 
 ---
 
-## Determinism Guarantees
+## Garantias de determinismo
 
-For bootstrap to work (`ofscc_v2 === ofscc_v3`):
+Para o bootstrap funcionar (`ofscc_v2 === ofscc_v3`):
 
-**Deterministic**:
-- Token order matches source order
-- AST order matches source order  
-- Symbol table ordered byInsertion
-- No timestamps or random data
+**Determinístico**:
+- A ordem dos tokens segue a ordem do fonte
+- A ordem da AST segue a ordem do fonte  
+- Tabela de símbolos ordenada por inserção
+- Sem timestamps nem dados aleatórios
 
-**Non-deterministic** (avoid):
-- Hash tables (unpredictable iteration)
-- Floating-point without rounding
-- Embedded timestamps
-- Address-dependent output
-
----
-
-## Known Limitations
-
-### Current
-
-1. **No argv parsing** — Command-line args hardcoded
-2. **Single-pass type checking** — No forward declarations
-3. **Limited error recovery** — Errors halt compilation
-4. **No diagnostics** — Just echo messages
-
-### Planned
-
-1. Add Interpreter backend (`interpreter.ofs`) for instant evaluation via `ofs run`
-2. Implement OIR (Obsidian Intermediate Representation) lowering layer
-3. Add tremor/catch error handling and unwinding
-4. Path-aware error messages and diagnostics
-5. Native graphics, windowing, and audio standard modules
+**Não determinístico** (evitar):
+- Tabelas hash (iteração imprevisível)
+- Ponto flutuante sem arredondamento
+- Timestamps embutidos
+- Saída dependente de endereços
 
 ---
 
-## Testing Strategy
+## Limitações conhecidas
 
-| Level | Files | Purpose |
+### Atuais
+
+1. **Sem análise de argv** — argumentos de linha de comando fixos
+2. **Verificação de tipos em uma passada** — sem declarações adiantadas
+3. **Recuperação de erros limitada** — erros interrompem a compilação
+4. **Sem diagnósticos** — apenas mensagens com echo
+
+### Planejadas
+
+1. Backend interpretador (`interpreter.ofs`) para avaliação instantânea via `ofs run` (já existe; evoluir)
+2. Implementar a camada de rebaixamento OIR (Obsidian Intermediate Representation)
+3. Adicionar tratamento de erros tremor/catch e desenrolamento de pilha
+4. Mensagens de erro e diagnósticos com caminho do arquivo
+5. Módulos padrão nativos de gráficos, janelas e áudio
+
+---
+
+## Estratégia de testes
+
+| Nível | Arquivos | Objetivo |
 |---|---|---|
-| **Unit** | `test_lexer_units.ofs` | Char classification, keywords |
-| **Integration** | `test_lexer_parser.ofs` | Lexer + Parser together |
-| **E2E** | `test_bootstrap.sh` | Full 3-pass bootstrap |
-| **Regression** | `examples/` | Real programs |
+| **Unitário** | `test_lexer_units.ofs` | Classificação de caracteres, palavras-chave |
+| **Integração** | `test_lexer_parser.ofs` | Lexer + Parser juntos |
+| **E2E** | `test_bootstrap.sh` | Bootstrap completo em 3 passos |
+| **Regressão** | `examples/` | Programas reais |
 
 ---
 
-## Performance
+## Desempenho
 
-| Phase | Time (typical) | Limiting Factor |
+| Fase | Tempo (típico) | Fator limitante |
 |---|---|---|
-| Lexer | <1ms | File I/O |
-| Parser | ~10ms | Node allocation |
-| TypeCheck | ~5ms | Symbol lookup |
-| LLVMGen | ~10ms | SSA IR generation |
-| LLC (Assembler) | ~35ms | Machine code emission |
-| Linker (ld / ld.lld) | ~15ms | Object linking with `magma.o` |
-| **Total** | ~70ms | Native machine code generation |
+| Lexer | <1ms | E/S de arquivo |
+| Parser | ~10ms | Alocação de nós |
+| TypeCheck | ~5ms | Busca de símbolos |
+| LLVMGen | ~10ms | Geração de IR SSA |
+| LLC (Assembler) | ~35ms | Emissão de código de máquina |
+| Linker (ld / ld.lld) | ~15ms | Ligação de objetos com `magma.o` |
+| **Total** | ~70ms | Geração de código de máquina nativo |
 
 ---
 
-## Active Architecture: Direct LLVM Backend (Zero-Clang)
+## Arquitetura ativa: backend LLVM direto (zero Clang)
 
-The OFS compiler emits LLVM IR directly without intermediate C code:
+O compilador OFS emite LLVM IR diretamente, sem código C intermediário:
 
 ```
 llvmgen.ofs → output.ll (LLVM IR) → llc -filetype=obj → output.o → ld (with magma.o) → executable
 ```
 
-Benefits:
-- Direct machine code generation (no GCC or Clang dependency)
-- Byte-for-byte reproducibility and deterministic IR emission
-- Fast compilation (~50-100ms end-to-end)
-- 100% pure OFS runtime via Stack Magma (`magma.o`)
-- First-class cross-compilation support (Linux ELF and Windows PE32+)
+Benefícios:
+- Geração direta de código de máquina (sem depender de GCC ou Clang)
+- Reprodutibilidade byte a byte e emissão de IR determinística
+- Compilação rápida (~50-100 ms de ponta a ponta)
+- Runtime 100% OFS puro via Stack Magma (`magma.o`)
+- Compilação cruzada de primeira classe (Linux ELF e Windows PE32+)
 
 ---
 
-**Architecture Status**: Production & Self-Hosted
-**Verification**: Verified via `cmp -s v3.ll v4.ll` (zero diff)
+**Estado da arquitetura**: produção e self-hosted
+**Verificação**: via `cmp -s v3.ll v4.ll` (diff zero)

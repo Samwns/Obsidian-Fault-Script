@@ -15,14 +15,14 @@ The OFS toolchain compiles them natively. Browsers receive generated HTML, CSS, 
 ## ODL
 
 ```odl
-page "OFS Web" "pt"
+page "OFS Web" "en"
 skin "theme.css"
 flow
   deck.topbar
     title1 "OFS Web"
-    link.button "Documentacao" "#docs"
+    link.button "Documentation" "#docs"
   stage#content
-    mark "## Conteudo nativo\nODL suporta **Markdown**."
+    mark "## Native content\nODL supports **Markdown**."
     raw "<custom-element></custom-element>"
   spark "app.js"
 ```

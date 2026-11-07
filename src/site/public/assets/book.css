@@ -19,8 +19,8 @@ a{color:var(--accent2)}a:focus-visible,button:focus-visible{outline:2px solid va
 .doc-title,.chapter-name{font-size:2rem;margin:.2em 0 .6em}
 .chapter-page .leaf-in{text-align:center;padding-top:28%}.chapter-name{font-size:2.4rem}
 code{font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0;font-family:ui-monospace,"JetBrains Mono",Consolas,monospace;font-size:.88em;background:var(--code);padding:.1em .35em;border-radius:4px}
-pre{font-variant-ligatures:none;background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px;overflow:auto;line-height:1.5}pre code{background:none;padding:0;font-size:.82rem}
-.tw{overflow:auto;margin:1em 0}table{border-collapse:collapse;font:14px system-ui,sans-serif;min-width:100%}th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}th{background:var(--paper2)}
+pre{font-variant-ligatures:none;background:var(--code);border:1px solid var(--line);border-radius:6px;padding:12px;overflow:hidden;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}pre code{background:none;padding:0 0 0 1.2em;font-size:.82rem;white-space:pre-wrap;overflow-wrap:anywhere;display:block;text-indent:-1.2em}
+.tw{overflow:hidden;margin:1em 0}table{border-collapse:collapse;font:14px system-ui,sans-serif;min-width:100%}th,td{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}th{background:var(--paper2)}
 blockquote{margin:1em 0;padding:.2em 1em;border-left:3px solid var(--accent);color:var(--muted)}
 li.sub{margin-left:1.2em;list-style:circle}
 .cover .leaf-in{text-align:center;padding:18px 16px;background:none}
@@ -351,7 +351,10 @@ li.sub{margin-left:1.2em;list-style:circle}
 
 /* Page inner contents */
 .pg{position:absolute;inset:0;overflow:hidden;background:var(--paper);border-radius:0 6px 6px 0}
-.pg .body{position:absolute;inset:0 0 38px 0;overflow:auto;scrollbar-width:thin;scrollbar-color:#3b3560 transparent}
+.pg .body{position:absolute;inset:0 0 38px 0;overflow:hidden}
+.pg .body pre code{font-size:clamp(11px,1.05vw,13px)}
+.pg .body table{font-size:12px}.pg .body th,.pg .body td{overflow-wrap:anywhere;padding:4px 6px}
+.pg .body img{max-width:100%;height:auto}.pg .btn:focus,.pg .btn:focus-visible,.pg .open-book:focus,.coverDesign :focus,.coverDesign :focus-visible{outline:none}
 .pg .leaf{margin:0;border:0;border-radius:0;background:none;max-width:none}
 .pg .leaf-in{padding:clamp(22px,3.8vw,38px) clamp(20px,3.4vw,36px) 16px}
 .pg .body p,.pg .body li{font-size:clamp(13px,1.3vw,15.5px);hyphens:auto}
@@ -515,7 +518,7 @@ li.sub{margin-left:1.2em;list-style:circle}
 /* Edge chapter tabs */
 .stabs{
   position:absolute;
-  left:calc(100% + 6px);
+  right:0;
   top:6%;
   max-height:88%;
   overflow:auto;
@@ -529,10 +532,9 @@ li.sub{margin-left:1.2em;list-style:circle}
 .stab{
   display:block;
   width:var(--tw,118px);
-  margin-left:-4px;
-  padding:5px 8px 5px 12px;
+  padding:5px 12px 5px 8px;
   border:0;
-  border-radius:0 8px 8px 0;
+  border-radius:8px 0 0 8px;
   background:hsl(var(--h) 45% 32%);
   color:#fff;
   font:600 12px system-ui,sans-serif;
@@ -544,7 +546,7 @@ li.sub{margin-left:1.2em;list-style:circle}
   box-shadow:2px 2px 6px #0007;
   transition:transform .15s,background .15s;
 }
-.stab:hover,.stab.on{transform:translateX(6px);background:hsl(var(--h) 60% 42%)}
+.stab:hover,.stab.on{transform:translateX(-6px);background:hsl(var(--h) 60% 42%)}
 .stab.mk{background:hsl(45 85% 40%);color:#1a1200}
 
 /* Bottom navigation bar */
@@ -707,6 +709,7 @@ small[data-relsrc]{color:var(--muted);font-size:.8em}
   .stage{
     --bw:min(calc(100vw - 36px),420px);
     --bd:24px;
+    --bh:max(calc(var(--bw)*1.38),calc(100vh - 190px));
     perspective:1200px;
     padding:0;
   }
@@ -718,6 +721,6 @@ small[data-relsrc]{color:var(--muted);font-size:.8em}
   .page > li{transform:none!important}
   .page > li:not(:nth-child(2)){display:none}
   .nav-btn{display:none}
-  .stab{--tw:28px;text-align:center;padding:5px 0}
+  .stab{--tw:20px;text-align:center;padding:5px 0;font-size:10px}
   .stab .t{display:none}
 }

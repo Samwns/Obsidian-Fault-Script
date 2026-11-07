@@ -33,6 +33,8 @@ core main() {
 }
 ```
 
+`core` é palavra reservada: só marca o ponto de entrada. Usá-la como nome (`vein core()`, `core(1)`, inclusive dentro de `namespace`) é **erro de compilação** ("`core` e palavra reservada…"); renomeie a função (ex.: `core_fn`). Qualquer erro sintático encerra a compilação com código 1.
+
 Um arquivo `.ofs` pode conter:
 
 - `attach { ... }`
@@ -551,8 +553,9 @@ Módulo `net` expõe:
 
 Módulo `http` expõe:
 
-- `http.get(url: obsidian) -> HttpResponse`
-- `http.parse_response(raw: obsidian) -> HttpResponse`
+- `http.get(ip: obsidian, port: stone, host: obsidian, path: obsidian) -> HttpResponse`
+- `http.parse_status_code(response_text: obsidian) -> stone`
+- `http.extract_body(response_text: obsidian) -> obsidian`
 
 Módulo `odl` expõe:
 

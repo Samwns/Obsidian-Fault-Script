@@ -1,16 +1,16 @@
-# ODL and OES
+# ODL e OES
 
-ODL (**Obsidian Document Language**) and OES (**Obsidian Effect Scripts**) are standalone OFS web languages. They keep the browser output compatible with HTML and CSS, but the authored source uses OFS vocabulary: `page`, `skin`, `flow`, `deck`, `stage`, `band`, `gem`, `paint`, `veil`, and `pulse`.
+ODL (**Obsidian Document Language**) e OES (**Obsidian Effect Scripts**) são linguagens web independentes do OFS. A saída para o navegador continua compatível com HTML e CSS, mas o código-fonte usa o vocabulário do OFS: `page`, `skin`, `flow`, `deck`, `stage`, `band`, `gem`, `paint`, `veil`, and `pulse`.
 
-The OFS toolchain compiles them natively. Browsers receive generated HTML, CSS, and JavaScript artifacts.
+A toolchain do OFS as compila nativamente. Os navegadores recebem artefatos HTML, CSS e JavaScript gerados.
 
-| Source | Responsibility | Generated artifact |
+| Fonte | Responsabilidade | Artefato gerado |
 |---|---|---|
-| `.odl` | document structure, content, components, interop | HTML |
-| `.oes` | tokens, layout, responsive rules, motion | CSS |
-| `.oll` | native desktop UI components, layouts, windows | native UI (60 FPS) / PPM preview |
-| `.oal` | Android app: manifest, touch screens, styles, actions, lifecycle ([OAL_REFERENCE.md](OAL_REFERENCE.md)) | `AndroidManifest.xml` + OFS → APK |
-| `.ofs` | native logic, generators, servers, build tools | executable |
+| `.odl` | estrutura do documento, conteúdo, componentes, interop | HTML |
+| `.oes` | tokens, layout, regras responsivas, movimento | CSS |
+| `.oll` | componentes de UI desktop nativa, layouts, janelas | UI nativa (60 FPS) / prévia PPM |
+| `.oal` | app Android: manifesto, telas de toque, estilos, ações, ciclo de vida ([OAL_REFERENCE.md](OAL_REFERENCE.md)) | `AndroidManifest.xml` + OFS → APK |
+| `.ofs` | lógica nativa, geradores, servidores, ferramentas de build | executável |
 
 ## ODL
 
@@ -20,27 +20,27 @@ skin "theme.css"
 flow
   deck.topbar
     title1 "OFS Web"
-    link.button "Documentacao" "#docs"
+    link.button "Documentação" "#docs"
   stage#content
-    mark "## Conteudo nativo\nODL suporta **Markdown**."
+    mark "## Conteúdo nativo\nODL suporta **Markdown**."
     raw "<custom-element></custom-element>"
   spark "app.js"
 ```
 
-ODL supports `tag.class#id`, native Markdown, raw HTML, browser scripts, ES/Node-style modules, inline JavaScript, and explicit PHP-compatible blocks. Interoperability is opt-in, so generated output stays understandable.
+O ODL aceita `tag.class#id`, Markdown nativo, HTML bruto, scripts de navegador, módulos no estilo ES/Node, JavaScript inline e blocos explícitos compatíveis com PHP. A interoperabilidade é opcional, então a saída gerada continua fácil de entender.
 
-### Safe Visual Positioning
+### Posicionamento visual seguro
 
-ODL includes a local-only studio hook:
+O ODL inclui um gancho de estúdio apenas local:
 
 ```odl
 move.card.feature
-  h2 "Drag me locally"
-  p "Open the page with ?ofs-studio=1."
+  h2 "Arraste-me localmente"
+  p "Abra a página com ?ofs-studio=1."
 studio "safe-localhost"
 ```
 
-`studio` only activates on `localhost` or `127.0.0.1`. It never runs on a public host by default. Marked `move.*` blocks can be dragged visually, and the studio exports OES transform rules that can be pasted back into `.oes` source.
+`studio` só é ativado em `localhost` ou `127.0.0.1` e nunca roda em host público por padrão. Os blocos `move.*` marcados podem ser arrastados visualmente, e o estúdio exporta regras de transformação OES que podem ser coladas de volta no fonte `.oes`.
 
 ## OES
 
@@ -64,7 +64,7 @@ pulse "enter"
     opacity "1"
 ```
 
-OES provides tokens, selector blocks, property aliases, responsive groups, feature queries, layers, and animation timelines.
+O OES oferece tokens, blocos de seletor, apelidos de propriedades, grupos responsivos, consultas de recurso, camadas e linhas do tempo de animação.
 
 ## CLI
 
@@ -73,22 +73,22 @@ ODLC_INPUT=page.odl ODLC_OUTPUT=index.html ofs run ofs/tools/odlc.ofs
 OESC_INPUT=theme.oes OESC_OUTPUT=theme.css ofs run ofs/tools/oesc.ofs
 ```
 
-Direct invocation also works:
+A invocação direta também funciona:
 
 ```bash
 ofs page.odl
 ofs theme.oes
 ```
 
-HTML-to-ODL and CSS-to-OES import preserves unsupported syntax in explicit raw blocks. This makes migration lossless while the structured reverse translator evolves.
+A importação de HTML para ODL e de CSS para OES preserva a sintaxe sem suporte em blocos brutos explícitos. Isso torna a migração sem perdas enquanto o tradutor reverso estruturado evolui.
 
-## Hosting
+## Hospedagem
 
-Generated artifacts can be hosted by GitHub Pages, any static host, Node, PHP, or the OFS native web server. The VS Code extension recognizes `.odl` as a site document and its **Go Live** command compiles neighboring `.oes` files before starting a local preview with automatic reload.
+Os artefatos gerados podem ser hospedados no GitHub Pages, em qualquer host estático, no Node, no PHP ou no servidor web nativo do OFS. A extensão do VS Code reconhece `.odl` como documento de site e o comando **Go Live** compila os `.oes` vizinhos antes de iniciar uma prévia local com recarga automática.
 
-When publishing to GitHub Pages, keep the generated `index.html` and `site.css` at the public root. If you want the authored language available too, copy the sources into a non-executed folder such as `source/page.odl` and `source/site.oes`. They are served as source files and do not interfere with the browser artifact.
+Ao publicar no GitHub Pages, mantenha o `index.html` e o `site.css` gerados na raiz pública. Se quiser disponibilizar também o código original, copie os fontes para uma pasta não executada, como `source/page.odl` e `source/site.oes`. Eles são servidos como arquivos-fonte e não interferem no artefato do navegador.
 
-Example site:
+Site de exemplo:
 
 ```bash
 ofs/dist/ofs build ofs/examples/native_site/build.ofs -o /tmp/ofs-native-site-build

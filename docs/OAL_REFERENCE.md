@@ -127,7 +127,7 @@ O nome da `.so` (`android.app.lib_name`) é o último segmento do pacote. A acti
 | `toggle "rótulo" value=expr -> ação(item)` | `icon=` | interruptor; `item` = 1 (ligar) ou 0 |
 | `progress "rótulo" value=expr` | | barra de progresso 0–100 |
 | `field "dica" value=expr -> ação` | `icon=` | campo de texto (toque chama a ação) |
-| `keyboard -> ação(item)` | | teclado na tela; `item` = código Unicode, 8 = apagar, 10 = confirmar |
+| `keyboard -> ação(item)` | | teclado na tela; `item` = código Unicode, 8 = apagar, 10 = confirmar. Camada hex (`oal.kb_layer = 2`): teclas 0-9, A-F, apagar, `#` (abc) e ↵. |
 
 **Seletor de cor (`colorpicker`).** Widget reutilizável de toque: arraste no quadrado (saturação × valor) e na barra de matiz; a prévia e o código `#RRGGBB` aparecem embaixo. `value=` é a cor atual (`0xRRGGBB`, inteiro) e `-> ação(item)` recebe a nova cor a cada movimento. O hex digitado fica por conta do app (um `field` + `keyboard` que chamam a mesma ação). Altura fixa (~280 dp). Tema: `oal.set_palette_full(fundo, barra, superfície, superfície_realçada, texto, secundário, destaque, botão, botão_pressionado, borda, selo)`; o texto sobre destaque/botão é escolhido por contraste (`oal.contrast_ink`). O botão da barra com ícone `back` é posicionado no **lado esquerdo**, antes do título.
 | `if expr` / `else` | filhos | blocos condicionais (expressão OFS) |
@@ -137,6 +137,32 @@ O nome da `.so` (`android.app.lib_name`) é o último segmento do pacote. A acti
 Rótulos, títulos, textos de `empty` e nomes de ícone podem ser expressões: `button tr("jogar") icon=play`, `fab.icon player.icone_auto()`, `bar app.nome()`. Classe e ícone juntos: `fab.ctrl.icon "save"`.
 
 `text` quebra em várias linhas na largura da tela (respeita `\n`); o aviso `empty` também.
+
+### Navegação: barra inferior, menu suspenso, bottom sheet e segurar
+
+**PT**
+| Widget / atributo | Efeito |
+| --- | --- |
+| `navbar` com filhos `tab "rótulo" icon=nome selected=expr -> ação` | barra de navegação inferior fixa (ícone + rótulo; a aba `selected` fica destacada na cor de destaque do tema). O conteúdo rola acima dela e os `fab` sobem junto. |
+| `popup menu -> fechar` / `popup sheet title=expr -> fechar`, filhos `item title=... icon=... [show=cond] -> ação` | `menu`: menu suspenso sob a barra, à direita (⋮); `sheet`: bottom sheet com título. Cobre a tela com fundo escuro; tocar fora chama a ação de fechar. Mostre-o com `if app.menu_aberto()`. Classe: `item.perigo`. |
+| `card ... long=ação(item)` / `item ... long=ação(item)` | segurar (~0,45 s) o card/item chama a ação (o toque normal continua em `-> ação`). Mover o dedo cancela. |
+| `bar "" logo=nome` | ícone (de `icons.ofs`) no lugar do texto do título da barra. |
+
+Runtime: `oal.nav_begin/nav_tab/nav_end`, `oal.popup_begin(sheet, titulo, fechar)/popup_item/popup_end`, `oal.use_long(ação)`, `oal.bar_logo(nome)`. A pilha de telas e o botão voltar são do app (`on back`); `oal.reset_to(tela)` troca de aba limpando a pilha. Pilhas de `fab` no topo (`top_left`/`top_right`) encolhem para não cobrir o D-pad/losango do mesmo lado.
+
+**EN**
+- `navbar` with `tab "label" icon=name selected=expr -> action` children: fixed bottom navigation bar (icon + label; the `selected` tab uses the theme accent). Content scrolls above it and `fab`s move up with it.
+- `popup menu -> close` / `popup sheet title=expr -> close`, children `item title=... icon=... [show=cond] -> action`: `menu` is a drop-down under the bar on the right (the ⋮ menu); `sheet` is a bottom sheet with a title. A dimmed scrim covers the screen; tapping outside calls the close action. Show it with `if app.menu_open()`. Class: `item.perigo`.
+- `card ... long=action(item)` / `item ... long=action(item)`: long press (~0.45 s) calls the action (a normal tap still uses `-> action`). Moving the finger cancels it.
+- `bar "" logo=name`: an `icons.ofs` icon in place of the bar title text.
+- Runtime: `oal.nav_begin/nav_tab/nav_end`, `oal.popup_begin(sheet, title, close)/popup_item/popup_end`, `oal.use_long(action)`, `oal.bar_logo(name)`. Screen stack and back button belong to the app (`on back`); `oal.reset_to(screen)` switches tabs clearing the stack. Top `fab` stacks (`top_left`/`top_right`) shrink so they do not cover the D-pad/diamond on the same side.
+
+**ES**
+- `navbar` con hijos `tab "etiqueta" icon=nombre selected=expr -> acción`: barra de navegación inferior fija (icono + etiqueta; la pestaña `selected` usa el color de acento del tema). El contenido se desplaza encima y los `fab` suben con ella.
+- `popup menu -> cerrar` / `popup sheet title=expr -> cerrar`, hijos `item title=... icon=... [show=cond] -> acción`: `menu` es un menú desplegable bajo la barra, a la derecha (el menú ⋮); `sheet` es un bottom sheet con título. Un fondo oscuro cubre la pantalla; tocar fuera llama a la acción de cerrar. Se muestra con `if app.menu_abierto()`. Clase: `item.perigo`.
+- `card ... long=acción(item)` / `item ... long=acción(item)`: mantener pulsado (~0,45 s) llama a la acción (el toque normal sigue en `-> acción`). Mover el dedo lo cancela.
+- `bar "" logo=nombre`: un icono de `icons.ofs` en lugar del texto del título de la barra.
+- Runtime: `oal.nav_begin/nav_tab/nav_end`, `oal.popup_begin(sheet, título, cerrar)/popup_item/popup_end`, `oal.use_long(acción)`, `oal.bar_logo(nombre)`. La pila de pantallas y el botón atrás son de la app (`on back`); `oal.reset_to(pantalla)` cambia de pestaña vaciando la pila. Las pilas de `fab` superiores (`top_left`/`top_right`) se encogen para no tapar el D-pad/rombo del mismo lado.
 
 ### Listas e grades com dados (`from`)
 
@@ -241,6 +267,6 @@ Tudo é desenhado em software num buffer RGBA (`canvas` + `raster` + `ttf` + `ic
 ## Limites
 
 - Texto: sem campo de texto do sistema (use `keyboard` + `field`); sem fontes CJK (a Roboto do sistema não tem japonês).
-- Sem gestos (`long_press`, `swipe`, `pinch`), `intent` e `storage` declarativos (use `android.start_intent` e caminhos do `android.ofs`).
+- Gestos: só toque, arrastar (rolagem) e segurar (`long=`); sem `swipe`/`pinch`. Sem `intent` e `storage` declarativos (use `android.start_intent` e caminhos do `android.ofs`).
 - Camadas: conteúdo (rola), barra, flutuante e `canvas full`; um `canvas full` por tela.
 - Render em software: telas com muitas imagens grandes ficam mais lentas na primeira vez (decodificação PNG em OFS).
