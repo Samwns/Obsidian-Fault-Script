@@ -60,4 +60,6 @@ on back -> volver
 
 ## Límites
 
-Sin campo de texto del sistema (usa `keyboard` + `field`); sin fuentes CJK; sin gestos ni `intent`/`storage` declarativos; un `canvas full` por pantalla; render por software.
+**Entrada de texto del sistema (`oal.edit_open`).** `oal.edit_open(título, texto, multilínea) -> bool` abre un Dialog de Android con un `EditText` nativo (stdlib `android_input.ofs`, solo JNI): teclado predeterminado (Gboard), cursor, desplazamiento, pegar y autocompletar. Botones OK/Cancelar (`oal.edit_ok_label`/`edit_cancel_label`). El resultado llega en `on frame`: `oal.edit_state` 2 = confirmado, 3 = cancelado, con `oal.edit_text`; llama a `oal.edit_done()` al tratarlo. Devuelve `false` fuera de Android: usa `keyboard`, que sigue disponible como alternativa.
+
+Campo de texto del sistema con `oal.edit_open` (`keyboard` + `field` como alternativa); sin fuentes CJK; sin gestos ni `intent`/`storage` declarativos; un `canvas full` por pantalla; render por software.

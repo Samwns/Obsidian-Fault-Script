@@ -22,6 +22,9 @@ vein oal_backend_orientation(req: stone) -> bool {
     return false
 }
 vein oal_backend_log(text: obsidian) -> void { echo(text) }
+vein oal_backend_text_open(title: obsidian, text: obsidian, multiline: bool) -> bool { return false }
+vein oal_backend_text_poll() -> stone { return 2 }
+vein oal_backend_text_get() -> obsidian { return "" }
 
 vein _oal_env_num(name: obsidian, def: stone) -> stone {
     forge v = getenv(name)

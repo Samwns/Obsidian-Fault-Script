@@ -96,6 +96,8 @@ on pause -> quick_save
 | `field "hint" value=expr -> action` | text field look; tap calls the action |
 | `keyboard -> action(item)` | on-screen keyboard; `item` = Unicode code, 8 = backspace, 10 = enter. Hex layer (`oal.kb_layer = 2`): keys 0-9, A-F, backspace, `#` (abc) and ↵. |
 
+**System text input (`oal.edit_open`).** `oal.edit_open(title, text, multiline) -> bool` opens an Android Dialog with a native `EditText` (stdlib `android_input.ofs`, JNI only): the device's default keyboard (Gboard), cursor, text scrolling, paste and autocomplete. OK/Cancel buttons (`oal.edit_ok_label`/`edit_cancel_label`). The result arrives in `on frame`: `oal.edit_state` 2 = confirmed, 3 = cancelled, with `oal.edit_text`; call `oal.edit_done()` when handled. Returns `false` off Android: use `keyboard`, which stays available as an alternative (e.g. gamepad).
+
 **Color picker (`colorpicker`).** Reusable touch widget: drag in the square (saturation × value) and on the hue bar; the preview and the `#RRGGBB` code appear below. `value=` is the current color (`0xRRGGBB` integer) and `-> action(item)` receives the new color on every move. Typed hex is up to the app (a `field` + `keyboard` calling the same action). Fixed height (~280 dp). Theme: `oal.set_palette_full(bg, bar, surface, surface_hi, text, muted, accent, button, button_pressed, border, badge)`; text over accent/button is chosen by contrast (`oal.contrast_ink`). A bar button with the `back` icon is placed on the **left side**, before the title.
 | `if expr` / `else` | conditional blocks (OFS expression) |
 

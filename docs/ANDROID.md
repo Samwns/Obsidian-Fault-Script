@@ -101,6 +101,10 @@ O botão voltar é entregue como `EV_BACK` e **não** fecha o app sozinho: chame
 
 ---
 
+### Entrada de texto pelo teclado do sistema (`android_input.ofs`)
+
+`ainput.open(título, texto, multilinha)` abre um `android.app.Dialog` com um `EditText` criado por JNI (sem Java próprio): teclado padrão (Gboard), cursor, colar e autocompletar. Sem listeners: os botões são `ToggleButton` (alternam ao toque; `ainput.poll()` lê `isChecked()`), e voltar/tocar fora fecha o Dialog (`isShowing()`). `poll()` devolve 0 aberto, 1 OK, 2 cancelado; `ainput.text()` lê o texto. A OAL expõe isso como `oal.edit_open`.
+
 ## Limites atuais
 
 - Só `arm64-v8a` (aarch64) e API 26+. Sem x86/armv7.

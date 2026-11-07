@@ -129,6 +129,8 @@ O nome da `.so` (`android.app.lib_name`) é o último segmento do pacote. A acti
 | `field "dica" value=expr -> ação` | `icon=` | campo de texto (toque chama a ação) |
 | `keyboard -> ação(item)` | | teclado na tela; `item` = código Unicode, 8 = apagar, 10 = confirmar. Camada hex (`oal.kb_layer = 2`): teclas 0-9, A-F, apagar, `#` (abc) e ↵. |
 
+**Entrada de texto do sistema (`oal.edit_open`).** `oal.edit_open(título, texto, multilinha) -> bool` abre um Dialog Android com um `EditText` nativo (stdlib `android_input.ofs`, só JNI): teclado padrão do aparelho (Gboard), cursor, rolagem do texto, colar e autocompletar. Botões OK/Cancelar (`oal.edit_ok_label`/`edit_cancel_label`). O resultado chega no `on frame`: `oal.edit_state` 2 = confirmado, 3 = cancelado, com `oal.edit_text`; chame `oal.edit_done()` ao tratar. Devolve `false` fora do Android: use `keyboard`, que continua disponível como alternativa (ex.: gamepad).
+
 **Seletor de cor (`colorpicker`).** Widget reutilizável de toque: arraste no quadrado (saturação × valor) e na barra de matiz; a prévia e o código `#RRGGBB` aparecem embaixo. `value=` é a cor atual (`0xRRGGBB`, inteiro) e `-> ação(item)` recebe a nova cor a cada movimento. O hex digitado fica por conta do app (um `field` + `keyboard` que chamam a mesma ação). Altura fixa (~280 dp). Tema: `oal.set_palette_full(fundo, barra, superfície, superfície_realçada, texto, secundário, destaque, botão, botão_pressionado, borda, selo)`; o texto sobre destaque/botão é escolhido por contraste (`oal.contrast_ink`). O botão da barra com ícone `back` é posicionado no **lado esquerdo**, antes do título.
 | `if expr` / `else` | filhos | blocos condicionais (expressão OFS) |
 
@@ -266,7 +268,7 @@ Tudo é desenhado em software num buffer RGBA (`canvas` + `raster` + `ttf` + `ic
 
 ## Limites
 
-- Texto: sem campo de texto do sistema (use `keyboard` + `field`); sem fontes CJK (a Roboto do sistema não tem japonês).
+- Texto: campo de texto do sistema via `oal.edit_open` (`keyboard` + `field` como alternativa); sem fontes CJK (a Roboto do sistema não tem japonês).
 - Gestos: só toque, arrastar (rolagem) e segurar (`long=`); sem `swipe`/`pinch`. Sem `intent` e `storage` declarativos (use `android.start_intent` e caminhos do `android.ofs`).
 - Camadas: conteúdo (rola), barra, flutuante e `canvas full`; um `canvas full` por tela.
 - Render em software: telas com muitas imagens grandes ficam mais lentas na primeira vez (decodificação PNG em OFS).

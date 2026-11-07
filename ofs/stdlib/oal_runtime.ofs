@@ -18,6 +18,9 @@ extern vein oal_app_event(ev: stone) -> bool
 extern vein oal_backend_quit() -> void
 extern vein oal_backend_request_frame() -> void
 extern vein oal_backend_log(text: obsidian) -> void
+extern vein oal_backend_text_open(title: obsidian, text: obsidian, multiline: bool) -> bool
+extern vein oal_backend_text_poll() -> stone
+extern vein oal_backend_text_get() -> obsidian
 extern vein oal_backend_orientation(req: stone) -> bool
 // canvas: o app desenha (paint) e recebe os toques (kind 0 desce, 1 move,
 // 2 sobe; finger = id do dedo; x/y relativos ao canvas). O oalc sempre gera.
@@ -125,6 +128,10 @@ namespace oal {
     forge overlay_scale: stone = 100      // tamanho de fab/dpad (%)
     forge text_scale: stone = 100         // tamanho do texto (%)
     forge animating: bool = false         // true: ON_FRAME a cada quadro
+    forge edit_state: stone = 0           // entrada de texto do sistema: 0 livre, 1 aberta, 2 confirmada, 3 cancelada
+    forge edit_ok_label: obsidian = "OK"     // rotulos dos botoes do dialogo de texto do sistema
+    forge edit_cancel_label: obsidian = "Cancelar"
+    forge edit_text: obsidian = ""        // texto do teclado do sistema (valido com edit_state 1..3)
     forge now_ms: stone = 0               // relogio do backend (oal.frame)
     forge _toast_text: obsidian = ""
     forge _toast_until: stone = 0
@@ -1282,6 +1289,21 @@ namespace oal {
         _set_action(id, action, -1)
     }
 
+    // Entrada de texto pelo teclado do sistema (cursor, colar, autocompletar). false se o
+    // backend nao tem (desktop): use o oal keyboard. O resultado chega por ON_FRAME:
+    // oal.edit_state 2 (confirmado) ou 3 (cancelado) com oal.edit_text; edit_done() zera.
+    vein edit_open(title: obsidian, text: obsidian, multiline: bool) -> bool {
+        edit_text = text
+        if (!oal_backend_text_open(title, text, multiline)) {
+            edit_state = 0
+            return false
+        }
+        edit_state = 1
+        oal_backend_request_frame()
+        return true
+    }
+    vein edit_done() -> void { edit_state = 0 }
+
     // Mensagem curta por cima de tudo (some sozinha).
     vein toast(text: obsidian) -> void {
         _toast_text = text
@@ -1349,7 +1371,7 @@ namespace oal {
 
     // O backend deve pedir quadros continuos? (animacao ou toast na tela)
     vein wants_frames() -> bool {
-        return animating || ofs_str_len(_toast_text) > 0 || _lp_fid >= 0
+        return animating || ofs_str_len(_toast_text) > 0 || _lp_fid >= 0 || edit_state == 1
     }
 
     // Chamado pelo backend no inicio de cada quadro.
@@ -1360,6 +1382,17 @@ namespace oal {
             _dirty = true
         }
         if (_lp_fid >= 0) { _long_tick() }
+        if (edit_state == 1) {
+            forge er = oal_backend_text_poll()
+            edit_text = oal_backend_text_get()
+            if (er != 0) {
+                edit_state = 1 + er
+                oal_app_event(ON_FRAME)
+                _dirty = true
+                return
+            }
+            oal_backend_request_frame()
+        }
         if (animating) { oal_app_event(ON_FRAME) }
     }
 

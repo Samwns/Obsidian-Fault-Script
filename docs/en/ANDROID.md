@@ -73,6 +73,10 @@ Functions: `lock`/`unlock_post`, `fill_rect`, `blit`, `request_frame`, `finish`,
 
 ---
 
+### Text input via the system keyboard (`android_input.ofs`)
+
+`ainput.open(title, text, multiline)` opens an `android.app.Dialog` with a JNI-created `EditText` (no Java of our own): default keyboard (Gboard), cursor, paste and autocomplete. No listeners: the buttons are `ToggleButton`s (they toggle on tap; `ainput.poll()` reads `isChecked()`), and back/tap outside closes the Dialog (`isShowing()`). `poll()` returns 0 open, 1 OK, 2 cancelled; `ainput.text()` reads the text. OAL exposes it as `oal.edit_open`.
+
 ## Current limits
 
 - `arm64-v8a` only, API 26+.

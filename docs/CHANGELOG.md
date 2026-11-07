@@ -6,6 +6,12 @@ All notable changes to this project are recorded here.
 
 ## [Unreleased]
 
+### Added / Adicionado — Entrada de texto pelo teclado do sistema (`android_input.ofs`, `oal.edit_open`)
+
+- **PT** — novo stdlib `android_input.ofs` (Dialog + `EditText` por JNI, sem Java próprio) e `oal.edit_open`/`edit_state`/`edit_text`: teclado padrão do Android (Gboard) com cursor, rolagem, colar e autocompletar nos campos de texto; o `keyboard` da OAL continua como alternativa. Documentado em `docs/OAL_REFERENCE.md` e `docs/ANDROID.md`.
+- **EN** — new stdlib `android_input.ofs` (Dialog + JNI `EditText`, no Java of our own) and `oal.edit_open`/`edit_state`/`edit_text`: the Android default keyboard (Gboard) with cursor, scrolling, paste and autocomplete in text fields; OAL `keyboard` remains as an alternative. Documented in `docs/OAL_REFERENCE.md` and `docs/ANDROID.md`.
+- **ES** — nuevo stdlib `android_input.ofs` (Dialog + `EditText` por JNI, sin Java propio) y `oal.edit_open`/`edit_state`/`edit_text`: teclado predeterminado de Android (Gboard) con cursor, desplazamiento, pegar y autocompletar en los campos de texto; el `keyboard` de OAL sigue como alternativa. Documentado en `docs/OAL_REFERENCE.md` y `docs/ANDROID.md`.
+
 ### Added / Adicionado — OAL: barra de navegação inferior, menu suspenso, bottom sheet e segurar (long press)
 
 - **PT** — **oalc + `oal_runtime`**: novos widgets genéricos `navbar` (abas embaixo com ícone e rótulo; o conteúdo e os `fab` respeitam a altura da barra) e `popup menu|sheet` (menu suspenso ⋮ ou bottom sheet, com fundo escurecido e tocar fora fecha); atributo `long=ação(item)` em `card`/`item` (segurar ~0,45 s, cancelado ao arrastar) e `bar "" logo=ícone`. As pilhas de `fab` no topo encolhem para não cobrir o D-pad/losango do mesmo lado. Documentado em `docs/OAL_REFERENCE.md`.

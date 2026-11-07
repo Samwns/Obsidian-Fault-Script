@@ -58,6 +58,10 @@ vein android_event(ev: stone) -> void {
 }
 ```
 
+### Entrada de texto con el teclado del sistema (`android_input.ofs`)
+
+`ainput.open(título, texto, multilínea)` abre un `android.app.Dialog` con un `EditText` creado por JNI (sin Java propio): teclado predeterminado (Gboard), cursor, pegar y autocompletar. Sin listeners: los botones son `ToggleButton` (alternan al tocar; `ainput.poll()` lee `isChecked()`), y volver/tocar fuera cierra el Dialog (`isShowing()`). `poll()` devuelve 0 abierto, 1 OK, 2 cancelado; `ainput.text()` lee el texto. OAL lo expone como `oal.edit_open`.
+
 ## Límites actuales
 
 Solo `arm64-v8a` y API 26+; render por software; audio solo WAV (PCM/MS-ADPCM); offsets de structs C fijos para aarch64; `fault_call` solo con enteros y punteros; el `magma.o`/`ofscc` instalados son anteriores al objetivo Android (la CLI compila `ofscc` desde el código fuente).

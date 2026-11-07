@@ -5,6 +5,7 @@
 
 attach {F:android.ofs}
 attach {F:oal_runtime.ofs}
+attach {F:android_input.ofs}
 
 extern vein AConfiguration_new() -> *stone
 extern vein AConfiguration_delete(cfg: *stone) -> void
@@ -20,6 +21,13 @@ vein oal_backend_orientation(req: stone) -> bool {
     if (req == oal.ORIENT_AUTO) { r = android.ORIENT_REQ_AUTO }
     return android.set_orientation(r)
 }
+vein oal_backend_text_open(title: obsidian, text: obsidian, multiline: bool) -> bool {
+    ainput.ok_label = oal.edit_ok_label
+    ainput.cancel_label = oal.edit_cancel_label
+    return ainput.open(title, text, multiline)
+}
+vein oal_backend_text_poll() -> stone { return ainput.poll() }
+vein oal_backend_text_get() -> obsidian { return ainput.text() }
 vein oal_backend_log(text: obsidian) -> void { android.log_tag("oal", text) }
 
 vein _oal_android_density() -> stone {
