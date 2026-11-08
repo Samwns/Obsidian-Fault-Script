@@ -77,6 +77,18 @@ namespace parser {
         echo("  dica: confira delimitadores ({}, (), []), pontuacao ou palavras reservadas.")
     }
     
+    // Erro de "esperava um nome": se o token e palavra reservada (ex.:
+    // `forge anchor = 1`), diz isso em vez de so "expected identifier".
+    vein _error_name(msg: obsidian) -> void {
+        forge t = _cur()
+        forge kw = keyword_to_kind(t.val)
+        if (kw != TOK_IDENT) {
+            _error("`" + t.val + "` e palavra reservada e nao pode ser usada como nome (" + msg + "); renomeie")
+            return
+        }
+        _error(msg)
+    }
+
     vein _sync() -> void {
         // advance to next statement boundary
         while (_cur_kind() != TOK_SEMI &&
@@ -293,7 +305,7 @@ namespace parser {
         if (t.kind == TOK_DOT) {
             _advance()
             if (_cur_kind() != TOK_IDENT) {
-                _error("expected field name")
+                _error_name("expected field name")
                 return left
             }
             forge field_name = _cur_val()
@@ -683,7 +695,7 @@ namespace parser {
             _advance()
             
             if (_cur_kind() != TOK_IDENT) {
-                _error("expected identifier")
+                _error_name("expected identifier")
                 _sync()
                 return -1
             }
@@ -736,7 +748,7 @@ namespace parser {
             _advance()
             while (_cur_kind() != TOK_RPAREN && _cur_kind() != TOK_EOF) {
                 if (_cur_kind() != TOK_IDENT) {
-                    _error("expected parameter name")
+                    _error_name("expected parameter name")
                     break
                 }
                 forge param_name = _cur_val()
@@ -778,7 +790,7 @@ namespace parser {
             _error("`core` e palavra reservada (marca o ponto de entrada `core main()`) e nao pode ser nome de funcao; renomeie a funcao")
         } else {
             if (_cur_kind() != TOK_IDENT) {
-                _error("expected function name")
+                _error_name("expected function name")
                 return -1
             }
         }
@@ -817,7 +829,7 @@ namespace parser {
         }
 
         if (_cur_kind() != TOK_IDENT) {
-            _error("expected extern function name")
+            _error_name("expected extern function name")
             return -1
         }
 
@@ -865,7 +877,7 @@ namespace parser {
         _advance()
 
         if (_cur_kind() != TOK_IDENT) {
-            _error("expected monolith name")
+            _error_name("expected monolith name")
             return -1
         }
 
@@ -882,7 +894,7 @@ namespace parser {
         forge mono = node_new(NK_MONOLITH, type_name, type_line, type_col)
         while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
             if (_cur_kind() != TOK_IDENT) {
-                _error("expected field name")
+                _error_name("expected field name")
                 _advance()
                 continue
             }
@@ -1020,7 +1032,7 @@ namespace parser {
         _advance()
 
         if (_cur_kind() != TOK_IDENT) {
-            _error("expected namespace name")
+            _error_name("expected namespace name")
             return -1
         }
 
@@ -1108,7 +1120,7 @@ namespace parser {
         _advance()
 
         if (_cur_kind() != TOK_IDENT) {
-            _error("expected strata name")
+            _error_name("expected strata name")
             return -1
         }
 
@@ -1125,7 +1137,7 @@ namespace parser {
         forge st = node_new(NK_STRATA, strata_name, s_line, s_col)
         while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
             if (_cur_kind() != TOK_IDENT) {
-                _error("expected variant name")
+                _error_name("expected variant name")
                 _advance()
                 continue
             }

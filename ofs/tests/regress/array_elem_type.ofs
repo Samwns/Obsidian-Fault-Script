@@ -1,0 +1,27 @@
+// `xs[i]` com `xs: Array<obsidian>` parametro ou campo de monolith e lido
+// como obsidian. Antes virava stone e `out + xs[i]` imprimia o endereco.
+monolith Box {
+    items: Array<obsidian>
+}
+
+vein join(xs: Array<obsidian>) -> obsidian {
+    forge out = ""
+    forge i = 0
+    while (i < ofs_array_len(xs)) {
+        out = out + xs[i] + ","
+        i++
+    }
+    return out
+}
+
+core main() {
+    forge a: Array<obsidian> = []
+    ofs_array_push(a, "ola")
+    ofs_array_push(a, "mundo")
+    echo(join(a))
+    forge bx: Box
+    bx.items = a
+    echo(bx.items[1] + "!")
+    bx.items[0] = "oi"
+    echo(a[0])
+}

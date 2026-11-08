@@ -564,6 +564,73 @@ namespace llvmgen {
         return ""
     }
 
+    // `Array<T>` -> T quando T e lido de forma diferente de stone (ponteiro,
+    // double ou bool); "" caso contrario.
+    vein elem_of_array_type(at: obsidian) -> obsidian {
+        forge alen = ofs_str_len(at)
+        if (alen < 8) { return "" }
+        if (!ofs_str_eq(ofs_str_substr(at, 0, 6), "Array<")) { return "" }
+        if (ofs_str_char_at(at, alen - 1) != 62) { return "" }
+        forge et = ofs_str_substr(at, 6, alen - 7)
+        if (ofs_str_eq(et, "obsidian") || ofs_str_eq(et, "crystal") || ofs_str_eq(et, "bool")) { return et }
+        if (is_named_type(et)) { return et }
+        return ""
+    }
+
+    // `a[i] = v` / `a[i] op= v` -> ofs_array_set. Antes o alvo NK_INDEX nao
+    // tinha caso no codegen e a atribuicao sumia do binario nativo.
+    vein emit_index_assign(target_id: stone, op: obsidian, value_id: stone) -> void {
+        forge target: Node = node_get(target_id)
+        emit_expr(target.c0)
+        forge arr = _expr_val
+        forge et = elem_of_array_type(_expr_type)
+        if (ofs_str_eq(et, "")) { et = "stone" }
+        emit_expr(target.c1)
+        forge idx = _expr_val
+        if (is_array_get(value_id)) {
+            emit_array_get(value_id, et)
+        } else {
+            emit_expr(value_id)
+        }
+        forge v = coerce_for_store(_expr_val, _expr_type, et)
+        forge lt = llvm_type(et)
+        if (!ofs_str_eq(op, "=")) {
+            forge old_raw = next_tmp("idx_old_ptr")
+            forge oldv = next_tmp("idx_old")
+            forge newv = next_tmp("idx_new")
+            cg_emit("  " + old_raw + " = call ptr @ofs_array_get(ptr " + arr + ", i64 " + idx + ")")
+            cg_emit("  " + oldv + " = load " + lt + ", ptr " + old_raw)
+            if (ofs_str_eq(et, "obsidian") && ofs_str_eq(op, "+=")) {
+                cg_emit("  " + newv + " = call ptr @ofs_str_concat(ptr " + oldv + ", ptr " + v + ")")
+            } else if (ofs_str_eq(et, "crystal")) {
+                forge fop = "fadd"
+                if (ofs_str_eq(op, "-=")) { fop = "fsub" }
+                if (ofs_str_eq(op, "*=")) { fop = "fmul" }
+                if (ofs_str_eq(op, "/=")) { fop = "fdiv" }
+                cg_emit("  " + newv + " = " + fop + " double " + oldv + ", " + v)
+            } else {
+                forge iop = "add"
+                if (ofs_str_eq(op, "-=")) { iop = "sub" }
+                if (ofs_str_eq(op, "*=")) { iop = "mul" }
+                if (ofs_str_eq(op, "/=")) { iop = "sdiv" }
+                if (ofs_str_eq(op, "%=")) { iop = "srem" }
+                if (ofs_str_eq(op, "&=")) { iop = "and" }
+                if (ofs_str_eq(op, "|=")) { iop = "or" }
+                if (ofs_str_eq(op, "^=")) { iop = "xor" }
+                if (ofs_str_eq(op, "<<=")) { iop = "shl" }
+                if (ofs_str_eq(op, ">>=")) { iop = "ashr" }
+                cg_emit("  " + newv + " = " + iop + " " + lt + " " + oldv + ", " + v)
+            }
+            v = newv
+        }
+        forge slot = next_tmp("idx_set")
+        cg_emit("  " + slot + " = alloca " + lt + ", align 8")
+        cg_emit("  store " + lt + " " + v + ", ptr " + slot)
+        cg_emit("  call void @ofs_array_set(ptr " + arr + ", i64 " + idx + ", ptr " + slot + ")")
+        _expr_val = v
+        _expr_type = et
+    }
+
     vein emit_array_get(id: stone, expected_type: obsidian) -> void {
         forge n: Node = node_get(id)
         forge arr_id = node_get_extra(id, 0)
@@ -572,18 +639,15 @@ namespace llvmgen {
             arr_id = n.c0
             idx_id = n.c1
         }
-        // infer element type from the array variable's declared generic type
-        if (ofs_str_eq(expected_type, "stone") && arr_id >= 0) {
-            forge arr_node: Node = node_get(arr_id)
-            if (arr_node.kind == NK_IDENT) {
-                forge at = var_type(arr_node.val)
-                if (ofs_str_eq(at, "Array<obsidian>")) { expected_type = "obsidian" }
-                if (ofs_str_eq(at, "Array<crystal>")) { expected_type = "crystal" }
-                if (ofs_str_eq(at, "Array<bool>")) { expected_type = "bool" }
-            }
-        }
         emit_expr(arr_id)
         forge arr = _expr_val
+        // Tipo do elemento a partir do tipo da expressao do array (variavel,
+        // parametro, campo `x.itens`...). Antes so olhava variaveis, e
+        // `p[i]` com `p: Array<obsidian>` parametro ou campo virava stone.
+        if (ofs_str_eq(expected_type, "stone")) {
+            forge inferred = elem_of_array_type(_expr_type)
+            if (!ofs_str_eq(inferred, "")) { expected_type = inferred }
+        }
         emit_expr(idx_id)
         forge idx = _expr_val
         forge raw = next_tmp("arr_get")
@@ -1033,6 +1097,10 @@ namespace llvmgen {
             if (ofs_str_eq(n.val, "=") || ofs_str_eq(n.val, "+=") || ofs_str_eq(n.val, "-=") || ofs_str_eq(n.val, "*=") || ofs_str_eq(n.val, "/=") || ofs_str_eq(n.val, "%=") || ofs_str_eq(n.val, "&=") || ofs_str_eq(n.val, "|=") || ofs_str_eq(n.val, "^=") || ofs_str_eq(n.val, "<<=") || ofs_str_eq(n.val, ">>=")) {
                 lower_ns_global(n.c0)
                 forge assign_target: Node = node_get(n.c0)
+                if (assign_target.kind == NK_INDEX) {
+                    emit_index_assign(n.c0, n.val, n.c1)
+                    return
+                }
                 if (assign_target.kind == NK_UNARY_OP && ofs_str_eq(assign_target.val, "*")) {
                     emit_expr(assign_target.c0)
                     forge dest_ptr = _expr_val
@@ -1386,6 +1454,10 @@ namespace llvmgen {
         if (n.kind == NK_ASSIGN) {
             lower_ns_global(n.c0)
             forge target: Node = node_get(n.c0)
+            if (target.kind == NK_INDEX) {
+                emit_index_assign(n.c0, n.val, n.c1)
+                return
+            }
             if (target.kind == NK_UNARY_OP && ofs_str_eq(target.val, "*")) {
                 emit_expr(target.c0)
                 forge dest_ptr = _expr_val
@@ -2351,7 +2423,9 @@ namespace llvmgen {
                 if (param2.c0 >= 0) {
                     forge ptn2: Node = node_get(param2.c0)
                     pt2 = ptn2.val
-                    if (ptn2.kind == NK_TYPE_ARRAY) { pt2 = "Array" }
+                    // `Array<T>` completo (como nas variaveis locais), para
+                    // `p[i]` saber o tipo do elemento.
+                    if (ptn2.kind == NK_TYPE_ARRAY) { pt2 = type_node_name(param2.c0) }
                 }
                 if (is_named_type(pt2)) {
                     declare_var(param2.val, pt2, "%" + param2.val)

@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# Regressoes do compilador/runtime (bugs: `core` como nome, `array_get as
-# crystal`, `ofs_str_char_at` O(n), metodos de `impl`).
+# Regressoes do compilador/runtime (bugs: `core`/`anchor` como nome, `array_get
+# as crystal`, `ofs_str_char_at` O(n), metodos de `impl`, `a[i] = v`, tipo do
+# elemento de `Array<T>` em parametro/campo, curto-circuito de `&&`/`||`).
 #   OFSCC_BIN=<ofscc>  (padrao: ofs/dist/ofscc)
 # Cada .ofs com .expected roda no build nativo e no interpretador; o
 # str_char_at_1mb usa o runtime compilado de stdlib/runtime/magma.ofs (como
 # no Android) e tem limite de tempo.
 set -uo pipefail
+# limite de memoria: um bug no compilador nao pode derrubar a maquina (OOM)
+ulimit -v 4194304
 cd "$(dirname "$0")"
 HERE="$(pwd)"
 ROOT="$(cd ../../.. && pwd)"
@@ -26,16 +29,21 @@ native() { # native <src> <bin>
   clang -Wno-override-module -Wl,--allow-multiple-definition -no-pie -O1 "$T/p.ll" "$T/magma.o" -lm -o "$2" 2>>"$T/build.log"
 }
 
-# 1. `core` como nome de funcao: erro de compilacao claro
-if OFSCC_MODE=check OFSCC_INPUT="$HERE/core_reserved_name.ofs" "$OFSCC" >"$T/core.log" 2>&1; then
-  fail "core_reserved_name: compilou (devia dar erro)"
-elif ! grep -q "core. e palavra reservada" "$T/core.log"; then
-  fail "core_reserved_name: erro sem a mensagem de palavra reservada"; tail -3 "$T/core.log"
-else
-  echo "ok: core_reserved_name"
-fi
+# 1. palavra reservada como nome (`core` em funcao, `anchor` em variavel):
+#    erro de compilacao claro em vez de seguir em silencio
+reserved() { # reserved <teste> <palavra>
+  if OFSCC_MODE=check OFSCC_INPUT="$HERE/$1.ofs" "$OFSCC" >"$T/$1.log" 2>&1; then
+    fail "$1: compilou (devia dar erro)"
+  elif ! grep -q "$2. e palavra reservada" "$T/$1.log"; then
+    fail "$1: erro sem a mensagem de palavra reservada"; tail -3 "$T/$1.log"
+  else
+    echo "ok: $1"
+  fi
+}
+reserved core_reserved_name core
+reserved anchor_reserved_name anchor
 
-# 2-4. saida esperada (nativo e interpretador)
+# 2. saida esperada (nativo e interpretador)
 for exp in "$HERE"/*.expected; do
   name="$(basename "$exp" .expected)"; src="$HERE/$name.ofs"
   native "$src" "$T/$name" || { tail -3 "$T/build.log"; fail "$name: nao compila"; continue; }

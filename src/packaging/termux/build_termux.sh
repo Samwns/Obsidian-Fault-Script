@@ -34,11 +34,15 @@ HOST="${HOST_OFSCC:-}"
 if [ -z "$HOST" ]; then
   step "montando ofscc do PC a partir do bootstrap (ofs/dist)"
   hc="${CC:-clang}"
-  $hc -Wno-override-module -c "$REPO/ofs/dist/magma.ll" -o "$W/magma-host.o"
-  $hc -Wno-override-module -Wl,--allow-multiple-definition -no-pie -O2 "$REPO/ofs/dist/ofscc.ll" "$W/magma-host.o" -lm -o "$W/ofscc0"
+  # O IR usa `ptr` (ponteiros opacos): o clang 14 (Ubuntu 22.04) so aceita
+  # com -opaque-pointers; do 15 em diante e o padrao.
+  HC_FLAGS=()
+  "$hc" --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.' && HC_FLAGS=(-mllvm -opaque-pointers)
+  "$hc" "${HC_FLAGS[@]}" -Wno-override-module -c "$REPO/ofs/dist/magma.ll" -o "$W/magma-host.o"
+  "$hc" "${HC_FLAGS[@]}" -Wno-override-module -Wl,--allow-multiple-definition -no-pie -O2 "$REPO/ofs/dist/ofscc.ll" "$W/magma-host.o" -lm -o "$W/ofscc0"
   OFS_RUNTIME="$W/magma-host.o" OFSCC_INPUT="$REPO/ofs/ofscc/ofscc.ofs" OFSCC_MODE=ir OFSCC_C_OUT="$W/ofscc1.ll" "$W/ofscc0" >"$W/s1.log" 2>&1 \
     || { tail -20 "$W/s1.log" >&2; die "falha ao compilar o ofscc do fonte"; }
-  $hc -Wno-override-module -Wl,--allow-multiple-definition -no-pie -O2 "$W/ofscc1.ll" "$W/magma-host.o" -lm -o "$W/ofscc1"
+  "$hc" "${HC_FLAGS[@]}" -Wno-override-module -Wl,--allow-multiple-definition -no-pie -O2 "$W/ofscc1.ll" "$W/magma-host.o" -lm -o "$W/ofscc1"
   HOST="$W/ofscc1"
 fi
 

@@ -1,0 +1,9 @@
+// `anchor` e palavra reservada: usar como nome de variavel da erro claro.
+vein f(x: stone) -> stone {
+    forge anchor: stone = x + 1
+    return anchor * 2
+}
+
+core main() {
+    echo(f(3))
+}

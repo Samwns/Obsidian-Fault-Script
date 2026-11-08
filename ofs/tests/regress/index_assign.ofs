@@ -1,0 +1,36 @@
+// `a[i] = v` e `a[i] op= v` gravam no array no binario nativo. Antes o alvo
+// `a[i]` nao tinha caso no codegen e a atribuicao sumia (so o interpretador
+// gravava); o contorno era `ofs_array_set`.
+monolith Box {
+    nums: Array<stone>
+}
+
+vein bump(xs: Array<stone>, i: stone) -> void {
+    xs[i] += 10
+}
+
+core main() {
+    forge a: Array<stone> = []
+    ofs_array_push(a, 1)
+    ofs_array_push(a, 2)
+    a[0] = 42
+    forge i: stone = 1
+    a[i] = a[0] + 1
+    bump(a, 0)
+    a[1] *= 2
+    echo(a[0])
+    echo(a[1])
+    forge s: Array<obsidian> = []
+    ofs_array_push(s, "x")
+    s[0] = "y"
+    s[0] += "z"
+    echo(s[0])
+    forge f: Array<crystal> = []
+    ofs_array_push(f, 1.5)
+    f[0] += 1.0
+    echo(f[0])
+    forge bx: Box
+    bx.nums = a
+    bx.nums[0] = 7
+    echo(a[0])
+}

@@ -103,6 +103,9 @@ namespace typeck {
         if (ofs_str_eq(type_str, "bool")) { return true }
         if (ofs_str_eq(type_str, "void")) { return true }
         if (ofs_str_eq(type_str, "Array")) { return true }
+        // `Array<T>` (campo de monolith); antes gerava aviso falso
+        if (ofs_str_len(type_str) > 6 && ofs_str_eq(ofs_str_substr(type_str, 0, 6), "Array<")) { return true }
+        if (ofs_str_eq(type_str, "i16") || ofs_str_eq(type_str, "i64") || ofs_str_eq(type_str, "f32") || ofs_str_eq(type_str, "f64")) { return true }
         if (ofs_str_eq(type_str, "u8")) { return true }
         if (ofs_str_eq(type_str, "u16")) { return true }
         if (ofs_str_eq(type_str, "u32")) { return true }

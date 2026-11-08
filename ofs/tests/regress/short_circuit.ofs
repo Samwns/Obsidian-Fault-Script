@@ -1,0 +1,23 @@
+// `&&` e `||` com curto-circuito: o lado direito nao roda quando o esquerdo
+// ja decide (`i > 0 && a[i - 1]` nao le a[-1]).
+vein side(x: stone) -> bool {
+    echo("efeito colateral")
+    return true
+}
+
+vein prev_is(a: Array<stone>, i: stone, v: stone) -> bool {
+    return i > 0 && a[i - 1] == v
+}
+
+core main() {
+    forge a: Array<stone> = []
+    ofs_array_push(a, 5)
+    forge i: stone = 0
+    if (i > 0 && a[i - 1] == 5) { echo("errado") } else { echo("ok and") }
+    if (i == 0 || a[i - 1] == 5) { echo("ok or") }
+    if (false && side(1)) { echo("errado") }
+    if (true || side(2)) { echo("ok or2") }
+    echo(prev_is(a, 0, 5))
+    while (i > 0 && a[i - 1] == 5) { i = i - 1 }
+    echo("ok while")
+}

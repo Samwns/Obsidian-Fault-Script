@@ -557,24 +557,68 @@ El módulo `http` expone:
 - `http.parse_status_code(response_text: obsidian) -> stone`
 - `http.extract_body(response_text: obsidian) -> obsidian`
 
-El módulo `odl` expone:
+El módulo `odl` expone constructores de HTML: cada función devuelve el fragmento como `obsidian`, y los fragmentos se anidan pasando uno como `children` del otro. El HTML es solo el artefacto generado; el fuente sigue en OFS.
 
-- `odl.parse(src: obsidian) -> stone`
-- `odl.element_count() -> stone`
-- `odl.new_element(tag: obsidian) -> stone`
-- `odl.get_element(id: stone) -> OdlElement`
-- `odl.set_element(id: stone, elem: OdlElement) -> void`
-- `odl.add_child(parent_id: stone, child_id: stone) -> void`
-- `odl.child_count(parent_id: stone) -> stone`
-- `odl.get_child_at(parent_id: stone, index: stone) -> stone`
-- `odl.reset() -> void`
+- `odl.attr(name: obsidian, value: obsidian) -> obsidian`
+- `odl.empty_attrs() -> obsidian`
+- `odl.tag(name: obsidian, attrs: obsidian, children: obsidian) -> obsidian`
+- `odl.void_tag(name: obsidian, attrs: obsidian) -> obsidian`
+- `odl.text(value: obsidian) -> obsidian`
+- `odl.document(lang: obsidian, title: obsidian, description: obsidian, head_extra: obsidian, body: obsidian) -> obsidian`
+- `odl.css(href: obsidian) -> obsidian`
+- `odl.icon(href: obsidian) -> obsidian`
+- `odl.script(src: obsidian) -> obsidian`
+- `odl.script_module(src: obsidian) -> obsidian`
+- `odl.meta(name: obsidian, content: obsidian) -> obsidian`
+- `odl.component(name: obsidian, class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.div(class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.section(id: obsidian, class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.article(class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.nav(class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.header(class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.main(id: obsidian, children: obsidian) -> obsidian`
+- `odl.footer(class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.a(class_name: obsidian, href: obsidian, children: obsidian) -> obsidian`
+- `odl.img(src: obsidian, alt: obsidian) -> obsidian`
+- `odl.p(class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.h1(children: obsidian) -> obsidian`
+- `odl.h2(children: obsidian) -> obsidian`
+- `odl.h3(children: obsidian) -> obsidian`
+- `odl.strong(children: obsidian) -> obsidian`
+- `odl.span(class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.ul(class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.ol(class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.li(children: obsidian) -> obsidian`
+- `odl.form(action: obsidian, method: obsidian, children: obsidian) -> obsidian`
+- `odl.label(for_id: obsidian, children: obsidian) -> obsidian`
+- `odl.input(input_type: obsidian, name: obsidian, value: obsidian) -> obsidian`
+- `odl.button(button_type: obsidian, class_name: obsidian, children: obsidian) -> obsidian`
+- `odl.code_block(children: obsidian) -> obsidian`
+- `odl.table(head: obsidian, body: obsidian) -> obsidian`
+- `odl.table_id(id: obsidian, head: obsidian, body: obsidian) -> obsidian`
 
-El módulo `oes` expone:
+El módulo `oes` expone constructores de CSS, en el mismo estilo: cada función devuelve el texto de la regla o declaración.
 
-- `oes.parse_sheet(css_src: obsidian) -> Array<OesRule>`
-- `oes.apply_rules(node_id: stone, rules: Array<OesRule>) -> void`
-- `oes.matches_selector(elem: OdlElement, sel: obsidian) -> bool`
-- `oes.parse_color(cname: obsidian) -> stone`
+- `oes.prop(name: obsidian, value: obsidian) -> obsidian`
+- `oes.rule(selector: obsidian, body: obsidian) -> obsidian`
+- `oes.media(query: obsidian, body: obsidian) -> obsidian`
+- `oes.supports(query: obsidian, body: obsidian) -> obsidian`
+- `oes.layer(name: obsidian, body: obsidian) -> obsidian`
+- `oes.font_face(body: obsidian) -> obsidian`
+- `oes.keyframes(name: obsidian, frames: obsidian) -> obsidian`
+- `oes.frame(step: obsidian, body: obsidian) -> obsidian`
+- `oes.var(name: obsidian, value: obsidian) -> obsidian`
+- `oes.use(name: obsidian) -> obsidian`
+- `oes.transition(property: obsidian, duration: obsidian, easing: obsidian) -> obsidian`
+- `oes.animation(name: obsidian, duration: obsidian, easing: obsidian) -> obsidian`
+
+```ofs
+attach {odl}
+attach {oes}
+
+forge corpo = odl.section("inicio", "hero", odl.h1("OFS") + odl.p("lead", "Uma linguagem só."))
+forge estilo = oes.rule(".hero", oes.prop("padding", "2rem") + oes.prop("color", oes.use("texto")))
+```
 
 El módulo `oll` expone:
 
