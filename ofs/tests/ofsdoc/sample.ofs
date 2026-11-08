@@ -1,0 +1,78 @@
+// sample: modulo de exemplo para o teste do `ofs doc`.
+//
+// Mostra como comentar: o cabecalho do arquivo vira a descricao do modulo.
+
+attach {F:outro.ofs}
+
+extern vein puts(s: obsidian) -> stone
+
+// Retorna a soma de dois inteiros.
+//
+// Texto livre com `shapes.area` linkado quando existe.
+// @param a primeiro valor
+// @param b segundo valor
+// @returns a soma
+vein add(a: stone, b: stone) -> stone {
+    return a + b
+}
+
+vein undocumented() -> void {
+    puts("x // nao e comentario { sem fechar")
+}
+
+/** Dobra o valor usando `add`. */
+vein twice(x: stone) -> stone {
+    return add(x, x)
+}
+
+// Funcao com assinatura em varias linhas.
+vein long_sig(
+    first: stone,
+    cb: vein(stone, stone) -> stone
+) -> stone {
+    return cb(first, first)
+}
+
+// Aviso exportado para C.
+rift vein sample_export(buf: *stone, n: stone) -> void bind "sample_c_export" abi c
+
+// Limite maximo de itens.
+const MAX_ITEMS: stone = 64
+
+forge counter: stone = 0
+
+// Ponto no plano.
+monolith Point {
+    // coordenada horizontal
+    x: stone
+    y: stone
+}
+
+impl Point {
+    // Soma as coordenadas.
+    vein sum(self: Point) -> stone {
+        return add(self.x, self.y)
+    }
+}
+
+// Formas geometricas.
+namespace shapes {
+    // Area do retangulo.
+    vein area(w: stone, h: stone) -> stone {
+        return w * h
+    }
+
+    vein _hidden() -> stone {
+        return area(1, 2) + twice(3)
+    }
+
+    vein cm() -> stone {
+        /* um comentario de bloco com vein fake() { */
+        return _hidden()
+    }
+}
+
+core main() {
+    echo(shapes.area(2, 3))
+    echo(add(1, 2))
+}

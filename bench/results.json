@@ -1,0 +1,10 @@
+{
+  "date": "2026-11-08", "unit": "ms", "results": {
+    "empty": {"ofs": "3", "ofs-interp": "40", "c": "2", "rust": "2", "python": "13"},
+    "fib": {"ofs": "43", "ofs-interp": "falha (saída 1, sem resultado)", "c": "23", "rust": "23", "python": "918"},
+    "loop": {"ofs": "406", "ofs-interp": "falha (saída 1, sem resultado)", "c": "282", "rust": "281", "python": "11027"},
+    "strings": {"ofs": "10404", "ofs-interp": "falha (saída 1, sem resultado)", "c": "201", "rust": "200", "python": "283"},
+    "sort": {"ofs": "86", "ofs-interp": "falha (saída 1, sem resultado)", "c": "8", "rust": "8", "python": "176"},
+    "alloc": {"ofs": "117", "ofs-interp": "falha (saída 1, sem resultado)", "c": "7", "rust": "9", "python": "154"}
+  }
+}

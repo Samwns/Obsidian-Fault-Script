@@ -45,6 +45,23 @@ The resulting compiler binary is written to `ofs/dist/ofs` (or `ofs/dist/ofscc`)
 
 ---
 
+### Termux (Android)
+
+OFS runs on the phone itself, inside Termux (aarch64).
+
+**Install** (in Termux):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Samwns/Obsidian-Fault-Script/main/src/packaging/termux/install_termux.sh | bash
+# or, with a local package:  bash install_termux.sh ofs-termux-aarch64.tar.gz
+```
+
+The installer runs `pkg install -y clang`, downloads the latest `ofs-termux-aarch64.tar.gz` release, extracts it into `$PREFIX` (`bin/ofs` and `lib/ofs/`) and tests `ofs --version`.
+
+**Use:** `ofs run hello.ofs` (interpreted), `ofs build hello.ofs -o hello && ./hello` (native aarch64, linked with Termux's `clang`). Tools live in `$PREFIX/lib/ofs/tools/` (`ofs run $PREFIX/lib/ofs/tools/odlc.ofs`).
+
+**Limitations:** no X11 windows for now (`.oll`/`.oal` windows); building an APK on the phone (`ofs build --target android`) comes later.
+
 ## 2. Command-Line Interface (CLI)
 
 The `ofs` CLI provides the following subcommands:

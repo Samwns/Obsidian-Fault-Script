@@ -1,0 +1,25 @@
+sample|vein|add|vein add(a: stone, b: stone) -> stone|Retorna a soma de dois inteiros.|pub=1|L15
+    usado por: twice, Point.sum, main
+sample|vein|undocumented|vein undocumented() -> void||pub=1|L19
+    chama: puts
+sample|vein|twice|vein twice(x: stone) -> stone|Dobra o valor usando `add`.|pub=1|L24
+    chama: add
+    usado por: shapes._hidden
+sample|vein|long_sig|vein long_sig(first: stone, cb: vein(stone, stone) -> stone) -> stone|Funcao com assinatura em varias linhas.|pub=1|L29
+sample|rift|sample_export|rift vein sample_export(buf: *stone, n: stone) -> void|Aviso exportado para C.|pub=1|L37
+    abi: c bind sample_c_export
+sample|const|MAX_ITEMS|const MAX_ITEMS: stone|Limite maximo de itens.|pub=1|L40
+sample|global|counter|forge counter: stone||pub=1|L42
+sample|monolith|Point|monolith Point|Ponto no plano.|pub=1|L45
+    campos: x: stone (coordenada horizontal); y: stone
+sample|vein|Point.sum|vein sum(self: Point) -> stone|Soma as coordenadas.|pub=1|L53
+    chama: add
+sample|vein|shapes.area|vein area(w: stone, h: stone) -> stone|Area do retangulo.|pub=1|L61
+    usado por: shapes._hidden, main
+sample|vein|shapes._hidden|vein _hidden() -> stone||pub=0|L65
+    chama: shapes.area, twice
+    usado por: shapes.cm
+sample|vein|shapes.cm|vein cm() -> stone||pub=1|L69
+    chama: shapes._hidden
+sample|core|main|core main()||pub=0|L75
+    chama: shapes.area, add

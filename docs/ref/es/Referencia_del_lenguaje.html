@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light"><title>Obsidian Fault Script — Referencia del lenguaje · OFS Referencia</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 28 11 24 28H8L4 11Z' fill='%237c3aed'/%3E%3Cpath d='M16 2 28 11H4Z' fill='%23c4b5fd'/%3E%3C/svg%3E"><script>try{var m=/[?&]theme=(dark|light)/.exec(location.search),t=m?m[1]:localStorage.getItem('ofsdoc-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script><link rel="stylesheet" href="../ofsdoc.css"></head><body data-root=""><header class="top"><a id="menu" class="ib" href="#side" aria-label="Menú"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></a><a class="brand sm" href="index.html"><svg class="gem" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path d="M16 2 28 11 24 28H8L4 11Z" fill="#7c3aed"/><path d="M16 2 28 11H4Z" fill="#c4b5fd"/><path d="M16 2 4 11 8 28 16 12Z" fill="#a78bfa" opacity=".85"/><path d="M16 12 8 28H24Z" fill="#5b21b6"/></svg><b>OFS</b></a><button id="theme" class="ib" type="button" aria-label="Cambiar tema"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button></header><div class="shell"><aside id="side" aria-label="Navegación"><a class="brand" href="index.html"><svg class="gem" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path d="M16 2 28 11 24 28H8L4 11Z" fill="#7c3aed"/><path d="M16 2 28 11H4Z" fill="#c4b5fd"/><path d="M16 2 4 11 8 28 16 12Z" fill="#a78bfa" opacity=".85"/><path d="M16 12 8 28H24Z" fill="#5b21b6"/></svg><span><b>OFS</b><i>Referencia</i></span></a><form class="search" role="search" onsubmit="return false"><input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Buscar funciones, módulos, guías…" aria-label="Buscar"><kbd>/</kbd></form><ul id="res" class="res" hidden></ul><nav class="grp"><ul class="lnk"><li><a href="index.html">Inicio</a></li><li><a href="cobertura.html">Cobertura</a></li></ul></nav><nav class="grp" aria-label="Guía"><h2>Guía</h2><details><summary>Primeros pasos</summary><ul><li><a href="Primeros_pasos.html">Guía de inicio de OFS</a></li><li><a href="Ruta_del_principiante.html">OFS — Beginner's Journey</a></li></ul></details><details open><summary>Lenguaje</summary><ul><li><a class="on" aria-current="page" href="Referencia_del_lenguaje.html">Obsidian Fault Script — Referencia del lenguaje</a></li><li><a href="Lenguaje_compilado.html">OFS: Lenguaje híbrido y compilado nativo</a></li></ul></details><details><summary>Biblioteca y herramientas</summary><ul><li><a href="Biblioteca_estandar.html">Referencia de la biblioteca estándar de OFS</a></li><li><a href="Herramientas.html">Herramientas de OFS</a></li></ul></details><details><summary>Compilador</summary><ul><li><a href="Arquitectura_del_compilador.html">OFS Compiler Architecture</a></li><li><a href="Bootstrap.html">OFS Self-Hosting Bootstrap Guide</a></li><li><a href="Rendimiento.html">OFS Performance Analysis</a></li><li><a href="Arquitectura_del_IDLE.html">Architectural Specification — OFS IDLE (Obsidian Integrated Development &amp; Learning Environment)</a></li></ul></details><details><summary>Lenguajes de dominio</summary><ul><li><a href="ODL.html">ODL Reference</a></li><li><a href="OES.html">OES Reference</a></li><li><a href="Interfaz_visual.html">OFS Native Visual Library</a></li><li><a href="OAL.html">Referencia OAL (v1)</a></li><li><a href="Interfaz_web.html">OFS Web Stack Architecture</a></li></ul></details><details><summary>Android</summary><ul><li><a href="Android.html">OFS en Android (aarch64)</a></li></ul></details><details><summary>Proyecto</summary><ul><li><a href="Lenguaje_del_sitio.html">ODL and OES</a></li><li><a href="Registro_en_GitHub.html">GitHub Recognition</a></li><li><a href="Cambios_recientes.html">Registro de cambios</a></li></ul></details></nav><nav class="grp" aria-label="API"><h2>API</h2><ul class="lnk"><li><a href="api/index.html">Visión general</a></li></ul><details><summary>stdlib</summary><ul class="mods"><li><a href="api/android_http.html">android_http</a></li><li><a href="api/android_input.html">android_input</a></li><li><a href="api/android.html">android</a></li><li><a href="api/android_webview.html">android_webview</a></li><li><a href="api/audio_android.html">audio_android</a></li><li><a href="api/avi.html">avi</a></li><li><a href="api/bedrock.html">bedrock</a></li><li><a href="api/bedrock_packet.html">bedrock_packet</a></li><li><a href="api/canvas.html">canvas</a></li><li><a href="api/core.html">core</a></li><li><a href="api/fs.html">fs</a></li><li><a href="api/hashmap.html">hashmap</a></li><li><a href="api/http.html">http</a></li><li><a href="api/icons.html">icons</a></li><li><a href="api/io.html">io</a></li><li><a href="api/math.html">math</a></li><li><a href="api/memory_modes.html">memory_modes</a></li><li><a href="api/net.html">net</a></li><li><a href="api/net_windows.html">net_windows</a></li><li><a href="api/oal_android.html">oal_android</a></li><li><a href="api/oal_runtime.html">oal_runtime</a></li><li><a href="api/oal_x11.html">oal_x11</a></li><li><a href="api/odl.html">odl</a></li><li><a href="api/oes.html">oes</a></li><li><a href="api/ofshtml.html">ofshtml</a></li><li><a href="api/oll.html">oll</a></li><li><a href="api/oll_x11.html">oll_x11</a></li><li><a href="api/png.html">png</a></li><li><a href="api/raster.html">raster</a></li><li><a href="api/rift.html">rift</a></li><li><a href="api/runtime-facet.html">runtime/facet</a></li><li><a href="api/runtime-foundation.html">runtime/foundation</a></li><li><a href="api/runtime-frame.html">runtime/frame</a></li><li><a href="api/runtime-impulse.html">runtime/impulse</a></li><li><a href="api/runtime-input.html">runtime/input</a></li><li><a href="api/runtime-magma.html">runtime/magma</a></li><li><a href="api/runtime-magma_windows.html">runtime/magma_windows</a></li><li><a href="api/runtime-matrix.html">runtime/matrix</a></li><li><a href="api/runtime-outlet.html">runtime/outlet</a></li><li><a href="api/runtime-prism.html">runtime/prism</a></li><li><a href="api/runtime-pulse.html">runtime/pulse</a></li><li><a href="api/runtime-reservoir.html">runtime/reservoir</a></li><li><a href="api/runtime-webserver.html">runtime/webserver</a></li><li><a href="api/runtime-webserver_windows.html">runtime/webserver_windows</a></li><li><a href="api/sha256.html">sha256</a></li><li><a href="api/string.html">string</a></li><li><a href="api/terminal_colors.html">terminal_colors</a></li><li><a href="api/test_lib.html">test_lib</a></li><li><a href="api/tls.html">tls</a></li><li><a href="api/ttf.html">ttf</a></li><li><a href="api/ui.html">ui</a></li><li><a href="api/wav.html">wav</a></li><li><a href="api/webserver.html">webserver</a></li><li><a href="api/webui.html">webui</a></li><li><a href="api/window.html">window</a></li><li><a href="api/x11win.html">x11win</a></li><li><a href="api/zip.html">zip</a></li></ul></details><details><summary>tools</summary><ul class="mods"><li><a href="api/fileio.html">fileio</a></li><li><a href="api/oalc.html">oalc</a></li><li><a href="api/odlc.html">odlc</a></li><li><a href="api/oesc.html">oesc</a></li><li><a href="api/ofsdoc_html.html">ofsdoc_html</a></li><li><a href="api/ofsdoc.html">ofsdoc</a></li><li><a href="api/ofsdoc_scan.html">ofsdoc_scan</a></li><li><a href="api/web_language_common.html">web_language_common</a></li></ul></details><details><summary>ofscc</summary><ul class="mods"><li><a href="api/ast.html">ast</a></li><li><a href="api/_attach_probe.html">_attach_probe</a></li><li><a href="api/chars.html">chars</a></li><li><a href="api/codegen.html">codegen</a></li><li><a href="api/events.html">events</a></li><li><a href="api/fileio.html">fileio</a></li><li><a href="api/interpreter.html">interpreter</a></li><li><a href="api/lexer.html">lexer</a></li><li><a href="api/llvmgen.html">llvmgen</a></li><li><a href="api/nodes.html">nodes</a></li><li><a href="api/ofscc.html">ofscc</a></li><li><a href="api/parser.html">parser</a></li><li><a href="api/reporter.html">reporter</a></li><li><a href="api/symbols.html">symbols</a></li><li><a href="api/test_lexer_basic.html">test_lexer_basic</a></li><li><a href="api/test_lexer_parser.html">test_lexer_parser</a></li><li><a href="api/test_lexer_units.html">test_lexer_units</a></li><li><a href="api/tokens.html">tokens</a></li><li><a href="api/typeck.html">typeck</a></li></ul></details></nav><div class="links"><a href="../../es/index.html">Libro</a><a href="https://github.com/Samwns/Obsidian-Fault-Script">GitHub</a></div><div class="langs"><a href="../Referencia_da_linguagem.html" hreflang="pt">PT</a><a href="../en/Language_reference.html" hreflang="en">EN</a><a href="Referencia_del_lenguaje.html" hreflang="es" aria-current="true">ES</a></div></aside><main id="main"><article class="art"><p class="eyebrow">Lenguaje</p><h1>Obsidian Fault Script — Referencia del lenguaje</h1><details class="toc" open><summary>En esta página</summary><ul><li class="tl2"><a href="#s1">Índice</a></li>
+<li class="tl2"><a href="#s2">1. Estructura de programa</a></li>
+<li class="tl2"><a href="#s3">2. Tipos</a></li>
+<li class="tl3"><a href="#s3.1">Tipos primitivos</a></li>
+<li class="tl3"><a href="#s3.2">Tipos enteros pequeños</a></li>
+<li class="tl3"><a href="#s3.3">Tipos compuestos</a></li>
+<li class="tl3"><a href="#s3.4">Inferencia</a></li>
+<li class="tl2"><a href="#s4">3. Variables y constantes</a></li>
+<li class="tl3"><a href="#s4.1"><code>forge</code></a></li>
+<li class="tl3"><a href="#s4.2"><code>const</code></a></li>
+<li class="tl3"><a href="#s4.3">Asignaciones comunes</a></li>
+<li class="tl2"><a href="#s5">4. Funciones e intents</a></li>
+<li class="tl3"><a href="#s5.1">Funciones normales</a></li>
+<li class="tl3"><a href="#s5.2">Entrada del programa</a></li>
+<li class="tl3"><a href="#s5.3">Intent</a></li>
+<li class="tl3"><a href="#s5.4">Composición de funciones</a></li>
+<li class="tl2"><a href="#s6">5. <code>monolith</code>, <code>impl</code> y layouts</a></li>
+<li class="tl3"><a href="#s6.1">Estructura</a></li>
+<li class="tl3"><a href="#s6.2">Métodos con <code>impl</code></a></li>
+<li class="tl3"><a href="#s6.3">Layout explícito</a></li>
+<li class="tl2"><a href="#s7">6. <code>namespace</code></a></li>
+<li class="tl2"><a href="#s8">7. Arrays y colecciones</a></li>
+<li class="tl2"><a href="#s9">8. Control de flujo</a></li>
+<li class="tl3"><a href="#s9.1"><code>if / else</code></a></li>
+<li class="tl3"><a href="#s9.2"><code>while</code></a></li>
+<li class="tl3"><a href="#s9.3"><code>cycle</code></a></li>
+<li class="tl3"><a href="#s9.4">Selección de múltiples caminos</a></li>
+<li class="tl3"><a href="#s9.5">Manejo de errores e interrupción (<code>throw</code>)</a></li>
+<li class="tl3"><a href="#s9.6"><code>strata</code> (enumeraciones de variantes)</a></li>
+<li class="tl2"><a href="#s10">9. Operadores y casts</a></li>
+<li class="tl3"><a href="#s10.1">Operadores principales</a></li>
+<li class="tl3"><a href="#s10.2">Cast con <code>as</code></a></li>
+<li class="tl2"><a href="#s11">10. <code>attach</code></a></li>
+<li class="tl3"><a href="#s11.1">Biblioteca estándar o paquete instalado</a></li>
+<li class="tl3"><a href="#s11.2">Archivo local</a></li>
+<li class="tl2"><a href="#s12">11. <code>extern vein</code> y <code>rift vein</code></a></li>
+<li class="tl3"><a href="#s12.1"><code>extern vein</code></a></li>
+<li class="tl3"><a href="#s12.2"><code>rift vein</code></a></li>
+<li class="tl3"><a href="#s12.3">Metadatos de enlace</a></li>
+<li class="tl3"><a href="#s12.4">Dirección de función y llamada indirecta (<code>fault_addr</code>, <code>fault_call</code>)</a></li>
+<li class="tl2"><a href="#s13">12. Bloques de bajo nivel</a></li>
+<li class="tl3"><a href="#s13.1"><code>fracture</code></a></li>
+<li class="tl3"><a href="#s13.2"><code>abyss</code></a></li>
+<li class="tl3"><a href="#s13.3"><code>fractal</code></a></li>
+<li class="tl3"><a href="#s13.4"><code>bedrock</code></a></li>
+<li class="tl3"><a href="#s13.5">Alias <code>tectonic</code></a></li>
+<li class="tl2"><a href="#s14">13. Biblioteca estándar y paquetes</a></li>
+<li class="tl2"><a href="#s15">14. Comandos del compilador</a></li>
+<li class="tl3"><a href="#s15.1">Compilador principal (<code>ofs</code>)</a></li>
+<li class="tl3"><a href="#s15.2">Compilador self-hosted (<code>ofscc</code>) en el estado actual</a></li>
+<li class="tl3"><a href="#s15.3">Precedencia de operadores (de menor a mayor)</a></li>
+<li class="tl2"><a href="#s16">Control Flow</a></li>
+<li class="tl3"><a href="#s16.1">if / else</a></li>
+<li class="tl3"><a href="#s16.2">cycle (bucle estilo C)</a></li>
+<li class="tl3"><a href="#s16.3">cycle (bucle por rango)</a></li>
+<li class="tl3"><a href="#s16.4">break / continue</a></li>
+<li class="tl3"><a href="#s16.5">while (bucle solo con condición)</a></li>
+<li class="tl2"><a href="#s17">Conversión de tipos (as)</a></li>
+<li class="tl3"><a href="#s17.1">Casts permitidos</a></li>
+<li class="tl2"><a href="#s18">Importaciones</a></li>
+<li class="tl3"><a href="#s18.1">Attach de biblioteca (stdlib / paquete)</a></li>
+<li class="tl3"><a href="#s18.2">Attach de archivo</a></li>
+<li class="tl3"><a href="#s18.3">Módulos de la biblioteca estándar</a></li>
+<li class="tl2"><a href="#s19">Funciones externas</a></li>
+<li class="tl3"><a href="#s19.1">rift vein</a></li>
+<li class="tl3"><a href="#s19.2">Dirección de interoperabilidad</a></li>
+<li class="tl2"><a href="#s20">Estructuras (monolith)</a></li>
+<li class="tl3"><a href="#s20.1">Creación de instancias</a></li>
+<li class="tl3"><a href="#s20.2">Acceso a campos</a></li>
+<li class="tl3"><a href="#s20.3">Paso a funciones</a></li>
+<li class="tl2"><a href="#s21">Punteros (shard / fracture)</a></li>
+<li class="tl3"><a href="#s21.1">fracture (bloque de punteros seguro)</a></li>
+<li class="tl3"><a href="#s21.2">Tipos de puntero</a></li>
+<li class="tl3"><a href="#s21.3">bedrock (bloque de bajo nivel tipado)</a></li>
+<li class="tl2"><a href="#s22">Colecciones (Arrays)</a></li>
+<li class="tl3"><a href="#s22.1">Literales de array</a></li>
+<li class="tl3"><a href="#s22.2">Indexación</a></li>
+<li class="tl3"><a href="#s22.3">Iteración</a></li>
+<li class="tl2"><a href="#s23">Memoria insegura (abyss)</a></li>
+<li class="tl3"><a href="#s23.1">Alias de directiva: tectonic</a></li>
+<li class="tl2"><a href="#s24">Funciones integradas</a></li>
+<li class="tl3"><a href="#s24.1">echo</a></li>
+<li class="tl3"><a href="#s24.2">Intrínsecos fault_*</a></li>
+<li class="tl3"><a href="#s24.3">asm (escape de ensamblador en línea) — planeado</a></li>
+<li class="tl2"><a href="#s25">Comentarios</a></li>
+<li class="tl2"><a href="#s26">Terminación de sentencias</a></li>
+<li class="tl2"><a href="#s27">Biblioteca estándar</a></li>
+<li class="tl3"><a href="#s27.1">Módulo Bedrock</a></li>
+<li class="tl3"><a href="#s27.2">Módulo Rift</a></li>
+<li class="tl3"><a href="#s27.3">Módulo Bedrock Packet</a></li>
+<li class="tl3"><a href="#s27.4">Patrón de ejemplo híbrido</a></li>
+<li class="tl3"><a href="#s27.5">Funciones matemáticas</a></li>
+<li class="tl3"><a href="#s27.6">Runtime nativo de OFS (Stack Magma)</a></li>
+<li class="tl2"><a href="#s28">Palabras clave</a></li>
+</ul></details><p>Referencia práctica del lenguaje soportado actualmente por el compilador de OFS. </p>
+<h2 id="s1">Índice</h2>
+<ol><li>Estructura de programa</li><li>Tipos</li><li>Variables y constantes</li><li>Funciones e intents</li><li><code>monolith</code>, <code>impl</code> y layouts</li><li><code>namespace</code></li><li>Arrays y colecciones</li><li>Control de flujo</li><li>Operadores y casts</li><li><code>attach</code></li><li><code>extern vein</code> y <code>rift vein</code></li><li>Bloques de bajo nivel</li><li>Biblioteca estándar y paquetes</li><li>Comandos del compilador</li></ol>
+<h2 id="s2">1. Estructura de programa</h2>
+<p>Todo programa ejecutable necesita un <code>core main()</code>: </p>
+<pre><code>core main() {
+    echo(&quot;inicio&quot;)
+}
+</code></pre>
+<p><code>core</code> es palabra reservada: solo marca el punto de entrada. Usarla como nombre (<code>vein core()</code>, <code>core(1)</code>, también dentro de un <code>namespace</code>) es <strong>error de compilación</strong> (&quot;<code>core</code> e palavra reservada…&quot;); renombre la función (p. ej. <code>core_fn</code>). Cualquier error sintáctico detiene la compilación con código 1. </p>
+<p>Un archivo <code>.ofs</code> puede contener: </p>
+<ul><li><code>attach { ... }</code></li><li><code>extern vein</code> y <code>rift vein</code></li><li><code>vein</code> y <code>core</code></li><li><code>monolith</code></li><li><code>impl</code></li><li><code>namespace</code></li><li><code>strata</code></li><li><code>forge</code> global</li></ul>
+<h2 id="s3">2. Tipos</h2>
+<h3 id="s3.1">Tipos primitivos</h3>
+<div class="tw"><table><thead><tr><th>Tipo</th><th>Uso</th><th>Representación general</th></tr></thead><tbody><tr><td><code>stone</code></td><td>entero principal</td><td>64 bits</td></tr><tr><td><code>crystal</code></td><td>punto flotante</td><td>64 bits</td></tr><tr><td><code>obsidian</code></td><td>cadena de texto</td><td>puntero</td></tr><tr><td><code>bool</code></td><td>booleano</td><td>lógico</td></tr><tr><td><code>void</code></td><td>sin retorno</td><td>retorno de función</td></tr></tbody></table></div>
+<h3 id="s3.2">Tipos enteros pequeños</h3>
+<div class="tw"><table><thead><tr><th>Tipo</th><th>Signo</th><th>Tamaño</th></tr></thead><tbody><tr><td><code>u8</code></td><td>sin signo</td><td>8 bits</td></tr><tr><td><code>u16</code></td><td>sin signo</td><td>16 bits</td></tr><tr><td><code>u32</code></td><td>sin signo</td><td>32 bits</td></tr><tr><td><code>u64</code></td><td>sin signo</td><td>64 bits</td></tr><tr><td><code>i8</code></td><td>con signo</td><td>8 bits</td></tr><tr><td><code>i32</code></td><td>con signo</td><td>32 bits</td></tr></tbody></table></div>
+<p>Ejemplo: </p>
+<pre><code>forge r: u8 = 255
+forge g: u8 = 128
+forge pixel: u32 = (r as u32 &lt;&lt; 16) | (g as u32 &lt;&lt; 8)
+</code></pre>
+<h3 id="s3.3">Tipos compuestos</h3>
+<div class="tw"><table><thead><tr><th>Tipo</th><th>Ejemplo</th></tr></thead><tbody><tr><td><code>Array&lt;T&gt;</code></td><td><code>Array&lt;stone&gt;</code></td></tr><tr><td>tipo de función</td><td><code>vein(stone) -&gt; stone</code></td></tr><tr><td><code>monolith</code></td><td><code>monolith Player { ... }</code></td></tr></tbody></table></div>
+<h3 id="s3.4">Inferencia</h3>
+<pre><code>forge n = 42
+forge nome = &quot;Ana&quot;
+forge ativo = true
+forge nums = [1, 2, 3]
+</code></pre>
+<h2 id="s4">3. Variables y constantes</h2>
+<h3 id="s4.1"><code>forge</code></h3>
+<pre><code>forge nome = &quot;Rex&quot;
+forge idade: stone = 20
+forge saldo: crystal = 42.5
+forge canal: u8 = 255
+</code></pre>
+<h3 id="s4.2"><code>const</code></h3>
+<pre><code>const limite: stone = 10
+</code></pre>
+<h3 id="s4.3">Asignaciones comunes</h3>
+<pre><code>x = 10
+x += 2
+x -= 1
+x *= 3
+x /= 2
+x++
+x--
+</code></pre>
+<h2 id="s5">4. Funciones e intents</h2>
+<h3 id="s5.1">Funciones normales</h3>
+<pre><code>vein soma(a: stone, b: stone) -&gt; stone {
+    return a + b
+}
+</code></pre>
+<h3 id="s5.2">Entrada del programa</h3>
+<pre><code>core main() {
+    echo(&quot;ok&quot;)
+}
+</code></pre>
+<h3 id="s5.3">Intent</h3>
+<pre><code>vein square(x: stone) -&gt; stone intent pure {
+    return x * x
+}
+</code></pre>
+<p>Intents aceptados: </p>
+<ul><li><code>pure</code></li><li><code>impure</code></li><li><code>fractal</code></li></ul>
+<h3 id="s5.4">Composición de funciones</h3>
+<p>Las funciones pueden invocar a otras funciones y admiten recursión directa: </p>
+<pre><code>vein quadrado(n: stone) -&gt; stone {
+    return n * n
+}
+
+vein soma_quadrados(a: stone, b: stone) -&gt; stone {
+    return quadrado(a) + quadrado(b)
+}
+
+core main() {
+    echo(soma_quadrados(3, 4))
+}
+</code></pre>
+<blockquote><p><strong>Nota</strong>: Las expresiones anónimas de función (<code>vein(...) -&gt; ...</code> en línea) están especificadas en el árbol sintáctico (<code>NK_LAMBDA</code>) y planificadas para la hoja de ruta de evolución del lenguaje. Actualmente, todas las funciones deben declararse con nombre mediante <code>vein</code>. </p>
+</blockquote>
+<h2 id="s6">5. <code>monolith</code>, <code>impl</code> y layouts</h2>
+<h3 id="s6.1">Estructura</h3>
+<pre><code>monolith Rect {
+    w: stone
+    h: stone
+}
+</code></pre>
+<h3 id="s6.2">Métodos con <code>impl</code></h3>
+<pre><code>impl Rect {
+    vein area(self: Rect) -&gt; stone {
+        return self.w * self.h
+    }
+}
+</code></pre>
+<p>Uso: </p>
+<pre><code>forge r: Rect
+r.w = 10
+r.h = 5
+echo(r.area())
+</code></pre>
+<h3 id="s6.3">Layout explícito</h3>
+<pre><code>monolith Header layout packed {
+    tag: stone
+    flags: stone
+}
+</code></pre>
+<p>Layouts soportados: </p>
+<ul><li><code>native</code></li><li><code>packed</code></li><li><code>c</code></li></ul>
+<h2 id="s7">6. <code>namespace</code></h2>
+<p>Use namespace para agrupar funciones y evitar colisiones de nombres. </p>
+<pre><code>namespace mathx {
+    vein square(x: stone) -&gt; stone {
+        return x * x
+    }
+}
+
+core main() {
+    echo(mathx.square(4))
+}
+</code></pre>
+<h2 id="s8">7. Arrays y colecciones</h2>
+<pre><code>forge nums = [1, 2, 3]
+echo(nums[0])
+</code></pre>
+<p>Ejemplo con paso de función: </p>
+<pre><code>vein map_array(arr: Array&lt;stone&gt;, fn: vein(stone) -&gt; stone) -&gt; Array&lt;stone&gt; {
+    forge result: Array&lt;stone&gt; = []
+    cycle (n in arr) {
+        ofs_array_push(result, fn(n))
+    }
+    return result
+}
+</code></pre>
+<h2 id="s9">8. Control de flujo</h2>
+<h3 id="s9.1"><code>if / else</code></h3>
+<pre><code>if (x &gt; 10) {
+    echo(&quot;alto&quot;)
+} else {
+    echo(&quot;baixo&quot;)
+}
+</code></pre>
+<h3 id="s9.2"><code>while</code></h3>
+<pre><code>while (energia &gt; 0) {
+    energia -= 1
+}
+</code></pre>
+<h3 id="s9.3"><code>cycle</code></h3>
+<p>Forma tipo C: </p>
+<pre><code>cycle (forge i = 0; i &lt; 10; i++) {
+    echo(i)
+}
+</code></pre>
+<p>Forma iterativa: </p>
+<pre><code>cycle (n in nums) {
+    echo(n)
+}
+</code></pre>
+<h3 id="s9.4">Selección de múltiples caminos</h3>
+<p>La selección de múltiples ramas se realiza mediante cadenas de <code>if / else if</code>: </p>
+<pre><code>if (code == 200) {
+    echo(&quot;ok&quot;)
+} else if (code == 404) {
+    echo(&quot;nao encontrado&quot;)
+} else {
+    echo(&quot;erro&quot;)
+}
+</code></pre>
+<blockquote><p><strong>Nota</strong>: <code>match</code> y <code>case</code> están reservados en la gramática y en el AST (<code>NK_MATCH</code>), con soporte completo en el parser previsto en la hoja de ruta de evolución del compilador. </p>
+</blockquote>
+<h3 id="s9.5">Manejo de errores e interrupción (<code>throw</code>)</h3>
+<p>La instrucción <code>throw</code> muestra un mensaje de diagnóstico y termina la ejecución con código de salida 1: </p>
+<pre><code>vein dividir(dividendo: stone, divisor: stone) -&gt; stone {
+    if (divisor == 0) {
+        throw &quot;divisao por zero indefinida&quot;
+    }
+    return dividendo / divisor
+}
+
+core main() {
+    echo(dividir(10, 2))
+}
+</code></pre>
+<blockquote><p><strong>Nota</strong>: La sintaxis <code>tremor { ... } catch (e: obsidian) { ... }</code> es reconocida por la gramática (<code>NK_TREMOR</code>), con desenrollado estructurado de pila y captura en tiempo de ejecución previstos para las capas del intérprete y la evolución del runtime. </p>
+</blockquote>
+<h3 id="s9.6"><code>strata</code> (enumeraciones de variantes)</h3>
+<pre><code>strata Status { Idle, Running, Failed }
+</code></pre>
+<blockquote><p><strong>Nota</strong>: <code>strata</code> se analiza sintáctica y semánticamente, con generación directa para el backend LLVM prevista en la hoja de ruta de tipos algebraicos. </p>
+</blockquote>
+<h2 id="s10">9. Operadores y casts</h2>
+<h3 id="s10.1">Operadores principales</h3>
+<ul><li>aritméticos: <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>%</code></li><li>comparación: <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>, <code>&gt;</code>, <code>&gt;=</code></li><li>lógicos: <code>&amp;&amp;</code>, <code>||</code>, <code>!</code></li><li>bit a bit: <code>&amp;</code>, <code>|</code>, <code>^</code>, <code>&lt;&lt;</code>, <code>&gt;&gt;</code></li></ul>
+<h3 id="s10.2">Cast con <code>as</code></h3>
+<pre><code>forge r: u8 = 255
+forge x: u32 = r as u32
+forge y: stone = x as stone
+forge z: u8 = y as u8
+</code></pre>
+<p>También funciona en conversiones entre entero y flotante: </p>
+<pre><code>forge c: crystal = 10.5
+forge n: u8 = c as u8
+</code></pre>
+<h2 id="s11">10. <code>attach</code></h2>
+<h3 id="s11.1">Biblioteca estándar o paquete instalado</h3>
+<pre><code>attach {core}
+attach {window}
+attach {terminal-colors}
+</code></pre>
+<h3 id="s11.2">Archivo local</h3>
+<pre><code>attach {F:modulos/minha_lib.ofs}
+</code></pre>
+<p>En Windows también funciona con ruta absoluta: </p>
+<pre><code>attach {F:G:\projeto\minha_lib.ofs}
+</code></pre>
+<p><code>attach</code> incrusta el código OFS del otro archivo en el proceso de compilación. No carga ninguna DLL nativa. </p>
+<h2 id="s12">11. <code>extern vein</code> y <code>rift vein</code></h2>
+<h3 id="s12.1"><code>extern vein</code></h3>
+<pre><code>extern vein puts(s: obsidian) -&gt; stone
+</code></pre>
+<h3 id="s12.2"><code>rift vein</code></h3>
+<pre><code>rift vein ofs_window_create(title: obsidian, w: stone, h: stone) -&gt; void abi c
+</code></pre>
+<h3 id="s12.3">Metadatos de enlace</h3>
+<pre><code>rift vein text_size(s: obsidian) -&gt; stone bind &quot;strlen&quot; abi c
+</code></pre>
+<h3 id="s12.4">Dirección de función y llamada indirecta (<code>fault_addr</code>, <code>fault_call</code>)</h3>
+<p>OFS no tiene un tipo &quot;puntero a función&quot;, pero puede obtener la dirección de una <code>vein</code> como <code>stone</code> y llamar a una dirección con la ABI de C. Sirve para callbacks de bibliotecas C (<code>qsort</code>, <code>ANativeActivity</code>, <code>ALooper</code>, <code>AChoreographer</code>) y para tablas de funciones de C (JNI). </p>
+<pre><code>rift vein c_qsort(base: *stone, n: stone, size: stone, cmp: stone) -&gt; void bind &quot;qsort&quot; abi c
+
+vein crescente(a: *stone, b: *stone) -&gt; stone {
+    forge x = 0
+    forge y = 0
+    fracture { x = *a; y = *b; }
+    if (x &lt; y) { return -1 }
+    if (x &gt; y) { return 1 }
+    return 0
+}
+
+core main() {
+    forge buf = ofs_alloc(64)
+    // ...llena 8 valores...
+    c_qsort(buf, 8, 8, fault_addr(crescente))
+    forge r = fault_call(fault_addr(crescente), buf, fault_step(buf, 1))
+}
+</code></pre>
+<ul><li><code>fault_addr(nome)</code> → <code>stone</code>: dirección de la vein. Acepta <code>vein</code> del módulo, <code>ns.vein</code> y <code>extern</code>/<code>rift vein</code> (con <code>bind</code>, devuelve el símbolo de C). En IR: <code>ptrtoint ptr @simbolo to i64</code>. Fuera de una vein, es un error semántico.</li><li><code>fault_call(endereco, args...)</code> → <code>stone</code>: llamada indirecta con la ABI de C (<code>inttoptr</code> + <code>call i64</code>). Argumentos enteros, punteros y <code>obsidian</code>; el retorno se lee como <code>i64</code> (las funciones <code>void</code> devuelven basura, ignórela). Sin <code>float</code>/<code>double</code>.</li><li>La vein usada como callback debe tener parámetros compatibles con la ABI de C: <code>stone</code> para enteros (los enteros de 32 bits llegan con la parte superior indefinida; enmascárelos con <code>&amp; 4294967295</code>) y <code>*stone</code> para punteros.</li><li>Solo en la compilación nativa (<code>ofs build</code>); el intérprete (<code>ofs run</code>) no implementa <code>fault_*</code>.</li><li>Prueba: <code>ofs/tests/runtime/test_fault_addr_qsort.ofs</code>.</li></ul>
+<p>Campos importantes: </p>
+<ul><li><code>bind &quot;...&quot;</code> define el símbolo nativo real</li><li><code>abi c</code> define la ABI de C</li><li><code>...</code> se acepta en una función variádica nativa</li></ul>
+<h2 id="s13">12. Bloques de bajo nivel</h2>
+<h3 id="s13.1"><code>fracture</code></h3>
+<p>Capa de bajo nivel más tipada. </p>
+<h3 id="s13.2"><code>abyss</code></h3>
+<p>Capa cruda y sin restricciones. </p>
+<h3 id="s13.3"><code>fractal</code></h3>
+<p>Capa especial vinculada a intent/efectos. </p>
+<h3 id="s13.4"><code>bedrock</code></h3>
+<p>Vocabulario de OFS para memoria, regiones, lanes, packets e intrinsics <code>fault_*</code>. </p>
+<p>Ejemplo: </p>
+<pre><code>attach {bedrock}
+
+core main() {
+    forge region = bedrock_region_new(4)
+    bedrock_region_write(region, 0, 10)
+    bedrock_region_write(region, 1, 20)
+    echo(bedrock_region_read(region, 1))
+    bedrock_region_drop(region)
+}
+</code></pre>
+<h3 id="s13.5">Alias <code>tectonic</code></h3>
+<p>El parser acepta alias textuales como: </p>
+<ul><li><code>tectonic fracture</code></li><li><code>tectonic abyss</code></li><li><code>tectonic fractal</code></li><li><code>tectonic safe</code></li><li><code>tectonic unsafe</code></li><li><code>tectonic bedrock</code></li></ul>
+<h2 id="s14">13. Biblioteca estándar y paquetes</h2>
+<p>Módulos y paquetes relevantes que ya están presentes en el proyecto: </p>
+<ul><li><code>fs</code></li><li><code>net</code></li><li><code>http</code></li><li><code>odl</code></li><li><code>oes</code></li><li><code>oll</code></li><li><code>canvas</code></li><li><code>core</code></li><li><code>fmt</code></li><li><code>io</code></li><li><code>math</code></li><li><code>string</code></li><li><code>rift</code></li><li><code>bedrock</code></li><li><code>bedrock-packet</code></li><li><code>memory-modes</code></li><li><code>terminal-colors</code></li><li><code>test-lib</code></li><li><code>webserver</code></li><li><code>window</code></li></ul>
+<p>El módulo <code>fs</code> expone: </p>
+<ul><li><code>fs.exists(path: obsidian) -&gt; bool</code></li><li><code>fs.size(path: obsidian) -&gt; stone</code></li><li><code>fs.read(path: obsidian) -&gt; obsidian</code></li><li><code>fs.write(path: obsidian, content: obsidian) -&gt; bool</code></li><li><code>fs.append(path: obsidian, content: obsidian) -&gt; bool</code></li></ul>
+<p>El módulo <code>net</code> expone: </p>
+<ul><li><code>net.tcp_connect(host: obsidian, port: stone) -&gt; stone</code></li><li><code>net.tcp_send(fd: stone, data: obsidian) -&gt; stone</code></li><li><code>net.tcp_recv(fd: stone, max_len: stone) -&gt; obsidian</code></li><li><code>net.tcp_close(fd: stone) -&gt; void</code></li><li><code>net.tcp_listen(port: stone, backlog: stone) -&gt; stone</code></li><li><code>net.tcp_accept(server_fd: stone) -&gt; stone</code></li></ul>
+<p>El módulo <code>http</code> expone: </p>
+<ul><li><code>http.get(ip: obsidian, port: stone, host: obsidian, path: obsidian) -&gt; HttpResponse</code></li><li><code>http.parse_status_code(response_text: obsidian) -&gt; stone</code></li><li><code>http.extract_body(response_text: obsidian) -&gt; obsidian</code></li></ul>
+<p>El módulo <code>odl</code> expone: </p>
+<ul><li><code>odl.parse(src: obsidian) -&gt; stone</code></li><li><code>odl.element_count() -&gt; stone</code></li><li><code>odl.new_element(tag: obsidian) -&gt; stone</code></li><li><code>odl.get_element(id: stone) -&gt; OdlElement</code></li><li><code>odl.set_element(id: stone, elem: OdlElement) -&gt; void</code></li><li><code>odl.add_child(parent_id: stone, child_id: stone) -&gt; void</code></li><li><code>odl.child_count(parent_id: stone) -&gt; stone</code></li><li><code>odl.get_child_at(parent_id: stone, index: stone) -&gt; stone</code></li><li><code>odl.reset() -&gt; void</code></li></ul>
+<p>El módulo <code>oes</code> expone: </p>
+<ul><li><code>oes.parse_sheet(css_src: obsidian) -&gt; Array&lt;OesRule&gt;</code></li><li><code>oes.apply_rules(node_id: stone, rules: Array&lt;OesRule&gt;) -&gt; void</code></li><li><code>oes.matches_selector(elem: OdlElement, sel: obsidian) -&gt; bool</code></li><li><code>oes.parse_color(cname: obsidian) -&gt; stone</code></li></ul>
+<p>El módulo <code>oll</code> expone: </p>
+<ul><li><code>oll.parse(src: obsidian) -&gt; stone</code></li><li><code>oll.load(path: obsidian) -&gt; stone</code></li><li><code>oll.node_count() -&gt; stone</code></li><li><code>oll.get_node(id: stone) -&gt; OllNode</code></li><li><code>oll.set_node(id: stone, n: OllNode) -&gt; void</code></li><li><code>oll.find_by_name(name: obsidian) -&gt; stone</code></li><li><code>oll.compute_layout(root_id: stone) -&gt; void</code></li><li><code>oll.render(cv: Canvas) -&gt; void</code></li><li><code>oll.hit_test(x: stone, y: stone) -&gt; stone</code></li><li><code>oll.click(id: stone) -&gt; obsidian</code></li><li><code>oll.reset() -&gt; void</code></li></ul>
+<p>El módulo <code>canvas</code> expone: </p>
+<ul><li><code>canvas.create(w: stone, h: stone) -&gt; Canvas</code></li><li><code>canvas.destroy(cv: Canvas) -&gt; void</code></li><li><code>canvas.clear(cv: Canvas, color: stone) -&gt; void</code></li><li><code>canvas.set_pixel(cv: Canvas, x: stone, y: stone, color: stone) -&gt; void</code></li><li><code>canvas.get_pixel(cv: Canvas, x: stone, y: stone) -&gt; stone</code></li><li><code>canvas.fill_rect(cv: Canvas, x: stone, y: stone, w: stone, h: stone, color: stone) -&gt; void</code></li><li><code>canvas.draw_rect(cv: Canvas, x: stone, y: stone, w: stone, h: stone, color: stone) -&gt; void</code></li><li><code>canvas.draw_char(cv: Canvas, x: stone, y: stone, ch: stone, color: stone) -&gt; void</code></li><li><code>canvas.draw_text(cv: Canvas, x: stone, y: stone, text: obsidian, color: stone) -&gt; void</code></li><li><code>canvas.save_ppm(cv: Canvas, path: obsidian) -&gt; bool</code></li><li><code>canvas.present(cv: Canvas) -&gt; void</code></li></ul>
+<p>El módulo <code>window</code> expone: </p>
+<ul><li><code>window.create</code></li><li><code>window.destroy</code></li><li><code>window.present</code></li><li><code>window.poll</code></li><li><code>window.is_open</code></li><li><code>window.width</code></li><li><code>window.height</code></li><li><code>window.set_title</code></li><li><code>input.mouse_x</code></li><li><code>input.mouse_y</code></li><li><code>input.is_down</code></li><li><code>input.key</code></li></ul>
+<h2 id="s15">14. Comandos del compilador</h2>
+<h3 id="s15.1">Compilador principal (<code>ofs</code>)</h3>
+<pre><code>ofs run arquivo.ofs
+ofs build arquivo.ofs -o app
+ofs check arquivo.ofs
+ofs clean
+ofs tokens arquivo.ofs
+ofs ast arquivo.ofs
+ofs ir arquivo.ofs
+ofs asm arquivo.ofs
+</code></pre>
+<h3 id="s15.2">Compilador self-hosted (<code>ofscc</code>) en el estado actual</h3>
+<p><code>ofscc</code> ya admite optimización y modos de inspección mediante un puente de variables de entorno: </p>
+<p>Variables: </p>
+<ul><li><code>OFSCC_INPUT</code></li><li><code>OFSCC_OUTPUT</code></li><li><code>OFSCC_C_OUT</code></li><li><code>OFSCC_OPT</code> (<code>-O0</code>, <code>-O2</code>, <code>-O3</code>)</li><li><code>OFSCC_MODE</code> (<code>check</code>, <code>tokens</code>, <code>ast</code>)</li></ul>
+<p>Ejemplo: </p>
+<pre><code>export OFSCC_INPUT=programa.ofs
+export OFSCC_OUTPUT=programa
+export OFSCC_OPT=-O3
+./ofscc_v1
+</code></pre>
+<pre><code>ofs arquivo.ofs
+ofs run arquivo.ofs
+ofs build arquivo.ofs -o app
+ofs check arquivo.ofs
+ofs tokens arquivo.ofs
+ofs ast arquivo.ofs
+ofs ir arquivo.ofs
+ofs asm arquivo.ofs
+ofs version
+ofs update
+</code></pre>
+<p>Paquetes: </p>
+<pre><code>uncover fmt
+infuse fmt
+infuse {fmt:stable}
+reinfuse fmt
+</code></pre>
+<h3 id="s15.3">Precedencia de operadores (de menor a mayor)</h3>
+<div class="tw"><table><thead><tr><th>Nivel</th><th>Operadores</th><th>Asociatividad</th></tr></thead><tbody><tr><td>1 </td><td>`\</td><td>\</td><td>`      </td><td>Izquierda</td></tr><tr><td>2 </td><td><code>&amp;&amp;</code>     </td><td>Izquierda</td></tr><tr><td>3 </td><td><code>==</code> <code>!=</code></td><td>Izquierda</td></tr><tr><td>4 </td><td><code>&lt;</code> <code>&lt;=</code> <code>&gt;</code> <code>&gt;=</code></td><td>Izquierda</td></tr><tr><td>5 </td><td>`</td><td>`        </td><td>Izquierda</td></tr><tr><td>6 </td><td><code>^</code>      </td><td>Izquierda</td></tr><tr><td>7 </td><td><code>&amp;</code>      </td><td>Izquierda</td></tr><tr><td>8 </td><td><code>&lt;&lt;</code> <code>&gt;&gt;</code></td><td>Izquierda</td></tr><tr><td>9 </td><td><code>+</code> <code>-</code>  </td><td>Izquierda</td></tr><tr><td>10</td><td><code>*</code> <code>/</code> <code>%</code></td><td>Izquierda</td></tr><tr><td>11</td><td>Unarios: <code>-</code> <code>!</code> <code>&amp;</code> <code>*</code> <code>++</code> <code>--</code> <code>~</code></td><td>Derecha</td></tr></tbody></table></div>
+<h2 id="s16">Control Flow</h2>
+<h3 id="s16.1">if / else</h3>
+<pre><code>if (condition) {
+    // then block
+}
+
+if (condition) {
+    // then block
+} else {
+    // else block
+}
+
+if (x &gt; 100) {
+    echo(&quot;big&quot;)
+} else if (x &gt; 50) {
+    echo(&quot;medium&quot;)
+} else {
+    echo(&quot;small&quot;)
+}
+</code></pre>
+<h3 id="s16.2">cycle (bucle estilo C)</h3>
+<pre><code>cycle (forge i = 0; i &lt; 10; i++) {
+    echo(i)
+}
+</code></pre>
+<p><strong>Sintaxis:</strong> </p>
+<pre><code>cycle (&lt;init&gt;; &lt;condition&gt;; &lt;step&gt;) {
+    &lt;body&gt;
+}
+</code></pre>
+<h3 id="s16.3">cycle (bucle por rango)</h3>
+<pre><code>forge nums = [1, 2, 3, 4, 5]
+cycle (n in nums) {
+    echo(n)
+}
+</code></pre>
+<p><strong>Sintaxis:</strong> </p>
+<pre><code>cycle (&lt;variable&gt; in &lt;collection&gt;) {
+    &lt;body&gt;
+}
+</code></pre>
+<h3 id="s16.4">break / continue</h3>
+<pre><code>cycle (forge i = 0; i &lt; 100; i++) {
+    if (i == 50) {
+        break       // salir del bucle
+    }
+    if (i % 2 == 0) {
+        continue    // omitir los números pares
+    }
+    echo(i)
+}
+</code></pre>
+<h3 id="s16.5">while (bucle solo con condición)</h3>
+<pre><code>forge count: stone = 10
+while (count &gt; 0) {
+    echo(count)
+    count -= 1
+}
+</code></pre>
+<p><strong>Sintaxis:</strong> </p>
+<pre><code>while (&lt;condition&gt;) {
+    &lt;body&gt;
+}
+</code></pre>
+<p><code>while</code> es azúcar sintáctico para un <code>cycle</code> con solo una condición. <code>break</code> y <code>continue</code> funcionan dentro de los bloques <code>while</code>. </p>
+<h2 id="s17">Conversión de tipos (as)</h2>
+<p>Use la palabra clave <code>as</code> para conversiones de tipo explícitas: </p>
+<pre><code>forge x: stone = 42
+forge y: crystal = x as crystal    // entero a flotante
+
+forge pi: crystal = 3.14
+forge rounded: stone = pi as stone // flotante a entero (trunca)
+
+forge flag: bool = true
+forge num: stone = flag as stone   // bool a entero (0 o 1)
+</code></pre>
+<h3 id="s17.1">Casts permitidos</h3>
+<div class="tw"><table><thead><tr><th>Desde</th><th>A   </th><th>Resultado  </th></tr></thead><tbody><tr><td><code>stone</code></td><td><code>crystal</code></td><td>Entero a flotante</td></tr><tr><td><code>crystal</code></td><td><code>stone</code></td><td>Flotante a entero (trunca)</td></tr><tr><td><code>bool</code></td><td><code>stone</code></td><td><code>true</code> → 1, <code>false</code> → 0</td></tr><tr><td><code>stone</code></td><td><code>bool</code></td><td>0 → <code>false</code>, distinto de cero → <code>true</code></td></tr><tr><td><code>bool</code></td><td><code>crystal</code></td><td><code>true</code> → 1.0, <code>false</code> → 0.0</td></tr><tr><td><code>crystal</code></td><td><code>bool</code></td><td>0.0 → <code>false</code>, distinto de cero → <code>true</code></td></tr></tbody></table></div>
+<p>Nota: Los casts a cadena (<code>obsidian</code>) requieren funciones de runtime (<code>ofs_stone_to_obsidian</code>, etc.). </p>
+<h2 id="s18">Importaciones</h2>
+<p>Use <code>attach</code> para incorporar al ámbito módulos de la biblioteca estándar, paquetes o archivos locales. </p>
+<h3 id="s18.1">Attach de biblioteca (stdlib / paquete)</h3>
+<pre><code>attach {core}
+attach {math}
+attach {webserver}
+attach {bedrock}
+attach {terminal-colors}
+attach {memory-modes}
+</code></pre>
+<p>El nombre dentro de <code>{}</code> corresponde a un módulo conocido de la biblioteca estándar o a un paquete instalado. El compilador resuelve el archivo automáticamente desde el directorio de la biblioteca estándar, <code>OFS_STDLIB_PATH</code> o <code>OFS_LIB_PATH</code>. </p>
+<h3 id="s18.2">Attach de archivo</h3>
+<pre><code>attach {F:helpers.ofs}
+attach {F:../shared/utils.ofs}
+</code></pre>
+<p>Use el prefijo <code>F:</code> para referenciar un archivo <code>.ofs</code> concreto mediante una ruta relativa al archivo actual. </p>
+<p>Las declaraciones de <code>attach</code> deben aparecer en el nivel superior, antes o entre otras declaraciones. El preprocesador las resuelve antes de que se ejecuten el lexer y el parser, por lo que cada módulo se incrusta exactamente una vez (la deduplicación es automática). </p>
+<h3 id="s18.3">Módulos de la biblioteca estándar</h3>
+<div class="tw"><table><thead><tr><th>Nombre</th><th>Descripción</th></tr></thead><tbody><tr><td><code>core</code></td><td>Auxiliares matemáticos, predicados, factorial, fibonacci</td></tr><tr><td><code>math</code></td><td>Primos, utilidades de dígitos, inversión de números</td></tr><tr><td><code>string</code></td><td>Utilidades de cadenas: repeat, starts_with, is_empty</td></tr><tr><td><code>io</code></td><td>prompt, print_separator, print_header</td></tr><tr><td><code>webserver</code></td><td>Constructor de respuestas HTTP, tipos MIME, auxiliares de registro</td></tr><tr><td><code>bedrock</code></td><td>Celdas de heap de bajo nivel, regiones, auxiliares de campos de bits</td></tr><tr><td><code>bedrock-packet</code></td><td>Auxiliares de layout de paquetes sobre regiones de bedrock</td></tr><tr><td><code>rift</code></td><td>Envoltorios de runtime externo (auxiliares de ABI de C)</td></tr><tr><td><code>terminal-colors</code></td><td>Salida de colores ANSI en terminal</td></tr><tr><td><code>memory-modes</code></td><td>Documentación y auxiliares para los modos fracture/abyss/fractal</td></tr><tr><td><code>test-lib</code></td><td>Utilidades para pruebas unitarias</td></tr></tbody></table></div>
+<h2 id="s19">Funciones externas</h2>
+<p>Declare funciones externas de C para FFI (Foreign Function Interface): </p>
+<pre><code>extern vein ofs_pow(base: crystal, exp: crystal) -&gt; crystal
+extern vein ofs_sqrt(val: crystal) -&gt; crystal
+extern vein ofs_str_len(s: obsidian) -&gt; stone
+
+core main() {
+    forge result = ofs_pow(2.0, 10.0)
+    echo(result)  // prints 1024
+}
+</code></pre>
+<p>Todas las funciones del runtime de OFS pueden accederse mediante declaraciones <code>extern</code>. Esto permite programar a bajo y alto nivel en el mismo lenguaje. </p>
+<h3 id="s19.1">rift vein</h3>
+<p>OFS ahora también admite <code>rift vein</code> como forma de declaración orientada a la interoperabilidad nativa: </p>
+<pre><code>rift vein strlen(text: obsidian) -&gt; stone
+
+core main() {
+    echo(strlen(&quot;fault&quot;))
+}
+</code></pre>
+<p><code>rift vein</code> se reduce al mismo pipeline de llamadas externas que <code>extern vein</code>, pero presenta la interoperabilidad como un límite nativo de OFS en lugar de enmarcar la característica solo como &quot;extern C&quot;. </p>
+<p>También puede añadir metadatos explícitos de interoperabilidad: </p>
+<pre><code>rift vein text_size(text: obsidian) -&gt; stone bind &quot;strlen&quot; abi c
+</code></pre>
+<ul><li><code>bind &quot;symbol&quot;</code> define el nombre del símbolo de enlace externo.</li><li><code>abi c</code> declara la ABI prevista.</li><li><code>abi system</code> está reservado para llamadas en el límite de plataforma/sistema.</li></ul>
+<h3 id="s19.2">Dirección de interoperabilidad</h3>
+<p><code>extern vein</code> es la superficie FFI actual. Hoy en día es más adecuada para símbolos de runtime y compatibles con C. </p>
+<p>La hoja de ruta amplía esto hacia capas de interoperabilidad nativa más ricas para: </p>
+<ul><li>límites de objetos y bibliotecas de C,</li><li>capas de puente de C++,</li><li>puentes de host/runtime de C#,</li><li>incrustación de Python o bindings de host,</li><li>escapes de ensamblador específicos del destino.</li></ul>
+<p>Estos son elementos de la hoja de ruta, no todos son funciones implementadas hoy. </p>
+<h2 id="s20">Estructuras (monolith)</h2>
+<p>Las estructuras se definen con la palabra clave <code>monolith</code>: </p>
+<pre><code>monolith Player {
+    name: obsidian
+    hp:   stone
+    speed: crystal
+}
+</code></pre>
+<p>También puede declarar un modo de layout explícito: </p>
+<pre><code>monolith Header layout packed {
+    tag: stone
+    flags: stone
+}
+</code></pre>
+<p>Modos de layout soportados actualmente: </p>
+<ul><li><code>layout native</code></li><li><code>layout packed</code></li><li><code>layout c</code></li></ul>
+<p><code>layout packed</code> se reduce a un layout de struct empaquetado de LLVM. <code>layout c</code> se acepta como intención explícita orientada a la ABI y actualmente se reduce igual que <code>native</code> hasta que se amplíe el subsistema completo de ABI/layout. </p>
+<h3 id="s20.1">Creación de instancias</h3>
+<pre><code>forge hero: Player
+hero.name = &quot;Obsidian Knight&quot;
+hero.hp = 100
+hero.speed = 1.5
+</code></pre>
+<h3 id="s20.2">Acceso a campos</h3>
+<p>Use la notación de punto para acceder a los campos: </p>
+<pre><code>echo(hero.name)     // &quot;Obsidian Knight&quot;
+echo(hero.hp)       // 100
+hero.hp -= 10       // recibe daño
+</code></pre>
+<h3 id="s20.3">Paso a funciones</h3>
+<pre><code>vein greet(p: Player) -&gt; void {
+    echo(p.name)
+    echo(p.hp)
+}
+
+core main() {
+    forge hero: Player
+    hero.name = &quot;Knight&quot;
+    hero.hp = 100
+    hero.speed = 1.5
+    greet(hero)
+}
+</code></pre>
+<h2 id="s21">Punteros (shard / fracture)</h2>
+<p>Las operaciones con punteros solo están permitidas dentro de bloques <code>fracture</code> (seguro), <code>bedrock</code> (de bajo nivel tipado) o <code>abyss</code> (inseguro). </p>
+<h3 id="s21.1">fracture (bloque de punteros seguro)</h3>
+<pre><code>core main() {
+    forge x: stone = 10
+
+    fracture {
+        shard p: *stone = &amp;x   // p apunta a x
+        *p = 42                // desreferenciar y asignar
+    }
+
+    echo(x)  // prints 42
+}
+</code></pre>
+<p><strong>Reglas clave:</strong> </p>
+<ul><li>Los punteros solo pueden crearse y usarse dentro de bloques <code>fracture</code></li><li>El compilador verifica los tipos de todas las operaciones con punteros</li><li><code>&amp;x</code> toma la dirección de <code>x</code></li><li><code>*p</code> desreferencia el puntero <code>p</code></li></ul>
+<h3 id="s21.2">Tipos de puntero</h3>
+<pre><code>shard p: *stone       // puntero a stone (i64*)
+shard q: *crystal     // puntero a crystal (f64*)
+shard s: *obsidian    // puntero a obsidian (i8**)
+</code></pre>
+<h3 id="s21.3">bedrock (bloque de bajo nivel tipado)</h3>
+<p><code>bedrock</code> es el bloque de bajo nivel nativo de OFS para trabajo tipado cercano a la máquina. </p>
+<pre><code>core main() {
+    forge x: stone = 10
+
+    bedrock {
+        shard p: *stone = &amp;x
+        *p = *p + fault_spin_left(1, 3)
+    }
+
+    echo(x)
+}
+</code></pre>
+<p>Use <code>bedrock</code> cuando quiera control de bajo nivel e intrínsecos parecidos a los de la máquina, manteniendo las reglas tipadas de OFS. </p>
+<h2 id="s22">Colecciones (Arrays)</h2>
+<h3 id="s22.1">Literales de array</h3>
+<pre><code>forge nums = [10, 20, 30, 40, 50]
+forge names = [&quot;Alice&quot;, &quot;Bob&quot;, &quot;Charlie&quot;]
+</code></pre>
+<p>Todos los elementos deben ser del mismo tipo. El tipo del array se infiere a partir de los elementos. </p>
+<h3 id="s22.2">Indexación</h3>
+<pre><code>forge first = nums[0]    // 10
+forge last = nums[4]     // 50
+nums[2] = 99             // modificar elemento
+</code></pre>
+<p>La indexación de arrays es <strong>basada en cero</strong> y con <strong>verificación de límites</strong> en tiempo de ejecución. </p>
+<h3 id="s22.3">Iteración</h3>
+<pre><code>// Por rango
+cycle (n in nums) {
+    echo(n)
+}
+
+// Por índice
+cycle (forge i = 0; i &lt; 5; i++) {
+    echo(nums[i])
+}
+</code></pre>
+<h2 id="s23">Memoria insegura (abyss)</h2>
+<p>El bloque <code>abyss</code> permite operaciones de memoria crudas e inseguras: </p>
+<pre><code>abyss {
+    // Raw memory access — no type checking
+    // Use with extreme caution
+}
+</code></pre>
+<p><strong>Reglas:</strong> </p>
+<ul><li>La verificación de tipos se relaja dentro de los bloques <code>abyss</code></li><li>Se permite el direccionamiento directo de memoria</li><li>Úselo solo cuando sea absolutamente necesario</li><li>Prefiera <code>fracture</code> para las operaciones con punteros</li></ul>
+<h3 id="s23.1">Alias de directiva: tectonic</h3>
+<p>Puede usar <code>tectonic</code> como directiva de prefijo para los modos de memoria/efectos. Es una sintaxis alias que se asigna al mismo comportamiento de runtime/semántico: </p>
+<ul><li><code>tectonic fracture { ... }</code> -&gt; igual que <code>fracture { ... }</code></li><li><code>tectonic safe { ... }</code> -&gt; igual que <code>fracture { ... }</code></li><li><code>tectonic abyss { ... }</code> -&gt; igual que <code>abyss { ... }</code></li><li><code>tectonic unsafe { ... }</code> -&gt; igual que <code>abyss { ... }</code></li><li><code>tectonic fractal { ... }</code> -&gt; igual que <code>fractal { ... }</code></li><li><code>tectonic bedrock { ... }</code> -&gt; igual que <code>bedrock { ... }</code></li></ul>
+<p>Ejemplo: </p>
+<pre><code>core main() {
+    forge x: stone = 10
+
+    tectonic fracture {
+        shard p: *stone = &amp;x
+        *p = 20
+    }
+
+    tectonic safe {
+        shard q: *stone = &amp;x
+        *q = *q + 1
+    }
+
+    tectonic abyss {
+        shard raw: *stone = &amp;x
+        *raw = *raw + 1
+    }
+
+    tectonic unsafe {
+        shard raw2: *stone = &amp;x
+        *raw2 = *raw2 + 1
+    }
+
+    tectonic fractal {
+        echo(&quot;effect-lifted mode&quot;)
+    }
+
+    tectonic bedrock {
+        shard native: *stone = &amp;x
+        *native = *native + 1
+    }
+}
+</code></pre>
+<h2 id="s24">Funciones integradas</h2>
+<h3 id="s24.1">echo</h3>
+<p>Función de impresión polimórfica: funciona con cualquier tipo: </p>
+<pre><code>echo(42)              // prints: 42
+echo(3.14)            // prints: 3.14
+echo(&quot;hello&quot;)         // prints: hello
+echo(true)            // prints: true
+</code></pre>
+<p><code>echo</code> selecciona automáticamente la función de impresión de runtime correcta según el tipo del argumento. </p>
+<h3 id="s24.2">Intrínsecos fault_*</h3>
+<p>Dentro de <code>bedrock</code>, <code>fracture</code> o <code>abyss</code>, OFS expone intrínsecos parecidos a los de la máquina con nombres nativos de OFS: </p>
+<pre><code>bedrock {
+    forge x: stone = 0xF0F0
+    echo(fault_count(x))
+    echo(fault_lead(x))
+    echo(fault_trail(x))
+    echo(fault_swap(x))
+    echo(fault_spin_left(x, 4))
+    echo(fault_spin_right(x, 4))
+    echo(fault_weave(0xFF00, 0xAAAA, 0x5555))
+}
+</code></pre>
+<p>Intrínsecos disponibles: </p>
+<ul><li><code>fault_count(stone)</code> -&gt; conteo de población (bits a 1)</li><li><code>fault_fence()</code> -&gt; emite una barrera de memoria a nivel de máquina</li><li><code>fault_prefetch(*stone)</code> -&gt; solicita una captación previa a nivel de máquina para el destino de un puntero</li><li><code>fault_trap()</code> -&gt; emite una trampa a nivel de máquina</li><li><code>fault_lead(stone)</code> -&gt; cuenta los ceros a la izquierda</li><li><code>fault_trail(stone)</code> -&gt; cuenta los ceros a la derecha</li><li><code>fault_swap(stone)</code> -&gt; intercambio de bytes</li><li><code>fault_spin_left(stone, stone)</code> -&gt; rotación a la izquierda</li><li><code>fault_spin_right(stone, stone)</code> -&gt; rotación a la derecha</li><li><code>fault_step(*stone, stone)</code> -&gt; avance tipado de punteros en elementos</li><li><code>fault_addr(vein)</code> -&gt; dirección de la vein como <code>stone</code> (ver FFI)</li><li><code>fault_call(endereco, args...)</code> -&gt; llamada indirecta con ABI de C (ver FFI)</li><li><code>fault_cut(value, shift, width)</code> -&gt; extrae un campo de bits</li><li><code>fault_patch(base, shift, width, insert)</code> -&gt; reemplaza un campo de bits</li><li><code>fault_weave(mask, left, right)</code> -&gt; mezcla bits de <code>left</code> y <code>right</code> usando <code>mask</code></li><li><code>fault_unreachable()</code> -&gt; marca el camino actual como inalcanzable, se reduce a IR <code>llvm.trap</code> + <code>unreachable</code></li><li><code>fault_memcpy(dst, src, len)</code> -&gt; copia de memoria en bloque (se reduce a <code>llvm.memcpy</code>); <code>dst</code> y <code>src</code> deben ser punteros</li><li><code>fault_memset(dst, val, len)</code> -&gt; relleno de memoria en bloque con el byte <code>val</code> (se reduce a <code>llvm.memset</code>); <code>dst</code> debe ser un puntero</li></ul>
+<p>Estas funciones están diseñadas para cubrir operaciones que el ensamblador ya tiene, y al mismo tiempo dar a OFS espacio para su propio vocabulario orientado a la máquina. </p>
+<h3 id="s24.3">asm (escape de ensamblador en línea) — planeado</h3>
+<blockquote><p><strong>Estado: planeado.</strong> El <code>asm</code> en línea todavía <strong>no está disponible</strong>: el lexer no reconoce la palabra <code>asm</code> y el backend LLVM no genera <code>InlineAsm</code>. El ejemplo muestra el diseño previsto y <strong>no compila hoy</strong>. Por ahora use los intrínsecos <code>fault_*</code>. </p>
+</blockquote>
+<p>Cuando ningún intrínseco <code>fault_*</code> cubre su necesidad, <code>asm</code> emitirá una cadena de ensamblador sin procesar directamente en ese punto del código. Solo se permitirá dentro de un bloque <code>bedrock</code>, <code>fracture</code> o <code>abyss</code>. </p>
+<pre><code>bedrock {
+    asm &quot;nop&quot;     // planeado
+    asm &quot;int3&quot;    // planeado
+}
+</code></pre>
+<p><strong>Restricciones:</strong> </p>
+<ul><li>Planeado: el argumento debe ser un literal de cadena.</li><li>La sintaxis de operandos de entrada/salida (restricciones completas estilo AT&amp;T) todavía no es analizable; use los intrínsecos <code>fault_*</code> cuando necesite enlazar operandos.</li><li>Planeado: genera una llamada de ensamblador en línea sin valor de retorno en LLVM IR, reenviando la cadena de ensamblador textualmente.</li><li>Planeado: la expresión <code>asm</code> se reducirá a <code>InlineAsm</code> de LLVM, despachada en el análisis semántico y en la generación de código. Todavía no está implementado.</li></ul>
+<h2 id="s25">Comentarios</h2>
+<pre><code>// Comentario de una sola línea
+
+/* Comentario
+   de varias líneas */
+
+forge x = 42  // comentario en línea
+</code></pre>
+<h2 id="s26">Terminación de sentencias</h2>
+<p>Las sentencias terminan con <strong>salto de línea</strong> o <strong>punto y coma</strong>. Ambos son válidos: </p>
+<pre><code>forge x = 10
+forge y = 20
+
+// O con punto y coma
+forge x = 10; forge y = 20
+</code></pre>
+<p>Los saltos de línea dentro de <code>()</code>, <code>[]</code> y <code>{}</code> se ignoran (continuación implícita de línea): </p>
+<pre><code>forge result = add(
+    10,
+    20
+)
+</code></pre>
+<h2 id="s27">Biblioteca estándar</h2>
+<p>La biblioteca estándar se divide entre auxiliares orientados a la aplicación y auxiliares nativos de bajo nivel de OFS en desarrollo. </p>
+<p>Ejemplos: </p>
+<ul><li><code>terminal_colors.ofs</code> para la presentación en terminal</li><li><code>webserver.ofs</code> para auxiliares HTTP</li><li><code>memory_modes.ofs</code> para las descripciones de los modos de memoria</li><li><code>bedrock.ofs</code> para auxiliares de estado respaldado por heap de forma explícita, al estilo nativo de OFS</li><li><code>rift.ofs</code> para envoltorios de límite externo nativos de OFS</li><li><code>bedrock_packet.ofs</code> para vistas de paquete/cabecera construidas sobre regiones de bajo nivel</li></ul>
+<h3 id="s27.1">Módulo Bedrock</h3>
+<p><code>bedrock.ofs</code> es la semilla actual de la programación de bajo nivel nativa de OFS. </p>
+<p>Proporciona auxiliares como: </p>
+<ul><li><code>bedrock_cell_new(initial)</code></li><li><code>bedrock_cell_read(cell)</code></li><li><code>bedrock_cell_write(cell, value)</code></li><li><code>bedrock_cell_add(cell, delta)</code></li><li><code>bedrock_cell_sub(cell, delta)</code></li><li><code>bedrock_cell_drop(cell)</code></li><li><code>bedrock_region_new(len)</code></li><li><code>bedrock_region_read(region, index)</code></li><li><code>bedrock_region_write(region, index, value)</code></li><li><code>bedrock_region_add(region, index, delta)</code></li><li><code>bedrock_prefetch(region, index)</code></li><li><code>bedrock_region_drop(region)</code></li><li><code>bedrock_view_at(region, start, offset)</code></li><li><code>bedrock_view_read(region, start, offset)</code></li><li><code>bedrock_view_write(region, start, offset, value)</code></li><li><code>bedrock_field_cut(value, shift, width)</code></li><li><code>bedrock_field_patch(base, shift, width, insert)</code></li><li><code>bedrock_lane8_get(value, lane)</code></li><li><code>bedrock_lane8_set(value, lane, insert)</code></li><li><code>bedrock_lane16_le_get(value, lane)</code></li><li><code>bedrock_lane16_be_get(value, lane)</code></li><li><code>bedrock_lane16_le_set(value, lane, insert)</code></li><li><code>bedrock_lane16_be_set(value, lane, insert)</code></li><li><code>bedrock_lane32_le_get(value, lane)</code></li><li><code>bedrock_lane32_be_get(value, lane)</code></li><li><code>bedrock_lane32_le_set(value, lane, insert)</code></li><li><code>bedrock_lane32_be_set(value, lane, insert)</code></li><li><code>bedrock_barrier()</code></li></ul>
+<p>El propósito de este módulo no es imitar directamente las APIs de C, sino dejar que la programación de bajo nivel crezca con el vocabulario de OFS. </p>
+<p>Estos auxiliares de lanes también dan a OFS una superficie consciente del endianness para ventanas de bits orientadas a la ABI, sin obligar al usuario a recurrir a desplazamientos crudos en todas partes. </p>
+<h3 id="s27.2">Módulo Rift</h3>
+<p><code>rift.ofs</code> es la primera superficie de interoperabilidad de la biblioteca estándar construida sobre <code>rift vein</code>. </p>
+<p>Proporciona envoltorios como: </p>
+<ul><li><code>rift_text_size(text)</code></li><li><code>rift_line(text)</code></li><li><code>rift_banner(title)</code></li><li><code>rift_report_line(label, value)</code></li></ul>
+<p>El objetivo es que los límites externos puedan consumirse mediante APIs orientadas a OFS, en lugar de exponer solo declaraciones crudas por todas partes. </p>
+<h3 id="s27.3">Módulo Bedrock Packet</h3>
+<p><code>bedrock_packet.ofs</code> es el primer módulo estructurado de bajo nivel con estilo de objetos construido sobre regiones de bedrock. </p>
+<p>Proporciona auxiliares como: </p>
+<ul><li><code>bedrock_packet_store(region, slot, header, payload)</code></li><li><code>bedrock_packet_header(region, slot)</code></li><li><code>bedrock_packet_payload(region, slot)</code></li><li><code>bedrock_packet_opcode(header)</code></li><li><code>bedrock_packet_lane(header)</code></li><li><code>bedrock_packet_opcode_be16(header)</code></li><li><code>bedrock_packet_tail_le16(header)</code></li><li><code>bedrock_packet_set_opcode(header, opcode)</code></li><li><code>bedrock_packet_set_lane(header, lane)</code></li></ul>
+<p>Esto forma parte de la dirección en la que la programación de bajo nivel de OFS adquiere sus propios objetos/módulos reutilizables, en lugar de exponer solo operaciones crudas. </p>
+<h3 id="s27.4">Patrón de ejemplo híbrido</h3>
+<p>Es válido y recomendable mezclar OFS de alto y bajo nivel en el mismo archivo: </p>
+<ul><li>lógica de negocio en funciones <code>vein</code> normales,</li><li>interoperabilidad externa en el límite mediante <code>rift vein</code>,</li><li>trabajo cercano a la máquina en <code>bedrock</code>,</li><li>auxiliares explícitos de almacenamiento de <code>bedrock.ofs</code>.</li></ul>
+<p>OFS incluye una biblioteca estándar escrita en el propio OFS (<code>stdlib/core.ofs</code>): </p>
+<h3 id="s27.5">Funciones matemáticas</h3>
+<pre><code>vein abs(x: stone) -&gt; stone         // valor absoluto
+vein max(a: stone, b: stone) -&gt; stone  // máximo
+vein min(a: stone, b: stone) -&gt; stone  // mínimo
+vein clamp(val: stone, lo: stone, hi: stone) -&gt; stone  // limitar a un rango
+</code></pre>
+<h3 id="s27.6">Runtime nativo de OFS (Stack Magma)</h3>
+<p>La implementación principal del runtime y de la biblioteca estándar de OFS está escrita en OFS (<code>stdlib/runtime/</code>), sin una implementación de runtime en otro lenguaje: </p>
+<div class="tw"><table><thead><tr><th>Subsistema</th><th>Módulo</th><th>Responsabilidad</th></tr></thead><tbody><tr><td><strong>Magma</strong></td><td><code>magma.ofs</code></td><td>Bootstrap y orquestador de ejecución del runtime nativo</td></tr><tr><td><strong>Reservoir</strong></td><td><code>reservoir.ofs</code></td><td>Asignación y gestión de memoria (<code>ofs_alloc</code>, <code>ofs_free</code>)</td></tr><tr><td><strong>Facet</strong></td><td><code>facet.ofs</code></td><td>Operaciones de texto y conversión numérica (<code>ofs_str_*</code>, <code>ofs_*_to_*</code>)</td></tr><tr><td><strong>Matrix</strong></td><td><code>matrix.ofs</code></td><td>Colecciones dinámicas y vectores (<code>ofs_array_*</code>)</td></tr><tr><td><strong>Outlet</strong></td><td><code>outlet.ofs</code></td><td>Entrada y salida de terminal (<code>echo_*</code>, colores ANSI, formato)</td></tr><tr><td><strong>Foundation</strong></td><td><code>foundation.ofs</code></td><td>Abstracciones del sistema operativo y del entorno (<code>ofs_getenv</code>, <code>ofs_mod</code>, <code>ofs_exit</code>)</td></tr><tr><td><strong>Pulse</strong></td><td><code>pulse.ofs</code></td><td>Reloj monotónico de alta precisión y temporizadores (<code>now_ms</code>, <code>sleep_ms</code>)</td></tr><tr><td><strong>Frame</strong></td><td><code>frame.ofs</code></td><td>Gestión de ventanas y superficies nativas</td></tr><tr><td><strong>Impulse</strong></td><td><code>impulse.ofs</code></td><td>Eventos de entrada: ratón y teclado</td></tr><tr><td><strong>Prism</strong></td><td><code>prism.ofs</code></td><td>Rasterización 2D de píxeles, geometría y superficies</td></tr></tbody></table></div>
+<p>Todas las primitivas de runtime son compiladas directamente por <code>ofscc</code> a LLVM IR nativo, lo que garantiza que los programas de OFS se ejecuten sobre el propio runtime nativo sin depender de implementaciones en C. </p>
+<h2 id="s28">Palabras clave</h2>
+<p>Lista completa de palabras clave reservadas: </p>
+<div class="tw"><table><thead><tr><th>Palabra clave</th><th>Token   </th><th>Propósito   </th></tr></thead><tbody><tr><td><code>core</code></td><td><code>KW_CORE</code></td><td>Función de entrada</td></tr><tr><td><code>vein</code></td><td><code>KW_VEIN</code></td><td>Definición de función</td></tr><tr><td><code>forge</code></td><td><code>KW_FORGE</code></td><td>Declaración de variable</td></tr><tr><td><code>monolith</code></td><td><code>KW_MONOLITH</code></td><td>Definición de struct</td></tr><tr><td><code>fracture</code></td><td><code>KW_FRACTURE</code></td><td>Bloque de punteros seguro</td></tr><tr><td><code>abyss</code></td><td><code>KW_ABYSS</code></td><td>Bloque de memoria insegura</td></tr><tr><td><code>cycle</code></td><td><code>KW_CYCLE</code></td><td>Bucle        </td></tr><tr><td><code>if</code> </td><td><code>KW_IF</code> </td><td>Condicional  </td></tr><tr><td><code>else</code></td><td><code>KW_ELSE</code></td><td>Rama else    </td></tr><tr><td><code>return</code></td><td><code>KW_RETURN</code></td><td>Retorno desde función</td></tr><tr><td><code>echo</code></td><td><code>KW_ECHO</code></td><td>Impresión (integrada)</td></tr><tr><td><code>in</code> </td><td><code>KW_IN</code> </td><td>Bucle por rango</td></tr><tr><td><code>shard</code></td><td><code>KW_SHARD</code></td><td>Tipo puntero </td></tr><tr><td><code>true</code></td><td><code>KW_TRUE</code></td><td>Booleano verdadero</td></tr><tr><td><code>false</code></td><td><code>KW_FALSE</code></td><td>Booleano falso</td></tr><tr><td><code>null</code></td><td><code>KW_NULL</code></td><td>Valor nulo   </td></tr><tr><td><code>break</code></td><td><code>KW_BREAK</code></td><td>Salir del bucle</td></tr><tr><td><code>continue</code></td><td><code>KW_CONTINUE</code></td><td>Omitir iteración</td></tr><tr><td><code>stone</code></td><td><code>KW_STONE</code></td><td>Tipo entero (i64)</td></tr><tr><td><code>crystal</code></td><td><code>KW_CRYSTAL</code></td><td>Tipo flotante (f64)</td></tr><tr><td><code>obsidian</code></td><td><code>KW_OBSIDIAN</code></td><td>Tipo cadena (i8*)</td></tr><tr><td><code>bool</code></td><td><code>KW_BOOL</code></td><td>Tipo booleano (i1)</td></tr><tr><td><code>void</code></td><td><code>KW_VOID</code></td><td>Tipo void    </td></tr><tr><td><code>attach</code></td><td><code>KW_IMPORT</code></td><td>Adjuntar módulo</td></tr><tr><td><code>while</code></td><td><code>KW_WHILE</code></td><td>Bucle solo con condición</td></tr><tr><td><code>extern</code></td><td><code>KW_EXTERN</code></td><td>Función externa</td></tr><tr><td><code>rift</code></td><td><code>KW_RIFT</code></td><td>Declaración de interop nativa</td></tr><tr><td><code>as</code> </td><td><code>KW_AS</code> </td><td>Cast de tipo</td></tr><tr><td><code>match</code></td><td><code>KW_MATCH</code></td><td>Coincidencia de patrones</td></tr><tr><td><code>case</code></td><td><code>KW_CASE</code></td><td>Rama de match</td></tr><tr><td><code>default</code></td><td><code>KW_DEFAULT</code></td><td>Rama de respaldo de match</td></tr><tr><td><code>const</code></td><td><code>KW_CONST</code></td><td>Variable inmutable</td></tr><tr><td><code>strata</code></td><td><code>KW_STRATA</code></td><td>Declaración de enum</td></tr><tr><td><code>tremor</code></td><td><code>KW_TREMOR</code></td><td>Bloque de manejo de errores</td></tr><tr><td><code>catch</code></td><td><code>KW_CATCH</code></td><td>Manejador de errores</td></tr><tr><td><code>throw</code></td><td><code>KW_THROW</code></td><td>Lanzar valor de error</td></tr><tr><td><code>tectonic</code></td><td><code>KW_TECTONIC</code></td><td>Prefijo de directiva de modo</td></tr><tr><td><code>bedrock</code></td><td><code>KW_BEDROCK</code></td><td>Bloque de bajo nivel tipado</td></tr><tr><td><code>asm</code></td><td><code>KW_ASM</code></td><td>Escape de ensamblador en línea (planeado, aún no disponible)</td></tr></tbody></table></div>
+<p class="cats">Guía · Lenguaje</p></article></main></div><footer class="foot"><span>Generado desde el código fuente por <code>ofs doc</code> · 2026-11-08</span><a href="../../legal/LICENSE">Apache License 2.0</a><a class="edit" href="https://github.com/Samwns/Obsidian-Fault-Script/edit/main/docs/es/LANGUAGE_REFERENCE.md" title="Editar en GitHub" aria-label="Editar en GitHub"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></a></footer><script src="../ofsdoc.js"></script></body></html>

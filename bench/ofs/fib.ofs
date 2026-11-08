@@ -1,0 +1,7 @@
+vein fib(n: stone) -> stone {
+    if (n < 2) { return n }
+    return fib(n - 1) + fib(n - 2)
+}
+core main() {
+    echo(fib(35))
+}

@@ -89,3 +89,21 @@ Linear symbol lists have good cache locality for small and medium programs. For 
 2. Per-phase timing: front end (lexer, parser, types), LLVM IR emission, native link.
 3. Real system metrics via `wait4`: user CPU time, system time and peak resident memory (RSS).
 4. Strict output checksum verification so no optimization changes semantics.
+
+## Measured run-time benchmarks
+
+Equivalent programs in OFS, Rust and Python (plus a local C reference) live in [`bench/`](../../bench/). Reproduce with `bash bench/run.sh` (writes [`bench/RESULTADOS.md`](../../bench/RESULTADOS.md)). Measured on an AMD Ryzen 5 5600GT, median of 5 runs, wall time in ms:
+
+@@TABLE@@
+
+Honest reading:
+
+- Native OFS **loses to C and Rust in every test**: about 1.5x-1.8x in `fib` and `loop`, 10x in `sort`, 17x in `alloc`, 50x in `strings` (concatenating and walking 1 MB).
+- It beats Python in `fib`, `loop`, `sort` and `alloc` (1.3x to 27x); in `strings` it loses even to Python (CPython optimizes string concatenation).
+- Startup is 3 ms (Python: 12 ms) and the empty binary is 28 KB (Rust: ~10 MB), but memory is higher than C: 5.1 MB empty, 97 MB in `alloc` (small arrays not freed in the loop) and 520 MB in `strings`.
+- `ofs run` (interpreted) is orders of magnitude slower: it does not finish `fib(35)` or `loop` in 60 s and fails (exit code 1) on `strings`, `sort` and `alloc`. Use it for scripts, not heavy loads.
+- Bug found while writing the benchmark: in native builds, `a[i] = v` on `Array<stone>` has no effect; `sort` uses `ofs_array_set(a, i, v)` as a workaround.
+
+## Consistency between `ofs run` and `ofs build`
+
+The interpreter and the LLVM generator share the lexer, parser and type checker, but execution still diverges: `ofs run` is a subset (no `extern` outside the builtin list, no pointers). The plan is to reach parity; until then `ofs build` is the reference.

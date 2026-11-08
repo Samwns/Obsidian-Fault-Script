@@ -62,20 +62,22 @@ O OFS combina o melhor dos dois paradigmas:
 
 1. **Desenvolvimento Instantâneo**: Em modo `ofs run` ou `ofs arquivo.ofs`, o código é executado diretamente na memória sem o atraso da invocação do `llc` e do `linker`.
 2. **Produção Nativa sem VM**: Em modo `ofs build`, o executável final não embute nenhum interpretador nem máquina virtual; roda diretamente como código de máquina da CPU (x86_64, ARM64).
-3. **Frontend Unificado**: Tanto o interpretador quanto o gerador LLVM compartilham o mesmo lexer, o mesmo parser e o mesmo verificador estático de tipos, garantindo consistência semântica.
+3. **Frontend Compartilhado**: o interpretador e o gerador LLVM compartilham lexer, parser e verificador de tipos. Isso **não** garante paridade de execução: hoje o `ofs run` ainda é um subconjunto do build nativo (sem `extern` fora da lista de builtins e sem ponteiros). O plano é chegar à paridade; até lá, programas com `extern` próprio ou ponteiros só rodam com `ofs build`.
 4. **Auto-hospedado (Self-hosted)**: Todo o compilador (`ofscc`), incluindo o parser, type checker, gerador LLVM e interpretador, é escrito em OFS.
 
 ---
 
 ## Comparativo Tecnológico
 
-| Característica | OFS (Nativo) | OFS (Interpretado) | Python | Node.js |
-|---|---|---|---|---|
-| **Modelo** | Máquina nativa AOT | AST Walk em memória | Bytecode em VM | JIT Engine (V8) |
-| **Execução** | Direto na CPU | Interpretador em OFS | CPython | V8 C++ |
-| **Inicialização** | ~2 a 10 ms | ~5 a 15 ms | ~40 a 100 ms | ~50 a 150 ms |
-| **Memória Base** | Leve (~1 a 4 MB) | Leve (~4 a 8 MB) | Moderado (~20 MB)| Elevado (~50 MB) |
-| **Dependências** | Nenhuma (binário) | Compilador `ofs` | Interpretador | Runtime Node |
+| Característica | OFS (Nativo) | OFS (Interpretado) | Python 3.14 |
+|---|---|---|---|
+| **Modelo** | AOT via LLVM | Interpretador de AST | Bytecode em VM |
+| **Inicialização (medida)** | 3 ms | 38 ms | 12 ms |
+| **RSS programa vazio (medido)** | 5,1 MB | n/d | 9,3 MB |
+| **Binário vazio** | 28 KB | n/a | n/a |
+| **Dependências** | Nenhuma (binário) | Compilador `ofs` | Interpretador |
+
+Números medidos em Ryzen 5 5600GT (mediana de 5 execuções). Tabela completa por benchmark, incluindo C e Rust, em [`bench/RESULTADOS.md`](../bench/RESULTADOS.md). Reproduzir: `bash bench/run.sh`. Node.js não foi medido (não faz parte do `bench/`). Resumo honesto: o OFS nativo fica entre 1,5x e 1,8x o tempo do C em `fib` e `loop`, 10x a 17x em `sort` e `alloc`, e **50x em `strings`**; o modo interpretado é lento demais para os benchmarks pesados (veja [PERFORMANCE.md](PERFORMANCE.md)).
 
 ---
 

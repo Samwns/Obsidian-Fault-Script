@@ -7,8 +7,24 @@ case "$OFS_VERSION" in
 esac
 OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Termux (Android, aarch64): instalacao em $PREFIX/lib/ofs, alvo nativo aarch64-android.
+IS_TERMUX=false
+TERMUX_LIB=""
+if [ -n "${TERMUX_VERSION:-}" ] || case "${PREFIX:-}" in /data/data/com.termux*) true ;; *) false ;; esac; then
+  IS_TERMUX=true
+  TERMUX_LIB="${PREFIX:-/data/data/com.termux/files/usr}/lib/ofs"
+  export OFSCC_TARGET="${OFSCC_TARGET:-aarch64-unknown-linux-android}"
+fi
+
 OFSCC="${OFSCC:-$ROOT/ofscc}"
+if [ "$IS_TERMUX" = true ] && [ ! -x "$OFSCC" ] && [ -x "$TERMUX_LIB/ofscc" ]; then
+  OFSCC="$TERMUX_LIB/ofscc"
+fi
 RUNTIME="${OFS_RUNTIME:-}"
+if [ -z "$RUNTIME" ] && [ "$IS_TERMUX" = true ] && [ -f "$TERMUX_LIB/magma.o" ]; then
+  RUNTIME="$TERMUX_LIB/magma.o"
+fi
 if [ -z "$RUNTIME" ]; then
   for runtime_candidate in "$ROOT/magma.o" "$ROOT/libofs_runtime.a" "$HOME/.local/lib/ofs/magma.o" "$HOME/.local/lib/ofs/libofs_runtime.a" \
     "/usr/local/lib/ofs/magma.o" "/usr/local/lib/ofs/libofs_runtime.a" "/usr/lib/ofs/magma.o" "/usr/lib/ofs/libofs_runtime.a"; do
@@ -48,7 +64,9 @@ if [ -z "${OFS_STDLIB:-}" ] && [ -n "${OFS_STDLIB_PATH:-}" ]; then
 fi
 
 if [ -z "${OFS_STDLIB_PATH:-}" ]; then
-  if [ -d "$ROOT/stdlib" ]; then
+  if [ "$IS_TERMUX" = true ] && [ -d "$TERMUX_LIB/stdlib" ]; then
+    export OFS_STDLIB_PATH="$TERMUX_LIB/stdlib"
+  elif [ -d "$ROOT/stdlib" ]; then
     export OFS_STDLIB_PATH="$ROOT/stdlib"
   elif [ -d "$ROOT/../ofs/stdlib" ]; then
     export OFS_STDLIB_PATH="$ROOT/../ofs/stdlib"
@@ -141,7 +159,9 @@ native_link() {
   fi
 
   extra_libs=(-lm)
-  if [ "$(uname -s)" != "Darwin" ]; then
+  if [ "$IS_TERMUX" = true ]; then
+    : # bionic ja inclui pthread/dl; sem X11
+  elif [ "$(uname -s)" != "Darwin" ]; then
     if pkg-config --exists x11 2>/dev/null; then
       extra_libs+=(-lX11)
     elif [ -f /usr/lib64/libX11.so ] || [ -f /usr/lib/x86_64-linux-gnu/libX11.so ]; then
@@ -180,6 +200,19 @@ native_link() {
       "${win_cmd[@]}"
     fi
     rm -f "$obj"
+    return 0
+  fi
+
+  if [ "$IS_TERMUX" = true ]; then
+    local tclang="${PREFIX:-}/bin/clang"
+    [ -x "$tclang" ] || tclang="$(command -v clang || true)"
+    [ -n "$tclang" ] || { echo "ofs: clang nao encontrado (pkg install clang)" >&2; return 1; }
+    local tcmd=("$tclang" -Wno-override-module)
+    [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ] && tcmd+=("${OFS_LLVM_IR_FLAGS[@]}")
+    tcmd+=(-Wl,--allow-multiple-definition "$in_ll")
+    [ "${#magma_objs[@]}" -gt 0 ] && tcmd+=("${magma_objs[@]}")
+    tcmd+=(-lm -o "$out_bin")
+    "${tcmd[@]}"
     return 0
   fi
 
@@ -246,6 +279,9 @@ native_asm() {
   fi
 }
 
+if [ ! -x "$OFSCC" ] && [ "$IS_TERMUX" = true ] && [ -x "$TERMUX_LIB/ofscc" ]; then
+  OFSCC="$TERMUX_LIB/ofscc"
+fi
 if [ ! -x "$OFSCC" ] && [ -x "$HOME/.local/lib/ofs/ofscc" ]; then
   OFSCC="$HOME/.local/lib/ofs/ofscc"
 fi
@@ -315,6 +351,7 @@ ${c_head}Subcomandos:${c_off}
   ${c_cmd}language [en|pt|es]${c_off} Mostra/altera o idioma da CLI
   ${c_cmd}ir|asm|tokens|ast${c_off}   Artefatos de depuracao do compilador
   ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o saida.ppm)
+  ${c_cmd}doc [pasta|arq.ofs]${c_off} Documentacao gerada do codigo (-o saida, --check, --docs pasta)
   ${c_cmd}build --target android${c_off} APK Android de um .ofs ou .oal (--install, --serial, --manifest)
   ${c_cmd}run <app.oal>${c_off}       Abre o app OAL numa janela de celular (X11)
   ${c_cmd}clean${c_off}               Limpa artefatos temporarios de build
@@ -341,6 +378,7 @@ ${c_head}Subcomandos:${c_off}
   ${c_cmd}language [en|pt|es]${c_off} Muestra/cambia el idioma de la CLI
   ${c_cmd}ir|asm|tokens|ast${c_off}   Artefactos de depuracion del compilador
   ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o salida.ppm)
+  ${c_cmd}doc [carpeta|arq.ofs]${c_off} Documentacion generada del codigo (-o salida, --check, --docs carpeta)
   ${c_cmd}build --target android${c_off} APK Android de un .ofs o .oal (--install, --serial, --manifest)
   ${c_cmd}run <app.oal>${c_off}       Abre la app OAL en una ventana de movil (X11)
   ${c_cmd}clean${c_off}               Limpia artefactos temporales de build
@@ -367,6 +405,7 @@ ${c_head}Subcommands:${c_off}
   ${c_cmd}language [en|pt|es]${c_off} Show/change the CLI language
   ${c_cmd}ir|asm|tokens|ast${c_off}   Compiler debug artifacts
   ${c_cmd}ui <file.oll>${c_off}       Render native OLL layout (-o output.ppm)
+  ${c_cmd}doc [dir|file.ofs]${c_off}  Docs generated from source code (-o out, --check, --docs dir)
   ${c_cmd}build --target android${c_off} Android APK from a .ofs or .oal (--install, --serial, --manifest)
   ${c_cmd}run <app.oal>${c_off}       Open an OAL app in a phone-sized X11 window
   ${c_cmd}clean${c_off}               Clean temporary build artifacts
@@ -751,6 +790,65 @@ oal_desktop_entry() {
   OFSCC="$A_OFSCC"
 }
 
+# ofs doc: auto-documentacao gerada do codigo (ofs/tools/ofsdoc.ofs, escrito em OFS).
+#   ofs doc [entradas...] [-o saida] [--check] [--docs pasta] [--title nome] [--repo url] [--lang pt|en|es]
+# Sem entradas: ofs/stdlib, ofs/tools e ofs/ofscc do repositorio. --check nao gera
+# HTML: imprime a cobertura e sai com 1 se um .md citar funcao que nao existe.
+cmd_doc() {
+  local src out="" check=0 dump=0 docs="" title="" repo="" lang="" root="" defaults=0
+  local inputs=()
+  src="$(android_src_dir)" || { echo "ofs doc: fonte do OFS (ofs/tools/ofsdoc.ofs) nao encontrado; defina OFS_SOURCE=<repo>/ofs" >&2; return 2; }
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      -o|--output) out="${2:-}"; shift 2 ;;
+      --check) check=1; shift ;;
+      --dump) dump=1; shift ;;
+      --docs) docs="${2:-}"; shift 2 ;;
+      --title) title="${2:-}"; shift 2 ;;
+      --repo) repo="${2:-}"; shift 2 ;;
+      --lang) lang="${2:-}"; shift 2 ;;
+      *) inputs+=("$1"); shift ;;
+    esac
+  done
+  if [ "${#inputs[@]}" -eq 0 ]; then
+    defaults=1
+    inputs=("$src/stdlib" "$src/tools" "$src/ofscc")
+    root="$(cd "$src/.." && pwd)"
+    [ -n "$repo" ] || repo="https://github.com/$OFS_REPO"
+    [ -n "$docs" ] || { [ -d "$root/docs" ] && docs="$root/docs"; }
+    [ -n "$title" ] || title="OFS"
+  else
+    [ -n "$docs" ] || { [ -d docs ] && docs="docs"; }
+    [ -e "${inputs[0]}" ] || { echo "ofs doc: entrada nao encontrada: ${inputs[0]}" >&2; return 2; }
+    if [ -z "$title" ]; then
+      title="$(basename "$(cd "$(dirname "${inputs[0]}")" && pwd)/$(basename "${inputs[0]}")")"
+      title="${title%.ofs}"
+    fi
+  fi
+  [ -n "$out" ] || out="docs_api"
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/ofs/tools"
+  mkdir -p "$cache"
+  local bin="$cache/ofsdoc" tool_src="$src/tools/ofsdoc.ofs"
+  [ -f "$tool_src" ] || { echo "ofs doc: $tool_src nao existe" >&2; return 2; }
+  if [ ! -x "$bin" ] || [ -n "$(find "$src/tools" -maxdepth 1 -name 'ofsdoc*.ofs' -newer "$bin" -print -quit)" ]; then
+    echo "ofs doc: compilando a ferramenta (primeira vez)..." >&2
+    local ll="$cache/ofsdoc.ll"
+    OFSCC_INPUT="$tool_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" >"$cache/ofsdoc.log" 2>&1 \
+      || { tail -20 "$cache/ofsdoc.log" >&2; echo "ofs doc: falha ao compilar o ofsdoc" >&2; return 1; }
+    native_link "$ll" "$bin" linux
+    chmod +x "$bin"
+    rm -f "$ll"
+  fi
+  local joined="" i
+  for i in "${inputs[@]}"; do
+    case "$i" in /*) ;; *) i="$(pwd)/$i" ;; esac
+    joined="${joined:+$joined:}${i%/}"
+  done
+  OFSDOC_INPUT="$joined" OFSDOC_OUT="$out" OFSDOC_DOCS="$docs" OFSDOC_CHECK="$check" OFSDOC_DUMP="$dump" \
+    OFSDOC_TITLE="$title" OFSDOC_REPO="$repo" OFSDOC_ROOT="$root" OFSDOC_LANG="${lang:-${OFS_LANG:-}}" \
+    OFSDOC_ASSETS="$src/tools/ofsdoc" "$bin"
+}
+
 need_ofscc() {
   if [ ! -x "$OFSCC" ]; then
     echo "ofs: self-hosted compiler not found next to wrapper: $OFSCC" >&2
@@ -787,6 +885,11 @@ esac
 
 need_ofscc
 shift || true
+
+if [ "$cmd" = doc ]; then
+  cmd_doc "$@"
+  exit $?
+fi
 
 mode="$cmd"
 input=""

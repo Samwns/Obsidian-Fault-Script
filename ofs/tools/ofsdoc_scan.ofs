@@ -1,0 +1,1366 @@
+// ofsdoc_scan: extrator de documentacao do OFS (parte 1 do `ofs doc`).
+//
+// Le arquivos .ofs e monta um indice em memoria: modulos, tipos (monolith),
+// funcoes (vein / rift vein / extern vein / core), constantes globais e seus
+// comentarios de documentacao (linhas `//` contiguas acima da declaracao ou
+// `/** ... */`). Depois resolve "chama" / "usado por", cruza com os .md de
+// docs/ ("veja tambem") e calcula a cobertura. Nao guarda o texto dos fontes:
+// cada arquivo e lido, varrido linha a linha e descartado (o runtime do OFS
+// nao libera strings, entao o scanner evita concatenar textos grandes).
+//
+// Nao usa o lexer do ofscc de proposito: e um scanner de linhas com chaves
+// balanceadas, strings e comentarios ignorados (limitacao: `{` de container
+// ou de corpo na mesma linha da declaracao, como no stdlib).
+
+extern vein getenv(name: obsidian) -> obsidian
+extern vein exit(code: stone) -> void
+extern vein system(cmd: obsidian) -> stone
+extern vein fopen(path: obsidian, mode: obsidian) -> obsidian
+extern vein fclose(f: obsidian) -> stone
+extern vein fread(buffer: obsidian, size: stone, count: stone, f: obsidian) -> stone
+extern vein fputs(value: obsidian, f: obsidian) -> stone
+extern vein fseek(f: obsidian, offset: stone, origin: stone) -> stone
+extern vein ftell(f: obsidian) -> stone
+extern vein ofs_alloc(size: stone) -> obsidian
+extern vein ofs_str_lower(s: obsidian) -> obsidian
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_stone_to_obsidian(value: stone) -> obsidian
+extern vein ofs_array_len(a: Array) -> stone
+extern vein ofs_array_get(a: Array, index: stone) -> stone
+extern vein ofs_array_push(a: Array, value: stone) -> void
+extern vein ofs_array_set(a: Array, index: stone, value: stone) -> void
+extern vein ofs_array_pop(a: Array) -> stone
+
+// ---------------------------------------------------------------- utilitarios
+
+// leitura tipada de Array<obsidian> (a[i] direto vira stone no codegen atual)
+vein od_s(a: Array<obsidian>, i: stone) -> obsidian {
+    return a[i]
+}
+
+
+vein od_t(lang: obsidian, pt: obsidian, en: obsidian, es: obsidian) -> obsidian {
+    if (ofs_str_eq(lang, "en")) { return en }
+    if (ofs_str_eq(lang, "es")) { return es }
+    return pt
+}
+
+vein od_itos(n: stone) -> obsidian {
+    return ofs_stone_to_obsidian(n)
+}
+
+vein od_isid(c: stone) -> bool {
+    return (c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c == 95
+}
+
+vein od_isidst(c: stone) -> bool {
+    return (c >= 97 && c <= 122) || (c >= 65 && c <= 90) || c == 95
+}
+
+vein od_find(s: obsidian, needle: obsidian, from: stone) -> stone {
+    forge n = ofs_str_len(s)
+    forge m = ofs_str_len(needle)
+    if (m == 0) { return from }
+    forge c0 = ofs_str_char_at(needle, 0)
+    forge i = from
+    while (i + m <= n) {
+        if (ofs_str_char_at(s, i) == c0) {
+            forge j = 1
+            while (j < m && ofs_str_char_at(s, i + j) == ofs_str_char_at(needle, j)) { j = j + 1 }
+            if (j == m) { return i }
+        }
+        i = i + 1
+    }
+    return -1
+}
+
+vein od_has(s: obsidian, needle: obsidian) -> bool {
+    return od_find(s, needle, 0) >= 0
+}
+
+vein od_starts(s: obsidian, p: obsidian) -> bool {
+    forge m = ofs_str_len(p)
+    if (ofs_str_len(s) < m) { return false }
+    forge j = 0
+    while (j < m) {
+        if (ofs_str_char_at(s, j) != ofs_str_char_at(p, j)) { return false }
+        j = j + 1
+    }
+    return true
+}
+
+vein od_ends(s: obsidian, p: obsidian) -> bool {
+    forge n = ofs_str_len(s)
+    forge m = ofs_str_len(p)
+    if (n < m) { return false }
+    return ofs_str_eq(ofs_str_substr(s, n - m, m), p)
+}
+
+// substring [a, b)
+vein od_sub(s: obsidian, a: stone, b: stone) -> obsidian {
+    if (b <= a) { return "" }
+    return ofs_str_substr(s, a, b - a)
+}
+
+vein od_tail(s: obsidian, a: stone) -> obsidian {
+    return od_sub(s, a, ofs_str_len(s))
+}
+
+vein od_trim(s: obsidian) -> obsidian {
+    forge n = ofs_str_len(s)
+    forge a = 0
+    while (a < n && (ofs_str_char_at(s, a) == 32 || ofs_str_char_at(s, a) == 9 || ofs_str_char_at(s, a) == 13 || ofs_str_char_at(s, a) == 10)) { a = a + 1 }
+    forge b = n
+    while (b > a && (ofs_str_char_at(s, b - 1) == 32 || ofs_str_char_at(s, b - 1) == 9 || ofs_str_char_at(s, b - 1) == 13 || ofs_str_char_at(s, b - 1) == 10)) { b = b - 1 }
+    if (a == 0 && b == n) { return s }
+    return od_sub(s, a, b)
+}
+
+vein od_esc(s: obsidian) -> obsidian {
+    forge out = ""
+    forge start = 0
+    forge n = ofs_str_len(s)
+    forge i = 0
+    while (i < n) {
+        forge c = ofs_str_char_at(s, i)
+        forge rep = ""
+        if (c == 38) { rep = "&amp;" } else if (c == 60) { rep = "&lt;" } else if (c == 62) { rep = "&gt;" } else if (c == 34) { rep = "&quot;" }
+        if (ofs_str_len(rep) > 0) {
+            out = out + od_sub(s, start, i) + rep
+            start = i + 1
+        }
+        i = i + 1
+    }
+    if (start == 0) { return s }
+    return out + od_sub(s, start, n)
+}
+
+vein od_jesc(s: obsidian) -> obsidian {
+    forge out = ""
+    forge start = 0
+    forge n = ofs_str_len(s)
+    forge i = 0
+    while (i < n) {
+        forge c = ofs_str_char_at(s, i)
+        forge rep = ""
+        if (c == 34) { rep = "\\\"" } else if (c == 92) { rep = "\\\\" } else if (c == 10) { rep = "\\n" } else if (c == 9) { rep = " " } else if (c == 13) { rep = "" } else if (c < 32) { rep = " " }
+        if (c == 34 || c == 92 || c < 32) {
+            out = out + od_sub(s, start, i) + rep
+            start = i + 1
+        }
+        i = i + 1
+    }
+    if (start == 0) { return s }
+    return out + od_sub(s, start, n)
+}
+
+vein od_ident_end(s: obsidian, i: stone) -> stone {
+    forge n = ofs_str_len(s)
+    forge j = i
+    while (j < n && od_isid(ofs_str_char_at(s, j))) { j = j + 1 }
+    return j
+}
+
+vein od_first_line(s: obsidian) -> obsidian {
+    forge n = ofs_str_len(s)
+    forge i = 0
+    while (i < n && ofs_str_char_at(s, i) != 10) { i = i + 1 }
+    return od_trim(od_sub(s, 0, i))
+}
+
+vein od_count(s: obsidian, ch: stone) -> stone {
+    forge n = ofs_str_len(s)
+    forge k = 0
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(s, i) == ch) { k = k + 1 }
+        i = i + 1
+    }
+    return k
+}
+
+vein od_paren_balance(s: obsidian) -> stone {
+    return od_count(s, 40) - od_count(s, 41)
+}
+
+vein od_basename(p: obsidian) -> obsidian {
+    forge n = ofs_str_len(p)
+    forge i = n
+    while (i > 0 && ofs_str_char_at(p, i - 1) != 47) { i = i - 1 }
+    return od_tail(p, i)
+}
+
+vein od_read(path: obsidian) -> obsidian {
+    forge f = fopen(path, "r")
+    if (f == null) { return "" }
+    fseek(f, 0, 2)
+    forge size = ftell(f)
+    fseek(f, 0, 0)
+    forge buf = ofs_alloc(size + 1)
+    fread(buf, 1, size, f)
+    fclose(f)
+    return buf
+}
+
+vein od_exists(path: obsidian) -> bool {
+    forge f = fopen(path, "r")
+    if (f == null) { return false }
+    fclose(f)
+    return true
+}
+
+vein od_sq(s: obsidian) -> obsidian {
+    return "'" + s + "'"
+}
+
+// ---------------------------------------------------------------- modelo
+
+forge od_m_path: Array<obsidian> = []      // caminho dado ao scanner
+forge od_m_src: Array<obsidian> = []       // caminho relativo ao repositorio (links)
+forge od_m_name: Array<obsidian> = []      // nome de exibicao (relativo a raiz de entrada, sem .ofs)
+forge od_m_slug: Array<obsidian> = []      // nome do arquivo html (sem .html)
+forge od_m_group: Array<obsidian> = []     // pasta de entrada (stdlib, tools, ofscc)
+forge od_m_doc: Array<obsidian> = []       // comentario de cabecalho
+forge od_m_ns: Array<obsidian> = []        // ",ns1,ns2,"
+forge od_m_attach: Array<obsidian> = []    // ",mod1,mod2,"
+forge od_m_lines: Array<stone> = []
+forge od_m_lr: Array<obsidian> = []
+forge od_m_see: Array<obsidian> = []
+forge od_m_pub: Array<stone> = []
+forge od_m_pubdoc: Array<stone> = []
+
+forge od_i_mod: Array<stone> = []
+forge od_i_kind: Array<obsidian> = []      // vein rift extern core monolith strata const global type
+forge od_i_name: Array<obsidian> = []
+forge od_i_owner: Array<obsidian> = []     // namespace / tipo do impl
+forge od_i_okind: Array<obsidian> = []     // namespace | impl | ""
+forge od_i_sig: Array<obsidian> = []
+forge od_i_params: Array<obsidian> = []    // "nome\ttipo\n..."
+forge od_i_ret: Array<obsidian> = []
+forge od_i_doc: Array<obsidian> = []
+forge od_i_line: Array<stone> = []
+forge od_i_pub: Array<stone> = []
+forge od_i_abi: Array<obsidian> = []
+forge od_i_bind: Array<obsidian> = []
+forge od_i_calls: Array<obsidian> = []
+forge od_i_used: Array<obsidian> = []
+forge od_i_see: Array<obsidian> = []
+forge od_i_lr: Array<obsidian> = []
+forge od_i_nxs: Array<stone> = []
+forge od_i_nxq: Array<stone> = []
+forge od_i_stamp: Array<stone> = []
+forge od_i_fields: Array<obsidian> = []    // "nome\ttipo\tdoc\n..." (monolith) ou variantes (strata)
+forge od_i_val: Array<obsidian> = []       // valor de const/global
+
+forge od_hk: Array<obsidian> = []
+forge od_hv: Array<stone> = []
+forge od_hsize: stone = 65536
+
+// estado do scanner
+forge od_depth: stone = 0
+forge od_in_block: bool = false
+forge od_blk_doc: bool = false
+forge od_blk: obsidian = ""
+forge od_lcom: obsidian = ""
+forge od_lcomf: bool = false
+forge od_pend: obsidian = ""
+forge od_seen_code: bool = false
+forge od_cur_mdoc: obsidian = ""
+forge od_cx_depth: Array<stone> = []
+forge od_cx_name: Array<obsidian> = []
+forge od_cx_kind: Array<obsidian> = []
+forge od_cx_item: Array<stone> = []
+forge od_cur_mod: stone = -1
+forge od_cur_item: stone = -1
+forge od_body_depth: stone = 0
+forge od_seen_open: bool = false
+forge od_call_from: stone = -1
+forge od_sigbuf: obsidian = ""
+forge od_sigraw: obsidian = ""
+forge od_sigln: stone = 0
+forge od_sigdoc: obsidian = ""
+
+vein od_new_item(mi: stone, kind: obsidian, name: obsidian, owner: obsidian, okind: obsidian, ln: stone, doc: obsidian) -> stone {
+    forge idx = ofs_array_len(od_i_mod)
+    ofs_array_push(od_i_mod, mi)
+    ofs_array_push(od_i_kind, kind)
+    ofs_array_push(od_i_name, name)
+    ofs_array_push(od_i_owner, owner)
+    ofs_array_push(od_i_okind, okind)
+    ofs_array_push(od_i_sig, "")
+    ofs_array_push(od_i_params, "")
+    ofs_array_push(od_i_ret, "")
+    ofs_array_push(od_i_doc, doc)
+    ofs_array_push(od_i_line, ln)
+    ofs_array_push(od_i_pub, 0)
+    ofs_array_push(od_i_abi, "")
+    ofs_array_push(od_i_bind, "")
+    ofs_array_push(od_i_calls, ",")
+    ofs_array_push(od_i_used, "")
+    ofs_array_push(od_i_see, "")
+    ofs_array_push(od_i_lr, "")
+    ofs_array_push(od_i_nxs, -1)
+    ofs_array_push(od_i_nxq, -1)
+    ofs_array_push(od_i_stamp, -1)
+    ofs_array_push(od_i_fields, "")
+    ofs_array_push(od_i_val, "")
+    return idx
+}
+
+// ---------------------------------------------------------------- scanner de linhas
+
+// Remove comentarios e conteudo de strings (mantem `""`). Deixa o texto do
+// comentario `//` em od_lcom (od_lcomf = achou `//`) e o texto de bloco em od_blk.
+vein od_strip(raw: obsidian) -> obsidian {
+    forge n = ofs_str_len(raw)
+    forge out = ""
+    forge seg = 0
+    forge i = 0
+    forge bs = 0
+    od_lcom = ""
+    od_lcomf = false
+    od_blk = ""
+    if (od_in_block) { seg = -1 }
+    while (i < n) {
+        forge c = ofs_str_char_at(raw, i)
+        if (od_in_block) {
+            if (c == 42 && i + 1 < n && ofs_str_char_at(raw, i + 1) == 47) {
+                od_blk = od_blk + od_sub(raw, bs, i)
+                od_in_block = false
+                i = i + 2
+                seg = i
+            } else {
+                i = i + 1
+            }
+        } else if (c == 34) {
+            out = out + od_sub(raw, seg, i + 1)
+            i = i + 1
+            while (i < n && ofs_str_char_at(raw, i) != 34) {
+                if (ofs_str_char_at(raw, i) == 92) { i = i + 1 }
+                i = i + 1
+            }
+            seg = i
+            i = i + 1
+        } else if (c == 47 && i + 1 < n && ofs_str_char_at(raw, i + 1) == 47) {
+            out = out + od_sub(raw, seg, i)
+            od_lcom = od_sub(raw, i + 2, n)
+            od_lcomf = true
+            seg = -1
+            i = n
+        } else if (c == 47 && i + 1 < n && ofs_str_char_at(raw, i + 1) == 42) {
+            out = out + od_sub(raw, seg, i)
+            od_in_block = true
+            od_blk_doc = (i + 2 < n && ofs_str_char_at(raw, i + 2) == 42 && (i + 3 >= n || ofs_str_char_at(raw, i + 3) != 47))
+            i = i + 2
+            bs = i
+            seg = -1
+        } else {
+            i = i + 1
+        }
+    }
+    if (od_in_block) {
+        od_blk = od_blk + od_sub(raw, bs, n)
+    } else if (seg >= 0 && seg < n) {
+        out = out + od_sub(raw, seg, n)
+    }
+    return out
+}
+
+vein od_doc_text(s: obsidian) -> obsidian {
+    // remove exatamente um espaco inicial do texto de `//`
+    if (ofs_str_len(s) > 0 && ofs_str_char_at(s, 0) == 32) { return od_tail(s, 1) }
+    return s
+}
+
+vein od_block_text(s: obsidian) -> obsidian {
+    forge n = ofs_str_len(s)
+    forge a = 0
+    while (a < n && (ofs_str_char_at(s, a) == 32 || ofs_str_char_at(s, a) == 9 || ofs_str_char_at(s, a) == 42)) { a = a + 1 }
+    return od_trim(od_tail(s, a))
+}
+
+vein od_base_depth() -> stone {
+    forge k = ofs_array_len(od_cx_depth)
+    if (k == 0) { return 0 }
+    return od_cx_depth[k - 1]
+}
+
+vein od_ctx_kind_top() -> obsidian {
+    forge k = ofs_array_len(od_cx_kind)
+    if (k == 0) { return "" }
+    return od_s(od_cx_kind, k - 1)
+}
+
+vein od_ctx_name_top() -> obsidian {
+    forge k = ofs_array_len(od_cx_name)
+    if (k == 0) { return "" }
+    return od_s(od_cx_name, k - 1)
+}
+
+vein od_ctx_push(kind: obsidian, name: obsidian, depth: stone, item: stone) -> void {
+    ofs_array_push(od_cx_depth, depth)
+    ofs_array_push(od_cx_name, name)
+    ofs_array_push(od_cx_kind, kind)
+    ofs_array_push(od_cx_item, item)
+}
+
+vein od_ctx_pop() -> void {
+    ofs_array_pop(od_cx_depth)
+    ofs_array_pop(od_cx_name)
+    ofs_array_pop(od_cx_kind)
+    ofs_array_pop(od_cx_item)
+}
+
+// parametros "a: T, b: vein(stone) -> stone" -> "a\tT\nb\tvein(stone) -> stone\n"
+vein od_split_params(p: obsidian) -> obsidian {
+    forge out = ""
+    forge n = ofs_str_len(p)
+    forge depth = 0
+    forge start = 0
+    forge i = 0
+    while (i <= n) {
+        forge c = 44
+        if (i < n) { c = ofs_str_char_at(p, i) }
+        if (i < n && (c == 40 || c == 60 || c == 91)) { depth = depth + 1 }
+        if (i < n && (c == 41 || c == 62 || c == 93)) {
+            // `->` nao fecha angulo
+            if (c == 62 && i > 0 && ofs_str_char_at(p, i - 1) == 45) { } else { depth = depth - 1 }
+        }
+        if (i == n || (c == 44 && depth <= 0)) {
+            forge part = od_trim(od_sub(p, start, i))
+            if (ofs_str_len(part) > 0) {
+                forge colon = od_find(part, ":", 0)
+                if (colon < 0) {
+                    out = out + part + "\t\n"
+                } else {
+                    out = out + od_trim(od_sub(part, 0, colon)) + "\t" + od_trim(od_tail(part, colon + 1)) + "\n"
+                }
+            }
+            start = i + 1
+        }
+        i = i + 1
+    }
+    return out
+}
+
+// "a\tT\nb\tU\n" -> "a: T, b: U"
+vein od_params_join(pl: obsidian) -> obsidian {
+    forge out = ""
+    forge n = ofs_str_len(pl)
+    forge start = 0
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(pl, i) == 10) {
+            forge row = od_sub(pl, start, i)
+            forge tab = od_find(row, "\t", 0)
+            forge item = row
+            if (tab >= 0) {
+                forge ty = od_tail(row, tab + 1)
+                item = od_sub(row, 0, tab)
+                if (ofs_str_len(ty) > 0) { item = item + ": " + ty }
+            }
+            if (ofs_str_len(out) > 0) { out = out + ", " }
+            out = out + item
+            start = i + 1
+        }
+        i = i + 1
+    }
+    return out
+}
+
+vein od_bind_of(raw: obsidian) -> obsidian {
+    forge p = od_find(raw, "bind \"", 0)
+    if (p < 0) { return "" }
+    forge s = p + 6
+    forge e = od_find(raw, "\"", s)
+    if (e < 0) { return "" }
+    return od_sub(raw, s, e)
+}
+
+// ---------------------------------------------------------------- chamadas
+
+vein od_is_kw(tok: obsidian) -> bool {
+    if (ofs_str_len(tok) > 8) { return false }
+    return ofs_str_eq(tok, "if") || ofs_str_eq(tok, "while") || ofs_str_eq(tok, "cycle") || ofs_str_eq(tok, "switch") || ofs_str_eq(tok, "return") || ofs_str_eq(tok, "vein") || ofs_str_eq(tok, "throw") || ofs_str_eq(tok, "as") || ofs_str_eq(tok, "else") || ofs_str_eq(tok, "forge") || ofs_str_eq(tok, "sizeof")
+}
+
+// anota em od_i_calls os identificadores seguidos de `(` (formas `f(` e `ns.f(`)
+vein od_scan_calls(code: obsidian, from: stone, item: stone) -> void {
+    forge n = ofs_str_len(code)
+    forge i = from
+    if (i < 0) { i = 0 }
+    while (i < n) {
+        forge c = ofs_str_char_at(code, i)
+        if (od_isidst(c)) {
+            forge e = od_ident_end(code, i)
+            forge last = od_sub(code, i, e)
+            forge prev = ""
+            while (e + 1 < n && ofs_str_char_at(code, e) == 46 && od_isidst(ofs_str_char_at(code, e + 1))) {
+                forge e2 = od_ident_end(code, e + 1)
+                prev = last
+                last = od_sub(code, e + 1, e2)
+                e = e2
+            }
+            forge k = e
+            while (k < n && ofs_str_char_at(code, k) == 32) { k = k + 1 }
+            if (k < n && ofs_str_char_at(code, k) == 40 && od_is_kw(last) == false) {
+                forge tok = last
+                if (ofs_str_len(prev) > 0) { tok = prev + "." + last }
+                forge cur = od_s(od_i_calls, item)
+                if (od_has(cur, "," + tok + ",") == false) {
+                    ofs_array_set(od_i_calls, item, cur + tok + ",")
+                }
+            }
+            i = e
+        } else if (c >= 48 && c <= 57) {
+            i = od_ident_end(code, i)
+        } else {
+            i = i + 1
+        }
+    }
+}
+
+// ---------------------------------------------------------------- declaracoes
+
+vein od_pub_flag(kind: obsidian, name: obsidian) -> stone {
+    if (ofs_str_len(name) > 0 && ofs_str_char_at(name, 0) == 95) { return 0 }
+    return 1
+}
+
+vein od_do_fn(kind: obsidian, rest: obsidian, raw: obsidian, t: obsidian, ln: stone, doc: obsidian) -> void {
+    forge ne = od_ident_end(rest, 0)
+    forge name = od_sub(rest, 0, ne)
+    if (ofs_str_len(name) == 0) { return }
+    forge owner = ""
+    forge okind = ""
+    if (ofs_str_eq(od_ctx_kind_top(), "namespace") || ofs_str_eq(od_ctx_kind_top(), "impl")) {
+        owner = od_ctx_name_top()
+        okind = od_ctx_kind_top()
+    }
+    forge p = od_find(rest, "(", ne)
+    forge params = ""
+    forge ret = ""
+    if (p >= 0) {
+        forge depth = 0
+        forge q = p
+        forge n = ofs_str_len(rest)
+        while (q < n) {
+            forge c = ofs_str_char_at(rest, q)
+            if (c == 40) { depth = depth + 1 }
+            if (c == 41) {
+                depth = depth - 1
+                if (depth == 0) { break }
+            }
+            q = q + 1
+        }
+        params = od_split_params(od_sub(rest, p + 1, q))
+        forge after = od_trim(od_tail(rest, q + 1))
+        if (od_starts(after, "->")) {
+            forge r = od_trim(od_tail(after, 2))
+            forge cut = ofs_str_len(r)
+            forge a1 = od_find(r, "{", 0)
+            if (a1 >= 0 && a1 < cut) { cut = a1 }
+            a1 = od_find(r, " bind", 0)
+            if (a1 >= 0 && a1 < cut) { cut = a1 }
+            a1 = od_find(r, " abi", 0)
+            if (a1 >= 0 && a1 < cut) { cut = a1 }
+            ret = od_trim(od_sub(r, 0, cut))
+        }
+    }
+    forge idx = od_new_item(od_cur_mod, kind, name, owner, okind, ln, doc)
+    forge prefix = kind
+    if (ofs_str_eq(kind, "rift") || ofs_str_eq(kind, "extern")) { prefix = kind + " vein" }
+    if (ofs_str_eq(kind, "vein")) { prefix = "vein" }
+    forge sig = prefix + " " + name + "(" + od_params_join(params) + ")"
+    if (ofs_str_len(ret) > 0) { sig = sig + " -> " + ret }
+    ofs_array_set(od_i_sig, idx, sig)
+    ofs_array_set(od_i_params, idx, params)
+    ofs_array_set(od_i_ret, idx, ret)
+    if (ofs_str_eq(kind, "vein") || ofs_str_eq(kind, "rift")) { ofs_array_set(od_i_pub, idx, od_pub_flag(kind, name)) }
+    if (ofs_str_eq(kind, "rift")) {
+        if (od_has(t, " abi c")) { ofs_array_set(od_i_abi, idx, "c") }
+        ofs_array_set(od_i_bind, idx, od_bind_of(raw))
+    }
+    if (ofs_str_eq(kind, "vein") || ofs_str_eq(kind, "core")) {
+        od_cur_item = idx
+        od_body_depth = od_depth
+        od_seen_open = false
+        forge br = od_find(t, "{", 0)
+        if (br >= 0) { od_seen_open = true od_call_from = br + 1 }
+    }
+}
+
+vein od_do_global(kind: obsidian, rest: obsidian, ln: stone, doc: obsidian) -> void {
+    forge ne = od_ident_end(rest, 0)
+    forge name = od_sub(rest, 0, ne)
+    if (ofs_str_len(name) == 0) { return }
+    forge owner = ""
+    forge okind = ""
+    if (ofs_str_eq(od_ctx_kind_top(), "namespace")) { owner = od_ctx_name_top() okind = "namespace" }
+    forge idx = od_new_item(od_cur_mod, kind, name, owner, okind, ln, doc)
+    forge ty = ""
+    forge val = ""
+    forge eq = od_find(rest, "=", ne)
+    forge colon = od_find(rest, ":", ne)
+    if (colon >= 0 && (eq < 0 || colon < eq)) {
+        forge te = eq
+        if (te < 0) { te = ofs_str_len(rest) }
+        ty = od_trim(od_sub(rest, colon + 1, te))
+    }
+    if (eq >= 0) { val = od_trim(od_tail(rest, eq + 1)) }
+    if (ofs_str_len(val) > 60) { val = od_sub(val, 0, 57) + "..." }
+    ofs_array_set(od_i_ret, idx, ty)
+    ofs_array_set(od_i_val, idx, val)
+    ofs_array_set(od_i_pub, idx, od_pub_flag(kind, name))
+    forge sigkw = "const"
+    if (ofs_str_eq(kind, "global")) { sigkw = "forge" }
+    forge sig = sigkw + " " + name
+    if (ofs_str_len(ty) > 0) { sig = sig + ": " + ty }
+    ofs_array_set(od_i_sig, idx, sig)
+}
+
+vein od_do_attach(t: obsidian, raw: obsidian) -> void {
+    forge a = od_find(raw, "{", 0)
+    forge b = od_find(raw, "}", 0)
+    if (a < 0 || b < a) { return }
+    forge s = od_trim(od_sub(raw, a + 1, b))
+    if (od_starts(s, "F:")) { s = od_tail(s, 2) }
+    s = od_basename(s)
+    if (od_ends(s, ".ofs")) { s = od_sub(s, 0, ofs_str_len(s) - 4) }
+    if (ofs_str_len(s) == 0) { return }
+    forge cur = od_s(od_m_attach, od_cur_mod)
+    if (ofs_str_len(cur) == 0) { cur = "," }
+    if (od_has(cur, "," + s + ",") == false) { ofs_array_set(od_m_attach, od_cur_mod, cur + s + ",") }
+}
+
+vein od_do_field(t: obsidian, doc: obsidian) -> void {
+    forge item = od_cx_item[ofs_array_len(od_cx_item) - 1]
+    if (item < 0) { return }
+    forge s = od_trim(t)
+    if (od_ends(s, ",")) { s = od_trim(od_sub(s, 0, ofs_str_len(s) - 1)) }
+    if (ofs_str_len(s) == 0 || ofs_str_eq(s, "}")) { return }
+    forge row = ""
+    forge colon = od_find(s, ":", 0)
+    if (colon < 0) {
+        row = s + "\t\t" + od_first_line(doc)
+    } else {
+        row = od_trim(od_sub(s, 0, colon)) + "\t" + od_trim(od_tail(s, colon + 1)) + "\t" + od_first_line(doc)
+    }
+    ofs_array_set(od_i_fields, item, od_s(od_i_fields, item) + row + "\n")
+}
+
+vein od_after_kw(t: obsidian, kw: obsidian) -> obsidian {
+    return od_trim(od_tail(t, ofs_str_len(kw)))
+}
+
+// retorna a documentacao que sobra para o item (vazia se virou doc do modulo)
+vein od_decl(t: obsidian, raw: obsidian, ln: stone, doc: obsidian) -> void {
+    forge top = od_ctx_kind_top()
+    if (ofs_str_eq(top, "monolith") || ofs_str_eq(top, "strata")) {
+        od_do_field(t, doc)
+        return
+    }
+    if (od_starts(t, "rift vein ")) {
+        od_do_fn("rift", od_after_kw(t, "rift vein "), raw, t, ln, doc)
+    } else if (od_starts(t, "extern vein ")) {
+        od_do_fn("extern", od_after_kw(t, "extern vein "), raw, t, ln, doc)
+    } else if (od_starts(t, "vein ")) {
+        od_do_fn("vein", od_after_kw(t, "vein "), raw, t, ln, doc)
+    } else if (od_starts(t, "core ")) {
+        od_do_fn("core", od_after_kw(t, "core "), raw, t, ln, doc)
+    } else if (od_starts(t, "namespace ") || od_starts(t, "impl ")) {
+        forge isns = od_starts(t, "namespace ")
+        forge kw = "impl "
+        if (isns) { kw = "namespace " }
+        forge rest = od_after_kw(t, kw)
+        forge name = od_sub(rest, 0, od_ident_end(rest, 0))
+        forge ckind = "impl"
+        if (isns) { ckind = "namespace" }
+        if (od_find(t, "{", 0) >= 0) { od_ctx_push(ckind, name, od_depth + 1, -1) }
+        if (isns) {
+            forge cur = od_s(od_m_ns, od_cur_mod)
+            if (ofs_str_len(cur) == 0) { cur = "," }
+            if (od_has(cur, "," + name + ",") == false) { ofs_array_set(od_m_ns, od_cur_mod, cur + name + ",") }
+        }
+    } else if (od_starts(t, "monolith ") || od_starts(t, "strata ")) {
+        forge ismo = od_starts(t, "monolith ")
+        forge kw2 = "strata "
+        if (ismo) { kw2 = "monolith " }
+        forge rest2 = od_after_kw(t, kw2)
+        forge name2 = od_sub(rest2, 0, od_ident_end(rest2, 0))
+        forge k2 = "strata"
+        if (ismo) { k2 = "monolith" }
+        forge idx = od_new_item(od_cur_mod, k2, name2, "", "", ln, doc)
+        ofs_array_set(od_i_sig, idx, k2 + " " + name2)
+        ofs_array_set(od_i_pub, idx, od_pub_flag(k2, name2))
+        if (od_find(t, "{", 0) >= 0) { od_ctx_push(k2, name2, od_depth + 1, idx) }
+    } else if (od_starts(t, "attach")) {
+        od_do_attach(t, raw)
+    } else if (od_starts(t, "const ")) {
+        od_do_global("const", od_after_kw(t, "const "), ln, doc)
+    } else if (od_starts(t, "forge ")) {
+        od_do_global("global", od_after_kw(t, "forge "), ln, doc)
+    } else if (od_starts(t, "type ")) {
+        forge rest3 = od_after_kw(t, "type ")
+        forge name3 = od_sub(rest3, 0, od_ident_end(rest3, 0))
+        forge idx3 = od_new_item(od_cur_mod, "type", name3, "", "", ln, doc)
+        ofs_array_set(od_i_sig, idx3, "type " + od_trim(rest3))
+        ofs_array_set(od_i_pub, idx3, od_pub_flag("type", name3))
+    }
+}
+
+// kinds que consomem o comentario de cabecalho como doc do modulo quando sao a
+// primeira linha de codigo do arquivo
+vein od_is_docless(t: obsidian) -> bool {
+    return od_starts(t, "attach") || od_starts(t, "extern ") || od_starts(t, "namespace ")
+}
+
+vein od_handle_code(t0: obsidian, raw0: obsidian, ln0: stone) -> void {
+    forge t = t0
+    forge raw = raw0
+    forge ln = ln0
+    forge doc = od_pend
+    od_pend = ""
+    if (ofs_str_len(od_sigbuf) > 0) {
+        od_sigbuf = od_sigbuf + " " + t
+        od_sigraw = od_sigraw + " " + raw
+        if (od_paren_balance(od_sigbuf) > 0) { return }
+        t = od_sigbuf
+        raw = od_sigraw
+        ln = od_sigln
+        doc = od_sigdoc
+        od_sigbuf = ""
+        od_sigraw = ""
+        od_sigdoc = ""
+    } else if (od_cur_item < 0 && od_depth == od_base_depth() && (od_starts(t, "vein ") || od_starts(t, "rift vein ") || od_starts(t, "extern vein ") || od_starts(t, "core "))) {
+        if (od_paren_balance(t) > 0) {
+            od_sigbuf = t
+            od_sigraw = raw
+            od_sigln = ln
+            od_sigdoc = doc
+            return
+        }
+    }
+    if (od_seen_code == false) {
+        if (ofs_str_len(doc) > 0 && ofs_str_len(od_cur_mdoc) == 0 && od_is_docless(t)) {
+            od_cur_mdoc = doc
+            doc = ""
+        }
+        od_seen_code = true
+    }
+    forge d0 = od_depth
+    od_call_from = -1
+    if (od_cur_item < 0 && d0 == od_base_depth()) {
+        od_decl(t, raw, ln, doc)
+    } else if (od_cur_item >= 0 && od_seen_open == false) {
+        // corpo ainda nao abriu: `{` em outra linha
+        if (od_find(t, "{", 0) >= 0) { od_seen_open = true od_call_from = od_find(t, "{", 0) + 1 }
+    }
+    if (od_cur_item >= 0 && od_call_from < 0 && d0 > od_body_depth) { od_call_from = 0 }
+    if (od_cur_item >= 0 && od_call_from >= 0) { od_scan_calls(t, od_call_from, od_cur_item) }
+    od_depth = d0 + od_count(t, 123) - od_count(t, 125)
+    if (od_depth < 0) { od_depth = 0 }
+    while (od_base_depth() > od_depth && ofs_array_len(od_cx_depth) > 0) { od_ctx_pop() }
+    if (od_cur_item >= 0 && od_seen_open && od_depth <= od_body_depth) { od_cur_item = -1 }
+}
+
+// linhas decorativas (`// ──── titulo ────`, `// ----`, `// ====`) nao sao documentacao
+vein od_is_banner(s: obsidian) -> bool {
+    forge t = od_trim(s)
+    return od_starts(t, "──") || od_starts(t, "---") || od_starts(t, "===") || od_starts(t, "***") || od_starts(t, "━━") || od_starts(t, "═")
+}
+
+vein od_scan_line(raw: obsidian, ln: stone) -> void {
+    forge was_block = od_in_block
+    forge code = od_strip(raw)
+    forge t = od_trim(code)
+    if (ofs_str_len(t) == 0) {
+        if (was_block || ofs_str_len(od_blk) > 0 || od_in_block) {
+            if (od_blk_doc) {
+                forge bt = od_block_text(od_blk)
+                od_pend = od_pend + bt + "\n"
+            }
+            return
+        }
+        if (od_lcomf) {
+            if (od_is_banner(od_lcom)) {
+                od_pend = ""
+                return
+            }
+            od_pend = od_pend + od_doc_text(od_lcom) + "\n"
+            return
+        }
+        // linha em branco: separa o bloco (cabecalho do modulo se for o primeiro)
+        if (ofs_str_len(od_pend) > 0) {
+            if (od_seen_code == false && ofs_str_len(od_cur_mdoc) == 0) { od_cur_mdoc = od_pend }
+            od_pend = ""
+        }
+        return
+    }
+    od_handle_code(t, raw, ln)
+}
+
+vein od_scan_source(src: obsidian) -> void {
+    forge n = ofs_str_len(src)
+    forge st = 0
+    forge ln = 1
+    forge i = 0
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(src, i) == 10) {
+            if (i > st || i < n) {
+                forge e = i
+                if (e > st && ofs_str_char_at(src, e - 1) == 13) { e = e - 1 }
+                od_scan_line(od_sub(src, st, e), ln)
+            }
+            st = i + 1
+            ln = ln + 1
+        }
+        i = i + 1
+    }
+}
+
+// ---------------------------------------------------------------- arquivos
+
+forge od_repo_root: obsidian = ""
+
+vein od_rel_src(path: obsidian) -> obsidian {
+    forge p = path
+    if (ofs_str_len(od_repo_root) > 0 && od_starts(p, od_repo_root)) {
+        p = od_tail(p, ofs_str_len(od_repo_root))
+        if (ofs_str_len(p) > 0 && ofs_str_char_at(p, 0) == 47) { p = od_tail(p, 1) }
+    }
+    while (od_starts(p, "./")) { p = od_tail(p, 2) }
+    return p
+}
+
+vein od_slugify(name: obsidian) -> obsidian {
+    forge out = ""
+    forge n = ofs_str_len(name)
+    forge i = 0
+    while (i < n) {
+        forge c = ofs_str_char_at(name, i)
+        if (c == 47) { out = out + "-" } else { out = out + ofs_str_substr(name, i, 1) }
+        i = i + 1
+    }
+    return out
+}
+
+// root: diretorio de entrada (ou "" para arquivo unico); rel: caminho relativo a root sem .ofs
+vein od_scan_file(path: obsidian, group: obsidian, rel: obsidian) -> void {
+    forge src = od_read(path)
+    forge mi = ofs_array_len(od_m_path)
+    ofs_array_push(od_m_path, path)
+    ofs_array_push(od_m_src, od_rel_src(path))
+    ofs_array_push(od_m_name, rel)
+    ofs_array_push(od_m_slug, od_slugify(rel))
+    ofs_array_push(od_m_group, group)
+    ofs_array_push(od_m_doc, "")
+    ofs_array_push(od_m_ns, "")
+    ofs_array_push(od_m_attach, "")
+    ofs_array_push(od_m_lines, 0)
+    ofs_array_push(od_m_lr, "")
+    ofs_array_push(od_m_see, "")
+    ofs_array_push(od_m_pub, 0)
+    ofs_array_push(od_m_pubdoc, 0)
+    od_cur_mod = mi
+    od_depth = 0
+    od_in_block = false
+    od_blk_doc = false
+    od_pend = ""
+    od_seen_code = false
+    od_cur_mdoc = ""
+    od_cur_item = -1
+    od_sigbuf = ""
+    od_sigraw = ""
+    while (ofs_array_len(od_cx_depth) > 0) { od_ctx_pop() }
+    od_scan_source(src)
+    ofs_array_set(od_m_doc, mi, od_cur_mdoc)
+    ofs_array_set(od_m_lines, mi, od_count(src, 10))
+}
+
+vein od_scan_path(path: obsidian, group: obsidian) -> void {
+    if (od_ends(path, ".ofs")) {
+        od_scan_file(path, group, od_sub(od_basename(path), 0, ofs_str_len(od_basename(path)) - 4))
+        return
+    }
+    forge listf = "/tmp/ofsdoc_files.txt"
+    system("find " + od_sq(path) + " -name '*.ofs' -type f | sort > " + listf)
+    forge list = od_read(listf)
+    forge n = ofs_str_len(list)
+    forge st = 0
+    forge root = path
+    while (ofs_str_len(root) > 1 && ofs_str_char_at(root, ofs_str_len(root) - 1) == 47) { root = od_sub(root, 0, ofs_str_len(root) - 1) }
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(list, i) == 10) {
+            forge f = od_sub(list, st, i)
+            if (ofs_str_len(f) > 0) {
+                forge rel = od_tail(f, ofs_str_len(root) + 1)
+                if (od_ends(rel, ".ofs")) { rel = od_sub(rel, 0, ofs_str_len(rel) - 4) }
+                forge g = group
+                if (ofs_str_len(g) == 0) { g = od_basename(root) }
+                od_scan_file(f, g, rel)
+            }
+            st = i + 1
+        }
+        i = i + 1
+    }
+}
+
+// ---------------------------------------------------------------- indice (hash)
+
+vein od_hash(s: obsidian) -> stone {
+    forge h = 7
+    forge n = ofs_str_len(s)
+    forge i = 0
+    while (i < n) {
+        h = (h * 31 + ofs_str_char_at(s, i)) % 1000003
+        i = i + 1
+    }
+    return h
+}
+
+vein od_slot(key: obsidian) -> stone {
+    forge h = od_hash(key) % od_hsize
+    while (ofs_str_len(od_s(od_hk, h)) > 0 && ofs_str_eq(od_s(od_hk, h), key) == false) { h = (h + 1) % od_hsize }
+    return h
+}
+
+vein od_h_get(key: obsidian) -> stone {
+    forge h = od_slot(key)
+    if (ofs_str_len(od_s(od_hk, h)) == 0) { return -1 }
+    return od_hv[h]
+}
+
+// insere key -> val; devolve a cabeca anterior da cadeia (-1 se nova)
+vein od_h_put(key: obsidian, val: stone) -> stone {
+    forge h = od_slot(key)
+    if (ofs_str_len(od_s(od_hk, h)) == 0) {
+        ofs_array_set(od_hk, h, key)
+        ofs_array_set(od_hv, h, val)
+        return -1
+    }
+    forge old = od_hv[h]
+    return old
+}
+
+vein od_chain_tail_s(head: stone) -> stone {
+    forge j = head
+    while (od_i_nxs[j] >= 0) { j = od_i_nxs[j] }
+    return j
+}
+
+vein od_chain_tail_q(head: stone) -> stone {
+    forge j = head
+    while (od_i_nxq[j] >= 0) { j = od_i_nxq[j] }
+    return j
+}
+
+vein od_index() -> void {
+    if (ofs_array_len(od_hk) == 0) {
+        forge z = 0
+        while (z < od_hsize) {
+            ofs_array_push(od_hk, "")
+            ofs_array_push(od_hv, -1)
+            z = z + 1
+        }
+    }
+    forge ni = ofs_array_len(od_i_mod)
+    forge i = 0
+    while (i < ni) {
+        forge kind = od_s(od_i_kind, i)
+        forge name = od_s(od_i_name, i)
+        if (ofs_str_eq(kind, "monolith") || ofs_str_eq(kind, "strata") || ofs_str_eq(kind, "type")) {
+            forge hd = od_h_put("T:" + name, i)
+            if (hd >= 0) { ofs_array_set(od_i_nxs, od_chain_tail_s(hd), i) }
+        } else {
+            forge h1 = od_h_put(name, i)
+            if (h1 >= 0) { ofs_array_set(od_i_nxs, od_chain_tail_s(h1), i) }
+            if (ofs_str_len(od_s(od_i_owner, i)) > 0) {
+                forge h2 = od_h_put(od_s(od_i_owner, i) + "." + name, i)
+                if (h2 >= 0) { ofs_array_set(od_i_nxq, od_chain_tail_q(h2), i) }
+            }
+        }
+        i = i + 1
+    }
+    forge nm = ofs_array_len(od_m_name)
+    forge m = 0
+    while (m < nm) {
+        forge nsl = od_s(od_m_ns, m)
+        forge base = od_basename(od_s(od_m_name, m))
+        od_h_put("M:" + base, m)
+        forge a = 1
+        forge n = ofs_str_len(nsl)
+        while (a < n) {
+            forge e = od_find(nsl, ",", a)
+            if (e < 0) { break }
+            if (e > a) { od_h_put("M:" + od_sub(nsl, a, e), m) }
+            a = e + 1
+        }
+        m = m + 1
+    }
+}
+
+// melhor candidato de uma cadeia de itens com o mesmo nome
+vein od_pick(head: stone, mi: stone, owner: obsidian, quals: bool) -> stone {
+    forge best = -1
+    forge ext = -1
+    forge j = head
+    while (j >= 0) {
+        forge kind = od_s(od_i_kind, j)
+        forge ok = false
+        if (quals) { ok = true } else { ok = (ofs_str_len(od_s(od_i_owner, j)) == 0 || (od_i_mod[j] == mi && ofs_str_eq(od_s(od_i_owner, j), owner))) }
+        if (ok) {
+            if (ofs_str_eq(kind, "extern")) {
+                if (ext < 0 && od_i_mod[j] == mi) { ext = j }
+            } else if (od_i_mod[j] == mi) {
+                return j
+            } else if (best < 0) {
+                best = j
+            }
+        }
+        if (quals) { j = od_i_nxq[j] } else { j = od_i_nxs[j] }
+    }
+    if (best >= 0) { return best }
+    return ext
+}
+
+vein od_pick_any(head: stone) -> stone {
+    forge j = head
+    while (j >= 0) {
+        if (ofs_str_eq(od_s(od_i_kind, j), "extern") == false) { return j }
+        j = od_i_nxs[j]
+    }
+    return -1
+}
+
+vein od_resolve_tok(tok: obsidian, mi: stone, owner: obsidian) -> stone {
+    forge dot = od_find(tok, ".", 0)
+    if (dot >= 0) {
+        forge h = od_h_get(tok)
+        if (h >= 0) { return od_pick(h, mi, owner, true) }
+        // metodo de impl: x.metodo(
+        forge shn = od_tail(tok, dot + 1)
+        forge hs = od_h_get(shn)
+        forge j = hs
+        while (j >= 0) {
+            if (ofs_str_eq(od_s(od_i_okind, j), "impl") && ofs_str_eq(od_s(od_i_kind, j), "vein")) { return j }
+            j = od_i_nxs[j]
+        }
+        return -1
+    }
+    forge hh = od_h_get(tok)
+    if (hh < 0) { return -1 }
+    return od_pick(hh, mi, owner, false)
+}
+
+vein od_resolve_all() -> void {
+    forge ni = ofs_array_len(od_i_mod)
+    forge i = 0
+    while (i < ni) {
+        forge raw = od_s(od_i_calls, i)
+        forge res = ","
+        forge n = ofs_str_len(raw)
+        forge a = 1
+        while (a < n) {
+            forge e = od_find(raw, ",", a)
+            if (e < 0) { break }
+            if (e > a) {
+                forge tgt = od_resolve_tok(od_sub(raw, a, e), od_i_mod[i], od_s(od_i_owner, i))
+                forge okt = false
+                if (tgt >= 0) { okt = (tgt != i) }
+                if (okt) { okt = (od_i_stamp[tgt] != i) }
+                if (okt) {
+                    ofs_array_set(od_i_stamp, tgt, i)
+                    res = res + od_itos(tgt) + ","
+                    if (ofs_str_len(od_s(od_i_used, tgt)) == 0) { ofs_array_set(od_i_used, tgt, ",") }
+                    ofs_array_set(od_i_used, tgt, od_s(od_i_used, tgt) + od_itos(i) + ",")
+                }
+            }
+            a = e + 1
+        }
+        ofs_array_set(od_i_calls, i, res)
+        i = i + 1
+    }
+}
+
+// ---------------------------------------------------------------- docs (.md): "veja tambem" e funcoes inexistentes
+
+forge od_d_key: Array<obsidian> = []
+forge od_d_file: Array<obsidian> = []
+forge od_d_title: Array<obsidian> = []
+
+forge od_r_item: Array<stone> = []
+forge od_r_mod: Array<stone> = []
+forge od_r_doc: Array<stone> = []
+forge od_r_sec: Array<obsidian> = []
+forge od_r_title: Array<obsidian> = []
+forge od_r_line: Array<stone> = []
+
+forge od_p_name: Array<obsidian> = []
+forge od_p_doc: Array<stone> = []
+forge od_p_line: Array<stone> = []
+forge od_p_cnt: Array<stone> = []
+forge od_exdefs: obsidian = ","
+
+vein od_add_ref(item: stone, mod: stone, doc: stone, sec: obsidian, title: obsidian, ln: stone) -> void {
+    forge key = od_itos(doc) + ":" + sec
+    if (item >= 0) {
+        if (ofs_str_eq(od_s(od_i_lr, item), key)) { return }
+        if (ofs_str_len(od_s(od_i_see, item)) > 70) { return }
+        ofs_array_set(od_i_lr, item, key)
+    } else {
+        if (ofs_str_eq(od_s(od_m_lr, mod), key)) { return }
+        if (ofs_str_len(od_s(od_m_see, mod)) > 70) { return }
+        ofs_array_set(od_m_lr, mod, key)
+    }
+    forge r = ofs_array_len(od_r_item)
+    ofs_array_push(od_r_item, item)
+    ofs_array_push(od_r_mod, mod)
+    ofs_array_push(od_r_doc, doc)
+    ofs_array_push(od_r_sec, sec)
+    ofs_array_push(od_r_title, title)
+    ofs_array_push(od_r_line, ln)
+    if (item >= 0) {
+        ofs_array_set(od_i_see, item, od_s(od_i_see, item) + od_itos(r) + ",")
+    } else {
+        ofs_array_set(od_m_see, mod, od_s(od_m_see, mod) + od_itos(r) + ",")
+    }
+}
+
+vein od_add_phantom(name: obsidian, doc: stone, ln: stone) -> void {
+    forge k = 0
+    forge n = ofs_array_len(od_p_name)
+    while (k < n) {
+        if (ofs_str_eq(od_s(od_p_name, k), name)) {
+            ofs_array_set(od_p_cnt, k, od_p_cnt[k] + 1)
+            return
+        }
+        k = k + 1
+    }
+    ofs_array_push(od_p_name, name)
+    ofs_array_push(od_p_doc, doc)
+    ofs_array_push(od_p_line, ln)
+    ofs_array_push(od_p_cnt, 1)
+}
+
+vein od_has_upper(s: obsidian) -> bool {
+    forge n = ofs_str_len(s)
+    forge i = 0
+    while (i < n) {
+        forge c = ofs_str_char_at(s, i)
+        if (c >= 65 && c <= 90) { return true }
+        i = i + 1
+    }
+    return false
+}
+
+// algum modulo de nome `modname` tem um item chamado `name` (funcao global de modulo sem namespace)?
+vein od_module_has(modname: obsidian, name: obsidian) -> bool {
+    forge j = od_h_get(name)
+    while (j >= 0) {
+        if (ofs_str_eq(od_basename(od_s(od_m_name, od_i_mod[j])), modname)) { return true }
+        j = od_i_nxs[j]
+    }
+    return false
+}
+
+vein od_scan_md_line(line: obsidian, doc: stone, ln: stone, sec: obsidian, stitle: obsidian, fence: bool) -> void {
+    forge n = ofs_str_len(line)
+    forge inl = false
+    forge i = 0
+    while (i < n) {
+        forge c = ofs_str_char_at(line, i)
+        if (c == 96) {
+            inl = (inl == false)
+            i = i + 1
+        } else if (od_isidst(c)) {
+            forge e = od_ident_end(line, i)
+            forge first = od_sub(line, i, e)
+            forge last = first
+            forge prev = ""
+            while (e + 1 < n && ofs_str_char_at(line, e) == 46 && od_isidst(ofs_str_char_at(line, e + 1))) {
+                forge e2 = od_ident_end(line, e + 1)
+                prev = last
+                last = od_sub(line, e + 1, e2)
+                e = e2
+            }
+            forge called = (e < n && ofs_str_char_at(line, e) == 40)
+            if (ofs_str_len(prev) > 0) {
+                if (called) {
+                    forge q = prev + "." + last
+                    forge qi = od_h_get(q)
+                    if (qi >= 0) {
+                        od_add_ref(qi, -1, doc, sec, stitle, ln)
+                    } else if (od_h_get("M:" + prev) >= 0) {
+                        if (od_module_has(prev, last) == false) { od_add_phantom(q, doc, ln) }
+                    }
+                } else if (ofs_str_eq(last, "ofs")) {
+                    forge mi = od_h_get("M:" + prev)
+                    if (mi >= 0) { od_add_ref(-1, mi, doc, sec, stitle, ln) }
+                }
+                if (called) {
+                    forge mi2 = od_h_get("M:" + prev)
+                    if (mi2 >= 0) { od_add_ref(-1, mi2, doc, sec, stitle, ln) }
+                }
+            } else if (called && od_has(first, "_")) {
+                forge si = od_h_get(first)
+                if (si >= 0) {
+                    forge pi = od_pick_any(si)
+                    if (pi >= 0) { od_add_ref(pi, -1, doc, sec, stitle, ln) }
+                } else if (inl && fence == false && od_has_upper(first) == false && od_starts(first, "fault_") == false && od_has(od_exdefs, "," + first + ",") == false) {
+                    // `nome(args) -> T` entre crases e uma assinatura de exemplo/exercicio, nao uma citacao
+                    forge cb = od_find(line, "`", e)
+                    if (cb < 0) { cb = n }
+                    if (od_has(od_sub(line, e, cb), "->") == false) { od_add_phantom(first, doc, ln) }
+                }
+            } else if (inl && fence == false && e < n && ofs_str_char_at(line, e) == 96) {
+                forge mi3 = od_h_get("M:" + first)
+                if (mi3 >= 0) { od_add_ref(-1, mi3, doc, sec, stitle, ln) }
+            }
+            i = e
+        } else {
+            i = i + 1
+        }
+    }
+}
+
+vein od_scan_md(path: obsidian, key: obsidian, di: stone, pass: stone) -> void {
+    forge src = od_read(path)
+    forge n = ofs_str_len(src)
+    forge st = 0
+    forge ln = 1
+    forge fence = false
+    forge n2 = 0
+    forge n3 = 0
+    forge sec = ""
+    forge stitle = ""
+    forge i = 0
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(src, i) == 10) {
+            forge line = od_sub(src, st, i)
+            forge t = od_trim(line)
+            if (od_starts(t, "```")) {
+                fence = (fence == false)
+            } else if (pass == 0) {
+                // 1a passada: `vein nome(` dentro de blocos de codigo = exemplos
+                if (fence) {
+                    forge v = od_find(t, "vein ", 0)
+                    if (v == 0) {
+                        forge ne = od_ident_end(t, 5)
+                        if (ne > 5) { od_exdefs = od_exdefs + od_sub(t, 5, ne) + "," }
+                    }
+                }
+            } else if (fence == false && od_starts(t, "#")) {
+                forge lvl = 0
+                while (lvl < ofs_str_len(t) && ofs_str_char_at(t, lvl) == 35) { lvl = lvl + 1 }
+                forge title = od_trim(od_tail(t, lvl))
+                if (lvl == 1 && ofs_str_len(od_s(od_d_title, di)) == 0) { ofs_array_set(od_d_title, di, title) }
+                if (lvl == 2) {
+                    n2 = n2 + 1
+                    n3 = 0
+                    sec = "s" + od_itos(n2)
+                    stitle = title
+                }
+                if (lvl == 3) {
+                    n3 = n3 + 1
+                    sec = "s" + od_itos(n2) + "." + od_itos(n3)
+                    stitle = title
+                }
+            }
+            if (pass == 1 && ofs_str_len(t) > 0) { od_scan_md_line(line, di, ln, sec, stitle, fence) }
+            st = i + 1
+            ln = ln + 1
+        }
+        i = i + 1
+    }
+}
+
+vein od_scan_docs(dir: obsidian) -> void {
+    forge listf = "/tmp/ofsdoc_docs.txt"
+    system("ls -1 " + od_sq(dir) + "/*.md 2>/dev/null | sort > " + listf)
+    forge list = od_read(listf)
+    forge n = ofs_str_len(list)
+    forge st = 0
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(list, i) == 10) {
+            forge f = od_sub(list, st, i)
+            if (ofs_str_len(f) > 0) {
+                forge b = od_basename(f)
+                ofs_array_push(od_d_key, od_sub(b, 0, ofs_str_len(b) - 3))
+                ofs_array_push(od_d_file, f)
+                ofs_array_push(od_d_title, "")
+            }
+            st = i + 1
+        }
+        i = i + 1
+    }
+    forge pass = 0
+    while (pass < 2) {
+        forge d = 0
+        while (d < ofs_array_len(od_d_key)) {
+            od_scan_md(od_s(od_d_file, d), od_s(od_d_key, d), d, pass)
+            d = d + 1
+        }
+        pass = pass + 1
+    }
+}
+
+// ---------------------------------------------------------------- cobertura
+
+forge od_tot_pub: stone = 0
+forge od_tot_doc: stone = 0
+
+vein od_coverage() -> void {
+    forge ni = ofs_array_len(od_i_mod)
+    forge i = 0
+    od_tot_pub = 0
+    od_tot_doc = 0
+    while (i < ni) {
+        forge k = od_s(od_i_kind, i)
+        if ((ofs_str_eq(k, "vein") || ofs_str_eq(k, "rift")) && od_i_pub[i] == 1) {
+            forge m = od_i_mod[i]
+            ofs_array_set(od_m_pub, m, od_m_pub[m] + 1)
+            od_tot_pub = od_tot_pub + 1
+            if (ofs_str_len(od_trim(od_s(od_i_doc, i))) > 0) {
+                ofs_array_set(od_m_pubdoc, m, od_m_pubdoc[m] + 1)
+                od_tot_doc = od_tot_doc + 1
+            }
+        }
+        i = i + 1
+    }
+}
+
+vein od_pct(a: stone, b: stone) -> stone {
+    if (b == 0) { return 100 }
+    return (a * 100) / b
+}
+
+vein od_pct1(a: stone, b: stone) -> obsidian {
+    if (b == 0) { return "100.0" }
+    forge t = (a * 1000) / b
+    return od_itos(t / 10) + "." + od_itos(t % 10)
+}
+
+// monta o indice completo a partir de entradas separadas por ':'
+vein od_build(inputs: obsidian, docs_dir: obsidian) -> void {
+    forge n = ofs_str_len(inputs)
+    forge st = 0
+    forge i = 0
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(inputs, i) == 58) {
+            forge p = od_trim(od_sub(inputs, st, i))
+            if (ofs_str_len(p) > 0) { od_scan_path(p, "") }
+            st = i + 1
+        }
+        i = i + 1
+    }
+    od_index()
+    od_resolve_all()
+    if (ofs_str_len(docs_dir) > 0) { od_scan_docs(docs_dir) }
+    od_coverage()
+}

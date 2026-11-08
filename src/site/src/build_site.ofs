@@ -1,6 +1,7 @@
 attach {F:../../../ofs/ofscc/fileio.ofs}
 attach {F:sitekit.ofs}
 attach {F:book.ofs}
+attach {F:ref.ofs}
 
 vein write_pages(prefix: obsidian) {
     write_file(prefix + "index.html", bk_page("pt"))
@@ -73,6 +74,9 @@ core main() {
     write_file("docs/assets/book.css", read_file("src/site/book/book.css"))
     write_file("docs/assets/book.js", read_file("src/site/book/book.js"))
     write_file("docs/assets/benchmark.json", read_file("src/site/benchmarks/results.json"))
+    // Referencia (guia + API gerada do codigo + cobertura): docs/ref e copia no public
+    rf_write_all("docs/")
+    system("rm -rf src/site/public/ref src/site/public/wiki && cp -r docs/ref src/site/public/ref && cp -r docs/wiki src/site/public/wiki")
 
     echo("OFS site generated in src/site/public and docs")
 }

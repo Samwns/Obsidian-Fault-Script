@@ -391,10 +391,40 @@ jobs:
           name: extension-${{ needs.version.outputs.tag }}
           path: "src/vscode-extension/*.vsix"
 
+  # ── Termux (Android aarch64) ─────────────────────────────────────────
+  build-termux:
+    name: Build (termux-aarch64)
+    needs: version
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Android NDK
+        run: |
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/android-sdk}}"
+          SDKMANAGER="$(command -v sdkmanager || ls "$SDK"/cmdline-tools/*/bin/sdkmanager | head -1)"
+          yes | "$SDKMANAGER" --sdk_root="$SDK" --licenses >/dev/null || true
+          "$SDKMANAGER" --sdk_root="$SDK" "ndk;27.2.12479018"
+          echo "ANDROID_SDK=$SDK" >> "$GITHUB_ENV"
+
+      - name: Build Termux package
+        run: |
+          TAG="${{ needs.version.outputs.tag }}"
+          mkdir -p termux-dist
+          bash src/packaging/termux/build_termux.sh "${TAG#v}" "$PWD/termux-dist/ofs-termux-aarch64.tar.gz"
+          tar -tzf termux-dist/ofs-termux-aarch64.tar.gz | grep -F lib/ofs/ofscc
+          tar -xzOf termux-dist/ofs-termux-aarch64.tar.gz bin/ofs | grep -F "OFS_VERSION=\"${TAG#v}\""
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-termux-aarch64-${{ needs.version.outputs.tag }}
+          path: termux-dist/ofs-termux-aarch64.tar.gz
+
   # ── Publish ─────────────────────────────────────────────────────────
   publish:
     name: Publish Release
-    needs: [version, build-linux, build-macos, build-windows, vscode_extension]
+    needs: [version, build-linux, build-macos, build-windows, vscode_extension, build-termux]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -421,7 +451,7 @@ jobs:
       - name: Generate checksums
         run: |
           cd artifacts
-          sha256sum *.deb *.rpm *.pkg *.pkg.tar.zst *.exe *.vsix 2>/dev/null > CHECKSUMS.sha256 || true
+          sha256sum *.deb *.rpm *.pkg *.pkg.tar.zst *.exe *.vsix *.tar.gz 2>/dev/null > CHECKSUMS.sha256 || true
           cat CHECKSUMS.sha256
 
       - name: Create GitHub Release
@@ -437,6 +467,7 @@ jobs:
             artifacts/*.pkg.tar.zst
             artifacts/*.exe
             artifacts/*.vsix
+            artifacts/*.tar.gz
             artifacts/CHECKSUMS.sha256
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

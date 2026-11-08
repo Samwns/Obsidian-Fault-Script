@@ -6,6 +6,14 @@ All notable changes to this project are recorded here.
 
 ## [Unreleased]
 
+### Added / Adicionado — `ofs doc` (documentação gerada do código) e Referência do site
+
+- **PT** — novo comando **`ofs doc`** (`ofs/tools/ofsdoc.ofs`, em OFS): documentação HTML gerada do código-fonte (módulos, `vein`/`rift vein`/`extern vein`, `monolith`/`impl`, chama/usado por, veja também, link para a linha no GitHub, busca `search.json`) e relatório de cobertura (`ofs doc --check` sai com 1 se um `.md` citar função inexistente). A wiki do site foi substituída pela **Referência** (`docs/ref/`, tema obsidiana): Guia + API gerada + Cobertura numa navegação só; `docs/wiki/` só redireciona. Ver `docs/TOOLS.md`.
+
+### Added / Adicionado — Termux
+
+- **PT** — **Termux**: o OFS agora roda no celular (`ofs run`, `ofs build`, ferramentas); wrapper detecta o Termux, pacote `ofs-termux-aarch64.tar.gz` (`src/packaging/termux/build_termux.sh`, anexado à release pelo CI) e `install_termux.sh`. Ver `docs/GETTING_STARTED.md`.
+
 ### Added / Adicionado — Entrada de texto pelo teclado do sistema (`android_input.ofs`, `oal.edit_open`)
 
 - **PT** — novo stdlib `android_input.ofs` (Dialog + `EditText` por JNI, sem Java próprio) e `oal.edit_open`/`edit_state`/`edit_text`: teclado padrão do Android (Gboard) com cursor, rolagem, colar e autocompletar nos campos de texto; o `keyboard` da OAL continua como alternativa. Documentado em `docs/OAL_REFERENCE.md` e `docs/ANDROID.md`.

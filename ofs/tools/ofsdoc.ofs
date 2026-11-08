@@ -1,0 +1,129 @@
+// ofsdoc: auto-documentacao do OFS gerada a partir do codigo-fonte (`ofs doc`).
+//
+// Usado pelo wrapper `ofs doc` (compilado e guardado em cache). Variaveis de
+// ambiente (o wrapper traduz os argumentos):
+//   OFSDOC_INPUT   arquivos/pastas .ofs separados por ':'
+//   OFSDOC_OUT     pasta de saida (HTML + search.json)
+//   OFSDOC_DOCS    pasta dos .md do projeto (veja tambem / funcoes inexistentes); "" desliga
+//   OFSDOC_CHECK=1 so verifica (relatorio no terminal; exit 1 se houver funcao citada inexistente)
+//   OFSDOC_DUMP=1  imprime o que foi extraido (usado pelos testes)
+//   OFSDOC_ASSETS  pasta com ofsdoc.css e ofsdoc.js
+//   OFSDOC_TITLE, OFSDOC_REPO (URL do GitHub), OFSDOC_ROOT (prefixo removido dos caminhos), OFSDOC_LANG
+// Documentacao: docs/TOOLS.md.
+
+attach {F:ofsdoc_html.ofs}
+
+// "x\tstone\tdoc\n..." -> "x: stone (doc); ..."
+vein od_fields_line(fl: obsidian) -> obsidian {
+    forge out = ""
+    forge n = ofs_str_len(fl)
+    forge st = 0
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(fl, i) == 10) {
+            forge row = od_sub(fl, st, i)
+            forge t1 = od_find(row, "\t", 0)
+            forge t2 = od_find(row, "\t", t1 + 1)
+            if (t1 >= 0 && t2 >= 0) {
+                if (ofs_str_len(out) > 0) { out = out + "; " }
+                out = out + od_sub(row, 0, t1) + ": " + od_sub(row, t1 + 1, t2)
+                if (ofs_str_len(od_tail(row, t2 + 1)) > 0) { out = out + " (" + od_tail(row, t2 + 1) + ")" }
+            }
+            st = i + 1
+        }
+        i = i + 1
+    }
+    return out
+}
+
+// "12,40," -> "nome1, nome2"
+vein od_names_of(list: obsidian) -> obsidian {
+    forge out = ""
+    forge n = ofs_str_len(list)
+    forge st = 0
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(list, i) == 44) {
+            if (i > st) {
+                if (ofs_str_len(out) > 0) { out = out + ", " }
+                out = out + od_qual(od_obsidian_to_stone(od_sub(list, st, i)))
+            }
+            st = i + 1
+        }
+        i = i + 1
+    }
+    return out
+}
+
+vein od_dump() -> void {
+    forge ni = ofs_array_len(od_i_mod)
+    forge i = 0
+    while (i < ni) {
+        forge k = od_s(od_i_kind, i)
+        if (ofs_str_eq(k, "extern") == false) {
+            echo(od_s(od_m_name, od_i_mod[i]) + "|" + k + "|" + od_qual(i) + "|" + od_s(od_i_sig, i) + "|" + od_first_line(od_s(od_i_doc, i)) + "|pub=" + od_itos(od_i_pub[i]) + "|L" + od_itos(od_i_line[i]))
+            if (ofs_str_len(od_s(od_i_calls, i)) > 1) { echo("    chama: " + od_names_of(od_s(od_i_calls, i))) }
+            if (ofs_str_len(od_s(od_i_used, i)) > 1) { echo("    usado por: " + od_names_of(od_s(od_i_used, i))) }
+            if (ofs_str_len(od_s(od_i_fields, i)) > 0) { echo("    campos: " + od_fields_line(od_s(od_i_fields, i))) }
+            if (ofs_str_len(od_s(od_i_abi, i)) > 0) { echo("    abi: " + od_s(od_i_abi, i) + " bind " + od_s(od_i_bind, i)) }
+        }
+        i = i + 1
+    }
+}
+
+vein od_pick_lang() -> obsidian {
+    forge l = getenv("OFSDOC_LANG")
+    if (ofs_str_len(l) == 0) { l = getenv("OFS_LANG") }
+    if (od_starts(l, "pt")) { return "pt" }
+    if (od_starts(l, "es")) { return "es" }
+    return "en"
+}
+
+core main() {
+    forge inputs = getenv("OFSDOC_INPUT")
+    forge out = getenv("OFSDOC_OUT")
+    forge docs = getenv("OFSDOC_DOCS")
+    forge check = ofs_str_eq(getenv("OFSDOC_CHECK"), "1")
+    if (ofs_str_len(inputs) == 0) {
+        echo("ofs doc: nenhuma entrada (OFSDOC_INPUT)")
+        exit(2)
+    }
+    if (ofs_str_len(out) == 0) { out = "docs_api" }
+    od_lang = od_pick_lang()
+    od_repo_root = getenv("OFSDOC_ROOT")
+    od_repo = getenv("OFSDOC_REPO")
+    forge title = getenv("OFSDOC_TITLE")
+    if (ofs_str_len(title) > 0) { od_brand = title }
+    od_build(inputs, docs)
+    if (ofs_str_eq(getenv("OFSDOC_DUMP"), "1")) {
+        od_dump()
+        exit(0)
+    }
+    od_print_report()
+    if (check) {
+        if (ofs_array_len(od_p_name) > 0) { exit(1) }
+        exit(0)
+    }
+    od_today = od_sh("date +%Y-%m-%d", "")
+    od_api_dir = ""
+    od_asset_up = ""
+    od_multi = false
+    od_docs_prefix = ""
+    system("mkdir -p " + od_sq(out))
+    forge o = out
+    if (od_ends(o, "/") == false) { o = o + "/" }
+    od_gen_api(o)
+    od_page_api_index(o + "index.html", "home")
+    od_page_coverage(o + "cobertura.html")
+    od_open(o + "search.json")
+    od_w("[")
+    od_search_entries()
+    od_w("]\n")
+    od_close()
+    forge assets = getenv("OFSDOC_ASSETS")
+    if (ofs_str_len(assets) > 0) {
+        od_copy_file(assets + "/ofsdoc.css", o + "ofsdoc.css")
+        od_copy_file(assets + "/ofsdoc.js", o + "ofsdoc.js")
+    }
+    echo(od_t(od_lang, "HTML gerado em ", "HTML generated in ", "HTML generado en ") + o + "index.html")
+}

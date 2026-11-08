@@ -1200,22 +1200,24 @@ Available intrinsics:
 
 These functions are designed to cover operations assembly already has, while also giving OFS room for its own machine-oriented vocabulary.
 
-### asm (inline assembly escape hatch)
+### asm (inline assembly escape hatch) — planned
 
-When no `fault_*` intrinsic covers your need, `asm` emits a raw assembly string directly at that point in the code. It can only appear inside a `bedrock`, `fracture`, or `abyss` block.
+> **Status: planned.** Inline `asm` is not available yet: the lexer does not recognize the `asm` keyword and the LLVM backend does not emit `InlineAsm`. The example below shows the planned design and does not compile today. Use `fault_*` intrinsics for now.
+
+When no `fault_*` intrinsic covers your need, `asm` will emit a raw assembly string directly at that point in the code. It will only be allowed inside a `bedrock`, `fracture`, or `abyss` block.
 
 ```ofs
 bedrock {
-    asm "nop"
-    asm "int3"
+    asm "nop"     // planned
+    asm "int3"    // planned
 }
 ```
 
 **Restrictions:**
-- The argument must be a string literal.
+- Planned: the argument must be a string literal.
 - Input/output operand syntax (full AT&T-style constraints) is not yet parseable; use `fault_*` intrinsics when operand binding is needed.
-- Generates a void inline-asm call in LLVM IR with the assembly string forwarded verbatim.
-- The `asm` expression is lowered to LLVM `InlineAsm`; the compiler correctly dispatches it in both semantic analysis and code generation.
+- Planned: a void inline-asm call in LLVM IR with the assembly string forwarded verbatim.
+- Planned: the `asm` expression will be lowered to LLVM `InlineAsm`, dispatched in semantic analysis and code generation. Not implemented yet.
 
 ---
 
@@ -1423,4 +1425,4 @@ Complete list of reserved keywords:
 | `throw`    | `KW_THROW`       | Raise error value          |
 | `tectonic` | `KW_TECTONIC`    | Mode directive prefix      |
 | `bedrock`  | `KW_BEDROCK`     | Typed low-level block      |
-| `asm`      | `KW_ASM`         | Inline assembly escape hatch |
+| `asm`      | `KW_ASM`         | Inline assembly escape hatch (planned, not yet available) |

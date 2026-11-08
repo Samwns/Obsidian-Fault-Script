@@ -1,0 +1,428 @@
+// Gerador da "Referencia" do site (substitui a antiga wiki): artigos dos .md de
+// docs/ (Guia) + paginas de API geradas do codigo pelo ofsdoc + Cobertura, numa
+// navegacao so, em pt/en/es. Reaproveita o conversor md -> HTML do book.ofs (modo
+// bk_ref) e o gerador/tema do ofs/tools/ofsdoc_html.ofs. Saida: docs/ref/{,en/,es/}.
+//
+// Memoria: o runtime do OFS nao libera strings; o corpo de cada artigo e
+// descarregado em arquivo (rf_spill) e as paginas sao escritas em pedacos.
+
+attach {F:../../../ofs/tools/ofsdoc_html.ofs}
+
+forge rf_lang: obsidian = "pt"
+forge rf_title: obsidian = ""
+forge rf_toc: obsidian = ""
+forge rf_secs: obsidian = ""
+forge rf_n2: stone = 0
+forge rf_n3: stone = 0
+forge rf_edit: obsidian = ""
+forge rf_ntoc: stone = 0
+forge rf_json: obsidian = ""
+forge rf_sf: obsidian = null
+forge rf_ver: obsidian = ""
+
+forge rf_repo: obsidian = "https://github.com/Samwns/Obsidian-Fault-Script"
+forge rf_tmp: obsidian = "/tmp/ofsdoc_body.html"
+
+// KEY;categoria;nome pt;nome en;nome es
+forge rf_docs: obsidian = ""
+
+vein rf_init() -> void {
+    rf_docs = "\n" +
+    "GETTING_STARTED;0;Comecando;Getting_started;Primeros_pasos\n" +
+    "BEGINNER_JOURNEY;0;Jornada_do_iniciante;Beginner_journey;Ruta_del_principiante\n" +
+    "LANGUAGE_REFERENCE;1;Referencia_da_linguagem;Language_reference;Referencia_del_lenguaje\n" +
+    "COMPILED_LANGUAGE;1;Linguagem_compilada;Compiled_language;Lenguaje_compilado\n" +
+    "STANDARD_LIBRARY;2;Biblioteca_padrao;Standard_library;Biblioteca_estandar\n" +
+    "TOOLS;2;Ferramentas;Tools;Herramientas\n" +
+    "COMPILER_ARCHITECTURE;3;Arquitetura_do_compilador;Compiler_architecture;Arquitectura_del_compilador\n" +
+    "BOOTSTRAP;3;Bootstrap;Bootstrap;Bootstrap\n" +
+    "PERFORMANCE;3;Desempenho;Performance;Rendimiento\n" +
+    "IDLE_ARCHITECTURE;3;Arquitetura_do_IDLE;IDLE_architecture;Arquitectura_del_IDLE\n" +
+    "ODL_REFERENCE;4;ODL;ODL;ODL\n" +
+    "OES_REFERENCE;4;OES;OES;OES\n" +
+    "VISUAL_UI;4;Interface_visual;Visual_UI;Interfaz_visual\n" +
+    "OAL_REFERENCE;4;OAL;OAL;OAL\n" +
+    "WEB_UI;4;Interface_web;Web_UI;Interfaz_web\n" +
+    "ANDROID;5;Android;Android;Android\n" +
+    "SITE_LANGUAGE;6;Linguagem_do_site;Site_language;Lenguaje_del_sitio\n" +
+    "GITHUB_REGISTRATION;6;Registro_no_GitHub;GitHub_registration;Registro_en_GitHub\n" +
+    "CHANGELOG;6;Mudancas_recentes;Recent_changes;Cambios_recientes\n"
+}
+
+vein rf_field(row: obsidian, n: stone) -> obsidian {
+    return od_field(od_swap_sep(row), n)
+}
+
+// ';' -> '|' (od_field usa '|')
+vein od_swap_sep(row: obsidian) -> obsidian {
+    forge out = ""
+    forge start = 0
+    forge n = ofs_str_len(row)
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(row, i) == 59) {
+            out = out + ofs_str_substr(row, start, i - start) + "|"
+            start = i + 1
+        }
+        i = i + 1
+    }
+    return out + ofs_str_substr(row, start, n - start)
+}
+
+vein rf_row(dk: obsidian) -> obsidian {
+    forge s = bk_find(rf_docs, "\n" + dk + ";", 0)
+    if (s < 0) { return "" }
+    forge e = bk_find(rf_docs, "\n", s + 1)
+    return ofs_str_substr(rf_docs, s + 1, e - s - 1)
+}
+
+vein rf_name(dk: obsidian, lang: obsidian) -> obsidian {
+    forge r = rf_row(dk)
+    if (ofs_str_len(r) == 0) { return "" }
+    if (ofs_str_eq(lang, "en")) { return rf_field(r, 3) }
+    if (ofs_str_eq(lang, "es")) { return rf_field(r, 4) }
+    return rf_field(r, 2)
+}
+
+vein rf_cat_name(ct: stone, lang: obsidian) -> obsidian {
+    if (ct == 0) { return od_t(lang, "Começando", "Getting started", "Primeros pasos") }
+    if (ct == 1) { return od_t(lang, "Linguagem", "Language", "Lenguaje") }
+    if (ct == 2) { return od_t(lang, "Biblioteca e ferramentas", "Library and tools", "Biblioteca y herramientas") }
+    if (ct == 3) { return od_t(lang, "Compilador", "Compiler", "Compilador") }
+    if (ct == 4) { return od_t(lang, "Linguagens de domínio", "Domain languages", "Lenguajes de dominio") }
+    if (ct == 5) { return "Android" }
+    return od_t(lang, "Projeto", "Project", "Proyecto")
+}
+
+vein rf_base(u: obsidian) -> obsidian {
+    forge q = u
+    forge sl = bk_find(q, "/", 0)
+    cycle (forge k = 0; k < 8; k++) {
+        if (sl >= 0) {
+            q = ofs_str_substr(q, sl + 1, ofs_str_len(q) - sl - 1)
+            sl = bk_find(q, "/", 0)
+        }
+    }
+    return q
+}
+
+// resolve links do markdown para a Referencia
+vein rf_link(u: obsidian) -> obsidian {
+    if (bk_find(u, "http", 0) == 0 || bk_find(u, "#", 0) == 0 || bk_find(u, "mailto:", 0) == 0) { return u }
+    forge p = bk_find(u, ".md", 0)
+    if (p > 0) {
+        forge dk = rf_base(ofs_str_substr(u, 0, p))
+        forge nm = rf_name(dk, rf_lang)
+        forge tail = ofs_str_substr(u, p + 3, ofs_str_len(u) - p - 3)
+        if (ofs_str_len(nm) > 0) { return nm + ".html" + tail }
+        return "#red"
+    }
+    // outros caminhos relativos: arquivo no GitHub
+    forge rest = u
+    forge ups = 0
+    cycle (forge k = 0; k < 6; k++) {
+        if (ofs_str_eq(ofs_str_substr(rest, 0, 3), "../")) {
+            rest = ofs_str_substr(rest, 3, ofs_str_len(rest) - 3)
+            ups = ups + 1
+        }
+    }
+    forge depth = 1
+    if (ofs_str_eq(rf_lang, "pt") == false) { depth = 2 }
+    forge pre = ""
+    if (depth - ups == 1) { pre = "docs/" }
+    if (depth - ups == 2) { pre = "docs/" + rf_lang + "/" }
+    return rf_repo + "/blob/main/" + pre + rest
+}
+
+vein rf_heading(lvl: stone, title: obsidian) -> void {
+    bk_close_blocks()
+    if (lvl == 1) {
+        if (ofs_str_len(rf_title) == 0) { rf_title = title }
+        return
+    }
+    if (lvl == 2) {
+        rf_n2 = rf_n2 + 1
+        rf_n3 = 0
+        forge num = ofs_stone_to_obsidian(rf_n2)
+        rf_toc = rf_toc + "<li class=\"tl2\"><a href=\"#s" + num + "\">" + bk_inline(title) + "</a></li>\n"
+        rf_ntoc = rf_ntoc + 1
+        rf_secs = rf_secs + title + "\n"
+        bk_cur = bk_cur + "<h2 id=\"s" + num + "\">" + bk_inline(title) + "</h2>\n"
+        return
+    }
+    if (lvl == 3) {
+        rf_n3 = rf_n3 + 1
+        forge num3 = ofs_stone_to_obsidian(rf_n2) + "." + ofs_stone_to_obsidian(rf_n3)
+        rf_toc = rf_toc + "<li class=\"tl3\"><a href=\"#s" + num3 + "\">" + bk_inline(title) + "</a></li>\n"
+        rf_ntoc = rf_ntoc + 1
+        rf_secs = rf_secs + title + "\n"
+        bk_cur = bk_cur + "<h3 id=\"s" + num3 + "\">" + bk_inline(title) + "</h3>\n"
+        return
+    }
+    forge h = ofs_stone_to_obsidian(lvl)
+    bk_cur = bk_cur + "<h" + h + ">" + bk_inline(title) + "</h" + h + ">\n"
+}
+
+// descarrega o HTML ja convertido (chamado pelo bk_line em modo bk_ref)
+vein rf_spill() -> void {
+    fputs(bk_cur, rf_sf)
+    bk_cur = ""
+}
+
+vein stone_of(s: obsidian) -> stone {
+    forge v = 0
+    cycle (forge i = 0; i < ofs_str_len(s); i++) { v = v * 10 + (ofs_str_char_at(s, i) - 48) }
+    return v
+}
+
+vein rf_plain(s: obsidian) -> obsidian {
+    forge out = ""
+    forge n = ofs_str_len(s)
+    cycle (forge i = 0; i < n; i++) {
+        if (ofs_str_char_at(s, i) != 96 && ofs_str_char_at(s, i) != 42) { out = out + ofs_str_substr(s, i, 1) }
+    }
+    return out
+}
+
+// primeiro titulo (# ...) de um .md, sem formatacao
+vein rf_doc_title(path: obsidian, fb: obsidian) -> obsidian {
+    forge src = od_read(path)
+    forge n = ofs_str_len(src)
+    forge st = 0
+    cycle (forge i = 0; i <= n; i++) {
+        if (i == n || ofs_str_char_at(src, i) == 10) {
+            forge l = ofs_str_substr(src, st, i - st)
+            if (ofs_str_len(l) > 2 && ofs_str_char_at(l, 0) == 35 && ofs_str_char_at(l, 1) == 32) {
+                return rf_plain(od_trim(ofs_str_substr(l, 2, ofs_str_len(l) - 2)))
+            }
+            st = i + 1
+        }
+    }
+    return fb
+}
+
+// linhas "KEY|href|titulo|grupo" para a lateral e os links "veja tambem"
+vein rf_build_nav(lang: obsidian) -> void {
+    od_nav_guide = ""
+    forge pos = 0
+    cycle (forge g = 0; g < 60; g++) {
+        forge s = bk_find(rf_docs, "\n", pos)
+        if (s >= 0) {
+            forge e = bk_find(rf_docs, "\n", s + 1)
+            if (e > s + 1) {
+                forge r = ofs_str_substr(rf_docs, s + 1, e - s - 1)
+                forge dk = rf_field(r, 0)
+                forge path = bk_resolve(lang, dk)
+                if (ofs_str_len(path) > 0) {
+                    od_nav_guide = od_nav_guide + dk + "|" + rf_name(dk, lang) + ".html|" + rf_doc_title(path, dk) + "|" + rf_cat_name(stone_of(rf_field(r, 1)), lang) + "\n"
+                }
+            }
+            if (e > s) { pos = e }
+            if (e < 0) { pos = ofs_str_len(rf_docs) }
+        }
+    }
+}
+
+vein rf_nav_title(dk: obsidian) -> obsidian {
+    forge n = ofs_str_len(od_nav_guide)
+    forge st = 0
+    cycle (forge i = 0; i < n; i++) {
+        if (ofs_str_char_at(od_nav_guide, i) == 10) {
+            forge row = ofs_str_substr(od_nav_guide, st, i - st)
+            if (ofs_str_eq(od_field(row, 0), dk)) { return od_field(row, 2) }
+            st = i + 1
+        }
+    }
+    return dk
+}
+
+vein rf_alts(dk: obsidian) -> obsidian {
+    return rf_name(dk, "pt") + ".html|" + rf_name(dk, "en") + ".html|" + rf_name(dk, "es") + ".html"
+}
+
+vein rf_write_doc(lang: obsidian, row: obsidian, outdir: obsidian) -> void {
+    forge dk = rf_field(row, 0)
+    forge path = bk_resolve(lang, dk)
+    if (ofs_str_len(path) == 0) { return }
+    forge nm = rf_name(dk, lang)
+    rf_lang = lang
+    bk_ref = true
+    bk_cur = ""
+    bk_open = true
+    bk_para = ""
+    bk_list = ""
+    bk_tab = 0
+    bk_code = false
+    bk_quote = false
+    rf_title = ""
+    rf_toc = ""
+    rf_secs = ""
+    rf_n2 = 0
+    rf_n3 = 0
+    rf_ntoc = 0
+    rf_edit = rf_repo + "/edit/main/" + path
+    rf_sf = fopen(rf_tmp, "w")
+    forge src = read_file(path)
+    forge n = ofs_str_len(src)
+    forge st = 0
+    cycle (forge i = 0; i <= n; i++) {
+        if (i == n || ofs_str_char_at(src, i) == 10) {
+            bk_line(ofs_str_substr(src, st, i - st))
+            st = i + 1
+        }
+    }
+    bk_close_blocks()
+    rf_spill()
+    fclose(rf_sf)
+    bk_ref = false
+    forge title = rf_title
+    if (ofs_str_len(title) == 0) { title = nm }
+    forge ct = rf_cat_name(stone_of(rf_field(row, 1)), lang)
+    od_here = ""
+    od_open(outdir + nm + ".html")
+    od_page_begin(rf_plain(title), "", "g:" + dk, rf_alts(dk))
+    od_w("<article class=\"art\"><p class=\"eyebrow\">" + od_esc(ct) + "</p><h1>" + bk_inline(title) + "</h1>")
+    if (bk_find(path, "docs/" + lang + "/", 0) != 0 && ofs_str_eq(lang, "pt") == false) {
+        od_w("<div class=\"wk-note\">" + od_t(lang, "", "This page has not been translated yet; showing the Portuguese text.", "Esta página aún no está traducida; se muestra el texto en portugués.") + "</div>")
+    }
+    if (rf_ntoc >= 3) {
+        od_w("<details class=\"toc\" open><summary>" + od_t(lang, "Nesta página", "On this page", "En esta página") + "</summary><ul>" + rf_toc + "</ul></details>")
+    }
+    od_w(od_read(rf_tmp))
+    od_w("<p class=\"cats\">" + od_t(lang, "Guia", "Guide", "Guía") + " · " + od_esc(ct) + "</p></article>")
+    od_page_end(rf_edit)
+    od_close()
+    // entrada de busca
+    forge secs = ""
+    forge pos = 0
+    cycle (forge g = 0; g < 400; g++) {
+        forge e = bk_find(rf_secs, "\n", pos)
+        if (e >= 0) {
+            if (ofs_str_len(secs) > 0) { secs = secs + " · " }
+            secs = secs + ofs_str_substr(rf_secs, pos, e - pos)
+            pos = e + 1
+        }
+    }
+    if (ofs_str_len(rf_json) > 0) { rf_json = rf_json + ",\n" }
+    rf_json = rf_json + "{\"k\":\"doc\",\"n\":\"" + od_jesc(rf_plain(title)) + "\",\"m\":\"" + od_jesc(ct) + "\",\"s\":\"" + od_jesc(rf_plain(secs)) + "\",\"d\":\"\",\"u\":\"" + nm + ".html\"}"
+}
+
+vein rf_for_each_doc(lang: obsidian, outdir: obsidian) -> void {
+    forge pos = 0
+    cycle (forge g = 0; g < 60; g++) {
+        forge s = bk_find(rf_docs, "\n", pos)
+        if (s >= 0) {
+            forge e = bk_find(rf_docs, "\n", s + 1)
+            if (e > s + 1) { rf_write_doc(lang, ofs_str_substr(rf_docs, s + 1, e - s - 1), outdir) }
+            if (e > s) { pos = e }
+            if (e < 0) { pos = ofs_str_len(rf_docs) }
+        }
+    }
+}
+
+vein rf_tile(href: obsidian, title: obsidian, desc: obsidian) -> void {
+    od_w("<a class=\"tile\" href=\"" + href + "\"><b>" + title + "</b><span>" + desc + "</span></a>")
+}
+
+vein rf_home(lang: obsidian, outdir: obsidian) -> void {
+    od_here = ""
+    od_open(outdir + "index.html")
+    od_page_begin(od_t(lang, "Início", "Home", "Inicio"), od_t(lang, "Referência do Obsidian Fault Script: guia, API gerada do código e cobertura da documentação.", "Obsidian Fault Script reference: guide, API generated from the code and documentation coverage.", "Referencia de Obsidian Fault Script: guía, API generada del código y cobertura de la documentación."), "home", "index.html|index.html|index.html")
+    od_w("<div class=\"hero\"><p class=\"eyebrow\">Obsidian Fault Script " + rf_ver + "</p><h1>" + od_t(lang, "Referência <em>OFS</em>", "<em>OFS</em> Reference", "Referencia <em>OFS</em>") + "</h1>")
+    od_w("<p class=\"lead\">" + od_t(lang, "Guia da linguagem e API gerada direto do código-fonte: cada função com assinatura, parâmetros, o que chama, quem a usa e a linha no GitHub.", "Language guide and an API generated straight from the source code: every function with its signature, parameters, what it calls, who uses it and the line on GitHub.", "Guía del lenguaje y API generada directo del código fuente: cada función con su firma, parámetros, a quién llama, quién la usa y la línea en GitHub.") + "</p></div>")
+    od_w("<div class=\"tiles\">")
+    rf_tile(rf_name("GETTING_STARTED", lang) + ".html", od_t(lang, "Guia", "Guide", "Guía"), od_t(lang, "Instalação, linguagem, compilador e linguagens de domínio.", "Installation, language, compiler and domain languages.", "Instalación, lenguaje, compilador y lenguajes de dominio."))
+    rf_tile("api/index.html", "API", od_itos(ofs_array_len(od_m_name)) + " " + od_t(lang, "módulos do stdlib, ferramentas e compilador.", "modules from the stdlib, tools and compiler.", "módulos del stdlib, herramientas y compilador."))
+    rf_tile("cobertura.html", od_t(lang, "Cobertura", "Coverage", "Cobertura"), od_pct1(od_tot_doc, od_tot_pub) + "% " + od_t(lang, "das funções públicas documentadas.", "of public functions documented.", "de las funciones públicas documentadas."))
+    rf_tile(od_book_rel, od_t(lang, "Livro", "Book", "Libro"), od_t(lang, "A versão em formato de livro.", "The book-style version.", "La versión en formato libro."))
+    od_w("</div>")
+    od_w("<section class=\"sec\"><h2>" + od_t(lang, "Guia", "Guide", "Guía") + "</h2><div class=\"cards\">")
+    forge n = ofs_str_len(od_nav_guide)
+    forge st = 0
+    cycle (forge i = 0; i < n; i++) {
+        if (ofs_str_char_at(od_nav_guide, i) == 10) {
+            forge r = ofs_str_substr(od_nav_guide, st, i - st)
+            od_w("<a class=\"mc g\" href=\"" + od_field(r, 1) + "\"><b>" + od_esc(od_field(r, 2)) + "</b><span>" + od_esc(od_field(r, 3)) + "</span></a>")
+            st = i + 1
+        }
+    }
+    od_w("</div></section>")
+    od_w("<section class=\"sec\"><h2>API</h2><div class=\"cards\">")
+    forge nm = ofs_array_len(od_m_name)
+    forge m = 0
+    forge last = "\t"
+    while (m < nm) {
+        forge g = od_s(od_m_group, m)
+        if (ofs_str_eq(g, last) == false) {
+            forge cnt = 0
+            forge m2 = m
+            while (m2 < nm) {
+                if (ofs_str_eq(od_s(od_m_group, m2), g)) { cnt = cnt + 1 }
+                m2 = m2 + 1
+            }
+            od_w("<a class=\"mc\" href=\"api/" + od_s(od_m_slug, m) + ".html\"><b>" + od_esc(g) + "</b><span>" + od_itos(cnt) + " " + od_t(lang, "módulos", "modules", "módulos") + "</span></a>")
+            last = g
+        }
+        m = m + 1
+    }
+    od_w("</div></section>")
+    od_page_end("")
+    od_close()
+}
+
+// redireciona a antiga wiki para a Referencia
+vein rf_redirect(path: obsidian, target: obsidian) -> void {
+    write_file(path, "<!doctype html><html><head><meta charset=\"utf-8\"><meta http-equiv=\"refresh\" content=\"0; url=" + target + "\"><link rel=\"canonical\" href=\"" + target + "\"><title>Referência OFS</title></head><body><a href=\"" + target + "\">Referência OFS</a></body></html>\n")
+}
+
+vein rf_write_lang(lang: obsidian, outdir: obsidian) -> void {
+    system("mkdir -p " + outdir)
+    rf_lang = lang
+    od_lang = lang
+    od_multi = true
+    od_api_dir = "api/"
+    od_here = ""
+    od_repo = rf_repo
+    od_brand = "OFS"
+    if (ofs_str_eq(lang, "pt")) {
+        od_asset_up = ""
+        od_book_rel = "../index.html"
+        od_license_href = "../legal/LICENSE"
+    } else {
+        od_asset_up = "../"
+        od_book_rel = "../../" + lang + "/index.html"
+        od_license_href = "../../legal/LICENSE"
+    }
+    rf_build_nav(lang)
+    rf_json = ""
+    rf_for_each_doc(lang, outdir)
+    rf_home(lang, outdir)
+    od_gen_api(outdir + "api/")
+    od_page_coverage(outdir + "cobertura.html")
+    od_open(outdir + "search.json")
+    od_w("[" + rf_json + ",\n")
+    od_search_first = true
+    od_search_entries()
+    od_w("]\n")
+    od_close()
+}
+
+// root: "docs/" ou "src/site/public/"
+vein rf_write_all(root: obsidian) -> void {
+    rf_init()
+    od_today = od_sh("date +%Y-%m-%d", "")
+    rf_ver = od_sh("git tag | sort -V | tail -1", "v" + bk_version())
+    od_docs_prefix = "docs/"
+    // indice do codigo (stdlib + ferramentas + compilador) e dos .md: uma vez so
+    od_build("ofs/stdlib:ofs/tools:ofs/ofscc", "docs")
+    system("rm -rf " + root + "ref " + root + "wiki")
+    rf_write_lang("pt", root + "ref/")
+    rf_write_lang("en", root + "ref/en/")
+    rf_write_lang("es", root + "ref/es/")
+    od_copy_file("ofs/tools/ofsdoc/ofsdoc.css", root + "ref/ofsdoc.css")
+    od_copy_file("ofs/tools/ofsdoc/ofsdoc.js", root + "ref/ofsdoc.js")
+    system("mkdir -p " + root + "wiki/en " + root + "wiki/es")
+    rf_redirect(root + "wiki/index.html", "../ref/index.html")
+    rf_redirect(root + "wiki/en/index.html", "../../ref/en/index.html")
+    rf_redirect(root + "wiki/es/index.html", "../../ref/es/index.html")
+}

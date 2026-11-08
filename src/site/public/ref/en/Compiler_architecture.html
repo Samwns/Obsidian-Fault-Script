@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="dark light"><title>OFS Compiler Architecture · OFS Reference</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 28 11 24 28H8L4 11Z' fill='%237c3aed'/%3E%3Cpath d='M16 2 28 11H4Z' fill='%23c4b5fd'/%3E%3C/svg%3E"><script>try{var m=/[?&]theme=(dark|light)/.exec(location.search),t=m?m[1]:localStorage.getItem('ofsdoc-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script><link rel="stylesheet" href="../ofsdoc.css"></head><body data-root=""><header class="top"><a id="menu" class="ib" href="#side" aria-label="Menu"><svg viewBox="0 0 24 24" width="22" height="22"><path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></a><a class="brand sm" href="index.html"><svg class="gem" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path d="M16 2 28 11 24 28H8L4 11Z" fill="#7c3aed"/><path d="M16 2 28 11H4Z" fill="#c4b5fd"/><path d="M16 2 4 11 8 28 16 12Z" fill="#a78bfa" opacity=".85"/><path d="M16 12 8 28H24Z" fill="#5b21b6"/></svg><b>OFS</b></a><button id="theme" class="ib" type="button" aria-label="Toggle theme"><svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button></header><div class="shell"><aside id="side" aria-label="Navigation"><a class="brand" href="index.html"><svg class="gem" viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><path d="M16 2 28 11 24 28H8L4 11Z" fill="#7c3aed"/><path d="M16 2 28 11H4Z" fill="#c4b5fd"/><path d="M16 2 4 11 8 28 16 12Z" fill="#a78bfa" opacity=".85"/><path d="M16 12 8 28H24Z" fill="#5b21b6"/></svg><span><b>OFS</b><i>Reference</i></span></a><form class="search" role="search" onsubmit="return false"><input id="q" type="search" autocomplete="off" spellcheck="false" placeholder="Search functions, modules, guides…" aria-label="Search"><kbd>/</kbd></form><ul id="res" class="res" hidden></ul><nav class="grp"><ul class="lnk"><li><a href="index.html">Home</a></li><li><a href="cobertura.html">Coverage</a></li></ul></nav><nav class="grp" aria-label="Guide"><h2>Guide</h2><details><summary>Getting started</summary><ul><li><a href="Getting_started.html">Getting Started with OFS</a></li><li><a href="Beginner_journey.html">OFS — Beginner's Journey</a></li></ul></details><details><summary>Language</summary><ul><li><a href="Language_reference.html">Obsidian Fault Script — Language Reference</a></li><li><a href="Compiled_language.html">OFS: A Truly Hybrid and Native Compiled Language</a></li></ul></details><details><summary>Library and tools</summary><ul><li><a href="Standard_library.html">OFS Standard Library Reference</a></li><li><a href="Tools.html">OFS tools</a></li></ul></details><details open><summary>Compiler</summary><ul><li><a class="on" aria-current="page" href="Compiler_architecture.html">OFS Compiler Architecture</a></li><li><a href="Bootstrap.html">OFS Self-Hosting Bootstrap Guide</a></li><li><a href="Performance.html">OFS Performance Analysis</a></li><li><a href="IDLE_architecture.html">Architectural Specification — OFS IDLE (Obsidian Integrated Development &amp; Learning Environment)</a></li></ul></details><details><summary>Domain languages</summary><ul><li><a href="ODL.html">ODL Reference</a></li><li><a href="OES.html">OES Reference</a></li><li><a href="Visual_UI.html">OFS Native Visual Library</a></li><li><a href="OAL.html">OAL Reference (v1)</a></li><li><a href="Web_UI.html">OFS Web Stack Architecture</a></li></ul></details><details><summary>Android</summary><ul><li><a href="Android.html">OFS on Android (aarch64)</a></li></ul></details><details><summary>Project</summary><ul><li><a href="Site_language.html">ODL and OES</a></li><li><a href="GitHub_registration.html">GitHub Recognition</a></li><li><a href="Recent_changes.html">Changelog</a></li></ul></details></nav><nav class="grp" aria-label="API"><h2>API</h2><ul class="lnk"><li><a href="api/index.html">Overview</a></li></ul><details><summary>stdlib</summary><ul class="mods"><li><a href="api/android_http.html">android_http</a></li><li><a href="api/android_input.html">android_input</a></li><li><a href="api/android.html">android</a></li><li><a href="api/android_webview.html">android_webview</a></li><li><a href="api/audio_android.html">audio_android</a></li><li><a href="api/avi.html">avi</a></li><li><a href="api/bedrock.html">bedrock</a></li><li><a href="api/bedrock_packet.html">bedrock_packet</a></li><li><a href="api/canvas.html">canvas</a></li><li><a href="api/core.html">core</a></li><li><a href="api/fs.html">fs</a></li><li><a href="api/hashmap.html">hashmap</a></li><li><a href="api/http.html">http</a></li><li><a href="api/icons.html">icons</a></li><li><a href="api/io.html">io</a></li><li><a href="api/math.html">math</a></li><li><a href="api/memory_modes.html">memory_modes</a></li><li><a href="api/net.html">net</a></li><li><a href="api/net_windows.html">net_windows</a></li><li><a href="api/oal_android.html">oal_android</a></li><li><a href="api/oal_runtime.html">oal_runtime</a></li><li><a href="api/oal_x11.html">oal_x11</a></li><li><a href="api/odl.html">odl</a></li><li><a href="api/oes.html">oes</a></li><li><a href="api/ofshtml.html">ofshtml</a></li><li><a href="api/oll.html">oll</a></li><li><a href="api/oll_x11.html">oll_x11</a></li><li><a href="api/png.html">png</a></li><li><a href="api/raster.html">raster</a></li><li><a href="api/rift.html">rift</a></li><li><a href="api/runtime-facet.html">runtime/facet</a></li><li><a href="api/runtime-foundation.html">runtime/foundation</a></li><li><a href="api/runtime-frame.html">runtime/frame</a></li><li><a href="api/runtime-impulse.html">runtime/impulse</a></li><li><a href="api/runtime-input.html">runtime/input</a></li><li><a href="api/runtime-magma.html">runtime/magma</a></li><li><a href="api/runtime-magma_windows.html">runtime/magma_windows</a></li><li><a href="api/runtime-matrix.html">runtime/matrix</a></li><li><a href="api/runtime-outlet.html">runtime/outlet</a></li><li><a href="api/runtime-prism.html">runtime/prism</a></li><li><a href="api/runtime-pulse.html">runtime/pulse</a></li><li><a href="api/runtime-reservoir.html">runtime/reservoir</a></li><li><a href="api/runtime-webserver.html">runtime/webserver</a></li><li><a href="api/runtime-webserver_windows.html">runtime/webserver_windows</a></li><li><a href="api/sha256.html">sha256</a></li><li><a href="api/string.html">string</a></li><li><a href="api/terminal_colors.html">terminal_colors</a></li><li><a href="api/test_lib.html">test_lib</a></li><li><a href="api/tls.html">tls</a></li><li><a href="api/ttf.html">ttf</a></li><li><a href="api/ui.html">ui</a></li><li><a href="api/wav.html">wav</a></li><li><a href="api/webserver.html">webserver</a></li><li><a href="api/webui.html">webui</a></li><li><a href="api/window.html">window</a></li><li><a href="api/x11win.html">x11win</a></li><li><a href="api/zip.html">zip</a></li></ul></details><details><summary>tools</summary><ul class="mods"><li><a href="api/fileio.html">fileio</a></li><li><a href="api/oalc.html">oalc</a></li><li><a href="api/odlc.html">odlc</a></li><li><a href="api/oesc.html">oesc</a></li><li><a href="api/ofsdoc_html.html">ofsdoc_html</a></li><li><a href="api/ofsdoc.html">ofsdoc</a></li><li><a href="api/ofsdoc_scan.html">ofsdoc_scan</a></li><li><a href="api/web_language_common.html">web_language_common</a></li></ul></details><details><summary>ofscc</summary><ul class="mods"><li><a href="api/ast.html">ast</a></li><li><a href="api/_attach_probe.html">_attach_probe</a></li><li><a href="api/chars.html">chars</a></li><li><a href="api/codegen.html">codegen</a></li><li><a href="api/events.html">events</a></li><li><a href="api/fileio.html">fileio</a></li><li><a href="api/interpreter.html">interpreter</a></li><li><a href="api/lexer.html">lexer</a></li><li><a href="api/llvmgen.html">llvmgen</a></li><li><a href="api/nodes.html">nodes</a></li><li><a href="api/ofscc.html">ofscc</a></li><li><a href="api/parser.html">parser</a></li><li><a href="api/reporter.html">reporter</a></li><li><a href="api/symbols.html">symbols</a></li><li><a href="api/test_lexer_basic.html">test_lexer_basic</a></li><li><a href="api/test_lexer_parser.html">test_lexer_parser</a></li><li><a href="api/test_lexer_units.html">test_lexer_units</a></li><li><a href="api/tokens.html">tokens</a></li><li><a href="api/typeck.html">typeck</a></li></ul></details></nav><div class="links"><a href="../../en/index.html">Book</a><a href="https://github.com/Samwns/Obsidian-Fault-Script">GitHub</a></div><div class="langs"><a href="../Arquitetura_do_compilador.html" hreflang="pt">PT</a><a href="Compiler_architecture.html" hreflang="en" aria-current="true">EN</a><a href="../es/Arquitectura_del_compilador.html" hreflang="es">ES</a></div></aside><main id="main"><article class="art"><p class="eyebrow">Compiler</p><h1>OFS Compiler Architecture</h1><details class="toc" open><summary>On this page</summary><ul><li class="tl2"><a href="#s1">High-Level Overview</a></li>
+<li class="tl2"><a href="#s2">Phase 1: Lexer (Tokenization)</a></li>
+<li class="tl3"><a href="#s2.1">Input</a></li>
+<li class="tl3"><a href="#s2.2">Processing</a></li>
+<li class="tl3"><a href="#s2.3">Output</a></li>
+<li class="tl3"><a href="#s2.4">Key Design Decisions</a></li>
+<li class="tl2"><a href="#s3">Phase 2: Parser (AST Construction)</a></li>
+<li class="tl3"><a href="#s3.1">Strategy</a></li>
+<li class="tl3"><a href="#s3.2">Grammar (Simplified)</a></li>
+<li class="tl3"><a href="#s3.3">AST Node Pool</a></li>
+<li class="tl3"><a href="#s3.4">Example: Parse <code>vein add(a: stone) -&gt; stone { return a }</code></a></li>
+<li class="tl3"><a href="#s3.5">Precedence Table (Pratt Parser)</a></li>
+<li class="tl2"><a href="#s4">Phase 3: Type Checker</a></li>
+<li class="tl3"><a href="#s4.1">Symbol Table</a></li>
+<li class="tl3"><a href="#s4.2">Scope Stack</a></li>
+<li class="tl3"><a href="#s4.3">Type Checking Rules</a></li>
+<li class="tl3"><a href="#s4.4">Error Handling (Current)</a></li>
+<li class="tl2"><a href="#s5">Phase 4A: AST Interpreter Backend (Interpretação Direta)</a></li>
+<li class="tl3"><a href="#s5.1">Arquitetura do Interpretador</a></li>
+<li class="tl2"><a href="#s6">Phase 4B: LLVM IR Generator (Geração Nativa)</a></li>
+<li class="tl3"><a href="#s6.1">Type Mapping (OFS → LLVM IR)</a></li>
+<li class="tl3"><a href="#s6.2">Estratégia de Emissão LLVM IR</a></li>
+<li class="tl3"><a href="#s6.3">Exemplo: <code>forge x = 42</code></a></li>
+<li class="tl3"><a href="#s6.4">Exemplo: <code>vein add(a: stone, b: stone) -&gt; stone { return a + b }</code></a></li>
+<li class="tl3"><a href="#s6.5">Alvos (<code>OFSCC_TARGET</code>)</a></li>
+<li class="tl3"><a href="#s6.6">Endereço de função (<code>fault_addr</code>, <code>fault_call</code>)</a></li>
+<li class="tl2"><a href="#s7">Phase 5: Driver do Compilador</a></li>
+<li class="tl3"><a href="#s7.1">Pipeline de Execução Self-Hosted</a></li>
+<li class="tl2"><a href="#s8">Memory Model</a></li>
+<li class="tl3"><a href="#s8.1">Static Allocation</a></li>
+<li class="tl3"><a href="#s8.2">Dynamic Allocation (via FFI)</a></li>
+<li class="tl2"><a href="#s9">Determinism Guarantees</a></li>
+<li class="tl2"><a href="#s10">Known Limitations</a></li>
+<li class="tl3"><a href="#s10.1">Current</a></li>
+<li class="tl3"><a href="#s10.2">Planned</a></li>
+<li class="tl2"><a href="#s11">Testing Strategy</a></li>
+<li class="tl2"><a href="#s12">Performance</a></li>
+<li class="tl2"><a href="#s13">Active Architecture: Direct LLVM Backend (Zero-Clang)</a></li>
+</ul></details><h2 id="s1">High-Level Overview</h2>
+<pre><code>source.ofs
+    │
+    ├─────────────────────────────────────────┐
+    │                                         │
+    ▼                                         ▼
+┌──────────────┐                    ┌────────────────────┐
+│   Lexer      │ → Array&lt;Token&gt;     │  Symbol Table      │
+│  (chars,     │   (80 kinds)       │  (scope stack)     │
+│   tokens)    │                    └────────────────────┘
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│   Parser     │ → AST Root ID (stone)
+│  (recursive  │   (60+ node kinds)
+│   descent +  │   (pool-based allocation)
+│   Pratt)     │
+└──────┬───────┘
+       │
+       ▼
+┌──────────────┐
+│  TypeChecker │ → Annotated AST
+│  (with scope │   (type_str on each node)
+│   stack)     │
+└──────┬───────┘
+       │
+       ├─────────────────────────────────┐
+       │ (ofs run / interpreted)         │ (ofs build / native)
+       ▼                                 ▼
+┌──────────────┐                  ┌──────────────┐
+│ Interpreter  │                  │  LLVM Gen    │ → output.ll (LLVM IR nativo)
+│(interpreter  │                  │ (llvmgen.ofs)│   (mapeamento OFS → LLVM IR SSA)
+│    .ofs)     │                  └──────┬───────┘
+└──────┬───────┘                         │
+       │                                 ▼
+       ▼                             llc -filetype=obj output.ll -o output.o
+ Direct Execution                        │
+(instant evaluation)                     ▼
+                             ld / ld.lld output.o magma.o → executável nativo
+</code></pre>
+<h2 id="s2">Phase 1: Lexer (Tokenization)</h2>
+<p><strong>File</strong>: <code>ofs/ofscc/lexer.ofs</code> (660 lines) </p>
+<h3 id="s2.1">Input</h3>
+<pre><code>forge x: stone = 42
+</code></pre>
+<h3 id="s2.2">Processing</h3>
+<ol><li><strong>Character classification</strong> (<code>chars.ofs</code>):</li></ol>
+<pre><code>   is_digit(c), is_alpha(c), is_alnum(c), is_space(c)
+</code></pre>
+<ol><li><strong>Token recognition</strong>:</li></ol>
+<ul><li class="sub">Keywords (34): forge, vein, if, while, match, etc.</li><li class="sub">Operators (25+): +, -, *, /, ==, !=, &amp;&amp;, ||, [], etc.</li><li class="sub">Literals: 42, 3.14, &quot;hello\n&quot;, true, false, null</li><li class="sub">Identifiers: x, _var, CamelCase</li><li class="sub">Comments: // and /* */</li></ul>
+<ol><li><strong>Multi-character operators</strong>:</li></ol>
+<ul><li class="sub">++ / -- / += / -= / *= /= / == / != / &lt;= / &gt;= / &amp;&amp; / || / &lt;&lt; / &gt;&gt; / -&gt;</li></ul>
+<h3 id="s2.3">Output</h3>
+<pre><code>Token { kind: TOK_FORGE, val: &quot;forge&quot;, line: 1, col: 1 }
+Token { kind: TOK_IDENT, val: &quot;x&quot;, line: 1, col: 7 }
+Token { kind: TOK_COLON, val: &quot;:&quot;, line: 1, col: 8 }
+Token { kind: TOK_IDENT, val: &quot;stone&quot;, line: 1, col: 10 }
+Token { kind: TOK_EQ, val: &quot;=&quot;, line: 1, col: 16 }
+Token { kind: TOK_INT, val: &quot;42&quot;, line: 1, col: 18 }
+Token { kind: TOK_EOF, val: &quot;&quot;, line: 1, col: 21 }
+</code></pre>
+<h3 id="s2.4">Key Design Decisions</h3>
+<ul><li><strong>No lexer actions</strong> — Just tokenize, don't parse yet</li><li><strong>Line/column tracking</strong> — For error messages</li><li><strong>Escape sequences</strong> — \n, \t, \\, \&quot;, \0 handled</li><li><strong>Hex/float literals</strong> — 0xFF, 1.0e-5 supported</li></ul>
+<h2 id="s3">Phase 2: Parser (AST Construction)</h2>
+<p><strong>file</strong>: <code>ofs/ofscc/parser.ofs</code> (650+ lines) </p>
+<h3 id="s3.1">Strategy</h3>
+<ol><li><strong>Recursive Descent</strong> for statements + declarations</li><li><strong>Pratt Parser</strong> for expressions (operator precedence)</li><li><strong>Pool-based AST</strong> — nodes stored in global Array&lt;Node&gt;</li></ol>
+<h3 id="s3.2">Grammar (Simplified)</h3>
+<pre><code>program     ::= (decl | stmt)*
+decl        ::= fn_decl | var_decl | monolith_decl
+fn_decl     ::= (&quot;vein&quot; | &quot;core&quot;) IDENT &quot;(&quot; params &quot;)&quot; (&quot;-&gt;&quot; type)? block
+var_decl    ::= (&quot;forge&quot; | &quot;const&quot;) IDENT (&quot;:&quot; type)? (&quot;=&quot; expr)? &quot;;&quot;
+
+stmt        ::= expr_stmt | if_stmt | while_stmt | return_stmt | block
+if_stmt     ::= &quot;if&quot; &quot;(&quot; expr &quot;)&quot; block (&quot;else&quot; block)?
+while_stmt  ::= &quot;while&quot; &quot;(&quot; expr &quot;)&quot; block
+return_stmt ::= &quot;return&quot; expr? &quot;;&quot;
+
+expr        ::= assign_expr
+assign_expr ::= or_expr ((&quot;=&quot; | &quot;+=&quot; | &quot;-=&quot;) or_expr)*
+or_expr     ::= and_expr (&quot;||&quot; and_expr)*
+and_expr    ::= eq_expr (&quot;&amp;&amp;&quot; eq_expr)*
+eq_expr     ::= lt_expr ((&quot;==&quot; | &quot;!=&quot;) lt_expr)*
+lt_expr     ::= add_expr ((&quot;&lt;&quot; | &quot;&lt;=&quot; | &quot;&gt;&quot; | &quot;&gt;=&quot;) add_expr)*
+add_expr    ::= mul_expr ((&quot;+&quot; | &quot;-&quot;) mul_expr)*
+mul_expr    ::= unary_expr ((&quot;*&quot; | &quot;/&quot; | &quot;%&quot;) unary_expr)*
+unary_expr  ::= (&quot;!&quot; | &quot;-&quot; | &quot;&amp;&quot; | &quot;*&quot;) unary_expr | postfix_expr
+postfix_expr::= primary_expr (&quot;[&quot; expr &quot;]&quot; | &quot;.&quot; IDENT | &quot;++&quot; | &quot;--&quot;)*
+
+primary_expr::= IDENT | INT | FLOAT | STRING | &quot;true&quot; | &quot;false&quot; | &quot;null&quot;
+             | &quot;(&quot; expr &quot;)&quot; | &quot;[&quot; expr_list &quot;]&quot; | call_expr
+</code></pre>
+<h3 id="s3.3">AST Node Pool</h3>
+<p>All nodes stored in global array with numeric IDs: </p>
+<pre><code>monolith Node {
+    kind: stone        // NK_* constant
+    val: obsidian      // name or literal value
+    type_str: obsidian // from type checker
+    line, col: stone   // source position
+    c0, c1, c2, c3: stone  // child indices (fixed)
+    extra: Array&lt;stone&gt;    // additional children
+}
+
+forge _node_pool: Array&lt;Node&gt; = []
+</code></pre>
+<h3 id="s3.4">Example: Parse <code>vein add(a: stone) -&gt; stone { return a }</code></h3>
+<pre><code>NK_FN_DECL
+├─ val: &quot;add&quot;
+├─ c0: 2 (params block)
+│  └─ extra: [3] (param node)
+│     ├─ kind: NK_PARAM
+│     ├─ val: &quot;a&quot;
+│     └─ c0: 4 (type node)
+│        └─ kind: NK_TYPE, val: &quot;stone&quot;
+├─ c1: 5 (return type)
+│  └─ kind: NK_TYPE, val: &quot;stone&quot;
+└─ c2: 6 (body block)
+   └─ kind: NK_BLOCK
+      └─ extra: [7] (return stmt)
+         ├─ kind: NK_RETURN
+         └─ c0: 8 (ident node)
+            └─ kind: NK_IDENT, val: &quot;a&quot;
+</code></pre>
+<h3 id="s3.5">Precedence Table (Pratt Parser)</h3>
+<pre><code>Precedence Order (lowest to highest):
+1.  = += -= *= /=   (assignment)
+2.  ||              (logical OR)
+3.  &amp;&amp;              (logical AND)
+4.  == !=           (equality)
+5.  &lt; &lt;= &gt; &gt;=       (comparison)
+6.  |               (bitwise OR)
+7.  ^               (bitwise XOR)
+8.  &amp;               (bitwise AND)
+9.  &lt;&lt; &gt;&gt;           (bit shift)
+10. + -             (addition)
+11. * / %           (multiplication)
+12. Unary - ! ~     (prefix)
+13. ++ --           (postfix)
+14. [] . ()         (postfix: index, field, call)
+</code></pre>
+<h2 id="s4">Phase 3: Type Checker</h2>
+<p><strong>File</strong>: <code>ofs/ofscc/typeck.ofs</code> (350+ lines) </p>
+<h3 id="s4.1">Symbol Table</h3>
+<pre><code>monolith Symbol {
+    name: obsidian       // variable/function name
+    type_str: obsidian   // &quot;stone&quot;, &quot;obsidian&quot;, &quot;Array&lt;stone&gt;&quot;, etc
+    kind: stone          // SYM_VAR, SYM_CONST, SYM_FN, SYM_PARAM
+    fn_arity: stone      // number of parameters
+    is_const: bool       // immutable?
+}
+</code></pre>
+<h3 id="s4.2">Scope Stack</h3>
+<pre><code>forge _scopes: Array&lt;Array&lt;Symbol&gt;&gt; = []
+
+// Push scope when entering block/function
+push_scope()
+
+// Pop scope when exiting
+pop_scope()
+
+// Declare symbol in current scope
+declare(sym)
+
+// Resolve symbol (searches outer scopes)
+resolve(name)
+</code></pre>
+<h3 id="s4.3">Type Checking Rules</h3>
+<ol><li><strong>Literals</strong>:</li></ol>
+<ul><li class="sub"><code>42</code> → stone</li><li class="sub"><code>3.14</code> → crystal</li><li class="sub"><code>&quot;hello&quot;</code> → obsidian</li><li class="sub"><code>true</code>/<code>false</code> → bool</li></ul>
+<ol><li><strong>Binary operations</strong>:</li></ol>
+<ul><li class="sub">Arithmetic (+ - * /): both operands must be numeric</li><li class="sub">Comparison (== != &lt; &lt;= &gt; &gt;=): return bool</li><li class="sub">Logical (&amp;&amp; ||): operands and result are bool</li></ul>
+<ol><li><strong>Variable declarations</strong>:</li></ol>
+<ul><li class="sub"><code>forge x: stone = 42</code> → explicit type</li><li class="sub"><code>forge y = 42</code> → inferred as stone</li><li class="sub"><code>const z = 100</code> → inferred, immutable</li></ul>
+<ol><li><strong>Function calls</strong>:</li></ol>
+<ul><li class="sub">Arguments count must match parameters</li><li class="sub">Argument types should be compatible with parameters</li></ul>
+<h3 id="s4.4">Error Handling (Current)</h3>
+<ul><li>Warnings only (no <code>tremor</code>/<code>catch</code> yet)</li><li>Line/column reported</li><li>Message: <code>[typeck warn line:col] description</code></li></ul>
+<h2 id="s5">Phase 4A: AST Interpreter Backend (Interpretação Direta)</h2>
+<p><strong>File</strong>: <code>ofs/ofscc/interpreter.ofs</code> (70KB, 1,900+ lines) </p>
+<p>O backend interpretador da OFS executa a árvore sintática (AST) tipada diretamente em memória, sem gerar arquivos intermediários, código C ou LLVM IR. É o backend padrão utilizado pelo comando <code>ofs &lt;arquivo.ofs&gt;</code> e <code>ofs run &lt;arquivo.ofs&gt;</code>. </p>
+<h3 id="s5.1">Arquitetura do Interpretador</h3>
+<ol><li><strong>Sistema `Value`</strong>: Monolith universal que unifica valores escalares (<code>stone</code>, <code>crystal</code>, <code>obsidian</code>, <code>bool</code>, <code>null</code>) e handles virtuais na heap para <code>Array&lt;T&gt;</code>, objetos <code>monolith</code> e ponteiros.</li><li><strong>Ambiente e Frames de Chamada</strong>: Escopo léxico estrito baseado em marcadores de frame (<code>_current_frame_base</code> e <code>_globals_count</code>), impedindo vazamento de escopo entre funções chamadoras e variáveis globais.</li><li><strong>Semântica por Valor</strong>: Cópias profundas de campos de estruturas (<code>clone_value()</code>) garantindo comportamento idêntico ao modelo de memória nativo.</li><li><strong>Despacho Dinâmico de Métodos</strong>: Resolução automática de métodos definidos em blocos <code>impl Type</code> com injeção automática de <code>self</code>.</li><li><strong>Ponteiros Virtuais</strong>: Tabela de <code>Location</code> que reproduz a semântica de <code>&amp;</code> e <code>*</code> dentro de blocos <code>fracture</code> e declarações <code>shard</code>.</li><li><strong>Builtins Integrados</strong>: Resolução imediata de funções de entrada/saída (<code>echo</code>), strings (<code>ofs_str_*</code>), vetores (<code>ofs_array_*</code>) e matemáticas (<code>ofs_pow</code>, <code>ofs_sqrt</code>).</li></ol>
+<h2 id="s6">Phase 4B: LLVM IR Generator (Geração Nativa)</h2>
+<p><strong>File</strong>: <code>ofs/ofscc/llvmgen.ofs</code> (74KB, 2,000+ lines) </p>
+<p>O backend de compilação da OFS gera diretamente LLVM Intermediate Representation (IR), dispensando transpiladores para C ou dependências do Clang. É utilizado pelo comando <code>ofs build</code>. </p>
+<h3 id="s6.1">Type Mapping (OFS → LLVM IR)</h3>
+<pre><code>stone      → i64
+crystal    → double
+obsidian   → i8* (ponteiro para sequência UTF-8)
+bool       → i1
+void       → void
+u8, u16, u32, u64 → i8, i16, i32, i64
+i8, i32    → i8, i32
+Array&lt;T&gt;   → %struct.Array* (vetor dinâmico do Stack Magma)
+</code></pre>
+<h3 id="s6.2">Estratégia de Emissão LLVM IR</h3>
+<ol><li><strong>Target Datalayout &amp; Triple</strong> — Configuração da arquitetura de destino (x86_64 ELF ou Windows PE32+)</li><li><strong>Declarações Externas</strong> — Protótipos das rotinas do Stack Magma (<code>ofs_alloc</code>, <code>ofs_str_concat</code>, <code>ofs_array_push</code>, etc.)</li><li><strong>Definições de Funções</strong> — Blocos básicos rotulados (<code>entry:</code>, etc.), alocações de variáveis (<code>alloca</code>), instruções SSA (<code>load</code>, <code>store</code>, <code>add</code>, <code>icmp</code>, <code>br</code>, <code>call</code>)</li><li><strong>Constantes de String</strong> — Globais imutáveis <code>@.str.N = private unnamed_addr constant [...]</code></li></ol>
+<h3 id="s6.3">Exemplo: <code>forge x = 42</code></h3>
+<p><strong>LLVM IR Gerado</strong>: </p>
+<pre><code>%x = alloca i64, align 8
+store i64 42, i64* %x, align 8
+</code></pre>
+<h3 id="s6.4">Exemplo: <code>vein add(a: stone, b: stone) -&gt; stone { return a + b }</code></h3>
+<p><strong>LLVM IR Gerado</strong>: </p>
+<pre><code>define i64 @add(i64 %a, i64 %b) {
+entry:
+  %0 = add i64 %a, %b
+  ret i64 %0
+}
+</code></pre>
+<h3 id="s6.5">Alvos (<code>OFSCC_TARGET</code>)</h3>
+<p>Sem a variável, o IR sai com o triple do host (x86-64 Linux/Windows/macOS), idêntico ao de antes. <code>OFSCC_TARGET=android</code> emite <code>aarch64-unknown-linux-android26</code> (ou passe um triple completo). O runtime <code>magma</code> usa só a libc, então para o Android basta gerar o IR do <code>magma.ofs</code> com o mesmo triple e compilar com o clang do NDK; a <code>.so</code> é linkada com <code>-Wl,-init,__ofs_init_globals</code> porque não há <code>main()</code>. Ver <a href="Android.html">ANDROID.md</a>. </p>
+<p>Um <code>extern vein</code> que o próprio módulo define não é mais declarado de novo (antes: <code>invalid redefinition</code>). </p>
+<h3 id="s6.6">Endereço de função (<code>fault_addr</code>, <code>fault_call</code>)</h3>
+<p><code>fault_addr(nome)</code>: o typeck troca o argumento pelo símbolo mangled (<code>ns.fn</code> → <code>ns__fn</code>) e exige que seja uma vein (<code>SYM_FN</code>); o llvmgen resolve <code>bind</code> de <code>extern</code>/<code>rift</code> e emite <code>ptrtoint ptr @simbolo to i64</code>. <code>fault_call(endereco, args...)</code> emite <code>inttoptr</code> + <code>call i64 %p(...)</code> com os tipos LLVM dos argumentos. Ver <a href="Language_reference.html">LANGUAGE_REFERENCE.md</a>. </p>
+<h2 id="s7">Phase 5: Driver do Compilador</h2>
+<p><strong>File</strong>: <code>ofs/ofscc/ofscc.ofs</code> </p>
+<h3 id="s7.1">Pipeline de Execução Self-Hosted</h3>
+<pre><code>core main() {
+    forge src = read_file(input_file)
+    src = expand_attaches(input_file, src)
+    
+    forge tokens = lexer.lex(src)
+    forge root_id = parser.parse(tokens)
+    typeck.check(root_id)
+    
+    llvmgen.generate(root_id, ll_output)
+    
+    system(&quot;llc -filetype=obj &quot; + ll_output + &quot; -o &quot; + obj_output)
+    system(&quot;ld &quot; + obj_output + &quot; ofs/dist/magma.o -lc -lm -o &quot; + output_file)
+}
+</code></pre>
+<h2 id="s8">Memory Model</h2>
+<h3 id="s8.1">Static Allocation</h3>
+<ul><li>Token array: ~10KB (typical)</li><li>Node pool: ~1MB (large programs)</li><li>Symbol table: ~100KB</li></ul>
+<h3 id="s8.2">Dynamic Allocation (via FFI)</h3>
+<pre><code>extern vein ofs_alloc(size: stone) -&gt; stone
+extern vein ofs_free(ptr: stone) -&gt; void
+</code></pre>
+<p>Used for: </p>
+<ul><li>String concatenation (minimal)</li><li>Array growth (Array&lt;stone&gt; etc)</li></ul>
+<h2 id="s9">Determinism Guarantees</h2>
+<p>For bootstrap to work (<code>ofscc_v2 === ofscc_v3</code>): </p>
+<p><strong>Deterministic</strong>: </p>
+<ul><li>Token order matches source order</li><li>AST order matches source order</li><li>Symbol table ordered byInsertion</li><li>No timestamps or random data</li></ul>
+<p><strong>Non-deterministic</strong> (avoid): </p>
+<ul><li>Hash tables (unpredictable iteration)</li><li>Floating-point without rounding</li><li>Embedded timestamps</li><li>Address-dependent output</li></ul>
+<h2 id="s10">Known Limitations</h2>
+<h3 id="s10.1">Current</h3>
+<ol><li><strong>No argv parsing</strong> — Command-line args hardcoded</li><li><strong>Single-pass type checking</strong> — No forward declarations</li><li><strong>Limited error recovery</strong> — Errors halt compilation</li><li><strong>No diagnostics</strong> — Just echo messages</li></ol>
+<h3 id="s10.2">Planned</h3>
+<ol><li>Add Interpreter backend (<code>interpreter.ofs</code>) for instant evaluation via <code>ofs run</code></li><li>Implement OIR (Obsidian Intermediate Representation) lowering layer</li><li>Add tremor/catch error handling and unwinding</li><li>Path-aware error messages and diagnostics</li><li>Native graphics, windowing, and audio standard modules</li></ol>
+<h2 id="s11">Testing Strategy</h2>
+<div class="tw"><table><thead><tr><th>Level</th><th>Files</th><th>Purpose</th></tr></thead><tbody><tr><td><strong>Unit</strong></td><td><code>test_lexer_units.ofs</code></td><td>Char classification, keywords</td></tr><tr><td><strong>Integration</strong></td><td><code>test_lexer_parser.ofs</code></td><td>Lexer + Parser together</td></tr><tr><td><strong>E2E</strong></td><td><code>test_bootstrap.sh</code></td><td>Full 3-pass bootstrap</td></tr><tr><td><strong>Regression</strong></td><td><code>examples/</code></td><td>Real programs</td></tr></tbody></table></div>
+<h2 id="s12">Performance</h2>
+<div class="tw"><table><thead><tr><th>Phase</th><th>Time (typical)</th><th>Limiting Factor</th></tr></thead><tbody><tr><td>Lexer</td><td>&lt;1ms</td><td>File I/O</td></tr><tr><td>Parser</td><td>~10ms</td><td>Node allocation</td></tr><tr><td>TypeCheck</td><td>~5ms</td><td>Symbol lookup</td></tr><tr><td>LLVMGen</td><td>~10ms</td><td>SSA IR generation</td></tr><tr><td>LLC (Assembler)</td><td>~35ms</td><td>Machine code emission</td></tr><tr><td>Linker (ld / ld.lld)</td><td>~15ms</td><td>Object linking with <code>magma.o</code></td></tr><tr><td><strong>Total</strong></td><td>~70ms</td><td>Native machine code generation</td></tr></tbody></table></div>
+<h2 id="s13">Active Architecture: Direct LLVM Backend (Zero-Clang)</h2>
+<p>The OFS compiler emits LLVM IR directly without intermediate C code: </p>
+<pre><code>llvmgen.ofs → output.ll (LLVM IR) → llc -filetype=obj → output.o → ld (with magma.o) → executable
+</code></pre>
+<p>Benefits: </p>
+<ul><li>Direct machine code generation (no GCC or Clang dependency)</li><li>Byte-for-byte reproducibility and deterministic IR emission</li><li>Fast compilation (~50-100ms end-to-end)</li><li>100% pure OFS runtime via Stack Magma (<code>magma.o</code>)</li><li>First-class cross-compilation support (Linux ELF and Windows PE32+)</li></ul>
+<p><strong>Architecture Status</strong>: Production &amp; Self-Hosted <strong>Verification</strong>: Verified via <code>cmp -s v3.ll v4.ll</code> (zero diff) </p>
+<p class="cats">Guide · Compiler</p></article></main></div><footer class="foot"><span>Generated from source by <code>ofs doc</code> · 2026-11-08</span><a href="../../legal/LICENSE">Apache License 2.0</a><a class="edit" href="https://github.com/Samwns/Obsidian-Fault-Script/edit/main/docs/en/COMPILER_ARCHITECTURE.md" title="Edit on GitHub" aria-label="Edit on GitHub"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></a></footer><script src="../ofsdoc.js"></script></body></html>

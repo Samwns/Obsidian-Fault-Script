@@ -1,0 +1,991 @@
+// ofsdoc_html: gerador das paginas do `ofs doc` (parte 2).
+//
+// Escreve HTML estatico direto em arquivos (fputs, pedaco por pedaco): o
+// runtime do OFS nao libera strings, entao nenhuma pagina e montada numa
+// string grande. Usado pelo CLI (`ofs doc`) e pelo build do site
+// (src/site/src/ref.ofs), que injeta a navegacao do Guia via od_nav_guide.
+//
+// Convencao de comentario (documentada em docs/TOOLS.md):
+//   // Resumo em uma linha.
+//   //
+//   // Texto livre; `nome` vira link quando existir no codigo.
+//   //   linhas indentadas viram bloco de codigo
+//   // @param a descricao do parametro a
+//   // @returns descricao do retorno
+//   // @example
+//   //   hashmap.set(m, 1, 2)
+
+attach {F:ofsdoc_scan.ofs}
+
+// ---------------------------------------------------------------- configuracao
+
+forge od_f: obsidian = null
+forge od_lang: obsidian = "pt"
+forge od_brand: obsidian = "OFS"
+forge od_repo: obsidian = ""
+forge od_api_dir: obsidian = ""
+forge od_asset_up: obsidian = ""
+forge od_here: obsidian = ""
+forge od_multi: bool = false
+forge od_book_rel: obsidian = ""
+forge od_license_href: obsidian = ""
+forge od_nav_guide: obsidian = ""
+forge od_today: obsidian = ""
+forge od_docs_prefix: obsidian = "docs/"
+forge od_page_prefix: obsidian = ""
+
+vein od_w(s: obsidian) -> void {
+    fputs(s, od_f)
+}
+
+vein od_open(path: obsidian) -> bool {
+    od_f = fopen(path, "w")
+    return od_f != null
+}
+
+vein od_close() -> void {
+    fclose(od_f)
+}
+
+vein od_copy_file(from: obsidian, to: obsidian) -> bool {
+    forge s = od_read(from)
+    if (ofs_str_len(s) == 0) { return false }
+    forge f = fopen(to, "w")
+    if (f == null) { return false }
+    fputs(s, f)
+    fclose(f)
+    return true
+}
+
+vein od_sh(cmd: obsidian, fb: obsidian) -> obsidian {
+    system(cmd + " > /tmp/ofsdoc_sh.txt 2>/dev/null")
+    forge r = od_trim(od_read("/tmp/ofsdoc_sh.txt"))
+    if (ofs_str_len(r) == 0) { return fb }
+    return r
+}
+
+// ---------------------------------------------------------------- itens
+
+vein od_qual(i: stone) -> obsidian {
+    if (ofs_str_len(od_s(od_i_owner, i)) > 0) { return od_s(od_i_owner, i) + "." + od_s(od_i_name, i) }
+    return od_s(od_i_name, i)
+}
+
+vein od_is_type(i: stone) -> bool {
+    forge k = od_s(od_i_kind, i)
+    return ofs_str_eq(k, "monolith") || ofs_str_eq(k, "strata") || ofs_str_eq(k, "type")
+}
+
+vein od_anchor(i: stone) -> obsidian {
+    if (od_is_type(i)) { return "T-" + od_s(od_i_name, i) }
+    if (ofs_str_eq(od_s(od_i_kind, i), "extern")) { return "x-" + od_qual(i) }
+    if (ofs_str_eq(od_s(od_i_kind, i), "global") || ofs_str_eq(od_s(od_i_kind, i), "const")) { return "v-" + od_qual(i) }
+    return od_qual(i)
+}
+
+vein od_mod_href(mi: stone) -> obsidian {
+    return od_here + od_api_dir + od_s(od_m_slug, mi) + ".html"
+}
+
+vein od_item_href(i: stone) -> obsidian {
+    return od_mod_href(od_i_mod[i]) + "#" + od_anchor(i)
+}
+
+vein od_src_url(mi: stone, ln: stone) -> obsidian {
+    if (ofs_str_len(od_repo) == 0) { return "" }
+    forge u = od_repo + "/blob/main/" + od_s(od_m_src, mi)
+    if (ln > 0) { u = u + "#L" + od_itos(ln) }
+    return u
+}
+
+vein od_is_builtin_type(tok: obsidian) -> bool {
+    return ofs_str_eq(tok, "stone") || ofs_str_eq(tok, "crystal") || ofs_str_eq(tok, "obsidian") || ofs_str_eq(tok, "bool") || ofs_str_eq(tok, "void") || ofs_str_eq(tok, "Array") || ofs_str_eq(tok, "null") || ofs_str_eq(tok, "u8") || ofs_str_eq(tok, "u16") || ofs_str_eq(tok, "u32") || ofs_str_eq(tok, "u64") || ofs_str_eq(tok, "i8") || ofs_str_eq(tok, "i16") || ofs_str_eq(tok, "i32") || ofs_str_eq(tok, "i64") || ofs_str_eq(tok, "f32") || ofs_str_eq(tok, "f64")
+}
+
+vein od_is_decl_kw(tok: obsidian) -> bool {
+    return ofs_str_eq(tok, "vein") || ofs_str_eq(tok, "rift") || ofs_str_eq(tok, "extern") || ofs_str_eq(tok, "core") || ofs_str_eq(tok, "monolith") || ofs_str_eq(tok, "strata") || ofs_str_eq(tok, "const") || ofs_str_eq(tok, "forge") || ofs_str_eq(tok, "type")
+}
+
+// tipo/assinatura -> HTML com palavras-chave, tipos nativos e links para monolith
+vein od_code_html(s: obsidian, sig: bool) -> obsidian {
+    forge out = ""
+    forge n = ofs_str_len(s)
+    forge i = 0
+    forge start = 0
+    forge namenext = false
+    while (i < n) {
+        forge c = ofs_str_char_at(s, i)
+        if (od_isidst(c)) {
+            forge e = od_ident_end(s, i)
+            forge tok = od_sub(s, i, e)
+            forge piece = ""
+            forge nx = e
+            while (nx < n && ofs_str_char_at(s, nx) == 32) { nx = nx + 1 }
+            if (sig && od_is_decl_kw(tok)) {
+                piece = "<span class=\"k\">" + tok + "</span>"
+                namenext = true
+                if (ofs_str_eq(tok, "rift") || ofs_str_eq(tok, "extern")) { namenext = false }
+            } else if (sig && namenext) {
+                piece = "<span class=\"nm\">" + od_esc(tok) + "</span>"
+                namenext = false
+            } else if (od_is_builtin_type(tok)) {
+                piece = "<span class=\"bt\">" + tok + "</span>"
+            } else if (od_h_get("T:" + tok) >= 0) {
+                forge ti = od_h_get("T:" + tok)
+                piece = "<a class=\"ty\" href=\"" + od_item_href(ti) + "\">" + od_esc(tok) + "</a>"
+            } else if (sig && nx < n && ofs_str_char_at(s, nx) == 58) {
+                piece = "<span class=\"pn\">" + od_esc(tok) + "</span>"
+            } else {
+                piece = od_esc(tok)
+            }
+            out = out + od_esc(od_sub(s, start, i)) + piece
+            i = e
+            start = e
+        } else {
+            i = i + 1
+        }
+    }
+    return out + od_esc(od_sub(s, start, n))
+}
+
+// ---------------------------------------------------------------- comentarios de doc
+
+// `codigo` com link quando o nome existe no indice
+vein od_inline(s: obsidian) -> obsidian {
+    forge out = ""
+    forge n = ofs_str_len(s)
+    forge start = 0
+    forge i = 0
+    forge inside = false
+    while (i < n) {
+        if (ofs_str_char_at(s, i) == 96) {
+            if (inside) {
+                forge code = od_sub(s, start, i)
+                forge nm = code
+                if (od_ends(nm, "()")) { nm = od_sub(nm, 0, ofs_str_len(nm) - 2) }
+                forge href = ""
+                forge h = od_h_get(nm)
+                if (h >= 0 && ofs_str_len(nm) > 0) {
+                    forge pi = od_pick_any(h)
+                    if (pi >= 0) { href = od_item_href(pi) }
+                }
+                if (ofs_str_len(href) == 0 && od_h_get("T:" + nm) >= 0) { href = od_item_href(od_h_get("T:" + nm)) }
+                if (ofs_str_len(href) == 0 && od_h_get("M:" + nm) >= 0) { href = od_mod_href(od_h_get("M:" + nm)) }
+                if (ofs_str_len(href) > 0) {
+                    out = out + "<a href=\"" + href + "\"><code>" + od_esc(code) + "</code></a>"
+                } else {
+                    out = out + "<code>" + od_esc(code) + "</code>"
+                }
+                inside = false
+            } else {
+                out = out + od_esc(od_sub(s, start, i))
+                inside = true
+            }
+            start = i + 1
+        }
+        i = i + 1
+    }
+    if (inside) { return out + "`" + od_esc(od_sub(s, start, n)) }
+    return out + od_esc(od_sub(s, start, n))
+}
+
+vein od_is_tag_line(t: obsidian) -> bool {
+    return od_starts(t, "@param ") || od_starts(t, "@return") || od_starts(t, "@see ") || od_starts(t, "@example")
+}
+
+// texto de `@<tag> [nome] descricao`; para param procura pelo nome
+vein od_doc_tag(doc: obsidian, tag: obsidian, name: obsidian) -> obsidian {
+    forge n = ofs_str_len(doc)
+    forge st = 0
+    forge i = 0
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(doc, i) == 10) {
+            forge t = od_trim(od_sub(doc, st, i))
+            if (od_starts(t, "@" + tag + " ")) {
+                forge rest = od_trim(od_tail(t, ofs_str_len(tag) + 2))
+                if (ofs_str_len(name) == 0) { return rest }
+                if (od_starts(rest, name + " ") || ofs_str_eq(rest, name)) { return od_trim(od_tail(rest, ofs_str_len(name))) }
+            }
+            st = i + 1
+        }
+        i = i + 1
+    }
+    return ""
+}
+
+vein od_doc_write(doc: obsidian) -> void {
+    forge n = ofs_str_len(doc)
+    forge st = 0
+    forge mode = 0
+    forge i = 0
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(doc, i) == 10) {
+            forge l = od_sub(doc, st, i)
+            forge t = od_trim(l)
+            if (mode == 3) {
+                od_w(od_esc(l) + "\n")
+            } else if (ofs_str_len(t) == 0) {
+                if (mode == 1) { od_w("</p>\n") }
+                if (mode == 2) { od_w("</code></pre>\n") }
+                mode = 0
+            } else if (od_starts(t, "@example")) {
+                if (mode == 1) { od_w("</p>\n") }
+                if (mode == 2) { od_w("</code></pre>\n") }
+                od_w("<pre class=\"ex\"><code>")
+                mode = 3
+            } else if (od_is_tag_line(t)) {
+                // exibido nas secoes de parametros/retorno
+            } else if (od_starts(l, "  ") || ofs_str_char_at(l, 0) == 9) {
+                if (mode == 1) { od_w("</p>\n") }
+                if (mode != 2) { od_w("<pre class=\"ex\"><code>") }
+                od_w(od_esc(od_tail(l, 2)) + "\n")
+                mode = 2
+            } else {
+                if (mode == 2) { od_w("</code></pre>\n") }
+                if (mode != 1) { od_w("<p>") } else { od_w(" ") }
+                od_w(od_inline(t))
+                mode = 1
+            }
+            st = i + 1
+        }
+        i = i + 1
+    }
+    if (mode == 1) { od_w("</p>\n") }
+    if (mode == 2) { od_w("</code></pre>\n") }
+    if (mode == 3) { od_w("</code></pre>\n") }
+}
+
+// ---------------------------------------------------------------- casca (layout)
+
+vein od_asset(name: obsidian) -> obsidian {
+    return od_here + od_asset_up + name
+}
+
+vein od_logo_svg() -> obsidian {
+    return "<svg class=\"gem\" viewBox=\"0 0 32 32\" width=\"26\" height=\"26\" aria-hidden=\"true\"><path d=\"M16 2 28 11 24 28H8L4 11Z\" fill=\"#7c3aed\"/><path d=\"M16 2 28 11H4Z\" fill=\"#c4b5fd\"/><path d=\"M16 2 4 11 8 28 16 12Z\" fill=\"#a78bfa\" opacity=\".85\"/><path d=\"M16 12 8 28H24Z\" fill=\"#5b21b6\"/></svg>"
+}
+
+vein od_lang_href(target: obsidian, rels: obsidian) -> obsidian {
+    forge rel = od_field(rels, od_lang_idx(target))
+    forge pre = ""
+    if (ofs_str_eq(od_lang, target) == false) {
+        if (ofs_str_eq(od_lang, "pt")) { pre = target + "/" } else if (ofs_str_eq(target, "pt")) { pre = "../" } else { pre = "../" + target + "/" }
+    }
+    return od_here + pre + rel
+}
+
+vein od_lang_idx(l: obsidian) -> stone {
+    if (ofs_str_eq(l, "en")) { return 1 }
+    if (ofs_str_eq(l, "es")) { return 2 }
+    return 0
+}
+
+// campo n (0-based) de "a|b|c"
+vein od_field(row: obsidian, n: stone) -> obsidian {
+    forge st = 0
+    forge k = 0
+    forge len = ofs_str_len(row)
+    forge i = 0
+    while (i <= len) {
+        if (i == len || ofs_str_char_at(row, i) == 124) {
+            if (k == n) { return od_sub(row, st, i) }
+            k = k + 1
+            st = i + 1
+        }
+        i = i + 1
+    }
+    return ""
+}
+
+vein od_nav_link(href: obsidian, label: obsidian, on: bool) -> void {
+    if (on) {
+        od_w("<li><a class=\"on\" aria-current=\"page\" href=\"" + href + "\">" + label + "</a></li>")
+    } else {
+        od_w("<li><a href=\"" + href + "\">" + label + "</a></li>")
+    }
+}
+
+// grupo do guia que contem a pagina atual ("g:KEY")
+vein od_guide_group_of(key: obsidian) -> obsidian {
+    forge n = ofs_str_len(od_nav_guide)
+    forge st = 0
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(od_nav_guide, i) == 10) {
+            forge row = od_sub(od_nav_guide, st, i)
+            if (ofs_str_eq(od_field(row, 0), key)) { return od_field(row, 3) }
+            st = i + 1
+        }
+        i = i + 1
+    }
+    return ""
+}
+
+vein od_side_guide(cur: obsidian) -> void {
+    if (ofs_str_len(od_nav_guide) == 0) { return }
+    forge curgrp = ""
+    if (od_starts(cur, "g:")) { curgrp = od_guide_group_of(od_tail(cur, 2)) }
+    od_w("<nav class=\"grp\" aria-label=\"" + od_t(od_lang, "Guia", "Guide", "Guía") + "\"><h2>" + od_t(od_lang, "Guia", "Guide", "Guía") + "</h2>")
+    forge n = ofs_str_len(od_nav_guide)
+    forge st = 0
+    forge i = 0
+    forge last = "\t"
+    while (i < n) {
+        if (ofs_str_char_at(od_nav_guide, i) == 10) {
+            forge row = od_sub(od_nav_guide, st, i)
+            forge g = od_field(row, 3)
+            if (ofs_str_eq(g, last) == false) {
+                if (ofs_str_eq(last, "\t") == false) { od_w("</ul></details>") }
+                forge op = ""
+                if (ofs_str_eq(g, curgrp)) { op = " open" }
+                od_w("<details" + op + "><summary>" + od_esc(g) + "</summary><ul>")
+                last = g
+            }
+            od_nav_link(od_here + od_field(row, 1), od_inline_plain(od_field(row, 2)), ofs_str_eq("g:" + od_field(row, 0), cur))
+            st = i + 1
+        }
+        i = i + 1
+    }
+    if (ofs_str_eq(last, "\t") == false) { od_w("</ul></details>") }
+    od_w("</nav>")
+}
+
+vein od_inline_plain(s: obsidian) -> obsidian {
+    return od_esc(s)
+}
+
+vein od_side_api(cur: obsidian) -> void {
+    forge nm = ofs_array_len(od_m_name)
+    if (nm == 0) { return }
+    forge curmod = -1
+    if (od_starts(cur, "m:")) { curmod = od_obsidian_to_stone(od_tail(cur, 2)) }
+    forge curgrp = ""
+    if (curmod >= 0) { curgrp = od_s(od_m_group, curmod) }
+    od_w("<nav class=\"grp\" aria-label=\"API\"><h2>API</h2>")
+    od_w("<ul class=\"lnk\">")
+    od_nav_link(od_here + od_api_dir + "index.html", od_t(od_lang, "Visão geral", "Overview", "Visión general"), ofs_str_eq(cur, "api"))
+    od_w("</ul>")
+    forge m = 0
+    forge last = "\t"
+    while (m < nm) {
+        forge g = od_s(od_m_group, m)
+        if (ofs_str_eq(g, last) == false) {
+            if (ofs_str_eq(last, "\t") == false) { od_w("</ul></details>") }
+            forge op = ""
+            if (ofs_str_eq(g, curgrp) || ofs_str_len(g) == 0) { op = " open" }
+            od_w("<details" + op + "><summary>" + od_esc(g) + "</summary><ul class=\"mods\">")
+            last = g
+        }
+        od_nav_link(od_mod_href(m), od_esc(od_s(od_m_name, m)), m == curmod)
+        m = m + 1
+    }
+    if (ofs_str_eq(last, "\t") == false) { od_w("</ul></details>") }
+    od_w("</nav>")
+}
+
+vein od_obsidian_to_stone(s: obsidian) -> stone {
+    forge v = 0
+    forge n = ofs_str_len(s)
+    forge i = 0
+    while (i < n) {
+        v = v * 10 + (ofs_str_char_at(s, i) - 48)
+        i = i + 1
+    }
+    return v
+}
+
+vein od_side(cur: obsidian, alts: obsidian) -> void {
+    od_w("<aside id=\"side\" aria-label=\"" + od_t(od_lang, "Navegação", "Navigation", "Navegación") + "\">")
+    od_w("<a class=\"brand\" href=\"" + od_here + "index.html\">" + od_logo_svg() + "<span><b>" + od_esc(od_brand) + "</b><i>" + od_t(od_lang, "Referência", "Reference", "Referencia") + "</i></span></a>")
+    od_w("<form class=\"search\" role=\"search\" onsubmit=\"return false\"><input id=\"q\" type=\"search\" autocomplete=\"off\" spellcheck=\"false\" placeholder=\"" + od_t(od_lang, "Buscar funções, módulos, guias…", "Search functions, modules, guides…", "Buscar funciones, módulos, guías…") + "\" aria-label=\"" + od_t(od_lang, "Buscar", "Search", "Buscar") + "\"><kbd>/</kbd></form><ul id=\"res\" class=\"res\" hidden></ul>")
+    od_w("<nav class=\"grp\"><ul class=\"lnk\">")
+    od_nav_link(od_here + "index.html", od_t(od_lang, "Início", "Home", "Inicio"), ofs_str_eq(cur, "home"))
+    od_nav_link(od_here + "cobertura.html", od_t(od_lang, "Cobertura", "Coverage", "Cobertura"), ofs_str_eq(cur, "cov"))
+    od_w("</ul></nav>")
+    od_side_guide(cur)
+    od_side_api(cur)
+    od_w("<div class=\"links\">")
+    if (ofs_str_len(od_book_rel) > 0) { od_w("<a href=\"" + od_here + od_book_rel + "\">" + od_t(od_lang, "Livro", "Book", "Libro") + "</a>") }
+    if (ofs_str_len(od_repo) > 0) { od_w("<a href=\"" + od_repo + "\">GitHub</a>") }
+    od_w("</div>")
+    if (od_multi && ofs_str_len(alts) > 0) {
+        od_w("<div class=\"langs\"><a href=\"" + od_lang_href("pt", alts) + "\" hreflang=\"pt\"" + od_cur_attr("pt") + ">PT</a><a href=\"" + od_lang_href("en", alts) + "\" hreflang=\"en\"" + od_cur_attr("en") + ">EN</a><a href=\"" + od_lang_href("es", alts) + "\" hreflang=\"es\"" + od_cur_attr("es") + ">ES</a></div>")
+    }
+    od_w("</aside>")
+}
+
+vein od_cur_attr(l: obsidian) -> obsidian {
+    if (ofs_str_eq(od_lang, l)) { return " aria-current=\"true\"" }
+    return ""
+}
+
+// abre a pagina: <head>, barra superior, lateral e <main>
+vein od_page_begin(title: obsidian, desc: obsidian, cur: obsidian, alts: obsidian) -> void {
+    od_w("<!doctype html>\n<html lang=\"" + od_lang + "\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><meta name=\"color-scheme\" content=\"dark light\">")
+    od_w("<title>" + od_esc(title) + " · " + od_esc(od_brand) + " " + od_t(od_lang, "Referência", "Reference", "Referencia") + "</title>")
+    if (ofs_str_len(desc) > 0) { od_w("<meta name=\"description\" content=\"" + od_esc(desc) + "\">") }
+    od_w("<link rel=\"icon\" href=\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 28 11 24 28H8L4 11Z' fill='%237c3aed'/%3E%3Cpath d='M16 2 28 11H4Z' fill='%23c4b5fd'/%3E%3C/svg%3E\">")
+    od_w("<script>try{var m=/[?&]theme=(dark|light)/.exec(location.search),t=m?m[1]:localStorage.getItem('ofsdoc-theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>")
+    od_w("<link rel=\"stylesheet\" href=\"" + od_asset("ofsdoc.css") + "\"></head>")
+    od_w("<body data-root=\"" + od_here + "\"><header class=\"top\"><a id=\"menu\" class=\"ib\" href=\"#side\" aria-label=\"" + od_t(od_lang, "Menu", "Menu", "Menú") + "\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\"><path d=\"M3 6h18M3 12h18M3 18h18\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"/></svg></a>")
+    od_w("<a class=\"brand sm\" href=\"" + od_here + "index.html\">" + od_logo_svg() + "<b>" + od_esc(od_brand) + "</b></a><button id=\"theme\" class=\"ib\" type=\"button\" aria-label=\"" + od_t(od_lang, "Alternar tema", "Toggle theme", "Cambiar tema") + "\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\"><path d=\"M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8Z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"/></svg></button></header>")
+    od_w("<div class=\"shell\">")
+    od_side(cur, alts)
+    od_w("<main id=\"main\">")
+}
+
+vein od_page_end(edit_href: obsidian) -> void {
+    od_w("</main></div>")
+    od_w("<footer class=\"foot\"><span>" + od_t(od_lang, "Gerado do código-fonte por ", "Generated from source by ", "Generado desde el código fuente por ") + "<code>ofs doc</code>")
+    if (ofs_str_len(od_today) > 0) { od_w(" · " + od_today) }
+    od_w("</span>")
+    if (ofs_str_len(od_license_href) > 0) { od_w("<a href=\"" + od_here + od_license_href + "\">Apache License 2.0</a>") }
+    if (ofs_str_len(edit_href) > 0) {
+        od_w("<a class=\"edit\" href=\"" + edit_href + "\" title=\"" + od_t(od_lang, "Editar no GitHub", "Edit on GitHub", "Editar en GitHub") + "\" aria-label=\"" + od_t(od_lang, "Editar no GitHub", "Edit on GitHub", "Editar en GitHub") + "\"><svg viewBox=\"0 0 24 24\" width=\"16\" height=\"16\"><path d=\"M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"/></svg></a>")
+    }
+    od_w("</footer><script src=\"" + od_asset("ofsdoc.js") + "\"></script></body></html>\n")
+}
+
+// ---------------------------------------------------------------- cartoes
+
+vein od_badge(cls: obsidian, label: obsidian) -> void {
+    od_w("<span class=\"b " + cls + "\">" + label + "</span>")
+}
+
+vein od_chips(list: obsidian, limit: stone, empty_label: obsidian) -> void {
+    forge n = ofs_str_len(list)
+    forge a = 1
+    forge shown = 0
+    forge total = od_count(list, 44) - 1
+    if (total < 0) { total = 0 }
+    while (a < n) {
+        forge e = od_find(list, ",", a)
+        if (e < 0) { break }
+        if (e > a && shown < limit) {
+            forge idx = od_obsidian_to_stone(od_sub(list, a, e))
+            od_w("<li><a class=\"chip\" href=\"" + od_item_href(idx) + "\">" + od_esc(od_qual(idx)) + "</a></li>")
+            shown = shown + 1
+        }
+        a = e + 1
+    }
+    if (total > shown) { od_w("<li class=\"more\">+" + od_itos(total - shown) + "</li>") }
+}
+
+vein od_see_list(list: obsidian) -> void {
+    forge n = ofs_str_len(list)
+    forge a = 0
+    while (a < n) {
+        forge e = od_find(list, ",", a)
+        if (e < 0) { break }
+        if (e > a) {
+            forge r = od_obsidian_to_stone(od_sub(list, a, e))
+            forge d = od_r_doc[r]
+            forge key = od_s(od_d_key, d)
+            forge sec = od_s(od_r_sec, r)
+            forge href = od_doc_href(key, sec, od_r_line[r])
+            od_w("<li><a href=\"" + href + "\">" + od_esc(od_s(od_d_title, d)) + "</a>")
+            if (ofs_str_len(od_s(od_r_title, r)) > 0) { od_w(" › " + od_esc(od_s(od_r_title, r))) }
+            od_w("</li>")
+        }
+        a = e + 1
+    }
+}
+
+// link para a secao do guia (pagina do site) ou, sem site, para o .md no GitHub
+vein od_doc_href(key: obsidian, sec: obsidian, ln: stone) -> obsidian {
+    forge n = ofs_str_len(od_nav_guide)
+    forge st = 0
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(od_nav_guide, i) == 10) {
+            forge row = od_sub(od_nav_guide, st, i)
+            if (ofs_str_eq(od_field(row, 0), key)) {
+                forge h = od_here + od_field(row, 1)
+                if (ofs_str_len(sec) > 0 && od_doc_anchor_ok(key)) { h = h + "#" + sec }
+                return h
+            }
+            st = i + 1
+        }
+        i = i + 1
+    }
+    if (ofs_str_len(od_repo) > 0) { return od_repo + "/blob/main/" + od_docs_prefix + key + ".md#L" + od_itos(ln) }
+    return od_here + od_docs_prefix + key + ".md"
+}
+
+// ancora so vale se a traducao nao reordena secoes: pt sempre; en/es so sem traducao
+vein od_doc_anchor_ok(key: obsidian) -> bool {
+    if (ofs_str_eq(od_lang, "pt")) { return true }
+    return od_exists("docs/" + od_lang + "/" + key + ".md") == false
+}
+
+vein od_card(i: stone) -> void {
+    forge kind = od_s(od_i_kind, i)
+    forge name = od_s(od_i_name, i)
+    forge anc = od_anchor(i)
+    forge doc = od_s(od_i_doc, i)
+    od_w("<article class=\"card k-" + kind + "\" id=\"" + anc + "\"><header><h3><a class=\"anc\" href=\"#" + anc + "\" aria-label=\"link\">#</a>" + od_esc(name) + "</h3><span class=\"badges\">")
+    if (ofs_str_eq(kind, "rift")) {
+        od_badge("abi", od_t(od_lang, "exportada", "exported", "exportada") + " · abi c")
+    } else if (ofs_str_eq(kind, "extern")) {
+        od_badge("ext", od_t(od_lang, "externa: libc/NDK", "external: libc/NDK", "externa: libc/NDK"))
+    } else if (ofs_str_eq(kind, "core")) {
+        od_badge("core", od_t(od_lang, "entrada", "entry point", "entrada"))
+    } else if (ofs_str_eq(kind, "monolith")) {
+        od_badge("mono", "monolith")
+    } else if (ofs_str_eq(kind, "strata")) {
+        od_badge("mono", "strata")
+    } else if (ofs_str_eq(kind, "const")) {
+        od_badge("cst", "const")
+    } else if (ofs_str_eq(kind, "global")) {
+        od_badge("cst", od_t(od_lang, "global", "global", "global"))
+    }
+    if (ofs_str_len(od_s(od_i_owner, i)) > 0) {
+        if (ofs_str_eq(od_s(od_i_okind, i), "impl")) { od_badge("ns", "impl " + od_esc(od_s(od_i_owner, i))) } else { od_badge("ns", od_esc(od_s(od_i_owner, i))) }
+    }
+    if (od_i_pub[i] == 0 && (ofs_str_eq(kind, "vein") || ofs_str_eq(kind, "rift"))) { od_badge("priv", od_t(od_lang, "interna", "internal", "interna")) }
+    if (od_i_pub[i] == 1 && (ofs_str_eq(kind, "vein") || ofs_str_eq(kind, "rift")) && ofs_str_len(od_trim(doc)) == 0) { od_badge("nodoc", od_t(od_lang, "sem doc", "no docs", "sin doc")) }
+    od_w("</span></header>")
+    od_w("<pre class=\"sig\"><code>" + od_code_html(od_s(od_i_sig, i), true))
+    if (ofs_str_eq(kind, "rift") && ofs_str_len(od_s(od_i_bind, i)) > 0) { od_w(" <span class=\"cm\">// bind \"" + od_esc(od_s(od_i_bind, i)) + "\"</span>") }
+    if (ofs_str_len(od_s(od_i_val, i)) > 0) { od_w(" <span class=\"cm\">= " + od_esc(od_s(od_i_val, i)) + "</span>") }
+    od_w("</code></pre>")
+    if (ofs_str_len(od_trim(doc)) > 0) {
+        od_w("<div class=\"doc\">")
+        od_doc_write(doc)
+        od_w("</div>")
+    }
+    // campos (monolith / variantes de strata)
+    if (od_is_type(i) && ofs_str_len(od_s(od_i_fields, i)) > 0) {
+        od_w("<h4>" + od_t(od_lang, "Campos", "Fields", "Campos") + "</h4><div class=\"tw\"><table class=\"pt\"><tbody>")
+        forge fl = od_s(od_i_fields, i)
+        forge n = ofs_str_len(fl)
+        forge st = 0
+        forge k = 0
+        while (k < n) {
+            if (ofs_str_char_at(fl, k) == 10) {
+                forge row = od_sub(fl, st, k)
+                forge t1 = od_find(row, "\t", 0)
+                forge t2 = od_find(row, "\t", t1 + 1)
+                if (t1 >= 0 && t2 >= 0) {
+                    od_w("<tr><td><code class=\"pn\">" + od_esc(od_sub(row, 0, t1)) + "</code></td><td><code>" + od_code_html(od_sub(row, t1 + 1, t2), false) + "</code></td><td>" + od_inline(od_tail(row, t2 + 1)) + "</td></tr>")
+                }
+                st = k + 1
+            }
+            k = k + 1
+        }
+        od_w("</tbody></table></div>")
+        od_methods_of(i)
+    }
+    // parametros
+    forge pl = od_s(od_i_params, i)
+    if (ofs_str_len(pl) > 0) {
+        od_w("<h4>" + od_t(od_lang, "Parâmetros", "Parameters", "Parámetros") + "</h4><div class=\"tw\"><table class=\"pt\"><tbody>")
+        forge n2 = ofs_str_len(pl)
+        forge st2 = 0
+        forge k2 = 0
+        while (k2 < n2) {
+            if (ofs_str_char_at(pl, k2) == 10) {
+                forge row2 = od_sub(pl, st2, k2)
+                forge tb = od_find(row2, "\t", 0)
+                forge pn = row2
+                forge pt = ""
+                if (tb >= 0) { pn = od_sub(row2, 0, tb) pt = od_tail(row2, tb + 1) }
+                od_w("<tr><td><code class=\"pn\">" + od_esc(pn) + "</code></td><td><code>" + od_code_html(pt, false) + "</code></td><td>" + od_inline(od_doc_tag(doc, "param", pn)) + "</td></tr>")
+                st2 = k2 + 1
+            }
+            k2 = k2 + 1
+        }
+        od_w("</tbody></table></div>")
+    }
+    forge ret = od_s(od_i_ret, i)
+    if (ofs_str_len(ret) > 0 && (ofs_str_eq(kind, "vein") || ofs_str_eq(kind, "rift") || ofs_str_eq(kind, "extern") || ofs_str_eq(kind, "core")) && ofs_str_eq(ret, "void") == false) {
+        od_w("<h4>" + od_t(od_lang, "Retorno", "Returns", "Retorno") + "</h4><p class=\"ret\"><code>" + od_code_html(ret, false) + "</code>")
+        forge rd = od_doc_tag(doc, "returns", "")
+        if (ofs_str_len(rd) == 0) { rd = od_doc_tag(doc, "return", "") }
+        if (ofs_str_len(rd) > 0) { od_w(" — " + od_inline(rd)) }
+        od_w("</p>")
+    }
+    forge calls = od_s(od_i_calls, i)
+    if (ofs_str_len(calls) > 1) {
+        od_w("<div class=\"rel\"><h4>" + od_t(od_lang, "Chama", "Calls", "Llama a") + "</h4><ul class=\"chips\">")
+        od_chips(calls, 24, "")
+        od_w("</ul></div>")
+    }
+    forge used = od_s(od_i_used, i)
+    if (ofs_str_len(used) > 1) {
+        od_w("<div class=\"rel\"><h4>" + od_t(od_lang, "Usado por", "Used by", "Usado por") + "</h4><ul class=\"chips\">")
+        od_chips(used, 24, "")
+        od_w("</ul></div>")
+    }
+    if (ofs_str_len(od_s(od_i_see, i)) > 0) {
+        od_w("<div class=\"rel\"><h4>" + od_t(od_lang, "Veja também", "See also", "Véase también") + "</h4><ul class=\"see\">")
+        od_see_list(od_s(od_i_see, i))
+        od_w("</ul></div>")
+    }
+    forge su = od_src_url(od_i_mod[i], od_i_line[i])
+    od_w("<footer class=\"src\">")
+    if (ofs_str_len(su) > 0) {
+        od_w(od_t(od_lang, "Fonte", "Source", "Fuente") + ": <a href=\"" + su + "\">" + od_esc(od_s(od_m_src, od_i_mod[i])) + ":" + od_itos(od_i_line[i]) + "</a>")
+    } else {
+        od_w(od_t(od_lang, "Fonte", "Source", "Fuente") + ": " + od_esc(od_s(od_m_src, od_i_mod[i])) + ":" + od_itos(od_i_line[i]))
+    }
+    od_w("</footer></article>\n")
+}
+
+// metodos de `impl Tipo`
+vein od_methods_of(ti: stone) -> void {
+    forge name = od_s(od_i_name, ti)
+    forge ni = ofs_array_len(od_i_mod)
+    forge first = true
+    forge j = 0
+    while (j < ni) {
+        if (od_i_mod[j] == od_i_mod[ti] && ofs_str_eq(od_s(od_i_okind, j), "impl") && ofs_str_eq(od_s(od_i_owner, j), name)) {
+            if (first) {
+                od_w("<div class=\"rel\"><h4>" + od_t(od_lang, "Métodos", "Methods", "Métodos") + "</h4><ul class=\"chips\">")
+                first = false
+            }
+            od_w("<li><a class=\"chip\" href=\"" + od_item_href(j) + "\">" + od_esc(od_s(od_i_name, j)) + "</a></li>")
+        }
+        j = j + 1
+    }
+    if (first == false) { od_w("</ul></div>") }
+}
+
+// ---------------------------------------------------------------- pagina de modulo
+
+vein od_mod_range_first(mi: stone) -> stone {
+    forge ni = ofs_array_len(od_i_mod)
+    forge j = 0
+    while (j < ni) {
+        if (od_i_mod[j] == mi) { return j }
+        j = j + 1
+    }
+    return ni
+}
+
+vein od_pill(done: stone, total: stone) -> void {
+    forge p = od_pct(done, total)
+    forge cls = "hi"
+    if (p < 70) { cls = "mid" }
+    if (p < 30) { cls = "lo" }
+    od_w("<span class=\"pill " + cls + "\" title=\"" + od_itos(done) + "/" + od_itos(total) + "\">" + od_itos(p) + "%</span>")
+}
+
+vein od_section_open(id: obsidian, title: obsidian, count: stone) -> void {
+    od_w("<section class=\"sec\" id=\"" + id + "\"><h2>" + title + " <small>" + od_itos(count) + "</small></h2>")
+}
+
+vein od_count_kind(mi: stone, kinds: obsidian, pubonly: stone) -> stone {
+    forge ni = ofs_array_len(od_i_mod)
+    forge c = 0
+    forge j = od_mod_range_first(mi)
+    while (j < ni) {
+        if (od_i_mod[j] != mi) { break }
+        if (od_has(kinds, "," + od_s(od_i_kind, j) + ",")) {
+            if (pubonly == 0 || od_i_pub[j] == 1) { c = c + 1 }
+        }
+        j = j + 1
+    }
+    return c
+}
+
+// escreve cartoes do modulo cujo kind esta em `kinds`; priv: 1 = so internos, 0 = so publicos
+vein od_cards_of(mi: stone, kinds: obsidian, priv: stone) -> void {
+    forge ni = ofs_array_len(od_i_mod)
+    forge j = od_mod_range_first(mi)
+    while (j < ni) {
+        if (od_i_mod[j] != mi) { break }
+        if (od_has(kinds, "," + od_s(od_i_kind, j) + ",")) {
+            forge want = 0
+            if (priv == 0 && od_i_pub[j] == 1) { want = 1 }
+            if (priv == 1 && od_i_pub[j] == 0) { want = 1 }
+            if (priv == 2) { want = 1 }
+            if (want == 1) { od_card(j) }
+        }
+        j = j + 1
+    }
+}
+
+vein od_index_chips(mi: stone, kinds: obsidian) -> void {
+    forge ni = ofs_array_len(od_i_mod)
+    forge j = od_mod_range_first(mi)
+    while (j < ni) {
+        if (od_i_mod[j] != mi) { break }
+        if (od_has(kinds, "," + od_s(od_i_kind, j) + ",") && od_i_pub[j] == 1) {
+            od_w("<li><a class=\"chip\" href=\"#" + od_anchor(j) + "\">" + od_esc(od_s(od_i_name, j)) + "</a></li>")
+        }
+        j = j + 1
+    }
+}
+
+vein od_page_module(mi: stone, outdir: obsidian) -> void {
+    od_here = ""
+    if (ofs_str_len(od_api_dir) > 0) { od_here = "../" }
+    od_open(outdir + od_s(od_m_slug, mi) + ".html")
+    forge name = od_s(od_m_name, mi)
+    forge rel = od_api_dir + od_s(od_m_slug, mi) + ".html"
+    od_page_begin(name, od_first_line(od_s(od_m_doc, mi)), "m:" + od_itos(mi), rel + "|" + rel + "|" + rel)
+    od_w("<header class=\"mh\"><p class=\"eyebrow\">" + od_esc(od_s(od_m_group, mi)) + "</p><h1>" + od_esc(name) + "</h1>")
+    forge lead = od_first_line(od_s(od_m_doc, mi))
+    od_w("<div class=\"meta\">")
+    forge nsl = od_s(od_m_ns, mi)
+    if (ofs_str_len(nsl) > 1) {
+        forge a = 1
+        while (a < ofs_str_len(nsl)) {
+            forge e = od_find(nsl, ",", a)
+            if (e < 0) { break }
+            od_badge("ns", "namespace " + od_esc(od_sub(nsl, a, e)))
+            a = e + 1
+        }
+    }
+    od_w("<span class=\"stat\">" + od_itos(od_m_pub[mi]) + " " + od_t(od_lang, "funções públicas", "public functions", "funciones públicas") + "</span>")
+    if (od_m_pub[mi] > 0) { od_pill(od_m_pubdoc[mi], od_m_pub[mi]) }
+    forge su = od_src_url(mi, 0)
+    if (ofs_str_len(su) > 0) { od_w("<a class=\"stat\" href=\"" + su + "\">" + od_esc(od_s(od_m_src, mi)) + "</a>") } else { od_w("<span class=\"stat\">" + od_esc(od_s(od_m_src, mi)) + "</span>") }
+    od_w("</div></header>")
+    if (ofs_str_len(od_trim(od_s(od_m_doc, mi))) > 0) {
+        od_w("<section class=\"mdoc doc\">")
+        od_doc_write(od_s(od_m_doc, mi))
+        od_w("</section>")
+    }
+    forge at = od_s(od_m_attach, mi)
+    if (ofs_str_len(at) > 1) {
+        od_w("<p class=\"deps\"><b>" + od_t(od_lang, "Depende de", "Depends on", "Depende de") + ":</b> ")
+        forge a2 = 1
+        while (a2 < ofs_str_len(at)) {
+            forge e2 = od_find(at, ",", a2)
+            if (e2 < 0) { break }
+            forge dn = od_sub(at, a2, e2)
+            forge dm = od_h_get("M:" + dn)
+            if (dm >= 0) { od_w("<a class=\"chip\" href=\"" + od_mod_href(dm) + "\">" + od_esc(dn) + "</a> ") } else { od_w("<span class=\"chip\">" + od_esc(dn) + "</span> ") }
+            a2 = e2 + 1
+        }
+        od_w("</p>")
+    }
+    // indice rapido
+    forge ntypes = od_count_kind(mi, ",monolith,strata,type,", 0)
+    forge nfun = od_count_kind(mi, ",vein,rift,core,", 1)
+    forge nconst = od_count_kind(mi, ",const,global,", 1)
+    forge npriv = od_count_kind(mi, ",vein,rift,core,", 0) - nfun
+    forge next = od_count_kind(mi, ",extern,", 0)
+    if (ntypes + nfun + nconst > 0) {
+        od_w("<nav class=\"qi\" aria-label=\"" + od_t(od_lang, "Neste módulo", "In this module", "En este módulo") + "\"><ul class=\"chips\">")
+        od_index_chips(mi, ",monolith,strata,type,")
+        od_index_chips(mi, ",const,global,")
+        od_index_chips(mi, ",vein,rift,core,")
+        od_w("</ul></nav>")
+    }
+    if (ntypes > 0) {
+        od_section_open("tipos", od_t(od_lang, "Tipos", "Types", "Tipos"), ntypes)
+        od_cards_of(mi, ",monolith,strata,type,", 2)
+        od_w("</section>")
+    }
+    if (nconst > 0) {
+        od_section_open("constantes", od_t(od_lang, "Constantes e globais", "Constants and globals", "Constantes y globales"), nconst)
+        od_cards_of(mi, ",const,global,", 0)
+        od_w("</section>")
+    }
+    if (nfun > 0) {
+        od_section_open("funcoes", od_t(od_lang, "Funções", "Functions", "Funciones"), nfun)
+        od_cards_of(mi, ",vein,rift,core,", 0)
+        od_w("</section>")
+    }
+    if (npriv > 0) {
+        od_w("<details class=\"fold\"><summary>" + od_t(od_lang, "Internas (", "Internal (", "Internas (") + od_itos(npriv) + ")</summary>")
+        od_cards_of(mi, ",vein,rift,core,", 1)
+        od_w("</details>")
+    }
+    if (next > 0) {
+        od_w("<details class=\"fold\"><summary>" + od_t(od_lang, "Declarações externas (", "External declarations (", "Declaraciones externas (") + od_itos(next) + ")</summary>")
+        od_cards_of(mi, ",extern,", 2)
+        od_w("</details>")
+    }
+    od_page_end(od_edit_url(mi))
+    od_close()
+}
+
+vein od_edit_url(mi: stone) -> obsidian {
+    if (ofs_str_len(od_repo) == 0) { return "" }
+    return od_repo + "/edit/main/" + od_s(od_m_src, mi)
+}
+
+// ---------------------------------------------------------------- indice da API
+
+vein od_page_api_index(path: obsidian, cur: obsidian) -> void {
+    od_here = ""
+    if (ofs_str_len(od_api_dir) > 0) { od_here = "../" }
+    od_open(path)
+    forge rel = od_api_dir + "index.html"
+    if (ofs_str_len(od_api_dir) == 0) { rel = "index.html" }
+    od_page_begin(od_t(od_lang, "API", "API", "API"), "", cur, rel + "|" + rel + "|" + rel)
+    od_w("<header class=\"mh\"><p class=\"eyebrow\">" + od_t(od_lang, "Gerado do código-fonte", "Generated from source", "Generado desde el código fuente") + "</p><h1>" + od_esc(od_brand) + " · " + od_t(od_lang, "Referência da API", "API reference", "Referencia de la API") + "</h1>")
+    od_w("<p class=\"lead\">" + od_t(od_lang, "Módulos, funções e tipos extraídos dos comentários do código. Cada função mostra assinatura, parâmetros, o que chama, quem a usa e a linha no fonte.", "Modules, functions and types extracted from code comments. Each function shows its signature, parameters, what it calls, who uses it and the source line.", "Módulos, funciones y tipos extraídos de los comentarios del código. Cada función muestra firma, parámetros, a quién llama, quién la usa y la línea en el fuente.") + "</p>")
+    od_w("<div class=\"meta\"><span class=\"stat\">" + od_itos(ofs_array_len(od_m_name)) + " " + od_t(od_lang, "módulos", "modules", "módulos") + "</span><span class=\"stat\">" + od_itos(od_tot_pub) + " " + od_t(od_lang, "funções públicas", "public functions", "funciones públicas") + "</span>")
+    od_pill(od_tot_doc, od_tot_pub)
+    od_w("<a class=\"stat\" href=\"" + od_here + "cobertura.html\">" + od_t(od_lang, "ver cobertura", "see coverage", "ver cobertura") + "</a></div></header>")
+    forge nm = ofs_array_len(od_m_name)
+    forge m = 0
+    forge last = "\t"
+    while (m < nm) {
+        forge g = od_s(od_m_group, m)
+        if (ofs_str_eq(g, last) == false) {
+            if (ofs_str_eq(last, "\t") == false) { od_w("</div></section>") }
+            od_w("<section class=\"sec\"><h2>" + od_esc(g) + "</h2><div class=\"cards\">")
+            last = g
+        }
+        od_w("<a class=\"mc\" href=\"" + od_mod_href(m) + "\"><b>" + od_esc(od_s(od_m_name, m)) + "</b><span>" + od_esc(od_first_line(od_s(od_m_doc, m))) + "</span><i>" + od_itos(od_m_pub[m]) + " " + od_t(od_lang, "funções", "functions", "funciones") + " · " + od_itos(od_pct(od_m_pubdoc[m], od_m_pub[m])) + "%</i></a>")
+        m = m + 1
+    }
+    if (ofs_str_eq(last, "\t") == false) { od_w("</div></section>") }
+    od_page_end("")
+    od_close()
+}
+
+// ---------------------------------------------------------------- cobertura
+
+vein od_page_coverage(path: obsidian) -> void {
+    od_here = ""
+    od_open(path)
+    forge rel = "cobertura.html"
+    od_page_begin(od_t(od_lang, "Cobertura", "Coverage", "Cobertura"), "", "cov", rel + "|" + rel + "|" + rel)
+    od_w("<header class=\"mh\"><p class=\"eyebrow\">" + od_t(od_lang, "O que falta documentar", "What is left to document", "Qué falta documentar") + "</p><h1>" + od_t(od_lang, "Cobertura da documentação", "Documentation coverage", "Cobertura de la documentación") + "</h1>")
+    od_w("<div class=\"big\"><b>" + od_pct1(od_tot_doc, od_tot_pub) + "%</b><span>" + od_itos(od_tot_doc) + " " + od_t(od_lang, "de", "of", "de") + " " + od_itos(od_tot_pub) + " " + od_t(od_lang, "funções públicas têm comentário", "public functions have a comment", "funciones públicas tienen comentario") + "</span><div class=\"bar\"><i style=\"width:" + od_itos(od_pct(od_tot_doc, od_tot_pub)) + "%\"></i></div></div></header>")
+    // citadas e inexistentes
+    od_w("<section class=\"sec\" id=\"inexistentes\"><h2>" + od_t(od_lang, "Citadas na documentação e inexistentes", "Cited in the docs but missing", "Citadas en la documentación e inexistentes") + " <small>" + od_itos(ofs_array_len(od_p_name)) + "</small></h2>")
+    if (ofs_array_len(od_p_name) == 0) {
+        od_w("<p class=\"ok\">" + od_t(od_lang, "Nenhuma: toda função citada em docs/*.md existe no código.", "None: every function cited in docs/*.md exists in the code.", "Ninguna: toda función citada en docs/*.md existe en el código.") + "</p>")
+    } else {
+        od_w("<div class=\"tw\"><table><thead><tr><th>" + od_t(od_lang, "Nome", "Name", "Nombre") + "</th><th>" + od_t(od_lang, "Primeira citação", "First citation", "Primera cita") + "</th><th>#</th></tr></thead><tbody>")
+        forge p = 0
+        while (p < ofs_array_len(od_p_name)) {
+            forge d = od_p_doc[p]
+            od_w("<tr><td><code>" + od_esc(od_s(od_p_name, p)) + "()</code></td><td><a href=\"" + od_doc_href(od_s(od_d_key, d), "", od_p_line[p]) + "\">" + od_esc(od_s(od_d_key, d)) + ".md:" + od_itos(od_p_line[p]) + "</a></td><td>" + od_itos(od_p_cnt[p]) + "</td></tr>")
+            p = p + 1
+        }
+        od_w("</tbody></table></div>")
+    }
+    od_w("</section>")
+    // por modulo
+    od_w("<section class=\"sec\" id=\"modulos\"><h2>" + od_t(od_lang, "Por módulo", "By module", "Por módulo") + " <small>" + od_itos(ofs_array_len(od_m_name)) + "</small></h2><div class=\"tw\"><table class=\"cov\"><thead><tr><th>" + od_t(od_lang, "Módulo", "Module", "Módulo") + "</th><th>" + od_t(od_lang, "Públicas", "Public", "Públicas") + "</th><th>" + od_t(od_lang, "Com doc", "Documented", "Con doc") + "</th><th>%</th><th></th></tr></thead><tbody>")
+    forge nm = ofs_array_len(od_m_name)
+    forge m = 0
+    while (m < nm) {
+        if (od_m_pub[m] > 0) {
+            od_w("<tr><td><a href=\"" + od_mod_href(m) + "\">" + od_esc(od_s(od_m_name, m)) + "</a> <small>" + od_esc(od_s(od_m_group, m)) + "</small></td><td>" + od_itos(od_m_pub[m]) + "</td><td>" + od_itos(od_m_pubdoc[m]) + "</td><td>")
+            od_pill(od_m_pubdoc[m], od_m_pub[m])
+            od_w("</td><td class=\"mini\"><div class=\"bar\"><i style=\"width:" + od_itos(od_pct(od_m_pubdoc[m], od_m_pub[m])) + "%\"></i></div></td></tr>")
+            if (od_m_pubdoc[m] < od_m_pub[m]) {
+                od_w("<tr class=\"miss\"><td colspan=\"5\"><details><summary>" + od_t(od_lang, "faltam ", "missing ", "faltan ") + od_itos(od_m_pub[m] - od_m_pubdoc[m]) + "</summary><ul class=\"chips\">")
+                forge ni = ofs_array_len(od_i_mod)
+                forge j = od_mod_range_first(m)
+                while (j < ni) {
+                    if (od_i_mod[j] != m) { break }
+                    forge k = od_s(od_i_kind, j)
+                    if ((ofs_str_eq(k, "vein") || ofs_str_eq(k, "rift")) && od_i_pub[j] == 1 && ofs_str_len(od_trim(od_s(od_i_doc, j))) == 0) {
+                        od_w("<li><a class=\"chip\" href=\"" + od_item_href(j) + "\">" + od_esc(od_qual(j)) + "</a></li>")
+                    }
+                    j = j + 1
+                }
+                od_w("</ul></details></td></tr>")
+            }
+        }
+        m = m + 1
+    }
+    od_w("</tbody></table></div></section>")
+    od_page_end("")
+    od_close()
+}
+
+// ---------------------------------------------------------------- busca
+
+forge od_search_first: bool = true
+
+vein od_search_sep() -> void {
+    if (od_search_first) { od_search_first = false } else { od_w(",\n") }
+}
+
+// entradas da API para search.json; `pre` = prefixo dos urls relativo a pasta do idioma
+vein od_search_entries() -> void {
+    forge nm = ofs_array_len(od_m_name)
+    forge m = 0
+    while (m < nm) {
+        od_search_sep()
+        od_w("{\"k\":\"module\",\"n\":\"" + od_jesc(od_s(od_m_name, m)) + "\",\"m\":\"" + od_jesc(od_s(od_m_group, m)) + "\",\"s\":\"\",\"d\":\"" + od_jesc(od_first_line(od_s(od_m_doc, m))) + "\",\"u\":\"" + od_api_dir + od_s(od_m_slug, m) + ".html\"}")
+        m = m + 1
+    }
+    forge ni = ofs_array_len(od_i_mod)
+    forge i = 0
+    while (i < ni) {
+        forge k = od_s(od_i_kind, i)
+        if (od_i_pub[i] == 1 && ofs_str_eq(k, "extern") == false) {
+            forge sig = od_s(od_i_sig, i)
+            if (ofs_str_len(sig) > 140) { sig = od_sub(sig, 0, 137) + "..." }
+            od_search_sep()
+            od_w("{\"k\":\"" + k + "\",\"n\":\"" + od_jesc(od_qual(i)) + "\",\"m\":\"" + od_jesc(od_s(od_m_name, od_i_mod[i])) + "\",\"s\":\"" + od_jesc(sig) + "\",\"d\":\"" + od_jesc(od_first_line(od_s(od_i_doc, i))) + "\",\"u\":\"" + od_api_dir + od_s(od_m_slug, od_i_mod[i]) + ".html#" + od_jesc(od_anchor(i)) + "\"}")
+        }
+        i = i + 1
+    }
+}
+
+// ---------------------------------------------------------------- geracao
+
+vein od_gen_api(outdir: obsidian) -> void {
+    system("mkdir -p " + od_sq(outdir))
+    forge nm = ofs_array_len(od_m_name)
+    forge m = 0
+    while (m < nm) {
+        od_page_module(m, outdir)
+        m = m + 1
+    }
+    od_page_api_index(outdir + "index.html", "api")
+}
+
+// relatorio no terminal (a mesma informacao da pagina Cobertura)
+vein od_print_report() -> void {
+    forge lang = od_lang
+    echo(od_t(lang, "ofs doc: cobertura da documentação", "ofs doc: documentation coverage", "ofs doc: cobertura de la documentación"))
+    forge nm = ofs_array_len(od_m_name)
+    forge m = 0
+    while (m < nm) {
+        if (od_m_pub[m] > 0) {
+            forge pc = od_pct(od_m_pubdoc[m], od_m_pub[m])
+            echo("  " + od_pad(od_s(od_m_group, m) + "/" + od_s(od_m_name, m), 38) + od_pad(od_itos(od_m_pubdoc[m]) + "/" + od_itos(od_m_pub[m]), 9) + od_itos(pc) + "%")
+        }
+        m = m + 1
+    }
+    // subtotais por pasta de entrada
+    forge g0 = 0
+    while (g0 < nm) {
+        forge grp = od_s(od_m_group, g0)
+        forge gp = 0
+        forge gd = 0
+        forge g1 = 0
+        while (g1 < nm) {
+            if (ofs_str_eq(od_s(od_m_group, g1), grp)) { gp = gp + od_m_pub[g1] gd = gd + od_m_pubdoc[g1] }
+            g1 = g1 + 1
+        }
+        forge prevg = "\t"
+        if (g0 > 0) { prevg = od_s(od_m_group, g0 - 1) }
+        if (ofs_str_eq(prevg, grp) == false) {
+            echo("  [" + grp + "] " + od_itos(gd) + "/" + od_itos(gp) + " (" + od_pct1(gd, gp) + "%)")
+        }
+        g0 = g0 + 1
+    }
+    echo(od_t(lang, "Total: ", "Total: ", "Total: ") + od_itos(od_tot_doc) + "/" + od_itos(od_tot_pub) + " " + od_t(lang, "funções públicas documentadas", "public functions documented", "funciones públicas documentadas") + " (" + od_pct1(od_tot_doc, od_tot_pub) + "%)")
+    if (ofs_array_len(od_p_name) == 0) {
+        echo(od_t(lang, "Funções citadas em docs/*.md que não existem: nenhuma", "Functions cited in docs/*.md that do not exist: none", "Funciones citadas en docs/*.md que no existen: ninguna"))
+    } else {
+        echo(od_t(lang, "Funções citadas em docs/*.md que não existem no código (", "Functions cited in docs/*.md that do not exist in the code (", "Funciones citadas en docs/*.md que no existen en el código (") + od_itos(ofs_array_len(od_p_name)) + "):")
+        forge p = 0
+        while (p < ofs_array_len(od_p_name)) {
+            echo("  " + od_s(od_p_name, p) + "()  " + od_s(od_d_key, od_p_doc[p]) + ".md:" + od_itos(od_p_line[p]) + " (" + od_itos(od_p_cnt[p]) + "x)")
+            p = p + 1
+        }
+    }
+}
+
+vein od_pad(s: obsidian, w: stone) -> obsidian {
+    forge r = s
+    while (ofs_str_len(r) < w) { r = r + " " }
+    return r
+}

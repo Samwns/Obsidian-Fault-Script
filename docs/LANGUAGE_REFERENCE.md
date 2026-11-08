@@ -48,6 +48,76 @@ Um arquivo `.ofs` pode conter:
 
 ---
 
+### Comentários
+
+```ofs
+// Comentário de uma linha
+
+/* Comentário
+   de várias linhas */
+
+forge x = 42  // comentário no fim da linha
+```
+
+### Terminação de instruções
+
+Instruções terminam com **quebra de linha** ou **ponto e vírgula**. Quebras de linha dentro de `()`, `[]` e `{}` são ignoradas (continuação implícita).
+
+```ofs
+forge x = 10; forge y = 20
+
+forge resultado = soma(
+    10,
+    20
+)
+```
+
+### Palavras reservadas
+
+| Palavra | Token | Finalidade |
+|---|---|---|
+| `core` | `KW_CORE` | Ponto de entrada |
+| `vein` | `KW_VEIN` | Definição de função |
+| `forge` | `KW_FORGE` | Declaração de variável |
+| `monolith` | `KW_MONOLITH` | Definição de estrutura |
+| `fracture` | `KW_FRACTURE` | Bloco de ponteiros seguro |
+| `abyss` | `KW_ABYSS` | Bloco de memória insegura |
+| `cycle` | `KW_CYCLE` | Laço |
+| `if` | `KW_IF` | Condicional |
+| `else` | `KW_ELSE` | Ramo alternativo |
+| `return` | `KW_RETURN` | Retorna de função |
+| `echo` | `KW_ECHO` | Impressão (embutida) |
+| `in` | `KW_IN` | Laço por intervalo |
+| `shard` | `KW_SHARD` | Tipo ponteiro |
+| `true` | `KW_TRUE` | Booleano verdadeiro |
+| `false` | `KW_FALSE` | Booleano falso |
+| `null` | `KW_NULL` | Valor nulo |
+| `break` | `KW_BREAK` | Sai do laço |
+| `continue` | `KW_CONTINUE` | Pula para a próxima iteração |
+| `stone` | `KW_STONE` | Tipo inteiro (i64) |
+| `crystal` | `KW_CRYSTAL` | Tipo ponto flutuante (f64) |
+| `obsidian` | `KW_OBSIDIAN` | Tipo string (i8*) |
+| `bool` | `KW_BOOL` | Tipo booleano (i1) |
+| `void` | `KW_VOID` | Tipo vazio |
+| `attach` | `KW_IMPORT` | Anexa módulo |
+| `while` | `KW_WHILE` | Laço só com condição |
+| `extern` | `KW_EXTERN` | Função estrangeira (FFI) |
+| `rift` | `KW_RIFT` | Declaração de interop nativa |
+| `as` | `KW_AS` | Conversão de tipo |
+| `match` | `KW_MATCH` | Casamento de padrão |
+| `case` | `KW_CASE` | Braço do `match` |
+| `default` | `KW_DEFAULT` | Braço padrão do `match` |
+| `const` | `KW_CONST` | Variável imutável |
+| `strata` | `KW_STRATA` | Enumeração |
+| `tremor` | `KW_TREMOR` | Bloco de tratamento de erro |
+| `catch` | `KW_CATCH` | Tratador de erro |
+| `throw` | `KW_THROW` | Lança valor de erro |
+| `tectonic` | `KW_TECTONIC` | Prefixo de diretiva de modo |
+| `bedrock` | `KW_BEDROCK` | Bloco de baixo nível tipado |
+| `asm` | `KW_ASM` | Escape de assembly inline (**planejado**; ainda não reconhecido pelo lexer) |
+
+---
+
 ## 2. Tipos
 
 ### Tipos primitivos
@@ -269,6 +339,16 @@ vein map_array(arr: Array<stone>, fn: vein(stone) -> stone) -> Array<stone> {
 
 ---
 
+Indexação é **base zero** e tem **verificação de limites** em tempo de execução:
+
+```ofs
+forge nums = [10, 20, 30, 40, 50]
+forge primeiro = nums[0]   // 10
+nums[2] = 99               // altera elemento
+```
+
+---
+
 ## 8. Controle de fluxo
 
 ### `if / else`
@@ -350,6 +430,23 @@ strata Status { Idle, Running, Failed }
 
 > **Nota**: `strata` é analisada sintaticamente e semanticamente, com geração direta para o backend LLVM prevista no roadmap de tipos algébricos.
 
+
+### `break` e `continue`
+
+```ofs
+cycle (forge i = 0; i < 100; i++) {
+    if (i == 50) {
+        break       // sai do laço
+    }
+    if (i % 2 == 0) {
+        continue    // pula números pares
+    }
+    echo(i)
+}
+```
+
+`break` e `continue` funcionam em `cycle` e em `while`. `while` é açúcar sintático para um `cycle` só com condição.
+
 ---
 
 ## 9. Operadores e casts
@@ -376,6 +473,36 @@ Também funciona em conversões entre inteiro e float:
 forge c: crystal = 10.5
 forge n: u8 = c as u8
 ```
+
+
+### Precedência de operadores (do menor para o maior)
+
+| Nível | Operadores | Associatividade |
+|---|---|---|
+| 1 | `\|\|` | Esquerda |
+| 2 | `&&` | Esquerda |
+| 3 | `==` `!=` | Esquerda |
+| 4 | `<` `<=` `>` `>=` | Esquerda |
+| 5 | `\|` | Esquerda |
+| 6 | `^` | Esquerda |
+| 7 | `&` | Esquerda |
+| 8 | `<<` `>>` | Esquerda |
+| 9 | `+` `-` | Esquerda |
+| 10 | `*` `/` `%` | Esquerda |
+| 11 | Unários: `-` `!` `&` `*` `++` `--` `~` | Direita |
+
+### Casts permitidos
+
+| De | Para | Resultado |
+|---|---|---|
+| `stone` | `crystal` | Inteiro para float |
+| `crystal` | `stone` | Float para inteiro (trunca) |
+| `bool` | `stone` | `true` → 1, `false` → 0 |
+| `stone` | `bool` | 0 → `false`, diferente de zero → `true` |
+| `bool` | `crystal` | `true` → 1.0, `false` → 0.0 |
+| `crystal` | `bool` | 0.0 → `false`, diferente de zero → `true` |
+
+Conversões de string (`obsidian`) exigem funções de runtime (`ofs_stone_to_obsidian` etc.).
 
 ---
 
@@ -462,6 +589,20 @@ Campos importantes:
 - `abi c` define ABI C
 - `...` é aceito em função variádica nativa
 
+
+### Direção da interoperabilidade
+
+`extern vein` é a superfície FFI atual, mais adequada a símbolos de runtime e compatíveis com C. O roadmap amplia isso para: fronteiras com objetos e bibliotecas C, pontes C++, pontes C#, embedding de Python e escapes de assembly específicos do destino. Esses itens são roadmap, não recursos implementados hoje.
+
+### Padrão híbrido
+
+É válido e recomendado misturar alto e baixo nível no mesmo arquivo:
+
+- lógica de negócio em `vein` comuns;
+- interop estrangeira na fronteira, por `rift vein`;
+- trabalho próximo à máquina em `bedrock`;
+- armazenamento explícito com `bedrock.ofs`.
+
 ---
 
 ## 12. Blocos de baixo nível
@@ -506,6 +647,68 @@ O parser aceita aliases textuais como:
 - `tectonic safe`
 - `tectonic unsafe`
 - `tectonic bedrock`
+
+
+### Regras de `fracture`, `bedrock` e `abyss`
+
+- Ponteiros só podem ser criados e usados dentro de `fracture`, `bedrock` ou `abyss`.
+- `fracture`: o compilador checa os tipos de todas as operações com ponteiros; `&x` obtém o endereço de `x` e `*p` desreferencia `p`.
+- `abyss`: checagem de tipos relaxada e endereçamento direto permitido. Use só quando for indispensável; prefira `fracture`.
+
+```ofs
+core main() {
+    forge x: stone = 10
+
+    fracture {
+        shard p: *stone = &x   // p aponta para x
+        *p = 42
+    }
+
+    echo(x)  // imprime 42
+}
+```
+
+Tipos ponteiro: `shard p: *stone` (ponteiro para inteiro, i64*), `shard q: *crystal` (f64*), `shard s: *obsidian` (i8**).
+
+### Intrínsecos `fault_*`
+
+Disponíveis dentro de `bedrock`, `fracture` ou `abyss`:
+
+- `fault_count(stone)` → contagem de bits 1 (popcount)
+- `fault_fence()` → barreira de memória
+- `fault_prefetch(*stone)` → pré-busca de memória para o alvo do ponteiro
+- `fault_trap()` → armadilha (trap) da máquina
+- `fault_lead(stone)` → zeros à esquerda
+- `fault_trail(stone)` → zeros à direita
+- `fault_swap(stone)` → troca de bytes
+- `fault_spin_left(stone, stone)` / `fault_spin_right(stone, stone)` → rotação de bits
+- `fault_step(*stone, stone)` → avanço de ponteiro tipado, em elementos
+- `fault_addr(vein)` → endereço da `vein` como `stone` (ver seção 11)
+- `fault_call(endereco, args...)` → chamada indireta com ABI C (ver seção 11)
+- `fault_cut(value, shift, width)` → extrai um campo de bits
+- `fault_patch(base, shift, width, insert)` → substitui um campo de bits
+- `fault_weave(mask, left, right)` → mistura bits de `left` e `right` conforme `mask`
+- `fault_unreachable()` → marca o caminho como inalcançável (gera `llvm.trap` + `unreachable`)
+- `fault_memcpy(dst, src, len)` → cópia de memória em bloco (`llvm.memcpy`); `dst` e `src` são ponteiros
+- `fault_memset(dst, val, len)` → preenchimento de memória com o byte `val` (`llvm.memset`); `dst` é ponteiro
+
+Esses intrínsecos cobrem operações que o assembly já tem e dão ao OFS vocabulário próprio, orientado à máquina.
+
+### `asm` inline (planejado)
+
+> **Estado: planejado.** O `asm` inline ainda **não está disponível** no compilador: o lexer não reconhece a palavra `asm` e o backend LLVM não gera `InlineAsm`. Os exemplos abaixo mostram o desenho previsto e **não compilam hoje**. Enquanto isso, use os intrínsecos `fault_*`.
+
+```ofs
+bedrock {
+    asm "nop"     // planejado
+    asm "int3"    // planejado
+}
+```
+
+Restrições previstas:
+- O argumento deve ser um literal de string.
+- Operandos de entrada/saída (restrições estilo AT&T) ainda não serão analisáveis na primeira versão; use `fault_*` quando precisar vincular operandos.
+- Deve aparecer apenas dentro de `bedrock`, `fracture` ou `abyss`.
 
 ---
 
@@ -619,6 +822,66 @@ Módulo `window` expõe:
 - `input.is_down`
 - `input.key`
 
+
+### Módulos da biblioteca padrão
+
+| Nome | Descrição |
+|---|---|
+| `core` | Auxiliares de matemática, predicados, fatorial, Fibonacci |
+| `math` | Primos, utilitários de dígitos, inversão de números |
+| `string` | Utilitários de string: repeat, starts_with, is_empty |
+| `io` | prompt, print_separator, print_header |
+| `webserver` | Construtor de resposta HTTP, tipos MIME, auxiliares de log |
+| `bedrock` | Células, regiões e auxiliares de campos de bits em heap |
+| `bedrock-packet` | Auxiliares de layout de pacote sobre regiões `bedrock` |
+| `rift` | Wrappers de runtime estrangeiro (auxiliares de ABI C) |
+| `terminal-colors` | Saída de cores ANSI no terminal |
+| `memory-modes` | Documentação e auxiliares dos modos fracture/abyss/fractal |
+| `test-lib` | Utilitários de teste unitário |
+
+### Funções matemáticas (`stdlib/core.ofs`)
+
+```ofs
+vein abs(x: stone) -> stone
+vein max(a: stone, b: stone) -> stone
+vein min(a: stone, b: stone) -> stone
+vein clamp(val: stone, lo: stone, hi: stone) -> stone
+```
+
+### Auxiliares de `bedrock.ofs`
+
+- Células: `bedrock_cell_new`, `bedrock_cell_read`, `bedrock_cell_write`, `bedrock_cell_add`, `bedrock_cell_sub`, `bedrock_cell_drop`.
+- Regiões: `bedrock_region_new`, `bedrock_region_read`, `bedrock_region_write`, `bedrock_region_add`, `bedrock_region_drop`, `bedrock_prefetch`.
+- Visões: `bedrock_view_at`, `bedrock_view_read`, `bedrock_view_write`.
+- Campos e lanes: `bedrock_field_cut`, `bedrock_field_patch`, `bedrock_lane8_get/set`, `bedrock_lane16_le/be_get/set`, `bedrock_lane32_le/be_get/set`.
+- Barreira: `bedrock_barrier`.
+
+A finalidade desse módulo não é imitar APIs de C, e sim fazer a programação de baixo nível crescer no vocabulário do OFS. Os auxiliares de lanes dão uma superfície com endianness para janelas de bits voltadas a ABI, sem exigir deslocamentos manuais.
+
+### Auxiliares de `rift.ofs` e `bedrock_packet.ofs`
+
+- `rift.ofs`: `rift_text_size`, `rift_line`, `rift_banner`, `rift_report_line`. Permite consumir interfaces estrangeiras por APIs em OFS.
+- `bedrock_packet.ofs`: `bedrock_packet_store`, `bedrock_packet_header`, `bedrock_packet_payload`, `bedrock_packet_opcode`, `bedrock_packet_lane`, `bedrock_packet_opcode_be16`, `bedrock_packet_tail_le16`, `bedrock_packet_set_opcode`, `bedrock_packet_set_lane`. Visões de cabeçalho e payload sobre regiões `bedrock`.
+
+### Runtime nativo OFS (Stack Magma)
+
+A implementação principal do runtime e da biblioteca padrão é escrita em OFS (`stdlib/runtime/`), sem runtime em outra linguagem:
+
+| Subsistema | Módulo | Responsabilidade |
+|---|---|---|
+| **Magma** | `magma.ofs` | Bootstrap e orquestração da execução do runtime nativo |
+| **Reservoir** | `reservoir.ofs` | Alocação e gerenciamento de memória (`ofs_alloc`, `ofs_free`) |
+| **Facet** | `facet.ofs` | Texto e conversão numérica (`ofs_str_*`, `ofs_*_to_*`) |
+| **Matrix** | `matrix.ofs` | Coleções dinâmicas e vetores (`ofs_array_*`) |
+| **Outlet** | `outlet.ofs` | Entrada e saída do terminal (`echo_*`, cores ANSI, formatação) |
+| **Foundation** | `foundation.ofs` | Sistema operacional e ambiente (`ofs_getenv`, `ofs_mod`, `ofs_exit`) |
+| **Pulse** | `pulse.ofs` | Relógio monotônico de alta precisão e timers (`now_ms`, `sleep_ms`) |
+| **Frame** | `frame.ofs` | Gerenciamento de janelas e superfícies nativas |
+| **Impulse** | `impulse.ofs` | Eventos de entrada: mouse e teclado |
+| **Prism** | `prism.ofs` | Rasterização 2D de pixels, geometria e superfícies |
+
+Todas as primitivas de runtime são compiladas pelo `ofscc` diretamente para LLVM IR nativo.
+
 ---
 
 ## 14. Comandos do compilador
@@ -678,750 +941,3 @@ infuse fmt
 infuse {fmt:stable}
 reinfuse fmt
 ```
-
-### Operator Precedence (lowest to highest)
-
-| Level | Operators           | Associativity |
-|-------|---------------------|---------------|
-| 1     | `\|\|`              | Left          |
-| 2     | `&&`                | Left          |
-| 3     | `==` `!=`           | Left          |
-| 4     | `<` `<=` `>` `>=`   | Left          |
-| 5     | `|`                 | Left          |
-| 6     | `^`                 | Left          |
-| 7     | `&`                 | Left          |
-| 8     | `<<` `>>`           | Left          |
-| 9     | `+` `-`             | Left          |
-| 10    | `*` `/` `%`         | Left          |
-| 11    | Unary: `-` `!` `&` `*` `++` `--` `~` | Right |
-
----
-
-## Control Flow
-
-### if / else
-
-```ofs
-if (condition) {
-    // then block
-}
-
-if (condition) {
-    // then block
-} else {
-    // else block
-}
-
-if (x > 100) {
-    echo("big")
-} else if (x > 50) {
-    echo("medium")
-} else {
-    echo("small")
-}
-```
-
-### cycle (C-style loop)
-
-```ofs
-cycle (forge i = 0; i < 10; i++) {
-    echo(i)
-}
-```
-
-**Syntax:**
-```
-cycle (<init>; <condition>; <step>) {
-    <body>
-}
-```
-
-### cycle (range-based loop)
-
-```ofs
-forge nums = [1, 2, 3, 4, 5]
-cycle (n in nums) {
-    echo(n)
-}
-```
-
-**Syntax:**
-```
-cycle (<variable> in <collection>) {
-    <body>
-}
-```
-
-### break / continue
-
-```ofs
-cycle (forge i = 0; i < 100; i++) {
-    if (i == 50) {
-        break       // exit loop
-    }
-    if (i % 2 == 0) {
-        continue    // skip even numbers
-    }
-    echo(i)
-}
-```
-
-### while (condition-only loop)
-
-```ofs
-forge count: stone = 10
-while (count > 0) {
-    echo(count)
-    count -= 1
-}
-```
-
-**Syntax:**
-```
-while (<condition>) {
-    <body>
-}
-```
-
-`while` is syntactic sugar for a `cycle` with only a condition. `break` and `continue` work inside `while` blocks.
-
----
-
-## Type Casting (as)
-
-Use the `as` keyword for explicit type conversions:
-
-```ofs
-forge x: stone = 42
-forge y: crystal = x as crystal    // integer to float
-
-forge pi: crystal = 3.14
-forge rounded: stone = pi as stone // float to integer (truncates)
-
-forge flag: bool = true
-forge num: stone = flag as stone   // bool to integer (0 or 1)
-```
-
-### Allowed Casts
-
-| From      | To        | Result                  |
-|-----------|-----------|-------------------------|
-| `stone`   | `crystal` | Integer to float        |
-| `crystal` | `stone`   | Float to integer (truncates) |
-| `bool`    | `stone`   | `true` → 1, `false` → 0 |
-| `stone`   | `bool`    | 0 → `false`, non-zero → `true` |
-| `bool`    | `crystal` | `true` → 1.0, `false` → 0.0 |
-| `crystal` | `bool`    | 0.0 → `false`, non-zero → `true` |
-
-Note: String (`obsidian`) casts require runtime functions (`ofs_stone_to_obsidian`, etc.).
-
----
-
-## Imports
-
-Use `attach` to bring stdlib modules, packages, or local files into scope.
-
-### Library attach (stdlib / package)
-
-```ofs
-attach {core}
-attach {math}
-attach {webserver}
-attach {bedrock}
-attach {terminal-colors}
-attach {memory-modes}
-```
-
-The name inside `{}` maps to a known stdlib module or an installed package. The compiler resolves the file automatically from the stdlib directory, `OFS_STDLIB_PATH`, or `OFS_LIB_PATH`.
-
-### File attach
-
-```ofs
-attach {F:helpers.ofs}
-attach {F:../shared/utils.ofs}
-```
-
-Use the `F:` prefix to reference a specific `.ofs` file by path relative to the current file.
-
-Attach declarations must appear at the top level, before or between other declarations. The preprocessor resolves them before the lexer and parser run, so each module is inlined exactly once (deduplication is automatic).
-
-### Stdlib modules
-
-| Name | Description |
-|------|-------------|
-| `core` | Math helpers, predicates, factorial, fibonacci |
-| `math` | Primes, digit utilities, reverse numbers |
-| `string` | String utilities: repeat, starts_with, is_empty |
-| `io` | prompt, print_separator, print_header |
-| `webserver` | HTTP response builder, MIME types, log helpers |
-| `bedrock` | Low-level heap cells, regions, bit-field helpers |
-| `bedrock-packet` | Packet layout helpers built on bedrock regions |
-| `rift` | Foreign runtime wrappers (C ABI helpers) |
-| `terminal-colors` | ANSI terminal color output |
-| `memory-modes` | Docs and helpers for fracture/abyss/fractal modes |
-| `test-lib` | Unit test utilities |
-
----
-
-## Extern Functions
-
-Declare external C functions for FFI (Foreign Function Interface):
-
-```ofs
-extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
-extern vein ofs_sqrt(val: crystal) -> crystal
-extern vein ofs_str_len(s: obsidian) -> stone
-
-core main() {
-    forge result = ofs_pow(2.0, 10.0)
-    echo(result)  // prints 1024
-}
-```
-
-All OFS runtime functions can be accessed via `extern` declarations. This enables low-level and high-level programming in the same language.
-
-### rift vein
-
-OFS now also supports `rift vein` as a native interop-facing declaration form:
-
-```ofs
-rift vein strlen(text: obsidian) -> stone
-
-core main() {
-    echo(strlen("fault"))
-}
-```
-
-`rift vein` lowers to the same foreign-call pipeline as `extern vein`, but it presents interop as an OFS-native boundary instead of framing the feature only as "extern C".
-
-You can also add explicit interop metadata:
-
-```ofs
-rift vein text_size(text: obsidian) -> stone bind "strlen" abi c
-```
-
-- `bind "symbol"` sets the external link symbol name.
-- `abi c` declares the intended ABI.
-- `abi system` is reserved for platform/system-boundary calls.
-
-### Interop Direction
-
-`extern vein` is the current FFI surface. Today it is best suited for runtime and C-compatible symbols.
-
-The roadmap extends this toward richer native interop layers for:
-
-- C object and library boundaries,
-- C++ bridge layers,
-- C# host/runtime bridges,
-- Python embedding or host bindings,
-- target-specific assembly escape hatches.
-
-These are roadmap items, not all implemented features today.
-
----
-
-## Structures (monolith)
-
-Structures are defined with the `monolith` keyword:
-
-```ofs
-monolith Player {
-    name: obsidian
-    hp:   stone
-    speed: crystal
-}
-```
-
-You can also declare an explicit layout mode:
-
-```ofs
-monolith Header layout packed {
-    tag: stone
-    flags: stone
-}
-```
-
-Supported layout modes today:
-
-- `layout native`
-- `layout packed`
-- `layout c`
-
-`layout packed` lowers to a packed LLVM struct layout. `layout c` is accepted as an explicit ABI-facing intent and currently lowers like `native` until the full ABI/layout subsystem is expanded.
-
-### Creating Instances
-
-```ofs
-forge hero: Player
-hero.name = "Obsidian Knight"
-hero.hp = 100
-hero.speed = 1.5
-```
-
-### Field Access
-
-Use dot notation to access fields:
-
-```ofs
-echo(hero.name)     // "Obsidian Knight"
-echo(hero.hp)       // 100
-hero.hp -= 10       // take damage
-```
-
-### Passing to Functions
-
-```ofs
-vein greet(p: Player) -> void {
-    echo(p.name)
-    echo(p.hp)
-}
-
-core main() {
-    forge hero: Player
-    hero.name = "Knight"
-    hero.hp = 100
-    hero.speed = 1.5
-    greet(hero)
-}
-```
-
----
-
-## Pointers (shard / fracture)
-
-Pointer operations are only allowed inside `fracture` (safe), `bedrock` (typed low-level), or `abyss` (unsafe) blocks.
-
-### fracture (Safe Pointer Block)
-
-```ofs
-core main() {
-    forge x: stone = 10
-
-    fracture {
-        shard p: *stone = &x   // p points to x
-        *p = 42                // dereference and assign
-    }
-
-    echo(x)  // prints 42
-}
-```
-
-**Key rules:**
-- Pointers can only be created and used inside `fracture` blocks
-- The compiler type-checks all pointer operations
-- `&x` takes the address of `x`
-- `*p` dereferences pointer `p`
-
-### Pointer Types
-
-```ofs
-shard p: *stone       // pointer to stone (i64*)
-shard q: *crystal     // pointer to crystal (f64*)
-shard s: *obsidian    // pointer to obsidian (i8**)
-```
-
-### bedrock (Typed Low-Level Block)
-
-`bedrock` is the OFS-native low-level block for typed machine-adjacent work.
-
-```ofs
-core main() {
-    forge x: stone = 10
-
-    bedrock {
-        shard p: *stone = &x
-        *p = *p + fault_spin_left(1, 3)
-    }
-
-    echo(x)
-}
-```
-
-Use `bedrock` when you want low-level control and machine-like intrinsics while still keeping typed OFS rules.
-
----
-
-## Collections (Arrays)
-
-### Array Literals
-
-```ofs
-forge nums = [10, 20, 30, 40, 50]
-forge names = ["Alice", "Bob", "Charlie"]
-```
-
-All elements must be the same type. The array type is inferred from the elements.
-
-### Indexing
-
-```ofs
-forge first = nums[0]    // 10
-forge last = nums[4]     // 50
-nums[2] = 99             // modify element
-```
-
-Array indexing is **zero-based** with **bounds checking** at runtime.
-
-### Iteration
-
-```ofs
-// Range-based
-cycle (n in nums) {
-    echo(n)
-}
-
-// Index-based
-cycle (forge i = 0; i < 5; i++) {
-    echo(nums[i])
-}
-```
-
----
-
-## Unsafe Memory (abyss)
-
-The `abyss` block allows raw, unsafe memory operations:
-
-```ofs
-abyss {
-    // Raw memory access — no type checking
-    // Use with extreme caution
-}
-```
-
-**Rules:**
-- Type checking is relaxed inside `abyss` blocks
-- Direct memory addressing is allowed
-- Only use when absolutely necessary
-- Prefer `fracture` for pointer operations
-
-### Directive alias: tectonic
-
-You can use `tectonic` as a prefix directive for memory/effect modes.
-This is an alias syntax that maps to the same runtime/semantic behavior:
-
-- `tectonic fracture { ... }` -> same as `fracture { ... }`
-- `tectonic safe { ... }` -> same as `fracture { ... }`
-- `tectonic abyss { ... }` -> same as `abyss { ... }`
-- `tectonic unsafe { ... }` -> same as `abyss { ... }`
-- `tectonic fractal { ... }` -> same as `fractal { ... }`
-- `tectonic bedrock { ... }` -> same as `bedrock { ... }`
-
-Example:
-
-```ofs
-core main() {
-    forge x: stone = 10
-
-    tectonic fracture {
-        shard p: *stone = &x
-        *p = 20
-    }
-
-    tectonic safe {
-        shard q: *stone = &x
-        *q = *q + 1
-    }
-
-    tectonic abyss {
-        shard raw: *stone = &x
-        *raw = *raw + 1
-    }
-
-    tectonic unsafe {
-        shard raw2: *stone = &x
-        *raw2 = *raw2 + 1
-    }
-
-    tectonic fractal {
-        echo("effect-lifted mode")
-    }
-
-    tectonic bedrock {
-        shard native: *stone = &x
-        *native = *native + 1
-    }
-}
-```
-
----
-
-## Built-in Functions
-
-### echo
-
-Polymorphic print function — works with any type:
-
-```ofs
-echo(42)              // prints: 42
-echo(3.14)            // prints: 3.14
-echo("hello")         // prints: hello
-echo(true)            // prints: true
-```
-
-`echo` automatically selects the correct runtime print function based on the argument type.
-
-### fault_* intrinsics
-
-Inside `bedrock`, `fracture`, or `abyss`, OFS exposes machine-like intrinsics with OFS-native names:
-
-```ofs
-bedrock {
-    forge x: stone = 0xF0F0
-    echo(fault_count(x))
-    echo(fault_lead(x))
-    echo(fault_trail(x))
-    echo(fault_swap(x))
-    echo(fault_spin_left(x, 4))
-    echo(fault_spin_right(x, 4))
-    echo(fault_weave(0xFF00, 0xAAAA, 0x5555))
-}
-```
-
-Available intrinsics:
-
-- `fault_count(stone)` -> population count
-- `fault_fence()` -> emit a machine-level memory barrier
-- `fault_prefetch(*stone)` -> request a machine-level prefetch for a pointer target
-- `fault_trap()` -> emit a machine-level trap
-- `fault_lead(stone)` -> count leading zeros
-- `fault_trail(stone)` -> count trailing zeros
-- `fault_swap(stone)` -> byte swap
-- `fault_spin_left(stone, stone)` -> rotate left
-- `fault_spin_right(stone, stone)` -> rotate right
-- `fault_step(*stone, stone)` -> typed pointer stepping in elements
-- `fault_addr(vein)` -> endereço da vein como `stone` (ver FFI)
-- `fault_call(endereco, args...)` -> chamada indireta com ABI C (ver FFI)
-- `fault_cut(value, shift, width)` -> extract a bit field
-- `fault_patch(base, shift, width, insert)` -> replace a bit field
-- `fault_weave(mask, left, right)` -> blend bits from `left` and `right` using `mask`
-- `fault_unreachable()` -> marks the current path as unreachable, lowers to `llvm.trap` + `unreachable` IR
-- `fault_memcpy(dst, src, len)` -> bulk memory copy (lowers to `llvm.memcpy`); `dst` and `src` must be pointers
-- `fault_memset(dst, val, len)` -> bulk memory fill with `val` byte (lowers to `llvm.memset`); `dst` must be a pointer
-
-These functions are designed to cover operations assembly already has, while also giving OFS room for its own machine-oriented vocabulary.
-
-### asm (inline assembly escape hatch)
-
-When no `fault_*` intrinsic covers your need, `asm` emits a raw assembly string directly at that point in the code. It can only appear inside a `bedrock`, `fracture`, or `abyss` block.
-
-```ofs
-bedrock {
-    asm "nop"
-    asm "int3"
-}
-```
-
-**Restrictions:**
-- The argument must be a string literal.
-- Input/output operand syntax (full AT&T-style constraints) is not yet parseable; use `fault_*` intrinsics when operand binding is needed.
-- Generates a void inline-asm call in LLVM IR with the assembly string forwarded verbatim.
-- The `asm` expression is lowered to LLVM `InlineAsm`; the compiler correctly dispatches it in both semantic analysis and code generation.
-
----
-
-## Comments
-
-```ofs
-// Single-line comment
-
-/* Multi-line
-   comment */
-
-forge x = 42  // inline comment
-```
-
----
-
-## Statement Termination
-
-Statements are terminated by **newline** or **semicolon**. Both are valid:
-
-```ofs
-forge x = 10
-forge y = 20
-
-// Or with semicolons
-forge x = 10; forge y = 20
-```
-
-Newlines inside `()`, `[]`, and `{}` are ignored (implicit line continuation):
-
-```ofs
-forge result = add(
-    10,
-    20
-)
-```
-
----
-
-## Standard Library
-
-The standard library is split between application-facing helpers and emerging low-level OFS-native helpers.
-
-Examples:
-
-- `terminal_colors.ofs` for terminal presentation
-- `webserver.ofs` for HTTP helpers
-- `memory_modes.ofs` for memory-mode descriptions
-- `bedrock.ofs` for explicit heap-backed state helpers in OFS-native style
-- `rift.ofs` for OFS-native foreign-boundary wrappers
-- `bedrock_packet.ofs` for packet/header views built on low-level regions
-
-### Bedrock Module
-
-`bedrock.ofs` is the current seed for OFS-native low-level programming.
-
-It provides helpers such as:
-
-- `bedrock_cell_new(initial)`
-- `bedrock_cell_read(cell)`
-- `bedrock_cell_write(cell, value)`
-- `bedrock_cell_add(cell, delta)`
-- `bedrock_cell_sub(cell, delta)`
-- `bedrock_cell_drop(cell)`
-- `bedrock_region_new(len)`
-- `bedrock_region_read(region, index)`
-- `bedrock_region_write(region, index, value)`
-- `bedrock_region_add(region, index, delta)`
-- `bedrock_prefetch(region, index)`
-- `bedrock_region_drop(region)`
-- `bedrock_view_at(region, start, offset)`
-- `bedrock_view_read(region, start, offset)`
-- `bedrock_view_write(region, start, offset, value)`
-- `bedrock_field_cut(value, shift, width)`
-- `bedrock_field_patch(base, shift, width, insert)`
-- `bedrock_lane8_get(value, lane)`
-- `bedrock_lane8_set(value, lane, insert)`
-- `bedrock_lane16_le_get(value, lane)`
-- `bedrock_lane16_be_get(value, lane)`
-- `bedrock_lane16_le_set(value, lane, insert)`
-- `bedrock_lane16_be_set(value, lane, insert)`
-- `bedrock_lane32_le_get(value, lane)`
-- `bedrock_lane32_be_get(value, lane)`
-- `bedrock_lane32_le_set(value, lane, insert)`
-- `bedrock_lane32_be_set(value, lane, insert)`
-- `bedrock_barrier()`
-
-The purpose of this module is not to imitate C APIs directly, but to let low-level programming grow in OFS vocabulary.
-
-These lane helpers also give OFS an endianness-aware surface for ABI-facing bit windows without forcing the user to drop into raw shifts everywhere.
-
-### Rift Module
-
-`rift.ofs` is the first standard-library interop surface built on top of `rift vein`.
-
-It provides wrappers such as:
-
-- `rift_text_size(text)`
-- `rift_line(text)`
-- `rift_banner(title)`
-- `rift_report_line(label, value)`
-
-The goal is to let foreign boundaries be consumed through OFS-facing APIs instead of exposing only raw declarations everywhere.
-
-### Bedrock Packet Module
-
-`bedrock_packet.ofs` is the first structured low-level object-style module built on top of bedrock regions.
-
-It provides helpers such as:
-
-- `bedrock_packet_store(region, slot, header, payload)`
-- `bedrock_packet_header(region, slot)`
-- `bedrock_packet_payload(region, slot)`
-- `bedrock_packet_opcode(header)`
-- `bedrock_packet_lane(header)`
-- `bedrock_packet_opcode_be16(header)`
-- `bedrock_packet_tail_le16(header)`
-- `bedrock_packet_set_opcode(header, opcode)`
-- `bedrock_packet_set_lane(header, lane)`
-
-This is part of the direction where OFS low-level programming gains its own reusable objects/modules instead of exposing only raw operations.
-
-### Hybrid Example Pattern
-
-It is valid and encouraged to mix high-level and low-level OFS in the same file:
-
-- business logic in regular `vein` functions,
-- foreign interop at the boundary through `rift vein`,
-- machine-adjacent work in `bedrock`,
-- explicit storage helpers from `bedrock.ofs`.
-
-OFS includes a standard library written in OFS itself (`stdlib/core.ofs`):
-
-### Math Functions
-
-```ofs
-vein abs(x: stone) -> stone         // absolute value
-vein max(a: stone, b: stone) -> stone  // maximum
-vein min(a: stone, b: stone) -> stone  // minimum
-vein clamp(val: stone, lo: stone, hi: stone) -> stone  // clamp to range
-```
-
-### Runtime Nativo OFS (Stack Magma)
-
-A implementação principal do runtime e da biblioteca padrão da OFS é escrita em OFS (`stdlib/runtime/`), sem uma implementação de runtime em outra linguagem:
-
-| Subsistema | Módulo | Responsabilidade |
-|---|---|---|
-| **Magma** | `magma.ofs` | Bootstrap e orquestrador de execução do runtime nativo |
-| **Reservoir** | `reservoir.ofs` | Alocação e gerenciamento de memória (`ofs_alloc`, `ofs_free`) |
-| **Facet** | `facet.ofs` | Operações de texto e conversão numérica (`ofs_str_*`, `ofs_*_to_*`) |
-| **Matrix** | `matrix.ofs` | Coleções dinâmicas e vetores (`ofs_array_*`) |
-| **Outlet** | `outlet.ofs` | Entrada e saída do terminal (`echo_*`, cores ANSI, formatação) |
-| **Foundation** | `foundation.ofs` | Abstrações de sistema operacional e ambiente (`ofs_getenv`, `ofs_mod`, `ofs_exit`) |
-| **Pulse** | `pulse.ofs` | Relógio de alta precisão monotônico e timers (`now_ms`, `sleep_ms`) |
-| **Frame** | `frame.ofs` | Gerenciamento de janelas e superfícies nativas |
-| **Impulse** | `impulse.ofs` | Eventos de entrada, mouse e teclado |
-| **Prism** | `prism.ofs` | Rasterização 2D de pixels, geometria e superfícies |
-
-Todas as primitivas de runtime são compiladas diretamente pelo `ofscc` para LLVM IR nativo, garantindo que programas OFS executem sobre o próprio runtime nativo sem depender de implementações em C.
-
----
-
-## Keywords
-
-Complete list of reserved keywords:
-
-| Keyword    | Token            | Purpose                    |
-|------------|------------------|----------------------------|
-| `core`     | `KW_CORE`        | Entry point function       |
-| `vein`     | `KW_VEIN`        | Function definition        |
-| `forge`    | `KW_FORGE`       | Variable declaration       |
-| `monolith` | `KW_MONOLITH`   | Struct definition          |
-| `fracture` | `KW_FRACTURE`   | Safe pointer block         |
-| `abyss`    | `KW_ABYSS`      | Unsafe memory block        |
-| `cycle`    | `KW_CYCLE`       | Loop                       |
-| `if`       | `KW_IF`          | Conditional                |
-| `else`     | `KW_ELSE`        | Else branch                |
-| `return`   | `KW_RETURN`      | Return from function       |
-| `echo`     | `KW_ECHO`        | Print (built-in)           |
-| `in`       | `KW_IN`          | Range-based cycle          |
-| `shard`    | `KW_SHARD`       | Pointer type               |
-| `true`     | `KW_TRUE`        | Boolean true               |
-| `false`    | `KW_FALSE`       | Boolean false              |
-| `null`     | `KW_NULL`        | Null value                 |
-| `break`    | `KW_BREAK`       | Exit loop                  |
-| `continue` | `KW_CONTINUE`    | Skip iteration             |
-| `stone`    | `KW_STONE`       | Integer type (i64)         |
-| `crystal`  | `KW_CRYSTAL`     | Float type (f64)           |
-| `obsidian` | `KW_OBSIDIAN`    | String type (i8*)          |
-| `bool`     | `KW_BOOL`        | Boolean type (i1)          |
-| `void`     | `KW_VOID`        | Void type                  |
-| `attach`   | `KW_IMPORT`      | Attach module              |
-| `while`    | `KW_WHILE`       | Condition-only loop        |
-| `extern`   | `KW_EXTERN`      | Foreign function           |
-| `rift`     | `KW_RIFT`        | Native interop declaration |
-| `as`       | `KW_AS`          | Type cast                  |
-| `match`    | `KW_MATCH`       | Pattern matching           |
-| `case`     | `KW_CASE`        | Match arm                  |
-| `default`  | `KW_DEFAULT`     | Match fallback arm         |
-| `const`    | `KW_CONST`       | Immutable variable         |
-| `strata`   | `KW_STRATA`      | Enum declaration           |
-| `tremor`   | `KW_TREMOR`      | Error handling block       |
-| `catch`    | `KW_CATCH`       | Error handler              |
-| `throw`    | `KW_THROW`       | Raise error value          |
-| `tectonic` | `KW_TECTONIC`    | Mode directive prefix      |
-| `bedrock`  | `KW_BEDROCK`     | Typed low-level block      |
-| `asm`      | `KW_ASM`         | Inline assembly escape hatch |

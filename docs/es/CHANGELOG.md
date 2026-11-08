@@ -6,6 +6,14 @@ Todos los cambios notables de este proyecto se registran aquí.
 
 ## [Unreleased]
 
+### Added — `ofs doc` (documentación generada del código) y la Referencia del sitio
+
+- **ES** — nuevo comando **`ofs doc`** (`ofs/tools/ofsdoc.ofs`, escrito en OFS): documentación HTML generada del código fuente (módulos, `vein`/`rift vein`/`extern vein`, `monolith`/`impl`, llama a/usado por, véase también, enlace a la línea en GitHub, búsqueda `search.json`) e informe de cobertura (`ofs doc --check` sale con 1 si un `.md` cita una función inexistente). La wiki del sitio fue reemplazada por la **Referencia** (`docs/ref/`, tema obsidiana): Guía + API generada + Cobertura en una sola navegación; `docs/wiki/` solo redirige. Ver `docs/es/TOOLS.md`.
+
+### Added / Adicionado — Termux
+
+- **ES** — **Termux**: OFS ahora corre en el teléfono (`ofs run`, `ofs build`, herramientas); el wrapper detecta Termux, paquete `ofs-termux-aarch64.tar.gz` (`src/packaging/termux/build_termux.sh`, adjuntado a la release por CI) e `install_termux.sh`. Ver `docs/es/GETTING_STARTED.md`.
+
 ### Added — hex keyboard (OAL)
 
 - **ES** — OAL: capa hex del `keyboard`, con `oal.kb_layer = 2` (teclas 0-9, A-F, borrar, `#` y ↵). Usada en el campo hex del selector de color de M.O.O.N.

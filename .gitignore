@@ -77,3 +77,5 @@ Thumbs.db
 !.vscode/launch.json
 !.vscode/tasks.json
 !.vscode/extensions.json
+# Benchmarks: fontes de referência em C ficam só locais
+bench/c/

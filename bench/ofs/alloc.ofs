@@ -1,0 +1,12 @@
+core main() {
+    forge s: stone = 0
+    forge i: stone = 0
+    while (i < 1000000) {
+        forge a: Array<stone> = []
+        ofs_array_push(a, i)
+        ofs_array_push(a, i + 1)
+        s = (s + a[1]) % 1000000007
+        i += 1
+    }
+    echo(s)
+}

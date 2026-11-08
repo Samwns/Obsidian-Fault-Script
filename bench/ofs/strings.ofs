@@ -1,0 +1,19 @@
+extern vein ofs_str_char_at(s: obsidian, i: stone) -> stone
+
+core main() {
+    forge chunk: obsidian = ""
+    forge k: stone = 0
+    while (k < 64) { chunk = chunk + "abcdefghijklmnop"; k += 1 }
+    forge s: obsidian = ""
+    forge j: stone = 0
+    while (j < 1024) { s = s + chunk; j += 1 }
+    forge n: stone = ofs_str_len(s)
+    forge h: stone = 0
+    forge i: stone = 0
+    while (i < n) {
+        h = (h * 31 + ofs_str_char_at(s, i)) % 1000003
+        i += 1
+    }
+    echo(n)
+    echo(h)
+}

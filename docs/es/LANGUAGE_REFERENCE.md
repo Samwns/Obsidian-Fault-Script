@@ -1200,22 +1200,24 @@ Intrínsecos disponibles:
 
 Estas funciones están diseñadas para cubrir operaciones que el ensamblador ya tiene, y al mismo tiempo dar a OFS espacio para su propio vocabulario orientado a la máquina.
 
-### asm (escape de ensamblador en línea)
+### asm (escape de ensamblador en línea) — planeado
 
-Cuando ningún intrínseco `fault_*` cubre su necesidad, `asm` emite una cadena de ensamblador sin procesar directamente en ese punto del código. Solo puede aparecer dentro de un bloque `bedrock`, `fracture` o `abyss`.
+> **Estado: planeado.** El `asm` en línea todavía **no está disponible**: el lexer no reconoce la palabra `asm` y el backend LLVM no genera `InlineAsm`. El ejemplo muestra el diseño previsto y **no compila hoy**. Por ahora use los intrínsecos `fault_*`.
+
+Cuando ningún intrínseco `fault_*` cubre su necesidad, `asm` emitirá una cadena de ensamblador sin procesar directamente en ese punto del código. Solo se permitirá dentro de un bloque `bedrock`, `fracture` o `abyss`.
 
 ```ofs
 bedrock {
-    asm "nop"
-    asm "int3"
+    asm "nop"     // planeado
+    asm "int3"    // planeado
 }
 ```
 
 **Restricciones:**
-- El argumento debe ser un literal de cadena.
+- Planeado: el argumento debe ser un literal de cadena.
 - La sintaxis de operandos de entrada/salida (restricciones completas estilo AT&T) todavía no es analizable; use los intrínsecos `fault_*` cuando necesite enlazar operandos.
-- Genera una llamada de ensamblador en línea sin valor de retorno en LLVM IR, reenviando la cadena de ensamblador textualmente.
-- La expresión `asm` se reduce a `InlineAsm` de LLVM; el compilador la despacha correctamente tanto en el análisis semántico como en la generación de código.
+- Planeado: genera una llamada de ensamblador en línea sin valor de retorno en LLVM IR, reenviando la cadena de ensamblador textualmente.
+- Planeado: la expresión `asm` se reducirá a `InlineAsm` de LLVM, despachada en el análisis semántico y en la generación de código. Todavía no está implementado.
 
 ---
 
@@ -1423,4 +1425,4 @@ Lista completa de palabras clave reservadas:
 | `throw`    | `KW_THROW`       | Lanzar valor de error      |
 | `tectonic` | `KW_TECTONIC`    | Prefijo de directiva de modo |
 | `bedrock`  | `KW_BEDROCK`     | Bloque de bajo nivel tipado |
-| `asm`      | `KW_ASM`         | Escape de ensamblador en línea |
+| `asm`      | `KW_ASM`         | Escape de ensamblador en línea (planeado, aún no disponible) |

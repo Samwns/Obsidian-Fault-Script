@@ -1,0 +1,9 @@
+core main() {
+    forge s: stone = 0
+    forge i: stone = 0
+    while (i < 100000000) {
+        s = (s + i * i) % 1000000007
+        i += 1
+    }
+    echo(s)
+}
