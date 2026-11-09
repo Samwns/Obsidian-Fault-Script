@@ -14,21 +14,21 @@
 
 | Benchmark | OFS nativo | OFS interpretado | C -O2 | rust | python |
 |---|---|---|---|---|---|
-| empty | 3 | 36 | 2 | 2 | 12 |
-| fib | 41 | 6035 | 22 | 22 | 908 |
-| loop | 405 | 18126 | 275 | 275 | 11300 |
-| strings | 17 | 586 | 201 | 196 | 277 |
-| sort | 15 | 960 | 7 | 7 | 162 |
-| alloc | 17 | 787 | 7 | 9 | 155 |
+| empty | 3 | 38 | 2 | 2 | 12 |
+| fib | 41 | 6081 | 22 | 22 | 867 |
+| loop | 404 | 18088 | 273 | 273 | 10671 |
+| strings | 15 | 583 | 191 | 197 | 272 |
+| sort | 16 | 943 | 7 | 8 | 161 |
+| alloc | 16 | 770 | 7 | 11 | 168 |
 
 ## Tamanho do binário (bytes, programa vazio) e memória máxima (MB)
 
 | Linguagem | Binário vazio | RSS empty | RSS fib | RSS loop | RSS strings | RSS sort | RSS alloc |
 |---|---|---|---|---|---|---|---|
-| ofs | 37312 | 5.4 | 5.5 | 4.9 | 5.5 | 6.4 | 5.1 |
-| c | 12568 | 2.0 | 2.0 | 2.0 | 3.3 | 2.3 | 2.1 |
-| rust | 10440304 | 2.1 | 1.9 | 1.9 | 4.2 | 3.0 | 1.9 |
-| python | n/a (interpretador) | 9.5 | 9.3 | 9.2 | 11.6 | 13.4 | 9.5 |
+| ofs | 37656 | 5.1 | 5.2 | 5.3 | 5.7 | 6.0 | 5.3 |
+| c | 12568 | 2.1 | 2.2 | 2.0 | 3.4 | 2.4 | 2.0 |
+| rust | 10440304 | 2.0 | 2.0 | 2.1 | 4.1 | 2.9 | 2.1 |
+| python | n/a (interpretador) | 9.4 | 9.4 | 9.3 | 11.6 | 13.2 | 9.2 |
 
 A linha `empty` da tabela de tempo é o tempo de inicialização (programa que só imprime `ok`).
 "memória" = o processo estourou o limite de 2048 MB; "timeout" = passou do limite de tempo; "falha" = saiu com erro sem ser por memória.

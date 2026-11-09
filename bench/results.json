@@ -1,7 +1,7 @@
 {
   "schema": 3,
   "date": "2026-11-09",
-  "generated_at_utc": "2026-11-09T08:16:47Z",
+  "generated_at_utc": "2026-11-09T09:02:08Z",
   "machine": {"cpu": "AMD Ryzen 5 5600GT with Radeon Graphics", "threads": 12, "os": "Linux 7.3.1-201.nobara.fc44.x86_64", "arch": "x86_64", "memory_gb": 23.3},
   "versions": {"ofs": "1.0.169", "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)", "rustc": "rustc 1.99.0 (b940084d7 2026-09-28) (Fedora 1.99.0-1.fc44)", "go": null, "python": "Python 3.14.8"},
   "method": {"metric": "mediana do tempo de parede", "unit": "ms", "runs": 5, "interp_runs": 1, "interp_timeout_s": 120, "native_timeout_s": 300, "mem_limit_mb": 2048, "c_flags": "clang -O2", "rust_flags": "rustc -O", "reproduce": "bash bench/run.sh"},
@@ -11,52 +11,52 @@
   "results": {
     "empty": {
       "ofs": {"status": "ok", "ms": 3, "text": "3"},
-      "ofs-interp": {"status": "ok", "ms": 36, "text": "36"},
+      "ofs-interp": {"status": "ok", "ms": 38, "text": "38"},
       "c": {"status": "ok", "ms": 2, "text": "2"},
       "rust": {"status": "ok", "ms": 2, "text": "2"},
       "python": {"status": "ok", "ms": 12, "text": "12"}
     },
     "fib": {
       "ofs": {"status": "ok", "ms": 41, "text": "41"},
-      "ofs-interp": {"status": "ok", "ms": 6035, "text": "6035"},
+      "ofs-interp": {"status": "ok", "ms": 6081, "text": "6081"},
       "c": {"status": "ok", "ms": 22, "text": "22"},
       "rust": {"status": "ok", "ms": 22, "text": "22"},
-      "python": {"status": "ok", "ms": 908, "text": "908"}
+      "python": {"status": "ok", "ms": 867, "text": "867"}
     },
     "loop": {
-      "ofs": {"status": "ok", "ms": 405, "text": "405"},
-      "ofs-interp": {"status": "ok", "ms": 18126, "text": "18126"},
-      "c": {"status": "ok", "ms": 275, "text": "275"},
-      "rust": {"status": "ok", "ms": 275, "text": "275"},
-      "python": {"status": "ok", "ms": 11300, "text": "11300"}
+      "ofs": {"status": "ok", "ms": 404, "text": "404"},
+      "ofs-interp": {"status": "ok", "ms": 18088, "text": "18088"},
+      "c": {"status": "ok", "ms": 273, "text": "273"},
+      "rust": {"status": "ok", "ms": 273, "text": "273"},
+      "python": {"status": "ok", "ms": 10671, "text": "10671"}
     },
     "strings": {
-      "ofs": {"status": "ok", "ms": 17, "text": "17"},
-      "ofs-interp": {"status": "ok", "ms": 586, "text": "586"},
-      "c": {"status": "ok", "ms": 201, "text": "201"},
-      "rust": {"status": "ok", "ms": 196, "text": "196"},
-      "python": {"status": "ok", "ms": 277, "text": "277"}
+      "ofs": {"status": "ok", "ms": 15, "text": "15"},
+      "ofs-interp": {"status": "ok", "ms": 583, "text": "583"},
+      "c": {"status": "ok", "ms": 191, "text": "191"},
+      "rust": {"status": "ok", "ms": 197, "text": "197"},
+      "python": {"status": "ok", "ms": 272, "text": "272"}
     },
     "sort": {
-      "ofs": {"status": "ok", "ms": 15, "text": "15"},
-      "ofs-interp": {"status": "ok", "ms": 960, "text": "960"},
+      "ofs": {"status": "ok", "ms": 16, "text": "16"},
+      "ofs-interp": {"status": "ok", "ms": 943, "text": "943"},
       "c": {"status": "ok", "ms": 7, "text": "7"},
-      "rust": {"status": "ok", "ms": 7, "text": "7"},
-      "python": {"status": "ok", "ms": 162, "text": "162"}
+      "rust": {"status": "ok", "ms": 8, "text": "8"},
+      "python": {"status": "ok", "ms": 161, "text": "161"}
     },
     "alloc": {
-      "ofs": {"status": "ok", "ms": 17, "text": "17"},
-      "ofs-interp": {"status": "ok", "ms": 787, "text": "787"},
+      "ofs": {"status": "ok", "ms": 16, "text": "16"},
+      "ofs-interp": {"status": "ok", "ms": 770, "text": "770"},
       "c": {"status": "ok", "ms": 7, "text": "7"},
-      "rust": {"status": "ok", "ms": 9, "text": "9"},
-      "python": {"status": "ok", "ms": 155, "text": "155"}
+      "rust": {"status": "ok", "ms": 11, "text": "11"},
+      "python": {"status": "ok", "ms": 168, "text": "168"}
     }
   },
   "rss_mb": {
-    "ofs": {"empty": 5.4, "fib": 5.5, "loop": 4.9, "strings": 5.5, "sort": 6.4, "alloc": 5.1},
-    "c": {"empty": 2.0, "fib": 2.0, "loop": 2.0, "strings": 3.3, "sort": 2.3, "alloc": 2.1},
-    "rust": {"empty": 2.1, "fib": 1.9, "loop": 1.9, "strings": 4.2, "sort": 3.0, "alloc": 1.9},
-    "python": {"empty": 9.5, "fib": 9.3, "loop": 9.2, "strings": 11.6, "sort": 13.4, "alloc": 9.5}
+    "ofs": {"empty": 5.1, "fib": 5.2, "loop": 5.3, "strings": 5.7, "sort": 6.0, "alloc": 5.3},
+    "c": {"empty": 2.1, "fib": 2.2, "loop": 2.0, "strings": 3.4, "sort": 2.4, "alloc": 2.0},
+    "rust": {"empty": 2.0, "fib": 2.0, "loop": 2.1, "strings": 4.1, "sort": 2.9, "alloc": 2.1},
+    "python": {"empty": 9.4, "fib": 9.4, "loop": 9.3, "strings": 11.6, "sort": 13.2, "alloc": 9.2}
   },
-  "binary_size_bytes": {"ofs": 37312, "c": 12568, "rust": 10440304, "python": null}
+  "binary_size_bytes": {"ofs": 37656, "c": 12568, "rust": 10440304, "python": null}
 }
