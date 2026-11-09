@@ -111,7 +111,8 @@ jobs:
           if clang --version | grep -Eq 'version 14\.|clang-1400\.'; then
             REAL_CLANG="$(command -v clang)"
             mkdir -p "$RUNNER_TEMP/clangwrap"
-            printf '#!/bin/sh\nexec "%s" -mllvm -opaque-pointers "$@"\n' "$REAL_CLANG" > "$RUNNER_TEMP/clangwrap/clang"
+            # o `ofs` ja passa a flag sozinho no clang 14; repetida o LLVM recusa
+            printf '#!/bin/sh\ncase " $* " in *" -opaque-pointers "*) exec "%s" "$@";; esac\nexec "%s" -mllvm -opaque-pointers "$@"\n' "$REAL_CLANG" "$REAL_CLANG" > "$RUNNER_TEMP/clangwrap/clang"
             chmod +x "$RUNNER_TEMP/clangwrap/clang"
             export PATH="$RUNNER_TEMP/clangwrap:$PATH"
           fi

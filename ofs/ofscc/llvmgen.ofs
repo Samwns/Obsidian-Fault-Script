@@ -466,6 +466,17 @@ namespace llvmgen {
         ofs_array_push(_loop_saves, "")
     }
 
+    // Marca cada corpo de loop com um asm vazio que so toca memoria
+    // inacessivel: nao gera instrucao e a analise de alias o ignora (LICM/GVN
+    // seguem iguais), mas faz a LoopAccessAnalysis desistir do loop. Sem isso o
+    // LLVM 14 com -opaque-pointers da segfault em RuntimePointerChecking::insert
+    // (LoopLoadElimination no -O1, LoopVectorize no -O2) em qualquer loop sem
+    // chamadas que precise de checagem de alias em tempo de execucao, p.ex.
+    // `*(b.data + pos) = ...` relendo `b.data` a cada volta (strbuf.append_int).
+    vein emit_loop_laa_guard() -> void {
+        cg_emit("  call void asm sideeffect \"\", \"\"() inaccessiblememonly nounwind")
+    }
+
     vein pop_loop() -> void {
         ofs_array_pop(_break_labels)
         ofs_array_pop(_continue_labels)
@@ -3211,6 +3222,7 @@ namespace llvmgen {
             forge wstk = next_tmp("loop_stk")
             cg_emit("  " + wstk + " = call ptr @llvm.stacksave()")
             set_loop_save(wstk)
+            emit_loop_laa_guard()
             _terminated = false
             emit_stmt(n.c1)
             if (!_terminated) {
@@ -3247,6 +3259,7 @@ namespace llvmgen {
             forge cstk2 = next_tmp("loop_stk")
             cg_emit("  " + cstk2 + " = call ptr @llvm.stacksave()")
             set_loop_save(cstk2)
+            emit_loop_laa_guard()
             _terminated = false
             if (n.c3 >= 0) { emit_stmt(n.c3) }
             if (!_terminated) {
@@ -3315,6 +3328,7 @@ namespace llvmgen {
             forge rstk = next_tmp("loop_stk")
             cg_emit("  " + rstk + " = call ptr @llvm.stacksave()")
             set_loop_save(rstk)
+            emit_loop_laa_guard()
             _terminated = false
             if (n.c1 >= 0) { emit_stmt(n.c1) }
             if (!_terminated) {

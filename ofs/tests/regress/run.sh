@@ -32,10 +32,20 @@ trap 'rm -rf "$T"' EXIT
 FAILED=0
 fail() { echo "FAIL: $*"; FAILED=$((FAILED + 1)); }
 
+# log de build que falhou: as linhas-chave (erro, crash do clang/LLVM, passo
+# que caiu) e o final, para o CI mostrar a causa e nao so "nao compila"
+show_build_log() { # show_build_log <log>
+  [ -s "$1" ] || { echo "  (log vazio: $1)"; return; }
+  echo "  --- linhas-chave de $(basename "$1") ---"
+  grep -E -i 'error|erro|LLVM ERROR|Stack dump|Running pass|Program arguments|PLEASE submit|Segmentation|signal|Assertion|^[0-9]+\.[[:space:]]' "$1" | head -40 | sed 's/^/  /'
+  echo "  --- ultimas 40 linhas ---"
+  tail -40 "$1" | sed 's/^/  /'
+}
+
 # runtime a partir do fonte (magma.ofs)
 ( cd "$ROOT/ofs/stdlib/runtime" && OFSCC_MODE=ir OFSCC_INPUT=magma.ofs OFSCC_C_OUT="$T/magma.ll" "$OFSCC" ) >"$T/magma.log" 2>&1 \
   && clang -Wno-override-module -c "$T/magma.ll" -o "$T/magma.o" 2>>"$T/magma.log" \
-  || { tail "$T/magma.log"; echo "FAIL: runtime magma.ofs nao compila"; exit 1; }
+  || { show_build_log "$T/magma.log"; echo "FAIL: runtime magma.ofs nao compila"; exit 1; }
 
 native() { # native <src> <bin>
   OFSCC_MODE=ir OFSCC_INPUT="$1" OFSCC_C_OUT="$T/p.ll" "$OFSCC" >"$T/build.log" 2>&1 || return 1
@@ -85,7 +95,7 @@ compile_err type_err_crystal_mod "ERRO DE TIPO .*type_err_crystal_mod.ofs:4:13\]
 NATIVE_ONLY=""
 for exp in "$HERE"/*.expected; do
   name="$(basename "$exp" .expected)"; src="$HERE/$name.ofs"
-  native "$src" "$T/$name" || { tail -3 "$T/build.log"; fail "$name: nao compila"; continue; }
+  native "$src" "$T/$name" || { show_build_log "$T/build.log"; fail "$name: nao compila"; continue; }
   out="$(timeout 10 "$T/$name" 2>&1)" || { fail "$name (nativo): rc=$? / tempo"; continue; }
   [ "$out" = "$(cat "$exp")" ] || { fail "$name (nativo): saida"; diff <(echo "$out") "$exp" | head; continue; }
   echo "ok: $name (nativo)"
@@ -160,7 +170,7 @@ oob_check() { # oob_check <modo> <rc> <stdout> <stderr>
 }
 if native "$HERE/array_oob.ofs" "$T/array_oob"; then
   timeout 10 "$T/array_oob" >"$T/oob.out" 2>"$T/oob.err"; oob_check nativo $? "$T/oob.out" "$T/oob.err"
-else fail "array_oob: nao compila"; tail -3 "$T/build.log"; fi
+else fail "array_oob: nao compila"; show_build_log "$T/build.log"; fi
 OFSCC_MODE=run OFSCC_INPUT="$HERE/array_oob.ofs" timeout 20 "$OFSCC" >"$T/oob.out" 2>"$T/oob.err"; oob_check interp $? "$T/oob.out" "$T/oob.err"
 
 [ "$FAILED" -eq 0 ] && echo "regress: tudo ok" || { echo "regress: $FAILED falha(s)"; exit 1; }
