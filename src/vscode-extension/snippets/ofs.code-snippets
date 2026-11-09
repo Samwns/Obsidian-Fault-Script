@@ -35,9 +35,12 @@
     "prefix": "hashmap",
     "body": [
       "attach {hashmap}",
-      "forge ${1:m} = hashmap.new(${2:64})",
-      "hashmap.set(${1:m}, ${3:chave}, ${4:valor})",
-      "forge ${5:v} = hashmap.get(${1:m}, ${3:chave}, -1)"
+      "",
+      "core main() {",
+      "    forge ${1:m} = hashmap.new(${2:64})",
+      "    hashmap.set(${1:m}, ${3:42}, ${4:7})",
+      "    echo(hashmap.get(${1:m}, ${3:42}, -1))",
+      "}"
     ],
     "description": "Tabela hash inteiro -> inteiro"
   },
@@ -122,7 +125,7 @@
   "Attach Stdlib": {
     "prefix": "attach-stdlib",
     "body": [
-      "attach {${1|core,math,string,io,odl,oes,ofshtml,webserver,webui,bedrock,bedrock-packet,terminal-colors,memory-modes,rift,canvas,window,fmt,test-lib,fs,net,http,oll,ui,raster,ttf,x11win,icons,hashmap|}}"
+      "attach {${1|core,math,string,io,odl,oes,ofshtml,webserver,webui,bedrock,bedrock-packet,terminal-colors,memory-modes,rift,canvas,window,test-lib,fs,net,net-windows,http,oll,oll-x11,ui,raster,ttf,x11win,icons,hashmap,strbuf,android,android-http,android-input,android-webview,audio-android,avi,oal-android,oal-runtime,oal-x11,png,sha256,tls,wav,zip|}}"
     ]
   },
   "Web UI Site": {
@@ -149,14 +152,6 @@
       "attach {F:${1:module.ofs}}"
     ]
   },
-  "Lambda": {
-    "prefix": "lambda",
-    "body": [
-      "vein(${1:x: stone}) -> ${2:stone} {",
-      "    $0",
-      "}"
-    ]
-  },
   "Namespace": {
     "prefix": "namespace",
     "body": [
@@ -169,7 +164,7 @@
     "prefix": "impl",
     "body": [
       "impl ${1:TypeName} {",
-      "    vein ${2:method}(self) -> ${3:void} {",
+      "    vein ${2:method}(self: ${1:TypeName}) -> ${3:void} {",
       "        $0",
       "    }",
       "}"
@@ -200,7 +195,8 @@
     "prefix": "rift",
     "body": [
       "rift vein ${1:symbol}(${2:arg: obsidian}) -> ${3:stone}"
-    ]
+    ],
+    "description": "Simbolo nativo externo (fronteira de chamada)"
   },
   "Small Int Pixel": {
     "prefix": "pixel-u32",
@@ -301,23 +297,6 @@
       "}"
     ]
   },
-  "Inline Assembly": {
-    "prefix": "asm",
-    "body": [
-      "bedrock {",
-      "    asm \"${1:nop}\"",
-      "}"
-    ]
-  },
-  "Packed Monolith": {
-    "prefix": "monolith-packed",
-    "body": [
-      "monolith ${1:Header} layout packed {",
-      "    ${2:tag}: stone",
-      "    ${3:flags}: stone",
-      "}"
-    ]
-  },
   "Canvas Demo": {
     "prefix": "canvas-demo",
     "body": [
@@ -337,8 +316,7 @@
       "    canvas.destroy(cv)",
       "}"
     ]
-  }
-  ,
+  },
   "Library Smoke": {
     "prefix": "lib-smoke",
     "body": [
@@ -348,5 +326,115 @@
       "    $0",
       "}"
     ]
+  },
+  "Seal (defer)": {
+    "prefix": "seal",
+    "body": [
+      "seal { ${1:fechar(recurso)} }",
+      "$0"
+    ],
+    "description": "Roda a acao ao sair do escopo (sinonimo de anchor)"
+  },
+  "Anchor (defer)": {
+    "prefix": "anchor",
+    "body": [
+      "anchor { ${1:fechar(recurso)} }",
+      "$0"
+    ],
+    "description": "Roda a acao ao sair do escopo"
+  },
+  "Mine In": {
+    "prefix": "mine",
+    "body": [
+      "mine (${1:item} in ${2:items}) {",
+      "    $0",
+      "}"
+    ],
+    "description": "Laco por colecao (nome tematico de cycle)"
+  },
+  "Match": {
+    "prefix": "match",
+    "body": [
+      "match (${1:valor}) {",
+      "    ${2:200} => { $3 }",
+      "    _ => { $0 }",
+      "}"
+    ],
+    "description": "Casamento de padrao"
+  },
+  "Assay": {
+    "prefix": "assay",
+    "body": [
+      "assay (${1:valor}) {",
+      "    ${2:200} => { $3 }",
+      "    _ => { $0 }",
+      "}"
+    ],
+    "description": "Casamento de padrao (sinonimo de match)"
+  },
+  "Tremor Catch": {
+    "prefix": "tremor",
+    "body": [
+      "tremor {",
+      "    ${1:throw \"erro\"}",
+      "} catch (${2:e}: obsidian) {",
+      "    $0",
+      "}"
+    ],
+    "description": "Bloco de tratamento de erro"
+  },
+  "While": {
+    "prefix": "while",
+    "body": [
+      "while (${1:condicao}) {",
+      "    $0",
+      "}"
+    ],
+    "description": "Laco por condicao"
+  },
+  "Shatter / Erode": {
+    "prefix": "shatter",
+    "body": [
+      "if (${1:condicao}) { ${2|shatter,erode|} }"
+    ],
+    "description": "Sai do laco (shatter) ou pula a iteracao (erode)"
+  },
+  "Strata": {
+    "prefix": "strata",
+    "body": [
+      "strata ${1:Estado} { ${2:Solid}, ${3:Crack} }"
+    ],
+    "description": "Enumeracao de variantes"
+  },
+  "Propagate": {
+    "prefix": "propagate",
+    "body": [
+      "forge ${1:v} = ${2:Solid(1)}?"
+    ],
+    "description": "Propaga falhas de uma variante (?)"
+  },
+  "StrBuf": {
+    "prefix": "strbuf",
+    "body": [
+      "attach {strbuf}",
+      "",
+      "core main() {",
+      "    forge ${1:b}: StrBuf = strbuf.create(${2:64})",
+      "    strbuf.append(${1:b}, ${3:\"texto\"})",
+      "    echo(strbuf.to_obsidian(${1:b}))",
+      "    strbuf.release(${1:b})",
+      "}"
+    ],
+    "description": "Buffer de texto que cresce"
+  },
+  "Fault Call": {
+    "prefix": "fault-call",
+    "body": [
+      "bedrock {",
+      "    forge ${1:f}: stone = fault_addr(${2:nome_da_vein})",
+      "    forge ${3:r}: stone = fault_call(${1:f}, ${4:arg})",
+      "}"
+    ],
+    "description": "Endereco de vein e chamada indireta"
   }
 }

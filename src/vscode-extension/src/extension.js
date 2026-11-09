@@ -8,11 +8,10 @@ const http = require('http');
 
 const KEYWORDS = [
   'core', 'vein', 'forge', 'const', 'monolith', 'impl', 'namespace', 'strata', 'extern', 'rift',
-  'if', 'else', 'while', 'cycle', 'match', 'case', 'default',
-  'return', 'break', 'continue', 'throw', 'tremor', 'catch',
-  'fracture', 'abyss', 'bedrock', 'obsid', 'attach', 'import', 'intent', 'tectonic', 'pure', 'impure', 'fractal',
-  'layout', 'bind', 'abi', 'packed', 'native', 'system',
-  'asm', 'echo', 'in', 'shard',
+  'if', 'else', 'while', 'cycle', 'mine', 'match', 'assay', 'case', 'default',
+  'return', 'break', 'shatter', 'continue', 'erode', 'throw', 'tremor', 'catch',
+  'anchor', 'seal', 'fracture', 'abyss', 'bedrock', 'tectonic', 'attach',
+  'bind', 'abi', 'echo', 'in', 'shard',
   'u8', 'u16', 'u32', 'u64', 'i8', 'i16', 'i32',
   'true', 'false', 'null', 'as'
 ];
@@ -21,8 +20,10 @@ const TYPES = ['stone', 'crystal', 'obsidian', 'bool', 'void', 'Array', 'u8', 'u
 
 const MODULES = [
   'core', 'math', 'string', 'io', 'oes', 'ofshtml', 'odl', 'webserver', 'webui', 'bedrock', 'bedrock-packet',
-  'terminal-colors', 'memory-modes', 'rift', 'canvas', 'window', 'fmt', 'test-lib',
-  'fs', 'net', 'http', 'oll', 'ui', 'raster', 'ttf', 'x11win', 'icons', 'hashmap'
+  'terminal-colors', 'memory-modes', 'rift', 'canvas', 'window', 'test-lib',
+  'fs', 'net', 'net-windows', 'http', 'oll', 'oll-x11', 'ui', 'raster', 'ttf', 'x11win', 'icons', 'hashmap', 'strbuf',
+  'android', 'android-http', 'android-input', 'android-webview', 'audio-android', 'avi',
+  'oal-android', 'oal-runtime', 'oal-x11', 'png', 'sha256', 'tls', 'wav', 'zip'
 ];
 
 const BUILTINS = [
@@ -36,7 +37,7 @@ const LOW_LEVEL_INTRINSICS = [
   'fault_spin_left', 'fault_spin_right', 'fault_step',
   'fault_cut', 'fault_patch', 'fault_weave',
   'fault_fence', 'fault_prefetch', 'fault_trap',
-  'fault_unreachable', 'fault_memcpy', 'fault_memset'
+  'fault_unreachable', 'fault_memcpy', 'fault_memset', 'fault_addr', 'fault_call'
 ];
 
 const STDLIB_COMPLETIONS = [
@@ -48,8 +49,6 @@ const STDLIB_COMPLETIONS = [
   'serve_once', 'serve_forever', 'serve_html_once', 'serve_html_forever',
   'webui.page', 'webui.nav', 'webui.hero', 'webui.button', 'webui.panel',
   'webui.grid', 'webui.card', 'webui.stack', 'webui.serve',
-  'fmt_pad_right', 'fmt_pad_left', 'fmt_center', 'fmt_zero_pad', 'fmt_sign',
-  'fmt_truncate', 'fmt_repeat', 'fmt_separator', 'fmt_upper', 'fmt_lower', 'fmt_trim',
   'echo_red', 'echo_green', 'echo_yellow', 'echo_blue', 'echo_purple', 'echo_cyan',
   'explain_memory_modes', 'memory_mode_mid_name',
   'rift_text_size', 'rift_line', 'rift_banner', 'rift_report_line',
@@ -76,39 +75,311 @@ const STDLIB_COMPLETIONS = [
   'x11win.width', 'x11win.height', 'x11win.set_title', 'x11win.set_cursor', 'x11win.set_icon',
   'x11win.now_ms', 'x11win.sleep_ms', 'x11win.mouse_x', 'x11win.mouse_y',
   'icons.draw', 'icons.draw_centered',
+  'strbuf.create', 'strbuf.append', 'strbuf.append_char', 'strbuf.append_int',
+  'strbuf.to_obsidian', 'strbuf.length', 'strbuf.clear', 'strbuf.release',
   'hashmap.new', 'hashmap.set', 'hashmap.get', 'hashmap.has', 'hashmap.count', 'hashmap.clear'
 ];
 
 const HOVER_DOCS = {
   core: {
-    description: 'Entry point do programa OFS.',
-    context: 'Use para definir o ponto inicial do programa (main).',
+    description: 'Ponto de entrada do programa.',
+    context: 'Todo programa executável tem um `core main()`; a execução começa nele.',
     example: 'core main() {\n    echo("hello")\n}'
   },
   vein: {
-    description: 'Declara uma funcao.',
-    context: 'Use quando precisar reutilizar logica em blocos nomeados.',
+    description: 'Declara uma função.',
+    context: 'Parâmetros levam tipo (`nome: tipo`) e o retorno vem após `->`. Também aparece em `extern vein` e `rift vein`, sem corpo.',
     example: 'vein add(a: stone, b: stone) -> stone {\n    return a + b\n}'
   },
   forge: {
-    description: 'Declara variavel (tipada ou inferida).',
-    context: 'Use para criar variaveis locais em funcoes/blocos.',
+    description: 'Declara uma variável (tipada ou com tipo inferido).',
+    context: 'Use para variáveis locais ou globais mutáveis.',
     example: 'forge x: stone = 10\nforge y = 20'
   },
   const: {
-    description: 'Declara variavel imutavel.',
-    context: 'Use para valores que nao devem mudar durante a execucao.',
+    description: 'Declara uma variável imutável.',
+    context: 'Use para valores que não devem mudar durante a execução.',
     example: 'const max: stone = 100'
   },
+  monolith: {
+    description: 'Declara uma estrutura (tipo composto) com campos nomeados.',
+    context: 'Os métodos entram em um bloco `impl`. Campos são acessados com `.`.',
+    example: 'monolith Rect {\n    w: stone\n    h: stone\n}\n\ncore main() {\n    forge r: Rect\n    r.w = 3\n    echo(r.w)\n}'
+  },
+  strata: {
+    description: 'Declara uma enumeração de variantes.',
+    context: 'Use junto com `?` para propagar falhas: as variantes `Crack` e `Barren` contam como falha.',
+    example: 'strata Status { Idle, Running, Failed }'
+  },
   impl: {
-    description: 'Declara metodos para um monolith.',
-    context: 'Use para associar comportamento ao tipo e permitir chamadas como `obj.metodo()`.',
-    example: 'impl Rect {\n    vein area(self) -> stone {\n        return self.w * self.h\n    }\n}'
+    description: 'Declara os métodos de um monolith.',
+    context: 'O primeiro parâmetro `self: Tipo` dá acesso aos campos; chame com `obj.metodo()`.',
+    example: 'monolith Rect {\n    w: stone\n    h: stone\n}\n\nimpl Rect {\n    vein area(self: Rect) -> stone {\n        return self.w * self.h\n    }\n}\n\ncore main() {\n    forge r: Rect\n    r.w = 3\n    r.h = 4\n    echo(r.area())\n}'
   },
   namespace: {
-    description: 'Agrupa simbolos em um escopo nomeado.',
-    context: 'Use para organizar APIs e evitar colisao de nomes.',
-    example: 'namespace mathx {\n    vein square(x: stone) -> stone {\n        return x * x\n    }\n}'
+    description: 'Agrupa símbolos em um escopo nomeado.',
+    context: 'Use para organizar APIs e evitar colisão de nomes; acesse com `nome.simbolo`.',
+    example: 'namespace mathx {\n    vein square(x: stone) -> stone {\n        return x * x\n    }\n}\n\ncore main() {\n    echo(mathx.square(5))\n}'
+  },
+  if: {
+    description: 'Execução condicional.',
+    context: 'A condição vai entre parênteses; `else if` encadeia ramos.',
+    example: 'if (x > 0) {\n    echo("positivo")\n} else if (x == 0) {\n    echo("zero")\n} else {\n    echo("negativo")\n}'
+  },
+  else: {
+    description: 'Ramo alternativo de um `if`.',
+    context: 'Pode ser seguido de outro `if` (`else if`) ou de um bloco.',
+    example: 'if (x > 0) {\n    echo("sim")\n} else {\n    echo("nao")\n}'
+  },
+  cycle: {
+    description: 'Laço: forma de 3 partes ou por coleção (`item in lista`).',
+    context: '`mine` é o sinônimo temático de `cycle`. Use `shatter`/`break` para sair e `erode`/`continue` para pular a iteração.',
+    example: 'forge nums: Array<stone> = [1, 2, 3]\ncycle (n in nums) {\n    echo(n)\n}\ncycle (forge i = 0; i < 3; i++) {\n    echo(i)\n}'
+  },
+  mine: {
+    description: 'Laço por coleção: `mine (item in lista)` (nome temático de `cycle`).',
+    context: 'Só aceita a forma `item in iteravel`; para o laço de 3 partes use `cycle`.',
+    example: 'forge nums: Array<stone> = [1, 2, 3]\nmine (n in nums) {\n    echo(n)\n}'
+  },
+  while: {
+    description: 'Laço controlado por condição.',
+    context: 'Use quando o número de repetições depende de estado dinâmico.',
+    example: 'forge x = 3\nwhile (x > 0) {\n    x -= 1\n}'
+  },
+  break: {
+    description: 'Sai do laço atual (`cycle`, `mine` ou `while`).',
+    context: '`shatter` é o sinônimo temático.',
+    example: 'cycle (forge i = 0; i < 10; i++) {\n    if (i == 3) { break }\n    echo(i)\n}'
+  },
+  shatter: {
+    description: 'Sai do laço atual; sinônimo de `break`.',
+    context: 'Roda os blocos `seal`/`anchor` pendentes antes de sair.',
+    example: 'cycle (forge i = 0; i < 10; i++) {\n    if (i == 3) { shatter }\n    echo(i)\n}'
+  },
+  continue: {
+    description: 'Pula para a próxima iteração do laço.',
+    context: '`erode` é o sinônimo temático.',
+    example: 'cycle (forge i = 0; i < 5; i++) {\n    if (i == 2) { continue }\n    echo(i)\n}'
+  },
+  erode: {
+    description: 'Pula para a próxima iteração do laço; sinônimo de `continue`.',
+    context: 'Roda os blocos `seal`/`anchor` pendentes do corpo antes de continuar.',
+    example: 'cycle (forge i = 0; i < 5; i++) {\n    if (i == 2) { erode }\n    echo(i)\n}'
+  },
+  return: {
+    description: 'Encerra a função, opcionalmente devolvendo um valor.',
+    context: 'Os blocos `seal`/`anchor` pendentes rodam antes de sair.',
+    example: 'vein double(n: stone) -> stone {\n    return n * 2\n}'
+  },
+  match: {
+    description: 'Casamento de padrão: compara o valor com cada caso usando `==`.',
+    context: 'Cada braço é `valor => { ... }`; `_` é o caso padrão. `assay` é o sinônimo temático.',
+    example: 'forge code = 200\nmatch (code) {\n    200 => { echo("ok") }\n    404 => { echo("nao encontrado") }\n    _ => { echo("outro") }\n}'
+  },
+  assay: {
+    description: 'Casamento de padrão; sinônimo de `match`.',
+    context: 'Mesma sintaxe: braços `valor => { ... }` e `_` como caso padrão.',
+    example: 'forge code = 404\nassay (code) {\n    200 => { echo("ok") }\n    _ => { echo("outro") }\n}'
+  },
+  tremor: {
+    description: 'Bloco de tratamento de erro, usado com `catch`.',
+    context: 'O que for lançado por `throw` dentro do bloco chega ao `catch (e: obsidian)`.',
+    example: 'tremor {\n    throw "boom"\n} catch (e: obsidian) {\n    echo(e)\n}'
+  },
+  catch: {
+    description: 'Tratador de um bloco `tremor`.',
+    context: 'Recebe o valor lançado em uma variável, opcionalmente tipada.',
+    example: 'tremor {\n    throw "falhou"\n} catch (e: obsidian) {\n    echo(e)\n}'
+  },
+  throw: {
+    description: 'Lança um erro com uma mensagem.',
+    context: 'Dentro de `tremor` é capturado pelo `catch`; fora dele exibe a mensagem e encerra com código 1. Não é permitido dentro de `seal`/`anchor` (E0042).',
+    example: 'throw "valor invalido"'
+  },
+  anchor: {
+    description: 'Registra uma ação que roda quando o escopo atual termina (defer).',
+    context: 'Roda em qualquer saída (fim do bloco, `return`, `break`/`continue`, `?`), em ordem inversa de registro. `return`, `break`, `continue` e `throw` dentro dele dão erro E0042. `seal` é o mesmo recurso.',
+    example: 'vein run() -> stone {\n    anchor { echo("fim") }\n    echo("trabalhando")\n    return 0\n}'
+  },
+  seal: {
+    description: 'Sinônimo de `anchor`: sela o recurso ao sair do escopo (defer).',
+    context: 'Aceita um bloco ou um comando só. Várias ações rodam em ordem inversa. `return`/`break`/`continue`/`throw` dentro dele dão erro E0042.',
+    example: 'vein run() -> stone {\n    seal { echo("fechado") }\n    echo("usando o recurso")\n    return 0\n}'
+  },
+  attach: {
+    description: 'Anexa um módulo OFS (stdlib, pacote instalado ou arquivo).',
+    context: '`attach {nome}` procura na stdlib e em `OFS_LIB_PATH`; `attach {F:caminho.ofs}` anexa um arquivo.',
+    example: 'attach {strbuf}\n// ou um arquivo específico:\n// attach {F:helpers.ofs}'
+  },
+  extern: {
+    description: 'Declara, sem corpo, um símbolo nativo externo (libc, libm, X11, JNI do Android).',
+    context: 'É uma fronteira de chamada: o símbolo é resolvido no link e chamado pela convenção de chamada do sistema (ABI C). Não existe corpo OFS para ele. `rift vein` é a forma temática e aceita `bind` e `abi`.',
+    example: 'extern vein puts(s: obsidian) -> stone\n\ncore main() {\n    puts("ola")\n}'
+  },
+  rift: {
+    description: 'Declara, sem corpo, um símbolo nativo externo (fronteira de chamada), como `extern`.',
+    context: 'Aceita `bind "simbolo"` para ligar outro nome ao símbolo nativo e `abi c` para indicar a convenção de chamada do sistema. Use para libc, libm, X11 e JNI.',
+    example: 'rift vein text_size(s: obsidian) -> stone bind "strlen" abi c\n\ncore main() {\n    echo(text_size("fault"))\n}'
+  },
+  abi: {
+    description: 'Metadado de `rift vein`/`extern vein`: convenção de chamada do símbolo nativo.',
+    context: 'Aparece depois do tipo de retorno (e de `bind`, se houver). `c` indica a convenção de chamada do sistema (ABI C).',
+    example: 'rift vein text_size(s: obsidian) -> stone bind "strlen" abi c'
+  },
+  bind: {
+    description: 'Metadado de `rift vein`/`extern vein`: nome do símbolo nativo.',
+    context: 'Liga um nome OFS a um símbolo nativo com outro nome.',
+    example: 'rift vein text_size(s: obsidian) -> stone bind "strlen" abi c'
+  },
+  as: {
+    description: 'Conversão explícita de tipo.',
+    context: 'Entre inteiros (trunca/estende), `stone`↔`crystal`, ponteiros e `stone`.',
+    example: 'forge x = 7\nforge y: crystal = x as crystal'
+  },
+  in: {
+    description: 'Separa o item da coleção em `cycle`/`mine`.',
+    context: 'Use em `cycle (item in lista)`.',
+    example: 'forge nums: Array<stone> = [1, 2]\ncycle (n in nums) {\n    echo(n)\n}'
+  },
+  echo: {
+    description: 'Imprime um valor seguido de quebra de linha.',
+    context: 'Aceita `stone`, `crystal`, `obsidian` e `bool`.',
+    example: 'echo("Hello, World!")\necho(42)\necho(3.14)'
+  },
+  shard: {
+    description: 'Declara uma variável ponteiro tipada.',
+    context: 'Ponteiros só existem dentro de `fracture`, `bedrock` ou `abyss`.',
+    example: 'forge x = 1\nfracture {\n    shard p: *stone = &x\n    *p = *p + 1\n}\necho(x)'
+  },
+  fracture: {
+    description: 'Bloco para código de baixo nível com ponteiros (`&x`, `*p`, `shard`).',
+    context: 'Hoje é um bloco comum que marca a região de baixo nível; os intrínsecos `fault_*` e ponteiros só valem dentro de `fracture`, `bedrock` ou `abyss`.',
+    example: 'forge x = 1\nfracture {\n    shard p: *stone = &x\n    *p = 42\n}\necho(x)'
+  },
+  abyss: {
+    description: 'Bloco de baixo nível sem rede de proteção (ponteiros e `fault_*`).',
+    context: 'Hoje é um bloco comum, equivalente a `fracture`/`bedrock` no código gerado. Prefira `fracture` ou `bedrock` quando possível.',
+    example: 'forge x = 1\nabyss {\n    shard p: *stone = &x\n    *p = 7\n}'
+  },
+  bedrock: {
+    description: 'Bloco de baixo nível tipado (ponteiros e intrínsecos `fault_*`).',
+    context: 'Hoje é um bloco comum que marca a região de baixo nível. Também é o nome da biblioteca `attach {bedrock}` (células e regiões).',
+    example: 'forge x = 1\nbedrock {\n    shard p: *stone = &x\n    *p = *p + fault_spin_left(1, 3)\n}'
+  },
+  tectonic: {
+    description: 'Prefixo opcional de um bloco de baixo nível: `tectonic fracture|abyss|bedrock { ... }`.',
+    context: 'O compilador aceita as três formas como blocos equivalentes.',
+    example: 'tectonic bedrock {\n    fault_fence()\n}'
+  },
+  layout: {
+    description: 'Palavra reservada; o suporte a `monolith ... layout` ainda não existe.',
+    context: 'Todo `monolith` usa o layout nativo. Evite usar `layout` como nome.',
+    example: 'monolith Header {\n    tag: stone\n    flags: stone\n}'
+  },
+  intent: {
+    description: 'Palavra reservada; a anotação `intent` ainda não é aceita pelo parser.',
+    context: 'Evite usar `intent` como nome.',
+    example: 'vein square(x: stone) -> stone {\n    return x * x\n}'
+  },
+  strbuf: {
+    description: 'Biblioteca de buffer de texto que cresce (`attach {strbuf}`).',
+    context: 'Anexar é O(1) amortizado. API: `create`, `append`, `append_char`, `append_int`, `to_obsidian` (cópia), `length`, `clear`, `release`.',
+    example: 'attach {strbuf}\n\ncore main() {\n    forge b: StrBuf = strbuf.create(64)\n    strbuf.append(b, "total: ")\n    strbuf.append_int(b, 42)\n    echo(strbuf.to_obsidian(b))\n    strbuf.release(b)\n}'
+  },
+  fault_count: {
+    description: 'Intrínseco: contagem de bits 1 (popcount), em 64 bits.',
+    context: 'Dentro de `bedrock`, `fracture` ou `abyss`. `fault_count(-1)` vale 64.',
+    example: 'bedrock {\n    echo(fault_count(0xF0F0))\n}'
+  },
+  fault_lead: {
+    description: 'Intrínseco: conta zeros à esquerda (64 bits).',
+    context: 'Dentro de `bedrock`, `fracture` ou `abyss`. `fault_lead(0)` vale 64.',
+    example: 'bedrock {\n    echo(fault_lead(1))\n}'
+  },
+  fault_trail: {
+    description: 'Intrínseco: conta zeros à direita (64 bits).',
+    context: 'Dentro de `bedrock`, `fracture` ou `abyss`. `fault_trail(0)` vale 64.',
+    example: 'bedrock {\n    echo(fault_trail(8))\n}'
+  },
+  fault_spin_left: {
+    description: 'Intrínseco: rotação de bits para a esquerda (64 bits).',
+    context: 'A distância é tomada módulo 64.',
+    example: 'bedrock {\n    echo(fault_spin_left(1, 3))\n}'
+  },
+  fault_spin_right: {
+    description: 'Intrínseco: rotação de bits para a direita (64 bits).',
+    context: 'A distância é tomada módulo 64.',
+    example: 'bedrock {\n    echo(fault_spin_right(8, 3))\n}'
+  },
+  fault_weave: {
+    description: 'Intrínseco: mistura bits de dois valores conforme uma máscara.',
+    context: '`fault_weave(mask, left, right)` = `(left & mask) | (right & ~mask)`.',
+    example: 'bedrock {\n    echo(fault_weave(0xFF00, 0xAAAA, 0x5555))\n}'
+  },
+  fault_swap: {
+    description: 'Intrínseco: inverte a ordem dos bytes (byte swap, 64 bits).',
+    context: 'Dentro de `bedrock`, `fracture` ou `abyss`.',
+    example: 'bedrock {\n    echo(fault_swap(0x0102))\n}'
+  },
+  fault_cut: {
+    description: 'Intrínseco: extrai um campo de bits.',
+    context: '`fault_cut(valor, deslocamento, largura)`. Útil em cabeçalhos e layouts compactados.',
+    example: 'bedrock {\n    forge opcode: stone = fault_cut(0xAB00, 8, 8)\n    echo(opcode)\n}'
+  },
+  fault_patch: {
+    description: 'Intrínseco: substitui um campo de bits.',
+    context: '`fault_patch(base, deslocamento, largura, novo)` devolve a base com o campo trocado.',
+    example: 'bedrock {\n    forge patched: stone = fault_patch(0, 8, 8, 0x2A)\n    echo(patched)\n}'
+  },
+  fault_memcpy: {
+    description: 'Intrínseco: copia `len` bytes de `src` para `dst` (`llvm.memcpy`).',
+    context: '`dst` e `src` são ponteiros.',
+    example: 'forge a = 5\nforge b = 0\nbedrock {\n    shard pa: *stone = &a\n    shard pb: *stone = &b\n    fault_memcpy(pb, pa, 8)\n}\necho(b)'
+  },
+  fault_memset: {
+    description: 'Intrínseco: preenche `len` bytes de `dst` com o byte `val` (`llvm.memset`).',
+    context: '`dst` é um ponteiro.',
+    example: 'forge a = 5\nbedrock {\n    shard pa: *stone = &a\n    fault_memset(pa, 0, 8)\n}\necho(a)'
+  },
+  fault_unreachable: {
+    description: 'Intrínseco: marca o caminho como inalcançável.',
+    context: 'Gera `trap` + `unreachable`; se executado, encerra o processo com SIGILL.',
+    example: 'bedrock {\n    if (1 > 2) { fault_unreachable() }\n}'
+  },
+  fault_trap: {
+    description: 'Intrínseco: encerra o processo com uma trap de máquina (SIGILL).',
+    context: 'Use para abortar em estado impossível.',
+    example: 'bedrock {\n    if (1 > 2) { fault_trap() }\n}'
+  },
+  fault_fence: {
+    description: 'Intrínseco: barreira de memória.',
+    context: 'No interpretador (`ofs run`) não faz nada.',
+    example: 'bedrock {\n    fault_fence()\n}'
+  },
+  fault_prefetch: {
+    description: 'Intrínseco: dica de pré-busca (prefetch) do alvo de um ponteiro.',
+    context: 'No interpretador (`ofs run`) não faz nada.',
+    example: 'forge x = 1\nbedrock {\n    shard p: *stone = &x\n    fault_prefetch(p)\n}'
+  },
+  fault_addr: {
+    description: 'Intrínseco: endereço de uma `vein` como `stone`.',
+    context: 'Aceita veins do módulo e `extern`/`rift vein`. Só dentro de uma vein. Combine com `fault_call` ou passe a símbolos nativos que esperam callbacks.',
+    example: 'vein inc(n: stone) -> stone {\n    return n + 1\n}\n\ncore main() {\n    bedrock {\n        forge f: stone = fault_addr(inc)\n        echo(fault_call(f, 41))\n    }\n}'
+  },
+  fault_call: {
+    description: 'Intrínseco: chamada indireta por endereço (`fault_call(endereco, args...)`).',
+    context: 'Segue a convenção de chamada do sistema (ABI C): argumentos inteiros, ponteiros e `obsidian`; o retorno é lido como `stone`.',
+    example: 'vein inc(n: stone) -> stone {\n    return n + 1\n}\n\ncore main() {\n    bedrock {\n        echo(fault_call(fault_addr(inc), 41))\n    }\n}'
+  },
+  fault_step: {
+    description: 'Intrínseco: avança um ponteiro tipado por N elementos.',
+    context: 'Soma `N * tamanho do tipo apontado`, como aritmética de ponteiros.',
+    example: 'forge x = 1\nbedrock {\n    shard p: *stone = &x\n    shard q: *stone = fault_step(p, 0)\n    echo(*q)\n}'
+  },
+  asm: {
+    description: 'Comando CLI que emite o assembly do alvo (`ofs asm`).',
+    context: 'O `asm` inline dentro de blocos de baixo nível ainda é planejado e não é aceito pelo compilador; use os intrínsecos `fault_*`.',
+    example: 'ofs asm main.ofs -o main'
   },
   u8: {
     description: 'Inteiro sem sinal de 8 bits.',
@@ -140,96 +411,6 @@ const HOVER_DOCS = {
     context: 'Use para inteiros compactos com sinal.',
     example: 'forge acc: i32 = -42'
   },
-  cycle: {
-    description: 'Loop range-based ou C-style (3 partes).',
-    context: 'Use para iteracoes controladas por faixa, colecoes ou contador.',
-    example: 'cycle (n in nums) {\n    echo(n)\n}\ncycle (forge i = 0; i < 10; i++) {\n    echo(i)\n}'
-  },
-  while: {
-    description: 'Loop por condicao.',
-    context: 'Use quando o numero de repeticoes depende de estado dinamico.',
-    example: 'while (x > 0) {\n    x -= 1\n}'
-  },
-  fracture: {
-    description: 'Bloco seguro para operacoes com ponteiros.',
-    context: 'Use para manipulacao de ponteiros com restricoes de seguranca.',
-    example: 'fracture {\n    shard p: *stone = &x;\n    *p = 42\n}'
-  },
-  abyss: {
-    description: 'Bloco de memoria irrestrita (unsafe).',
-    context: 'Use apenas quando precisar de operacoes de memoria sem guardrails.',
-    example: 'abyss {\n    // operacoes sem restricoes de seguranca\n}'
-  },
-  fractal: {
-    description: 'Bloco intermediario de efeitos.',
-    context: 'Sintaxe planejada/documentada; no compilador atual, `tectonic fractal` ainda e tratado como bloco comum.',
-    example: 'fractal {\n    echo("effect-lifted block")\n}'
-  },
-  bedrock: {
-    description: 'Bloco typed low-level nativo da OFS.',
-    context: 'Use para combinar ponteiros, intrinsics fault_* e armazenamento explicito sem cair no modo raw de abyss.',
-    example: 'bedrock {\n    shard p: *stone = &x\n    *p = *p + fault_spin_left(1, 3)\n}'
-  },
-  rift: {
-    description: 'Declaracao de interop nativa da OFS.',
-    context: 'Use como fronteira de chamada para simbolos externos sem apresentar isso apenas como extern C.',
-    example: 'rift vein strlen(text: obsidian) -> stone'
-  },
-  abi: {
-    description: 'Metadado de ABI para fronteiras de interop.',
-    context: 'Use em `rift vein` e `extern vein` para declarar a ABI pretendida, como `c` ou `system`.',
-    example: 'rift vein text_size(text: obsidian) -> stone bind "strlen" abi c'
-  },
-  bind: {
-    description: 'Metadado de símbolo externo.',
-    context: 'Use para ligar um nome OFS a um símbolo externo diferente.',
-    example: 'rift vein text_size(text: obsidian) -> stone bind "strlen" abi c'
-  },
-  layout: {
-    description: 'Metadado de layout para monolith.',
-    context: 'Use para declarar intenção de layout em tipos ABI-facing.',
-    example: 'monolith Header layout packed {\n    tag: stone\n    flags: stone\n}'
-  },
-  packed: {
-    description: 'Modo de layout compacto para monolith.',
-    context: 'Use em `monolith ... layout packed` quando precisar de estrutura compactada no lowering atual.',
-    example: 'monolith Header layout packed {\n    tag: stone\n    flags: stone\n}'
-  },
-  tectonic: {
-    description: 'Diretiva prefixo para modos: fracture, abyss ou fractal.',
-    context: 'Use para selecionar explicitamente o modo de memoria do bloco. Hoje o compiler aceita fracture, abyss e bedrock como blocos equivalentes para codegen.',
-    example: 'tectonic fracture {\n    shard p: *stone = &x\n}\ntectonic bedrock {\n    fault_fence()\n}'
-  },
-  obsid: {
-    description: 'Fechamento de bloco no estilo ": ... obsid".',
-    example: 'if (x > 0):\n    echo("ok")\nobsid'
-  },
-  attach: {
-    description: 'Importa modulo OFS por nome ou arquivo.',
-    context: 'Use para trazer funcoes/monoliths de bibliotecas stdlib ou arquivos .ofs externos.',
-    example: 'attach {terminal-colors}\n// ou para arquivo especifico:\nattach {F:helpers.ofs}'
-  },
-  extern: {
-    description: 'Declara funcao externa (runtime/C).',
-    example: 'extern vein ofs_pow(base: crystal, exp: crystal) -> crystal'
-  },
-  match: {
-    description: 'Pattern matching com case/default.',
-    example: 'match code {\n    case 200: { echo("ok") }\n    default: { echo("other") }\n}'
-  },
-  tremor: {
-    description: 'Bloco de tratamento de erro.',
-    example: 'tremor {\n    throw "boom"\n} catch (e: obsidian) {\n    echo(e)\n}'
-  },
-  throw: {
-    description: 'Lanca erro dentro de fluxo tremor/catch.',
-    example: 'throw "invalid value"'
-  },
-  as: {
-    description: 'Cast explicito de tipo.',
-    context: 'Use quando precisar converter um valor entre tipos compativeis.',
-    example: 'forge y: crystal = x as crystal'
-  },
   run: {
     description: 'Comando CLI para compilar e executar imediatamente.',
     context: 'Melhor para ciclo rapido de desenvolvimento e testes locais.',
@@ -260,80 +441,10 @@ const HOVER_DOCS = {
     context: 'Use para debug de codegen e analise de otimizacao.',
     example: 'ofs ir main.ofs'
   },
-  asm: {
-    description: 'Comando CLI para emitir assembly nativo do alvo.',
-    context: 'Use para inspecionar o lowering final sem abandonar OFS como fonte de verdade.',
-    example: 'ofs asm main.ofs -o main'
-  },
-  fault_count: {
-    description: 'Intrinsic low-level: population count.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss.',
-    example: 'bedrock {\n    echo(fault_count(0xF0F0))\n}'
-  },
-  fault_lead: {
-    description: 'Intrinsic low-level: conta zeros a esquerda.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss.',
-    example: 'bedrock {\n    echo(fault_lead(x))\n}'
-  },
-  fault_trail: {
-    description: 'Intrinsic low-level: conta zeros a direita.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss.',
-    example: 'bedrock {\n    echo(fault_trail(x))\n}'
-  },
-  fault_swap: {
-    description: 'Intrinsic low-level: byte swap.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss.',
-    example: 'bedrock {\n    echo(fault_swap(x))\n}'
-  },
-  fault_spin_left: {
-    description: 'Intrinsic low-level: rotacao para a esquerda.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss.',
-    example: 'bedrock {\n    echo(fault_spin_left(x, 5))\n}'
-  },
-  fault_spin_right: {
-    description: 'Intrinsic low-level: rotacao para a direita.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss.',
-    example: 'bedrock {\n    echo(fault_spin_right(x, 5))\n}'
-  },
-  fault_step: {
-    description: 'Intrinsic low-level: avanca ponteiro tipado por quantidade de elementos.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss. Ideal para regioes e tabelas bedrock.',
-    example: 'bedrock {\n    shard slot: *stone = fault_step(base, 2)\n    *slot = 42\n}'
-  },
-  fault_cut: {
-    description: 'Intrinsic low-level: extrai campo de bits.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss para leitura de layouts e headers.',
-    example: 'bedrock {\n    forge opcode: stone = fault_cut(header, 8, 8)\n}'
-  },
-  fault_patch: {
-    description: 'Intrinsic low-level: reescreve campo de bits.',
-    context: 'Disponivel em blocos bedrock, fracture e abyss para montar headers e estruturas compactadas.',
-    example: 'bedrock {\n    forge patched: stone = fault_patch(header, 40, 8, 0x2A)\n}'
-  },
-  fault_fence: {
-    description: 'Intrinsic low-level: emite barreira de memoria.',
-    context: 'Aceito pelo compilador atual como intrinsic no-op/headless; reservado para barreira real no backend.',
-    example: 'bedrock {\n    fault_fence()\n}'
-  },
-  fault_prefetch: {
-    description: 'Intrinsic low-level: solicita prefetch de um alvo em memoria.',
-    context: 'Aceito pelo compilador atual como intrinsic no-op/headless; reservado para prefetch real no backend.',
-    example: 'bedrock {\n    fault_prefetch(ptr)\n}'
-  },
-  fault_trap: {
-    description: 'Intrinsic low-level: emite trap de maquina.',
-    context: 'Documentado como roadmap; use com cuidado ate o lowering hard-fail ser exposto no compilador self-hosted.',
-    example: 'bedrock {\n    fault_trap()\n}'
-  },
-  fault_weave: {
-    description: 'Intrinsic low-level da OFS para entrelacar bits por mascara.',
-    context: 'Combina bits de dois valores usando uma mascara, indo alem das operacoes classicas expostas diretamente em assembly.',
-    example: 'bedrock {\n    echo(fault_weave(0xFF00, left, right))\n}'
-  },
   rift_text_size: {
     description: 'Wrapper de stdlib para tamanho de texto via rift.',
     context: 'Use `attach {rift}` para consumir fronteiras externas com API OFS.',
-    example: 'attach {rift}\necho(rift_text_size("fault"))'
+    example: 'attach {rift}\n\ncore main() {\n    echo(rift_text_size("fault"))\n}'
   },
   window: {
     description: 'Modulo nativo de janela e input da OFS.',
@@ -343,27 +454,27 @@ const HOVER_DOCS = {
   raster: {
     description: 'Rasterizador vetorial com antialiasing (100% OFS).',
     context: 'Use `attach {raster}` para caminhos, retangulos arredondados, circulos e tracos suaves sobre um Canvas.',
-    example: 'attach {raster}\nraster.fill_round_rect(cv, 10.0, 10.0, 120.0, 40.0, 12.0, 3355494)'
+    example: 'attach {canvas}\nattach {raster}\n\ncore main() {\n    forge cv = canvas.create(160, 60)\n    raster.fill_round_rect(cv, 10.0, 10.0, 120.0, 40.0, 12.0, 3355494)\n}'
   },
   ttf: {
     description: 'Fontes TrueType com UTF-8, acentos e cache de glifos (100% OFS).',
     context: 'Use `attach {ttf}` para desenhar texto real (Inter, Noto, DejaVu) em um Canvas.',
-    example: 'attach {ttf}\nforge f = ttf.load("/usr/share/fonts/rsms-inter-fonts/Inter-Regular.ttf")\nttf.draw(cv, f, 14, 10, 30, "Ola, acao!", 15132390)'
+    example: 'attach {canvas}\nattach {ttf}\n\ncore main() {\n    forge cv = canvas.create(320, 48)\n    forge f = ttf.load("/usr/share/fonts/rsms-inter-fonts/Inter-Regular.ttf")\n    ttf.draw(cv, f, 14, 10, 30, "Ola, acao!", 15132390)\n}'
   },
   x11win: {
     description: 'Janela X11 nativa com teclado (UTF-8, teclas mortas), mouse, roda e resize.',
     context: 'Use `attach {x11win}` para abrir uma janela real e apresentar um Canvas.',
-    example: 'attach {x11win}\nx11win.open("App", 800, 600)\nwhile (x11win.is_open()) {\n    forge ev = x11win.poll()\n    x11win.present(cv)\n    x11win.sleep_ms(16)\n}'
+    example: 'attach {canvas}\nattach {x11win}\n\ncore main() {\n    forge cv = canvas.create(800, 600)\n    x11win.open("App", 800, 600)\n    while (x11win.is_open()) {\n        forge ev = x11win.poll()\n        x11win.present(cv)\n        x11win.sleep_ms(16)\n    }\n}'
   },
   icons: {
     description: 'Icones vetoriais de interface (grade 24x24).',
     context: 'Use `attach {icons}` com constantes como icons.BACK, icons.RELOAD, icons.HOME.',
-    example: 'attach {icons}\nicons.draw(cv, icons.RELOAD, 12, 12, 20, 13421772)'
+    example: 'attach {canvas}\nattach {icons}\n\ncore main() {\n    forge cv = canvas.create(24, 24)\n    icons.draw(cv, icons.RELOAD, 2, 2, 20, 13421772)\n}'
   },
   hashmap: {
     description: 'Tabela hash inteiro -> inteiro com crescimento automatico.',
     context: 'Use `attach {hashmap}` para caches e indices rapidos.',
-    example: 'attach {hashmap}\nforge m = hashmap.new(64)\nhashmap.set(m, 42, 7)\necho(hashmap.get(m, 42, -1))'
+    example: 'attach {hashmap}\n\ncore main() {\n    forge m = hashmap.new(64)\n    hashmap.set(m, 42, 7)\n    echo(hashmap.get(m, 42, -1))\n}'
   },
   canvas: {
     description: 'Modulo nativo/instavel de canvas da OFS.',
@@ -373,37 +484,37 @@ const HOVER_DOCS = {
   bedrock_region_new: {
     description: 'Cria uma regiao low-level de stones zerada.',
     context: 'Use para buffers/tabelas de tamanho fixo geridos em OFS low-level.',
-    example: 'attach {bedrock}\nforge region = bedrock_region_new(4)'
+    example: 'attach {bedrock}\n\ncore main() {\n    forge region = bedrock_region_new(4)\n    bedrock_region_write(region, 0, 10)\n    echo(bedrock_region_read(region, 0))\n    bedrock_region_drop(region)\n}'
   },
   bedrock_prefetch: {
     description: 'Helper OFS para solicitar prefetch de uma regiao bedrock.',
     context: 'Use antes de ler slots quentes em regioes low-level sem expor chamadas de intrinsic em toda a base.',
-    example: 'bedrock_prefetch(region, 0)'
+    example: 'attach {bedrock}\n\ncore main() {\n    forge region = bedrock_region_new(4)\n    bedrock_prefetch(region, 0)\n    bedrock_region_drop(region)\n}'
   },
   bedrock_view_read: {
     description: 'Le um valor a partir de uma view bedrock sobre uma regiao.',
     context: 'Use para janelas/slices de tabelas low-level sem sair da API OFS.',
-    example: 'echo(bedrock_view_read(region, 1, 0))'
+    example: 'attach {bedrock}\n\ncore main() {\n    forge region = bedrock_region_new(4)\n    bedrock_region_write(region, 1, 42)\n    echo(bedrock_view_read(region, 1, 0))\n    bedrock_region_drop(region)\n}'
   },
   bedrock_lane8_get: {
     description: 'Helper OFS para extrair um lane de 8 bits.',
     context: 'Use em headers e layouts compactados sem escrever shifts diretamente.',
-    example: 'echo(bedrock_lane8_get(header, 0))'
+    example: 'attach {bedrock}\n\ncore main() {\n    forge header: stone = 0x2A01\n    echo(bedrock_lane8_get(header, 0))\n}'
   },
   bedrock_lane16_le_get: {
     description: 'Helper OFS para extrair uma janela little-endian de 16 bits.',
     context: 'Use em tipos ABI-facing e headers quando o layout local segue ordem little-endian.',
-    example: 'echo(bedrock_lane16_le_get(header, 0))'
+    example: 'attach {bedrock}\n\ncore main() {\n    forge header: stone = 0x2A01\n    echo(bedrock_lane16_le_get(header, 0))\n}'
   },
   bedrock_lane16_be_get: {
     description: 'Helper OFS para extrair uma janela big-endian de 16 bits.',
     context: 'Use em headers de rede e protocolos sem espalhar byte swap manual pelo codigo.',
-    example: 'echo(bedrock_lane16_be_get(header, 3))'
+    example: 'attach {bedrock}\n\ncore main() {\n    forge header: stone = 0x2A01\n    echo(bedrock_lane16_be_get(header, 0))\n}'
   },
   bedrock_packet_opcode_be16: {
     description: 'Helper de pacote para ler a janela big-endian de 16 bits do cabecalho.',
     context: 'Use quando um header OFS precisa expor um campo protocolar em ordem de rede.',
-    example: 'echo(bedrock_packet_opcode_be16(header))'
+    example: 'attach {bedrock-packet}\n\ncore main() {\n    forge header: stone = 0x0102030405060708\n    echo(bedrock_packet_opcode_be16(header))\n}'
   },
   version: {
     description: 'Comando CLI para exibir versao do compilador.',
@@ -420,25 +531,10 @@ const HOVER_DOCS = {
     context: 'Use para consultar sintaxe e fluxo recomendado de uso.',
     example: 'ofs help'
   },
-  asm: {
-    description: 'Escape hatch de inline assembly nativo.',
-    context: 'Use dentro de blocos bedrock/fracture/abyss para emitir instrucoes de maquina diretamente quando nenhum intrinsic fault_* cobre o caso.',
-    example: 'bedrock {\n    asm "nop"\n    asm "int3"\n}'
-  },
-  echo: {
-    description: 'Funcao built-in de saida (print).',
-    context: 'Use para imprimir qualquer valor OFS: stone, crystal, obsidian ou bool. Exibe nova linha automaticamente.',
-    example: 'echo("Hello, World!")\necho(42)\necho(3.14)'
-  },
-  in: {
-    description: 'Palavra-chave de iteracao range-based em cycle.',
-    context: 'Use para iterar sobre colecoes (forjas de array) de forma expressiva.',
-    example: 'cycle (n in nums) {\n    echo(n)\n}'
-  },
-  shard: {
-    description: 'Declara variavel ponteiro tipado.',
-    context: 'Use dentro de fracture ou bedrock para criar ponteiros seguros para valores existentes.',
-    example: 'fracture {\n    shard p: *stone = &x\n    *p = *p + 1\n}'
+  i16: {
+    description: 'Inteiro com sinal de 16 bits.',
+    context: 'Use para dados compactos com sinal.',
+    example: 'forge delta: i16 = -300'
   }
 };
 
@@ -1182,7 +1278,22 @@ const STDLIB_NAMES = {
   'rift':            'rift.ofs',
   'canvas':          'canvas.ofs',
   'window':          'window.ofs',
-  'fmt':             'fmt.ofs',
+  'net-windows':     'net_windows.ofs',
+  'oll-x11':         'oll_x11.ofs',
+  'android':         'android.ofs',
+  'android-http':    'android_http.ofs',
+  'android-input':   'android_input.ofs',
+  'android-webview': 'android_webview.ofs',
+  'audio-android':   'audio_android.ofs',
+  'avi':             'avi.ofs',
+  'oal-android':     'oal_android.ofs',
+  'oal-runtime':     'oal_runtime.ofs',
+  'oal-x11':         'oal_x11.ofs',
+  'png':             'png.ofs',
+  'sha256':          'sha256.ofs',
+  'tls':             'tls.ofs',
+  'wav':             'wav.ofs',
+  'zip':             'zip.ofs',
   'test-lib':        'test_lib.ofs',
   'fs':              'fs.ofs',
   'net':             'net.ofs',
@@ -1194,6 +1305,7 @@ const STDLIB_NAMES = {
   'x11win':          'x11win.ofs',
   'icons':           'icons.ofs',
   'hashmap':         'hashmap.ofs',
+  'strbuf':          'strbuf.ofs',
 };
 
 function getStdlibSearchDirs(docDir) {
@@ -1344,49 +1456,204 @@ function collectAttachSymbols(document) {
   return Array.from(dedup.values());
 }
 
-function parseDiagnostics(document, output) {
-  const diagnostics = [];
-  const lines = output.split(/\r?\n/);
+const ANSI_REGEX = /\u001b\[[0-9;?]*[A-Za-z]/g;
+// Cabecalhos do ofscc:
+//   [ERRO SINTATICO l:c]: msg
+//   [ERRO SEMANTICO arquivo:l:c]: msg   (+ "voce quis dizer", "dica:")
+//   [ERRO DE ATTACH arquivo:l]: msg
+//   [AVISO DE TIPO arquivo:l:c]: msg
+//   [fault E0042] l:c: msg
+//   arquivo.ofs:l:c: msg                (formato legado)
+const COMPILER_HEADER_REGEX = /^\[(ERRO SINTATICO|ERRO SEMANTICO|ERRO DE ATTACH|AVISO DE TIPO|AVISO SEMANTICO)\s+(.+?)\]:\s*(.*)$/;
+const COMPILER_FAULT_REGEX = /^\[fault (E\d+)\]\s*(\d+):(\d+):\s*(.*)$/;
 
-  for (const line of lines) {
-    const match = line.match(DIAGNOSTIC_REGEX);
-    if (!match) {
+function splitLocation(loc) {
+  // "arquivo:l:c", "arquivo:l", "l:c" ou "l"; o arquivo pode conter ':' (Windows)
+  let m = loc.match(/^(.*):(\d+):(\d+)$/);
+  if (m) return { file: m[1].trim() || null, line: Number.parseInt(m[2], 10), col: Number.parseInt(m[3], 10) };
+  m = loc.match(/^(\d+):(\d+)$/);
+  if (m) return { file: null, line: Number.parseInt(m[1], 10), col: Number.parseInt(m[2], 10) };
+  m = loc.match(/^(.*):(\d+)$/);
+  if (m) return { file: m[1].trim() || null, line: Number.parseInt(m[2], 10), col: 1 };
+  m = loc.match(/^(\d+)$/);
+  if (m) return { file: null, line: Number.parseInt(m[1], 10), col: 1 };
+  return null;
+}
+
+function parseCompilerMessages(output) {
+  const messages = [];
+  const lines = String(output || '').replace(ANSI_REGEX, '').split(/\r?\n/);
+  let current = null;
+
+  for (const rawLine of lines) {
+    // ruido do indicador de progresso do compilador (spinner, "Reading", "done ...")
+    if (rawLine.includes('\r') || /^\s*[\u2192\u2713\u2717]/.test(rawLine) || /^done\s/.test(rawLine)) {
+      current = null;
       continue;
     }
-
-    const filePath = match[1].trim();
-    if (!filePath.endsWith('.ofs')) {
+    let m = rawLine.match(COMPILER_HEADER_REGEX);
+    if (m) {
+      const loc = splitLocation(m[2].trim());
+      if (loc) {
+        const kind = m[1];
+        current = {
+          severity: kind.startsWith('AVISO') ? 'warning' : 'error',
+          kind,
+          code: null,
+          file: loc.file,
+          line: loc.line,
+          col: loc.col,
+          wholeLine: kind === 'ERRO DE ATTACH',
+          message: m[3].trim(),
+          extra: []
+        };
+        messages.push(current);
+        continue;
+      }
+    }
+    m = rawLine.match(COMPILER_FAULT_REGEX);
+    if (m) {
+      current = {
+        severity: 'error', kind: 'fault', code: m[1], file: null,
+        line: Number.parseInt(m[2], 10), col: Number.parseInt(m[3], 10),
+        wholeLine: false, message: m[4].trim(), extra: []
+      };
+      messages.push(current);
       continue;
     }
-
-    const lineNum = Number.parseInt(match[2], 10);
-    const colNum = Number.parseInt(match[3], 10);
-    const message = match[4].trim() || 'Unknown OFS error';
-
-    const range = createRangeFromLineCol(document, lineNum, colNum);
-    diagnostics.push(new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error));
+    m = rawLine.match(DIAGNOSTIC_REGEX);
+    if (m && m[1].trim().endsWith('.ofs')) {
+      current = {
+        severity: 'error', kind: 'legacy', code: null, file: m[1].trim(),
+        line: Number.parseInt(m[2], 10), col: Number.parseInt(m[3], 10),
+        wholeLine: false, message: m[4].trim() || 'Unknown OFS error', extra: []
+      };
+      messages.push(current);
+      continue;
+    }
+    // linhas de continuacao (indentadas) pertencem a ultima mensagem
+    if (current && /^\s{2,}\S/.test(rawLine)) {
+      const text = rawLine.trim();
+      if (!text.startsWith('-->')) {
+        current.extra.push(text);
+      } else if (current.kind === 'ERRO SINTATICO') {
+        current.extra.push(text.replace(/^-->\s*/, ''));
+      }
+      continue;
+    }
+    if (rawLine.trim() === '' ) {
+      continue;
+    }
+    current = null;
   }
+  return messages;
+}
 
-  return diagnostics;
+function compilerMessageText(msg) {
+  const prefix = msg.code ? `[${msg.code}] ` : '';
+  const extra = msg.extra.filter((l) => !/^\(um modulo verificado/.test(l));
+  return prefix + [msg.message, ...extra].join('\n');
+}
+
+function sameFilePath(a, b, baseDir) {
+  if (!a || !b) return false;
+  const norm = (p) => path.resolve(baseDir, p);
+  const na = norm(a);
+  const nb = norm(b);
+  return process.platform === 'win32' ? na.toLowerCase() === nb.toLowerCase() : na === nb;
+}
+
+function rangeForMessage(textLines, msg) {
+  const lineIdx = Math.min(Math.max(msg.line - 1, 0), Math.max(textLines.length - 1, 0));
+  const lineText = textLines[lineIdx] || '';
+  if (msg.wholeLine) {
+    const first = lineText.search(/\S/);
+    return new vscode.Range(lineIdx, Math.max(first, 0), lineIdx, lineText.length);
+  }
+  const colIdx = Math.min(Math.max(msg.col - 1, 0), lineText.length);
+  // realca a palavra/token que comeca na coluna indicada
+  const rest = lineText.slice(colIdx);
+  const word = rest.match(/^[A-Za-z_][A-Za-z0-9_]*/);
+  const len = word ? word[0].length : 1;
+  return new vscode.Range(lineIdx, colIdx, lineIdx, Math.min(colIdx + len, Math.max(lineText.length, colIdx + 1)));
+}
+
+// Devolve Map<caminho absoluto, Diagnostic[]>. Erros sem arquivo pertencem ao documento.
+// Erros em arquivos `attach` vao para o proprio arquivo e, alem disso, um resumo
+// aparece no documento (na linha do attach correspondente) para nao passar despercebido.
+function parseDiagnosticsByFile(document, output) {
+  const baseDir = path.dirname(document.fileName);
+  const byFile = new Map();
+  const docKey = document.fileName;
+  const push = (key, diag) => {
+    if (!byFile.has(key)) byFile.set(key, []);
+    byFile.get(key).push(diag);
+  };
+  const docLines = document.getText().split(/\r?\n/);
+
+  for (const msg of parseCompilerMessages(output)) {
+    const severity = msg.severity === 'warning'
+      ? vscode.DiagnosticSeverity.Warning
+      : vscode.DiagnosticSeverity.Error;
+    const text = compilerMessageText(msg);
+    const isDoc = !msg.file || sameFilePath(msg.file, document.fileName, baseDir);
+
+    if (isDoc) {
+      const diag = new vscode.Diagnostic(rangeForMessage(docLines, msg), text, severity);
+      diag.source = 'ofscc';
+      if (msg.code) diag.code = msg.code;
+      push(docKey, diag);
+      continue;
+    }
+
+    let otherPath = path.resolve(baseDir, msg.file);
+    if (!fs.existsSync(otherPath)) {
+      const root = getWorkspaceRoot();
+      if (root && fs.existsSync(path.resolve(root, msg.file))) {
+        otherPath = path.resolve(root, msg.file);
+      }
+    }
+    let otherLines = [];
+    try { otherLines = fs.readFileSync(otherPath, 'utf8').split(/\r?\n/); } catch { /* arquivo ilegivel */ }
+    const diag = new vscode.Diagnostic(rangeForMessage(otherLines, msg), text, severity);
+    diag.source = 'ofscc';
+    if (msg.code) diag.code = msg.code;
+    push(otherPath, diag);
+
+    // ponteiro no documento: linha do attach que traz o arquivo com problema
+    const base = path.basename(msg.file);
+    let attachLine = docLines.findIndex((l) => /^\s*attach\s*\{/.test(l) && l.includes(base));
+    if (attachLine < 0) attachLine = docLines.findIndex((l) => /^\s*attach\s*\{/.test(l));
+    if (attachLine < 0) attachLine = 0;
+    const attachText = docLines[attachLine] || '';
+    const pointer = new vscode.Diagnostic(
+      new vscode.Range(attachLine, 0, attachLine, attachText.length),
+      `${base}:${msg.line}:${msg.col}: ${msg.message}`,
+      severity
+    );
+    pointer.source = 'ofscc';
+    push(docKey, pointer);
+  }
+  return byFile;
+}
+
+function parseDiagnostics(document, output) {
+  return parseDiagnosticsByFile(document, output).get(document.fileName) || [];
 }
 
 function parseFirstCompilerError(output) {
-  const lines = output.split(/\r?\n/);
-
-  for (const line of lines) {
-    const match = line.match(DIAGNOSTIC_REGEX);
-    if (!match) {
-      continue;
-    }
-
+  const first = parseCompilerMessages(output).find((m) => m.severity === 'error');
+  if (first) {
     return {
-      line: Number.parseInt(match[2], 10),
-      col: Number.parseInt(match[3], 10),
-      message: match[4].trim() || 'Unknown OFS error'
+      line: first.line,
+      col: first.col,
+      file: first.file,
+      message: compilerMessageText(first).split('\n')[0]
     };
   }
 
-  const fallback = output.trim();
+  const fallback = String(output || '').replace(ANSI_REGEX, '').split(/\r?\n/)
+    .filter((l) => l.trim() && !l.includes('\r') && !/^\s*[\u2192\u2713\u2717]/.test(l)).join('\n').trim();
   return fallback ? { line: null, col: null, message: fallback } : null;
 }
 
@@ -2762,6 +3029,8 @@ async function runOllNative(document) {
   terminal.sendText(`"${ofsPath}" run "${path.basename(file)}"`);
 }
 
+const checkedExtraUris = new Map(); // documento -> URIs de arquivos attach com diagnosticos
+
 async function runOfsCheck(document, diagnosticCollection) {
   if (!document || document.languageId !== 'ofs') {
     return;
@@ -2775,20 +3044,36 @@ async function runOfsCheck(document, diagnosticCollection) {
   const args = ['check', document.fileName];
 
   const result = await runExecFile(ofsPath, args, { cwd: getWorkspaceRoot() || undefined });
+  const combined = `${result.stdout || ''}\n${result.stderr || ''}`;
+  const byFile = parseDiagnosticsByFile(document, combined);
+  const diagnostics = byFile.get(document.fileName) || [];
+
+  // limpa diagnosticos antigos de arquivos attach e aplica os novos
+  for (const old of checkedExtraUris.get(document.fileName) || []) {
+    diagnosticCollection.delete(old);
+  }
+  const extras = [];
+  for (const [file, list] of byFile) {
+    if (file !== document.fileName) {
+      const uri = vscode.Uri.file(file);
+      diagnosticCollection.set(uri, list);
+      extras.push(uri);
+    }
+  }
+  checkedExtraUris.set(document.fileName, extras);
+
   if (!result.error) {
-    diagnosticCollection.set(document.uri, []);
+    // sucesso: ainda podem existir avisos (ex.: AVISO DE TIPO)
+    diagnosticCollection.set(document.uri, diagnostics);
     return;
   }
-
-  const combined = `${result.stdout || ''}\n${result.stderr || ''}`;
-  const diagnostics = parseDiagnostics(document, combined);
 
   if (diagnostics.length === 0) {
     const fallbackRange = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 1));
     diagnosticCollection.set(document.uri, [
       new vscode.Diagnostic(
         fallbackRange,
-        combined.trim() || 'OFS check failed. Verify ofs.path and compiler installation.',
+        combined.replace(ANSI_REGEX, '').trim() || 'OFS check failed. Verify ofs.path and compiler installation.',
         vscode.DiagnosticSeverity.Error
       )
     ]);
@@ -3377,7 +3662,19 @@ function registerHoverProvider(context) {
   const provider = vscode.languages.registerHoverProvider('ofs', {
     async provideHover(document, position) {
       const range = document.getWordRangeAtPosition(position);
-      if (!range) return undefined;
+      if (!range) {
+        // operador `?` de propagacao (nao e uma palavra)
+        const qLine = document.lineAt(position.line).text;
+        if (qLine[position.character] === '?' && !/^\s*\/\//.test(qLine)) {
+          const qr = new vscode.Range(position.line, position.character, position.line, position.character + 1);
+          const qmd = new vscode.MarkdownString();
+          qmd.appendMarkdown('**?** (propagação)\n\n`expr?` desembrulha uma variante de `strata`: `Solid(v)?` e `Ore(v)?` valem `v`; `Crack(e)?` e `Barren?` saem da `vein` atual na hora (rodando os `seal`/`anchor` pendentes), propagando a falha.\n\n');
+          qmd.appendMarkdown('Exemplo:\n');
+          qmd.appendCodeblock('strata Outcome { Solid, Crack }\n\nvein ok() -> stone {\n    forge v = Solid(7)?\n    return v\n}', 'ofs');
+          return new vscode.Hover(qmd, qr);
+        }
+        return undefined;
+      }
 
       const word = document.getText(range);
 
@@ -3580,6 +3877,78 @@ class OfsThemesTreeDataProvider {
   }
 }
 
+// Formatacao: `ofs fmt --stdin` (ferramenta escrita em OFS). Para formatar ao salvar,
+// use a opcao padrao do VS Code: "[ofs]": { "editor.formatOnSave": true }.
+// `fmt` e um comando do wrapper `ofs`; o compilador embutido/do workspace pode
+// nao te-lo. Tenta o `ofs.path` configurado, o `ofs` do PATH e o caminho usado
+// pelo resto da extensao, nessa ordem, e fica com o primeiro que funcionar.
+async function runOfsFmt(text, cwd) {
+  const configured = vscode.workspace.getConfiguration().get('ofs.path', 'ofs');
+  const candidates = [...new Set([configured, 'ofs', getOfsPath()].filter(Boolean))];
+  let lastError = null;
+  for (const bin of candidates) {
+    try {
+      return await runOfsFmtWith(bin, text, cwd);
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError || new Error('ofs fmt indisponivel');
+}
+
+function runOfsFmtWith(bin, text, cwd) {
+  return new Promise((resolve, reject) => {
+    const proc = cp.spawn(bin, ['fmt', '--stdin'], { cwd, windowsHide: true });
+    const out = [];
+    const err = [];
+    const timer = setTimeout(() => {
+      proc.kill();
+      reject(new Error('ofs fmt: tempo esgotado'));
+    }, 30000);
+    proc.stdout.on('data', (d) => out.push(d));
+    proc.stderr.on('data', (d) => err.push(d));
+    proc.on('error', (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+    proc.on('close', (code) => {
+      clearTimeout(timer);
+      if (code !== 0) {
+        reject(new Error(Buffer.concat(err).toString('utf8').trim() || `ofs fmt saiu com codigo ${code}`));
+        return;
+      }
+      resolve(Buffer.concat(out).toString('utf8'));
+    });
+    proc.stdin.on('error', () => {});
+    proc.stdin.end(text, 'utf8');
+  });
+}
+
+function registerFormattingProvider(context) {
+  const provider = vscode.languages.registerDocumentFormattingEditProvider('ofs', {
+    async provideDocumentFormattingEdits(document) {
+      if (!vscode.workspace.getConfiguration().get('ofs.format.enable', true)) {
+        return [];
+      }
+      const folder = vscode.workspace.getWorkspaceFolder(document.uri);
+      const cwd = folder ? folder.uri.fsPath : path.dirname(document.uri.fsPath);
+      let formatted;
+      try {
+        formatted = await runOfsFmt(document.getText(), cwd);
+      } catch (e) {
+        vscode.window.showWarningMessage(`OFS: nao foi possivel formatar (${e.message})`);
+        return [];
+      }
+      if (!formatted || formatted === document.getText()) {
+        return [];
+      }
+      const whole = new vscode.Range(document.positionAt(0), document.positionAt(document.getText().length));
+      return [vscode.TextEdit.replace(whole, formatted)];
+    }
+  });
+  context.subscriptions.push(provider);
+}
+
 function activate(context) {
   extensionContextRef = context;
   if (context.globalStorageUri?.fsPath) {
@@ -3706,6 +4075,7 @@ function activate(context) {
   registerFileDecorations(context);
   registerHoverProvider(context);
   registerAttachDecorations(context);
+  registerFormattingProvider(context);
 
   ensureCompilerInstalledOnActivate();
 

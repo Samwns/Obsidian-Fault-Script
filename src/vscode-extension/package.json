@@ -359,6 +359,11 @@
           "default": "ofs",
           "description": "Path to OFS compiler executable."
         },
+        "ofs.format.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Habilita o formatador (ofs fmt --stdin) como provedor de formatacao de .ofs. Para formatar ao salvar, use editor.formatOnSave na linguagem ofs."
+        },
         "ofs.diagnosticsOnType": {
           "type": "boolean",
           "default": true,

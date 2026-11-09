@@ -1,11 +1,16 @@
-// Memory Modes Library Stub
-// Provides memory management mode utilities
+// Memory Modes Library
+// Nomes e descricao dos blocos de modo de memoria da OFS.
+//
+// Nao ha coletor de lixo (GC) em OFS. fracture, bedrock, abyss e tectonic sao
+// hoje blocos comuns: marcadores de codigo de baixo nivel, sem mudar a
+// semantica de memoria. A memoria e liberada pelo compilador (strings e arrays
+// locais no fim do escopo, quando nao escapam) ou a mao, pelo programa.
 
 vein explain_memory_modes() {
-    echo("Memory Modes:")
-    echo("- bedrock: Manual memory management")
-    echo("- fractal: Region-based allocation")
-    echo("- abyss: Garbage collected")
+    echo("Memory Modes (marcadores de codigo de baixo nivel; nao ha GC):")
+    echo("- fracture/bedrock/abyss/tectonic: blocos comuns, sem efeito proprio na memoria")
+    echo("- liberacao: o compilador libera strings e arrays locais no fim do escopo, quando nao escapam")
+    echo("- o resto da memoria e gerenciado a mao pelo programa")
 }
 
 vein memory_mode_mid_name() -> obsidian {

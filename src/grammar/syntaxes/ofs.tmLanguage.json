@@ -2,13 +2,30 @@
   "name": "Obsidian Fault Script",
   "scopeName": "source.ofs",
   "patterns": [
-    { "include": "#comments" },
-    { "include": "#strings" },
-    { "include": "#numbers" },
-    { "include": "#keywords" },
-    { "include": "#types" },
-    { "include": "#operators" },
-    { "include": "#functions" }
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    },
+    {
+      "include": "#numbers"
+    },
+    {
+      "include": "#keywords"
+    },
+    {
+      "include": "#types"
+    },
+    {
+      "include": "#operators"
+    },
+    {
+      "include": "#intrinsics"
+    },
+    {
+      "include": "#functions"
+    }
   ],
   "repository": {
     "comments": {
@@ -38,7 +55,7 @@
       "patterns": [
         {
           "name": "constant.numeric.ofs",
-          "match": "\\b(?:0[xX][0-9A-Fa-f]+|(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?)\\b"
+          "match": "\\b(?:0[xX][0-9A-Fa-f]+|[0-9]+(?:\\.[0-9]+)?)\\b"
         }
       ]
     },
@@ -49,7 +66,9 @@
           "name": "meta.attach.ofs",
           "match": "\\battach\\s*\\{\\s*([A-Za-z_][A-Za-z0-9_.\\-]*)\\s*\\}",
           "captures": {
-            "1": { "name": "entity.name.module.ofs" }
+            "1": {
+              "name": "entity.name.module.ofs"
+            }
           }
         },
         {
@@ -57,13 +76,27 @@
           "name": "meta.attach.file.ofs",
           "match": "\\battach\\s*\\{\\s*([Ff](?:ile)?):([^}]+)\\}",
           "captures": {
-            "1": { "name": "keyword.operator.ofs" },
-            "2": { "name": "string.unquoted.ofs" }
+            "1": {
+              "name": "keyword.operator.ofs"
+            },
+            "2": {
+              "name": "string.unquoted.ofs"
+            }
           }
         },
         {
           "name": "keyword.control.ofs",
-          "match": "\\b(core|vein|forge|const|monolith|impl|namespace|strata|if|else|while|cycle|match|case|default|return|break|continue|throw|tremor|catch|fracture|abyss|bedrock|obsid|intent|tectonic|pure|impure|fractal|extern|rift|attach|import|as|layout|bind|abi|packed|native|system|asm|echo|in|shard)\\b"
+          "match": "\\b(core|vein|forge|const|monolith|impl|namespace|strata|if|else|while|cycle|mine|match|assay|case|default|return|break|shatter|continue|erode|throw|tremor|catch|anchor|seal|fracture|abyss|bedrock|tectonic|attach|extern|rift|as|in|echo|shard)\\b"
+        },
+        {
+          "comment": "bind/abi: metadados de extern/rift vein",
+          "name": "keyword.other.contextual.ofs",
+          "match": "\\b(bind|abi)\\b(?=\\s+(?:\\\"|[a-z]))"
+        },
+        {
+          "comment": "reservadas, ainda sem sintaxe aceita pelo compilador",
+          "name": "invalid.deprecated.reserved.ofs",
+          "match": "\\b(layout|intent)\\b(?=\\s)"
         },
         {
           "name": "support.function.intrinsic.ofs",
@@ -83,7 +116,7 @@
         },
         {
           "name": "storage.type.ofs",
-          "match": "\\b(Array|stone|u8|u16|u32|u64|i8|i16|i32|crystal|obsidian|bool|void|glyph|flow|truth|ptr|shard)\\b"
+          "match": "\\b(Array|stone|crystal|obsidian|bool|void|u8|u16|u32|u64|i8|i16|i32|i64|f32|f64)\\b"
         }
       ]
     },
@@ -91,7 +124,7 @@
       "patterns": [
         {
           "name": "keyword.operator.ofs",
-          "match": "(\\+=|-=|\\*=|/=|%=|==|!=|<=|>=|&&|\\|\\||<<|>>|->|[+\\-*/%=&|^!~<>])"
+          "match": "(\\+=|-=|\\*=|/=|%=|==|!=|<=|>=|&&|\\|\\||<<|>>|->|\\+\\+|--|[+\\-*/%=&|^!~<>?])"
         }
       ]
     },
@@ -100,6 +133,14 @@
         {
           "name": "entity.name.function.ofs",
           "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(?=\\()"
+        }
+      ]
+    },
+    "intrinsics": {
+      "patterns": [
+        {
+          "name": "support.function.intrinsic.ofs",
+          "match": "\\bfault_(?:count|lead|trail|spin_left|spin_right|weave|swap|cut|patch|memcpy|memset|unreachable|trap|fence|prefetch|addr|call|step)\\b"
         }
       ]
     }

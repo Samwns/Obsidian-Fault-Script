@@ -20,7 +20,7 @@ vein write_pages(prefix: obsidian) {
     write_file(prefix + "github.html", page_github())
     write_file(prefix + "site.css", site_css())
     write_file(prefix + "site.js", site_runtime_js())
-    write_file(prefix + "benchmark.json", read_file("src/site/benchmarks/results.json"))
+    write_file(prefix + "benchmark.json", read_file("bench/results.json"))
 }
 
 core main() {
@@ -29,13 +29,13 @@ core main() {
     write_file("src/site/public/.nojekyll", "")
     write_file("src/site/public/assets/site.css", site_css())
     write_file("src/site/public/assets/site.js", site_runtime_js())
-    write_file("src/site/public/assets/benchmark.json", read_file("src/site/benchmarks/results.json"))
+    write_file("src/site/public/assets/benchmark.json", read_file("bench/results.json"))
 
     write_pages("docs/")
     write_file("docs/.nojekyll", "")
     write_file("docs/assets/site.css", site_css())
     write_file("docs/assets/site.js", site_runtime_js())
-    write_file("docs/assets/benchmark.json", read_file("src/site/benchmarks/results.json"))
+    write_file("docs/assets/benchmark.json", read_file("bench/results.json"))
 
     write_pages("")
     echo("OFS src/site generated in src/site/public, docs, and repository root")
