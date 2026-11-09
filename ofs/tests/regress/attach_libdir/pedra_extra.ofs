@@ -1,0 +1,4 @@
+// modulo achado via OFS_LIB_PATH (teste attach_lib_path)
+vein pedra_extra_valor() -> stone {
+    return 42
+}

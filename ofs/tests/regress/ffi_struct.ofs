@@ -1,0 +1,81 @@
+// monolith com layout C (F2): o interpretador guarda o monolith em memoria
+// crua com os offsets do llvmgen (llvmgen.struct_layout), entao passar `&s`
+// ou `s` ao C ve os mesmos bytes do build nativo; monolith como parametro de
+// vein e por referencia (como o ponteiro do nativo).
+rift vein c_memcpy(dst: *u8, src: *u8, n: stone) -> *u8 bind "memcpy" abi c
+rift vein c_memcmp(a: *u8, b: *u8, n: stone) -> stone bind "memcmp" abi c
+extern vein ofs_alloc(size: stone) -> *u8
+
+monolith Misto {
+    a: u8
+    b: i32
+    c: crystal
+    d: u16
+    e: stone
+    ok: bool
+}
+
+monolith Par {
+    x: stone
+    y: stone
+}
+
+vein byte_em(base: stone, off: stone) -> stone {
+    forge p: *u8 = (base + off) as *u8
+    forge v: u8 = 0
+    fracture { v = *p }
+    return v as stone
+}
+
+vein zera(p: Par) -> void {
+    p.x = 0
+}
+
+core main() {
+    forge m: Misto
+    m.a = 200
+    m.b = -2
+    m.c = 1.5
+    m.d = 65535
+    m.e = 77
+    m.ok = true
+    forge raw: *u8 = ofs_alloc(64)
+    forge rb: stone = raw as stone
+    fracture { c_memcpy(raw, (&m) as *u8, 40) }
+    // offsets C: a@0 b@4 c@8 d@16 e@24 ok@32 (tamanho 40)
+    echo(byte_em(rb, 0))
+    echo(byte_em(rb, 4))
+    echo(byte_em(rb, 7))
+    echo(byte_em(rb, 15))
+    echo(byte_em(rb, 16) + byte_em(rb, 17))
+    echo(byte_em(rb, 24))
+    echo(byte_em(rb, 32))
+    // e de volta: o C escreve no monolith
+    forge n: Misto
+    fracture { c_memcpy((&n) as *u8, raw, 40) }
+    echo(n.a)
+    echo(n.b)
+    echo(n.c)
+    echo(n.d)
+    echo(n.e)
+    echo(n.ok)
+    fracture { echo(c_memcmp((&m) as *u8, (&n) as *u8, 40)) }
+
+    // campo pelo endereco do bloco + offset
+    forge p: Par
+    p.x = 1
+    p.y = 2
+    fracture {
+        forge py: *stone = ((&p) as stone + 8) as *stone
+        *py = 222
+    }
+    echo(p.y)
+    // por referencia ao chamar; copia ao atribuir
+    zera(p)
+    echo(p.x)
+    forge q: Par = p
+    q.y = 5
+    echo(p.y)
+    p = q
+    echo(p.y)
+}

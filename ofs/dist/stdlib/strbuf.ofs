@@ -1,0 +1,127 @@
+// OFS Standard Library — strbuf: texto montado aos pedacos
+//
+// `s = s + x` num laco copia o texto inteiro a cada volta. O compilador ja
+// cresce `s` no lugar quando prova que ninguem mais ve o valor antigo (ver
+// docs/STANDARD_LIBRARY.md, "Strings e memoria"), mas quando o texto passa
+// por varias funcoes ou estruturas, um buffer explicito e o caminho certo:
+//
+//   attach {strbuf}
+//   forge b: StrBuf = strbuf.create(64)
+//   strbuf.append(b, "linha ")
+//   strbuf.append_int(b, 42)
+//   strbuf.append_char(b, 10)
+//   forge texto = strbuf.to_obsidian(b)   // copia; o buffer continua valendo
+//   strbuf.release(b)
+//
+// A capacidade dobra quando enche (append amortizado O(1)). Usa memoria
+// crua do runtime; roda igual no build nativo e no `ofs run` (F2).
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_realloc(ptr: *stone, size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+extern vein memcpy(dst: *stone, src: *stone, size: stone) -> *stone
+extern vein ofs_str_len(s: obsidian) -> stone
+
+monolith StrBuf {
+    data: stone
+    len: stone
+    cap: stone
+}
+
+namespace strbuf {
+    vein create(cap: stone) -> StrBuf {
+        if (cap < 16) { cap = 16 }
+        forge b: StrBuf
+        b.data = ofs_alloc(cap) as stone
+        b.len = 0
+        b.cap = cap
+        return b
+    }
+
+    // garante espaco para mais `extra` bytes + o terminador
+    vein reserve(b: StrBuf, extra: stone) -> void {
+        forge need = b.len + extra + 1
+        if (need <= b.cap && b.data != 0) { return }
+        forge nc = b.cap * 2
+        if (nc < 16) { nc = 16 }
+        if (nc < need) { nc = need }
+        if (b.data == 0) {
+            b.data = ofs_alloc(nc) as stone
+        } else {
+            b.data = ofs_realloc(b.data as *stone, nc) as stone
+        }
+        b.cap = nc
+    }
+
+    vein append(b: StrBuf, s: obsidian) -> void {
+        forge n = ofs_str_len(s)
+        if (n <= 0) { return }
+        reserve(b, n)
+        forge dst = b.data + b.len
+        memcpy(dst as *stone, s as *stone, n)
+        b.len = b.len + n
+    }
+
+    // `c` e o codigo do byte (0..255), como ofs_str_char_at devolve
+    vein append_char(b: StrBuf, c: stone) -> void {
+        reserve(b, 1)
+        forge p: *u8 = (b.data + b.len) as *u8
+        fracture { *p = c as u8 }
+        b.len = b.len + 1
+    }
+
+    vein append_int(b: StrBuf, v: stone) -> void {
+        reserve(b, 21)
+        // trabalha com n <= 0 (cabe MIN_I64, que nao tem positivo)
+        forge n = v
+        if (v < 0) {
+            append_char(b, 45)
+        } else {
+            n = 0 - v
+        }
+        // n <= 0 aqui; conta os digitos
+        forge digits = 1
+        forge t = n / 10
+        while (t != 0) {
+            digits++
+            t = t / 10
+        }
+        forge pos = b.len + digits - 1
+        forge i = 0
+        while (i < digits) {
+            forge d = 0 - (n % 10)
+            forge p: *u8 = (b.data + pos) as *u8
+            fracture { *p = (48 + d) as u8 }
+            n = n / 10
+            pos--
+            i++
+        }
+        b.len = b.len + digits
+    }
+
+    vein length(b: StrBuf) -> stone {
+        return b.len
+    }
+
+    // Copia o conteudo para uma string nova (o buffer pode continuar sendo
+    // usado; a string devolvida nao muda depois).
+    vein to_obsidian(b: StrBuf) -> obsidian {
+        forge out: *stone = ofs_alloc(b.len + 1)
+        if (b.len > 0) { memcpy(out, b.data as *stone, b.len) }
+        return out as obsidian
+    }
+
+    // Esvazia sem devolver a memoria (reutiliza a capacidade).
+    vein clear(b: StrBuf) -> void {
+        b.len = 0
+    }
+
+    // Devolve a memoria do buffer; depois disso so `reserve`/`append`
+    // voltam a alocar.
+    vein release(b: StrBuf) -> void {
+        if (b.data != 0) { ofs_free(b.data as *stone) }
+        b.data = 0
+        b.len = 0
+        b.cap = 0
+    }
+}

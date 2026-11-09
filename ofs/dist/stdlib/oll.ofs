@@ -275,6 +275,30 @@ namespace oll {
         set_node(child_id, n)
     }
 
+    // Move o filho (o ultimo adicionado com esse id) para a primeira posicao entre os filhos do pai.
+    vein move_child_first(parent_id: stone, child_id: stone) -> void {
+        forge len = ofs_array_len(_children_parent)
+        forge first = -1
+        forge at = -1
+        forge i = 0
+        while (i < len) {
+            if (ofs_array_get(_children_parent, i) == parent_id) {
+                if (first < 0) { first = i }
+                if (ofs_array_get(_children_child, i) == child_id) { at = i }
+            }
+            i++
+        }
+        if (first < 0 || at <= first) { return }
+        forge k = at
+        while (k > first) {
+            ofs_array_set(_children_parent, k, ofs_array_get(_children_parent, k - 1))
+            ofs_array_set(_children_child, k, ofs_array_get(_children_child, k - 1))
+            k--
+        }
+        ofs_array_set(_children_parent, first, parent_id)
+        ofs_array_set(_children_child, first, child_id)
+    }
+
     vein child_count(parent_id: stone) -> stone {
         forge cnt = 0
         forge i = 0

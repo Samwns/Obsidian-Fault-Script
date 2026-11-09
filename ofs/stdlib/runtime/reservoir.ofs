@@ -2,16 +2,57 @@ extern vein calloc(num: stone, size: stone) -> *stone
 extern vein free(ptr: *stone) -> void
 extern vein malloc(size: stone) -> *stone
 extern vein memcpy(dst: *stone, src: *stone, size: stone) -> *stone
+extern vein memmove(dst: *stone, src: *stone, size: stone) -> *stone
+extern vein realloc(ptr: *stone, size: stone) -> *stone
 extern vein memset(dst: *stone, val: stone, size: stone) -> *stone
 extern vein exit(code: stone) -> void
+extern vein write(fd: stone, buf: obsidian, n: stone) -> stone
+
+// Mensagem de falta de memoria no stderr (fd 2) sem alocar nada:
+// os digitos de N saem um a um de literais constantes.
+vein __ofs_oom_digit(d: stone) -> obsidian {
+    if (d == 0) { return "0" }
+    if (d == 1) { return "1" }
+    if (d == 2) { return "2" }
+    if (d == 3) { return "3" }
+    if (d == 4) { return "4" }
+    if (d == 5) { return "5" }
+    if (d == 6) { return "6" }
+    if (d == 7) { return "7" }
+    if (d == 8) { return "8" }
+    return "9"
+}
+
+vein __ofs_oom_num(n: stone) -> void {
+    if (n >= 10) { __ofs_oom_num(n / 10) }
+    write(2, __ofs_oom_digit(n % 10), 1)
+}
+
+vein ofs_out_of_memory(size: stone) -> void {
+    write(2, "ofs: sem memoria (falha ao alocar ", 34)
+    __ofs_oom_num(size)
+    write(2, " bytes)\n", 8)
+    exit(1)
+}
 
 vein ofs_alloc(size: stone) -> *stone {
     if (size <= 0) { size = 1 }
     forge ptr: *stone = calloc(1, size)
     if (ptr == null) {
-        exit(1)
+        ofs_out_of_memory(size)
     }
     return ptr
+}
+
+// realloc com a mesma checagem de falta de memoria do ofs_alloc. So para
+// blocos vindos de ofs_alloc/ofs_realloc (sem pools: realloc/free do libc).
+vein ofs_realloc(ptr: *stone, size: stone) -> *stone {
+    if (size <= 0) { size = 1 }
+    forge np: *stone = realloc(ptr, size)
+    if (np == null) {
+        ofs_out_of_memory(size)
+    }
+    return np
 }
 
 vein ofs_free(ptr: *stone) -> void {

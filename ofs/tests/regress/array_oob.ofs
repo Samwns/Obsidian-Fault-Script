@@ -1,0 +1,9 @@
+// Indice fora do limite: mensagem no stderr com indice e tamanho, rc 1, nos
+// dois modos (antes o nativo saia com exit(1) mudo e o interpretador
+// devolvia null e seguia). Moon, COMPILER_ISSUES.md.
+core main() {
+    forge l: Array<stone> = [1, 2, 3]
+    echo(ofs_array_get(l, 1))
+    echo(l[7])
+    echo("nao chega aqui")
+}

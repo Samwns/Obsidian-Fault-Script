@@ -1,0 +1,32 @@
+// `seal { ... }` e sinonimo de `anchor`: roda ao sair do escopo, em ordem
+// inversa (LIFO), em return, break/shatter e no fim do bloco. Os dois
+// podem ser misturados.
+vein recurso(n: stone) -> stone {
+    echo("abre " + ofs_stone_to_obsidian(n))
+    seal { echo("fecha " + ofs_stone_to_obsidian(n)) }
+    anchor echo("anchor " + ofs_stone_to_obsidian(n))
+    if (n > 1) {
+        return n * 10
+    }
+    echo("fim " + ofs_stone_to_obsidian(n))
+    return n
+}
+
+core main() {
+    echo(recurso(1))
+    echo(recurso(2))
+    forge i = 0
+    while (i < 3) {
+        // a acao e avaliada na saida: na volta 0 ja ve i == 1 (depois do i++)
+        seal { echo("volta " + ofs_stone_to_obsidian(i)) }
+        if (i == 1) {
+            break
+        }
+        i++
+    }
+    {
+        seal echo("bloco")
+        echo("dentro")
+    }
+    echo("ok")
+}

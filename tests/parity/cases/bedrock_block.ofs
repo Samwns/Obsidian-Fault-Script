@@ -1,0 +1,21 @@
+// bloco bedrock + intrinsecos fault_* + celulas do stdlib bedrock.
+attach {bedrock}
+
+vein campo(v: stone) -> stone {
+    bedrock {
+        return fault_cut(v, 4, 8)
+    }
+}
+
+core main() {
+    forge c = bedrock_cell_new(5)
+    echo(campo(43981))
+    bedrock {
+        forge p = fault_patch(0, 8, 8, 255)
+        echo(p)
+        echo(fault_swap(1))
+    }
+    bedrock_cell_add(c, 10)
+    echo(bedrock_cell_read(c))
+    bedrock_cell_drop(c)
+}

@@ -1,0 +1,38 @@
+// F3: `echo` de variante imprime o nome nos dois modos (o nativo usa a
+// tabela de nomes que o llvmgen gera); tipo `strata` em variavel,
+// parametro, retorno e Array
+strata Cor { Vermelho, Verde, Azul }
+strata Resposta { Pronto(stone), Falhou }
+
+vein proxima(c: Cor) -> Cor {
+    if (c == Vermelho) { return Verde }
+    if (c == Verde) { return Azul }
+    return Vermelho
+}
+
+core main() {
+    echo(Verde)
+    forge c: Cor = Vermelho
+    echo(c)
+    c = proxima(c)
+    echo(c)
+    echo(proxima(Azul))
+    forge v = Azul
+    echo(v)
+    forge cores: Array<Cor> = [Azul, Verde]
+    echo(cores[0])
+    cycle (k in cores) { echo(k) }
+    echo(Pronto(7))
+    echo(Falhou)
+    echo("cor: " + c + ", depois " + proxima(c))
+    // a etiqueta numerica continua disponivel com `as stone`
+    echo(Azul as stone)
+    forge t: stone = c as stone
+    echo(t)
+    echo(c == Verde)
+    echo(Azul == 2)
+    match (c) {
+        Verde => { echo("e verde") }
+        _ => { echo("outra") }
+    }
+}

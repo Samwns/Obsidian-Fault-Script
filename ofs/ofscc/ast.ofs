@@ -154,6 +154,83 @@ vein node_pool_len() -> stone {
     return ofs_array_len(_node_pool)
 }
 
+vein node_line_of(id: stone) -> stone {
+    if (id < 0 || id >= ofs_array_len(_node_pool)) { return 0 }
+    forge n: Node = ofs_array_get(_node_pool, id)
+    return n.line
+}
+
+// ── Linhas do runtime no fonte expandido ───────────────────────────────
+// O driver junta os `attach` num fonte so; ele marca aqui as faixas de
+// linhas que vieram de stdlib/runtime/*.ofs. O interpretador (`ofs run`)
+// usa a versao nativa dessas veins (a mesma linkada no ofscc), como faz com
+// os builtins, em vez de interpretar o codigo de memoria crua do runtime.
+
+forge _runtime_line_lo: Array<stone> = []
+forge _runtime_line_hi: Array<stone> = []
+
+vein ast_mark_runtime_lines(lo: stone, hi: stone) -> void {
+    if (hi < lo) { return }
+    ofs_array_push(_runtime_line_lo, lo)
+    ofs_array_push(_runtime_line_hi, hi)
+}
+
+vein ast_line_is_runtime(line: stone) -> bool {
+    forge i = 0
+    while (i < ofs_array_len(_runtime_line_lo)) {
+        forge lo: stone = ofs_array_get(_runtime_line_lo, i)
+        forge hi: stone = ofs_array_get(_runtime_line_hi, i)
+        if (line >= lo && line <= hi) { return true }
+        i++
+    }
+    return false
+}
+
+// ── Mapa de linhas: fonte expandido -> arquivo:linha ──────────────────
+// O driver junta os `attach` num fonte so; as mensagens do typeck usam este
+// mapa para dizer o arquivo e a linha de verdade. Cada entrada e uma faixa
+// continua: a linha expandida `exp` corresponde a `file:line`, e as
+// seguintes avancam juntas ate a proxima entrada.
+
+forge _srcmap_exp: Array<stone> = []
+forge _srcmap_file: Array<obsidian> = []
+forge _srcmap_line: Array<stone> = []
+
+vein ast_srcmap_add(exp_line: stone, file: obsidian, file_line: stone) -> void {
+    forge n = ofs_array_len(_srcmap_exp)
+    if (n > 0) {
+        forge le: stone = ofs_array_get(_srcmap_exp, n - 1)
+        forge ll: stone = ofs_array_get(_srcmap_line, n - 1)
+        forge lf: obsidian = ofs_array_get(_srcmap_file, n - 1)
+        if (ofs_str_eq(lf, file) && exp_line - le == file_line - ll) { return }
+    }
+    ofs_array_push(_srcmap_exp, exp_line)
+    ofs_array_push(_srcmap_file, file)
+    ofs_array_push(_srcmap_line, file_line)
+}
+
+// "arquivo:linha:coluna" da linha expandida (ou "linha:coluna" sem mapa)
+vein ast_src_loc(exp_line: stone, col: stone) -> obsidian {
+    forge lo = 0
+    forge hi = ofs_array_len(_srcmap_exp) - 1
+    forge best = -1
+    while (lo <= hi) {
+        forge mid = (lo + hi) / 2
+        forge e: stone = ofs_array_get(_srcmap_exp, mid)
+        if (e <= exp_line) {
+            best = mid
+            lo = mid + 1
+        } else {
+            hi = mid - 1
+        }
+    }
+    if (best < 0) { return ofs_stone_to_obsidian(exp_line) + ":" + ofs_stone_to_obsidian(col) }
+    forge be: stone = ofs_array_get(_srcmap_exp, best)
+    forge bl: stone = ofs_array_get(_srcmap_line, best)
+    forge bf: obsidian = ofs_array_get(_srcmap_file, best)
+    return bf + ":" + ofs_stone_to_obsidian(bl + exp_line - be) + ":" + ofs_stone_to_obsidian(col)
+}
+
 // ── Debug/Display ──────────────────────────────────────────────────────
 
 vein node_kind_name(kind: stone) -> obsidian {

@@ -5,9 +5,13 @@
 //   forge ui = ttf.load("/usr/share/fonts/rsms-inter-fonts/Inter-Regular.ttf")
 //   ttf.draw(cv, ui, 14, x, baseline_y, "Olá, mundo — ação!", 15132390)
 //   forge w = ttf.width(ui, 14, "texto")
+//   forge jp = ttf.load_face_named("/system/fonts/NotoSansCJK-Regular.ttc", "CJK JP")
+//   ttf.set_fallback(jp)      // glifo que falta na fonte principal vem daqui
 //
 // Suporta: cmap formatos 4 e 12 (Unicode/BMP e alem), glifos simples e
-// compostos (acentos), metricas horizontais (hhea/hmtx), UTF-8.
+// compostos (acentos), outlines CFF (Type 2, incl. CID-keyed como o Noto
+// CJK), colecoes TTC, fonte de fallback por glifo, metricas horizontais
+// (hhea/hmtx), UTF-8.
 // Glifos rasterizados ficam em cache por (fonte, glifo, tamanho, subpixel).
 
 attach {F:raster.ofs}
@@ -40,6 +44,19 @@ namespace ttf {
     forge _loca: Array<stone> = []
     forge _glyf: Array<stone> = []
     forge _hmtx: Array<stone> = []
+    forge _kind: Array<stone> = []       // 0 = glyf (TrueType), 1 = CFF
+    forge _cs: Array<stone> = []         // CFF: CharStrings INDEX
+    forge _gsubr: Array<stone> = []      // CFF: Global Subrs INDEX
+    forge _fdsel: Array<stone> = []      // CFF: FDSelect (-1 = sem CID)
+    forge _lsub0: Array<stone> = []      // CFF: 1a entrada em _lsubs
+    forge _lsubs: Array<stone> = []      // Subrs locais por FD (-1 = nenhum)
+
+    // ── Fallback por glifo ───────────────────────────────────────────────
+    forge _fb_font: stone = -1           // -1 = nenhuma/ainda nao carregada
+    forge _fb_path: obsidian = ""
+    forge _fb_name: obsidian = ""
+    forge _fb_tried: bool = false
+    forge _rf: stone = 0                 // fonte do ultimo _resolve
 
     // ── Caches ───────────────────────────────────────────────────────────
     forge _glyph_map: stone = -1
@@ -107,10 +124,15 @@ namespace ttf {
     }
 
     vein _find_table(b: stone, tag: stone) -> stone {
-        forge n = _u16(b, 4)
+        return _find_table_at(b, 0, tag)
+    }
+
+    // dir = inicio do diretorio de tabelas (0, ou a face dentro de um TTC)
+    vein _find_table_at(b: stone, dir: stone, tag: stone) -> stone {
+        forge n = _u16(b, dir + 4)
         forge i = 0
         while (i < n) {
-            forge rec = 12 + 16 * i
+            forge rec = dir + 12 + 16 * i
             if (_u32(b, rec) == tag) { return _u32(b, rec + 8) }
             i++
         }
@@ -137,34 +159,139 @@ namespace ttf {
     }
 
     // Retorna o id da fonte, ou -1 se o arquivo nao puder ser lido.
+    // Num TTC (colecao), carrega a primeira face.
     vein load(path: obsidian) -> stone {
+        return load_face(path, 0)
+    }
+
+    // Face `face` de um TTC (num .ttf/.otf comum, so a 0 existe).
+    vein load_face(path: obsidian, face: stone) -> stone {
         forge b = _read_file(path)
         if (b == 0) { return -1 }
-        forge head = _find_table(b, 1751474532)
-        forge hhea = _find_table(b, 1751672161)
-        forge hmtx = _find_table(b, 1752003704)
-        forge maxp = _find_table(b, 1835104368)
-        forge cmap = _find_table(b, 1668112752)
-        forge loca = _find_table(b, 1819239265)
-        forge glyf = _find_table(b, 1735162214)
-        if (head < 0 || hhea < 0 || hmtx < 0 || maxp < 0 || cmap < 0 || loca < 0 || glyf < 0) {
+        forge dir = _face_dir(b, face)
+        if (dir < 0) {
             ofs_free(b as *stone)
             return -1
         }
+        forge id = _load_at(b, dir)
+        if (id < 0) { ofs_free(b as *stone) }
+        return id
+    }
+
+    // Primeira face cujo nome (familia ou nome completo) contem `name`,
+    // ex.: "CJK JP"; se nenhuma tiver, a face 0.
+    vein load_face_named(path: obsidian, name: obsidian) -> stone {
+        forge b = _read_file(path)
+        if (b == 0) { return -1 }
+        forge face = -1
+        if (_u32(b, 0) == 1953784678) {
+            forge nf = _u32(b, 8)
+            forge i = 0
+            while (i < nf && face < 0) {
+                if (_face_has_name(b, _u32(b, 12 + 4 * i), name)) { face = i }
+                i++
+            }
+        }
+        if (face < 0) { face = 0 }
+        forge id = _load_at(b, _face_dir(b, face))
+        if (id < 0) { ofs_free(b as *stone) }
+        return id
+    }
+
+    // Numero de faces do arquivo (1 se nao for TTC; 0 se nao abrir).
+    vein face_count(path: obsidian) -> stone {
+        forge f = fopen(path, "rb")
+        if (f == null) { return 0 }
+        forge buf: *stone = ofs_alloc(16)
+        fread(buf, 1, 12, f)
+        fclose(f)
+        forge b = buf as stone
+        forge n = 1
+        if (_u32(b, 0) == 1953784678) { n = _u32(b, 8) }
+        ofs_free(buf)
+        return n
+    }
+
+    vein _face_dir(b: stone, face: stone) -> stone {
+        if (_u32(b, 0) == 1953784678) {            // "ttcf"
+            if (face < 0 || face >= _u32(b, 8)) { return -1 }
+            return _u32(b, 12 + 4 * face)
+        }
+        if (face != 0) { return -1 }
+        return 0
+    }
+
+    // A tabela name da face tem o nome 1 ou 4 contendo `want` (ASCII)?
+    vein _face_has_name(b: stone, dir: stone, want: obsidian) -> bool {
+        forge nm = _find_table_at(b, dir, 1851878757)      // "name"
+        if (nm < 0) { return false }
+        forge cnt = _u16(b, nm + 2)
+        forge strs = nm + _u16(b, nm + 4)
+        forge wl = ofs_str_len(want)
+        forge i = 0
+        while (i < cnt) {
+            forge r = nm + 6 + 12 * i
+            forge plat = _u16(b, r)
+            forge nid = _u16(b, r + 6)
+            if (nid == 1 || nid == 4) {
+                forge len = _u16(b, r + 8)
+                forge p = strs + _u16(b, r + 10)
+                forge step = 1
+                forge lo = 0
+                if (plat == 0 || plat == 3) {
+                    step = 2
+                    lo = 1
+                }
+                forge nch = len / step
+                forge s0 = 0
+                while (s0 + wl <= nch) {
+                    forge k = 0
+                    while (k < wl && _u8(b, p + (s0 + k) * step + lo) == (ofs_str_char_at_known(want, k) & 255)) { k++ }
+                    if (k == wl) { return true }
+                    s0++
+                }
+            }
+            i++
+        }
+        return false
+    }
+
+    vein _load_at(b: stone, dir: stone) -> stone {
+        if (dir < 0) { return -1 }
+        forge head = _find_table_at(b, dir, 1751474532)
+        forge hhea = _find_table_at(b, dir, 1751672161)
+        forge hmtx = _find_table_at(b, dir, 1752003704)
+        forge maxp = _find_table_at(b, dir, 1835104368)
+        forge cmap = _find_table_at(b, dir, 1668112752)
+        forge loca = _find_table_at(b, dir, 1819239265)
+        forge glyf = _find_table_at(b, dir, 1735162214)
+        forge cff = _find_table_at(b, dir, 1128678944)     // "CFF "
+        forge kind = 0
+        if (loca < 0 || glyf < 0) {
+            if (cff < 0) { return -1 }
+            kind = 1
+        }
+        if (head < 0 || hhea < 0 || hmtx < 0 || maxp < 0 || cmap < 0) { return -1 }
         forge sub = _pick_cmap(b, cmap, 12)
         forge fmt = 12
         if (sub < 0) {
             sub = _pick_cmap(b, cmap, 4)
             fmt = 4
         }
-        if (sub < 0) {
-            ofs_free(b as *stone)
-            return -1
+        if (sub < 0) { return -1 }
+        if (kind == 1) {
+            if (!_cff_setup(b, cff)) { return -1 }
+        } else {
+            ofs_array_push(_cs, -1)
+            ofs_array_push(_gsubr, -1)
+            ofs_array_push(_fdsel, -1)
+            ofs_array_push(_lsub0, 0)
         }
         if (_glyph_map < 0) {
             _glyph_map = hashmap.new(512)
             _cache = hashmap.new(1024)
         }
+        ofs_array_push(_kind, kind)
         ofs_array_push(_base, b)
         ofs_array_push(_upem, _u16(b, head + 18))
         ofs_array_push(_locfmt, _i16(b, head + 50))
@@ -179,6 +306,51 @@ namespace ttf {
         ofs_array_push(_glyf, glyf)
         ofs_array_push(_hmtx, hmtx)
         return ofs_array_len(_base) - 1
+    }
+
+    // ── Fallback por glifo ───────────────────────────────────────────────
+    // Glifo que nao existe na fonte pedida (cmap = 0) e desenhado com a
+    // fonte de fallback, no mesmo tamanho em px. Vale para todas as fontes.
+    vein set_fallback(font: stone) -> void {
+        _fb_font = font
+        _fb_tried = true
+    }
+
+    // Igual, mas so le o arquivo na primeira vez que faltar um glifo
+    // (fontes CJK tem ~20 MB). name: trecho do nome da face no TTC.
+    vein set_fallback_file(path: obsidian, name: obsidian) -> void {
+        _fb_path = path
+        _fb_name = name
+        _fb_font = -1
+        _fb_tried = false
+    }
+
+    vein fallback() -> stone {
+        if (!_fb_tried) {
+            _fb_tried = true
+            if (ofs_str_len(_fb_path) > 0) { _fb_font = load_face_named(_fb_path, _fb_name) }
+        }
+        return _fb_font
+    }
+
+    // Glifo de cp na fonte ou no fallback; _rf recebe a fonte usada.
+    vein _resolve(font: stone, cp: stone) -> stone {
+        _rf = font
+        forge g = glyph_index(font, cp)
+        if (g != 0 || cp < 32 || (_fb_tried && _fb_font < 0)) { return g }
+        forge fb = fallback()
+        if (fb < 0 || fb == font) { return g }
+        forge g2 = glyph_index(fb, cp)
+        if (g2 != 0) {
+            _rf = fb
+            return g2
+        }
+        return g
+    }
+
+    // A fonte (ou o fallback) tem o glifo do codepoint?
+    vein has_glyph(font: stone, cp: stone) -> bool {
+        return _resolve(font, cp) != 0
     }
 
     // Tenta varios caminhos e retorna a primeira fonte que carregar.
@@ -492,6 +664,484 @@ namespace ttf {
         }
     }
 
+    // ── CFF (OpenType com outlines PostScript, ex.: Noto Sans CJK) ───────
+    // Type 2 charstrings: CharStrings INDEX, Private DICT, subrs locais e
+    // globais, fontes CID (FDArray/FDSelect). Hints sao lidos e ignorados.
+    // O contorno vai para _p_op/_p_x/_p_y (unidades da fonte em 16.16, y
+    // para cima): 0 move, 1 linha, 2 cubica (este ponto + os 2 seguintes).
+    forge _il: stone = 0
+    forge _dv: Array<stone> = []
+
+    vein _offn(b: stone, p: stone, sz: stone) -> stone {
+        forge v = 0
+        forge k = 0
+        while (k < sz) {
+            v = (v << 8) | _u8(b, p + k)
+            k++
+        }
+        return v
+    }
+
+    // Inicio (absoluto) do item i do INDEX em idx; _il recebe o tamanho.
+    vein _idx_item(b: stone, idx: stone, i: stone) -> stone {
+        forge n = _u16(b, idx)
+        forge osz = _u8(b, idx + 2)
+        forge op = idx + 3
+        forge o0 = _offn(b, op + i * osz, osz)
+        forge o1 = _offn(b, op + (i + 1) * osz, osz)
+        _il = o1 - o0
+        return op + (n + 1) * osz - 1 + o0
+    }
+
+    vein _idx_end(b: stone, idx: stone) -> stone {
+        forge n = _u16(b, idx)
+        if (n == 0) { return idx + 2 }
+        forge osz = _u8(b, idx + 2)
+        forge op = idx + 3
+        return op + (n + 1) * osz - 1 + _offn(b, op + n * osz, osz)
+    }
+
+    // Procura o operador want (escape 12 x = 1200 + x) num DICT; os
+    // operandos ficam em _dv.
+    vein _dict_find(b: stone, p0: stone, end: stone, want: stone) -> bool {
+        forge p = p0
+        forge ops: Array<stone> = []
+        while (p < end) {
+            forge b0 = _u8(b, p)
+            if (b0 <= 21) {
+                forge op = b0
+                p++
+                if (b0 == 12) {
+                    op = 1200 + _u8(b, p)
+                    p++
+                }
+                if (op == want) {
+                    _dv = ops
+                    return true
+                }
+                ops = []
+            } else if (b0 == 28) {
+                ofs_array_push(ops, _i16(b, p + 1))
+                p = p + 3
+            } else if (b0 == 29) {
+                forge v = _u32(b, p + 1)
+                if (v >= 2147483648) { v = v - 4294967296 }
+                ofs_array_push(ops, v)
+                p = p + 5
+            } else if (b0 == 30) {
+                p++
+                forge more = true
+                while (more && p < end) {
+                    forge c = _u8(b, p)
+                    p++
+                    if ((c & 15) == 15 || (c >> 4) == 15) { more = false }
+                }
+                ofs_array_push(ops, 0)
+            } else if (b0 >= 32 && b0 <= 246) {
+                ofs_array_push(ops, b0 - 139)
+                p++
+            } else if (b0 >= 247 && b0 <= 250) {
+                ofs_array_push(ops, (b0 - 247) * 256 + _u8(b, p + 1) + 108)
+                p = p + 2
+            } else if (b0 >= 251 && b0 <= 254) {
+                ofs_array_push(ops, 0 - (b0 - 251) * 256 - _u8(b, p + 1) - 108)
+                p = p + 2
+            } else {
+                p++
+            }
+        }
+        return false
+    }
+
+    vein _dv_at(i: stone) -> stone {
+        if (i < 0 || i >= ofs_array_len(_dv)) { return 0 }
+        return ofs_array_get(_dv, i)
+    }
+
+    // Subrs locais de um Private DICT (size, offset relativos ao CFF).
+    vein _priv_subrs(b: stone, cff: stone, size: stone, off: stone) -> stone {
+        forge pv = cff + off
+        if (_dict_find(b, pv, pv + size, 19)) { return pv + _dv_at(0) }
+        return -1
+    }
+
+    // Le o CFF e registra CharStrings/subrs da fonte que esta sendo criada.
+    vein _cff_setup(b: stone, cff: stone) -> bool {
+        forge hdr = _u8(b, cff + 2)
+        forge name_idx = cff + hdr
+        forge top_idx = _idx_end(b, name_idx)
+        forge str_idx = _idx_end(b, top_idx)
+        forge gsub = _idx_end(b, str_idx)
+        if (_u16(b, top_idx) < 1) { return false }
+        forge top = _idx_item(b, top_idx, 0)
+        forge top_end = top + _il
+        if (!_dict_find(b, top, top_end, 17)) { return false }
+        forge cs = cff + _dv_at(0)
+        forge base = ofs_array_len(_lsubs)
+        forge fds = -1
+        if (_dict_find(b, top, top_end, 1236)) {
+            forge fda = cff + _dv_at(0)
+            if (_dict_find(b, top, top_end, 1237)) { fds = cff + _dv_at(0) }
+            forge nfd = _u16(b, fda)
+            forge i = 0
+            while (i < nfd) {
+                forge it = _idx_item(b, fda, i)
+                forge ls = -1
+                if (_dict_find(b, it, it + _il, 18)) { ls = _priv_subrs(b, cff, _dv_at(0), _dv_at(1)) }
+                ofs_array_push(_lsubs, ls)
+                i++
+            }
+        } else {
+            forge ls = -1
+            if (_dict_find(b, top, top_end, 18)) { ls = _priv_subrs(b, cff, _dv_at(0), _dv_at(1)) }
+            ofs_array_push(_lsubs, ls)
+        }
+        ofs_array_push(_cs, cs)
+        ofs_array_push(_gsubr, gsub)
+        ofs_array_push(_fdsel, fds)
+        ofs_array_push(_lsub0, base)
+        return true
+    }
+
+    vein _fd_of(b: stone, fds: stone, g: stone) -> stone {
+        if (fds < 0) { return 0 }
+        forge fmt = _u8(b, fds)
+        if (fmt == 0) { return _u8(b, fds + 1 + g) }
+        if (fmt == 3) {
+            forge n = _u16(b, fds + 1)
+            forge lo = 0
+            forge hi = n - 1
+            while (lo < hi) {
+                forge mid = (lo + hi + 1) / 2
+                if (_u16(b, fds + 3 + mid * 3) <= g) {
+                    lo = mid
+                } else {
+                    hi = mid - 1
+                }
+            }
+            return _u8(b, fds + 3 + lo * 3 + 2)
+        }
+        return 0
+    }
+
+    // estado do interpretador de charstrings
+    forge _p_op: Array<stone> = []
+    forge _p_x: Array<stone> = []
+    forge _p_y: Array<stone> = []
+    forge _st: Array<stone> = []
+    forge _sn: stone = 0
+    forge _nst: stone = 0
+    forge _cx: stone = 0
+    forge _cy: stone = 0
+    forge _wdone: bool = false
+    forge _ended: bool = false
+    forge _cb: stone = 0
+    forge _cgs: stone = -1
+    forge _cls: stone = -1
+
+    vein _push(v: stone) -> void {
+        if (_sn < 48) {
+            ofs_array_set(_st, _sn, v)
+            _sn++
+        }
+    }
+    vein _s(i: stone) -> stone { return ofs_array_get(_st, i) }
+
+    vein _pt(op: stone, x: stone, y: stone) -> void {
+        ofs_array_push(_p_op, op)
+        ofs_array_push(_p_x, x)
+        ofs_array_push(_p_y, y)
+    }
+    vein _mv(dx: stone, dy: stone) -> void {
+        _cx = _cx + dx
+        _cy = _cy + dy
+        _pt(0, _cx, _cy)
+    }
+    vein _ln(dx: stone, dy: stone) -> void {
+        _cx = _cx + dx
+        _cy = _cy + dy
+        _pt(1, _cx, _cy)
+    }
+    vein _cv(d1x: stone, d1y: stone, d2x: stone, d2y: stone, d3x: stone, d3y: stone) -> void {
+        forge x1 = _cx + d1x
+        forge y1 = _cy + d1y
+        forge x2 = x1 + d2x
+        forge y2 = y1 + d2y
+        _cx = x2 + d3x
+        _cy = y2 + d3y
+        _pt(2, x1, y1)
+        _pt(2, x2, y2)
+        _pt(2, _cx, _cy)
+    }
+
+    // Largura opcional: o primeiro operador que limpa a pilha pode trazer
+    // um argumento a mais. Devolve o indice do primeiro argumento real.
+    vein _wbase(normal: stone) -> stone {
+        forge r = 0
+        if (!_wdone && _sn > normal) { r = 1 }
+        _wdone = true
+        return r
+    }
+    vein _stems() -> void {
+        forge k = 0
+        if (!_wdone && _sn % 2 == 1) { k = 1 }
+        _wdone = true
+        _nst = _nst + (_sn - k) / 2
+    }
+
+    vein _bias(n: stone) -> stone {
+        if (n < 1240) { return 107 }
+        if (n < 33900) { return 1131 }
+        return 32768
+    }
+
+    vein _cs_run(p0: stone, end: stone, depth: stone) -> void {
+        if (depth > 10) { return }
+        forge b = _cb
+        forge p = p0
+        while (p < end && !_ended) {
+            forge v = _u8(b, p)
+            if (v == 28) {
+                _push(_i16(b, p + 1) * 65536)
+                p = p + 3
+                continue
+            }
+            if (v == 255) {
+                forge f = _u32(b, p + 1)
+                if (f >= 2147483648) { f = f - 4294967296 }
+                _push(f)
+                p = p + 5
+                continue
+            }
+            if (v >= 32) {
+                if (v <= 246) {
+                    _push((v - 139) * 65536)
+                    p++
+                } else if (v <= 250) {
+                    _push(((v - 247) * 256 + _u8(b, p + 1) + 108) * 65536)
+                    p = p + 2
+                } else {
+                    _push((0 - (v - 251) * 256 - _u8(b, p + 1) - 108) * 65536)
+                    p = p + 2
+                }
+                continue
+            }
+            p++
+            if (v == 1 || v == 3 || v == 18 || v == 23) {
+                _stems()
+                _sn = 0
+            } else if (v == 19 || v == 20) {
+                _stems()
+                _sn = 0
+                p = p + (_nst + 7) / 8
+            } else if (v == 21) {
+                forge i = _wbase(2)
+                _mv(_s(i), _s(i + 1))
+                _sn = 0
+            } else if (v == 22) {
+                forge i = _wbase(1)
+                _mv(_s(i), 0)
+                _sn = 0
+            } else if (v == 4) {
+                forge i = _wbase(1)
+                _mv(0, _s(i))
+                _sn = 0
+            } else if (v == 5) {
+                forge i = 0
+                while (i + 1 < _sn) {
+                    _ln(_s(i), _s(i + 1))
+                    i = i + 2
+                }
+                _sn = 0
+            } else if (v == 6 || v == 7) {
+                forge horiz = v == 6
+                forge i = 0
+                while (i < _sn) {
+                    if (horiz) { _ln(_s(i), 0) } else { _ln(0, _s(i)) }
+                    horiz = !horiz
+                    i++
+                }
+                _sn = 0
+            } else if (v == 8) {
+                forge i = 0
+                while (i + 5 < _sn) {
+                    _cv(_s(i), _s(i + 1), _s(i + 2), _s(i + 3), _s(i + 4), _s(i + 5))
+                    i = i + 6
+                }
+                _sn = 0
+            } else if (v == 24) {
+                forge i = 0
+                while (i + 5 < _sn - 2) {
+                    _cv(_s(i), _s(i + 1), _s(i + 2), _s(i + 3), _s(i + 4), _s(i + 5))
+                    i = i + 6
+                }
+                if (i + 1 < _sn) { _ln(_s(i), _s(i + 1)) }
+                _sn = 0
+            } else if (v == 25) {
+                forge i = 0
+                while (i + 1 < _sn - 6) {
+                    _ln(_s(i), _s(i + 1))
+                    i = i + 2
+                }
+                if (i + 5 < _sn) { _cv(_s(i), _s(i + 1), _s(i + 2), _s(i + 3), _s(i + 4), _s(i + 5)) }
+                _sn = 0
+            } else if (v == 26) {
+                forge i = 0
+                forge d1x = 0
+                if (_sn % 2 == 1) {
+                    d1x = _s(0)
+                    i = 1
+                }
+                while (i + 3 < _sn) {
+                    _cv(d1x, _s(i), _s(i + 1), _s(i + 2), 0, _s(i + 3))
+                    d1x = 0
+                    i = i + 4
+                }
+                _sn = 0
+            } else if (v == 27) {
+                forge i = 0
+                forge d1y = 0
+                if (_sn % 2 == 1) {
+                    d1y = _s(0)
+                    i = 1
+                }
+                while (i + 3 < _sn) {
+                    _cv(_s(i), d1y, _s(i + 1), _s(i + 2), _s(i + 3), 0)
+                    d1y = 0
+                    i = i + 4
+                }
+                _sn = 0
+            } else if (v == 30 || v == 31) {
+                forge horiz = v == 31
+                forge i = 0
+                while (i + 3 < _sn) {
+                    forge last = 0
+                    if (i + 5 == _sn) { last = _s(i + 4) }
+                    if (horiz) {
+                        _cv(_s(i), 0, _s(i + 1), _s(i + 2), last, _s(i + 3))
+                    } else {
+                        _cv(0, _s(i), _s(i + 1), _s(i + 2), _s(i + 3), last)
+                    }
+                    horiz = !horiz
+                    i = i + 4
+                }
+                _sn = 0
+            } else if (v == 10 || v == 29) {
+                if (_sn > 0) {
+                    _sn--
+                    forge subs = _cls
+                    if (v == 29) { subs = _cgs }
+                    if (subs >= 0) {
+                        forge n = _u16(b, subs)
+                        forge k = _s(_sn) / 65536 + _bias(n)
+                        if (k >= 0 && k < n) {
+                            forge sp = _idx_item(b, subs, k)
+                            _cs_run(sp, sp + _il, depth + 1)
+                        }
+                    }
+                }
+            } else if (v == 11) {
+                return
+            } else if (v == 14) {
+                _wbase(0)
+                _ended = true
+                _sn = 0
+            } else if (v == 12) {
+                forge e = _u8(b, p)
+                p++
+                if (e == 35 && _sn >= 12) {
+                    _cv(_s(0), _s(1), _s(2), _s(3), _s(4), _s(5))
+                    _cv(_s(6), _s(7), _s(8), _s(9), _s(10), _s(11))
+                } else if (e == 34 && _sn >= 7) {
+                    _cv(_s(0), 0, _s(1), _s(2), _s(3), 0)
+                    _cv(_s(4), 0, _s(5), 0 - _s(2), _s(6), 0)
+                } else if (e == 36 && _sn >= 9) {
+                    _cv(_s(0), _s(1), _s(2), _s(3), _s(4), 0)
+                    _cv(_s(5), 0, _s(6), _s(7), _s(8), 0 - (_s(1) + _s(3) + _s(7)))
+                } else if (e == 37 && _sn >= 11) {
+                    forge dx = _s(0) + _s(2) + _s(4) + _s(6) + _s(8)
+                    forge dy = _s(1) + _s(3) + _s(5) + _s(7) + _s(9)
+                    forge ax = dx
+                    if (ax < 0) { ax = 0 - ax }
+                    forge ay = dy
+                    if (ay < 0) { ay = 0 - ay }
+                    _cv(_s(0), _s(1), _s(2), _s(3), _s(4), _s(5))
+                    if (ax > ay) {
+                        _cv(_s(6), _s(7), _s(8), _s(9), _s(10), 0 - dy)
+                    } else {
+                        _cv(_s(6), _s(7), _s(8), _s(9), 0 - dx, _s(10))
+                    }
+                }
+                _sn = 0
+            } else {
+                _sn = 0
+            }
+        }
+    }
+
+    // Interpreta o glifo g de uma fonte CFF; devolve o numero de pontos.
+    vein _cff_path(font: stone, g: stone) -> stone {
+        _p_op = []
+        _p_x = []
+        _p_y = []
+        if (ofs_array_len(_st) < 48) {
+            _st = []
+            forge k = 0
+            while (k < 48) {
+                ofs_array_push(_st, 0)
+                k++
+            }
+        }
+        forge b = _get(_base, font)
+        forge cs = _get(_cs, font)
+        if (g < 0 || g >= _u16(b, cs)) { return 0 }
+        _cb = b
+        _cgs = _get(_gsubr, font)
+        _cls = ofs_array_get(_lsubs, _get(_lsub0, font) + _fd_of(b, _get(_fdsel, font), g))
+        _sn = 0
+        _nst = 0
+        _cx = 0
+        _cy = 0
+        _wdone = false
+        _ended = false
+        forge p = _idx_item(b, cs, g)
+        _cs_run(p, p + _il, 0)
+        return ofs_array_len(_p_op)
+    }
+
+    vein _fx(v: stone, o: crystal, s: crystal) -> crystal {
+        return o + ((v as crystal) / 65536.0) * s
+    }
+    vein _fy(v: stone, o: crystal, s: crystal) -> crystal {
+        return o - ((v as crystal) / 65536.0) * s
+    }
+
+    // Emite o contorno em _p_* (ja interpretado) no rasterizador.
+    vein _emit_cff(ox: crystal, oy: crystal, s: crystal) -> void {
+        forge n = ofs_array_len(_p_op)
+        forge i = 0
+        forge open = false
+        while (i < n) {
+            forge op = ofs_array_get(_p_op, i)
+            forge x = _fx(ofs_array_get(_p_x, i), ox, s)
+            forge y = _fy(ofs_array_get(_p_y, i), oy, s)
+            if (op == 0) {
+                if (open) { raster.close() }
+                raster.move_to(x, y)
+                open = true
+                i++
+            } else if (op == 1) {
+                raster.line_to(x, y)
+                i++
+            } else {
+                if (i + 2 >= n) { break }
+                raster.cubic_to(x, y, _fx(ofs_array_get(_p_x, i + 1), ox, s), _fy(ofs_array_get(_p_y, i + 1), oy, s), _fx(ofs_array_get(_p_x, i + 2), ox, s), _fy(ofs_array_get(_p_y, i + 2), oy, s))
+                i = i + 3
+            }
+        }
+        if (open) { raster.close() }
+    }
+
     // ── Cache de glifos rasterizados ─────────────────────────────────────
     vein _pool_reserve(n: stone) -> stone {
         if (_pool_len + n > _pool_cap) {
@@ -511,11 +1161,28 @@ namespace ttf {
         return at
     }
 
+    // Limite do cache de glifos rasterizados, em pixels (8 bytes cada).
+    forge pool_limit: stone = 4000000
+
+    // Esquece todos os glifos rasterizados (o espaco e reaproveitado).
+    vein clear_cache() -> void {
+        if (_cache < 0) { return }
+        hashmap.clear(_cache)
+        _e_off = []
+        _e_w = []
+        _e_h = []
+        _e_left = []
+        _e_top = []
+        _pool_len = 0
+    }
+
     // Retorna o indice da entrada de cache (rasteriza se necessario).
     vein _entry(font: stone, g: stone, size: stone, sub: stone) -> stone {
         forge key = ((font * 65536 + g) * 256 + size) * 4 + sub
         forge hit = hashmap.get(_cache, key, -1)
         if (hit >= 0) { return hit }
+        // texto CJK tem milhares de glifos: passou do limite, recomeca o cache
+        if (_pool_len > pool_limit) { clear_cache() }
 
         forge b = _get(_base, font)
         forge s = (size as crystal) / (_get(_upem, font) as crystal)
@@ -525,7 +1192,36 @@ namespace ttf {
         forge left = 0
         forge top = 0
         forge off = 0
-        if (_glyph_len(font, g) > 0) {
+        if (_get(_kind, font) == 1) {
+            if (_cff_path(font, g) > 0) {
+                forge minx = ofs_array_get(_p_x, 0)
+                forge maxx = minx
+                forge miny = ofs_array_get(_p_y, 0)
+                forge maxy = miny
+                forge q = 1
+                while (q < ofs_array_len(_p_op)) {
+                    forge vx = ofs_array_get(_p_x, q)
+                    forge vy = ofs_array_get(_p_y, q)
+                    if (vx < minx) { minx = vx }
+                    if (vx > maxx) { maxx = vx }
+                    if (vy < miny) { miny = vy }
+                    if (vy > maxy) { maxy = vy }
+                    q++
+                }
+                forge cx0 = raster.floor_i(_fx(minx, subx, s))
+                forge cx1 = raster.ceil_i(_fx(maxx, subx, s))
+                forge cy0 = raster.floor_i(0.0 - _fx(maxy, 0.0, s))
+                forge cy1 = raster.ceil_i(0.0 - _fx(miny, 0.0, s))
+                w = cx1 - cx0 + 2
+                h = cy1 - cy0 + 2
+                left = cx0 - 1
+                top = cy0 - 1
+                off = _pool_reserve(w * h)
+                raster.begin(0, 0, w, h)
+                _emit_cff((1 - cx0) as crystal + subx, (1 - cy0) as crystal, s)
+                raster.to_alpha(fault_step(_pool, off), stem_darkening)
+            }
+        } else if (_glyph_len(font, g) > 0) {
             forge gp = _get(_glyf, font) + _glyph_offset(font, g)
             forge xmin = (_i16(b, gp + 2) as crystal) * s + subx
             forge ymin = (_i16(b, gp + 4) as crystal) * s
@@ -616,7 +1312,8 @@ namespace ttf {
         while (i < n) {
             forge cp = decode(text, i, n)
             i = i + _u8_len
-            pen = pen + advance64(font, glyph_index(font, cp), size)
+            forge g = _resolve(font, cp)
+            pen = pen + advance64(_rf, g, size)
         }
         return pen
     }
@@ -634,13 +1331,14 @@ namespace ttf {
         while (i < n) {
             forge cp = decode(text, i, n)
             i = i + _u8_len
-            forge g = glyph_index(font, cp)
+            forge g = _resolve(font, cp)
+            forge gf = _rf
             forge ix = pen / 64
             forge sub = ((pen - ix * 64) * 4) / 64
             if (cp != 32) {
-                _blit(cv, _entry(font, g, size, sub), ix, y, color)
+                _blit(cv, _entry(gf, g, size, sub), ix, y, color)
             }
-            pen = pen + advance64(font, g, size)
+            pen = pen + advance64(gf, g, size)
         }
         return (pen + 63) / 64 - x
     }
@@ -657,7 +1355,8 @@ namespace ttf {
         forge cut = 0
         while (i < n) {
             forge cp = decode(text, i, n)
-            forge adv = advance64(font, glyph_index(font, cp), size)
+            forge gg = _resolve(font, cp)
+            forge adv = advance64(_rf, gg, size)
             if (pen + adv > limit) { break }
             pen = pen + adv
             i = i + _u8_len
@@ -670,5 +1369,106 @@ namespace ttf {
     vein draw_centered(cv: Canvas, font: stone, size: stone, x: stone, w: stone, y: stone, text: obsidian, color: stone) -> void {
         forge tw = width(font, size, text)
         draw(cv, font, size, x + (w - tw) / 2, y, text, color)
+    }
+
+    // ── texto em varias linhas ───────────────────────────────────────────
+    // Quebra o texto em linhas de no maximo max_w px: quebra nos espacos,
+    // respeita "\n" e corta palavras maiores que a linha. Sem espacos (ex.:
+    // japones) quebra em qualquer caractere.
+    vein wrap(font: stone, size: stone, text: obsidian, max_w: stone) -> Array<obsidian> {
+        forge out: Array<obsidian> = []
+        forge n = ofs_str_len(text)
+        if (n == 0 || font < 0) {
+            ofs_array_push(out, text)
+            return out
+        }
+        forge limit = max_w * 64
+        forge start = 0          // inicio da linha atual (byte)
+        forge last_sp = -1       // ultimo espaco na linha (byte)
+        forge pen = 0
+        forge pen_at_sp = 0
+        forge i = 0
+        while (i < n) {
+            forge cp = decode(text, i, n)
+            forge len = _u8_len
+            if (cp == 10) {
+                ofs_array_push(out, ofs_str_substr(text, start, i - start))
+                i = i + len
+                start = i
+                last_sp = -1
+                pen = 0
+                continue
+            }
+            forge gw = _resolve(font, cp)
+            forge adv = advance64(_rf, gw, size)
+            if (cp == 32) {
+                last_sp = i
+                pen_at_sp = pen + adv
+            }
+            if (pen + adv > limit && i > start && cp != 32) {
+                if (last_sp > start) {
+                    ofs_array_push(out, ofs_str_substr(text, start, last_sp - start))
+                    start = last_sp + 1
+                    pen = pen - pen_at_sp
+                } else {
+                    ofs_array_push(out, ofs_str_substr(text, start, i - start))
+                    start = i
+                    pen = 0
+                }
+                last_sp = -1
+            }
+            pen = pen + adv
+            i = i + len
+        }
+        ofs_array_push(out, ofs_str_substr(text, start, n - start))
+        return out
+    }
+
+    // Numero de codepoints (caracteres) do texto.
+    vein chars(text: obsidian) -> stone {
+        forge n = ofs_str_len(text)
+        forge i = 0
+        forge c = 0
+        while (i < n) {
+            decode(text, i, n)
+            i = i + _u8_len
+            c++
+        }
+        return c
+    }
+
+    // Prefixo com os primeiros k caracteres (efeito maquina de escrever).
+    vein prefix(text: obsidian, k: stone) -> obsidian {
+        forge n = ofs_str_len(text)
+        forge i = 0
+        forge c = 0
+        while (i < n && c < k) {
+            decode(text, i, n)
+            i = i + _u8_len
+            c++
+        }
+        return ofs_str_substr(text, 0, i)
+    }
+
+    // Desenha o texto quebrado em linhas a partir do topo y (line_h px por
+    // linha). max_chars < 0 = tudo; senao so os primeiros max_chars caracteres.
+    // Devolve o numero de linhas.
+    vein draw_wrapped(cv: Canvas, font: stone, size: stone, x: stone, y: stone, max_w: stone, line_h: stone, text: obsidian, color: stone, max_chars: stone) -> stone {
+        forge lines = wrap(font, size, text, max_w)
+        forge asc = ascent(font, size)
+        forge left = max_chars
+        forge k = 0
+        while (k < ofs_array_len(lines)) {
+            forge ln: obsidian = ofs_array_get(lines, k)
+            if (max_chars >= 0) {
+                if (left <= 0) { return ofs_array_len(lines) }
+                forge lc = chars(ln)
+                if (lc > left) { ln = prefix(ln, left) }
+                left = left - lc - 1
+            }
+            draw(cv, font, size, x, y + asc + k * line_h, ln, color)
+            k++
+        }
+        return ofs_array_len(lines)
     }
 }

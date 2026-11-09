@@ -1,0 +1,16 @@
+// extern da libc: calloc/free/strlen.
+rift vein c_calloc(n: stone, size: stone) -> *stone bind "calloc" abi c
+rift vein c_free(p: *stone) -> void bind "free" abi c
+rift vein c_strlen(s: obsidian) -> stone bind "strlen" abi c
+
+core main() {
+    forge p: *stone = c_calloc(4, 8)
+    forge z = 99
+    fracture { z = *p }
+    echo(z)
+    fracture { *p = 7 }
+    fracture { z = *p }
+    echo(z)
+    echo(c_strlen("ofs-parity"))
+    c_free(p)
+}

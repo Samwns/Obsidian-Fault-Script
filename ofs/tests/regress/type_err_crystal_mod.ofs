@@ -1,0 +1,6 @@
+// F3: '%' so vale para inteiros (o nativo emitia fadd em silencio)
+core main() {
+    forge c: crystal = 7.5
+    echo(c % 2)
+    echo("nao chega aqui")
+}

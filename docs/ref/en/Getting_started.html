@@ -16,7 +16,7 @@
 <li class="tl3"><a href="#s8.2">Loops (<code>while</code>)</a></li>
 <li class="tl3"><a href="#s8.3">Multi-Branch Selection</a></li>
 <li class="tl3"><a href="#s8.4">Error Handling and Abort (<code>throw</code>)</a></li>
-<li class="tl2"><a href="#s9">9. Native Interoperability (<code>rift</code> / <code>extern vein</code>)</a></li>
+<li class="tl2"><a href="#s9">9. The Rift: native system libraries (<code>rift</code> / <code>extern vein</code>)</a></li>
 <li class="tl2"><a href="#s10">10. Web Stack: ODL and OES</a></li>
 <li class="tl3"><a href="#s10.1">ODL (Obsidian Document Language)</a></li>
 <li class="tl3"><a href="#s10.2">OES (Obsidian Effect Scripts)</a></li>
@@ -218,13 +218,15 @@ core main() {
 </code></pre>
 <blockquote><p><strong>Note</strong>: The <code>tremor { ... } catch (...) { ... }</code> block structure is modeled in the grammar (<code>NK_TREMOR</code>), with non-terminating stack unwinding planned for the upcoming interpreter and runtime stages. </p>
 </blockquote>
-<h2 id="s9">9. Native Interoperability (<code>rift</code> / <code>extern vein</code>)</h2>
-<p>External C symbols can be bound directly: </p>
+<h2 id="s9">9. The Rift: native system libraries (<code>rift</code> / <code>extern vein</code>)</h2>
+<p>The <strong>Rift</strong> is the boundary through which OFS reaches native system libraries (libc, libm, X11, Android JNI, kernel32). <code>rift vein</code> and <code>extern vein</code> declare a function that lives in a native library, called through the system calling convention. There is no C code in OFS: the compiler and the runtime are written in OFS. </p>
+<blockquote><p>The system calling convention is known technically as the C ABI (<code>abi c</code>); it does not involve C code. </p>
+</blockquote>
 <pre><code>extern vein puts(s: obsidian) -&gt; stone
 rift vein strlen(s: obsidian) -&gt; stone bind &quot;strlen&quot; abi c
 
 core main() {
-    puts(&quot;Message dispatched via C puts&quot;)
+    puts(&quot;Message dispatched via libc puts&quot;)
 }
 </code></pre>
 <h2 id="s10">10. Web Stack: ODL and OES</h2>

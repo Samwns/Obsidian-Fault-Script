@@ -1,0 +1,165 @@
+// OFS Standard Library — android_input: entrada de texto pelo teclado do sistema (Gboard etc.), 100% OFS (JNI)
+//
+//   attach {F:android_input.ofs}
+//   ainput.open("Titulo", "texto inicial", false)  // false se falhar (last_error)
+//   ainput.poll()      // 1x por quadro: 0 aberto, 1 confirmado (OK), 2 cancelado (voltar/fora)
+//   ainput.text()      // texto atual do EditText (valido enquanto aberto e depois de poll() != 0)
+//   ainput.close()     // fecha o Dialog (poll() != 0 ja fecha sozinho)
+//
+// Um android.app.Dialog com um EditText nativo: cursor, selecao, colar, autocompletar e o
+// teclado padrao do aparelho funcionam sem nenhuma classe Java propria. Nao ha listeners:
+//  - os botoes sao ToggleButton, que alternam o proprio estado ao toque; poll() le isChecked();
+//  - voltar / tocar fora fecha o Dialog (cancelable) e poll() percebe por isShowing().
+// So na thread principal (callbacks do android.ofs), como o android_webview.
+
+attach {F:android.ofs}
+
+namespace ainput {
+    forge _dlg: stone = 0
+    forge _et: stone = 0
+    forge _ok: stone = 0
+    forge _no: stone = 0
+    forge _text: obsidian = ""
+    forge last_error: obsidian = ""
+    forge ok_label: obsidian = "OK"
+    forge cancel_label: obsidian = "Cancelar"
+
+    vein is_open() -> bool { return _dlg != 0 }
+
+    vein _btn(label: obsidian) -> stone {
+        forge tb = android.jni_new("android/widget/ToggleButton", "(Landroid/content/Context;)V", android.jni_activity(), 0, 0, 0)
+        if (tb == 0) { return 0 }
+        forge s = android.jni_string(label)
+        android.jni_call(tb, "setTextOn", "(Ljava/lang/CharSequence;)V", s, 0, 0, 0, 0, 0)
+        android.jni_call(tb, "setTextOff", "(Ljava/lang/CharSequence;)V", s, 0, 0, 0, 0, 0)
+        android.jni_call(tb, "setChecked", "(Z)V", 1, 0, 0, 0, 0, 0)
+        android.jni_call(tb, "setChecked", "(Z)V", 0, 0, 0, 0, 0, 0)
+        android.jni_delete(s)
+        return tb
+    }
+
+    // Abre o Dialog com o teclado. multiline: Enter insere nova linha.
+    vein open(title: obsidian, text: obsidian, multiline: bool) -> bool {
+        last_error = ""
+        if (_dlg != 0) { close() }
+        forge act = android.jni_activity()
+        if (act == 0) { last_error = "sem activity"; return false }
+        forge et = android.jni_new("android/widget/EditText", "(Landroid/content/Context;)V", act, 0, 0, 0)
+        if (et == 0) { last_error = "EditText indisponivel"; return false }
+        forge jt = android.jni_string(text)
+        android.jni_call(et, "setText", "(Ljava/lang/CharSequence;)V", jt, 0, 0, 0, 0, 0)
+        android.jni_delete(jt)
+        // TYPE_CLASS_TEXT(1) | TYPE_TEXT_VARIATION_URI(16) nao: texto livre; multilinha = 131072
+        if (multiline) {
+            android.jni_call(et, "setInputType", "(I)V", 1 | 131072, 0, 0, 0, 0, 0)
+            android.jni_call(et, "setMinLines", "(I)V", 4, 0, 0, 0, 0, 0)
+        } else {
+            android.jni_call(et, "setInputType", "(I)V", 1 | 16, 0, 0, 0, 0, 0)
+            android.jni_call(et, "setSingleLine", "(Z)V", 1, 0, 0, 0, 0, 0)
+        }
+        forge len = android.jni_call(et, "length", "()I", 0, 0, 0, 0, 0, 0)
+        android.jni_call(et, "setSelection", "(I)V", len, 0, 0, 0, 0, 0)
+
+        forge ok = _btn(ok_label)
+        forge no = _btn(cancel_label)
+        forge row = android.jni_new("android/widget/LinearLayout", "(Landroid/content/Context;)V", act, 0, 0, 0)
+        forge col = android.jni_new("android/widget/LinearLayout", "(Landroid/content/Context;)V", act, 0, 0, 0)
+        if (ok == 0 || no == 0 || row == 0 || col == 0) { last_error = "layout indisponivel"; return false }
+        android.jni_call(row, "setOrientation", "(I)V", 0, 0, 0, 0, 0, 0)
+        android.jni_call(row, "setGravity", "(I)V", 5, 0, 0, 0, 0, 0)
+        android.jni_call(row, "addView", "(Landroid/view/View;)V", no, 0, 0, 0, 0, 0)
+        android.jni_call(row, "addView", "(Landroid/view/View;)V", ok, 0, 0, 0, 0, 0)
+        android.jni_call(col, "setOrientation", "(I)V", 1, 0, 0, 0, 0, 0)
+        android.jni_call(col, "setPadding", "(IIII)V", 40, 24, 40, 16, 0, 0)
+        android.jni_call(col, "addView", "(Landroid/view/View;)V", et, 0, 0, 0, 0, 0)
+        android.jni_call(col, "addView", "(Landroid/view/View;)V", row, 0, 0, 0, 0, 0)
+
+        forge theme = android.jni_static_int_field("android/R$style", "Theme_DeviceDefault_Dialog")
+        forge dlg = android.jni_new("android/app/Dialog", "(Landroid/content/Context;I)V", act, theme, 0, 0)
+        if (dlg == 0) { last_error = "Dialog indisponivel"; return false }
+        forge jtt = android.jni_string(title)
+        android.jni_call(dlg, "setTitle", "(Ljava/lang/CharSequence;)V", jtt, 0, 0, 0, 0, 0)
+        android.jni_delete(jtt)
+        android.jni_call(dlg, "setContentView", "(Landroid/view/View;)V", col, 0, 0, 0, 0, 0)
+        android.jni_call(dlg, "setCancelable", "(Z)V", 1, 0, 0, 0, 0, 0)
+        forge win = android.jni_call(dlg, "getWindow", "()Landroid/view/Window;", 0, 0, 0, 0, 0, 0)
+        if (win != 0) {
+            // largura total; teclado visivel e janela sobe com ele (ADJUST_RESIZE 16 | STATE_VISIBLE 4)
+            android.jni_call(win, "setLayout", "(II)V", -1, -2, 0, 0, 0, 0)
+            android.jni_call(win, "setSoftInputMode", "(I)V", 16 | 4, 0, 0, 0, 0, 0)
+            android.jni_delete(win)
+        }
+        _et = android.jni_global(et)
+        _ok = android.jni_global(ok)
+        _no = android.jni_global(no)
+        _dlg = android.jni_global(dlg)
+        android.jni_delete(et)
+        android.jni_delete(ok)
+        android.jni_delete(no)
+        android.jni_delete(row)
+        android.jni_delete(col)
+        android.jni_delete(dlg)
+        _text = text
+        android.jni_call(_dlg, "show", "()V", 0, 0, 0, 0, 0, 0)
+        if (android.jni_failed) {
+            last_error = "show falhou"
+            close()
+            return false
+        }
+        android.jni_call(_et, "requestFocus", "()Z", 0, 0, 0, 0, 0, 0)
+        // abre o teclado mesmo que o STATE_VISIBLE seja ignorado
+        forge svc = android.jni_call(act, "getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;", android.jni_string("input_method"), 0, 0, 0, 0, 0)
+        if (svc != 0) {
+            android.jni_call(svc, "showSoftInput", "(Landroid/view/View;I)Z", _et, 1, 0, 0, 0, 0)
+            android.jni_delete(svc)
+        }
+        return true
+    }
+
+    // texto atual do campo
+    vein text() -> obsidian {
+        if (_et == 0) { return _text }
+        forge ed = android.jni_call(_et, "getText", "()Landroid/text/Editable;", 0, 0, 0, 0, 0, 0)
+        if (ed == 0) { return _text }
+        forge js = android.jni_call(ed, "toString", "()Ljava/lang/String;", 0, 0, 0, 0, 0, 0)
+        android.jni_delete(ed)
+        if (js == 0) { return _text }
+        _text = android.jni_to_text(js)
+        android.jni_delete(js)
+        return _text
+    }
+
+    // 0 aberto, 1 confirmado, 2 cancelado. Ao terminar, guarda o texto e fecha o Dialog.
+    vein poll() -> stone {
+        if (_dlg == 0) { return 2 }
+        forge r = 0
+        if (android.jni_call(_ok, "isChecked", "()Z", 0, 0, 0, 0, 0, 0) != 0) {
+            r = 1
+        } else if (android.jni_call(_no, "isChecked", "()Z", 0, 0, 0, 0, 0, 0) != 0) {
+            r = 2
+        } else if (android.jni_call(_dlg, "isShowing", "()Z", 0, 0, 0, 0, 0, 0) == 0) {
+            r = 2
+        }
+        if (r == 0) {
+            text()
+            return 0
+        }
+        text()
+        close()
+        return r
+    }
+
+    vein close() -> void {
+        if (_dlg != 0) {
+            android.jni_call(_dlg, "dismiss", "()V", 0, 0, 0, 0, 0, 0)
+        }
+        android.jni_delete_global(_et)
+        android.jni_delete_global(_ok)
+        android.jni_delete_global(_no)
+        android.jni_delete_global(_dlg)
+        _et = 0
+        _ok = 0
+        _no = 0
+        _dlg = 0
+    }
+}

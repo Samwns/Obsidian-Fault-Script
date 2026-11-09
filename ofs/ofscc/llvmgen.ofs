@@ -3,6 +3,19 @@
 attach {F:fileio.ofs}
 attach {F:ast.ofs}
 
+// Layout do buffer dos trampolins FFI (ver emit_ffi_dispatch); o
+// interpretador usa as mesmas constantes.
+forge FFI_MAX_ARGS: stone = 12
+forge FFI_SLOT_F: stone = 12
+forge FFI_SLOT_RET: stone = 18
+forge FFI_SLOT_ST: stone = 19
+forge FFI_BUF_BYTES: stone = 160
+// Trampolins de callback (F2): `fault_addr` de uma vein interpretada vira o
+// endereco de um destes; cada um repassa ate FFI_CB_ARGS inteiros/ponteiros
+// para __ofs_cb_enter (ver emit_cb_trampolines).
+forge FFI_CB_SLOTS: stone = 16
+forge FFI_CB_ARGS: stone = 6
+
 namespace llvmgen {
     forge _tmp_counter: stone = 0
     forge _label_counter: stone = 0
@@ -29,6 +42,8 @@ namespace llvmgen {
     forge _mono_names: Array<obsidian> = []
     forge _variant_names: Array<obsidian> = []
     forge _variant_tags: Array<stone> = []
+    // tipos `strata` (valor = etiqueta i64, como as variantes)
+    forge _strata_names: Array<obsidian> = []
     forge _field_owners: Array<obsidian> = []
     forge _field_names: Array<obsidian> = []
     forge _field_types: Array<obsidian> = []
@@ -89,10 +104,22 @@ namespace llvmgen {
         return false
     }
 
+    vein is_strata_type(type_str: obsidian) -> bool {
+        forge i = 0
+        while (i < ofs_array_len(_strata_names)) {
+            forge name: obsidian = ofs_array_get(_strata_names, i)
+            if (ofs_str_eq(name, type_str)) { return true }
+            i++
+        }
+        return false
+    }
+
     vein llvm_type(type_str: obsidian) -> obsidian {
         if (ofs_str_char_at(type_str, 0) == 42) { return "ptr" }
         if (ofs_str_eq(type_str, "variant")) { return "i64" }
         if (is_named_type(type_str)) { return "ptr" }
+        // antes caia no "ptr" final: `forge c: Cor = Verde` gerava IR invalido
+        if (is_strata_type(type_str)) { return "i64" }
         if (ofs_str_eq(type_str, "stone")) { return "i64" }
         if (ofs_str_eq(type_str, "crystal")) { return "double" }
         if (ofs_str_eq(type_str, "obsidian")) { return "ptr" }
@@ -142,25 +169,78 @@ namespace llvmgen {
         return offset + align - remainder
     }
 
-    vein monolith_alloc_size(owner: obsidian) -> stone {
+    // Layout C de um monolith: FONTE UNICA para o codigo nativo (tamanho do
+    // ofs_alloc; o `%T = type {...}` do LLVM da os mesmos offsets) e para o
+    // interpretador, que guarda monoliths em memoria crua com este layout
+    // (passar `&s` ou `s` ao C funciona igual nos dois modos). Campos na
+    // ordem declarada, cada um alinhado ao proprio tamanho (maximo 8); o
+    // tamanho final e arredondado ao maior alinhamento. `offsets` recebe o
+    // offset de cada campo; devolve o tamanho (struct vazia ocupa 1 byte).
+    vein struct_layout(field_types: Array<obsidian>, offsets: Array<stone>) -> stone {
         forge offset = 0
         forge max_align = 1
         forge i = 0
-        while (i < ofs_array_len(_field_names)) {
-            forge field_owner: obsidian = ofs_array_get(_field_owners, i)
-            if (ofs_str_eq(field_owner, owner)) {
-                forge field_t: obsidian = ofs_array_get(_field_types, i)
-                forge field_align = type_storage_align(field_t)
-                offset = align_storage(offset, field_align)
-                offset = offset + type_storage_size(field_t)
-                if (field_align > max_align) { max_align = field_align }
-            }
+        while (i < ofs_array_len(field_types)) {
+            forge field_t: obsidian = ofs_array_get(field_types, i)
+            forge field_align = type_storage_align(field_t)
+            offset = align_storage(offset, field_align)
+            ofs_array_push(offsets, offset)
+            offset = offset + type_storage_size(field_t)
+            if (field_align > max_align) { max_align = field_align }
             i++
         }
         offset = align_storage(offset, max_align)
         // LLVM represents an empty struct with a non-zero addressable object.
         if (offset < 1) { return 1 }
         return offset
+    }
+
+    vein monolith_alloc_size(owner: obsidian) -> stone {
+        forge types: Array<obsidian> = []
+        forge offsets: Array<stone> = []
+        forge i = 0
+        while (i < ofs_array_len(_field_names)) {
+            forge field_owner: obsidian = ofs_array_get(_field_owners, i)
+            if (ofs_str_eq(field_owner, owner)) {
+                forge field_t: obsidian = ofs_array_get(_field_types, i)
+                ofs_array_push(types, field_t)
+            }
+            i++
+        }
+        return struct_layout(types, offsets)
+    }
+
+    // Campos monolith de um objeto novo (sem inicializador) recebem um
+    // sub-objeto zerado, ate 8 niveis: a mesma regra do interpretador
+    // (interpreter.obj_new). O campo ocupa 8 bytes (ponteiro).
+    vein emit_init_nested(obj: obsidian, t: obsidian, depth: stone) -> void {
+        if (depth >= 8) { return }
+        forge i = 0
+        while (i < ofs_array_len(_field_names)) {
+            forge owner: obsidian = ofs_array_get(_field_owners, i)
+            if (ofs_str_eq(owner, t)) {
+                forge ft: obsidian = ofs_array_get(_field_types, i)
+                if (is_named_type(ft)) {
+                    forge fname: obsidian = ofs_array_get(_field_names, i)
+                    forge fptr = next_tmp("nest_ptr")
+                    forge sub = next_tmp("nest_obj")
+                    cg_emit("  " + sub + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(monolith_alloc_size(ft)) + ")")
+                    emit_init_nested(sub, ft, depth + 1)
+                    cg_emit("  " + fptr + " = getelementptr inbounds %" + t + ", ptr " + obj + ", i32 0, i32 " + ofs_stone_to_obsidian(field_index(t, fname)))
+                    cg_emit("  store ptr " + sub + ", ptr " + fptr)
+                }
+            }
+            i++
+        }
+    }
+
+    // inteiro estreito com sinal: estende com sext (os outros com zext)
+    vein is_signed_narrow(t: obsidian) -> bool {
+        return ofs_str_eq(t, "i8") || ofs_str_eq(t, "i16") || ofs_str_eq(t, "i32")
+    }
+
+    vein is_unsigned_narrow(t: obsidian) -> bool {
+        return ofs_str_eq(t, "u8") || ofs_str_eq(t, "u16") || ofs_str_eq(t, "u32") || ofs_str_eq(t, "bool")
     }
 
     vein int_bitwidth(t: obsidian) -> stone {
@@ -215,6 +295,7 @@ namespace llvmgen {
         if (id < 0) { return }
         forge n: Node = node_get(id)
         if (n.kind == NK_STRATA) {
+            ofs_array_push(_strata_names, n.val)
             // register variants as stone (i64 tag) globals with unique tags
             forge vi = 0
             while (vi < node_extra_len(id)) {
@@ -332,7 +413,12 @@ namespace llvmgen {
             i--
             forge depth: stone = ofs_array_get(_anchor_depths, i)
             if (depth >= min_depth) {
-                emit_stmt(ofs_array_get(_anchor_nodes, i))
+                forge aid: stone = ofs_array_get(_anchor_nodes, i)
+                if (aid <= -2) {
+                    if (!_terminated) { emit_scope_free(-2 - aid) }
+                } else {
+                    emit_stmt(aid)
+                }
             }
         }
     }
@@ -415,6 +501,89 @@ namespace llvmgen {
             i--
         }
         return -1
+    }
+
+    // `Crack`/`Barren` sao as variantes de falha (mesma regra do interpretador)
+    vein is_fail_variant(name: obsidian) -> bool {
+        return ofs_str_eq(name, "Crack") || ofs_str_eq(name, "Barren")
+    }
+
+    // `?` falhou: roda os anchors e sai da vein devolvendo a etiqueta (i64)
+    // da variante de falha, convertida para o tipo de retorno.
+    vein emit_try_return(tag: obsidian) -> void {
+        if (ofs_str_eq(_current_ret_type, "void")) {
+            emit_anchors_from_depth(0)
+            cg_emit("  ret void")
+            return
+        }
+        if (ofs_str_eq(_current_ret_type, "main")) {
+            forge tr32 = next_tmp("try_rc")
+            cg_emit("  " + tr32 + " = trunc i64 " + tag + " to i32")
+            emit_anchors_from_depth(0)
+            cg_emit("  ret i32 " + tr32)
+            return
+        }
+        forge tv = coerce_for_store(tag, "stone", _current_ret_type)
+        emit_anchors_from_depth(0)
+        cg_emit("  ret " + llvm_type(_current_ret_type) + " " + tv)
+    }
+
+    // `expr?`. Variantes no nativo sao etiquetas i64 sem payload, entao:
+    //   Solid(v)? / Ore(v)?   (construtor direto) -> v
+    //   Crack(e)? / Barren?   (construtor direto) -> retorna a etiqueta
+    //   outra expressao       -> se a etiqueta for de falha, retorna-a;
+    //                            senao o valor e a propria etiqueta
+    vein emit_try(op_id: stone) -> void {
+        forge op: Node = node_get(op_id)
+        forge otag = -1
+        if (op.kind == NK_CALL || op.kind == NK_IDENT) { otag = variant_tag(op.val) }
+        if (otag >= 0) {
+            forge has_payload = op.kind == NK_CALL && node_extra_len(op_id) > 0
+            if (is_fail_variant(op.val)) {
+                if (has_payload) { emit_expr(node_get_extra(op_id, 0)) }
+                emit_try_return(ofs_stone_to_obsidian(otag))
+                cg_emit(next_label("try_dead") + ":")
+                _expr_val = "0"
+                _expr_type = "stone"
+                return
+            }
+            if (has_payload) {
+                emit_expr(node_get_extra(op_id, 0))
+                return
+            }
+            _expr_val = ofs_stone_to_obsidian(otag)
+            _expr_type = "stone"
+            return
+        }
+        emit_expr(op_id)
+        forge tval = coerce_for_store(_expr_val, _expr_type, "stone")
+        forge tcond = ""
+        forge vi = 0
+        while (vi < ofs_array_len(_variant_names)) {
+            forge vn: obsidian = ofs_array_get(_variant_names, vi)
+            if (is_fail_variant(vn)) {
+                forge vt: stone = ofs_array_get(_variant_tags, vi)
+                forge tc = next_tmp("try_is_fail")
+                cg_emit("  " + tc + " = icmp eq i64 " + tval + ", " + ofs_stone_to_obsidian(vt))
+                if (ofs_str_len(tcond) > 0) {
+                    forge tor = next_tmp("try_or")
+                    cg_emit("  " + tor + " = or i1 " + tcond + ", " + tc)
+                    tc = tor
+                }
+                tcond = tc
+            }
+            vi++
+        }
+        if (ofs_str_len(tcond) > 0) {
+            forge lfail = next_label("try_fail")
+            forge lok = next_label("try_ok")
+            cg_emit("  br i1 " + tcond + ", label %" + lfail + ", label %" + lok)
+            cg_emit(lfail + ":")
+            emit_try_return(tval)
+            cg_emit(lok + ":")
+        }
+        _expr_val = tval
+        _expr_type = "stone"
     }
 
     vein variant_tag(name: obsidian) -> stone {
@@ -513,6 +682,8 @@ namespace llvmgen {
                 forge cast_int = next_tmp("cast")
                 if (src_b > dst_b) {
                     cg_emit("  " + cast_int + " = trunc " + from_llvm + " " + value + " to " + to_llvm)
+                } else if (is_signed_narrow(from_type)) {
+                    cg_emit("  " + cast_int + " = sext " + from_llvm + " " + value + " to " + to_llvm)
                 } else {
                     cg_emit("  " + cast_int + " = zext " + from_llvm + " " + value + " to " + to_llvm)
                 }
@@ -577,6 +748,206 @@ namespace llvmgen {
         return ""
     }
 
+    // ── Arrays: caminho rapido inline ─────────────────────────────────────
+    // Cabecalho do array no runtime (matrix.ofs): [data, len, cap, elem_size],
+    // 4 x i64. O `ofs build` compila com `llc` (sem passes de IR) e o runtime
+    // e -O0, entao cada `a[i]` como chamada custava ~10 chamadas. Aqui o
+    // acesso valido com elem_size 8 vira load/store direto; o resto (null,
+    // fora dos limites, outro elem_size, crescimento) cai no runtime, que
+    // mantem a mesma semantica (exit(1) fora dos limites).
+    vein arr_hdr_load(arr: obsidian, word: stone, ty: obsidian) -> obsidian {
+        forge v = next_tmp("ah")
+        if (word == 0) {
+            cg_emit("  " + v + " = load " + ty + ", ptr " + arr)
+            return v
+        }
+        forge hp = next_tmp("ahp")
+        cg_emit("  " + hp + " = getelementptr i64, ptr " + arr + ", i64 " + ofs_stone_to_obsidian(word))
+        cg_emit("  " + v + " = load " + ty + ", ptr " + hp)
+        return v
+    }
+
+    // Emite o teste "arr != null && idx < len (sem sinal) && elem_size == 8"
+    // e desvia para fast/slow. `bound_word` 1 = len (get/set), 2 = cap (push,
+    // com idx = len).
+    vein arr_emit_guard(arr: obsidian, idx: obsidian, bound_word: stone, fast: obsidian, slow: obsidian) -> void {
+        forge chk = next_label("arr_chk")
+        forge isnull = next_tmp("arr_isnull")
+        cg_emit("  " + isnull + " = icmp eq ptr " + arr + ", null")
+        cg_emit("  br i1 " + isnull + ", label %" + slow + ", label %" + chk)
+        cg_emit("")
+        cg_emit(chk + ":")
+        forge bound = arr_hdr_load(arr, bound_word, "i64")
+        forge esz = arr_hdr_load(arr, 3, "i64")
+        forge inb = next_tmp("arr_inb")
+        forge e8 = next_tmp("arr_e8")
+        forge ok = next_tmp("arr_ok")
+        cg_emit("  " + inb + " = icmp ult i64 " + idx + ", " + bound)
+        cg_emit("  " + e8 + " = icmp eq i64 " + esz + ", 8")
+        cg_emit("  " + ok + " = and i1 " + inb + ", " + e8)
+        cg_emit("  br i1 " + ok + ", label %" + fast + ", label %" + slow)
+        cg_emit("")
+    }
+
+    // Endereco do elemento idx (como ofs_array_get).
+    vein emit_arr_elem_ptr(arr: obsidian, idx: obsidian) -> obsidian {
+        forge fast = next_label("arr_fast")
+        forge slow = next_label("arr_slow")
+        forge done = next_label("arr_end")
+        arr_emit_guard(arr, idx, 1, fast, slow)
+        cg_emit(fast + ":")
+        forge data = arr_hdr_load(arr, 0, "ptr")
+        forge fp = next_tmp("arr_fp")
+        cg_emit("  " + fp + " = getelementptr i64, ptr " + data + ", i64 " + idx)
+        cg_emit("  br label %" + done)
+        cg_emit("")
+        cg_emit(slow + ":")
+        forge sp = next_tmp("arr_sp")
+        cg_emit("  " + sp + " = call ptr @ofs_array_get(ptr " + arr + ", i64 " + idx + ")")
+        cg_emit("  br label %" + done)
+        cg_emit("")
+        cg_emit(done + ":")
+        forge p = next_tmp("arr_ptr")
+        cg_emit("  " + p + " = phi ptr [ " + fp + ", %" + fast + " ], [ " + sp + ", %" + slow + " ]")
+        return p
+    }
+
+    // a[idx] = v (como ofs_array_set com um slot de `lt`).
+    vein emit_arr_store(arr: obsidian, idx: obsidian, lt: obsidian, v: obsidian) -> void {
+        forge fast = next_label("arr_fast")
+        forge slow = next_label("arr_slow")
+        forge done = next_label("arr_end")
+        arr_emit_guard(arr, idx, 1, fast, slow)
+        cg_emit(fast + ":")
+        forge data = arr_hdr_load(arr, 0, "ptr")
+        forge fp = next_tmp("arr_fp")
+        cg_emit("  " + fp + " = getelementptr i64, ptr " + data + ", i64 " + idx)
+        cg_emit("  store " + lt + " " + v + ", ptr " + fp)
+        cg_emit("  br label %" + done)
+        cg_emit("")
+        cg_emit(slow + ":")
+        forge slot = next_tmp("idx_set")
+        cg_emit("  " + slot + " = alloca " + lt + ", align 8")
+        cg_emit("  store " + lt + " " + v + ", ptr " + slot)
+        cg_emit("  call void @ofs_array_set(ptr " + arr + ", i64 " + idx + ", ptr " + slot + ")")
+        cg_emit("  br label %" + done)
+        cg_emit("")
+        cg_emit(done + ":")
+    }
+
+    // ofs_array_push(arr, v): com len < cap e elem_size 8 grava direto.
+    vein emit_arr_push(arr: obsidian, lt: obsidian, v: obsidian) -> void {
+        forge fast = next_label("arr_fast")
+        forge slow = next_label("arr_slow")
+        forge done = next_label("arr_end")
+        forge isnull = next_tmp("arr_isnull")
+        forge chk = next_label("arr_chk")
+        cg_emit("  " + isnull + " = icmp eq ptr " + arr + ", null")
+        cg_emit("  br i1 " + isnull + ", label %" + slow + ", label %" + chk)
+        cg_emit("")
+        cg_emit(chk + ":")
+        forge len = arr_hdr_load(arr, 1, "i64")
+        forge cap = arr_hdr_load(arr, 2, "i64")
+        forge esz = arr_hdr_load(arr, 3, "i64")
+        forge room = next_tmp("arr_room")
+        forge e8 = next_tmp("arr_e8")
+        forge ok = next_tmp("arr_ok")
+        cg_emit("  " + room + " = icmp slt i64 " + len + ", " + cap)
+        cg_emit("  " + e8 + " = icmp eq i64 " + esz + ", 8")
+        cg_emit("  " + ok + " = and i1 " + room + ", " + e8)
+        cg_emit("  br i1 " + ok + ", label %" + fast + ", label %" + slow)
+        cg_emit("")
+        cg_emit(fast + ":")
+        forge data = arr_hdr_load(arr, 0, "ptr")
+        forge fp = next_tmp("arr_fp")
+        forge nlen = next_tmp("arr_nlen")
+        forge lenp = next_tmp("arr_lenp")
+        cg_emit("  " + fp + " = getelementptr i64, ptr " + data + ", i64 " + len)
+        cg_emit("  store " + lt + " " + v + ", ptr " + fp)
+        cg_emit("  " + nlen + " = add i64 " + len + ", 1")
+        cg_emit("  " + lenp + " = getelementptr i64, ptr " + arr + ", i64 1")
+        cg_emit("  store i64 " + nlen + ", ptr " + lenp)
+        cg_emit("  br label %" + done)
+        cg_emit("")
+        cg_emit(slow + ":")
+        forge slot = next_tmp("arr_push")
+        cg_emit("  " + slot + " = alloca " + lt + ", align 8")
+        cg_emit("  store " + lt + " " + v + ", ptr " + slot)
+        cg_emit("  call void @ofs_array_push(ptr " + arr + ", ptr " + slot + ")")
+        cg_emit("  br label %" + done)
+        cg_emit("")
+        cg_emit(done + ":")
+    }
+
+    // ofs_array_len(arr): null -> 0.
+    vein emit_arr_len(arr: obsidian) -> obsidian {
+        forge chk = next_label("arr_chk")
+        forge done = next_label("arr_end")
+        forge entry_lbl = next_label("arr_nul")
+        forge isnull = next_tmp("arr_isnull")
+        cg_emit("  " + isnull + " = icmp eq ptr " + arr + ", null")
+        cg_emit("  br i1 " + isnull + ", label %" + entry_lbl + ", label %" + chk)
+        cg_emit("")
+        cg_emit(entry_lbl + ":")
+        cg_emit("  br label %" + done)
+        cg_emit("")
+        cg_emit(chk + ":")
+        forge len = arr_hdr_load(arr, 1, "i64")
+        cg_emit("  br label %" + done)
+        cg_emit("")
+        cg_emit(done + ":")
+        forge r = next_tmp("arr_len")
+        cg_emit("  " + r + " = phi i64 [ 0, %" + entry_lbl + " ], [ " + len + ", %" + chk + " ]")
+        return r
+    }
+
+    // `[...]` local: o mesmo bloco que ofs_array_new monta (cabecalho +
+    // dados iniciais em arr + 32), sem passar pelo runtime -O0.
+    vein emit_arr_new_inline(arr: obsidian, count: stone) -> void {
+        forge cap = count
+        if (cap <= 0) { cap = 4 }
+        cg_emit("  " + arr + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(32 + cap * 8) + ")")
+        forge d = next_tmp("arr_data")
+        cg_emit("  " + d + " = getelementptr i8, ptr " + arr + ", i64 32")
+        cg_emit("  store ptr " + d + ", ptr " + arr)
+        forge cp = next_tmp("ahp")
+        cg_emit("  " + cp + " = getelementptr i64, ptr " + arr + ", i64 2")
+        cg_emit("  store i64 " + ofs_stone_to_obsidian(cap) + ", ptr " + cp)
+        forge ep = next_tmp("ahp")
+        cg_emit("  " + ep + " = getelementptr i64, ptr " + arr + ", i64 3")
+        cg_emit("  store i64 8, ptr " + ep)
+    }
+
+    // ofs_array_free inline: libera os dados (se nao estao no bloco do
+    // cabecalho) e o cabecalho.
+    vein emit_arr_free_inline(v: obsidian) -> void {
+        forge chk = next_label("afree_chk")
+        forge ldata = next_label("afree_data")
+        forge lhdr = next_label("afree_hdr")
+        forge done = next_label("afree_end")
+        forge isn = next_tmp("afree_null")
+        cg_emit("  " + isn + " = icmp eq ptr " + v + ", null")
+        cg_emit("  br i1 " + isn + ", label %" + done + ", label %" + chk)
+        cg_emit("")
+        cg_emit(chk + ":")
+        forge d = arr_hdr_load(v, 0, "ptr")
+        forge inl = next_tmp("afree_inl")
+        forge same = next_tmp("afree_same")
+        cg_emit("  " + inl + " = getelementptr i8, ptr " + v + ", i64 32")
+        cg_emit("  " + same + " = icmp eq ptr " + d + ", " + inl)
+        cg_emit("  br i1 " + same + ", label %" + lhdr + ", label %" + ldata)
+        cg_emit("")
+        cg_emit(ldata + ":")
+        cg_emit("  call void @ofs_free(ptr " + d + ")")
+        cg_emit("  br label %" + lhdr)
+        cg_emit("")
+        cg_emit(lhdr + ":")
+        cg_emit("  call void @ofs_free(ptr " + v + ")")
+        cg_emit("  br label %" + done)
+        cg_emit("")
+        cg_emit(done + ":")
+    }
+
     // `a[i] = v` / `a[i] op= v` -> ofs_array_set. Antes o alvo NK_INDEX nao
     // tinha caso no codegen e a atribuicao sumia do binario nativo.
     vein emit_index_assign(target_id: stone, op: obsidian, value_id: stone) -> void {
@@ -595,10 +966,9 @@ namespace llvmgen {
         forge v = coerce_for_store(_expr_val, _expr_type, et)
         forge lt = llvm_type(et)
         if (!ofs_str_eq(op, "=")) {
-            forge old_raw = next_tmp("idx_old_ptr")
             forge oldv = next_tmp("idx_old")
             forge newv = next_tmp("idx_new")
-            cg_emit("  " + old_raw + " = call ptr @ofs_array_get(ptr " + arr + ", i64 " + idx + ")")
+            forge old_raw = emit_arr_elem_ptr(arr, idx)
             cg_emit("  " + oldv + " = load " + lt + ", ptr " + old_raw)
             if (ofs_str_eq(et, "obsidian") && ofs_str_eq(op, "+=")) {
                 cg_emit("  " + newv + " = call ptr @ofs_str_concat(ptr " + oldv + ", ptr " + v + ")")
@@ -623,10 +993,7 @@ namespace llvmgen {
             }
             v = newv
         }
-        forge slot = next_tmp("idx_set")
-        cg_emit("  " + slot + " = alloca " + lt + ", align 8")
-        cg_emit("  store " + lt + " " + v + ", ptr " + slot)
-        cg_emit("  call void @ofs_array_set(ptr " + arr + ", i64 " + idx + ", ptr " + slot + ")")
+        emit_arr_store(arr, idx, lt, v)
         _expr_val = v
         _expr_type = et
     }
@@ -650,8 +1017,7 @@ namespace llvmgen {
         }
         emit_expr(idx_id)
         forge idx = _expr_val
-        forge raw = next_tmp("arr_get")
-        cg_emit("  " + raw + " = call ptr @ofs_array_get(ptr " + arr + ", i64 " + idx + ")")
+        forge raw = emit_arr_elem_ptr(arr, idx)
         if (is_named_type(expected_type) || ofs_str_eq(expected_type, "obsidian") || ofs_str_eq(expected_type, "Array")) {
             forge loaded_ptr = next_tmp("arr_item")
             cg_emit("  " + loaded_ptr + " = load ptr, ptr " + raw)
@@ -748,6 +1114,223 @@ namespace llvmgen {
         return false
     }
 
+    // Funcoes C variadicas conhecidas: quantos parametros fixos tem. Uma
+    // `extern`/`rift` com esse simbolo e declarada com `...` e chamada com o
+    // tipo da funcao (`call i64 (ptr, i64, ptr, ...) @snprintf(...)`); sem
+    // isso a ABI x86-64 nao define %al e um double variadico sai como lixo.
+    forge _va_names: Array<obsidian> = []
+    forge _va_sigs: Array<obsidian> = []
+
+    vein variadic_fixed_count(name: obsidian) -> stone {
+        if (ofs_str_eq(name, "printf") || ofs_str_eq(name, "scanf")) { return 1 }
+        if (ofs_str_eq(name, "fprintf") || ofs_str_eq(name, "sprintf") || ofs_str_eq(name, "dprintf")) { return 2 }
+        if (ofs_str_eq(name, "sscanf") || ofs_str_eq(name, "fscanf") || ofs_str_eq(name, "open")) { return 2 }
+        if (ofs_str_eq(name, "fcntl") || ofs_str_eq(name, "ioctl") || ofs_str_eq(name, "syslog")) { return 2 }
+        if (ofs_str_eq(name, "snprintf") || ofs_str_eq(name, "openat")) { return 3 }
+        return -1
+    }
+
+    vein variadic_sig(name: obsidian) -> obsidian {
+        forge i = 0
+        while (i < ofs_array_len(_va_names)) {
+            forge vn: obsidian = ofs_array_get(_va_names, i)
+            if (ofs_str_eq(vn, name)) { return ofs_array_get(_va_sigs, i) }
+            i++
+        }
+        return ""
+    }
+
+    // ── Trampolins FFI do interpretador (F1 de INTERPRETADOR_PARIDADE) ──
+    // `ofs run` chama funcoes C por endereco (dlsym). Inteiros e ponteiros
+    // poderiam ir todos como i64, mas `crystal` precisa ir em registrador FP
+    // e o retorno double vem em xmm0/d0, e uma variadica precisa do tipo
+    // `(fixos, ...)` (no x86-64 o LLVM poe em %al o numero de args FP).
+    // Por isso o modulo que declara `extern vein __ofs_ffi_dispatch` (o
+    // interpretador) recebe aqui a DEFINICAO dessa funcao: um `switch` sobre
+    // a classe da assinatura com uma chamada de tipo LLVM exato por classe
+    // (o LLVM cuida da ABI de cada alvo). Um compilador antigo so declara o
+    // simbolo (sem uso direto: o interpretador o acha por dlsym).
+    //
+    // sig = nargs | fmask << 4 | retf << 10 | vfixed << 11
+    //   nargs  : 0..12 argumentos
+    //   fmask  : bit j = argumento j e double (so nos 6 primeiros)
+    //   retf   : 1 = retorno double (gravado no buffer), 0 = i64/void
+    //   vfixed : 0 = nao variadica; 1..3 = variadica com k fixos (inteiros)
+    // buffer (i64 x 20): [0..11] args inteiros, [12..17] args double (pela
+    // posicao do argumento), [18] retorno double, [19] status (1 = classe
+    // sem trampolim).
+    // Classes geradas (ffi_sig_supported): ate 4 args com qualquer mistura
+    // i64/f64 e retorno i64|f64 (62); so inteiros ate 12 args (X11/Win32);
+    // variadicas com 1..3 fixos inteiros + ate 4 extras i64|f64, retorno i64
+    // (printf/snprintf/open...). 143 casos no total.
+
+    vein ffi_sig(nargs: stone, fmask: stone, retf: stone, vfixed: stone) -> stone {
+        return nargs | (fmask << 4) | (retf << 10) | (vfixed << 11)
+    }
+
+    vein ffi_sig_supported(nargs: stone, fmask: stone, retf: stone, vfixed: stone) -> bool {
+        if (nargs < 0 || nargs > 12 || retf < 0 || retf > 1) { return false }
+        if (fmask < 0 || fmask >= 64) { return false }
+        if (nargs < 6 && (fmask >> nargs) != 0) { return false }
+        if (vfixed == 0) {
+            if (nargs <= 4) { return true }
+            return fmask == 0
+        }
+        if (vfixed > 3 || retf != 0 || nargs < vfixed) { return false }
+        if ((fmask & ((1 << vfixed) - 1)) != 0) { return false }
+        if (nargs > 6 || nargs - vfixed > 4) { return false }
+        return true
+    }
+
+    vein ffi_call_args(nargs: stone, fmask: stone) -> obsidian {
+        forge s = ""
+        forge j = 0
+        while (j < nargs) {
+            if (j > 0) { s = s + ", " }
+            if (((fmask >> j) & 1) != 0) {
+                s = s + "double %d" + ofs_stone_to_obsidian(j)
+            } else {
+                s = s + "i64 %a" + ofs_stone_to_obsidian(j)
+            }
+            j++
+        }
+        return s
+    }
+
+    vein emit_ffi_dispatch() -> void {
+        cg_emit("define i64 @__ofs_ffi_dispatch(i64 %fn, i64 %sig, ptr %buf) {")
+        cg_emit("entry:")
+        cg_emit("  %f = inttoptr i64 %fn to ptr")
+        forge j = 0
+        while (j < FFI_MAX_ARGS) {
+            forge js = ofs_stone_to_obsidian(j)
+            cg_emit("  %ap" + js + " = getelementptr inbounds i64, ptr %buf, i64 " + js)
+            cg_emit("  %a" + js + " = load i64, ptr %ap" + js)
+            j++
+        }
+        j = 0
+        while (j < 6) {
+            forge ds = ofs_stone_to_obsidian(j)
+            cg_emit("  %dp" + ds + " = getelementptr inbounds i64, ptr %buf, i64 " + ofs_stone_to_obsidian(FFI_SLOT_F + j))
+            cg_emit("  %d" + ds + " = load double, ptr %dp" + ds)
+            j++
+        }
+        cg_emit("  %rp = getelementptr inbounds i64, ptr %buf, i64 " + ofs_stone_to_obsidian(FFI_SLOT_RET))
+        cg_emit("  %sp = getelementptr inbounds i64, ptr %buf, i64 " + ofs_stone_to_obsidian(FFI_SLOT_ST))
+        cg_emit("  store i64 0, ptr %sp")
+        cg_emit("  switch i64 %sig, label %bad [")
+        forge cases: Array<stone> = []
+        forge vf = 0
+        while (vf <= 3) {
+            forge na = 0
+            while (na <= FFI_MAX_ARGS) {
+                forge fm = 0
+                while (fm < 64) {
+                    forge rf = 0
+                    while (rf <= 1) {
+                        if (ffi_sig_supported(na, fm, rf, vf)) {
+                            forge sg = ffi_sig(na, fm, rf, vf)
+                            ofs_array_push(cases, sg)
+                            cg_emit("    i64 " + ofs_stone_to_obsidian(sg) + ", label %s" + ofs_stone_to_obsidian(sg))
+                        }
+                        rf++
+                    }
+                    fm++
+                }
+                na++
+            }
+            vf++
+        }
+        cg_emit("  ]")
+        forge ci = 0
+        while (ci < ofs_array_len(cases)) {
+            forge sig: stone = ofs_array_get(cases, ci)
+            forge ss = ofs_stone_to_obsidian(sig)
+            forge nargs = sig & 15
+            forge fmask = (sig >> 4) & 63
+            forge retf = (sig >> 10) & 1
+            forge vfixed = (sig >> 11) & 3
+            forge args = ffi_call_args(nargs, fmask)
+            forge fty = ""
+            if (vfixed > 0) {
+                forge fixs = ""
+                forge k = 0
+                while (k < vfixed) {
+                    fixs = fixs + "i64, "
+                    k++
+                }
+                fty = " (" + fixs + "...)"
+            }
+            cg_emit("s" + ss + ":")
+            if (retf == 1) {
+                cg_emit("  %r" + ss + " = call double" + fty + " %f(" + args + ")")
+                cg_emit("  store double %r" + ss + ", ptr %rp")
+                cg_emit("  ret i64 0")
+            } else {
+                cg_emit("  %r" + ss + " = call i64" + fty + " %f(" + args + ")")
+                cg_emit("  ret i64 %r" + ss)
+            }
+            ci++
+        }
+        cg_emit("bad:")
+        cg_emit("  store i64 1, ptr %sp")
+        cg_emit("  ret i64 0")
+        cg_emit("}")
+    }
+
+    // ── Trampolins de callback do interpretador (F2) ──
+    // `fault_addr(f)` de uma vein INTERPRETADA precisa de um endereco que o
+    // C possa chamar (qsort, bsearch, atexit...). O modulo que declara
+    // `extern vein __ofs_cb_table` (o interpretador) recebe aqui a definicao
+    // de FFI_CB_SLOTS funcoes nativas `__ofs_cb_K(i64 x FFI_CB_ARGS) -> i64`;
+    // cada uma chama `__ofs_cb_enter(K, a0..a5)` (definida pelo interpretador),
+    // que reentra no interpretador e roda a vein ligada ao slot K. Argumentos
+    // a mais que o C nao passou chegam como lixo e sao ignorados (a vein so
+    // le os seus). `__ofs_cb_table(K)` devolve o endereco do slot K (0 fora
+    // da tabela); o interpretador a acha por dlsym, como __ofs_ffi_dispatch.
+    vein emit_cb_trampolines() -> void {
+        forge params = ""
+        forge args = ""
+        forge j = 0
+        while (j < FFI_CB_ARGS) {
+            if (j > 0) { params = params + ", " }
+            params = params + "i64 %a" + ofs_stone_to_obsidian(j)
+            args = args + ", i64 %a" + ofs_stone_to_obsidian(j)
+            j++
+        }
+        forge k = 0
+        while (k < FFI_CB_SLOTS) {
+            forge ks = ofs_stone_to_obsidian(k)
+            cg_emit("define i64 @__ofs_cb_" + ks + "(" + params + ") {")
+            cg_emit("entry:")
+            cg_emit("  %r = call i64 @__ofs_cb_enter(i64 " + ks + args + ")")
+            cg_emit("  ret i64 %r")
+            cg_emit("}")
+            k++
+        }
+        cg_emit("define i64 @__ofs_cb_table(i64 %slot) {")
+        cg_emit("entry:")
+        cg_emit("  switch i64 %slot, label %bad [")
+        k = 0
+        while (k < FFI_CB_SLOTS) {
+            forge ks2 = ofs_stone_to_obsidian(k)
+            cg_emit("    i64 " + ks2 + ", label %t" + ks2)
+            k++
+        }
+        cg_emit("  ]")
+        k = 0
+        while (k < FFI_CB_SLOTS) {
+            forge ks3 = ofs_stone_to_obsidian(k)
+            cg_emit("t" + ks3 + ":")
+            cg_emit("  %p" + ks3 + " = ptrtoint ptr @__ofs_cb_" + ks3 + " to i64")
+            cg_emit("  ret i64 %p" + ks3)
+            k++
+        }
+        cg_emit("bad:")
+        cg_emit("  ret i64 0")
+        cg_emit("}")
+    }
+
     vein emit_extern_decls(id: stone) -> void {
         if (id < 0) { return }
         forge n: Node = node_get(id)
@@ -756,6 +1339,14 @@ namespace llvmgen {
             if (ofs_str_eq(sym_name, "")) { sym_name = n.val }
             ofs_array_push(_bind_names, n.val)
             ofs_array_push(_bind_targets, sym_name)
+            if (ofs_str_eq(sym_name, "__ofs_ffi_dispatch") && !is_known_extern(sym_name)) {
+                ofs_array_push(_extern_names, sym_name)
+                emit_ffi_dispatch()
+            }
+            if (ofs_str_eq(sym_name, "__ofs_cb_table") && !is_known_extern(sym_name)) {
+                ofs_array_push(_extern_names, sym_name)
+                emit_cb_trampolines()
+            }
             forge defined_here = false
             if (_decl_root >= 0) { defined_here = is_defined_fn(_decl_root, sym_name) }
             if (!is_known_extern(sym_name) && !defined_here) {
@@ -770,13 +1361,23 @@ namespace llvmgen {
                 if (params_id >= 0) {
                     count = node_extra_len(params_id)
                 }
+                forge fixed = variadic_fixed_count(sym_name)
+                if (fixed > count) { fixed = -1 }
+                forge pcount = count
+                if (fixed >= 0) { pcount = fixed }
                 forge j = 0
-                while (j < count) {
+                while (j < pcount) {
                     forge pid = node_get_extra(params_id, j)
                     forge p: Node = node_get(pid)
                     if (j > 0) { params_str = params_str + ", " }
                     params_str = params_str + llvm_type(type_node_name(p.c0))
                     j++
+                }
+                if (fixed >= 0) {
+                    if (fixed > 0) { params_str = params_str + ", " }
+                    params_str = params_str + "..."
+                    ofs_array_push(_va_names, sym_name)
+                    ofs_array_push(_va_sigs, ret_t + " (" + params_str + ")")
                 }
                 cg_emit("declare " + ret_t + " @" + sym_name + "(" + params_str + ")")
             }
@@ -878,6 +1479,10 @@ namespace llvmgen {
         emit_decl_if_missing(root_id, "echo_obsidian", "declare void @echo_obsidian(ptr)")
         emit_decl_if_missing(root_id, "echo_bool", "declare void @echo_bool(i32)")
         emit_decl_if_missing(root_id, "ofs_str_concat", "declare ptr @ofs_str_concat(ptr, ptr)")
+        emit_decl_if_missing(root_id, "ofs_str_concat_ex", "declare ptr @ofs_str_concat_ex(ptr, ptr, i64)")
+        emit_decl_if_missing(root_id, "ofs_str_release", "declare void @ofs_str_release(ptr, i64)")
+        emit_decl_if_missing(root_id, "ofs_array_free", "declare void @ofs_array_free(ptr)")
+        emit_decl_if_missing(root_id, "ofs_free", "declare void @ofs_free(ptr)")
         emit_decl_if_missing(root_id, "ofs_str_eq", "declare i32 @ofs_str_eq(ptr, ptr)")
         emit_decl_if_missing(root_id, "ofs_str_contains", "declare i32 @ofs_str_contains(ptr, ptr)")
         emit_decl_if_missing(root_id, "ofs_str_len", "declare i64 @ofs_str_len(ptr)")
@@ -885,6 +1490,7 @@ namespace llvmgen {
         emit_decl_if_missing(root_id, "ofs_str_char_at_known", "declare i64 @ofs_str_char_at_known(ptr, i64)")
         emit_decl_if_missing(root_id, "ofs_str_substr", "declare ptr @ofs_str_substr(ptr, i64, i64)")
         emit_decl_if_missing(root_id, "ofs_stone_to_obsidian", "declare ptr @ofs_stone_to_obsidian(i64)")
+        emit_decl_if_missing(root_id, "ofs_crystal_to_obsidian", "declare ptr @ofs_crystal_to_obsidian(double)")
         emit_decl_if_missing(root_id, "ofs_alloc", "declare ptr @ofs_alloc(i64)")
         emit_decl_if_missing(root_id, "ofs_array_new", "declare ptr @ofs_array_new(i64, i64)")
         emit_decl_if_missing(root_id, "ofs_array_push", "declare void @ofs_array_push(ptr, ptr)")
@@ -909,18 +1515,109 @@ namespace llvmgen {
         cg_emit("declare void @llvm.stackrestore(ptr)")
         cg_emit("declare i64 @llvm.bswap.i64(i64)")
         cg_emit("declare void @llvm.trap()")
+        cg_emit("declare i64 @llvm.ctpop.i64(i64)")
+        cg_emit("declare i64 @llvm.ctlz.i64(i64, i1)")
+        cg_emit("declare i64 @llvm.cttz.i64(i64, i1)")
+        cg_emit("declare i64 @llvm.fshl.i64(i64, i64, i64)")
+        cg_emit("declare i64 @llvm.fshr.i64(i64, i64, i64)")
+        cg_emit("declare void @llvm.memcpy.p0.p0.i64(ptr, ptr, i64, i1)")
+        cg_emit("declare void @llvm.memset.p0.i64(ptr, i8, i64, i1)")
         ofs_array_push(_extern_names, "llvm.prefetch.p0")
         ofs_array_push(_extern_names, "llvm.stacksave")
         ofs_array_push(_extern_names, "llvm.stackrestore")
         ofs_array_push(_extern_names, "llvm.bswap.i64")
         ofs_array_push(_extern_names, "llvm.trap")
+        ofs_array_push(_extern_names, "llvm.ctpop.i64")
+        ofs_array_push(_extern_names, "llvm.ctlz.i64")
+        ofs_array_push(_extern_names, "llvm.cttz.i64")
+        ofs_array_push(_extern_names, "llvm.fshl.i64")
+        ofs_array_push(_extern_names, "llvm.fshr.i64")
+        ofs_array_push(_extern_names, "llvm.memcpy.p0.p0.i64")
+        ofs_array_push(_extern_names, "llvm.memset.p0.i64")
         _decl_root = root_id
         emit_extern_decls(root_id)
         cg_emit("")
+        emit_text_helpers()
+    }
+
+    // Conversoes para texto que o typeck insere na arvore (F3): o nome de
+    // uma variante pela etiqueta (tabela de nomes; etiqueta fora da tabela
+    // sai como numero) e bool como "true"/"false", iguais ao interpretador.
+    vein emit_text_helpers() -> void {
+        forge nv = ofs_array_len(_variant_names)
+        forge vi = 0
+        while (vi < nv) {
+            forge vname: obsidian = ofs_array_get(_variant_names, vi)
+            cg_emit("@.ofs_vn" + ofs_stone_to_obsidian(vi) + " = private unnamed_addr constant [" +
+                ofs_stone_to_obsidian(ofs_str_len(vname) + 1) + " x i8] c\"" + llvm_escape_string(vname) + "\", align 1")
+            vi++
+        }
+        forge ns = ofs_stone_to_obsidian(nv)
+        if (nv > 0) {
+            cg_emit_raw("@.ofs_variant_names = private constant [" + ns + " x ptr] [")
+            vi = 0
+            while (vi < nv) {
+                if (vi > 0) { cg_emit_raw(", ") }
+                cg_emit_raw("ptr @.ofs_vn" + ofs_stone_to_obsidian(vi))
+                vi++
+            }
+            cg_emit("]")
+        }
+        cg_emit("define internal ptr @__ofs_variant_name(i64 %v) {")
+        cg_emit("entry:")
+        if (nv > 0) {
+            cg_emit("  %ok = icmp ult i64 %v, " + ns)
+            cg_emit("  br i1 %ok, label %named, label %number")
+            cg_emit("named:")
+            cg_emit("  %slot = getelementptr inbounds [" + ns + " x ptr], ptr @.ofs_variant_names, i64 0, i64 %v")
+            cg_emit("  %name = load ptr, ptr %slot")
+            cg_emit("  ret ptr %name")
+            cg_emit("number:")
+        }
+        cg_emit("  %num = call ptr @ofs_stone_to_obsidian(i64 %v)")
+        cg_emit("  ret ptr %num")
+        cg_emit("}")
+        cg_emit("@.ofs_true = private unnamed_addr constant [5 x i8] c\"true\\00\", align 1")
+        cg_emit("@.ofs_false = private unnamed_addr constant [6 x i8] c\"false\\00\", align 1")
+        cg_emit("define internal ptr @__ofs_bool_text(i32 %b) {")
+        cg_emit("entry:")
+        cg_emit("  %t = icmp ne i32 %b, 0")
+        cg_emit("  %s = select i1 %t, ptr @.ofs_true, ptr @.ofs_false")
+        cg_emit("  ret ptr %s")
+        cg_emit("}")
+        cg_emit("")
+        ofs_array_push(_extern_names, "__ofs_variant_name")
+        ofs_array_push(_extern_names, "__ofs_bool_text")
+    }
+
+    // O runtime (modulo que define ofs_alloc, ex.: magma.ofs) tambem tem um
+    // __ofs_init_globals; exportado, ele colidia com o de todo programa (o
+    // link exigia --allow-multiple-definition e o do runtime nunca rodava).
+    // No runtime sem main ele e `internal` e roda como construtor
+    // (llvm.global_ctors). Programas continuam exportando o simbolo (o
+    // `ofs build --target android` usa -Wl,-init,__ofs_init_globals).
+    forge _init_internal: bool = false
+
+    vein module_has_main(root_id: stone) -> bool {
+        forge i = 0
+        while (i < node_extra_len(root_id)) {
+            forge did = node_get_extra(root_id, i)
+            forge k = node_kind_of(did)
+            if (k == NK_CORE_DECL) { return true }
+            if (k == NK_FN_DECL && ofs_str_eq(node_val_of(did), "main")) { return true }
+            i++
+        }
+        return false
     }
 
     vein emit_global_init() -> void {
-        cg_emit("define void @__ofs_init_globals() {")
+        if (_init_internal) {
+            cg_emit("@llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 65535, ptr @__ofs_init_globals, ptr null }]")
+            cg_emit("")
+            cg_emit("define internal void @__ofs_init_globals() {")
+        } else {
+            cg_emit("define void @__ofs_init_globals() {")
+        }
         cg_emit("entry:")
         forge gi = 0
         while (gi < ofs_array_len(_global_names)) {
@@ -954,6 +1651,7 @@ namespace llvmgen {
             } else if (is_named_type(gt)) {
                 forge obj = next_tmp("gobj")
                 cg_emit("  " + obj + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(monolith_alloc_size(gt)) + ")")
+                emit_init_nested(obj, gt, 0)
                 cg_emit("  store ptr " + obj + ", ptr @" + gname)
             }
             gi++
@@ -997,6 +1695,35 @@ namespace llvmgen {
         cg_emit("  " + w + " = " + ext + " " + lt + " " + v + " to i64")
         _widened_type = "stone"
         return w
+    }
+
+    // `old op= v` no tipo t (os dois ja no tipo t): devolve o novo valor
+    vein emit_compound_value(op: obsidian, t: obsidian, old: obsidian, v: obsidian) -> obsidian {
+        forge nv = next_tmp("compound")
+        if (ofs_str_eq(t, "obsidian") && ofs_str_eq(op, "+=")) {
+            cg_emit("  " + nv + " = call ptr @ofs_str_concat(ptr " + old + ", ptr " + v + ")")
+            return nv
+        }
+        forge lt = llvm_type(t)
+        forge cop = "add"
+        if (ofs_str_eq(lt, "double") || ofs_str_eq(lt, "float")) {
+            cop = "fadd"
+            if (ofs_str_eq(op, "-=")) { cop = "fsub" }
+            if (ofs_str_eq(op, "*=")) { cop = "fmul" }
+            if (ofs_str_eq(op, "/=")) { cop = "fdiv" }
+        } else {
+            if (ofs_str_eq(op, "-=")) { cop = "sub" }
+            if (ofs_str_eq(op, "*=")) { cop = "mul" }
+            if (ofs_str_eq(op, "/=")) { cop = "sdiv" }
+            if (ofs_str_eq(op, "%=")) { cop = "srem" }
+            if (ofs_str_eq(op, "&=")) { cop = "and" }
+            if (ofs_str_eq(op, "|=")) { cop = "or" }
+            if (ofs_str_eq(op, "^=")) { cop = "xor" }
+            if (ofs_str_eq(op, "<<=")) { cop = "shl" }
+            if (ofs_str_eq(op, ">>=")) { cop = "ashr" }
+        }
+        cg_emit("  " + nv + " = " + cop + " " + lt + " " + old + ", " + v)
+        return nv
     }
 
     // Resultado logico (i1, tipo "bool1") vira bool i32 antes de ir para
@@ -1051,15 +1778,12 @@ namespace llvmgen {
         if (n.kind == NK_ARRAY_LIT) {
             forge arr = next_tmp("arr")
             forge count = node_extra_len(id)
-            cg_emit("  " + arr + " = call ptr @ofs_array_new(i64 " + ofs_stone_to_obsidian(count) + ", i64 8)")
+            emit_arr_new_inline(arr, count)
             forge ai = 0
             while (ai < count) {
                 forge elem_id = node_get_extra(id, ai)
                 emit_expr(elem_id)
-                forge slot = next_tmp("arr_elem")
-                cg_emit("  " + slot + " = alloca " + llvm_type(_expr_type) + ", align 8")
-                cg_emit("  store " + llvm_type(_expr_type) + " " + _expr_val + ", ptr " + slot)
-                cg_emit("  call void @ofs_array_push(ptr " + arr + ", ptr " + slot + ")")
+                emit_arr_push(arr, llvm_type(_expr_type), _expr_val)
                 ai++
             }
             _expr_val = arr
@@ -1089,7 +1813,11 @@ namespace llvmgen {
         }
 
         if (n.kind == NK_INDEX) {
-            emit_array_get(id, "stone")
+            // tipo do elemento decidido pelo typeck (Array<T> -> T); inteiros
+            // estreitos seguem lidos como stone (slot de 8 bytes)
+            forge ix_t = n.type_str
+            if (ofs_str_eq(ix_t, "") || ofs_str_eq(ix_t, "unknown") || int_bitwidth(ix_t) > 0) { ix_t = "stone" }
+            emit_array_get(id, ix_t)
             return
         }
 
@@ -1123,12 +1851,28 @@ namespace llvmgen {
                 if (assign_target.kind == NK_IDENT) {
                     forge at = var_type(assign_target.val)
                     forge ap = var_ptr(assign_target.val)
+                    if (ofs_str_eq(at, "obsidian")) {
+                        forge aown = own_ptr_of(assign_target.val)
+                        if (!ofs_str_eq(aown, "")) {
+                            emit_owned_assign(assign_target.val, ap, aown, n.val, n.c1)
+                            return
+                        }
+                    }
+                    forge afree = false
+                    if (ofs_str_eq(n.val, "=") && var_index(assign_target.val) >= 0) {
+                        if (esc_list_has(_free_arr_ptrs, ap)) { afree = true }
+                    }
                     if (is_array_get(n.c1)) {
                         emit_array_get(n.c1, at)
                     } else {
                         emit_expr(n.c1)
                     }
                     forge av = coerce_for_store(_expr_val, _expr_type, at)
+                    if (afree) {
+                        forge afold = next_tmp("arr_old")
+                        cg_emit("  " + afold + " = load ptr, ptr " + ap)
+                        emit_arr_free_inline(afold)
+                    }
                     if (!ofs_str_eq(n.val, "=")) {
                         forge olda = next_tmp("assign_old")
                         forge newa = next_tmp("assign_new")
@@ -1146,6 +1890,13 @@ namespace llvmgen {
                             if (ofs_str_eq(n.val, "^=")) { aop = "xor" }
                             if (ofs_str_eq(n.val, "<<=")) { aop = "shl" }
                             if (ofs_str_eq(n.val, ">>=")) { aop = "ashr" }
+                            // crystal: fadd/fsub/fmul/fdiv (antes `add double`, IR invalido)
+                            if (ofs_str_eq(llvm_type(at), "double")) {
+                                aop = "fadd"
+                                if (ofs_str_eq(n.val, "-=")) { aop = "fsub" }
+                                if (ofs_str_eq(n.val, "*=")) { aop = "fmul" }
+                                if (ofs_str_eq(n.val, "/=")) { aop = "fdiv" }
+                            }
                             cg_emit("  " + newa + " = " + aop + " " + llvm_type(at) + " " + olda + ", " + av)
                         }
                         av = newa
@@ -1175,10 +1926,18 @@ namespace llvmgen {
                         emit_expr(n.c1)
                     }
                     forge fv_assign = coerce_for_store(_expr_val, _expr_type, ft_assign)
+                    if (!ofs_str_eq(n.val, "=") && !is_named_type(ft_assign)) {
+                        // `p.x op= v` (antes o op era ignorado e virava `p.x = v`)
+                        forge fold = next_tmp("field_old")
+                        cg_emit("  " + fold + " = load " + llvm_type(ft_assign) + ", ptr " + fp_assign)
+                        fv_assign = emit_compound_value(n.val, ft_assign, fold, fv_assign)
+                    }
                     if (is_named_type(ft_assign)) {
-                        forge loaded_named = next_tmp("named_val")
-                        cg_emit("  " + loaded_named + " = load %" + ft_assign + ", ptr " + fv_assign)
-                        cg_emit("  store %" + ft_assign + " " + loaded_named + ", ptr " + fp_assign)
+                        // campo monolith guarda o ponteiro do sub-objeto (8
+                        // bytes, struct_layout): `a.b = v` aponta para v,
+                        // como no interpretador (antes copiava a struct
+                        // inteira por cima do campo de 8 bytes)
+                        cg_emit("  store ptr " + fv_assign + ", ptr " + fp_assign)
                     } else {
                         cg_emit("  store " + llvm_type(ft_assign) + " " + fv_assign + ", ptr " + fp_assign)
                     }
@@ -1222,9 +1981,18 @@ namespace llvmgen {
             }
 
             emit_expr(n.c0)
+            forge left_fresh = expr_is_fresh(n.c0)
+            forge left_own = ""
+            if (!ofs_str_eq(_selfapp_name, "") && node_kind_of(n.c0) == NK_IDENT) {
+                if (ofs_str_eq(node_val_of(n.c0), _selfapp_name)) {
+                    left_own = _selfapp_own
+                    _selfapp_name = ""
+                }
+            }
             forge left = widen_int(_expr_val, _expr_type)
             forge left_type = _widened_type
             emit_expr(n.c1)
+            forge right_fresh = expr_is_fresh(n.c1)
             forge right = widen_int(_expr_val, _expr_type)
             forge right_type = _widened_type
 
@@ -1236,7 +2004,28 @@ namespace llvmgen {
                     right = coerce_for_store(right, right_type, "obsidian")
                 }
                 forge tmp = next_tmp("concat")
-                cg_emit("  " + tmp + " = call ptr @ofs_str_concat(ptr " + left + ", ptr " + right + ")")
+                if (!ofs_str_eq(left_own, "")) {
+                    // `s = s + ...`: o buffer de s e dele (ver emit_owned_assign)
+                    forge lo = next_tmp("own_flag")
+                    cg_emit("  " + lo + " = load i64, ptr " + left_own)
+                    forge lf = lo
+                    if (right_fresh) {
+                        lf = next_tmp("cat_flags")
+                        cg_emit("  " + lf + " = or i64 " + lo + ", 2")
+                    }
+                    cg_emit("  " + tmp + " = call ptr @ofs_str_concat_ex(ptr " + left + ", ptr " + right + ", i64 " + lf + ")")
+                    _selfapp_done = true
+                } else if (left_fresh || right_fresh) {
+                    // temporarios da propria expressao (`a + b + c`): o da
+                    // esquerda cresce no lugar, o da direita e liberado
+                    forge cf = 0
+                    if (left_fresh) { cf = cf + 1 }
+                    if (right_fresh) { cf = cf + 2 }
+                    cg_emit("  " + tmp + " = call ptr @ofs_str_concat_ex(ptr " + left + ", ptr " + right + ", i64 " + ofs_stone_to_obsidian(cf) + ")")
+                } else {
+                    cg_emit("  " + tmp + " = call ptr @ofs_str_concat(ptr " + left + ", ptr " + right + ")")
+                }
+                _fresh_val = tmp
                 _expr_val = tmp
                 _expr_type = "obsidian"
                 return
@@ -1373,6 +2162,13 @@ namespace llvmgen {
             }
             if (ofs_str_eq(n.val, "-")) {
                 forge tmp = next_tmp("neg")
+                // `-x` com crystal: fneg (antes saia `sub i64 0, 7.0`, IR invalido)
+                if (ofs_str_eq(_expr_type, "crystal") || ofs_str_eq(_expr_type, "f64")) {
+                    cg_emit("  " + tmp + " = fneg double " + _expr_val)
+                    _expr_val = tmp
+                    _expr_type = "crystal"
+                    return
+                }
                 cg_emit("  " + tmp + " = sub i64 0, " + _expr_val)
                 _expr_val = tmp
                 _expr_type = "stone"
@@ -1413,6 +2209,10 @@ namespace llvmgen {
             } else {
                 emit_expr(n.c0)
             }
+            // comparacao/logico e i1 ("bool1"): vira bool i32 antes do `as`
+            // (antes `(a == b) as stone` emitia `zext i32 %cmp` com %cmp i1,
+            // IR invalido; COMPILER_ISSUES.md do Moon, item 2)
+            normalize_bool1()
             forge src_val = _expr_val
             forge src_type = _expr_type
             if (ofs_str_eq(src_type, dst_type)) {
@@ -1432,7 +2232,10 @@ namespace llvmgen {
             } else if ((ofs_str_eq(src_llvm, "float") || ofs_str_eq(src_llvm, "double")) && (!ofs_str_eq(dst_llvm, "float") && !ofs_str_eq(dst_llvm, "double"))) {
                 cg_emit("  " + cast_tmp + " = fptosi " + src_llvm + " " + src_val + " to " + dst_llvm)
             } else if ((!ofs_str_eq(src_llvm, "float") && !ofs_str_eq(src_llvm, "double")) && (ofs_str_eq(dst_llvm, "float") || ofs_str_eq(dst_llvm, "double"))) {
-                cg_emit("  " + cast_tmp + " = sitofp " + src_llvm + " " + src_val + " to " + dst_llvm)
+                // uN -> crystal sem sinal (antes sitofp: `(255 as u8) as crystal` dava -1.0)
+                forge i2f = "sitofp"
+                if (is_unsigned_narrow(src_type)) { i2f = "uitofp" }
+                cg_emit("  " + cast_tmp + " = " + i2f + " " + src_llvm + " " + src_val + " to " + dst_llvm)
             } else if (ofs_str_eq(src_llvm, "float") && ofs_str_eq(dst_llvm, "double")) {
                 cg_emit("  " + cast_tmp + " = fpext float " + src_val + " to double")
             } else if (ofs_str_eq(src_llvm, "double") && ofs_str_eq(dst_llvm, "float")) {
@@ -1442,6 +2245,9 @@ namespace llvmgen {
                 forge dst_b = int_bitwidth(dst_type)
                 if (src_b > dst_b) {
                     cg_emit("  " + cast_tmp + " = trunc " + src_llvm + " " + src_val + " to " + dst_llvm)
+                } else if (is_signed_narrow(src_type)) {
+                    // iN estende com sinal (`(-3 as i8) as stone` == -3)
+                    cg_emit("  " + cast_tmp + " = sext " + src_llvm + " " + src_val + " to " + dst_llvm)
                 } else {
                     cg_emit("  " + cast_tmp + " = zext " + src_llvm + " " + src_val + " to " + dst_llvm)
                 }
@@ -1480,6 +2286,13 @@ namespace llvmgen {
             if (target.kind == NK_IDENT) {
                 forge t = var_type(target.val)
                 forge p = var_ptr(target.val)
+                if (ofs_str_eq(t, "obsidian")) {
+                    forge nown = own_ptr_of(target.val)
+                    if (!ofs_str_eq(nown, "")) {
+                        emit_owned_assign(target.val, p, nown, n.val, n.c1)
+                        return
+                    }
+                }
                 if (is_array_get(n.c1)) {
                     emit_array_get(n.c1, t)
                 } else {
@@ -1498,6 +2311,12 @@ namespace llvmgen {
                         if (ofs_str_eq(n.val, "*=")) { op = "mul" }
                         if (ofs_str_eq(n.val, "/=")) { op = "sdiv" }
                         if (ofs_str_eq(n.val, "%=")) { op = "srem" }
+                        if (ofs_str_eq(llvm_type(t), "double")) {
+                            op = "fadd"
+                            if (ofs_str_eq(n.val, "-=")) { op = "fsub" }
+                            if (ofs_str_eq(n.val, "*=")) { op = "fmul" }
+                            if (ofs_str_eq(n.val, "/=")) { op = "fdiv" }
+                        }
                         cg_emit("  " + newv + " = " + op + " " + llvm_type(t) + " " + oldv + ", " + v)
                     }
                     v = newv
@@ -1529,9 +2348,8 @@ namespace llvmgen {
                 }
                 forge fv = coerce_for_store(_expr_val, _expr_type, ft)
                 if (is_named_type(ft)) {
-                    forge loaded_named = next_tmp("named_val")
-                    cg_emit("  " + loaded_named + " = load %" + ft + ", ptr " + fv)
-                    cg_emit("  store %" + ft + " " + loaded_named + ", ptr " + gep)
+                    // ponteiro do sub-objeto (ver o caso de BIN_OP "=")
+                    cg_emit("  store ptr " + fv + ", ptr " + gep)
                 } else {
                     cg_emit("  store " + llvm_type(ft) + " " + fv + ", ptr " + gep)
                 }
@@ -1550,7 +2368,13 @@ namespace llvmgen {
             forge gep2 = next_tmp("field_ptr")
             cg_emit("  " + gep2 + " = getelementptr inbounds %" + base_type2 + ", ptr " + base_ptr2 + ", i32 0, i32 " + ofs_stone_to_obsidian(idx2))
             if (is_named_type(ft2)) {
-                _expr_val = gep2
+                // o campo guarda o ponteiro do sub-objeto: carrega-o (antes o
+                // endereco do proprio campo era usado como se a struct
+                // inteira morasse ali, e structs > 8 bytes pisavam os
+                // campos seguintes)
+                forge sub = next_tmp("sub_obj")
+                cg_emit("  " + sub + " = load ptr, ptr " + gep2)
+                _expr_val = sub
                 _expr_type = ft2
             } else {
                 forge lv = next_tmp("field")
@@ -1563,7 +2387,7 @@ namespace llvmgen {
 
         if (n.kind == NK_POST_OP) {
             if (ofs_str_eq(n.val, "?")) {
-                emit_expr(n.c0)
+                emit_try(n.c0)
                 return
             }
             lower_ns_global(n.c0)
@@ -1751,6 +2575,93 @@ namespace llvmgen {
                 return
             }
 
+            // fault_count/fault_lead/fault_trail: popcount e zeros a esquerda/
+            // direita em 64 bits (0 -> 64 zeros; negativos em complemento de 2)
+            if (ofs_str_eq(n.val, "fault_count") || ofs_str_eq(n.val, "fault_lead") || ofs_str_eq(n.val, "fault_trail")) {
+                emit_expr(node_get_extra(id, 0))
+                forge fb_v = coerce_for_store(_expr_val, _expr_type, "stone")
+                forge fb_tmp = next_tmp("fault_bits")
+                if (ofs_str_eq(n.val, "fault_count")) {
+                    cg_emit("  " + fb_tmp + " = call i64 @llvm.ctpop.i64(i64 " + fb_v + ")")
+                } else if (ofs_str_eq(n.val, "fault_lead")) {
+                    cg_emit("  " + fb_tmp + " = call i64 @llvm.ctlz.i64(i64 " + fb_v + ", i1 false)")
+                } else {
+                    cg_emit("  " + fb_tmp + " = call i64 @llvm.cttz.i64(i64 " + fb_v + ", i1 false)")
+                }
+                _expr_val = fb_tmp
+                _expr_type = "stone"
+                return
+            }
+
+            // fault_spin_left/right(v, n): rotacao de 64 bits; n e tomado modulo 64
+            if (ofs_str_eq(n.val, "fault_spin_left") || ofs_str_eq(n.val, "fault_spin_right")) {
+                emit_expr(node_get_extra(id, 0))
+                forge fr_v = coerce_for_store(_expr_val, _expr_type, "stone")
+                emit_expr(node_get_extra(id, 1))
+                forge fr_n = coerce_for_store(_expr_val, _expr_type, "stone")
+                forge fr_tmp = next_tmp("fault_spin")
+                forge fr_fn = "fshl"
+                if (ofs_str_eq(n.val, "fault_spin_right")) { fr_fn = "fshr" }
+                cg_emit("  " + fr_tmp + " = call i64 @llvm." + fr_fn + ".i64(i64 " + fr_v + ", i64 " + fr_v + ", i64 " + fr_n + ")")
+                _expr_val = fr_tmp
+                _expr_type = "stone"
+                return
+            }
+
+            // fault_weave(mask, left, right): bit de `left` onde mask=1 e de
+            // `right` onde mask=0  ==  (left & mask) | (right & ~mask)
+            if (ofs_str_eq(n.val, "fault_weave")) {
+                emit_expr(node_get_extra(id, 0))
+                forge fw_m = coerce_for_store(_expr_val, _expr_type, "stone")
+                emit_expr(node_get_extra(id, 1))
+                forge fw_l = coerce_for_store(_expr_val, _expr_type, "stone")
+                emit_expr(node_get_extra(id, 2))
+                forge fw_r = coerce_for_store(_expr_val, _expr_type, "stone")
+                forge fw_a = next_tmp("fw_l")
+                cg_emit("  " + fw_a + " = and i64 " + fw_l + ", " + fw_m)
+                forge fw_nm = next_tmp("fw_nm")
+                cg_emit("  " + fw_nm + " = xor i64 " + fw_m + ", -1")
+                forge fw_b = next_tmp("fw_r")
+                cg_emit("  " + fw_b + " = and i64 " + fw_r + ", " + fw_nm)
+                forge fw_res = next_tmp("fault_weave")
+                cg_emit("  " + fw_res + " = or i64 " + fw_a + ", " + fw_b)
+                _expr_val = fw_res
+                _expr_type = "stone"
+                return
+            }
+
+            if (ofs_str_eq(n.val, "fault_unreachable")) {
+                cg_emit("  call void @llvm.trap()")
+                cg_emit("  unreachable")
+                // o resto da expressao/bloco continua num bloco sem predecessor
+                cg_emit(next_label("fault_dead") + ":")
+                _expr_val = "0"
+                _expr_type = "void"
+                return
+            }
+
+            // fault_memcpy(dst, src, len) / fault_memset(dst, byte, len)
+            if (ofs_str_eq(n.val, "fault_memcpy") || ofs_str_eq(n.val, "fault_memset")) {
+                emit_expr(node_get_extra(id, 0))
+                forge fm_d = coerce_for_store(_expr_val, _expr_type, "ptr")
+                emit_expr(node_get_extra(id, 1))
+                forge fm_s = _expr_val
+                forge fm_st = _expr_type
+                emit_expr(node_get_extra(id, 2))
+                forge fm_n = coerce_for_store(_expr_val, _expr_type, "stone")
+                if (ofs_str_eq(n.val, "fault_memcpy")) {
+                    forge fm_sp = coerce_for_store(fm_s, fm_st, "ptr")
+                    cg_emit("  call void @llvm.memcpy.p0.p0.i64(ptr " + fm_d + ", ptr " + fm_sp + ", i64 " + fm_n + ", i1 false)")
+                } else {
+                    forge fm_b = next_tmp("fm_byte")
+                    cg_emit("  " + fm_b + " = trunc i64 " + coerce_for_store(fm_s, fm_st, "stone") + " to i8")
+                    cg_emit("  call void @llvm.memset.p0.i64(ptr " + fm_d + ", i8 " + fm_b + ", i64 " + fm_n + ", i1 false)")
+                }
+                _expr_val = "0"
+                _expr_type = "void"
+                return
+            }
+
             if (ofs_str_eq(n.val, "ofs_stone_to_obsidian")) {
                 forge arg_id0 = node_get_extra(id, 0)
                 emit_expr(arg_id0)
@@ -1816,9 +2727,27 @@ namespace llvmgen {
                 return
             }
 
+            if (ofs_str_eq(n.val, "__ofs_variant_name") || ofs_str_eq(n.val, "__ofs_bool_text")) {
+                // conversoes para texto inseridas pelo typeck (emit_text_helpers)
+                emit_expr(node_get_extra(id, 0))
+                normalize_bool1()
+                forge tx_tmp = next_tmp("text")
+                if (ofs_str_eq(n.val, "__ofs_bool_text")) {
+                    forge tb = coerce_for_store(_expr_val, _expr_type, "bool")
+                    cg_emit("  " + tx_tmp + " = call ptr @__ofs_bool_text(i32 " + tb + ")")
+                } else {
+                    forge tv = widen_int(_expr_val, _expr_type)
+                    cg_emit("  " + tx_tmp + " = call ptr @__ofs_variant_name(i64 " + tv + ")")
+                }
+                _expr_val = tx_tmp
+                _expr_type = "obsidian"
+                return
+            }
+
             if (ofs_str_eq(n.val, "echo")) {
                 forge arg_id = node_get_extra(id, 0)
                 emit_expr(arg_id)
+                forge echo_fresh = expr_is_fresh(arg_id)
                 // inteiros pequenos (u8, u32...) imprimem como numero, nao ponteiro
                 _expr_val = widen_int(_expr_val, _expr_type)
                 _expr_type = _widened_type
@@ -1834,6 +2763,7 @@ namespace llvmgen {
                     cg_emit("  call void @echo_bool(i32 " + _expr_val + ")")
                 } else {
                     cg_emit("  call void @echo_obsidian(ptr " + _expr_val + ")")
+                    if (echo_fresh) { cg_emit("  call void @ofs_str_release(ptr " + _expr_val + ", i64 1)") }
                 }
                 _expr_val = "0"
                 _expr_type = "void"
@@ -1843,9 +2773,7 @@ namespace llvmgen {
             if (ofs_str_eq(n.val, "ofs_array_len")) {
                 forge arr_id = node_get_extra(id, 0)
                 emit_expr(arr_id)
-                forge alen = next_tmp("arr_len")
-                cg_emit("  " + alen + " = call i64 @ofs_array_len(ptr " + _expr_val + ")")
-                _expr_val = alen
+                _expr_val = emit_arr_len(_expr_val)
                 _expr_type = "stone"
                 return
             }
@@ -1874,10 +2802,7 @@ namespace llvmgen {
                 forge val_id2 = node_get_extra(id, 1)
                 emit_expr(val_id2)
                 normalize_bool1()
-                forge slot2 = next_tmp("arr_push")
-                cg_emit("  " + slot2 + " = alloca " + llvm_type(_expr_type) + ", align 8")
-                cg_emit("  store " + llvm_type(_expr_type) + " " + _expr_val + ", ptr " + slot2)
-                cg_emit("  call void @ofs_array_push(ptr " + arr2 + ", ptr " + slot2 + ")")
+                emit_arr_push(arr2, llvm_type(_expr_type), _expr_val)
                 _expr_val = "0"
                 _expr_type = "void"
                 return
@@ -1893,10 +2818,7 @@ namespace llvmgen {
                 forge val_id3 = node_get_extra(id, 2)
                 emit_expr(val_id3)
                 normalize_bool1()
-                forge slot3 = next_tmp("arr_set")
-                cg_emit("  " + slot3 + " = alloca " + llvm_type(_expr_type) + ", align 8")
-                cg_emit("  store " + llvm_type(_expr_type) + " " + _expr_val + ", ptr " + slot3)
-                cg_emit("  call void @ofs_array_set(ptr " + arr3 + ", i64 " + idx3 + ", ptr " + slot3 + ")")
+                emit_arr_store(arr3, idx3, llvm_type(_expr_type), _expr_val)
                 _expr_val = "0"
                 _expr_type = "void"
                 return
@@ -1937,11 +2859,18 @@ namespace llvmgen {
             }
 
             forge args = ""
+            // temporarios (`f(a + b)`) passados a parametros que nao escapam
+            // sao liberados depois da chamada
+            forge free_after: Array<obsidian> = []
+            forge cmask = esc_call_mask(id, n.val)
             forge i = 0
             while (i < node_extra_len(id)) {
                 if (i > 0) { args = args + ", " }
                 forge arg_id = node_get_extra(id, i)
                 emit_expr(arg_id)
+                if (i < 62 && expr_is_fresh(arg_id)) {
+                    if (((cmask >> i) & 1) != 0) { ofs_array_push(free_after, _expr_val) }
+                }
                 if (ofs_str_eq(_expr_type, "bool1")) {
                     forge b_ext = next_tmp("bool_ext")
                     cg_emit("  " + b_ext + " = zext i1 " + _expr_val + " to i32")
@@ -1965,15 +2894,28 @@ namespace llvmgen {
             forge ret_type = n.type_str
             if (ofs_str_eq(ret_type, "")) { ret_type = "stone" }
             forge ret_llvm = llvm_type(ret_type)
+            forge va_sig = variadic_sig(callee)
             if (ofs_str_eq(ret_llvm, "void")) {
-                cg_emit("  call void @" + callee + "(" + args + ")")
+                if (!ofs_str_eq(va_sig, "")) {
+                    cg_emit("  call " + va_sig + " @" + callee + "(" + args + ")")
+                } else {
+                    cg_emit("  call void @" + callee + "(" + args + ")")
+                }
                 _expr_val = "0"
                 _expr_type = "void"
             } else {
                 forge call_tmp = next_tmp("call")
-                cg_emit("  " + call_tmp + " = call " + ret_llvm + " @" + callee + "(" + args + ")")
+                forge call_ty = ret_llvm
+                if (!ofs_str_eq(va_sig, "")) { call_ty = va_sig }
+                cg_emit("  " + call_tmp + " = call " + call_ty + " @" + callee + "(" + args + ")")
                 _expr_val = call_tmp
                 _expr_type = ret_type
+            }
+            forge fi2 = 0
+            while (fi2 < ofs_array_len(free_after)) {
+                forge fv: obsidian = ofs_array_get(free_after, fi2)
+                cg_emit("  call void @ofs_str_release(ptr " + fv + ", i64 1)")
+                fi2++
             }
             return
         }
@@ -1999,14 +2941,32 @@ namespace llvmgen {
             }
             if (ofs_str_eq(t, "")) { t = "stone" }
             forge p = next_tmp(n.val)
+            forge stack_obj = false
             if (is_named_type(t)) {
-                forge mem = next_tmp("obj")
-                cg_emit("  " + mem + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(monolith_alloc_size(t)) + ")")
-                p = mem
+                if (esc_struct_ok(n.val)) {
+                    // monolith local que nao escapa: pilha em vez de heap
+                    forge sobj = next_tmp("sobj")
+                    cg_emit("  " + sobj + " = alloca %" + t + ", align 8")
+                    p = sobj
+                    stack_obj = true
+                    ofs_array_push(_stack_obj_ptrs, sobj)
+                    ofs_array_push(_stack_obj_types, t)
+                } else {
+                    forge mem = next_tmp("obj")
+                    cg_emit("  " + mem + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(monolith_alloc_size(t)) + ")")
+                    p = mem
+                }
             } else {
                 cg_emit("  " + p + " = alloca " + storage_type(t) + ", align 8")
             }
             declare_var(n.val, t, p)
+            forge own = ""
+            if (ofs_str_eq(t, "obsidian") && esc_str_ok(n.val)) {
+                own = p + "_own"
+                cg_emit("  " + own + " = alloca i64, align 8")
+                cg_emit("  store i64 0, ptr " + own)
+                ofs_array_push(_own_ptrs, p)
+            }
             if (n.c1 >= 0) {
                 if (is_array_get(n.c1)) {
                     emit_array_get(n.c1, t)
@@ -2018,10 +2978,16 @@ namespace llvmgen {
                     cg_emit("  " + named_val + " = load %" + t + ", ptr " + _expr_val)
                     cg_emit("  store %" + t + " " + named_val + ", ptr " + p)
                 } else {
+                    forge init_fresh = expr_is_fresh(n.c1)
                     forge v = coerce_for_store(_expr_val, _expr_type, t)
                     cg_emit("  store " + llvm_type(t) + " " + v + ", ptr " + p)
+                    if (!ofs_str_eq(own, "") && init_fresh) {
+                        cg_emit("  store i64 1, ptr " + own)
+                    }
                 }
             } else if (is_named_type(t)) {
+                if (stack_obj) { cg_emit("  store %" + t + " zeroinitializer, ptr " + p) }
+                emit_init_nested(p, t, 0)
                 return
             } else if (ofs_str_eq(t, "obsidian") || ofs_str_eq(t, "Array")) {
                 cg_emit("  store ptr null, ptr " + p)
@@ -2030,6 +2996,14 @@ namespace llvmgen {
             } else {
                 cg_emit("  store " + llvm_type(t) + " 0, ptr " + p)
             }
+            if (!ofs_str_eq(own, "")) {
+                if ((esc_bits_of(n.val) & 2) == 0) { register_scope_free(p, 1) }
+            }
+            if (esc_is_arr_type(t) && esc_arr_ok(n.val)) {
+                ofs_array_push(_free_arr_ptrs, p)
+                register_scope_free(p, 2)
+            }
+            _fresh_val = ""
             return
         }
 
@@ -2052,6 +3026,22 @@ namespace llvmgen {
                     emit_expr(n.c0)
                 }
                 forge v = coerce_for_store(_expr_val, _expr_type, _current_ret_type)
+                // monolith local na pilha: devolve uma copia no heap
+                forge si = ofs_array_len(_stack_obj_ptrs) - 1
+                while (si >= 0) {
+                    forge sp: obsidian = ofs_array_get(_stack_obj_ptrs, si)
+                    if (ofs_str_eq(sp, v)) {
+                        forge st: obsidian = ofs_array_get(_stack_obj_types, si)
+                        forge hc = next_tmp("ret_obj")
+                        forge hv = next_tmp("ret_copy")
+                        cg_emit("  " + hc + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(monolith_alloc_size(st)) + ")")
+                        cg_emit("  " + hv + " = load %" + st + ", ptr " + v)
+                        cg_emit("  store %" + st + " " + hv + ", ptr " + hc)
+                        v = hc
+                        break
+                    }
+                    si--
+                }
                 emit_anchors_from_depth(0)
                 cg_emit("  ret " + llvm_type(_current_ret_type) + " " + v)
             }
@@ -2307,8 +3297,7 @@ namespace llvmgen {
             cg_emit("  " + cur_i + " = load i64, ptr " + idx_ptr)
             forge cur_arr = next_tmp("cur_arr")
             cg_emit("  " + cur_arr + " = load ptr, ptr " + arr_ptr)
-            forge arr_len = next_tmp("arr_len")
-            cg_emit("  " + arr_len + " = call i64 @ofs_array_len(ptr " + cur_arr + ")")
+            forge arr_len = emit_arr_len(cur_arr)
             forge cond_cmp = next_tmp("cond_cmp")
             cg_emit("  " + cond_cmp + " = icmp slt i64 " + cur_i + ", " + arr_len)
             cg_emit("  br i1 " + cond_cmp + ", label %" + body_lbl + ", label %" + end_lbl)
@@ -2319,8 +3308,7 @@ namespace llvmgen {
             cg_emit("  " + cur_i2 + " = load i64, ptr " + idx_ptr)
             forge cur_arr2 = next_tmp("cur_arr")
             cg_emit("  " + cur_arr2 + " = load ptr, ptr " + arr_ptr)
-            forge elem_slot = next_tmp("elem_slot")
-            cg_emit("  " + elem_slot + " = call ptr @ofs_array_get(ptr " + cur_arr2 + ", i64 " + cur_i2 + ")")
+            forge elem_slot = emit_arr_elem_ptr(cur_arr2, cur_i2)
             forge elem_val = next_tmp("elem_val")
             cg_emit("  " + elem_val + " = load " + llvm_type(elem_t) + ", ptr " + elem_slot)
             cg_emit("  store " + llvm_type(elem_t) + " " + elem_val + ", ptr " + item_ptr)
@@ -2353,6 +3341,713 @@ namespace llvmgen {
         }
     }
 
+    // ── Analise de escape por funcao (A6: memoria) ───────────────────────
+    // Strings, arrays e monoliths sao ponteiros sem GC nem contagem de
+    // referencia: `t = s` faz t e s dividirem o mesmo buffer. O codegen so
+    // reaproveita/libera memoria quando prova, por NOME dentro da funcao e de
+    // forma conservadora, que o valor de uma variavel local nunca e copiado
+    // para outro lugar ("nao escapa"). Usos que NAO escapam:
+    //   - operando de `+`, comparacao, condicao, indice;
+    //   - base de `a[i]`, `a[i] = v`, de ofs_array_push/set/len/get/pop;
+    //   - base de campo `n.f` (quando o campo nao e monolith);
+    //   - copia por valor de monolith (`forge m: T = n`);
+    //   - argumento de builtin que so le (ofs_str_len, echo, ...) ou de vein
+    //     do modulo cujo parametro, por esta mesma analise, nao escapa;
+    //   - `return s` (so para strings: a variavel morre ali).
+    // Qualquer outro uso (atribuir a outra variavel/campo/array, cast, `&`,
+    // chamada desconhecida, variavel de `cycle ... in`/`tremor`) escapa.
+    // O que o codegen faz com isso:
+    //   - obsidian que nao escapa ganha um "dono" em tempo de execucao
+    //     (`<ptr>_own`): 1 quando o valor veio de uma concatenacao (buffer
+    //     novo e exclusivo). Com dono, `s = s + x` / `s += x` crescem o
+    //     buffer no lugar (realloc) e o valor antigo e liberado quando a
+    //     variavel recebe outro valor ou sai do escopo;
+    //   - Array local que nao escapa e so recebe literais `[...]` e liberado
+    //     ao sair do escopo (e antes de receber outro literal);
+    //   - monolith local que nao escapa vai para a pilha (alloca) em vez do
+    //     heap.
+    // Bits por nome: 1 escapa, 2 retornado, 4 array recebeu valor que nao e
+    // literal, 8 parametro.
+    forge _esc_names: Array<obsidian> = []
+    forge _esc_types: Array<obsidian> = []
+    forge _esc_bits: Array<stone> = []
+    forge _esc_has_anchor: bool = false
+    forge _esc_disabled: bool = true
+    // mascara de parametros que nao escapam, por vein do modulo
+    forge _fn_names: Array<obsidian> = []
+    forge _fn_masks: Array<stone> = []
+    forge _call_fn_cache: Array<stone> = []
+    // por funcao: variaveis obsidian com dono (ptr da variavel) e arrays
+    // liberados no fim do escopo; acoes de fim de escopo (anchors sinteticos)
+    forge _own_ptrs: Array<obsidian> = []
+    forge _free_arr_ptrs: Array<obsidian> = []
+    forge _stack_obj_ptrs: Array<obsidian> = []
+    forge _stack_obj_types: Array<obsidian> = []
+    forge _sf_ptrs: Array<obsidian> = []
+    forge _sf_kinds: Array<stone> = []
+    // auto-concatenacao em curso (`s = s + ...`): nome e ptr do dono
+    forge _selfapp_name: obsidian = ""
+    forge _selfapp_own: obsidian = ""
+    forge _selfapp_done: bool = false
+    // ultimo resultado de concatenacao (temporario exclusivo)
+    forge _fresh_val: obsidian = ""
+
+    vein esc_index(name: obsidian) -> stone {
+        forge i = ofs_array_len(_esc_names) - 1
+        while (i >= 0) {
+            forge nm: obsidian = ofs_array_get(_esc_names, i)
+            if (ofs_str_eq(nm, name)) { return i }
+            i--
+        }
+        return -1
+    }
+
+    vein esc_mark(name: obsidian, bits: stone) -> void {
+        forge i = esc_index(name)
+        if (i < 0) {
+            ofs_array_push(_esc_names, name)
+            ofs_array_push(_esc_types, "")
+            ofs_array_push(_esc_bits, bits)
+            return
+        }
+        forge old: stone = ofs_array_get(_esc_bits, i)
+        ofs_array_set(_esc_bits, i, old | bits)
+    }
+
+    vein esc_declare(name: obsidian, t: obsidian, bits: stone) -> void {
+        forge i = esc_index(name)
+        if (i < 0) {
+            ofs_array_push(_esc_names, name)
+            ofs_array_push(_esc_types, t)
+            ofs_array_push(_esc_bits, bits)
+            return
+        }
+        forge old_t: obsidian = ofs_array_get(_esc_types, i)
+        if (ofs_str_eq(old_t, "")) {
+            ofs_array_set(_esc_types, i, t)
+        } else if (!ofs_str_eq(old_t, t)) {
+            bits = bits | 1
+        }
+        forge old: stone = ofs_array_get(_esc_bits, i)
+        ofs_array_set(_esc_bits, i, old | bits)
+    }
+
+    vein esc_type_of(name: obsidian) -> obsidian {
+        forge i = esc_index(name)
+        if (i < 0) { return "" }
+        return ofs_array_get(_esc_types, i)
+    }
+
+    vein esc_is_arr_type(t: obsidian) -> bool {
+        if (ofs_str_eq(t, "Array")) { return true }
+        if (ofs_str_len(t) > 6) {
+            if (ofs_str_eq(ofs_str_substr(t, 0, 6), "Array<")) { return true }
+        }
+        return false
+    }
+
+    vein esc_is_assign_op(op: obsidian) -> bool {
+        if (ofs_str_eq(op, "=") || ofs_str_eq(op, "+=") || ofs_str_eq(op, "-=") || ofs_str_eq(op, "*=") || ofs_str_eq(op, "/=")) { return true }
+        if (ofs_str_eq(op, "%=") || ofs_str_eq(op, "&=") || ofs_str_eq(op, "|=") || ofs_str_eq(op, "^=") || ofs_str_eq(op, "<<=") || ofs_str_eq(op, ">>=")) { return true }
+        return false
+    }
+
+    // Builtins (sem corpo no modulo) que so leem os argumentos e nunca os
+    // devolvem nem guardam.
+    vein esc_pure_builtin(nm: obsidian) -> bool {
+        if (ofs_str_eq(nm, "echo") || ofs_str_eq(nm, "ofs_str_len") || ofs_str_eq(nm, "ofs_str_char_at") || ofs_str_eq(nm, "ofs_str_char_at_known")) { return true }
+        if (ofs_str_eq(nm, "ofs_str_eq") || ofs_str_eq(nm, "ofs_str_concat") || ofs_str_eq(nm, "ofs_str_substr") || ofs_str_eq(nm, "ofs_str_contains")) { return true }
+        if (ofs_str_eq(nm, "ofs_str_upper") || ofs_str_eq(nm, "ofs_str_lower") || ofs_str_eq(nm, "ofs_obsidian_to_stone") || ofs_str_eq(nm, "ofs_obsidian_to_crystal")) { return true }
+        if (ofs_str_eq(nm, "ofs_stone_to_obsidian") || ofs_str_eq(nm, "ofs_crystal_to_obsidian") || ofs_str_eq(nm, "ofs_array_len") || ofs_str_eq(nm, "ofs_array_get")) { return true }
+        if (ofs_str_eq(nm, "ofs_array_pop") || ofs_str_eq(nm, "strlen") || ofs_str_eq(nm, "strcmp") || ofs_str_eq(nm, "strncmp")) { return true }
+        if (ofs_str_eq(nm, "fputs") || ofs_str_eq(nm, "puts")) { return true }
+        return false
+    }
+
+    vein esc_fn_index(call_id: stone, nm: obsidian) -> stone {
+        if (call_id >= 0 && call_id < ofs_array_len(_call_fn_cache)) {
+            forge c: stone = ofs_array_get(_call_fn_cache, call_id)
+            if (c != -2) { return c }
+        }
+        forge r = -1
+        forge i = 0
+        while (i < ofs_array_len(_fn_names)) {
+            forge fnm: obsidian = ofs_array_get(_fn_names, i)
+            if (ofs_str_eq(fnm, nm)) {
+                r = i
+                break
+            }
+            i++
+        }
+        if (call_id >= 0 && call_id < ofs_array_len(_call_fn_cache)) {
+            ofs_array_set(_call_fn_cache, call_id, r)
+        }
+        return r
+    }
+
+    // bit i = o argumento i nao escapa
+    vein esc_call_mask(call_id: stone, nm: obsidian) -> stone {
+        forge fi = esc_fn_index(call_id, nm)
+        if (fi >= 0) { return ofs_array_get(_fn_masks, fi) }
+        if (esc_pure_builtin(nm)) { return -1 }
+        if (ofs_str_eq(nm, "ofs_array_push")) { return 1 }
+        if (ofs_str_eq(nm, "ofs_array_set")) { return 3 }
+        return 0
+    }
+
+    vein esc_walk_kids(id: stone, ctx: stone) -> void {
+        esc_walk(node_child(id, 0), ctx)
+        esc_walk(node_child(id, 1), ctx)
+        esc_walk(node_child(id, 2), ctx)
+        esc_walk(node_child(id, 3), ctx)
+        forge i = 0
+        forge cnt = node_extra_len(id)
+        while (i < cnt) {
+            esc_walk(node_get_extra(id, i), ctx)
+            i++
+        }
+    }
+
+    // ctx: 0 comando, 1 escapa, 2 so leitura, 3 base de campo, 4 retorno
+    vein esc_walk(id: stone, ctx: stone) -> void {
+        if (id < 0) { return }
+        forge k = node_kind_of(id)
+        if (k == NK_IDENT) {
+            if (ctx == 1) { esc_mark(node_val_of(id), 1) }
+            if (ctx == 4) { esc_mark(node_val_of(id), 2) }
+            return
+        }
+        if (k == NK_LIT_INT || k == NK_LIT_FLOAT || k == NK_LIT_STRING || k == NK_LIT_BOOL || k == NK_LIT_NULL) { return }
+        if (k == NK_BREAK || k == NK_CONTINUE || k == NK_STRATA || k == NK_ATTACH) { return }
+        if (k == NK_BLOCK) {
+            forge bi = 0
+            forge bcnt = node_extra_len(id)
+            while (bi < bcnt) {
+                esc_walk(node_get_extra(id, bi), 0)
+                bi++
+            }
+            return
+        }
+        if (k == NK_VAR_DECL || k == NK_CONST_DECL) {
+            forge dn: Node = node_get(id)
+            forge t = dn.type_str
+            if (dn.c0 >= 0) {
+                forge ann = type_node_name(dn.c0)
+                if (!ofs_str_eq(ann, "")) { t = ann }
+            }
+            if (ofs_str_eq(t, "")) { t = "stone" }
+            esc_declare(dn.val, t, 0)
+            if (dn.c1 >= 0) {
+                if (is_named_type(t)) {
+                    esc_walk(dn.c1, 2)
+                } else {
+                    esc_walk(dn.c1, 1)
+                }
+                if (esc_is_arr_type(t) && node_kind_of(dn.c1) != NK_ARRAY_LIT) { esc_mark(dn.val, 4) }
+            }
+            return
+        }
+        if (k == NK_BIN_OP || k == NK_ASSIGN) {
+            forge bn: Node = node_get(id)
+            if (k == NK_ASSIGN || esc_is_assign_op(bn.val)) {
+                esc_walk_assign(bn.c0, bn.val, bn.c1, ctx)
+                return
+            }
+            esc_walk(bn.c0, 2)
+            esc_walk(bn.c1, 2)
+            return
+        }
+        if (k == NK_UNARY_OP) {
+            if (ofs_str_eq(node_val_of(id), "&")) {
+                esc_walk(node_child(id, 0), 1)
+            } else {
+                esc_walk(node_child(id, 0), 2)
+            }
+            return
+        }
+        if (k == NK_POST_OP) {
+            if (ofs_str_eq(node_val_of(id), "?")) {
+                esc_walk(node_child(id, 0), ctx)
+            } else {
+                esc_walk(node_child(id, 0), 1)
+            }
+            return
+        }
+        if (k == NK_CAST) {
+            esc_walk(node_child(id, 0), 1)
+            return
+        }
+        if (k == NK_INDEX) {
+            esc_walk(node_child(id, 0), 2)
+            esc_walk(node_child(id, 1), 2)
+            return
+        }
+        if (k == NK_FIELD) {
+            esc_walk_field(id, ctx)
+            return
+        }
+        if (k == NK_CALL) {
+            forge cnm = node_val_of(id)
+            forge mask = esc_call_mask(id, cnm)
+            forge ci = 0
+            forge ccnt = node_extra_len(id)
+            while (ci < ccnt) {
+                forge arg = node_get_extra(id, ci)
+                forge keep = false
+                if (ci < 62) {
+                    if (((mask >> ci) & 1) != 0) { keep = true }
+                }
+                if (keep) {
+                    esc_walk(arg, 2)
+                } else {
+                    esc_walk(arg, 1)
+                }
+                ci++
+            }
+            return
+        }
+        if (k == NK_RETURN) {
+            esc_walk(node_child(id, 0), 4)
+            return
+        }
+        if (k == NK_IF) {
+            esc_walk(node_child(id, 0), 2)
+            esc_walk(node_child(id, 1), 0)
+            esc_walk(node_child(id, 2), 0)
+            return
+        }
+        if (k == NK_WHILE) {
+            esc_walk(node_child(id, 0), 2)
+            esc_walk(node_child(id, 1), 0)
+            return
+        }
+        if (k == NK_CYCLE_C) {
+            esc_walk(node_child(id, 0), 0)
+            esc_walk(node_child(id, 1), 2)
+            esc_walk(node_child(id, 2), 0)
+            esc_walk(node_child(id, 3), 0)
+            return
+        }
+        if (k == NK_CYCLE_RANGE) {
+            esc_mark(node_val_of(id), 1)
+            esc_walk(node_child(id, 0), 2)
+            esc_walk(node_child(id, 1), 0)
+            return
+        }
+        if (k == NK_TREMOR) {
+            esc_walk(node_child(id, 0), 0)
+            forge cv = node_child(id, 1)
+            if (cv >= 0) {
+                esc_mark(node_val_of(cv), 1)
+                esc_walk(cv, 1)
+            }
+            esc_walk(node_child(id, 2), 0)
+            return
+        }
+        if (k == NK_ANCHOR) {
+            _esc_has_anchor = true
+            esc_walk(node_child(id, 0), 0)
+            return
+        }
+        if (k == NK_THROW) {
+            esc_walk(node_child(id, 0), 2)
+            return
+        }
+        if (k == NK_LAMBDA) {
+            _esc_disabled = true
+            return
+        }
+        if (k == NK_MATCH) {
+            esc_walk(node_child(id, 0), 2)
+            forge mi = 0
+            forge mcnt = node_extra_len(id)
+            while (mi < mcnt) {
+                forge cid = node_get_extra(id, mi)
+                forge ck = node_kind_of(cid)
+                if (ck == NK_CASE) {
+                    esc_walk(node_child(cid, 0), 2)
+                    esc_walk(node_child(cid, 1), 0)
+                } else if (ck == NK_DEFAULT) {
+                    esc_walk(node_child(cid, 0), 0)
+                } else {
+                    esc_walk(cid, 1)
+                }
+                mi++
+            }
+            return
+        }
+        // no desconhecido: tudo o que aparece embaixo escapa
+        esc_walk_kids(id, 1)
+    }
+
+    vein esc_walk_assign(target: stone, op: obsidian, value: stone, ctx: stone) -> void {
+        forge tk = node_kind_of(target)
+        if (tk == NK_IDENT) {
+            forge nm = node_val_of(target)
+            // valor da atribuicao usado como expressao: aliasa a variavel
+            if (ctx != 0) { esc_mark(nm, 1) }
+            forge tt = esc_type_of(nm)
+            if (ofs_str_eq(op, "=")) {
+                if (is_named_type(tt)) {
+                    esc_walk(value, 2)
+                } else {
+                    esc_walk(value, 1)
+                }
+                if (node_kind_of(value) != NK_ARRAY_LIT) { esc_mark(nm, 4) }
+            } else {
+                if (!ofs_str_eq(op, "+=")) { esc_mark(nm, 1) }
+                esc_walk(value, 2)
+            }
+            return
+        }
+        if (tk == NK_INDEX) {
+            esc_walk(node_child(target, 0), 2)
+            esc_walk(node_child(target, 1), 2)
+            esc_walk(value, 1)
+            return
+        }
+        if (tk == NK_FIELD) {
+            esc_walk(node_child(target, 0), 3)
+            esc_walk(value, 1)
+            return
+        }
+        if (tk == NK_UNARY_OP) {
+            esc_walk(node_child(target, 0), 2)
+            esc_walk(value, 1)
+            return
+        }
+        esc_walk(target, 1)
+        esc_walk(value, 1)
+    }
+
+    vein esc_walk_field(id: stone, ctx: stone) -> void {
+        forge b = node_child(id, 0)
+        if (ctx == 1 || ctx == 4) {
+            // o valor lido vai ser guardado: campo monolith = ponteiro para
+            // dentro do objeto base
+            if (node_kind_of(b) != NK_IDENT) {
+                esc_walk(b, 1)
+                return
+            }
+            forge bt = esc_type_of(node_val_of(b))
+            if (is_named_type(bt)) {
+                if (is_named_type(field_type(bt, node_val_of(id)))) {
+                    esc_walk(b, 1)
+                    return
+                }
+            }
+        }
+        esc_walk(b, 3)
+    }
+
+    vein esc_param_type(param_id: stone) -> obsidian {
+        forge pc0 = node_child(param_id, 0)
+        if (pc0 < 0) { return "stone" }
+        if (node_kind_of(pc0) == NK_TYPE_ARRAY) { return type_node_name(pc0) }
+        return node_val_of(pc0)
+    }
+
+    // Preenche as tabelas para a funcao `fn_id` (FN_DECL ou CORE_DECL).
+    vein esc_analyze(fn_id: stone) -> void {
+        _esc_names = []
+        _esc_types = []
+        _esc_bits = []
+        _esc_has_anchor = false
+        _esc_disabled = false
+        forge k = node_kind_of(fn_id)
+        if (k == NK_FN_DECL) {
+            forge params_id = node_child(fn_id, 0)
+            forge pi = 0
+            forge pcnt = node_extra_len(params_id)
+            while (pi < pcnt) {
+                forge pid = node_get_extra(params_id, pi)
+                esc_declare(node_val_of(pid), esc_param_type(pid), 8)
+                pi++
+            }
+        }
+        forge body = node_child(fn_id, 2)
+        if (body < 0) {
+            _esc_disabled = true
+            return
+        }
+        forge si = 0
+        forge scnt = node_extra_len(body)
+        while (si < scnt) {
+            esc_walk(node_get_extra(body, si), 0)
+            si++
+        }
+    }
+
+    vein esc_bits_of(name: obsidian) -> stone {
+        forge i = esc_index(name)
+        if (i < 0) { return 1 }
+        return ofs_array_get(_esc_bits, i)
+    }
+
+    vein esc_str_ok(name: obsidian) -> bool {
+        if (_esc_disabled) { return false }
+        if (!ofs_str_eq(esc_type_of(name), "obsidian")) { return false }
+        forge b = esc_bits_of(name)
+        if ((b & 1) != 0) { return false }
+        if (_esc_has_anchor && (b & 2) != 0) { return false }
+        return true
+    }
+
+    vein esc_arr_ok(name: obsidian) -> bool {
+        if (_esc_disabled) { return false }
+        if (!esc_is_arr_type(esc_type_of(name))) { return false }
+        return (esc_bits_of(name) & 15) == 0
+    }
+
+    // `return n` e permitido: o retorno copia o objeto da pilha para um
+    // bloco novo no heap (ver NK_RETURN), entao o laco que so procura
+    // (`forge s: Sym = lista[i]; if (...) { return s }`) aloca uma vez, nao
+    // uma vez por volta.
+    vein esc_struct_ok(name: obsidian) -> bool {
+        if (_esc_disabled) { return false }
+        if (!is_named_type(esc_type_of(name))) { return false }
+        return (esc_bits_of(name) & 9) == 0
+    }
+
+    vein esc_list_has(list: Array<obsidian>, v: obsidian) -> bool {
+        forge i = ofs_array_len(list) - 1
+        while (i >= 0) {
+            forge x: obsidian = ofs_array_get(list, i)
+            if (ofs_str_eq(x, v)) { return true }
+            i--
+        }
+        return false
+    }
+
+    // Mascara de parametros que nao escapam (nem sao retornados).
+    vein esc_param_mask(fn_id: stone) -> stone {
+        esc_analyze(fn_id)
+        if (_esc_disabled) { return 0 }
+        if (node_kind_of(fn_id) != NK_FN_DECL) { return 0 }
+        forge params_id = node_child(fn_id, 0)
+        forge mask = 0
+        forge pi = 0
+        forge pcnt = node_extra_len(params_id)
+        while (pi < pcnt && pi < 62) {
+            forge pid = node_get_extra(params_id, pi)
+            if ((esc_bits_of(node_val_of(pid)) & 3) == 0) { mask = mask | (1 << pi) }
+            pi++
+        }
+        return mask
+    }
+
+    vein esc_collect_fns(root_id: stone, ids: Array<stone>) -> void {
+        forge i = 0
+        while (i < node_extra_len(root_id)) {
+            forge decl_id = node_get_extra(root_id, i)
+            forge k = node_kind_of(decl_id)
+            if (k == NK_CORE_DECL || k == NK_FN_DECL) {
+                ofs_array_push(ids, decl_id)
+            } else if (k == NK_NAMESPACE || k == NK_IMPL) {
+                forge j = 0
+                while (j < node_extra_len(decl_id)) {
+                    forge member_id = node_get_extra(decl_id, j)
+                    forge mk = node_kind_of(member_id)
+                    if (mk == NK_CORE_DECL || mk == NK_FN_DECL) {
+                        ofs_array_push(ids, member_id)
+                    }
+                    j++
+                }
+            }
+            i++
+        }
+    }
+
+    // Ponto fixo pessimista: comeca com "todo parametro escapa" e cada
+    // passada so usa fatos ja provados (seguro com recursao).
+    vein esc_compute_masks(root_id: stone) -> void {
+        forge ids: Array<stone> = []
+        esc_collect_fns(root_id, ids)
+        _fn_names = []
+        _fn_masks = []
+        _call_fn_cache = []
+        forge pool = node_pool_len()
+        forge ci = 0
+        while (ci < pool) {
+            ofs_array_push(_call_fn_cache, -2)
+            ci++
+        }
+        forge i = 0
+        while (i < ofs_array_len(ids)) {
+            forge fid: stone = ofs_array_get(ids, i)
+            ofs_array_push(_fn_names, node_val_of(fid))
+            ofs_array_push(_fn_masks, 0)
+            i++
+        }
+        forge pass = 0
+        while (pass < 3) {
+            i = 0
+            while (i < ofs_array_len(ids)) {
+                forge fid2: stone = ofs_array_get(ids, i)
+                ofs_array_set(_fn_masks, i, esc_param_mask(fid2))
+                i++
+            }
+            pass++
+        }
+        _esc_names = []
+        _esc_types = []
+        _esc_bits = []
+        _esc_disabled = true
+    }
+
+    // Variavel obsidian com dono: ptr do contador `_own`, ou "" se nao tem.
+    vein own_ptr_of(name: obsidian) -> obsidian {
+        if (var_index(name) < 0) { return "" }
+        forge p = var_ptr(name)
+        if (esc_list_has(_own_ptrs, p)) { return p + "_own" }
+        return ""
+    }
+
+    // O no `id` acabou de ser emitido e o valor e um temporario exclusivo
+    // (resultado de concatenacao que ninguem mais viu)?
+    vein expr_is_fresh(id: stone) -> bool {
+        if (ofs_str_eq(_fresh_val, "")) { return false }
+        if (!ofs_str_eq(_fresh_val, _expr_val)) { return false }
+        if (node_kind_of(id) != NK_BIN_OP) { return false }
+        return ofs_str_eq(node_val_of(id), "+")
+    }
+
+    // Quantas vezes o identificador `name` aparece na subarvore `id`.
+    vein count_ident(id: stone, name: obsidian) -> stone {
+        if (id < 0) { return 0 }
+        forge k = node_kind_of(id)
+        if (k == NK_IDENT) {
+            if (ofs_str_eq(node_val_of(id), name)) { return 1 }
+            return 0
+        }
+        forge c = count_ident(node_child(id, 0), name) + count_ident(node_child(id, 1), name)
+        c = c + count_ident(node_child(id, 2), name) + count_ident(node_child(id, 3), name)
+        forge i = 0
+        forge cnt = node_extra_len(id)
+        while (i < cnt) {
+            c = c + count_ident(node_get_extra(id, i), name)
+            i++
+        }
+        return c
+    }
+
+    // Folha mais a esquerda de uma cadeia `a + b + c` e o identificador name?
+    vein concat_leftmost_is(id: stone, name: obsidian) -> bool {
+        forge cur = id
+        while (node_kind_of(cur) == NK_BIN_OP && ofs_str_eq(node_val_of(cur), "+")) {
+            cur = node_child(cur, 0)
+        }
+        if (node_kind_of(cur) != NK_IDENT) { return false }
+        return ofs_str_eq(node_val_of(cur), name)
+    }
+
+    // Registra uma acao de fim de escopo (como um `anchor`): 1 = liberar a
+    // string com dono em `p`, 2 = liberar o array em `p`.
+    vein register_scope_free(p: obsidian, kind: stone) -> void {
+        ofs_array_push(_sf_ptrs, p)
+        ofs_array_push(_sf_kinds, kind)
+        ofs_array_push(_anchor_nodes, 0 - 1 - ofs_array_len(_sf_ptrs))
+        ofs_array_push(_anchor_depths, _scope_depth)
+    }
+
+    vein emit_scope_free(idx: stone) -> void {
+        forge p: obsidian = ofs_array_get(_sf_ptrs, idx)
+        forge kind: stone = ofs_array_get(_sf_kinds, idx)
+        forge v = next_tmp("sf_val")
+        cg_emit("  " + v + " = load ptr, ptr " + p)
+        if (kind == 1) {
+            forge o = next_tmp("sf_own")
+            cg_emit("  " + o + " = load i64, ptr " + p + "_own")
+            cg_emit("  call void @ofs_str_release(ptr " + v + ", i64 " + o + ")")
+        } else {
+            emit_arr_free_inline(v)
+        }
+    }
+
+    // Grava `v` numa variavel obsidian com dono `own`: libera o valor antigo
+    // (se era dela) e marca o novo como dela quando `fresh`.
+    vein emit_owned_store(p: obsidian, own: obsidian, v: obsidian, fresh: bool) -> void {
+        forge oldv = next_tmp("own_old")
+        forge oldo = next_tmp("own_flag")
+        cg_emit("  " + oldv + " = load ptr, ptr " + p)
+        cg_emit("  " + oldo + " = load i64, ptr " + own)
+        cg_emit("  call void @ofs_str_release(ptr " + oldv + ", i64 " + oldo + ")")
+        cg_emit("  store ptr " + v + ", ptr " + p)
+        if (fresh) {
+            cg_emit("  store i64 1, ptr " + own)
+        } else {
+            cg_emit("  store i64 0, ptr " + own)
+        }
+    }
+
+    // Atribuicao a uma variavel obsidian com dono (ver analise de escape).
+    vein emit_owned_assign(name: obsidian, p: obsidian, own: obsidian, op: obsidian, value_id: stone) -> void {
+        if (ofs_str_eq(op, "+=")) {
+            if (is_array_get(value_id)) {
+                emit_array_get(value_id, "obsidian")
+            } else {
+                emit_expr(value_id)
+            }
+            forge vf = expr_is_fresh(value_id)
+            forge v = coerce_for_store(_expr_val, _expr_type, "obsidian")
+            forge oldv = next_tmp("own_old")
+            forge oldo = next_tmp("own_flag")
+            cg_emit("  " + oldv + " = load ptr, ptr " + p)
+            cg_emit("  " + oldo + " = load i64, ptr " + own)
+            forge fl = oldo
+            if (vf) {
+                fl = next_tmp("cat_flags")
+                cg_emit("  " + fl + " = or i64 " + oldo + ", 2")
+            }
+            forge nv = next_tmp("concat")
+            cg_emit("  " + nv + " = call ptr @ofs_str_concat_ex(ptr " + oldv + ", ptr " + v + ", i64 " + fl + ")")
+            cg_emit("  store ptr " + nv + ", ptr " + p)
+            cg_emit("  store i64 1, ptr " + own)
+            _fresh_val = ""
+            _expr_val = nv
+            _expr_type = "obsidian"
+            return
+        }
+        // `s = s + ...` (s so aparece como primeira parcela): cresce no lugar
+        if (node_kind_of(value_id) == NK_BIN_OP && ofs_str_eq(node_val_of(value_id), "+")) {
+            if (concat_leftmost_is(value_id, name) && count_ident(value_id, name) == 1) {
+                _selfapp_name = name
+                _selfapp_own = own
+                _selfapp_done = false
+                emit_expr(value_id)
+                _selfapp_name = ""
+                if (_selfapp_done) {
+                    _selfapp_done = false
+                    forge sv = coerce_for_store(_expr_val, _expr_type, "obsidian")
+                    cg_emit("  store ptr " + sv + ", ptr " + p)
+                    cg_emit("  store i64 1, ptr " + own)
+                    _fresh_val = ""
+                    _expr_val = sv
+                    _expr_type = "obsidian"
+                    return
+                }
+                forge f2 = expr_is_fresh(value_id)
+                forge v2 = coerce_for_store(_expr_val, _expr_type, "obsidian")
+                emit_owned_store(p, own, v2, f2)
+                _fresh_val = ""
+                _expr_val = v2
+                _expr_type = "obsidian"
+                return
+            }
+        }
+        if (is_array_get(value_id)) {
+            emit_array_get(value_id, "obsidian")
+        } else {
+            emit_expr(value_id)
+        }
+        forge f3 = expr_is_fresh(value_id)
+        forge v3 = coerce_for_store(_expr_val, _expr_type, "obsidian")
+        emit_owned_store(p, own, v3, f3)
+        _fresh_val = ""
+        _expr_val = v3
+        _expr_type = "obsidian"
+    }
+
     vein emit_function(id: stone) -> void {
         forge n: Node = node_get(id)
         if (n.kind == NK_CORE_DECL || (n.kind == NK_FN_DECL && ofs_str_eq(n.val, "main"))) {
@@ -2363,6 +4058,15 @@ namespace llvmgen {
             _scope_depth = 0
             _current_ret_type = "main"
             _terminated = false
+            esc_analyze(id)
+            _own_ptrs = []
+            _free_arr_ptrs = []
+            _stack_obj_ptrs = []
+            _stack_obj_types = []
+            _sf_ptrs = []
+            _sf_kinds = []
+            _selfapp_name = ""
+            _fresh_val = ""
             cg_emit("define i32 @main() {")
             cg_emit("entry:")
             cg_emit("  call void @__ofs_init_globals()")
@@ -2377,6 +4081,7 @@ namespace llvmgen {
             if (!_terminated) { cg_emit("  ret i32 0") }
             cg_emit("}")
             cg_emit("")
+            _esc_disabled = true
             return
         }
 
@@ -2388,6 +4093,15 @@ namespace llvmgen {
             _scope_depth = 0
             _terminated = false
             _current_ret_type = "void"
+            esc_analyze(id)
+            _own_ptrs = []
+            _free_arr_ptrs = []
+            _stack_obj_ptrs = []
+            _stack_obj_types = []
+            _sf_ptrs = []
+            _sf_kinds = []
+            _selfapp_name = ""
+            _fresh_val = ""
             if (n.c1 >= 0) {
                 forge ret_node: Node = node_get(n.c1)
                 _current_ret_type = ret_node.val
@@ -2434,6 +4148,12 @@ namespace llvmgen {
                     cg_emit("  " + pp + " = alloca " + llvm_type(pt2) + ", align 8")
                     cg_emit("  store " + llvm_type(pt2) + " %" + param2.val + ", ptr " + pp)
                     declare_var(param2.val, pt2, pp)
+                    if (ofs_str_eq(pt2, "obsidian") && esc_str_ok(param2.val)) {
+                        cg_emit("  " + pp + "_own = alloca i64, align 8")
+                        cg_emit("  store i64 0, ptr " + pp + "_own")
+                        ofs_array_push(_own_ptrs, pp)
+                        if ((esc_bits_of(param2.val) & 2) == 0) { register_scope_free(pp, 1) }
+                    }
                 }
                 pi++
             }
@@ -2454,6 +4174,7 @@ namespace llvmgen {
             }
             cg_emit("}")
             cg_emit("")
+            _esc_disabled = true
         }
     }
 
@@ -2468,6 +4189,7 @@ namespace llvmgen {
         _field_indices = []
         _variant_names = []
         _variant_tags = []
+        _strata_names = []
         _global_names = []
         _global_types = []
         _global_inits = []
@@ -2478,13 +4200,18 @@ namespace llvmgen {
         _string_vals = []
         _string_names = []
         _extern_names = []
+        _va_names = []
+        _va_sigs = []
         _bind_names = []
         _bind_targets = []
         collect_types(root_id)
         collect_all_strings()
         collect_globals(root_id)
         emit_header(root_id)
+        _init_internal = false
+        if (is_defined_fn(root_id, "ofs_alloc") && !module_has_main(root_id)) { _init_internal = true }
         emit_global_init()
+        esc_compute_masks(root_id)
 
         forge i = 0
         while (i < node_extra_len(root_id)) {

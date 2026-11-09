@@ -1,0 +1,21 @@
+// monolith passado ao C (memcpy) por endereco.
+rift vein c_memcpy(dst: *stone, src: *stone, n: stone) -> *stone bind "memcpy" abi c
+
+monolith Par {
+    a: stone
+    b: stone
+}
+
+core main() {
+    forge x: Par
+    x.a = 11
+    x.b = 22
+    forge y: Par
+    y.a = 0
+    y.b = 0
+    fracture {
+        c_memcpy(&y, &x, 16)
+    }
+    echo(y.a)
+    echo(y.b)
+}

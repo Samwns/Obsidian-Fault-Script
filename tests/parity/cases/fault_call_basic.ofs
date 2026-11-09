@@ -1,0 +1,12 @@
+// fault_addr / fault_call: endereco de vein OFS e de funcao C.
+rift vein c_strlen(s: obsidian) -> stone bind "strlen" abi c
+
+vein soma(a: stone, b: stone) -> stone {
+    return a + b
+}
+
+core main() {
+    forge f = fault_addr(soma)
+    echo(fault_call(f, 20, 22))
+    echo(fault_call(fault_addr(c_strlen), "abcde"))
+}

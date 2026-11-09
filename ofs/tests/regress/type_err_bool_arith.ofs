@@ -1,0 +1,8 @@
+// F3: bool nao e numero na aritmetica (o nativo gerava IR invalido e o
+// interpretador somava 0)
+core main() {
+    forge s: stone = 3
+    forge b: bool = true
+    echo(s + b)
+    echo("nao chega aqui")
+}

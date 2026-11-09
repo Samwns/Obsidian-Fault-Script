@@ -7,7 +7,7 @@ extern vein putchar(c: stone) -> stone
 
 vein echo_obsidian(s: obsidian) -> void {
     if (s == null) {
-        puts("(null)")
+        puts("null")
     } else {
         puts(s)
     }

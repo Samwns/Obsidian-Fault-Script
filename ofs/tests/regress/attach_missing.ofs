@@ -1,0 +1,6 @@
+// `attach` de modulo que nao existe e erro claro (antes era ignorado).
+attach {modulo-que-nao-existe}
+
+core main() {
+    echo("nao chega aqui")
+}

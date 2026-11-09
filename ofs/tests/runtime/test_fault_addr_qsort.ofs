@@ -1,6 +1,7 @@
 // fault_addr: passa o endereco de uma vein OFS para o qsort da libc;
 // fault_call: chama uma funcao pelo endereco.
-// So no build nativo (o interpretador nao tem fault_*).
+// Roda igual no build nativo e no `ofs run` (F2: o comparador interpretado
+// vira um trampolim nativo).
 //   ofs build ofs/tests/runtime/test_fault_addr_qsort.ofs -o /tmp/t && /tmp/t
 // Saida esperada: "1 2 3 5 8 13 21 34" e "ok"; codigo de saida 0.
 

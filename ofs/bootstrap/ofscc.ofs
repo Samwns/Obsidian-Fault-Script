@@ -180,63 +180,165 @@ vein normalize_path(p: obsidian) -> obsidian {
     return out
 }
 
+// linhas ja emitidas no fonte expandido (para ast_mark_runtime_lines)
+forge _expanded_lines: stone = 0
+
+vein path_is_runtime(p: obsidian) -> bool {
+    forge n = ofs_str_len(p)
+    forge pat = "stdlib/runtime/"
+    forge m = ofs_str_len(pat)
+    forge i = 0
+    while (i + m <= n) {
+        if (ofs_str_eq(ofs_str_substr(p, i, m), pat)) { return true }
+        i++
+    }
+    return false
+}
+
 vein expand_attaches(path_in: obsidian, src: obsidian) -> obsidian {
     forge path = normalize_path(path_in)
     if (path_seen(path)) { return "" }
     remember_path(path)
+    forge first_line = _expanded_lines + 1
+    forge res = expand_attaches_body(path, src)
+    if (path_is_runtime(path)) { ast_mark_runtime_lines(first_line, _expanded_lines) }
+    return res
+}
+
+// ── Busca dos modulos do `attach` ──────────────────────────────────────
+// Ordem (a primeira que existir vence):
+//   attach {modulo}       1. $OFS_STDLIB_PATH/modulo.ofs
+//                         2. pasta do arquivo que faz o attach
+//                         3. cada pasta de $OFS_LIB_PATH (separadas por ':')
+//                         4. $OFS_LIB_HOME, ou ~/.ofs/libs (onde o
+//                            src/packages/install_library.sh instala)
+//   attach {F:caminho}    1. caminho absoluto, ou relativo a pasta do arquivo
+//                         2. $OFS_STDLIB_PATH/caminho
+//                         3. e 4. como acima
+// Modulo que nao existe em nenhum lugar e erro (antes era ignorado em
+// silencio e o programa quebrava depois, longe da causa).
+
+forge _attach_errors: stone = 0
+
+vein _env(name: obsidian) -> obsidian {
+    forge v = getenv(name)
+    if (v == null) { return "" }
+    return v
+}
+
+vein _dir_join(dir: obsidian, rel: obsidian) -> obsidian {
+    forge n = ofs_str_len(dir)
+    if (n == 0) { return rel }
+    if (ofs_str_char_at(dir, n - 1) == 47) { return dir + rel }
+    return dir + "/" + rel
+}
+
+// pastas extras de bibliotecas: $OFS_LIB_PATH (a:b:c) e depois a pasta de
+// instalacao ($OFS_LIB_HOME ou ~/.ofs/libs)
+vein attach_lib_dirs() -> Array<obsidian> {
+    forge dirs: Array<obsidian> = []
+    forge lp = _env("OFS_LIB_PATH")
+    forge n = ofs_str_len(lp)
+    forge st = 0
+    forge i = 0
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(lp, i) == 58) {
+            if (i > st) { ofs_array_push(dirs, ofs_str_substr(lp, st, i - st)) }
+            st = i + 1
+        }
+        i++
+    }
+    forge home_libs = _env("OFS_LIB_HOME")
+    if (ofs_str_eq(home_libs, "")) {
+        forge home = _env("HOME")
+        if (!ofs_str_eq(home, "")) { home_libs = home + "/.ofs/libs" }
+    }
+    if (!ofs_str_eq(home_libs, "")) { ofs_array_push(dirs, home_libs) }
+    return dirs
+}
+
+// candidatos, na ordem de busca, para `rel` pedido a partir da pasta `base`
+vein attach_candidates(base: obsidian, rel: obsidian, short_form: bool) -> Array<obsidian> {
+    forge c: Array<obsidian> = []
+    forge std = _env("OFS_STDLIB_PATH")
+    if (short_form) {
+        if (!ofs_str_eq(std, "")) { ofs_array_push(c, _dir_join(std, rel)) }
+        ofs_array_push(c, base + rel)
+    } else {
+        if (ofs_str_len(rel) > 0 && ofs_str_char_at(rel, 0) == 47) {
+            ofs_array_push(c, rel)
+        } else {
+            ofs_array_push(c, base + rel)
+        }
+        if (!ofs_str_eq(std, "")) { ofs_array_push(c, _dir_join(std, rel)) }
+    }
+    if (ofs_str_len(rel) == 0 || ofs_str_char_at(rel, 0) != 47) {
+        forge dirs = attach_lib_dirs()
+        forge i = 0
+        while (i < ofs_array_len(dirs)) {
+            ofs_array_push(c, _dir_join(ofs_array_get(dirs, i), rel))
+            i++
+        }
+    }
+    return c
+}
+
+// caminho do modulo, ou "" (com erro impresso) se nao existir
+vein resolve_attach(path: obsidian, file_line: stone, base: obsidian, rel: obsidian, short_form: bool, shown: obsidian) -> obsidian {
+    forge c = attach_candidates(base, rel, short_form)
+    forge i = 0
+    while (i < ofs_array_len(c)) {
+        forge cand: obsidian = ofs_array_get(c, i)
+        if (file_exists(cand)) { return cand }
+        i++
+    }
+    _attach_errors++
+    echo("[ERRO DE ATTACH " + path + ":" + ofs_stone_to_obsidian(file_line) + "]: modulo '" + shown + "' nao encontrado")
+    echo("  procurado em (nesta ordem):")
+    i = 0
+    while (i < ofs_array_len(c)) {
+        echo("    " + ofs_array_get(c, i))
+        i++
+    }
+    echo("  dica: confira o nome, defina OFS_STDLIB_PATH ou acrescente a pasta da biblioteca em OFS_LIB_PATH (separada por ':').")
+    return ""
+}
+
+vein expand_attaches_body(path: obsidian, src: obsidian) -> obsidian {
 
     forge base = dirname(path)
     forge out_parts: Array<obsidian> = []
     forge start = 0
     forge i = 0
     forge len = ofs_str_len(src)
+    forge file_line = 1
 
     while (i <= len) {
         if (i == len || ofs_str_char_at(src, i) == 10) {
             forge line = ofs_str_substr(src, start, i - start)
             if (is_short_attach_line(line)) {
                 forge mod_file = short_attach_file(line)
-                forge mod_path = ""
-                forge env_std2 = getenv("OFS_STDLIB_PATH")
-                if (env_std2 != null && !ofs_str_eq(env_std2, "")) {
-                    if (file_exists(env_std2 + "/" + mod_file)) { mod_path = env_std2 + "/" + mod_file }
-                }
-                if (ofs_str_eq(mod_path, "") && file_exists(base + mod_file)) {
-                    mod_path = base + mod_file
-                }
+                forge shown = ofs_str_substr(line, 8, ofs_str_len(mod_file) - 4)
+                forge mod_path = resolve_attach(path, file_line, base, mod_file, true, shown)
                 if (!ofs_str_eq(mod_path, "")) {
                     ofs_array_push(out_parts, expand_attaches(mod_path, read_file(mod_path)))
-                } else {
-                    // modulo desconhecido: mantem a linha (o parser a ignora)
-                    ofs_array_push(out_parts, line + "\n")
                 }
             } else if (is_attach_line(line)) {
                 forge rel = attach_path_from_line(line)
-                forge child_path = base + rel
-                // caminho absoluto: usa como esta
-                if (ofs_str_len(rel) > 0 && ofs_str_char_at(rel, 0) == 47) { child_path = rel }
-                forge f_chk = fopen(child_path, "r")
-                if (f_chk != null) {
-                    fclose(f_chk)
-                } else {
-                    forge env_std = getenv("OFS_STDLIB_PATH")
-                    if (!ofs_str_eq(env_std, "")) {
-                        forge std_cand = env_std + "/" + rel
-                        forge f_std = fopen(std_cand, "r")
-                        if (f_std != null) {
-                            fclose(f_std)
-                            child_path = std_cand
-                        }
-                    }
-        }
-                forge child_src = read_file(child_path)
-                ofs_array_push(out_parts, expand_attaches(child_path, child_src))
+                forge child_path = resolve_attach(path, file_line, base, rel, false, "F:" + rel)
+                if (!ofs_str_eq(child_path, "")) {
+                    forge child_src = read_file(child_path)
+                    ofs_array_push(out_parts, expand_attaches(child_path, child_src))
+                }
             } else {
                 if (i < len || ofs_str_len(line) > 0) {
+                    ast_srcmap_add(_expanded_lines + 1, path, file_line)
                     ofs_array_push(out_parts, line + "\n")
+                    _expanded_lines++
                 }
             }
             start = i + 1
+            file_line++
         }
         i++
     }
@@ -476,6 +578,10 @@ core main() {
     forge src: obsidian = ""
     src = read_file(input_file)
     src = expand_attaches(input_file, src)
+    if (_attach_errors > 0) {
+        reporter_flush()
+        exit(1)
+    }
     if (ofs_str_eq(getenv("OFS_DUMP_EXPANDED"), "1")) {
         echo(src)
         return

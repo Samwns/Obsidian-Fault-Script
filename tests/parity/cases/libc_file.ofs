@@ -1,0 +1,12 @@
+// extern da libc: fopen/fputs/fclose escrevendo um arquivo no cwd.
+rift vein c_fopen(path: obsidian, mode: obsidian) -> *stone bind "fopen" abi c
+rift vein c_fputs(s: obsidian, f: *stone) -> stone bind "fputs" abi c
+rift vein c_fclose(f: *stone) -> stone bind "fclose" abi c
+
+core main() {
+    forge f: *stone = c_fopen("parity_out.txt", "w")
+    c_fputs("linha um\n", f)
+    c_fputs("linha dois\n", f)
+    c_fclose(f)
+    echo("escrito")
+}

@@ -1,0 +1,24 @@
+// `crystal` -> texto passa por snprintf (variadico). Antes o IR declarava
+// `@snprintf(ptr, i64, ptr, i64)` sem `...`, o %al ficava indefinido e o
+// double saia como lixo (2.2e-317) conforme a pilha/buffer. Varia a
+// profundidade da pilha e o tamanho dos blocos alocados antes.
+extern vein ofs_crystal_to_obsidian(v: crystal) -> obsidian
+
+vein fmt_at(depth: stone, f: crystal) -> obsidian {
+    if (depth > 0) { return fmt_at(depth - 1, f) }
+    return ofs_crystal_to_obsidian(f)
+}
+
+core main() {
+    forge pad = ""
+    forge k = 0
+    while (k < 12) {
+        pad = pad + "x"
+        forge f: crystal = (k as crystal) + 0.5
+        echo(fmt_at(k, f) + " " + ofs_crystal_to_obsidian(f * 2.0) + " " + pad)
+        echo(f)
+        k++
+    }
+    echo(1.0)
+    echo(ofs_crystal_to_obsidian(1.0))
+}

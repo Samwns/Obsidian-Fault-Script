@@ -1,0 +1,5 @@
+// `seal` (sinonimo de `anchor`) e palavra reservada: usar como nome da erro claro.
+core main() {
+    forge seal: stone = 1
+    echo(seal)
+}

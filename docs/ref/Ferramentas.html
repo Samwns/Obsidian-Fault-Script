@@ -5,6 +5,7 @@
 <li class="tl3"><a href="#s1.3">Cobertura (&quot;o que falta documentar&quot;)</a></li>
 <li class="tl3"><a href="#s1.4">Teste</a></li>
 <li class="tl2"><a href="#s2"><code>ofs fmt</code>: formatador</a></li>
+<li class="tl2"><a href="#s3"><code>ofs test</code>, <code>ofs twin</code>, <code>ofs polish</code></a></li>
 </ul></details><h2 id="s1"><code>ofs doc</code>: documentação gerada do código</h2>
 <p><code>ofs doc</code> lê arquivos <code>.ofs</code> e gera uma referência HTML estática (como <code>rustdoc</code> ou <code>godoc</code>): uma página por módulo, com cartões de função, busca e um relatório de cobertura. A ferramenta é escrita em OFS (<code>ofs/tools/ofsdoc.ofs</code>) e funciona em qualquer projeto OFS. </p>
 <pre><code>ofs doc                          # ofs/stdlib, ofs/tools e ofs/ofscc do repositório -&gt; docs_api/
@@ -58,4 +59,10 @@ ofs fmt --stdin         # lê da entrada padrão, escreve na saída (editores)
 <p>Regras: recuo de 4 espaços (linhas de continuação dentro de <code>(</code>/<code>[</code> ou após operador ganham +4), <code>{</code> na mesma linha, espaço em volta de operadores binários e depois de <code>,</code> e <code>:</code>, no máximo uma linha em branco seguida, sem espaço no fim da linha, um <code>\n</code> no fim do arquivo. As quebras de linha do autor são mantidas, e comentários, strings e linhas <code>attach</code> nunca são alteradas. </p>
 <p>Garantias (testadas em <code>ofs/tests/fmt/run.sh</code>): formatar duas vezes dá o mesmo arquivo, e o IR do <code>ofscc</code> do original e do formatado é idêntico (o programa não muda). Pendente: quebra automática de linhas acima de 100 colunas e ordenação dos <code>attach</code>. </p>
 <p>No VS Code, a extensão registra o <code>ofs fmt --stdin</code> como formatador; para formatar ao salvar: <code>&quot;[ofs]&quot;: { &quot;editor.formatOnSave&quot;: true }</code>. </p>
+<h2 id="s3"><code>ofs test</code>, <code>ofs twin</code>, <code>ofs polish</code></h2>
+<pre><code>ofs test [--run] [--twin] [pasta]   # padrão: ./tests
+ofs twin arquivo.ofs
+ofs polish [--check] [--diff] [alvos]
+</code></pre>
+<ul><li><code>ofs test</code>: acha os <code>*.ofs</code> que têm um <code>.expected</code> ao lado, compila e roda cada um (nativo; <code>--run</code> usa o interpretado; <code>--twin</code> também compara os dois modos) e compara a saída com o <code>.expected</code>. Imprime <code>ok</code>/<code>FAIL</code> por arquivo e um resumo; sai com 1 se algum falhar. <code>.ofs</code> sem <code>.expected</code> são ignorados.</li><li><code>ofs twin</code>: roda o programa interpretado e nativo em diretórios temporários e compara stdout, código de saída e stderr normalizado. Imprime <code>iguais</code> (código 0) ou a primeira diferença (código 1). Variável <code>OFS_TEST_TIMEOUT</code> (padrão 30 s por execução).</li><li><code>ofs polish</code>: sinônimo de <code>ofs fmt</code>, com as mesmas opções.</li></ul>
 <p class="cats">Guia · Biblioteca e ferramentas</p></article></main></div><footer class="foot"><span>Gerado do código-fonte por <code>ofs doc</code> · 2026-11-09</span><a href="../legal/LICENSE">Apache License 2.0</a><a class="edit" href="https://github.com/Samwns/Obsidian-Fault-Script/edit/main/docs/TOOLS.md" title="Editar no GitHub" aria-label="Editar no GitHub"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></a></footer><script src="ofsdoc.js"></script></body></html>

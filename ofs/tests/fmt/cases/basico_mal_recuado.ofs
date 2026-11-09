@@ -1,0 +1,17 @@
+// codigo mal recuado e sem espacos
+forge   x:stone=1+2*3 ;
+vein soma(a:stone,b:stone)->stone{
+if(a<b&&!(a>1)){
+return a+b
+}else{
+        return -a*b
+}
+}
+vein main() -> void {
+forge   arr:Array<stone> =[1,2 ,3]
+forge  i = 0
+while(i<3){
+i++
+}
+echo( soma(x,arr[0]) )
+}

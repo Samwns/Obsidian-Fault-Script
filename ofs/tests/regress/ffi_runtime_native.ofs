@@ -1,0 +1,13 @@
+// Veins de stdlib/runtime rodam nativas no `ofs run` (a versao linkada no
+// ofscc), como os builtins: o corpo delas usa memoria crua (fracture).
+attach {F:../../stdlib/runtime/facet.ofs}
+attach {F:../../stdlib/runtime/pulse.ofs}
+
+core main() {
+    echo(facet.to_upper("magma"))
+    echo(facet.to_lower("OFS"))
+    echo(facet.from_stone(4242))
+    forge t0 = pulse.now_ms()
+    forge t1 = pulse.now_ms()
+    if (t1 >= t0 && t0 > 0) { echo("pulse ok") }
+}

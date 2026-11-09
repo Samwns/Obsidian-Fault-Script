@@ -1,0 +1,40 @@
+// FFI no interpretador (F1): extern/rift da libc/libm chamados por endereco.
+// Inteiro, i32 com sinal, string (char*) de ida e volta, ponteiro opaco do C
+// (FILE*), double em registrador FP, variadica com double e i64.
+extern vein strlen(s: obsidian) -> stone
+extern vein abs(x: i32) -> i32
+extern vein atoi(s: obsidian) -> i32
+extern vein strchr(s: obsidian, c: stone) -> obsidian
+extern vein strstr(h: obsidian, n: obsidian) -> obsidian
+extern vein cos(x: crystal) -> crystal
+extern vein ldexp(x: crystal, e: i32) -> crystal
+extern vein fmax(a: crystal, b: crystal) -> crystal
+extern vein fflush(f: stone) -> stone
+extern vein printf(fmt: obsidian, a: stone, b: crystal, c: obsidian) -> stone
+extern vein ofs_alloc(size: stone) -> *u8
+rift vein c_snprintf_d(buf: *u8, n: stone, fmt: obsidian, v: crystal) -> stone bind "snprintf" abi c
+rift vein c_snprintf_i(buf: *u8, n: stone, fmt: obsidian, a: stone, b: stone) -> stone bind "snprintf" abi c
+rift vein c_fopen(path: obsidian, mode: obsidian) -> *stone bind "fopen" abi c
+rift vein c_fclose(f: *stone) -> stone bind "fclose" abi c
+
+core main() {
+    echo(strlen("obsidian"))
+    echo(abs(-42))
+    echo(atoi("-17") + 1)
+    echo(strchr("chave=valor", 61))
+    if (strstr("abc", "z") == null) { echo("strstr null") }
+    echo(cos(0.0))
+    echo(ldexp(1.5, 4))
+    echo(fmax(2.25, 1.5))
+    fflush(0)
+    forge n = printf("i=%ld d=%.2f s=%s\n", 7, 2.5, "x")
+    fflush(0)
+    echo(n)
+    forge buf: *u8 = ofs_alloc(64)
+    echo(c_snprintf_d(buf, 64, "%.3f", 3.14159))
+    echo(buf as obsidian)
+    echo(c_snprintf_i(buf, 64, "%ld-%ld", 12, -34))
+    echo(buf as obsidian)
+    forge f: *stone = c_fopen("/nao/existe/ofs_ffi.txt", "r")
+    if (f == null) { echo("fopen null") }
+}

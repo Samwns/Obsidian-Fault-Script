@@ -1,0 +1,29 @@
+// Global de topo usado antes da linha que o declara, variante de strata
+// fora do PascalCase e global de namespace: nao sao "indefinidos". E um
+// global com inicial maiuscula vale o seu valor no `ofs run` (antes virava
+// a variante de mesmo nome).
+strata Cor { RED, Verde }
+
+vein usa() -> stone {
+    forge c = RED
+    if (c == RED) { return DEPOIS + ANTES }
+    return 0
+}
+
+forge DEPOIS: stone = 41
+
+namespace cfg {
+    vein get() -> stone { return cfg.valor }
+    forge valor = 7
+}
+
+forge ANTES: stone = 1
+
+core main() {
+    echo(usa())
+    echo(cfg.get())
+    forge a = [DEPOIS, cfg.valor]
+    echo(a[1])
+    forge v = Verde
+    if (v == Verde) { echo("verde") }
+}

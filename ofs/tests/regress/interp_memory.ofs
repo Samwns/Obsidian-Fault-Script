@@ -1,0 +1,32 @@
+// Regressao A6: o interpretador (`ofs run`) vazava ~3 KB por chamada de
+// funcao e ~4 KB por volta de laco (cada Value/Node virava um ofs_alloc
+// nunca liberado). Este programa faz ~60 mil chamadas, recursao de 5 mil
+// niveis e 300 mil voltas de laco com variavel local, indexacao e `+=`; o
+// run.sh o roda no interpretador com `ulimit -v` de 64 MB (antes da
+// correcao precisava de mais de 1 GB).
+
+vein fib(n: stone) -> stone {
+    if (n < 2) { return n }
+    return fib(n - 1) + fib(n - 2)
+}
+
+vein depth(n: stone) -> stone {
+    if (n == 0) { return 0 }
+    return depth(n - 1) + 1
+}
+
+core main() {
+    echo(fib(22))
+    echo(depth(5000))
+    forge a: Array<stone> = [3, 7]
+    forge s: stone = 0
+    forge i: stone = 0
+    while (i < 300000) {
+        forge t: stone = a[i % 2] * 3
+        s = (s + t + i) % 1000003
+        i += 1
+    }
+    echo(s)
+    a[1] = 9
+    echo(a[0] + a[1])
+}

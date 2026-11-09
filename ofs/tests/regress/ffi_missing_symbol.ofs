@@ -1,0 +1,8 @@
+// extern sem simbolo: o build nativo falha no link; o `ofs run` da o mesmo
+// erro ("undefined reference") no carregamento, antes de rodar, com rc 1.
+extern vein ofs_ffi_simbolo_que_nao_existe(x: stone) -> stone
+
+core main() {
+    echo("nao chega aqui")
+    echo(ofs_ffi_simbolo_que_nao_existe(1))
+}

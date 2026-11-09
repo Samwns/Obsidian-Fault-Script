@@ -1,0 +1,13 @@
+attach   {F:chars.ofs}
+attach {strbuf}    // fica como esta
+vein g(p: *stone, q: *u8) -> *stone {
+    forge x: *stone = p
+    fracture {
+        *x = *x + 1
+    }
+    forge n = -1
+    forge r = n - 1
+    forge m = n * 2
+    forge t = (n < 3) && (m >= 2)
+    return x
+}

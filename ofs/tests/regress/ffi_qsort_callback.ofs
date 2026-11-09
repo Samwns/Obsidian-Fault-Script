@@ -1,0 +1,77 @@
+// Callback C -> OFS (F2): `fault_addr` de uma vein interpretada vira um
+// trampolim nativo que reentra no interpretador. qsort da libc ordenando um
+// Array<stone> (o ofs_array nativo da coluna de valores) e um Array de
+// monoliths (ponteiros), com comparadores OFS.
+rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
+rift vein c_bsearch(key: *stone, base: *stone, count: stone, size: stone, cmp: stone) -> *stone bind "bsearch" abi c
+extern vein ofs_array_data(arr: Array<stone>) -> *stone
+
+monolith Item {
+    peso: stone
+    nome: obsidian
+}
+
+vein crescente(a: *stone, b: *stone) -> stone {
+    forge x = 0
+    forge y = 0
+    fracture { x = *a; y = *b; }
+    if (x < y) { return -1 }
+    if (x > y) { return 1 }
+    return 0
+}
+
+vein decrescente(a: *stone, b: *stone) -> stone {
+    return 0 - crescente(a, b)
+}
+
+// elementos de Array<Item> sao ponteiros para o monolith
+vein por_peso(a: *stone, b: *stone) -> stone {
+    forge pa: stone = 0
+    forge pb: stone = 0
+    fracture { pa = *a; pb = *b; }
+    forge ia: Item = pa as Item
+    forge ib: Item = pb as Item
+    return ia.peso - ib.peso
+}
+
+vein linha(v: Array<stone>) -> obsidian {
+    forge s = ""
+    cycle (x in v) { s = s + ofs_stone_to_obsidian(x) + " " }
+    return s
+}
+
+core main() {
+    forge v: Array<stone> = [42, 7, 19, 3, 88, 1, 56]
+    c_qsort(ofs_array_data(v), ofs_array_len(v), 8, fault_addr(crescente))
+    echo(linha(v))
+    c_qsort(ofs_array_data(v), ofs_array_len(v), 8, fault_addr(decrescente))
+    echo(linha(v))
+    c_qsort(ofs_array_data(v), ofs_array_len(v), 8, fault_addr(crescente))
+    forge chave: stone = 19
+    forge achou: *stone = c_bsearch(&chave, ofs_array_data(v), ofs_array_len(v), 8, fault_addr(crescente))
+    forge idx = ((achou as stone) - (ofs_array_data(v) as stone)) / 8
+    echo(idx)
+    // o mesmo slot de trampolim para a mesma vein
+    echo(fault_addr(crescente) == fault_addr(crescente))
+
+    forge itens: Array<Item> = []
+    forge nomes: Array<obsidian> = ["c", "a", "d", "b"]
+    forge pesos: Array<stone> = [30, 10, 40, 20]
+    forge i = 0
+    while (i < 4) {
+        forge it: Item
+        it.peso = ofs_array_get(pesos, i)
+        it.nome = ofs_array_get(nomes, i)
+        ofs_array_push(itens, it)
+        i++
+    }
+    c_qsort(ofs_array_data(itens), 4, 8, fault_addr(por_peso))
+    forge s = ""
+    forge j = 0
+    while (j < 4) {
+        forge it2: Item = ofs_array_get(itens, j)
+        s = s + it2.nome
+        j++
+    }
+    echo(s)
+}

@@ -1,0 +1,12 @@
+// Callback com parametro crystal: os trampolins do interpretador (F2) so
+// passam inteiros/ponteiros; erro claro com rc 1 (o build nativo funciona).
+rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
+
+vein com_crystal(a: crystal, b: crystal) -> stone {
+    return 0
+}
+
+core main() {
+    forge f = fault_addr(com_crystal)
+    echo("nao chega aqui")
+}

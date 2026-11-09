@@ -82,6 +82,71 @@ vein ofs_str_concat(a: obsidian, b: obsidian) -> obsidian {
     return res
 }
 
+// ── Concatenacao sem lixo (A6) ──────────────────────────────────────────
+// Strings nao tem GC nem contagem de referencia: `t = s` faz t e s
+// apontarem para o mesmo buffer. Por isso o runtime NUNCA decide sozinho
+// crescer ou liberar um buffer; quem decide e o compilador (llvmgen), que so
+// passa as flags abaixo quando provou que o buffer e exclusivo:
+//   1 = `a` e exclusivo (temporario de uma concatenacao anterior da mesma
+//       expressao, ou o valor proprio de uma variavel local que nunca foi
+//       copiada para outro lugar): pode crescer no lugar com realloc.
+//   2 = `b` e um temporario exclusivo: e liberado depois da copia.
+// Sem flags, igual a ofs_str_concat (sempre copia).
+
+// O cache de ofs_str_char_at guarda (ponteiro, comprimento): um buffer
+// liberado ou realocado pode voltar no mesmo endereco com outro texto.
+vein __ofs_str_forget(p: obsidian) -> void {
+    if ((p as stone) == (__ofs_charat_s as stone)) {
+        __ofs_charat_s = null
+        __ofs_charat_n = 0
+    }
+}
+
+vein ofs_str_concat_ex(a: obsidian, b: obsidian, flags: stone) -> obsidian {
+    forge la = ofs_str_len(a)
+    forge lb = ofs_str_len(b)
+    forge total = la + lb
+    forge res: obsidian = null
+    forge src: stone = b as stone
+    if ((flags & 1) != 0 && a != null) {
+        forge ab: stone = a as stone
+        // `s = s + s`: b aponta para dentro do proprio buffer de a
+        forge inside = false
+        if (src >= ab && src <= ab + la) { inside = true }
+        __ofs_str_forget(a)
+        res = ofs_realloc(a as *stone, total + 1)
+        if (inside) { src = res as stone + (src - ab) }
+        if (lb > 0) {
+            forge rp = res as stone + la
+            memmove(rp as *stone, src as *stone, lb)
+        }
+    } else {
+        res = ofs_alloc(total + 1)
+        if (la > 0) {
+            memcpy(res as *stone, a as *stone, la)
+        }
+        if (lb > 0) {
+            forge rp2 = res as stone + la
+            memcpy(rp2 as *stone, src as *stone, lb)
+        }
+    }
+    forge term: *u8 = (res as stone + total) as *u8
+    fracture { *term = 0 as u8 }
+    if ((flags & 2) != 0 && b != null) {
+        __ofs_str_forget(b)
+        free(b as *stone)
+    }
+    return res
+}
+
+// Libera `s` se `own` != 0 (o compilador provou que s e exclusivo).
+vein ofs_str_release(s: obsidian, own: stone) -> void {
+    if (own != 0 && s != null) {
+        __ofs_str_forget(s)
+        free(s as *stone)
+    }
+}
+
 vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian {
     if (s == null) { return "" }
     forge slen = ofs_str_len(s)
@@ -152,19 +217,17 @@ vein ofs_stone_to_obsidian(v: stone) -> obsidian {
     fracture { *pz = 0 as u8 }
     forge n = v
     forge neg = false
-    if (n < 0) {
-        neg = true
-        // evita overflow no caso n == MIN_I64
-        n = 0 - (n + 1)
-        n = n + 1
-    }
+    // n fica com o sinal original e cada digito sai com `% 10` em modulo:
+    // negar MIN_I64 estoura (antes `echo` de MIN_I64 imprimia so "-").
+    if (n < 0) { neg = true }
     if (n == 0) {
         pos = pos - 1
         forge p0: *u8 = pos as *u8
         fracture { *p0 = 48 as u8 }
     } else {
-        while (n > 0) {
+        while (n != 0) {
             forge d = n % 10
+            if (d < 0) { d = 0 - d }
             pos = pos - 1
             forge pd: *u8 = pos as *u8
             fracture { *pd = (48 + d) as u8 }

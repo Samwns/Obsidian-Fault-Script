@@ -1,0 +1,10 @@
+// Identificador indefinido e erro de compilacao (antes: aviso, e o nome
+// chegava ao llc como `%contadr`). A mensagem sugere o nome parecido.
+vein soma(total: stone, extra: stone) -> stone {
+    forge contador = total + extra
+    return contadr * 2
+}
+
+core main() {
+    echo(soma(1, 2))
+}

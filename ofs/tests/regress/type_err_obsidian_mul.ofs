@@ -1,0 +1,7 @@
+// F3: obsidian so aceita '+' (concatenacao)
+core main() {
+    forge nome: obsidian = "pedra"
+    forge c: crystal = 2.5
+    echo(nome * c)
+    echo("nao chega aqui")
+}

@@ -1,0 +1,21 @@
+// cabecalho   
+
+
+// depois de varias linhas em branco
+
+
+
+
+/* bloco
+      * com asteriscos   
+   */
+vein f() -> stone {
+        // comentario recuado errado
+    forge a = 1   // comentario no fim
+    /* inline */ forge b = 2
+
+
+
+    return a + b /* depois */
+}
+vein main() -> void { echo(f()) }

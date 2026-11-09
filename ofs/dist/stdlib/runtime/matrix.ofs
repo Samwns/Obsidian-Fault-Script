@@ -12,93 +12,201 @@ vein _load_stone(p: *stone) -> stone {
     }
 }
 
+// Cabecalho do array (4 palavras de 8 bytes): [data, len, cap, elem_size].
+// O codegen (llvmgen) le/escreve esse layout direto no caminho rapido de
+// `a[i]`, `a[i] = v`, `ofs_array_push` e `ofs_array_len` (elem_size == 8);
+// estas funcoes ficam para o caminho lento (fora dos limites, outro
+// elem_size, crescimento). O runtime e compilado sem otimizacao (-O0):
+// por isso as funcoes leem o cabecalho com `fracture` em vez de chamar
+// _load_stone/ofs_array_len a cada campo.
+// Cabecalho e dados iniciais num bloco so (uma alocacao e uma liberacao
+// por array): os dados comecam logo depois do cabecalho (arr + 32). Ao
+// crescer, os dados vao para um bloco proprio; o inicial nunca e liberado
+// sozinho (faz parte do cabecalho).
+// Erro de acesso ao array: mensagem no stderr (fd 2) e exit(1). Antes era
+// so exit(1), e o programa terminava mudo. O interpretador (`ofs run`)
+// imprime o mesmo texto. Sem alocar (como ofs_out_of_memory).
+vein __ofs_arr_num(n: stone) -> void {
+    if (n < 0) {
+        write(2, "-", 1)
+        __ofs_oom_num(0 - n)
+        return
+    }
+    __ofs_oom_num(n)
+}
+
+vein ofs_array_oob(idx: stone, len: stone) -> void {
+    write(2, "ofs: indice ", 12)
+    __ofs_arr_num(idx)
+    write(2, " fora do limite do array (tamanho ", 34)
+    __ofs_arr_num(len)
+    write(2, ")\n", 2)
+    exit(1)
+}
+
+vein ofs_array_fail(msg: obsidian, n: stone) -> void {
+    write(2, "ofs: ", 5)
+    write(2, msg, n)
+    write(2, "\n", 1)
+    exit(1)
+}
+
 vein ofs_array_new(initial_cap: stone, elem_size: stone) -> *stone {
     if (initial_cap <= 0) { initial_cap = 4 }
     if (elem_size <= 0) { elem_size = 8 }
-    forge arr: *stone = ofs_alloc(32)
-    forge data: *stone = ofs_alloc(initial_cap * elem_size)
-    _store_stone(arr, data as stone)
-    _store_stone(fault_step(arr, 1), 0)
-    _store_stone(fault_step(arr, 2), initial_cap)
-    _store_stone(fault_step(arr, 3), elem_size)
+    forge arr: *stone = ofs_alloc(32 + initial_cap * elem_size)
+    forge data: stone = arr as stone + 32
+    forge p1: *stone = fault_step(arr, 1)
+    forge p2: *stone = fault_step(arr, 2)
+    forge p3: *stone = fault_step(arr, 3)
+    fracture {
+        *arr = data
+        *p1 = 0
+        *p2 = initial_cap
+        *p3 = elem_size
+    }
     return arr
+}
+
+// Libera o cabecalho e os dados (nao os elementos). Usado pelo codegen para
+// arrays locais que nao escapam da funcao (ver llvmgen, `esc_*`).
+vein ofs_array_free(arr: *stone) -> void {
+    if (arr == null) { return }
+    forge d: stone = 0
+    fracture { d = *arr }
+    if (d != 0 && d != arr as stone + 32) { free(d as *stone) }
+    free(arr)
 }
 
 vein ofs_array_len(arr: *stone) -> stone {
     if (arr == null) { return 0 }
-    return _load_stone(fault_step(arr, 1))
+    forge p1: *stone = fault_step(arr, 1)
+    fracture {
+        return *p1
+    }
 }
 
 vein ofs_array_cap(arr: *stone) -> stone {
     if (arr == null) { return 0 }
-    return _load_stone(fault_step(arr, 2))
+    forge p2: *stone = fault_step(arr, 2)
+    fracture {
+        return *p2
+    }
 }
 
 vein ofs_array_elem_size(arr: *stone) -> stone {
     if (arr == null) { return 8 }
-    return _load_stone(fault_step(arr, 3))
+    forge p3: *stone = fault_step(arr, 3)
+    fracture {
+        return *p3
+    }
 }
 
 vein ofs_array_data(arr: *stone) -> *stone {
     if (arr == null) { return null }
-    forge d = _load_stone(arr)
+    forge d: stone = 0
+    fracture { d = *arr }
     return d as *stone
 }
 
+// Crescimento geometrico (capacidade dobra): push amortizado O(1).
 vein ofs_array_push(arr: *stone, elem: *stone) -> void {
     if (arr == null) { return }
-    forge cur_len = ofs_array_len(arr)
-    forge cur_cap = ofs_array_cap(arr)
-    forge esz = ofs_array_elem_size(arr)
-    forge cur_data = ofs_array_data(arr)
+    forge p1: *stone = fault_step(arr, 1)
+    forge p2: *stone = fault_step(arr, 2)
+    forge p3: *stone = fault_step(arr, 3)
+    forge cur_len: stone = 0
+    forge cur_cap: stone = 0
+    forge esz: stone = 0
+    forge cur_data: stone = 0
+    fracture {
+        cur_len = *p1
+        cur_cap = *p2
+        esz = *p3
+        cur_data = *arr
+    }
 
     if (cur_len >= cur_cap) {
         forge new_cap = cur_cap * 2
         if (new_cap < 4) { new_cap = 4 }
         forge new_data: *stone = ofs_alloc(new_cap * esz)
-        if (cur_len > 0 && cur_data != null) {
-            memcpy(new_data, cur_data, cur_len * esz)
-            ofs_free(cur_data)
+        if (cur_len > 0 && cur_data != 0) {
+            memcpy(new_data, cur_data as *stone, cur_len * esz)
         }
-        _store_stone(arr, new_data as stone)
-        _store_stone(fault_step(arr, 2), new_cap)
-        cur_data = new_data
+        if (cur_data != 0 && cur_data != arr as stone + 32) { free(cur_data as *stone) }
+        cur_data = new_data as stone
+        fracture {
+            *arr = cur_data
+            *p2 = new_cap
+        }
     }
 
-    forge dest = cur_data as stone + (cur_len * esz)
-    memcpy(dest as *stone, elem, esz)
-    _store_stone(fault_step(arr, 1), cur_len + 1)
+    forge dest = cur_data + (cur_len * esz)
+    if (esz == 8) {
+        forge dp: *stone = dest as *stone
+        forge ev: stone = 0
+        fracture {
+            ev = *elem
+            *dp = ev
+        }
+    } else {
+        memcpy(dest as *stone, elem, esz)
+    }
+    fracture { *p1 = cur_len + 1 }
 }
 
 vein ofs_array_get(arr: *stone, idx: stone) -> *stone {
-    if (arr == null || idx < 0) { exit(1) }
-    forge cur_len = ofs_array_len(arr)
-    if (idx >= cur_len) { exit(1) }
-    forge cur_data = ofs_array_data(arr)
-    forge esz = ofs_array_elem_size(arr)
-    forge ptr = cur_data as stone + (idx * esz)
+    if (arr == null) { ofs_array_fail("acesso a array nulo", 19) }
+    forge p1: *stone = fault_step(arr, 1)
+    forge p3: *stone = fault_step(arr, 3)
+    forge cur_len: stone = 0
+    forge esz: stone = 0
+    forge cur_data: stone = 0
+    fracture {
+        cur_len = *p1
+        esz = *p3
+        cur_data = *arr
+    }
+    if (idx < 0 || idx >= cur_len) { ofs_array_oob(idx, cur_len) }
+    forge ptr = cur_data + (idx * esz)
     return ptr as *stone
 }
 
+// (nao chama ofs_array_get: o codegen trata essa chamada como leitura do
+// elemento, nao como endereco)
 vein ofs_array_set(arr: *stone, idx: stone, elem: *stone) -> void {
-    if (arr == null || idx < 0) { exit(1) }
-    forge cur_len = ofs_array_len(arr)
-    if (idx >= cur_len) { exit(1) }
-    forge cur_data = ofs_array_data(arr)
-    forge esz = ofs_array_elem_size(arr)
-    forge ptr = cur_data as stone + (idx * esz)
+    if (arr == null) { ofs_array_fail("acesso a array nulo", 19) }
+    forge p1: *stone = fault_step(arr, 1)
+    forge p3: *stone = fault_step(arr, 3)
+    forge cur_len: stone = 0
+    forge esz: stone = 0
+    forge cur_data: stone = 0
+    fracture {
+        cur_len = *p1
+        esz = *p3
+        cur_data = *arr
+    }
+    if (idx < 0 || idx >= cur_len) { ofs_array_oob(idx, cur_len) }
+    forge ptr = cur_data + (idx * esz)
     memcpy(ptr as *stone, elem, esz)
 }
 
 vein ofs_array_pop(arr: *stone) -> *stone {
-    if (arr == null) { exit(1) }
-    forge cur_len = ofs_array_len(arr)
-    if (cur_len <= 0) { exit(1) }
+    if (arr == null) { ofs_array_fail("acesso a array nulo", 19) }
+    forge p1: *stone = fault_step(arr, 1)
+    forge p3: *stone = fault_step(arr, 3)
+    forge cur_len: stone = 0
+    forge esz: stone = 0
+    forge cur_data: stone = 0
+    fracture {
+        cur_len = *p1
+        esz = *p3
+        cur_data = *arr
+    }
+    if (cur_len <= 0) { ofs_array_fail("ofs_array_pop em array vazio", 28) }
     forge new_len = cur_len - 1
-    forge cur_data = ofs_array_data(arr)
-    forge esz = ofs_array_elem_size(arr)
-    _store_stone(fault_step(arr, 1), new_len)
-    forge ptr = cur_data as stone + (new_len * esz)
+    fracture { *p1 = new_len }
+    forge ptr = cur_data + (new_len * esz)
     return ptr as *stone
 }
 

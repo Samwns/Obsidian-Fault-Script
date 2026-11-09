@@ -1,0 +1,308 @@
+// OFS Standard Library — audio_android: saida de som com AAudio (Android 8+)
+//
+//   attach {F:audio_android.ofs}
+//   audio.open()                          // 44100 Hz, estereo, i16
+//   forge s = wav.load("/.../musica.wav")
+//   audio.play(audio.CH_MUSIC, s, true)   // canal, som (wav.*), em loop
+//   audio.set_volume(audio.CH_MUSIC, 80)  // 0-100
+//   audio.stop(audio.CH_MUSIC)
+//   audio.position(audio.CH_MUSIC)        // quadros ja tocados (relogio)
+//   audio.pump()                          // 1x por quadro: libera sons trocados
+//   audio.pause() / audio.resume() / audio.close()
+//
+// O mixer roda na thread de audio do AAudio (callback). Essa thread so le e
+// escreve memoria crua alocada aqui (bloco de controle + PCM): nada de Array,
+// string ou alocacao, porque o runtime do OFS nao e thread-safe. A thread
+// principal so muda campos de 64 bits (atomicos no aarch64) e nunca libera um
+// PCM que o callback ainda pode estar lendo: wav.free fica adiado ate o
+// callback passar por pelo menos dois ciclos (audio.pump).
+// Linkar com -laaudio (`ofs build --target android` ja faz).
+
+attach {F:wav.ofs}
+
+rift vein _aa_create_builder(out: *stone) -> stone bind "AAudio_createStreamBuilder" abi c
+rift vein _aa_b_format(b: *stone, f: stone) -> void bind "AAudioStreamBuilder_setFormat" abi c
+rift vein _aa_b_channels(b: *stone, n: stone) -> void bind "AAudioStreamBuilder_setChannelCount" abi c
+rift vein _aa_b_rate(b: *stone, r: stone) -> void bind "AAudioStreamBuilder_setSampleRate" abi c
+rift vein _aa_b_perf(b: *stone, m: stone) -> void bind "AAudioStreamBuilder_setPerformanceMode" abi c
+rift vein _aa_b_callback(b: *stone, cb: stone, user: *stone) -> void bind "AAudioStreamBuilder_setDataCallback" abi c
+rift vein _aa_b_open(b: *stone, out: *stone) -> stone bind "AAudioStreamBuilder_openStream" abi c
+rift vein _aa_b_delete(b: *stone) -> stone bind "AAudioStreamBuilder_delete" abi c
+rift vein _aa_start(s: *stone) -> stone bind "AAudioStream_requestStart" abi c
+rift vein _aa_pause(s: *stone) -> stone bind "AAudioStream_requestPause" abi c
+rift vein _aa_stop(s: *stone) -> stone bind "AAudioStream_requestStop" abi c
+rift vein _aa_close(s: *stone) -> stone bind "AAudioStream_close" abi c
+rift vein _aa_rate(s: *stone) -> stone bind "AAudioStream_getSampleRate" abi c
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+extern vein memset(dst: *stone, val: stone, size: stone) -> *stone
+
+namespace audio {
+    forge CHANNELS: stone = 4
+    forge CH_MUSIC: stone = 0
+    forge CH_VOICE: stone = 1
+    forge CH_SFX: stone = 2
+    forge CH_EXTRA: stone = 3
+
+    // bloco de controle (palavras de 64 bits):
+    //   [0] ciclos do callback  [1] volume mestre 0-256  [2] taxa de saida
+    //   canal c em 8 + c*8: pcm, quadros, pos (16.16), passo (16.16),
+    //   loop, volume 0-256, canais do som, ativo
+    forge _ctl: *stone = null
+    forge _stream: *stone = null
+    forge _scratch: *stone = null
+    forge ok: bool = false
+    forge out_rate: stone = 44100
+    forge _snd: Array<stone> = [-1, -1, -1, -1]     // som tocando em cada canal
+    forge _vol: Array<stone> = [100, 100, 100, 100]
+    forge _pend: Array<stone> = []                  // wav.free adiado
+    forge _pend_t: Array<stone> = []
+    forge last_error: obsidian = ""
+
+    vein _w(i: stone) -> stone {
+        forge p: *stone = fault_step(_ctl, i)
+        forge v = 0
+        fracture { v = *p; }
+        return v
+    }
+    vein _set(i: stone, v: stone) -> void {
+        forge p: *stone = fault_step(_ctl, i)
+        fracture { *p = v; }
+    }
+
+    vein _s32(v: stone) -> stone {
+        forge u = v & 4294967295
+        if (u >= 2147483648) { return u - 4294967296 }
+        return u
+    }
+
+    vein open() -> bool {
+        if (ok) { return true }
+        if (_ctl == null) {
+            _ctl = ofs_alloc(8 * 64)
+            memset(_ctl, 0, 8 * 64)
+            _scratch = ofs_alloc(64)
+        }
+        _set(1, 256)
+        _set(2, 44100)
+        if (_s32(_aa_create_builder(_scratch)) != 0) {
+            last_error = "AAudio_createStreamBuilder falhou"
+            return false
+        }
+        forge pb: *stone = _scratch
+        forge b: *stone = null
+        fracture { b = *pb as *stone; }
+        _aa_b_format(b, 1)          // AAUDIO_FORMAT_PCM_I16
+        _aa_b_channels(b, 2)
+        _aa_b_rate(b, 44100)
+        _aa_b_perf(b, 10)           // PERFORMANCE_MODE_NONE (economiza bateria)
+        _aa_b_callback(b, fault_addr(_callback), null)
+        forge r = _s32(_aa_b_open(b, _scratch))
+        _aa_b_delete(b)
+        if (r != 0) {
+            last_error = "AAudioStreamBuilder_openStream: " + ofs_stone_to_obsidian(r)
+            return false
+        }
+        fracture { _stream = *pb as *stone; }
+        out_rate = _s32(_aa_rate(_stream))
+        if (out_rate <= 0) { out_rate = 44100 }
+        _set(2, out_rate)
+        _aa_start(_stream)
+        ok = true
+        return true
+    }
+
+    vein pause() -> void {
+        if (ok) { _aa_pause(_stream) }
+    }
+    vein resume() -> void {
+        if (ok) { _aa_start(_stream) }
+    }
+    vein close() -> void {
+        if (!ok) { return }
+        _aa_stop(_stream)
+        _aa_close(_stream)
+        _stream = null
+        ok = false
+    }
+
+    // volume mestre 0-100
+    vein set_master(pct: stone) -> void {
+        if (_ctl == null) { return }
+        if (pct < 0) { pct = 0 }
+        if (pct > 100) { pct = 100 }
+        _set(1, (pct * 256) / 100)
+    }
+
+    vein set_volume(ch: stone, pct: stone) -> void {
+        if (ch < 0 || ch >= CHANNELS) { return }
+        if (pct < 0) { pct = 0 }
+        if (pct > 100) { pct = 100 }
+        ofs_array_set(_vol, ch, pct)
+        if (_ctl != null) { _set(8 + ch * 8 + 5, (pct * 256) / 100) }
+    }
+
+    // Posicao do canal, em quadros do som que ele toca (relogio para
+    // sincronizar video com audio).
+    vein position(ch: stone) -> stone {
+        if (_ctl == null || ch < 0 || ch >= CHANNELS) { return 0 }
+        return _w(8 + ch * 8 + 2) >> 16
+    }
+
+    vein playing(ch: stone) -> bool {
+        if (_ctl == null || ch < 0 || ch >= CHANNELS) { return false }
+        return _w(8 + ch * 8 + 7) != 0
+    }
+
+    // Toca o som s (id do wav.*) no canal. O som antigo do canal e liberado
+    // (wav.free) com seguranca; o novo passa a pertencer ao canal.
+    vein play(ch: stone, s: stone, loop: bool) -> void {
+        if (!ok || ch < 0 || ch >= CHANNELS) {
+            if (s >= 0) { wav.free(s) }
+            return
+        }
+        stop(ch)
+        if (s < 0) { return }
+        forge base = 8 + ch * 8
+        _set(base + 0, wav.pcm(s))
+        _set(base + 1, wav.frames(s))
+        _set(base + 2, 0)
+        _set(base + 3, (wav.rate(s) * 65536) / out_rate)
+        forge lp = 0
+        if (loop) { lp = 1 }
+        _set(base + 4, lp)
+        _set(base + 5, (ofs_array_get(_vol, ch) * 256) / 100)
+        _set(base + 6, wav.channels(s))
+        ofs_array_set(_snd, ch, s)
+        _set(base + 7, 1)
+    }
+
+    vein stop(ch: stone) -> void {
+        if (_ctl == null || ch < 0 || ch >= CHANNELS) { return }
+        _set(8 + ch * 8 + 7, 0)
+        forge old = ofs_array_get(_snd, ch)
+        if (old >= 0) {
+            ofs_array_push(_pend, old)
+            ofs_array_push(_pend_t, _w(0))
+            ofs_array_set(_snd, ch, -1)
+        }
+        if (!ok) { pump() }
+    }
+
+    vein stop_all() -> void {
+        forge c = 0
+        while (c < CHANNELS) {
+            stop(c)
+            c++
+        }
+    }
+
+    // Libera os sons que o callback ja nao pode estar lendo; tambem solta o
+    // canal que terminou (sem loop).
+    vein pump() -> void {
+        if (_ctl == null) { return }
+        forge c = 0
+        while (c < CHANNELS) {
+            if (_w(8 + c * 8 + 7) == 0 && ofs_array_get(_snd, c) >= 0) { stop(c) }
+            c++
+        }
+        forge now = _w(0)
+        forge keep_s: Array<stone> = []
+        forge keep_t: Array<stone> = []
+        forge i = 0
+        while (i < ofs_array_len(_pend)) {
+            forge t = ofs_array_get(_pend_t, i)
+            if (!ok || now - t >= 2) {
+                wav.free(ofs_array_get(_pend, i))
+            } else {
+                ofs_array_push(keep_s, ofs_array_get(_pend, i))
+                ofs_array_push(keep_t, t)
+            }
+            i++
+        }
+        _pend = keep_s
+        _pend_t = keep_t
+    }
+
+    // ── thread de audio ──────────────────────────────────────────────────
+    vein _rd16(p: stone) -> stone {
+        forge a: *u8 = p as *u8
+        forge b: *u8 = (p + 1) as *u8
+        forge lo: u8 = 0 as u8
+        forge hi: u8 = 0 as u8
+        fracture {
+            lo = *a;
+            hi = *b;
+        }
+        forge v = ((lo as stone) & 255) | (((hi as stone) & 255) << 8)
+        if (v >= 32768) { return v - 65536 }
+        return v
+    }
+
+    vein _wr16(p: stone, v: stone) -> void {
+        if (v > 32767) { v = 32767 }
+        if (v < 0 - 32768) { v = 0 - 32768 }
+        forge u = v & 65535
+        forge a: *u8 = p as *u8
+        forge b: *u8 = (p + 1) as *u8
+        forge lo: u8 = (u & 255) as u8
+        forge hi: u8 = ((u >> 8) & 255) as u8
+        fracture {
+            *a = lo;
+            *b = hi;
+        }
+    }
+
+    // aaudio_data_callback_result_t (*)(AAudioStream*, void* user, void* data, int32_t frames)
+    vein _callback(stream: *stone, user: *stone, data: *stone, nframes: stone) -> stone {
+        forge n = nframes & 4294967295
+        forge out = data as stone
+        forge master = _w(1)
+        forge f = 0
+        while (f < n) {
+            forge l = 0
+            forge r = 0
+            forge c = 0
+            while (c < 4) {
+                forge base = 8 + c * 8
+                if (_w(base + 7) != 0) {
+                    forge pcm = _w(base)
+                    forge frames = _w(base + 1)
+                    forge pos = _w(base + 2)
+                    forge idx = pos >> 16
+                    if (idx >= frames) {
+                        if (_w(base + 4) != 0 && frames > 0) {
+                            pos = 0
+                            idx = 0
+                        } else {
+                            _set(base + 7, 0)
+                            c++
+                            continue
+                        }
+                    }
+                    forge vol = _w(base + 5)
+                    forge chs = _w(base + 6)
+                    forge sl = 0
+                    forge sr = 0
+                    if (chs == 2) {
+                        sl = _rd16(pcm + idx * 4)
+                        sr = _rd16(pcm + idx * 4 + 2)
+                    } else {
+                        sl = _rd16(pcm + idx * 2)
+                        sr = sl
+                    }
+                    l = l + (sl * vol) / 256
+                    r = r + (sr * vol) / 256
+                    _set(base + 2, pos + _w(base + 3))
+                }
+                c++
+            }
+            _wr16(out + f * 4, (l * master) / 256)
+            _wr16(out + f * 4 + 2, (r * master) / 256)
+            f++
+        }
+        _set(0, _w(0) + 1)
+        return 0
+    }
+}

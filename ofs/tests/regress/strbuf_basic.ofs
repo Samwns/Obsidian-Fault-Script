@@ -1,0 +1,33 @@
+// strbuf (ofs/stdlib/strbuf.ofs): crescimento, append_int com negativos e
+// MIN_I64, to_obsidian copia (nao muda depois), clear e release.
+attach {strbuf}
+
+core main() {
+    forge b: StrBuf = strbuf.create(4)
+    strbuf.append(b, "abc")
+    strbuf.append_char(b, 45)
+    strbuf.append_int(b, 0)
+    strbuf.append_char(b, 32)
+    strbuf.append_int(b, -1234)
+    strbuf.append_char(b, 32)
+    strbuf.append_int(b, 9223372036854775807)
+    strbuf.append_char(b, 32)
+    strbuf.append_int(b, 0 - 9223372036854775807 - 1)
+    forge first = strbuf.to_obsidian(b)
+    echo(first)
+    strbuf.append(b, "!")
+    echo(first)
+    echo(strbuf.length(b))
+    strbuf.clear(b)
+    forge i = 0
+    while (i < 1000) {
+        strbuf.append_int(b, i % 10)
+        i++
+    }
+    forge big = strbuf.to_obsidian(b)
+    echo(ofs_str_len(big))
+    echo(ofs_str_substr(big, 990, 10))
+    strbuf.release(b)
+    strbuf.append(b, "de novo")
+    echo(strbuf.to_obsidian(b))
+}

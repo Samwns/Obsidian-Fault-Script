@@ -1,0 +1,63 @@
+// `&x` de variavel do interpretador passado ao C (F2): a variavel passa a
+// viver num slot de memoria crua que o C le e escreve (stone, i32, crystal,
+// ponteiro de saida), como a alloca do build nativo.
+rift vein c_memset(dst: *stone, v: stone, n: stone) -> *stone bind "memset" abi c
+rift vein c_sscanf_l(s: obsidian, fmt: obsidian, out: *stone) -> stone bind "sscanf" abi c
+rift vein c_sscanf_i(s: obsidian, fmt: obsidian, out: *i32) -> stone bind "sscanf" abi c
+rift vein c_strtol(s: obsidian, endp: *stone, base: stone) -> stone bind "strtol" abi c
+rift vein c_modf(x: crystal, ip: *crystal) -> crystal bind "modf" abi c
+
+vein dobra(p: *stone) -> void {
+    fracture { *p = *p * 2 }
+}
+
+core main() {
+    forge x: stone = 5
+    fracture {
+        c_memset(&x, 0, 8)
+    }
+    echo(x)
+    x = 7
+    fracture { dobra(&x) }
+    echo(x)
+    x = x + 1
+    echo(x)
+
+    forge lido: stone = 0
+    forge n = c_sscanf_l("123456789012", "%ld", &lido)
+    echo(n)
+    echo(lido)
+
+    forge pequeno: i32 = 99
+    c_sscanf_i("-42", "%d", &pequeno)
+    echo(pequeno)
+
+    forge texto: obsidian = "4096resto"
+    forge fim: stone = 0
+    forge v = c_strtol(texto, &fim, 10)
+    echo(v)
+    echo(fim - (texto as stone))
+
+    forge inteira: crystal = 0.0
+    forge frac = c_modf(3.75, &inteira)
+    echo(inteira)
+    echo(frac)
+
+    // o mesmo endereco enquanto a variavel vive
+    forge a1: stone = 0
+    forge a2: stone = 0
+    fracture {
+        a1 = (&x) as stone
+        a2 = (&x) as stone
+    }
+    echo(a1 == a2)
+    forge i = 0
+    forge soma = 0
+    while (i < 3) {
+        forge t: stone = i * 10
+        fracture { dobra(&t) }
+        soma = soma + t
+        i++
+    }
+    echo(soma)
+}

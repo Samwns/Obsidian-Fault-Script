@@ -1,0 +1,17 @@
+vein main() -> void {
+    forge a = 1 +
+        2 +
+        3
+    if (a == 1 ||
+        a == 2 &&
+        a == 3) {
+        echo("x" +
+            "y")
+    }
+    forge v = [
+        1,
+        2,
+        3
+    ]
+    echo(v[0] + a)
+}

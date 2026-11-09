@@ -1,0 +1,24 @@
+// Ponteiro *u8: escrever e ler bytes de um buffer cru.
+extern vein ofs_alloc(size: stone) -> *u8
+extern vein ofs_free(p: *u8) -> void
+
+core main() {
+    forge buf: *u8 = ofs_alloc(8)
+    forge i = 0
+    while (i < 8) {
+        forge q: *u8 = fault_step(buf, i)
+        fracture { *q = (i * 3 + 1) as u8 }
+        i++
+    }
+    forge soma = 0
+    i = 0
+    while (i < 8) {
+        forge q: *u8 = fault_step(buf, i)
+        forge v: u8 = 0
+        fracture { v = *q }
+        soma = soma + (v as stone)
+        i++
+    }
+    echo(soma)
+    ofs_free(buf)
+}

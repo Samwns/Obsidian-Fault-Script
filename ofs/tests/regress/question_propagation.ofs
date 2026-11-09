@@ -1,0 +1,57 @@
+// `?`: Solid(v)?/Ore(v)? vale v; Crack(e)?/Barren? sai da vein (anchors rodam)
+// devolvendo a etiqueta numerica da variante (Crack = 1, Barren = 3 aqui).
+strata Outcome {
+    Solid,
+    Crack
+}
+
+strata Lode {
+    Ore,
+    Barren
+}
+
+vein ok() -> stone {
+    forge v = Solid(7)?
+    return v + 1
+}
+
+vein bad() -> stone {
+    anchor { echo("anchor bad") }
+    forge v = Crack("boom")?
+    echo("nao chega aqui")
+    return v
+}
+
+vein name_ok() -> obsidian {
+    forge s = Solid("pedra")?
+    return s
+}
+
+vein lode_missing() -> stone {
+    forge x = Barren?
+    return 99
+}
+
+vein in_loop() -> stone {
+    forge i = 0
+    while (i < 10) {
+        if (i == 3) {
+            forge z = Crack(i)?
+        }
+        i++
+    }
+    return 50
+}
+
+vein direct_return() -> stone {
+    return Crack(0)?
+}
+
+core main() {
+    echo(ok())
+    echo(bad())
+    echo(name_ok())
+    echo(lode_missing())
+    echo(in_loop())
+    echo(direct_return())
+}

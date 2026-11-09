@@ -1,0 +1,7 @@
+// `attach {x}` tambem procura em $OFS_LIB_PATH (pastas separadas por ':')
+// e em ~/.ofs/libs. O run.sh roda com OFS_LIB_PATH=<vazia>:attach_libdir.
+attach {pedra-extra}
+
+core main() {
+    echo(pedra_extra_valor())
+}

@@ -70,6 +70,8 @@ A `.ofs` file can contain:
 | `u64` | unsigned | 64 bits |
 | `i8` | signed | 8 bits |
 | `i32` | signed | 32 bits |
+| `i16` | signed | 16 bits |
+| `i64` | signed | 64 bits |
 
 Example:
 
@@ -95,6 +97,60 @@ forge nome = "Ana"
 forge ativo = true
 forge nums = [1, 2, 3]
 ```
+
+### Implicit conversions and operations (single rule)
+
+The type checker (`typeck`) computes the final type of every expression and writes the implicit conversions into the program tree itself. Native code (`ofs build`) and the interpreter (`ofs run`) only execute those conversions, so the same program gives the same result in both modes.
+
+**Type of each expression**
+
+| Expression | Type |
+|---|---|
+| `a[i]` with `a: Array<T>` | `T` (no declared `T`: `stone`) |
+| `p.field` | the field's declared type |
+| `f(...)`, `x.method(...)` | the `vein`'s declared return type |
+| `ofs_array_get(a, i)` / `ofs_array_pop(a)` | the element of `Array<T>` |
+| `cycle (x in a)` with scalar `a: Array<T>` | `x: T` |
+| `a op b` integer with integer | `stone` |
+
+**Implicit conversions (accepted)**
+
+| Where | From → to | How |
+|---|---|---|
+| mixed arithmetic and comparison | integer → `crystal` | `c + 1` means `c + 1.0`; `2 * c` is `crystal` |
+| integer arithmetic | `u8`…`i64` → `stone` | computed in 64 bits (`iN` sign-extends, `uN` zero-extends), result is `stone` |
+| `forge x: T = v`, `x = v`, argument, `return`, `Array<T>` element | integer → `crystal` | `forge c: crystal = 1` is `1.0` |
+| same | `crystal` → integer | truncates toward zero, like `as` |
+| same | `bool` → integer | `true` → 1, `false` → 0 |
+| same | integer → integer of another width | truncates or extends on store (`forge u: u8 = 300` is 44) |
+| comparison with a number | `bool`/variant → `stone` | `ok == 1`; `Blue == 2` compares the tag |
+| `stone == null` | `null` → 0 | address held in a `stone` |
+| `"text" + v` | `stone`, `crystal`, `bool`, variant → `obsidian` | `"c=" + 1.5` gives `c=1.5`; `"ok=" + true` gives `ok=true`; a variant gives its name |
+| `x op= v` | same as `x = x op v` | `c += 1` with `c: crystal` adds `1.0` |
+
+**Meaningless combinations: compile error**
+
+Reported as `[ERRO DE TIPO file:line:column]` with a hint, in both modes, before anything runs:
+
+| Example | Why |
+|---|---|
+| `p + 1`, `p * 2` with `p: *u8` | pointer arithmetic: use `fault_step(p, n)` or `(p as stone) + n` |
+| `s + b` with `b: bool` | `bool` is not a number: `(b as stone)` |
+| `name * c`, `name - 1` with `name: obsidian` | `obsidian` only accepts `+` (concatenation) |
+| `c % 2` with `c: crystal` | `%` is integer-only |
+| `c & 1`, `b \| b` | bits only exist on integers (for `bool` use `&&`/`\|\|`) |
+| `"a" < "b"`, `p < q` (pointers) | `<`, `<=`, `>`, `>=` are for numbers only |
+| `s == 0` with `s: obsidian` | comparison between different types: convert with `as` |
+| `-text`, `~c` | sign only on numbers, `~` only on integers |
+| `s += 0.5` with `s: stone` | write `s = (s + 0.5) as stone` |
+
+**Warnings (the program still builds)**
+
+`[AVISO DE TIPO]` shows up when a value is stored into a type with no defined conversion, e.g. `forge x: stone = "abc"` or `forge c: crystal = true`. There native code reinterprets the bits (or the address) and the interpreter keeps the value as is. It stays a warning because low-level code sometimes wants exactly that reinterpretation: use `as T` to make the intent explicit.
+
+When `typeck` does not know the type of one side (a call without a known signature, for instance), it neither converts nor reports an error.
+
+**Variants in `echo`**: `echo(v)` of a variant (a `strata` type or a literal like `Green`) prints the **name** in both modes. The numeric tag is `v as stone`.
 
 ---
 
@@ -215,6 +271,8 @@ echo(r.area())
 
 ### Explicit layout
 
+> **Planned:** `layout` is a reserved word, but the parser does not accept `layout` on a `monolith` yet (it reports `expected '{' after monolith name`). Every `monolith` uses the native layout today. The syntax below is the intended one.
+
 ```ofs
 monolith Header layout packed {
     tag: stone
@@ -321,7 +379,15 @@ if (code == 200) {
 }
 ```
 
-> **Note**: `match` and `case` are reserved in the grammar and AST (`NK_MATCH`), with full parser support planned for the compiler's roadmap.
+Or with `match` (synonym: `assay`), which compares the value with each case using `==`; `_` is the default case:
+
+```ofs
+match (code) {
+    200 => { echo("ok") }
+    404 => { echo("not found") }
+    _ => { echo("error") }
+}
+```
 
 ### Error handling and interruption (`throw`)
 
@@ -348,7 +414,41 @@ core main() {
 strata Status { Idle, Running, Failed }
 ```
 
-> **Note**: `strata` is parsed and semantically analyzed, with direct generation for the LLVM backend planned for the algebraic types roadmap.
+> **Note**: a variant is a numeric tag (`v as stone`) and can be stored in a `strata` type (`forge c: Status = Idle`, parameters, return values, `Array<Status>`). `echo(c)` prints the name (`Idle`) in both modes. The payload of `Ok(7)` is not stored by native code yet (see `?` propagation).
+
+### `?` propagation
+
+`expr?` unwraps a result variant:
+
+- `Solid(v)?` and `Ore(v)?` evaluate to `v`.
+- `Crack(e)?` and `Barren?` leave the current `vein` immediately (pending `anchor`s run), propagating the failure. Failure variants are the ones named `Crack` and `Barren`; any other variant counts as success.
+
+The propagated value is the same in both modes:
+
+- In the native build variants are payload-less `i64` tags: the tag is the variant's position in declaration order across all `strata` of the program (with `strata Outcome { Solid, Crack }` declared first, `Crack` = 1). A `vein ... -> stone` that propagates `Crack` returns that tag, and `echo` prints `1` in both modes. With an `obsidian` return you get the tag as text; with `crystal`, the number; in `core main` it becomes the exit code.
+- In the interpreter, if the declared return type is the `strata` type itself (`-> Outcome`), the whole variant (with payload) is returned.
+- Since native code keeps no payload, `x?` over an expression that is not a direct constructor (e.g. `f()?`) evaluates to the success variant's tag, not its payload.
+
+```ofs
+strata Outcome { Solid, Crack }
+
+vein ok() -> stone {
+    forge v = Solid(7)?      // 7
+    return v
+}
+
+vein bad() -> stone {
+    forge v = Crack("boom")? // returns 1 right here
+    return v
+}
+
+core main() {
+    echo(ok())   // 7
+    echo(bad())  // 1
+}
+```
+
+Test: `ofs/tests/regress/question_propagation.ofs`.
 
 ---
 
@@ -407,6 +507,8 @@ attach {F:G:\projeto\minha_lib.ofs}
 
 ## 11. `extern vein` and `rift vein`
 
+The **Rift** is the boundary through which OFS reaches the native system libraries (libc, libm, X11, Android JNI, kernel32). `extern vein` and `rift vein` declare a function that lives in a native library.
+
 ### `extern vein`
 
 ```ofs
@@ -427,7 +529,7 @@ rift vein text_size(s: obsidian) -> stone bind "strlen" abi c
 
 ### Function address and indirect call (`fault_addr`, `fault_call`)
 
-OFS has no "function pointer" type, but it can get the address of a `vein` as a `stone` and call an address using the C ABI. This is useful for C library callbacks (`qsort`, `ANativeActivity`, `ALooper`, `AChoreographer`) and for C function tables (JNI).
+OFS has no "function pointer" type, but it can get the address of a `vein` as a `stone` and call an address using the system calling convention. This is useful for native library callbacks (`qsort`, `ANativeActivity`, `ALooper`, `AChoreographer`) and for native function tables (JNI).
 
 ```ofs
 rift vein c_qsort(base: *stone, n: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
@@ -449,18 +551,37 @@ core main() {
 }
 ```
 
-- `fault_addr(nome)` → `stone`: address of the vein. Accepts a module `vein`, `ns.vein`, and `extern`/`rift vein` (with `bind`, it returns the C symbol). In IR: `ptrtoint ptr @simbolo to i64`. Outside a vein, it is a semantic error.
-- `fault_call(endereco, args...)` → `stone`: indirect call with the C ABI (`inttoptr` + `call i64`). Integer, pointer and `obsidian` arguments; the return value is read as `i64` (`void` functions return garbage, ignore it). No `float`/`double`.
-- The vein used as a callback must have parameters compatible with the C ABI: `stone` for integers (32-bit integers arrive with undefined upper bits; mask them with `& 4294967295`) and `*stone` for pointers.
-- Only in the native build (`ofs build`); the interpreter (`ofs run`) does not implement `fault_*`.
+- `fault_addr(nome)` → `stone`: address of the vein. Accepts a module `vein`, `ns.vein`, and `extern`/`rift vein` (with `bind`, it returns the native symbol). In IR: `ptrtoint ptr @simbolo to i64`. Outside a vein, it is a semantic error.
+- `fault_call(endereco, args...)` → `stone`: indirect call using the system calling convention (`inttoptr` + `call i64`). Integer, pointer and `obsidian` arguments; the return value is read as `i64` (`void` functions return garbage, ignore it). No `float`/`double`.
+- The vein used as a callback must have parameters compatible with the system calling convention: `stone` for integers (32-bit integers arrive with undefined upper bits; mask them with `& 4294967295`) and `*stone` for pointers.
+- In the interpreter (`ofs run`), `fault_addr` of an `extern`/`rift vein` returns the native address and `fault_addr` of an interpreted vein returns a native trampoline that re-enters the interpreter (the `qsort` above works the same). See "In the interpreter (`ofs run`): the Rift".
 - Test: `ofs/tests/runtime/test_fault_addr_qsort.ofs`.
 
 
 Important fields:
 
 - `bind "..."` sets the actual native symbol
-- `abi c` sets the C ABI
+- `abi c` selects the system calling convention
 - `...` is accepted in a native variadic function
+
+### In the interpreter (`ofs run`): the Rift
+
+`ofs run` calls the same native system library functions the native build would link, with no C code and no libffi:
+
+- **Resolved at load time.** Every `extern vein`/`rift vein` called by the program (or passed to `fault_addr`) becomes an address via `dlsym(RTLD_DEFAULT, "symbol")`, using `bind` when present. The interpreter first opens `libm` (the build links `-lm`) and the libraries in `OFS_FFI_LIBS` (`libfoo.so:/path/libbar.so`); if a symbol is missing it also tries `libX11`/`libXft` (`ofs build` links both when present). A missing symbol gives the linker's error (`undefined reference to 'x'`) before running, with exit code 1. An `extern` that is declared but never called does not need to exist (as in the link).
+- **OFS runtime.** `ofscc` is linked with `-rdynamic`, so `ofs_alloc`, `ofs_echo_color` etc. are found too. Veins defined in `stdlib/runtime/*.ofs` (pulled in with `attach`) run the native version linked into `ofscc`, like the builtins, when the signature fits the Rift; `OFS_RUN_RUNTIME=interp` turns this off.
+- **Conversion.** `stone`, `bool`, integers (`i8`..`u64`, narrowed to width and sign), pointers and `obsidian` (the value's own `char*`) go as `i64`; `crystal` goes in an FP register. The return follows the declared type: `char*` becomes `obsidian` without a copy (as in native code, where `obsidian` is the pointer; `NULL` becomes `null`), `*T` becomes the address (it can go back to the native function, be compared with `null`, converted with `as` and dereferenced), `monolith` the block and `Array` the `ofs_array` itself.
+- **Trampolines.** The call goes through `__ofs_ffi_dispatch`, generated by `llvmgen` inside `ofscc`: one case with the exact LLVM type per signature class (up to 4 arguments with any `stone`/`crystal` mix and an integer or `crystal` return; up to 12 integer-only; variadics with 1 to 3 fixed and up to 4 extra). Any other class is a clear error.
+- **Variadics** (`printf`, `snprintf`, `open`...): the ones `llvmgen` knows by name; extras use the declared type (or the value's type), with the right convention (`%al` on x86-64).
+- `fault_addr(extern)` returns the native address and `fault_call(address, ...)` calls it with arguments in the value's type (as in native code). `fault_step` adds to a native pointer.
+- **Raw memory (F2).** The interpreter runs natively, so a pointer is a real address. `*p` and `*p = v` read and write with the width of the pointee type (`u8`/`i8`/`u16`/`i16`/`u32`/`i32`/`u64`/`i64`/`stone`/`f32`/`f64`/`crystal`/`bool` (4 bytes)/`obsidian`/`*T`), using the `typeck` static type (the same one `llvmgen` uses); narrow integers are sign-extended (`iN`) or zero-extended (`uN`), as in native code. A null `p` faults like native code (address 0). `fault_memcpy`/`fault_memset` use real `memcpy`/`memset` of any size; `fault_step(p, i)` adds `i * sizeof(*p)` with the static type of `p`.
+- **`as`** follows the `llvmgen` rule: same LLVM type only retags; `ptrtoint`/`inttoptr` (including `obsidian`, which is the `char*` itself); `fptosi`; `sitofp` from `iN`/`stone` and `uitofp` from `uN` (`(255 as u8) as crystal` is 255.0); `fpext`/`fptrunc` (`f32` rounds); `trunc` if the source is wider, otherwise `sext` from `iN` and `zext` from `uN`/`bool` (`(0 - 1) as i8 as stone` is -1). `forge x: u8 = 300` and `x = v` into a `u8`/`i32`/`f32` truncate like the native `store`.
+- **`&x`.** The address of an interpreter variable is real: on the first `&x` the variable moves into an 8-byte raw-memory slot (the native function can read and write it: `sscanf(s, "%d", &n)`, `strtol(s, &end, 10)`, `modf(x, &whole)`), freed when the variable goes out of scope, like the native `alloca`. `&x` of a `monolith` is the block itself. Only variables have an address (native code has no `&s.field`/`&a[i]` either: use `(&s) as stone + offset`); `&x` of an `Array` variable is a clear error.
+- **`monolith` with system layout.** Instances live in raw memory with the `llvmgen.struct_layout` layout (the same as native code: fields in order, each aligned to its own size, up to 8; `bool` takes 4 bytes; `Array` and nested `monolith` take 8). `s` or `&s` passed to a native function (`memcpy`, `qsort` of structs...) sees the same bytes as the native build. As in native code, a `monolith` passed to a vein is by reference and `forge y: T = x`/`y = x` copy. An `Array` field holds the interpreter's array (the native function should not read it).
+- **`Array` and strings.** An `Array` passed to a native function is the native `ofs_array` itself (`[data, len, cap, elem_size]` header + data) of the interpreter's value column; the native function writes elements in place and the length is synchronized on return. Elements of a single type (integers/pointers, `crystal`, `bool`, `obsidian` or `monolith`); mixed types are a clear error. An `Array` returned by a native function uses the same block, without copying. `obsidian` already is the `char*`. Use `ofs_array_data(a)` to pass only the data (e.g. `qsort`).
+- **Native → OFS callbacks.** `fault_addr(vein)` of an interpreted vein binds the vein to one of 16 native trampolines (`__ofs_cb_0`..`__ofs_cb_15`, generated by `llvmgen` inside `ofscc`); the library calls the trampoline, which re-enters the interpreter, including inside a native call made by the program itself (`qsort` inside `qsort`, `fault_call` of another callback). The same vein reuses its slot. Up to 6 parameters that are integers, pointers, `obsidian`, `bool` or `monolith` (by pointer), with an integer/pointer return. More than 16 different veins, more than 6 parameters or `crystal`/`f32` in the callback give a clear error with exit code 1 (use `ofs run --native`). `f32` as a Rift argument is not supported yet either.
+- `bedrock`, `fracture` and `abyss` are plain blocks in both modes (native code changes nothing inside them); the `bedrock` cells and regions (stdlib) use the raw memory above.
+- Tests: `ofs/tests/regress/ffi_*.ofs`, `tests/parity/cases/libc_*`.
 
 ---
 
@@ -809,6 +930,25 @@ cycle (forge i = 0; i < 100; i++) {
 }
 ```
 
+### seal / anchor (run on scope exit)
+
+`seal { … }` and `anchor { … }` are **the same thing** (the same token): they register an action that runs when the current scope ends, on any exit (end of block, `return`, `break`/`shatter`, `continue`/`erode`, `?` propagation). Several actions run in reverse order (the last registered runs first). `seal` is the thematic name ("seals the resource on the way out"); `anchor` keeps working. Both take a block or a single statement.
+
+```ofs
+vein copy(src: obsidian) -> stone {
+    forge f = fopen(src, "r")
+    seal { fclose(f) }          // runs on any return below
+    anchor echo("copy done")    // same as seal; runs before fclose (LIFO)
+    if (f == null) { return 1 }
+    // ...
+    return 0
+}
+```
+
+- The action is evaluated **on exit**, with the values of that moment.
+- `return`, `break`, `continue` and `throw` **inside** `seal`/`anchor` are forbidden (error `E0042`).
+- Same behavior in native code and in `ofs run`. Test: `ofs/tests/regress/seal_defer.ofs`.
+
 ### while (condition-only loop)
 
 ```ofs
@@ -888,6 +1028,21 @@ Use the `F:` prefix to reference a specific `.ofs` file by path relative to the 
 
 Attach declarations must appear at the top level, before or between other declarations. The preprocessor resolves them before the lexer and parser run, so each module is inlined exactly once (deduplication is automatic).
 
+### Where `attach` looks
+
+The first match wins:
+
+| Form | Search order |
+|---|---|
+| `attach {module}` | 1. `$OFS_STDLIB_PATH/module.ofs` · 2. the attaching file's folder · 3. each folder in `$OFS_LIB_PATH` (`:`-separated) · 4. `$OFS_LIB_HOME`, or `~/.ofs/libs` (where `src/packages/install_library.sh` installs) |
+| `attach {F:path}` | 1. absolute path, or relative to the file's folder · 2. `$OFS_STDLIB_PATH/path` · 3. and 4. as above |
+
+In `attach {module}`, a hyphen becomes an underscore (`terminal-colors` → `terminal_colors.ofs`). A module that exists in none of these places is a **compile error** that lists every path tried (`[ERRO DE ATTACH file:line]: modulo 'x' nao encontrado`). Previously `attach {x}` of a missing module was silently ignored.
+
+### Undefined names
+
+Using a name that was never declared (variable, global, constant) is a **compile error** in both modes, with the real file and line and a suggestion when a similar name exists (`[ERRO SEMANTICO calc.ofs:5:12]: identificador indefinido 'contadr'` / `voce quis dizer 'contador'?`). Top-level globals may be used in a `vein` above the line that declares them. A module checked alone (`ofs check module.ofs`) does not see the names of the file that attaches it: check the main file. Incompatible types in an operation (`[AVISO DE TIPO]`) are still only a warning.
+
 ### Stdlib modules
 
 | Name | Description |
@@ -899,7 +1054,7 @@ Attach declarations must appear at the top level, before or between other declar
 | `webserver` | HTTP response builder, MIME types, log helpers |
 | `bedrock` | Low-level heap cells, regions, bit-field helpers |
 | `bedrock-packet` | Packet layout helpers built on bedrock regions |
-| `rift` | Foreign runtime wrappers (C ABI helpers) |
+| `rift` | Rift wrappers (native library helpers) |
 | `terminal-colors` | ANSI terminal color output |
 | `memory-modes` | Docs and helpers for fracture/abyss/fractal modes |
 | `test-lib` | Unit test utilities |
@@ -908,7 +1063,9 @@ Attach declarations must appear at the top level, before or between other declar
 
 ## Extern Functions
 
-Declare external C functions for FFI (Foreign Function Interface):
+The **Rift** is the boundary through which OFS reaches the native system libraries (libc, libm, X11, Android JNI, kernel32). `extern vein` and `rift vein` declare a function that lives in a native library. There is no C code in OFS. (The system calling convention is technically known as the C ABI; it does not involve C code.)
+
+Declare native system library functions through the Rift:
 
 ```ofs
 extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
@@ -925,7 +1082,7 @@ All OFS runtime functions can be accessed via `extern` declarations. This enable
 
 ### rift vein
 
-OFS also supports `rift vein` as a native interop-facing declaration form:
+OFS also supports `rift vein` as a declaration form for native functions through the Rift:
 
 ```ofs
 rift vein strlen(text: obsidian) -> stone
@@ -935,7 +1092,7 @@ core main() {
 }
 ```
 
-`rift vein` lowers to the same foreign-call pipeline as `extern vein`, but it presents interop as an OFS-native boundary instead of framing the feature only as "extern C".
+`rift vein` lowers to the same native-call pipeline as `extern vein`, but it presents interop as an OFS-native boundary instead of framing the feature only as an "extern" declaration.
 
 You can also add explicit interop metadata:
 
@@ -949,13 +1106,13 @@ rift vein text_size(text: obsidian) -> stone bind "strlen" abi c
 
 ### Interop Direction
 
-`extern vein` is the current FFI surface. Today it is best suited for runtime and C-compatible symbols.
+`extern vein` is the current Rift surface. Today it is best suited for runtime symbols and native system libraries.
 
 The roadmap extends this toward richer native interop layers for:
 
-- C object and library boundaries,
-- C++ bridge layers,
-- C# host/runtime bridges,
+- native object and library boundaries,
+- bridge layers to other ecosystems,
+- host/runtime bridges,
 - Python embedding or host bindings,
 - target-specific assembly escape hatches.
 
@@ -1010,6 +1167,8 @@ echo(hero.name)     // "Obsidian Knight"
 echo(hero.hp)       // 100
 hero.hp -= 10       // take damage
 ```
+
+A field can be another `monolith`. The field holds a **reference** to the sub-object (8 bytes in the system layout); `forge c: Body` already creates the zeroed sub-object, so `c.pos.x = 1` works directly. `c.pos = v` makes the field point to `v`; `forge w: Vec3 = c.pos` copies. Same in native code and in `ofs run` (test: `ofs/tests/regress/monolith_nested.ofs`).
 
 ### Passing to Functions
 
@@ -1103,7 +1262,7 @@ forge last = nums[4]     // 50
 nums[2] = 99             // modify element
 ```
 
-Array indexing is **zero-based** with **bounds checking** at runtime.
+Array indexing is **zero-based** with **bounds checking** at runtime. Out of bounds (`a[7]`, `ofs_array_get`/`ofs_array_set`), the program stops with exit code 1 and `ofs: indice 7 fora do limite do array (tamanho 5)` on stderr, in both modes.
 
 ### Iteration
 
@@ -1233,14 +1392,24 @@ Available intrinsics:
 - `fault_spin_left(stone, stone)` -> rotate left
 - `fault_spin_right(stone, stone)` -> rotate right
 - `fault_step(*stone, stone)` -> typed pointer stepping in elements
-- `fault_addr(vein)` -> address of the vein as `stone` (see FFI)
-- `fault_call(endereco, args...)` -> indirect call with C ABI (see FFI)
+- `fault_addr(vein)` -> address of the vein as `stone` (see the Rift)
+- `fault_call(endereco, args...)` -> indirect call using the system calling convention (see the Rift)
 - `fault_cut(value, shift, width)` -> extract a bit field
 - `fault_patch(base, shift, width, insert)` -> replace a bit field
 - `fault_weave(mask, left, right)` -> blend bits from `left` and `right` using `mask`
 - `fault_unreachable()` -> marks the current path as unreachable, lowers to `llvm.trap` + `unreachable` IR
 - `fault_memcpy(dst, src, len)` -> bulk memory copy (lowers to `llvm.memcpy`); `dst` and `src` must be pointers
 - `fault_memset(dst, val, len)` -> bulk memory fill with `val` byte (lowers to `llvm.memset`); `dst` must be a pointer
+
+Exact semantics (identical in the native build and in the `ofs run` interpreter):
+
+- Everything is 64-bit two's complement: `fault_count(-1)` = 64; `fault_lead(0)` = `fault_trail(0)` = 64; `fault_lead(-1)` = 0.
+- `fault_spin_left`/`fault_spin_right`: 64-bit rotation (`llvm.fshl`/`llvm.fshr`); the distance is taken modulo 64 (`fault_spin_right(6, 65)` = 3).
+- `fault_weave(mask, left, right)` = `(left & mask) | (right & ~mask)`: each bit comes from `left` where `mask` is 1 and from `right` where it is 0.
+- `fault_trap()` and `fault_unreachable()` terminate the process with SIGILL (the interpreter does the same via `raise(SIGILL)`).
+- `fault_fence()`/`fault_prefetch()` are no-ops in the interpreter.
+- In the interpreter pointers are real addresses: `fault_memcpy`/`fault_memset` copy/fill any size, and `fault_step`, `fault_addr` and `fault_call` work as in native code (see "In the interpreter (`ofs run`): the Rift").
+- Test: `ofs/tests/regress/fault_intrinsics.ofs`.
 
 These functions are designed to cover operations assembly already has, while also giving OFS room for its own machine-oriented vocabulary.
 
@@ -1311,7 +1480,8 @@ Examples:
 - `webserver.ofs` for HTTP helpers
 - `memory_modes.ofs` for memory-mode descriptions
 - `bedrock.ofs` for explicit heap-backed state helpers in OFS-native style
-- `rift.ofs` for OFS-native foreign-boundary wrappers
+- `rift.ofs` for OFS-native Rift wrappers
+
 - `bedrock_packet.ofs` for packet/header views built on low-level regions
 
 ### Bedrock Module
@@ -1349,7 +1519,7 @@ It provides helpers such as:
 - `bedrock_lane32_be_set(value, lane, insert)`
 - `bedrock_barrier()`
 
-The purpose of this module is not to imitate C APIs directly, but to let low-level programming grow in OFS vocabulary.
+The purpose of this module is not to imitate another language's APIs directly, but to let low-level programming grow in OFS vocabulary.
 
 These lane helpers also give OFS an endianness-aware surface for ABI-facing bit windows without forcing the user to drop into raw shifts everywhere.
 
@@ -1364,7 +1534,7 @@ It provides wrappers such as:
 - `rift_banner(title)`
 - `rift_report_line(label, value)`
 
-The goal is to let foreign boundaries be consumed through OFS-facing APIs instead of exposing only raw declarations everywhere.
+The goal is to let native system libraries be consumed through OFS-facing APIs instead of exposing only raw declarations everywhere.
 
 ### Bedrock Packet Module
 
@@ -1389,7 +1559,7 @@ This is part of the direction where OFS low-level programming gains its own reus
 It is valid and encouraged to mix high-level and low-level OFS in the same file:
 
 - business logic in regular `vein` functions,
-- foreign interop at the boundary through `rift vein`,
+- calling native libraries through the Rift (`rift vein`),
 - machine-adjacent work in `bedrock`,
 - explicit storage helpers from `bedrock.ofs`.
 
@@ -1456,8 +1626,8 @@ Complete list of reserved keywords:
 | `void`     | `KW_VOID`        | Void type                  |
 | `attach`   | `KW_IMPORT`      | Attach module              |
 | `while`    | `KW_WHILE`       | Condition-only loop        |
-| `extern`   | `KW_EXTERN`      | Foreign function           |
-| `rift`     | `KW_RIFT`        | Native interop declaration |
+| `extern`   | `KW_EXTERN`      | Native Rift function (system library) |
+| `rift`     | `KW_RIFT`        | Native function declaration via the Rift |
 | `as`       | `KW_AS`          | Type cast                  |
 | `match`    | `KW_MATCH`       | Pattern matching           |
 | `case`     | `KW_CASE`        | Match arm                  |

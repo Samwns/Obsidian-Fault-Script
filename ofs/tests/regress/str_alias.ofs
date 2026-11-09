@@ -1,0 +1,184 @@
+// A6: concatenacao que cresce no lugar / libera intermediarias nao pode
+// mudar o que outras referencias veem (strings nao tem GC nem contagem de
+// referencia). Cada linha impressa tem de sair igual no nativo e no
+// interpretador.
+
+forge g_saved: obsidian = ""
+forge g_list: Array<obsidian> = []
+forge g_arrs: Array<Array> = []
+
+monolith Item {
+    name: obsidian
+    n: stone
+}
+
+forge g_items: Array<Item> = []
+
+vein keep(s: obsidian) -> void {
+    g_saved = s
+}
+
+vein shout(p: obsidian) -> obsidian {
+    p = p + "!"
+    p = p + "!"
+    return p
+}
+
+vein build(n: stone) -> obsidian {
+    forge out = ""
+    forge i = 0
+    while (i < n) {
+        out = out + ofs_stone_to_obsidian(i)
+        i++
+    }
+    return out
+}
+
+vein measure(s: obsidian) -> stone {
+    return ofs_str_len(s)
+}
+
+vein keep_arr(a: Array<stone>) -> void {
+    ofs_array_push(g_arrs, a)
+}
+
+vein keep_item(it: Item) -> void {
+    ofs_array_push(g_items, it)
+}
+
+core main() {
+    // 1. copia antes de crescer
+    forge s = "ab"
+    s = s + "c"
+    forge t = s
+    s = s + "d"
+    echo(t)
+    echo(s)
+
+    // 2. a propria string dos dois lados
+    forge u = "xy"
+    u = u + "z"
+    u = u + u
+    echo(u)
+    u += u
+    echo(u)
+
+    // 3. varias aparicoes no lado direito
+    forge w = "1"
+    w = w + "2"
+    w = w + "-" + w
+    echo(w)
+
+    // 4. passada para funcao que guarda
+    forge k = "keep"
+    k = k + "me"
+    keep(k)
+    k = k + "!!"
+    echo(g_saved)
+    echo(k)
+
+    // 5. guardada em array e em campo
+    forge a = "arr"
+    a = a + "0"
+    ofs_array_push(g_list, a)
+    a = a + "1"
+    forge it: Item
+    it.name = a
+    a = a + "2"
+    echo(ofs_array_get(g_list, 0))
+    echo(it.name)
+    echo(a)
+
+    // 6. literal nunca e alterado
+    forge lit = "lit"
+    lit = lit + "+"
+    forge lit2 = "lit"
+    echo(lit)
+    echo(lit2)
+
+    // 7. parametro que cresce e retorno de string montada em laco
+    forge base = "hey"
+    echo(shout(base))
+    echo(base)
+    forge b10 = build(10)
+    forge b10c = b10
+    b10 = b10 + "x"
+    echo(b10c)
+    echo(b10)
+
+    // 8. temporarios de cadeia e argumento de funcao que so le
+    forge mid = "M"
+    echo("a" + mid + "c" + ofs_stone_to_obsidian(42) + "e")
+    echo(measure("12" + mid + "34"))
+
+    // 9. variavel declarada no laco, break e continue
+    forge acc = ""
+    forge i = 0
+    while (i < 6) {
+        forge line = ""
+        line = line + "L" + ofs_stone_to_obsidian(i)
+        line += ";"
+        i++
+        if (i == 2) { continue }
+        if (i == 5) { break }
+        acc = acc + line
+    }
+    echo(acc)
+
+    // 10. cache de char_at depois de crescer no lugar
+    forge c = "abc"
+    c = c + "d"
+    forge sum = 0
+    forge j = 0
+    while (j < ofs_str_len(c)) {
+        sum = sum + ofs_str_char_at(c, j)
+        j++
+    }
+    c = c + "e"
+    j = 0
+    while (j < ofs_str_len(c)) {
+        sum = sum + ofs_str_char_at(c, j)
+        j++
+    }
+    echo(sum)
+
+    // 11. arrays locais liberados no fim do escopo; o que escapa continua
+    forge total = 0
+    forge r = 0
+    while (r < 1000) {
+        forge tmp: Array<stone> = []
+        ofs_array_push(tmp, r)
+        ofs_array_push(tmp, r * 2)
+        total = total + tmp[1]
+        r++
+    }
+    echo(total)
+    forge q = 0
+    while (q < 3) {
+        forge kept: Array<stone> = []
+        ofs_array_push(kept, q * 10)
+        keep_arr(kept)
+        q++
+    }
+    forge kk: Array<stone> = ofs_array_get(g_arrs, 2)
+    echo(kk[0])
+
+    // 12. monolith local: copia por valor; o que escapa continua valido
+    forge m1: Item
+    m1.name = "m1"
+    m1.n = 1
+    forge m2: Item = m1
+    m2.n = 2
+    echo(m1.n)
+    echo(m2.n)
+    forge z = 0
+    while (z < 3) {
+        forge itz: Item
+        itz.name = "it" + ofs_stone_to_obsidian(z)
+        itz.n = z
+        keep_item(itz)
+        z++
+    }
+    forge got: Item = ofs_array_get(g_items, 1)
+    echo(got.name)
+}

@@ -1,0 +1,8 @@
+vein main() -> void {
+    forge a = "chave { aberta // nao e comentario /* nem bloco */"
+    forge b = "aspas \" escapadas  e   espacos   internos  "
+    forge c = "}"
+    forge d = "linha1
+   linha2 com   espacos"
+    echo(a + b + c + d)
+}

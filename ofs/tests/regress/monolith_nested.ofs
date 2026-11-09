@@ -1,0 +1,85 @@
+// monolith dentro de campo de outro monolith (struct > 8 bytes). O campo
+// guarda o ponteiro do sub-objeto (8 bytes, llvmgen.struct_layout), igual
+// nos dois modos. Antes o nativo usava os 8 bytes do campo como se a
+// struct inteira morasse ali: `c.pos.z` pisava `c.massa`.
+monolith Vec3 {
+    x: stone
+    y: stone
+    z: crystal
+}
+
+monolith Corpo {
+    id: stone
+    pos: Vec3
+    massa: stone
+}
+
+monolith Mundo {
+    nome: obsidian
+    corpo: Corpo
+    tick: u8
+}
+
+forge g_mundo: Mundo
+
+vein mexe(p: Vec3) -> void {
+    p.x = 77
+}
+
+vein soma(c: Corpo) -> stone {
+    return c.id + c.pos.x + c.pos.y + c.massa
+}
+
+core main() {
+    forge c: Corpo
+    c.id = 7
+    c.massa = 99
+    c.pos.x = 1
+    c.pos.y = 2
+    c.pos.z = 3.5
+    echo(c.id)
+    echo(c.pos.x)
+    echo(c.pos.y)
+    echo(c.pos.z)
+    echo(c.massa)
+    echo(soma(c))
+
+    // `a.b = v`: o campo passa a apontar para v (alias, como no interpretador)
+    forge v: Vec3
+    v.x = 10
+    v.z = 30.0
+    c.pos = v
+    v.z = 5.0
+    echo(c.pos.z)
+    echo(c.massa)
+
+    // `forge w: T = c.pos` copia; vein recebe por referencia
+    forge w: Vec3 = c.pos
+    w.x = 6
+    echo(c.pos.x)
+    mexe(c.pos)
+    echo(c.pos.x)
+
+    // copia de Corpo e rasa: o sub-objeto e compartilhado
+    forge d: Corpo = c
+    d.pos.y = 9
+    d.id = 3
+    echo(c.pos.y)
+    echo(c.id)
+
+    // tres niveis e global
+    g_mundo.nome = "terra"
+    g_mundo.tick = 200 as u8
+    g_mundo.corpo.massa = 1000
+    g_mundo.corpo.pos.y = 42
+    g_mundo.corpo.pos.z = 0.25
+    echo(g_mundo.nome)
+    echo(g_mundo.tick)
+    echo(g_mundo.corpo.massa)
+    echo(g_mundo.corpo.pos.y)
+    echo(g_mundo.corpo.pos.z)
+    forge m: Mundo
+    m.corpo.pos.x = 8
+    m.corpo.id = 4
+    echo(m.corpo.pos.x + m.corpo.id)
+}

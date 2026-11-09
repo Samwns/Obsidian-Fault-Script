@@ -1,0 +1,108 @@
+// F3: tipos e conversoes implicitas decididos no typeck (iguais no
+// nativo e no `ofs run`)
+forge ESCALA: crystal = 2
+forge NEG: crystal = -3
+
+monolith Ponto {
+    x: crystal
+    n: stone
+}
+
+vein metade(v: crystal) -> crystal { return v / 2 }
+vein inteiro(v: stone) -> stone { return v }
+vein como_crystal() -> crystal { return 7 }
+vein como_stone() -> stone { return 7.9 }
+
+core main() {
+    forge c: crystal = 1.5
+    // inteiro -> crystal na aritmetica mista (dos dois lados)
+    echo(c + 1)
+    echo(2 * c)
+    echo(c - 1)
+    echo(10 / c)
+    forge k = 3
+    echo(k + c)
+    // comparacao mista
+    echo(c > 1)
+    echo(1 < c)
+    echo(k == 3.0)
+    // forge com tipo, argumento, return, global
+    forge um: crystal = 1
+    echo(um)
+    echo(metade(3))
+    echo(inteiro(2.9))
+    echo(como_crystal())
+    echo(como_stone())
+    echo(ESCALA * 2)
+    echo(NEG)
+    // atribuicao e compostos
+    forge acc: crystal = 0.0
+    acc = 4
+    acc += 1
+    acc *= 2
+    acc -= 0.5
+    acc /= 3
+    echo(acc)
+    forge s: stone = 0
+    s = 4.8
+    echo(s)
+    // a[i] tem o tipo do elemento
+    forge a: Array<crystal> = [1.5, 2.5]
+    echo(a[0] * 2.0)
+    forge x = a[1]
+    echo(x)
+    echo(a[1] + 1)
+    forge b: Array<crystal> = [1, 2, 3]
+    echo(b[2] / 2)
+    ofs_array_push(b, 4)
+    echo(b[3])
+    forge soma: crystal = 0.0
+    cycle (v in b) { soma = soma + v }
+    echo(soma)
+    // campo e chamada pelo tipo declarado
+    forge p: Ponto
+    p.x = 3
+    p.n = 2
+    echo(p.x / p.n)
+    // `campo op= v` (o nativo ignorava o op e gravava so v)
+    p.x += 1
+    p.n *= 3
+    echo(p.x)
+    echo(p.n)
+    // larguras inteiras: a conta e em stone (64 bits)
+    forge g: i64 = 5
+    forge h: i16 = 2
+    echo(g + h)
+    forge z: i32 = 7
+    echo(z * h)
+    forge u: u8 = 250
+    echo(u + 10)
+    forge w: u8 = 300
+    echo(w)
+    forge neg: i16 = 4
+    echo(-neg)
+    // bool -> stone ao guardar/passar e ao comparar com numero
+    forge ok: bool = true
+    forge n1: stone = ok
+    echo(n1 + 1)
+    echo(inteiro(ok))
+    echo(ok == 1)
+    // concatenacao: crystal, bool e numero viram texto
+    echo("c=" + c + " ok=" + ok + " k=" + k)
+    // sinal: iN estende com sinal, uN sem sinal (conta, texto, store, `as`)
+    forge q: i8 = -3
+    echo(-q)
+    echo(q + 1)
+    echo("q=" + q)
+    forge w32: i32 = -5
+    forge ws: stone = w32
+    echo(ws)
+    echo(q as stone)
+    forge cheio: u8 = 255
+    echo(cheio as crystal)
+    forge cc: crystal = cheio
+    echo(cc)
+    // stone guardando endereco comparado com null
+    forge addr: stone = 0
+    echo(addr == null)
+}

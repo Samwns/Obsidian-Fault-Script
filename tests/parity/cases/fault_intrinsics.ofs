@@ -1,0 +1,37 @@
+// Intrinsecos fault_* (popcount, zeros a esquerda/direita, rotacao, weave,
+// swap, cut/patch, memcpy/memset): mesma saida no nativo e no interpretador.
+// Inclui 0 e negativos (64 bits, complemento de 2).
+core main() {
+    bedrock {
+        echo(fault_count(255))
+        echo(fault_count(0))
+        echo(fault_count(-1))
+        echo(fault_lead(1))
+        echo(fault_lead(0))
+        echo(fault_lead(-1))
+        echo(fault_trail(8))
+        echo(fault_trail(0))
+        echo(fault_trail(-9223372036854775807 - 1))
+        echo(fault_spin_left(-2, 1))
+        echo(fault_spin_right(6, 65))
+        echo(fault_spin_left(12345, 0))
+        echo(fault_weave(0x00FF00FF00FF00FF, -1, 0))
+        echo(fault_weave(0xF0, 0xAB, 0x0C))
+        echo(fault_swap(0x0102030405060708))
+        echo(fault_cut(0xABCD, 4, 8))
+        echo(fault_patch(0xFFFF, 4, 8, 0x12))
+        fault_fence()
+        forge a: stone = 0x1111111111111111
+        forge b: stone = 0x2222222222222222
+        fracture {
+            shard pa: *stone = &a
+            shard pb: *stone = &b
+            fault_memcpy(pa, pb, 8)
+            echo(a)
+            fault_memset(pb, 0xAB, 2)
+            echo(b)
+            fault_memset(pb, 0, 8)
+            echo(b)
+        }
+    }
+}

@@ -20,3 +20,37 @@ vein ofs_pow(base: crystal, exp: crystal) -> crystal {
 vein ofs_sqrt(value: crystal) -> crystal {
     return _ofs_runtime_sqrt(value)
 }
+
+// FFI do interpretador (`ofs run`, interpreter.ofs) no Windows: dlopen/dlsym
+// sobre a API Win32 (o ofscc declara os nomes POSIX). RTLD_DEFAULT (0) procura
+// no .exe e nas DLLs do C runtime e do Win32 ja carregadas. O .exe nao exporta
+// o runtime OFS nem __ofs_ffi_dispatch (sem equivalente simples a -rdynamic
+// no link MSVC): no Windows o `ofs run` chama so funcoes C inteiras/ponteiro
+// e interpreta as veins do runtime.
+rift vein _ofs_win_load_library(path: obsidian) -> stone bind "LoadLibraryA" abi c
+rift vein _ofs_win_get_proc(module: stone, name: obsidian) -> stone bind "GetProcAddress" abi c
+rift vein _ofs_win_get_module(name: obsidian) -> stone bind "GetModuleHandleA" abi c
+
+vein dlopen(path: obsidian, flags: stone) -> stone {
+	return _ofs_win_load_library(path)
+}
+
+vein _ofs_win_proc_in(dll: obsidian, name: obsidian) -> stone {
+	forge m = _ofs_win_get_module(dll)
+	if (m == 0) { return 0 }
+	return _ofs_win_get_proc(m, name)
+}
+
+vein dlsym(handle: stone, name: obsidian) -> stone {
+	if (handle != 0) {
+		return _ofs_win_get_proc(handle, name)
+	}
+	forge a = _ofs_win_get_proc(_ofs_win_get_module(null), name)
+	if (a == 0) { a = _ofs_win_proc_in("ucrtbase.dll", name) }
+	if (a == 0) { a = _ofs_win_proc_in("msvcrt.dll", name) }
+	if (a == 0) { a = _ofs_win_proc_in("kernel32.dll", name) }
+	if (a == 0) { a = _ofs_win_proc_in("user32.dll", name) }
+	if (a == 0) { a = _ofs_win_proc_in("gdi32.dll", name) }
+	if (a == 0) { a = _ofs_win_proc_in("ws2_32.dll", name) }
+	return a
+}

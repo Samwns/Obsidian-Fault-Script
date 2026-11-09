@@ -1,0 +1,278 @@
+// OFS Standard Library — android_webview: WebView em tela cheia, 100% OFS (JNI)
+//
+//   attach {F:android_webview.ofs}
+//   webview.open("file:///sdcard/Jogo/", html, shim_js)  // false se falhar
+//   webview.poll()            // 1x por quadro: false quando o usuario fechou (voltar)
+//   webview.eval("js...")     // evaluateJavascript sem retorno
+//   webview.title()           // document.title da pagina (canal JS -> OFS)
+//   webview.close()           // destroi a WebView
+//
+// Nenhuma classe Java propria: a WebView fica num android.app.Dialog (janela
+// propria; a NativeActivity toma a superficie da janela principal, entao uma
+// View adicionada a ela nao seria desenhada). O botao voltar fecha o Dialog
+// sozinho (cancelable); poll() percebe por Dialog.isShowing().
+// Como nao ha WebViewClient/ValueCallback proprios:
+//  - o shim e injetado como <script> no inicio do HTML (loadDataWithBaseURL);
+//  - o retorno do JS para o OFS vai pelo document.title (webview.title()).
+// So na thread principal (callbacks do android.ofs).
+
+attach {F:android.ofs}
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+extern vein ofs_str_char_at(s: obsidian, idx: stone) -> stone
+
+namespace webview {
+    forge _dlg: stone = 0          // referencia global do Dialog
+    forge _wv: stone = 0           // referencia global da WebView
+    forge debug: bool = true       // chrome://inspect (WebView.setWebContentsDebuggingEnabled)
+    forge last_error: obsidian = ""
+
+    vein _put(buf: *stone, i: stone, v: stone) -> void {
+        forge p: *u8 = ((buf as stone) + i) as *u8
+        forge b: u8 = (v & 255) as u8
+        fracture {
+            *p = b;
+        }
+    }
+
+    // leitura O(1) de um byte (ofs_str_char_at percorre a string inteira a cada chamada)
+    vein _gb(s: obsidian, i: stone) -> stone {
+        forge p: *u8 = ((s as stone) + i) as *u8
+        forge v: u8 = 0 as u8
+        fracture {
+            v = *p;
+        }
+        return (v as stone) & 255
+    }
+
+    // quantos bytes de continuacao (10xxxxxx) seguem a partir de i (0 se invalido)
+    vein _seq_len(s: obsidian, i: stone, n: stone, c: stone) -> stone {
+        forge need = 0
+        if (c >= 194 && c <= 223) { need = 1 }
+        else if (c >= 224 && c <= 239) { need = 2 }
+        else if (c >= 240 && c <= 244) { need = 3 }
+        else { return 0 }
+        if (i + need > n - 1) { return 0 }
+        forge k = 1
+        while (k <= need) {
+            if ((_gb(s, i + k) & 192) != 128) { return 0 }
+            k++
+        }
+        return need
+    }
+
+    // NewStringUTF espera "UTF-8 modificado": sem sequencias de 4 bytes (viram
+    // pares substitutos de 3 bytes cada), sem NUL e sem bytes invalidos (o
+    // CheckJNI aborta o app com UTF-8 invalido: bytes ruins viram '?').
+    // Texto comum passa direto.
+    vein str(s: obsidian) -> stone {
+        forge n = ofs_str_len(s)
+        forge need = false
+        forge i = 0
+        while (i < n) {
+            forge c = _gb(s, i) & 255
+            if (c >= 128) {
+                forge sl = _seq_len(s, i, n, c)
+                if (sl == 0 || sl == 3) {
+                    need = true
+                    break
+                }
+                i = i + sl
+            } else if (c == 0) {
+                need = true
+                break
+            }
+            i++
+        }
+        if (!need) { return android.jni_string(s) }
+        forge buf: *stone = ofs_alloc(n * 2 + 16)
+        forge o = 0
+        i = 0
+        while (i < n) {
+            forge c = _gb(s, i) & 255
+            if (c == 0) {
+                _put(buf, o, 192)
+                _put(buf, o + 1, 128)
+                o = o + 2
+                i++
+            } else if (c < 128) {
+                _put(buf, o, c)
+                o++
+                i++
+            } else {
+                forge sl = _seq_len(s, i, n, c)
+                if (sl == 0) {
+                    _put(buf, o, 63)
+                    o++
+                    i++
+                } else if (sl == 3) {
+                    forge cp = ((c & 7) << 18) | ((_gb(s, i + 1) & 63) << 12) | ((_gb(s, i + 2) & 63) << 6) | (_gb(s, i + 3) & 63)
+                    cp = cp - 65536
+                    forge hi = 55296 + (cp >> 10)
+                    forge lo = 56320 + (cp & 1023)
+                    _put(buf, o, 224 | (hi >> 12))
+                    _put(buf, o + 1, 128 | ((hi >> 6) & 63))
+                    _put(buf, o + 2, 128 | (hi & 63))
+                    _put(buf, o + 3, 224 | (lo >> 12))
+                    _put(buf, o + 4, 128 | ((lo >> 6) & 63))
+                    _put(buf, o + 5, 128 | (lo & 63))
+                    o = o + 6
+                    i = i + 4
+                } else {
+                    forge k = 0
+                    while (k <= sl) {
+                        _put(buf, o + k, _gb(s, i + k))
+                        k++
+                    }
+                    o = o + sl + 1
+                    i = i + sl + 1
+                }
+            }
+        }
+        _put(buf, o, 0)
+        forge js = android.jni_string(buf as obsidian)
+        ofs_free(buf)
+        return js
+    }
+
+    vein is_open() -> bool { return _wv != 0 }
+
+    // Cria a WebView e abre o Dialog em tela cheia. base: URL base (file:///.../);
+    // html: pagina ja com o shim; devolve false se algo falhar (last_error).
+    vein open(base: obsidian, html: obsidian) -> bool {
+        last_error = ""
+        if (_wv != 0) { close() }
+        forge act = android.jni_activity()
+        if (act == 0) { last_error = "sem activity"; return false }
+        if (debug) {
+            android.jni_scall("android/webkit/WebView", "setWebContentsDebuggingEnabled", "(Z)V", 1, 0, 0, 0)
+        }
+        forge wv = android.jni_new("android/webkit/WebView", "(Landroid/content/Context;)V", act, 0, 0, 0)
+        if (wv == 0) { last_error = "WebView indisponivel"; return false }
+        forge st = android.jni_call(wv, "getSettings", "()Landroid/webkit/WebSettings;", 0, 0, 0, 0, 0, 0)
+        if (st != 0) {
+            android.jni_call(st, "setJavaScriptEnabled", "(Z)V", 1, 0, 0, 0, 0, 0)
+            android.jni_call(st, "setDomStorageEnabled", "(Z)V", 1, 0, 0, 0, 0, 0)
+            android.jni_call(st, "setAllowFileAccess", "(Z)V", 1, 0, 0, 0, 0, 0)
+            android.jni_call(st, "setAllowContentAccess", "(Z)V", 1, 0, 0, 0, 0, 0)
+            android.jni_call(st, "setAllowFileAccessFromFileURLs", "(Z)V", 1, 0, 0, 0, 0, 0)
+            android.jni_call(st, "setAllowUniversalAccessFromFileURLs", "(Z)V", 1, 0, 0, 0, 0, 0)
+            android.jni_call(st, "setMediaPlaybackRequiresUserGesture", "(Z)V", 0, 0, 0, 0, 0, 0)
+            android.jni_call(st, "setUseWideViewPort", "(Z)V", 1, 0, 0, 0, 0, 0)
+            android.jni_call(st, "setLoadWithOverviewMode", "(Z)V", 1, 0, 0, 0, 0, 0)
+            android.jni_call(st, "setBuiltInZoomControls", "(Z)V", 0, 0, 0, 0, 0, 0)
+            android.jni_call(st, "setSupportZoom", "(Z)V", 0, 0, 0, 0, 0, 0)
+            android.jni_delete(st)
+        }
+        // clientes padrao do framework (nao sao subclasses): links ficam na propria WebView
+        forge wc = android.jni_new("android/webkit/WebViewClient", "()V", 0, 0, 0, 0)
+        if (wc != 0) {
+            android.jni_call(wv, "setWebViewClient", "(Landroid/webkit/WebViewClient;)V", wc, 0, 0, 0, 0, 0)
+            android.jni_delete(wc)
+        }
+        forge cc = android.jni_new("android/webkit/WebChromeClient", "()V", 0, 0, 0, 0)
+        if (cc != 0) {
+            android.jni_call(wv, "setWebChromeClient", "(Landroid/webkit/WebChromeClient;)V", cc, 0, 0, 0, 0, 0)
+            android.jni_delete(cc)
+        }
+        android.jni_call(wv, "setBackgroundColor", "(I)V", 0, 0, 0, 0, 0, 0)
+
+        forge theme = android.jni_static_int_field("android/R$style", "Theme_Black_NoTitleBar_Fullscreen")
+        forge dlg = android.jni_new("android/app/Dialog", "(Landroid/content/Context;I)V", act, theme, 0, 0)
+        if (dlg == 0) { last_error = "Dialog indisponivel"; android.jni_delete(wv); return false }
+        android.jni_call(dlg, "setContentView", "(Landroid/view/View;)V", wv, 0, 0, 0, 0, 0)
+        android.jni_call(dlg, "setCancelable", "(Z)V", 1, 0, 0, 0, 0, 0)
+        // janela: tela cheia imersiva + sobre o recorte da camera + tela ligada
+        forge win = android.jni_call(dlg, "getWindow", "()Landroid/view/Window;", 0, 0, 0, 0, 0, 0)
+        if (win != 0) {
+            android.jni_call(win, "addFlags", "(I)V", 128 | 1024, 0, 0, 0, 0, 0)
+            forge dv = android.jni_call(win, "getDecorView", "()Landroid/view/View;", 0, 0, 0, 0, 0, 0)
+            if (dv != 0) {
+                android.jni_call(dv, "setSystemUiVisibility", "(I)V", 256 | 512 | 1024 | 2 | 4 | 4096, 0, 0, 0, 0, 0)
+                android.jni_delete(dv)
+            }
+            forge lp = android.jni_call(win, "getAttributes", "()Landroid/view/WindowManager$LayoutParams;", 0, 0, 0, 0, 0, 0)
+            if (lp != 0 && android.sdk_version >= 28) {
+                forge cls = android.jni_find_class("android/view/WindowManager$LayoutParams")
+                forge fid = fault_call(android.jni_fn(94), android.jni_env(), cls, "layoutInDisplayCutoutMode", "I")
+                if (!android.jni_check() && fid != 0) {
+                    fault_call(android.jni_fn(109), android.jni_env(), lp, fid, 1)
+                    android.jni_call(win, "setAttributes", "(Landroid/view/WindowManager$LayoutParams;)V", lp, 0, 0, 0, 0, 0)
+                }
+                android.jni_delete(cls)
+                android.jni_delete(lp)
+            }
+            android.jni_delete(win)
+        }
+        _wv = android.jni_global(wv)
+        _dlg = android.jni_global(dlg)
+        android.jni_delete(wv)
+        android.jni_delete(dlg)
+        android.jni_call(_dlg, "show", "()V", 0, 0, 0, 0, 0, 0)
+
+        forge jbase = str(base)
+        forge jhtml = str(html)
+        forge jmime = android.jni_string("text/html")
+        forge jenc = android.jni_string("UTF-8")
+        android.jni_call(_wv, "loadDataWithBaseURL", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", jbase, jhtml, jmime, jenc, 0, 0)
+        forge failed = android.jni_failed
+        android.jni_delete(jbase)
+        android.jni_delete(jhtml)
+        android.jni_delete(jmime)
+        android.jni_delete(jenc)
+        if (failed) {
+            last_error = "loadDataWithBaseURL falhou"
+            close()
+            return false
+        }
+        return true
+    }
+
+    // false quando o Dialog foi fechado (botao voltar). Nesse caso chame close().
+    vein poll() -> bool {
+        if (_wv == 0 || _dlg == 0) { return false }
+        return android.jni_call(_dlg, "isShowing", "()Z", 0, 0, 0, 0, 0, 0) != 0
+    }
+
+    // Executa JavaScript na pagina (sem retorno).
+    vein eval(js: obsidian) -> void {
+        if (_wv == 0) { return }
+        forge s = str(js)
+        android.jni_call(_wv, "evaluateJavascript", "(Ljava/lang/String;Landroid/webkit/ValueCallback;)V", s, 0, 0, 0, 0, 0)
+        android.jni_delete(s)
+    }
+
+    // document.title da pagina ("" se nao houver).
+    vein title() -> obsidian {
+        if (_wv == 0) { return "" }
+        forge t = android.jni_call(_wv, "getTitle", "()Ljava/lang/String;", 0, 0, 0, 0, 0, 0)
+        if (t == 0) { return "" }
+        forge s = android.jni_to_text(t)
+        android.jni_delete(t)
+        return s
+    }
+
+    // onPause/onResume da WebView (para o app em segundo plano).
+    vein pause(on: bool) -> void {
+        if (_wv == 0) { return }
+        if (on) {
+            android.jni_call(_wv, "onPause", "()V", 0, 0, 0, 0, 0, 0)
+        } else {
+            android.jni_call(_wv, "onResume", "()V", 0, 0, 0, 0, 0, 0)
+        }
+    }
+
+    vein close() -> void {
+        if (_dlg != 0) {
+            android.jni_call(_dlg, "dismiss", "()V", 0, 0, 0, 0, 0, 0)
+        }
+        if (_wv != 0) {
+            android.jni_call(_wv, "destroy", "()V", 0, 0, 0, 0, 0, 0)
+        }
+        android.jni_delete_global(_wv)
+        android.jni_delete_global(_dlg)
+        _wv = 0
+        _dlg = 0
+    }
+}

@@ -1,0 +1,52 @@
+// Reentrancia (F2): um callback chamado pelo C dentro de uma chamada C feita
+// pela vein interpretada, e que por sua vez chama o C (qsort aninhado,
+// strlen, fault_call de outro callback) e recursao interpretada.
+rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
+rift vein c_strlen(s: obsidian) -> stone bind "strlen" abi c
+extern vein ofs_array_data(arr: Array<stone>) -> *stone
+
+forge chamadas: stone = 0
+forge internos: stone = 0
+
+vein fat(n: stone) -> stone {
+    if (n <= 1) { return 1 }
+    return n * fat(n - 1)
+}
+
+vein menor(a: *stone, b: *stone) -> stone {
+    forge x = 0
+    forge y = 0
+    fracture { x = *a; y = *b; }
+    internos = internos + 1
+    return x - y
+}
+
+// comparador que, a cada chamada, ordena outro array (qsort dentro de qsort)
+// e chama C e outro callback por endereco
+vein externo(a: *stone, b: *stone) -> stone {
+    chamadas = chamadas + 1
+    forge w: Array<stone> = [3, 1, 2]
+    c_qsort(ofs_array_data(w), 3, 8, fault_addr(menor))
+    forge t: stone = ofs_array_get(w, 0) + ofs_array_get(w, 2)
+    forge l = c_strlen("abc")
+    forge k1: stone = 5
+    forge k2: stone = 9
+    forge d = fault_call(fault_addr(menor), &k1, &k2)
+    forge f = fat(4)
+    forge x = 0
+    forge y = 0
+    fracture { x = *a; y = *b; }
+    if (t != 4 || l != 3 || d != -4 || f != 24) { return 0 }
+    return y - x
+}
+
+core main() {
+    forge v: Array<stone> = [5, 9, 1, 7, 3]
+    c_qsort(ofs_array_data(v), 5, 8, fault_addr(externo))
+    forge s = ""
+    cycle (x in v) { s = s + ofs_stone_to_obsidian(x) + " " }
+    echo(s)
+    echo(chamadas > 0)
+    echo(internos >= chamadas * 2)
+    echo(fat(10))
+}

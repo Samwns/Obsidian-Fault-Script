@@ -1,0 +1,12 @@
+// snprintf variadico com crystal (double) e stone.
+extern vein ofs_alloc(size: stone) -> *u8
+rift vein c_snprintf_d(buf: *u8, n: stone, fmt: obsidian, v: crystal) -> stone bind "snprintf" abi c
+rift vein c_snprintf_i(buf: *u8, n: stone, fmt: obsidian, v: stone) -> stone bind "snprintf" abi c
+
+core main() {
+    forge buf: *u8 = ofs_alloc(64)
+    forge n = c_snprintf_d(buf, 64, "%.3f", 3.14159)
+    echo(n)
+    forge m = c_snprintf_i(buf, 64, "%ld", 12345)
+    echo(m)
+}

@@ -16,6 +16,25 @@ namespace typeck {
     forge _anchor_depth: stone = 0
     forge _semantic_errors: stone = 0
     forge _check_visits: stone = 0
+    // F3: tipos nomeados conhecidos e o retorno da vein em verificacao
+    forge _strata_types: Array<obsidian> = []
+    forge _mono_types: Array<obsidian> = []
+    forge _cur_ret: obsidian = "unknown"
+
+    // Classes de tipo usadas pelas regras de operacao e conversao (F3).
+    // TY_UNK = o typeck nao sabe (builtin sem assinatura, expressao sem
+    // tipo): nunca gera erro nem conversao.
+    forge TY_UNK: stone = 0
+    forge TY_INT: stone = 1
+    forge TY_FLT: stone = 2
+    forge TY_BOOL: stone = 3
+    forge TY_STR: stone = 4
+    forge TY_PTR: stone = 5
+    forge TY_NULL: stone = 6
+    forge TY_VAR: stone = 7
+    forge TY_ARR: stone = 8
+    forge TY_OBJ: stone = 9
+    forge TY_VOID: stone = 10
     
     vein push_scope() -> void {
         _scope_depth++
@@ -38,6 +57,7 @@ namespace typeck {
     }
     
     vein declare(sym: Symbol) -> void {
+        if (sym.param_types == null) { sym.param_types = "" }
         ofs_array_push(_symbols, sym)
         ofs_array_push(_symbol_depths, _scope_depth)
     }
@@ -57,6 +77,7 @@ namespace typeck {
         dummy.name = ""
         dummy.type_str = "unknown"
         dummy.kind = SYM_UNKNOWN
+        dummy.param_types = ""
         return dummy
     }
 
@@ -117,7 +138,8 @@ namespace typeck {
 
     vein is_int_type(t: obsidian) -> bool {
         if (ofs_str_eq(t, "stone") || ofs_str_eq(t, "u8") || ofs_str_eq(t, "u16") ||
-            ofs_str_eq(t, "u32") || ofs_str_eq(t, "u64") || ofs_str_eq(t, "i8") || ofs_str_eq(t, "i32")) {
+            ofs_str_eq(t, "u32") || ofs_str_eq(t, "u64") || ofs_str_eq(t, "i8") || ofs_str_eq(t, "i32") ||
+            ofs_str_eq(t, "i16") || ofs_str_eq(t, "i64")) {
             return true
         }
         return false
@@ -140,22 +162,477 @@ namespace typeck {
         return has_lower
     }
 
-    vein check_type_compat(from: obsidian, to: obsidian) -> bool {
-        if (ofs_str_eq(from, to)) { return true }
-        if (is_int_type(from) && is_int_type(to)) { return true }
-        if (ofs_str_len(from) > 0 && ofs_str_char_at(from, 0) == 42 &&
-            ofs_str_len(to) > 0 && ofs_str_char_at(to, 0) == 42) {
-            return true
+    // ── Tipos e conversoes implicitas (F3) ────────────────────────────
+    // O typeck decide o tipo final de cada expressao e materializa as
+    // conversoes implicitas na propria arvore: um no NK_CAST (ou um literal
+    // reescrito, ou uma chamada de conversao para texto). O llvmgen e o
+    // interpretador so executam esses nos; nenhum dos dois converte por
+    // conta propria. Regra completa: docs/LANGUAGE_REFERENCE.md, "Tipos".
+
+    vein list_has(list: Array<obsidian>, v: obsidian) -> bool {
+        forge i = 0
+        forge cnt = ofs_array_len(list)
+        while (i < cnt) {
+            forge e: obsidian = ofs_array_get(list, i)
+            if (ofs_str_eq(e, v)) { return true }
+            i++
         }
         return false
+    }
+
+    vein is_float_type(t: obsidian) -> bool {
+        return ofs_str_eq(t, "crystal") || ofs_str_eq(t, "f64")
+    }
+
+    vein ty_class(t: obsidian) -> stone {
+        if (t == null) { return TY_UNK }
+        forge tl = ofs_str_len(t)
+        if (tl == 0) { return TY_UNK }
+        if (ofs_str_char_at(t, 0) == 42) { return TY_PTR }
+        if (is_int_type(t)) { return TY_INT }
+        if (is_float_type(t)) { return TY_FLT }
+        if (ofs_str_eq(t, "bool")) { return TY_BOOL }
+        if (ofs_str_eq(t, "obsidian")) { return TY_STR }
+        if (ofs_str_eq(t, "null")) { return TY_NULL }
+        if (ofs_str_eq(t, "void")) { return TY_VOID }
+        if (ofs_str_eq(t, "variant")) { return TY_VAR }
+        if (ofs_str_eq(t, "Array")) { return TY_ARR }
+        if (tl > 7 && ofs_str_eq(ofs_str_substr(t, 0, 6), "Array<")) { return TY_ARR }
+        if (list_has(_strata_types, t)) { return TY_VAR }
+        if (list_has(_mono_types, t)) { return TY_OBJ }
+        return TY_UNK
+    }
+
+    // `Array<T>` -> T; "" se nao for um array com elemento declarado
+    vein array_elem_of(t: obsidian) -> obsidian {
+        if (t == null) { return "" }
+        forge tl = ofs_str_len(t)
+        if (tl < 8) { return "" }
+        if (!ofs_str_eq(ofs_str_substr(t, 0, 6), "Array<")) { return "" }
+        if (ofs_str_char_at(t, tl - 1) != 62) { return "" }
+        return ofs_str_substr(t, 6, tl - 7)
+    }
+
+    vein type_error(n: Node, msg: obsidian, hint: obsidian) -> void {
+        _semantic_errors++
+        echo("[ERRO DE TIPO " + ast_src_loc(n.line, n.col) + "]: " + msg)
+        if (!ofs_str_eq(hint, "")) { echo("  dica: " + hint) }
+    }
+
+    // tipos dos parametros de uma vein/extern, separados por ','
+    vein param_types_of(decl_id: stone) -> obsidian {
+        forge params_id = node_child(decl_id, 0)
+        if (params_id < 0) { return "" }
+        forge out = ""
+        forge i = 0
+        forge pc = node_extra_len(params_id)
+        while (i < pc) {
+            forge pid = node_extra_at(params_id, i)
+            forge ptid = node_child(pid, 0)
+            forge pt = "unknown"
+            if (ptid >= 0) { pt = type_node_name(ptid) }
+            if (i > 0) { out = out + "," }
+            out = out + pt
+            i++
+        }
+        return out
+    }
+
+    // i-esimo tipo de uma lista "a,b,c" ("" se nao existir)
+    vein param_type_at(list: obsidian, idx: stone) -> obsidian {
+        forge len = ofs_str_len(list)
+        forge start = 0
+        forge k = 0
+        forge i = 0
+        while (i <= len) {
+            if (i == len || ofs_str_char_at(list, i) == 44) {
+                if (k == idx) { return ofs_str_substr(list, start, i - start) }
+                k++
+                start = i + 1
+            }
+            i++
+        }
+        return ""
+    }
+
+    vein set_extra_at(parent_id: stone, idx: stone, child_id: stone) -> void {
+        forge pn: Node = node_get(parent_id)
+        ofs_array_set(pn.extra, idx, child_id)
+        node_set(parent_id, pn)
+    }
+
+    vein is_decimal_text(s: obsidian) -> bool {
+        forge len = ofs_str_len(s)
+        if (len == 0) { return false }
+        forge i = 0
+        while (i < len) {
+            forge c = ofs_str_char_at(s, i)
+            if (c < 48 || c > 57) { return false }
+            i++
+        }
+        return true
+    }
+
+    // Conversao numerica explicita na arvore: `child as to_t`. Literal
+    // inteiro decimal que vira crystal e reescrito no lugar (`1` -> `1.0`),
+    // o que tambem serve de inicializador constante de global.
+    vein wrap_cast(child_id: stone, to_t: obsidian) -> stone {
+        forge cn: Node = node_get(child_id)
+        if (is_float_type(to_t)) {
+            if (cn.kind == NK_LIT_INT && is_decimal_text(cn.val)) {
+                cn.kind = NK_LIT_FLOAT
+                cn.val = cn.val + ".0"
+                cn.type_str = "crystal"
+                node_set(child_id, cn)
+                return child_id
+            }
+            if (cn.kind == NK_UNARY_OP && ofs_str_eq(cn.val, "-") && cn.c0 >= 0) {
+                forge inner: Node = node_get(cn.c0)
+                if (inner.kind == NK_LIT_INT && is_decimal_text(inner.val)) {
+                    inner.kind = NK_LIT_FLOAT
+                    inner.val = inner.val + ".0"
+                    inner.type_str = "crystal"
+                    node_set(cn.c0, inner)
+                    node_set_type(child_id, "crystal")
+                    return child_id
+                }
+            }
+        }
+        forge cid = node_new(NK_CAST, to_t, cn.line, cn.col)
+        node_set_child(cid, 0, child_id)
+        node_set_type(cid, to_t)
+        return cid
+    }
+
+    // Conversao para texto (concatenacao com obsidian): chamada explicita
+    // de uma funcao do runtime, igual nos dois modos.
+    vein wrap_text(child_id: stone, cls: stone) -> stone {
+        forge fname = ""
+        if (cls == TY_INT) { fname = "ofs_stone_to_obsidian" }
+        if (cls == TY_FLT) { fname = "ofs_crystal_to_obsidian" }
+        if (cls == TY_BOOL) { fname = "__ofs_bool_text" }
+        if (cls == TY_VAR) { fname = "__ofs_variant_name" }
+        if (ofs_str_eq(fname, "")) { return child_id }
+        forge cn: Node = node_get(child_id)
+        if (cls == TY_INT && !ofs_str_eq(cn.type_str, "stone")) {
+            // u8/i32...: estende para stone antes (o mesmo widen da aritmetica)
+            child_id = wrap_cast(child_id, "stone")
+        }
+        forge cid = node_new(NK_CALL, fname, cn.line, cn.col)
+        node_add_extra(cid, child_id)
+        node_set_type(cid, "obsidian")
+        return cid
+    }
+
+    // Valor `child_id` guardado num lugar do tipo `to_t` (forge com tipo,
+    // `=`, argumento, return, elemento de array): devolve o no a usar.
+    //   inteiro -> crystal; crystal -> inteiro (trunca, como `as`);
+    //   bool -> inteiro (0/1); crystal/bool/variante -> obsidian (texto).
+    // Inteiro -> inteiro de outra largura fica com o back-end (trunca/
+    // estende no store, igual nos dois modos).
+    vein coerce_value(child_id: stone, to_t: obsidian) -> stone {
+        if (child_id < 0) { return child_id }
+        forge tc = ty_class(to_t)
+        if (tc == TY_UNK) { return child_id }
+        forge ft = node_type_of(child_id)
+        forge fc = ty_class(ft)
+        if (fc == TY_UNK || ofs_str_eq(ft, to_t)) { return child_id }
+        if (tc == TY_FLT && fc == TY_INT) { return wrap_cast(child_id, to_t) }
+        if (tc == TY_INT && (fc == TY_FLT || fc == TY_BOOL)) { return wrap_cast(child_id, to_t) }
+        if (tc == TY_STR && (fc == TY_FLT || fc == TY_BOOL || fc == TY_VAR)) { return wrap_text(child_id, fc) }
+        if (store_suspicious(fc, tc)) {
+            // So aviso: os dois modos ja divergem aqui (o nativo reinterpreta
+            // os bits/o endereco, o interpretador guarda o valor como esta),
+            // mas codigo de baixo nivel pode querer exatamente isso.
+            forge wn: Node = node_get(child_id)
+            echo("[AVISO DE TIPO " + ast_src_loc(wn.line, wn.col) + "]: valor " + ft + " guardado como " + to_t +
+                " (converta com 'as " + to_t + "' se for intencional)")
+        }
+        return child_id
+    }
+
+    // guardar um valor da classe `fc` num lugar da classe `tc` sem conversao
+    // definida (nem implicita, nem reinterpretacao de endereco usual)
+    vein store_suspicious(fc: stone, tc: stone) -> bool {
+        if (fc == TY_UNK || tc == TY_UNK || fc == tc) { return false }
+        if (fc == TY_NULL || fc == TY_VOID || tc == TY_VOID) { return false }
+        if (tc == TY_INT) { return fc == TY_STR || fc == TY_ARR || fc == TY_OBJ }
+        if (tc == TY_FLT) { return fc != TY_INT }
+        if (tc == TY_BOOL) { return fc == TY_STR || fc == TY_FLT || fc == TY_ARR || fc == TY_OBJ }
+        if (tc == TY_STR) { return fc == TY_ARR || fc == TY_OBJ }
+        if (tc == TY_ARR) { return fc == TY_FLT || fc == TY_BOOL || fc == TY_STR || fc == TY_OBJ }
+        if (tc == TY_OBJ) { return fc == TY_FLT || fc == TY_BOOL || fc == TY_STR || fc == TY_ARR }
+        return false
+    }
+
+    vein class_name(c: stone) -> obsidian {
+        if (c == TY_INT) { return "inteiro" }
+        if (c == TY_FLT) { return "crystal" }
+        if (c == TY_BOOL) { return "bool" }
+        if (c == TY_STR) { return "obsidian" }
+        if (c == TY_PTR) { return "ponteiro" }
+        if (c == TY_NULL) { return "null" }
+        if (c == TY_VAR) { return "variante" }
+        if (c == TY_ARR) { return "Array" }
+        if (c == TY_OBJ) { return "monolith" }
+        if (c == TY_VOID) { return "void" }
+        return "?"
+    }
+
+    vein is_arith_op(op: obsidian) -> bool {
+        return ofs_str_eq(op, "+") || ofs_str_eq(op, "-") || ofs_str_eq(op, "*") ||
+            ofs_str_eq(op, "/") || ofs_str_eq(op, "%")
+    }
+
+    vein is_bit_op(op: obsidian) -> bool {
+        return ofs_str_eq(op, "&") || ofs_str_eq(op, "|") || ofs_str_eq(op, "^") ||
+            ofs_str_eq(op, "<<") || ofs_str_eq(op, ">>")
+    }
+
+    vein is_cmp_op(op: obsidian) -> bool {
+        return ofs_str_eq(op, "==") || ofs_str_eq(op, "!=") || ofs_str_eq(op, "<") ||
+            ofs_str_eq(op, "<=") || ofs_str_eq(op, ">") || ofs_str_eq(op, ">=")
+    }
+
+    vein is_numeric_class(c: stone) -> bool {
+        return c == TY_INT || c == TY_FLT
+    }
+
+    vein binop_mismatch(n: Node, lt: obsidian, rt: obsidian) -> void {
+        forge lc = ty_class(lt)
+        forge rc = ty_class(rt)
+        forge msg = "operacao '" + n.val + "' entre " + lt + " e " + rt + " nao existe"
+        forge hint = ""
+        if (lc == TY_PTR || rc == TY_PTR) {
+            msg = "aritmetica de ponteiro com '" + n.val + "' (" + lt + " e " + rt + ")"
+            hint = "use fault_step(p, n) para andar n elementos, ou converta o endereco: (p as stone) " + n.val + " n"
+        } else if (lc == TY_BOOL || rc == TY_BOOL) {
+            hint = "bool nao e numero: converta com '(b as stone)'"
+            if (is_bit_op(n.val)) { hint = "para bool use && / || / !; para bits converta com '(b as stone)'" }
+        } else if (lc == TY_STR || rc == TY_STR) {
+            hint = "obsidian so aceita '+' (concatenacao); para numero use ofs_obsidian_to_stone(s)"
+        } else if (ofs_str_eq(n.val, "%") && (lc == TY_FLT || rc == TY_FLT)) {
+            msg = "'%' so vale para inteiros (" + lt + " e " + rt + ")"
+            hint = "converta com 'as stone', ou calcule a - b * ((a / b) as stone)"
+        } else if (is_bit_op(n.val) && (lc == TY_FLT || rc == TY_FLT)) {
+            msg = "operacao de bits '" + n.val + "' com crystal (" + lt + " e " + rt + ")"
+            hint = "bits so existem em inteiros: converta com 'as stone'"
+        } else if (lc == TY_VAR || rc == TY_VAR) {
+            hint = "a etiqueta de uma variante sai com '(v as stone)'"
+        }
+        type_error(n, msg, hint)
+    }
+
+    // Operacao binaria (nao atribuicao, nao && ||): valida, insere as
+    // conversoes e devolve o tipo do resultado.
+    vein check_binop(id: stone, lt: obsidian, rt: obsidian) -> obsidian {
+        forge n: Node = node_get(id)
+        forge op = n.val
+        forge lc = ty_class(lt)
+        forge rc = ty_class(rt)
+        forge known = lc != TY_UNK && rc != TY_UNK
+
+        if (is_arith_op(op)) {
+            if (ofs_str_eq(op, "+") && (lc == TY_STR || rc == TY_STR)) {
+                // concatenacao: o outro lado vira texto
+                if (lc != TY_STR && lc != TY_NULL) { node_set_child(id, 0, wrap_text(n.c0, lc)) }
+                if (rc != TY_STR && rc != TY_NULL) { node_set_child(id, 1, wrap_text(n.c1, rc)) }
+                return "obsidian"
+            }
+            if (!known) { return lt }
+            if (lc == TY_INT && rc == TY_INT) { return "stone" }
+            if (is_numeric_class(lc) && is_numeric_class(rc)) {
+                if (ofs_str_eq(op, "%")) {
+                    binop_mismatch(n, lt, rt)
+                    return "unknown"
+                }
+                if (lc == TY_INT) { node_set_child(id, 0, wrap_cast(n.c0, "crystal")) }
+                if (rc == TY_INT) { node_set_child(id, 1, wrap_cast(n.c1, "crystal")) }
+                return "crystal"
+            }
+            binop_mismatch(n, lt, rt)
+            return "unknown"
+        }
+
+        if (is_bit_op(op)) {
+            if (!known) { return lt }
+            if (lc == TY_INT && rc == TY_INT) { return "stone" }
+            binop_mismatch(n, lt, rt)
+            return "unknown"
+        }
+
+        if (is_cmp_op(op)) {
+            if (!known) { return "bool" }
+            forge eq = ofs_str_eq(op, "==") || ofs_str_eq(op, "!=")
+            // bool e variante comparados com numero: viram stone (0/1, etiqueta)
+            if ((lc == TY_BOOL || lc == TY_VAR) && is_numeric_class(rc)) {
+                node_set_child(id, 0, wrap_cast(n.c0, "stone"))
+                lc = TY_INT
+            }
+            if ((rc == TY_BOOL || rc == TY_VAR) && is_numeric_class(lc)) {
+                node_set_child(id, 1, wrap_cast(n.c1, "stone"))
+                rc = TY_INT
+            }
+            if (is_numeric_class(lc) && is_numeric_class(rc)) {
+                if (lc == TY_INT && rc == TY_FLT) { node_set_child(id, 0, wrap_cast(n.c0, "crystal")) }
+                if (lc == TY_FLT && rc == TY_INT) { node_set_child(id, 1, wrap_cast(n.c1, "crystal")) }
+                return "bool"
+            }
+            if (lc == rc && lc != TY_VOID) {
+                if (!eq && lc != TY_INT && lc != TY_FLT) {
+                    type_error(n, "comparacao de ordem '" + op + "' entre " + lt + " e " + rt,
+                        "'<', '<=', '>' e '>=' so valem para numeros")
+                    return "bool"
+                }
+                return "bool"
+            }
+            if (eq && (lc == TY_NULL || rc == TY_NULL)) {
+                forge other = lc
+                if (lc == TY_NULL) { other = rc }
+                if (other == TY_STR || other == TY_PTR || other == TY_ARR || other == TY_OBJ || other == TY_NULL) { return "bool" }
+                if (other == TY_INT) {
+                    // endereco guardado em stone comparado com null: vale 0
+                    forge null_id = n.c1
+                    if (lc == TY_NULL) { null_id = n.c0 }
+                    forge nn: Node = node_get(null_id)
+                    nn.kind = NK_LIT_INT
+                    nn.val = "0"
+                    nn.type_str = "stone"
+                    node_set(null_id, nn)
+                    return "bool"
+                }
+            }
+            type_error(n, "comparacao '" + op + "' entre " + lt + " e " + rt + " nao existe",
+                "os dois lados precisam ser do mesmo tipo (converta com 'as')")
+            return "bool"
+        }
+
+        return lt
+    }
+
+    // `alvo op= valor` (op: + - * / % & | ^ << >>): valida e converte o
+    // valor para o tipo do alvo. `x op= v` vale `x = x op v` com o
+    // resultado no tipo de x.
+    vein check_compound(id: stone, op: obsidian, target_t: obsidian) -> void {
+        forge n: Node = node_get(id)
+        forge value_id = n.c1
+        forge vt = node_type_of(value_id)
+        forge tc = ty_class(target_t)
+        forge vc = ty_class(vt)
+        if (tc == TY_UNK || vc == TY_UNK) { return }
+        forge bop = ofs_str_substr(op, 0, ofs_str_len(op) - 1)
+        if (tc == TY_STR && ofs_str_eq(bop, "+")) {
+            if (vc != TY_STR && vc != TY_NULL) { node_set_child(id, 1, wrap_text(value_id, vc)) }
+            return
+        }
+        forge ok = false
+        if (tc == TY_INT && vc == TY_INT) { ok = true }
+        if (tc == TY_FLT && is_numeric_class(vc) && is_arith_op(bop) && !ofs_str_eq(bop, "%")) { ok = true }
+        if (!ok) {
+            forge fake: Node = n
+            fake.val = bop
+            if (tc == TY_INT && vc == TY_FLT && is_arith_op(bop)) {
+                type_error(n, "'" + op + "' de crystal num alvo inteiro (" + target_t + ")",
+                    "escreva x = (x " + bop + " v) as " + target_t + ", ou converta o valor com 'as " + target_t + "'")
+            } else {
+                binop_mismatch(fake, target_t, vt)
+            }
+            return
+        }
+        if (tc == TY_FLT && vc == TY_INT) { node_set_child(id, 1, wrap_cast(value_id, target_t)) }
     }
 
     vein report_anchor_control(n: Node, control: obsidian) -> void {
         _semantic_errors++
         echo("[fault E0042] " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) +
-            ": '" + control + "' is not allowed inside anchor")
+            ": '" + control + "' is not allowed inside anchor/seal")
     }
     
+    // Distancia de edicao (Levenshtein) com teto: devolve `cap + 1` assim
+    // que passa de `cap`. So roda quando ha erro, para a sugestao.
+    vein edit_distance(a: obsidian, b: obsidian, cap: stone) -> stone {
+        forge la = ofs_str_len(a)
+        forge lb = ofs_str_len(b)
+        if (la - lb > cap || lb - la > cap) { return cap + 1 }
+        forge prev: Array<stone> = []
+        forge cur: Array<stone> = []
+        forge j = 0
+        while (j <= lb) {
+            ofs_array_push(prev, j)
+            ofs_array_push(cur, 0)
+            j++
+        }
+        forge i = 1
+        while (i <= la) {
+            ofs_array_set(cur, 0, i)
+            forge row_min = i
+            forge ca = ofs_str_char_at(a, i - 1)
+            j = 1
+            while (j <= lb) {
+                forge cost = 1
+                if (ca == ofs_str_char_at(b, j - 1)) { cost = 0 }
+                forge best: stone = ofs_array_get(prev, j - 1) + cost
+                forge del: stone = ofs_array_get(prev, j) + 1
+                forge ins: stone = ofs_array_get(cur, j - 1) + 1
+                if (del < best) { best = del }
+                if (ins < best) { best = ins }
+                ofs_array_set(cur, j, best)
+                if (best < row_min) { row_min = best }
+                j++
+            }
+            if (row_min > cap) { return cap + 1 }
+            forge tmp = prev
+            prev = cur
+            cur = tmp
+            i++
+        }
+        return ofs_array_get(prev, lb)
+    }
+
+    // nome visivel mais parecido com `name` (ou ""), para "voce quis dizer"
+    vein suggest_name(name: obsidian) -> obsidian {
+        forge cap = ofs_str_len(name) / 3
+        if (cap < 1) { cap = 1 }
+        if (cap > 3) { cap = 3 }
+        forge best = ""
+        forge best_d = cap + 1
+        forge i = ofs_array_len(_symbols) - 1
+        while (i >= 0) {
+            forge sym: Symbol = ofs_array_get(_symbols, i)
+            if (!ofs_str_eq(sym.name, name) && ofs_str_len(sym.name) > 0) {
+                forge d = edit_distance(name, sym.name, cap)
+                if (d < best_d) {
+                    best_d = d
+                    best = sym.name
+                }
+            }
+            i--
+        }
+        // nome mangled de namespace: mostra como o usuario escreve (ns.nome)
+        forge bl = ofs_str_len(best)
+        forge k = 1
+        while (k + 1 < bl) {
+            if (ofs_str_char_at(best, k) == 95 && ofs_str_char_at(best, k + 1) == 95) {
+                return ofs_str_substr(best, 0, k) + "." + ofs_str_substr(best, k + 2, bl - k - 2)
+            }
+            k++
+        }
+        return best
+    }
+
+    // Identificador que nao existe em nenhum escopo: erro de compilacao
+    // (antes era aviso e o nome chegava ao `llc` como `%nome`).
+    vein report_undefined(n: Node) -> void {
+        _semantic_errors++
+        echo("[ERRO SEMANTICO " + ast_src_loc(n.line, n.col) + "]: identificador indefinido '" + n.val + "'")
+        forge sug = suggest_name(n.val)
+        if (!ofs_str_eq(sug, "")) {
+            echo("  voce quis dizer '" + sug + "'?")
+        }
+        echo("  dica: declare com 'forge' antes de usar, ou anexe o modulo que o define com 'attach'")
+        echo("        (um modulo verificado sozinho nao enxerga os nomes de quem o anexa).")
+    }
+
     // Reescreve `recv__metodo(args)` (chamada `recv.metodo(args)`) para
     // `Tipo__metodo(recv, args)` quando `recv` e uma variavel de tipo `Tipo`
     // com metodo em `impl Tipo`. Devolve o tipo de retorno, ou "" se nao for.
@@ -196,6 +673,68 @@ namespace typeck {
         cn.val = mname
         node_set(id, cn)
         return m_sym.type_str
+    }
+
+    // argumentos de uma chamada nos tipos dos parametros declarados
+    // (variadica: so os fixos; "unknown"/sem tipo: sem conversao)
+    vein coerce_args(call_id: stone, ptypes: obsidian) -> void {
+        if (ptypes == null || ofs_str_eq(ptypes, "")) { return }
+        forge argc = node_extra_len(call_id)
+        forge i = 0
+        while (i < argc) {
+            forge pt = param_type_at(ptypes, i)
+            if (ofs_str_eq(pt, "")) { return }
+            forge aid = node_extra_at(call_id, i)
+            forge nid = coerce_value(aid, pt)
+            if (nid != aid) { set_extra_at(call_id, i, nid) }
+            i++
+        }
+    }
+
+    // `strata T { A, B(stone) }`: o tipo e as variantes (as variantes viram
+    // globais `stone` no llvmgen; nomes PascalCase ja passam por
+    // is_variant_name, os outros, ex. `RED`, precisam estar declarados)
+    vein declare_strata(id: stone) -> void {
+        if (!list_has(_strata_types, node_val_of(id))) { ofs_array_push(_strata_types, node_val_of(id)) }
+        forge type_sym: Symbol
+        type_sym.name = node_val_of(id)
+        type_sym.type_str = node_val_of(id)
+        type_sym.kind = SYM_MONOLITH
+        declare(type_sym)
+        forge vi = 0
+        while (vi < node_extra_len(id)) {
+            forge var_id = node_extra_at(id, vi)
+            if (node_kind_of(var_id) == NK_VARIANT) {
+                forge vs: Symbol
+                vs.name = node_val_of(var_id)
+                vs.type_str = "variant"
+                vs.kind = SYM_CONST
+                declare(vs)
+            }
+            vi++
+        }
+    }
+
+    // global (forge/const de topo ou de namespace) pre-declarado: o tipo vem
+    // da anotacao ou de um literal; a declaracao de verdade redeclara depois
+    // com o tipo inferido completo
+    vein predeclare_global(decl_id: stone) -> void {
+        forge gv_sym: Symbol
+        gv_sym.name = node_val_of(decl_id)
+        gv_sym.type_str = "unknown"
+        forge gv_ann = node_child(decl_id, 0)
+        forge gv_init = node_child(decl_id, 1)
+        if (gv_ann >= 0) {
+            gv_sym.type_str = type_node_name(gv_ann)
+        } else if (gv_init >= 0) {
+            forge gik = node_kind_of(gv_init)
+            if (gik == NK_LIT_INT) { gv_sym.type_str = "stone" }
+            if (gik == NK_LIT_FLOAT) { gv_sym.type_str = "crystal" }
+            if (gik == NK_LIT_STRING) { gv_sym.type_str = "obsidian" }
+            if (gik == NK_LIT_BOOL) { gv_sym.type_str = "bool" }
+        }
+        gv_sym.kind = SYM_VAR
+        declare(gv_sym)
     }
 
     vein check_node(id: stone) -> obsidian {
@@ -239,14 +778,14 @@ namespace typeck {
         }
         
         if (n.kind == NK_IDENT) {
-            if (is_variant_name(n.val)) {
+            forge sym: Symbol = resolve(n.val)
+            if (ofs_str_eq(sym.name, "") && is_variant_name(n.val)) {
                 node_set_type(id, "variant")
                 return "variant"
             }
-            forge sym: Symbol = resolve(n.val)
             if (ofs_str_eq(sym.name, "")) {
-                echo("[AVISO SEMANTICO " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "]: identificador desconhecido '" + n.val + "'")
-                echo("  dica: declare a variavel com 'forge' ou importe o modulo com 'attach'.")
+                report_undefined(n)
+                node_set_type(id, "unknown")
                 return "unknown"
             }
             node_set_type(id, sym.type_str)
@@ -256,37 +795,29 @@ namespace typeck {
         if (n.kind == NK_BIN_OP) {
             forge left_type = check_node(n.c0)
             forge right_type = check_node(n.c1)
-            
-            if (ofs_str_eq(n.val, "+") || ofs_str_eq(n.val, "-") ||
-                ofs_str_eq(n.val, "*") || ofs_str_eq(n.val, "/") ||
-                ofs_str_eq(n.val, "%") || ofs_str_eq(n.val, "&") ||
-                ofs_str_eq(n.val, "|") || ofs_str_eq(n.val, "^") ||
-                ofs_str_eq(n.val, "<<") || ofs_str_eq(n.val, ">>")) {
-                if (ofs_str_eq(n.val, "+") && (ofs_str_eq(left_type, "obsidian") || ofs_str_eq(right_type, "obsidian"))) {
-                    node_set_type(id, "obsidian")
-                    return "obsidian"
-                }
-                if (!check_type_compat(left_type, right_type)) {
-                    echo("[AVISO DE TIPO " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "]: tipos incompativeis na operacao '" + n.val + "' (" + left_type + " vs " + right_type + ")")
-                }
-                node_set_type(id, left_type)
-                return left_type
-            }
-            
-            if (ofs_str_eq(n.val, "==") || ofs_str_eq(n.val, "!=") ||
-                ofs_str_eq(n.val, "<") || ofs_str_eq(n.val, "<=") ||
-                ofs_str_eq(n.val, ">") || ofs_str_eq(n.val, ">=")) {
-                node_set_type(id, "bool")
-                return "bool"
-            }
-            
+
             if (ofs_str_eq(n.val, "&&") || ofs_str_eq(n.val, "||")) {
                 node_set_type(id, "bool")
                 return "bool"
             }
-            
-            node_set_type(id, left_type)
-            return left_type
+            // atribuicao escrita como operador binario (`x = v`, `x += v`)
+            if (ofs_str_eq(n.val, "=")) {
+                node_set_child(id, 1, coerce_value(n.c1, left_type))
+                node_set_type(id, left_type)
+                return left_type
+            }
+            forge opl = ofs_str_len(n.val)
+            if (opl >= 2 && ofs_str_char_at(n.val, opl - 1) == 61 && !is_cmp_op(n.val)) {
+                check_compound(id, n.val, left_type)
+                node_set_type(id, left_type)
+                return left_type
+            }
+            // "unknown" (builtin sem assinatura, ou um erro ja relatado)
+            // nao gera erro em cascata: check_binop so decide com os dois
+            // tipos conhecidos.
+            forge bt = check_binop(id, left_type, right_type)
+            node_set_type(id, bt)
+            return bt
         }
 
         if (n.kind == NK_FIELD) {
@@ -317,15 +848,24 @@ namespace typeck {
         }
 
         if (n.kind == NK_INDEX) {
-            check_node(n.c0)
+            // `a[i]` tem o tipo do elemento de Array<T>; sem T declarado o
+            // elemento e lido como stone (igual ao llvmgen)
+            forge base_t = check_node(n.c0)
             check_node(n.c1)
-            node_set_type(id, "stone")
-            return "stone"
+            forge et = array_elem_of(base_t)
+            if (ofs_str_eq(et, "")) { et = "stone" }
+            node_set_type(id, et)
+            return et
         }
 
         if (n.kind == NK_ASSIGN) {
             forge target_type = check_node(n.c0)
             check_node(n.c1)
+            if (ofs_str_eq(n.val, "=") || ofs_str_eq(n.val, "")) {
+                node_set_child(id, 1, coerce_value(n.c1, target_type))
+            } else {
+                check_compound(id, n.val, target_type)
+            }
             node_set_type(id, target_type)
             return target_type
         }
@@ -333,8 +873,16 @@ namespace typeck {
         if (n.kind == NK_POST_OP) {
             forge operand_type = check_node(n.c0)
             if (ofs_str_eq(n.val, "?")) {
-                node_set_type(id, operand_type)
-                return operand_type
+                // `Solid(v)?` vale v (tipo do payload); qualquer outro `x?`
+                // vale a etiqueta da variante (stone). Ver llvmgen.emit_try.
+                forge try_t = "stone"
+                forge top: Node = node_get(n.c0)
+                if (top.kind == NK_CALL && is_variant_name(top.val) && node_extra_len(n.c0) > 0 &&
+                    !ofs_str_eq(top.val, "Crack") && !ofs_str_eq(top.val, "Barren")) {
+                    try_t = node_type_of(node_extra_at(n.c0, 0))
+                }
+                node_set_type(id, try_t)
+                return try_t
             }
             node_set_type(id, operand_type)
             return operand_type
@@ -361,6 +909,26 @@ namespace typeck {
                 }
                 node_set_type(id, deref_t)
                 return deref_t
+            }
+            if (ofs_str_eq(n.val, "!")) {
+                node_set_type(id, "bool")
+                return "bool"
+            }
+            forge uc = ty_class(operand_type)
+            if (ofs_str_eq(n.val, "-") && uc != TY_UNK && uc != TY_INT && uc != TY_FLT) {
+                type_error(n, "'-' unario em " + operand_type, "so numeros (stone, crystal, inteiros) tem sinal")
+                node_set_type(id, "unknown")
+                return "unknown"
+            }
+            if (ofs_str_eq(n.val, "~") && uc != TY_UNK && uc != TY_INT) {
+                type_error(n, "'~' em " + operand_type, "bits so existem em inteiros: converta com 'as stone'")
+                node_set_type(id, "unknown")
+                return "unknown"
+            }
+            if (uc == TY_INT && !ofs_str_eq(operand_type, "stone") && (ofs_str_eq(n.val, "-") || ofs_str_eq(n.val, "~"))) {
+                // u8/i32...: a conta e feita em stone (como na aritmetica)
+                node_set_child(id, 0, wrap_cast(n.c0, "stone"))
+                operand_type = "stone"
             }
             node_set_type(id, operand_type)
             return operand_type
@@ -402,11 +970,11 @@ namespace typeck {
                 check_node(arg_id)
                 i++
             }
-            if (ofs_str_eq(n.val, "fault_call") || ofs_str_eq(n.val, "fault_cut") || ofs_str_eq(n.val, "fault_patch") || ofs_str_eq(n.val, "fault_swap") || ofs_str_eq(n.val, "fault_count") || ofs_str_eq(n.val, "fault_lead") || ofs_str_eq(n.val, "fault_trail")) {
+            if (ofs_str_eq(n.val, "fault_call") || ofs_str_eq(n.val, "fault_cut") || ofs_str_eq(n.val, "fault_patch") || ofs_str_eq(n.val, "fault_swap") || ofs_str_eq(n.val, "fault_count") || ofs_str_eq(n.val, "fault_lead") || ofs_str_eq(n.val, "fault_trail") || ofs_str_eq(n.val, "fault_spin_left") || ofs_str_eq(n.val, "fault_spin_right") || ofs_str_eq(n.val, "fault_weave")) {
                 node_set_type(id, "stone")
                 return "stone"
             }
-            if (ofs_str_eq(n.val, "fault_fence") || ofs_str_eq(n.val, "fault_prefetch") || ofs_str_eq(n.val, "fault_trap")) {
+            if (ofs_str_eq(n.val, "fault_fence") || ofs_str_eq(n.val, "fault_prefetch") || ofs_str_eq(n.val, "fault_trap") || ofs_str_eq(n.val, "fault_unreachable") || ofs_str_eq(n.val, "fault_memcpy") || ofs_str_eq(n.val, "fault_memset")) {
                 node_set_type(id, "void")
                 return "void"
             }
@@ -415,20 +983,16 @@ namespace typeck {
                 node_set_type(id, st_t)
                 return st_t
             }
-            forge fn_sym: Symbol = resolve(n.val)
-            if (!ofs_str_eq(fn_sym.name, "")) {
-                node_set_type(id, fn_sym.type_str)
-                return fn_sym.type_str
+            if (ofs_str_eq(n.val, "echo") && argc == 1) {
+                // variante imprime o nome nos dois modos (o nativo usa a
+                // tabela de nomes gerada pelo llvmgen)
+                forge ea = node_extra_at(id, 0)
+                if (ty_class(node_type_of(ea)) == TY_VAR) { set_extra_at(id, 0, wrap_text(ea, TY_VAR)) }
+                node_set_type(id, "void")
+                return "void"
             }
-            // Metodo de `impl`: o parser baixa `r.area()` para `r__area()`.
-            // Se `r` e uma variavel de tipo T e existe `T__area`, reescreve
-            // para `T__area(r, ...)` (receptor como primeiro argumento).
-            forge mt = check_method_call(id, n.val, argc)
-            if (!ofs_str_eq(mt, "")) {
-                node_set_type(id, mt)
-                return mt
-            }
-            // Builtins de Array sem `extern` declarado: antes caiam em
+            // Builtins genericos de Array (antes do `extern` que o stdlib declara
+            // com `stone`: o elemento vem de Array<T>). Antes caiam em
             // "unknown" (= ponteiro no LLVM) e `forge n = ofs_array_get(a, i)`
             // gerava IR invalido. Infere o elemento a partir de Array<T>.
             if (ofs_str_eq(n.val, "ofs_array_get") || ofs_str_eq(n.val, "ofs_array_pop")) {
@@ -440,8 +1004,55 @@ namespace typeck {
                         elem_t = ofs_str_substr(arr_t, 6, alen - 7)
                     }
                 }
+                if (ofs_str_eq(elem_t, "stone")) {
+                    // sem Array<T>: o tipo do `extern` declarado, se houver
+                    forge ag_sym: Symbol = resolve(n.val)
+                    if (!ofs_str_eq(ag_sym.name, "") && !ofs_str_eq(ag_sym.type_str, "unknown")) { elem_t = ag_sym.type_str }
+                }
                 node_set_type(id, elem_t)
                 return elem_t
+            }
+            // ofs_array_push(a, v) / ofs_array_set(a, i, v): v no tipo do elemento
+            if ((ofs_str_eq(n.val, "ofs_array_push") && argc == 2) || (ofs_str_eq(n.val, "ofs_array_set") && argc == 3)) {
+                forge pa_et = array_elem_of(node_type_of(node_extra_at(id, 0)))
+                if (!ofs_str_eq(pa_et, "")) {
+                    set_extra_at(id, argc - 1, coerce_value(node_extra_at(id, argc - 1), pa_et))
+                }
+                node_set_type(id, "void")
+                return "void"
+            }
+            forge fn_sym: Symbol = resolve(n.val)
+            if (!ofs_str_eq(fn_sym.name, "")) {
+                coerce_args(id, fn_sym.param_types)
+                node_set_type(id, fn_sym.type_str)
+                return fn_sym.type_str
+            }
+            // Metodo de `impl`: o parser baixa `r.area()` para `r__area()`.
+            // Se `r` e uma variavel de tipo T e existe `T__area`, reescreve
+            // para `T__area(r, ...)` (receptor como primeiro argumento).
+            forge mt = check_method_call(id, n.val, argc)
+            if (!ofs_str_eq(mt, "")) {
+                forge m_sym: Symbol = resolve(node_val_of(id))
+                coerce_args(id, m_sym.param_types)
+                node_set_type(id, mt)
+                return mt
+            }
+            if (ofs_str_eq(n.val, "ofs_crystal_to_obsidian") || ofs_str_eq(n.val, "__ofs_bool_text") || ofs_str_eq(n.val, "__ofs_variant_name")) {
+                node_set_type(id, "obsidian")
+                return "obsidian"
+            }
+            if (ofs_str_eq(n.val, "ofs_obsidian_to_stone")) {
+                node_set_type(id, "stone")
+                return "stone"
+            }
+            if (ofs_str_eq(n.val, "ofs_pow") || ofs_str_eq(n.val, "ofs_sqrt")) {
+                forge pi = 0
+                while (pi < argc) {
+                    set_extra_at(id, pi, coerce_value(node_extra_at(id, pi), "crystal"))
+                    pi++
+                }
+                node_set_type(id, "crystal")
+                return "crystal"
             }
             // Builtins de string do runtime (declarados implicitamente pelo llvmgen).
             if (ofs_str_eq(n.val, "ofs_str_len") || ofs_str_eq(n.val, "ofs_str_char_at") || ofs_str_eq(n.val, "ofs_str_char_at_known")) {
@@ -478,6 +1089,16 @@ namespace typeck {
                 type_str = type_node_name(type_node_id)
                 if (init_id >= 0) {
                     check_node(init_id)
+                    // `forge a: Array<crystal> = [1, 2]`: cada elemento no tipo T
+                    forge dl_et = array_elem_of(type_str)
+                    if (node_kind_of(init_id) == NK_ARRAY_LIT && !ofs_str_eq(dl_et, "")) {
+                        forge ei = 0
+                        while (ei < node_extra_len(init_id)) {
+                            set_extra_at(init_id, ei, coerce_value(node_extra_at(init_id, ei), dl_et))
+                            ei++
+                        }
+                    }
+                    node_set_child(id, 1, coerce_value(init_id, type_str))
                 }
             } else if (init_id >= 0) {
                 // Infer from initializer
@@ -501,7 +1122,9 @@ namespace typeck {
         if (n.kind == NK_RETURN) {
             if (_anchor_depth > 0) { report_anchor_control(n, "return") }
             if (n.c0 >= 0) {
-                return check_node(n.c0)
+                forge rv_t = check_node(n.c0)
+                node_set_child(id, 0, coerce_value(n.c0, _cur_ret))
+                return rv_t
             }
             return "void"
         }
@@ -590,6 +1213,12 @@ namespace typeck {
             if (ofs_str_eq(arr_t, "Array<obsidian>") || ofs_str_eq(arr_t, "obsidian")) {
                 rsym.type_str = "obsidian"
             }
+            // elemento escalar declarado (crystal, bool, inteiros, strata)
+            forge cr_et = array_elem_of(arr_t)
+            forge cr_c = ty_class(cr_et)
+            if (cr_c == TY_INT || cr_c == TY_FLT || cr_c == TY_BOOL || (cr_c == TY_VAR && !ofs_str_eq(cr_et, "variant"))) {
+                rsym.type_str = cr_et
+            }
             rsym.kind = SYM_VAR
             declare(rsym)
             node_set_type(id, rsym.type_str)
@@ -632,6 +1261,9 @@ namespace typeck {
         
         if (n.kind == NK_FN_DECL || n.kind == NK_CORE_DECL) {
             push_scope()
+            forge saved_ret = _cur_ret
+            _cur_ret = "unknown"
+            if (n.c1 >= 0) { _cur_ret = type_node_name(n.c1) }
             
             // Check parameters
             forge params_id = n.c0
@@ -659,12 +1291,14 @@ namespace typeck {
             if (body_id >= 0) {
                 check_node(body_id)
             }
+            _cur_ret = saved_ret
             
             pop_scope()
             return "void"
         }
 
         if (n.kind == NK_MONOLITH) {
+            if (!list_has(_mono_types, n.val)) { ofs_array_push(_mono_types, n.val) }
             forge type_sym: Symbol
             type_sym.name = n.val
             type_sym.type_str = n.val
@@ -679,7 +1313,9 @@ namespace typeck {
                 if (field_type_id >= 0) {
                     forge field_type_str = type_node_name(field_type_id)
                     register_field(n.val, node_val_of(field_id), field_type_str)
-                    if (!check_type_string(field_type_str)) {
+                    // campo de outro monolith/strata (pre-declarado no topo)
+                    forge fts: Symbol = resolve(field_type_str)
+                    if (!check_type_string(field_type_str) && fts.kind != SYM_MONOLITH) {
                         echo("[typeck warn] unknown field type '" + field_type_str + "' in monolith " + n.val)
                     }
                 }
@@ -713,12 +1349,18 @@ namespace typeck {
         }
 
         if (n.kind == NK_STRATA) {
-            forge type_sym: Symbol
-            type_sym.name = n.val
-            type_sym.type_str = n.val
-            type_sym.kind = SYM_MONOLITH
-            declare(type_sym)
+            declare_strata(id)
             return "void"
+        }
+
+        if (n.kind == NK_ARRAY_LIT) {
+            forge i = 0
+            forge elc = node_extra_len(id)
+            while (i < elc) {
+                check_node(node_extra_at(id, i))
+                i++
+            }
+            return "unknown"
         }
 
         if (n.kind == NK_ATTACH) {
@@ -741,6 +1383,7 @@ namespace typeck {
                         fn_sym.type_str = type_node_name(decl_c1)
                     }
                     fn_sym.kind = SYM_FN
+                    fn_sym.param_types = param_types_of(decl_id)
                     declare(fn_sym)
                 } else if (decl_kind == NK_EXTERN_VN || decl_kind == NK_RIFT_VN) {
                     forge ext_sym: Symbol
@@ -751,7 +1394,20 @@ namespace typeck {
                         ext_sym.type_str = type_node_name(decl_c1e)
                     }
                     ext_sym.kind = SYM_FN
+                    ext_sym.param_types = param_types_of(decl_id)
                     declare(ext_sym)
+                } else if (decl_kind == NK_VAR_DECL || decl_kind == NK_CONST_DECL) {
+                    // global de topo usado numa vein antes da linha que o declara
+                    predeclare_global(decl_id)
+                } else if (decl_kind == NK_STRATA) {
+                    declare_strata(decl_id)
+                } else if (decl_kind == NK_MONOLITH) {
+                    if (!list_has(_mono_types, node_val_of(decl_id))) { ofs_array_push(_mono_types, node_val_of(decl_id)) }
+                    forge mono_sym: Symbol
+                    mono_sym.name = node_val_of(decl_id)
+                    mono_sym.type_str = node_val_of(decl_id)
+                    mono_sym.kind = SYM_MONOLITH
+                    declare(mono_sym)
                 } else if (decl_kind == NK_NAMESPACE || decl_kind == NK_IMPL) {
                     forge j = 0
                     forge mcount = node_extra_len(decl_id)
@@ -767,6 +1423,7 @@ namespace typeck {
                                 member_sym.type_str = type_node_name(mc1)
                             }
                             member_sym.kind = SYM_FN
+                            member_sym.param_types = param_types_of(member_id)
                             member_sym.fn_arity = -1
                             forge mc0 = node_child(member_id, 0)
                             if (mc0 >= 0) { member_sym.fn_arity = node_extra_len(mc0) }
@@ -774,22 +1431,16 @@ namespace typeck {
                         } else if (member_kind == NK_VAR_DECL || member_kind == NK_CONST_DECL) {
                             // globais de namespace (nome ja mangled ns__nome),
                             // visiveis de fora como `ns.nome`
-                            forge gv_sym: Symbol
-                            gv_sym.name = node_val_of(member_id)
-                            gv_sym.type_str = "unknown"
-                            forge gv_ann = node_child(member_id, 0)
-                            forge gv_init = node_child(member_id, 1)
-                            if (gv_ann >= 0) {
-                                gv_sym.type_str = type_node_name(gv_ann)
-                            } else if (gv_init >= 0) {
-                                forge gik = node_kind_of(gv_init)
-                                if (gik == NK_LIT_INT) { gv_sym.type_str = "stone" }
-                                if (gik == NK_LIT_FLOAT) { gv_sym.type_str = "crystal" }
-                                if (gik == NK_LIT_STRING) { gv_sym.type_str = "obsidian" }
-                                if (gik == NK_LIT_BOOL) { gv_sym.type_str = "bool" }
-                            }
-                            gv_sym.kind = SYM_VAR
-                            declare(gv_sym)
+                            predeclare_global(member_id)
+                        } else if (member_kind == NK_STRATA) {
+                            declare_strata(member_id)
+                        } else if (member_kind == NK_MONOLITH) {
+                            if (!list_has(_mono_types, node_val_of(member_id))) { ofs_array_push(_mono_types, node_val_of(member_id)) }
+                            forge nm_sym: Symbol
+                            nm_sym.name = node_val_of(member_id)
+                            nm_sym.type_str = node_val_of(member_id)
+                            nm_sym.kind = SYM_MONOLITH
+                            declare(nm_sym)
                         }
                         j++
                     }
@@ -813,6 +1464,7 @@ namespace typeck {
     vein check(root_id: stone) -> void {
         _anchor_depth = 0
         _semantic_errors = 0
+        _cur_ret = "unknown"
         _check_visits = 0
         push_scope()
         check_node(root_id)

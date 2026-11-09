@@ -18,5 +18,6 @@ monolith Symbol {
     type_str:  obsidian   // type ("stone", "obsidian", etc)
     kind:      stone      // SYM_* kind
     fn_arity:  stone      // number of parameters (if SYM_FN)
+    param_types: obsidian // tipos dos parametros separados por ',' (SYM_FN)
     is_const:  bool       // is immutable
 }

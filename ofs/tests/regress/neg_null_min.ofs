@@ -1,0 +1,19 @@
+// `-x` com crystal gera fneg (antes `sub i64 0, 7.0`, IR invalido no nativo);
+// `echo` de obsidian nulo imprime `null` nos dois modos (o nativo imprimia
+// `(null)`); `echo` do menor stone imprime o numero (antes so "-").
+vein half(x: crystal) -> crystal {
+    return x / 2.0
+}
+
+core main() {
+    echo(half(-7.0))
+    forge y: crystal = -2.5
+    echo(y)
+    echo(-y)
+    forge s: obsidian = null
+    echo(s)
+    forge m: stone = 0 - 9223372036854775807 - 1
+    echo(m)
+    echo(m + 1)
+    echo(-42)
+}

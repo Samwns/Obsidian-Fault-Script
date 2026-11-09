@@ -1,0 +1,544 @@
+// ofsfmt: formatador do OFS (`ofs fmt`). Escrito em OFS.
+//
+// Filtro de um arquivo: o wrapper `ofs fmt` cuida de pastas, --check, --diff e
+// --stdin e chama esta ferramenta (compilada e guardada em cache) por arquivo.
+// Variaveis de ambiente:
+//   OFSFMT_INPUT   arquivo .ofs de entrada
+//   OFSFMT_OUTPUT  arquivo de saida (formatado)
+// Documentacao: docs/TOOLS.md.
+//
+// Decisao de projeto: tem lexer proprio, que guarda o TEXTO ORIGINAL de cada
+// token (strings, numeros, comentarios) em vez de reaproveitar o lexer do
+// ofscc. O do compilador descarta comentarios e converte strings/hex, e mexer
+// nele colocaria o bootstrap em risco. As fronteiras dos tokens seguem as
+// mesmas regras do ofscc (mesmos operadores de 1 e 2 caracteres, mesmos
+// numeros, strings com escape por barra invertida), entao o formatador ve a
+// mesma sequencia de tokens que o compilador; so muda o espaco entre eles.
+//
+// O que ele faz: recuo de 4 espacos por `{` aberta (+4 por linha de
+// continuacao dentro de ( ou [, ou depois de operador no fim da linha), espaco
+// em volta de operadores binarios e depois de `,` e `:`, no maximo uma linha em
+// branco seguida, sem espaco no fim da linha, arquivo terminando em um `\n`.
+// A quebra de linhas do autor e mantida (nao junta nem quebra linhas).
+// Nunca altera: strings, linhas `attach` (o ofscc as expande por texto) e texto de comentarios.
+// Pendente: quebra automatica de linhas acima de 100 colunas e ordenacao de
+// `attach`.
+
+extern vein getenv(name: obsidian) -> obsidian
+extern vein fopen(path: obsidian, mode: obsidian) -> obsidian
+extern vein fclose(f: obsidian) -> stone
+extern vein fread(buffer: obsidian, size: stone, count: stone, f: obsidian) -> stone
+extern vein fputs(value: obsidian, f: obsidian) -> stone
+extern vein fseek(f: obsidian, offset: stone, origin: stone) -> stone
+extern vein ftell(f: obsidian) -> stone
+extern vein ofs_alloc(size: stone) -> obsidian
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_str_len(s: obsidian) -> stone
+extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_array_len(a: Array) -> stone
+extern vein ofs_array_get(a: Array, index: stone) -> stone
+extern vein ofs_array_push(a: Array, value: stone) -> void
+extern vein ofs_array_set(a: Array, index: stone, value: stone) -> void
+extern vein ofs_array_pop(a: Array) -> stone
+
+// tipos de token
+forge FK_ID: stone = 1
+forge FK_NUM: stone = 2
+forge FK_STR: stone = 3
+forge FK_OP: stone = 4
+forge FK_LC: stone = 5
+forge FK_BC: stone = 6
+forge FK_RAW: stone = 7
+
+// papel do operador
+forge FR_BIN: stone = 0
+forge FR_PRE: stone = 1
+forge FR_POST: stone = 2
+forge FR_GOPEN: stone = 3
+forge FR_GCLOSE: stone = 4
+
+forge fm_src: obsidian = ""
+forge fm_len: stone = 0
+forge fm_out: obsidian = ""
+
+forge t_kind: Array<stone> = []
+forge t_s: Array<stone> = []
+forge t_e: Array<stone> = []
+forge t_nl: Array<stone> = []
+forge t_gap: Array<stone> = []
+forge t_role: Array<stone> = []
+forge t_kw: Array<stone> = []
+
+forge stk_k: Array<stone> = []
+forge stk_l: Array<stone> = []
+forge fm_line: stone = 0
+
+vein fm_g(a: Array<stone>, i: stone) -> stone {
+    return a[i]
+}
+
+vein fm_ch(i: stone) -> stone {
+    if (i < 0 || i >= fm_len) { return -1 }
+    return ofs_str_char_at(fm_src, i)
+}
+
+vein fm_isalpha(c: stone) -> bool {
+    return (c >= 97 && c <= 122) || (c >= 65 && c <= 90) || c == 95
+}
+
+vein fm_isdigit(c: stone) -> bool {
+    return c >= 48 && c <= 57
+}
+
+vein fm_ishex(c: stone) -> bool {
+    return (c >= 48 && c <= 57) || (c >= 97 && c <= 102) || (c >= 65 && c <= 70)
+}
+
+vein fm_emit(s: obsidian) -> void {
+    fputs(s, fm_out)
+}
+
+vein fm_emit_range(a: stone, b: stone) -> void {
+    if (b > a) { fputs(ofs_str_substr(fm_src, a, b - a), fm_out) }
+}
+
+vein fm_spaces(n: stone) -> void {
+    while (n > 0) {
+        fputs(" ", fm_out)
+        n = n - 1
+    }
+}
+
+vein fm_read(path: obsidian) -> bool {
+    forge f = fopen(path, "r")
+    if (f == null) { return false }
+    fseek(f, 0, 2)
+    forge size = ftell(f)
+    fseek(f, 0, 0)
+    forge buf = ofs_alloc(size + 1)
+    fread(buf, 1, size, f)
+    fclose(f)
+    fm_src = buf
+    fm_len = ofs_str_len(buf)
+    return true
+}
+
+// o token i tem exatamente o texto lit?
+vein fm_is(i: stone, lit: obsidian) -> bool {
+    forge a = fm_g(t_s, i)
+    forge n = fm_g(t_e, i) - a
+    if (n != ofs_str_len(lit)) { return false }
+    forge k = 0
+    while (k < n) {
+        if (ofs_str_char_at(fm_src, a + k) != ofs_str_char_at(lit, k)) { return false }
+        k = k + 1
+    }
+    return true
+}
+
+// 0 = nao e palavra-chave, 1 = palavra-chave comum, 2 = valor (true/false/null),
+// 3 = palavra-chave seguida de espaco antes de `(` (if, while, return, ...)
+vein fm_kwclass(w: obsidian) -> stone {
+    if (ofs_str_eq(w, "true") || ofs_str_eq(w, "false") || ofs_str_eq(w, "null")) { return 2 }
+    if (ofs_str_eq(w, "if") || ofs_str_eq(w, "else") || ofs_str_eq(w, "while") ||
+        ofs_str_eq(w, "cycle") || ofs_str_eq(w, "match") || ofs_str_eq(w, "case") ||
+        ofs_str_eq(w, "catch") || ofs_str_eq(w, "return") || ofs_str_eq(w, "throw") ||
+        ofs_str_eq(w, "as") || ofs_str_eq(w, "in") || ofs_str_eq(w, "assay")) { return 3 }
+    if (ofs_str_eq(w, "forge") || ofs_str_eq(w, "vein") || ofs_str_eq(w, "monolith") ||
+        ofs_str_eq(w, "const") || ofs_str_eq(w, "strata") || ofs_str_eq(w, "default") ||
+        ofs_str_eq(w, "tremor") || ofs_str_eq(w, "attach") || ofs_str_eq(w, "extern") ||
+        ofs_str_eq(w, "rift") || ofs_str_eq(w, "abyss") || ofs_str_eq(w, "fracture") ||
+        ofs_str_eq(w, "bedrock") || ofs_str_eq(w, "namespace") || ofs_str_eq(w, "impl") ||
+        ofs_str_eq(w, "core") || ofs_str_eq(w, "echo") || ofs_str_eq(w, "break") ||
+        ofs_str_eq(w, "continue") || ofs_str_eq(w, "shard") || ofs_str_eq(w, "tectonic") ||
+        ofs_str_eq(w, "intent") || ofs_str_eq(w, "layout") || ofs_str_eq(w, "shatter") ||
+        ofs_str_eq(w, "erode") || ofs_str_eq(w, "mine") || ofs_str_eq(w, "anchor") || ofs_str_eq(w, "seal")) { return 1 }
+    return 0
+}
+
+vein fm_push(kind: stone, s: stone, e: stone, nl: stone, gap: stone) -> void {
+    ofs_array_push(t_kind, kind)
+    ofs_array_push(t_s, s)
+    ofs_array_push(t_e, e)
+    ofs_array_push(t_nl, nl)
+    ofs_array_push(t_gap, gap)
+    ofs_array_push(t_role, 0)
+    forge kw = 0
+    if (kind == 1) { kw = fm_kwclass(ofs_str_substr(fm_src, s, e - s)) }
+    ofs_array_push(t_kw, kw)
+}
+
+// ------------------------------------------------------------------ lexer
+
+// fim (exclusivo) do operador que comeca em p, com as mesmas regras do ofscc
+vein fm_op_end(p: stone) -> stone {
+    forge c = fm_ch(p)
+    forge d = fm_ch(p + 1)
+    if (c == 43) { if (d == 43 || d == 61) { return p + 2 } return p + 1 }
+    if (c == 45) { if (d == 45 || d == 61 || d == 62) { return p + 2 } return p + 1 }
+    if (c == 42 || c == 47 || c == 33) { if (d == 61) { return p + 2 } return p + 1 }
+    if (c == 61) { if (d == 61 || d == 62) { return p + 2 } return p + 1 }
+    if (c == 60) { if (d == 61 || d == 60) { return p + 2 } return p + 1 }
+    if (c == 62) { if (d == 61 || d == 62) { return p + 2 } return p + 1 }
+    if (c == 38) { if (d == 38) { return p + 2 } return p + 1 }
+    if (c == 124) { if (d == 124) { return p + 2 } return p + 1 }
+    if (c == 58) { if (d == 58) { return p + 2 } return p + 1 }
+    return p + 1
+}
+
+vein fm_is_op_char(c: stone) -> bool {
+    // + - * / % = ! < > & | ^ ~ ? ( ) [ ] { } ; , : .
+    return c == 43 || c == 45 || c == 42 || c == 47 || c == 37 || c == 61 || c == 33 ||
+        c == 60 || c == 62 || c == 38 || c == 124 || c == 94 || c == 126 || c == 63 ||
+        c == 40 || c == 41 || c == 91 || c == 93 || c == 123 || c == 125 ||
+        c == 59 || c == 44 || c == 58 || c == 46
+}
+
+vein fm_lex() -> void {
+    forge pos = 0
+    forge nl = 0
+    forge gap = 0
+    while (pos < fm_len) {
+        forge c = fm_ch(pos)
+        if (c == 10) { nl = nl + 1 gap = 0 pos = pos + 1 continue }
+        if (c == 13) { pos = pos + 1 continue }
+        if (c == 32 || c == 9) { gap = gap + 1 pos = pos + 1 continue }
+        forge start = pos
+        if (c == 47 && fm_ch(pos + 1) == 47) {
+            while (pos < fm_len && fm_ch(pos) != 10) { pos = pos + 1 }
+            forge e = pos
+            while (e > start && (fm_ch(e - 1) == 32 || fm_ch(e - 1) == 9 || fm_ch(e - 1) == 13)) { e = e - 1 }
+            fm_push(5, start, e, nl, gap)
+        } else if (c == 47 && fm_ch(pos + 1) == 42) {
+            pos = pos + 2
+            forge closed = false
+            while (pos < fm_len && !closed) {
+                if (fm_ch(pos) == 42 && fm_ch(pos + 1) == 47) {
+                    pos = pos + 2
+                    closed = true
+                } else {
+                    pos = pos + 1
+                }
+            }
+            fm_push(6, start, pos, nl, gap)
+        } else if (fm_isalpha(c)) {
+            while (fm_isalpha(fm_ch(pos)) || fm_isdigit(fm_ch(pos))) { pos = pos + 1 }
+            fm_push(1, start, pos, nl, gap)
+        } else if (fm_isdigit(c)) {
+            pos = pos + 1
+            if (c == 48 && (fm_ch(pos) == 120 || fm_ch(pos) == 88)) {
+                pos = pos + 1
+                while (fm_ishex(fm_ch(pos))) { pos = pos + 1 }
+            } else {
+                while (fm_isdigit(fm_ch(pos))) { pos = pos + 1 }
+                if (fm_ch(pos) == 46 && fm_isdigit(fm_ch(pos + 1))) {
+                    pos = pos + 1
+                    while (fm_isdigit(fm_ch(pos))) { pos = pos + 1 }
+                }
+                if (fm_ch(pos) == 101 || fm_ch(pos) == 69) {
+                    pos = pos + 1
+                    if (fm_ch(pos) == 43 || fm_ch(pos) == 45) { pos = pos + 1 }
+                    while (fm_isdigit(fm_ch(pos))) { pos = pos + 1 }
+                }
+            }
+            fm_push(2, start, pos, nl, gap)
+        } else if (c == 34) {
+            pos = pos + 1
+            while (pos < fm_len && fm_ch(pos) != 34) {
+                if (fm_ch(pos) == 92) { pos = pos + 1 }
+                pos = pos + 1
+            }
+            if (pos < fm_len) { pos = pos + 1 }
+            if (pos > fm_len) { pos = fm_len }
+            fm_push(3, start, pos, nl, gap)
+        } else if (fm_is_op_char(c)) {
+            pos = fm_op_end(pos)
+            fm_push(4, start, pos, nl, gap)
+        } else {
+            // caractere desconhecido (ou byte de UTF-8 fora de string): fica como esta
+            pos = pos + 1
+            while (pos < fm_len && fm_ch(pos) >= 128) { pos = pos + 1 }
+            fm_push(7, start, pos, nl, gap)
+        }
+        nl = 0
+        gap = 0
+    }
+}
+
+// ------------------------------------------------------------------ papeis
+
+vein fm_is_comment(i: stone) -> bool {
+    forge k = fm_g(t_kind, i)
+    return k == 5 || k == 6
+}
+
+// o token i termina um operando? (decide se `-`, `*`, `&` seguintes sao binarios)
+vein fm_operand_end(i: stone) -> bool {
+    forge k = fm_g(t_kind, i)
+    if (k == 2 || k == 3) { return true }
+    if (k == 1) {
+        forge w = fm_g(t_kw, i)
+        return w == 0 || w == 2
+    }
+    if (k == 4) {
+        forge r = fm_g(t_role, i)
+        if (r == 2 || r == 4) { return true }
+        return fm_is(i, ")") || fm_is(i, "]")
+    }
+    return false
+}
+
+vein fm_roles() -> void {
+    forge n = ofs_array_len(t_kind)
+    forge prev = -1
+    forge gdepth = 0
+    forge i = 0
+    while (i < n) {
+        forge k = fm_g(t_kind, i)
+        if (k == 5 || k == 6) { i = i + 1 continue }
+        if (k == 4) {
+            forge po = false
+            if (prev >= 0) { po = fm_operand_end(prev) }
+            if (fm_is(i, "!") || fm_is(i, "~")) {
+                ofs_array_set(t_role, i, 1)
+            } else if (fm_is(i, "++") || fm_is(i, "--")) {
+                if (po) { ofs_array_set(t_role, i, 2) } else { ofs_array_set(t_role, i, 1) }
+            } else if (fm_is(i, "?")) {
+                if (po) { ofs_array_set(t_role, i, 2) }
+            } else if (fm_is(i, "-") || fm_is(i, "+") || fm_is(i, "*") || fm_is(i, "&")) {
+                if (!po) { ofs_array_set(t_role, i, 1) }
+            } else if (fm_is(i, "<")) {
+                if (prev >= 0 && fm_g(t_kind, prev) == 1 && fm_is(prev, "Array")) {
+                    ofs_array_set(t_role, i, 3)
+                    gdepth = gdepth + 1
+                }
+            } else if (fm_is(i, ">")) {
+                if (gdepth > 0) {
+                    ofs_array_set(t_role, i, 4)
+                    gdepth = gdepth - 1
+                }
+            } else if (fm_is(i, "{") || fm_is(i, "}") || fm_is(i, ";")) {
+                gdepth = 0
+            }
+        }
+        prev = i
+        i = i + 1
+    }
+}
+
+// ------------------------------------------------------------------ espacos
+
+// `(` ou `[` depois de p: leva espaco antes?
+vein fm_open_space(p: stone) -> bool {
+    forge k = fm_g(t_kind, p)
+    if (k == 1) { return fm_g(t_kw, p) == 3 }
+    if (k == 2 || k == 3) { return false }
+    if (k == 4) {
+        forge r = fm_g(t_role, p)
+        if (r == 1 || r == 2 || r == 3 || r == 4) { return false }
+        if (fm_is(p, ")") || fm_is(p, "]") || fm_is(p, "(") || fm_is(p, "[") ||
+            fm_is(p, ".") || fm_is(p, "::") || fm_is(p, "!") || fm_is(p, "~")) { return false }
+        return true
+    }
+    return true
+}
+
+// espaco entre o token anterior p e o token i (mesma linha)?
+vein fm_space(p: stone, i: stone) -> bool {
+    forge kp = fm_g(t_kind, p)
+    forge ki = fm_g(t_kind, i)
+    if (kp == 5 || kp == 6) { return true }
+    if (kp == 7 || ki == 7) { return fm_g(t_gap, i) > 0 }
+    if (ki == 4) {
+        forge r = fm_g(t_role, i)
+        if (r == 2 || r == 3 || r == 4) { return false }
+        if (fm_is(i, ")") || fm_is(i, "]") || fm_is(i, ",") || fm_is(i, ";") ||
+            fm_is(i, ".") || fm_is(i, "::") || fm_is(i, ":")) { return false }
+        if (fm_is(i, "(") || fm_is(i, "[")) { return fm_open_space(p) }
+        if (fm_is(i, "{")) { return !(fm_is(p, "(") || fm_is(p, "[")) }
+        if (fm_is(i, "}")) { return !fm_is(p, "{") }
+    }
+    if (kp == 4) {
+        forge rp = fm_g(t_role, p)
+        if (rp == 1 || rp == 3) { return false }
+        if (fm_is(p, "(") || fm_is(p, "[") || fm_is(p, ".") || fm_is(p, "::")) { return false }
+    }
+    return true
+}
+
+// ------------------------------------------------------------------ recuo
+
+// colunas de recuo para uma linha que comeca no token i (prev = ultimo token de codigo antes)
+vein fm_indent(i: stone, prev: stone) -> stone {
+    forge braces = 0
+    forge contl = 0
+    forge lastl = -1
+    forge seen_brace = false
+    forge j = ofs_array_len(stk_k) - 1
+    while (j >= 0) {
+        if (fm_g(stk_k, j) == 0) {
+            braces = braces + 1
+            seen_brace = true
+        } else if (!seen_brace) {
+            forge ln = fm_g(stk_l, j)
+            if (ln != lastl) { contl = contl + 1 lastl = ln }
+        }
+        j = j - 1
+    }
+    forge extra = 0
+    if (contl == 0) {
+        if (prev >= 0 && fm_g(t_kind, prev) == 4 && fm_g(t_role, prev) == 0) {
+            if (fm_is(prev, "+") || fm_is(prev, "-") || fm_is(prev, "*") || fm_is(prev, "/") ||
+                fm_is(prev, "%") || fm_is(prev, "=") || fm_is(prev, "==") || fm_is(prev, "!=") ||
+                fm_is(prev, "<") || fm_is(prev, ">") || fm_is(prev, "<=") || fm_is(prev, ">=") ||
+                fm_is(prev, "&&") || fm_is(prev, "||") || fm_is(prev, "&") || fm_is(prev, "|") ||
+                fm_is(prev, "^") || fm_is(prev, "<<") || fm_is(prev, ">>") || fm_is(prev, "+=") ||
+                fm_is(prev, "-=") || fm_is(prev, "*=") || fm_is(prev, "/=")) { extra = 1 }
+        }
+        if (fm_g(t_kind, i) == 4 && fm_g(t_role, i) == 0) {
+            if (fm_is(i, "&&") || fm_is(i, "||")) { extra = 1 }
+        }
+    }
+    return 4 * (braces + contl + extra)
+}
+
+vein fm_is_closer(i: stone) -> bool {
+    if (fm_g(t_kind, i) != 4) { return false }
+    return fm_is(i, "}") || fm_is(i, ")") || fm_is(i, "]")
+}
+
+// ------------------------------------------------------------------ comentarios de bloco
+
+vein fm_emit_block_comment(a: stone, b: stone, cols: stone) -> void {
+    forge p = a
+    forge first = true
+    while (p < b) {
+        // fim da linha
+        forge q = p
+        while (q < b && fm_ch(q) != 10) { q = q + 1 }
+        forge e = q
+        while (e > p && (fm_ch(e - 1) == 32 || fm_ch(e - 1) == 9 || fm_ch(e - 1) == 13)) { e = e - 1 }
+        if (first) {
+            fm_emit_range(p, e)
+            first = false
+        } else {
+            fm_emit("\n")
+            forge s = p
+            while (s < e && (fm_ch(s) == 32 || fm_ch(s) == 9)) { s = s + 1 }
+            if (s < e && fm_ch(s) == 42) {
+                fm_spaces(cols + 1)
+                fm_emit_range(s, e)
+            } else {
+                fm_emit_range(p, e)
+            }
+        }
+        p = q + 1
+    }
+}
+
+// ------------------------------------------------------------------ saida
+
+vein fm_format() -> void {
+    forge n = ofs_array_len(t_kind)
+    forge prev = -1
+    forge prev_any = -1
+    forge i = 0
+    while (i < n) {
+        forge k = fm_g(t_kind, i)
+        forge nlc = fm_g(t_nl, i)
+        forge startline = (i == 0) || nlc > 0
+        // `attach ...`: o ofscc expande essas linhas por TEXTO (a linha tem que comecar
+        // com `attach {`), entao a linha inteira fica exatamente como o autor escreveu.
+        if (k == 1 && startline && fm_is(i, "attach")) {
+            forge eol = fm_g(t_e, i)
+            while (eol < fm_len && fm_ch(eol) != 10) { eol = eol + 1 }
+            forge ok = true
+            forge j = i + 1
+            while (j < n && fm_g(t_s, j) < eol) {
+                if (fm_g(t_e, j) > eol) { ok = false }
+                j = j + 1
+            }
+            forge ls = fm_g(t_s, i)
+            while (ls > 0 && (fm_ch(ls - 1) == 32 || fm_ch(ls - 1) == 9)) { ls = ls - 1 }
+            if (ok && (ls == 0 || fm_ch(ls - 1) == 10)) {
+                forge e = eol
+                while (e > ls && (fm_ch(e - 1) == 32 || fm_ch(e - 1) == 9 || fm_ch(e - 1) == 13)) { e = e - 1 }
+                if (i > 0) {
+                    fm_emit("\n")
+                    if (nlc >= 2) { fm_emit("\n") }
+                }
+                fm_line = fm_line + 1
+                fm_emit_range(ls, e)
+                forge pj = j - 1
+                while (pj > i && fm_is_comment(pj)) { pj = pj - 1 }
+                prev = pj
+                prev_any = j - 1
+                i = j
+                continue
+            }
+        }
+        if (k == 4 && fm_is_closer(i)) {
+            if (ofs_array_len(stk_k) > 0) {
+                ofs_array_pop(stk_k)
+                ofs_array_pop(stk_l)
+            }
+        }
+        forge cols = 0
+        if (startline) {
+            if (i > 0) {
+                fm_emit("\n")
+                if (nlc >= 2) { fm_emit("\n") }
+            }
+            fm_line = fm_line + 1
+            cols = fm_indent(i, prev)
+            fm_spaces(cols)
+        } else if (k == 5 || k == 6) {
+            forge g = fm_g(t_gap, i)
+            if (g < 1) { g = 1 }
+            fm_spaces(g)
+        } else if (fm_space(prev_any, i)) {
+            fm_emit(" ")
+        }
+        if (k == 6) {
+            fm_emit_block_comment(fm_g(t_s, i), fm_g(t_e, i), cols)
+        } else {
+            fm_emit_range(fm_g(t_s, i), fm_g(t_e, i))
+        }
+        if (k == 4 && !fm_is_closer(i)) {
+            if (fm_is(i, "{")) {
+                ofs_array_push(stk_k, 0)
+                ofs_array_push(stk_l, fm_line)
+            } else if (fm_is(i, "(") || fm_is(i, "[")) {
+                ofs_array_push(stk_k, 1)
+                ofs_array_push(stk_l, fm_line)
+            }
+        }
+        if (k != 5 && k != 6) { prev = i }
+        prev_any = i
+        i = i + 1
+    }
+    if (n > 0) { fm_emit("\n") }
+}
+
+vein main() -> void {
+    forge inp = getenv("OFSFMT_INPUT")
+    forge outp = getenv("OFSFMT_OUTPUT")
+    if (ofs_str_len(inp) == 0 || ofs_str_len(outp) == 0) {
+        echo("ofsfmt: defina OFSFMT_INPUT e OFSFMT_OUTPUT")
+        return
+    }
+    if (!fm_read(inp)) {
+        echo("ofsfmt: nao consegui ler " + inp)
+        return
+    }
+    fm_out = fopen(outp, "w")
+    if (fm_out == null) {
+        echo("ofsfmt: nao consegui escrever " + outp)
+        return
+    }
+    fm_lex()
+    fm_roles()
+    fm_format()
+    fclose(fm_out)
+}

@@ -1,0 +1,16 @@
+// `(cond) as stone`: a comparacao e i1 no nativo; antes o `as` emitia
+// `zext i32` sobre o i1 (IR invalido). Moon, COMPILER_ISSUES.md item 2.
+core main() {
+    forge a = 3
+    forge b = 3
+    forge x = (a == b) as stone
+    echo(x)
+    echo((a != b) as stone)
+    echo((a < 5 && b > 1) as stone + 10)
+    forge c: crystal = (a >= 3) as crystal
+    echo(c)
+    forge u: u8 = (a == 4) as u8
+    echo(u)
+    forge t: bool = (a == b) as bool
+    echo(t)
+}

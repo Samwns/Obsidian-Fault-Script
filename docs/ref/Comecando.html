@@ -16,7 +16,7 @@
 <li class="tl3"><a href="#s8.2">Laços de repetição (<code>while</code>)</a></li>
 <li class="tl3"><a href="#s8.3">Seleção de múltiplos caminhos</a></li>
 <li class="tl3"><a href="#s8.4">Tratamento e validação de erros (<code>throw</code>)</a></li>
-<li class="tl2"><a href="#s9">9. Interoperabilidade Nativa com C (<code>rift</code> / <code>extern vein</code>)</a></li>
+<li class="tl2"><a href="#s9">9. O Rift: bibliotecas nativas do sistema (<code>rift</code> / <code>extern vein</code>)</a></li>
 <li class="tl2"><a href="#s10">10. Stack Web: ODL e OES</a></li>
 <li class="tl3"><a href="#s10.1">ODL (Obsidian Document Language)</a></li>
 <li class="tl3"><a href="#s10.2">OES (Obsidian Effect Scripts)</a></li>
@@ -218,13 +218,15 @@ core main() {
 </code></pre>
 <blockquote><p><strong>Nota</strong>: A estrutura <code>tremor { ... } catch (...) { ... }</code> está modelada na gramática (<code>NK_TREMOR</code>), com desbobinamento estruturado previsto para as próximas etapas de runtime e interpretador. </p>
 </blockquote>
-<h2 id="s9">9. Interoperabilidade Nativa com C (<code>rift</code> / <code>extern vein</code>)</h2>
-<p>É possível declarar e chamar símbolos C externos diretamente: </p>
+<h2 id="s9">9. O Rift: bibliotecas nativas do sistema (<code>rift</code> / <code>extern vein</code>)</h2>
+<p>O <strong>Rift</strong> (a fenda) é a fronteira por onde o OFS alcança as bibliotecas nativas do sistema (libc, libm, X11, JNI do Android, kernel32). <code>rift vein</code> e <code>extern vein</code> declaram uma função que mora numa biblioteca nativa, e ela é chamada pela convenção de chamada do sistema. Não há código C no OFS: o compilador e o runtime são escritos em OFS. </p>
+<blockquote><p>A convenção de chamada do sistema é conhecida tecnicamente como ABI C (<code>abi c</code>); não envolve código C. </p>
+</blockquote>
 <pre><code>extern vein puts(s: obsidian) -&gt; stone
 rift vein strlen(s: obsidian) -&gt; stone bind &quot;strlen&quot; abi c
 
 core main() {
-    puts(&quot;Mensagem enviada via puts do C&quot;)
+    puts(&quot;Mensagem enviada via puts da libc&quot;)
 }
 </code></pre>
 <h2 id="s10">10. Stack Web: ODL e OES</h2>

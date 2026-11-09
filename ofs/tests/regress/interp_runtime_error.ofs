@@ -1,0 +1,5 @@
+core main() {
+    echo("antes")
+    vein_que_nao_existe(1)
+    echo("nao chega aqui")
+}

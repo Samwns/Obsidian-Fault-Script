@@ -152,6 +152,8 @@ vein keyword_to_kind(s: obsidian) -> stone {
     if (ofs_str_eq(s, "erode"))     { return TOK_ERODE }
     if (ofs_str_eq(s, "mine"))      { return TOK_MINE }
     if (ofs_str_eq(s, "anchor"))    { return TOK_ANCHOR }
+    // `seal { ... }`: sinonimo tematico de `anchor` (sela o recurso ao sair)
+    if (ofs_str_eq(s, "seal"))      { return TOK_ANCHOR }
     if (ofs_str_eq(s, "true"))      { return TOK_TRUE }
     if (ofs_str_eq(s, "false"))     { return TOK_FALSE }
     if (ofs_str_eq(s, "null"))      { return TOK_NULL }
