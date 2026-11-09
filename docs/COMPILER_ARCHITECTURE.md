@@ -10,14 +10,14 @@ source.ofs
     ▼                                         ▼
 ┌──────────────┐                    ┌────────────────────┐
 │   Lexer      │ → Array<Token>     │  Symbol Table      │
-│  (chars,     │   (80 kinds)       │  (scope stack)     │
+│  (chars,     │   (87 kinds)       │  (scope stack)     │
 │   tokens)    │                    └────────────────────┘
 └──────┬───────┘
        │
        ▼
 ┌──────────────┐
 │   Parser     │ → AST Root ID (stone)
-│  (recursive  │   (60+ node kinds)
+│  (recursive  │   (48 node kinds)
 │   descent +  │   (pool-based allocation)
 │   Pratt)     │
 └──────┬───────┘
@@ -48,7 +48,7 @@ source.ofs
 
 ## Fase 1: Lexer (tokenização)
 
-**Arquivo**: `ofs/ofscc/lexer.ofs` (660 linhas)
+**Arquivo**: `ofs/ofscc/lexer.ofs` (433 linhas)
 
 ### Entrada
 ```ofs
@@ -63,14 +63,14 @@ forge x: stone = 42
    ```
 
 2. **Reconhecimento de tokens**:
-   - Palavras-chave (34): forge, vein, if, while, match, etc.
-   - Operadores (25+): +, -, *, /, ==, !=, &&, ||, [], etc.
+   - Palavras-chave (38): forge, vein, monolith, if, cycle, match/assay, strata, attach, etc.
+   - Operadores (25+): +, -, *, /, ==, !=, &&, ||, &, |, ^, ~, %, ?, etc.
    - Literais: 42, 3.14, "hello\n", true, false, null
    - Identificadores: x, _var, CamelCase
    - Comentários: // and /* */
 
 3. **Operadores de vários caracteres**:
-   - ++ / -- / += / -= / *= /= / == / != / <= / >= / && / || / << / >> / ->
+   - ++ / -- / += / -= / *= /= / == / != / <= / >= / && / || / << / >> / -> / =>
 
 ### Saída
 ```
@@ -87,14 +87,14 @@ Token { kind: TOK_EOF, val: "", line: 1, col: 21 }
 
 - **Sem ações no lexer** — apenas tokeniza, sem analisar ainda
 - **Rastreio de linha/coluna** — para mensagens de erro
-- **Sequências de escape** — \n, \t, \\, \", \0 tratadas
+- **Sequências de escape** — \n, \t, \\, \", \r, \0 tratadas
 - **Literais hex/float** — 0xFF, 1.0e-5 suportados
 
 ---
 
 ## Fase 2: Parser (construção da AST)
 
-**Arquivo**: `ofs/ofscc/parser.ofs` (650+ linhas)
+**Arquivo**: `ofs/ofscc/parser.ofs` (1.246 linhas)
 
 ### Estratégia
 
@@ -105,30 +105,60 @@ Token { kind: TOK_EOF, val: "", line: 1, col: 21 }
 ### Gramática (simplificada)
 
 ```
-program     ::= (decl | stmt)*
-decl        ::= fn_decl | var_decl | monolith_decl
-fn_decl     ::= ("vein" | "core") IDENT "(" params ")" ("->" type)? block
-var_decl    ::= ("forge" | "const") IDENT (":" type)? ("=" expr)? ";"
+program     ::= (fn_decl | monolith_decl | impl_decl | namespace_decl
+                | strata_decl | extern_decl | attach_decl | var_decl)*
 
-stmt        ::= expr_stmt | if_stmt | while_stmt | return_stmt | block
-if_stmt     ::= "if" "(" expr ")" block ("else" block)?
+fn_decl     ::= ("vein" | "core") IDENT "(" params? ")" ("->" type)? block
+params      ::= IDENT ":" type ("," IDENT ":" type)*
+extern_decl ::= ("extern" | "rift") "vein" IDENT "(" params? ")" ("->" type)?
+                ("bind" STRING)? ("abi" IDENT)?
+monolith_decl ::= "monolith" IDENT "{" (IDENT ":" type (","|";")?)* "}"
+impl_decl   ::= "impl" IDENT "{" fn_decl* "}"
+namespace_decl ::= "namespace" IDENT "{" (fn_decl | var_decl | monolith_decl
+                | extern_decl | impl_decl | strata_decl)* "}"
+strata_decl ::= "strata" IDENT "{" (IDENT ("(" type ")")? (","|";")?)* "}"
+attach_decl ::= "attach" "{" caminho "}"          // ex.: attach {core}, attach {F:lib.ofs}
+var_decl    ::= ("forge" | "const" | "shard") IDENT (":" type)? ("=" expr)? ";"?
+
+type        ::= IDENT | "Array" "<" type ">" | "*" type
+
+stmt        ::= var_decl | if_stmt | while_stmt | cycle_stmt | mine_stmt
+              | match_stmt | return_stmt | throw_stmt | tremor_stmt
+              | anchor_stmt | unsafe_block | block | "break" | "continue"
+              | "shatter" | "erode" | expr ";"?
+if_stmt     ::= "if" "(" expr ")" block ("else" (if_stmt | block))?
 while_stmt  ::= "while" "(" expr ")" block
-return_stmt ::= "return" expr? ";"
+cycle_stmt  ::= "cycle" "(" IDENT "in" expr ")" block          // sobre uma coleção
+              | "cycle" "(" "forge" IDENT "in" expr ")" block
+              | "cycle" "(" init? ";" expr? ";" expr? ")" block // estilo C
+mine_stmt   ::= "mine" "(" IDENT "in" expr ")" block
+match_stmt  ::= ("match" | "assay") "(" expr ")" "{" (pattern "=>" (block | stmt))* "}"
+pattern     ::= expr | "_"                                      // "_" é o caso padrão
+return_stmt ::= "return" expr? ";"?
+throw_stmt  ::= "throw" expr ";"?
+tremor_stmt ::= "tremor" block ("catch" "(" IDENT (":" type)? ")" block)?
+anchor_stmt ::= "anchor" stmt
+unsafe_block::= ("fracture" | "bedrock" | "abyss" | "tectonic") ("fracture"|"bedrock"|"abyss")? block
+block       ::= "{" stmt* "}"
 
-expr        ::= assign_expr
-assign_expr ::= or_expr (("=" | "+=" | "-=") or_expr)*
-or_expr     ::= and_expr ("||" and_expr)*
-and_expr    ::= eq_expr ("&&" eq_expr)*
-eq_expr     ::= lt_expr (("==" | "!=") lt_expr)*
-lt_expr     ::= add_expr (("<" | "<=" | ">" | ">=") add_expr)*
-add_expr    ::= mul_expr (("+" | "-") mul_expr)*
-mul_expr    ::= unary_expr (("*" | "/" | "%") unary_expr)*
-unary_expr  ::= ("!" | "-" | "&" | "*") unary_expr | postfix_expr
-postfix_expr::= primary_expr ("[" expr "]" | "." IDENT | "++" | "--")*
-
-primary_expr::= IDENT | INT | FLOAT | STRING | "true" | "false" | "null"
-             | "(" expr ")" | "[" expr_list "]" | call_expr
+expr        ::= unary (binop expr)*         // precedência na tabela abaixo
+unary       ::= ("-" | "!" | "~" | "&" | "*") postfix(primary)
+postfix     ::= primary ( "(" args? ")" | "[" expr "]" | "." IDENT
+                        | "++" | "--" | "?" | "as" type )*
+primary     ::= IDENT | INT | FLOAT | STRING | "true" | "false" | "null"
+              | "(" expr ")" | "[" (expr ("," expr)*)? "]" | "echo" "(" args? ")"
 ```
+
+Pontos que a gramática não mostra:
+
+- Os parênteses de `if`, `while`, `match`/`assay` e `cycle`/`mine` são obrigatórios. `if x == 1 { }` dá o erro `expected '('`. O corpo precisa ser um bloco `{ }`.
+- O ponto e vírgula é opcional no fim de comandos e declarações. Só é exigido dentro do `cycle` estilo C.
+- `assay` é só outro nome de `match` (mesmo token). O `match` vira uma cadeia de `if` comparando com `==`; `_` é o caso padrão e `=>` separa padrão e corpo. Não há padrões de desestruturação.
+- `shatter` e `erode` são sinônimos de `break` e `continue`. `mine` é como o `cycle ... in`, mas só aceita o formato `item in coleção`.
+- Chamadas com namespace (`ns.fn(x)`) viram o símbolo `ns__fn`. Métodos de `impl` viram `Tipo__metodo`.
+- `attach {caminho}` só vale no nível do arquivo. O texto entre as chaves é colado token a token (`F:` indica caminho de arquivo).
+- Não existe literal de struct (`P { x: 1 }`) nem `monolith ... layout ...`; o parser espera `{` logo depois do nome do `monolith`. Declare a variável (`forge p: P`) e atribua os campos.
+- `core` é palavra reservada: marca o ponto de entrada (`core main()`) e não serve como nome.
 
 ### Pool de nós da AST
 
@@ -183,8 +213,8 @@ Ordem de precedência (da menor para a maior):
 9.  << >>           (deslocamento de bits)
 10. + -             (adição)
 11. * / %           (multiplicação)
-12. Unário - ! ~    (prefixo)
-13. ++ --           (pós-fixo)
+12. Unário - ! ~ & *  (prefixo)
+13. ++ -- ? as    (pós-fixo: incremento, propagação, conversão de tipo)
 14. [] . ()         (pós-fixo: índice, campo, chamada)
 ```
 
@@ -192,7 +222,7 @@ Ordem de precedência (da menor para a maior):
 
 ## Fase 3: Verificador de tipos
 
-**Arquivo**: `ofs/ofscc/typeck.ofs` (350+ linhas)
+**Arquivo**: `ofs/ofscc/typeck.ofs` (825 linhas)
 
 ### Tabela de símbolos
 
@@ -256,7 +286,7 @@ resolve(name)
 
 ## Fase 4A: Backend interpretador de AST (interpretação direta)
 
-**Arquivo**: `ofs/ofscc/interpreter.ofs` (70 KB, 1.900+ linhas)
+**Arquivo**: `ofs/ofscc/interpreter.ofs` (70 KB, 2.086 linhas)
 
 O backend interpretador da OFS executa a árvore sintática (AST) tipada diretamente em memória, sem gerar arquivos intermediários, código C ou LLVM IR. É o backend padrão utilizado pelo comando `ofs <arquivo.ofs>` e `ofs run <arquivo.ofs>`.
 
@@ -264,16 +294,17 @@ O backend interpretador da OFS executa a árvore sintática (AST) tipada diretam
 
 1. **Sistema `Value`**: Monolith universal que unifica valores escalares (`stone`, `crystal`, `obsidian`, `bool`, `null`) e handles virtuais na heap para `Array<T>`, objetos `monolith` e ponteiros.
 2. **Ambiente e Frames de Chamada**: Escopo léxico estrito baseado em marcadores de frame (`_current_frame_base` e `_globals_count`), impedindo vazamento de escopo entre funções chamadoras e variáveis globais.
-3. **Semântica por Valor**: Cópias profundas de campos de estruturas (`clone_value()`) garantindo comportamento idêntico ao modelo de memória nativo.
+3. **Semântica por Valor**: `forge y: T = x` e `y = x` copiam o bloco do `monolith` (`obj_clone()`/`memcpy` no bloco que `y` já tem, como o `store %T` do nativo); parâmetros de vein recebem o `monolith` por referência, como o ponteiro do nativo.
 4. **Despacho Dinâmico de Métodos**: Resolução automática de métodos definidos em blocos `impl Type` com injeção automática de `self`.
-5. **Ponteiros Virtuais**: Tabela de `Location` que reproduz a semântica de `&` e `*` dentro de blocos `fracture` e declarações `shard`.
-6. **Builtins Integrados**: Resolução imediata de funções de entrada/saída (`echo`), strings (`ofs_str_*`), vetores (`ofs_array_*`) e matemáticas (`ofs_pow`, `ofs_sqrt`).
+5. **Ponteiros reais (F2)**: ponteiro é endereço (`VAL_INT` com tipo `*T`). `*p`/`*p = v` usam `mem_load`/`mem_store` pela classe de memória do tipo apontado (`MC_*`: largura, sinal, `f32`, `obsidian`, `*T`, `monolith`, variante), com o tipo estático do `typeck` pré-calculado por nó em `annotate_nodes` (o mesmo tipo que o `llvmgen` usa); a leitura/escrita é o próprio código nativo do interpretador (`fracture { *p8 = v as u8 }`). `&x` de variável troca a entrada por `VAL_BOXED`: o valor passa a viver num slot de 8 bytes (`box_var`), lido/escrito por `env_load`/`env_store` e liberado em `env_pop_one` (`_boxed_live` mantém o caminho rápido sem custo quando não há nenhum). `as` replica o `NK_CAST` do `llvmgen` (`eval_cast`). `monolith` vive em memória crua com o layout de `llvmgen.struct_layout` (a mesma função calcula o tamanho do `ofs_alloc` no nativo e os offsets no interpretador; `compute_layouts`), e o `VAL_OBJECT` guarda o endereço do bloco; campo `Array` guarda o handle interpretado como `-(h+1)`.
+6. **Builtins Integrados**: Resolução imediata de funções de entrada/saída (`echo`), strings (`ofs_str_*`), vetores (`ofs_array_*`) e matemáticas (`ofs_pow`, `ofs_sqrt`). A lista (`is_builtin`) é só um caminho rápido, não o limite do que pode ser chamado.
+7. **Rift (`extern vein`/`rift vein`)**: no carregamento (`collect_declarations` → `resolve_calls` → `ffi_check_symbols`), cada extern chamada vira um endereço via `dlsym(RTLD_DEFAULT, sym)` (com `bind`), depois de abrir `libm` e `OFS_FFI_LIBS`; símbolo ausente é o erro do linker (`undefined reference`), código 1. Veins de `stdlib/runtime/*.ofs` (faixas de linha marcadas por `expand_attaches` com `ast_mark_runtime_lines`) usam a versão nativa linkada no `ofscc`. A chamada (`call_extern`) converte os argumentos pelo tipo declarado (inteiros/ponteiros/`obsidian` como `i64`, `crystal` como `double`), grava num buffer e chama `__ofs_ffi_dispatch`, que o `llvmgen` define no próprio `ofscc` (`emit_ffi_dispatch`, quando o módulo declara essa extern): um `switch` com uma chamada de tipo LLVM exato por classe de assinatura (`ffi_sig`/`ffi_sig_supported`: até 4 args `i64|double` com retorno `i64|double`, até 12 só inteiros, variádicas de 1 a 3 fixos + até 4 extras; 155 casos). Por isso o `ofscc` precisa ser linkado com `-rdynamic` (exporta o runtime e o dispatcher para o `dlsym`). Na F2, `&x`, `monolith` (o bloco) e `Array` vão à função nativa como endereço: o `Array` é a coluna de valores do interpretador, que já é um `ofs_array` nativo (`arr_native_ptr`), com o comprimento sincronizado na volta (`ffi_sync_arrays`); um `Array` devolvido pela função nativa vira um array interpretado que usa o mesmo bloco (`arr_adopt`). Callbacks nativos → OFS: o módulo que declara `extern vein __ofs_cb_table` recebe do `llvmgen` (`emit_cb_trampolines`) 16 funções `__ofs_cb_K(i64 x 6)` que chamam `__ofs_cb_enter(K, ...)`, definida no fim do `interpreter.ofs`; `fault_addr` de uma vein interpretada liga a vein a um slot (`cb_slot_for`) e devolve o endereço de `__ofs_cb_K` (achado por `dlsym`, para um `ofscc` gerado por compilador antigo continuar ligando); `cb_enter` empilha os argumentos pelo tipo de cada parâmetro, roda a vein e devolve o resultado como `i64`, preservando os registradores do interpretador (reentrante: funciona dentro de uma chamada nativa feita pelo interpretador). Slots esgotados, mais de 6 parâmetros ou `crystal`/`f32` no callback são erro claro (código 1).
 
 ---
 
 ## Fase 4B: Gerador de LLVM IR (geração nativa)
 
-**Arquivo**: `ofs/ofscc/llvmgen.ofs` (74 KB, 2.000+ linhas)
+**Arquivo**: `ofs/ofscc/llvmgen.ofs` (74 KB, 2.509 linhas)
 
 O backend de compilação da OFS gera diretamente LLVM Intermediate Representation (IR), dispensando transpiladores para C ou dependências do Clang. É utilizado pelo comando `ofs build`.
 
@@ -360,7 +391,7 @@ core main() {
 - Pool de nós: ~1 MB (programas grandes)
 - Tabela de símbolos: ~100 KB
 
-### Alocação dinâmica (via FFI)
+### Alocação dinâmica (via Rift)
 
 ```ofs
 extern vein ofs_alloc(size: stone) -> stone

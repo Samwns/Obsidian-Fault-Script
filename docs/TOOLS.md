@@ -75,3 +75,33 @@ ofs doc --check || exit 1
 ### Teste
 
 `ofs/tests/ofsdoc/run.sh` compara o extrator com `ofs/tests/ofsdoc/expected.txt` (nomes, assinaturas, comentários, chama/usado por) e confere o código de saída do `--check`.
+
+## `ofs fmt`: formatador
+
+`ofs fmt` formata código `.ofs` (ferramenta escrita em OFS, `ofs/tools/ofsfmt.ofs`).
+
+```bash
+ofs fmt arquivo.ofs     # reescreve no lugar
+ofs fmt src/            # pasta, recursivo (só .ofs); sem alvo = pasta atual
+ofs fmt --check [alvos] # CI: lista o que mudaria e sai com código 1
+ofs fmt --diff [alvos]  # mostra o diff, não escreve
+ofs fmt --stdin         # lê da entrada padrão, escreve na saída (editores)
+```
+
+Regras: recuo de 4 espaços (linhas de continuação dentro de `(`/`[` ou após operador ganham +4), `{` na mesma linha, espaço em volta de operadores binários e depois de `,` e `:`, no máximo uma linha em branco seguida, sem espaço no fim da linha, um `\n` no fim do arquivo. As quebras de linha do autor são mantidas, e comentários, strings e linhas `attach` nunca são alteradas.
+
+Garantias (testadas em `ofs/tests/fmt/run.sh`): formatar duas vezes dá o mesmo arquivo, e o IR do `ofscc` do original e do formatado é idêntico (o programa não muda). Pendente: quebra automática de linhas acima de 100 colunas e ordenação dos `attach`.
+
+No VS Code, a extensão registra o `ofs fmt --stdin` como formatador; para formatar ao salvar: `"[ofs]": { "editor.formatOnSave": true }`.
+
+## `ofs test`, `ofs twin`, `ofs polish`
+
+```bash
+ofs test [--run] [--twin] [pasta]   # padrão: ./tests
+ofs twin arquivo.ofs
+ofs polish [--check] [--diff] [alvos]
+```
+
+- `ofs test`: acha os `*.ofs` que têm um `.expected` ao lado, compila e roda cada um (nativo; `--run` usa o interpretado; `--twin` também compara os dois modos) e compara a saída com o `.expected`. Imprime `ok`/`FAIL` por arquivo e um resumo; sai com 1 se algum falhar. `.ofs` sem `.expected` são ignorados.
+- `ofs twin`: roda o programa interpretado e nativo em diretórios temporários e compara stdout, código de saída e stderr normalizado. Imprime `iguais` (código 0) ou a primeira diferença (código 1). Variável `OFS_TEST_TIMEOUT` (padrão 30 s por execução).
+- `ofs polish`: sinônimo de `ofs fmt`, com as mesmas opções.

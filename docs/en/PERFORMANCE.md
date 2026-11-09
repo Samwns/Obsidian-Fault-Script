@@ -22,7 +22,7 @@ The planned order is:
 2. add detailed lexer, parser, type-checker, and LLVM IR timing;
 3. benchmark 10 KB, 100 KB, and 1 MB sources;
 4. introduce token slices or a compilation arena;
-5. add a native string builder;
+5. add a native string builder (`strbuf` already exists in the stdlib);
 6. measure indexed symbol tables;
 7. evaluate LTO and LLVM flags.
 
@@ -92,17 +92,41 @@ Linear symbol lists have good cache locality for small and medium programs. For 
 
 ## Measured run-time benchmarks
 
-Equivalent programs in OFS, Rust and Python (plus a local C reference) live in [`bench/`](../../bench/). Reproduce with `bash bench/run.sh` (writes [`bench/RESULTADOS.md`](../../bench/RESULTADOS.md)). Measured on an AMD Ryzen 5 5600GT, median of 5 runs, wall time in ms:
+Equivalent programs in OFS, Rust and Python (plus a local C reference) live in [`bench/`](../../bench/). Reproduce with `bash bench/run.sh` (it measures the repository compiler, `ofs/dist`, and writes [`bench/RESULTADOS.md`](../../bench/RESULTADOS.md)). Measured on an AMD Ryzen 5 5600GT, OFS 1.0.169, median of 5 runs (interpreted: 1 run), 2,048 MB memory limit per process, wall time in ms:
 
-@@TABLE@@
+| Benchmark | Native OFS | Interpreted OFS | C -O2 | Rust | Python |
+|---|---|---|---|---|---|
+| empty (startup) | 3 | 37 | 2 | 2 | 12 |
+| fib (n=35) | 41 | 5,997 | 22 | 23 | 906 |
+| loop (10^8) | 410 | 18,135 | 276 | 277 | 11,031 |
+| strings (1 MB) | 15 | 589 | 196 | 199 | 272 |
+| sort (100k) | 15 | 925 | 7 | 7 | 164 |
+| alloc (1 million) | 17 | 751 | 7 | 9 | 150 |
 
-Honest reading:
+Peak memory (RSS, MB) and empty binary:
 
-- Native OFS **loses to C and Rust in every test**: about 1.5x-1.8x in `fib` and `loop`, 10x in `sort`, 17x in `alloc`, 50x in `strings` (concatenating and walking 1 MB).
-- It beats Python in `fib`, `loop`, `sort` and `alloc` (1.3x to 27x); in `strings` it loses even to Python (CPython optimizes string concatenation).
-- Startup is 3 ms (Python: 12 ms) and the empty binary is 28 KB (Rust: ~10 MB), but memory is higher than C: 5.1 MB empty, 97 MB in `alloc` (small arrays not freed in the loop) and 520 MB in `strings`.
-- `ofs run` (interpreted) is orders of magnitude slower: it does not finish `fib(35)` or `loop` in 60 s and fails (exit code 1) on `strings`, `sort` and `alloc`. Use it for scripts, not heavy loads.
-- Bug found while writing the benchmark: in native builds, `a[i] = v` on `Array<stone>` has no effect; `sort` uses `ofs_array_set(a, i, v)` as a workaround.
+| Language | Empty binary (bytes) | empty | fib | loop | strings | sort | alloc |
+|---|---|---|---|---|---|---|---|
+| OFS | 36,624 | 5.0 | 5.2 | 5.4 | 5.8 | 6.3 | 5.1 |
+| C | 12,568 | 2.2 | 1.9 | 1.9 | 3.5 | 2.3 | 2.2 |
+| Rust | 10,440,304 | 2.0 | 2.2 | 2.2 | 4.1 | 2.7 | 2.0 |
+| Python | n/a (interpreter) | 9.2 | 9.4 | 9.5 | 11.6 | 13.4 | 9.5 |
+
+All interpreted-mode outputs match the native ones.
+
+History: before the "A6" memory optimization, `strings` took 223 ms and 520 MB, `alloc` 116 ms and 97 MB, `sort` 86 ms, and `ofs run` hit the 2,048 MB limit on everything except the empty program. An even older run mistakenly measured an old installed compiler, which produced a 10,404 ms `strings` figure; it does not apply to the repository compiler.
+
+Honest reading (machine: AMD Ryzen 5 5600GT, Linux, OFS 1.0.169, measured on 2026-11-08):
+
+- Native OFS **still loses to C and Rust on compute and allocation tests**: about 1.5x in `loop`, 1.9x in `fib`, 2.1x in `sort` and 2.4x in `alloc`.
+- **`strings` is a special case, not a comparison with an optimized C.** The C reference (`bench/c/strings.c`) does `malloc` + `memcpy` on every concatenation, copying everything (O(n^2)), and that is what OFS used to do (223 ms, 520 MB). Now OFS grows the string in place (`realloc`) when the compiler proves, by per-function escape analysis, that the old value is seen by nobody else; aliases such as `t = s` remain correct. That is why OFS (15 ms, 5.8 MB) beats C (196 ms, 3.5 MB) here, by about 13x. A C program with a growing buffer would do the same; the stdlib has `strbuf` for explicit control.
+- `alloc` dropped from 116 ms / 97 MB to 17 ms / 5.1 MB (C: 7 ms): local arrays are freed at the end of their scope and allocation is inline. `sort` dropped from 86 to 15 ms (C: 7 ms): `a[i]` and `a[i] = v` are inlined in the generated code.
+- It beats Python in `fib` (22x), `loop` (27x), `strings` (18x), `sort` (11x) and `alloc` (9x).
+- Startup is 3 ms (Python: 12 ms) and the empty binary is 36,624 bytes (Rust: about 10 MB). Base memory is higher than C: 5.0 MB against 2.2 MB.
+- Interpreted mode (`ofs run`) now runs every benchmark within the memory limit (the leak of about 3 KB per call was fixed; the interpreter was rewritten with registers and AST tables). It is still much slower than native and generally slower than Python: 6.6x slower in `fib`, 1.6x in `loop`, 2.2x in `strings`, 5.6x in `sort` and 5.0x in `alloc`. Use `ofs run` for scripts and development; use `ofs build` for performance.
+- Compiling the compiler itself (self-host) dropped from 197 MB to 45 MB of RAM.
+
+To reproduce: `bash bench/run.sh`. Full numbers are in [`bench/RESULTADOS.md`](../../bench/RESULTADOS.md).
 
 ## Consistency between `ofs run` and `ofs build`
 

@@ -324,16 +324,18 @@ core main() {
 
 ---
 
-## 9. Native Interoperability (`rift` / `extern vein`)
+## 9. The Rift: native system libraries (`rift` / `extern vein`)
 
-External C symbols can be bound directly:
+The **Rift** is the boundary through which OFS reaches native system libraries (libc, libm, X11, Android JNI, kernel32). `rift vein` and `extern vein` declare a function that lives in a native library, called through the system calling convention. There is no C code in OFS: the compiler and the runtime are written in OFS.
+
+> The system calling convention is known technically as the C ABI (`abi c`); it does not involve C code.
 
 ```ofs
 extern vein puts(s: obsidian) -> stone
 rift vein strlen(s: obsidian) -> stone bind "strlen" abi c
 
 core main() {
-    puts("Message dispatched via C puts")
+    puts("Message dispatched via libc puts")
 }
 ```
 

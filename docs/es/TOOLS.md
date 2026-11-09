@@ -75,3 +75,33 @@ ofs doc --check || exit 1
 ### Prueba
 
 `ofs/tests/ofsdoc/run.sh` compara el extractor con `ofs/tests/ofsdoc/expected.txt` (nombres, firmas, comentarios, llama a/usado por) y verifica el código de salida de `--check`.
+
+## `ofs fmt`: formateador
+
+`ofs fmt` formatea código `.ofs` (herramienta escrita en OFS, `ofs/tools/ofsfmt.ofs`).
+
+```bash
+ofs fmt archivo.ofs     # reescribe en el sitio
+ofs fmt src/            # carpeta, recursivo (solo .ofs); sin destino = carpeta actual
+ofs fmt --check [rutas] # CI: lista lo que cambiaría y sale con código 1
+ofs fmt --diff [rutas]  # muestra el diff, no escribe
+ofs fmt --stdin         # lee la entrada estándar, escribe en la salida (editores)
+```
+
+Reglas: sangría de 4 espacios (las líneas de continuación dentro de `(`/`[` o tras un operador reciben +4), `{` en la misma línea, espacio alrededor de operadores binarios y después de `,` y `:`, como máximo una línea en blanco seguida, sin espacios al final de línea, un `\n` al final del archivo. Se mantienen los saltos de línea del autor, y los comentarios, las cadenas y las líneas `attach` nunca se modifican.
+
+Garantías (probadas en `ofs/tests/fmt/run.sh`): formatear dos veces da el mismo archivo y el IR de `ofscc` del original y del formateado es idéntico (el programa no cambia). Pendiente: salto automático de líneas de más de 100 columnas y ordenación de `attach`.
+
+En VS Code la extensión registra `ofs fmt --stdin` como formateador; para formatear al guardar: `"[ofs]": { "editor.formatOnSave": true }`.
+
+## `ofs test`, `ofs twin`, `ofs polish`
+
+```bash
+ofs test [--run] [--twin] [carpeta]   # por defecto: ./tests
+ofs twin archivo.ofs
+ofs polish [--check] [--diff] [destinos]
+```
+
+- `ofs test`: busca los `*.ofs` con un `.expected` al lado, compila y ejecuta cada uno (nativo; `--run` usa el interpretado; `--twin` también compara ambos modos) y compara la salida con el `.expected`. Imprime `ok`/`FAIL` por archivo y un resumen; sale con 1 si alguno falla. Los `.ofs` sin `.expected` se ignoran.
+- `ofs twin`: ejecuta el programa interpretado y nativo en directorios temporales y compara stdout, código de salida y stderr normalizado. Imprime `iguais` (iguales, código 0) o la primera diferencia (código 1). `OFS_TEST_TIMEOUT` fija el límite por ejecución (30 s por defecto).
+- `ofs polish`: alias de `ofs fmt`, mismas opciones.

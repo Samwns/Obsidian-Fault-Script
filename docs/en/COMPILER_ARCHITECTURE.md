@@ -10,14 +10,14 @@ source.ofs
     ▼                                         ▼
 ┌──────────────┐                    ┌────────────────────┐
 │   Lexer      │ → Array<Token>     │  Symbol Table      │
-│  (chars,     │   (80 kinds)       │  (scope stack)     │
+│  (chars,     │   (87 kinds)       │  (scope stack)     │
 │   tokens)    │                    └────────────────────┘
 └──────┬───────┘
        │
        ▼
 ┌──────────────┐
 │   Parser     │ → AST Root ID (stone)
-│  (recursive  │   (60+ node kinds)
+│  (recursive  │   (48 node kinds)
 │   descent +  │   (pool-based allocation)
 │   Pratt)     │
 └──────┬───────┘
@@ -48,7 +48,7 @@ source.ofs
 
 ## Phase 1: Lexer (Tokenization)
 
-**File**: `ofs/ofscc/lexer.ofs` (660 lines)
+**File**: `ofs/ofscc/lexer.ofs` (433 lines)
 
 ### Input
 ```ofs
@@ -63,14 +63,14 @@ forge x: stone = 42
    ```
 
 2. **Token recognition**:
-   - Keywords (34): forge, vein, if, while, match, etc.
-   - Operators (25+): +, -, *, /, ==, !=, &&, ||, [], etc.
+   - Keywords (38): forge, vein, monolith, if, cycle, match/assay, strata, attach, etc.
+   - Operators (25+): +, -, *, /, ==, !=, &&, ||, &, |, ^, ~, %, ?, etc.
    - Literals: 42, 3.14, "hello\n", true, false, null
    - Identifiers: x, _var, CamelCase
    - Comments: // and /* */
 
 3. **Multi-character operators**:
-   - ++ / -- / += / -= / *= /= / == / != / <= / >= / && / || / << / >> / ->
+   - ++ / -- / += / -= / *= /= / == / != / <= / >= / && / || / << / >> / -> / =>
 
 ### Output
 ```
@@ -87,14 +87,14 @@ Token { kind: TOK_EOF, val: "", line: 1, col: 21 }
 
 - **No lexer actions** — Just tokenize, don't parse yet
 - **Line/column tracking** — For error messages
-- **Escape sequences** — \n, \t, \\, \", \0 handled
+- **Escape sequences** — \n, \t, \\, \", \r, \0 handled
 - **Hex/float literals** — 0xFF, 1.0e-5 supported
 
 ---
 
 ## Phase 2: Parser (AST Construction)
 
-**file**: `ofs/ofscc/parser.ofs` (650+ lines)
+**file**: `ofs/ofscc/parser.ofs` (1,246 lines)
 
 ### Strategy
 
@@ -105,30 +105,60 @@ Token { kind: TOK_EOF, val: "", line: 1, col: 21 }
 ### Grammar (Simplified)
 
 ```
-program     ::= (decl | stmt)*
-decl        ::= fn_decl | var_decl | monolith_decl
-fn_decl     ::= ("vein" | "core") IDENT "(" params ")" ("->" type)? block
-var_decl    ::= ("forge" | "const") IDENT (":" type)? ("=" expr)? ";"
+program     ::= (fn_decl | monolith_decl | impl_decl | namespace_decl
+                | strata_decl | extern_decl | attach_decl | var_decl)*
 
-stmt        ::= expr_stmt | if_stmt | while_stmt | return_stmt | block
-if_stmt     ::= "if" "(" expr ")" block ("else" block)?
+fn_decl     ::= ("vein" | "core") IDENT "(" params? ")" ("->" type)? block
+params      ::= IDENT ":" type ("," IDENT ":" type)*
+extern_decl ::= ("extern" | "rift") "vein" IDENT "(" params? ")" ("->" type)?
+                ("bind" STRING)? ("abi" IDENT)?
+monolith_decl ::= "monolith" IDENT "{" (IDENT ":" type (","|";")?)* "}"
+impl_decl   ::= "impl" IDENT "{" fn_decl* "}"
+namespace_decl ::= "namespace" IDENT "{" (fn_decl | var_decl | monolith_decl
+                | extern_decl | impl_decl | strata_decl)* "}"
+strata_decl ::= "strata" IDENT "{" (IDENT ("(" type ")")? (","|";")?)* "}"
+attach_decl ::= "attach" "{" path "}"          // e.g. attach {core}, attach {F:lib.ofs}
+var_decl    ::= ("forge" | "const" | "shard") IDENT (":" type)? ("=" expr)? ";"?
+
+type        ::= IDENT | "Array" "<" type ">" | "*" type
+
+stmt        ::= var_decl | if_stmt | while_stmt | cycle_stmt | mine_stmt
+              | match_stmt | return_stmt | throw_stmt | tremor_stmt
+              | anchor_stmt | unsafe_block | block | "break" | "continue"
+              | "shatter" | "erode" | expr ";"?
+if_stmt     ::= "if" "(" expr ")" block ("else" (if_stmt | block))?
 while_stmt  ::= "while" "(" expr ")" block
-return_stmt ::= "return" expr? ";"
+cycle_stmt  ::= "cycle" "(" IDENT "in" expr ")" block          // over a collection
+              | "cycle" "(" "forge" IDENT "in" expr ")" block
+              | "cycle" "(" init? ";" expr? ";" expr? ")" block // C style
+mine_stmt   ::= "mine" "(" IDENT "in" expr ")" block
+match_stmt  ::= ("match" | "assay") "(" expr ")" "{" (pattern "=>" (block | stmt))* "}"
+pattern     ::= expr | "_"                                      // "_" is the default case
+return_stmt ::= "return" expr? ";"?
+throw_stmt  ::= "throw" expr ";"?
+tremor_stmt ::= "tremor" block ("catch" "(" IDENT (":" type)? ")" block)?
+anchor_stmt ::= "anchor" stmt
+unsafe_block::= ("fracture" | "bedrock" | "abyss" | "tectonic") ("fracture"|"bedrock"|"abyss")? block
+block       ::= "{" stmt* "}"
 
-expr        ::= assign_expr
-assign_expr ::= or_expr (("=" | "+=" | "-=") or_expr)*
-or_expr     ::= and_expr ("||" and_expr)*
-and_expr    ::= eq_expr ("&&" eq_expr)*
-eq_expr     ::= lt_expr (("==" | "!=") lt_expr)*
-lt_expr     ::= add_expr (("<" | "<=" | ">" | ">=") add_expr)*
-add_expr    ::= mul_expr (("+" | "-") mul_expr)*
-mul_expr    ::= unary_expr (("*" | "/" | "%") unary_expr)*
-unary_expr  ::= ("!" | "-" | "&" | "*") unary_expr | postfix_expr
-postfix_expr::= primary_expr ("[" expr "]" | "." IDENT | "++" | "--")*
-
-primary_expr::= IDENT | INT | FLOAT | STRING | "true" | "false" | "null"
-             | "(" expr ")" | "[" expr_list "]" | call_expr
+expr        ::= unary (binop expr)*         // precedence: see table below
+unary       ::= ("-" | "!" | "~" | "&" | "*") postfix(primary)
+postfix     ::= primary ( "(" args? ")" | "[" expr "]" | "." IDENT
+                        | "++" | "--" | "?" | "as" type )*
+primary     ::= IDENT | INT | FLOAT | STRING | "true" | "false" | "null"
+              | "(" expr ")" | "[" (expr ("," expr)*)? "]" | "echo" "(" args? ")"
 ```
+
+Points the grammar does not show:
+
+- The parentheses of `if`, `while`, `match`/`assay` and `cycle`/`mine` are required. `if x == 1 { }` fails with `expected '('`. The body must be a `{ }` block.
+- The semicolon is optional at the end of statements and declarations. It is only required inside a C-style `cycle`.
+- `assay` is just another name for `match` (same token). `match` becomes a chain of `if` comparing with `==`; `_` is the default case and `=>` separates pattern and body. There are no destructuring patterns.
+- `shatter` and `erode` are synonyms of `break` and `continue`. `mine` works like `cycle ... in` but only accepts the `item in collection` form.
+- Namespace calls (`ns.fn(x)`) become the symbol `ns__fn`. `impl` methods become `Type__method`.
+- `attach {path}` is only valid at file level. The text between the braces is glued token by token (`F:` marks a file path).
+- There is no struct literal (`P { x: 1 }`) and no `monolith ... layout ...`; the parser expects `{` right after the `monolith` name. Declare the variable (`forge p: P`) and assign the fields.
+- `core` is a reserved word: it marks the entry point (`core main()`) and cannot be used as a name.
 
 ### AST Node Pool
 
@@ -183,8 +213,8 @@ Precedence Order (lowest to highest):
 9.  << >>           (bit shift)
 10. + -             (addition)
 11. * / %           (multiplication)
-12. Unary - ! ~     (prefix)
-13. ++ --           (postfix)
+12. Unary - ! ~ & *  (prefix)
+13. ++ -- ? as    (postfix: increment, propagation, type cast)
 14. [] . ()         (postfix: index, field, call)
 ```
 
@@ -192,7 +222,7 @@ Precedence Order (lowest to highest):
 
 ## Phase 3: Type Checker
 
-**File**: `ofs/ofscc/typeck.ofs` (350+ lines)
+**File**: `ofs/ofscc/typeck.ofs` (825 lines)
 
 ### Symbol Table
 
@@ -256,24 +286,25 @@ resolve(name)
 
 ## Phase 4A: AST Interpreter Backend (Interpretação Direta)
 
-**File**: `ofs/ofscc/interpreter.ofs` (70KB, 1,900+ lines)
+**File**: `ofs/ofscc/interpreter.ofs` (70KB, 2,086 lines)
 
-O backend interpretador da OFS executa a árvore sintática (AST) tipada diretamente em memória, sem gerar arquivos intermediários, código C ou LLVM IR. É o backend padrão utilizado pelo comando `ofs <arquivo.ofs>` e `ofs run <arquivo.ofs>`.
+The OFS interpreter backend runs the typed syntax tree (AST) directly in memory, without generating intermediate files, C code or LLVM IR. It is the default backend used by `ofs <file.ofs>` and `ofs run <file.ofs>`.
 
-### Arquitetura do Interpretador
+### Interpreter architecture
 
-1. **Sistema `Value`**: Monolith universal que unifica valores escalares (`stone`, `crystal`, `obsidian`, `bool`, `null`) e handles virtuais na heap para `Array<T>`, objetos `monolith` e ponteiros.
-2. **Ambiente e Frames de Chamada**: Escopo léxico estrito baseado em marcadores de frame (`_current_frame_base` e `_globals_count`), impedindo vazamento de escopo entre funções chamadoras e variáveis globais.
-3. **Semântica por Valor**: Cópias profundas de campos de estruturas (`clone_value()`) garantindo comportamento idêntico ao modelo de memória nativo.
-4. **Despacho Dinâmico de Métodos**: Resolução automática de métodos definidos em blocos `impl Type` com injeção automática de `self`.
-5. **Ponteiros Virtuais**: Tabela de `Location` que reproduz a semântica de `&` e `*` dentro de blocos `fracture` e declarações `shard`.
-6. **Builtins Integrados**: Resolução imediata de funções de entrada/saída (`echo`), strings (`ofs_str_*`), vetores (`ofs_array_*`) e matemáticas (`ofs_pow`, `ofs_sqrt`).
+1. **`Value` system**: a universal monolith that unifies scalar values (`stone`, `crystal`, `obsidian`, `bool`, `null`) and virtual heap handles for `Array<T>`, `monolith` objects and pointers.
+2. **Environment and call frames**: strict lexical scope based on frame markers (`_current_frame_base` and `_globals_count`), so callers' variables do not leak into callees or globals.
+3. **Value semantics**: `forge y: T = x` and `y = x` copy the `monolith` block (`obj_clone()`/`memcpy` into the block `y` already has, like the native `store %T`); vein parameters receive the `monolith` by reference, like the native pointer.
+4. **Method dispatch**: methods defined in `impl Type` blocks are resolved automatically, with `self` injected.
+5. **Real pointers (F2)**: a pointer is an address (`VAL_INT` with type `*T`). `*p`/`*p = v` use `mem_load`/`mem_store` by the memory class of the pointee type (`MC_*`: width, sign, `f32`, `obsidian`, `*T`, `monolith`, variant), with the `typeck` static type precomputed per node in `annotate_nodes` (the same type `llvmgen` uses); the load/store is the interpreter's own native code (`fracture { *p8 = v as u8 }`). `&x` of a variable turns the entry into `VAL_BOXED`: the value moves to an 8-byte slot (`box_var`), read/written by `env_load`/`env_store` and freed in `env_pop_one` (`_boxed_live` keeps the fast path free when there is none). `as` mirrors `llvmgen`'s `NK_CAST` (`eval_cast`). A `monolith` lives in raw memory with the `llvmgen.struct_layout` layout (the same function computes the native `ofs_alloc` size and the interpreter's offsets; `compute_layouts`), and `VAL_OBJECT` holds the block address; an `Array` field holds the interpreted handle as `-(h+1)`.
+6. **Built-ins**: direct handling of I/O (`echo`), strings (`ofs_str_*`), arrays (`ofs_array_*`) and math (`ofs_pow`, `ofs_sqrt`). The list (`is_builtin`) is only a fast path, not a limit on what can be called.
+7. **Rift (`extern vein`/`rift vein`)**: at load time (`collect_declarations` → `resolve_calls` → `ffi_check_symbols`), every called extern becomes an address via `dlsym(RTLD_DEFAULT, sym)` (honoring `bind`), after opening `libm` and `OFS_FFI_LIBS`; a missing symbol is the linker's error (`undefined reference`), exit code 1. Veins from `stdlib/runtime/*.ofs` (line ranges marked by `expand_attaches` through `ast_mark_runtime_lines`) use the native version linked into `ofscc`. The call (`call_extern`) converts arguments by the declared type (integers/pointers/`obsidian` as `i64`, `crystal` as `double`), stores them in a buffer and calls `__ofs_ffi_dispatch`, which `llvmgen` defines inside `ofscc` itself (`emit_ffi_dispatch`, when the module declares that extern): a `switch` with one call of exact LLVM type per signature class (`ffi_sig`/`ffi_sig_supported`: up to 4 `i64|double` args with an `i64|double` return, up to 12 integer-only, variadics with 1 to 3 fixed + up to 4 extra; 155 cases). That is why `ofscc` must be linked with `-rdynamic` (it exports the runtime and the dispatcher to `dlsym`). In F2, `&x`, `monolith` (the block) and `Array` go to the native function as addresses: the `Array` is the interpreter's value column, which already is a native `ofs_array` (`arr_native_ptr`), with its length synchronized on return (`ffi_sync_arrays`); an `Array` returned by the native function becomes an interpreted array that uses the same block (`arr_adopt`). native → OFS callbacks: the module that declares `extern vein __ofs_cb_table` gets from `llvmgen` (`emit_cb_trampolines`) 16 functions `__ofs_cb_K(i64 x 6)` that call `__ofs_cb_enter(K, ...)`, defined at the end of `interpreter.ofs`; `fault_addr` of an interpreted vein binds the vein to a slot (`cb_slot_for`) and returns the address of `__ofs_cb_K` (found via `dlsym`, so an `ofscc` built by an older compiler still links); `cb_enter` pushes the arguments by each parameter's type, runs the vein and returns the result as `i64`, preserving the interpreter registers (re-entrant: it works inside a native call made by the interpreter). Exhausted slots, more than 6 parameters or `crystal`/`f32` in the callback are a clear error (exit code 1).
 
 ---
 
 ## Phase 4B: LLVM IR Generator (Geração Nativa)
 
-**File**: `ofs/ofscc/llvmgen.ofs` (74KB, 2,000+ lines)
+**File**: `ofs/ofscc/llvmgen.ofs` (74KB, 2,509 lines)
 
 O backend de compilação da OFS gera diretamente LLVM Intermediate Representation (IR), dispensando transpiladores para C ou dependências do Clang. É utilizado pelo comando `ofs build`.
 
@@ -360,7 +391,7 @@ core main() {
 - Node pool: ~1MB (large programs)
 - Symbol table: ~100KB
 
-### Dynamic Allocation (via FFI)
+### Dynamic Allocation (via Rift)
 
 ```ofs
 extern vein ofs_alloc(size: stone) -> stone

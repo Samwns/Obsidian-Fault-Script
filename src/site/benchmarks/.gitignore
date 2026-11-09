@@ -1,6 +1,0 @@
-build/
-src/__pycache__/
-src/csharp/bin/
-src/csharp/obj/
-src/csharp-hello/bin/
-src/csharp-hello/obj/

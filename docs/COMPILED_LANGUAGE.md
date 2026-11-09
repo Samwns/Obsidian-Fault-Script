@@ -72,12 +72,12 @@ O OFS combina o melhor dos dois paradigmas:
 | Característica | OFS (Nativo) | OFS (Interpretado) | Python 3.14 |
 |---|---|---|---|
 | **Modelo** | AOT via LLVM | Interpretador de AST | Bytecode em VM |
-| **Inicialização (medida)** | 3 ms | 38 ms | 12 ms |
-| **RSS programa vazio (medido)** | 5,1 MB | n/d | 9,3 MB |
-| **Binário vazio** | 28 KB | n/a | n/a |
+| **Inicialização (medida)** | 3 ms | 37 ms | 12 ms |
+| **RSS programa vazio (medido)** | 5,0 MB | n/d | 9,2 MB |
+| **Binário vazio** | 36 KB | n/a | n/a |
 | **Dependências** | Nenhuma (binário) | Compilador `ofs` | Interpretador |
 
-Números medidos em Ryzen 5 5600GT (mediana de 5 execuções). Tabela completa por benchmark, incluindo C e Rust, em [`bench/RESULTADOS.md`](../bench/RESULTADOS.md). Reproduzir: `bash bench/run.sh`. Node.js não foi medido (não faz parte do `bench/`). Resumo honesto: o OFS nativo fica entre 1,5x e 1,8x o tempo do C em `fib` e `loop`, 10x a 17x em `sort` e `alloc`, e **50x em `strings`**; o modo interpretado é lento demais para os benchmarks pesados (veja [PERFORMANCE.md](PERFORMANCE.md)).
+Números medidos em Ryzen 5 5600GT (mediana de 5 execuções). Tabela completa por benchmark, incluindo C e Rust, em [`bench/RESULTADOS.md`](../bench/RESULTADOS.md). Reproduzir: `bash bench/run.sh`. Node.js não foi medido (não faz parte do `bench/`). Resumo honesto: o OFS nativo fica entre 1,5x e 1,9x o tempo do C em `fib` e `loop` e entre 2x e 2,4x em `sort` e `alloc`; em `strings` ele é mais rápido que o C de referência (15 ms contra 196 ms) porque cresce a string no lugar, enquanto o C de referência copia tudo a cada concatenação (veja a leitura honesta em [PERFORMANCE.md](PERFORMANCE.md)). O modo interpretado roda todos os benchmarks, mas é de 1,6x a 6,6x mais lento que Python.
 
 ---
 

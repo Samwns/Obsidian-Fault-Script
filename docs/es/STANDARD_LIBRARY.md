@@ -50,6 +50,31 @@ Rutinas auxiliares para manipular cadenas sobre las primitivas del runtime:
 
 El runtime nativo ofrece además las rutinas `ofs_str_len`, `ofs_str_char_at`, `ofs_str_substr`, `ofs_str_concat`, `ofs_str_eq`, `ofs_str_contains` y conversiones numéricas.
 
+### `strbuf.ofs`
+
+Búfer de texto cuya capacidad se duplica al llenarse (anexar es O(1) amortizado). Úselo cuando el texto se arma en muchos pasos o pasa por varias funciones:
+
+- `strbuf.create(capacidad)`: crea un `StrBuf` vacío.
+- `strbuf.append(b, texto)`, `strbuf.append_char(b, codigo_byte)`, `strbuf.append_int(b, n)`: anexan al final.
+- `strbuf.to_obsidian(b)`: devuelve una **copia** del contenido (la cadena no cambia si el búfer sigue creciendo).
+- `strbuf.length(b)`, `strbuf.clear(b)` (lo vacía y conserva la capacidad), `strbuf.release(b)` (libera la memoria).
+
+```ofs
+attach {strbuf}
+
+core main() {
+    forge b: StrBuf = strbuf.create(64)
+    strbuf.append(b, "total: ")
+    strbuf.append_int(b, 42)
+    echo(strbuf.to_obsidian(b))
+    strbuf.release(b)
+}
+```
+
+Por ahora solo en código nativo (usa memoria cruda del runtime; `ofs run` aún no alcanza el Rift).
+
+**Cadenas y memoria.** Las cadenas no tienen GC ni conteo de referencias: `t = s` hace que ambas variables apunten al mismo texto. El compilador nativo solo reutiliza o libera memoria cuando demuestra que nadie más ve el valor: `s = s + x` / `s += x` en una variable local que nunca se copia a otro lugar crecen en el lugar; las partes intermedias de `a + b + c` y un `f(a + b)` cuyo parámetro no se guarda se liberan; los arrays locales que no escapan se liberan al final de su ámbito. Si la variable se copia, se guarda en un campo/array o se pasa a una función que la guarda, todo funciona como antes (una copia nueva en cada `+`).
+
 ### `io.ofs`
 
 Entrada y salida en la terminal:
@@ -202,7 +227,7 @@ Estructuras utilitarias para armar y analizar paquetes de datos binarios en prot
 
 ### `rift.ofs`
 
-Capa para declarar y llamar funciones externas mediante la interfaz de funciones externas (FFI) con la convención C ABI.
+Capa del Rift: declarar y llamar funciones nativas de bibliotecas del sistema con la convención de llamada del sistema (conocida técnicamente como ABI C; no involucra código C).
 
 ### `memory_modes.ofs`
 

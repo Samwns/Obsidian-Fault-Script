@@ -75,3 +75,33 @@ ofs doc --check || exit 1
 ### Test
 
 `ofs/tests/ofsdoc/run.sh` compares the extractor with `ofs/tests/ofsdoc/expected.txt` (names, signatures, comments, calls/used by) and checks the exit code of `--check`.
+
+## `ofs fmt`: formatter
+
+`ofs fmt` formats `.ofs` code (a tool written in OFS, `ofs/tools/ofsfmt.ofs`).
+
+```bash
+ofs fmt file.ofs        # rewrite in place
+ofs fmt src/            # folder, recursive (.ofs only); no target = current folder
+ofs fmt --check [paths] # CI: lists what would change and exits with code 1
+ofs fmt --diff [paths]  # show the diff, write nothing
+ofs fmt --stdin         # read stdin, write stdout (editors)
+```
+
+Rules: 4-space indent (continuation lines inside `(`/`[` or after an operator get +4), `{` on the same line, spaces around binary operators and after `,` and `:`, at most one blank line in a row, no trailing spaces, a single `\n` at end of file. The author's line breaks are kept, and comments, strings and `attach` lines are never changed.
+
+Guarantees (tested in `ofs/tests/fmt/run.sh`): formatting twice gives the same file, and the `ofscc` IR of the original and the formatted file is identical (the program does not change). Pending: automatic wrapping above 100 columns and sorting of `attach`.
+
+In VS Code the extension registers `ofs fmt --stdin` as the formatter; to format on save: `"[ofs]": { "editor.formatOnSave": true }`.
+
+## `ofs test`, `ofs twin`, `ofs polish`
+
+```bash
+ofs test [--run] [--twin] [folder]   # default: ./tests
+ofs twin file.ofs
+ofs polish [--check] [--diff] [targets]
+```
+
+- `ofs test`: finds `*.ofs` files with a `.expected` next to them, builds and runs each one (native; `--run` uses the interpreter; `--twin` also compares both modes) and diffs the output against `.expected`. Prints `ok`/`FAIL` per file and a summary; exits 1 if any fails. `.ofs` files without `.expected` are skipped.
+- `ofs twin`: runs the program interpreted and native in temporary directories and compares stdout, exit code and normalized stderr. Prints `iguais` (same, exit 0) or the first difference (exit 1). `OFS_TEST_TIMEOUT` sets the per-run limit (default 30 s).
+- `ofs polish`: alias of `ofs fmt`, same options.

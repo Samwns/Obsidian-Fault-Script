@@ -316,16 +316,18 @@ core main() {
 
 ---
 
-## 9. Interoperabilidade Nativa com C (`rift` / `extern vein`)
+## 9. O Rift: bibliotecas nativas do sistema (`rift` / `extern vein`)
 
-É possível declarar e chamar símbolos C externos diretamente:
+O **Rift** (a fenda) é a fronteira por onde o OFS alcança as bibliotecas nativas do sistema (libc, libm, X11, JNI do Android, kernel32). `rift vein` e `extern vein` declaram uma função que mora numa biblioteca nativa, e ela é chamada pela convenção de chamada do sistema. Não há código C no OFS: o compilador e o runtime são escritos em OFS.
+
+> A convenção de chamada do sistema é conhecida tecnicamente como ABI C (`abi c`); não envolve código C.
 
 ```ofs
 extern vein puts(s: obsidian) -> stone
 rift vein strlen(s: obsidian) -> stone bind "strlen" abi c
 
 core main() {
-    puts("Mensagem enviada via puts do C")
+    puts("Mensagem enviada via puts da libc")
 }
 ```
 

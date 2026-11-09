@@ -1,278 +1,62 @@
 {
-  "schema": 2,
-  "generated_at_utc": "2026-06-14T14:06:52.383Z",
-  "machine": {
-    "platform": "linux",
-    "release": "6.8.0-1052-azure",
-    "architecture": "x64",
-    "cpu": "AMD EPYC 9V74 80-Core Processor",
-    "logical_cores": 2,
-    "total_memory_bytes": 8330444800,
-    "node": "v24.14.0"
-  },
-  "methodology": {
-    "cpu": "Fibonacci iterativo com n variando de 25 a 32 por 5.000.000 iteracoes. Cinco processos; menor e melhor.",
-    "memory": "Pico de memoria residente reportado por wait4/getrusage no processo de CPU. Cinco execucoes; menor e melhor.",
-    "startup": "Processo hello-world minimo, quinze execucoes. Inclui startup de runtime/VM; menor e melhor.",
-    "frontend": "Para OFS, tempo do frontend self-hosted ate gerar LLVM IR, em cinco execucoes. O build completo tambem inclui otimizacao e link pelo Clang.",
-    "compile": "Build otimizado do codigo de CPU, cinco execucoes. Python mede compilacao para bytecode; menor e melhor.",
-    "artifact": "Bytes do executavel, class, DLL ou bytecode principal. Dependencias de runtime nao entram no tamanho.",
-    "web": "Geracao do exemplo native_site: .odl para HTML, .oes para CSS e build web total. Cinco execucoes; menor e melhor.",
-    "warning": "Medicoes locais desta maquina e deste workload. Nao sao rankings universais de linguagens."
-  },
-  "expected_checksum": "3488433750000",
-  "web": {
-    "odl_html_ms": {
-      "best": 38.9221,
-      "median": 43.6324,
-      "mean": 140.6099,
-      "max": 529.0601
+  "schema": 3,
+  "date": "2026-11-09",
+  "generated_at_utc": "2026-11-09T08:16:47Z",
+  "machine": {"cpu": "AMD Ryzen 5 5600GT with Radeon Graphics", "threads": 12, "os": "Linux 7.3.1-201.nobara.fc44.x86_64", "arch": "x86_64", "memory_gb": 23.3},
+  "versions": {"ofs": "1.0.169", "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)", "rustc": "rustc 1.99.0 (b940084d7 2026-09-28) (Fedora 1.99.0-1.fc44)", "go": null, "python": "Python 3.14.8"},
+  "method": {"metric": "mediana do tempo de parede", "unit": "ms", "runs": 5, "interp_runs": 1, "interp_timeout_s": 120, "native_timeout_s": 300, "mem_limit_mb": 2048, "c_flags": "clang -O2", "rust_flags": "rustc -O", "reproduce": "bash bench/run.sh"},
+  "benchmarks": ["empty", "fib", "loop", "strings", "sort", "alloc"],
+  "languages": ["ofs", "ofs-interp", "c", "rust", "python"],
+  "language_labels": {"ofs": "OFS nativo", "ofs-interp": "OFS interpretado", "c": "C -O2", "rust": "Rust -O", "go": "Go", "python": "Python 3"},
+  "results": {
+    "empty": {
+      "ofs": {"status": "ok", "ms": 3, "text": "3"},
+      "ofs-interp": {"status": "ok", "ms": 36, "text": "36"},
+      "c": {"status": "ok", "ms": 2, "text": "2"},
+      "rust": {"status": "ok", "ms": 2, "text": "2"},
+      "python": {"status": "ok", "ms": 12, "text": "12"}
     },
-    "oes_css_ms": {
-      "best": 49.013,
-      "median": 50.4834,
-      "mean": 176.2986,
-      "max": 679.9333
+    "fib": {
+      "ofs": {"status": "ok", "ms": 41, "text": "41"},
+      "ofs-interp": {"status": "ok", "ms": 6035, "text": "6035"},
+      "c": {"status": "ok", "ms": 22, "text": "22"},
+      "rust": {"status": "ok", "ms": 22, "text": "22"},
+      "python": {"status": "ok", "ms": 908, "text": "908"}
     },
-    "total_ms": {
-      "best": 84.3088,
-      "median": 88.2894,
-      "mean": 88.4487,
-      "max": 96.2132
+    "loop": {
+      "ofs": {"status": "ok", "ms": 405, "text": "405"},
+      "ofs-interp": {"status": "ok", "ms": 18126, "text": "18126"},
+      "c": {"status": "ok", "ms": 275, "text": "275"},
+      "rust": {"status": "ok", "ms": 275, "text": "275"},
+      "python": {"status": "ok", "ms": 11300, "text": "11300"}
     },
-    "html_bytes": 1025,
-    "css_bytes": 1338,
-    "source_bytes": 2188
-  },
-  "results": [
-    {
-      "language": "OFS",
-      "available": true,
-      "correct": true,
-      "checksum": "3488433750000",
-      "cpu_ms": {
-        "best": 25.5794,
-        "median": 27.3808,
-        "mean": 31.0213,
-        "max": 46.8155
-      },
-      "memory_rss_kb": {
-        "best": 1664,
-        "median": 1792,
-        "mean": 1766.4,
-        "max": 1920
-      },
-      "startup_ms": {
-        "best": 1.2545,
-        "median": 1.6043,
-        "mean": 1.6375,
-        "max": 2.1214
-      },
-      "frontend_ms": {
-        "best": 7.2839,
-        "median": 7.7643,
-        "mean": 8.8353,
-        "max": 12.8106
-      },
-      "compile_ms": {
-        "best": 195.0806,
-        "median": 213.4796,
-        "mean": 316.6272,
-        "max": 616.736
-      },
-      "artifact_bytes": 16056
+    "strings": {
+      "ofs": {"status": "ok", "ms": 17, "text": "17"},
+      "ofs-interp": {"status": "ok", "ms": 586, "text": "586"},
+      "c": {"status": "ok", "ms": 201, "text": "201"},
+      "rust": {"status": "ok", "ms": 196, "text": "196"},
+      "python": {"status": "ok", "ms": 277, "text": "277"}
     },
-    {
-      "language": "C",
-      "available": true,
-      "correct": true,
-      "checksum": "3488433750000",
-      "cpu_ms": {
-        "best": 109.8335,
-        "median": 123.314,
-        "mean": 123.9871,
-        "max": 141.5229
-      },
-      "memory_rss_kb": {
-        "best": 1280,
-        "median": 1408,
-        "mean": 1408,
-        "max": 1536
-      },
-      "startup_ms": {
-        "best": 1.258,
-        "median": 2.114,
-        "mean": 2.827,
-        "max": 6.671
-      },
-      "frontend_ms": null,
-      "compile_ms": {
-        "best": 90.3023,
-        "median": 100.9211,
-        "mean": 101.3259,
-        "max": 114.7121
-      },
-      "artifact_bytes": 15968
+    "sort": {
+      "ofs": {"status": "ok", "ms": 15, "text": "15"},
+      "ofs-interp": {"status": "ok", "ms": 960, "text": "960"},
+      "c": {"status": "ok", "ms": 7, "text": "7"},
+      "rust": {"status": "ok", "ms": 7, "text": "7"},
+      "python": {"status": "ok", "ms": 162, "text": "162"}
     },
-    {
-      "language": "C++",
-      "available": true,
-      "correct": true,
-      "checksum": "3488433750000",
-      "cpu_ms": {
-        "best": 61.7548,
-        "median": 63.2499,
-        "mean": 70.1963,
-        "max": 91.7118
-      },
-      "memory_rss_kb": {
-        "best": 3328,
-        "median": 3456,
-        "mean": 3430.4,
-        "max": 3456
-      },
-      "startup_ms": {
-        "best": 2.1595,
-        "median": 2.6923,
-        "mean": 2.8409,
-        "max": 4.1852
-      },
-      "frontend_ms": null,
-      "compile_ms": {
-        "best": 407.555,
-        "median": 422.5488,
-        "mean": 832.5529,
-        "max": 2445.6033
-      },
-      "artifact_bytes": 16312
-    },
-    {
-      "language": "Java",
-      "available": true,
-      "correct": true,
-      "checksum": "3488433750000",
-      "cpu_ms": {
-        "best": 108.3117,
-        "median": 108.8063,
-        "mean": 114.6928,
-        "max": 124.8185
-      },
-      "memory_rss_kb": {
-        "best": 44040,
-        "median": 44432,
-        "mean": 44367.2,
-        "max": 44644
-      },
-      "startup_ms": {
-        "best": 51.6913,
-        "median": 54.5153,
-        "mean": 56.4793,
-        "max": 77.963
-      },
-      "frontend_ms": null,
-      "compile_ms": {
-        "best": 652.3106,
-        "median": 813.0463,
-        "mean": 1392.7618,
-        "max": 3934.3475
-      },
-      "artifact_bytes": 671
-    },
-    {
-      "language": "C#",
-      "available": true,
-      "correct": true,
-      "checksum": "3488433750000",
-      "cpu_ms": {
-        "best": 153.5746,
-        "median": 161.684,
-        "mean": 482.4549,
-        "max": 1728.0681
-      },
-      "memory_rss_kb": {
-        "best": 28032,
-        "median": 28204,
-        "mean": 28198.4,
-        "max": 28288
-      },
-      "startup_ms": {
-        "best": 50.7501,
-        "median": 53.2019,
-        "mean": 56.9349,
-        "max": 74.6743
-      },
-      "frontend_ms": null,
-      "compile_ms": {
-        "best": 1830.4553,
-        "median": 1948.8389,
-        "mean": 5100.3516,
-        "max": 17746.2948
-      },
-      "artifact_bytes": 4608
-    },
-    {
-      "language": "Python",
-      "available": true,
-      "correct": true,
-      "checksum": "3488433750000",
-      "cpu_ms": {
-        "best": 4567.4892,
-        "median": 4727.5282,
-        "mean": 5436.4673,
-        "max": 7046.0642
-      },
-      "memory_rss_kb": {
-        "best": 9728,
-        "median": 9856,
-        "mean": 9881.6,
-        "max": 9984
-      },
-      "startup_ms": {
-        "best": 20.6477,
-        "median": 24.4476,
-        "mean": 25.1366,
-        "max": 36.3514
-      },
-      "frontend_ms": null,
-      "compile_ms": {
-        "best": 53.3149,
-        "median": 55.9931,
-        "mean": 70.2252,
-        "max": 132.3296
-      },
-      "artifact_bytes": 625
-    },
-    {
-      "language": "Rust",
-      "available": true,
-      "correct": true,
-      "checksum": "3488433750000",
-      "cpu_ms": {
-        "best": 107.2619,
-        "median": 111.5489,
-        "mean": 130.6391,
-        "max": 209.0076
-      },
-      "memory_rss_kb": {
-        "best": 1920,
-        "median": 2048,
-        "mean": 2022.4,
-        "max": 2048
-      },
-      "startup_ms": {
-        "best": 1.5574,
-        "median": 2.0219,
-        "mean": 1.9442,
-        "max": 2.2829
-      },
-      "frontend_ms": null,
-      "compile_ms": {
-        "best": 153.2266,
-        "median": 170.3448,
-        "mean": 3576.8272,
-        "max": 17144.6316
-      },
-      "artifact_bytes": 4337512
+    "alloc": {
+      "ofs": {"status": "ok", "ms": 17, "text": "17"},
+      "ofs-interp": {"status": "ok", "ms": 787, "text": "787"},
+      "c": {"status": "ok", "ms": 7, "text": "7"},
+      "rust": {"status": "ok", "ms": 9, "text": "9"},
+      "python": {"status": "ok", "ms": 155, "text": "155"}
     }
-  ]
+  },
+  "rss_mb": {
+    "ofs": {"empty": 5.4, "fib": 5.5, "loop": 4.9, "strings": 5.5, "sort": 6.4, "alloc": 5.1},
+    "c": {"empty": 2.0, "fib": 2.0, "loop": 2.0, "strings": 3.3, "sort": 2.3, "alloc": 2.1},
+    "rust": {"empty": 2.1, "fib": 1.9, "loop": 1.9, "strings": 4.2, "sort": 3.0, "alloc": 1.9},
+    "python": {"empty": 9.5, "fib": 9.3, "loop": 9.2, "strings": 11.6, "sort": 13.4, "alloc": 9.5}
+  },
+  "binary_size_bytes": {"ofs": 37312, "c": 12568, "rust": 10440304, "python": null}
 }

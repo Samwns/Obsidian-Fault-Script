@@ -50,6 +50,31 @@ Rotinas auxiliares para manipulação de strings sobre as primitivas do runtime:
 
 O runtime nativo disponibiliza adicionalmente as rotinas `ofs_str_len`, `ofs_str_char_at`, `ofs_str_substr`, `ofs_str_concat`, `ofs_str_eq`, `ofs_str_contains` e conversões numéricas.
 
+### `strbuf.ofs`
+
+Buffer de texto com capacidade que dobra quando enche (anexar é O(1) amortizado). Use quando o texto é montado em muitas etapas ou passa por várias funções:
+
+- `strbuf.create(capacidade)`: cria um `StrBuf` vazio.
+- `strbuf.append(b, texto)`, `strbuf.append_char(b, codigo_byte)`, `strbuf.append_int(b, n)`: anexam ao fim.
+- `strbuf.to_obsidian(b)`: devolve uma **cópia** do conteúdo (a string não muda se o buffer continuar crescendo).
+- `strbuf.length(b)`, `strbuf.clear(b)` (esvazia e mantém a capacidade), `strbuf.release(b)` (devolve a memória).
+
+```ofs
+attach {strbuf}
+
+core main() {
+    forge b: StrBuf = strbuf.create(64)
+    strbuf.append(b, "total: ")
+    strbuf.append_int(b, 42)
+    echo(strbuf.to_obsidian(b))
+    strbuf.release(b)
+}
+```
+
+Só no código nativo por enquanto (usa memória crua do runtime; o `ofs run` ainda não alcança o Rift).
+
+**Strings e memória.** Strings não têm GC nem contagem de referência: `t = s` faz as duas variáveis apontarem para o mesmo texto. O compilador nativo só reaproveita ou libera memória quando prova que ninguém mais vê o valor: `s = s + x` / `s += x` numa variável local que nunca é copiada para outro lugar crescem no lugar; as partes intermediárias de `a + b + c` e um `f(a + b)` cujo parâmetro não é guardado são liberados; arrays locais que não escapam são liberados no fim do escopo. Se a variável for copiada, guardada num campo/array ou passada para uma função que a guarda, tudo continua como antes (cópia nova a cada `+`).
+
 ### `io.ofs`
 
 Entrada e saída no terminal:
@@ -202,7 +227,7 @@ Estruturas utilitárias para montagem e parsing de pacotes de dados binários em
 
 ### `rift.ofs`
 
-Camada para declaração e chamada de funções externas via Foreign Function Interface (FFI) com convenção C ABI.
+Camada do Rift: declaração e chamada de funções nativas de bibliotecas do sistema, pela convenção de chamada do sistema (conhecida tecnicamente como ABI C; não envolve código C).
 
 ### `memory_modes.ofs`
 

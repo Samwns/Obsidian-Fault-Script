@@ -50,6 +50,31 @@ Text manipulation routines built atop runtime primitives:
 
 The native runtime additionally supplies `ofs_str_len`, `ofs_str_char_at`, `ofs_str_substr`, `ofs_str_concat`, `ofs_str_eq`, `ofs_str_contains`, and numeric formatting conversions.
 
+### `strbuf.ofs`
+
+Text buffer whose capacity doubles when full (amortized O(1) append). Use it when text is built in many steps or passes through several functions:
+
+- `strbuf.create(capacity)`: creates an empty `StrBuf`.
+- `strbuf.append(b, text)`, `strbuf.append_char(b, byte_code)`, `strbuf.append_int(b, n)`: append to the end.
+- `strbuf.to_obsidian(b)`: returns a **copy** of the contents (the string does not change if the buffer keeps growing).
+- `strbuf.length(b)`, `strbuf.clear(b)` (empties it, keeps the capacity), `strbuf.release(b)` (frees the memory).
+
+```ofs
+attach {strbuf}
+
+core main() {
+    forge b: StrBuf = strbuf.create(64)
+    strbuf.append(b, "total: ")
+    strbuf.append_int(b, 42)
+    echo(strbuf.to_obsidian(b))
+    strbuf.release(b)
+}
+```
+
+Native code only for now (it uses raw runtime memory; `ofs run` cannot reach the Rift yet).
+
+**Strings and memory.** Strings have no GC or reference counting: `t = s` makes both variables point to the same text. The native compiler only reuses or frees memory when it proves nobody else sees the value: `s = s + x` / `s += x` on a local variable that is never copied elsewhere grow in place; the intermediate parts of `a + b + c` and an `f(a + b)` whose parameter is not stored are freed; local arrays that do not escape are freed at the end of their scope. If the variable is copied, stored in a field/array or passed to a function that keeps it, everything works as before (a new copy on every `+`).
+
 ### `io.ofs`
 
 Terminal and console input/output:
@@ -202,7 +227,7 @@ Binary buffer encoding and decoding for low-level network protocols.
 
 ### `rift.ofs`
 
-Foreign Function Interface (FFI) bindings using the standard C ABI.
+Rift layer: declaring and calling native functions from system libraries through the system calling convention (known technically as the C ABI; it involves no C code).
 
 ### `memory_modes.ofs`
 
