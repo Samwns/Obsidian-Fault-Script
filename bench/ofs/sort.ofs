@@ -2,21 +2,21 @@ vein quick(a: Array<stone>, lo: stone, hi: stone) -> void {
     if (lo >= hi) { return }
     forge m: stone = (lo + hi) / 2
     forge p: stone = a[m]
-    ofs_array_set(a, m, a[hi])
-    ofs_array_set(a, hi, p)
+    a[m] = a[hi]
+    a[hi] = p
     forge s: stone = lo
     forge i: stone = lo
     while (i < hi) {
         if (a[i] < p) {
             forge t: stone = a[i]
-            ofs_array_set(a, i, a[s])
-            ofs_array_set(a, s, t)
+            a[i] = a[s]
+            a[s] = t
             s += 1
         }
         i += 1
     }
-    ofs_array_set(a, hi, a[s])
-    ofs_array_set(a, s, p)
+    a[hi] = a[s]
+    a[s] = p
     quick(a, lo, s - 1)
     quick(a, s + 1, hi)
 }

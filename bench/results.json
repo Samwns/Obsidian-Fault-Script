@@ -1,10 +1,62 @@
 {
-  "date": "2026-11-08", "unit": "ms", "results": {
-    "empty": {"ofs": "3", "ofs-interp": "40", "c": "2", "rust": "2", "python": "13"},
-    "fib": {"ofs": "43", "ofs-interp": "falha (saída 1, sem resultado)", "c": "23", "rust": "23", "python": "918"},
-    "loop": {"ofs": "406", "ofs-interp": "falha (saída 1, sem resultado)", "c": "282", "rust": "281", "python": "11027"},
-    "strings": {"ofs": "10404", "ofs-interp": "falha (saída 1, sem resultado)", "c": "201", "rust": "200", "python": "283"},
-    "sort": {"ofs": "86", "ofs-interp": "falha (saída 1, sem resultado)", "c": "8", "rust": "8", "python": "176"},
-    "alloc": {"ofs": "117", "ofs-interp": "falha (saída 1, sem resultado)", "c": "7", "rust": "9", "python": "154"}
-  }
+  "schema": 3,
+  "date": "2026-11-09",
+  "generated_at_utc": "2026-11-09T08:16:47Z",
+  "machine": {"cpu": "AMD Ryzen 5 5600GT with Radeon Graphics", "threads": 12, "os": "Linux 7.3.1-201.nobara.fc44.x86_64", "arch": "x86_64", "memory_gb": 23.3},
+  "versions": {"ofs": "1.0.169", "clang": "clang version 22.1.8 (Fedora 22.1.8-4.fc44)", "rustc": "rustc 1.99.0 (b940084d7 2026-09-28) (Fedora 1.99.0-1.fc44)", "go": null, "python": "Python 3.14.8"},
+  "method": {"metric": "mediana do tempo de parede", "unit": "ms", "runs": 5, "interp_runs": 1, "interp_timeout_s": 120, "native_timeout_s": 300, "mem_limit_mb": 2048, "c_flags": "clang -O2", "rust_flags": "rustc -O", "reproduce": "bash bench/run.sh"},
+  "benchmarks": ["empty", "fib", "loop", "strings", "sort", "alloc"],
+  "languages": ["ofs", "ofs-interp", "c", "rust", "python"],
+  "language_labels": {"ofs": "OFS nativo", "ofs-interp": "OFS interpretado", "c": "C -O2", "rust": "Rust -O", "go": "Go", "python": "Python 3"},
+  "results": {
+    "empty": {
+      "ofs": {"status": "ok", "ms": 3, "text": "3"},
+      "ofs-interp": {"status": "ok", "ms": 36, "text": "36"},
+      "c": {"status": "ok", "ms": 2, "text": "2"},
+      "rust": {"status": "ok", "ms": 2, "text": "2"},
+      "python": {"status": "ok", "ms": 12, "text": "12"}
+    },
+    "fib": {
+      "ofs": {"status": "ok", "ms": 41, "text": "41"},
+      "ofs-interp": {"status": "ok", "ms": 6035, "text": "6035"},
+      "c": {"status": "ok", "ms": 22, "text": "22"},
+      "rust": {"status": "ok", "ms": 22, "text": "22"},
+      "python": {"status": "ok", "ms": 908, "text": "908"}
+    },
+    "loop": {
+      "ofs": {"status": "ok", "ms": 405, "text": "405"},
+      "ofs-interp": {"status": "ok", "ms": 18126, "text": "18126"},
+      "c": {"status": "ok", "ms": 275, "text": "275"},
+      "rust": {"status": "ok", "ms": 275, "text": "275"},
+      "python": {"status": "ok", "ms": 11300, "text": "11300"}
+    },
+    "strings": {
+      "ofs": {"status": "ok", "ms": 17, "text": "17"},
+      "ofs-interp": {"status": "ok", "ms": 586, "text": "586"},
+      "c": {"status": "ok", "ms": 201, "text": "201"},
+      "rust": {"status": "ok", "ms": 196, "text": "196"},
+      "python": {"status": "ok", "ms": 277, "text": "277"}
+    },
+    "sort": {
+      "ofs": {"status": "ok", "ms": 15, "text": "15"},
+      "ofs-interp": {"status": "ok", "ms": 960, "text": "960"},
+      "c": {"status": "ok", "ms": 7, "text": "7"},
+      "rust": {"status": "ok", "ms": 7, "text": "7"},
+      "python": {"status": "ok", "ms": 162, "text": "162"}
+    },
+    "alloc": {
+      "ofs": {"status": "ok", "ms": 17, "text": "17"},
+      "ofs-interp": {"status": "ok", "ms": 787, "text": "787"},
+      "c": {"status": "ok", "ms": 7, "text": "7"},
+      "rust": {"status": "ok", "ms": 9, "text": "9"},
+      "python": {"status": "ok", "ms": 155, "text": "155"}
+    }
+  },
+  "rss_mb": {
+    "ofs": {"empty": 5.4, "fib": 5.5, "loop": 4.9, "strings": 5.5, "sort": 6.4, "alloc": 5.1},
+    "c": {"empty": 2.0, "fib": 2.0, "loop": 2.0, "strings": 3.3, "sort": 2.3, "alloc": 2.1},
+    "rust": {"empty": 2.1, "fib": 1.9, "loop": 1.9, "strings": 4.2, "sort": 3.0, "alloc": 1.9},
+    "python": {"empty": 9.5, "fib": 9.3, "loop": 9.2, "strings": 11.6, "sort": 13.4, "alloc": 9.5}
+  },
+  "binary_size_bytes": {"ofs": 37312, "c": 12568, "rust": 10440304, "python": null}
 }
