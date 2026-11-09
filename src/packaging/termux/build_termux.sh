@@ -59,7 +59,7 @@ ir "$REPO/ofs/stdlib/runtime/magma.ofs" "$W/magma.ll"
 
 step "ofscc (aarch64-android)"
 ir "$REPO/ofs/ofscc/ofscc.ofs" "$W/ofscc.ll"
-"$NDKCC" --target="$TRIPLE" -O2 -Wno-override-module -Wl,--allow-multiple-definition "$W/ofscc.ll" "$W/magma.o" -lm -o "$W/ofscc"
+"$NDKCC" --target="$TRIPLE" -O2 -Wno-override-module -Wl,--allow-multiple-definition -rdynamic "$W/ofscc.ll" "$W/magma.o" -lm -o "$W/ofscc"
 
 step "montando layout"
 P="$W/pkg"

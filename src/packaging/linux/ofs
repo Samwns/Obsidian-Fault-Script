@@ -17,23 +17,57 @@ if [ -n "${TERMUX_VERSION:-}" ] || case "${PREFIX:-}" in /data/data/com.termux*)
   export OFSCC_TARGET="${OFSCC_TARGET:-aarch64-unknown-linux-android}"
 fi
 
-OFSCC="${OFSCC:-$ROOT/ofscc}"
-if [ "$IS_TERMUX" = true ] && [ ! -x "$OFSCC" ] && [ -x "$TERMUX_LIB/ofscc" ]; then
-  OFSCC="$TERMUX_LIB/ofscc"
-fi
-RUNTIME="${OFS_RUNTIME:-}"
-if [ -z "$RUNTIME" ] && [ "$IS_TERMUX" = true ] && [ -f "$TERMUX_LIB/magma.o" ]; then
-  RUNTIME="$TERMUX_LIB/magma.o"
-fi
-if [ -z "$RUNTIME" ]; then
-  for runtime_candidate in "$ROOT/magma.o" "$ROOT/libofs_runtime.a" "$HOME/.local/lib/ofs/magma.o" "$HOME/.local/lib/ofs/libofs_runtime.a" \
-    "/usr/local/lib/ofs/magma.o" "/usr/local/lib/ofs/libofs_runtime.a" "/usr/lib/ofs/magma.o" "/usr/lib/ofs/libofs_runtime.a"; do
-    if [ -f "$runtime_candidate" ]; then
-      RUNTIME="$runtime_candidate"
-      break
-    fi
+# Resolucao de compilador, runtime e stdlib: sempre do MESMO conjunto.
+# Prioridade: (1) variaveis explicitas OFSCC / OFS_RUNTIME / OFS_STDLIB(_PATH);
+# (2) checkout do repositorio (ofs/dist/ofscc + ofs/dist/magma.o + ofs/stdlib);
+# (3) instalacao ao lado do wrapper (pacote) e Termux $PREFIX/lib/ofs;
+# (4) ~/.local/lib/ofs, /usr/local, /usr/lib/ofs (cada um como conjunto unico).
+# Uma variavel explicita vale so para o seu item; os demais vem do primeiro conjunto completo.
+OFS_SRC_FROM=""
+_set_runtime_in() { # dir -> imprime o runtime desse dir
+  local d="$1" r
+  for r in "$d/magma.o" "$d/libofs_runtime.a"; do [ -f "$r" ] && { printf '%s' "$r"; return 0; }; done
+  return 1
+}
+_set_stdlib_in() { # dir -> imprime a stdlib desse dir
+  local d="$1" s
+  for s in "$d/stdlib" "$d/../ofs/stdlib" "$d/../share/ofs/stdlib"; do
+    [ -d "$s" ] && { (cd "$s" && pwd); return 0; }
   done
-fi
+  return 1
+}
+_pick_set() {
+  local d rt sl
+  RES_CC=""; RES_RT=""; RES_SL=""; RES_FROM=""
+  local repo_root="$ROOT/../../../ofs"
+  if [ -x "$repo_root/dist/ofscc" ] && [ -f "$repo_root/dist/magma.o" ] && [ -d "$repo_root/stdlib" ]; then
+    RES_CC="$(cd "$repo_root/dist" && pwd)/ofscc"; RES_RT="$(cd "$repo_root/dist" && pwd)/magma.o"
+    RES_SL="$(cd "$repo_root/stdlib" && pwd)"; RES_FROM="repositorio"; return 0
+  fi
+  local dirs=("$ROOT")
+  [ "$IS_TERMUX" = true ] && dirs+=("$TERMUX_LIB")
+  dirs+=("$HOME/.local/lib/ofs" "/usr/local/lib/ofs" "/usr/lib/ofs")
+  for d in "${dirs[@]}"; do
+    [ -x "$d/ofscc" ] || continue
+    rt="$(_set_runtime_in "$d")" || continue
+    sl="$(_set_stdlib_in "$d")" || sl=""
+    RES_CC="$d/ofscc"; RES_RT="$rt"; RES_SL="$sl"; RES_FROM="$d"; return 0
+  done
+  return 1
+}
+_pick_set || true
+
+OFS_CC_SRC="padrao"; OFS_RT_SRC="padrao"; OFS_SL_SRC="padrao"
+if [ -n "${OFSCC:-}" ]; then OFS_CC_SRC="OFSCC"; else OFSCC="${RES_CC:-$ROOT/ofscc}"; fi
+RUNTIME="${OFS_RUNTIME:-}"
+if [ -n "$RUNTIME" ]; then OFS_RT_SRC="OFS_RUNTIME"; else RUNTIME="${RES_RT:-}"; fi
+if [ -z "${OFS_STDLIB_PATH:-}" ] && [ -n "${OFS_STDLIB:-}" ]; then OFS_STDLIB_PATH="$OFS_STDLIB"; fi
+if [ -n "${OFS_STDLIB_PATH:-}" ]; then OFS_SL_SRC="OFS_STDLIB"; else OFS_STDLIB_PATH="${RES_SL:-}"; fi
+[ "$OFS_CC_SRC" = padrao ] && OFS_CC_SRC="${RES_FROM:-padrao}"
+[ "$OFS_RT_SRC" = padrao ] && OFS_RT_SRC="${RES_FROM:-padrao}"
+[ "$OFS_SL_SRC" = padrao ] && OFS_SL_SRC="${RES_FROM:-padrao}"
+export OFS_STDLIB_PATH OFS_STDLIB="$OFS_STDLIB_PATH"
+
 
 # Keep bootstrap resource use bounded while allowing callers to tighten the
 # limits. OFSCC_MAX_MEM is bytes (4 GiB by default); CPU time is seconds.
@@ -56,36 +90,6 @@ fi
 ulimit -Sc 0 2>/dev/null || true
 export OFS_RUNTIME="$RUNTIME"
 
-if [ -z "${OFS_STDLIB_PATH:-}" ] && [ -n "${OFS_STDLIB:-}" ]; then
-  export OFS_STDLIB_PATH="$OFS_STDLIB"
-fi
-if [ -z "${OFS_STDLIB:-}" ] && [ -n "${OFS_STDLIB_PATH:-}" ]; then
-  export OFS_STDLIB="$OFS_STDLIB_PATH"
-fi
-
-if [ -z "${OFS_STDLIB_PATH:-}" ]; then
-  if [ "$IS_TERMUX" = true ] && [ -d "$TERMUX_LIB/stdlib" ]; then
-    export OFS_STDLIB_PATH="$TERMUX_LIB/stdlib"
-  elif [ -d "$ROOT/stdlib" ]; then
-    export OFS_STDLIB_PATH="$ROOT/stdlib"
-  elif [ -d "$ROOT/../ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="$ROOT/../ofs/stdlib"
-  elif [ -f "$ROOT/../../../ofs/stdlib/core.ofs" ]; then
-    # wrapper rodando direto do repo (src/packaging/linux/ofs)
-    export OFS_STDLIB_PATH="$(cd "$ROOT/../../../ofs/stdlib" && pwd)"
-  elif [ -d "$HOME/.local/lib/ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="$HOME/.local/lib/ofs/stdlib"
-  elif [ -d "$HOME/.local/share/ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="$HOME/.local/share/ofs/stdlib"
-  elif [ -d "/usr/local/share/ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="/usr/local/share/ofs/stdlib"
-  elif [ -d "/usr/lib/ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="/usr/lib/ofs/stdlib"
-  elif [ -d "/usr/share/ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="/usr/share/ofs/stdlib"
-  fi
-  export OFS_STDLIB="${OFS_STDLIB_PATH:-}"
-fi
 
 env_llvm_ir_flags="${OFS_LLVM_IR_FLAGS:-${LLVM_IR_FLAGS:-}}"
 detect_llvm_ir_flags() {
@@ -279,20 +283,8 @@ native_asm() {
   fi
 }
 
-if [ ! -x "$OFSCC" ] && [ "$IS_TERMUX" = true ] && [ -x "$TERMUX_LIB/ofscc" ]; then
-  OFSCC="$TERMUX_LIB/ofscc"
-fi
-if [ ! -x "$OFSCC" ] && [ -x "$HOME/.local/lib/ofs/ofscc" ]; then
-  OFSCC="$HOME/.local/lib/ofs/ofscc"
-fi
-if [ ! -x "$OFSCC" ] && command -v ofscc >/dev/null 2>&1; then
+if [ ! -x "$OFSCC" ] && [ "$OFS_CC_SRC" != OFSCC ] && command -v ofscc >/dev/null 2>&1; then
   OFSCC="$(command -v ofscc)"
-fi
-if [ ! -x "$OFSCC" ] && [ -x /usr/local/bin/ofscc ]; then
-  OFSCC="/usr/local/bin/ofscc"
-fi
-if [ ! -x "$OFSCC" ] && [ -x /usr/lib/ofs/ofscc ]; then
-  OFSCC="/usr/lib/ofs/ofscc"
 fi
 
 banner() {
@@ -317,7 +309,22 @@ show_version() {
   banner
   printf 'ofs %s - Obsidian Fault Script\n' "$OFS_VERSION"
   printf 'status: stable\n'
+  printf 'compilador: %s (%s)\n' "$OFSCC" "$OFS_CC_SRC"
+  printf 'runtime:    %s (%s)\n' "${OFS_RUNTIME:-?}" "$OFS_RT_SRC"
+  printf 'stdlib:     %s (%s)\n' "${OFS_STDLIB_PATH:-?}" "$OFS_SL_SRC"
 }
+
+# Chave do cache de ferramentas: caminho+mtime do compilador (arg 2, padrao
+# $OFSCC) e do runtime. Ferramenta cacheada com outra toolchain e recompilada.
+toolchain_key() {
+  local f out=""
+  for f in "${1:-$OFSCC}" "${OFS_RUNTIME:-}"; do
+    out="$out$f:$(stat -c %Y "$f" 2>/dev/null || stat -f %m "$f" 2>/dev/null || echo 0);"
+  done
+  printf '%s' "$out"
+}
+tool_stale() { [ "$(cat "$1.key" 2>/dev/null)" != "$(toolchain_key "${2:-}")" ]; }
+tool_stamp() { toolchain_key "${2:-}" > "$1.key"; }
 
 # Cores do help: ativadas por padrao; NO_COLOR (qualquer valor) ou TERM=dumb
 # desligam. Espelha reporter_detect_color() do ofscc.ofs.
@@ -345,13 +352,14 @@ ${c_head}Subcomandos:${c_off}
   ${c_cmd}run <arq.ofs>${c_off}       Executa interpretado (--native compila temporario)
   ${c_cmd}build <arq.ofs>${c_off}     Compila para executavel nativo (-o saida)
   ${c_cmd}check <arq.ofs>${c_off}     Somente verificacao de tipos
-  ${c_cmd}test <arq.ofs>${c_off}      Executa os testes (assay) do arquivo
+  ${c_cmd}test [pasta]${c_off}      Roda *.ofs com .expected numa pasta (--run, --twin)
   ${c_cmd}twin <arq.ofs>${c_off}      Roda interpretado + nativo e compara saidas
-  ${c_cmd}polish <arq.ofs>${c_off}    Verifica estilo e padroes do codigo
+  ${c_cmd}polish <arq.ofs>${c_off}    Sinonimo de fmt (formata/verifica estilo)
   ${c_cmd}language [en|pt|es]${c_off} Mostra/altera o idioma da CLI
   ${c_cmd}ir|asm|tokens|ast${c_off}   Artefatos de depuracao do compilador
   ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o saida.ppm)
   ${c_cmd}doc [pasta|arq.ofs]${c_off} Documentacao gerada do codigo (-o saida, --check, --docs pasta)
+  ${c_cmd}fmt [alvos]${c_off}         Formata .ofs no lugar (--check, --diff, --stdin)
   ${c_cmd}build --target android${c_off} APK Android de um .ofs ou .oal (--install, --serial, --manifest)
   ${c_cmd}run <app.oal>${c_off}       Abre o app OAL numa janela de celular (X11)
   ${c_cmd}clean${c_off}               Limpa artefatos temporarios de build
@@ -372,13 +380,14 @@ ${c_head}Subcomandos:${c_off}
   ${c_cmd}run <arq.ofs>${c_off}       Ejecuta interpretado (--native compila temporal)
   ${c_cmd}build <arq.ofs>${c_off}     Compila a ejecutable nativo (-o salida)
   ${c_cmd}check <arq.ofs>${c_off}     Solo verificacion de tipos
-  ${c_cmd}test <arq.ofs>${c_off}      Ejecuta las pruebas (assay) del archivo
+  ${c_cmd}test [pasta]${c_off}      Ejecuta *.ofs con .expected en una carpeta (--run, --twin)
   ${c_cmd}twin <arq.ofs>${c_off}      Ejecuta interpretado + nativo y compara salidas
-  ${c_cmd}polish <arq.ofs>${c_off}    Verifica estilo y patrones del codigo
+  ${c_cmd}polish <arq.ofs>${c_off}    Sinonimo de fmt (formatea/verifica estilo)
   ${c_cmd}language [en|pt|es]${c_off} Muestra/cambia el idioma de la CLI
   ${c_cmd}ir|asm|tokens|ast${c_off}   Artefactos de depuracion del compilador
   ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o salida.ppm)
   ${c_cmd}doc [carpeta|arq.ofs]${c_off} Documentacion generada del codigo (-o salida, --check, --docs carpeta)
+  ${c_cmd}fmt [destinos]${c_off}      Formatea .ofs en el sitio (--check, --diff, --stdin)
   ${c_cmd}build --target android${c_off} APK Android de un .ofs o .oal (--install, --serial, --manifest)
   ${c_cmd}run <app.oal>${c_off}       Abre la app OAL en una ventana de movil (X11)
   ${c_cmd}clean${c_off}               Limpia artefactos temporales de build
@@ -399,13 +408,14 @@ ${c_head}Subcommands:${c_off}
   ${c_cmd}run <file.ofs>${c_off}      Run interpreted (--native builds a temp binary)
   ${c_cmd}build <file.ofs>${c_off}    Compile to a native executable (-o output)
   ${c_cmd}check <file.ofs>${c_off}    Type-check only (no output)
-  ${c_cmd}test <file.ofs>${c_off}     Run file tests (assay)
+  ${c_cmd}test [folder]${c_off}     Run *.ofs with .expected in a folder (--run, --twin)
   ${c_cmd}twin <file.ofs>${c_off}     Run interpreted + native and diff outputs
-  ${c_cmd}polish <file.ofs>${c_off}   Style and pattern checks
+  ${c_cmd}polish <file.ofs>${c_off}   Alias of fmt (format/check style)
   ${c_cmd}language [en|pt|es]${c_off} Show/change the CLI language
   ${c_cmd}ir|asm|tokens|ast${c_off}   Compiler debug artifacts
   ${c_cmd}ui <file.oll>${c_off}       Render native OLL layout (-o output.ppm)
   ${c_cmd}doc [dir|file.ofs]${c_off}  Docs generated from source code (-o out, --check, --docs dir)
+  ${c_cmd}fmt [targets]${c_off}       Format .ofs in place (--check, --diff, --stdin)
   ${c_cmd}build --target android${c_off} Android APK from a .ofs or .oal (--install, --serial, --manifest)
   ${c_cmd}run <app.oal>${c_off}       Open an OAL app in a phone-sized X11 window
   ${c_cmd}clean${c_off}               Clean temporary build artifacts
@@ -608,13 +618,14 @@ android_tool() {
   local tool_src="$src/tools/$name.ofs"
   [ -f "$tool_src" ] || android_die "$tool_src nao existe"
   local bin="$ANDROID_CACHE/$name"
-  if [ ! -x "$bin" ] || [ -n "$(find "$src/tools" "$OFS_STDLIB_PATH" -name '*.ofs' -newer "$bin" -print -quit)" ]; then
+  if [ ! -x "$bin" ] || tool_stale "$bin" "$A_OFSCC" || [ -n "$(find "$src/tools" "$OFS_STDLIB_PATH" -name '*.ofs' -newer "$bin" -print -quit)" ]; then
     android_step "compilando $name"
     local ll="$ANDROID_CACHE/$name.ll"
     OFSCC_INPUT="$tool_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$A_OFSCC" >"$ANDROID_CACHE/$name.log" 2>&1 \
       || { tail -20 "$ANDROID_CACHE/$name.log" >&2; android_die "falha ao compilar $name"; }
     native_link "$ll" "$bin" linux
     chmod +x "$bin"
+    tool_stamp "$bin" "$A_OFSCC"
     rm -f "$ll"
   fi
   printf '%s\n' "$bin"
@@ -830,13 +841,14 @@ cmd_doc() {
   mkdir -p "$cache"
   local bin="$cache/ofsdoc" tool_src="$src/tools/ofsdoc.ofs"
   [ -f "$tool_src" ] || { echo "ofs doc: $tool_src nao existe" >&2; return 2; }
-  if [ ! -x "$bin" ] || [ -n "$(find "$src/tools" -maxdepth 1 -name 'ofsdoc*.ofs' -newer "$bin" -print -quit)" ]; then
+  if [ ! -x "$bin" ] || tool_stale "$bin" || [ -n "$(find "$src/tools" -maxdepth 1 -name 'ofsdoc*.ofs' -newer "$bin" -print -quit)" ]; then
     echo "ofs doc: compilando a ferramenta (primeira vez)..." >&2
     local ll="$cache/ofsdoc.ll"
     OFSCC_INPUT="$tool_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" >"$cache/ofsdoc.log" 2>&1 \
       || { tail -20 "$cache/ofsdoc.log" >&2; echo "ofs doc: falha ao compilar o ofsdoc" >&2; return 1; }
     native_link "$ll" "$bin" linux
     chmod +x "$bin"
+    tool_stamp "$bin"
     rm -f "$ll"
   fi
   local joined="" i
@@ -847,6 +859,83 @@ cmd_doc() {
   OFSDOC_INPUT="$joined" OFSDOC_OUT="$out" OFSDOC_DOCS="$docs" OFSDOC_CHECK="$check" OFSDOC_DUMP="$dump" \
     OFSDOC_TITLE="$title" OFSDOC_REPO="$repo" OFSDOC_ROOT="$root" OFSDOC_LANG="${lang:-${OFS_LANG:-}}" \
     OFSDOC_ASSETS="$src/tools/ofsdoc" "$bin"
+}
+
+# ofs fmt: formatador (ofs/tools/ofsfmt.ofs, escrito em OFS).
+#   ofs fmt [--check] [--diff] [--stdin] [arquivo.ofs|pasta ...]
+# Sem alvos: a pasta atual. Pastas sao percorridas recursivamente (so .ofs).
+cmd_fmt() {
+  local check=0 diff=0 stdin=0 src
+  local targets=()
+  src="$(android_src_dir)" || { echo "ofs fmt: fonte do OFS (ofs/tools/ofsfmt.ofs) nao encontrado; defina OFS_SOURCE=<repo>/ofs" >&2; return 2; }
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --check) check=1; shift ;;
+      --diff) diff=1; shift ;;
+      --stdin) stdin=1; shift ;;
+      -h|--help) echo "uso: ofs fmt [--check] [--diff] [--stdin] [arquivo.ofs|pasta ...]"; return 0 ;;
+      -*) echo "ofs fmt: opcao desconhecida: $1" >&2; return 2 ;;
+      *) targets+=("$1"); shift ;;
+    esac
+  done
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/ofs/tools"
+  mkdir -p "$cache"
+  local bin="$cache/ofsfmt" tool_src="$src/tools/ofsfmt.ofs"
+  [ -f "$tool_src" ] || { echo "ofs fmt: $tool_src nao existe" >&2; return 2; }
+  if [ ! -x "$bin" ] || tool_stale "$bin" || [ "$tool_src" -nt "$bin" ]; then
+    echo "ofs fmt: compilando a ferramenta (primeira vez)..." >&2
+    local ll="$cache/ofsfmt.ll"
+    OFSCC_INPUT="$tool_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" >"$cache/ofsfmt.log" 2>&1 \
+      || { tail -20 "$cache/ofsfmt.log" >&2; echo "ofs fmt: falha ao compilar o ofsfmt" >&2; return 1; }
+    native_link "$ll" "$bin" linux
+    chmod +x "$bin"
+    tool_stamp "$bin"
+    rm -f "$ll"
+  fi
+  local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/ofsfmt-XXXXXX")"
+  if [ "$stdin" = 1 ]; then
+    cat > "$tmp/in.ofs"
+    OFSFMT_INPUT="$tmp/in.ofs" OFSFMT_OUTPUT="$tmp/out.ofs" "$bin" >&2 || { rm -rf "$tmp"; return 1; }
+    [ -f "$tmp/out.ofs" ] || { rm -rf "$tmp"; echo "ofs fmt: o formatador nao gerou saida" >&2; return 1; }
+    cat "$tmp/out.ofs"
+    rm -rf "$tmp"
+    return 0
+  fi
+  [ "${#targets[@]}" -gt 0 ] || targets=(.)
+  local files=() t f
+  for t in "${targets[@]}"; do
+    if [ -d "$t" ]; then
+      while IFS= read -r f; do files+=("$f"); done < <(find "$t" -type f -name '*.ofs' -not -path '*/.git/*' | LC_ALL=C sort)
+    elif [ -f "$t" ]; then
+      files+=("$t")
+    else
+      echo "ofs fmt: alvo nao encontrado: $t" >&2; rm -rf "$tmp"; return 2
+    fi
+  done
+  local changed=0 failed=0
+  for f in "${files[@]}"; do
+    rm -f "$tmp/out.ofs"
+    OFSFMT_INPUT="$f" OFSFMT_OUTPUT="$tmp/out.ofs" "$bin" >&2
+    if [ ! -f "$tmp/out.ofs" ]; then echo "ofs fmt: falhou em $f" >&2; failed=$((failed + 1)); continue; fi
+    if ! cmp -s "$f" "$tmp/out.ofs"; then
+      changed=$((changed + 1))
+      if [ "$diff" = 1 ]; then
+        diff -u --label "$f" --label "$f (formatado)" "$f" "$tmp/out.ofs" || true
+      elif [ "$check" = 1 ]; then
+        echo "$f"
+      else
+        cat "$tmp/out.ofs" > "$f"
+        echo "formatado: $f"
+      fi
+    fi
+  done
+  rm -rf "$tmp"
+  [ "$failed" -eq 0 ] || return 1
+  if [ "$check" = 1 ] && [ "$changed" -gt 0 ]; then
+    echo "ofs fmt: $changed arquivo(s) precisam de formatacao" >&2
+    return 1
+  fi
+  return 0
 }
 
 need_ofscc() {
@@ -883,11 +972,124 @@ case "$cmd" in
     ;;
 esac
 
+# ---- helpers de twin/test: compila nativo e roda em diretorio limpo ----
+# _ofs_native_build <arq.ofs> <bin> <log> ; retorna 0 se compilou
+_ofs_native_build() {
+  local ll="$2.ll"
+  ( OFSCC_INPUT="$1" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" ) >"$3" 2>&1 || return 1
+  [ -s "$ll" ] || return 1
+  ( native_link "$ll" "$2" linux ) >>"$3" 2>&1 || return 1
+  rm -f "$ll"; [ -f "$2" ] || return 1
+  chmod +x "$2" 2>/dev/null; return 0
+}
+# _ofs_run_native <bin> <dir> <out> <err> ; escreve codigo em $_RC
+_ofs_run_native() {
+  ( cd "$2" && timeout "${OFS_TEST_TIMEOUT:-30}" "$1" </dev/null >"$3" 2>"$4" ) && _RC=0 || _RC=$?
+}
+_ofs_run_interp() {
+  ( cd "$2" && OFSCC_MODE=run OFSCC_INPUT="$1" timeout "${OFS_TEST_TIMEOUT:-30}" "$OFSCC" </dev/null >"$3" 2>"$4" ) && _RC=0 || _RC=$?
+}
+_ofs_norm() { # remove cores, caminhos temporarios e linhas de progresso
+  sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' | sed -E "s#${TMPDIR:-/tmp}/[^ :\"']*#<TMP>#g; s#/tmp/[^ :\"']*#<TMP>#g" |
+    grep -vE '^[[:space:]]*(Parsing|Checking|Forging|Linking|Running|Interpreting)[[:space:]].*(ok|ms)' || true
+}
+
+# ofs twin <arq.ofs>: interpretado x nativo; compara stdout, codigo e stderr.
+# Define _TWIN_MSG com a primeira diferenca; retorna 0 iguais, 1 difere/falha.
+_ofs_twin_core() {
+  local f t; f="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+  t="$(mktemp -d "${TMPDIR:-/tmp}/ofs-twin-XXXXXX")"
+  mkdir -p "$t/n" "$t/i"; _TWIN_MSG=""
+  if ! _ofs_native_build "$f" "$t/bin" "$t/log"; then
+    _TWIN_MSG="nativo nao compilou: $(grep -iE 'error|erro' "$t/log" | head -1 | cut -c1-120)"
+    rm -rf "$t"; return 1
+  fi
+  _ofs_run_native "$t/bin" "$t/n" "$t/n.out" "$t/n.err"; local nrc=$_RC
+  _ofs_run_interp "$f" "$t/i" "$t/i.out" "$t/i.err"; local irc=$_RC
+  _ofs_norm <"$t/n.out" >"$t/n.o"; _ofs_norm <"$t/i.out" >"$t/i.o"
+  _ofs_norm <"$t/n.err" >"$t/n.e"; _ofs_norm <"$t/i.err" >"$t/i.e"
+  local rc=0
+  if [ "$nrc" -ne "$irc" ]; then _TWIN_MSG="codigo de saida: nativo=$nrc interpretado=$irc"; rc=1
+  elif ! cmp -s "$t/n.o" "$t/i.o"; then
+    _TWIN_MSG="stdout difere: $(diff "$t/n.o" "$t/i.o" | grep -m1 '^[<>]' | cut -c1-120)  (< nativo, > interpretado)"; rc=1
+  elif ! cmp -s "$t/n.e" "$t/i.e"; then
+    _TWIN_MSG="stderr difere: $(diff "$t/n.e" "$t/i.e" | grep -m1 '^[<>]' | cut -c1-120)  (< nativo, > interpretado)"; rc=1
+  fi
+  rm -rf "$t"; return $rc
+}
+cmd_twin() {
+  case "${1:-}" in ""|-h|--help) echo "uso: ofs twin <arquivo.ofs>"; [ -n "${1:-}" ] && return 0; return 2 ;; esac
+  [ -f "$1" ] || { echo "ofs twin: arquivo nao encontrado: $1" >&2; return 2; }
+  if _ofs_twin_core "$1"; then echo "iguais: $1"; return 0; fi
+  echo "diferem: $1: $_TWIN_MSG"; return 1
+}
+
+# ofs test [--run] [--twin] [pasta]: *.ofs com .expected ao lado.
+cmd_test() {
+  local mode=native dir="" f
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --run) mode=run; shift ;;
+      --twin) mode=twin; shift ;;
+      -h|--help) echo "uso: ofs test [--run] [--twin] [pasta]   (padrao: ./tests)"; return 0 ;;
+      -*) echo "ofs test: opcao desconhecida: $1" >&2; return 2 ;;
+      *) dir="$1"; shift ;;
+    esac
+  done
+  [ -n "$dir" ] || dir="tests"
+  [ -d "$dir" ] || { echo "ofs test: pasta nao encontrada: $dir" >&2; return 2; }
+  local pass=0 fail=0 total=0 t
+  t="$(mktemp -d "${TMPDIR:-/tmp}/ofs-test-XXXXXX")"
+  while IFS= read -r f; do
+    [ -f "${f%.ofs}.expected" ] || continue
+    f="$(cd "$(dirname "$f")" && pwd)/$(basename "$f")"
+    total=$((total + 1)); rm -rf "$t/w"; mkdir -p "$t/w"
+    local why=""
+    if [ "$mode" = twin ]; then
+      _ofs_twin_core "$f" || why="twin: $_TWIN_MSG"
+    fi
+    if [ -z "$why" ]; then
+      if [ "$mode" = run ]; then
+        _ofs_run_interp "$f" "$t/w" "$t/out" "$t/err"
+      elif _ofs_native_build "$f" "$t/bin" "$t/log"; then
+        _ofs_run_native "$t/bin" "$t/w" "$t/out" "$t/err"
+      else
+        why="nao compilou: $(grep -iE 'error|erro' "$t/log" | head -1 | cut -c1-100)"
+      fi
+    fi
+    if [ -z "$why" ]; then
+      _ofs_norm <"$t/out" >"$t/o"; _ofs_norm <"${f%.ofs}.expected" >"$t/e"
+      cmp -s "$t/o" "$t/e" || why="saida difere do .expected: $(diff "$t/e" "$t/o" | grep -m1 '^[<>]' | cut -c1-100)"
+    fi
+    if [ -z "$why" ]; then pass=$((pass + 1)); echo "ok    $f"
+    else fail=$((fail + 1)); echo "FAIL  $f  ($why)"; fi
+    rm -f "$t/bin" "$t/out" "$t/err"
+  done < <(find "$dir" -name '*.ofs' | sort)
+  rm -rf "$t"
+  echo "resumo: $pass ok, $fail falha(s), $total teste(s)"
+  [ "$fail" -eq 0 ] || return 1
+}
+
 need_ofscc
 shift || true
 
 if [ "$cmd" = doc ]; then
   cmd_doc "$@"
+  exit $?
+fi
+
+if [ "$cmd" = fmt ] || [ "$cmd" = polish ]; then
+  cmd_fmt "$@"
+  exit $?
+fi
+
+if [ "$cmd" = twin ]; then
+  cmd_twin "$@"
+  exit $?
+fi
+
+if [ "$cmd" = test ]; then
+  cmd_test "$@"
   exit $?
 fi
 

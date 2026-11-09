@@ -89,10 +89,35 @@ jobs:
           clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
           cp ofs/dist/magma.ll selfhost/magma.ll
           clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -c selfhost/magma.ll -o selfhost/magma.o
-          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -Wl,--allow-multiple-definition -no-pie -O2 selfhost/ofscc.ll selfhost/magma.o -lm -o selfhost/ofscc
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -Wl,--allow-multiple-definition -no-pie -rdynamic -O2 selfhost/ofscc.ll selfhost/magma.o -lm -o selfhost/ofscc
           chmod +x selfhost/ofscc
           ./selfhost/ofscc --help
           OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check ./selfhost/ofscc
+
+      # Testes bloqueantes: se qualquer suite falhar, o job (e o release) falha.
+      # Os scripts chamam `clang` direto, sem flags; no clang 14 do ubuntu-22.04 o IR
+      # precisa de -opaque-pointers, entao um wrapper no PATH injeta a flag sem editar os scripts.
+      - name: Testes (regress, fmt, diferencial)
+        env:
+          OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
+          OFSCC_BIN: ${{ github.workspace }}/selfhost/ofscc
+          OFSCC: ${{ github.workspace }}/selfhost/ofscc
+          OFS_RUNTIME: ${{ github.workspace }}/selfhost/magma.o
+        run: |
+          set -eo pipefail
+          sed 's/__OFS_VERSION__/ci/g' src/packaging/linux/ofs > selfhost/ofs
+          chmod +x selfhost/ofs
+          export OFS_BIN="$GITHUB_WORKSPACE/selfhost/ofs"
+          if clang --version | grep -Eq 'version 14\.|clang-1400\.'; then
+            REAL_CLANG="$(command -v clang)"
+            mkdir -p "$RUNNER_TEMP/clangwrap"
+            printf '#!/bin/sh\nexec "%s" -mllvm -opaque-pointers "$@"\n' "$REAL_CLANG" > "$RUNNER_TEMP/clangwrap/clang"
+            chmod +x "$RUNNER_TEMP/clangwrap/clang"
+            export PATH="$RUNNER_TEMP/clangwrap:$PATH"
+          fi
+          bash ofs/tests/regress/run.sh
+          bash ofs/tests/fmt/run.sh
+          bash ofs/tests/interpreter/test_differential.sh
 
       - name: Gravar versao nos scripts Linux
         run: |
@@ -152,7 +177,7 @@ jobs:
           LLVM_IR_FLAGS=()
           clang --version | grep -Eq 'version 14\.|clang-1400\.' && LLVM_IR_FLAGS=(-mllvm -opaque-pointers)
           clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -c selfhost/magma.ll -o selfhost/magma.o
-          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -Wl,-multiply_defined,suppress -Wl,-no_pie -O2 selfhost/ofscc.ll selfhost/magma.o -lm -o selfhost/ofscc
+          clang -Wno-override-module "${LLVM_IR_FLAGS[@]}" -Wl,-multiply_defined,suppress -Wl,-no_pie -rdynamic -O2 selfhost/ofscc.ll selfhost/magma.o -lm -o selfhost/ofscc
           chmod +x selfhost/ofscc
           ./selfhost/ofscc --help
           OFSCC_INPUT=ofs/tests/selfhost_stdlib_smoke.ofs OFSCC_MODE=check ./selfhost/ofscc

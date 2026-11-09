@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - src/site/**
+      - bench/results.json
       - docs/**
       - ofs/dist/ofscc.ll
       - ofs/stdlib/odl.ofs
