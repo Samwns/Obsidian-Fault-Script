@@ -15,7 +15,7 @@ vein memory_mode_mid_name() -> obsidian {
 }
 
 vein explain_memory_modes() -> void {
-    echo("fracture = safe pointers")
-    echo("abyss = unrestricted memory")
-    echo("fractal = effect-lifted intermediate mode")
+    echo("fracture/bedrock/abyss/tectonic = blocos comuns (marcadores de baixo nivel, sem GC)")
+    echo("memoria: liberada pelo compilador no fim do escopo (se nao escapa) ou a mao")
+    echo("fractal = modo intermediario (so o nome)")
 }
