@@ -1,0 +1,1328 @@
+// quarry: gerenciador de pacotes do OFS (`ofs quarry`). Escrito em OFS.
+//
+// A pedreira (quarry) de onde se extraem as bibliotecas. O wrapper `ofs quarry`
+// compila esta ferramenta (cache por mtime, como ofsfmt/ofsdoc) e passa:
+//   QUARRY_CMD          subcomando: add, remove, list, search, update, install, publish
+//   QUARRY_ARGS         argumentos, um por linha
+//   QUARRY_CACHE        pasta de cache (downloads e temporarios)
+//   OFS_QUARRY_REGISTRY registro: URL http(s)/file:// ou caminho (arquivo .json ou pasta com registry.json)
+//   OFS_LIB_HOME        onde instalar (padrao ~/.ofs/libs; o `attach` ja procura ali)
+//   OFS_STDLIB_PATH     para avisar quando um modulo do stdlib esconde o pacote
+//   OFS_LANG            idioma das mensagens (pt, en, es)
+// Documentacao: docs/TOOLS.md (secao `ofs quarry`).
+//
+// Arquivos do projeto (na pasta atual):
+//   ofs.claim  manifesto (chave = valor; secao [deps] com as faixas de versao)
+//   ofs.lode   lock: versao exata + sha256 + URL de cada pacote (direto e transitivo)
+// Instalacao: <lib_home>/<pacote>/ (conteudo do .tar.gz) + <lib_home>/<modulo>.ofs,
+// um "veio" de uma linha (`attach {F:<pacote>/<main>}`) para que `attach {modulo}`
+// ache o pacote sem configuracao. <lib_home>/<pacote>/.assay guarda versao e hash.
+// Rede e arquivos: `curl` (http/https), `cp`, `tar`, `mkdir`, `rm` pelo sistema;
+// o sha256 e calculado em OFS (stdlib sha256.ofs).
+
+attach {F:quarry_json.ofs}
+
+forge Q_DEFAULT_REGISTRY: obsidian = "https://raw.githubusercontent.com/Samwns/Obsidian-Fault-Script/main/src/packages/registry.json"
+forge Q_CLAIM: obsidian = "ofs.claim"
+forge Q_LODE: obsidian = "ofs.lode"
+
+forge q_lang: obsidian = "pt"
+forge q_libhome: obsidian = ""
+forge q_cache: obsidian = ""
+forge q_stdlib: obsidian = ""
+forge q_pwd: obsidian = ""
+forge q_registry_src: obsidian = ""
+forge q_reg_base: obsidian = ""
+forge q_reg: stone = -1
+forge q_pkgs: stone = -1
+forge q_args: Array<obsidian> = []
+forge q_failed: bool = false
+
+// ---------------------------------------------------------------- mensagens
+
+vein qm(pt: obsidian, en: obsidian, es: obsidian) -> obsidian {
+    if (ofs_str_eq(q_lang, "en")) { return en }
+    if (ofs_str_eq(q_lang, "es")) { return es }
+    return pt
+}
+
+vein q_say(s: obsidian) -> void {
+    echo("ofs quarry: " + s)
+}
+
+vein q_err(s: obsidian) -> bool {
+    echo("ofs quarry: " + qm("erro: ", "error: ", "error: ") + s)
+    q_failed = true
+    return false
+}
+
+vein q_arg(i: stone) -> obsidian {
+    if (i >= ofs_array_len(q_args)) { return "" }
+    return q_args[i]
+}
+
+vein q_opt(name: obsidian) -> obsidian {
+    forge i = 0
+    while (i < ofs_array_len(q_args)) {
+        forge a: obsidian = q_args[i]
+        if (ofs_str_eq(a, name)) { return q_arg(i + 1) }
+        if (qt_starts(a, name + "=")) { return qt_tail(a, ofs_str_len(name) + 1) }
+        i++
+    }
+    return ""
+}
+
+// argumentos posicionais (pula --opcao valor)
+vein q_positional(k: stone) -> obsidian {
+    forge n = 0
+    forge i = 0
+    while (i < ofs_array_len(q_args)) {
+        forge a: obsidian = q_args[i]
+        if (qt_starts(a, "--")) {
+            if (!qt_has(a, "=")) { i++ }
+        } else {
+            if (n == k) { return a }
+            n++
+        }
+        i++
+    }
+    return ""
+}
+
+vein q_abs(p: obsidian) -> obsidian {
+    if (qt_starts(p, "/")) { return p }
+    if (qt_starts(p, "./")) { return q_pwd + "/" + qt_tail(p, 2) }
+    return q_pwd + "/" + p
+}
+
+// nome do modulo do `attach`: hifen vira sublinhado (terminal-colors -> terminal_colors)
+vein q_module(name: obsidian) -> obsidian {
+    return qt_replace(qt_replace(name, "-", "_"), ".", "_")
+}
+
+// ---------------------------------------------------------------- formato chave = valor
+
+forge ln_kind: stone = 0     // 0 vazio/comentario, 1 [secao], 2 chave = valor
+forge ln_a: obsidian = ""
+forge ln_b: obsidian = ""
+
+vein q_parse_line(raw: obsidian) -> void {
+    forge s = qt_trim(raw)
+    ln_kind = 0
+    ln_a = ""
+    ln_b = ""
+    if (ofs_str_len(s) == 0 || qt_starts(s, "#")) { return }
+    if (qt_starts(s, "[") && qt_ends(s, "]")) {
+        ln_kind = 1
+        ln_a = qt_trim(qt_sub(s, 1, ofs_str_len(s) - 1))
+        return
+    }
+    forge eq = qt_find(s, "=", 0)
+    if (eq < 0) { return }
+    ln_kind = 2
+    ln_a = qt_trim(qt_sub(s, 0, eq))
+    ln_b = qt_trim(qt_tail(s, eq + 1))
+    forge n = ofs_str_len(ln_b)
+    if (n >= 2 && ofs_str_char_at(ln_b, 0) == 34 && ofs_str_char_at(ln_b, n - 1) == 34) {
+        ln_b = qt_sub(ln_b, 1, n - 1)
+    }
+}
+
+// ---------------------------------------------------------------- manifesto (ofs.claim)
+
+forge cl_lines: Array<obsidian> = []
+forge cl_ok: bool = false
+
+vein cl_load(path: obsidian) -> bool {
+    cl_lines = []
+    cl_ok = false
+    if (!qt_exists(path)) { return false }
+    cl_lines = qt_lines(qt_read(path))
+    cl_ok = true
+    return true
+}
+
+vein cl_get(sec: obsidian, key: obsidian) -> obsidian {
+    forge cur = ""
+    forge i = 0
+    while (i < ofs_array_len(cl_lines)) {
+        q_parse_line(cl_lines[i])
+        if (ln_kind == 1) { cur = ln_a }
+        if (ln_kind == 2 && ofs_str_eq(cur, sec) && ofs_str_eq(ln_a, key)) { return ln_b }
+        i++
+    }
+    return ""
+}
+
+forge kv_k: Array<obsidian> = []
+forge kv_v: Array<obsidian> = []
+
+// pares da secao `sec` em kv_k/kv_v
+vein cl_pairs(sec: obsidian) -> stone {
+    kv_k = []
+    kv_v = []
+    forge cur = ""
+    forge i = 0
+    while (i < ofs_array_len(cl_lines)) {
+        q_parse_line(cl_lines[i])
+        if (ln_kind == 1) { cur = ln_a }
+        if (ln_kind == 2 && ofs_str_eq(cur, sec)) {
+            ofs_array_push(kv_k, ln_a)
+            ofs_array_push(kv_v, ln_b)
+        }
+        i++
+    }
+    return ofs_array_len(kv_k)
+}
+
+// define `key = val` na secao (troca a linha existente ou insere no fim da secao)
+vein cl_set(sec: obsidian, key: obsidian, val: obsidian) -> void {
+    forge cur = ""
+    forge last = -1
+    forge has_sec = ofs_str_eq(sec, "")
+    forge i = 0
+    while (i < ofs_array_len(cl_lines)) {
+        q_parse_line(cl_lines[i])
+        if (ln_kind == 1) {
+            cur = ln_a
+            if (ofs_str_eq(cur, sec)) {
+                has_sec = true
+                last = i
+            }
+        }
+        if (ln_kind == 2 && ofs_str_eq(cur, sec)) {
+            if (ofs_str_eq(ln_a, key)) {
+                cl_lines[i] = key + " = " + val
+                return
+            }
+            last = i
+        }
+        i++
+    }
+    forge line = key + " = " + val
+    if (!has_sec) {
+        if (ofs_array_len(cl_lines) > 0) {
+            forge lastl: obsidian = cl_lines[ofs_array_len(cl_lines) - 1]
+            if (ofs_str_len(qt_trim(lastl)) > 0) { ofs_array_push(cl_lines, "") }
+        }
+        ofs_array_push(cl_lines, "[" + sec + "]")
+        ofs_array_push(cl_lines, line)
+        return
+    }
+    if (last < 0) { last = -1 }
+    forge out: Array<obsidian> = []
+    i = 0
+    if (last < 0) { ofs_array_push(out, line) }
+    while (i < ofs_array_len(cl_lines)) {
+        ofs_array_push(out, cl_lines[i])
+        if (i == last) { ofs_array_push(out, line) }
+        i++
+    }
+    cl_lines = out
+}
+
+vein cl_del(sec: obsidian, key: obsidian) -> bool {
+    forge cur = ""
+    forge out: Array<obsidian> = []
+    forge hit = false
+    forge i = 0
+    while (i < ofs_array_len(cl_lines)) {
+        q_parse_line(cl_lines[i])
+        if (ln_kind == 1) { cur = ln_a }
+        if (ln_kind == 2 && ofs_str_eq(cur, sec) && ofs_str_eq(ln_a, key)) {
+            hit = true
+        } else {
+            ofs_array_push(out, cl_lines[i])
+        }
+        i++
+    }
+    cl_lines = out
+    return hit
+}
+
+vein cl_save(path: obsidian) -> bool {
+    forge s = ""
+    forge i = 0
+    while (i < ofs_array_len(cl_lines)) {
+        s = s + cl_lines[i] + "\n"
+        i++
+    }
+    return qt_write(path, s)
+}
+
+vein cl_new() -> void {
+    forge nm = q_module(ofs_str_lower(qt_basename(q_pwd)))
+    nm = qt_replace(nm, "_", "-")
+    if (!qt_safe_name(nm)) { nm = "projeto" }
+    cl_lines = []
+    ofs_array_push(cl_lines, "# ofs.claim: manifesto do projeto (ofs quarry). Faixas: ^1.2, ~1.2.3, 1.x, 1.2.3")
+    ofs_array_push(cl_lines, "name = " + nm)
+    ofs_array_push(cl_lines, "version = 0.1.0")
+    ofs_array_push(cl_lines, "")
+    ofs_array_push(cl_lines, "[deps]")
+    cl_ok = true
+}
+
+// ---------------------------------------------------------------- lock (ofs.lode)
+
+forge lk_name: Array<obsidian> = []
+forge lk_ver: Array<obsidian> = []
+forge lk_sha: Array<obsidian> = []
+forge lk_url: Array<obsidian> = []
+forge lk_main: Array<obsidian> = []
+forge lk_deps: Array<obsidian> = []
+forge lk_ok: bool = false
+
+vein lk_load(path: obsidian) -> bool {
+    lk_name = []
+    lk_ver = []
+    lk_sha = []
+    lk_url = []
+    lk_main = []
+    lk_deps = []
+    lk_ok = false
+    if (!qt_exists(path)) { return false }
+    forge lines = qt_lines(qt_read(path))
+    forge cur = -1
+    forge i = 0
+    while (i < ofs_array_len(lines)) {
+        q_parse_line(lines[i])
+        if (ln_kind == 1) {
+            ofs_array_push(lk_name, ln_a)
+            ofs_array_push(lk_ver, "")
+            ofs_array_push(lk_sha, "")
+            ofs_array_push(lk_url, "")
+            ofs_array_push(lk_main, "")
+            ofs_array_push(lk_deps, "")
+            cur = ofs_array_len(lk_name) - 1
+        }
+        if (ln_kind == 2 && cur >= 0) {
+            if (ofs_str_eq(ln_a, "version")) { lk_ver[cur] = ln_b }
+            if (ofs_str_eq(ln_a, "sha256")) { lk_sha[cur] = ln_b }
+            if (ofs_str_eq(ln_a, "url")) { lk_url[cur] = ln_b }
+            if (ofs_str_eq(ln_a, "main")) { lk_main[cur] = ln_b }
+            if (ofs_str_eq(ln_a, "deps")) { lk_deps[cur] = ln_b }
+        }
+        i++
+    }
+    lk_ok = true
+    return true
+}
+
+vein lk_idx(name: obsidian) -> stone {
+    forge i = 0
+    while (i < ofs_array_len(lk_name)) {
+        forge n: obsidian = lk_name[i]
+        if (ofs_str_eq(n, name)) { return i }
+        i++
+    }
+    return -1
+}
+
+// "a ^1.0, b ~2.1" -> nomes
+vein q_dep_names(deps: obsidian) -> Array<obsidian> {
+    forge out: Array<obsidian> = []
+    forge parts = qt_split(deps, 44)
+    forge i = 0
+    while (i < ofs_array_len(parts)) {
+        forge p: obsidian = parts[i]
+        forge sp = qt_find(p, " ", 0)
+        if (sp < 0) { ofs_array_push(out, p) } else { ofs_array_push(out, qt_sub(p, 0, sp)) }
+        i++
+    }
+    return out
+}
+
+// ---------------------------------------------------------------- registro
+
+vein q_is_url(u: obsidian) -> bool {
+    return qt_starts(u, "http://") || qt_starts(u, "https://")
+}
+
+// baixa/copia `src` (http(s), file:// ou caminho) para `dest`
+vein q_fetch(src: obsidian, dest: obsidian) -> bool {
+    qt_rm(dest)
+    if (q_is_url(src)) {
+        forge rc = system("curl -fsSL --retry 2 --connect-timeout 20 -o " + qt_sq(dest) + " " + qt_sq(src) + " 2>/dev/null")
+        return rc == 0 && qt_exists(dest)
+    }
+    forge p = src
+    if (qt_starts(p, "file://")) { p = qt_tail(p, 7) }
+    if (!qt_exists(p)) { return false }
+    return system("cp -f " + qt_sq(p) + " " + qt_sq(dest)) == 0
+}
+
+vein q_resolve_url(u: obsidian) -> obsidian {
+    if (q_is_url(u) || qt_starts(u, "file://") || qt_starts(u, "/")) { return u }
+    return q_reg_base + u
+}
+
+vein q_load_registry() -> bool {
+    if (q_reg >= 0) { return true }
+    forge src = q_opt("--registry")
+    if (ofs_str_len(src) == 0) { src = qt_env("OFS_QUARRY_REGISTRY") }
+    if (ofs_str_len(src) == 0) { src = Q_DEFAULT_REGISTRY }
+    if (qt_starts(src, "file://")) { src = qt_tail(src, 7) }
+    forge text = ""
+    if (q_is_url(src)) {
+        q_registry_src = src
+        q_reg_base = qt_sub(src, 0, qt_rfind_char(src, 47) + 1)
+        forge dest = q_cache + "/registry.json"
+        if (!q_fetch(src, dest)) { return q_err(qm("nao consegui baixar o registro ", "could not download the registry ", "no pude descargar el registro ") + src) }
+        text = qt_read(dest)
+    } else {
+        src = q_abs(src)
+        if (qt_is_dir(src)) { src = src + "/registry.json" }
+        q_registry_src = src
+        q_reg_base = qt_dirname(src) + "/"
+        if (!qt_exists(src)) { return q_err(qm("registro nao encontrado: ", "registry not found: ", "registro no encontrado: ") + src) }
+        text = qt_read(src)
+    }
+    q_reg = qj_parse(text)
+    if (q_reg < 0) { return q_err(qm("registro invalido (", "invalid registry (", "registro invalido (") + qj_err + "): " + src) }
+    q_pkgs = qj_get(q_reg, "packages")
+    if (q_pkgs < 0) { q_pkgs = qj_get(q_reg, "src/packages") }
+    if (q_pkgs < 0) { return q_err(qm("registro sem \"packages\": ", "registry without \"packages\": ", "registro sin \"packages\": ") + src) }
+    return true
+}
+
+vein q_reg_pkg(name: obsidian) -> stone {
+    forge kids = qj_children(q_pkgs)
+    forge i = 0
+    while (i < ofs_array_len(kids)) {
+        if (ofs_str_eq(qj_gets(kids[i], "name"), name)) { return kids[i] }
+        i++
+    }
+    return -1
+}
+
+vein q_entry(pkg: stone, ver: obsidian) -> stone {
+    return qj_get(qj_get(pkg, "versions"), ver)
+}
+
+// versao instalavel: tem sha256 e um arquivo/URL
+vein q_entry_ok(e: stone) -> bool {
+    return e >= 0 && ofs_str_len(qj_gets(e, "sha256")) == 64 && (ofs_str_len(qj_gets(e, "url")) > 0 || ofs_str_len(qj_gets(e, "file")) > 0)
+}
+
+// "a ^1.0, b ~2.1" a partir de "deps": { "a": "^1.0", ... }
+vein q_entry_deps(e: stone) -> obsidian {
+    forge out = ""
+    forge kids = qj_children(qj_get(e, "deps"))
+    forge i = 0
+    while (i < ofs_array_len(kids)) {
+        if (i > 0) { out = out + ", " }
+        out = out + qj_key[kids[i]] + " " + qj_str(kids[i])
+        i++
+    }
+    return out
+}
+
+vein q_latest(pkg: stone, channel: obsidian) -> obsidian {
+    forge v = qj_gets(qj_get(pkg, "channels"), channel)
+    if (ofs_str_len(v) > 0 || !ofs_str_eq(channel, "latest")) { return v }
+    forge best = ""
+    forge kids = qj_children(qj_get(pkg, "versions"))
+    forge i = 0
+    while (i < ofs_array_len(kids)) {
+        forge k: obsidian = qj_key[kids[i]]
+        if (q_entry_ok(kids[i]) && (ofs_str_len(best) == 0 || qv_cmp(k, best) > 0)) { best = k }
+        i++
+    }
+    return best
+}
+
+// ---------------------------------------------------------------- resolucao
+
+forge rs_name: Array<obsidian> = []
+forge rs_ver: Array<obsidian> = []
+forge rs_entry: Array<stone> = []
+forge ct_pkg: Array<obsidian> = []
+forge ct_range: Array<obsidian> = []
+forge ct_from: Array<obsidian> = []
+
+vein rs_idx(name: obsidian) -> stone {
+    forge i = 0
+    while (i < ofs_array_len(rs_name)) {
+        forge n: obsidian = rs_name[i]
+        if (ofs_str_eq(n, name)) { return i }
+        i++
+    }
+    return -1
+}
+
+vein q_ct_desc(name: obsidian) -> obsidian {
+    forge out = ""
+    forge i = 0
+    while (i < ofs_array_len(ct_pkg)) {
+        forge p: obsidian = ct_pkg[i]
+        if (ofs_str_eq(p, name)) {
+            if (ofs_str_len(out) > 0) { out = out + "; " }
+            out = out + ct_range[i] + " (" + qm("pedido por ", "required by ", "pedido por ") + ct_from[i] + ")"
+        }
+        i++
+    }
+    return out
+}
+
+// maior versao instalavel que satisfaz todas as faixas; a do lock vence se servir
+vein q_choose(name: obsidian, pkg: stone, prefer: obsidian) -> obsidian {
+    forge best = ""
+    forge kids = qj_children(qj_get(pkg, "versions"))
+    forge i = 0
+    while (i < ofs_array_len(kids)) {
+        forge v: obsidian = qj_key[kids[i]]
+        forge ok = q_entry_ok(kids[i])
+        forge j = 0
+        while (ok && j < ofs_array_len(ct_pkg)) {
+            forge p: obsidian = ct_pkg[j]
+            if (ofs_str_eq(p, name) && !qv_ok(ct_range[j], v)) { ok = false }
+            j++
+        }
+        if (ok) {
+            if (ofs_str_eq(v, prefer)) { return v }
+            if (ofs_str_len(best) == 0 || qv_cmp(v, best) > 0) { best = v }
+        }
+        i++
+    }
+    return best
+}
+
+// resolve as dependencias do manifesto. `free`: "" usa o lock sempre que der,
+// "*" ignora o lock, ou o nome de um pacote que pode subir de versao.
+vein q_resolve(free: obsidian) -> bool {
+    rs_name = []
+    rs_ver = []
+    rs_entry = []
+    ct_pkg = []
+    ct_range = []
+    ct_from = []
+    forge queue: Array<obsidian> = []
+    forge n = cl_pairs("deps")
+    forge i = 0
+    while (i < n) {
+        ofs_array_push(ct_pkg, kv_k[i])
+        ofs_array_push(ct_range, kv_v[i])
+        ofs_array_push(ct_from, Q_CLAIM)
+        ofs_array_push(queue, kv_k[i])
+        i++
+    }
+    forge qi = 0
+    while (qi < ofs_array_len(queue)) {
+        forge name: obsidian = queue[qi]
+        qi++
+        if (!qt_safe_name(name)) { return q_err(qm("nome de pacote invalido: ", "invalid package name: ", "nombre de paquete invalido: ") + name) }
+        forge pkg = q_reg_pkg(name)
+        if (pkg < 0) { return q_err(qm("pacote nao existe no registro: ", "package not in the registry: ", "el paquete no existe en el registro: ") + name + " (" + q_registry_src + ")") }
+        forge prefer = ""
+        forge li = lk_idx(name)
+        if (li >= 0 && !ofs_str_eq(free, "*") && !ofs_str_eq(free, name)) { prefer = lk_ver[li] }
+        forge pick = q_choose(name, pkg, prefer)
+        if (ofs_str_len(pick) == 0) {
+            return q_err(qm("conflito: nenhuma versao de ", "conflict: no version of ", "conflicto: ninguna version de ") + name + qm(" satisfaz ", " satisfies ", " satisface ") + q_ct_desc(name))
+        }
+        forge ri = rs_idx(name)
+        if (ri >= 0) {
+            forge cur: obsidian = rs_ver[ri]
+            if (ofs_str_eq(cur, pick)) { continue }
+            rs_ver[ri] = pick
+            rs_entry[ri] = q_entry(pkg, pick)
+        } else {
+            ofs_array_push(rs_name, name)
+            ofs_array_push(rs_ver, pick)
+            ofs_array_push(rs_entry, q_entry(pkg, pick))
+        }
+        forge deps = qj_children(qj_get(q_entry(pkg, pick), "deps"))
+        forge d = 0
+        while (d < ofs_array_len(deps)) {
+            ofs_array_push(ct_pkg, qj_key[deps[d]])
+            ofs_array_push(ct_range, qj_str(deps[d]))
+            ofs_array_push(ct_from, name + "@" + pick)
+            ofs_array_push(queue, qj_key[deps[d]])
+            d++
+        }
+    }
+    return true
+}
+
+// ---------------------------------------------------------------- instalacao
+
+vein q_assay_path(name: obsidian) -> obsidian {
+    return q_libhome + "/" + name + "/.assay"
+}
+
+vein q_installed(name: obsidian, key: obsidian) -> obsidian {
+    forge p = q_assay_path(name)
+    if (!qt_exists(p)) { return "" }
+    forge lines = qt_lines(qt_read(p))
+    forge i = 0
+    while (i < ofs_array_len(lines)) {
+        q_parse_line(lines[i])
+        if (ln_kind == 2 && ofs_str_eq(ln_a, key)) { return ln_b }
+        i++
+    }
+    return ""
+}
+
+vein q_stub_path(name: obsidian) -> obsidian {
+    return q_libhome + "/" + q_module(name) + ".ofs"
+}
+
+vein q_stub_ours(path: obsidian) -> bool {
+    return qt_starts(qt_read(path), "// ofs quarry:")
+}
+
+vein q_uninstall(name: obsidian) -> void {
+    qt_rm(q_libhome + "/" + name)
+    forge stub = q_stub_path(name)
+    if (qt_exists(stub) && q_stub_ours(stub)) { qt_rm(stub) }
+}
+
+// confere a lista do tar: nada absoluto nem com ".."
+vein q_tar_safe(archive: obsidian) -> bool {
+    forge lst = q_cache + "/quarry_list.txt"
+    if (system("tar -tzf " + qt_sq(archive) + " > " + qt_sq(lst) + " 2>/dev/null") != 0) { return false }
+    forge lines = qt_lines(qt_read(lst))
+    qt_rm(lst)
+    forge i = 0
+    while (i < ofs_array_len(lines)) {
+        forge l: obsidian = lines[i]
+        if (qt_starts(l, "/") || ofs_str_eq(l, "..") || qt_starts(l, "../") || qt_has(l, "/../") || qt_ends(l, "/..")) { return false }
+        i++
+    }
+    return true
+}
+
+vein q_extract(name: obsidian, ver: obsidian, sha: obsidian, url: obsidian, archive: obsidian, mainf: obsidian) -> bool {
+    if (!q_tar_safe(archive)) { return q_err(qm("pacote com caminhos inseguros (absolutos ou '..'): ", "package with unsafe paths (absolute or '..'): ", "paquete con rutas inseguras (absolutas o '..'): ") + name) }
+    forge tmp = q_libhome + "/." + name + ".quarry-tmp"
+    qt_rm(tmp)
+    qt_mkdirs(tmp)
+    if (system("tar -xzf " + qt_sq(archive) + " -C " + qt_sq(tmp) + " --no-same-owner 2>/dev/null") != 0) {
+        qt_rm(tmp)
+        return q_err(qm("falha ao extrair ", "failed to extract ", "fallo al extraer ") + archive)
+    }
+    if (!qt_exists(tmp + "/" + mainf)) {
+        qt_rm(tmp)
+        return q_err(name + "@" + ver + qm(": o arquivo principal nao esta no pacote: ", ": main file is missing from the package: ", ": el archivo principal no esta en el paquete: ") + mainf)
+    }
+    forge dest = q_libhome + "/" + name
+    qt_rm(dest)
+    system("mv " + qt_sq(tmp) + " " + qt_sq(dest))
+    qt_write(dest + "/.assay", "# ofs quarry: o que foi extraido e conferido\nname = " + name + "\nversion = " + ver + "\nsha256 = " + sha + "\nurl = " + url + "\nmain = " + mainf + "\n")
+    forge stub = q_stub_path(name)
+    if (qt_exists(stub) && !q_stub_ours(stub)) {
+        q_say(qm("aviso: substituindo ", "warning: replacing ", "aviso: reemplazando ") + stub + qm(" (nao era do quarry)", " (not created by quarry)", " (no era de quarry)"))
+    }
+    qt_write(stub, "// ofs quarry: " + name + " " + ver + " (gerado; `ofs quarry remove " + name + "` apaga)\nattach {F:" + name + "/" + mainf + "}\n")
+    if (ofs_str_len(q_stdlib) > 0 && qt_exists(q_stdlib + "/" + q_module(name) + ".ofs")) {
+        q_say(qm("aviso: o stdlib tem ", "warning: the stdlib has ", "aviso: el stdlib tiene ") + q_module(name) + ".ofs" + qm(" e ele vem primeiro no `attach {", " and it comes first in `attach {", " y viene primero en `attach {") + q_module(name) + qm("}`; use `attach {F:", "}`; use `attach {F:", "}`; use `attach {F:") + name + "/" + mainf + "}`")
+    }
+    return true
+}
+
+// baixa (ou usa o cache), confere o sha256 e instala. `urls`: candidatas em ordem.
+vein q_install_pkg(name: obsidian, ver: obsidian, sha: obsidian, mainf: obsidian, urls: Array<obsidian>) -> obsidian {
+    if (ofs_str_len(sha) != 64) {
+        q_err(name + "@" + ver + qm(": sem sha256", ": no sha256", ": sin sha256"))
+        return ""
+    }
+    if (ofs_str_eq(q_installed(name, "version"), ver) && ofs_str_eq(q_installed(name, "sha256"), sha) && qt_exists(q_libhome + "/" + name + "/" + mainf) && qt_exists(q_stub_path(name))) {
+        return q_installed(name, "url")
+    }
+    forge archive = q_cache + "/" + name + "-" + ver + ".tar.gz"
+    forge used = ""
+    if (qt_exists(archive) && ofs_str_eq(sha256.file(archive), sha)) {
+        used = q_installed(name, "url")
+        if (ofs_str_len(used) == 0 && ofs_array_len(urls) > 0) { used = urls[0] }
+    } else {
+        forge part = archive + ".part"
+        forge i = 0
+        while (i < ofs_array_len(urls) && ofs_str_len(used) == 0) {
+            forge u: obsidian = urls[i]
+            if (q_fetch(u, part)) {
+                forge got = sha256.file(part)
+                if (!ofs_str_eq(got, sha)) {
+                    qt_rm(part)
+                    q_err(qm("sha256 nao confere para ", "sha256 mismatch for ", "sha256 no coincide para ") + name + "@" + ver + " (" + u + ")\n  " + qm("esperado ", "expected ", "esperado ") + sha + "\n  " + qm("obtido   ", "got      ", "obtenido ") + got + "\n  " + qm("pacote recusado", "package refused", "paquete rechazado"))
+                    return ""
+                }
+                system("mv -f " + qt_sq(part) + " " + qt_sq(archive))
+                used = u
+            }
+            i++
+        }
+        if (ofs_str_len(used) == 0) {
+            forge tried = ""
+            forge j = 0
+            while (j < ofs_array_len(urls)) {
+                tried = tried + "\n    " + urls[j]
+                j++
+            }
+            q_err(qm("nao consegui baixar ", "could not download ", "no pude descargar ") + name + "@" + ver + qm("; tentei:", "; tried:", "; intente:") + tried)
+            return ""
+        }
+    }
+    if (!q_extract(name, ver, sha, used, archive, mainf)) { return "" }
+    q_say(qm("extraido ", "extracted ", "extraido ") + name + " " + ver + " -> " + q_libhome + "/" + name)
+    return used
+}
+
+forge rs_url: Array<obsidian> = []
+forge rs_sha: Array<obsidian> = []
+forge rs_main: Array<obsidian> = []
+forge rs_deps: Array<obsidian> = []
+
+// instala tudo o que foi resolvido (rs_*), conferindo com o lock quando houver
+vein q_install_resolved() -> bool {
+    rs_url = []
+    rs_sha = []
+    rs_main = []
+    rs_deps = []
+    forge i = 0
+    while (i < ofs_array_len(rs_name)) {
+        forge name: obsidian = rs_name[i]
+        forge ver: obsidian = rs_ver[i]
+        forge e = rs_entry[i]
+        forge sha = qj_gets(e, "sha256")
+        forge mainf = qj_gets(e, "main")
+        forge urls: Array<obsidian> = []
+        forge li = lk_idx(name)
+        if (li >= 0 && ofs_str_eq(lk_ver[li], ver)) {
+            forge lsha: obsidian = lk_sha[li]
+            if (!ofs_str_eq(lsha, sha)) {
+                return q_err(qm("o sha256 de ", "the sha256 of ", "el sha256 de ") + name + "@" + ver + qm(" no registro difere do ofs.lode (registro alterado?)", " in the registry differs from ofs.lode (registry changed?)", " en el registro difiere de ofs.lode (registro alterado?)") + "\n  ofs.lode " + lsha + "\n  registro " + sha)
+            }
+            if (ofs_str_len(lk_url[li]) > 0) { ofs_array_push(urls, lk_url[li]) }
+        }
+        // registro local: o arquivo ao lado dele vem antes da URL (sem rede)
+        forge u = qj_gets(e, "url")
+        forge f = qj_gets(e, "file")
+        forge local = !q_is_url(q_reg_base)
+        if (ofs_str_len(u) > 0 && !local) { ofs_array_push(urls, q_resolve_url(u)) }
+        if (ofs_str_len(f) > 0) {
+            ofs_array_push(urls, q_reg_base + "dist/" + f)
+            ofs_array_push(urls, q_reg_base + f)
+        }
+        if (ofs_str_len(u) > 0 && local) { ofs_array_push(urls, q_resolve_url(u)) }
+        if (ofs_str_len(mainf) == 0) { mainf = "libs/" + q_module(name) + ".ofs" }
+        forge used = q_install_pkg(name, ver, sha, mainf, urls)
+        if (ofs_str_len(used) == 0) { return false }
+        ofs_array_push(rs_url, used)
+        ofs_array_push(rs_sha, sha)
+        ofs_array_push(rs_main, mainf)
+        ofs_array_push(rs_deps, q_entry_deps(e))
+        i++
+    }
+    return true
+}
+
+// instala exatamente o que o lock diz (sem registro)
+vein q_install_lock() -> bool {
+    rs_name = []
+    rs_ver = []
+    rs_url = []
+    rs_sha = []
+    rs_main = []
+    rs_deps = []
+    forge i = 0
+    while (i < ofs_array_len(lk_name)) {
+        forge urls: Array<obsidian> = []
+        ofs_array_push(urls, lk_url[i])
+        forge used = q_install_pkg(lk_name[i], lk_ver[i], lk_sha[i], lk_main[i], urls)
+        if (ofs_str_len(used) == 0) { return false }
+        ofs_array_push(rs_name, lk_name[i])
+        ofs_array_push(rs_ver, lk_ver[i])
+        ofs_array_push(rs_url, used)
+        ofs_array_push(rs_sha, lk_sha[i])
+        ofs_array_push(rs_main, lk_main[i])
+        ofs_array_push(rs_deps, lk_deps[i])
+        i++
+    }
+    return true
+}
+
+// grava ofs.lode a partir de rs_* (ordem alfabetica, para diffs estaveis)
+vein q_write_lock() -> bool {
+    forge order: Array<stone> = []
+    forge i = 0
+    while (i < ofs_array_len(rs_name)) {
+        forge j = ofs_array_len(order)
+        ofs_array_push(order, i)
+        while (j > 0) {
+            forge a: obsidian = rs_name[order[j - 1]]
+            forge b: obsidian = rs_name[i]
+            if (q_str_lt(b, a)) {
+                order[j] = order[j - 1]
+                order[j - 1] = i
+                j = j - 1
+            } else {
+                break
+            }
+        }
+        i++
+    }
+    forge s = "# ofs.lode: gerado por `ofs quarry`; nao edite a mao.\n# Versao exata, sha256 do .tar.gz e origem de cada pacote (diretos e transitivos).\nlode = 1\n"
+    i = 0
+    while (i < ofs_array_len(order)) {
+        forge k = order[i]
+        s = s + "\n[" + rs_name[k] + "]\nversion = " + rs_ver[k] + "\nsha256 = " + rs_sha[k] + "\nurl = " + rs_url[k] + "\nmain = " + rs_main[k] + "\n"
+        forge d: obsidian = rs_deps[k]
+        if (ofs_str_len(d) > 0) { s = s + "deps = " + d + "\n" }
+        i++
+    }
+    return qt_write(Q_LODE, s)
+}
+
+vein q_str_lt(a: obsidian, b: obsidian) -> bool {
+    forge n = ofs_str_len(a)
+    forge m = ofs_str_len(b)
+    forge i = 0
+    while (i < n && i < m) {
+        forge ca = ofs_str_char_at(a, i)
+        forge cb = ofs_str_char_at(b, i)
+        if (ca != cb) { return ca < cb }
+        i++
+    }
+    return n < m
+}
+
+// o lock cobre o manifesto? (toda dependencia direta esta no lock e na faixa)
+vein q_lock_covers() -> bool {
+    if (!lk_ok) { return false }
+    forge n = cl_pairs("deps")
+    forge i = 0
+    while (i < n) {
+        forge li = lk_idx(kv_k[i])
+        if (li < 0) { return false }
+        if (!qv_ok(kv_v[i], lk_ver[li])) { return false }
+        i++
+    }
+    return true
+}
+
+vein q_need_claim() -> bool {
+    if (cl_ok) { return true }
+    return q_err(qm("sem ofs.claim nesta pasta (", "no ofs.claim in this folder (", "sin ofs.claim en esta carpeta (") + q_pwd + qm("); use `ofs quarry add <pacote>` para criar", "); use `ofs quarry add <package>` to create one", "); use `ofs quarry add <paquete>` para crearlo"))
+}
+
+// ---------------------------------------------------------------- comandos
+
+vein cmd_add() -> bool {
+    forge spec = q_positional(0)
+    if (ofs_str_len(spec) == 0) { return q_err(qm("uso: ofs quarry add <pacote>[@versao|@canal]", "usage: ofs quarry add <package>[@version|@channel]", "uso: ofs quarry add <paquete>[@version|@canal]")) }
+    forge name = spec
+    forge want = ""
+    forge at = qt_find(spec, "@", 0)
+    if (at >= 0) {
+        name = qt_sub(spec, 0, at)
+        want = qt_tail(spec, at + 1)
+    }
+    if (!qt_safe_name(name)) { return q_err(qm("nome de pacote invalido: ", "invalid package name: ", "nombre de paquete invalido: ") + name) }
+    if (!q_load_registry()) { return false }
+    forge pkg = q_reg_pkg(name)
+    if (pkg < 0) { return q_err(qm("pacote nao existe no registro: ", "package not in the registry: ", "el paquete no existe en el registro: ") + name) }
+    forge range = ""
+    if (ofs_str_len(want) == 0) {
+        forge v = q_latest(pkg, "latest")
+        if (ofs_str_len(v) == 0) { return q_err(name + qm(": nenhuma versao publicada", ": no published version", ": ninguna version publicada")) }
+        range = "^" + v
+    } else if (qv_range_valid(want)) {
+        range = want
+    } else {
+        forge v = q_latest(pkg, want)
+        if (ofs_str_len(v) == 0) { return q_err(name + qm(": canal/versao desconhecido: ", ": unknown channel/version: ", ": canal/version desconocido: ") + want) }
+        range = "^" + v
+    }
+    if (!cl_ok) { cl_new() }
+    cl_set("deps", name, range)
+    if (!q_resolve("")) { return false }
+    if (!q_install_resolved()) { return false }
+    cl_save(Q_CLAIM)
+    q_write_lock()
+    forge ri = rs_idx(name)
+    q_say(qm("adicionado ", "added ", "agregado ") + name + " " + range + " -> " + rs_ver[ri] + qm(" (ofs.claim e ofs.lode atualizados)", " (ofs.claim and ofs.lode updated)", " (ofs.claim y ofs.lode actualizados)"))
+    return true
+}
+
+vein cmd_remove() -> bool {
+    forge name = q_positional(0)
+    if (ofs_str_len(name) == 0) { return q_err(qm("uso: ofs quarry remove <pacote>", "usage: ofs quarry remove <package>", "uso: ofs quarry remove <paquete>")) }
+    if (!qt_safe_name(name)) { return q_err(qm("nome de pacote invalido: ", "invalid package name: ", "nombre de paquete invalido: ") + name) }
+    if (!cl_ok) {
+        if (!qt_exists(q_libhome + "/" + name)) { return q_err(name + qm(" nao esta instalado em ", " is not installed in ", " no esta instalado en ") + q_libhome) }
+        q_uninstall(name)
+        q_say(qm("removido ", "removed ", "eliminado ") + name + " (" + q_libhome + ")")
+        return true
+    }
+    if (!cl_del("deps", name)) { return q_err(name + qm(" nao esta em [deps] do ofs.claim", " is not in [deps] of ofs.claim", " no esta en [deps] de ofs.claim")) }
+    // o que continua alcancavel a partir do manifesto, pelos deps do lock
+    forge keep: Array<obsidian> = []
+    forge n = cl_pairs("deps")
+    forge i = 0
+    while (i < n) {
+        ofs_array_push(keep, kv_k[i])
+        i++
+    }
+    forge qi = 0
+    while (qi < ofs_array_len(keep)) {
+        forge li = lk_idx(keep[qi])
+        if (li >= 0) {
+            forge ds = q_dep_names(lk_deps[li])
+            forge d = 0
+            while (d < ofs_array_len(ds)) {
+                forge dn: obsidian = ds[d]
+                forge seen = false
+                forge k = 0
+                while (k < ofs_array_len(keep)) {
+                    if (ofs_str_eq(keep[k], dn)) { seen = true }
+                    k++
+                }
+                if (!seen) { ofs_array_push(keep, dn) }
+                d++
+            }
+        }
+        qi++
+    }
+    rs_name = []
+    rs_ver = []
+    rs_url = []
+    rs_sha = []
+    rs_main = []
+    rs_deps = []
+    i = 0
+    while (i < ofs_array_len(lk_name)) {
+        forge ln: obsidian = lk_name[i]
+        forge kept = false
+        forge k = 0
+        while (k < ofs_array_len(keep)) {
+            if (ofs_str_eq(keep[k], ln)) { kept = true }
+            k++
+        }
+        if (kept) {
+            ofs_array_push(rs_name, ln)
+            ofs_array_push(rs_ver, lk_ver[i])
+            ofs_array_push(rs_url, lk_url[i])
+            ofs_array_push(rs_sha, lk_sha[i])
+            ofs_array_push(rs_main, lk_main[i])
+            ofs_array_push(rs_deps, lk_deps[i])
+        } else {
+            q_uninstall(ln)
+            q_say(qm("removido ", "removed ", "eliminado ") + ln + " " + lk_ver[i])
+        }
+        i++
+    }
+    if (rs_idx(name) >= 0) { q_say(name + qm(" continua instalado: outro pacote depende dele", " stays installed: another package depends on it", " sigue instalado: otro paquete depende de el")) }
+    if (lk_idx(name) < 0) { q_uninstall(name) }
+    cl_save(Q_CLAIM)
+    q_write_lock()
+    return true
+}
+
+vein cmd_list() -> bool {
+    forge lst = q_cache + "/quarry_ls.txt"
+    system("ls -1 " + qt_sq(q_libhome) + " > " + qt_sq(lst) + " 2>/dev/null")
+    forge names = qt_lines(qt_read(lst))
+    qt_rm(lst)
+    echo(qm("pedreira: ", "quarry: ", "cantera: ") + q_libhome)
+    forge shown = 0
+    forge i = 0
+    while (i < ofs_array_len(names)) {
+        forge nm: obsidian = names[i]
+        forge v = q_installed(nm, "version")
+        if (ofs_str_len(v) > 0) {
+            forge mark = ""
+            if (cl_ok && ofs_str_len(cl_get("deps", nm)) > 0) { mark = "  (ofs.claim " + cl_get("deps", nm) + ")" } else if (lk_ok && lk_idx(nm) >= 0) { mark = qm("  (transitivo)", "  (transitive)", "  (transitivo)") }
+            echo("  " + qt_pad(nm, 20) + " " + v + mark)
+            shown++
+        }
+        i++
+    }
+    if (shown == 0) { echo(qm("  (nenhum pacote instalado)", "  (no packages installed)", "  (ningun paquete instalado)")) }
+    if (cl_ok) {
+        forge n = cl_pairs("deps")
+        forge j = 0
+        while (j < n) {
+            forge dn: obsidian = kv_k[j]
+            if (ofs_str_len(q_installed(dn, "version")) == 0) {
+                echo(qm("  faltando: ", "  missing: ", "  faltando: ") + dn + " " + kv_v[j] + qm(" (rode `ofs quarry install`)", " (run `ofs quarry install`)", " (ejecute `ofs quarry install`)"))
+            }
+            j++
+        }
+    }
+    return true
+}
+
+vein cmd_search() -> bool {
+    forge term = ofs_str_lower(q_positional(0))
+    if (!q_load_registry()) { return false }
+    forge kids = qj_children(q_pkgs)
+    forge hits = 0
+    forge i = 0
+    while (i < ofs_array_len(kids)) {
+        forge p = kids[i]
+        forge name = qj_gets(p, "name")
+        forge desc = qj_gets(p, "description")
+        forge tags = ""
+        forge tk = qj_children(qj_get(p, "tags"))
+        forge t = 0
+        while (t < ofs_array_len(tk)) {
+            tags = tags + " " + qj_str(tk[t])
+            t++
+        }
+        forge hay = ofs_str_lower(name + " " + desc + " " + tags)
+        if (ofs_str_len(term) == 0 || qt_has(hay, term)) {
+            forge chans = ""
+            forge ck = qj_children(qj_get(p, "channels"))
+            forge c = 0
+            while (c < ofs_array_len(ck)) {
+                if (!ofs_str_eq(qj_key[ck[c]], "latest")) { chans = chans + " " + qj_key[ck[c]] + "=" + qj_str(ck[c]) }
+                c++
+            }
+            echo(qt_pad(name, 18) + " " + qt_pad(q_latest(p, "latest"), 8) + " " + desc)
+            if (ofs_str_len(chans) > 0) { echo(qt_pad("", 18) + "  " + qm("canais:", "channels:", "canales:") + chans) }
+            hits++
+        }
+        i++
+    }
+    if (hits == 0) { echo(qm("nada encontrado para '", "nothing found for '", "nada encontrado para '") + term + "'") }
+    return true
+}
+
+vein q_print_changes(old_n: Array<obsidian>, old_v: Array<obsidian>) -> void {
+    forge changed = 0
+    forge i = 0
+    while (i < ofs_array_len(rs_name)) {
+        forge nm: obsidian = rs_name[i]
+        forge before = ""
+        forge j = 0
+        while (j < ofs_array_len(old_n)) {
+            if (ofs_str_eq(old_n[j], nm)) { before = old_v[j] }
+            j++
+        }
+        if (!ofs_str_eq(before, rs_ver[i])) {
+            if (ofs_str_len(before) == 0) { before = qm("(novo)", "(new)", "(nuevo)") }
+            q_say(nm + " " + before + " -> " + rs_ver[i])
+            changed++
+        }
+        i++
+    }
+    if (changed == 0) { q_say(qm("tudo na ultima versao permitida pelo ofs.claim", "everything is at the newest version ofs.claim allows", "todo en la ultima version que permite ofs.claim")) }
+}
+
+vein cmd_update() -> bool {
+    if (!q_need_claim()) { return false }
+    forge name = q_positional(0)
+    forge free = "*"
+    if (ofs_str_len(name) > 0) {
+        if (ofs_str_len(cl_get("deps", name)) == 0 && lk_idx(name) < 0) { return q_err(name + qm(" nao esta no projeto", " is not in the project", " no esta en el proyecto")) }
+        free = name
+    }
+    if (!q_load_registry()) { return false }
+    forge old_n: Array<obsidian> = lk_name
+    forge old_v: Array<obsidian> = lk_ver
+    if (!q_resolve(free)) { return false }
+    if (!q_install_resolved()) { return false }
+    q_write_lock()
+    q_print_changes(old_n, old_v)
+    return true
+}
+
+vein cmd_install() -> bool {
+    if (!q_need_claim()) { return false }
+    if (q_lock_covers()) {
+        if (!q_install_lock()) { return false }
+        q_say(qm("instalado conforme ofs.lode: ", "installed from ofs.lode: ", "instalado segun ofs.lode: ") + ofs_array_len(rs_name) + qm(" pacote(s), sha256 conferido", " package(s), sha256 verified", " paquete(s), sha256 verificado"))
+        return true
+    }
+    if (lk_ok) { q_say(qm("ofs.lode nao cobre o ofs.claim; resolvendo de novo", "ofs.lode does not cover ofs.claim; resolving again", "ofs.lode no cubre ofs.claim; resolviendo de nuevo")) }
+    if (!q_load_registry()) { return false }
+    if (!q_resolve("")) { return false }
+    if (!q_install_resolved()) { return false }
+    q_write_lock()
+    q_say(qm("instalado: ", "installed: ", "instalado: ") + ofs_array_len(rs_name) + qm(" pacote(s); ofs.lode gravado", " package(s); ofs.lode written", " paquete(s); ofs.lode escrito"))
+    return true
+}
+
+// ---------------------------------------------------------------- publish
+
+forge pb_name: obsidian = ""
+forge pb_ver: obsidian = ""
+forge pb_desc: obsidian = ""
+forge pb_main: obsidian = ""
+forge pb_author: obsidian = ""
+forge pb_license: obsidian = ""
+forge pb_tags: obsidian = ""
+forge pb_channel: obsidian = ""
+forge pb_include: obsidian = ""
+forge pb_manifest: obsidian = ""
+
+vein q_read_publish_manifest() -> bool {
+    if (cl_ok) {
+        pb_manifest = Q_CLAIM
+        pb_name = cl_get("", "name")
+        pb_ver = cl_get("", "version")
+        pb_desc = cl_get("", "description")
+        pb_main = cl_get("", "main")
+        pb_author = cl_get("", "author")
+        pb_license = cl_get("", "license")
+        pb_tags = cl_get("", "tags")
+        pb_channel = cl_get("", "channel")
+        pb_include = cl_get("", "include")
+        return true
+    }
+    if (qt_exists("ofspkg.json")) {
+        // formato antigo dos pacotes de src/packages (sem dependencias)
+        forge o = qj_parse(qt_read("ofspkg.json"))
+        if (o < 0) { return q_err("ofspkg.json: " + qj_err) }
+        pb_manifest = "ofspkg.json"
+        pb_name = qj_gets(o, "name")
+        pb_ver = qj_gets(o, "version")
+        pb_desc = qj_gets(o, "description")
+        pb_main = qj_gets(o, "main")
+        pb_author = qj_gets(o, "author")
+        pb_license = qj_gets(o, "license")
+        return true
+    }
+    return q_err(qm("sem ofs.claim (nem ofspkg.json) em ", "no ofs.claim (nor ofspkg.json) in ", "sin ofs.claim (ni ofspkg.json) en ") + q_pwd)
+}
+
+vein q_today() -> obsidian {
+    forge d = qt_sh("date +%Y-%m-%d")
+    if (ofs_str_len(d) == 0) { d = "1970-01-01" }
+    return d
+}
+
+vein q_tags_node(tags: obsidian) -> stone {
+    forge a = qj_new_arr()
+    forge parts = qt_split(tags, 44)
+    forge i = 0
+    while (i < ofs_array_len(parts)) {
+        qj_append(a, qj_new_str(parts[i]))
+        i++
+    }
+    return a
+}
+
+// junta a entrada no registro (cria o arquivo se nao existir)
+vein q_deposit(path: obsidian, file: obsidian, url: obsidian, sha: obsidian, size: stone) -> bool {
+    forge root = -1
+    if (qt_exists(path)) {
+        root = qj_parse(qt_read(path))
+        if (root < 0) { return q_err(path + ": " + qj_err) }
+    } else {
+        root = qj_new_obj()
+    }
+    qj_rename(root, "src/packages", "packages")
+    qj_set_str(root, "version", "2")
+    qj_set_str(root, "updated", q_today())
+    forge pkgs = qj_get(root, "packages")
+    if (pkgs < 0) {
+        pkgs = qj_new_arr()
+        qj_set(root, "packages", pkgs)
+    }
+    forge p = -1
+    forge kids = qj_children(pkgs)
+    forge i = 0
+    while (i < ofs_array_len(kids)) {
+        if (ofs_str_eq(qj_gets(kids[i], "name"), pb_name)) { p = kids[i] }
+        i++
+    }
+    if (p < 0) {
+        p = qj_new_obj()
+        qj_set_str(p, "name", pb_name)
+        qj_set_str(p, "description", pb_desc)
+        qj_set_str(p, "author", pb_author)
+        qj_set_str(p, "license", pb_license)
+        qj_set(p, "tags", q_tags_node(pb_tags))
+        qj_set(p, "channels", qj_new_obj())
+        qj_set(p, "versions", qj_new_obj())
+        qj_append(pkgs, p)
+    } else if (cl_ok) {
+        // ofspkg.json antigo: os metadados do registro valem mais que os dele
+        if (ofs_str_len(pb_desc) > 0) { qj_set_str(p, "description", pb_desc) }
+        if (ofs_str_len(pb_author) > 0) { qj_set_str(p, "author", pb_author) }
+        if (ofs_str_len(pb_license) > 0) { qj_set_str(p, "license", pb_license) }
+        if (ofs_str_len(pb_tags) > 0) { qj_set(p, "tags", q_tags_node(pb_tags)) }
+    }
+    forge chans = qj_get(p, "channels")
+    if (chans < 0) {
+        chans = qj_new_obj()
+        qj_set(p, "channels", chans)
+    }
+    forge vers = qj_get(p, "versions")
+    if (vers < 0) {
+        vers = qj_new_obj()
+        qj_set(p, "versions", vers)
+    }
+    forge old = qj_get(vers, pb_ver)
+    forge date = qj_gets(old, "date")
+    if (ofs_str_len(date) == 0) { date = q_today() }
+    forge ch = pb_channel
+    if (ofs_str_len(ch) == 0) { ch = qj_gets(old, "channel") }
+    if (ofs_str_len(ch) == 0) { ch = "stable" }
+    forge e = qj_new_obj()
+    qj_set_str(e, "date", date)
+    qj_set_str(e, "channel", ch)
+    qj_set_str(e, "main", pb_main)
+    qj_set_str(e, "file", file)
+    qj_set_str(e, "url", url)
+    qj_set_str(e, "sha256", sha)
+    qj_set(e, "size", qj_new_num(size))
+    if (cl_ok && cl_pairs("deps") > 0) {
+        forge deps = qj_new_obj()
+        forge d = 0
+        while (d < ofs_array_len(kv_k)) {
+            qj_set_str(deps, kv_k[d], kv_v[d])
+            d++
+        }
+        qj_set(e, "deps", deps)
+    }
+    qj_set(vers, pb_ver, e)
+    forge cur = qj_gets(chans, ch)
+    if (ofs_str_len(cur) == 0 || qv_cmp(pb_ver, cur) >= 0) { qj_set_str(chans, ch, pb_ver) }
+    forge lat = qj_gets(chans, "latest")
+    if (ofs_str_len(lat) == 0 || qv_cmp(pb_ver, lat) >= 0) { qj_set_str(chans, "latest", pb_ver) }
+    if (!qt_write(path, qj_dump(root, 0) + "\n")) { return q_err(qm("nao consegui gravar ", "could not write ", "no pude escribir ") + path) }
+    q_say(qm("registro atualizado: ", "registry updated: ", "registro actualizado: ") + path)
+    return true
+}
+
+vein cmd_publish() -> bool {
+    if (!q_read_publish_manifest()) { return false }
+    if (!qt_safe_name(pb_name)) { return q_err(qm("name invalido no manifesto: '", "invalid name in the manifest: '", "name invalido en el manifiesto: '") + pb_name + "'") }
+    if (!qv_valid(pb_ver)) { return q_err(qm("version invalida no manifesto (use 1.2.3): '", "invalid version in the manifest (use 1.2.3): '", "version invalida en el manifiesto (use 1.2.3): '") + pb_ver + "'") }
+    if (ofs_str_len(pb_main) == 0) { pb_main = "libs/" + q_module(pb_name) + ".ofs" }
+    if (!qt_exists(pb_main)) { return q_err(qm("arquivo principal nao existe: ", "main file does not exist: ", "el archivo principal no existe: ") + pb_main) }
+    if (cl_ok) {
+        forge n = cl_pairs("deps")
+        forge d = 0
+        while (d < n) {
+            if (!qt_safe_name(kv_k[d]) || !qv_range_valid(kv_v[d])) { return q_err("[deps] " + kv_k[d] + " = " + kv_v[d] + qm(": nome ou faixa invalida", ": invalid name or range", ": nombre o rango invalido")) }
+            d++
+        }
+    }
+    // o que entra no pacote
+    forge inc: Array<obsidian> = []
+    if (ofs_str_len(pb_include) > 0) {
+        inc = qt_split(pb_include, 44)
+    } else {
+        forge slash = qt_find(pb_main, "/", 0)
+        if (slash > 0) { ofs_array_push(inc, qt_sub(pb_main, 0, slash)) } else { ofs_array_push(inc, pb_main) }
+    }
+    ofs_array_push(inc, pb_manifest)
+    if (qt_exists("README.md")) { ofs_array_push(inc, "README.md") }
+    if (qt_exists("LICENSE")) { ofs_array_push(inc, "LICENSE") }
+    forge files = ""
+    forge i = 0
+    while (i < ofs_array_len(inc)) {
+        forge f: obsidian = inc[i]
+        if (qt_starts(f, "/") || qt_has(f, "..")) { return q_err("include: " + f + qm(" (use caminhos relativos ao projeto)", " (use paths relative to the project)", " (use rutas relativas al proyecto)")) }
+        if (!qt_exists(f) && !qt_is_dir(f)) { return q_err("include: " + f + qm(" nao existe", " does not exist", " no existe")) }
+        if (!qt_has(" " + files + " ", " " + qt_sq(f) + " ")) { files = files + " " + qt_sq(f) }
+        i++
+    }
+    forge out = q_opt("--out")
+    if (ofs_str_len(out) == 0) { out = "dist" }
+    out = q_abs(out)
+    qt_mkdirs(out)
+    forge file = pb_name + "-" + pb_ver + ".tar.gz"
+    forge archive = out + "/" + file
+    // tar reprodutivel: ordem por nome, datas e donos zerados, gzip sem nome/data
+    forge cmd = "tar --sort=name --mtime=@0 --owner=0 --group=0 --numeric-owner --exclude=.git --exclude='*.tar.gz' -cf -" + files + " | gzip -n -9 > " + qt_sq(archive + ".part")
+    if (system(cmd) != 0 || !qt_exists(archive + ".part")) { return q_err(qm("falha ao empacotar com tar/gzip", "packing with tar/gzip failed", "fallo al empaquetar con tar/gzip")) }
+    system("mv -f " + qt_sq(archive + ".part") + " " + qt_sq(archive))
+    forge sha = sha256.file(archive)
+    forge size = fs.size(archive)
+    forge origin = q_opt("--origin")
+    forge url = file
+    if (ofs_str_len(origin) > 0) {
+        if (qt_has(origin, "{")) {
+            url = qt_replace(qt_replace(qt_replace(origin, "{name}", pb_name), "{version}", pb_ver), "{file}", file)
+        } else {
+            if (qt_ends(origin, "/")) { url = origin + file } else { url = origin + "/" + file }
+        }
+    }
+    forge ch = pb_channel
+    if (ofs_str_len(ch) == 0) { ch = "stable" }
+    forge deps = ""
+    if (cl_ok && cl_pairs("deps") > 0) {
+        forge d = 0
+        while (d < ofs_array_len(kv_k)) {
+            if (d > 0) { deps = deps + ", " }
+            deps = deps + "\"" + kv_k[d] + "\": \"" + qj_escape(kv_v[d]) + "\""
+            d++
+        }
+        deps = ", \"deps\": { " + deps + " }"
+    }
+    forge entry = "\"" + pb_ver + "\": { \"channel\": \"" + ch + "\", \"main\": \"" + pb_main + "\", \"file\": \"" + file + "\", \"url\": \"" + qj_escape(url) + "\", \"sha256\": \"" + sha + "\", \"size\": " + size + deps + " }"
+    if (ofs_str_len(q_opt("--deposit")) == 0) { qt_write(out + "/" + pb_name + "-" + pb_ver + ".json", "{ \"name\": \"" + pb_name + "\", \"versions\": { " + entry + " } }\n") }
+    q_say(qm("pacote: ", "package: ", "paquete: ") + archive)
+    echo("sha256 " + sha + "  " + file)
+    echo(qm("entrada de registro (versions de \"", "registry entry (versions of \"", "entrada de registro (versions de \"") + pb_name + "\"):")
+    echo("  " + entry)
+    forge dep = q_opt("--deposit")
+    if (ofs_str_len(dep) > 0) { return q_deposit(q_abs(dep), file, url, sha, size) }
+    q_say(qm("nada foi enviado; publique o .tar.gz e junte a entrada ao registro (ou use --deposit <registry.json>)", "nothing was uploaded; publish the .tar.gz and add the entry to the registry (or use --deposit <registry.json>)", "no se envio nada; publique el .tar.gz y agregue la entrada al registro (o use --deposit <registry.json>)"))
+    return true
+}
+
+// ---------------------------------------------------------------- entrada
+
+vein q_usage() -> void {
+    echo(qm("uso: ofs quarry <add|remove|list|search|update|install|publish> [...]", "usage: ofs quarry <add|remove|list|search|update|install|publish> [...]", "uso: ofs quarry <add|remove|list|search|update|install|publish> [...]"))
+}
+
+core main() {
+    forge l = qt_env("OFS_LANG")
+    if (qt_starts(l, "en")) { q_lang = "en" }
+    if (qt_starts(l, "es")) { q_lang = "es" }
+    q_pwd = qt_env("PWD")
+    if (ofs_str_len(q_pwd) == 0) { q_pwd = qt_sh("pwd") }
+    forge home = qt_env("HOME")
+    q_libhome = qt_env("OFS_LIB_HOME")
+    if (ofs_str_len(q_libhome) == 0) { q_libhome = home + "/.ofs/libs" }
+    q_cache = qt_env("QUARRY_CACHE")
+    if (ofs_str_len(q_cache) == 0) {
+        forge xc = qt_env("XDG_CACHE_HOME")
+        if (ofs_str_len(xc) == 0) { xc = home + "/.cache" }
+        q_cache = xc + "/ofs/quarry"
+    }
+    q_stdlib = qt_env("OFS_STDLIB_PATH")
+    qt_mkdirs(q_cache)
+    qt_mkdirs(q_libhome)
+    qt_tmp_dir = q_cache
+    q_args = qt_lines(qt_env("QUARRY_ARGS"))
+    forge a: Array<obsidian> = []
+    forge i = 0
+    while (i < ofs_array_len(q_args)) {
+        forge s: obsidian = q_args[i]
+        if (ofs_str_len(s) > 0) { ofs_array_push(a, s) }
+        i++
+    }
+    q_args = a
+    cl_load(Q_CLAIM)
+    lk_load(Q_LODE)
+    forge cmd = qt_env("QUARRY_CMD")
+    forge ok = true
+    if (ofs_str_eq(cmd, "add")) {
+        ok = cmd_add()
+    } else if (ofs_str_eq(cmd, "remove") || ofs_str_eq(cmd, "rm")) {
+        ok = cmd_remove()
+    } else if (ofs_str_eq(cmd, "list") || ofs_str_eq(cmd, "ls")) {
+        ok = cmd_list()
+    } else if (ofs_str_eq(cmd, "search")) {
+        ok = cmd_search()
+    } else if (ofs_str_eq(cmd, "update")) {
+        ok = cmd_update()
+    } else if (ofs_str_eq(cmd, "install")) {
+        ok = cmd_install()
+    } else if (ofs_str_eq(cmd, "publish")) {
+        ok = cmd_publish()
+    } else {
+        q_usage()
+        exit(2)
+    }
+    if (!ok || q_failed) { exit(1) }
+    exit(0)
+}

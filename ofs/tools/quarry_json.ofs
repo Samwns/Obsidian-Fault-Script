@@ -1,0 +1,685 @@
+// quarry_json: texto, arquivos, versoes (semver) e JSON para o `ofs quarry`.
+//
+// Parte 1 da ferramenta `ofs/tools/quarry.ofs` (o gerenciador de pacotes).
+// Tudo aqui e generico: nao sabe nada de registro, manifesto ou lock.
+//
+// JSON: arvore em arrays paralelos (qj_kind, qj_val, qj_key, filhos ligados
+// por qj_first/qj_next). Strings guardam o texto JSON *com* os escapes
+// (qj_str decodifica os comuns); qj_dump reescreve sem perder nada.
+
+attach {F:fs.ofs}
+attach {F:sha256.ofs}
+
+extern vein getenv(name: obsidian) -> obsidian
+extern vein system(cmd: obsidian) -> stone
+extern vein exit(code: stone) -> void
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+extern vein ofs_str_char_at(s: obsidian, index: stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_str_lower(s: obsidian) -> obsidian
+extern vein ofs_array_len(a: Array) -> stone
+extern vein ofs_array_push(a: Array, value: stone) -> void
+
+// ---------------------------------------------------------------- texto
+
+vein qt_env(name: obsidian) -> obsidian {
+    forge v = getenv(name)
+    if (v == null) { return "" }
+    return v
+}
+
+vein qt_sub(s: obsidian, a: stone, b: stone) -> obsidian {
+    if (b <= a) { return "" }
+    return ofs_str_substr(s, a, b - a)
+}
+
+vein qt_tail(s: obsidian, a: stone) -> obsidian {
+    return qt_sub(s, a, ofs_str_len(s))
+}
+
+vein qt_starts(s: obsidian, p: obsidian) -> bool {
+    forge m = ofs_str_len(p)
+    if (ofs_str_len(s) < m) { return false }
+    return ofs_str_eq(ofs_str_substr(s, 0, m), p)
+}
+
+vein qt_ends(s: obsidian, p: obsidian) -> bool {
+    forge n = ofs_str_len(s)
+    forge m = ofs_str_len(p)
+    if (n < m) { return false }
+    return ofs_str_eq(ofs_str_substr(s, n - m, m), p)
+}
+
+// posicao de `needle` em `s` a partir de `from`, ou -1
+vein qt_find(s: obsidian, needle: obsidian, from: stone) -> stone {
+    forge n = ofs_str_len(s)
+    forge m = ofs_str_len(needle)
+    if (m == 0) { return from }
+    forge i = from
+    while (i + m <= n) {
+        if (ofs_str_char_at(s, i) == ofs_str_char_at(needle, 0)) {
+            if (ofs_str_eq(ofs_str_substr(s, i, m), needle)) { return i }
+        }
+        i++
+    }
+    return -1
+}
+
+vein qt_has(s: obsidian, needle: obsidian) -> bool {
+    return qt_find(s, needle, 0) >= 0
+}
+
+vein qt_rfind_char(s: obsidian, c: stone) -> stone {
+    forge i = ofs_str_len(s) - 1
+    while (i >= 0) {
+        if (ofs_str_char_at(s, i) == c) { return i }
+        i = i - 1
+    }
+    return -1
+}
+
+vein qt_is_space(c: stone) -> bool {
+    return c == 32 || c == 9 || c == 10 || c == 13
+}
+
+vein qt_trim(s: obsidian) -> obsidian {
+    forge n = ofs_str_len(s)
+    forge a = 0
+    while (a < n && qt_is_space(ofs_str_char_at(s, a))) { a++ }
+    forge b = n
+    while (b > a && qt_is_space(ofs_str_char_at(s, b - 1))) { b = b - 1 }
+    return qt_sub(s, a, b)
+}
+
+// divide por um caractere (codigo); pedacos aparados, vazios descartados
+vein qt_split(s: obsidian, c: stone) -> Array<obsidian> {
+    forge out: Array<obsidian> = []
+    forge n = ofs_str_len(s)
+    forge st = 0
+    forge i = 0
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(s, i) == c) {
+            forge p = qt_trim(qt_sub(s, st, i))
+            if (ofs_str_len(p) > 0) { ofs_array_push(out, p) }
+            st = i + 1
+        }
+        i++
+    }
+    return out
+}
+
+// linhas (sem aparar, mantem as vazias)
+vein qt_lines(s: obsidian) -> Array<obsidian> {
+    forge out: Array<obsidian> = []
+    forge n = ofs_str_len(s)
+    forge st = 0
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(s, i) == 10) {
+            forge ln = qt_sub(s, st, i)
+            if (qt_ends(ln, "\r")) { ln = qt_sub(ln, 0, ofs_str_len(ln) - 1) }
+            ofs_array_push(out, ln)
+            st = i + 1
+        }
+        i++
+    }
+    if (st < n) { ofs_array_push(out, qt_sub(s, st, n)) }
+    return out
+}
+
+vein qt_replace(s: obsidian, a: obsidian, b: obsidian) -> obsidian {
+    forge out = ""
+    forge st = 0
+    forge m = ofs_str_len(a)
+    forge p = qt_find(s, a, 0)
+    while (p >= 0) {
+        out = out + qt_sub(s, st, p) + b
+        st = p + m
+        p = qt_find(s, a, st)
+    }
+    return out + qt_tail(s, st)
+}
+
+// "123" -> 123; -1 se nao comecar por digito
+vein qt_atoi(s: obsidian) -> stone {
+    forge n = ofs_str_len(s)
+    if (n == 0) { return -1 }
+    forge c = ofs_str_char_at(s, 0)
+    if (c < 48 || c > 57) { return -1 }
+    forge v = 0
+    forge i = 0
+    while (i < n) {
+        c = ofs_str_char_at(s, i)
+        if (c < 48 || c > 57) { break }
+        v = v * 10 + (c - 48)
+        i++
+    }
+    return v
+}
+
+// aspas simples para o shell: a'b -> 'a'\''b'
+vein qt_sq(s: obsidian) -> obsidian {
+    return "'" + qt_replace(s, "'", "'\\''") + "'"
+}
+
+vein qt_pad(s: obsidian, w: stone) -> obsidian {
+    forge out = s
+    forge n = ofs_str_len(s)
+    while (n < w) {
+        out = out + " "
+        n++
+    }
+    return out
+}
+
+// nome de pacote seguro: [a-z0-9][a-z0-9._-]*
+vein qt_safe_name(s: obsidian) -> bool {
+    forge n = ofs_str_len(s)
+    if (n == 0 || n > 64) { return false }
+    forge i = 0
+    while (i < n) {
+        forge c = ofs_str_char_at(s, i)
+        forge ok = (c >= 97 && c <= 122) || (c >= 48 && c <= 57)
+        if (i > 0 && (c == 45 || c == 95 || c == 46)) { ok = true }
+        if (!ok) { return false }
+        i++
+    }
+    return !qt_has(s, "..")
+}
+
+// ---------------------------------------------------------------- arquivos
+
+vein qt_exists(path: obsidian) -> bool {
+    return fs.exists(path)
+}
+
+vein qt_read(path: obsidian) -> obsidian {
+    return fs.read(path)
+}
+
+vein qt_write(path: obsidian, content: obsidian) -> bool {
+    return fs.write(path, content)
+}
+
+vein qt_is_dir(path: obsidian) -> bool {
+    return system("test -d " + qt_sq(path)) == 0
+}
+
+vein qt_mkdirs(path: obsidian) -> bool {
+    return system("mkdir -p " + qt_sq(path)) == 0
+}
+
+vein qt_rm(path: obsidian) -> void {
+    system("rm -rf " + qt_sq(path))
+}
+
+vein qt_dirname(p: obsidian) -> obsidian {
+    forge i = qt_rfind_char(p, 47)
+    if (i < 0) { return "." }
+    if (i == 0) { return "/" }
+    return qt_sub(p, 0, i)
+}
+
+vein qt_basename(p: obsidian) -> obsidian {
+    forge i = qt_rfind_char(p, 47)
+    if (i < 0) { return p }
+    return qt_tail(p, i + 1)
+}
+
+forge qt_tmp_dir: obsidian = "/tmp"
+
+// roda `cmd` e devolve o stdout aparado ("" se falhar)
+vein qt_sh(cmd: obsidian) -> obsidian {
+    forge f = qt_tmp_dir + "/quarry_sh.txt"
+    qt_rm(f)
+    system(cmd + " > " + qt_sq(f) + " 2>/dev/null")
+    forge r = qt_trim(qt_read(f))
+    qt_rm(f)
+    return r
+}
+
+// ---------------------------------------------------------------- versoes
+
+// componente k (0 maior, 1 menor, 2 correcao) de "1.2.3-beta"; -1 se ausente/curinga
+vein qv_part(v: obsidian, k: stone) -> stone {
+    forge cv = v
+    forge dash = qt_find(v, "-", 0)
+    if (dash >= 0) { cv = qt_sub(v, 0, dash) }
+    forge parts = qt_split(cv, 46)
+    if (k >= ofs_array_len(parts)) { return -1 }
+    forge p: obsidian = parts[k]
+    return qt_atoi(p)
+}
+
+vein qv_count(v: obsidian) -> stone {
+    forge cv = v
+    forge dash = qt_find(v, "-", 0)
+    if (dash >= 0) { cv = qt_sub(v, 0, dash) }
+    return ofs_array_len(qt_split(cv, 46))
+}
+
+vein qv_valid(v: obsidian) -> bool {
+    return qv_count(v) == 3 && qv_part(v, 0) >= 0 && qv_part(v, 1) >= 0 && qv_part(v, 2) >= 0
+}
+
+vein qv_n(v: obsidian, k: stone) -> stone {
+    forge x = qv_part(v, k)
+    if (x < 0) { return 0 }
+    return x
+}
+
+// <0, 0, >0. Pre-lancamento ("1.0.0-beta") vem antes de "1.0.0".
+vein qv_cmp(a: obsidian, b: obsidian) -> stone {
+    forge k = 0
+    while (k < 3) {
+        forge d = qv_n(a, k) - qv_n(b, k)
+        if (d != 0) { return d }
+        k++
+    }
+    forge pa = qt_has(a, "-")
+    forge pb = qt_has(b, "-")
+    if (pa && !pb) { return -1 }
+    if (pb && !pa) { return 1 }
+    return 0
+}
+
+// um comparador: ^1.2, ~1.2.3, 1.x, 1.2.*, *, >=1.0, <2.0, =1.2.3, 1.2.3
+vein qv_one(r0: obsidian, v: obsidian) -> bool {
+    forge r = r0
+    if (ofs_str_len(r) == 0 || ofs_str_eq(r, "*") || ofs_str_eq(r, "x") || ofs_str_eq(r, "latest")) { return true }
+    if (qt_starts(r, ">=")) { return qv_cmp(v, qt_tail(r, 2)) >= 0 }
+    if (qt_starts(r, "<=")) { return qv_cmp(v, qt_tail(r, 2)) <= 0 }
+    if (qt_starts(r, ">")) { return qv_cmp(v, qt_tail(r, 1)) > 0 }
+    if (qt_starts(r, "<")) { return qv_cmp(v, qt_tail(r, 1)) < 0 }
+    if (qt_starts(r, "=")) { r = qt_tail(r, 1) }
+    if (qt_starts(r, "^")) {
+        forge b = qt_tail(r, 1)
+        forge c = qv_count(b)
+        if (qv_cmp(v, b) < 0) { return false }
+        if (qv_n(b, 0) > 0 || c == 1) { return qv_n(v, 0) == qv_n(b, 0) }
+        if (qv_n(b, 1) > 0 || c == 2) { return qv_n(v, 0) == 0 && qv_n(v, 1) == qv_n(b, 1) }
+        return qv_cmp(v, b) == 0
+    }
+    if (qt_starts(r, "~")) {
+        forge b = qt_tail(r, 1)
+        if (qv_cmp(v, b) < 0) { return false }
+        if (qv_count(b) == 1) { return qv_n(v, 0) == qv_n(b, 0) }
+        return qv_n(v, 0) == qv_n(b, 0) && qv_n(v, 1) == qv_n(b, 1)
+    }
+    // exata ou parcial/curinga: compara so os componentes numericos dados
+    forge c = qv_count(r)
+    forge k = 0
+    while (k < 3) {
+        if (k >= c) { return true }
+        forge x = qv_part(r, k)
+        if (x < 0) { return true }
+        if (qv_n(v, k) != x) { return false }
+        k++
+    }
+    if (qt_has(r, "-") || qt_has(v, "-")) { return qv_cmp(v, r) == 0 }
+    return true
+}
+
+// faixa = comparadores separados por espaco (todos precisam valer)
+vein qv_ok(range: obsidian, v: obsidian) -> bool {
+    forge parts = qt_split(range, 32)
+    forge i = 0
+    while (i < ofs_array_len(parts)) {
+        forge p: obsidian = parts[i]
+        if (!qv_one(p, v)) { return false }
+        i++
+    }
+    return true
+}
+
+vein qv_range_valid(r: obsidian) -> bool {
+    if (ofs_str_len(r) == 0) { return false }
+    forge c = ofs_str_char_at(r, 0)
+    return (c >= 48 && c <= 57) || c == 94 || c == 126 || c == 62 || c == 60 || c == 61 || c == 42 || c == 120
+}
+
+// ---------------------------------------------------------------- JSON
+
+forge qj_kind: Array<stone> = []      // 1 null, 2 true, 3 false, 4 numero, 5 string, 6 array, 7 objeto
+forge qj_val: Array<obsidian> = []    // texto do numero / string (com escapes)
+forge qj_key: Array<obsidian> = []    // chave, se membro de objeto
+forge qj_first: Array<stone> = []
+forge qj_last: Array<stone> = []
+forge qj_next: Array<stone> = []
+forge qj_src: obsidian = ""
+forge qj_pos: stone = 0
+forge qj_len: stone = 0
+forge qj_err: obsidian = ""
+
+vein qj_node(kind: stone, val: obsidian) -> stone {
+    ofs_array_push(qj_kind, kind)
+    ofs_array_push(qj_val, val)
+    ofs_array_push(qj_key, "")
+    ofs_array_push(qj_first, -1)
+    ofs_array_push(qj_last, -1)
+    ofs_array_push(qj_next, -1)
+    return ofs_array_len(qj_kind) - 1
+}
+
+vein qj_append(parent: stone, child: stone) -> void {
+    if (qj_last[parent] < 0) {
+        qj_first[parent] = child
+    } else {
+        qj_next[qj_last[parent]] = child
+    }
+    qj_last[parent] = child
+}
+
+vein qj_ws() -> void {
+    while (qj_pos < qj_len && qt_is_space(ofs_str_char_at(qj_src, qj_pos))) { qj_pos++ }
+}
+
+vein qj_fail(msg: obsidian) -> stone {
+    if (ofs_str_len(qj_err) == 0) { qj_err = msg + " (posicao " + qj_pos + ")" }
+    return -1
+}
+
+// le uma string a partir da aspa; devolve o conteudo cru (com escapes)
+vein qj_read_string() -> obsidian {
+    qj_pos++
+    forge st = qj_pos
+    while (qj_pos < qj_len) {
+        forge c = ofs_str_char_at(qj_src, qj_pos)
+        if (c == 92) {
+            qj_pos = qj_pos + 2
+        } else if (c == 34) {
+            forge s = qt_sub(qj_src, st, qj_pos)
+            qj_pos++
+            return s
+        } else {
+            qj_pos++
+        }
+    }
+    qj_fail("string sem fim")
+    return ""
+}
+
+vein qj_value() -> stone {
+    qj_ws()
+    if (qj_pos >= qj_len) { return qj_fail("fim inesperado") }
+    forge c = ofs_str_char_at(qj_src, qj_pos)
+    if (c == 123) {
+        forge o = qj_node(7, "")
+        qj_pos++
+        qj_ws()
+        if (qj_pos < qj_len && ofs_str_char_at(qj_src, qj_pos) == 125) {
+            qj_pos++
+            return o
+        }
+        while (true) {
+            qj_ws()
+            if (qj_pos >= qj_len || ofs_str_char_at(qj_src, qj_pos) != 34) { return qj_fail("esperava chave") }
+            forge k = qj_read_string()
+            qj_ws()
+            if (qj_pos >= qj_len || ofs_str_char_at(qj_src, qj_pos) != 58) { return qj_fail("esperava ':'") }
+            qj_pos++
+            forge v = qj_value()
+            if (v < 0) { return -1 }
+            qj_key[v] = k
+            qj_append(o, v)
+            qj_ws()
+            if (qj_pos >= qj_len) { return qj_fail("objeto sem fim") }
+            forge d = ofs_str_char_at(qj_src, qj_pos)
+            qj_pos++
+            if (d == 125) { return o }
+            if (d != 44) { return qj_fail("esperava ',' ou '}'") }
+        }
+    }
+    if (c == 91) {
+        forge a = qj_node(6, "")
+        qj_pos++
+        qj_ws()
+        if (qj_pos < qj_len && ofs_str_char_at(qj_src, qj_pos) == 93) {
+            qj_pos++
+            return a
+        }
+        while (true) {
+            forge v = qj_value()
+            if (v < 0) { return -1 }
+            qj_append(a, v)
+            qj_ws()
+            if (qj_pos >= qj_len) { return qj_fail("array sem fim") }
+            forge d = ofs_str_char_at(qj_src, qj_pos)
+            qj_pos++
+            if (d == 93) { return a }
+            if (d != 44) { return qj_fail("esperava ',' ou ']'") }
+        }
+    }
+    if (c == 34) {
+        forge s = qj_read_string()
+        return qj_node(5, s)
+    }
+    if (qj_pos + 4 <= qj_len && ofs_str_eq(ofs_str_substr(qj_src, qj_pos, 4), "true")) {
+        qj_pos = qj_pos + 4
+        return qj_node(2, "true")
+    }
+    if (qj_pos + 5 <= qj_len && ofs_str_eq(ofs_str_substr(qj_src, qj_pos, 5), "false")) {
+        qj_pos = qj_pos + 5
+        return qj_node(3, "false")
+    }
+    if (qj_pos + 4 <= qj_len && ofs_str_eq(ofs_str_substr(qj_src, qj_pos, 4), "null")) {
+        qj_pos = qj_pos + 4
+        return qj_node(1, "null")
+    }
+    forge st = qj_pos
+    while (qj_pos < qj_len) {
+        forge e = ofs_str_char_at(qj_src, qj_pos)
+        if ((e >= 48 && e <= 57) || e == 45 || e == 43 || e == 46 || e == 101 || e == 69) {
+            qj_pos++
+        } else {
+            break
+        }
+    }
+    if (qj_pos == st) { return qj_fail("valor invalido") }
+    return qj_node(4, qt_sub(qj_src, st, qj_pos))
+}
+
+// texto -> raiz (ou -1, com o motivo em qj_err)
+vein qj_parse(text: obsidian) -> stone {
+    qj_src = text
+    qj_pos = 0
+    qj_len = ofs_str_len(text)
+    qj_err = ""
+    forge r = qj_value()
+    if (r < 0) { return -1 }
+    qj_ws()
+    if (qj_pos < qj_len) { return qj_fail("texto depois do fim") }
+    return r
+}
+
+// membro `key` do objeto (ou -1)
+vein qj_get(o: stone, key: obsidian) -> stone {
+    if (o < 0 || qj_kind[o] != 7) { return -1 }
+    forge c = qj_first[o]
+    while (c >= 0) {
+        forge k: obsidian = qj_key[c]
+        if (ofs_str_eq(k, key)) { return c }
+        c = qj_next[c]
+    }
+    return -1
+}
+
+// filhos de um array/objeto, em ordem
+vein qj_children(o: stone) -> Array<stone> {
+    forge out: Array<stone> = []
+    if (o < 0) { return out }
+    forge c = qj_first[o]
+    while (c >= 0) {
+        ofs_array_push(out, c)
+        c = qj_next[c]
+    }
+    return out
+}
+
+vein qj_unescape(s: obsidian) -> obsidian {
+    if (!qt_has(s, "\\")) { return s }
+    forge out = ""
+    forge n = ofs_str_len(s)
+    forge st = 0
+    forge i = 0
+    while (i < n) {
+        if (ofs_str_char_at(s, i) == 92 && i + 1 < n) {
+            out = out + qt_sub(s, st, i)
+            forge e = ofs_str_char_at(s, i + 1)
+            if (e == 110) {
+                out = out + "\n"
+            } else if (e == 116) {
+                out = out + "\t"
+            } else if (e == 114) {
+                out = out + "\r"
+            } else if (e == 117) {
+                out = out + qt_sub(s, i, i + 6)
+            } else {
+                out = out + ofs_str_substr(s, i + 1, 1)
+            }
+            if (e == 117) {
+                i = i + 6
+            } else {
+                i = i + 2
+            }
+            st = i
+        } else {
+            i++
+        }
+    }
+    return out + qt_tail(s, st)
+}
+
+vein qj_escape(s: obsidian) -> obsidian {
+    forge out = qt_replace(s, "\\", "\\\\")
+    out = qt_replace(out, "\"", "\\\"")
+    out = qt_replace(out, "\n", "\\n")
+    out = qt_replace(out, "\t", "\\t")
+    return out
+}
+
+// valor de texto do no (string decodificada, numero cru), "" se ausente
+vein qj_str(id: stone) -> obsidian {
+    if (id < 0) { return "" }
+    forge k = qj_kind[id]
+    if (k == 5) { return qj_unescape(qj_val[id]) }
+    if (k == 4 || k == 2 || k == 3) { return qj_val[id] }
+    return ""
+}
+
+vein qj_gets(o: stone, key: obsidian) -> obsidian {
+    return qj_str(qj_get(o, key))
+}
+
+vein qj_new_str(s: obsidian) -> stone {
+    return qj_node(5, qj_escape(s))
+}
+
+vein qj_new_num(n: stone) -> stone {
+    return qj_node(4, "" + n)
+}
+
+vein qj_new_obj() -> stone {
+    return qj_node(7, "")
+}
+
+vein qj_new_arr() -> stone {
+    return qj_node(6, "")
+}
+
+// define o membro `key` (troca o valor se ja existir, mantendo a posicao)
+vein qj_set(o: stone, key: obsidian, v: stone) -> void {
+    qj_key[v] = key
+    forge prev = -1
+    forge c = qj_first[o]
+    while (c >= 0) {
+        forge k: obsidian = qj_key[c]
+        if (ofs_str_eq(k, key)) {
+            qj_next[v] = qj_next[c]
+            if (prev < 0) { qj_first[o] = v } else { qj_next[prev] = v }
+            if (qj_last[o] == c) { qj_last[o] = v }
+            return
+        }
+        prev = c
+        c = qj_next[c]
+    }
+    qj_append(o, v)
+}
+
+vein qj_set_str(o: stone, key: obsidian, s: obsidian) -> void {
+    qj_set(o, key, qj_new_str(s))
+}
+
+// renomeia um membro (mesmo valor e posicao)
+vein qj_rename(o: stone, from: obsidian, to: obsidian) -> void {
+    forge c = qj_get(o, from)
+    if (c >= 0) { qj_key[c] = to }
+}
+
+vein qj_scalar(id: stone) -> obsidian {
+    forge k = qj_kind[id]
+    if (k == 5) { return "\"" + qj_val[id] + "\"" }
+    return qj_val[id]
+}
+
+vein qj_indent(n: stone) -> obsidian {
+    forge s = ""
+    forge i = 0
+    while (i < n) {
+        s = s + "  "
+        i++
+    }
+    return s
+}
+
+// uma linha so, se todos os filhos forem escalares; senao ""
+vein qj_inline(id: stone) -> obsidian {
+    forge k = qj_kind[id]
+    if (k != 6 && k != 7) { return qj_scalar(id) }
+    forge kids = qj_children(id)
+    if (ofs_array_len(kids) == 0) {
+        if (k == 6) { return "[]" }
+        return "{}"
+    }
+    forge out = ""
+    forge i = 0
+    while (i < ofs_array_len(kids)) {
+        forge c = kids[i]
+        forge ck = qj_kind[c]
+        if (ck == 6 || ck == 7) {
+            forge sub = qj_inline(c)
+            if (ofs_str_len(sub) == 0 || ofs_array_len(qj_children(c)) > 0) { return "" }
+        }
+        if (i > 0) { out = out + ", " }
+        if (k == 7) { out = out + "\"" + qj_key[c] + "\": " }
+        out = out + qj_inline(c)
+        i++
+    }
+    if (k == 6) { return "[" + out + "]" }
+    return "{ " + out + " }"
+}
+
+// JSON com 2 espacos; objetos/arrays curtos de escalares numa linha
+vein qj_dump(id: stone, lvl: stone) -> obsidian {
+    forge k = qj_kind[id]
+    if (k != 6 && k != 7) { return qj_scalar(id) }
+    forge one = qj_inline(id)
+    if (ofs_str_len(one) > 0 && ofs_str_len(one) + lvl * 2 <= 160 && lvl > 0) { return one }
+    forge kids = qj_children(id)
+    if (ofs_array_len(kids) == 0) { return one }
+    forge out = ""
+    if (k == 6) { out = "[\n" } else { out = "{\n" }
+    forge i = 0
+    while (i < ofs_array_len(kids)) {
+        forge c = kids[i]
+        out = out + qj_indent(lvl + 1)
+        if (k == 7) { out = out + "\"" + qj_key[c] + "\": " }
+        out = out + qj_dump(c, lvl + 1)
+        if (i + 1 < ofs_array_len(kids)) { out = out + "," }
+        out = out + "\n"
+        i++
+    }
+    out = out + qj_indent(lvl)
+    if (k == 6) { return out + "]" }
+    return out + "}"
+}

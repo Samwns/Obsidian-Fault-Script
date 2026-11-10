@@ -105,3 +105,29 @@ ofs polish [--check] [--diff] [destinos]
 - `ofs test`: busca los `*.ofs` con un `.expected` al lado, compila y ejecuta cada uno (nativo; `--run` usa el interpretado; `--twin` también compara ambos modos) y compara la salida con el `.expected`. Imprime `ok`/`FAIL` por archivo y un resumen; sale con 1 si alguno falla. Los `.ofs` sin `.expected` se ignoran.
 - `ofs twin`: ejecuta el programa interpretado y nativo en directorios temporales y compara stdout, código de salida y stderr normalizado. Imprime `iguais` (iguales, código 0) o la primera diferencia (código 1). `OFS_TEST_TIMEOUT` fija el límite por ejecución (30 s por defecto).
 - `ofs polish`: alias de `ofs fmt`, mismas opciones.
+
+## `ofs quarry`: paquetes
+
+`ofs quarry` es el gestor de paquetes (la cantera de donde se extraen las bibliotecas). Está escrito en OFS (`ofs/tools/quarry.ofs` + `quarry_json.ofs`), y el wrapper lo compila y lo guarda en caché como `ofs fmt`/`ofs doc`.
+
+```bash
+ofs quarry add granito            # rango ^<última>; también granito@1.2.3, granito@^1.2, granito@beta (canal)
+ofs quarry remove granito         # lo quita del proyecto y borra las dependencias huérfanas
+ofs quarry list                   # lo instalado, con versión
+ofs quarry search texto           # busca en nombre, descripción y tags del registro
+ofs quarry update [granito]       # sube versiones dentro de los rangos de ofs.claim
+ofs quarry install                # reproduce el proyecto: instala lo que dice ofs.lode, verificando el sha256
+ofs quarry publish [--out dist] [--origin <url>] [--deposit registry.json]
+```
+
+**Dónde instala:** en `$OFS_LIB_HOME`, o en `~/.ofs/libs`, donde `attach` ya busca. Cada paquete va a `~/.ofs/libs/<paquete>/` (el contenido del `.tar.gz` más `.assay`, con la versión y el hash verificados) y recibe una "veta" de una línea, `~/.ofs/libs/<modulo>.ofs` (`attach {F:<paquete>/<main>}`). Así `attach {granito}` lo encuentra sin configuración, tanto en `ofs build` como en `ofs run` (el guion pasa a guion bajo: `terminal-colors` → `attach {terminal_colors}`). La instalación es por usuario, no por proyecto. Si el stdlib tiene un módulo con el mismo nombre, ese gana la búsqueda; `quarry` avisa y sugiere `attach {F:<paquete>/<main>}`.
+
+**De dónde descarga:** del registro en `OFS_QUARRY_REGISTRY` (o `--registry`): una URL `http(s)://`, `file://` o una ruta (archivo `.json` o carpeta con `registry.json`). Por defecto: `src/packages/registry.json` del repositorio en GitHub (raw). Cada versión apunta a una release de GitHub `quarry-<paquete>-<versión>` (la publica el workflow `publish-libraries.yml`, sin npm ni `NPM_TOKEN`); si falla, prueba `<carpeta del registro>/dist/<archivo>`. Con un registro local, el archivo de al lado va primero, así que no hace falta red. La descarga usa el `curl` del sistema (el `tls.ofs` del stdlib no sigue redirecciones y requiere `-lssl`), y la extracción usa `tar`. El sha256 se calcula en OFS.
+
+### Manifiesto `ofs.claim` y lock `ofs.lode`
+
+El manifiesto es un archivo clave = valor, con secciones `[deps]` (`^1.2`, `~1.2.3`, `1.x`, exacta, `>=1.0 <2.0`, `*`). Lleva `name`, `version`, `description` y `main`; para publish también acepta `author`, `license`, `tags`, `channel` e `include`. `ofs.lode` se genera, con una sección por paquete (directos y transitivos): `version` exacta, `sha256` del `.tar.gz`, `url`, `main` y `deps`. `install` **rechaza** el paquete si el sha256 no coincide. Si ninguna versión satisface todos los rangos, hay conflicto: no se escribe nada y el mensaje dice quién pidió qué.
+
+**Publicar:** `ofs quarry publish` genera un `dist/<nombre>-<versión>.tar.gz` reproducible y muestra la entrada de registro con el hash, sin enviar nada. `--origin` define la URL y `--deposit registry.json` escribe la entrada en el registro. `src/packages/build_packages.sh` lo hace para las 19 bibliotecas.
+
+Prueba: `ofs/tests/quarry/run.sh`. Pendiente: firma de paquetes, instalación por proyecto y subir la release desde `publish`.

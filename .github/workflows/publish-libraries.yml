@@ -6,6 +6,8 @@ on:
     branches: [main]
     paths:
       - src/packages/src/**
+      - src/packages/dist/**
+      - src/packages/registry.json
       - .github/workflows/publish-libraries.yml
 
 permissions:
@@ -16,6 +18,34 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
+  # ofs quarry: cada dist/<pacote>-<versao>.tar.gz vira a release
+  # quarry-<pacote>-<versao> (a URL que o registry.json aponta). Sem npm e sem
+  # NPM_TOKEN: so o GITHUB_TOKEN do proprio workflow. Os .tar.gz e os sha256
+  # sao gerados localmente por src/packages/build_packages.sh (ofs quarry publish).
+  quarry-releases:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Publish quarry releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          for f in src/packages/dist/*-[0-9]*.tar.gz; do
+            [[ -f "$f" ]] || continue
+            file="$(basename "$f")"
+            tag="quarry-${file%.tar.gz}"
+            if gh release view "$tag" >/dev/null 2>&1; then
+              echo "Skipping $tag (already published)"
+              continue
+            fi
+            gh release create "$tag" "$f" --title "$tag" \
+              --notes "OFS package ${file%.tar.gz} (ofs quarry). sha256: $(sha256sum "$f" | cut -d' ' -f1)"
+          done
+
   publish:
     runs-on: ubuntu-latest
     steps:

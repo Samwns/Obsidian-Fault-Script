@@ -1,7 +1,7 @@
 {
-  "version": "1",
-  "updated": "2026-04-12",
-  "src/packages": [
+  "version": "2",
+  "updated": "2026-11-09",
+  "packages": [
     {
       "name": "canvas",
       "description": "Unstable native pixel buffer helpers for OFS window rendering",
@@ -10,7 +10,15 @@
       "tags": ["canvas", "graphics", "pixels", "window", "native", "unstable"],
       "channels": { "beta": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-12", "channel": "beta", "main": "libs/canvas.ofs" }
+        "1.0.0": {
+          "date": "2026-04-12",
+          "channel": "beta",
+          "main": "libs/canvas.ofs",
+          "file": "canvas-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-canvas-1.0.0/canvas-1.0.0.tar.gz",
+          "sha256": "3608118de5410505752d2c52baf9ece316ebc76addd7e56e2859dbeeb5374b11",
+          "size": 907
+        }
       }
     },
     {
@@ -21,7 +29,15 @@
       "tags": ["string", "format", "text", "table", "utility"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/fmt.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/fmt.ofs",
+          "file": "fmt-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-fmt-1.0.0/fmt-1.0.0.tar.gz",
+          "sha256": "f2774571a6713400ffe186d5f638697d88883f8c65974030c4ef919d6af3013c",
+          "size": 2037
+        }
       }
     },
     {
@@ -32,7 +48,15 @@
       "tags": ["core", "math", "stdlib"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/core.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/core.ofs",
+          "file": "core-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-core-1.0.0/core-1.0.0.tar.gz",
+          "sha256": "24ab782ce70faa6f9ae71ce2096ea9421d5870033a7617a940b8abdcdebb9512",
+          "size": 829
+        }
       }
     },
     {
@@ -43,7 +67,15 @@
       "tags": ["math", "primes", "stdlib"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/math.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/math.ofs",
+          "file": "math-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-math-1.0.0/math-1.0.0.tar.gz",
+          "sha256": "c8ef1b38ea41cfdab5030c6df070aa29aee5d986f8c37e917812eb84a88ac93c",
+          "size": 763
+        }
       }
     },
     {
@@ -54,7 +86,15 @@
       "tags": ["string", "text", "stdlib"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/string.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/string.ofs",
+          "file": "string-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-string-1.0.0/string-1.0.0.tar.gz",
+          "sha256": "0690fab1b19e3679b9bfb7a7219ac3a63673363cf7787f27b66008f92ed4efc9",
+          "size": 508
+        }
       }
     },
     {
@@ -65,7 +105,15 @@
       "tags": ["io", "input", "output", "stdlib"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/io.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/io.ofs",
+          "file": "io-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-io-1.0.0/io-1.0.0.tar.gz",
+          "sha256": "9e931a172733d16075405583181f3d20a3e308e5979ccbb3d9c50836801c529c",
+          "size": 498
+        }
       }
     },
     {
@@ -77,7 +125,15 @@
       "channels": { "stable": "1.1.0", "latest": "1.1.0" },
       "versions": {
         "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/webserver.ofs" },
-        "1.1.0": { "date": "2026-06-14", "channel": "stable", "main": "libs/webserver.ofs" }
+        "1.1.0": {
+          "date": "2026-06-14",
+          "channel": "stable",
+          "main": "libs/webserver.ofs",
+          "file": "webserver-1.1.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-webserver-1.1.0/webserver-1.1.0.tar.gz",
+          "sha256": "5dfea2c1b7ce6a9dd9d851fd149d461a3834f7d046935845d6f17b2b4ea1ea5e",
+          "size": 1517
+        }
       }
     },
     {
@@ -88,7 +144,15 @@
       "tags": ["web", "html", "markup", "dsl", "site"],
       "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
       "versions": {
-        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/ofshtml.ofs" }
+        "0.1.0": {
+          "date": "2026-06-14",
+          "channel": "alpha",
+          "main": "libs/ofshtml.ofs",
+          "file": "ofshtml-0.1.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-ofshtml-0.1.0/ofshtml-0.1.0.tar.gz",
+          "sha256": "811b6ecd43a54d063ff5055ad9b0ff186a9ec06765fa96b8c991e15b04e26e21",
+          "size": 1143
+        }
       }
     },
     {
@@ -99,7 +163,15 @@
       "tags": ["web", "markup", "html", "dsl", "odl"],
       "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
       "versions": {
-        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/odl.ofs" }
+        "0.1.0": {
+          "date": "2026-06-14",
+          "channel": "alpha",
+          "main": "libs/odl.ofs",
+          "file": "odl-0.1.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-odl-0.1.0/odl-0.1.0.tar.gz",
+          "sha256": "bdf8e32ab6036ee4b69b7c3ae5d79ef1d7340169668b97b1d795fb61f66f4478",
+          "size": 1332
+        }
       }
     },
     {
@@ -110,7 +182,15 @@
       "tags": ["web", "style", "css", "dsl", "oes"],
       "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
       "versions": {
-        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/oes.ofs" }
+        "0.1.0": {
+          "date": "2026-06-14",
+          "channel": "alpha",
+          "main": "libs/oes.ofs",
+          "file": "oes-0.1.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-oes-0.1.0/oes-0.1.0.tar.gz",
+          "sha256": "f89b808efe7c7877e42bce7ed839a8578a56b3e2720273c0431f00472a768933",
+          "size": 741
+        }
       }
     },
     {
@@ -121,7 +201,15 @@
       "tags": ["web", "ui", "html", "style", "site", "server"],
       "channels": { "alpha": "0.1.0", "latest": "0.1.0" },
       "versions": {
-        "0.1.0": { "date": "2026-06-14", "channel": "alpha", "main": "libs/webui.ofs" }
+        "0.1.0": {
+          "date": "2026-06-14",
+          "channel": "alpha",
+          "main": "libs/webui.ofs",
+          "file": "webui-0.1.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-webui-0.1.0/webui-0.1.0.tar.gz",
+          "sha256": "cb7a79c0bc15450d592f282fa06568b2110f661530e35a50d50646c2a537ca46",
+          "size": 1818
+        }
       }
     },
     {
@@ -132,7 +220,15 @@
       "tags": ["low-level", "memory", "bits", "stdlib"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/bedrock.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/bedrock.ofs",
+          "file": "bedrock-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-bedrock-1.0.0/bedrock-1.0.0.tar.gz",
+          "sha256": "d6868d2ef59a048403587a03b3d21a7c7160152c4a264d77fd7ea5d88bf9155e",
+          "size": 1097
+        }
       }
     },
     {
@@ -143,7 +239,15 @@
       "tags": ["low-level", "packets", "networking", "stdlib"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/bedrock_packet.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/bedrock_packet.ofs",
+          "file": "bedrock-packet-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-bedrock-packet-1.0.0/bedrock-packet-1.0.0.tar.gz",
+          "sha256": "909077092d4105fdcbc106386eb204f3644821eb8aafbbfafdf1d98a38a78f87",
+          "size": 563
+        }
       }
     },
     {
@@ -154,7 +258,15 @@
       "tags": ["ffi", "interop", "abi", "stdlib"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/rift.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/rift.ofs",
+          "file": "rift-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-rift-1.0.0/rift-1.0.0.tar.gz",
+          "sha256": "8dbf4e755be0f4816c524d70a64c8c22781e6a137aa8b50cf239655e6c35ba19",
+          "size": 483
+        }
       }
     },
     {
@@ -165,7 +277,15 @@
       "tags": ["terminal", "colors", "ansi", "ui"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/terminal_colors.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/terminal_colors.ofs",
+          "file": "terminal-colors-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-terminal-colors-1.0.0/terminal-colors-1.0.0.tar.gz",
+          "sha256": "c3b82d34ebc93f0256f1757e857e882a4d19f96952515c1d36a4b424e7e1341a",
+          "size": 671
+        }
       }
     },
     {
@@ -176,7 +296,15 @@
       "tags": ["memory", "modes", "fracture", "abyss", "stdlib"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/memory_modes.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/memory_modes.ofs",
+          "file": "memory-modes-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-memory-modes-1.0.0/memory-modes-1.0.0.tar.gz",
+          "sha256": "867a59116d26f5c35e39f2bf3ddb878018b22963401dcff62d5b05b635d34a72",
+          "size": 541
+        }
       }
     },
     {
@@ -187,7 +315,15 @@
       "tags": ["test", "unit-test", "stdlib"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-07", "channel": "stable", "main": "libs/test_lib.ofs" }
+        "1.0.0": {
+          "date": "2026-04-07",
+          "channel": "stable",
+          "main": "libs/test_lib.ofs",
+          "file": "test-lib-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-test-lib-1.0.0/test-lib-1.0.0.tar.gz",
+          "sha256": "e199d5d49529444cd0aa44aa8c57abbb67bbf8aa16bbcdeb39725e74c74a4086",
+          "size": 285
+        }
       }
     },
     {
@@ -198,7 +334,34 @@
       "tags": ["window", "input", "graphics", "runtime", "stdlib"],
       "channels": { "stable": "1.0.0", "latest": "1.0.0" },
       "versions": {
-        "1.0.0": { "date": "2026-04-12", "channel": "stable", "main": "libs/window.ofs" }
+        "1.0.0": {
+          "date": "2026-04-12",
+          "channel": "stable",
+          "main": "libs/window.ofs",
+          "file": "window-1.0.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-window-1.0.0/window-1.0.0.tar.gz",
+          "sha256": "06e989b2a4c1836ab8bca595d3e65aa4a68f1160d59390a2ef1d5667fdaa826f",
+          "size": 693
+        }
+      }
+    },
+    {
+      "name": "ui",
+      "description": "Native OFS visual UI helpers: styles, layout, bitmap text, panels, buttons, checkbox, slider, and icons",
+      "author": "OFS Team",
+      "license": "MIT",
+      "tags": [],
+      "channels": { "stable": "0.2.0", "latest": "0.2.0" },
+      "versions": {
+        "0.2.0": {
+          "date": "2026-11-09",
+          "channel": "stable",
+          "main": "libs/ui.ofs",
+          "file": "ui-0.2.0.tar.gz",
+          "url": "https://github.com/Samwns/Obsidian-Fault-Script/releases/download/quarry-ui-0.2.0/ui-0.2.0.tar.gz",
+          "sha256": "48baa55bbeec7386a72ab93a5e1e7747c8703deace189c57dc5aef99ba664a69",
+          "size": 2377
+        }
       }
     }
   ]

@@ -105,3 +105,47 @@ ofs polish [--check] [--diff] [targets]
 - `ofs test`: finds `*.ofs` files with a `.expected` next to them, builds and runs each one (native; `--run` uses the interpreter; `--twin` also compares both modes) and diffs the output against `.expected`. Prints `ok`/`FAIL` per file and a summary; exits 1 if any fails. `.ofs` files without `.expected` are skipped.
 - `ofs twin`: runs the program interpreted and native in temporary directories and compares stdout, exit code and normalized stderr. Prints `iguais` (same, exit 0) or the first difference (exit 1). `OFS_TEST_TIMEOUT` sets the per-run limit (default 30 s).
 - `ofs polish`: alias of `ofs fmt`, same options.
+
+## `ofs quarry`: packages
+
+`ofs quarry` is the package manager (the quarry the libraries are extracted from). It is written in OFS (`ofs/tools/quarry.ofs` + `quarry_json.ofs`) and compiled and cached by the wrapper like `ofs fmt`/`ofs doc`.
+
+```bash
+ofs quarry add granito            # range ^<latest>; also granito@1.2.3, granito@^1.2, granito@beta (channel)
+ofs quarry remove granito         # drop it from the project and delete orphaned dependencies
+ofs quarry list                   # what is installed, with versions
+ofs quarry search text            # search names, descriptions and tags in the registry
+ofs quarry update [granito]       # raise versions within the ofs.claim ranges
+ofs quarry install                # reproduce the project: install what ofs.lode says, verifying sha256
+ofs quarry publish [--out dist] [--origin <url>] [--deposit registry.json]
+```
+
+**Where it installs:** `$OFS_LIB_HOME`, or `~/.ofs/libs`, which `attach` already searches. Each package goes to `~/.ofs/libs/<package>/` (the `.tar.gz` contents plus `.assay`, with the verified version and hash) and gets a one-line "vein" `~/.ofs/libs/<module>.ofs` (`attach {F:<package>/<main>}`), so `attach {granito}` finds it with no configuration, in both `ofs build` and `ofs run` (hyphens become underscores: `terminal-colors` → `attach {terminal_colors}`). Installation is per user, not per project: projects that need different versions of the same package switch with `ofs quarry install`. If the stdlib has a module with the same name (`core`, `fmt`, `io`...), it wins the search; `quarry` warns and suggests `attach {F:<package>/<main>}`.
+
+**Where it downloads from:** the registry in `OFS_QUARRY_REGISTRY` (or `--registry`): an `http(s)://` URL, `file://` or a path (a `.json` file or a folder with `registry.json`). Default: the repository's `src/packages/registry.json` on GitHub (raw). Each version points to a GitHub release `quarry-<package>-<version>` (published by the `publish-libraries.yml` workflow, with no npm and no `NPM_TOKEN`); if that fails, `quarry` tries `<registry folder>/dist/<file>`. With a local registry the file next to it comes first, so no network is needed. Downloads use the system `curl`: the stdlib `tls.ofs` does not follow redirects (GitHub releases redirect) and needs `-lssl`. Extraction uses `tar`. The sha256 is computed in OFS (`sha256.ofs`).
+
+### Manifest `ofs.claim` and lock `ofs.lode`
+
+The manifest is a key = value file (ODL describes HTML documents, so it does not fit this job). Comments start with `#`:
+
+```ini
+name = my-app
+version = 0.1.0
+description = Example
+main = libs/my_app.ofs           # for publish; default libs/<name>.ofs
+# optional for publish: author, license, tags = a, b, channel = beta, include = libs, assets
+
+[deps]
+granito = ^1.2      # >=1.2.0 <2.0.0  (^0.3 = >=0.3.0 <0.4.0)
+basalto = ~1.0.3    # >=1.0.3 <1.1.0
+xisto = 1.x         # any 1.*.*
+ardosia = 2.0.1     # exact (also >=1.0 <2.0, *)
+```
+
+`ofs.lode` is generated, with one section per package (direct and transitive): exact `version`, `sha256` of the `.tar.gz`, the `url` it came from, `main` and `deps`. When the lock covers the manifest, `install` uses only the lock (no registry needed) and **refuses** a package whose sha256 does not match. It also refuses when the registry has a different hash than the lock for the locked version. Registry versions without `sha256` cannot be installed.
+
+**Dependencies between packages:** a package published with `[deps]` in its `ofs.claim` carries those ranges into its registry entry. For each package, resolution picks the highest version that satisfies every requested range (the locked one, if it still fits) and then follows that version's dependencies. If no version satisfies every range, that is a conflict: nothing is written, and the message lists who asked for what.
+
+**Publishing:** run `ofs quarry publish` in the package folder. It builds a reproducible `dist/<name>-<version>.tar.gz` (sorted by name, with zeroed dates and owners and `gzip -n`, so the same source gives the same sha256). The archive holds `include` (default: the folder of `main`), the manifest, `README.md` and `LICENSE`. The command prints the registry entry with its hash and uploads nothing. `--origin` sets the URL (`{name}`, `{version}`, `{file}` are replaced; without it the URL is the file name, relative to the registry). `--deposit registry.json` writes the entry into the registry. `src/packages/build_packages.sh` does this for the 19 libraries in `src/packages/src/`, which still use the old `ofspkg.json` (also accepted).
+
+Test: `ofs/tests/quarry/run.sh` (temporary local registry, temporary `HOME`/`OFS_LIB_HOME`). Pending: package signatures (only the registry/lock sha256 for now), per-project installs, and uploading the release from `publish`.
