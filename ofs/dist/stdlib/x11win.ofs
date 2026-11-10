@@ -92,12 +92,14 @@ namespace x11win {
     forge _dead: stone = 0
 
     vein _word(i: stone) -> stone {
-        forge p: *stone = fault_step(_ev, i)
-        forge v = 0
         fracture {
-            v = *p;
+            forge p: *stone = fault_step(_ev, i)
+            forge v = 0
+            fracture {
+                v = *p;
+            }
+            return v
         }
-        return v
     }
 
     vein _lo32(v: stone) -> stone {
@@ -191,44 +193,48 @@ namespace x11win {
 
     // Define o icone da janela (_NET_WM_ICON) a partir de um canvas quadrado.
     vein set_icon(icon: Canvas) -> void {
-        if (_disp == null) { return }
-        forge n = icon.width * icon.height
-        forge data: *stone = ofs_alloc((n + 2) * 8)
-        forge p0: *stone = data
-        forge p1: *stone = fault_step(data, 1)
         fracture {
-            *p0 = icon.width;
-            *p1 = icon.height;
-        }
-        forge i = 0
-        while (i < n) {
-            forge px = canvas.get_pixel(icon, i % icon.width, i / icon.width)
-            forge q: *stone = fault_step(data, i + 2)
+            if (_disp == null) { return }
+            forge n = icon.width * icon.height
+            forge data: *stone = ofs_alloc((n + 2) * 8)
+            forge p0: *stone = data
+            forge p1: *stone = fault_step(data, 1)
             fracture {
-                *q = px;
+                *p0 = icon.width;
+                *p1 = icon.height;
             }
-            i++
+            forge i = 0
+            while (i < n) {
+                forge px = canvas.get_pixel(icon, i % icon.width, i / icon.width)
+                forge q: *stone = fault_step(data, i + 2)
+                fracture {
+                    *q = px;
+                }
+                i++
+            }
+            forge prop = XInternAtom(_disp, "_NET_WM_ICON", 0)
+            // XA_CARDINAL = 6, formato 32 (long), PropModeReplace = 0
+            XChangeProperty(_disp, _win, prop, 6, 32, 0, data, n + 2)
+            ofs_free(data)
         }
-        forge prop = XInternAtom(_disp, "_NET_WM_ICON", 0)
-        // XA_CARDINAL = 6, formato 32 (long), PropModeReplace = 0
-        XChangeProperty(_disp, _win, prop, 6, 32, 0, data, n + 2)
-        ofs_free(data)
     }
 
     // ── Tempo ────────────────────────────────────────────────────────────
     vein now_ms() -> stone {
-        // funciona tambem sem janela aberta (modo headless)
-        if (_ts == null) { _ts = ofs_alloc(16) }
-        clock_gettime(1, _ts)
-        forge ps: *stone = _ts
-        forge pn: *stone = fault_step(_ts, 1)
-        forge sec = 0
-        forge nsec = 0
         fracture {
-            sec = *ps;
-            nsec = *pn;
+            // funciona tambem sem janela aberta (modo headless)
+            if (_ts == null) { _ts = ofs_alloc(16) }
+            clock_gettime(1, _ts)
+            forge ps: *stone = _ts
+            forge pn: *stone = fault_step(_ts, 1)
+            forge sec = 0
+            forge nsec = 0
+            fracture {
+                sec = *ps;
+                nsec = *pn;
+            }
+            return sec * 1000 + nsec / 1000000
         }
-        return sec * 1000 + nsec / 1000000
     }
 
     vein sleep_ms(ms: stone) -> void {
@@ -248,44 +254,46 @@ namespace x11win {
     }
 
     vein present(cv: Canvas) -> void {
-        if (_disp == null) { return }
-        forge w = cv.width
-        forge h = cv.height
-        _ensure_image(w, h)
-        // canvas: 1 stone (0xRRGGBB) por pixel -> XImage: 1 u32 por pixel.
-        // Empacota dois pixels por palavra de 64 bits.
-        forge total = w * h
-        forge pairs = total / 2
-        forge i = 0
-        while (i < pairs) {
-            forge sp0: *stone = fault_step(cv.buffer, i * 2)
-            forge sp1: *stone = fault_step(cv.buffer, i * 2 + 1)
-            forge a = 0
-            forge b = 0
-            fracture {
-                a = *sp0;
-                b = *sp1;
+        fracture {
+            if (_disp == null) { return }
+            forge w = cv.width
+            forge h = cv.height
+            _ensure_image(w, h)
+            // canvas: 1 stone (0xRRGGBB) por pixel -> XImage: 1 u32 por pixel.
+            // Empacota dois pixels por palavra de 64 bits.
+            forge total = w * h
+            forge pairs = total / 2
+            forge i = 0
+            while (i < pairs) {
+                forge sp0: *stone = fault_step(cv.buffer, i * 2)
+                forge sp1: *stone = fault_step(cv.buffer, i * 2 + 1)
+                forge a = 0
+                forge b = 0
+                fracture {
+                    a = *sp0;
+                    b = *sp1;
+                }
+                forge dp: *stone = fault_step(_img_data, i)
+                fracture {
+                    *dp = (a & 16777215) | ((b & 16777215) << 32);
+                }
+                i++
             }
-            forge dp: *stone = fault_step(_img_data, i)
-            fracture {
-                *dp = (a & 16777215) | ((b & 16777215) << 32);
+            if (total % 2 == 1) {
+                forge spl: *stone = fault_step(cv.buffer, total - 1)
+                forge last = 0
+                fracture {
+                    last = *spl;
+                }
+                forge dpl: *u32 = (((_img_data as stone) + (total - 1) * 4) as *u32)
+                forge lv: u32 = (last & 16777215) as u32
+                fracture {
+                    *dpl = lv;
+                }
             }
-            i++
+            XPutImage(_disp, _win, _gc, _img, 0, 0, 0, 0, w, h)
+            XFlush(_disp)
         }
-        if (total % 2 == 1) {
-            forge spl: *stone = fault_step(cv.buffer, total - 1)
-            forge last = 0
-            fracture {
-                last = *spl;
-            }
-            forge dpl: *u32 = (((_img_data as stone) + (total - 1) * 4) as *u32)
-            forge lv: u32 = (last & 16777215) as u32
-            fracture {
-                *dpl = lv;
-            }
-        }
-        XPutImage(_disp, _win, _gc, _img, 0, 0, 0, 0, w, h)
-        XFlush(_disp)
     }
 
     // ── Teclado: keysym -> Unicode, com teclas mortas (pt-BR) ────────────
@@ -360,37 +368,41 @@ namespace x11win {
     }
 
     vein utf8(cp: stone) -> obsidian {
-        forge buf: *u8 = ofs_alloc(8) as *u8
-        forge base = buf as stone
-        forge n = 0
-        if (cp < 128) {
-            _put(base, 0, cp)
-            n = 1
-        } else if (cp < 2048) {
-            _put(base, 0, 192 | (cp >> 6))
-            _put(base, 1, 128 | (cp & 63))
-            n = 2
-        } else if (cp < 65536) {
-            _put(base, 0, 224 | (cp >> 12))
-            _put(base, 1, 128 | ((cp >> 6) & 63))
-            _put(base, 2, 128 | (cp & 63))
-            n = 3
-        } else {
-            _put(base, 0, 240 | (cp >> 18))
-            _put(base, 1, 128 | ((cp >> 12) & 63))
-            _put(base, 2, 128 | ((cp >> 6) & 63))
-            _put(base, 3, 128 | (cp & 63))
-            n = 4
+        fracture {
+            forge buf: *u8 = ofs_alloc(8) as *u8
+            forge base = buf as stone
+            forge n = 0
+            if (cp < 128) {
+                _put(base, 0, cp)
+                n = 1
+            } else if (cp < 2048) {
+                _put(base, 0, 192 | (cp >> 6))
+                _put(base, 1, 128 | (cp & 63))
+                n = 2
+            } else if (cp < 65536) {
+                _put(base, 0, 224 | (cp >> 12))
+                _put(base, 1, 128 | ((cp >> 6) & 63))
+                _put(base, 2, 128 | (cp & 63))
+                n = 3
+            } else {
+                _put(base, 0, 240 | (cp >> 18))
+                _put(base, 1, 128 | ((cp >> 12) & 63))
+                _put(base, 2, 128 | ((cp >> 6) & 63))
+                _put(base, 3, 128 | (cp & 63))
+                n = 4
+            }
+            _put(base, n, 0)
+            return base as obsidian
         }
-        _put(base, n, 0)
-        return base as obsidian
     }
 
     vein _put(base: stone, i: stone, v: stone) -> void {
-        forge p: *u8 = (base + i) as *u8
-        forge b: u8 = (v & 255) as u8
         fracture {
-            *p = b;
+            forge p: *u8 = (base + i) as *u8
+            forge b: u8 = (v & 255) as u8
+            fracture {
+                *p = b;
+            }
         }
     }
 

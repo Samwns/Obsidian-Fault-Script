@@ -3,30 +3,32 @@ extern vein ofs_alloc(size: stone) -> *stone
 extern vein ofs_free(p: *stone) -> void
 
 core main() {
-    forge x: stone = 10
     fracture {
-        shard p: *stone = &x
-        echo(*p)
-        *p = 42
-    }
-    echo(x)
+        forge x: stone = 10
+        fracture {
+            shard p: *stone = &x
+            echo(*p)
+            *p = 42
+        }
+        echo(x)
 
-    forge buf: *stone = ofs_alloc(32)
-    forge i = 0
-    while (i < 4) {
-        forge q: *stone = fault_step(buf, i)
-        fracture { *q = (i + 1) * 100 }
-        i++
+        forge buf: *stone = ofs_alloc(32)
+        forge i = 0
+        while (i < 4) {
+            forge q: *stone = fault_step(buf, i)
+            fracture { *q = (i + 1) * 100 }
+            i++
+        }
+        forge soma = 0
+        i = 0
+        while (i < 4) {
+            forge q: *stone = fault_step(buf, i)
+            forge v = 0
+            fracture { v = *q }
+            soma = soma + v
+            i++
+        }
+        echo(soma)
+        ofs_free(buf)
     }
-    forge soma = 0
-    i = 0
-    while (i < 4) {
-        forge q: *stone = fault_step(buf, i)
-        forge v = 0
-        fracture { v = *q }
-        soma = soma + v
-        i++
-    }
-    echo(soma)
-    ofs_free(buf)
 }

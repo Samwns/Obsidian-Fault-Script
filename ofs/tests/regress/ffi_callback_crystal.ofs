@@ -7,6 +7,8 @@ vein com_crystal(a: crystal, b: crystal) -> stone {
 }
 
 core main() {
-    forge f = fault_addr(com_crystal)
-    echo("nao chega aqui")
+    abyss {
+        forge f = fault_addr(com_crystal)
+        echo("nao chega aqui")
+    }
 }

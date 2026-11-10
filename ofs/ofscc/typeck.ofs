@@ -14,6 +14,12 @@ namespace typeck {
     forge _field_names: Array<obsidian> = []
     forge _field_types: Array<obsidian> = []
     forge _anchor_depth: stone = 0
+    // F4: profundidade de blocos de baixo nivel. `fracture`/`bedrock`/
+    // `tectonic` liberam ponteiros; `abyss` libera tudo (fault_call/addr).
+    forge _fracture_depth: stone = 0
+    forge _abyss_depth: stone = 0
+    forge _fault_strict: stone = -1
+    forge _fault_warnings: stone = 0
     forge _semantic_errors: stone = 0
     forge _check_visits: stone = 0
     // F3: tipos nomeados conhecidos e o retorno da vein em verificacao
@@ -542,6 +548,66 @@ namespace typeck {
         if (tc == TY_FLT && vc == TY_INT) { node_set_child(id, 1, wrap_cast(value_id, target_t)) }
     }
 
+    // ── Baixo nivel exige bloco (F4) ──────────────────────────────────
+    // Regra (docs/LANGUAGE_REFERENCE.md, secao 12):
+    //   fracture / bedrock / tectonic: `*p` (ler e escrever), `&x`, `as`
+    //     envolvendo ponteiro, fault_step, fault_memcpy, fault_memset;
+    //   abyss: tudo isso + fault_call e fault_addr.
+    // Fora do bloco: [AVISO DE FALHA] ate 2027-01-09 e depois erro;
+    // OFS_STRICT_FAULT=1 ja trata como [ERRO DE FALHA].
+    vein fault_strict() -> bool {
+        if (_fault_strict < 0) {
+            _fault_strict = 0
+            forge sv = getenv("OFS_STRICT_FAULT")
+            if (sv != null && ofs_str_len(sv) > 0 && !ofs_str_eq(sv, "0")) { _fault_strict = 1 }
+        }
+        return _fault_strict == 1
+    }
+
+    vein fault_block_enter(kind: obsidian) -> void {
+        if (ofs_str_eq(kind, "abyss")) { _abyss_depth++ }
+        else { _fracture_depth++ }
+    }
+
+    vein fault_block_leave(kind: obsidian) -> void {
+        if (ofs_str_eq(kind, "abyss")) { _abyss_depth-- }
+        else { _fracture_depth-- }
+    }
+
+    vein is_fault_block(n: Node) -> bool {
+        return n.kind == NK_BLOCK && ofs_str_len(n.val) > 0
+    }
+
+    // `op` = operacao (texto para a mensagem); `need_abyss` = so `abyss` libera;
+    // `example` = trecho para a dica
+    vein require_fault(n: Node, op: obsidian, need_abyss: bool, example: obsidian) -> void {
+        if (_abyss_depth > 0) { return }
+        if (!need_abyss && _fracture_depth > 0) { return }
+        forge blocks = "fracture, bedrock ou abyss"
+        forge vein_mark = "fracture vein"
+        if (need_abyss) {
+            blocks = "so abyss"
+            vein_mark = "abyss vein"
+        }
+        forge loc = ast_src_loc(n.line, n.col)
+        forge hint = "  dica: " + example + "  ou marque a vein: '" + vein_mark + " f(...)'"
+        if (fault_strict()) {
+            _semantic_errors++
+            echo("[ERRO DE FALHA " + loc + "]: " + op + " fora de bloco de baixo nivel (libera: " + blocks + ")")
+            echo(hint)
+        } else {
+            // aviso no stderr: no `ofs run` o stdout e do programa
+            _fault_warnings++
+            fault_note("[AVISO DE FALHA " + loc + "]: " + op + " fora de bloco de baixo nivel (libera: " + blocks + ")")
+            fault_note(hint)
+        }
+    }
+
+    vein fault_note(msg: obsidian) -> void {
+        forge line = msg + "\n"
+        write(2, line, ofs_str_len(line))
+    }
+
     vein report_anchor_control(n: Node, control: obsidian) -> void {
         _semantic_errors++
         echo("[fault E0042] " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) +
@@ -889,8 +955,15 @@ namespace typeck {
         }
         
         if (n.kind == NK_CAST) {
-            check_node(n.c0)
+            forge src_type = check_node(n.c0)
             forge target_type = n.val
+            forge cs = ty_class(src_type)
+            forge ct = ty_class(target_type)
+            if ((ct == TY_PTR && cs != TY_NULL && !ofs_str_eq(src_type, target_type)) ||
+                (cs == TY_PTR && !ofs_str_eq(src_type, target_type))) {
+                require_fault(n, "'as' com ponteiro (" + src_type + " as " + target_type + ")", false,
+                    "fracture { forge q = (p as stone) + 8 }")
+            }
             node_set_type(id, target_type)
             return target_type
         }
@@ -898,11 +971,13 @@ namespace typeck {
         if (n.kind == NK_UNARY_OP) {
             forge operand_type = check_node(n.c0)
             if (ofs_str_eq(n.val, "&")) {
+                require_fault(n, "endereco '&x'", false, "fracture { shard p: *stone = &x }")
                 forge ptr_t = "*" + operand_type
                 node_set_type(id, ptr_t)
                 return ptr_t
             }
             if (ofs_str_eq(n.val, "*")) {
+                require_fault(n, "acesso por ponteiro '*p' (leitura ou escrita)", false, "fracture { forge v = *p; *p = v + 1 }")
                 forge deref_t = "stone"
                 if (ofs_str_len(operand_type) > 1 && ofs_str_char_at(operand_type, 0) == 42) {
                     deref_t = ofs_str_substr(operand_type, 1, ofs_str_len(operand_type) - 1)
@@ -939,6 +1014,7 @@ namespace typeck {
             // funcao C). O argumento e um nome de vein, nao uma expressao:
             // `ns.fn` vira o simbolo `ns__fn` e nao passa por check_node.
             if (ofs_str_eq(n.val, "fault_addr")) {
+                require_fault(n, "'fault_addr' (endereco de vein)", true, "abyss { forge f = fault_addr(minha_vein) }")
                 if (node_extra_len(id) == 1) {
                     forge fa_id = node_get_extra(id, 0)
                     forge fa: Node = node_get(fa_id)
@@ -962,6 +1038,11 @@ namespace typeck {
                 echo("[ERRO SEMANTICO " + ofs_stone_to_obsidian(n.line) + ":" + ofs_stone_to_obsidian(n.col) + "]: fault_addr espera o nome de uma vein")
                 node_set_type(id, "stone")
                 return "stone"
+            }
+            if (ofs_str_eq(n.val, "fault_call")) {
+                require_fault(n, "'fault_call' (chamada por endereco)", true, "abyss { forge r = fault_call(f, a, b) }")
+            } else if (ofs_str_eq(n.val, "fault_step") || ofs_str_eq(n.val, "fault_memcpy") || ofs_str_eq(n.val, "fault_memset")) {
+                require_fault(n, "'" + n.val + "' (memoria crua)", false, "fracture { " + n.val + "(...) }")
             }
             forge i = 0
             forge argc = node_extra_len(id)
@@ -1228,6 +1309,9 @@ namespace typeck {
         }
         
         if (n.kind == NK_BLOCK) {
+            forge fault_kind = n.val
+            forge is_fault = is_fault_block(n)
+            if (is_fault) { fault_block_enter(fault_kind) }
             forge i = 0
             forge stmtc = node_extra_len(id)
             while (i < stmtc) {
@@ -1235,6 +1319,7 @@ namespace typeck {
                 check_node(stmt_id)
                 i++
             }
+            if (is_fault) { fault_block_leave(fault_kind) }
             return "void"
         }
 
@@ -1463,12 +1548,23 @@ namespace typeck {
     
     vein check(root_id: stone) -> void {
         _anchor_depth = 0
+        _fracture_depth = 0
+        _abyss_depth = 0
+        _fault_warnings = 0
         _semantic_errors = 0
         _cur_ret = "unknown"
         _check_visits = 0
         push_scope()
         check_node(root_id)
         pop_scope()
+        if (_fault_warnings > 0) {
+            fault_note("[AVISO DE FALHA] " + ofs_stone_to_obsidian(_fault_warnings) +
+                " operacao(oes) de baixo nivel fora de bloco: viram erro em 2027-01-09; OFS_STRICT_FAULT=1 ja trata como erro")
+        }
+    }
+
+    vein fault_warning_count() -> stone {
+        return _fault_warnings
     }
 
     vein has_errors() -> bool {

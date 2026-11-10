@@ -94,18 +94,22 @@ namespace zip {
     forge _w_dos: stone = 0
 
     vein _gb(base: stone, i: stone) -> stone {
-        forge p: *u8 = (base + i) as *u8
-        forge v: u8 = 0 as u8
         fracture {
-            v = *p;
+            forge p: *u8 = (base + i) as *u8
+            forge v: u8 = 0 as u8
+            fracture {
+                v = *p;
+            }
+            return (v as stone) & 255
         }
-        return (v as stone) & 255
     }
     vein _pb(base: stone, i: stone, v: stone) -> void {
-        forge p: *u8 = (base + i) as *u8
-        forge b: u8 = (v & 255) as u8
         fracture {
-            *p = b;
+            forge p: *u8 = (base + i) as *u8
+            forge b: u8 = (v & 255) as u8
+            fracture {
+                *p = b;
+            }
         }
     }
     vein _u16(base: stone, i: stone) -> stone { return _gb(base, i) | (_gb(base, i + 1) << 8) }
@@ -120,12 +124,14 @@ namespace zip {
     }
 
     vein _text(base: stone, i: stone, n: stone) -> obsidian {
-        forge b: *stone = ofs_alloc(n + 8)
-        memcpy(b, (base + i) as *stone, n)
-        _pb(b as stone, n, 0)
-        forge out = ofs_str_substr(b as obsidian, 0, n)
-        ofs_free(b)
-        return out
+        fracture {
+            forge b: *stone = ofs_alloc(n + 8)
+            memcpy(b, (base + i) as *stone, n)
+            _pb(b as stone, n, 0)
+            forge out = ofs_str_substr(b as obsidian, 0, n)
+            ofs_free(b)
+            return out
+        }
     }
 
     vein _mkdir_p(path: obsidian) -> void {
@@ -150,64 +156,70 @@ namespace zip {
 
     // ── leitura ──────────────────────────────────────────────────────────
     vein close() -> void {
-        xabort()
-        if (_mem != 0) { ofs_free(_mem as *stone) }
-        _mem = 0
-        _size = 0
-        _names = []
-        _method = []
-        _csize = []
-        _usize = []
-        _crc = []
-        _off = []
+        fracture {
+            xabort()
+            if (_mem != 0) { ofs_free(_mem as *stone) }
+            _mem = 0
+            _size = 0
+            _names = []
+            _method = []
+            _csize = []
+            _usize = []
+            _crc = []
+            _off = []
+        }
     }
 
     vein free_data() -> void {
-        if (data_ptr != 0) { ofs_free(data_ptr as *stone) }
-        data_ptr = 0
-        data_len = 0
+        fracture {
+            if (data_ptr != 0) { ofs_free(data_ptr as *stone) }
+            data_ptr = 0
+            data_len = 0
+        }
     }
 
     vein open(path: obsidian) -> bool {
-        close()
-        last_error = ""
-        forge f = fopen(path, "rb")
-        if (f == null) { last_error = "nao abriu"; return false }
-        fseek(f, 0, 2)
-        _size = ftell(f)
-        fseek(f, 0, 0)
-        if (_size < 22) { fclose(f); last_error = "zip pequeno demais"; return false }
-        forge m: *stone = ofs_alloc(_size + 16)
-        forge got = fread(m, 1, _size, f)
-        fclose(f)
-        _mem = m as stone
-        if (got != _size) { close(); last_error = "leitura incompleta"; return false }
-        // EOCD (assinatura 0x06054b50) procurado de tras para frente
-        forge e = _size - 22
-        forge lim = _size - 22 - 65535
-        if (lim < 0) { lim = 0 }
-        while (e >= lim && _u32(_mem, e) != 101010256) { e-- }
-        if (e < lim) { close(); last_error = "nao e um zip"; return false }
-        forge n = _u16(_mem, e + 10)
-        forge cd = _u32(_mem, e + 16)
-        if (cd + 46 > _size) { close(); last_error = "zip corrompido"; return false }
-        forge p = cd
-        forge k = 0
-        while (k < n) {
-            if (p + 46 > _size || _u32(_mem, p) != 33639248) { close(); last_error = "diretorio central invalido"; return false }
-            forge nl = _u16(_mem, p + 28)
-            forge xl = _u16(_mem, p + 30)
-            forge cl = _u16(_mem, p + 32)
-            ofs_array_push(_method, _u16(_mem, p + 10))
-            ofs_array_push(_crc, _u32(_mem, p + 16))
-            ofs_array_push(_csize, _u32(_mem, p + 20))
-            ofs_array_push(_usize, _u32(_mem, p + 24))
-            ofs_array_push(_off, _u32(_mem, p + 42))
-            ofs_array_push(_names, _text(_mem, p + 46, nl))
-            p = p + 46 + nl + xl + cl
-            k++
+        fracture {
+            close()
+            last_error = ""
+            forge f = fopen(path, "rb")
+            if (f == null) { last_error = "nao abriu"; return false }
+            fseek(f, 0, 2)
+            _size = ftell(f)
+            fseek(f, 0, 0)
+            if (_size < 22) { fclose(f); last_error = "zip pequeno demais"; return false }
+            forge m: *stone = ofs_alloc(_size + 16)
+            forge got = fread(m, 1, _size, f)
+            fclose(f)
+            _mem = m as stone
+            if (got != _size) { close(); last_error = "leitura incompleta"; return false }
+            // EOCD (assinatura 0x06054b50) procurado de tras para frente
+            forge e = _size - 22
+            forge lim = _size - 22 - 65535
+            if (lim < 0) { lim = 0 }
+            while (e >= lim && _u32(_mem, e) != 101010256) { e-- }
+            if (e < lim) { close(); last_error = "nao e um zip"; return false }
+            forge n = _u16(_mem, e + 10)
+            forge cd = _u32(_mem, e + 16)
+            if (cd + 46 > _size) { close(); last_error = "zip corrompido"; return false }
+            forge p = cd
+            forge k = 0
+            while (k < n) {
+                if (p + 46 > _size || _u32(_mem, p) != 33639248) { close(); last_error = "diretorio central invalido"; return false }
+                forge nl = _u16(_mem, p + 28)
+                forge xl = _u16(_mem, p + 30)
+                forge cl = _u16(_mem, p + 32)
+                ofs_array_push(_method, _u16(_mem, p + 10))
+                ofs_array_push(_crc, _u32(_mem, p + 16))
+                ofs_array_push(_csize, _u32(_mem, p + 20))
+                ofs_array_push(_usize, _u32(_mem, p + 24))
+                ofs_array_push(_off, _u32(_mem, p + 42))
+                ofs_array_push(_names, _text(_mem, p + 46, nl))
+                p = p + 46 + nl + xl + cl
+                k++
+            }
+            return true
         }
-        return true
     }
 
     vein last() -> obsidian { return last_error }
@@ -231,67 +243,73 @@ namespace zip {
 
     // Extrai a entrada i para data_ptr/data_len (libere com free_data()).
     vein read(i: stone) -> bool {
-        free_data()
-        last_error = ""
-        if (i < 0 || i >= ofs_array_len(_names)) { last_error = "indice"; return false }
-        forge off: stone = ofs_array_get(_off, i)
-        if (off + 30 > _size || _u32(_mem, off) != 67324752) { last_error = "cabecalho local invalido"; return false }
-        forge start = off + 30 + _u16(_mem, off + 26) + _u16(_mem, off + 28)
-        forge cs: stone = ofs_array_get(_csize, i)
-        forge us: stone = ofs_array_get(_usize, i)
-        forge method: stone = ofs_array_get(_method, i)
-        if (start + cs > _size) { last_error = "dados alem do arquivo"; return false }
-        if (method == 0) {
-            forge b: *stone = ofs_alloc(cs + 8)
-            memcpy(b, (_mem + start) as *stone, cs)
-            data_ptr = b as stone
-            data_len = cs
-        } else if (method == 8) {
-            if (cs == 0) {
-                data_ptr = ofs_alloc(8) as stone
-                data_len = 0
+        fracture {
+            free_data()
+            last_error = ""
+            if (i < 0 || i >= ofs_array_len(_names)) { last_error = "indice"; return false }
+            forge off: stone = ofs_array_get(_off, i)
+            if (off + 30 > _size || _u32(_mem, off) != 67324752) { last_error = "cabecalho local invalido"; return false }
+            forge start = off + 30 + _u16(_mem, off + 26) + _u16(_mem, off + 28)
+            forge cs: stone = ofs_array_get(_csize, i)
+            forge us: stone = ofs_array_get(_usize, i)
+            forge method: stone = ofs_array_get(_method, i)
+            if (start + cs > _size) { last_error = "dados alem do arquivo"; return false }
+            if (method == 0) {
+                forge b: *stone = ofs_alloc(cs + 8)
+                memcpy(b, (_mem + start) as *stone, cs)
+                data_ptr = b as stone
+                data_len = cs
+            } else if (method == 8) {
+                if (cs == 0) {
+                    data_ptr = ofs_alloc(8) as stone
+                    data_len = 0
+                } else {
+                    if (!png.inflate_raw(_mem + start, cs)) { last_error = "deflate invalido"; return false }
+                    data_ptr = png.out_ptr()
+                    data_len = png.out_len()
+                }
             } else {
-                if (!png.inflate_raw(_mem + start, cs)) { last_error = "deflate invalido"; return false }
-                data_ptr = png.out_ptr()
-                data_len = png.out_len()
+                last_error = "metodo de compressao nao suportado"
+                return false
             }
-        } else {
-            last_error = "metodo de compressao nao suportado"
-            return false
+            if (data_len != us) { free_data(); last_error = "tamanho nao confere"; return false }
+            forge c = sha256.crc32_update(0, data_ptr, data_len)
+            forge want: stone = ofs_array_get(_crc, i)
+            if (c != want) { free_data(); last_error = "CRC nao confere"; return false }
+            return true
         }
-        if (data_len != us) { free_data(); last_error = "tamanho nao confere"; return false }
-        forge c = sha256.crc32_update(0, data_ptr, data_len)
-        forge want: stone = ofs_array_get(_crc, i)
-        if (c != want) { free_data(); last_error = "CRC nao confere"; return false }
-        return true
     }
 
     // ── extracao em blocos ───────────────────────────────────────────────
     vein _now_ms() -> stone {
-        if (_ts == null) { _ts = ofs_alloc(16) }
-        clock_gettime(1, _ts)
-        forge ps: *stone = _ts
-        forge pn: *stone = fault_step(_ts, 1)
-        forge sec = 0
-        forge nsec = 0
         fracture {
-            sec = *ps;
-            nsec = *pn;
+            if (_ts == null) { _ts = ofs_alloc(16) }
+            clock_gettime(1, _ts)
+            forge ps: *stone = _ts
+            forge pn: *stone = fault_step(_ts, 1)
+            forge sec = 0
+            forge nsec = 0
+            fracture {
+                sec = *ps;
+                nsec = *pn;
+            }
+            return sec * 1000 + nsec / 1000000
         }
-        return sec * 1000 + nsec / 1000000
     }
 
     vein xabort() -> void {
-        if (_x_on && _x_method == 8 && _x_phase == 0) { png.inflate_abort() }
-        if (_x_on && _x_owned && _x_src != 0) { ofs_free(_x_src as *stone) }
-        if (_x_f != null) {
-            fclose(_x_f)
-            _x_f = null
-            remove(_x_dest)
+        fracture {
+            if (_x_on && _x_method == 8 && _x_phase == 0) { png.inflate_abort() }
+            if (_x_on && _x_owned && _x_src != 0) { ofs_free(_x_src as *stone) }
+            if (_x_f != null) {
+                fclose(_x_f)
+                _x_f = null
+                remove(_x_dest)
+            }
+            _x_src = 0
+            _x_owned = false
+            _x_on = false
         }
-        _x_src = 0
-        _x_owned = false
-        _x_on = false
     }
 
     // Prepara a extracao da entrada i para dest. hash = calcula tambem o sha256 (x_sha).
@@ -369,46 +387,48 @@ namespace zip {
 
     // Um passo de ~n bytes. 0 = continua, 1 = pronto, -1 = erro (last_error; o parcial e apagado).
     vein xstep(n: stone) -> stone {
-        if (!_x_on) { return -1 }
-        if (n < 4096) { n = 4096 }
-        if (_x_phase == 0) {
-            if (_x_method == 8) {
-                forge r = png.inflate_step(n)
-                if (r < 0) { return _x_fail("deflate invalido") }
-                forge got = png.inc_len()
-                if (got > _x_total) { return _x_fail("tamanho nao confere") }
-                _x_digest(png.inc_ptr(), got)
-                if (r == 0) { return 0 }
-                if (got != _x_total) { return _x_fail("tamanho nao confere") }
-                _x_src = png.inflate_take()
-                _x_owned = true
-            } else {
-                // guardado: digere um trecho por passo
-                forge to = _x_crc_to + n
-                if (to > _x_total) { to = _x_total }
-                _x_digest(_x_src, to)
-                if (to < _x_total) { return 0 }
+        fracture {
+            if (!_x_on) { return -1 }
+            if (n < 4096) { n = 4096 }
+            if (_x_phase == 0) {
+                if (_x_method == 8) {
+                    forge r = png.inflate_step(n)
+                    if (r < 0) { return _x_fail("deflate invalido") }
+                    forge got = png.inc_len()
+                    if (got > _x_total) { return _x_fail("tamanho nao confere") }
+                    _x_digest(png.inc_ptr(), got)
+                    if (r == 0) { return 0 }
+                    if (got != _x_total) { return _x_fail("tamanho nao confere") }
+                    _x_src = png.inflate_take()
+                    _x_owned = true
+                } else {
+                    // guardado: digere um trecho por passo
+                    forge to = _x_crc_to + n
+                    if (to > _x_total) { to = _x_total }
+                    _x_digest(_x_src, to)
+                    if (to < _x_total) { return 0 }
+                }
+                if (_x_crc != _x_want_crc) { return _x_fail("CRC nao confere") }
+                if (_x_hash) { x_sha = sha256.final() }
+                _x_phase = 1
+                return 0
             }
-            if (_x_crc != _x_want_crc) { return _x_fail("CRC nao confere") }
-            if (_x_hash) { x_sha = sha256.final() }
-            _x_phase = 1
-            return 0
+            forge left = _x_total - _x_w
+            forge c = n
+            if (c > left) { c = left }
+            if (c > 0) {
+                if (fwrite((_x_src + _x_w) as *stone, 1, c, _x_f) != c) { return _x_fail("escrita incompleta") }
+                _x_w = _x_w + c
+            }
+            if (_x_w < _x_total) { return 0 }
+            fclose(_x_f)
+            _x_f = null
+            if (_x_owned) { ofs_free(_x_src as *stone) }
+            _x_src = 0
+            _x_owned = false
+            _x_on = false
+            return 1
         }
-        forge left = _x_total - _x_w
-        forge c = n
-        if (c > left) { c = left }
-        if (c > 0) {
-            if (fwrite((_x_src + _x_w) as *stone, 1, c, _x_f) != c) { return _x_fail("escrita incompleta") }
-            _x_w = _x_w + c
-        }
-        if (_x_w < _x_total) { return 0 }
-        fclose(_x_f)
-        _x_f = null
-        if (_x_owned) { ofs_free(_x_src as *stone) }
-        _x_src = 0
-        _x_owned = false
-        _x_on = false
-        return 1
     }
 
     // Passos de 64 KB ate gastar ms milissegundos (sempre faz pelo menos um).
@@ -423,16 +443,18 @@ namespace zip {
     }
 
     vein read_text(nm: obsidian) -> obsidian {
-        forge i = find(nm)
-        if (i < 0) { last_error = "nao existe: " + nm; return "" }
-        if (!read(i)) { return "" }
-        forge b: *stone = ofs_alloc(data_len + 8)
-        memcpy(b, data_ptr as *stone, data_len)
-        _pb(b as stone, data_len, 0)
-        forge out = ofs_str_substr(b as obsidian, 0, data_len)
-        ofs_free(b)
-        free_data()
-        return out
+        fracture {
+            forge i = find(nm)
+            if (i < 0) { last_error = "nao existe: " + nm; return "" }
+            if (!read(i)) { return "" }
+            forge b: *stone = ofs_alloc(data_len + 8)
+            memcpy(b, data_ptr as *stone, data_len)
+            _pb(b as stone, data_len, 0)
+            forge out = ofs_str_substr(b as obsidian, 0, data_len)
+            ofs_free(b)
+            free_data()
+            return out
+        }
     }
 
     // Nome seguro para extrair: sem "..", sem barra inicial, sem "\".
@@ -453,17 +475,19 @@ namespace zip {
     }
 
     vein extract(i: stone, dest: obsidian) -> bool {
-        if (!read(i)) { return false }
-        _mkdir_p(_parent(dest))
-        forge f = fopen(dest, "wb")
-        if (f == null) { free_data(); last_error = "nao gravou " + dest; return false }
-        forge w = 0
-        if (data_len > 0) { w = fwrite(data_ptr as *stone, 1, data_len, f) }
-        fclose(f)
-        forge ok = w == data_len
-        free_data()
-        if (!ok) { last_error = "escrita incompleta" }
-        return ok
+        fracture {
+            if (!read(i)) { return false }
+            _mkdir_p(_parent(dest))
+            forge f = fopen(dest, "wb")
+            if (f == null) { free_data(); last_error = "nao gravou " + dest; return false }
+            forge w = 0
+            if (data_len > 0) { w = fwrite(data_ptr as *stone, 1, data_len, f) }
+            fclose(f)
+            forge ok = w == data_len
+            free_data()
+            if (!ok) { last_error = "escrita incompleta" }
+            return ok
+        }
     }
 
     // Extrai tudo em dir. Devolve quantos arquivos foram gravados (-1 se algum nome for inseguro ou falhar).
@@ -486,20 +510,22 @@ namespace zip {
 
     // ── escrita ──────────────────────────────────────────────────────────
     vein _dos_stamp() -> stone {
-        forge tb: *stone = ofs_alloc(16)
-        forge tm: *stone = ofs_alloc(128)
-        time(tb)
-        localtime_r(tb, tm)
-        forge sec = _u32(tm as stone, 0)
-        forge mi = _u32(tm as stone, 4)
-        forge ho = _u32(tm as stone, 8)
-        forge da = _u32(tm as stone, 12)
-        forge mo = _u32(tm as stone, 16) + 1
-        forge yr = _u32(tm as stone, 20) - 80
-        ofs_free(tb)
-        ofs_free(tm)
-        if (yr < 0) { yr = 0 }
-        return (((yr << 9) | (mo << 5) | da) << 16) | (ho << 11) | (mi << 5) | (sec / 2)
+        fracture {
+            forge tb: *stone = ofs_alloc(16)
+            forge tm: *stone = ofs_alloc(128)
+            time(tb)
+            localtime_r(tb, tm)
+            forge sec = _u32(tm as stone, 0)
+            forge mi = _u32(tm as stone, 4)
+            forge ho = _u32(tm as stone, 8)
+            forge da = _u32(tm as stone, 12)
+            forge mo = _u32(tm as stone, 16) + 1
+            forge yr = _u32(tm as stone, 20) - 80
+            ofs_free(tb)
+            ofs_free(tm)
+            if (yr < 0) { yr = 0 }
+            return (((yr << 9) | (mo << 5) | da) << 16) | (ho << 11) | (mi << 5) | (sec / 2)
+        }
     }
 
     vein create(path: obsidian) -> bool {
@@ -517,119 +543,127 @@ namespace zip {
     }
 
     vein add_bytes(nm: obsidian, base: stone, n: stone) -> bool {
-        if (_wf == null) { return false }
-        forge nl = ofs_str_len(nm)
-        forge h: *stone = ofs_alloc(30 + nl + 8)
-        forge hb = h as stone
-        forge crc = sha256.crc32_update(0, base, n)
-        _p32(hb, 0, 67324752)
-        _p16(hb, 4, 20)
-        _p16(hb, 6, 2048)                 // bit 11: nomes em UTF-8
-        _p16(hb, 8, 0)
-        _p16(hb, 10, _w_dos & 65535)
-        _p16(hb, 12, _w_dos >> 16)
-        _p32(hb, 14, crc)
-        _p32(hb, 18, n)
-        _p32(hb, 22, n)
-        _p16(hb, 26, nl)
-        _p16(hb, 28, 0)
-        forge k = 0
-        while (k < nl) {
-            _pb(hb, 30 + k, ofs_str_char_at(nm, k))
-            k++
+        fracture {
+            if (_wf == null) { return false }
+            forge nl = ofs_str_len(nm)
+            forge h: *stone = ofs_alloc(30 + nl + 8)
+            forge hb = h as stone
+            forge crc = sha256.crc32_update(0, base, n)
+            _p32(hb, 0, 67324752)
+            _p16(hb, 4, 20)
+            _p16(hb, 6, 2048)                 // bit 11: nomes em UTF-8
+            _p16(hb, 8, 0)
+            _p16(hb, 10, _w_dos & 65535)
+            _p16(hb, 12, _w_dos >> 16)
+            _p32(hb, 14, crc)
+            _p32(hb, 18, n)
+            _p32(hb, 22, n)
+            _p16(hb, 26, nl)
+            _p16(hb, 28, 0)
+            forge k = 0
+            while (k < nl) {
+                _pb(hb, 30 + k, ofs_str_char_at(nm, k))
+                k++
+            }
+            ofs_array_push(_w_names, nm)
+            ofs_array_push(_w_crc, crc)
+            ofs_array_push(_w_size, n)
+            ofs_array_push(_w_off, _w_pos)
+            fwrite(h, 1, 30 + nl, _wf)
+            ofs_free(h)
+            forge ok = true
+            if (n > 0) { ok = fwrite(base as *stone, 1, n, _wf) == n }
+            _w_pos = _w_pos + 30 + nl + n
+            return ok
         }
-        ofs_array_push(_w_names, nm)
-        ofs_array_push(_w_crc, crc)
-        ofs_array_push(_w_size, n)
-        ofs_array_push(_w_off, _w_pos)
-        fwrite(h, 1, 30 + nl, _wf)
-        ofs_free(h)
-        forge ok = true
-        if (n > 0) { ok = fwrite(base as *stone, 1, n, _wf) == n }
-        _w_pos = _w_pos + 30 + nl + n
-        return ok
     }
 
     vein add_text(nm: obsidian, text: obsidian) -> bool {
-        forge n = ofs_str_len(text)
-        forge b: *stone = ofs_alloc(n + 8)
-        forge k = 0
-        while (k < n) {
-            _pb(b as stone, k, ofs_str_char_at(text, k))
-            k++
+        fracture {
+            forge n = ofs_str_len(text)
+            forge b: *stone = ofs_alloc(n + 8)
+            forge k = 0
+            while (k < n) {
+                _pb(b as stone, k, ofs_str_char_at(text, k))
+                k++
+            }
+            forge ok = add_bytes(nm, b as stone, n)
+            ofs_free(b)
+            return ok
         }
-        forge ok = add_bytes(nm, b as stone, n)
-        ofs_free(b)
-        return ok
     }
 
     vein add_file(nm: obsidian, src: obsidian) -> bool {
-        forge f = fopen(src, "rb")
-        if (f == null) { last_error = "nao abriu " + src; return false }
-        fseek(f, 0, 2)
-        forge n = ftell(f)
-        fseek(f, 0, 0)
-        forge b: *stone = ofs_alloc(n + 8)
-        forge got = 0
-        if (n > 0) { got = fread(b, 1, n, f) }
-        fclose(f)
-        forge ok = got == n && add_bytes(nm, b as stone, n)
-        ofs_free(b)
-        if (!ok) { last_error = "falha ao adicionar " + src }
-        return ok
+        fracture {
+            forge f = fopen(src, "rb")
+            if (f == null) { last_error = "nao abriu " + src; return false }
+            fseek(f, 0, 2)
+            forge n = ftell(f)
+            fseek(f, 0, 0)
+            forge b: *stone = ofs_alloc(n + 8)
+            forge got = 0
+            if (n > 0) { got = fread(b, 1, n, f) }
+            fclose(f)
+            forge ok = got == n && add_bytes(nm, b as stone, n)
+            ofs_free(b)
+            if (!ok) { last_error = "falha ao adicionar " + src }
+            return ok
+        }
     }
 
     vein finish() -> bool {
-        if (_wf == null) { return false }
-        forge cd_start = _w_pos
-        forge n: stone = ofs_array_len(_w_names)
-        forge i = 0
-        while (i < n) {
-            forge nm: obsidian = ofs_array_get(_w_names, i)
-            forge nl = ofs_str_len(nm)
-            forge h: *stone = ofs_alloc(46 + nl + 8)
-            forge hb = h as stone
-            _p32(hb, 0, 33639248)
-            _p16(hb, 4, 20)
-            _p16(hb, 6, 20)
-            _p16(hb, 8, 2048)
-            _p16(hb, 10, 0)
-            _p16(hb, 12, _w_dos & 65535)
-            _p16(hb, 14, _w_dos >> 16)
-            _p32(hb, 16, ofs_array_get(_w_crc, i))
-            _p32(hb, 20, ofs_array_get(_w_size, i))
-            _p32(hb, 24, ofs_array_get(_w_size, i))
-            _p16(hb, 28, nl)
-            _p16(hb, 30, 0)
-            _p16(hb, 32, 0)
-            _p16(hb, 34, 0)
-            _p16(hb, 36, 0)
-            _p32(hb, 38, 0)
-            _p32(hb, 42, ofs_array_get(_w_off, i))
-            forge k = 0
-            while (k < nl) {
-                _pb(hb, 46 + k, ofs_str_char_at(nm, k))
-                k++
+        fracture {
+            if (_wf == null) { return false }
+            forge cd_start = _w_pos
+            forge n: stone = ofs_array_len(_w_names)
+            forge i = 0
+            while (i < n) {
+                forge nm: obsidian = ofs_array_get(_w_names, i)
+                forge nl = ofs_str_len(nm)
+                forge h: *stone = ofs_alloc(46 + nl + 8)
+                forge hb = h as stone
+                _p32(hb, 0, 33639248)
+                _p16(hb, 4, 20)
+                _p16(hb, 6, 20)
+                _p16(hb, 8, 2048)
+                _p16(hb, 10, 0)
+                _p16(hb, 12, _w_dos & 65535)
+                _p16(hb, 14, _w_dos >> 16)
+                _p32(hb, 16, ofs_array_get(_w_crc, i))
+                _p32(hb, 20, ofs_array_get(_w_size, i))
+                _p32(hb, 24, ofs_array_get(_w_size, i))
+                _p16(hb, 28, nl)
+                _p16(hb, 30, 0)
+                _p16(hb, 32, 0)
+                _p16(hb, 34, 0)
+                _p16(hb, 36, 0)
+                _p32(hb, 38, 0)
+                _p32(hb, 42, ofs_array_get(_w_off, i))
+                forge k = 0
+                while (k < nl) {
+                    _pb(hb, 46 + k, ofs_str_char_at(nm, k))
+                    k++
+                }
+                fwrite(h, 1, 46 + nl, _wf)
+                _w_pos = _w_pos + 46 + nl
+                ofs_free(h)
+                i++
             }
-            fwrite(h, 1, 46 + nl, _wf)
-            _w_pos = _w_pos + 46 + nl
-            ofs_free(h)
-            i++
+            forge e: *stone = ofs_alloc(32)
+            forge eb = e as stone
+            _p32(eb, 0, 101010256)
+            _p16(eb, 4, 0)
+            _p16(eb, 6, 0)
+            _p16(eb, 8, n)
+            _p16(eb, 10, n)
+            _p32(eb, 12, _w_pos - cd_start)
+            _p32(eb, 16, cd_start)
+            _p16(eb, 20, 0)
+            fwrite(e, 1, 22, _wf)
+            ofs_free(e)
+            fclose(_wf)
+            _wf = null
+            return true
         }
-        forge e: *stone = ofs_alloc(32)
-        forge eb = e as stone
-        _p32(eb, 0, 101010256)
-        _p16(eb, 4, 0)
-        _p16(eb, 6, 0)
-        _p16(eb, 8, n)
-        _p16(eb, 10, n)
-        _p32(eb, 12, _w_pos - cd_start)
-        _p32(eb, 16, cd_start)
-        _p16(eb, 20, 0)
-        fwrite(e, 1, 22, _wf)
-        ofs_free(e)
-        fclose(_wf)
-        _wf = null
-        return true
     }
 }

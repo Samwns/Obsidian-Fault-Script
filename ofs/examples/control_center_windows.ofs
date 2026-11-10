@@ -217,74 +217,76 @@ vein render_ui(hwnd: *stone, progress_val: stone, status_text: obsidian) -> void
 }
 
 vein main() -> void {
-    forge hInst = GetModuleHandleA(null)
+    fracture {
+        forge hInst = GetModuleHandleA(null)
 
-    forge WS_OVERLAPPEDWINDOW = 13565952
-    forge WS_VISIBLE = 268435456
+        forge WS_OVERLAPPEDWINDOW = 13565952
+        forge WS_VISIBLE = 268435456
 
-    forge main_hwnd = CreateWindowExA(0, "STATIC", "Obsidian Fault Script (OFS) - Control Center & OLL Studio", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 60, 40, 920, 710, null, null, hInst, null)
-    if (main_hwnd == null) {
-        ExitProcess(1)
-    }
-
-    ShowWindow(main_hwnd, 5)
-    UpdateWindow(main_hwnd)
-
-    forge cur_progress: stone = 94
-    forge cur_status: obsidian = "94% NOMINAL"
-
-    render_ui(main_hwnd, cur_progress, cur_status)
-
-    forge msg: *stone = ofs_alloc(96)
-    forge has_msg = GetMessageA(msg, null, 0, 0)
-    while (has_msg > 0) {
-        forge msg_id = _load_stone(fault_step(msg, 1)) % 65536
-        if (msg_id == 16 || msg_id == 2) {
-            ExitProcess(0)
+        forge main_hwnd = CreateWindowExA(0, "STATIC", "Obsidian Fault Script (OFS) - Control Center & OLL Studio", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 60, 40, 920, 710, null, null, hInst, null)
+        if (main_hwnd == null) {
+            ExitProcess(1)
         }
 
-        if (msg_id == 20) {
-            has_msg = GetMessageA(msg, null, 0, 0)
-            continue
-        }
+        ShowWindow(main_hwnd, 5)
+        UpdateWindow(main_hwnd)
 
-        if (msg_id == 15) {
-            ValidateRect(main_hwnd, null)
-            render_ui(main_hwnd, cur_progress, cur_status)
-            has_msg = GetMessageA(msg, null, 0, 0)
-            continue
-        }
+        forge cur_progress: stone = 94
+        forge cur_status: obsidian = "94% NOMINAL"
 
-        if (msg_id == 513) {
-            forge lparam_val = _load_stone(fault_step(msg, 3))
-            forge mx = lparam_val % 65536
-            forge my = (lparam_val / 65536) % 65536
+        render_ui(main_hwnd, cur_progress, cur_status)
 
-            if (my >= 565 && my <= 607) {
-                if (mx >= 32 && mx <= 227) {
-                    cur_progress = 100
-                    cur_status = "100% CONCLUIDO"
-                    render_ui(main_hwnd, cur_progress, cur_status)
-                    MessageBoxA(main_hwnd, "Benchmark executado com sucesso!\n\nWorkload: Fibonacci iterativo 5.000.000 iteracoes\nTempo mediano: 4.6 ms\nStatus: Determinismo estrito verificado!\nRuntime: Stack Magma puro.", "OFS Benchmark", 64)
-                } else if (mx >= 245 && mx <= 440) {
-                    forge p = ofs_alloc(4096)
-                    ofs_free(p)
-                    cur_status = "RESERVOIR OK"
-                    render_ui(main_hwnd, cur_progress, cur_status)
-                    MessageBoxA(main_hwnd, "Teste de memoria Reservoir realizado com sucesso!\n\nAlocador: Reservoir nativo OFS\nAlocacao: 4096 bytes alocados e liberados com sucesso.\nStatus: Zero vazamento de memoria.", "Reservoir Heap Test", 64)
-                } else if (mx >= 458 && mx <= 653) {
-                    MessageBoxA(main_hwnd, "Obsidian Fault Script (OFS) v1.0.137\n\n- Compilador: 100% self-hosted em OFS\n- Backend: LLVM IR SSA (Zero Clang)\n- Motor Visual: OLL Declarative 60 FPS\n- Multiplataforma: Linux, Windows e macOS\n- Criado por Samwns e comunidade.", "Sobre o OFS", 64)
-                } else if (mx >= 673 && mx <= 868) {
-                    ExitProcess(0)
+        forge msg: *stone = ofs_alloc(96)
+        forge has_msg = GetMessageA(msg, null, 0, 0)
+        while (has_msg > 0) {
+            forge msg_id = _load_stone(fault_step(msg, 1)) % 65536
+            if (msg_id == 16 || msg_id == 2) {
+                ExitProcess(0)
+            }
+
+            if (msg_id == 20) {
+                has_msg = GetMessageA(msg, null, 0, 0)
+                continue
+            }
+
+            if (msg_id == 15) {
+                ValidateRect(main_hwnd, null)
+                render_ui(main_hwnd, cur_progress, cur_status)
+                has_msg = GetMessageA(msg, null, 0, 0)
+                continue
+            }
+
+            if (msg_id == 513) {
+                forge lparam_val = _load_stone(fault_step(msg, 3))
+                forge mx = lparam_val % 65536
+                forge my = (lparam_val / 65536) % 65536
+
+                if (my >= 565 && my <= 607) {
+                    if (mx >= 32 && mx <= 227) {
+                        cur_progress = 100
+                        cur_status = "100% CONCLUIDO"
+                        render_ui(main_hwnd, cur_progress, cur_status)
+                        MessageBoxA(main_hwnd, "Benchmark executado com sucesso!\n\nWorkload: Fibonacci iterativo 5.000.000 iteracoes\nTempo mediano: 4.6 ms\nStatus: Determinismo estrito verificado!\nRuntime: Stack Magma puro.", "OFS Benchmark", 64)
+                    } else if (mx >= 245 && mx <= 440) {
+                        forge p = ofs_alloc(4096)
+                        ofs_free(p)
+                        cur_status = "RESERVOIR OK"
+                        render_ui(main_hwnd, cur_progress, cur_status)
+                        MessageBoxA(main_hwnd, "Teste de memoria Reservoir realizado com sucesso!\n\nAlocador: Reservoir nativo OFS\nAlocacao: 4096 bytes alocados e liberados com sucesso.\nStatus: Zero vazamento de memoria.", "Reservoir Heap Test", 64)
+                    } else if (mx >= 458 && mx <= 653) {
+                        MessageBoxA(main_hwnd, "Obsidian Fault Script (OFS) v1.0.137\n\n- Compilador: 100% self-hosted em OFS\n- Backend: LLVM IR SSA (Zero Clang)\n- Motor Visual: OLL Declarative 60 FPS\n- Multiplataforma: Linux, Windows e macOS\n- Criado por Samwns e comunidade.", "Sobre o OFS", 64)
+                    } else if (mx >= 673 && mx <= 868) {
+                        ExitProcess(0)
+                    }
                 }
             }
+
+            TranslateMessage(msg)
+            DispatchMessageA(msg)
+            render_ui(main_hwnd, cur_progress, cur_status)
+            has_msg = GetMessageA(msg, null, 0, 0)
         }
 
-        TranslateMessage(msg)
-        DispatchMessageA(msg)
-        render_ui(main_hwnd, cur_progress, cur_status)
-        has_msg = GetMessageA(msg, null, 0, 0)
+        ExitProcess(0)
     }
-
-    ExitProcess(0)
 }

@@ -26,47 +26,53 @@ vein decrescente(a: *stone, b: *stone) -> stone {
 }
 
 vein fill(buf: *stone) -> void {
-    forge vals: Array<stone> = [21, 3, 34, 1, 13, 8, 2, 5]
-    forge i = 0
-    while (i < 8) {
-        forge p: *stone = fault_step(buf, i)
-        forge v: stone = ofs_array_get(vals, i)
-        fracture { *p = v; }
-        i++
+    fracture {
+        forge vals: Array<stone> = [21, 3, 34, 1, 13, 8, 2, 5]
+        forge i = 0
+        while (i < 8) {
+            forge p: *stone = fault_step(buf, i)
+            forge v: stone = ofs_array_get(vals, i)
+            fracture { *p = v; }
+            i++
+        }
     }
 }
 
 vein at(buf: *stone, i: stone) -> stone {
-    forge p: *stone = fault_step(buf, i)
-    forge v = 0
-    fracture { v = *p; }
-    return v
+    fracture {
+        forge p: *stone = fault_step(buf, i)
+        forge v = 0
+        fracture { v = *p; }
+        return v
+    }
 }
 
 core main() {
-    forge buf = ofs_alloc(64)
-    fill(buf)
-    c_qsort(buf, 8, 8, fault_addr(ordem.crescente))
-    forge line = ""
-    forge i = 0
-    while (i < 8) {
-        if (i > 0) { line = line + " " }
-        line = line + ofs_stone_to_obsidian(at(buf, i))
-        i++
+    abyss {
+        forge buf = ofs_alloc(64)
+        fill(buf)
+        c_qsort(buf, 8, 8, fault_addr(ordem.crescente))
+        forge line = ""
+        forge i = 0
+        while (i < 8) {
+            if (i > 0) { line = line + " " }
+            line = line + ofs_stone_to_obsidian(at(buf, i))
+            i++
+        }
+        echo(line)
+        if (at(buf, 0) != 1 || at(buf, 7) != 34) { exit(1) }
+
+        c_qsort(buf, 8, 8, fault_addr(decrescente))
+        if (at(buf, 0) != 34 || at(buf, 7) != 1) { exit(2) }
+
+        // endereco de um simbolo C via bind: o proprio qsort
+        if (fault_addr(c_qsort) == 0) { exit(3) }
+
+        // fault_call: chamada indireta (vein OFS e funcao C pelo endereco)
+        forge x = 5
+        forge y = 9
+        if (fault_call(fault_addr(ordem.crescente), &x, &y) != -1) { exit(4) }
+        if (fault_call(fault_addr(c_strlen), "abcd") != 4) { exit(5) }
+        echo("ok")
     }
-    echo(line)
-    if (at(buf, 0) != 1 || at(buf, 7) != 34) { exit(1) }
-
-    c_qsort(buf, 8, 8, fault_addr(decrescente))
-    if (at(buf, 0) != 34 || at(buf, 7) != 1) { exit(2) }
-
-    // endereco de um simbolo C via bind: o proprio qsort
-    if (fault_addr(c_qsort) == 0) { exit(3) }
-
-    // fault_call: chamada indireta (vein OFS e funcao C pelo endereco)
-    forge x = 5
-    forge y = 9
-    if (fault_call(fault_addr(ordem.crescente), &x, &y) != -1) { exit(4) }
-    if (fault_call(fault_addr(c_strlen), "abcd") != 4) { exit(5) }
-    echo("ok")
 }

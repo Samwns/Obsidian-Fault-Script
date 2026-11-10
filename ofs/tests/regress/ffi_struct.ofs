@@ -21,10 +21,12 @@ monolith Par {
 }
 
 vein byte_em(base: stone, off: stone) -> stone {
-    forge p: *u8 = (base + off) as *u8
-    forge v: u8 = 0
-    fracture { v = *p }
-    return v as stone
+    fracture {
+        forge p: *u8 = (base + off) as *u8
+        forge v: u8 = 0
+        fracture { v = *p }
+        return v as stone
+    }
 }
 
 vein zera(p: Par) -> void {
@@ -32,50 +34,52 @@ vein zera(p: Par) -> void {
 }
 
 core main() {
-    forge m: Misto
-    m.a = 200
-    m.b = -2
-    m.c = 1.5
-    m.d = 65535
-    m.e = 77
-    m.ok = true
-    forge raw: *u8 = ofs_alloc(64)
-    forge rb: stone = raw as stone
-    fracture { c_memcpy(raw, (&m) as *u8, 40) }
-    // offsets C: a@0 b@4 c@8 d@16 e@24 ok@32 (tamanho 40)
-    echo(byte_em(rb, 0))
-    echo(byte_em(rb, 4))
-    echo(byte_em(rb, 7))
-    echo(byte_em(rb, 15))
-    echo(byte_em(rb, 16) + byte_em(rb, 17))
-    echo(byte_em(rb, 24))
-    echo(byte_em(rb, 32))
-    // e de volta: o C escreve no monolith
-    forge n: Misto
-    fracture { c_memcpy((&n) as *u8, raw, 40) }
-    echo(n.a)
-    echo(n.b)
-    echo(n.c)
-    echo(n.d)
-    echo(n.e)
-    echo(n.ok)
-    fracture { echo(c_memcmp((&m) as *u8, (&n) as *u8, 40)) }
-
-    // campo pelo endereco do bloco + offset
-    forge p: Par
-    p.x = 1
-    p.y = 2
     fracture {
-        forge py: *stone = ((&p) as stone + 8) as *stone
-        *py = 222
+        forge m: Misto
+        m.a = 200
+        m.b = -2
+        m.c = 1.5
+        m.d = 65535
+        m.e = 77
+        m.ok = true
+        forge raw: *u8 = ofs_alloc(64)
+        forge rb: stone = raw as stone
+        fracture { c_memcpy(raw, (&m) as *u8, 40) }
+        // offsets C: a@0 b@4 c@8 d@16 e@24 ok@32 (tamanho 40)
+        echo(byte_em(rb, 0))
+        echo(byte_em(rb, 4))
+        echo(byte_em(rb, 7))
+        echo(byte_em(rb, 15))
+        echo(byte_em(rb, 16) + byte_em(rb, 17))
+        echo(byte_em(rb, 24))
+        echo(byte_em(rb, 32))
+        // e de volta: o C escreve no monolith
+        forge n: Misto
+        fracture { c_memcpy((&n) as *u8, raw, 40) }
+        echo(n.a)
+        echo(n.b)
+        echo(n.c)
+        echo(n.d)
+        echo(n.e)
+        echo(n.ok)
+        fracture { echo(c_memcmp((&m) as *u8, (&n) as *u8, 40)) }
+
+        // campo pelo endereco do bloco + offset
+        forge p: Par
+        p.x = 1
+        p.y = 2
+        fracture {
+            forge py: *stone = ((&p) as stone + 8) as *stone
+            *py = 222
+        }
+        echo(p.y)
+        // por referencia ao chamar; copia ao atribuir
+        zera(p)
+        echo(p.x)
+        forge q: Par = p
+        q.y = 5
+        echo(p.y)
+        p = q
+        echo(p.y)
     }
-    echo(p.y)
-    // por referencia ao chamar; copia ao atribuir
-    zera(p)
-    echo(p.x)
-    forge q: Par = p
-    q.y = 5
-    echo(p.y)
-    p = q
-    echo(p.y)
 }

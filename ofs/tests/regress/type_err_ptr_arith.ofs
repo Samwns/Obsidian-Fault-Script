@@ -1,8 +1,10 @@
 // F3: aritmetica de ponteiro fora de fault_step/`as` e erro de compilacao
 core main() {
-    forge buf: *u8 = ofs_alloc(16) as *u8
-    forge ok = fault_step(buf, 1)
-    forge ok2 = (buf as stone) + 1
-    forge errado = buf + 1
-    echo("nao chega aqui")
+    fracture {
+        forge buf: *u8 = ofs_alloc(16) as *u8
+        forge ok = fault_step(buf, 1)
+        forge ok2 = (buf as stone) + 1
+        forge errado = buf + 1
+        echo("nao chega aqui")
+    }
 }

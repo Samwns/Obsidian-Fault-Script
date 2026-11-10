@@ -14,7 +14,9 @@
 # stone`, indice fora do limite com mensagem e rc 1; tipos e conversoes no
 # typeck: aritmetica mista inteiro/crystal, `a[i]` com o tipo do elemento,
 # i64/i16, conversao em forge/argumento/return/compostos, `echo` de variante
-# com o nome nos dois modos; combinacoes sem sentido sao [ERRO DE TIPO]).
+# com o nome nos dois modos; combinacoes sem sentido sao [ERRO DE TIPO]; F4:
+# operacoes de baixo nivel so dentro de fracture/bedrock/tectonic/abyss, com
+# OFS_STRICT_FAULT=1 e [ERRO DE FALHA]; sem ela, [AVISO DE FALHA] no stderr).
 #   OFSCC_BIN=<ofscc>  (padrao: ofs/dist/ofscc)
 # Cada .ofs com .expected roda no build nativo e no interpretador; o
 # str_char_at_1mb usa o runtime compilado de stdlib/runtime/magma.ofs (como
@@ -26,6 +28,9 @@ cd "$(dirname "$0")"
 HERE="$(pwd)"
 ROOT="$(cd ../../.. && pwd)"
 export OFS_STDLIB_PATH="$ROOT/ofs/stdlib" NO_COLOR=1 OFS_PROGRESS=plain
+# F4: o repositorio compila no modo estrito (operacao de baixo nivel fora de
+# bloco e erro); a secao 8 testa o aviso do modo padrao
+export OFS_STRICT_FAULT=1
 OFSCC="${OFSCC_BIN:-$ROOT/ofs/dist/ofscc}"
 T="$(mktemp -d "${TMPDIR:-/tmp}/ofs-regress-XXXXXX")"
 trap 'rm -rf "$T"' EXIT
@@ -85,10 +90,14 @@ compile_err undefined_ident "identificador indefinido 'contadr'" "voce quis dize
 compile_err seal_return_inside "E0042.*'return' is not allowed inside anchor/seal"
 compile_err attach_missing "ERRO DE ATTACH .*attach_missing.ofs:2.*modulo 'modulo-que-nao-existe' nao encontrado" "procurado em"
 # erros de tipo (F3): arquivo:linha:col e a dica
-compile_err type_err_ptr_arith "ERRO DE TIPO .*type_err_ptr_arith.ofs:6:25\]: aritmetica de ponteiro com '+' (\*u8 e stone)" "fault_step(p, n)"
+compile_err type_err_ptr_arith "ERRO DE TIPO .*type_err_ptr_arith.ofs:7:29\]: aritmetica de ponteiro com '+' (\*u8 e stone)" "fault_step(p, n)"
 compile_err type_err_bool_arith "ERRO DE TIPO .*type_err_bool_arith.ofs:6:13\]: operacao '+' entre stone e bool nao existe" "as stone"
 compile_err type_err_obsidian_mul "ERRO DE TIPO .*type_err_obsidian_mul.ofs:5:16\]: operacao '\*' entre obsidian e crystal nao existe" "concatenacao"
 compile_err type_err_crystal_mod "ERRO DE TIPO .*type_err_crystal_mod.ofs:4:13\]: '%' so vale para inteiros (crystal e stone)"
+# F4: baixo nivel fora do bloco que o libera (modo estrito)
+compile_err fault_err_deref "ERRO DE FALHA .*fault_err_deref.ofs:6:16\]: acesso por ponteiro '\*p'.*libera: fracture, bedrock ou abyss" "fracture vein"
+compile_err fault_err_call_fracture "ERRO DE FALHA .*fault_err_call_fracture.ofs:8:29\]: 'fault_call'.*libera: so abyss" "abyss {"
+compile_err fault_err_cast "ERRO DE FALHA .*fault_err_cast.ofs:6:21\]: 'as' com ponteiro (\*u8 as stone)"
 
 # 2. saida esperada (nativo e interpretador)
 # (vazio desde a F2: memoria crua funciona no `ofs run`)
@@ -172,5 +181,21 @@ if native "$HERE/array_oob.ofs" "$T/array_oob"; then
   timeout 10 "$T/array_oob" >"$T/oob.out" 2>"$T/oob.err"; oob_check nativo $? "$T/oob.out" "$T/oob.err"
 else fail "array_oob: nao compila"; show_build_log "$T/build.log"; fi
 OFSCC_MODE=run OFSCC_INPUT="$HERE/array_oob.ofs" timeout 20 "$OFSCC" >"$T/oob.out" 2>"$T/oob.err"; oob_check interp $? "$T/oob.out" "$T/oob.err"
+
+# 8. F4 sem OFS_STRICT_FAULT: [AVISO DE FALHA] no stderr (com a data em que
+#    vira erro), compila e roda nos dois modos com o stdout so do programa
+for m in run native; do
+  if [ "$m" = run ]; then
+    out="$(env -u OFS_STRICT_FAULT OFSCC_MODE=run OFSCC_INPUT="$HERE/fault_warn_default.ofs" timeout 20 "$OFSCC" 2>"$T/fw.err")"; rc=$?
+  else
+    env -u OFS_STRICT_FAULT OFSCC_MODE=ir OFSCC_INPUT="$HERE/fault_warn_default.ofs" OFSCC_C_OUT="$T/fw.ll" "$OFSCC" >"$T/fw.err" 2>&1 \
+      && clang -Wno-override-module -no-pie -O1 "$T/fw.ll" "$T/magma.o" -lm -o "$T/fw" 2>>"$T/fw.log"; rc=$?
+    [ "$rc" -eq 0 ] && { out="$(timeout 10 "$T/fw" 2>&1)"; rc=$?; }
+  fi
+  if [ "$rc" -ne 0 ] || [ "$out" != "4" ]; then fail "fault_warn_default ($m): rc=$rc saida=$out"
+  elif ! grep -q "AVISO DE FALHA .*fault_warn_default.ofs:6:11\]: acesso por ponteiro" "$T/fw.err" || ! grep -q "viram erro em 2027-01-09" "$T/fw.err"; then
+    fail "fault_warn_default ($m): sem o aviso"; tail -3 "$T/fw.err"
+  else echo "ok: fault_warn_default ($m, aviso)"; fi
+done
 
 [ "$FAILED" -eq 0 ] && echo "regress: tudo ok" || { echo "regress: $FAILED falha(s)"; exit 1; }

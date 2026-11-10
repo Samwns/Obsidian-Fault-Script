@@ -82,24 +82,26 @@ namespace tls {
 
     // Le ate o servidor fechar; buffer binario com NUL extra (last_len bytes).
     vein recv_all(ssl: *stone) -> *stone {
-        forge cap = 65536
-        forge buf: *stone = ofs_alloc(cap + 1)
-        forge len = 0
-        while (true) {
-            if (cap - len < 16384) {
-                forge ncap = cap * 2
-                forge nb: *stone = ofs_alloc(ncap + 1)
-                memcpy(nb, buf, len)
-                ofs_free(buf)
-                buf = nb
-                cap = ncap
+        fracture {
+            forge cap = 65536
+            forge buf: *stone = ofs_alloc(cap + 1)
+            forge len = 0
+            while (true) {
+                if (cap - len < 16384) {
+                    forge ncap = cap * 2
+                    forge nb: *stone = ofs_alloc(ncap + 1)
+                    memcpy(nb, buf, len)
+                    ofs_free(buf)
+                    buf = nb
+                    cap = ncap
+                }
+                forge n = SSL_read(ssl, (((buf as stone) + len) as obsidian), cap - len)
+                if (n <= 0) { break }
+                len = len + n
             }
-            forge n = SSL_read(ssl, (((buf as stone) + len) as obsidian), cap - len)
-            if (n <= 0) { break }
-            len = len + n
+            last_len = len
+            return buf
         }
-        last_len = len
-        return buf
     }
 
     vein close(ssl: *stone) -> void {

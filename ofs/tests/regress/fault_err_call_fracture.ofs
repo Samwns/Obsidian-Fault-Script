@@ -1,0 +1,11 @@
+// F4: `fault_call` so e liberado por `abyss`; `fracture` nao basta
+vein um() -> stone { return 1 }
+
+core main() {
+    abyss { forge f = fault_addr(um) }
+    fracture {
+        forge g = 0
+        forge r = fault_call(g, 1)
+    }
+    echo("nao chega aqui")
+}

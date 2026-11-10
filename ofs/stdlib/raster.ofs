@@ -52,12 +52,14 @@ namespace raster {
     }
 
     vein _acc_add(idx: stone, v: crystal) -> void {
-        forge p: *stone = fault_step(_acc, idx)
-        forge sc = v * 65536.0
-        if (sc >= 0.0) { sc = sc + 0.5 } else { sc = sc - 0.5 }
-        forge add = sc as stone
         fracture {
-            *p = *p + add;
+            forge p: *stone = fault_step(_acc, idx)
+            forge sc = v * 65536.0
+            if (sc >= 0.0) { sc = sc + 0.5 } else { sc = sc - 0.5 }
+            forge add = sc as stone
+            fracture {
+                *p = *p + add;
+            }
         }
     }
 
@@ -234,41 +236,43 @@ namespace raster {
 
     // Converte a acumulacao em cobertura e compoe no canvas com a cor dada.
     vein fill(cv: Canvas, color: stone) -> void {
-        if (_open) { close() }
-        forge base_a = canvas.color_alpha(color)
-        forge rgb = color % 16777216
-        forge y = 0
-        while (y < _h) {
-            forge row = y * _stride
-            forge acc = 0
-            forge x = 0
-            while (x < _w) {
-                forge p: *stone = fault_step(_acc, row + x)
-                forge v = 0
-                fracture {
-                    v = *p;
-                    *p = 0;
-                }
-                acc = acc + v
-                forge cov = acc
-                if (cov < 0) { cov = 0 - cov }
-                if (cov > 65536) { cov = 65536 }
-                if (cov > 0) {
-                    forge a = (cov * base_a) / 65536
-                    if (a > 0) {
-                        canvas.blend_pixel(cv, _ox + x, _oy + y, argb_or_rgb(a, rgb), 255)
+        fracture {
+            if (_open) { close() }
+            forge base_a = canvas.color_alpha(color)
+            forge rgb = color % 16777216
+            forge y = 0
+            while (y < _h) {
+                forge row = y * _stride
+                forge acc = 0
+                forge x = 0
+                while (x < _w) {
+                    forge p: *stone = fault_step(_acc, row + x)
+                    forge v = 0
+                    fracture {
+                        v = *p;
+                        *p = 0;
                     }
+                    acc = acc + v
+                    forge cov = acc
+                    if (cov < 0) { cov = 0 - cov }
+                    if (cov > 65536) { cov = 65536 }
+                    if (cov > 0) {
+                        forge a = (cov * base_a) / 65536
+                        if (a > 0) {
+                            canvas.blend_pixel(cv, _ox + x, _oy + y, argb_or_rgb(a, rgb), 255)
+                        }
+                    }
+                    x++
                 }
-                x++
+                // limpa as celulas de transbordo da linha
+                forge pe: *stone = fault_step(_acc, row + _w)
+                forge pe2: *stone = fault_step(_acc, row + _w + 1)
+                fracture {
+                    *pe = 0;
+                    *pe2 = 0;
+                }
+                y++
             }
-            // limpa as celulas de transbordo da linha
-            forge pe: *stone = fault_step(_acc, row + _w)
-            forge pe2: *stone = fault_step(_acc, row + _w + 1)
-            fracture {
-                *pe = 0;
-                *pe2 = 0;
-            }
-            y++
         }
     }
 
@@ -280,42 +284,44 @@ namespace raster {
     // Converte a acumulacao em alfa 0..255 gravado em dst (1 stone por pixel,
     // linha a linha com largura _w) e limpa o buffer. Usado pelo cache de glifos.
     vein to_alpha(dst: *stone, gamma_boost: stone) -> void {
-        if (_open) { close() }
-        forge y = 0
-        while (y < _h) {
-            forge row = y * _stride
-            forge acc = 0
-            forge x = 0
-            while (x < _w) {
-                forge p: *stone = fault_step(_acc, row + x)
-                forge v = 0
+        fracture {
+            if (_open) { close() }
+            forge y = 0
+            while (y < _h) {
+                forge row = y * _stride
+                forge acc = 0
+                forge x = 0
+                while (x < _w) {
+                    forge p: *stone = fault_step(_acc, row + x)
+                    forge v = 0
+                    fracture {
+                        v = *p;
+                        *p = 0;
+                    }
+                    acc = acc + v
+                    forge cov = acc
+                    if (cov < 0) { cov = 0 - cov }
+                    if (cov > 65536) { cov = 65536 }
+                    forge a = (cov * 255) / 65536
+                    if (gamma_boost > 0 && a > 0 && a < 255) {
+                        // escurecimento leve de hastes (aproxima a gama de texto)
+                        a = a + ((255 - a) * a * gamma_boost) / (255 * 100)
+                        if (a > 255) { a = 255 }
+                    }
+                    forge q: *stone = fault_step(dst, y * _w + x)
+                    fracture {
+                        *q = a;
+                    }
+                    x++
+                }
+                forge pe: *stone = fault_step(_acc, row + _w)
+                forge pe2: *stone = fault_step(_acc, row + _w + 1)
                 fracture {
-                    v = *p;
-                    *p = 0;
+                    *pe = 0;
+                    *pe2 = 0;
                 }
-                acc = acc + v
-                forge cov = acc
-                if (cov < 0) { cov = 0 - cov }
-                if (cov > 65536) { cov = 65536 }
-                forge a = (cov * 255) / 65536
-                if (gamma_boost > 0 && a > 0 && a < 255) {
-                    // escurecimento leve de hastes (aproxima a gama de texto)
-                    a = a + ((255 - a) * a * gamma_boost) / (255 * 100)
-                    if (a > 255) { a = 255 }
-                }
-                forge q: *stone = fault_step(dst, y * _w + x)
-                fracture {
-                    *q = a;
-                }
-                x++
+                y++
             }
-            forge pe: *stone = fault_step(_acc, row + _w)
-            forge pe2: *stone = fault_step(_acc, row + _w + 1)
-            fracture {
-                *pe = 0;
-                *pe2 = 0;
-            }
-            y++
         }
     }
 

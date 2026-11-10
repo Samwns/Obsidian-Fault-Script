@@ -33,6 +33,10 @@ EXPECTED_ERR=(
   ofs/tests/regress/type_err_bool_arith.ofs
   ofs/tests/regress/type_err_obsidian_mul.ofs
   ofs/tests/regress/type_err_crystal_mod.ofs
+  ofs/tests/regress/fault_err_deref.ofs
+  ofs/tests/regress/fault_err_call_fracture.ofs
+  ofs/tests/regress/fault_err_cast.ofs
+  ofs/tests/regress/fault_warn_default.ofs  # so aviso sem OFS_STRICT_FAULT; aqui (estrito) e erro
 )
 is_expected() { # is_expected <arquivo absoluto>
   local r="${1#$ROOT/}" e
@@ -40,6 +44,8 @@ is_expected() { # is_expected <arquivo absoluto>
   return 1
 }
 export OFS_STDLIB_PATH="$ROOT/ofs/stdlib" OFS_STDLIB="$ROOT/ofs/stdlib" NO_COLOR=1 OFS_PROGRESS=plain
+# F4: modo estrito (baixo nivel fora de fracture/abyss = erro nos dois modos)
+export OFS_STRICT_FAULT=1
 LLVM_FLAGS=()
 clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.' && LLVM_FLAGS=(-mllvm -opaque-pointers)
 T="$(mktemp -d "${TMPDIR:-/tmp}/ofs-parity-XXXXXX")"

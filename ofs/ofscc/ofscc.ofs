@@ -22,33 +22,35 @@ extern vein memcpy(dst: *u8, src: *u8, count: stone) -> *u8
 forge _expanded_paths: Array<obsidian> = []
 
 vein join_parts(parts: Array<obsidian>) -> obsidian {
-    forge total = 0
-    forge i = 0
-    while (i < ofs_array_len(parts)) {
-        forge part: obsidian = ofs_array_get(parts, i)
-        total = total + ofs_str_len(part)
-        i++
-    }
-
-    forge result: obsidian = ofs_alloc(total + 1)
-    forge offset = 0
-    i = 0
-    while (i < ofs_array_len(parts)) {
-        forge part: obsidian = ofs_array_get(parts, i)
-        forge part_len = ofs_str_len(part)
-        if (part_len > 0) {
-            // A libc bulk copy avoids per-character local declarations. The
-            // LLVM backend currently lowers such declarations to `alloca`,
-            // which otherwise grows the stack for the entire source file.
-            memcpy((result as stone + offset) as *u8, part as *u8, part_len)
+    fracture {
+        forge total = 0
+        forge i = 0
+        while (i < ofs_array_len(parts)) {
+            forge part: obsidian = ofs_array_get(parts, i)
+            total = total + ofs_str_len(part)
+            i++
         }
-        offset = offset + part_len
-        i++
-    }
 
-    forge terminator: *u8 = (result as stone + total) as *u8
-    fracture { *terminator = 0 as u8 }
-    return result
+        forge result: obsidian = ofs_alloc(total + 1)
+        forge offset = 0
+        i = 0
+        while (i < ofs_array_len(parts)) {
+            forge part: obsidian = ofs_array_get(parts, i)
+            forge part_len = ofs_str_len(part)
+            if (part_len > 0) {
+                // A libc bulk copy avoids per-character local declarations. The
+                // LLVM backend currently lowers such declarations to `alloca`,
+                // which otherwise grows the stack for the entire source file.
+                memcpy((result as stone + offset) as *u8, part as *u8, part_len)
+            }
+            offset = offset + part_len
+            i++
+        }
+
+        forge terminator: *u8 = (result as stone + total) as *u8
+        fracture { *terminator = 0 as u8 }
+        return result
+    }
 }
 
 vein path_seen(path: obsidian) -> bool {

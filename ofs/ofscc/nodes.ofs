@@ -34,7 +34,7 @@ forge NK_TREMOR:     stone = 31   // c0=body, c1=catch_var(ident), c2=catch_body
 forge NK_ANCHOR:     stone = 32   // c0=action_stmt_or_block
 
 // ── Expressions ─────────────────────────────────────────────────────────
-forge NK_BLOCK:      stone = 40   // extra=statements
+forge NK_BLOCK:      stone = 40   // extra=statements; val="" ou fracture/bedrock/abyss/tectonic (F4)
 forge NK_ASSIGN:     stone = 41   // val=op (=, +=, -=, etc), c0=target, c1=value
 forge NK_CALL:       stone = 42   // val=fn_name, extra=arguments
 forge NK_BIN_OP:     stone = 43   // val=op, c0=left, c1=right

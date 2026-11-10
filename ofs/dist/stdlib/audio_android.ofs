@@ -61,14 +61,18 @@ namespace audio {
     forge last_error: obsidian = ""
 
     vein _w(i: stone) -> stone {
-        forge p: *stone = fault_step(_ctl, i)
-        forge v = 0
-        fracture { v = *p; }
-        return v
+        fracture {
+            forge p: *stone = fault_step(_ctl, i)
+            forge v = 0
+            fracture { v = *p; }
+            return v
+        }
     }
     vein _set(i: stone, v: stone) -> void {
-        forge p: *stone = fault_step(_ctl, i)
-        fracture { *p = v; }
+        fracture {
+            forge p: *stone = fault_step(_ctl, i)
+            fracture { *p = v; }
+        }
     }
 
     vein _s32(v: stone) -> stone {
@@ -78,39 +82,41 @@ namespace audio {
     }
 
     vein open() -> bool {
-        if (ok) { return true }
-        if (_ctl == null) {
-            _ctl = ofs_alloc(8 * 64)
-            memset(_ctl, 0, 8 * 64)
-            _scratch = ofs_alloc(64)
+        abyss {
+            if (ok) { return true }
+            if (_ctl == null) {
+                _ctl = ofs_alloc(8 * 64)
+                memset(_ctl, 0, 8 * 64)
+                _scratch = ofs_alloc(64)
+            }
+            _set(1, 256)
+            _set(2, 44100)
+            if (_s32(_aa_create_builder(_scratch)) != 0) {
+                last_error = "AAudio_createStreamBuilder falhou"
+                return false
+            }
+            forge pb: *stone = _scratch
+            forge b: *stone = null
+            fracture { b = *pb as *stone; }
+            _aa_b_format(b, 1)          // AAUDIO_FORMAT_PCM_I16
+            _aa_b_channels(b, 2)
+            _aa_b_rate(b, 44100)
+            _aa_b_perf(b, 10)           // PERFORMANCE_MODE_NONE (economiza bateria)
+            _aa_b_callback(b, fault_addr(_callback), null)
+            forge r = _s32(_aa_b_open(b, _scratch))
+            _aa_b_delete(b)
+            if (r != 0) {
+                last_error = "AAudioStreamBuilder_openStream: " + ofs_stone_to_obsidian(r)
+                return false
+            }
+            fracture { _stream = *pb as *stone; }
+            out_rate = _s32(_aa_rate(_stream))
+            if (out_rate <= 0) { out_rate = 44100 }
+            _set(2, out_rate)
+            _aa_start(_stream)
+            ok = true
+            return true
         }
-        _set(1, 256)
-        _set(2, 44100)
-        if (_s32(_aa_create_builder(_scratch)) != 0) {
-            last_error = "AAudio_createStreamBuilder falhou"
-            return false
-        }
-        forge pb: *stone = _scratch
-        forge b: *stone = null
-        fracture { b = *pb as *stone; }
-        _aa_b_format(b, 1)          // AAUDIO_FORMAT_PCM_I16
-        _aa_b_channels(b, 2)
-        _aa_b_rate(b, 44100)
-        _aa_b_perf(b, 10)           // PERFORMANCE_MODE_NONE (economiza bateria)
-        _aa_b_callback(b, fault_addr(_callback), null)
-        forge r = _s32(_aa_b_open(b, _scratch))
-        _aa_b_delete(b)
-        if (r != 0) {
-            last_error = "AAudioStreamBuilder_openStream: " + ofs_stone_to_obsidian(r)
-            return false
-        }
-        fracture { _stream = *pb as *stone; }
-        out_rate = _s32(_aa_rate(_stream))
-        if (out_rate <= 0) { out_rate = 44100 }
-        _set(2, out_rate)
-        _aa_start(_stream)
-        ok = true
-        return true
     }
 
     vein pause() -> void {
@@ -227,82 +233,88 @@ namespace audio {
 
     // ── thread de audio ──────────────────────────────────────────────────
     vein _rd16(p: stone) -> stone {
-        forge a: *u8 = p as *u8
-        forge b: *u8 = (p + 1) as *u8
-        forge lo: u8 = 0 as u8
-        forge hi: u8 = 0 as u8
         fracture {
-            lo = *a;
-            hi = *b;
+            forge a: *u8 = p as *u8
+            forge b: *u8 = (p + 1) as *u8
+            forge lo: u8 = 0 as u8
+            forge hi: u8 = 0 as u8
+            fracture {
+                lo = *a;
+                hi = *b;
+            }
+            forge v = ((lo as stone) & 255) | (((hi as stone) & 255) << 8)
+            if (v >= 32768) { return v - 65536 }
+            return v
         }
-        forge v = ((lo as stone) & 255) | (((hi as stone) & 255) << 8)
-        if (v >= 32768) { return v - 65536 }
-        return v
     }
 
     vein _wr16(p: stone, v: stone) -> void {
-        if (v > 32767) { v = 32767 }
-        if (v < 0 - 32768) { v = 0 - 32768 }
-        forge u = v & 65535
-        forge a: *u8 = p as *u8
-        forge b: *u8 = (p + 1) as *u8
-        forge lo: u8 = (u & 255) as u8
-        forge hi: u8 = ((u >> 8) & 255) as u8
         fracture {
-            *a = lo;
-            *b = hi;
+            if (v > 32767) { v = 32767 }
+            if (v < 0 - 32768) { v = 0 - 32768 }
+            forge u = v & 65535
+            forge a: *u8 = p as *u8
+            forge b: *u8 = (p + 1) as *u8
+            forge lo: u8 = (u & 255) as u8
+            forge hi: u8 = ((u >> 8) & 255) as u8
+            fracture {
+                *a = lo;
+                *b = hi;
+            }
         }
     }
 
     // aaudio_data_callback_result_t (*)(AAudioStream*, void* user, void* data, int32_t frames)
     vein _callback(stream: *stone, user: *stone, data: *stone, nframes: stone) -> stone {
-        forge n = nframes & 4294967295
-        forge out = data as stone
-        forge master = _w(1)
-        forge f = 0
-        while (f < n) {
-            forge l = 0
-            forge r = 0
-            forge c = 0
-            while (c < 4) {
-                forge base = 8 + c * 8
-                if (_w(base + 7) != 0) {
-                    forge pcm = _w(base)
-                    forge frames = _w(base + 1)
-                    forge pos = _w(base + 2)
-                    forge idx = pos >> 16
-                    if (idx >= frames) {
-                        if (_w(base + 4) != 0 && frames > 0) {
-                            pos = 0
-                            idx = 0
-                        } else {
-                            _set(base + 7, 0)
-                            c++
-                            continue
+        fracture {
+            forge n = nframes & 4294967295
+            forge out = data as stone
+            forge master = _w(1)
+            forge f = 0
+            while (f < n) {
+                forge l = 0
+                forge r = 0
+                forge c = 0
+                while (c < 4) {
+                    forge base = 8 + c * 8
+                    if (_w(base + 7) != 0) {
+                        forge pcm = _w(base)
+                        forge frames = _w(base + 1)
+                        forge pos = _w(base + 2)
+                        forge idx = pos >> 16
+                        if (idx >= frames) {
+                            if (_w(base + 4) != 0 && frames > 0) {
+                                pos = 0
+                                idx = 0
+                            } else {
+                                _set(base + 7, 0)
+                                c++
+                                continue
+                            }
                         }
+                        forge vol = _w(base + 5)
+                        forge chs = _w(base + 6)
+                        forge sl = 0
+                        forge sr = 0
+                        if (chs == 2) {
+                            sl = _rd16(pcm + idx * 4)
+                            sr = _rd16(pcm + idx * 4 + 2)
+                        } else {
+                            sl = _rd16(pcm + idx * 2)
+                            sr = sl
+                        }
+                        l = l + (sl * vol) / 256
+                        r = r + (sr * vol) / 256
+                        _set(base + 2, pos + _w(base + 3))
                     }
-                    forge vol = _w(base + 5)
-                    forge chs = _w(base + 6)
-                    forge sl = 0
-                    forge sr = 0
-                    if (chs == 2) {
-                        sl = _rd16(pcm + idx * 4)
-                        sr = _rd16(pcm + idx * 4 + 2)
-                    } else {
-                        sl = _rd16(pcm + idx * 2)
-                        sr = sl
-                    }
-                    l = l + (sl * vol) / 256
-                    r = r + (sr * vol) / 256
-                    _set(base + 2, pos + _w(base + 3))
+                    c++
                 }
-                c++
+                _wr16(out + f * 4, (l * master) / 256)
+                _wr16(out + f * 4 + 2, (r * master) / 256)
+                f++
             }
-            _wr16(out + f * 4, (l * master) / 256)
-            _wr16(out + f * 4 + 2, (r * master) / 256)
-            f++
+            _set(0, _w(0) + 1)
+            return 0
         }
-        _set(0, _w(0) + 1)
-        return 0
     }
 }

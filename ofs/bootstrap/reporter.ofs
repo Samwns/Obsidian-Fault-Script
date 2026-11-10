@@ -131,13 +131,15 @@ forge _use_color:  bool = false
 // Inicializa o byte ESC (27) sem escapar na fonte (LLVM IR em OFS nao
 // processa \x1b em literais obsidian). Emite 27 + code.
 vein reporter_init_esc() -> void {
-    if (ofs_str_len(_ansi_esc) > 0) { return }
-    forge buf: obsidian = ofs_alloc(2)
-    forge p: *u8 = buf as *u8
-    fracture { *p = 27 as u8 }
-    forge p1: *u8 = (buf as stone + 1) as *u8
-    fracture { *p1 = 0 as u8 }
-    _ansi_esc = buf
+    fracture {
+        if (ofs_str_len(_ansi_esc) > 0) { return }
+        forge buf: obsidian = ofs_alloc(2)
+        forge p: *u8 = buf as *u8
+        fracture { *p = 27 as u8 }
+        forge p1: *u8 = (buf as stone + 1) as *u8
+        fracture { *p1 = 0 as u8 }
+        _ansi_esc = buf
+    }
 }
 
 // Prioridade: NO_COLOR != "" → false; TERM=dumb → false; senao ativa.
@@ -264,20 +266,22 @@ vein anim_set_enabled(v: bool) -> void {
 
 // Monta uma string contendo `\r` + N espaços + `\r` para limpar a linha.
 vein _clear_line_seq() -> obsidian {
-    forge buf: obsidian = ofs_alloc(84)
-    forge p0: *u8 = buf as *u8
-    fracture { *p0 = 13 as u8 }
-    forge i = 1
-    while (i < 82) {
-        forge pi: *u8 = (buf as stone + i) as *u8
-        fracture { *pi = 32 as u8 }
-        i++
+    fracture {
+        forge buf: obsidian = ofs_alloc(84)
+        forge p0: *u8 = buf as *u8
+        fracture { *p0 = 13 as u8 }
+        forge i = 1
+        while (i < 82) {
+            forge pi: *u8 = (buf as stone + i) as *u8
+            fracture { *pi = 32 as u8 }
+            i++
+        }
+        forge pr: *u8 = (buf as stone + 82) as *u8
+        fracture { *pr = 13 as u8 }
+        forge pz: *u8 = (buf as stone + 83) as *u8
+        fracture { *pz = 0 as u8 }
+        return buf
     }
-    forge pr: *u8 = (buf as stone + 82) as *u8
-    fracture { *pr = 13 as u8 }
-    forge pz: *u8 = (buf as stone + 83) as *u8
-    fracture { *pz = 0 as u8 }
-    return buf
 }
 
 // Escreve uma string sem `\n` no stdout (echo sempre adiciona; usamos

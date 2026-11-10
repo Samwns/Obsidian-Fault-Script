@@ -1469,51 +1469,55 @@ namespace oal {
     }
 
     vein _free_png(im: stone) -> void {
-        if (im < 0 || im >= ofs_array_len(png.img_px)) { return }
-        forge p = ofs_array_get(png.img_px, im)
-        if (p != 0) { ofs_free(p as *stone) }
-        ofs_array_set(png.img_px, im, 0)
-        ofs_array_set(png.img_w, im, 0)
-        ofs_array_set(png.img_h, im, 0)
+        fracture {
+            if (im < 0 || im >= ofs_array_len(png.img_px)) { return }
+            forge p = ofs_array_get(png.img_px, im)
+            if (p != 0) { ofs_free(p as *stone) }
+            ofs_array_set(png.img_px, im, 0)
+            ofs_array_set(png.img_w, im, 0)
+            ofs_array_set(png.img_h, im, 0)
+        }
     }
 
     // Reduz a imagem (vizinho mais proximo com media 2x2) para caber em max px.
     vein _shrink(im: stone, max: stone) -> stone {
-        forge w = png.width(im)
-        forge h = png.height(im)
-        if (w <= max && h <= max) { return im }
-        forge nw = max
-        forge nh = (h * max) / w
-        if (h > w) {
-            nh = max
-            nw = (w * max) / h
-        }
-        if (nw < 1) { nw = 1 }
-        if (nh < 1) { nh = 1 }
-        forge src = ofs_array_get(png.img_px, im)
-        forge dst = ofs_alloc(nw * nh * 8) as stone
-        forge y = 0
-        while (y < nh) {
-            forge sy = (y * h) / nh
-            forge x = 0
-            while (x < nw) {
-                forge sx = (x * w) / nw
-                forge sp: *stone = (src + (sy * w + sx) * 8) as *stone
-                forge dp2: *stone = (dst + (y * nw + x) * 8) as *stone
-                forge v = 0
-                fracture {
-                    v = *sp;
-                    *dp2 = v;
-                }
-                x++
+        fracture {
+            forge w = png.width(im)
+            forge h = png.height(im)
+            if (w <= max && h <= max) { return im }
+            forge nw = max
+            forge nh = (h * max) / w
+            if (h > w) {
+                nh = max
+                nw = (w * max) / h
             }
-            y++
+            if (nw < 1) { nw = 1 }
+            if (nh < 1) { nh = 1 }
+            forge src = ofs_array_get(png.img_px, im)
+            forge dst = ofs_alloc(nw * nh * 8) as stone
+            forge y = 0
+            while (y < nh) {
+                forge sy = (y * h) / nh
+                forge x = 0
+                while (x < nw) {
+                    forge sx = (x * w) / nw
+                    forge sp: *stone = (src + (sy * w + sx) * 8) as *stone
+                    forge dp2: *stone = (dst + (y * nw + x) * 8) as *stone
+                    forge v = 0
+                    fracture {
+                        v = *sp;
+                        *dp2 = v;
+                    }
+                    x++
+                }
+                y++
+            }
+            _free_png(im)
+            ofs_array_set(png.img_px, im, dst)
+            ofs_array_set(png.img_w, im, nw)
+            ofs_array_set(png.img_h, im, nh)
+            return im
         }
-        _free_png(im)
-        ofs_array_set(png.img_px, im, dst)
-        ofs_array_set(png.img_w, im, nw)
-        ofs_array_set(png.img_h, im, nh)
-        return im
     }
 
     // ── navegacao ────────────────────────────────────────────────────────

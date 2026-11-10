@@ -55,6 +55,57 @@ namespace parser {
         return t.kind
     }
     
+    // ── Blocos de baixo nivel (F4) ─────────────────────────────────────
+    // `fracture`/`bedrock`/`abyss`/`tectonic [X]` antes de `{` ou de `vein`.
+    // O bloco vira um NK_BLOCK com o nome do bloco no `val` ("" = bloco
+    // comum); o llvmgen e o interpretador executam igual a um bloco comum,
+    // o typeck usa o nome para liberar as operacoes de baixo nivel.
+
+    vein _is_fault_kw(k: stone) -> bool {
+        return k == TOK_FRACTURE || k == TOK_BEDROCK || k == TOK_ABYSS || k == TOK_TECTONIC
+    }
+
+    vein _fault_kw_name(k: stone) -> obsidian {
+        if (k == TOK_FRACTURE) { return "fracture" }
+        if (k == TOK_BEDROCK) { return "bedrock" }
+        if (k == TOK_ABYSS) { return "abyss" }
+        return "tectonic"
+    }
+
+    // consome `X` ou `tectonic X`/`X Y` e devolve o nome que vale: `abyss`
+    // se aparecer, senao o primeiro que nao for `tectonic`
+    vein _parse_fault_prefix() -> obsidian {
+        forge first = _fault_kw_name(_cur_kind())
+        _advance()
+        forge name = first
+        if (_cur_kind() == TOK_FRACTURE || _cur_kind() == TOK_BEDROCK || _cur_kind() == TOK_ABYSS) {
+            forge second = _fault_kw_name(_cur_kind())
+            _advance()
+            if (ofs_str_eq(second, "abyss") || ofs_str_eq(first, "tectonic")) { name = second }
+        }
+        return name
+    }
+
+    vein _mark_fault_block(block_id: stone, fk: obsidian) -> void {
+        if (block_id < 0) { return }
+        forge b: Node = node_get(block_id)
+        if (b.kind != NK_BLOCK) { return }
+        b.val = fk
+        node_set(block_id, b)
+    }
+
+    // `fracture vein f(...)` / `abyss vein f(...)` (ou `tectonic abyss vein`)
+    vein _is_fault_vein_start() -> bool {
+        if (!_is_fault_kw(_cur_kind())) { return false }
+        forge k1 = _peek_kind()
+        if (k1 == TOK_VEIN || k1 == TOK_CORE) { return true }
+        if (_is_fault_kw(k1)) {
+            forge k2 = _peek2_kind()
+            return k2 == TOK_VEIN || k2 == TOK_CORE
+        }
+        return false
+    }
+
     vein _expect(kind: stone) -> bool {
         if (_cur_kind() != kind) { return false }
         _advance()
@@ -439,12 +490,12 @@ namespace parser {
         forge line = t.line
         forge col = t.col
         
-        if (t.kind == TOK_FRACTURE || t.kind == TOK_BEDROCK || t.kind == TOK_ABYSS || t.kind == TOK_TECTONIC) {
-            _advance()
-            if (_cur_kind() == TOK_FRACTURE || _cur_kind() == TOK_BEDROCK || _cur_kind() == TOK_ABYSS) {
-                _advance()
-            }
-            return parse_block()
+        if (_is_fault_kw(t.kind)) {
+            // F4: bloco de baixo nivel = NK_BLOCK com o nome do bloco no val
+            forge fk = _parse_fault_prefix()
+            forge fblock = parse_block()
+            _mark_fault_block(fblock, fk)
+            return fblock
         }
 
         if (t.kind == TOK_IF) {
@@ -778,6 +829,9 @@ namespace parser {
     }
     
     vein parse_fn_decl() -> stone {
+        // F4: `fracture vein`/`abyss vein` marca o corpo inteiro
+        forge fault_kind = ""
+        if (_is_fault_kw(_cur_kind())) { fault_kind = _parse_fault_prefix() }
         forge t = _cur()
         forge line = t.line
         
@@ -807,6 +861,7 @@ namespace parser {
         }
         
         forge body = parse_block()
+        if (!ofs_str_eq(fault_kind, "")) { _mark_fault_block(body, fault_kind) }
         
         forge kind = NK_FN_DECL
         if (t.kind == TOK_CORE) {
@@ -947,7 +1002,7 @@ namespace parser {
 
         forge imp = node_new(NK_IMPL, type_name, type_line, type_col)
         while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
-            if (_cur_kind() == TOK_VEIN || _cur_kind() == TOK_CORE) {
+            if (_cur_kind() == TOK_VEIN || _cur_kind() == TOK_CORE || _is_fault_vein_start()) {
                 forge method_id = parse_fn_decl()
                 if (method_id >= 0) {
                     // flatten method names in Phase B: Type__method
@@ -1050,7 +1105,7 @@ namespace parser {
         forge local_names: Array<obsidian> = []
         while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
             forge member: stone = -1
-            if (_cur_kind() == TOK_VEIN || _cur_kind() == TOK_CORE) {
+            if (_cur_kind() == TOK_VEIN || _cur_kind() == TOK_CORE || _is_fault_vein_start()) {
                 member = parse_fn_decl()
                 if (member >= 0) {
                     forge m: Node = node_get(member)
@@ -1176,7 +1231,7 @@ namespace parser {
         while (_cur_kind() != TOK_EOF) {
             forge t = _cur()
             
-            if (t.kind == TOK_VEIN || t.kind == TOK_CORE) {
+            if (t.kind == TOK_VEIN || t.kind == TOK_CORE || _is_fault_vein_start()) {
                 forge decl = parse_fn_decl()
                 if (decl >= 0) {
                     node_add_extra(program, decl)

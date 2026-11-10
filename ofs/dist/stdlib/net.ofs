@@ -37,45 +37,47 @@ namespace net {
     // Resolve um nome (DNS / /etc/hosts) para IPv4 "a.b.c.d" via getaddrinfo.
     // Retorna "" se nao resolver. IPs literais voltam inalterados.
     vein resolve(host: obsidian) -> obsidian {
-        if (is_ipv4(host)) { return host }
-        forge hints: *stone = ofs_alloc(48)
-        forge h1: *stone = fault_step(hints, 1)
         fracture {
-            *hints = 2 << 32;
-            *h1 = 1;
-        }
-        forge res: *stone = ofs_alloc(8)
-        if (getaddrinfo(host, null, hints, res) != 0) { return "" }
-        forge ai = 0
-        fracture {
-            ai = *res;
-        }
-        if (ai == 0) { return "" }
-        // struct addrinfo: glibc tem ai_addr em +24 e ai_canonname em +32;
-        // bionic (Android) inverte (ai_canonname em +24, ai_addr em +32).
-        // Sem AI_CANONNAME o canonname e NULL, entao: +24 se nao-nulo, senao +32.
-        forge pa: *stone = fault_step(ai as *stone, 3)
-        forge pb: *stone = fault_step(ai as *stone, 4)
-        forge sa = 0
-        fracture {
-            sa = *pa;
-        }
-        if (sa == 0) {
+            if (is_ipv4(host)) { return host }
+            forge hints: *stone = ofs_alloc(48)
+            forge h1: *stone = fault_step(hints, 1)
             fracture {
-                sa = *pb;
+                *hints = 2 << 32;
+                *h1 = 1;
             }
+            forge res: *stone = ofs_alloc(8)
+            if (getaddrinfo(host, null, hints, res) != 0) { return "" }
+            forge ai = 0
+            fracture {
+                ai = *res;
+            }
+            if (ai == 0) { return "" }
+            // struct addrinfo: glibc tem ai_addr em +24 e ai_canonname em +32;
+            // bionic (Android) inverte (ai_canonname em +24, ai_addr em +32).
+            // Sem AI_CANONNAME o canonname e NULL, entao: +24 se nao-nulo, senao +32.
+            forge pa: *stone = fault_step(ai as *stone, 3)
+            forge pb: *stone = fault_step(ai as *stone, 4)
+            forge sa = 0
+            fracture {
+                sa = *pa;
+            }
+            if (sa == 0) {
+                fracture {
+                    sa = *pb;
+                }
+            }
+            forge w = 0
+            forge psa: *stone = sa as *stone
+            fracture {
+                w = *psa;
+            }
+            freeaddrinfo(ai as *stone)
+            forge b0 = (w >> 32) & 255
+            forge b1 = (w >> 40) & 255
+            forge b2 = (w >> 48) & 255
+            forge b3 = (w >> 56) & 255
+            return ofs_stone_to_obsidian(b0) + "." + ofs_stone_to_obsidian(b1) + "." + ofs_stone_to_obsidian(b2) + "." + ofs_stone_to_obsidian(b3)
         }
-        forge w = 0
-        forge psa: *stone = sa as *stone
-        fracture {
-            w = *psa;
-        }
-        freeaddrinfo(ai as *stone)
-        forge b0 = (w >> 32) & 255
-        forge b1 = (w >> 40) & 255
-        forge b2 = (w >> 48) & 255
-        forge b3 = (w >> 56) & 255
-        return ofs_stone_to_obsidian(b0) + "." + ofs_stone_to_obsidian(b1) + "." + ofs_stone_to_obsidian(b2) + "." + ofs_stone_to_obsidian(b3)
     }
 
     // Tempo maximo (segundos) para conectar, enviar e receber. 0 = sem limite.
@@ -93,22 +95,24 @@ namespace net {
     }
 
     vein tcp_connect(ip: obsidian, port: stone) -> stone {
-        forge s = socket(2, 1, 0)
-        if (s < 0) {
-            return -1
+        fracture {
+            forge s = socket(2, 1, 0)
+            if (s < 0) {
+                return -1
+            }
+            set_timeout(s, timeout_s)
+            forge addr: *stone = ofs_alloc(16)
+            forge port_net = htons(port)
+            forge ip_net = inet_addr(ip)
+            forge w0 = 2 + (port_net * 65536) + (ip_net * 4294967296);
+            *addr = w0
+            forge res = connect(s, addr, 16)
+            if (res != 0) {
+                close(s)
+                return -1
+            }
+            return s
         }
-        set_timeout(s, timeout_s)
-        forge addr: *stone = ofs_alloc(16)
-        forge port_net = htons(port)
-        forge ip_net = inet_addr(ip)
-        forge w0 = 2 + (port_net * 65536) + (ip_net * 4294967296);
-        *addr = w0
-        forge res = connect(s, addr, 16)
-        if (res != 0) {
-            close(s)
-            return -1
-        }
-        return s
     }
 
     vein tcp_send(fd: stone, data: obsidian) -> stone {
@@ -132,24 +136,26 @@ namespace net {
     // zero: arquivos, imagens). O buffer termina com um NUL extra, entao
     // conteudo textual pode ser usado direto como obsidian.
     vein recv_all(fd: stone) -> *stone {
-        forge cap = 65536
-        forge buf: *stone = ofs_alloc(cap + 1)
-        forge len = 0
-        while (true) {
-            if (cap - len < 16384) {
-                forge ncap = cap * 2
-                forge nb: *stone = ofs_alloc(ncap + 1)
-                memcpy(nb, buf, len)
-                ofs_free(buf)
-                buf = nb
-                cap = ncap
+        fracture {
+            forge cap = 65536
+            forge buf: *stone = ofs_alloc(cap + 1)
+            forge len = 0
+            while (true) {
+                if (cap - len < 16384) {
+                    forge ncap = cap * 2
+                    forge nb: *stone = ofs_alloc(ncap + 1)
+                    memcpy(nb, buf, len)
+                    ofs_free(buf)
+                    buf = nb
+                    cap = ncap
+                }
+                forge n = recv(fd, (((buf as stone) + len) as obsidian), cap - len, 0)
+                if (n <= 0) { break }
+                len = len + n
             }
-            forge n = recv(fd, (((buf as stone) + len) as obsidian), cap - len, 0)
-            if (n <= 0) { break }
-            len = len + n
+            last_len = len
+            return buf
         }
-        last_len = len
-        return buf
     }
 
     vein tcp_close(fd: stone) -> void {
@@ -157,31 +163,35 @@ namespace net {
     }
 
     vein tcp_listen(port: stone, backlog: stone) -> stone {
-        forge s = socket(2, 1, 0)
-        if (s < 0) {
-            return -1
+        fracture {
+            forge s = socket(2, 1, 0)
+            if (s < 0) {
+                return -1
+            }
+            forge addr: *stone = ofs_alloc(16)
+            forge port_net = htons(port)
+            forge w0 = 2 + (port_net * 65536);
+            *addr = w0
+            forge b_res = bind(s, addr, 16)
+            if (b_res != 0) {
+                close(s)
+                return -1
+            }
+            forge l_res = listen(s, backlog)
+            if (l_res != 0) {
+                close(s)
+                return -1
+            }
+            return s
         }
-        forge addr: *stone = ofs_alloc(16)
-        forge port_net = htons(port)
-        forge w0 = 2 + (port_net * 65536);
-        *addr = w0
-        forge b_res = bind(s, addr, 16)
-        if (b_res != 0) {
-            close(s)
-            return -1
-        }
-        forge l_res = listen(s, backlog)
-        if (l_res != 0) {
-            close(s)
-            return -1
-        }
-        return s
     }
 
     vein tcp_accept(server_fd: stone) -> stone {
-        forge client_addr: *stone = ofs_alloc(16)
-        forge len_ptr: *stone = ofs_alloc(8);
-        *len_ptr = 16
-        return accept(server_fd, client_addr, len_ptr)
+        fracture {
+            forge client_addr: *stone = ofs_alloc(16)
+            forge len_ptr: *stone = ofs_alloc(8);
+            *len_ptr = 16
+            return accept(server_fd, client_addr, len_ptr)
+        }
     }
 }

@@ -82,112 +82,114 @@ vein render_oll_to_x11(disp: *stone, win: stone, gc: *stone) -> void {
 extern vein getenv(name: obsidian) -> obsidian
 
 core main() {
-    forge oll_file = "ofs/examples/oll/system_monitor.oll"
-    forge env_file = getenv("OLL_FILE")
-    if (ofs_str_len(env_file) > 0) {
-        oll_file = env_file
-    }
-    echo("[OFS OLL Viewer] Carregando arquivo de interface: " + oll_file)
-    forge root_id = oll.load(oll_file)
-    if (root_id < 0) {
-        echo("[OFS OLL Viewer] Erro ao carregar layout OLL: " + oll_file)
-        exit(1)
-    }
+    fracture {
+        forge oll_file = "ofs/examples/oll/system_monitor.oll"
+        forge env_file = getenv("OLL_FILE")
+        if (ofs_str_len(env_file) > 0) {
+            oll_file = env_file
+        }
+        echo("[OFS OLL Viewer] Carregando arquivo de interface: " + oll_file)
+        forge root_id = oll.load(oll_file)
+        if (root_id < 0) {
+            echo("[OFS OLL Viewer] Erro ao carregar layout OLL: " + oll_file)
+            exit(1)
+        }
 
-    oll.compute_layout(root_id)
-    forge root_node = oll.get_node(root_id)
-    forge win_w = root_node.box_w
-    if (win_w <= 0) { win_w = 840 }
-    forge win_h = root_node.box_h
-    if (win_h <= 0) { win_h = 600 }
+        oll.compute_layout(root_id)
+        forge root_node = oll.get_node(root_id)
+        forge win_w = root_node.box_w
+        if (win_w <= 0) { win_w = 840 }
+        forge win_h = root_node.box_h
+        if (win_h <= 0) { win_h = 600 }
 
-    forge win_title = "OFS - OLL Native Window (" + root_node.text + ")"
-    if (ofs_str_len(root_node.text) == 0) {
-        win_title = "OFS - OLL Native Layout Window"
-    }
+        forge win_title = "OFS - OLL Native Window (" + root_node.text + ")"
+        if (ofs_str_len(root_node.text) == 0) {
+            win_title = "OFS - OLL Native Layout Window"
+        }
 
-    echo("[OFS OLL Viewer] Conectando ao servidor X11...")
-    forge disp: *stone = XOpenDisplay(null)
-    if (disp == null) {
-        echo("[OFS OLL Viewer] Erro: display X11 indisponivel.")
-        exit(1)
-    }
+        echo("[OFS OLL Viewer] Conectando ao servidor X11...")
+        forge disp: *stone = XOpenDisplay(null)
+        if (disp == null) {
+            echo("[OFS OLL Viewer] Erro: display X11 indisponivel.")
+            exit(1)
+        }
 
-    forge screen = XDefaultScreen(disp)
-    forge root = XRootWindow(disp, screen)
-    forge black: stone = 0
-    forge white: stone = 16777215
+        forge screen = XDefaultScreen(disp)
+        forge root = XRootWindow(disp, screen)
+        forge black: stone = 0
+        forge white: stone = 16777215
 
-    echo("[OFS OLL Viewer] Criando janela nativa " + ofs_stone_to_obsidian(win_w) + "x" + ofs_stone_to_obsidian(win_h) + "...")
-    forge win = XCreateSimpleWindow(disp, root, 80, 60, win_w, win_h, 1, white, black)
-    if (win == 0) {
-        echo("[OFS OLL Viewer] Erro ao criar janela X11.")
-        XCloseDisplay(disp)
-        exit(1)
-    }
+        echo("[OFS OLL Viewer] Criando janela nativa " + ofs_stone_to_obsidian(win_w) + "x" + ofs_stone_to_obsidian(win_h) + "...")
+        forge win = XCreateSimpleWindow(disp, root, 80, 60, win_w, win_h, 1, white, black)
+        if (win == 0) {
+            echo("[OFS OLL Viewer] Erro ao criar janela X11.")
+            XCloseDisplay(disp)
+            exit(1)
+        }
 
-    XStoreName(disp, win, win_title)
-    XSelectInput(disp, win, 163845)
-    XMapWindow(disp, win)
-    XFlush(disp)
+        XStoreName(disp, win, win_title)
+        XSelectInput(disp, win, 163845)
+        XMapWindow(disp, win)
+        XFlush(disp)
 
-    forge gc: *stone = XCreateGC(disp, win, 0, null)
-    echo("[OFS OLL Viewer] Janela criada com sucesso! Window ID: " + ofs_stone_to_obsidian(win))
-    echo("[OFS OLL Viewer] Renderizando layout OLL (" + ofs_stone_to_obsidian(oll.node_count()) + " nos)...")
+        forge gc: *stone = XCreateGC(disp, win, 0, null)
+        echo("[OFS OLL Viewer] Janela criada com sucesso! Window ID: " + ofs_stone_to_obsidian(win))
+        echo("[OFS OLL Viewer] Renderizando layout OLL (" + ofs_stone_to_obsidian(oll.node_count()) + " nos)...")
 
-    render_oll_to_x11(disp, win, gc)
+        render_oll_to_x11(disp, win, gc)
 
-    forge event_buf: *stone = ofs_alloc(192)
-    forge running = 1
-    forge frames = 0
-    forge status_banner = "Interface OLL ativa e interativa!"
+        forge event_buf: *stone = ofs_alloc(192)
+        forge running = 1
+        forge frames = 0
+        forge status_banner = "Interface OLL ativa e interativa!"
 
-    while (running != 0 && frames < 600) {
-        while (XPending(disp) > 0) {
-            XNextEvent(disp, event_buf)
-            forge ev_type: stone = 0
-            fracture {
-                ev_type = *event_buf
-            }
-
-            if (ev_type == 12) {
-                render_oll_to_x11(disp, win, gc)
-            } else if (ev_type == 4) {
-                forge p_xy: *stone = fault_step(event_buf, 8)
-                forge raw_xy: stone = 0
+        while (running != 0 && frames < 600) {
+            while (XPending(disp) > 0) {
+                XNextEvent(disp, event_buf)
+                forge ev_type: stone = 0
                 fracture {
-                    raw_xy = *p_xy
+                    ev_type = *event_buf
                 }
-                forge mx = raw_xy % 65536
-                forge my = (raw_xy / 4294967296) % 65536
-                forge hit_id = oll.hit_test(mx, my)
-                if (hit_id >= 0) {
-                    forge hit_node = oll.get_node(hit_id)
-                    echo("[OFS OLL Event] Clique no componente: " + hit_node.text + " (acao: " + hit_node.on_click + ")")
-                    status_banner = "Clicado: " + hit_node.text
-                    if (ofs_str_eq(hit_node.on_click, "quit") || ofs_str_eq(hit_node.on_click, "close")) {
+
+                if (ev_type == 12) {
+                    render_oll_to_x11(disp, win, gc)
+                } else if (ev_type == 4) {
+                    forge p_xy: *stone = fault_step(event_buf, 8)
+                    forge raw_xy: stone = 0
+                    fracture {
+                        raw_xy = *p_xy
+                    }
+                    forge mx = raw_xy % 65536
+                    forge my = (raw_xy / 4294967296) % 65536
+                    forge hit_id = oll.hit_test(mx, my)
+                    if (hit_id >= 0) {
+                        forge hit_node = oll.get_node(hit_id)
+                        echo("[OFS OLL Event] Clique no componente: " + hit_node.text + " (acao: " + hit_node.on_click + ")")
+                        status_banner = "Clicado: " + hit_node.text
+                        if (ofs_str_eq(hit_node.on_click, "quit") || ofs_str_eq(hit_node.on_click, "close")) {
+                            running = 0
+                        }
+                    }
+                    render_oll_to_x11(disp, win, gc)
+                } else if (ev_type == 2) {
+                    forge p_kc: *stone = fault_step(event_buf, 10)
+                    forge keycode: stone = 0
+                    fracture {
+                        keycode = *p_kc % 256
+                    }
+                    if (keycode == 9) {
+                        echo("[OFS OLL Event] Tecla ESC pressionada. Fechando...")
                         running = 0
                     }
                 }
-                render_oll_to_x11(disp, win, gc)
-            } else if (ev_type == 2) {
-                forge p_kc: *stone = fault_step(event_buf, 10)
-                forge keycode: stone = 0
-                fracture {
-                    keycode = *p_kc % 256
-                }
-                if (keycode == 9) {
-                    echo("[OFS OLL Event] Tecla ESC pressionada. Fechando...")
-                    running = 0
-                }
             }
+            usleep(16000)
+            frames++
         }
-        usleep(16000)
-        frames++
-    }
 
-    echo("[OFS OLL Viewer] Encerrando visualizacao...")
-    XDestroyWindow(disp, win)
-    XCloseDisplay(disp)
-    echo("[OFS OLL Viewer] Finalizado com sucesso.")
+        echo("[OFS OLL Viewer] Encerrando visualizacao...")
+        XDestroyWindow(disp, win)
+        XCloseDisplay(disp)
+        echo("[OFS OLL Viewer] Finalizado com sucesso.")
+    }
 }

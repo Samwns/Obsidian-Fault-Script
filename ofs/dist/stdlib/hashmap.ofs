@@ -33,46 +33,56 @@ namespace hashmap {
     }
 
     vein _slot_ptr(base: stone, i: stone) -> *stone {
-        return fault_step(base as *stone, i)
+        fracture {
+            return fault_step(base as *stone, i)
+        }
     }
 
     vein _rd(base: stone, i: stone) -> stone {
-        forge p: *stone = fault_step(base as *stone, i)
-        forge v = 0
         fracture {
-            v = *p;
+            forge p: *stone = fault_step(base as *stone, i)
+            forge v = 0
+            fracture {
+                v = *p;
+            }
+            return v
         }
-        return v
     }
 
     vein _wr(base: stone, i: stone, v: stone) -> void {
-        forge p: *stone = fault_step(base as *stone, i)
         fracture {
-            *p = v;
+            forge p: *stone = fault_step(base as *stone, i)
+            fracture {
+                *p = v;
+            }
         }
     }
 
     vein _alloc_table(cap: stone) -> stone {
-        forge k: *stone = ofs_alloc(cap * 8)
-        forge kb = k as stone
-        forge e = _empty()
-        forge i = 0
-        while (i < cap) {
-            _wr(kb, i, e)
-            i++
+        fracture {
+            forge k: *stone = ofs_alloc(cap * 8)
+            forge kb = k as stone
+            forge e = _empty()
+            forge i = 0
+            while (i < cap) {
+                _wr(kb, i, e)
+                i++
+            }
+            return kb
         }
-        return kb
     }
 
     vein new(initial_cap: stone) -> stone {
-        forge cap = 16
-        while (cap < initial_cap * 2) { cap = cap * 2 }
-        ofs_array_push(_keys, _alloc_table(cap))
-        forge v: *stone = ofs_alloc(cap * 8)
-        ofs_array_push(_vals, v as stone)
-        ofs_array_push(_caps, cap)
-        ofs_array_push(_counts, 0)
-        return ofs_array_len(_caps) - 1
+        fracture {
+            forge cap = 16
+            while (cap < initial_cap * 2) { cap = cap * 2 }
+            ofs_array_push(_keys, _alloc_table(cap))
+            forge v: *stone = ofs_alloc(cap * 8)
+            ofs_array_push(_vals, v as stone)
+            ofs_array_push(_caps, cap)
+            ofs_array_push(_counts, 0)
+            return ofs_array_len(_caps) - 1
+        }
     }
 
     vein count(m: stone) -> stone {
@@ -94,28 +104,30 @@ namespace hashmap {
     }
 
     vein _grow(m: stone) -> void {
-        forge old_k = ofs_array_get(_keys, m)
-        forge old_v = ofs_array_get(_vals, m)
-        forge old_cap = ofs_array_get(_caps, m)
-        forge cap = old_cap * 2
-        forge nk = _alloc_table(cap)
-        forge nvp: *stone = ofs_alloc(cap * 8)
-        ofs_array_set(_keys, m, nk)
-        ofs_array_set(_vals, m, nvp as stone)
-        ofs_array_set(_caps, m, cap)
-        forge e = _empty()
-        forge i = 0
-        while (i < old_cap) {
-            forge k = _rd(old_k, i)
-            if (k != e) {
-                forge s = _find(m, k)
-                _wr(nk, s, k)
-                _wr(nvp as stone, s, _rd(old_v, i))
+        fracture {
+            forge old_k = ofs_array_get(_keys, m)
+            forge old_v = ofs_array_get(_vals, m)
+            forge old_cap = ofs_array_get(_caps, m)
+            forge cap = old_cap * 2
+            forge nk = _alloc_table(cap)
+            forge nvp: *stone = ofs_alloc(cap * 8)
+            ofs_array_set(_keys, m, nk)
+            ofs_array_set(_vals, m, nvp as stone)
+            ofs_array_set(_caps, m, cap)
+            forge e = _empty()
+            forge i = 0
+            while (i < old_cap) {
+                forge k = _rd(old_k, i)
+                if (k != e) {
+                    forge s = _find(m, k)
+                    _wr(nk, s, k)
+                    _wr(nvp as stone, s, _rd(old_v, i))
+                }
+                i++
             }
-            i++
+            ofs_free(old_k as *stone)
+            ofs_free(old_v as *stone)
         }
-        ofs_free(old_k as *stone)
-        ofs_free(old_v as *stone)
     }
 
     vein set(m: stone, key: stone, val: stone) -> void {

@@ -14,40 +14,44 @@ vein _ofs_webserver_response(content_type: obsidian, body: obsidian) -> obsidian
 }
 
 vein ofs_webserver_serve_once(port: stone, content_type: obsidian, body: obsidian) -> stone {
-    if (port <= 0 || port > 65535) { port = 8080 }
-    forge response = _ofs_webserver_response(content_type, body)
-    forge server = net__tcp_listen(port, 16)
-    if (server < 0) { return 2 }
+    fracture {
+        if (port <= 0 || port > 65535) { port = 8080 }
+        forge response = _ofs_webserver_response(content_type, body)
+        forge server = net__tcp_listen(port, 16)
+        if (server < 0) { return 2 }
 
-    forge client = net__tcp_accept(server)
-    if (client < 0) {
+        forge client = net__tcp_accept(server)
+        if (client < 0) {
+            net__tcp_close(server)
+            return 3
+        }
+        forge request = net__tcp_recv(client, 2047)
+        forge sent = net__tcp_send(client, response)
+        ofs_free(request as *stone)
+        net__tcp_close(client)
         net__tcp_close(server)
-        return 3
+        if (sent < ofs_str_len(response)) { return 3 }
+        return 0
     }
-    forge request = net__tcp_recv(client, 2047)
-    forge sent = net__tcp_send(client, response)
-    ofs_free(request as *stone)
-    net__tcp_close(client)
-    net__tcp_close(server)
-    if (sent < ofs_str_len(response)) { return 3 }
-    return 0
 }
 
 vein ofs_webserver_serve_forever(port: stone, content_type: obsidian, body: obsidian) -> stone {
-    if (port <= 0 || port > 65535) { port = 8080 }
-    forge response = _ofs_webserver_response(content_type, body)
-    forge server = net__tcp_listen(port, 16)
-    if (server < 0) { return 2 }
+    fracture {
+        if (port <= 0 || port > 65535) { port = 8080 }
+        forge response = _ofs_webserver_response(content_type, body)
+        forge server = net__tcp_listen(port, 16)
+        if (server < 0) { return 2 }
 
-    echo("OFS web server listening on http://127.0.0.1/" + ofs_stone_to_obsidian(port))
-    while (true) {
-        forge client = net__tcp_accept(server)
-        if (client >= 0) {
-            forge request = net__tcp_recv(client, 2047)
-            net__tcp_send(client, response)
-            ofs_free(request as *stone)
-            net__tcp_close(client)
+        echo("OFS web server listening on http://127.0.0.1/" + ofs_stone_to_obsidian(port))
+        while (true) {
+            forge client = net__tcp_accept(server)
+            if (client >= 0) {
+                forge request = net__tcp_recv(client, 2047)
+                net__tcp_send(client, response)
+                ofs_free(request as *stone)
+                net__tcp_close(client)
+            }
         }
+        return 0
     }
-    return 0
 }

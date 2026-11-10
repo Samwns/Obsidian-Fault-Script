@@ -546,8 +546,10 @@ vein crescente(a: *stone, b: *stone) -> stone {
 core main() {
     forge buf = ofs_alloc(64)
     // ...llena 8 valores...
-    c_qsort(buf, 8, 8, fault_addr(crescente))
-    forge r = fault_call(fault_addr(crescente), buf, fault_step(buf, 1))
+    abyss {
+        c_qsort(buf, 8, 8, fault_addr(crescente))
+        forge r = fault_call(fault_addr(crescente), buf, fault_step(buf, 1))
+    }
 }
 ```
 
@@ -580,7 +582,7 @@ Campos importantes:
 - **`monolith` con layout del sistema.** Las instancias viven en memoria cruda con el layout de `llvmgen.struct_layout` (el mismo del código nativo: campos en orden, cada uno alineado a su propio tamaño, hasta 8; `bool` ocupa 4 bytes; `Array` y `monolith` anidado ocupan 8). `s` o `&s` pasado a una función nativa (`memcpy`, `qsort` de structs...) ve los mismos bytes que el build nativo. Como en el nativo, un `monolith` pasado a una vein es por referencia y `forge y: T = x`/`y = x` copian. Un campo `Array` guarda el array del intérprete (la función nativa no debe leerlo).
 - **`Array` y strings.** Un `Array` pasado a una función nativa es el propio `ofs_array` nativo (cabecera `[data, len, cap, elem_size]` + datos) de la columna de valores del intérprete; la función nativa escribe los elementos en el lugar y la longitud se sincroniza a la vuelta. Elementos de un solo tipo (enteros/punteros, `crystal`, `bool`, `obsidian` o `monolith`); tipos mezclados son un error claro. Un `Array` devuelto por una función nativa usa el mismo bloque, sin copia. `obsidian` ya es el `char*`. Use `ofs_array_data(a)` para pasar solo los datos (ej.: `qsort`).
 - **Callbacks nativos → OFS.** `fault_addr(vein)` de una vein interpretada liga la vein a uno de 16 trampolines nativos (`__ofs_cb_0`..`__ofs_cb_15`, generados por el `llvmgen` dentro del `ofscc`); la biblioteca llama al trampolín, que reentra en el intérprete, incluso dentro de una llamada nativa hecha por el propio programa (`qsort` dentro de `qsort`, `fault_call` de otro callback). La misma vein reutiliza su slot. Hasta 6 parámetros enteros, punteros, `obsidian`, `bool` o `monolith` (por puntero) y retorno entero/puntero. Más de 16 veins distintas, más de 6 parámetros o `crystal`/`f32` en el callback dan un error claro con código 1 (use `ofs run --native`). `f32` como argumento del Rift tampoco está soportado aún.
-- `bedrock`, `fracture` y `abyss` son bloques comunes en los dos modos (el nativo no cambia nada dentro de ellos); las celdas y regiones del `bedrock` (stdlib) usan la memoria cruda de arriba.
+- `bedrock`, `fracture` y `abyss` no cambian la ejecución en los dos modos (el nativo genera el mismo código dentro de ellos); el `typeck` los exige para las operaciones de memoria cruda (ver sección 12, "Reglas"). Las celdas y regiones del `bedrock` (stdlib) usan la memoria cruda de arriba.
 - Pruebas: `ofs/tests/regress/ffi_*.ofs`, `tests/parity/cases/libc_*`.
 
 ---
@@ -627,6 +629,47 @@ El parser acepta alias textuales como:
 - `tectonic safe`
 - `tectonic unsafe`
 - `tectonic bedrock`
+
+### Reglas de `fracture`, `bedrock`, `tectonic` y `abyss` (F4)
+
+El `typeck` exige un bloque de bajo nivel para las operaciones que tocan memoria cruda. La regla es la misma en `ofs build` y en `ofs run` (viene del `typeck`):
+
+| Operación | `fracture` / `bedrock` / `tectonic` | `abyss` |
+|---|---|---|
+| `*p` (leer) y `*p = v` (escribir) | libera | libera |
+| `&x` | libera | libera |
+| `as` con puntero (`n as *u8`, `p as stone`, `s as *u8`, `p as *T`) | libera | libera |
+| `fault_step`, `fault_memcpy`, `fault_memset` | libera | libera |
+| `fault_call`, `fault_addr` | — | libera |
+
+- La aritmética de direcciones pasa por estas operaciones: `p + 1` con puntero ya es `[ERRO DE TIPO]`; use `fault_step(p, n)` o `((p as stone) + n) as *T`, ambos dentro del bloque.
+- Siguen libres fuera de bloque: llamar `extern`/`rift vein` (incluso con punteros como argumento o retorno, p. ej. `forge buf = ofs_alloc(64)`), comparar un puntero con `null`, guardar y pasar punteros, y los intrínsecos de bits (`fault_count`, `fault_cut`, `fault_weave`...).
+- `tectonic X` vale como `X` (`tectonic abyss { }` = `abyss`); `tectonic { }` solo vale como `fracture`. Los bloques anidados se suman: dentro de `abyss`, todo está liberado.
+- Se puede marcar la vein entera: `fracture vein leer(p: *u8) -> stone { return *p }`, `abyss vein llamar(f: stone) -> stone { return fault_call(f) }` (también en `namespace` e `impl`). El cuerpo vale como el bloque. El código que debe compilar con un `ofscc` anterior a esta regla (el propio compilador, por la semilla, y el stdlib) usa un bloque `fracture { }` dentro de la vein, que todo compilador entiende.
+- En el árbol el bloque es un `NK_BLOCK` con el nombre en `val` (`"fracture"`, `"abyss"`...); el `llvmgen` y el intérprete lo ejecutan como un bloque común (mismo IR).
+
+**Migración.** Hasta el **2027-01-09**, una operación fuera de bloque es solo un aviso, en stderr (en `ofs run` el stdout es del programa), y el programa compila igual:
+
+```
+[AVISO DE FALHA app.ofs:12:15]: acesso por ponteiro '*p' (leitura ou escrita) fora de bloco de baixo nivel (libera: fracture, bedrock ou abyss)
+  dica: fracture { forge v = *p; *p = v + 1 }  ou marque a vein: 'fracture vein f(...)'
+[AVISO DE FALHA] 1 operacao(oes) de baixo nivel fora de bloco: viram erro em 2027-01-09; OFS_STRICT_FAULT=1 ja trata como erro
+```
+
+Con `OFS_STRICT_FAULT=1` (el modo de las pruebas del repositorio) la misma línea pasa a `[ERRO DE FALHA archivo:línea:col]` y la compilación se detiene con código 1. A partir del 2027-01-09 el modo estricto será el predeterminado. El stdlib, el runtime, el compilador, las herramientas, los ejemplos y las pruebas ya compilan sin ningún aviso.
+
+```ofs
+core main() {
+    forge x: stone = 10
+    fracture {
+        shard p: *stone = &x   // p apunta a x
+        *p = 42
+    }
+    echo(x)  // imprime 42
+}
+```
+
+Pruebas: `ofs/tests/regress/fault_blocks.ofs`, `fault_err_*.ofs`, `fault_warn_default.ofs`.
 
 ---
 

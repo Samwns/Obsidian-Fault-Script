@@ -31,32 +31,38 @@ namespace prism {
     }
 
     vein clear(surf: Surface, color: stone) -> void {
-        forge total = surf.width * surf.height
-        forge i = 0
-        while (i < total) {
-            forge p: *stone = fault_step(surf.buffer, i)
-            fracture {
-                *p = color
+        fracture {
+            forge total = surf.width * surf.height
+            forge i = 0
+            while (i < total) {
+                forge p: *stone = fault_step(surf.buffer, i)
+                fracture {
+                    *p = color
+                }
+                i++
             }
-            i++
         }
     }
 
     vein set_pixel(surf: Surface, x: stone, y: stone, color: stone) -> void {
-        if (!in_bounds(surf, x, y)) { return }
-        forge idx = y * surf.width + x
-        forge p: *stone = fault_step(surf.buffer, idx)
         fracture {
-            *p = color
+            if (!in_bounds(surf, x, y)) { return }
+            forge idx = y * surf.width + x
+            forge p: *stone = fault_step(surf.buffer, idx)
+            fracture {
+                *p = color
+            }
         }
     }
 
     vein get_pixel(surf: Surface, x: stone, y: stone) -> stone {
-        if (!in_bounds(surf, x, y)) { return 0 }
-        forge idx = y * surf.width + x
-        forge p: *stone = fault_step(surf.buffer, idx)
         fracture {
-            return *p
+            if (!in_bounds(surf, x, y)) { return 0 }
+            forge idx = y * surf.width + x
+            forge p: *stone = fault_step(surf.buffer, idx)
+            fracture {
+                return *p
+            }
         }
     }
 
@@ -73,27 +79,29 @@ namespace prism {
     }
 
     vein save_ppm(surf: Surface, path: obsidian) -> bool {
-        forge f: *stone = fopen(path, "wb")
-        if (f == null) { return false }
-        forge header = "P6\n" + ofs_stone_to_obsidian(surf.width) + " " + ofs_stone_to_obsidian(surf.height) + "\n255\n"
-        fputs(header, f)
-        forge total = surf.width * surf.height
-        forge i = 0
-        while (i < total) {
-            forge p: *stone = fault_step(surf.buffer, i)
-            forge col: stone = 0
-            fracture {
-                col = *p
+        fracture {
+            forge f: *stone = fopen(path, "wb")
+            if (f == null) { return false }
+            forge header = "P6\n" + ofs_stone_to_obsidian(surf.width) + " " + ofs_stone_to_obsidian(surf.height) + "\n255\n"
+            fputs(header, f)
+            forge total = surf.width * surf.height
+            forge i = 0
+            while (i < total) {
+                forge p: *stone = fault_step(surf.buffer, i)
+                forge col: stone = 0
+                fracture {
+                    col = *p
+                }
+                forge r = (col / 65536) % 256
+                forge g = (col / 256) % 256
+                forge b = col % 256
+                fputc(r, f)
+                fputc(g, f)
+                fputc(b, f)
+                i++
             }
-            forge r = (col / 65536) % 256
-            forge g = (col / 256) % 256
-            forge b = col % 256
-            fputc(r, f)
-            fputc(g, f)
-            fputc(b, f)
-            i++
+            fclose(f)
+            return true
         }
-        fclose(f)
-        return true
     }
 }

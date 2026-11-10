@@ -25,32 +25,40 @@ namespace sha256 {
     forge _crc_tab: stone = 0
 
     vein _gb(base: stone, i: stone) -> stone {
-        forge p: *u8 = (base + i) as *u8
-        forge v: u8 = 0 as u8
         fracture {
-            v = *p;
+            forge p: *u8 = (base + i) as *u8
+            forge v: u8 = 0 as u8
+            fracture {
+                v = *p;
+            }
+            return (v as stone) & 255
         }
-        return (v as stone) & 255
     }
     vein _pb(base: stone, i: stone, v: stone) -> void {
-        forge p: *u8 = (base + i) as *u8
-        forge b: u8 = (v & 255) as u8
         fracture {
-            *p = b;
+            forge p: *u8 = (base + i) as *u8
+            forge b: u8 = (v & 255) as u8
+            fracture {
+                *p = b;
+            }
         }
     }
     vein _rw(base: stone, i: stone) -> stone {
-        forge p: *stone = (base + i * 8) as *stone
-        forge v = 0
         fracture {
-            v = *p;
+            forge p: *stone = (base + i * 8) as *stone
+            forge v = 0
+            fracture {
+                v = *p;
+            }
+            return v
         }
-        return v
     }
     vein _ww(base: stone, i: stone, v: stone) -> void {
-        forge p: *stone = (base + i * 8) as *stone
         fracture {
-            *p = v;
+            forge p: *stone = (base + i * 8) as *stone
+            fracture {
+                *p = v;
+            }
         }
     }
     vein _rotr(x: stone, n: stone) -> stone {
@@ -58,13 +66,15 @@ namespace sha256 {
     }
 
     vein init() -> void {
-        if (_w == 0) {
-            _w = ofs_alloc(64 * 8 + 8) as stone
-            _buf = ofs_alloc(72) as stone
+        fracture {
+            if (_w == 0) {
+                _w = ofs_alloc(64 * 8 + 8) as stone
+                _buf = ofs_alloc(72) as stone
+            }
+            _h = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225]
+            _fill = 0
+            _total = 0
         }
-        _h = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225]
-        _fill = 0
-        _total = 0
     }
 
     vein _block(base: stone) -> void {
@@ -188,34 +198,38 @@ namespace sha256 {
     }
 
     vein file(path: obsidian) -> obsidian {
-        forge f = fopen(path, "rb")
-        if (f == null) { return "" }
-        init()
-        forge buf = ofs_alloc(65536 + 8)
-        while (true) {
-            forge n = fread(buf, 1, 65536, f)
-            if (n <= 0) { break }
-            update(buf as stone, n)
+        fracture {
+            forge f = fopen(path, "rb")
+            if (f == null) { return "" }
+            init()
+            forge buf = ofs_alloc(65536 + 8)
+            while (true) {
+                forge n = fread(buf, 1, 65536, f)
+                if (n <= 0) { break }
+                update(buf as stone, n)
+            }
+            ofs_free(buf)
+            fclose(f)
+            return final()
         }
-        ofs_free(buf)
-        fclose(f)
-        return final()
     }
 
     // ── CRC-32 (polinomio 0xEDB88320), como no zip ───────────────────────
     vein _crc_init() -> void {
-        if (_crc_tab != 0) { return }
-        _crc_tab = ofs_alloc(256 * 8 + 8) as stone
-        forge n = 0
-        while (n < 256) {
-            forge c = n
-            forge k = 0
-            while (k < 8) {
-                if ((c & 1) != 0) { c = 3988292384 ^ (c >> 1) } else { c = c >> 1 }
-                k++
+        fracture {
+            if (_crc_tab != 0) { return }
+            _crc_tab = ofs_alloc(256 * 8 + 8) as stone
+            forge n = 0
+            while (n < 256) {
+                forge c = n
+                forge k = 0
+                while (k < 8) {
+                    if ((c & 1) != 0) { c = 3988292384 ^ (c >> 1) } else { c = c >> 1 }
+                    k++
+                }
+                _ww(_crc_tab, n, c)
+                n++
             }
-            _ww(_crc_tab, n, c)
-            n++
         }
     }
     // crc: valor anterior (0 no inicio)

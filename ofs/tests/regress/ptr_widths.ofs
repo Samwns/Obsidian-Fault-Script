@@ -5,66 +5,68 @@ extern vein ofs_alloc(size: stone) -> *u8
 extern vein ofs_free(p: *u8) -> void
 
 core main() {
-    forge buf: *u8 = ofs_alloc(64)
-    forge base: stone = buf as stone
     fracture {
-        forge pu8: *u8 = (base + 0) as *u8
-        *pu8 = 300 as u8
-        echo(*pu8)
-        forge pi8: *i8 = (base + 1) as *i8
-        *pi8 = (0 - 5) as i8
-        echo(*pi8)
-        echo(*pu8)
-        forge pu16: *u16 = (base + 2) as *u16
-        *pu16 = 70000 as u16
-        echo(*pu16)
-        forge pi16: *i16 = (base + 4) as *i16
-        *pi16 = (0 - 1234) as i16
-        echo(*pi16)
-        forge pu32: *u32 = (base + 8) as *u32
-        *pu32 = 4294967295 as u32
-        echo(*pu32)
-        forge pi32: *i32 = (base + 12) as *i32
-        *pi32 = (0 - 123456) as i32
-        echo(*pi32)
-        forge pu64: *u64 = (base + 16) as *u64
-        *pu64 = 1234567890123 as u64
-        echo(*pu64)
-        forge pi64: *i64 = (base + 24) as *i64
-        *pi64 = (0 - 987654321) as i64
-        echo(*pi64)
-        forge ps: *stone = (base + 32) as *stone
-        *ps = 42
-        *ps = *ps + 1
-        echo(*ps)
-        forge pf: *f32 = (base + 40) as *f32
-        *pf = 1.5 as f32
-        forge fv: crystal = (*pf) as crystal
-        echo(fv)
-        forge pd: *crystal = (base + 48) as *crystal
-        *pd = 2.25
-        echo(*pd)
-        forge pd2: *f64 = (base + 48) as *f64
-        forge d2: crystal = (*pd2) as crystal
-        echo(d2 * 2.0)
-        forge pp: *stone = (base + 56) as *stone
-        *pp = base
-        forge back: stone = *pp
-        echo(back == base)
-        // bytes crus: o u16 de 70000 (0x11170) vira 0x1170 = 112, 17
-        forge b2: *u8 = (base + 2) as *u8
-        forge b3: *u8 = (base + 3) as *u8
-        echo(((*b2) as stone) + 1000 * ((*b3) as stone))
+        forge buf: *u8 = ofs_alloc(64)
+        forge base: stone = buf as stone
+        fracture {
+            forge pu8: *u8 = (base + 0) as *u8
+            *pu8 = 300 as u8
+            echo(*pu8)
+            forge pi8: *i8 = (base + 1) as *i8
+            *pi8 = (0 - 5) as i8
+            echo(*pi8)
+            echo(*pu8)
+            forge pu16: *u16 = (base + 2) as *u16
+            *pu16 = 70000 as u16
+            echo(*pu16)
+            forge pi16: *i16 = (base + 4) as *i16
+            *pi16 = (0 - 1234) as i16
+            echo(*pi16)
+            forge pu32: *u32 = (base + 8) as *u32
+            *pu32 = 4294967295 as u32
+            echo(*pu32)
+            forge pi32: *i32 = (base + 12) as *i32
+            *pi32 = (0 - 123456) as i32
+            echo(*pi32)
+            forge pu64: *u64 = (base + 16) as *u64
+            *pu64 = 1234567890123 as u64
+            echo(*pu64)
+            forge pi64: *i64 = (base + 24) as *i64
+            *pi64 = (0 - 987654321) as i64
+            echo(*pi64)
+            forge ps: *stone = (base + 32) as *stone
+            *ps = 42
+            *ps = *ps + 1
+            echo(*ps)
+            forge pf: *f32 = (base + 40) as *f32
+            *pf = 1.5 as f32
+            forge fv: crystal = (*pf) as crystal
+            echo(fv)
+            forge pd: *crystal = (base + 48) as *crystal
+            *pd = 2.25
+            echo(*pd)
+            forge pd2: *f64 = (base + 48) as *f64
+            forge d2: crystal = (*pd2) as crystal
+            echo(d2 * 2.0)
+            forge pp: *stone = (base + 56) as *stone
+            *pp = base
+            forge back: stone = *pp
+            echo(back == base)
+            // bytes crus: o u16 de 70000 (0x11170) vira 0x1170 = 112, 17
+            forge b2: *u8 = (base + 2) as *u8
+            forge b3: *u8 = (base + 3) as *u8
+            echo(((*b2) as stone) + 1000 * ((*b3) as stone))
+        }
+        // as: trunc, sext de iN / zext de uN (F3), sitofp, fptosi
+        forge big: stone = 511
+        forge t8: u8 = big as u8
+        echo(t8)
+        forge m1: i8 = (0 - 1) as i8
+        echo(m1)
+        echo(m1 as stone)
+        forge f: crystal = big as crystal
+        echo(f / 2.0)
+        echo((7.9 as stone))
+        ofs_free(buf)
     }
-    // as: trunc, sext de iN / zext de uN (F3), sitofp, fptosi
-    forge big: stone = 511
-    forge t8: u8 = big as u8
-    echo(t8)
-    forge m1: i8 = (0 - 1) as i8
-    echo(m1)
-    echo(m1 as stone)
-    forge f: crystal = big as crystal
-    echo(f / 2.0)
-    echo((7.9 as stone))
-    ofs_free(buf)
 }

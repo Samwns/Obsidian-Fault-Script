@@ -924,69 +924,77 @@ namespace interpreter {
 
     // inteiro (bits brutos, canonicos) no endereco a
     vein mem_rd(a: stone, c: stone) -> stone {
-        if (c == MC_U8 || c == MC_I8) {
-            forge p8: *u8 = a as *u8
-            forge v8: u8 = 0
-            fracture { v8 = *p8 }
-            return mc_canon(c, v8 as stone)
+        fracture {
+            if (c == MC_U8 || c == MC_I8) {
+                forge p8: *u8 = a as *u8
+                forge v8: u8 = 0
+                fracture { v8 = *p8 }
+                return mc_canon(c, v8 as stone)
+            }
+            if (c == MC_U16 || c == MC_I16) {
+                forge p16: *u16 = a as *u16
+                forge v16: u16 = 0
+                fracture { v16 = *p16 }
+                return mc_canon(c, v16 as stone)
+            }
+            if (c == MC_U32 || c == MC_I32 || c == MC_BOOL || c == MC_F32) {
+                forge p32: *u32 = a as *u32
+                forge v32: u32 = 0
+                fracture { v32 = *p32 }
+                return mc_canon(c, v32 as stone)
+            }
+            forge p64: *stone = a as *stone
+            forge v64: stone = 0
+            fracture { v64 = *p64 }
+            return v64
         }
-        if (c == MC_U16 || c == MC_I16) {
-            forge p16: *u16 = a as *u16
-            forge v16: u16 = 0
-            fracture { v16 = *p16 }
-            return mc_canon(c, v16 as stone)
-        }
-        if (c == MC_U32 || c == MC_I32 || c == MC_BOOL || c == MC_F32) {
-            forge p32: *u32 = a as *u32
-            forge v32: u32 = 0
-            fracture { v32 = *p32 }
-            return mc_canon(c, v32 as stone)
-        }
-        forge p64: *stone = a as *stone
-        forge v64: stone = 0
-        fracture { v64 = *p64 }
-        return v64
     }
 
     vein mem_wr(a: stone, c: stone, v: stone) -> void {
-        if (c == MC_U8 || c == MC_I8) {
-            forge p8: *u8 = a as *u8
-            fracture { *p8 = v as u8 }
-            return
+        fracture {
+            if (c == MC_U8 || c == MC_I8) {
+                forge p8: *u8 = a as *u8
+                fracture { *p8 = v as u8 }
+                return
+            }
+            if (c == MC_U16 || c == MC_I16) {
+                forge p16: *u16 = a as *u16
+                fracture { *p16 = v as u16 }
+                return
+            }
+            if (c == MC_U32 || c == MC_I32 || c == MC_BOOL) {
+                forge p32: *u32 = a as *u32
+                fracture { *p32 = v as u32 }
+                return
+            }
+            forge p64: *stone = a as *stone
+            fracture { *p64 = v }
         }
-        if (c == MC_U16 || c == MC_I16) {
-            forge p16: *u16 = a as *u16
-            fracture { *p16 = v as u16 }
-            return
-        }
-        if (c == MC_U32 || c == MC_I32 || c == MC_BOOL) {
-            forge p32: *u32 = a as *u32
-            fracture { *p32 = v as u32 }
-            return
-        }
-        forge p64: *stone = a as *stone
-        fracture { *p64 = v }
     }
 
     vein mem_rd_f(a: stone, c: stone) -> crystal {
-        if (c == MC_F32) {
-            forge pf: *f32 = a as *f32
-            fracture { return (*pf) as crystal }
+        fracture {
+            if (c == MC_F32) {
+                forge pf: *f32 = a as *f32
+                fracture { return (*pf) as crystal }
+            }
+            forge pd: *crystal = a as *crystal
+            forge d: crystal = 0.0
+            fracture { d = *pd }
+            return d
         }
-        forge pd: *crystal = a as *crystal
-        forge d: crystal = 0.0
-        fracture { d = *pd }
-        return d
     }
 
     vein mem_wr_f(a: stone, c: stone, f: crystal) -> void {
-        if (c == MC_F32) {
-            forge pf: *f32 = a as *f32
-            fracture { *pf = f as f32 }
-            return
+        fracture {
+            if (c == MC_F32) {
+                forge pf: *f32 = a as *f32
+                fracture { *pf = f as f32 }
+                return
+            }
+            forge pd: *crystal = a as *crystal
+            fracture { *pd = f }
         }
-        forge pd: *crystal = a as *crystal
-        fracture { *pd = f }
     }
 
     // valor dos registradores como palavra de 64 bits para memoria/C:
@@ -1670,11 +1678,13 @@ namespace interpreter {
 
     // copia (rasa) do objeto em a, do tipo t; devolve o novo endereco
     vein obj_clone(a: stone, t: obsidian) -> stone {
-        forge size = obj_size(t)
-        if (size <= 0) { return a }
-        forge b = ofs_alloc(size) as stone
-        memcpy(b as *u8, a as *u8, size)
-        return b
+        fracture {
+            forge size = obj_size(t)
+            if (size <= 0) { return a }
+            forge b = ofs_alloc(size) as stone
+            memcpy(b as *u8, a as *u8, size)
+            return b
+        }
     }
 
     // Objetos tem semantica de valor ao ir para variavel: copia nos registradores
@@ -1727,27 +1737,29 @@ namespace interpreter {
     // Monolith sobre monolith do mesmo tipo copia para o bloco que a variavel
     // ja tem (como o `store %T` do nativo): `&x` tomado antes continua valendo.
     vein env_assign(idx: stone) -> void {
-        if (_rk == VAL_OBJECT && _rr > 0) {
-            forge ck: stone = ofs_array_get(_env_kind, idx)
-            if (ck == VAL_OBJECT) {
-                forge dst: stone = ofs_array_get(_env_ref, idx)
-                forge dt: obsidian = ofs_array_get(_env_type, idx)
-                if (dst > 0 && ofs_str_eq(dt, _rt)) {
-                    if (dst != _rr) { memcpy(dst as *u8, _rr as *u8, obj_size(dt)) }
-                    return
+        fracture {
+            if (_rk == VAL_OBJECT && _rr > 0) {
+                forge ck: stone = ofs_array_get(_env_kind, idx)
+                if (ck == VAL_OBJECT) {
+                    forge dst: stone = ofs_array_get(_env_ref, idx)
+                    forge dt: obsidian = ofs_array_get(_env_type, idx)
+                    if (dst > 0 && ofs_str_eq(dt, _rt)) {
+                        if (dst != _rr) { memcpy(dst as *u8, _rr as *u8, obj_size(dt)) }
+                        return
+                    }
                 }
             }
+            forge k = _rk
+            forge t: obsidian = _rt
+            forge iv = _ri
+            forge fv: crystal = _rf
+            forge bv = _rb
+            forge sv: obsidian = _rs
+            forge rv = _rr
+            clone_regs()
+            env_store(idx)
+            r_set(k, t, iv, fv, bv, sv, rv)
         }
-        forge k = _rk
-        forge t: obsidian = _rt
-        forge iv = _ri
-        forge fv: crystal = _rf
-        forge bv = _rb
-        forge sv: obsidian = _rs
-        forge rv = _rr
-        clone_regs()
-        env_store(idx)
-        r_set(k, t, iv, fv, bv, sv, rv)
     }
 
     // `&x`: a variavel idx passa a viver num slot de memoria crua (8 bytes)
@@ -2346,22 +2358,24 @@ namespace interpreter {
     // crua de verdade (memcpy/memset da libc), como o llvm.memcpy/memset do
     // nativo. Ponteiros: endereco do C, &x, obsidian, monolith ou Array.
     vein fault_mem(code: stone, num_args: stone, arg_base: stone) -> void {
-        if (num_args < 3) {
-            fault_runtime_error("fault_memcpy/fault_memset esperam (ponteiro, valor, len)")
-            return
+        fracture {
+            if (num_args < 3) {
+                fault_runtime_error("fault_memcpy/fault_memset esperam (ponteiro, valor, len)")
+                return
+            }
+            forge len = arg_i(arg_base + 2)
+            if (len <= 0) { r_void(); return }
+            load_arg(arg_base)
+            forge dst = reg_as_int()
+            if (code == BI_FAULT_MEMCPY) {
+                load_arg(arg_base + 1)
+                forge src = reg_as_int()
+                memcpy(dst as *u8, src as *u8, len)
+            } else {
+                memset(dst as *u8, arg_i(arg_base + 1) & 255, len)
+            }
+            r_void()
         }
-        forge len = arg_i(arg_base + 2)
-        if (len <= 0) { r_void(); return }
-        load_arg(arg_base)
-        forge dst = reg_as_int()
-        if (code == BI_FAULT_MEMCPY) {
-            load_arg(arg_base + 1)
-            forge src = reg_as_int()
-            memcpy(dst as *u8, src as *u8, len)
-        } else {
-            memset(dst as *u8, arg_i(arg_base + 1) & 255, len)
-        }
-        r_void()
     }
 
     vein call_fault(code: stone, num_args: stone, arg_base: stone) -> void {
@@ -2690,27 +2704,35 @@ namespace interpreter {
     }
 
     vein ffi_put_i(i: stone, v: stone) -> void {
-        forge p: *stone = ffi_slot(i) as *stone
-        fracture { *p = v }
+        fracture {
+            forge p: *stone = ffi_slot(i) as *stone
+            fracture { *p = v }
+        }
     }
 
     vein ffi_put_f(i: stone, v: crystal) -> void {
-        forge p: *crystal = ffi_slot(i) as *crystal
-        fracture { *p = v }
+        fracture {
+            forge p: *crystal = ffi_slot(i) as *crystal
+            fracture { *p = v }
+        }
     }
 
     vein ffi_get_i(i: stone) -> stone {
-        forge p: *stone = ffi_slot(i) as *stone
-        forge v: stone = 0
-        fracture { v = *p }
-        return v
+        fracture {
+            forge p: *stone = ffi_slot(i) as *stone
+            forge v: stone = 0
+            fracture { v = *p }
+            return v
+        }
     }
 
     vein ffi_get_f(i: stone) -> crystal {
-        forge p: *crystal = ffi_slot(i) as *crystal
-        forge v: crystal = 0.0
-        fracture { v = *p }
-        return v
+        fracture {
+            forge p: *crystal = ffi_slot(i) as *crystal
+            forge v: crystal = 0.0
+            fracture { v = *p }
+            return v
+        }
     }
 
     // Chama addr com os slots ja preenchidos; resultado inteiro bruto (o
@@ -2718,27 +2740,29 @@ namespace interpreter {
     forge _ffi_ret_f: crystal = 0.0
 
     vein ffi_invoke(addr: stone, nargs: stone, fmask: stone, retf: stone, vfixed: stone, what: obsidian) -> stone {
-        if (!llvmgen.ffi_sig_supported(nargs, fmask, retf, vfixed)) {
-            fault_runtime_error(what + ": assinatura FFI sem trampolim (" + ofs_stone_to_obsidian(nargs) + " args; ate 4 com crystal, 12 so inteiros, variadica ate 4 extras)")
-            return 0
-        }
-        if (_ffi_disp == 0) {
-            // ofscc sem trampolins (gerado por compilador antigo ou sem
-            // -rdynamic): so inteiros/ponteiros, todos como i64
-            if (fmask != 0 || retf != 0) {
-                fault_runtime_error(what + ": crystal no FFI precisa dos trampolins (__ofs_ffi_dispatch) e de um ofscc linkado com -rdynamic")
+        abyss {
+            if (!llvmgen.ffi_sig_supported(nargs, fmask, retf, vfixed)) {
+                fault_runtime_error(what + ": assinatura FFI sem trampolim (" + ofs_stone_to_obsidian(nargs) + " args; ate 4 com crystal, 12 so inteiros, variadica ate 4 extras)")
                 return 0
             }
-            return fault_call(addr, ffi_get_i(0), ffi_get_i(1), ffi_get_i(2), ffi_get_i(3), ffi_get_i(4), ffi_get_i(5), ffi_get_i(6), ffi_get_i(7), ffi_get_i(8), ffi_get_i(9), ffi_get_i(10), ffi_get_i(11))
+            if (_ffi_disp == 0) {
+                // ofscc sem trampolins (gerado por compilador antigo ou sem
+                // -rdynamic): so inteiros/ponteiros, todos como i64
+                if (fmask != 0 || retf != 0) {
+                    fault_runtime_error(what + ": crystal no FFI precisa dos trampolins (__ofs_ffi_dispatch) e de um ofscc linkado com -rdynamic")
+                    return 0
+                }
+                return fault_call(addr, ffi_get_i(0), ffi_get_i(1), ffi_get_i(2), ffi_get_i(3), ffi_get_i(4), ffi_get_i(5), ffi_get_i(6), ffi_get_i(7), ffi_get_i(8), ffi_get_i(9), ffi_get_i(10), ffi_get_i(11))
+            }
+            ffi_put_i(FFI_SLOT_ST, 0)
+            forge r = fault_call(_ffi_disp, addr, llvmgen.ffi_sig(nargs, fmask, retf, vfixed), _ffi_buf)
+            if (ffi_get_i(FFI_SLOT_ST) != 0) {
+                fault_runtime_error(what + ": assinatura FFI sem trampolim")
+                return 0
+            }
+            if (retf != 0) { _ffi_ret_f = ffi_get_f(FFI_SLOT_RET) }
+            return r
         }
-        ffi_put_i(FFI_SLOT_ST, 0)
-        forge r = fault_call(_ffi_disp, addr, llvmgen.ffi_sig(nargs, fmask, retf, vfixed), _ffi_buf)
-        if (ffi_get_i(FFI_SLOT_ST) != 0) {
-            fault_runtime_error(what + ": assinatura FFI sem trampolim")
-            return 0
-        }
-        if (retf != 0) { _ffi_ret_f = ffi_get_f(FFI_SLOT_RET) }
-        return r
     }
 
     // resultado -> registradores
@@ -2943,59 +2967,61 @@ namespace interpreter {
     // parametros e no retorno; crystal/f32 = erro claro.
 
     vein cb_slot_for(fid: stone, name: obsidian) -> stone {
-        ffi_init()
-        if (_cb_table == 0) {
-            _cb_table = dlsym(ffi_rtld_default(), "__ofs_cb_table")
+        abyss {
+            ffi_init()
             if (_cb_table == 0) {
-                fault_runtime_error("fault_addr(" + name + "): callback para o C precisa dos trampolins __ofs_cb_table (ofscc compilado por um ofscc com F2 e linkado com -rdynamic)")
+                _cb_table = dlsym(ffi_rtld_default(), "__ofs_cb_table")
+                if (_cb_table == 0) {
+                    fault_runtime_error("fault_addr(" + name + "): callback para o C precisa dos trampolins __ofs_cb_table (ofscc compilado por um ofscc com F2 e linkado com -rdynamic)")
+                    return 0
+                }
+            }
+            forge slot = 0
+            forge n = ofs_array_len(_cb_fn)
+            while (slot < n) {
+                forge f: stone = ofs_array_get(_cb_fn, slot)
+                if (f == fid) { return fault_call(_cb_table, slot) }
+                slot++
+            }
+            if (n >= FFI_CB_SLOTS) {
+                fault_runtime_error("fault_addr(" + name + "): trampolins de callback esgotados (" + ofs_stone_to_obsidian(FFI_CB_SLOTS) + " veins diferentes por execucao)")
                 return 0
             }
-        }
-        forge slot = 0
-        forge n = ofs_array_len(_cb_fn)
-        while (slot < n) {
-            forge f: stone = ofs_array_get(_cb_fn, slot)
-            if (f == fid) { return fault_call(_cb_table, slot) }
-            slot++
-        }
-        if (n >= FFI_CB_SLOTS) {
-            fault_runtime_error("fault_addr(" + name + "): trampolins de callback esgotados (" + ofs_stone_to_obsidian(FFI_CB_SLOTS) + " veins diferentes por execucao)")
-            return 0
-        }
-        forge pcls: Array<stone> = []
-        forge ptypes: Array<obsidian> = []
-        forge params = nc0(fid)
-        forge np = nx_len(params)
-        if (np > FFI_CB_ARGS) {
-            fault_runtime_error("fault_addr(" + name + "): callback com mais de " + ofs_stone_to_obsidian(FFI_CB_ARGS) + " parametros")
-            return 0
-        }
-        forge j = 0
-        while (j < np) {
-            forge pid = nx_at(params, j)
-            forge pt = ""
-            if (nc0(pid) >= 0) { pt = type_node_str(nc0(pid)) }
-            forge c = mem_class(pt)
-            if (c == MC_F64 || c == MC_F32) {
-                fault_runtime_error("fault_addr(" + name + "): callback com parametro crystal/f32 ainda nao e suportado no interpretador (so inteiros/ponteiros)")
+            forge pcls: Array<stone> = []
+            forge ptypes: Array<obsidian> = []
+            forge params = nc0(fid)
+            forge np = nx_len(params)
+            if (np > FFI_CB_ARGS) {
+                fault_runtime_error("fault_addr(" + name + "): callback com mais de " + ofs_stone_to_obsidian(FFI_CB_ARGS) + " parametros")
                 return 0
             }
-            ofs_array_push(pcls, c)
-            ofs_array_push(ptypes, pt)
-            j++
+            forge j = 0
+            while (j < np) {
+                forge pid = nx_at(params, j)
+                forge pt = ""
+                if (nc0(pid) >= 0) { pt = type_node_str(nc0(pid)) }
+                forge c = mem_class(pt)
+                if (c == MC_F64 || c == MC_F32) {
+                    fault_runtime_error("fault_addr(" + name + "): callback com parametro crystal/f32 ainda nao e suportado no interpretador (so inteiros/ponteiros)")
+                    return 0
+                }
+                ofs_array_push(pcls, c)
+                ofs_array_push(ptypes, pt)
+                j++
+            }
+            forge rt = "void"
+            if (nc1(fid) >= 0) { rt = type_node_str(nc1(fid)) }
+            forge rc = mem_class(rt)
+            if (rc == MC_F64 || rc == MC_F32) {
+                fault_runtime_error("fault_addr(" + name + "): callback com retorno crystal/f32 ainda nao e suportado no interpretador (so inteiros/ponteiros)")
+                return 0
+            }
+            ofs_array_push(_cb_fn, fid)
+            ofs_array_push(_cb_pcls, pcls)
+            ofs_array_push(_cb_ptypes, ptypes)
+            ofs_array_push(_cb_rcls, rc)
+            return fault_call(_cb_table, n)
         }
-        forge rt = "void"
-        if (nc1(fid) >= 0) { rt = type_node_str(nc1(fid)) }
-        forge rc = mem_class(rt)
-        if (rc == MC_F64 || rc == MC_F32) {
-            fault_runtime_error("fault_addr(" + name + "): callback com retorno crystal/f32 ainda nao e suportado no interpretador (so inteiros/ponteiros)")
-            return 0
-        }
-        ofs_array_push(_cb_fn, fid)
-        ofs_array_push(_cb_pcls, pcls)
-        ofs_array_push(_cb_ptypes, ptypes)
-        ofs_array_push(_cb_rcls, rc)
-        return fault_call(_cb_table, n)
     }
 
     vein cb_raw_arg(j: stone, a0: stone, a1: stone, a2: stone, a3: stone, a4: stone, a5: stone) -> stone {

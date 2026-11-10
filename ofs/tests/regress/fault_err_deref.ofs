@@ -1,0 +1,8 @@
+// F4: `*p` fora de bloco de baixo nivel e [ERRO DE FALHA] com OFS_STRICT_FAULT=1
+// (sem a variavel, ate 2027-01-09, e [AVISO DE FALHA] no stderr e compila)
+core main() {
+    forge x: stone = 5
+    fracture { shard p: *stone = &x }
+    forge v = *(&x)
+    echo("nao chega aqui")
+}

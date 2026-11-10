@@ -276,6 +276,8 @@ resolve(name)
    - O número de argumentos deve bater com os parâmetros
    - Os tipos dos argumentos devem ser compatíveis com os parâmetros
 
+5. **Baixo nível exige bloco (F4)**: o parser guarda `fracture`/`bedrock`/`abyss`/`tectonic [X]` como `NK_BLOCK` com o nome no `val` (o corpo de `fracture vein`/`abyss vein` também); o `llvmgen` e o interpretador executam como bloco comum. O typeck conta a profundidade (`_fracture_depth`, `_abyss_depth`, no molde do `_anchor_depth`) e, em `require_fault`, cobra o bloco para `*p`, `&x`, `as` com ponteiro, `fault_step`/`fault_memcpy`/`fault_memset` (qualquer bloco) e `fault_call`/`fault_addr` (só `abyss`). Fora do bloco: `[AVISO DE FALHA arquivo:linha:col]` no stderr até 2027-01-09; com `OFS_STRICT_FAULT=1`, `[ERRO DE FALHA ...]` e `_semantic_errors++`. Regra completa: [LANGUAGE_REFERENCE.md](LANGUAGE_REFERENCE.md), seção 12.
+
 ### Tratamento de erros (atual)
 
 - Apenas avisos (ainda sem `tremor`/`catch`)

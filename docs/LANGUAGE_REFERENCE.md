@@ -753,8 +753,10 @@ vein crescente(a: *stone, b: *stone) -> stone {
 core main() {
     forge buf = ofs_alloc(64)
     // ...preenche 8 valores...
-    c_qsort(buf, 8, 8, fault_addr(crescente))
-    forge r = fault_call(fault_addr(crescente), buf, fault_step(buf, 1))
+    abyss {
+        c_qsort(buf, 8, 8, fault_addr(crescente))
+        forge r = fault_call(fault_addr(crescente), buf, fault_step(buf, 1))
+    }
 }
 ```
 
@@ -787,7 +789,7 @@ O `ofs run` chama as mesmas funções nativas das bibliotecas do sistema que o b
 - **`monolith` com layout do sistema.** As instâncias vivem em memória crua com o layout de `llvmgen.struct_layout` (o mesmo do código nativo: campos na ordem, cada um alinhado ao próprio tamanho, até 8; `bool` ocupa 4 bytes; `Array` e `monolith` aninhado ocupam 8). `s` ou `&s` passado à função nativa (`memcpy`, `qsort` de structs...) vê os mesmos bytes do build nativo. Como no nativo, `monolith` passado a uma vein é por referência e `forge y: T = x`/`y = x` copiam. Um campo `Array` guarda o array do interpretador (a função nativa não deve lê-lo).
 - **`Array` e strings.** Um `Array` passado à função nativa é o próprio `ofs_array` nativo (cabeçalho `[data, len, cap, elem_size]` + dados) da coluna de valores do interpretador; a função nativa escreve nos elementos no lugar e o comprimento é sincronizado na volta. Elementos de um só tipo (inteiros/ponteiros, `crystal`, `bool`, `obsidian` ou `monolith`); tipos misturados são erro claro. Um `Array` devolvido pela função nativa usa o mesmo bloco, sem cópia. `obsidian` já é o `char*`. Use `ofs_array_data(a)` para passar só os dados (ex.: `qsort`).
 - **Callbacks nativos → OFS.** `fault_addr(vein)` de uma vein interpretada liga a vein a um de 16 trampolins nativos (`__ofs_cb_0`..`__ofs_cb_15`, gerados pelo `llvmgen` no `ofscc`); a biblioteca chama o trampolim, que reentra no interpretador, inclusive dentro de uma chamada nativa feita pelo próprio programa (`qsort` dentro de `qsort`, `fault_call` de outro callback). A mesma vein reusa o slot. Até 6 parâmetros inteiros, ponteiros, `obsidian`, `bool` ou `monolith` (por ponteiro) e retorno inteiro/ponteiro. Mais de 16 veins diferentes, mais de 6 parâmetros ou `crystal`/`f32` no callback dão erro claro com código 1 (use `ofs run --native`). `f32` como argumento do Rift também ainda não é suportado.
-- `bedrock`, `fracture` e `abyss` são blocos comuns nos dois modos (o nativo não muda nada dentro deles); as células e regiões do `bedrock` (stdlib) usam a memória crua acima.
+- `bedrock`, `fracture` e `abyss` não mudam a execução nos dois modos (o nativo gera o mesmo código dentro deles); o `typeck` os exige para as operações de memória crua (ver seção 12, "Regras"). As células e regiões do `bedrock` (stdlib) usam a memória crua acima.
 - Testes: `ofs/tests/regress/ffi_*.ofs`, `ptr_widths.ofs`, `tests/parity/cases/` (`ptr_*`, `libc_*`, `monolith_memcpy`, `qsort_fault_addr`, `fault_call_basic`, `bedrock_block`).
 
 
@@ -850,11 +852,33 @@ O parser aceita aliases textuais como:
 - `tectonic bedrock`
 
 
-### Regras de `fracture`, `bedrock` e `abyss`
+### Regras de `fracture`, `bedrock`, `tectonic` e `abyss` (F4)
 
-- Ponteiros só podem ser criados e usados dentro de `fracture`, `bedrock` ou `abyss`.
-- `fracture`: o compilador checa os tipos de todas as operações com ponteiros; `&x` obtém o endereço de `x` e `*p` desreferencia `p`.
-- `abyss`: checagem de tipos relaxada e endereçamento direto permitido. Use só quando for indispensável; prefira `fracture`.
+O `typeck` exige um bloco de baixo nível para as operações que mexem em memória crua. A regra vale igual no `ofs build` e no `ofs run` (vem do `typeck`):
+
+| Operação | `fracture` / `bedrock` / `tectonic` | `abyss` |
+|---|---|---|
+| `*p` (ler) e `*p = v` (escrever) | libera | libera |
+| `&x` | libera | libera |
+| `as` com ponteiro (`n as *u8`, `p as stone`, `s as *u8`, `p as *T`) | libera | libera |
+| `fault_step`, `fault_memcpy`, `fault_memset` | libera | libera |
+| `fault_call`, `fault_addr` | — | libera |
+
+- Aritmética de endereço passa por essas operações: `p + 1` com ponteiro já é `[ERRO DE TIPO]`; use `fault_step(p, n)` ou `((p as stone) + n) as *T`, ambos dentro do bloco.
+- Continuam livres fora de bloco: chamar `extern`/`rift vein` (mesmo com ponteiro como argumento ou retorno, ex. `forge buf = ofs_alloc(64)`), comparar ponteiro com `null`, guardar e passar ponteiro adiante, e os intrínsecos de bits (`fault_count`, `fault_cut`, `fault_weave`...).
+- `tectonic X` vale como `X` (`tectonic abyss { }` = `abyss`); `tectonic { }` sozinho vale como `fracture`. Blocos aninhados somam: dentro de `abyss`, tudo é liberado.
+- A vein inteira pode ser marcada: `fracture vein ler(p: *u8) -> stone { return *p }`, `abyss vein chamar(f: stone) -> stone { return fault_call(f) }` (também em `namespace` e `impl`). O corpo vale como o bloco. Código que precisa compilar com um `ofscc` anterior a esta regra (o próprio compilador, por causa da semente, e o stdlib) usa o bloco `fracture { }` dentro da vein, que todo compilador entende.
+- Na árvore, o bloco é um `NK_BLOCK` com o nome no `val` (`"fracture"`, `"abyss"`...); o `llvmgen` e o interpretador o executam como um bloco comum (mesmo IR).
+
+**Migração.** Até **2027-01-09**, operação fora de bloco é só aviso, no stderr (no `ofs run` o stdout é do programa), e o programa compila igual:
+
+```
+[AVISO DE FALHA app.ofs:12:15]: acesso por ponteiro '*p' (leitura ou escrita) fora de bloco de baixo nivel (libera: fracture, bedrock ou abyss)
+  dica: fracture { forge v = *p; *p = v + 1 }  ou marque a vein: 'fracture vein f(...)'
+[AVISO DE FALHA] 1 operacao(oes) de baixo nivel fora de bloco: viram erro em 2027-01-09; OFS_STRICT_FAULT=1 ja trata como erro
+```
+
+Com `OFS_STRICT_FAULT=1` (o modo dos testes do repositório) a mesma linha vira `[ERRO DE FALHA arquivo:linha:col]` e a compilação para com código 1. A partir de 2027-01-09 o modo estrito passa a ser o padrão. O stdlib, o runtime, o compilador, as ferramentas, os exemplos e os testes já compilam sem nenhum aviso.
 
 ```ofs
 core main() {
@@ -869,11 +893,11 @@ core main() {
 }
 ```
 
-Tipos ponteiro: `shard p: *stone` (ponteiro para inteiro, i64*), `shard q: *crystal` (f64*), `shard s: *obsidian` (i8**).
+Tipos ponteiro: `shard p: *stone` (ponteiro para inteiro, i64*), `shard q: *crystal` (f64*), `shard s: *obsidian` (i8**). Testes: `ofs/tests/regress/fault_blocks.ofs`, `fault_err_*.ofs`, `fault_warn_default.ofs`.
 
 ### Intrínsecos `fault_*`
 
-Disponíveis dentro de `bedrock`, `fracture` ou `abyss`:
+Os de bits valem em qualquer lugar; `fault_step`, `fault_memcpy` e `fault_memset` pedem `fracture`/`bedrock`/`abyss`, e `fault_addr`/`fault_call` pedem `abyss` (tabela acima):
 
 - `fault_count(stone)` → contagem de bits 1 (popcount)
 - `fault_fence()` → barreira de memória
@@ -919,7 +943,7 @@ bedrock {
 Restrições previstas:
 - O argumento deve ser um literal de string.
 - Operandos de entrada/saída (restrições estilo AT&T) ainda não serão analisáveis na primeira versão; use `fault_*` quando precisar vincular operandos.
-- Deve aparecer apenas dentro de `bedrock`, `fracture` ou `abyss`.
+- Deve aparecer apenas dentro de `abyss` (F4/F5).
 
 ---
 

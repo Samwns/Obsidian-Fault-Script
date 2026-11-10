@@ -24,29 +24,33 @@ vein menor(a: *stone, b: *stone) -> stone {
 // comparador que, a cada chamada, ordena outro array (qsort dentro de qsort)
 // e chama C e outro callback por endereco
 vein externo(a: *stone, b: *stone) -> stone {
-    chamadas = chamadas + 1
-    forge w: Array<stone> = [3, 1, 2]
-    c_qsort(ofs_array_data(w), 3, 8, fault_addr(menor))
-    forge t: stone = ofs_array_get(w, 0) + ofs_array_get(w, 2)
-    forge l = c_strlen("abc")
-    forge k1: stone = 5
-    forge k2: stone = 9
-    forge d = fault_call(fault_addr(menor), &k1, &k2)
-    forge f = fat(4)
-    forge x = 0
-    forge y = 0
-    fracture { x = *a; y = *b; }
-    if (t != 4 || l != 3 || d != -4 || f != 24) { return 0 }
-    return y - x
+    abyss {
+        chamadas = chamadas + 1
+        forge w: Array<stone> = [3, 1, 2]
+        c_qsort(ofs_array_data(w), 3, 8, fault_addr(menor))
+        forge t: stone = ofs_array_get(w, 0) + ofs_array_get(w, 2)
+        forge l = c_strlen("abc")
+        forge k1: stone = 5
+        forge k2: stone = 9
+        forge d = fault_call(fault_addr(menor), &k1, &k2)
+        forge f = fat(4)
+        forge x = 0
+        forge y = 0
+        fracture { x = *a; y = *b; }
+        if (t != 4 || l != 3 || d != -4 || f != 24) { return 0 }
+        return y - x
+    }
 }
 
 core main() {
-    forge v: Array<stone> = [5, 9, 1, 7, 3]
-    c_qsort(ofs_array_data(v), 5, 8, fault_addr(externo))
-    forge s = ""
-    cycle (x in v) { s = s + ofs_stone_to_obsidian(x) + " " }
-    echo(s)
-    echo(chamadas > 0)
-    echo(internos >= chamadas * 2)
-    echo(fat(10))
+    abyss {
+        forge v: Array<stone> = [5, 9, 1, 7, 3]
+        c_qsort(ofs_array_data(v), 5, 8, fault_addr(externo))
+        forge s = ""
+        cycle (x in v) { s = s + ofs_stone_to_obsidian(x) + " " }
+        echo(s)
+        echo(chamadas > 0)
+        echo(internos >= chamadas * 2)
+        echo(fat(10))
+    }
 }

@@ -12,24 +12,26 @@ vein cmp(a: *stone, b: *stone) -> stone {
 }
 
 core main() {
-    forge buf: *stone = ofs_alloc(40)
-    forge vals: Array<stone> = [9, 4, 7, 1, 5]
-    forge i = 0
-    while (i < 5) {
-        forge p: *stone = fault_step(buf, i)
-        forge v: stone = ofs_array_get(vals, i)
-        fracture { *p = v; }
-        i++
+    abyss {
+        forge buf: *stone = ofs_alloc(40)
+        forge vals: Array<stone> = [9, 4, 7, 1, 5]
+        forge i = 0
+        while (i < 5) {
+            forge p: *stone = fault_step(buf, i)
+            forge v: stone = ofs_array_get(vals, i)
+            fracture { *p = v; }
+            i++
+        }
+        c_qsort(buf, 5, 8, fault_addr(cmp))
+        forge line = ""
+        i = 0
+        while (i < 5) {
+            forge p: *stone = fault_step(buf, i)
+            forge v = 0
+            fracture { v = *p; }
+            line = line + ofs_stone_to_obsidian(v) + " "
+            i++
+        }
+        echo(line)
     }
-    c_qsort(buf, 5, 8, fault_addr(cmp))
-    forge line = ""
-    i = 0
-    while (i < 5) {
-        forge p: *stone = fault_step(buf, i)
-        forge v = 0
-        fracture { v = *p; }
-        line = line + ofs_stone_to_obsidian(v) + " "
-        i++
-    }
-    echo(line)
 }

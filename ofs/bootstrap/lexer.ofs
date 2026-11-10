@@ -126,12 +126,14 @@ namespace lexer {
     // ── String Scanning ────────────────────────────────────────────────
     
     vein _byte_str(b: stone) -> obsidian {
-        forge buf: *u8 = ofs_alloc(2) as *u8
-        forge v: u8 = b as u8
         fracture {
-            *buf = v;
+            forge buf: *u8 = ofs_alloc(2) as *u8
+            forge v: u8 = b as u8
+            fracture {
+                *buf = v;
+            }
+            return buf as obsidian
         }
-        return buf as obsidian
     }
 
     vein _scan_string() -> void {

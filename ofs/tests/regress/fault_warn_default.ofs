@@ -1,0 +1,7 @@
+// F4: sem OFS_STRICT_FAULT, operacao fora de bloco e so aviso (no stderr) ate
+// 2027-01-09; o programa compila e roda igual (o stdout e so do programa)
+core main() {
+    forge x: stone = 3
+    fracture { shard p: *stone = &x }
+    echo(*(&x) + 1)
+}

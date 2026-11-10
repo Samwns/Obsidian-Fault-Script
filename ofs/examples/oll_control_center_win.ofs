@@ -228,121 +228,123 @@ vein render_ui(hwnd: *stone, progress_val: stone, status_text: obsidian, hover_i
 }
 
 vein main() -> void {
-    forge hInst = GetModuleHandleA(null)
+    fracture {
+        forge hInst = GetModuleHandleA(null)
 
-    forge sw = GetSystemMetrics(0)
-    forge sh = GetSystemMetrics(1)
-    forge init_w: stone = 920
-    forge init_h: stone = 710
-    forge wx = (sw - init_w) / 2
-    forge wy = (sh - init_h) / 2
-    if (wx < 0) { wx = 0 }
-    if (wy < 0) { wy = 0 }
+        forge sw = GetSystemMetrics(0)
+        forge sh = GetSystemMetrics(1)
+        forge init_w: stone = 920
+        forge init_h: stone = 710
+        forge wx = (sw - init_w) / 2
+        forge wy = (sh - init_h) / 2
+        if (wx < 0) { wx = 0 }
+        if (wy < 0) { wy = 0 }
 
-    forge WS_FIXED = 13238272
-    forge WS_VISIBLE = 268435456
-    forge SS_NOTIFY = 256
+        forge WS_FIXED = 13238272
+        forge WS_VISIBLE = 268435456
+        forge SS_NOTIFY = 256
 
-    forge main_hwnd = CreateWindowExA(0, "STATIC", "Obsidian Fault Script (OFS) - Control Center & OLL Studio", WS_FIXED | WS_VISIBLE | SS_NOTIFY, wx, wy, init_w, init_h, null, null, hInst, null)
-    if (main_hwnd == null) {
-        ExitProcess(1)
-    }
-
-    forge hCurArrow = LoadCursorA(null, 32512)
-    forge hCurHand = LoadCursorA(null, 32649)
-    forge cur_cursor = hCurArrow
-    SetCursor(cur_cursor)
-
-    ShowWindow(main_hwnd, 5)
-    UpdateWindow(main_hwnd)
-    SetCursor(cur_cursor)
-
-    forge cur_progress: stone = 94
-    forge cur_status: obsidian = "94% NOMINAL"
-    forge hover_id: stone = 0
-
-    render_ui(main_hwnd, cur_progress, cur_status, hover_id)
-
-    forge pt: *stone = ofs_alloc(16)
-    forge msg: *stone = ofs_alloc(96)
-    forge has_msg = GetMessageA(msg, null, 0, 0)
-    while (has_msg > 0) {
-        forge msg_id = _load_stone(fault_step(msg, 1)) & 65535
-        if (msg_id == 16 || msg_id == 2) {
-            ExitProcess(0)
+        forge main_hwnd = CreateWindowExA(0, "STATIC", "Obsidian Fault Script (OFS) - Control Center & OLL Studio", WS_FIXED | WS_VISIBLE | SS_NOTIFY, wx, wy, init_w, init_h, null, null, hInst, null)
+        if (main_hwnd == null) {
+            ExitProcess(1)
         }
 
-        if (msg_id == 32) {
-            SetCursor(cur_cursor)
-            has_msg = GetMessageA(msg, null, 0, 0)
-            continue
-        }
+        forge hCurArrow = LoadCursorA(null, 32512)
+        forge hCurHand = LoadCursorA(null, 32649)
+        forge cur_cursor = hCurArrow
+        SetCursor(cur_cursor)
 
-        if (msg_id == 20) {
-            has_msg = GetMessageA(msg, null, 0, 0)
-            continue
-        }
+        ShowWindow(main_hwnd, 5)
+        UpdateWindow(main_hwnd)
+        SetCursor(cur_cursor)
 
-        if (msg_id == 15) {
-            ValidateRect(main_hwnd, null)
-            render_ui(main_hwnd, cur_progress, cur_status, hover_id)
-            has_msg = GetMessageA(msg, null, 0, 0)
-            continue
-        }
+        forge cur_progress: stone = 94
+        forge cur_status: obsidian = "94% NOMINAL"
+        forge hover_id: stone = 0
 
-        GetCursorPos(pt)
-        ScreenToClient(main_hwnd, pt)
-        forge pt_val = _load_stone(pt)
-        forge mx = pt_val & 65535
-        forge my = (pt_val >> 32) & 65535
+        render_ui(main_hwnd, cur_progress, cur_status, hover_id)
 
-        forge in_bounds: stone = 1
-        if (mx > 32767 || mx > 908 || my > 32767 || my > 680) {
-            in_bounds = 0
-        }
-
-        forge new_hover: stone = 0
-        if (in_bounds == 1 && my >= 565 && my <= 607) {
-            if (mx >= 32 && mx <= 227) { new_hover = 1 }
-            else if (mx >= 245 && mx <= 440) { new_hover = 2 }
-            else if (mx >= 458 && mx <= 653) { new_hover = 3 }
-            else if (mx >= 673 && mx <= 868) { new_hover = 4 }
-        }
-
-        if (new_hover != hover_id) {
-            hover_id = new_hover
-            if (hover_id > 0) {
-                cur_cursor = hCurHand
-            } else {
-                cur_cursor = hCurArrow
-            }
-            SetCursor(cur_cursor)
-            render_ui(main_hwnd, cur_progress, cur_status, hover_id)
-        }
-
-        if (msg_id == 513) {
-            if (hover_id == 1) {
-                cur_progress = 100
-                cur_status = "100% CONCLUIDO"
-                render_ui(main_hwnd, cur_progress, cur_status, hover_id)
-                MessageBoxA(main_hwnd, "Benchmark executado com sucesso!\n\nWorkload: Fibonacci iterativo 5.000.000 iteracoes\nTempo mediano: 4.6 ms\nStatus: Determinismo estrito verificado!\nRuntime: Stack Magma puro.", "OFS Benchmark", 64)
-            } else if (hover_id == 2) {
-                forge p = ofs_alloc(4096)
-                ofs_free(p)
-                cur_status = "RESERVOIR OK"
-                render_ui(main_hwnd, cur_progress, cur_status, hover_id)
-                MessageBoxA(main_hwnd, "Teste de memoria Reservoir realizado com sucesso!\n\nAlocador: Reservoir nativo OFS\nAlocacao: 4096 bytes alocados e liberados com sucesso.\nStatus: Zero vazamento de memoria.", "Reservoir Heap Test", 64)
-            } else if (hover_id == 3) {
-                MessageBoxA(main_hwnd, "Obsidian Fault Script (OFS) v1.0.137\n\n- Compilador: 100% self-hosted em OFS\n- Backend: LLVM IR SSA (Zero Clang)\n- Motor Visual: OLL Declarative 60 FPS\n- Multiplataforma: Linux, Windows e macOS\n- Criado por Samwns e comunidade.", "Sobre o OFS", 64)
-            } else if (hover_id == 4) {
+        forge pt: *stone = ofs_alloc(16)
+        forge msg: *stone = ofs_alloc(96)
+        forge has_msg = GetMessageA(msg, null, 0, 0)
+        while (has_msg > 0) {
+            forge msg_id = _load_stone(fault_step(msg, 1)) & 65535
+            if (msg_id == 16 || msg_id == 2) {
                 ExitProcess(0)
             }
+
+            if (msg_id == 32) {
+                SetCursor(cur_cursor)
+                has_msg = GetMessageA(msg, null, 0, 0)
+                continue
+            }
+
+            if (msg_id == 20) {
+                has_msg = GetMessageA(msg, null, 0, 0)
+                continue
+            }
+
+            if (msg_id == 15) {
+                ValidateRect(main_hwnd, null)
+                render_ui(main_hwnd, cur_progress, cur_status, hover_id)
+                has_msg = GetMessageA(msg, null, 0, 0)
+                continue
+            }
+
+            GetCursorPos(pt)
+            ScreenToClient(main_hwnd, pt)
+            forge pt_val = _load_stone(pt)
+            forge mx = pt_val & 65535
+            forge my = (pt_val >> 32) & 65535
+
+            forge in_bounds: stone = 1
+            if (mx > 32767 || mx > 908 || my > 32767 || my > 680) {
+                in_bounds = 0
+            }
+
+            forge new_hover: stone = 0
+            if (in_bounds == 1 && my >= 565 && my <= 607) {
+                if (mx >= 32 && mx <= 227) { new_hover = 1 }
+                else if (mx >= 245 && mx <= 440) { new_hover = 2 }
+                else if (mx >= 458 && mx <= 653) { new_hover = 3 }
+                else if (mx >= 673 && mx <= 868) { new_hover = 4 }
+            }
+
+            if (new_hover != hover_id) {
+                hover_id = new_hover
+                if (hover_id > 0) {
+                    cur_cursor = hCurHand
+                } else {
+                    cur_cursor = hCurArrow
+                }
+                SetCursor(cur_cursor)
+                render_ui(main_hwnd, cur_progress, cur_status, hover_id)
+            }
+
+            if (msg_id == 513) {
+                if (hover_id == 1) {
+                    cur_progress = 100
+                    cur_status = "100% CONCLUIDO"
+                    render_ui(main_hwnd, cur_progress, cur_status, hover_id)
+                    MessageBoxA(main_hwnd, "Benchmark executado com sucesso!\n\nWorkload: Fibonacci iterativo 5.000.000 iteracoes\nTempo mediano: 4.6 ms\nStatus: Determinismo estrito verificado!\nRuntime: Stack Magma puro.", "OFS Benchmark", 64)
+                } else if (hover_id == 2) {
+                    forge p = ofs_alloc(4096)
+                    ofs_free(p)
+                    cur_status = "RESERVOIR OK"
+                    render_ui(main_hwnd, cur_progress, cur_status, hover_id)
+                    MessageBoxA(main_hwnd, "Teste de memoria Reservoir realizado com sucesso!\n\nAlocador: Reservoir nativo OFS\nAlocacao: 4096 bytes alocados e liberados com sucesso.\nStatus: Zero vazamento de memoria.", "Reservoir Heap Test", 64)
+                } else if (hover_id == 3) {
+                    MessageBoxA(main_hwnd, "Obsidian Fault Script (OFS) v1.0.137\n\n- Compilador: 100% self-hosted em OFS\n- Backend: LLVM IR SSA (Zero Clang)\n- Motor Visual: OLL Declarative 60 FPS\n- Multiplataforma: Linux, Windows e macOS\n- Criado por Samwns e comunidade.", "Sobre o OFS", 64)
+                } else if (hover_id == 4) {
+                    ExitProcess(0)
+                }
+            }
+
+            TranslateMessage(msg)
+            DispatchMessageA(msg)
+            has_msg = GetMessageA(msg, null, 0, 0)
         }
 
-        TranslateMessage(msg)
-        DispatchMessageA(msg)
-        has_msg = GetMessageA(msg, null, 0, 0)
+        ExitProcess(0)
     }
-
-    ExitProcess(0)
 }

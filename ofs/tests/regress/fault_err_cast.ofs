@@ -1,0 +1,8 @@
+// F4: `as` entre inteiro e ponteiro fora de bloco
+extern vein ofs_alloc(size: stone) -> *u8
+
+core main() {
+    forge buf: *u8 = ofs_alloc(8)
+    forge e = buf as stone
+    echo("nao chega aqui")
+}

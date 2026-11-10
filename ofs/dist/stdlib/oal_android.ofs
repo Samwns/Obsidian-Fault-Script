@@ -31,14 +31,16 @@ vein oal_backend_text_get() -> obsidian { return ainput.text() }
 vein oal_backend_log(text: obsidian) -> void { android.log_tag("oal", text) }
 
 vein _oal_android_density() -> stone {
-    if (android.activity == null) { return 160 }
-    forge am = android.peek(android.activity, 8) as *stone      // +64 assetManager
-    forge cfg = AConfiguration_new()
-    AConfiguration_fromAssetManager(cfg, am)
-    forge d = android.s32(AConfiguration_getDensity(cfg))
-    AConfiguration_delete(cfg)
-    if (d <= 0 || d > 1000) { d = 160 }
-    return d
+    fracture {
+        if (android.activity == null) { return 160 }
+        forge am = android.peek(android.activity, 8) as *stone      // +64 assetManager
+        forge cfg = AConfiguration_new()
+        AConfiguration_fromAssetManager(cfg, am)
+        forge d = android.s32(AConfiguration_getDensity(cfg))
+        AConfiguration_delete(cfg)
+        if (d <= 0 || d > 1000) { d = 160 }
+        return d
+    }
 }
 
 vein android_event(ev: stone) -> void {

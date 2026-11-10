@@ -57,22 +57,28 @@ namespace avi {
 
     // ── bytes (little-endian) ────────────────────────────────────────────
     vein _gb(b: stone, i: stone) -> stone {
-        forge p: *u8 = (b + i) as *u8
-        forge v: u8 = 0 as u8
-        fracture { v = *p; }
-        return (v as stone) & 255
+        fracture {
+            forge p: *u8 = (b + i) as *u8
+            forge v: u8 = 0 as u8
+            fracture { v = *p; }
+            return (v as stone) & 255
+        }
     }
     vein _u16(b: stone, i: stone) -> stone { return _gb(b, i) | (_gb(b, i + 1) << 8) }
     vein _u32(b: stone, i: stone) -> stone { return _u16(b, i) | (_u16(b, i + 2) << 16) }
     vein _rd(p: *stone, i: stone) -> stone {
-        forge q: *stone = fault_step(p, i)
-        forge v = 0
-        fracture { v = *q; }
-        return v
+        fracture {
+            forge q: *stone = fault_step(p, i)
+            forge v = 0
+            fracture { v = *q; }
+            return v
+        }
     }
     vein _wr(p: *stone, i: stone, v: stone) -> void {
-        forge q: *stone = fault_step(p, i)
-        fracture { *q = v; }
+        fracture {
+            forge q: *stone = fault_step(p, i)
+            fracture { *q = v; }
+        }
     }
 
     vein _tag(s: obsidian) -> stone {
@@ -91,15 +97,17 @@ namespace avi {
     }
 
     vein _read_at(f: *stone, pos: stone, n: stone) -> stone {
-        if (_buf_cap < n + 16) {
-            if (_buf != null) { ofs_free(_buf) }
-            _buf_cap = n + 65536
-            _buf = ofs_alloc(_buf_cap)
+        fracture {
+            if (_buf_cap < n + 16) {
+                if (_buf != null) { ofs_free(_buf) }
+                _buf_cap = n + 65536
+                _buf = ofs_alloc(_buf_cap)
+            }
+            fseek(f, pos, 0)
+            forge got = fread(_buf, 1, n, f)
+            if (got < n) { return -1 }
+            return _buf as stone
         }
-        fseek(f, pos, 0)
-        forge got = fread(_buf, 1, n, f)
-        if (got < n) { return -1 }
-        return _buf as stone
     }
 
     vein _ensure_lut() -> void {
@@ -117,139 +125,143 @@ namespace avi {
 
     // ── abrir ────────────────────────────────────────────────────────────
     vein open(path: obsidian) -> stone {
-        forge f = fopen(path, "rb")
-        if (f == null) {
-            last_error = "nao abriu " + path
-            return -1
-        }
-        fseek(f, 0, 2)
-        forge fsize = ftell(f)
-        forge hb = _read_at(f, 0, 12)
-        if (hb < 0 || _u32(hb, 0) != _tag("RIFF") || _u32(hb, 8) != _tag("AVI ")) {
-            fclose(f)
-            last_error = "nao e AVI"
-            return -1
-        }
-        forge w = 0
-        forge h = 0
-        forge usf = 33333
-        forge fcc = 0
-        forge bpp = 0
-        forge afmt = -1
-        forge ach = 0
-        forge arate = 0
-        forge abits = 0
-        forge vstream = -1
-        forge astream = -1
-        forge v0 = ofs_array_len(_vo)
-        forge a0 = ofs_array_len(_ao)
-        forge abytes = 0
-        // pilha de fins de LIST/RIFF para descer em hdrl/strl/movi/rec
-        forge pos = 12
-        forge end = fsize
-        forge stream = -1
-        forge stype = 0
-        while (pos + 8 <= end) {
-            forge c = _read_at(f, pos, 12)
-            if (c < 0) { break }
-            forge id = _u32(c, 0)
-            forge sz = _u32(c, 4)
-            forge body = pos + 8
-            if (id == _tag("RIFF") || id == _tag("LIST")) {
-                forge lt = _u32(c, 8)
-                if (lt == _tag("strl")) { stream++ }
-                // desce na lista: so pula o cabecalho
-                pos = body + 4
-                continue
+        fracture {
+            forge f = fopen(path, "rb")
+            if (f == null) {
+                last_error = "nao abriu " + path
+                return -1
             }
-            if (id == _tag("avih") && sz >= 40) {
-                forge a = _read_at(f, body, 40)
-                usf = _u32(a, 0)
-                w = _u32(a, 32)
-                h = _u32(a, 36)
-            } else if (id == _tag("strh") && sz >= 8) {
-                forge a = _read_at(f, body, 8)
-                stype = _u32(a, 0)
-                if (stype == _tag("vids") && vstream < 0) {
-                    vstream = stream
-                    fcc = _u32(a, 4)
+            fseek(f, 0, 2)
+            forge fsize = ftell(f)
+            forge hb = _read_at(f, 0, 12)
+            if (hb < 0 || _u32(hb, 0) != _tag("RIFF") || _u32(hb, 8) != _tag("AVI ")) {
+                fclose(f)
+                last_error = "nao e AVI"
+                return -1
+            }
+            forge w = 0
+            forge h = 0
+            forge usf = 33333
+            forge fcc = 0
+            forge bpp = 0
+            forge afmt = -1
+            forge ach = 0
+            forge arate = 0
+            forge abits = 0
+            forge vstream = -1
+            forge astream = -1
+            forge v0 = ofs_array_len(_vo)
+            forge a0 = ofs_array_len(_ao)
+            forge abytes = 0
+            // pilha de fins de LIST/RIFF para descer em hdrl/strl/movi/rec
+            forge pos = 12
+            forge end = fsize
+            forge stream = -1
+            forge stype = 0
+            while (pos + 8 <= end) {
+                forge c = _read_at(f, pos, 12)
+                if (c < 0) { break }
+                forge id = _u32(c, 0)
+                forge sz = _u32(c, 4)
+                forge body = pos + 8
+                if (id == _tag("RIFF") || id == _tag("LIST")) {
+                    forge lt = _u32(c, 8)
+                    if (lt == _tag("strl")) { stream++ }
+                    // desce na lista: so pula o cabecalho
+                    pos = body + 4
+                    continue
                 }
-                if (stype == _tag("auds") && astream < 0) { astream = stream }
-            } else if (id == _tag("strf")) {
-                if (stream == vstream && stype == _tag("vids") && sz >= 20) {
-                    forge a = _read_at(f, body, 20)
-                    bpp = _u16(a, 14)
-                    forge comp = _u32(a, 16)
-                    if (comp != 0) { fcc = comp }
-                } else if (stream == astream && stype == _tag("auds") && sz >= 16) {
-                    forge a = _read_at(f, body, 16)
-                    afmt = _u16(a, 0)
-                    ach = _u16(a, 2)
-                    arate = _u32(a, 4)
-                    abits = _u16(a, 14)
-                }
-            } else if (id != _tag("idx1") && id != _tag("JUNK")) {
-                // ##dc / ##db (video) e ##wb (audio) dentro do movi
-                forge d0 = (id & 255) - 48
-                forge d1 = ((id >> 8) & 255) - 48
-                forge kind = (id >> 16) & 65535
-                if (d0 >= 0 && d0 <= 9 && d1 >= 0 && d1 <= 9) {
-                    forge sn = d0 * 10 + d1
-                    if (sn == vstream && (kind == 25444 || kind == 25188)) {   // "dc" / "db"
-                        ofs_array_push(_vo, body)
-                        ofs_array_push(_vl, sz)
-                    } else if (sn == astream && kind == 25207) {              // "wb"
-                        ofs_array_push(_ao, body)
-                        ofs_array_push(_al, sz)
-                        abytes = abytes + sz
+                if (id == _tag("avih") && sz >= 40) {
+                    forge a = _read_at(f, body, 40)
+                    usf = _u32(a, 0)
+                    w = _u32(a, 32)
+                    h = _u32(a, 36)
+                } else if (id == _tag("strh") && sz >= 8) {
+                    forge a = _read_at(f, body, 8)
+                    stype = _u32(a, 0)
+                    if (stype == _tag("vids") && vstream < 0) {
+                        vstream = stream
+                        fcc = _u32(a, 4)
+                    }
+                    if (stype == _tag("auds") && astream < 0) { astream = stream }
+                } else if (id == _tag("strf")) {
+                    if (stream == vstream && stype == _tag("vids") && sz >= 20) {
+                        forge a = _read_at(f, body, 20)
+                        bpp = _u16(a, 14)
+                        forge comp = _u32(a, 16)
+                        if (comp != 0) { fcc = comp }
+                    } else if (stream == astream && stype == _tag("auds") && sz >= 16) {
+                        forge a = _read_at(f, body, 16)
+                        afmt = _u16(a, 0)
+                        ach = _u16(a, 2)
+                        arate = _u32(a, 4)
+                        abits = _u16(a, 14)
+                    }
+                } else if (id != _tag("idx1") && id != _tag("JUNK")) {
+                    // ##dc / ##db (video) e ##wb (audio) dentro do movi
+                    forge d0 = (id & 255) - 48
+                    forge d1 = ((id >> 8) & 255) - 48
+                    forge kind = (id >> 16) & 65535
+                    if (d0 >= 0 && d0 <= 9 && d1 >= 0 && d1 <= 9) {
+                        forge sn = d0 * 10 + d1
+                        if (sn == vstream && (kind == 25444 || kind == 25188)) {   // "dc" / "db"
+                            ofs_array_push(_vo, body)
+                            ofs_array_push(_vl, sz)
+                        } else if (sn == astream && kind == 25207) {              // "wb"
+                            ofs_array_push(_ao, body)
+                            ofs_array_push(_al, sz)
+                            abytes = abytes + sz
+                        }
                     }
                 }
+                pos = body + sz + (sz & 1)
             }
-            pos = body + sz + (sz & 1)
+            if (w <= 0 || h <= 0 || ofs_array_len(_vo) == v0) {
+                fclose(f)
+                last_error = "sem video"
+                return -1
+            }
+            ofs_array_push(_file, f as stone)
+            ofs_array_push(_w, w)
+            ofs_array_push(_h, h)
+            ofs_array_push(_usf, usf)
+            ofs_array_push(_fourcc, fcc)
+            ofs_array_push(_bpp, bpp)
+            ofs_array_push(_afmt, afmt)
+            ofs_array_push(_ach, ach)
+            ofs_array_push(_arate, arate)
+            ofs_array_push(_abits, abits)
+            ofs_array_push(_abytes, abytes)
+            ofs_array_push(_v0, v0)
+            ofs_array_push(_vn, ofs_array_len(_vo) - v0)
+            ofs_array_push(_a0, a0)
+            ofs_array_push(_an, ofs_array_len(_ao) - a0)
+            ofs_array_push(_last, -1)
+            return ofs_array_len(_file) - 1
         }
-        if (w <= 0 || h <= 0 || ofs_array_len(_vo) == v0) {
-            fclose(f)
-            last_error = "sem video"
-            return -1
-        }
-        ofs_array_push(_file, f as stone)
-        ofs_array_push(_w, w)
-        ofs_array_push(_h, h)
-        ofs_array_push(_usf, usf)
-        ofs_array_push(_fourcc, fcc)
-        ofs_array_push(_bpp, bpp)
-        ofs_array_push(_afmt, afmt)
-        ofs_array_push(_ach, ach)
-        ofs_array_push(_arate, arate)
-        ofs_array_push(_abits, abits)
-        ofs_array_push(_abytes, abytes)
-        ofs_array_push(_v0, v0)
-        ofs_array_push(_vn, ofs_array_len(_vo) - v0)
-        ofs_array_push(_a0, a0)
-        ofs_array_push(_an, ofs_array_len(_ao) - a0)
-        ofs_array_push(_last, -1)
-        return ofs_array_len(_file) - 1
     }
 
     vein close(v: stone) -> void {
-        if (v < 0 || v >= ofs_array_len(_file)) { return }
-        forge f = ofs_array_get(_file, v)
-        if (f != 0) { fclose(f as *stone) }
-        ofs_array_set(_file, v, 0)
-        ofs_array_set(_vn, v, 0)
-        ofs_array_set(_an, v, 0)
-        // as listas planas so encolhem quando nao ha mais video aberto
-        forge any = false
-        forge k = 0
-        while (k < ofs_array_len(_file)) {
-            if (ofs_array_get(_file, k) != 0) { any = true }
-            k++
-        }
-        if (!any) {
-            _vo = []
-            _vl = []
-            _ao = []
-            _al = []
+        fracture {
+            if (v < 0 || v >= ofs_array_len(_file)) { return }
+            forge f = ofs_array_get(_file, v)
+            if (f != 0) { fclose(f as *stone) }
+            ofs_array_set(_file, v, 0)
+            ofs_array_set(_vn, v, 0)
+            ofs_array_set(_an, v, 0)
+            // as listas planas so encolhem quando nao ha mais video aberto
+            forge any = false
+            forge k = 0
+            while (k < ofs_array_len(_file)) {
+                if (ofs_array_get(_file, k) != 0) { any = true }
+                k++
+            }
+            if (!any) {
+                _vo = []
+                _vl = []
+                _ao = []
+                _al = []
+            }
         }
     }
 
@@ -276,48 +288,52 @@ namespace avi {
     // Todo o audio do arquivo (blocos ##wb em ordem) num bloco novo de
     // memoria; libere com ofs_free. 0 se nao houver audio.
     vein read_audio(v: stone) -> stone {
-        forge total = ofs_array_get(_abytes, v)
-        if (total <= 0) { return 0 }
-        forge f = ofs_array_get(_file, v) as *stone
-        forge a0 = ofs_array_get(_a0, v)
-        forge an = ofs_array_get(_an, v)
-        forge out: *stone = ofs_alloc(total + 16)
-        forge pos = 0
-        forge i = 0
-        while (i < an) {
-            forge n = ofs_array_get(_al, a0 + i)
-            fseek(f, ofs_array_get(_ao, a0 + i), 0)
-            fread(fault_step(out as *u8, pos) as *stone, 1, n, f)
-            pos = pos + n
-            i++
+        fracture {
+            forge total = ofs_array_get(_abytes, v)
+            if (total <= 0) { return 0 }
+            forge f = ofs_array_get(_file, v) as *stone
+            forge a0 = ofs_array_get(_a0, v)
+            forge an = ofs_array_get(_an, v)
+            forge out: *stone = ofs_alloc(total + 16)
+            forge pos = 0
+            forge i = 0
+            while (i < an) {
+                forge n = ofs_array_get(_al, a0 + i)
+                fseek(f, ofs_array_get(_ao, a0 + i), 0)
+                fread(fault_step(out as *u8, pos) as *stone, 1, n, f)
+                pos = pos + n
+                i++
+            }
+            return out as stone
         }
-        return out as stone
     }
 
     // ── decodificacao ────────────────────────────────────────────────────
     // Decodifica ate o quadro i (inclusive) em dst (w*h stones, 0xRRGGBB,
     // de cima para baixo). Devolve false se o codec nao for suportado.
     vein decode(v: stone, i: stone, dst: *stone) -> bool {
-        if (!supported(v)) { return false }
-        forge n = frames(v)
-        if (i >= n) { i = n - 1 }
-        forge last = ofs_array_get(_last, v)
-        if (i == last) { return true }
-        if (i < last) { last = -1 }
-        _ensure_lut()
-        forge f = ofs_array_get(_file, v) as *stone
-        forge v0 = ofs_array_get(_v0, v)
-        forge k = last + 1
-        while (k <= i) {
-            forge len = ofs_array_get(_vl, v0 + k)
-            if (len > 0) {
-                forge b = _read_at(f, ofs_array_get(_vo, v0 + k), len)
-                if (b >= 0) { _msv1_16(b, len, width(v), height(v), dst) }
+        fracture {
+            if (!supported(v)) { return false }
+            forge n = frames(v)
+            if (i >= n) { i = n - 1 }
+            forge last = ofs_array_get(_last, v)
+            if (i == last) { return true }
+            if (i < last) { last = -1 }
+            _ensure_lut()
+            forge f = ofs_array_get(_file, v) as *stone
+            forge v0 = ofs_array_get(_v0, v)
+            forge k = last + 1
+            while (k <= i) {
+                forge len = ofs_array_get(_vl, v0 + k)
+                if (len > 0) {
+                    forge b = _read_at(f, ofs_array_get(_vo, v0 + k), len)
+                    if (b >= 0) { _msv1_16(b, len, width(v), height(v), dst) }
+                }
+                k++
             }
-            k++
+            ofs_array_set(_last, v, i)
+            return true
         }
-        ofs_array_set(_last, v, i)
-        return true
     }
 
     // Quadro de Microsoft Video 1, 16 bits (RGB555). Blocos 4x4 a partir

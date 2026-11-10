@@ -152,48 +152,54 @@ namespace android {
 
     // --- acesso a memoria C (palavras de 64 bits) ---
     vein peek(p: *stone, word: stone) -> stone {
-        forge q: *stone = fault_step(p, word)
-        forge v = 0
-        fracture { v = *q; }
-        return v
+        fracture {
+            forge q: *stone = fault_step(p, word)
+            forge v = 0
+            fracture { v = *q; }
+            return v
+        }
     }
 
     vein poke(p: *stone, word: stone, v: stone) -> void {
-        forge q: *stone = fault_step(p, word)
-        fracture { *q = v; }
+        fracture {
+            forge q: *stone = fault_step(p, word)
+            fracture { *q = v; }
+        }
     }
 
     // --- ciclo de vida ---
     vein _on_create(act: *stone) -> void {
-        activity = act
-        window = null
-        input_queue = null
-        has_focus = false
-        resumed = false
-        orientation = 0
-        _frame_pending = false
-        _alive = true
-        if (_scratch == null) { _scratch = ofs_alloc(64) }
-        sdk_version = s32(peek(act, 6))                   // +48 int32 sdkVersion
-        _choreo = _achoreographer_get_instance()
-        // ANativeActivityCallbacks (16 ponteiros; o framework zera o resto)
-        forge cb: *stone = peek(act, 0) as *stone
-        poke(cb, 0, fault_addr(_cb_start))
-        poke(cb, 1, fault_addr(_cb_resume))
-        poke(cb, 3, fault_addr(_cb_pause))
-        poke(cb, 4, fault_addr(_cb_stop))
-        poke(cb, 5, fault_addr(_cb_destroy))
-        poke(cb, 6, fault_addr(_cb_focus))
-        poke(cb, 7, fault_addr(_cb_window_created))
-        poke(cb, 8, fault_addr(_cb_window_resized))
-        poke(cb, 9, fault_addr(_cb_window_redraw))
-        poke(cb, 10, fault_addr(_cb_window_destroyed))
-        poke(cb, 11, fault_addr(_cb_input_created))
-        poke(cb, 12, fault_addr(_cb_input_destroyed))
-        poke(cb, 13, fault_addr(_cb_content_rect))
-        poke(cb, 14, fault_addr(_cb_config))
-        poke(cb, 15, fault_addr(_cb_low_memory))
-        android_event(EV_CREATE)
+        abyss {
+            activity = act
+            window = null
+            input_queue = null
+            has_focus = false
+            resumed = false
+            orientation = 0
+            _frame_pending = false
+            _alive = true
+            if (_scratch == null) { _scratch = ofs_alloc(64) }
+            sdk_version = s32(peek(act, 6))                   // +48 int32 sdkVersion
+            _choreo = _achoreographer_get_instance()
+            // ANativeActivityCallbacks (16 ponteiros; o framework zera o resto)
+            forge cb: *stone = peek(act, 0) as *stone
+            poke(cb, 0, fault_addr(_cb_start))
+            poke(cb, 1, fault_addr(_cb_resume))
+            poke(cb, 3, fault_addr(_cb_pause))
+            poke(cb, 4, fault_addr(_cb_stop))
+            poke(cb, 5, fault_addr(_cb_destroy))
+            poke(cb, 6, fault_addr(_cb_focus))
+            poke(cb, 7, fault_addr(_cb_window_created))
+            poke(cb, 8, fault_addr(_cb_window_resized))
+            poke(cb, 9, fault_addr(_cb_window_redraw))
+            poke(cb, 10, fault_addr(_cb_window_destroyed))
+            poke(cb, 11, fault_addr(_cb_input_created))
+            poke(cb, 12, fault_addr(_cb_input_destroyed))
+            poke(cb, 13, fault_addr(_cb_content_rect))
+            poke(cb, 14, fault_addr(_cb_config))
+            poke(cb, 15, fault_addr(_cb_low_memory))
+            android_event(EV_CREATE)
+        }
     }
 
     vein _cb_start(act: *stone) -> void { android_event(EV_START) }
@@ -278,9 +284,11 @@ namespace android {
 
     // --- frames (AChoreographer) ---
     vein request_frame() -> void {
-        if (_frame_pending || !_alive || _choreo == null) { return }
-        _frame_pending = true
-        _achoreographer_post_frame(_choreo, fault_addr(_cb_frame), null)
+        abyss {
+            if (_frame_pending || !_alive || _choreo == null) { return }
+            _frame_pending = true
+            _achoreographer_post_frame(_choreo, fault_addr(_cb_frame), null)
+        }
     }
 
     vein _cb_frame(time_ns: stone, data: *stone) -> void {
@@ -298,8 +306,10 @@ namespace android {
 
     // --- entrada (AInputQueue no looper da thread principal) ---
     vein _cb_input_created(act: *stone, q: *stone) -> void {
-        input_queue = q
-        _ainputqueue_attach_looper(q, _alooper_for_thread(), 2, fault_addr(_cb_input), null)
+        abyss {
+            input_queue = q
+            _ainputqueue_attach_looper(q, _alooper_for_thread(), 2, fault_addr(_cb_input), null)
+        }
     }
     vein _cb_input_destroyed(act: *stone, q: *stone) -> void {
         _ainputqueue_detach_looper(q)
@@ -308,18 +318,20 @@ namespace android {
 
     // int (*ALooper_callbackFunc)(int fd, int events, void* data): 1 = continua
     vein _cb_input(fd: stone, events: stone, data: *stone) -> stone {
-        forge q = input_queue
-        if (q == null) { return 1 }
-        forge outp: *stone = _scratch
-        while (true) {
-            fracture { *outp = 0; }
-            if (s32(_ainputqueue_get_event(q, _scratch)) < 0) { break }
-            forge ev = peek(_scratch, 0) as *stone
-            if ((_ainputqueue_pre_dispatch(q, ev) & 4294967295) != 0) { continue }
-            forge handled = _input_event(ev)
-            _ainputqueue_finish(q, ev, handled)
+        fracture {
+            forge q = input_queue
+            if (q == null) { return 1 }
+            forge outp: *stone = _scratch
+            while (true) {
+                fracture { *outp = 0; }
+                if (s32(_ainputqueue_get_event(q, _scratch)) < 0) { break }
+                forge ev = peek(_scratch, 0) as *stone
+                if ((_ainputqueue_pre_dispatch(q, ev) & 4294967295) != 0) { continue }
+                forge handled = _input_event(ev)
+                _ainputqueue_finish(q, ev, handled)
+            }
+            return 1
         }
-        return 1
     }
 
     vein _input_event(ev: *stone) -> stone {
@@ -437,25 +449,27 @@ namespace android {
     // Chama um metodo Java `void nome(I)` da activity. So na thread principal
     // (todas as callbacks deste modulo rodam nela). Retorna false se falhar.
     vein call_activity_void_int(name: obsidian, value: stone) -> bool {
-        if (activity == null) { return false }
-        forge env = peek(activity, 2)                  // +16 JNIEnv*
-        forge obj = peek(activity, 3)                  // +24 jobject clazz
-        if (env == 0 || obj == 0) { return false }
-        forge fns = peek(env as *stone, 0) as *stone
-        forge cls = fault_call(peek(fns, _JNI_GET_OBJECT_CLASS), env, obj)
-        if (cls == 0) { return false }
-        forge mid = fault_call(peek(fns, _JNI_GET_METHOD_ID), env, cls, name, "(I)V")
-        forge ok = mid != 0
-        if (ok) {
-            poke(_scratch, 4, value & 4294967295)          // jvalue (int)
-            fault_call(peek(fns, _JNI_CALL_VOID_METHOD_A), env, obj, mid, fault_step(_scratch, 4))
+        abyss {
+            if (activity == null) { return false }
+            forge env = peek(activity, 2)                  // +16 JNIEnv*
+            forge obj = peek(activity, 3)                  // +24 jobject clazz
+            if (env == 0 || obj == 0) { return false }
+            forge fns = peek(env as *stone, 0) as *stone
+            forge cls = fault_call(peek(fns, _JNI_GET_OBJECT_CLASS), env, obj)
+            if (cls == 0) { return false }
+            forge mid = fault_call(peek(fns, _JNI_GET_METHOD_ID), env, cls, name, "(I)V")
+            forge ok = mid != 0
+            if (ok) {
+                poke(_scratch, 4, value & 4294967295)          // jvalue (int)
+                fault_call(peek(fns, _JNI_CALL_VOID_METHOD_A), env, obj, mid, fault_step(_scratch, 4))
+            }
+            if ((fault_call(peek(fns, _JNI_EXCEPTION_CHECK), env) & 255) != 0) {
+                fault_call(peek(fns, _JNI_EXCEPTION_CLEAR), env)
+                ok = false
+            }
+            fault_call(peek(fns, _JNI_DELETE_LOCAL_REF), env, cls)
+            return ok
         }
-        if ((fault_call(peek(fns, _JNI_EXCEPTION_CHECK), env) & 255) != 0) {
-            fault_call(peek(fns, _JNI_EXCEPTION_CLEAR), env)
-            ok = false
-        }
-        fault_call(peek(fns, _JNI_DELETE_LOCAL_REF), env, cls)
-        return ok
     }
 
     // ── ajudantes JNI genericos (thread principal) ──
@@ -469,40 +483,52 @@ namespace android {
         return peek(activity, 3)
     }
     vein jni_fn(i: stone) -> stone {
-        forge env = jni_env()
-        if (env == 0) { return 0 }
-        forge fns = peek(env as *stone, 0) as *stone
-        return peek(fns, i)
+        fracture {
+            forge env = jni_env()
+            if (env == 0) { return 0 }
+            forge fns = peek(env as *stone, 0) as *stone
+            return peek(fns, i)
+        }
     }
     // true se havia excecao Java pendente (e a limpa).
     vein jni_check() -> bool {
-        forge env = jni_env()
-        if ((fault_call(jni_fn(_JNI_EXCEPTION_CHECK), env) & 255) != 0) {
-            fault_call(jni_fn(_JNI_EXCEPTION_CLEAR), env)
-            return true
+        abyss {
+            forge env = jni_env()
+            if ((fault_call(jni_fn(_JNI_EXCEPTION_CHECK), env) & 255) != 0) {
+                fault_call(jni_fn(_JNI_EXCEPTION_CLEAR), env)
+                return true
+            }
+            return false
         }
-        return false
     }
     vein jni_find_class(name: obsidian) -> stone {
-        forge c = fault_call(jni_fn(_JNI_FIND_CLASS), jni_env(), name)
-        if (jni_check()) { return 0 }
-        return c
+        abyss {
+            forge c = fault_call(jni_fn(_JNI_FIND_CLASS), jni_env(), name)
+            if (jni_check()) { return 0 }
+            return c
+        }
     }
     vein jni_string(s: obsidian) -> stone {
-        return fault_call(jni_fn(_JNI_NEW_STRING_UTF), jni_env(), s)
+        abyss {
+            return fault_call(jni_fn(_JNI_NEW_STRING_UTF), jni_env(), s)
+        }
     }
     vein jni_delete(ref: stone) -> void {
-        if (ref != 0) { fault_call(jni_fn(_JNI_DELETE_LOCAL_REF), jni_env(), ref) }
+        abyss {
+            if (ref != 0) { fault_call(jni_fn(_JNI_DELETE_LOCAL_REF), jni_env(), ref) }
+        }
     }
     // jstring -> obsidian (copia)
     vein jni_to_text(js: stone) -> obsidian {
-        if (js == 0) { return "" }
-        forge env = jni_env()
-        forge chars = fault_call(jni_fn(_JNI_GET_STRING_UTF_CHARS), env, js, 0)
-        if (chars == 0) { return "" }
-        forge out = _android_strdup(chars as *stone)
-        fault_call(jni_fn(_JNI_RELEASE_STRING_UTF_CHARS), env, js, chars)
-        return out
+        abyss {
+            if (js == 0) { return "" }
+            forge env = jni_env()
+            forge chars = fault_call(jni_fn(_JNI_GET_STRING_UTF_CHARS), env, js, 0)
+            if (chars == 0) { return "" }
+            forge out = _android_strdup(chars as *stone)
+            fault_call(jni_fn(_JNI_RELEASE_STRING_UTF_CHARS), env, js, chars)
+            return out
+        }
     }
     // Argumentos jvalue (ate 4) num bloco proprio; devolve o ponteiro.
     forge _jargs: *stone = null
@@ -516,77 +542,83 @@ namespace android {
     }
     // Metodo estatico sem argumentos que devolve boolean: Classe.nome()Z.
     vein jni_static_bool(cls_name: obsidian, name: obsidian) -> stone {
-        forge env = jni_env()
-        if (env == 0) { return -1 }
-        forge cls = jni_find_class(cls_name)
-        if (cls == 0) { return -1 }
-        forge mid = fault_call(jni_fn(_JNI_GET_STATIC_METHOD_ID), env, cls, name, "()Z")
-        if (jni_check() || mid == 0) {
+        abyss {
+            forge env = jni_env()
+            if (env == 0) { return -1 }
+            forge cls = jni_find_class(cls_name)
+            if (cls == 0) { return -1 }
+            forge mid = fault_call(jni_fn(_JNI_GET_STATIC_METHOD_ID), env, cls, name, "()Z")
+            if (jni_check() || mid == 0) {
+                jni_delete(cls)
+                return -1
+            }
+            forge r = fault_call(jni_fn(_JNI_CALL_STATIC_BOOLEAN_METHOD_A), env, cls, mid, jni_args(0, 0, 0, 0)) & 255
+            forge bad = jni_check()
             jni_delete(cls)
-            return -1
+            if (bad) { return -1 }
+            return r
         }
-        forge r = fault_call(jni_fn(_JNI_CALL_STATIC_BOOLEAN_METHOD_A), env, cls, mid, jni_args(0, 0, 0, 0)) & 255
-        forge bad = jni_check()
-        jni_delete(cls)
-        if (bad) { return -1 }
-        return r
     }
     // Activity.getPackageName()
     vein package_name() -> obsidian {
-        forge env = jni_env()
-        forge obj = jni_activity()
-        if (env == 0 || obj == 0) { return "" }
-        forge cls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, obj)
-        forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, cls, "getPackageName", "()Ljava/lang/String;")
-        forge out = ""
-        if (!jni_check() && mid != 0) {
-            forge js = fault_call(jni_fn(_JNI_CALL_OBJECT_METHOD_A), env, obj, mid, jni_args(0, 0, 0, 0))
-            if (!jni_check()) { out = jni_to_text(js) }
-            jni_delete(js)
+        abyss {
+            forge env = jni_env()
+            forge obj = jni_activity()
+            if (env == 0 || obj == 0) { return "" }
+            forge cls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, obj)
+            forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, cls, "getPackageName", "()Ljava/lang/String;")
+            forge out = ""
+            if (!jni_check() && mid != 0) {
+                forge js = fault_call(jni_fn(_JNI_CALL_OBJECT_METHOD_A), env, obj, mid, jni_args(0, 0, 0, 0))
+                if (!jni_check()) { out = jni_to_text(js) }
+                jni_delete(js)
+            }
+            jni_delete(cls)
+            return out
         }
-        jni_delete(cls)
-        return out
     }
     // startActivity(new Intent(action[, Uri.parse(uri)])). uri "" = sem dados.
     vein start_intent(action: obsidian, uri: obsidian) -> bool {
-        forge env = jni_env()
-        forge obj = jni_activity()
-        if (env == 0 || obj == 0) { return false }
-        forge icls = jni_find_class("android/content/Intent")
-        if (icls == 0) { return false }
-        forge jact = jni_string(action)
-        forge itn = 0
-        if (ofs_str_len(uri) > 0) {
-            forge ucls = jni_find_class("android/net/Uri")
-            forge parse = fault_call(jni_fn(_JNI_GET_STATIC_METHOD_ID), env, ucls, "parse", "(Ljava/lang/String;)Landroid/net/Uri;")
-            forge juri = jni_string(uri)
-            forge u = fault_call(jni_fn(_JNI_CALL_STATIC_OBJECT_METHOD_A), env, ucls, parse, jni_args(juri, 0, 0, 0))
-            jni_check()
-            forge ctor2 = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, icls, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V")
-            itn = fault_call(jni_fn(_JNI_NEW_OBJECT_A), env, icls, ctor2, jni_args(jact, u, 0, 0))
-            if (jni_check()) { itn = 0 }
-            jni_delete(juri)
-            jni_delete(u)
-            jni_delete(ucls)
-        } else {
-            forge ctor = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, icls, "<init>", "(Ljava/lang/String;)V")
-            itn = fault_call(jni_fn(_JNI_NEW_OBJECT_A), env, icls, ctor, jni_args(jact, 0, 0, 0))
-            if (jni_check()) { itn = 0 }
-        }
-        forge ok = false
-        if (itn != 0) {
-            forge acls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, obj)
-            forge start = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, acls, "startActivity", "(Landroid/content/Intent;)V")
-            if (!jni_check() && start != 0) {
-                fault_call(jni_fn(_JNI_CALL_VOID_METHOD_A), env, obj, start, jni_args(itn, 0, 0, 0))
-                ok = !jni_check()
+        abyss {
+            forge env = jni_env()
+            forge obj = jni_activity()
+            if (env == 0 || obj == 0) { return false }
+            forge icls = jni_find_class("android/content/Intent")
+            if (icls == 0) { return false }
+            forge jact = jni_string(action)
+            forge itn = 0
+            if (ofs_str_len(uri) > 0) {
+                forge ucls = jni_find_class("android/net/Uri")
+                forge parse = fault_call(jni_fn(_JNI_GET_STATIC_METHOD_ID), env, ucls, "parse", "(Ljava/lang/String;)Landroid/net/Uri;")
+                forge juri = jni_string(uri)
+                forge u = fault_call(jni_fn(_JNI_CALL_STATIC_OBJECT_METHOD_A), env, ucls, parse, jni_args(juri, 0, 0, 0))
+                jni_check()
+                forge ctor2 = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, icls, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V")
+                itn = fault_call(jni_fn(_JNI_NEW_OBJECT_A), env, icls, ctor2, jni_args(jact, u, 0, 0))
+                if (jni_check()) { itn = 0 }
+                jni_delete(juri)
+                jni_delete(u)
+                jni_delete(ucls)
+            } else {
+                forge ctor = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, icls, "<init>", "(Ljava/lang/String;)V")
+                itn = fault_call(jni_fn(_JNI_NEW_OBJECT_A), env, icls, ctor, jni_args(jact, 0, 0, 0))
+                if (jni_check()) { itn = 0 }
             }
-            jni_delete(acls)
-            jni_delete(itn)
+            forge ok = false
+            if (itn != 0) {
+                forge acls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, obj)
+                forge start = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, acls, "startActivity", "(Landroid/content/Intent;)V")
+                if (!jni_check() && start != 0) {
+                    fault_call(jni_fn(_JNI_CALL_VOID_METHOD_A), env, obj, start, jni_args(itn, 0, 0, 0))
+                    ok = !jni_check()
+                }
+                jni_delete(acls)
+                jni_delete(itn)
+            }
+            jni_delete(jact)
+            jni_delete(icls)
+            return ok
         }
-        jni_delete(jact)
-        jni_delete(icls)
-        return ok
     }
 
     // "Acesso a todos os arquivos" (MANAGE_EXTERNAL_STORAGE, Android 11+).
@@ -606,31 +638,35 @@ namespace android {
 
     // Chama um metodo sem argumentos que devolve objeto: obj.nome()sig.
     vein jni_call_object(obj: stone, name: obsidian, sig: obsidian) -> stone {
-        forge env = jni_env()
-        if (env == 0 || obj == 0) { return 0 }
-        forge cls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, obj)
-        forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, cls, name, sig)
-        forge r = 0
-        if (!jni_check() && mid != 0) {
-            r = fault_call(jni_fn(_JNI_CALL_OBJECT_METHOD_A), env, obj, mid, jni_args(0, 0, 0, 0))
-            if (jni_check()) { r = 0 }
+        abyss {
+            forge env = jni_env()
+            if (env == 0 || obj == 0) { return 0 }
+            forge cls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, obj)
+            forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, cls, name, sig)
+            forge r = 0
+            if (!jni_check() && mid != 0) {
+                r = fault_call(jni_fn(_JNI_CALL_OBJECT_METHOD_A), env, obj, mid, jni_args(0, 0, 0, 0))
+                if (jni_check()) { r = 0 }
+            }
+            jni_delete(cls)
+            return r
         }
-        jni_delete(cls)
-        return r
     }
     // obj.nome(int) / obj.nome(objeto): metodo void de 1 argumento.
     vein jni_call_void1(obj: stone, name: obsidian, sig: obsidian, arg: stone) -> bool {
-        forge env = jni_env()
-        if (env == 0 || obj == 0) { return false }
-        forge cls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, obj)
-        forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, cls, name, sig)
-        forge ok = false
-        if (!jni_check() && mid != 0) {
-            fault_call(jni_fn(_JNI_CALL_VOID_METHOD_A), env, obj, mid, jni_args(arg, 0, 0, 0))
-            ok = !jni_check()
+        abyss {
+            forge env = jni_env()
+            if (env == 0 || obj == 0) { return false }
+            forge cls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, obj)
+            forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, cls, name, sig)
+            forge ok = false
+            if (!jni_check() && mid != 0) {
+                fault_call(jni_fn(_JNI_CALL_VOID_METHOD_A), env, obj, mid, jni_args(arg, 0, 0, 0))
+                ok = !jni_check()
+            }
+            jni_delete(cls)
+            return ok
         }
-        jni_delete(cls)
-        return ok
     }
 
     // Tela cheia imersiva: esconde barra de status e de navegacao
@@ -658,26 +694,28 @@ namespace android {
     // Desenhar tambem na area do recorte da camera (Android 9+):
     // WindowManager.LayoutParams.layoutInDisplayCutoutMode = SHORT_EDGES (1).
     vein set_cutout_short_edges(on: bool) -> bool {
-        if (sdk_version < 28) { return false }
-        forge env = jni_env()
-        forge win = jni_call_object(jni_activity(), "getWindow", "()Landroid/view/Window;")
-        if (win == 0) { return false }
-        forge lp = jni_call_object(win, "getAttributes", "()Landroid/view/WindowManager$LayoutParams;")
-        forge ok = false
-        if (lp != 0) {
-            forge cls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, lp)
-            forge fid = fault_call(jni_fn(_JNI_GET_FIELD_ID), env, cls, "layoutInDisplayCutoutMode", "I")
-            if (!jni_check() && fid != 0) {
-                forge mode = 0
-                if (on) { mode = 1 }
-                fault_call(jni_fn(_JNI_SET_INT_FIELD), env, lp, fid, mode)
-                ok = jni_call_void1(win, "setAttributes", "(Landroid/view/WindowManager$LayoutParams;)V", lp)
+        abyss {
+            if (sdk_version < 28) { return false }
+            forge env = jni_env()
+            forge win = jni_call_object(jni_activity(), "getWindow", "()Landroid/view/Window;")
+            if (win == 0) { return false }
+            forge lp = jni_call_object(win, "getAttributes", "()Landroid/view/WindowManager$LayoutParams;")
+            forge ok = false
+            if (lp != 0) {
+                forge cls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, lp)
+                forge fid = fault_call(jni_fn(_JNI_GET_FIELD_ID), env, cls, "layoutInDisplayCutoutMode", "I")
+                if (!jni_check() && fid != 0) {
+                    forge mode = 0
+                    if (on) { mode = 1 }
+                    fault_call(jni_fn(_JNI_SET_INT_FIELD), env, lp, fid, mode)
+                    ok = jni_call_void1(win, "setAttributes", "(Landroid/view/WindowManager$LayoutParams;)V", lp)
+                }
+                jni_delete(cls)
+                jni_delete(lp)
             }
-            jni_delete(cls)
-            jni_delete(lp)
+            jni_delete(win)
+            return ok
         }
-        jni_delete(win)
-        return ok
     }
 
     // Mantem a tela ligada (FLAG_KEEP_SCREEN_ON) enquanto on = true.
@@ -690,18 +728,20 @@ namespace android {
     // o tamanho em android.asset_len.
     forge asset_len: stone = 0
     vein asset_read(name: obsidian) -> *stone {
-        asset_len = 0
-        if (activity == null) { return null }
-        forge am = peek(activity, 8) as *stone
-        forge a = _aasset_manager_open(am, name, 3)
-        if (a == null) { return null }
-        forge n = _aasset_get_length(a)
-        forge buf = ofs_alloc(n + 8)
-        forge got = s32(_aasset_read(a, buf, n))
-        _aasset_close(a)
-        if (got < 0) { return null }
-        asset_len = got
-        return buf
+        fracture {
+            asset_len = 0
+            if (activity == null) { return null }
+            forge am = peek(activity, 8) as *stone
+            forge a = _aasset_manager_open(am, name, 3)
+            if (a == null) { return null }
+            forge n = _aasset_get_length(a)
+            forge buf = ofs_alloc(n + 8)
+            forge got = s32(_aasset_read(a, buf, n))
+            _aasset_close(a)
+            if (got < 0) { return null }
+            asset_len = got
+            return buf
+        }
     }
 
     // Forca a orientacao em tempo de execucao (ORIENT_REQ_*).
@@ -759,116 +799,140 @@ namespace android {
 
     // obj.nome(args) -> valor (objeto = ref local; o chamador libera com jni_delete)
     vein jni_call(obj: stone, name: obsidian, sig: obsidian, a: stone, b: stone, c: stone, d: stone, e: stone, f: stone) -> stone {
-        jni_failed = false
-        forge env = jni_env()
-        if (env == 0 || obj == 0) { jni_failed = true; return 0 }
-        forge cls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, obj)
-        forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, cls, name, sig)
-        forge r = 0
-        if (jni_check() || mid == 0) {
-            jni_failed = true
-        } else {
-            forge kind = _sig_ret(sig)
-            forge fnx = _JNI_CALL_OBJECT_METHOD_A
-            if (kind == 86) { fnx = _JNI_CALL_VOID_METHOD_A }
-            if (kind == 90) { fnx = _JNI_CALL_BOOLEAN_METHOD_A }
-            if (kind == 73) { fnx = 51 }
-            if (kind == 74) { fnx = 54 }
-            r = fault_call(jni_fn(fnx), env, obj, mid, jni_argv(a, b, c, d, e, f, 0, 0))
-            if (jni_check()) { jni_failed = true; r = 0 }
-            r = _jni_result(kind, r)
+        abyss {
+            jni_failed = false
+            forge env = jni_env()
+            if (env == 0 || obj == 0) { jni_failed = true; return 0 }
+            forge cls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, obj)
+            forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, cls, name, sig)
+            forge r = 0
+            if (jni_check() || mid == 0) {
+                jni_failed = true
+            } else {
+                forge kind = _sig_ret(sig)
+                forge fnx = _JNI_CALL_OBJECT_METHOD_A
+                if (kind == 86) { fnx = _JNI_CALL_VOID_METHOD_A }
+                if (kind == 90) { fnx = _JNI_CALL_BOOLEAN_METHOD_A }
+                if (kind == 73) { fnx = 51 }
+                if (kind == 74) { fnx = 54 }
+                r = fault_call(jni_fn(fnx), env, obj, mid, jni_argv(a, b, c, d, e, f, 0, 0))
+                if (jni_check()) { jni_failed = true; r = 0 }
+                r = _jni_result(kind, r)
+            }
+            jni_delete(cls)
+            return r
         }
-        jni_delete(cls)
-        return r
     }
 
     // new Classe(args)
     vein jni_new(cls_name: obsidian, sig: obsidian, a: stone, b: stone, c: stone, d: stone) -> stone {
-        jni_failed = false
-        forge env = jni_env()
-        forge cls = jni_find_class(cls_name)
-        if (env == 0 || cls == 0) { jni_failed = true; return 0 }
-        forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, cls, "<init>", sig)
-        forge r = 0
-        if (jni_check() || mid == 0) {
-            jni_failed = true
-        } else {
-            r = fault_call(jni_fn(_JNI_NEW_OBJECT_A), env, cls, mid, jni_argv(a, b, c, d, 0, 0, 0, 0))
-            if (jni_check()) { jni_failed = true; r = 0 }
+        abyss {
+            jni_failed = false
+            forge env = jni_env()
+            forge cls = jni_find_class(cls_name)
+            if (env == 0 || cls == 0) { jni_failed = true; return 0 }
+            forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, cls, "<init>", sig)
+            forge r = 0
+            if (jni_check() || mid == 0) {
+                jni_failed = true
+            } else {
+                r = fault_call(jni_fn(_JNI_NEW_OBJECT_A), env, cls, mid, jni_argv(a, b, c, d, 0, 0, 0, 0))
+                if (jni_check()) { jni_failed = true; r = 0 }
+            }
+            jni_delete(cls)
+            return r
         }
-        jni_delete(cls)
-        return r
     }
 
     // Classe.nome(args) estatico
     vein jni_scall(cls_name: obsidian, name: obsidian, sig: obsidian, a: stone, b: stone, c: stone, d: stone) -> stone {
-        jni_failed = false
-        forge env = jni_env()
-        forge cls = jni_find_class(cls_name)
-        if (env == 0 || cls == 0) { jni_failed = true; return 0 }
-        forge mid = fault_call(jni_fn(_JNI_GET_STATIC_METHOD_ID), env, cls, name, sig)
-        forge r = 0
-        if (jni_check() || mid == 0) {
-            jni_failed = true
-        } else {
-            forge kind = _sig_ret(sig)
-            forge fnx = _JNI_CALL_STATIC_OBJECT_METHOD_A
-            if (kind == 86) { fnx = 143 }
-            if (kind == 90) { fnx = _JNI_CALL_STATIC_BOOLEAN_METHOD_A }
-            if (kind == 73) { fnx = 131 }
-            if (kind == 74) { fnx = 134 }
-            r = fault_call(jni_fn(fnx), env, cls, mid, jni_argv(a, b, c, d, 0, 0, 0, 0))
-            if (jni_check()) { jni_failed = true; r = 0 }
-            r = _jni_result(kind, r)
+        abyss {
+            jni_failed = false
+            forge env = jni_env()
+            forge cls = jni_find_class(cls_name)
+            if (env == 0 || cls == 0) { jni_failed = true; return 0 }
+            forge mid = fault_call(jni_fn(_JNI_GET_STATIC_METHOD_ID), env, cls, name, sig)
+            forge r = 0
+            if (jni_check() || mid == 0) {
+                jni_failed = true
+            } else {
+                forge kind = _sig_ret(sig)
+                forge fnx = _JNI_CALL_STATIC_OBJECT_METHOD_A
+                if (kind == 86) { fnx = 143 }
+                if (kind == 90) { fnx = _JNI_CALL_STATIC_BOOLEAN_METHOD_A }
+                if (kind == 73) { fnx = 131 }
+                if (kind == 74) { fnx = 134 }
+                r = fault_call(jni_fn(fnx), env, cls, mid, jni_argv(a, b, c, d, 0, 0, 0, 0))
+                if (jni_check()) { jni_failed = true; r = 0 }
+                r = _jni_result(kind, r)
+            }
+            jni_delete(cls)
+            return r
         }
-        jni_delete(cls)
-        return r
     }
 
     // Constante int estatica: Classe.CAMPO (ex.: "android/R$style", "Theme_Black_NoTitleBar_Fullscreen").
     vein jni_static_int_field(cls_name: obsidian, field: obsidian) -> stone {
-        forge env = jni_env()
-        forge cls = jni_find_class(cls_name)
-        if (env == 0 || cls == 0) { return 0 }
-        forge fid = fault_call(jni_fn(_JNI_GET_STATIC_FIELD_ID), env, cls, field, "I")
-        forge v = 0
-        if (!jni_check() && fid != 0) { v = s32(fault_call(jni_fn(_JNI_GET_STATIC_INT_FIELD), env, cls, fid)) }
-        jni_delete(cls)
-        return v
+        abyss {
+            forge env = jni_env()
+            forge cls = jni_find_class(cls_name)
+            if (env == 0 || cls == 0) { return 0 }
+            forge fid = fault_call(jni_fn(_JNI_GET_STATIC_FIELD_ID), env, cls, field, "I")
+            forge v = 0
+            if (!jni_check() && fid != 0) { v = s32(fault_call(jni_fn(_JNI_GET_STATIC_INT_FIELD), env, cls, fid)) }
+            jni_delete(cls)
+            return v
+        }
     }
 
     // Referencia global (sobrevive entre callbacks) e sua liberacao.
     vein jni_global(ref: stone) -> stone {
-        if (ref == 0) { return 0 }
-        return fault_call(jni_fn(_JNI_NEW_GLOBAL_REF), jni_env(), ref)
+        abyss {
+            if (ref == 0) { return 0 }
+            return fault_call(jni_fn(_JNI_NEW_GLOBAL_REF), jni_env(), ref)
+        }
     }
     vein jni_delete_global(ref: stone) -> void {
-        if (ref != 0) { fault_call(jni_fn(_JNI_DELETE_GLOBAL_REF), jni_env(), ref) }
+        abyss {
+            if (ref != 0) { fault_call(jni_fn(_JNI_DELETE_GLOBAL_REF), jni_env(), ref) }
+        }
     }
 
     // Arrays: byte[n], Objeto[n] e leitura/escrita de bytes.
     vein jni_new_byte_array(n: stone) -> stone {
-        return fault_call(jni_fn(_JNI_NEW_BYTE_ARRAY), jni_env(), n)
+        abyss {
+            return fault_call(jni_fn(_JNI_NEW_BYTE_ARRAY), jni_env(), n)
+        }
     }
     vein jni_array_len(arr: stone) -> stone {
-        return s32(fault_call(jni_fn(_JNI_GET_ARRAY_LENGTH), jni_env(), arr))
+        abyss {
+            return s32(fault_call(jni_fn(_JNI_GET_ARRAY_LENGTH), jni_env(), arr))
+        }
     }
     // copia arr[off..off+n) para memoria nativa
     vein jni_get_bytes(arr: stone, off: stone, n: stone, dst: *stone) -> void {
-        fault_call(jni_fn(_JNI_GET_BYTE_ARRAY_REGION), jni_env(), arr, off, n, dst)
+        abyss {
+            fault_call(jni_fn(_JNI_GET_BYTE_ARRAY_REGION), jni_env(), arr, off, n, dst)
+        }
     }
     vein jni_set_bytes(arr: stone, off: stone, n: stone, src: *stone) -> void {
-        fault_call(jni_fn(_JNI_SET_BYTE_ARRAY_REGION), jni_env(), arr, off, n, src)
+        abyss {
+            fault_call(jni_fn(_JNI_SET_BYTE_ARRAY_REGION), jni_env(), arr, off, n, src)
+        }
     }
     vein jni_new_object_array(n: stone, cls_name: obsidian) -> stone {
-        forge cls = jni_find_class(cls_name)
-        if (cls == 0) { return 0 }
-        forge r = fault_call(jni_fn(_JNI_NEW_OBJECT_ARRAY), jni_env(), n, cls, 0)
-        jni_delete(cls)
-        return r
+        abyss {
+            forge cls = jni_find_class(cls_name)
+            if (cls == 0) { return 0 }
+            forge r = fault_call(jni_fn(_JNI_NEW_OBJECT_ARRAY), jni_env(), n, cls, 0)
+            jni_delete(cls)
+            return r
+        }
     }
     vein jni_set_object_elem(arr: stone, i: stone, v: stone) -> void {
-        fault_call(jni_fn(_JNI_SET_OBJECT_ARRAY_ELEMENT), jni_env(), arr, i, v)
+        abyss {
+            fault_call(jni_fn(_JNI_SET_OBJECT_ARRAY_ELEMENT), jni_env(), arr, i, v)
+        }
     }
 
     // --- acoes ---
@@ -878,16 +942,20 @@ namespace android {
 
     // Caminhos do app (ANativeActivity.internalDataPath / externalDataPath).
     vein internal_data_path() -> obsidian {
-        if (activity == null) { return "" }
-        forge p = peek(activity, 4) as *stone
-        if (p == null) { return "" }
-        return _android_strdup(p)
+        fracture {
+            if (activity == null) { return "" }
+            forge p = peek(activity, 4) as *stone
+            if (p == null) { return "" }
+            return _android_strdup(p)
+        }
     }
     vein external_data_path() -> obsidian {
-        if (activity == null) { return "" }
-        forge p = peek(activity, 5) as *stone
-        if (p == null) { return "" }
-        return _android_strdup(p)
+        fracture {
+            if (activity == null) { return "" }
+            forge p = peek(activity, 5) as *stone
+            if (p == null) { return "" }
+            return _android_strdup(p)
+        }
     }
 
     // --- desenho em software direto no ANativeWindow (RGBA_8888) ---
@@ -898,15 +966,17 @@ namespace android {
     forge buf_bits: *stone = null
 
     vein lock() -> bool {
-        if (window == null) { return false }
-        if (s32(_anw_lock(window, _scratch, null)) != 0) { return false }
-        forge w0 = peek(_scratch, 0)
-        forge w1 = peek(_scratch, 1)
-        buf_w = w0 & 4294967295
-        buf_h = (w0 >> 32) & 4294967295
-        buf_stride = w1 & 4294967295
-        buf_bits = peek(_scratch, 2) as *stone
-        return true
+        fracture {
+            if (window == null) { return false }
+            if (s32(_anw_lock(window, _scratch, null)) != 0) { return false }
+            forge w0 = peek(_scratch, 0)
+            forge w1 = peek(_scratch, 1)
+            buf_w = w0 & 4294967295
+            buf_h = (w0 >> 32) & 4294967295
+            buf_stride = w1 & 4294967295
+            buf_bits = peek(_scratch, 2) as *stone
+            return true
+        }
     }
 
     vein unlock_post() -> void {
@@ -924,62 +994,66 @@ namespace android {
     // Preenche [x, x+w) x [y, y+h) com 0xRRGGBB. Escreve 2 pixels por palavra
     // de 64 bits; x e w sao ajustados para pares (o stride e sempre par).
     vein fill_rect(x: stone, y: stone, w: stone, h: stone, color: stone) -> void {
-        forge x0 = x
-        forge y0 = y
-        forge x1 = x + w
-        forge y1 = y + h
-        if (x0 < 0) { x0 = 0 }
-        if (y0 < 0) { y0 = 0 }
-        if (x1 > buf_w) { x1 = buf_w }
-        if (y1 > buf_h) { y1 = buf_h }
-        x0 = x0 - (x0 & 1)
-        x1 = x1 + (x1 & 1)
-        if (x0 >= x1 || y0 >= y1) { return }
-        forge px = rgb(color)
-        forge pair = px | (px << 32)
-        forge half_stride = buf_stride / 2
-        forge yy = y0
-        while (yy < y1) {
-            forge row = yy * half_stride
-            forge xx = x0 / 2
-            forge xend = x1 / 2
-            while (xx < xend) {
-                forge p: *stone = fault_step(buf_bits, row + xx)
-                fracture { *p = pair; }
-                xx++
+        fracture {
+            forge x0 = x
+            forge y0 = y
+            forge x1 = x + w
+            forge y1 = y + h
+            if (x0 < 0) { x0 = 0 }
+            if (y0 < 0) { y0 = 0 }
+            if (x1 > buf_w) { x1 = buf_w }
+            if (y1 > buf_h) { y1 = buf_h }
+            x0 = x0 - (x0 & 1)
+            x1 = x1 + (x1 & 1)
+            if (x0 >= x1 || y0 >= y1) { return }
+            forge px = rgb(color)
+            forge pair = px | (px << 32)
+            forge half_stride = buf_stride / 2
+            forge yy = y0
+            while (yy < y1) {
+                forge row = yy * half_stride
+                forge xx = x0 / 2
+                forge xend = x1 / 2
+                while (xx < xend) {
+                    forge p: *stone = fault_step(buf_bits, row + xx)
+                    fracture { *p = pair; }
+                    xx++
+                }
+                yy++
             }
-            yy++
         }
     }
 
     // Copia um buffer de pixels OFS (1 stone por pixel, 0xRRGGBB, como o
     // Canvas do stdlib) para o buffer travado. Copia a interseccao.
     vein blit(src: *stone, src_w: stone, src_h: stone) -> void {
-        forge w = src_w
-        forge h = src_h
-        if (w > buf_w) { w = buf_w }
-        if (h > buf_h) { h = buf_h }
-        forge pairs = w / 2
-        forge half_stride = buf_stride / 2
-        forge y = 0
-        while (y < h) {
-            forge srow = y * src_w
-            forge drow = y * half_stride
-            forge i = 0
-            while (i < pairs) {
-                forge sp: *stone = fault_step(src, srow + i * 2)
-                forge a = 0
-                forge b = 0
-                fracture { a = *sp; }
-                forge sp2: *stone = fault_step(src, srow + i * 2 + 1)
-                fracture { b = *sp2; }
-                forge pa = 4278190080 | ((a & 255) << 16) | (a & 65280) | ((a >> 16) & 255)
-                forge pb = 4278190080 | ((b & 255) << 16) | (b & 65280) | ((b >> 16) & 255)
-                forge dp: *stone = fault_step(buf_bits, drow + i)
-                fracture { *dp = pa | (pb << 32); }
-                i++
+        fracture {
+            forge w = src_w
+            forge h = src_h
+            if (w > buf_w) { w = buf_w }
+            if (h > buf_h) { h = buf_h }
+            forge pairs = w / 2
+            forge half_stride = buf_stride / 2
+            forge y = 0
+            while (y < h) {
+                forge srow = y * src_w
+                forge drow = y * half_stride
+                forge i = 0
+                while (i < pairs) {
+                    forge sp: *stone = fault_step(src, srow + i * 2)
+                    forge a = 0
+                    forge b = 0
+                    fracture { a = *sp; }
+                    forge sp2: *stone = fault_step(src, srow + i * 2 + 1)
+                    fracture { b = *sp2; }
+                    forge pa = 4278190080 | ((a & 255) << 16) | (a & 65280) | ((a >> 16) & 255)
+                    forge pb = 4278190080 | ((b & 255) << 16) | (b & 65280) | ((b >> 16) & 255)
+                    forge dp: *stone = fault_step(buf_bits, drow + i)
+                    fracture { *dp = pa | (pb << 32); }
+                    i++
+                }
+                y++
             }
-            y++
         }
     }
 
@@ -992,38 +1066,42 @@ namespace android {
     // Se ha excecao Java pendente: guarda o toString() em jni_error, imprime a
     // pilha no logcat (System.err) e a limpa. Devolve true se havia.
     vein jni_take_error() -> bool {
-        forge env = jni_env()
-        if (env == 0) { return false }
-        if ((fault_call(jni_fn(_JNI_EXCEPTION_CHECK), env) & 255) == 0) { return false }
-        forge ex = fault_call(jni_fn(_JNI_EXCEPTION_OCCURRED), env)
-        fault_call(jni_fn(_JNI_EXCEPTION_DESCRIBE), env)
-        fault_call(jni_fn(_JNI_EXCEPTION_CLEAR), env)
-        jni_error = "excecao Java"
-        if (ex != 0) {
-            forge js = jni_call(ex, "toString", "()Ljava/lang/String;", 0, 0, 0, 0, 0, 0)
-            if (js != 0) { jni_error = jni_to_text(js) }
-            jni_delete(js)
-            jni_delete(ex)
+        abyss {
+            forge env = jni_env()
+            if (env == 0) { return false }
+            if ((fault_call(jni_fn(_JNI_EXCEPTION_CHECK), env) & 255) == 0) { return false }
+            forge ex = fault_call(jni_fn(_JNI_EXCEPTION_OCCURRED), env)
+            fault_call(jni_fn(_JNI_EXCEPTION_DESCRIBE), env)
+            fault_call(jni_fn(_JNI_EXCEPTION_CLEAR), env)
+            jni_error = "excecao Java"
+            if (ex != 0) {
+                forge js = jni_call(ex, "toString", "()Ljava/lang/String;", 0, 0, 0, 0, 0, 0)
+                if (js != 0) { jni_error = jni_to_text(js) }
+                jni_delete(js)
+                jni_delete(ex)
+            }
+            return true
         }
-        return true
     }
 
     // Estatico numa jclass ja obtida (ex.: de DexClassLoader.loadClass).
     vein jni_scall_cls(cls: stone, name: obsidian, sig: obsidian, a: stone, b: stone, c: stone, d: stone) -> stone {
-        jni_failed = false
-        forge env = jni_env()
-        if (env == 0 || cls == 0) { jni_failed = true; return 0 }
-        forge mid = fault_call(jni_fn(_JNI_GET_STATIC_METHOD_ID), env, cls, name, sig)
-        if (jni_take_error() || mid == 0) { jni_failed = true; return 0 }
-        forge kind = _sig_ret(sig)
-        forge fnx = _JNI_CALL_STATIC_OBJECT_METHOD_A
-        if (kind == 86) { fnx = 143 }
-        if (kind == 90) { fnx = _JNI_CALL_STATIC_BOOLEAN_METHOD_A }
-        if (kind == 73) { fnx = 131 }
-        if (kind == 74) { fnx = 134 }
-        forge r = fault_call(jni_fn(fnx), env, cls, mid, jni_argv(a, b, c, d, 0, 0, 0, 0))
-        if (jni_take_error()) { jni_failed = true; return 0 }
-        return _jni_result(kind, r)
+        abyss {
+            jni_failed = false
+            forge env = jni_env()
+            if (env == 0 || cls == 0) { jni_failed = true; return 0 }
+            forge mid = fault_call(jni_fn(_JNI_GET_STATIC_METHOD_ID), env, cls, name, sig)
+            if (jni_take_error() || mid == 0) { jni_failed = true; return 0 }
+            forge kind = _sig_ret(sig)
+            forge fnx = _JNI_CALL_STATIC_OBJECT_METHOD_A
+            if (kind == 86) { fnx = 143 }
+            if (kind == 90) { fnx = _JNI_CALL_STATIC_BOOLEAN_METHOD_A }
+            if (kind == 73) { fnx = 131 }
+            if (kind == 74) { fnx = 134 }
+            forge r = fault_call(jni_fn(fnx), env, cls, mid, jni_argv(a, b, c, d, 0, 0, 0, 0))
+            if (jni_take_error()) { jni_failed = true; return 0 }
+            return _jni_result(kind, r)
+        }
     }
 
     // getIntent().getStringExtra(chave) da activity ("" se nao houver).
@@ -1070,36 +1148,38 @@ namespace android {
     // System.loadLibrary (ou ""). Devolve referencia GLOBAL da classe ou 0
     // (motivo em jni_error). O loader fica vivo enquanto a classe existir.
     vein dex_load_class(dex: obsidian, libs: obsidian, cls_name: obsidian) -> stone {
-        jni_error = ""
-        forge act = jni_activity()
-        forge parent = jni_call(act, "getClassLoader", "()Ljava/lang/ClassLoader;", 0, 0, 0, 0, 0, 0)
-        forge jdex = jni_string(dex)
-        forge jlibs = 0
-        if (ofs_str_len(libs) > 0) { jlibs = jni_string(libs) }
-        forge loader = jni_new("dalvik/system/DexClassLoader", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)V", jdex, 0, jlibs, parent)
-        forge out = 0
-        if (loader == 0) {
-            if (!jni_take_error()) { jni_error = "DexClassLoader falhou" }
-        } else {
-            forge jn = jni_string(cls_name)
-            forge env = jni_env()
-            forge lcls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, loader)
-            forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, lcls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;")
-            if (!jni_take_error() && mid != 0) {
-                forge c = fault_call(jni_fn(_JNI_CALL_OBJECT_METHOD_A), env, loader, mid, jni_argv(jn, 0, 0, 0, 0, 0, 0, 0))
-                if (!jni_take_error() && c != 0) {
-                    out = jni_global(c)
-                    jni_delete(c)
+        abyss {
+            jni_error = ""
+            forge act = jni_activity()
+            forge parent = jni_call(act, "getClassLoader", "()Ljava/lang/ClassLoader;", 0, 0, 0, 0, 0, 0)
+            forge jdex = jni_string(dex)
+            forge jlibs = 0
+            if (ofs_str_len(libs) > 0) { jlibs = jni_string(libs) }
+            forge loader = jni_new("dalvik/system/DexClassLoader", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)V", jdex, 0, jlibs, parent)
+            forge out = 0
+            if (loader == 0) {
+                if (!jni_take_error()) { jni_error = "DexClassLoader falhou" }
+            } else {
+                forge jn = jni_string(cls_name)
+                forge env = jni_env()
+                forge lcls = fault_call(jni_fn(_JNI_GET_OBJECT_CLASS), env, loader)
+                forge mid = fault_call(jni_fn(_JNI_GET_METHOD_ID), env, lcls, "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;")
+                if (!jni_take_error() && mid != 0) {
+                    forge c = fault_call(jni_fn(_JNI_CALL_OBJECT_METHOD_A), env, loader, mid, jni_argv(jn, 0, 0, 0, 0, 0, 0, 0))
+                    if (!jni_take_error() && c != 0) {
+                        out = jni_global(c)
+                        jni_delete(c)
+                    }
                 }
+                jni_delete(lcls)
+                jni_delete(jn)
+                jni_delete(loader)
             }
-            jni_delete(lcls)
-            jni_delete(jn)
-            jni_delete(loader)
+            jni_delete(jdex)
+            jni_delete(jlibs)
+            jni_delete(parent)
+            return out
         }
-        jni_delete(jdex)
-        jni_delete(jlibs)
-        jni_delete(parent)
-        return out
     }
 
     // java.io.File(path).setReadOnly() (exigencia do Android 14+ para .dex/.so).

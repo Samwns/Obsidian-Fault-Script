@@ -158,36 +158,38 @@ namespace ahttp {
 
     // Corpo inteiro como texto (JSON pequeno). "" se falhar.
     vein get_text(url: obsidian) -> obsidian {
-        if (!open(url)) { return "" }
-        forge cap = 65536
-        forge buf: *stone = ofs_alloc(cap + 8)
-        forge total = 0
-        forge tmp: *stone = ofs_alloc(CHUNK + 8)
-        while (true) {
-            forge n = read(tmp)
-            if (n <= 0) { break }
-            if (total + n > cap) {
-                forge ncap = cap * 2
-                while (ncap < total + n) { ncap = ncap * 2 }
-                forge nb: *stone = ofs_alloc(ncap + 8)
-                memcpy(nb, buf, total)
-                ofs_free(buf)
-                buf = nb
-                cap = ncap
-            }
-            memcpy(((buf as stone) + total) as *stone, tmp, n)
-            total = total + n
-            if (total > 4194304) { break }
-        }
-        ofs_free(tmp)
-        close()
-        forge p: *u8 = ((buf as stone) + total) as *u8
-        forge z: u8 = 0 as u8
         fracture {
-            *p = z;
+            if (!open(url)) { return "" }
+            forge cap = 65536
+            forge buf: *stone = ofs_alloc(cap + 8)
+            forge total = 0
+            forge tmp: *stone = ofs_alloc(CHUNK + 8)
+            while (true) {
+                forge n = read(tmp)
+                if (n <= 0) { break }
+                if (total + n > cap) {
+                    forge ncap = cap * 2
+                    while (ncap < total + n) { ncap = ncap * 2 }
+                    forge nb: *stone = ofs_alloc(ncap + 8)
+                    memcpy(nb, buf, total)
+                    ofs_free(buf)
+                    buf = nb
+                    cap = ncap
+                }
+                memcpy(((buf as stone) + total) as *stone, tmp, n)
+                total = total + n
+                if (total > 4194304) { break }
+            }
+            ofs_free(tmp)
+            close()
+            forge p: *u8 = ((buf as stone) + total) as *u8
+            forge z: u8 = 0 as u8
+            fracture {
+                *p = z;
+            }
+            forge out = _android_strdup(buf)
+            ofs_free(buf)
+            return out
         }
-        forge out = _android_strdup(buf)
-        ofs_free(buf)
-        return out
     }
 }

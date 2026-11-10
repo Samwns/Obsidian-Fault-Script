@@ -41,37 +41,39 @@ vein linha(v: Array<stone>) -> obsidian {
 }
 
 core main() {
-    forge v: Array<stone> = [42, 7, 19, 3, 88, 1, 56]
-    c_qsort(ofs_array_data(v), ofs_array_len(v), 8, fault_addr(crescente))
-    echo(linha(v))
-    c_qsort(ofs_array_data(v), ofs_array_len(v), 8, fault_addr(decrescente))
-    echo(linha(v))
-    c_qsort(ofs_array_data(v), ofs_array_len(v), 8, fault_addr(crescente))
-    forge chave: stone = 19
-    forge achou: *stone = c_bsearch(&chave, ofs_array_data(v), ofs_array_len(v), 8, fault_addr(crescente))
-    forge idx = ((achou as stone) - (ofs_array_data(v) as stone)) / 8
-    echo(idx)
-    // o mesmo slot de trampolim para a mesma vein
-    echo(fault_addr(crescente) == fault_addr(crescente))
+    abyss {
+        forge v: Array<stone> = [42, 7, 19, 3, 88, 1, 56]
+        c_qsort(ofs_array_data(v), ofs_array_len(v), 8, fault_addr(crescente))
+        echo(linha(v))
+        c_qsort(ofs_array_data(v), ofs_array_len(v), 8, fault_addr(decrescente))
+        echo(linha(v))
+        c_qsort(ofs_array_data(v), ofs_array_len(v), 8, fault_addr(crescente))
+        forge chave: stone = 19
+        forge achou: *stone = c_bsearch(&chave, ofs_array_data(v), ofs_array_len(v), 8, fault_addr(crescente))
+        forge idx = ((achou as stone) - (ofs_array_data(v) as stone)) / 8
+        echo(idx)
+        // o mesmo slot de trampolim para a mesma vein
+        echo(fault_addr(crescente) == fault_addr(crescente))
 
-    forge itens: Array<Item> = []
-    forge nomes: Array<obsidian> = ["c", "a", "d", "b"]
-    forge pesos: Array<stone> = [30, 10, 40, 20]
-    forge i = 0
-    while (i < 4) {
-        forge it: Item
-        it.peso = ofs_array_get(pesos, i)
-        it.nome = ofs_array_get(nomes, i)
-        ofs_array_push(itens, it)
-        i++
+        forge itens: Array<Item> = []
+        forge nomes: Array<obsidian> = ["c", "a", "d", "b"]
+        forge pesos: Array<stone> = [30, 10, 40, 20]
+        forge i = 0
+        while (i < 4) {
+            forge it: Item
+            it.peso = ofs_array_get(pesos, i)
+            it.nome = ofs_array_get(nomes, i)
+            ofs_array_push(itens, it)
+            i++
+        }
+        c_qsort(ofs_array_data(itens), 4, 8, fault_addr(por_peso))
+        forge s = ""
+        forge j = 0
+        while (j < 4) {
+            forge it2: Item = ofs_array_get(itens, j)
+            s = s + it2.nome
+            j++
+        }
+        echo(s)
     }
-    c_qsort(ofs_array_data(itens), 4, 8, fault_addr(por_peso))
-    forge s = ""
-    forge j = 0
-    while (j < 4) {
-        forge it2: Item = ofs_array_get(itens, j)
-        s = s + it2.nome
-        j++
-    }
-    echo(s)
 }

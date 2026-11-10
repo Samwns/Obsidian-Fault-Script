@@ -128,24 +128,26 @@ namespace icons {
 
     // Une a forma atual (em raster) a mascara por cobertura maxima.
     vein _merge() -> void {
-        raster.to_alpha(_tmp, 0)
-        forge total = _n * _n
-        forge i = 0
-        while (i < total) {
-            forge pt: *stone = fault_step(_tmp, i)
-            forge pm: *stone = fault_step(_mask, i)
-            forge a = 0
-            forge m = 0
-            fracture {
-                a = *pt;
-                m = *pm;
-            }
-            if (a > m) {
+        fracture {
+            raster.to_alpha(_tmp, 0)
+            forge total = _n * _n
+            forge i = 0
+            while (i < total) {
+                forge pt: *stone = fault_step(_tmp, i)
+                forge pm: *stone = fault_step(_mask, i)
+                forge a = 0
+                forge m = 0
                 fracture {
-                    *pm = a;
+                    a = *pt;
+                    m = *pm;
                 }
+                if (a > m) {
+                    fracture {
+                        *pm = a;
+                    }
+                }
+                i++
             }
-            i++
         }
     }
 
@@ -195,27 +197,29 @@ namespace icons {
 
     // Recorta um circulo da mascara (mascara *= 1 - cobertura): luas, furos.
     vein _cut_dot(cx: crystal, cy: crystal, r: crystal) -> void {
-        _start()
-        raster.add_circle(_gx(cx), _gx(cy), r * _scale)
-        raster.to_alpha(_tmp, 0)
-        forge total = _n * _n
-        forge i = 0
-        while (i < total) {
-            forge pt: *stone = fault_step(_tmp, i)
-            forge pm: *stone = fault_step(_mask, i)
-            forge a = 0
-            forge m = 0
-            fracture {
-                a = *pt;
-                m = *pm;
-            }
-            if (a > 0) {
-                forge v = (m * (255 - a)) / 255
+        fracture {
+            _start()
+            raster.add_circle(_gx(cx), _gx(cy), r * _scale)
+            raster.to_alpha(_tmp, 0)
+            forge total = _n * _n
+            forge i = 0
+            while (i < total) {
+                forge pt: *stone = fault_step(_tmp, i)
+                forge pm: *stone = fault_step(_mask, i)
+                forge a = 0
+                forge m = 0
                 fracture {
-                    *pm = v;
+                    a = *pt;
+                    m = *pm;
                 }
+                if (a > 0) {
+                    forge v = (m * (255 - a)) / 255
+                    fracture {
+                        *pm = v;
+                    }
+                }
+                i++
             }
-            i++
         }
     }
 
@@ -634,20 +638,22 @@ namespace icons {
     }
 
     vein _entry(id: stone, size: stone) -> stone {
-        if (_cache < 0) { _cache = hashmap.new(64) }
-        forge key = id * 4096 + size
-        forge hit = hashmap.get(_cache, key, -1)
-        if (hit >= 0) { return hit }
-        _begin(size)
-        _build(id)
-        forge cells = _n * _n
-        forge off = _pool_reserve(cells)
-        memcpy(fault_step(_pool, off), _mask, cells * 8)
-        ofs_array_push(_e_off, off)
-        ofs_array_push(_e_size, _n)
-        forge idx = ofs_array_len(_e_off) - 1
-        hashmap.set(_cache, key, idx)
-        return idx
+        fracture {
+            if (_cache < 0) { _cache = hashmap.new(64) }
+            forge key = id * 4096 + size
+            forge hit = hashmap.get(_cache, key, -1)
+            if (hit >= 0) { return hit }
+            _begin(size)
+            _build(id)
+            forge cells = _n * _n
+            forge off = _pool_reserve(cells)
+            memcpy(fault_step(_pool, off), _mask, cells * 8)
+            ofs_array_push(_e_off, off)
+            ofs_array_push(_e_size, _n)
+            forge idx = ofs_array_len(_e_off) - 1
+            hashmap.set(_cache, key, idx)
+            return idx
+        }
     }
 
     // Icone pelo nome ("settings", "search"...); -1 se desconhecido.
@@ -725,24 +731,26 @@ namespace icons {
 
     // Desenha o icone com o canto superior esquerdo em (x, y).
     vein draw(cv: Canvas, id: stone, x: stone, y: stone, size: stone, color: stone) -> void {
-        forge e = _entry(id, size)
-        forge off: stone = ofs_array_get(_e_off, e)
-        forge n: stone = ofs_array_get(_e_size, e)
-        forge yy = 0
-        while (yy < n) {
-            forge xx = 0
-            while (xx < n) {
-                forge p: *stone = fault_step(_pool, off + yy * n + xx)
-                forge a = 0
-                fracture {
-                    a = *p;
+        fracture {
+            forge e = _entry(id, size)
+            forge off: stone = ofs_array_get(_e_off, e)
+            forge n: stone = ofs_array_get(_e_size, e)
+            forge yy = 0
+            while (yy < n) {
+                forge xx = 0
+                while (xx < n) {
+                    forge p: *stone = fault_step(_pool, off + yy * n + xx)
+                    forge a = 0
+                    fracture {
+                        a = *p;
+                    }
+                    if (a > 0) {
+                        canvas.blend_pixel(cv, x - 1 + xx, y - 1 + yy, color, a)
+                    }
+                    xx++
                 }
-                if (a > 0) {
-                    canvas.blend_pixel(cv, x - 1 + xx, y - 1 + yy, color, a)
-                }
-                xx++
+                yy++
             }
-            yy++
         }
     }
 
