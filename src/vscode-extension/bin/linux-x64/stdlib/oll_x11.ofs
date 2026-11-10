@@ -814,72 +814,80 @@ namespace oll_x11 {
     }
 
     vein draw_str(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, str: obsidian) -> void {
-        if (g_xft_draw != 0 && g_xft_font_ui != 0) {
-            forge r_val = ((col / 65536) % 256) * 257
-            forge g_val = ((col / 256) % 256) * 257
-            forge b_val = (col % 256) * 257
-            forge a_val = 65535
-            forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
-            _store_stone(g_xft_col_in as *stone, c_quad)
-            XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
-            forge len = ofs_str_len(str)
-            XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_ui as *stone, x, y, str, len)
-        } else {
-            XSetForeground(disp, gc, col)
-            forge len = ofs_str_len(str)
-            XDrawString(disp, d, gc, x, y, str, len)
+        fracture {
+            if (g_xft_draw != 0 && g_xft_font_ui != 0) {
+                forge r_val = ((col / 65536) % 256) * 257
+                forge g_val = ((col / 256) % 256) * 257
+                forge b_val = (col % 256) * 257
+                forge a_val = 65535
+                forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
+                _store_stone(g_xft_col_in as *stone, c_quad)
+                XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
+                forge len = ofs_str_len(str)
+                XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_ui as *stone, x, y, str, len)
+            } else {
+                XSetForeground(disp, gc, col)
+                forge len = ofs_str_len(str)
+                XDrawString(disp, d, gc, x, y, str, len)
+            }
         }
     }
 
     vein draw_str_code(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, str: obsidian) -> void {
-        if (g_xft_draw != 0 && g_xft_font_code != 0) {
-            forge r_val = ((col / 65536) % 256) * 257
-            forge g_val = ((col / 256) % 256) * 257
-            forge b_val = (col % 256) * 257
-            forge a_val = 65535
-            forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
-            _store_stone(g_xft_col_in as *stone, c_quad)
-            XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
-            forge len = ofs_str_len(str)
-            XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_code as *stone, x, y, str, len)
-        } else {
-            XSetForeground(disp, gc, col)
-            forge len = ofs_str_len(str)
-            XDrawString(disp, d, gc, x, y, str, len)
+        fracture {
+            if (g_xft_draw != 0 && g_xft_font_code != 0) {
+                forge r_val = ((col / 65536) % 256) * 257
+                forge g_val = ((col / 256) % 256) * 257
+                forge b_val = (col % 256) * 257
+                forge a_val = 65535
+                forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
+                _store_stone(g_xft_col_in as *stone, c_quad)
+                XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
+                forge len = ofs_str_len(str)
+                XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_code as *stone, x, y, str, len)
+            } else {
+                XSetForeground(disp, gc, col)
+                forge len = ofs_str_len(str)
+                XDrawString(disp, d, gc, x, y, str, len)
+            }
         }
     }
 
     vein draw_str_title(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, str: obsidian) -> void {
-        if (g_xft_draw != 0 && g_xft_font_title != 0) {
-            forge r_val = ((col / 65536) % 256) * 257
-            forge g_val = ((col / 256) % 256) * 257
-            forge b_val = (col % 256) * 257
-            forge a_val = 65535
-            forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
-            _store_stone(g_xft_col_in as *stone, c_quad)
-            XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
-            forge len = ofs_str_len(str)
-            XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_title as *stone, x, y, str, len)
-        } else {
-            XSetForeground(disp, gc, col)
-            forge len = ofs_str_len(str)
-            XDrawString(disp, d, gc, x, y, str, len)
+        fracture {
+            if (g_xft_draw != 0 && g_xft_font_title != 0) {
+                forge r_val = ((col / 65536) % 256) * 257
+                forge g_val = ((col / 256) % 256) * 257
+                forge b_val = (col % 256) * 257
+                forge a_val = 65535
+                forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
+                _store_stone(g_xft_col_in as *stone, c_quad)
+                XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
+                forge len = ofs_str_len(str)
+                XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_title as *stone, x, y, str, len)
+            } else {
+                XSetForeground(disp, gc, col)
+                forge len = ofs_str_len(str)
+                XDrawString(disp, d, gc, x, y, str, len)
+            }
         }
     }
 
     vein draw_str_heading(disp: *stone, d: stone, gc: *stone, col: stone, x: stone, y: stone, str: obsidian) -> void {
-        if (g_xft_draw != 0 && g_xft_font_heading != 0) {
-            forge r_val = ((col / 65536) % 256) * 257
-            forge g_val = ((col / 256) % 256) * 257
-            forge b_val = (col % 256) * 257
-            forge a_val = 65535
-            forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
-            _store_stone(g_xft_col_in as *stone, c_quad)
-            XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
-            forge len = ofs_str_len(str)
-            XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_heading as *stone, x, y, str, len)
-        } else {
-            draw_str_title(disp, d, gc, col, x, y, str)
+        fracture {
+            if (g_xft_draw != 0 && g_xft_font_heading != 0) {
+                forge r_val = ((col / 65536) % 256) * 257
+                forge g_val = ((col / 256) % 256) * 257
+                forge b_val = (col % 256) * 257
+                forge a_val = 65535
+                forge c_quad = r_val + (g_val * 65536) + (b_val * 4294967296) + (a_val * 281474976710656)
+                _store_stone(g_xft_col_in as *stone, c_quad)
+                XftColorAllocValue(disp, g_xft_visual as *stone, g_xft_cmap, g_xft_col_in as *stone, g_xft_col_out as *stone)
+                forge len = ofs_str_len(str)
+                XftDrawStringUtf8(g_xft_draw as *stone, g_xft_col_out as *stone, g_xft_font_heading as *stone, x, y, str, len)
+            } else {
+                draw_str_title(disp, d, gc, col, x, y, str)
+            }
         }
     }
 
@@ -2159,474 +2167,388 @@ namespace oll_x11 {
     }
 
     vein run_window(oll_path: obsidian) -> stone {
-        echo("[OFS OLL Viewer] Inicializando motor grafico OLL X11...")
-        forge disp: *stone = XOpenDisplay(null)
-        if (disp == null) {
-            echo("[OFS OLL Viewer] Erro: Impossivel conectar ao display X11.")
-            return 1
-        }
+        fracture {
+            echo("[OFS OLL Viewer] Inicializando motor grafico OLL X11...")
+            forge disp: *stone = XOpenDisplay(null)
+            if (disp == null) {
+                echo("[OFS OLL Viewer] Erro: Impossivel conectar ao display X11.")
+                return 1
+            }
 
-        forge scr = XDefaultScreen(disp)
-        forge depth = XDefaultDepth(disp, scr)
-        forge root = XRootWindow(disp, scr)
+            forge scr = XDefaultScreen(disp)
+            forge depth = XDefaultDepth(disp, scr)
+            forge root = XRootWindow(disp, scr)
 
-        forge win_w = 1240
-        forge win_h = 780
+            forge win_w = 1240
+            forge win_h = 780
 
-        forge win = XCreateSimpleWindow(disp, root, 50, 50, win_w, win_h, 0, 0, 1579032)
-        XStoreName(disp, win, "Obsidian Fault Script :: Studio IDLE (OLL Engine)")
+            forge win = XCreateSimpleWindow(disp, root, 50, 50, win_w, win_h, 0, 0, 1579032)
+            XStoreName(disp, win, "Obsidian Fault Script :: Studio IDLE (OLL Engine)")
 
-        forge mask = 1 + 2 + 4 + 8 + 64 + 32768 + 131072
-        XSelectInput(disp, win, mask)
-        XMapWindow(disp, win)
+            forge mask = 1 + 2 + 4 + 8 + 64 + 32768 + 131072
+            XSelectInput(disp, win, mask)
+            XMapWindow(disp, win)
 
-        forge gc: *stone = XCreateGC(disp, win, 0, null)
-        forge pix = XCreatePixmap(disp, win, win_w, win_h, depth)
+            forge gc: *stone = XCreateGC(disp, win, 0, null)
+            forge pix = XCreatePixmap(disp, win, win_w, win_h, depth)
 
-        XFlush(disp)
+            XFlush(disp)
 
-        g_xft_visual = XDefaultVisual(disp, scr) as stone
-        g_xft_cmap = XDefaultColormap(disp, scr)
-        g_xft_draw = XftDrawCreate(disp, pix, g_xft_visual as *stone, g_xft_cmap) as stone
-        g_xft_font_ui = XftFontOpenName(disp, scr, "Inter:size=11") as stone
-        if (g_xft_font_ui == 0) {
-            g_xft_font_ui = XftFontOpenName(disp, scr, "DejaVu Sans:size=11") as stone
-        }
-        g_xft_font_code = XftFontOpenName(disp, scr, "DejaVu Sans Mono:size=11") as stone
-        if (g_xft_font_code == 0) {
-            g_xft_font_code = XftFontOpenName(disp, scr, "monospace:size=11") as stone
-        }
-        g_xft_font_title = XftFontOpenName(disp, scr, "Inter:size=14:weight=bold") as stone
-        if (g_xft_font_title == 0) {
-            g_xft_font_title = XftFontOpenName(disp, scr, "DejaVu Sans:size=14:weight=bold") as stone
-        }
-        g_xft_font_heading = XftFontOpenName(disp, scr, "Inter:size=18:weight=bold") as stone
-        if (g_xft_font_heading == 0) {
-            g_xft_font_heading = XftFontOpenName(disp, scr, "DejaVu Sans:size=18:weight=bold") as stone
-        }
-        g_xft_col_in = ofs_alloc(32) as stone
-        g_xft_col_out = ofs_alloc(32) as stone
+            g_xft_visual = XDefaultVisual(disp, scr) as stone
+            g_xft_cmap = XDefaultColormap(disp, scr)
+            g_xft_draw = XftDrawCreate(disp, pix, g_xft_visual as *stone, g_xft_cmap) as stone
+            g_xft_font_ui = XftFontOpenName(disp, scr, "Inter:size=11") as stone
+            if (g_xft_font_ui == 0) {
+                g_xft_font_ui = XftFontOpenName(disp, scr, "DejaVu Sans:size=11") as stone
+            }
+            g_xft_font_code = XftFontOpenName(disp, scr, "DejaVu Sans Mono:size=11") as stone
+            if (g_xft_font_code == 0) {
+                g_xft_font_code = XftFontOpenName(disp, scr, "monospace:size=11") as stone
+            }
+            g_xft_font_title = XftFontOpenName(disp, scr, "Inter:size=14:weight=bold") as stone
+            if (g_xft_font_title == 0) {
+                g_xft_font_title = XftFontOpenName(disp, scr, "DejaVu Sans:size=14:weight=bold") as stone
+            }
+            g_xft_font_heading = XftFontOpenName(disp, scr, "Inter:size=18:weight=bold") as stone
+            if (g_xft_font_heading == 0) {
+                g_xft_font_heading = XftFontOpenName(disp, scr, "DejaVu Sans:size=18:weight=bold") as stone
+            }
+            g_xft_col_in = ofs_alloc(32) as stone
+            g_xft_col_out = ofs_alloc(32) as stone
 
-        forge event_buf: *stone = ofs_alloc(192)
+            forge event_buf: *stone = ofs_alloc(192)
 
-        forge active_activity = 0
-        forge active_panel_tab = 0
-        forge hover_elem = -1
-        forge menu_open = 0
-        forge menu_hover = -1
-        forge modal_open = 0
-        forge modal_tab = 0
-        forge modal_theme = 0
-        forge active_theme_id = 0
-        forge modal_font_size = 14
-        forge modal_lsp = 1
-        forge modal_autosave = 1
-        forge modal_hover = -1
-        forge palette_open = 0
-        forge palette_query = ""
-        forge palette_sel = 0
-        forge search_query = ""
+            forge active_activity = 0
+            forge active_panel_tab = 0
+            forge hover_elem = -1
+            forge menu_open = 0
+            forge menu_hover = -1
+            forge modal_open = 0
+            forge modal_tab = 0
+            forge modal_theme = 0
+            forge active_theme_id = 0
+            forge modal_font_size = 14
+            forge modal_lsp = 1
+            forge modal_autosave = 1
+            forge modal_hover = -1
+            forge palette_open = 0
+            forge palette_query = ""
+            forge palette_sel = 0
+            forge search_query = ""
 
-        forge workspace_folder = ""
-        forge workspace_files: Array<obsidian> = []
+            forge workspace_folder = ""
+            forge workspace_files: Array<obsidian> = []
 
-        forge active_file_path = ""
-        forge active_file_name = ""
-        forge editor_lines: Array<obsidian> = []
+            forge active_file_path = ""
+            forge active_file_name = ""
+            forge editor_lines: Array<obsidian> = []
 
-        forge open_tabs: Array<obsidian> = []
-        forge open_paths: Array<obsidian> = []
-        forge active_tab_idx = -1
+            forge open_tabs: Array<obsidian> = []
+            forge open_paths: Array<obsidian> = []
+            forge active_tab_idx = -1
 
-        forge folder_picker_open = 0
-        forge folder_picker_input = "."
-        forge focused_area = 0
-        forge terminal_input_buf = ""
+            forge folder_picker_open = 0
+            forge folder_picker_input = "."
+            forge focused_area = 0
+            forge terminal_input_buf = ""
 
-        forge git_branch = "main"
-        forge git_staged_files: Array<obsidian> = []
-        forge git_staged_types: Array<obsidian> = []
-        forge git_unstaged_files: Array<obsidian> = []
-        forge git_unstaged_types: Array<obsidian> = []
-        forge git_commit_msg_buf = ""
-        forge git_is_repo = 0
-        forge ext_search_query = ""
+            forge git_branch = "main"
+            forge git_staged_files: Array<obsidian> = []
+            forge git_staged_types: Array<obsidian> = []
+            forge git_unstaged_files: Array<obsidian> = []
+            forge git_unstaged_types: Array<obsidian> = []
+            forge git_commit_msg_buf = ""
+            forge git_is_repo = 0
+            forge ext_search_query = ""
 
-        git_is_repo = git_is_repository(".")
-        if (git_is_repo == 1) {
-            git_branch = git_get_branch_name(".")
-            git_refresh_all_status(".", git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-        }
+            git_is_repo = git_is_repository(".")
+            if (git_is_repo == 1) {
+                git_branch = git_get_branch_name(".")
+                git_refresh_all_status(".", git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+            }
 
-        forge cursor_row = 0
-        forge cursor_col = 0
-        forge scroll_top = 0
-        forge is_dirty = 0
-        forge lsp_err_count = 0
+            forge cursor_row = 0
+            forge cursor_col = 0
+            forge scroll_top = 0
+            forge is_dirty = 0
+            forge lsp_err_count = 0
 
-        forge terminal_lines: Array<obsidian> = []
-        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script$ ofs --version")
-        ofs_array_push(terminal_lines, "Obsidian Fault Script Compiler (ofscc) v0.1 - AOT Linux x86_64")
-        ofs_array_push(terminal_lines, "[OFS IDLE] Terminal interativo pronto. Digite comandos e pressione Enter.")
-        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+            forge terminal_lines: Array<obsidian> = []
+            ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script$ ofs --version")
+            ofs_array_push(terminal_lines, "Obsidian Fault Script Compiler (ofscc) v0.1 - AOT Linux x86_64")
+            ofs_array_push(terminal_lines, "[OFS IDLE] Terminal interativo pronto. Digite comandos e pressione Enter.")
+            ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
 
-        forge running = 1
-        forge needs_redraw = 1
+            forge running = 1
+            forge needs_redraw = 1
 
-        while (running != 0) {
-            while (XPending(disp) > 0) {
-                XNextEvent(disp, event_buf)
-                forge p_type: *stone = event_buf
-                forge ev_type: stone = 0
-                fracture {
-                    ev_type = (*p_type) % 65536
-                }
-
-                if (ev_type == 6) {
-                    forge p_xy6: *stone = fault_step(event_buf, 8)
-                    forge raw_xy6: stone = 0
+            while (running != 0) {
+                while (XPending(disp) > 0) {
+                    XNextEvent(disp, event_buf)
+                    forge p_type: *stone = event_buf
+                    forge ev_type: stone = 0
                     fracture {
-                        raw_xy6 = *p_xy6
+                        ev_type = (*p_type) % 65536
                     }
-                    forge mx6 = raw_xy6 % 65536
-                    forge my6 = (raw_xy6 / 4294967296) % 65536
 
-                    if (folder_picker_open > 0) {
-                        forge fp_w6 = 640
-                        forge fp_h6 = 260
-                        forge fp_x6 = (win_w - fp_w6) / 2
-                        forge fp_y6 = (win_h - fp_h6) / 2
-                        forge cur_fph = -1
-                        if (mx6 >= fp_x6 + fp_w6 - 34 && mx6 <= fp_x6 + fp_w6 - 8 && my6 >= fp_y6 + 6 && my6 <= fp_y6 + 32) {
-                            cur_fph = 222
-                        } else if (mx6 >= fp_x6 + fp_w6 - 240 && mx6 <= fp_x6 + fp_w6 - 130 && my6 >= fp_y6 + fp_h6 - 50 && my6 <= fp_y6 + fp_h6 - 18) {
-                            cur_fph = 220
-                        } else if (mx6 >= fp_x6 + fp_w6 - 118 && mx6 <= fp_x6 + fp_w6 - 24 && my6 >= fp_y6 + fp_h6 - 50 && my6 <= fp_y6 + fp_h6 - 18) {
-                            cur_fph = 221
+                    if (ev_type == 6) {
+                        forge p_xy6: *stone = fault_step(event_buf, 8)
+                        forge raw_xy6: stone = 0
+                        fracture {
+                            raw_xy6 = *p_xy6
                         }
-                        if (cur_fph != hover_elem) {
-                            hover_elem = cur_fph
-                            needs_redraw = 1
-                        }
-                    } else if (palette_open > 0) {
-                        forge pp_w6 = 620
-                        forge pp_x6 = (win_w - pp_w6) / 2
-                        if (mx6 >= pp_x6 && mx6 <= pp_x6 + pp_w6 && my6 >= 99 && my6 <= 99 + (8 * 26)) {
-                            forge next_psel = (my6 - 99) / 26
-                            if (next_psel != palette_sel) {
-                                palette_sel = next_psel
+                        forge mx6 = raw_xy6 % 65536
+                        forge my6 = (raw_xy6 / 4294967296) % 65536
+
+                        if (folder_picker_open > 0) {
+                            forge fp_w6 = 640
+                            forge fp_h6 = 260
+                            forge fp_x6 = (win_w - fp_w6) / 2
+                            forge fp_y6 = (win_h - fp_h6) / 2
+                            forge cur_fph = -1
+                            if (mx6 >= fp_x6 + fp_w6 - 34 && mx6 <= fp_x6 + fp_w6 - 8 && my6 >= fp_y6 + 6 && my6 <= fp_y6 + 32) {
+                                cur_fph = 222
+                            } else if (mx6 >= fp_x6 + fp_w6 - 240 && mx6 <= fp_x6 + fp_w6 - 130 && my6 >= fp_y6 + fp_h6 - 50 && my6 <= fp_y6 + fp_h6 - 18) {
+                                cur_fph = 220
+                            } else if (mx6 >= fp_x6 + fp_w6 - 118 && mx6 <= fp_x6 + fp_w6 - 24 && my6 >= fp_y6 + fp_h6 - 50 && my6 <= fp_y6 + fp_h6 - 18) {
+                                cur_fph = 221
+                            }
+                            if (cur_fph != hover_elem) {
+                                hover_elem = cur_fph
                                 needs_redraw = 1
                             }
-                        }
-                    } else if (modal_open > 0) {
-                        forge mmw = 760
-                        forge mmh = 490
-                        forge mmx = (win_w - mmw) / 2
-                        forge mmy = (win_h - mmh) / 2
-                        forge cur_mh = -1
-                        if (mx6 >= mmx + mmw - 34 && mx6 <= mmx + mmw - 6 && my6 >= mmy + 5 && my6 <= mmy + 33) {
-                            cur_mh = 100
-                        } else if (mx6 >= mmx + mmw - 110 && mx6 <= mmx + mmw - 15 && my6 >= mmy + mmh - 40 && my6 <= mmy + mmh - 12) {
-                            cur_mh = 101
-                        } else if (mx6 >= mmx && mx6 <= mmx + 190 && my6 >= mmy + 39 && my6 <= mmy + mmh - 48) {
-                            cur_mh = 10 + ((my6 - (mmy + 48)) / 38)
-                        }
-                        if (cur_mh != modal_hover) {
-                            modal_hover = cur_mh
-                            needs_redraw = 1
-                        }
-                    } else if (menu_open > 0) {
-                        forge cur_menu_h = -1
-                        forge m_mx6 = 38
-                        forge m_cnt6 = 6
-                        if (menu_open == 1) { m_mx6 = 38; m_cnt6 = 6 }
-                        else if (menu_open == 2) { m_mx6 = 98; m_cnt6 = 6 }
-                        else if (menu_open == 3) { m_mx6 = 148; m_cnt6 = 4 }
-                        else if (menu_open == 4) { m_mx6 = 208; m_cnt6 = 6 }
-                        else if (menu_open == 5) { m_mx6 = 256; m_cnt6 = 4 }
-                        else if (menu_open == 6) { m_mx6 = 280; m_cnt6 = 4 }
-                        else if (menu_open == 7) { m_mx6 = 346; m_cnt6 = 4 }
-                        else if (menu_open == 8) { m_mx6 = 408; m_cnt6 = 5 }
-
-                        if (mx6 >= m_mx6 && mx6 <= m_mx6 + 240 && my6 >= 35 && my6 <= 35 + (m_cnt6 * 29)) {
-                            cur_menu_h = (my6 - 38) / 29
-                        }
-                        if (cur_menu_h != menu_hover) {
-                            menu_hover = cur_menu_h
-                            needs_redraw = 1
-                        }
-                    } else {
-                        forge statusbar_y6 = win_h - 24
-                        forge panel_h6 = 220
-                        if (win_h < 650) { panel_h6 = 160 }
-                        forge panel_y6 = statusbar_y6 - panel_h6
-
-                        forge next_hover = -1
-                        if (my6 < 35) {
-                            if (mx6 >= 42 && mx6 < 98) { next_hover = 0 }
-                            else if (mx6 >= 98 && mx6 < 148) { next_hover = 1 }
-                            else if (mx6 >= 148 && mx6 < 208) { next_hover = 2 }
-                            else if (mx6 >= 208 && mx6 < 256) { next_hover = 3 }
-                            else if (mx6 >= 256 && mx6 < 280) { next_hover = 4 }
-                            else if (mx6 >= 280 && mx6 < 346) { next_hover = 5 }
-                            else if (mx6 >= 346 && mx6 < 408) { next_hover = 6 }
-                            else if (mx6 >= 408 && mx6 < 456) { next_hover = 7 }
-                            forge search_x6 = (win_w - 480) / 2
-                            if (search_x6 < 470) { search_x6 = 470 }
-                            if (mx6 >= search_x6 && mx6 <= search_x6 + 480) { next_hover = 8 }
-                        } else if (mx6 < 48) {
-                            if (my6 >= 44 && my6 < 82) { next_hover = 30 }
-                            else if (my6 >= 90 && my6 < 128) { next_hover = 31 }
-                            else if (my6 >= 136 && my6 < 174) { next_hover = 32 }
-                            else if (my6 >= 182 && my6 < 220) { next_hover = 33 }
-                            else if (my6 >= 228 && my6 < 266) { next_hover = 34 }
-                            else if (my6 >= statusbar_y6 - 48 && my6 <= statusbar_y6) { next_hover = 35 }
-                        } else if (mx6 < 268) {
-                            if (active_activity == 0) {
-                                if (ofs_str_len(workspace_folder) == 0) {
-                                    if (mx6 >= 60 && mx6 <= 256 && my6 >= 168 && my6 <= 200) {
-                                        next_hover = 200
-                                    }
-                                } else {
-                                    forge ot_n6 = ofs_array_len(open_tabs)
-                                    if (my6 >= 94 && my6 < 94 + (ot_n6 * 20)) {
-                                        next_hover = 120 + ((my6 - 94) / 20)
-                                    } else if (my6 >= 98 + (ot_n6 * 20) + 16 && my6 < statusbar_y6) {
-                                        next_hover = 40 + ((my6 - (98 + (ot_n6 * 20) + 16)) / 22)
-                                    }
+                        } else if (palette_open > 0) {
+                            forge pp_w6 = 620
+                            forge pp_x6 = (win_w - pp_w6) / 2
+                            if (mx6 >= pp_x6 && mx6 <= pp_x6 + pp_w6 && my6 >= 99 && my6 <= 99 + (8 * 26)) {
+                                forge next_psel = (my6 - 99) / 26
+                                if (next_psel != palette_sel) {
+                                    palette_sel = next_psel
+                                    needs_redraw = 1
                                 }
-                            } else if (active_activity == 2) {
-                                if (mx6 >= 222 && mx6 <= 242 && my6 >= 40 && my6 <= 60) {
-                                    next_hover = 310
-                                } else if (mx6 >= 244 && mx6 <= 264 && my6 >= 40 && my6 <= 60) {
-                                    next_hover = 311
-                                } else if (mx6 >= 58 && mx6 <= 258 && my6 >= 98 && my6 <= 146) {
-                                    next_hover = 302
-                                } else if (mx6 >= 58 && mx6 <= 258 && my6 >= 154 && my6 <= 180) {
-                                    next_hover = 300
-                                } else if (mx6 >= 240 && mx6 <= 264 && my6 >= 194 && my6 <= 212) {
-                                    next_hover = 305
-                                } else {
-                                    forge n_st_h = ofs_array_len(git_staged_files)
-                                    forge s_base_y = 216
-                                    if (my6 >= s_base_y && my6 < s_base_y + (n_st_h * 22)) {
-                                        next_hover = 320 + ((my6 - s_base_y) / 22)
+                            }
+                        } else if (modal_open > 0) {
+                            forge mmw = 760
+                            forge mmh = 490
+                            forge mmx = (win_w - mmw) / 2
+                            forge mmy = (win_h - mmh) / 2
+                            forge cur_mh = -1
+                            if (mx6 >= mmx + mmw - 34 && mx6 <= mmx + mmw - 6 && my6 >= mmy + 5 && my6 <= mmy + 33) {
+                                cur_mh = 100
+                            } else if (mx6 >= mmx + mmw - 110 && mx6 <= mmx + mmw - 15 && my6 >= mmy + mmh - 40 && my6 <= mmy + mmh - 12) {
+                                cur_mh = 101
+                            } else if (mx6 >= mmx && mx6 <= mmx + 190 && my6 >= mmy + 39 && my6 <= mmy + mmh - 48) {
+                                cur_mh = 10 + ((my6 - (mmy + 48)) / 38)
+                            }
+                            if (cur_mh != modal_hover) {
+                                modal_hover = cur_mh
+                                needs_redraw = 1
+                            }
+                        } else if (menu_open > 0) {
+                            forge cur_menu_h = -1
+                            forge m_mx6 = 38
+                            forge m_cnt6 = 6
+                            if (menu_open == 1) { m_mx6 = 38; m_cnt6 = 6 }
+                            else if (menu_open == 2) { m_mx6 = 98; m_cnt6 = 6 }
+                            else if (menu_open == 3) { m_mx6 = 148; m_cnt6 = 4 }
+                            else if (menu_open == 4) { m_mx6 = 208; m_cnt6 = 6 }
+                            else if (menu_open == 5) { m_mx6 = 256; m_cnt6 = 4 }
+                            else if (menu_open == 6) { m_mx6 = 280; m_cnt6 = 4 }
+                            else if (menu_open == 7) { m_mx6 = 346; m_cnt6 = 4 }
+                            else if (menu_open == 8) { m_mx6 = 408; m_cnt6 = 5 }
+
+                            if (mx6 >= m_mx6 && mx6 <= m_mx6 + 240 && my6 >= 35 && my6 <= 35 + (m_cnt6 * 29)) {
+                                cur_menu_h = (my6 - 38) / 29
+                            }
+                            if (cur_menu_h != menu_hover) {
+                                menu_hover = cur_menu_h
+                                needs_redraw = 1
+                            }
+                        } else {
+                            forge statusbar_y6 = win_h - 24
+                            forge panel_h6 = 220
+                            if (win_h < 650) { panel_h6 = 160 }
+                            forge panel_y6 = statusbar_y6 - panel_h6
+
+                            forge next_hover = -1
+                            if (my6 < 35) {
+                                if (mx6 >= 42 && mx6 < 98) { next_hover = 0 }
+                                else if (mx6 >= 98 && mx6 < 148) { next_hover = 1 }
+                                else if (mx6 >= 148 && mx6 < 208) { next_hover = 2 }
+                                else if (mx6 >= 208 && mx6 < 256) { next_hover = 3 }
+                                else if (mx6 >= 256 && mx6 < 280) { next_hover = 4 }
+                                else if (mx6 >= 280 && mx6 < 346) { next_hover = 5 }
+                                else if (mx6 >= 346 && mx6 < 408) { next_hover = 6 }
+                                else if (mx6 >= 408 && mx6 < 456) { next_hover = 7 }
+                                forge search_x6 = (win_w - 480) / 2
+                                if (search_x6 < 470) { search_x6 = 470 }
+                                if (mx6 >= search_x6 && mx6 <= search_x6 + 480) { next_hover = 8 }
+                            } else if (mx6 < 48) {
+                                if (my6 >= 44 && my6 < 82) { next_hover = 30 }
+                                else if (my6 >= 90 && my6 < 128) { next_hover = 31 }
+                                else if (my6 >= 136 && my6 < 174) { next_hover = 32 }
+                                else if (my6 >= 182 && my6 < 220) { next_hover = 33 }
+                                else if (my6 >= 228 && my6 < 266) { next_hover = 34 }
+                                else if (my6 >= statusbar_y6 - 48 && my6 <= statusbar_y6) { next_hover = 35 }
+                            } else if (mx6 < 268) {
+                                if (active_activity == 0) {
+                                    if (ofs_str_len(workspace_folder) == 0) {
+                                        if (mx6 >= 60 && mx6 <= 256 && my6 >= 168 && my6 <= 200) {
+                                            next_hover = 200
+                                        }
                                     } else {
-                                        forge unst_base_y = s_base_y + (n_st_h * 22) + 22
-                                        if (mx6 >= 240 && mx6 <= 264 && my6 >= unst_base_y - 20 && my6 <= unst_base_y) {
-                                            next_hover = 306
+                                        forge ot_n6 = ofs_array_len(open_tabs)
+                                        if (my6 >= 94 && my6 < 94 + (ot_n6 * 20)) {
+                                            next_hover = 120 + ((my6 - 94) / 20)
+                                        } else if (my6 >= 98 + (ot_n6 * 20) + 16 && my6 < statusbar_y6) {
+                                            next_hover = 40 + ((my6 - (98 + (ot_n6 * 20) + 16)) / 22)
+                                        }
+                                    }
+                                } else if (active_activity == 2) {
+                                    if (mx6 >= 222 && mx6 <= 242 && my6 >= 40 && my6 <= 60) {
+                                        next_hover = 310
+                                    } else if (mx6 >= 244 && mx6 <= 264 && my6 >= 40 && my6 <= 60) {
+                                        next_hover = 311
+                                    } else if (mx6 >= 58 && mx6 <= 258 && my6 >= 98 && my6 <= 146) {
+                                        next_hover = 302
+                                    } else if (mx6 >= 58 && mx6 <= 258 && my6 >= 154 && my6 <= 180) {
+                                        next_hover = 300
+                                    } else if (mx6 >= 240 && mx6 <= 264 && my6 >= 194 && my6 <= 212) {
+                                        next_hover = 305
+                                    } else {
+                                        forge n_st_h = ofs_array_len(git_staged_files)
+                                        forge s_base_y = 216
+                                        if (my6 >= s_base_y && my6 < s_base_y + (n_st_h * 22)) {
+                                            next_hover = 320 + ((my6 - s_base_y) / 22)
                                         } else {
-                                            forge n_unst_h = ofs_array_len(git_unstaged_files)
-                                            if (my6 >= unst_base_y && my6 < unst_base_y + (n_unst_h * 22)) {
-                                                next_hover = 340 + ((my6 - unst_base_y) / 22)
+                                            forge unst_base_y = s_base_y + (n_st_h * 22) + 22
+                                            if (mx6 >= 240 && mx6 <= 264 && my6 >= unst_base_y - 20 && my6 <= unst_base_y) {
+                                                next_hover = 306
+                                            } else {
+                                                forge n_unst_h = ofs_array_len(git_unstaged_files)
+                                                if (my6 >= unst_base_y && my6 < unst_base_y + (n_unst_h * 22)) {
+                                                    next_hover = 340 + ((my6 - unst_base_y) / 22)
+                                                }
                                             }
                                         }
                                     }
+                                } else if (active_activity == 4) {
+                                    if (mx6 >= 58 && mx6 <= 258 && my6 >= 74 && my6 <= 98) {
+                                        next_hover = 450
+                                    } else if (my6 >= 128 && my6 < 128 + (7 * 54)) {
+                                        next_hover = 400 + ((my6 - 128) / 54)
+                                    }
                                 }
-                            } else if (active_activity == 4) {
-                                if (mx6 >= 58 && mx6 <= 258 && my6 >= 74 && my6 <= 98) {
-                                    next_hover = 450
-                                } else if (my6 >= 128 && my6 < 128 + (7 * 54)) {
-                                    next_hover = 400 + ((my6 - 128) / 54)
+                            } else if (ofs_array_len(open_tabs) == 0 && my6 >= 35 && my6 < panel_y6 && mx6 >= 268) {
+                                if (my6 >= 142 && my6 <= 172) {
+                                    if (mx6 >= 300 && mx6 <= 405) { next_hover = 210 }
+                                    else if (mx6 >= 415 && mx6 <= 540) { next_hover = 211 }
+                                    else if (mx6 >= 550 && mx6 <= 725) { next_hover = 212 }
+                                    else if (mx6 >= 735 && mx6 <= 905) { next_hover = 213 }
                                 }
+                            } else if (my6 >= 35 && my6 < 70) {
+                                forge n_tabs_h = ofs_array_len(open_tabs)
+                                forge thi = 0
+                                forge hx = 268
+                                while (thi < n_tabs_h) {
+                                    if (mx6 >= hx && mx6 < hx + 140) { next_hover = 50 + thi }
+                                    hx = hx + 140
+                                    thi++
+                                }
+                                if (mx6 >= win_w - 136 && mx6 < win_w - 50) { next_hover = 55 }
+                                else if (mx6 >= win_w - 42 && mx6 < win_w - 8) { next_hover = 56 }
+                            } else if (my6 >= panel_y6 && my6 < panel_y6 + 30) {
+                                if (mx6 >= 274 && mx6 < 360) { next_hover = 60 }
+                                else if (mx6 >= 364 && mx6 < 490) { next_hover = 61 }
+                                else if (mx6 >= 494 && mx6 < 556) { next_hover = 62 }
+                                else if (mx6 >= 560 && mx6 < 674) { next_hover = 63 }
+                            } else if (my6 >= statusbar_y6) {
+                                if (mx6 >= 8 && mx6 <= 120) { next_hover = 70 }
                             }
-                        } else if (ofs_array_len(open_tabs) == 0 && my6 >= 35 && my6 < panel_y6 && mx6 >= 268) {
-                            if (my6 >= 142 && my6 <= 172) {
-                                if (mx6 >= 300 && mx6 <= 405) { next_hover = 210 }
-                                else if (mx6 >= 415 && mx6 <= 540) { next_hover = 211 }
-                                else if (mx6 >= 550 && mx6 <= 725) { next_hover = 212 }
-                                else if (mx6 >= 735 && mx6 <= 905) { next_hover = 213 }
-                            }
-                        } else if (my6 >= 35 && my6 < 70) {
-                            forge n_tabs_h = ofs_array_len(open_tabs)
-                            forge thi = 0
-                            forge hx = 268
-                            while (thi < n_tabs_h) {
-                                if (mx6 >= hx && mx6 < hx + 140) { next_hover = 50 + thi }
-                                hx = hx + 140
-                                thi++
-                            }
-                            if (mx6 >= win_w - 136 && mx6 < win_w - 50) { next_hover = 55 }
-                            else if (mx6 >= win_w - 42 && mx6 < win_w - 8) { next_hover = 56 }
-                        } else if (my6 >= panel_y6 && my6 < panel_y6 + 30) {
-                            if (mx6 >= 274 && mx6 < 360) { next_hover = 60 }
-                            else if (mx6 >= 364 && mx6 < 490) { next_hover = 61 }
-                            else if (mx6 >= 494 && mx6 < 556) { next_hover = 62 }
-                            else if (mx6 >= 560 && mx6 < 674) { next_hover = 63 }
-                        } else if (my6 >= statusbar_y6) {
-                            if (mx6 >= 8 && mx6 <= 120) { next_hover = 70 }
-                        }
 
-                        if (next_hover != hover_elem) {
-                            hover_elem = next_hover
-                            needs_redraw = 1
-                        }
-                    }
-                } else if (ev_type == 4) {
-                    forge p_xy: *stone = fault_step(event_buf, 8)
-                    forge raw_xy: stone = 0
-                    fracture {
-                        raw_xy = *p_xy
-                    }
-                    forge mx = raw_xy % 65536
-                    forge my = (raw_xy / 4294967296) % 65536
-
-                    forge statusbar_y4 = win_h - 24
-                    forge panel_h4 = 220
-                    if (win_h < 650) { panel_h4 = 160 }
-                    forge panel_y4 = statusbar_y4 - panel_h4
-
-                    if (folder_picker_open > 0) {
-                        forge fp_w4 = 640
-                        forge fp_h4 = 260
-                        forge fp_x4 = (win_w - fp_w4) / 2
-                        forge fp_y4 = (win_h - fp_h4) / 2
-                        if (mx >= fp_x4 + fp_w4 - 34 && mx <= fp_x4 + fp_w4 - 8 && my >= fp_y4 + 6 && my <= fp_y4 + 32) {
-                            folder_picker_open = 0
-                            needs_redraw = 1
-                        } else if (mx >= fp_x4 + fp_w4 - 240 && mx <= fp_x4 + fp_w4 - 130 && my >= fp_y4 + fp_h4 - 50 && my <= fp_y4 + fp_h4 - 18) {
-                            workspace_folder = folder_picker_input
-                            workspace_files = scan_workspace_files(workspace_folder)
-                            git_is_repo = git_is_repository(workspace_folder)
-                            if (git_is_repo == 1) {
-                                git_branch = git_get_branch_name(workspace_folder)
-                                git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                            if (next_hover != hover_elem) {
+                                hover_elem = next_hover
+                                needs_redraw = 1
                             }
-                            folder_picker_open = 0
-                            needs_redraw = 1
-                        } else if (mx >= fp_x4 + fp_w4 - 118 && mx <= fp_x4 + fp_w4 - 24 && my >= fp_y4 + fp_h4 - 50 && my <= fp_y4 + fp_h4 - 18) {
-                            folder_picker_open = 0
-                            needs_redraw = 1
                         }
-                    } else if (palette_open > 0) {
-                        forge pp_w4 = 620
-                        forge pp_x4 = (win_w - pp_w4) / 2
-                        if (mx >= pp_x4 && mx <= pp_x4 + pp_w4 && my >= 99 && my <= 99 + (8 * 26)) {
-                            forge sel_cmd = (my - 99) / 26
-                            if (sel_cmd == 0 || sel_cmd == 1) {
-                                active_panel_tab = 0
-                                if (is_dirty == 1) {
+                    } else if (ev_type == 4) {
+                        forge p_xy: *stone = fault_step(event_buf, 8)
+                        forge raw_xy: stone = 0
+                        fracture {
+                            raw_xy = *p_xy
+                        }
+                        forge mx = raw_xy % 65536
+                        forge my = (raw_xy / 4294967296) % 65536
+
+                        forge statusbar_y4 = win_h - 24
+                        forge panel_h4 = 220
+                        if (win_h < 650) { panel_h4 = 160 }
+                        forge panel_y4 = statusbar_y4 - panel_h4
+
+                        if (folder_picker_open > 0) {
+                            forge fp_w4 = 640
+                            forge fp_h4 = 260
+                            forge fp_x4 = (win_w - fp_w4) / 2
+                            forge fp_y4 = (win_h - fp_h4) / 2
+                            if (mx >= fp_x4 + fp_w4 - 34 && mx <= fp_x4 + fp_w4 - 8 && my >= fp_y4 + 6 && my <= fp_y4 + 32) {
+                                folder_picker_open = 0
+                                needs_redraw = 1
+                            } else if (mx >= fp_x4 + fp_w4 - 240 && mx <= fp_x4 + fp_w4 - 130 && my >= fp_y4 + fp_h4 - 50 && my <= fp_y4 + fp_h4 - 18) {
+                                workspace_folder = folder_picker_input
+                                workspace_files = scan_workspace_files(workspace_folder)
+                                git_is_repo = git_is_repository(workspace_folder)
+                                if (git_is_repo == 1) {
+                                    git_branch = git_get_branch_name(workspace_folder)
+                                    git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                }
+                                folder_picker_open = 0
+                                needs_redraw = 1
+                            } else if (mx >= fp_x4 + fp_w4 - 118 && mx <= fp_x4 + fp_w4 - 24 && my >= fp_y4 + fp_h4 - 50 && my <= fp_y4 + fp_h4 - 18) {
+                                folder_picker_open = 0
+                                needs_redraw = 1
+                            }
+                        } else if (palette_open > 0) {
+                            forge pp_w4 = 620
+                            forge pp_x4 = (win_w - pp_w4) / 2
+                            if (mx >= pp_x4 && mx <= pp_x4 + pp_w4 && my >= 99 && my <= 99 + (8 * 26)) {
+                                forge sel_cmd = (my - 99) / 26
+                                if (sel_cmd == 0 || sel_cmd == 1) {
+                                    active_panel_tab = 0
+                                    if (is_dirty == 1) {
+                                        save_lines_to_file(active_file_path, editor_lines)
+                                        is_dirty = 0
+                                    }
+                                    forge ofs_bin_c = resolve_ofs_binary()
+                                    forge real_p_c = resolve_path(active_file_path)
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_c)
+                                    forge ret_c = system(ofs_bin_c + " build " + real_p_c + " > /tmp/ofs_idle_build.log 2>&1")
+                                    forge log_lines_c = read_file_to_lines("/tmp/ofs_idle_build.log")
+                                    forge l_len_c = ofs_array_len(log_lines_c)
+                                    forge li_c = 0
+                                    while (li_c < l_len_c) {
+                                        forge ll_c: obsidian = ofs_array_get(log_lines_c, li_c)
+                                        if (ofs_str_len(ll_c) > 0) { ofs_array_push(terminal_lines, ll_c) }
+                                        li_c++
+                                    }
+                                    if (ret_c == 0) {
+                                        ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                        lsp_err_count = 0
+                                    } else {
+                                        ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_c) + ").")
+                                        lsp_err_count = 1
+                                    }
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                } else if (sel_cmd == 2) {
+                                    active_panel_tab = 1
+                                } else if (sel_cmd == 3) {
+                                    active_panel_tab = 2
+                                } else if (sel_cmd == 4) {
+                                    active_theme_id = (active_theme_id + 1) % 4
+                                } else if (sel_cmd == 5) {
                                     save_lines_to_file(active_file_path, editor_lines)
                                     is_dirty = 0
-                                }
-                                forge ofs_bin_c = resolve_ofs_binary()
-                                forge real_p_c = resolve_path(active_file_path)
-                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_c)
-                                forge ret_c = system(ofs_bin_c + " build " + real_p_c + " > /tmp/ofs_idle_build.log 2>&1")
-                                forge log_lines_c = read_file_to_lines("/tmp/ofs_idle_build.log")
-                                forge l_len_c = ofs_array_len(log_lines_c)
-                                forge li_c = 0
-                                while (li_c < l_len_c) {
-                                    forge ll_c: obsidian = ofs_array_get(log_lines_c, li_c)
-                                    if (ofs_str_len(ll_c) > 0) { ofs_array_push(terminal_lines, ll_c) }
-                                    li_c++
-                                }
-                                if (ret_c == 0) {
-                                    ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
-                                    lsp_err_count = 0
-                                } else {
-                                    ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_c) + ").")
-                                    lsp_err_count = 1
-                                }
-                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
-                            } else if (sel_cmd == 2) {
-                                active_panel_tab = 1
-                            } else if (sel_cmd == 3) {
-                                active_panel_tab = 2
-                            } else if (sel_cmd == 4) {
-                                active_theme_id = (active_theme_id + 1) % 4
-                            } else if (sel_cmd == 5) {
-                                save_lines_to_file(active_file_path, editor_lines)
-                                is_dirty = 0
-                                echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
-                            } else if (sel_cmd == 6) {
-                                ofs_array_push(open_tabs, "sem_titulo.ofs")
-                                ofs_array_push(open_paths, "sem_titulo.ofs")
-                                active_tab_idx = ofs_array_len(open_tabs) - 1
-                                active_file_name = "sem_titulo.ofs"
-                                active_file_path = "sem_titulo.ofs"
-                                editor_lines = [""]
-                                cursor_row = 0
-                                cursor_col = 0
-                                scroll_top = 0
-                                is_dirty = 0
-                            } else if (sel_cmd == 7) {
-                                terminal_lines = []
-                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
-                            }
-                        }
-                        palette_open = 0
-                        needs_redraw = 1
-                    } else if (modal_open > 0) {
-                        forge mw4 = 760
-                        forge mh4 = 490
-                        forge mx4 = (win_w - mw4) / 2
-                        forge my4 = (win_h - mh4) / 2
-
-                        if (mx >= mx4 + mw4 - 34 && mx <= mx4 + mw4 - 6 && my >= my4 + 5 && my <= my4 + 33) {
-                            modal_open = 0
-                        } else if (mx >= mx4 + mw4 - 110 && mx <= mx4 + mw4 - 15 && my >= my4 + mh4 - 40 && my <= my4 + mh4 - 12) {
-                            modal_open = 0
-                        } else if (mx >= mx4 + mw4 - 225 && mx <= mx4 + mw4 - 120 && my >= my4 + mh4 - 40 && my <= my4 + mh4 - 12) {
-                            echo("[OFS IDLE] Preferencias salvas com sucesso!")
-                            modal_open = 0
-                        } else if (mx >= mx4 && mx <= mx4 + 190 && my >= my4 + 39 && my <= my4 + mh4 - 48) {
-                            forge clicked_tab = (my - (my4 + 48)) / 38
-                            if (clicked_tab >= 0 && clicked_tab <= 3) {
-                                modal_tab = clicked_tab
-                            }
-                        } else if (modal_tab == 0) {
-                            forge cx0 = mx4 + 190 + 24
-                            forge cy0 = my4 + 54
-                            if (mx >= cx0 && mx <= cx0 + 380 && my >= cy0 + 35 && my <= cy0 + 65) {
-                                if (modal_autosave == 1) { modal_autosave = 0 }
-                                else { modal_autosave = 1 }
-                            }
-                        } else if (modal_tab == 1) {
-                            forge cx1 = mx4 + 190 + 24
-                            forge cy1 = my4 + 54
-                            if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 40 && my <= cy1 + 68) {
-                                modal_theme = 0
-                                active_theme_id = 0
-                            } else if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 74 && my <= cy1 + 102) {
-                                modal_theme = 1
-                                active_theme_id = 1
-                            } else if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 108 && my <= cy1 + 136) {
-                                modal_theme = 2
-                                active_theme_id = 2
-                            } else if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 142 && my <= cy1 + 170) {
-                                modal_theme = 3
-                                active_theme_id = 3
-                            } else if (mx >= cx1 + 220 && mx <= cx1 + 252 && my >= cy1 + 176 && my <= cy1 + 200) {
-                                if (modal_font_size > 10) { modal_font_size-- }
-                            } else if (mx >= cx1 + 260 && mx <= cx1 + 292 && my >= cy1 + 176 && my <= cy1 + 200) {
-                                if (modal_font_size < 32) { modal_font_size++ }
-                            }
-                        } else if (modal_tab == 2) {
-                            forge cx2 = mx4 + 190 + 24
-                            forge cy2 = my4 + 54
-                            if (mx >= cx2 && mx <= cx2 + 380 && my >= cy2 + 35 && my <= cy2 + 65) {
-                                if (modal_lsp == 1) { modal_lsp = 0 }
-                                else { modal_lsp = 1 }
-                            }
-                        }
-                        needs_redraw = 1
-                    } else if (menu_open > 0) {
-                        forge m_mx4 = 38
-                        forge m_cnt4 = 6
-                        if (menu_open == 1) { m_mx4 = 38; m_cnt4 = 6 }
-                        else if (menu_open == 2) { m_mx4 = 98; m_cnt4 = 6 }
-                        else if (menu_open == 3) { m_mx4 = 148; m_cnt4 = 4 }
-                        else if (menu_open == 4) { m_mx4 = 208; m_cnt4 = 6 }
-                        else if (menu_open == 5) { m_mx4 = 256; m_cnt4 = 4 }
-                        else if (menu_open == 6) { m_mx4 = 280; m_cnt4 = 4 }
-                        else if (menu_open == 7) { m_mx4 = 346; m_cnt4 = 4 }
-                        else if (menu_open == 8) { m_mx4 = 408; m_cnt4 = 5 }
-
-                        if (mx >= m_mx4 && mx <= m_mx4 + 240 && my >= 35 && my <= 35 + (m_cnt4 * 29)) {
-                            forge itm = (my - 38) / 29
-                            if (menu_open == 1) {
-                                if (itm == 0) {
+                                    echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
+                                } else if (sel_cmd == 6) {
                                     ofs_array_push(open_tabs, "sem_titulo.ofs")
                                     ofs_array_push(open_paths, "sem_titulo.ofs")
                                     active_tab_idx = ofs_array_len(open_tabs) - 1
@@ -2637,118 +2559,401 @@ namespace oll_x11 {
                                     cursor_col = 0
                                     scroll_top = 0
                                     is_dirty = 0
-                                } else if (itm == 1) {
-                                    palette_open = 1
-                                    palette_sel = 0
-                                    palette_query = ""
-                                } else if (itm == 2) {
-                                    folder_picker_open = 1
-                                    folder_picker_input = "."
-                                    menu_open = 0
-                                    needs_redraw = 1
-                                } else if (itm == 3) {
-                                    save_lines_to_file(active_file_path, editor_lines)
-                                    is_dirty = 0
-                                    echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
-                                } else if (itm == 4) {
-                                    modal_open = 1
-                                } else if (itm == 5) {
-                                    running = 0
-                                }
-                            } else if (menu_open == 2) {
-                                if (itm == 5) { active_activity = 1 }
-                            } else if (menu_open == 4) {
-                                if (itm >= 0 && itm <= 4) { active_activity = itm }
-                                else if (itm == 5) { active_panel_tab = 0 }
-                            } else if (menu_open == 5) {
-                                if (itm == 0) { palette_open = 1; palette_sel = 0; palette_query = "" }
-                            } else if (menu_open == 6) {
-                                if (itm == 0 || itm == 1) {
-                                    active_panel_tab = 0
-                                    if (is_dirty == 1) {
-                                        save_lines_to_file(active_file_path, editor_lines)
-                                        is_dirty = 0
-                                    }
-                                    forge ofs_b0 = resolve_ofs_binary()
-                                    forge real_p0 = resolve_path(active_file_path)
-                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p0)
-                                    forge ret0 = system(ofs_b0 + " build " + real_p0 + " > /tmp/ofs_idle_build.log 2>&1")
-                                    forge log_lines0 = read_file_to_lines("/tmp/ofs_idle_build.log")
-                                    forge l_len0 = ofs_array_len(log_lines0)
-                                    forge li0 = 0
-                                    while (li0 < l_len0) {
-                                        forge ll0: obsidian = ofs_array_get(log_lines0, li0)
-                                        if (ofs_str_len(ll0) > 0) { ofs_array_push(terminal_lines, ll0) }
-                                        li0++
-                                    }
-                                    if (ret0 == 0) {
-                                        ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
-                                        lsp_err_count = 0
-                                    } else {
-                                        ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret0) + ").")
-                                        lsp_err_count = 1
-                                    }
-                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
-                                }
-                            } else if (menu_open == 7) {
-                                if (itm == 3) {
+                                } else if (sel_cmd == 7) {
                                     terminal_lines = []
                                     ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
                                 }
                             }
-                        }
-                        menu_open = 0
-                        needs_redraw = 1
-                    } else {
-                        if (my < 35) {
-                            forge search_w4 = 480
-                            forge search_x4 = (win_w - search_w4) / 2
-                            if (search_x4 < 470) { search_x4 = 470 }
-                            if (mx >= search_x4 && mx <= search_x4 + search_w4) {
-                                palette_open = 1
-                                palette_sel = 0
-                                palette_query = ""
-                            } else if (mx >= 42 && mx < 98) { menu_open = 1; menu_hover = -1 }
-                            else if (mx >= 98 && mx < 148) { menu_open = 2; menu_hover = -1 }
-                            else if (mx >= 148 && mx < 208) { menu_open = 3; menu_hover = -1 }
-                            else if (mx >= 208 && mx < 256) { menu_open = 4; menu_hover = -1 }
-                            else if (mx >= 256 && mx < 280) { menu_open = 5; menu_hover = -1 }
-                            else if (mx >= 280 && mx < 346) { menu_open = 6; menu_hover = -1 }
-                            else if (mx >= 346 && mx < 408) { menu_open = 7; menu_hover = -1 }
-                            else if (mx >= 408 && mx < 456) { menu_open = 8; menu_hover = -1 }
-                        } else if (mx < 48) {
-                            if (my >= 44 && my < 82) { active_activity = 0 }
-                            else if (my >= 90 && my < 128) { active_activity = 1 }
-                            else if (my >= 136 && my < 174) { active_activity = 2 }
-                            else if (my >= 182 && my < 220) { active_activity = 3 }
-                            else if (my >= 228 && my < 266) { active_activity = 4 }
-                            else if (my >= statusbar_y4 - 48 && my <= statusbar_y4) {
-                                modal_open = 1
-                                active_activity = 5
+                            palette_open = 0
+                            needs_redraw = 1
+                        } else if (modal_open > 0) {
+                            forge mw4 = 760
+                            forge mh4 = 490
+                            forge mx4 = (win_w - mw4) / 2
+                            forge my4 = (win_h - mh4) / 2
+
+                            if (mx >= mx4 + mw4 - 34 && mx <= mx4 + mw4 - 6 && my >= my4 + 5 && my <= my4 + 33) {
+                                modal_open = 0
+                            } else if (mx >= mx4 + mw4 - 110 && mx <= mx4 + mw4 - 15 && my >= my4 + mh4 - 40 && my <= my4 + mh4 - 12) {
+                                modal_open = 0
+                            } else if (mx >= mx4 + mw4 - 225 && mx <= mx4 + mw4 - 120 && my >= my4 + mh4 - 40 && my <= my4 + mh4 - 12) {
+                                echo("[OFS IDLE] Preferencias salvas com sucesso!")
+                                modal_open = 0
+                            } else if (mx >= mx4 && mx <= mx4 + 190 && my >= my4 + 39 && my <= my4 + mh4 - 48) {
+                                forge clicked_tab = (my - (my4 + 48)) / 38
+                                if (clicked_tab >= 0 && clicked_tab <= 3) {
+                                    modal_tab = clicked_tab
+                                }
+                            } else if (modal_tab == 0) {
+                                forge cx0 = mx4 + 190 + 24
+                                forge cy0 = my4 + 54
+                                if (mx >= cx0 && mx <= cx0 + 380 && my >= cy0 + 35 && my <= cy0 + 65) {
+                                    if (modal_autosave == 1) { modal_autosave = 0 }
+                                    else { modal_autosave = 1 }
+                                }
+                            } else if (modal_tab == 1) {
+                                forge cx1 = mx4 + 190 + 24
+                                forge cy1 = my4 + 54
+                                if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 40 && my <= cy1 + 68) {
+                                    modal_theme = 0
+                                    active_theme_id = 0
+                                } else if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 74 && my <= cy1 + 102) {
+                                    modal_theme = 1
+                                    active_theme_id = 1
+                                } else if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 108 && my <= cy1 + 136) {
+                                    modal_theme = 2
+                                    active_theme_id = 2
+                                } else if (mx >= cx1 && mx <= cx1 + 360 && my >= cy1 + 142 && my <= cy1 + 170) {
+                                    modal_theme = 3
+                                    active_theme_id = 3
+                                } else if (mx >= cx1 + 220 && mx <= cx1 + 252 && my >= cy1 + 176 && my <= cy1 + 200) {
+                                    if (modal_font_size > 10) { modal_font_size-- }
+                                } else if (mx >= cx1 + 260 && mx <= cx1 + 292 && my >= cy1 + 176 && my <= cy1 + 200) {
+                                    if (modal_font_size < 32) { modal_font_size++ }
+                                }
+                            } else if (modal_tab == 2) {
+                                forge cx2 = mx4 + 190 + 24
+                                forge cy2 = my4 + 54
+                                if (mx >= cx2 && mx <= cx2 + 380 && my >= cy2 + 35 && my <= cy2 + 65) {
+                                    if (modal_lsp == 1) { modal_lsp = 0 }
+                                    else { modal_lsp = 1 }
+                                }
                             }
-                        } else if (mx < 268) {
-                            if (active_activity == 0) {
-                                if (ofs_str_len(workspace_folder) == 0) {
-                                    if (mx >= 60 && mx <= 256 && my >= 168 && my <= 200) {
+                            needs_redraw = 1
+                        } else if (menu_open > 0) {
+                            forge m_mx4 = 38
+                            forge m_cnt4 = 6
+                            if (menu_open == 1) { m_mx4 = 38; m_cnt4 = 6 }
+                            else if (menu_open == 2) { m_mx4 = 98; m_cnt4 = 6 }
+                            else if (menu_open == 3) { m_mx4 = 148; m_cnt4 = 4 }
+                            else if (menu_open == 4) { m_mx4 = 208; m_cnt4 = 6 }
+                            else if (menu_open == 5) { m_mx4 = 256; m_cnt4 = 4 }
+                            else if (menu_open == 6) { m_mx4 = 280; m_cnt4 = 4 }
+                            else if (menu_open == 7) { m_mx4 = 346; m_cnt4 = 4 }
+                            else if (menu_open == 8) { m_mx4 = 408; m_cnt4 = 5 }
+
+                            if (mx >= m_mx4 && mx <= m_mx4 + 240 && my >= 35 && my <= 35 + (m_cnt4 * 29)) {
+                                forge itm = (my - 38) / 29
+                                if (menu_open == 1) {
+                                    if (itm == 0) {
+                                        ofs_array_push(open_tabs, "sem_titulo.ofs")
+                                        ofs_array_push(open_paths, "sem_titulo.ofs")
+                                        active_tab_idx = ofs_array_len(open_tabs) - 1
+                                        active_file_name = "sem_titulo.ofs"
+                                        active_file_path = "sem_titulo.ofs"
+                                        editor_lines = [""]
+                                        cursor_row = 0
+                                        cursor_col = 0
+                                        scroll_top = 0
+                                        is_dirty = 0
+                                    } else if (itm == 1) {
+                                        palette_open = 1
+                                        palette_sel = 0
+                                        palette_query = ""
+                                    } else if (itm == 2) {
                                         folder_picker_open = 1
                                         folder_picker_input = "."
+                                        menu_open = 0
                                         needs_redraw = 1
+                                    } else if (itm == 3) {
+                                        save_lines_to_file(active_file_path, editor_lines)
+                                        is_dirty = 0
+                                        echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
+                                    } else if (itm == 4) {
+                                        modal_open = 1
+                                    } else if (itm == 5) {
+                                        running = 0
                                     }
-                                } else {
-                                    forge ot_n4 = ofs_array_len(open_tabs)
-                                    if (my >= 94 && my < 94 + (ot_n4 * 20)) {
-                                        forge sel_tab_i = (my - 94) / 20
-                                        if (mx >= 242 && mx <= 260) {
-                                            array_remove_at(open_tabs, sel_tab_i)
-                                            array_remove_at(open_paths, sel_tab_i)
-                                            forge rem_len = ofs_array_len(open_tabs)
-                                            if (rem_len == 0) {
+                                } else if (menu_open == 2) {
+                                    if (itm == 5) { active_activity = 1 }
+                                } else if (menu_open == 4) {
+                                    if (itm >= 0 && itm <= 4) { active_activity = itm }
+                                    else if (itm == 5) { active_panel_tab = 0 }
+                                } else if (menu_open == 5) {
+                                    if (itm == 0) { palette_open = 1; palette_sel = 0; palette_query = "" }
+                                } else if (menu_open == 6) {
+                                    if (itm == 0 || itm == 1) {
+                                        active_panel_tab = 0
+                                        if (is_dirty == 1) {
+                                            save_lines_to_file(active_file_path, editor_lines)
+                                            is_dirty = 0
+                                        }
+                                        forge ofs_b0 = resolve_ofs_binary()
+                                        forge real_p0 = resolve_path(active_file_path)
+                                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p0)
+                                        forge ret0 = system(ofs_b0 + " build " + real_p0 + " > /tmp/ofs_idle_build.log 2>&1")
+                                        forge log_lines0 = read_file_to_lines("/tmp/ofs_idle_build.log")
+                                        forge l_len0 = ofs_array_len(log_lines0)
+                                        forge li0 = 0
+                                        while (li0 < l_len0) {
+                                            forge ll0: obsidian = ofs_array_get(log_lines0, li0)
+                                            if (ofs_str_len(ll0) > 0) { ofs_array_push(terminal_lines, ll0) }
+                                            li0++
+                                        }
+                                        if (ret0 == 0) {
+                                            ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                            lsp_err_count = 0
+                                        } else {
+                                            ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret0) + ").")
+                                            lsp_err_count = 1
+                                        }
+                                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                    }
+                                } else if (menu_open == 7) {
+                                    if (itm == 3) {
+                                        terminal_lines = []
+                                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                    }
+                                }
+                            }
+                            menu_open = 0
+                            needs_redraw = 1
+                        } else {
+                            if (my < 35) {
+                                forge search_w4 = 480
+                                forge search_x4 = (win_w - search_w4) / 2
+                                if (search_x4 < 470) { search_x4 = 470 }
+                                if (mx >= search_x4 && mx <= search_x4 + search_w4) {
+                                    palette_open = 1
+                                    palette_sel = 0
+                                    palette_query = ""
+                                } else if (mx >= 42 && mx < 98) { menu_open = 1; menu_hover = -1 }
+                                else if (mx >= 98 && mx < 148) { menu_open = 2; menu_hover = -1 }
+                                else if (mx >= 148 && mx < 208) { menu_open = 3; menu_hover = -1 }
+                                else if (mx >= 208 && mx < 256) { menu_open = 4; menu_hover = -1 }
+                                else if (mx >= 256 && mx < 280) { menu_open = 5; menu_hover = -1 }
+                                else if (mx >= 280 && mx < 346) { menu_open = 6; menu_hover = -1 }
+                                else if (mx >= 346 && mx < 408) { menu_open = 7; menu_hover = -1 }
+                                else if (mx >= 408 && mx < 456) { menu_open = 8; menu_hover = -1 }
+                            } else if (mx < 48) {
+                                if (my >= 44 && my < 82) { active_activity = 0 }
+                                else if (my >= 90 && my < 128) { active_activity = 1 }
+                                else if (my >= 136 && my < 174) { active_activity = 2 }
+                                else if (my >= 182 && my < 220) { active_activity = 3 }
+                                else if (my >= 228 && my < 266) { active_activity = 4 }
+                                else if (my >= statusbar_y4 - 48 && my <= statusbar_y4) {
+                                    modal_open = 1
+                                    active_activity = 5
+                                }
+                            } else if (mx < 268) {
+                                if (active_activity == 0) {
+                                    if (ofs_str_len(workspace_folder) == 0) {
+                                        if (mx >= 60 && mx <= 256 && my >= 168 && my <= 200) {
+                                            folder_picker_open = 1
+                                            folder_picker_input = "."
+                                            needs_redraw = 1
+                                        }
+                                    } else {
+                                        forge ot_n4 = ofs_array_len(open_tabs)
+                                        if (my >= 94 && my < 94 + (ot_n4 * 20)) {
+                                            forge sel_tab_i = (my - 94) / 20
+                                            if (mx >= 242 && mx <= 260) {
+                                                array_remove_at(open_tabs, sel_tab_i)
+                                                array_remove_at(open_paths, sel_tab_i)
+                                                forge rem_len = ofs_array_len(open_tabs)
+                                                if (rem_len == 0) {
+                                                    active_tab_idx = -1
+                                                    active_file_name = ""
+                                                    active_file_path = ""
+                                                    editor_lines = []
+                                                } else {
+                                                    if (active_tab_idx >= rem_len) { active_tab_idx = rem_len - 1 }
+                                                    active_file_path = ofs_array_get(open_paths, active_tab_idx)
+                                                    active_file_name = ofs_array_get(open_tabs, active_tab_idx)
+                                                    editor_lines = read_file_to_lines(active_file_path)
+                                                }
+                                                cursor_row = 0
+                                                cursor_col = 0
+                                                scroll_top = 0
+                                                is_dirty = 0
+                                            } else {
+                                                active_tab_idx = sel_tab_i
+                                                active_file_path = ofs_array_get(open_paths, active_tab_idx)
+                                                active_file_name = ofs_array_get(open_tabs, active_tab_idx)
+                                                editor_lines = read_file_to_lines(active_file_path)
+                                                cursor_row = 0
+                                                cursor_col = 0
+                                                scroll_top = 0
+                                                is_dirty = 0
+                                            }
+                                        } else {
+                                            forge ws_top4 = 98 + (ot_n4 * 20) + 16
+                                            if (my >= ws_top4 && my < statusbar_y4) {
+                                                forge sel_idx = (my - ws_top4) / 22
+                                                forge total_wf = ofs_array_len(workspace_files)
+                                                if (sel_idx >= 0 && sel_idx < total_wf) {
+                                                    forge sel_p: obsidian = ofs_array_get(workspace_files, sel_idx)
+                                                    active_file_path = resolve_path(sel_p)
+                                                    active_file_name = get_filename_from_path(sel_p)
+                                                    editor_lines = read_file_to_lines(active_file_path)
+
+                                                    forge found_t = -1
+                                                    forge fti = 0
+                                                    forge total_op = ofs_array_len(open_paths)
+                                                    while (fti < total_op) {
+                                                        forge opt: obsidian = ofs_array_get(open_paths, fti)
+                                                        if (ofs_str_eq(opt, active_file_path)) {
+                                                            found_t = fti
+                                                        }
+                                                        fti++
+                                                    }
+
+                                                    if (found_t >= 0) {
+                                                        active_tab_idx = found_t
+                                                    } else {
+                                                        if (ofs_array_len(open_tabs) >= 5) {
+                                                            ofs_array_set(open_tabs, 4, active_file_name)
+                                                            ofs_array_set(open_paths, 4, active_file_path)
+                                                            active_tab_idx = 4
+                                                        } else {
+                                                            ofs_array_push(open_tabs, active_file_name)
+                                                            ofs_array_push(open_paths, active_file_path)
+                                                            active_tab_idx = ofs_array_len(open_tabs) - 1
+                                                        }
+                                                    }
+
+                                                    cursor_row = 0
+                                                    cursor_col = 0
+                                                    scroll_top = 0
+                                                    is_dirty = 0
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else if (active_activity == 2) {
+                                    if (mx >= 222 && mx <= 242 && my >= 40 && my <= 60) {
+                                        git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                        git_branch = git_get_branch_name(workspace_folder)
+                                    } else if (mx >= 244 && mx <= 264 && my >= 40 && my <= 60) {
+                                        if (ofs_str_len(git_commit_msg_buf) > 0) {
+                                            git_action_commit(workspace_folder, git_commit_msg_buf)
+                                            git_commit_msg_buf = ""
+                                            git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                        }
+                                    } else if (mx >= 58 && mx <= 258 && my >= 98 && my <= 146) {
+                                        focused_area = 2
+                                    } else if (mx >= 58 && mx <= 258 && my >= 154 && my <= 180) {
+                                        if (ofs_str_len(git_commit_msg_buf) > 0) {
+                                            git_action_commit(workspace_folder, git_commit_msg_buf)
+                                            git_commit_msg_buf = ""
+                                            git_action_push(workspace_folder)
+                                            git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                        }
+                                    } else if (mx >= 240 && mx <= 264 && my >= 194 && my <= 212) {
+                                        git_action_unstage_all(workspace_folder)
+                                        git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                    } else {
+                                        forge num_st = ofs_array_len(git_staged_files)
+                                        forge s_by = 216
+                                        if (my >= s_by && my < s_by + (num_st * 22)) {
+                                            forge c_s_idx = (my - s_by) / 22
+                                            if (c_s_idx < num_st) {
+                                                forge s_file: obsidian = ofs_array_get(git_staged_files, c_s_idx)
+                                                if (mx >= 240) {
+                                                    git_action_unstage(workspace_folder, s_file)
+                                                    git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                                } else {
+                                                    active_file_path = resolve_path(s_file)
+                                                    active_file_name = get_filename_from_path(s_file)
+                                                    editor_lines = read_file_to_lines(active_file_path)
+                                                    cursor_row = 0
+                                                    cursor_col = 0
+                                                    is_dirty = 0
+                                                }
+                                            }
+                                        } else {
+                                            forge unst_by = s_by + (num_st * 22) + 22
+                                            if (mx >= 240 && mx <= 264 && my >= unst_by - 20 && my <= unst_by) {
+                                                git_action_stage_all(workspace_folder)
+                                                git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                            } else {
+                                                forge num_unst = ofs_array_len(git_unstaged_files)
+                                                if (my >= unst_by && my < unst_by + (num_unst * 22)) {
+                                                    forge c_u_idx = (my - unst_by) / 22
+                                                    if (c_u_idx < num_unst) {
+                                                        forge u_file: obsidian = ofs_array_get(git_unstaged_files, c_u_idx)
+                                                        if (mx >= 246) {
+                                                            git_action_discard(workspace_folder, u_file)
+                                                            git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                                        } else if (mx >= 230) {
+                                                            git_action_stage(workspace_folder, u_file)
+                                                            git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                                        } else {
+                                                            active_file_path = resolve_path(u_file)
+                                                            active_file_name = get_filename_from_path(u_file)
+                                                            editor_lines = read_file_to_lines(active_file_path)
+                                                            cursor_row = 0
+                                                            cursor_col = 0
+                                                            is_dirty = 0
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else if (active_activity == 3) {
+                                    if (my >= 106 && my <= 134) {
+                                        active_panel_tab = 0
+                                        focused_area = 1
+                                        if (is_dirty == 1) {
+                                            save_lines_to_file(active_file_path, editor_lines)
+                                            is_dirty = 0
+                                        }
+                                        forge ofs_b_dbg = resolve_ofs_binary()
+                                        forge real_p_dbg = resolve_path(active_file_path)
+                                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_dbg)
+                                        forge ret_dbg = system(ofs_b_dbg + " build " + real_p_dbg + " > /tmp/ofs_idle_build.log 2>&1")
+                                        forge log_lines_dbg = read_file_to_lines("/tmp/ofs_idle_build.log")
+                                        forge l_len_dbg = ofs_array_len(log_lines_dbg)
+                                        forge li_dbg = 0
+                                        while (li_dbg < l_len_dbg) {
+                                            forge ll_dbg: obsidian = ofs_array_get(log_lines_dbg, li_dbg)
+                                            if (ofs_str_len(ll_dbg) > 0) { ofs_array_push(terminal_lines, ll_dbg) }
+                                            li_dbg++
+                                        }
+                                        if (ret_dbg == 0) {
+                                            ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                            lsp_err_count = 0
+                                        } else {
+                                            ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_dbg) + ").")
+                                            lsp_err_count = 1
+                                        }
+                                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                    }
+                                } else if (active_activity == 4) {
+                                    if (mx >= 58 && mx <= 258 && my >= 74 && my <= 98) {
+                                        focused_area = 3
+                                    } else if (my >= 128 && my < 128 + (7 * 54)) {
+                                        forge card_idx = (my - 128) / 54
+                                        if (mx >= 176 && mx <= 260) {
+                                            if (card_idx == 1) { active_theme_id = 0 }
+                                            else if (card_idx == 2) { active_theme_id = 1 }
+                                            else if (card_idx == 3) { active_theme_id = 2 }
+                                            else if (card_idx == 4) { active_theme_id = 3 }
+                                            else if (card_idx == 5) { active_theme_id = 4 }
+                                            else if (card_idx == 6) { active_theme_id = 5 }
+                                            modal_theme = active_theme_id
+                                        }
+                                    }
+                                }
+                            } else if (my >= 35 && my < 70) {
+                                forge total_ot = ofs_array_len(open_tabs)
+                                forge o_i = 0
+                                forge tab_x_cur = 268
+                                forge clicked_tab_hit = 0
+                                while (o_i < total_ot) {
+                                    if (mx >= tab_x_cur && mx < tab_x_cur + 140) {
+                                        if (mx >= tab_x_cur + 118) {
+                                            array_remove_at(open_tabs, o_i)
+                                            array_remove_at(open_paths, o_i)
+                                            forge rem_len_t = ofs_array_len(open_tabs)
+                                            if (rem_len_t == 0) {
                                                 active_tab_idx = -1
                                                 active_file_name = ""
                                                 active_file_path = ""
                                                 editor_lines = []
                                             } else {
-                                                if (active_tab_idx >= rem_len) { active_tab_idx = rem_len - 1 }
+                                                if (active_tab_idx >= rem_len_t) { active_tab_idx = rem_len_t - 1 }
                                                 active_file_path = ofs_array_get(open_paths, active_tab_idx)
                                                 active_file_name = ofs_array_get(open_tabs, active_tab_idx)
                                                 editor_lines = read_file_to_lines(active_file_path)
@@ -2758,829 +2963,634 @@ namespace oll_x11 {
                                             scroll_top = 0
                                             is_dirty = 0
                                         } else {
-                                            active_tab_idx = sel_tab_i
-                                            active_file_path = ofs_array_get(open_paths, active_tab_idx)
-                                            active_file_name = ofs_array_get(open_tabs, active_tab_idx)
+                                            active_tab_idx = o_i
+                                            active_file_path = ofs_array_get(open_paths, o_i)
+                                            active_file_name = ofs_array_get(open_tabs, o_i)
                                             editor_lines = read_file_to_lines(active_file_path)
                                             cursor_row = 0
                                             cursor_col = 0
                                             scroll_top = 0
                                             is_dirty = 0
                                         }
-                                    } else {
-                                        forge ws_top4 = 98 + (ot_n4 * 20) + 16
-                                        if (my >= ws_top4 && my < statusbar_y4) {
-                                            forge sel_idx = (my - ws_top4) / 22
-                                            forge total_wf = ofs_array_len(workspace_files)
-                                            if (sel_idx >= 0 && sel_idx < total_wf) {
-                                                forge sel_p: obsidian = ofs_array_get(workspace_files, sel_idx)
-                                                active_file_path = resolve_path(sel_p)
-                                                active_file_name = get_filename_from_path(sel_p)
-                                                editor_lines = read_file_to_lines(active_file_path)
+                                        clicked_tab_hit = 1
+                                    }
+                                    tab_x_cur = tab_x_cur + 140
+                                    o_i++
+                                }
 
-                                                forge found_t = -1
-                                                forge fti = 0
-                                                forge total_op = ofs_array_len(open_paths)
-                                                while (fti < total_op) {
-                                                    forge opt: obsidian = ofs_array_get(open_paths, fti)
-                                                    if (ofs_str_eq(opt, active_file_path)) {
-                                                        found_t = fti
-                                                    }
-                                                    fti++
-                                                }
-
-                                                if (found_t >= 0) {
-                                                    active_tab_idx = found_t
-                                                } else {
-                                                    if (ofs_array_len(open_tabs) >= 5) {
-                                                        ofs_array_set(open_tabs, 4, active_file_name)
-                                                        ofs_array_set(open_paths, 4, active_file_path)
-                                                        active_tab_idx = 4
-                                                    } else {
-                                                        ofs_array_push(open_tabs, active_file_name)
-                                                        ofs_array_push(open_paths, active_file_path)
-                                                        active_tab_idx = ofs_array_len(open_tabs) - 1
-                                                    }
-                                                }
-
-                                                cursor_row = 0
-                                                cursor_col = 0
-                                                scroll_top = 0
-                                                is_dirty = 0
-                                            }
-                                        }
-                                    }
-                                }
-                            } else if (active_activity == 2) {
-                                if (mx >= 222 && mx <= 242 && my >= 40 && my <= 60) {
-                                    git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-                                    git_branch = git_get_branch_name(workspace_folder)
-                                } else if (mx >= 244 && mx <= 264 && my >= 40 && my <= 60) {
-                                    if (ofs_str_len(git_commit_msg_buf) > 0) {
-                                        git_action_commit(workspace_folder, git_commit_msg_buf)
-                                        git_commit_msg_buf = ""
-                                        git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-                                    }
-                                } else if (mx >= 58 && mx <= 258 && my >= 98 && my <= 146) {
-                                    focused_area = 2
-                                } else if (mx >= 58 && mx <= 258 && my >= 154 && my <= 180) {
-                                    if (ofs_str_len(git_commit_msg_buf) > 0) {
-                                        git_action_commit(workspace_folder, git_commit_msg_buf)
-                                        git_commit_msg_buf = ""
-                                        git_action_push(workspace_folder)
-                                        git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-                                    }
-                                } else if (mx >= 240 && mx <= 264 && my >= 194 && my <= 212) {
-                                    git_action_unstage_all(workspace_folder)
-                                    git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-                                } else {
-                                    forge num_st = ofs_array_len(git_staged_files)
-                                    forge s_by = 216
-                                    if (my >= s_by && my < s_by + (num_st * 22)) {
-                                        forge c_s_idx = (my - s_by) / 22
-                                        if (c_s_idx < num_st) {
-                                            forge s_file: obsidian = ofs_array_get(git_staged_files, c_s_idx)
-                                            if (mx >= 240) {
-                                                git_action_unstage(workspace_folder, s_file)
-                                                git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-                                            } else {
-                                                active_file_path = resolve_path(s_file)
-                                                active_file_name = get_filename_from_path(s_file)
-                                                editor_lines = read_file_to_lines(active_file_path)
-                                                cursor_row = 0
-                                                cursor_col = 0
-                                                is_dirty = 0
-                                            }
-                                        }
-                                    } else {
-                                        forge unst_by = s_by + (num_st * 22) + 22
-                                        if (mx >= 240 && mx <= 264 && my >= unst_by - 20 && my <= unst_by) {
-                                            git_action_stage_all(workspace_folder)
-                                            git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-                                        } else {
-                                            forge num_unst = ofs_array_len(git_unstaged_files)
-                                            if (my >= unst_by && my < unst_by + (num_unst * 22)) {
-                                                forge c_u_idx = (my - unst_by) / 22
-                                                if (c_u_idx < num_unst) {
-                                                    forge u_file: obsidian = ofs_array_get(git_unstaged_files, c_u_idx)
-                                                    if (mx >= 246) {
-                                                        git_action_discard(workspace_folder, u_file)
-                                                        git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-                                                    } else if (mx >= 230) {
-                                                        git_action_stage(workspace_folder, u_file)
-                                                        git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-                                                    } else {
-                                                        active_file_path = resolve_path(u_file)
-                                                        active_file_name = get_filename_from_path(u_file)
-                                                        editor_lines = read_file_to_lines(active_file_path)
-                                                        cursor_row = 0
-                                                        cursor_col = 0
-                                                        is_dirty = 0
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            } else if (active_activity == 3) {
-                                if (my >= 106 && my <= 134) {
-                                    active_panel_tab = 0
-                                    focused_area = 1
-                                    if (is_dirty == 1) {
-                                        save_lines_to_file(active_file_path, editor_lines)
-                                        is_dirty = 0
-                                    }
-                                    forge ofs_b_dbg = resolve_ofs_binary()
-                                    forge real_p_dbg = resolve_path(active_file_path)
-                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_dbg)
-                                    forge ret_dbg = system(ofs_b_dbg + " build " + real_p_dbg + " > /tmp/ofs_idle_build.log 2>&1")
-                                    forge log_lines_dbg = read_file_to_lines("/tmp/ofs_idle_build.log")
-                                    forge l_len_dbg = ofs_array_len(log_lines_dbg)
-                                    forge li_dbg = 0
-                                    while (li_dbg < l_len_dbg) {
-                                        forge ll_dbg: obsidian = ofs_array_get(log_lines_dbg, li_dbg)
-                                        if (ofs_str_len(ll_dbg) > 0) { ofs_array_push(terminal_lines, ll_dbg) }
-                                        li_dbg++
-                                    }
-                                    if (ret_dbg == 0) {
-                                        ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
-                                        lsp_err_count = 0
-                                    } else {
-                                        ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_dbg) + ").")
-                                        lsp_err_count = 1
-                                    }
-                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
-                                }
-                            } else if (active_activity == 4) {
-                                if (mx >= 58 && mx <= 258 && my >= 74 && my <= 98) {
-                                    focused_area = 3
-                                } else if (my >= 128 && my < 128 + (7 * 54)) {
-                                    forge card_idx = (my - 128) / 54
-                                    if (mx >= 176 && mx <= 260) {
-                                        if (card_idx == 1) { active_theme_id = 0 }
-                                        else if (card_idx == 2) { active_theme_id = 1 }
-                                        else if (card_idx == 3) { active_theme_id = 2 }
-                                        else if (card_idx == 4) { active_theme_id = 3 }
-                                        else if (card_idx == 5) { active_theme_id = 4 }
-                                        else if (card_idx == 6) { active_theme_id = 5 }
-                                        modal_theme = active_theme_id
-                                    }
-                                }
-                            }
-                        } else if (my >= 35 && my < 70) {
-                            forge total_ot = ofs_array_len(open_tabs)
-                            forge o_i = 0
-                            forge tab_x_cur = 268
-                            forge clicked_tab_hit = 0
-                            while (o_i < total_ot) {
-                                if (mx >= tab_x_cur && mx < tab_x_cur + 140) {
-                                    if (mx >= tab_x_cur + 118) {
-                                        array_remove_at(open_tabs, o_i)
-                                        array_remove_at(open_paths, o_i)
-                                        forge rem_len_t = ofs_array_len(open_tabs)
-                                        if (rem_len_t == 0) {
-                                            active_tab_idx = -1
-                                            active_file_name = ""
-                                            active_file_path = ""
-                                            editor_lines = []
-                                        } else {
-                                            if (active_tab_idx >= rem_len_t) { active_tab_idx = rem_len_t - 1 }
-                                            active_file_path = ofs_array_get(open_paths, active_tab_idx)
-                                            active_file_name = ofs_array_get(open_tabs, active_tab_idx)
-                                            editor_lines = read_file_to_lines(active_file_path)
-                                        }
-                                        cursor_row = 0
-                                        cursor_col = 0
-                                        scroll_top = 0
-                                        is_dirty = 0
-                                    } else {
-                                        active_tab_idx = o_i
-                                        active_file_path = ofs_array_get(open_paths, o_i)
-                                        active_file_name = ofs_array_get(open_tabs, o_i)
-                                        editor_lines = read_file_to_lines(active_file_path)
-                                        cursor_row = 0
-                                        cursor_col = 0
-                                        scroll_top = 0
-                                        is_dirty = 0
-                                    }
-                                    clicked_tab_hit = 1
-                                }
-                                tab_x_cur = tab_x_cur + 140
-                                o_i++
-                            }
-
-                            if (clicked_tab_hit == 0) {
-                                if (mx >= win_w - 136 && mx < win_w - 50) {
-                                    active_panel_tab = 0
-                                    focused_area = 1
-                                    if (is_dirty == 1) {
-                                        save_lines_to_file(active_file_path, editor_lines)
-                                        is_dirty = 0
-                                    }
-                                    forge ofs_bin_r = resolve_ofs_binary()
-                                    forge real_p_r = resolve_path(active_file_path)
-                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_r)
-                                    forge ret_r = system(ofs_bin_r + " build " + real_p_r + " > /tmp/ofs_idle_build.log 2>&1")
-                                    forge log_lines_r = read_file_to_lines("/tmp/ofs_idle_build.log")
-                                    forge l_len_r = ofs_array_len(log_lines_r)
-                                    forge li_r = 0
-                                    while (li_r < l_len_r) {
-                                        forge ll_r: obsidian = ofs_array_get(log_lines_r, li_r)
-                                        if (ofs_str_len(ll_r) > 0) { ofs_array_push(terminal_lines, ll_r) }
-                                        li_r++
-                                    }
-                                    if (ret_r == 0) {
-                                        ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
-                                        lsp_err_count = 0
-                                    } else {
-                                        ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_r) + ").")
-                                        lsp_err_count = 1
-                                    }
-                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
-                                }
-                            }
-                        } else if (my >= 93 && my < panel_y4 && mx >= 268 && mx < win_w - 65) {
-                            focused_area = 0
-                            if (ofs_array_len(open_tabs) == 0) {
-                                if (my >= 142 && my <= 172) {
-                                    if (mx >= 300 && mx <= 405) {
-                                        ofs_array_push(open_tabs, "sem_titulo.ofs")
-                                        ofs_array_push(open_paths, "sem_titulo.ofs")
-                                        active_tab_idx = 0
-                                        active_file_name = "sem_titulo.ofs"
-                                        active_file_path = "sem_titulo.ofs"
-                                        editor_lines = [""]
-                                        cursor_row = 0
-                                        cursor_col = 0
-                                        scroll_top = 0
-                                        is_dirty = 0
-                                    } else if (mx >= 415 && mx <= 540) {
-                                        folder_picker_open = 1
-                                        folder_picker_input = "."
-                                    } else if (mx >= 550 && mx <= 725) {
-                                        palette_open = 1
-                                        palette_sel = 0
-                                        palette_query = ""
-                                    } else if (mx >= 735 && mx <= 905) {
+                                if (clicked_tab_hit == 0) {
+                                    if (mx >= win_w - 136 && mx < win_w - 50) {
                                         active_panel_tab = 0
                                         focused_area = 1
-                                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script$ ofs --help")
-                                        system("ofs --help > /tmp/ofs_idle_term.log 2>&1")
-                                        forge hlines = read_file_to_lines("/tmp/ofs_idle_term.log")
-                                        forge hlen = ofs_array_len(hlines)
-                                        forge hi = 0
-                                        while (hi < hlen) {
-                                            forge hl: obsidian = ofs_array_get(hlines, hi)
-                                            if (ofs_str_len(hl) > 0) { ofs_array_push(terminal_lines, hl) }
-                                            hi++
+                                        if (is_dirty == 1) {
+                                            save_lines_to_file(active_file_path, editor_lines)
+                                            is_dirty = 0
+                                        }
+                                        forge ofs_bin_r = resolve_ofs_binary()
+                                        forge real_p_r = resolve_path(active_file_path)
+                                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_r)
+                                        forge ret_r = system(ofs_bin_r + " build " + real_p_r + " > /tmp/ofs_idle_build.log 2>&1")
+                                        forge log_lines_r = read_file_to_lines("/tmp/ofs_idle_build.log")
+                                        forge l_len_r = ofs_array_len(log_lines_r)
+                                        forge li_r = 0
+                                        while (li_r < l_len_r) {
+                                            forge ll_r: obsidian = ofs_array_get(log_lines_r, li_r)
+                                            if (ofs_str_len(ll_r) > 0) { ofs_array_push(terminal_lines, ll_r) }
+                                            li_r++
+                                        }
+                                        if (ret_r == 0) {
+                                            ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                            lsp_err_count = 0
+                                        } else {
+                                            ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_r) + ").")
+                                            lsp_err_count = 1
+                                        }
+                                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                    }
+                                }
+                            } else if (my >= 93 && my < panel_y4 && mx >= 268 && mx < win_w - 65) {
+                                focused_area = 0
+                                if (ofs_array_len(open_tabs) == 0) {
+                                    if (my >= 142 && my <= 172) {
+                                        if (mx >= 300 && mx <= 405) {
+                                            ofs_array_push(open_tabs, "sem_titulo.ofs")
+                                            ofs_array_push(open_paths, "sem_titulo.ofs")
+                                            active_tab_idx = 0
+                                            active_file_name = "sem_titulo.ofs"
+                                            active_file_path = "sem_titulo.ofs"
+                                            editor_lines = [""]
+                                            cursor_row = 0
+                                            cursor_col = 0
+                                            scroll_top = 0
+                                            is_dirty = 0
+                                        } else if (mx >= 415 && mx <= 540) {
+                                            folder_picker_open = 1
+                                            folder_picker_input = "."
+                                        } else if (mx >= 550 && mx <= 725) {
+                                            palette_open = 1
+                                            palette_sel = 0
+                                            palette_query = ""
+                                        } else if (mx >= 735 && mx <= 905) {
+                                            active_panel_tab = 0
+                                            focused_area = 1
+                                            ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script$ ofs --help")
+                                            system("ofs --help > /tmp/ofs_idle_term.log 2>&1")
+                                            forge hlines = read_file_to_lines("/tmp/ofs_idle_term.log")
+                                            forge hlen = ofs_array_len(hlines)
+                                            forge hi = 0
+                                            while (hi < hlen) {
+                                                forge hl: obsidian = ofs_array_get(hlines, hi)
+                                                if (ofs_str_len(hl) > 0) { ofs_array_push(terminal_lines, hl) }
+                                                hi++
+                                            }
                                         }
                                     }
+                                } else {
+                                    forge clicked_row = scroll_top + ((my - 96) / 19)
+                                    forge t_lines = ofs_array_len(editor_lines)
+                                    if (clicked_row >= 0 && clicked_row < t_lines) {
+                                        cursor_row = clicked_row
+                                        forge cur_line_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                        forge c_len = ofs_str_len(cur_line_txt)
+                                        forge clicked_col = (mx - 326) / 7
+                                        if (clicked_col < 0) { clicked_col = 0 }
+                                        if (clicked_col > c_len) { clicked_col = c_len }
+                                        cursor_col = clicked_col
+                                    }
                                 }
-                            } else {
-                                forge clicked_row = scroll_top + ((my - 96) / 19)
-                                forge t_lines = ofs_array_len(editor_lines)
-                                if (clicked_row >= 0 && clicked_row < t_lines) {
-                                    cursor_row = clicked_row
-                                    forge cur_line_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
-                                    forge c_len = ofs_str_len(cur_line_txt)
-                                    forge clicked_col = (mx - 326) / 7
-                                    if (clicked_col < 0) { clicked_col = 0 }
-                                    if (clicked_col > c_len) { clicked_col = c_len }
-                                    cursor_col = clicked_col
+                            } else if (my >= 93 && my < panel_y4 && mx >= win_w - 65) {
+                                focused_area = 0
+                                forge clicked_sc = (my - 96) / 3
+                                if (clicked_sc < 0) { clicked_sc = 0 }
+                                forge tot_lines_mm = ofs_array_len(editor_lines)
+                                if (clicked_sc >= tot_lines_mm) { clicked_sc = tot_lines_mm - 1 }
+                                scroll_top = clicked_sc
+                            } else if (my >= panel_y4 && my < statusbar_y4 && mx >= 268) {
+                                focused_area = 1
+                                if (my < panel_y4 + 30) {
+                                    if (mx >= 274 && mx < 360) { active_panel_tab = 0 }
+                                    else if (mx >= 364 && mx < 490) { active_panel_tab = 1 }
+                                    else if (mx >= 494 && mx < 556) { active_panel_tab = 2 }
+                                    else if (mx >= 560 && mx < 674) { active_panel_tab = 3 }
+                                }
+                            } else if (my >= statusbar_y4) {
+                                if (mx >= 8 && mx <= 120) {
+                                    palette_open = 1
+                                    palette_query = "Git: "
+                                    palette_sel = 0
                                 }
                             }
-                        } else if (my >= 93 && my < panel_y4 && mx >= win_w - 65) {
-                            focused_area = 0
-                            forge clicked_sc = (my - 96) / 3
-                            if (clicked_sc < 0) { clicked_sc = 0 }
-                            forge tot_lines_mm = ofs_array_len(editor_lines)
-                            if (clicked_sc >= tot_lines_mm) { clicked_sc = tot_lines_mm - 1 }
-                            scroll_top = clicked_sc
-                        } else if (my >= panel_y4 && my < statusbar_y4 && mx >= 268) {
-                            focused_area = 1
-                            if (my < panel_y4 + 30) {
-                                if (mx >= 274 && mx < 360) { active_panel_tab = 0 }
-                                else if (mx >= 364 && mx < 490) { active_panel_tab = 1 }
-                                else if (mx >= 494 && mx < 556) { active_panel_tab = 2 }
-                                else if (mx >= 560 && mx < 674) { active_panel_tab = 3 }
-                            }
-                        } else if (my >= statusbar_y4) {
-                            if (mx >= 8 && mx <= 120) {
-                                palette_open = 1
-                                palette_query = "Git: "
-                                palette_sel = 0
-                            }
-                        }
-                        needs_redraw = 1
-                    }
-                } else if (ev_type == 2) {
-                    forge p_raw_kc: *stone = fault_step(event_buf, 10)
-                    forge raw_kc: stone = 0
-                    fracture {
-                        raw_kc = *p_raw_kc
-                    }
-                    forge state = raw_kc % 4294967296
-                    forge keycode = (raw_kc / 4294967296) % 256
-                    forge is_shift = state % 2
-                    forge is_ctrl = (state / 4) % 2
-
-                    forge sym = XKeycodeToKeysym(disp, keycode, is_shift)
-
-                    if (folder_picker_open > 0) {
-                        if (sym == 65307) {
-                            folder_picker_open = 0
-                            needs_redraw = 1
-                        } else if (sym == 65293) {
-                            workspace_folder = folder_picker_input
-                            workspace_files = scan_workspace_files(workspace_folder)
-                            git_is_repo = git_is_repository(workspace_folder)
-                            if (git_is_repo == 1) {
-                                git_branch = git_get_branch_name(workspace_folder)
-                                git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-                            }
-                            folder_picker_open = 0
-                            needs_redraw = 1
-                        } else if (sym == 65288) {
-                            forge f_len = ofs_str_len(folder_picker_input)
-                            if (f_len > 0) {
-                                folder_picker_input = ofs_str_substr(folder_picker_input, 0, f_len - 1)
-                                needs_redraw = 1
-                            }
-                        } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
-                            forge ch_buf_fp: *stone = ofs_alloc(8)
-                            fracture {
-                                *ch_buf_fp = sym
-                            }
-                            forge ch_str_fp: obsidian = ch_buf_fp
-                            folder_picker_input = folder_picker_input + ch_str_fp
                             needs_redraw = 1
                         }
-                    } else if (palette_open > 0) {
-                        if (sym == 65307) {
-                            palette_open = 0
-                            needs_redraw = 1
-                        } else if (sym == 65362) {
-                            if (palette_sel > 0) { palette_sel-- }
-                            needs_redraw = 1
-                        } else if (sym == 65364) {
-                            if (palette_sel < 7) { palette_sel++ }
-                            needs_redraw = 1
-                        } else if (sym == 65288) {
-                            forge qlen = ofs_str_len(palette_query)
-                            if (qlen > 0) {
-                                palette_query = ofs_str_substr(palette_query, 0, qlen - 1)
+                    } else if (ev_type == 2) {
+                        forge p_raw_kc: *stone = fault_step(event_buf, 10)
+                        forge raw_kc: stone = 0
+                        fracture {
+                            raw_kc = *p_raw_kc
+                        }
+                        forge state = raw_kc % 4294967296
+                        forge keycode = (raw_kc / 4294967296) % 256
+                        forge is_shift = state % 2
+                        forge is_ctrl = (state / 4) % 2
+
+                        forge sym = XKeycodeToKeysym(disp, keycode, is_shift)
+
+                        if (folder_picker_open > 0) {
+                            if (sym == 65307) {
+                                folder_picker_open = 0
+                                needs_redraw = 1
+                            } else if (sym == 65293) {
+                                workspace_folder = folder_picker_input
+                                workspace_files = scan_workspace_files(workspace_folder)
+                                git_is_repo = git_is_repository(workspace_folder)
+                                if (git_is_repo == 1) {
+                                    git_branch = git_get_branch_name(workspace_folder)
+                                    git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                }
+                                folder_picker_open = 0
+                                needs_redraw = 1
+                            } else if (sym == 65288) {
+                                forge f_len = ofs_str_len(folder_picker_input)
+                                if (f_len > 0) {
+                                    folder_picker_input = ofs_str_substr(folder_picker_input, 0, f_len - 1)
+                                    needs_redraw = 1
+                                }
+                            } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
+                                forge ch_buf_fp: *stone = ofs_alloc(8)
+                                fracture {
+                                    *ch_buf_fp = sym
+                                }
+                                forge ch_str_fp: obsidian = ch_buf_fp
+                                folder_picker_input = folder_picker_input + ch_str_fp
                                 needs_redraw = 1
                             }
-                        } else if (sym == 65293) {
-                            if (palette_sel == 0 || palette_sel == 1) {
-                                active_panel_tab = 0
-                                if (is_dirty == 1) {
+                        } else if (palette_open > 0) {
+                            if (sym == 65307) {
+                                palette_open = 0
+                                needs_redraw = 1
+                            } else if (sym == 65362) {
+                                if (palette_sel > 0) { palette_sel-- }
+                                needs_redraw = 1
+                            } else if (sym == 65364) {
+                                if (palette_sel < 7) { palette_sel++ }
+                                needs_redraw = 1
+                            } else if (sym == 65288) {
+                                forge qlen = ofs_str_len(palette_query)
+                                if (qlen > 0) {
+                                    palette_query = ofs_str_substr(palette_query, 0, qlen - 1)
+                                    needs_redraw = 1
+                                }
+                            } else if (sym == 65293) {
+                                if (palette_sel == 0 || palette_sel == 1) {
+                                    active_panel_tab = 0
+                                    if (is_dirty == 1) {
+                                        save_lines_to_file(active_file_path, editor_lines)
+                                        is_dirty = 0
+                                    }
+                                    forge ofs_bin_c2 = resolve_ofs_binary()
+                                    forge real_p_c2 = resolve_path(active_file_path)
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_c2)
+                                    forge ret_c2 = system(ofs_bin_c2 + " build " + real_p_c2 + " > /tmp/ofs_idle_build.log 2>&1")
+                                    forge log_lines_c2 = read_file_to_lines("/tmp/ofs_idle_build.log")
+                                    forge l_len_c2 = ofs_array_len(log_lines_c2)
+                                    forge li_c2 = 0
+                                    while (li_c2 < l_len_c2) {
+                                        forge ll_c2: obsidian = ofs_array_get(log_lines_c2, li_c2)
+                                        if (ofs_str_len(ll_c2) > 0) { ofs_array_push(terminal_lines, ll_c2) }
+                                        li_c2++
+                                    }
+                                    if (ret_c2 == 0) {
+                                        ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                        lsp_err_count = 0
+                                    } else {
+                                        ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_c2) + ").")
+                                        lsp_err_count = 1
+                                    }
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                } else if (palette_sel == 2) {
+                                    active_panel_tab = 1
+                                } else if (palette_sel == 3) {
+                                    active_panel_tab = 2
+                                } else if (palette_sel == 4) {
+                                    active_theme_id = (active_theme_id + 1) % 4
+                                } else if (palette_sel == 5) {
                                     save_lines_to_file(active_file_path, editor_lines)
                                     is_dirty = 0
+                                    echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
+                                } else if (palette_sel == 6) {
+                                    ofs_array_push(open_tabs, "sem_titulo.ofs")
+                                    ofs_array_push(open_paths, "sem_titulo.ofs")
+                                    active_tab_idx = ofs_array_len(open_tabs) - 1
+                                    active_file_name = "sem_titulo.ofs"
+                                    active_file_path = "sem_titulo.ofs"
+                                    editor_lines = [""]
+                                    cursor_row = 0
+                                    cursor_col = 0
+                                    scroll_top = 0
+                                    is_dirty = 0
+                                } else if (palette_sel == 7) {
+                                    terminal_lines = []
+                                    ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
                                 }
-                                forge ofs_bin_c2 = resolve_ofs_binary()
-                                forge real_p_c2 = resolve_path(active_file_path)
-                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_c2)
-                                forge ret_c2 = system(ofs_bin_c2 + " build " + real_p_c2 + " > /tmp/ofs_idle_build.log 2>&1")
-                                forge log_lines_c2 = read_file_to_lines("/tmp/ofs_idle_build.log")
-                                forge l_len_c2 = ofs_array_len(log_lines_c2)
-                                forge li_c2 = 0
-                                while (li_c2 < l_len_c2) {
-                                    forge ll_c2: obsidian = ofs_array_get(log_lines_c2, li_c2)
-                                    if (ofs_str_len(ll_c2) > 0) { ofs_array_push(terminal_lines, ll_c2) }
-                                    li_c2++
+                                palette_open = 0
+                                needs_redraw = 1
+                            } else if (sym >= 32 && sym <= 126) {
+                                forge ch_buf_p: *stone = ofs_alloc(8)
+                                fracture {
+                                    *ch_buf_p = sym
                                 }
-                                if (ret_c2 == 0) {
-                                    ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
-                                    lsp_err_count = 0
-                                } else {
-                                    ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_c2) + ").")
-                                    lsp_err_count = 1
-                                }
-                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
-                            } else if (palette_sel == 2) {
-                                active_panel_tab = 1
-                            } else if (palette_sel == 3) {
-                                active_panel_tab = 2
-                            } else if (palette_sel == 4) {
-                                active_theme_id = (active_theme_id + 1) % 4
-                            } else if (palette_sel == 5) {
-                                save_lines_to_file(active_file_path, editor_lines)
-                                is_dirty = 0
-                                echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
-                            } else if (palette_sel == 6) {
-                                ofs_array_push(open_tabs, "sem_titulo.ofs")
-                                ofs_array_push(open_paths, "sem_titulo.ofs")
-                                active_tab_idx = ofs_array_len(open_tabs) - 1
-                                active_file_name = "sem_titulo.ofs"
-                                active_file_path = "sem_titulo.ofs"
-                                editor_lines = [""]
-                                cursor_row = 0
-                                cursor_col = 0
-                                scroll_top = 0
-                                is_dirty = 0
-                            } else if (palette_sel == 7) {
-                                terminal_lines = []
-                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                                forge ch_str_p: obsidian = ch_buf_p
+                                palette_query = palette_query + ch_str_p
+                                needs_redraw = 1
                             }
-                            palette_open = 0
-                            needs_redraw = 1
-                        } else if (sym >= 32 && sym <= 126) {
-                            forge ch_buf_p: *stone = ofs_alloc(8)
-                            fracture {
-                                *ch_buf_p = sym
-                            }
-                            forge ch_str_p: obsidian = ch_buf_p
-                            palette_query = palette_query + ch_str_p
-                            needs_redraw = 1
-                        }
-                    } else if (sym == 65307) {
-                        if (modal_open > 0) {
-                            modal_open = 0
-                            needs_redraw = 1
-                        } else if (menu_open > 0) {
-                            menu_open = 0
-                            needs_redraw = 1
-                        } else {
-                            running = 0
-                        }
-                    } else if (is_ctrl == 1 && (sym == 49 || sym == 101 || sym == 69)) {
-                        active_activity = 0
-                        needs_redraw = 1
-                    } else if (is_ctrl == 1 && (sym == 50 || sym == 102 || sym == 70)) {
-                        active_activity = 1
-                        needs_redraw = 1
-                    } else if (is_ctrl == 1 && (sym == 51 || sym == 103 || sym == 71)) {
-                        active_activity = 2
-                        focused_area = 2
-                        needs_redraw = 1
-                    } else if (is_ctrl == 1 && (sym == 52 || sym == 100 || sym == 68)) {
-                        active_activity = 3
-                        needs_redraw = 1
-                    } else if (is_ctrl == 1 && (sym == 53 || sym == 120 || sym == 88)) {
-                        active_activity = 4
-                        focused_area = 3
-                        needs_redraw = 1
-                    } else if (sym == 65479) {
-                        menu_open = 1
-                        menu_hover = -1
-                        needs_redraw = 1
-                    } else if (is_ctrl == 1 && (sym == 112 || sym == 80)) {
-                        palette_open = 1
-                        palette_query = ""
-                        palette_sel = 0
-                        needs_redraw = 1
-                    } else if (is_ctrl == 1 && (sym == 115 || sym == 83)) {
-                        save_lines_to_file(active_file_path, editor_lines)
-                        is_dirty = 0
-                        echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
-                        needs_redraw = 1
-                    } else if (is_ctrl == 1 && (sym == 119 || sym == 87)) {
-                        if (ofs_array_len(open_tabs) > 0 && active_tab_idx >= 0) {
-                            array_remove_at(open_tabs, active_tab_idx)
-                            array_remove_at(open_paths, active_tab_idx)
-                            forge rem_t = ofs_array_len(open_tabs)
-                            if (rem_t == 0) {
-                                active_tab_idx = -1
-                                active_file_name = ""
-                                active_file_path = ""
-                                editor_lines = []
+                        } else if (sym == 65307) {
+                            if (modal_open > 0) {
+                                modal_open = 0
+                                needs_redraw = 1
+                            } else if (menu_open > 0) {
+                                menu_open = 0
+                                needs_redraw = 1
                             } else {
-                                if (active_tab_idx >= rem_t) { active_tab_idx = rem_t - 1 }
-                                active_file_path = ofs_array_get(open_paths, active_tab_idx)
-                                active_file_name = ofs_array_get(open_tabs, active_tab_idx)
-                                editor_lines = read_file_to_lines(active_file_path)
+                                running = 0
                             }
-                            cursor_row = 0
-                            cursor_col = 0
-                            is_dirty = 0
+                        } else if (is_ctrl == 1 && (sym == 49 || sym == 101 || sym == 69)) {
+                            active_activity = 0
                             needs_redraw = 1
-                        }
-                    } else if (sym == 65474 || (is_ctrl == 1 && (sym == 98 || sym == 66))) {
-                        active_panel_tab = 0
-                        if (is_dirty == 1) {
+                        } else if (is_ctrl == 1 && (sym == 50 || sym == 102 || sym == 70)) {
+                            active_activity = 1
+                            needs_redraw = 1
+                        } else if (is_ctrl == 1 && (sym == 51 || sym == 103 || sym == 71)) {
+                            active_activity = 2
+                            focused_area = 2
+                            needs_redraw = 1
+                        } else if (is_ctrl == 1 && (sym == 52 || sym == 100 || sym == 68)) {
+                            active_activity = 3
+                            needs_redraw = 1
+                        } else if (is_ctrl == 1 && (sym == 53 || sym == 120 || sym == 88)) {
+                            active_activity = 4
+                            focused_area = 3
+                            needs_redraw = 1
+                        } else if (sym == 65479) {
+                            menu_open = 1
+                            menu_hover = -1
+                            needs_redraw = 1
+                        } else if (is_ctrl == 1 && (sym == 112 || sym == 80)) {
+                            palette_open = 1
+                            palette_query = ""
+                            palette_sel = 0
+                            needs_redraw = 1
+                        } else if (is_ctrl == 1 && (sym == 115 || sym == 83)) {
                             save_lines_to_file(active_file_path, editor_lines)
                             is_dirty = 0
-                        }
-                        forge ofs_bin_k = resolve_ofs_binary()
-                        forge real_p_k = resolve_path(active_file_path)
-                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_k)
-                        forge ret_k = system(ofs_bin_k + " build " + real_p_k + " > /tmp/ofs_idle_build.log 2>&1")
-                        forge log_lines_k = read_file_to_lines("/tmp/ofs_idle_build.log")
-                        forge l_len_k = ofs_array_len(log_lines_k)
-                        forge li_k = 0
-                        while (li_k < l_len_k) {
-                            forge ll_k: obsidian = ofs_array_get(log_lines_k, li_k)
-                            if (ofs_str_len(ll_k) > 0) {
-                                ofs_array_push(terminal_lines, ll_k)
-                            }
-                            li_k++
-                        }
-                        if (ret_k == 0) {
-                            ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
-                            lsp_err_count = 0
-                        } else {
-                            ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_k) + ").")
-                            lsp_err_count = 1
-                        }
-                        ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
-                        needs_redraw = 1
-                    } else if (is_ctrl == 1 && (sym == 111 || sym == 79)) {
-                        folder_picker_open = 1
-                        folder_picker_input = "."
-                        needs_redraw = 1
-                    } else if (is_ctrl == 1 && (sym == 96 || sym == 126 || sym == 106 || sym == 74)) {
-                        focused_area = 1
-                        active_panel_tab = 0
-                        needs_redraw = 1
-                    } else if (focused_area == 1) {
-                        if (sym == 65293) {
-                            ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script$ " + terminal_input_buf)
-                            if (ofs_str_eq(terminal_input_buf, "clear")) {
-                                terminal_lines = []
-                            } else if (ofs_str_len(terminal_input_buf) > 0) {
-                                system("(" + terminal_input_buf + ") > /tmp/ofs_idle_term.log 2>&1")
-                                forge tlogs = read_file_to_lines("/tmp/ofs_idle_term.log")
-                                forge tcnt = ofs_array_len(tlogs)
-                                forge ti3 = 0
-                                while (ti3 < tcnt) {
-                                    forge tl3: obsidian = ofs_array_get(tlogs, ti3)
-                                    if (ofs_str_len(tl3) > 0) {
-                                        ofs_array_push(terminal_lines, tl3)
-                                    }
-                                    ti3++
+                            echo("[OFS IDLE] Arquivo salvo: " + active_file_path)
+                            needs_redraw = 1
+                        } else if (is_ctrl == 1 && (sym == 119 || sym == 87)) {
+                            if (ofs_array_len(open_tabs) > 0 && active_tab_idx >= 0) {
+                                array_remove_at(open_tabs, active_tab_idx)
+                                array_remove_at(open_paths, active_tab_idx)
+                                forge rem_t = ofs_array_len(open_tabs)
+                                if (rem_t == 0) {
+                                    active_tab_idx = -1
+                                    active_file_name = ""
+                                    active_file_path = ""
+                                    editor_lines = []
+                                } else {
+                                    if (active_tab_idx >= rem_t) { active_tab_idx = rem_t - 1 }
+                                    active_file_path = ofs_array_get(open_paths, active_tab_idx)
+                                    active_file_name = ofs_array_get(open_tabs, active_tab_idx)
+                                    editor_lines = read_file_to_lines(active_file_path)
                                 }
-                            }
-                            terminal_input_buf = ""
-                            needs_redraw = 1
-                        } else if (sym == 65288) {
-                            forge tlen = ofs_str_len(terminal_input_buf)
-                            if (tlen > 0) {
-                                terminal_input_buf = ofs_str_substr(terminal_input_buf, 0, tlen - 1)
+                                cursor_row = 0
+                                cursor_col = 0
+                                is_dirty = 0
                                 needs_redraw = 1
                             }
-                        } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
-                            forge ch_buf_t: *stone = ofs_alloc(8)
-                            fracture {
-                                *ch_buf_t = sym
+                        } else if (sym == 65474 || (is_ctrl == 1 && (sym == 98 || sym == 66))) {
+                            active_panel_tab = 0
+                            if (is_dirty == 1) {
+                                save_lines_to_file(active_file_path, editor_lines)
+                                is_dirty = 0
                             }
-                            forge ch_str_t: obsidian = ch_buf_t
-                            terminal_input_buf = terminal_input_buf + ch_str_t
-                            needs_redraw = 1
-                        }
-                    } else if (focused_area == 2) {
-                        if (sym == 65307) {
-                            focused_area = 0
-                            needs_redraw = 1
-                        } else if (sym == 65293) {
-                            if (ofs_str_len(git_commit_msg_buf) > 0) {
-                                git_action_commit(workspace_folder, git_commit_msg_buf)
-                                git_commit_msg_buf = ""
-                                git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
-                                needs_redraw = 1
+                            forge ofs_bin_k = resolve_ofs_binary()
+                            forge real_p_k = resolve_path(active_file_path)
+                            ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$ ofs build " + real_p_k)
+                            forge ret_k = system(ofs_bin_k + " build " + real_p_k + " > /tmp/ofs_idle_build.log 2>&1")
+                            forge log_lines_k = read_file_to_lines("/tmp/ofs_idle_build.log")
+                            forge l_len_k = ofs_array_len(log_lines_k)
+                            forge li_k = 0
+                            while (li_k < l_len_k) {
+                                forge ll_k: obsidian = ofs_array_get(log_lines_k, li_k)
+                                if (ofs_str_len(ll_k) > 0) {
+                                    ofs_array_push(terminal_lines, ll_k)
+                                }
+                                li_k++
                             }
-                        } else if (sym == 65288) {
-                            forge c_msg_len = ofs_str_len(git_commit_msg_buf)
-                            if (c_msg_len > 0) {
-                                git_commit_msg_buf = ofs_str_substr(git_commit_msg_buf, 0, c_msg_len - 1)
-                                needs_redraw = 1
-                            }
-                        } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
-                            forge ch_buf_c: *stone = ofs_alloc(8)
-                            fracture {
-                                *ch_buf_c = sym
-                            }
-                            forge ch_str_c: obsidian = ch_buf_c
-                            git_commit_msg_buf = git_commit_msg_buf + ch_str_c
-                            needs_redraw = 1
-                        }
-                    } else if (focused_area == 3) {
-                        if (sym == 65307) {
-                            focused_area = 0
-                            needs_redraw = 1
-                        } else if (sym == 65288) {
-                            forge q_len_x = ofs_str_len(ext_search_query)
-                            if (q_len_x > 0) {
-                                ext_search_query = ofs_str_substr(ext_search_query, 0, q_len_x - 1)
-                                needs_redraw = 1
-                            }
-                        } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
-                            forge ch_buf_x: *stone = ofs_alloc(8)
-                            fracture {
-                                *ch_buf_x = sym
-                            }
-                            forge ch_str_x: obsidian = ch_buf_x
-                            ext_search_query = ext_search_query + ch_str_x
-                            needs_redraw = 1
-                        }
-                    } else if (ofs_array_len(open_tabs) > 0) {
-                        if (sym == 65362) {
-                            if (cursor_row > 0) {
-                                cursor_row--
-                                forge l_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
-                                forge l_len = ofs_str_len(l_txt)
-                                if (cursor_col > l_len) { cursor_col = l_len }
-                                if (cursor_row < scroll_top) { scroll_top = cursor_row }
-                            }
-                            needs_redraw = 1
-                        } else if (sym == 65364) {
-                            forge t_lines = ofs_array_len(editor_lines)
-                            if (cursor_row < t_lines - 1) {
-                                cursor_row++
-                                forge l_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
-                                forge l_len = ofs_str_len(l_txt)
-                                if (cursor_col > l_len) { cursor_col = l_len }
-                                if (cursor_row >= scroll_top + 24) { scroll_top = cursor_row - 23 }
-                            }
-                            needs_redraw = 1
-                        } else if (sym == 65361) {
-                            if (cursor_col > 0) {
-                                cursor_col--
-                            } else if (cursor_row > 0) {
-                                cursor_row--
-                                forge l_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
-                                cursor_col = ofs_str_len(l_txt)
-                                if (cursor_row < scroll_top) { scroll_top = cursor_row }
-                            }
-                            needs_redraw = 1
-                        } else if (sym == 65363) {
-                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
-                            forge l_len = ofs_str_len(cur_l)
-                            if (cursor_col < l_len) {
-                                cursor_col++
+                            if (ret_k == 0) {
+                                ofs_array_push(terminal_lines, "[OFS IDLE] Build concluido com sucesso (codigo 0).")
+                                lsp_err_count = 0
                             } else {
+                                ofs_array_push(terminal_lines, "[OFS IDLE] Falha no build (codigo " + ofs_stone_to_obsidian(ret_k) + ").")
+                                lsp_err_count = 1
+                            }
+                            ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script/idle$")
+                            needs_redraw = 1
+                        } else if (is_ctrl == 1 && (sym == 111 || sym == 79)) {
+                            folder_picker_open = 1
+                            folder_picker_input = "."
+                            needs_redraw = 1
+                        } else if (is_ctrl == 1 && (sym == 96 || sym == 126 || sym == 106 || sym == 74)) {
+                            focused_area = 1
+                            active_panel_tab = 0
+                            needs_redraw = 1
+                        } else if (focused_area == 1) {
+                            if (sym == 65293) {
+                                ofs_array_push(terminal_lines, "samns@linux-ofs:~/Obsidian-Fault-Script$ " + terminal_input_buf)
+                                if (ofs_str_eq(terminal_input_buf, "clear")) {
+                                    terminal_lines = []
+                                } else if (ofs_str_len(terminal_input_buf) > 0) {
+                                    system("(" + terminal_input_buf + ") > /tmp/ofs_idle_term.log 2>&1")
+                                    forge tlogs = read_file_to_lines("/tmp/ofs_idle_term.log")
+                                    forge tcnt = ofs_array_len(tlogs)
+                                    forge ti3 = 0
+                                    while (ti3 < tcnt) {
+                                        forge tl3: obsidian = ofs_array_get(tlogs, ti3)
+                                        if (ofs_str_len(tl3) > 0) {
+                                            ofs_array_push(terminal_lines, tl3)
+                                        }
+                                        ti3++
+                                    }
+                                }
+                                terminal_input_buf = ""
+                                needs_redraw = 1
+                            } else if (sym == 65288) {
+                                forge tlen = ofs_str_len(terminal_input_buf)
+                                if (tlen > 0) {
+                                    terminal_input_buf = ofs_str_substr(terminal_input_buf, 0, tlen - 1)
+                                    needs_redraw = 1
+                                }
+                            } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
+                                forge ch_buf_t: *stone = ofs_alloc(8)
+                                fracture {
+                                    *ch_buf_t = sym
+                                }
+                                forge ch_str_t: obsidian = ch_buf_t
+                                terminal_input_buf = terminal_input_buf + ch_str_t
+                                needs_redraw = 1
+                            }
+                        } else if (focused_area == 2) {
+                            if (sym == 65307) {
+                                focused_area = 0
+                                needs_redraw = 1
+                            } else if (sym == 65293) {
+                                if (ofs_str_len(git_commit_msg_buf) > 0) {
+                                    git_action_commit(workspace_folder, git_commit_msg_buf)
+                                    git_commit_msg_buf = ""
+                                    git_refresh_all_status(workspace_folder, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types)
+                                    needs_redraw = 1
+                                }
+                            } else if (sym == 65288) {
+                                forge c_msg_len = ofs_str_len(git_commit_msg_buf)
+                                if (c_msg_len > 0) {
+                                    git_commit_msg_buf = ofs_str_substr(git_commit_msg_buf, 0, c_msg_len - 1)
+                                    needs_redraw = 1
+                                }
+                            } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
+                                forge ch_buf_c: *stone = ofs_alloc(8)
+                                fracture {
+                                    *ch_buf_c = sym
+                                }
+                                forge ch_str_c: obsidian = ch_buf_c
+                                git_commit_msg_buf = git_commit_msg_buf + ch_str_c
+                                needs_redraw = 1
+                            }
+                        } else if (focused_area == 3) {
+                            if (sym == 65307) {
+                                focused_area = 0
+                                needs_redraw = 1
+                            } else if (sym == 65288) {
+                                forge q_len_x = ofs_str_len(ext_search_query)
+                                if (q_len_x > 0) {
+                                    ext_search_query = ofs_str_substr(ext_search_query, 0, q_len_x - 1)
+                                    needs_redraw = 1
+                                }
+                            } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
+                                forge ch_buf_x: *stone = ofs_alloc(8)
+                                fracture {
+                                    *ch_buf_x = sym
+                                }
+                                forge ch_str_x: obsidian = ch_buf_x
+                                ext_search_query = ext_search_query + ch_str_x
+                                needs_redraw = 1
+                            }
+                        } else if (ofs_array_len(open_tabs) > 0) {
+                            if (sym == 65362) {
+                                if (cursor_row > 0) {
+                                    cursor_row--
+                                    forge l_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                    forge l_len = ofs_str_len(l_txt)
+                                    if (cursor_col > l_len) { cursor_col = l_len }
+                                    if (cursor_row < scroll_top) { scroll_top = cursor_row }
+                                }
+                                needs_redraw = 1
+                            } else if (sym == 65364) {
                                 forge t_lines = ofs_array_len(editor_lines)
                                 if (cursor_row < t_lines - 1) {
                                     cursor_row++
-                                    cursor_col = 0
+                                    forge l_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                    forge l_len = ofs_str_len(l_txt)
+                                    if (cursor_col > l_len) { cursor_col = l_len }
                                     if (cursor_row >= scroll_top + 24) { scroll_top = cursor_row - 23 }
                                 }
-                            }
-                            needs_redraw = 1
-                        } else if (sym == 65360) {
-                            cursor_col = 0
-                            needs_redraw = 1
-                        } else if (sym == 65367) {
-                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
-                            cursor_col = ofs_str_len(cur_l)
-                            needs_redraw = 1
-                        } else if (sym == 65365) {
-                            if (cursor_row >= 15) { cursor_row = cursor_row - 15 }
-                            else { cursor_row = 0 }
-                            if (scroll_top >= 15) { scroll_top = scroll_top - 15 }
-                            else { scroll_top = 0 }
-                            needs_redraw = 1
-                        } else if (sym == 65366) {
-                            forge t_lines = ofs_array_len(editor_lines)
-                            cursor_row = cursor_row + 15
-                            if (cursor_row >= t_lines) { cursor_row = t_lines - 1 }
-                            scroll_top = scroll_top + 15
-                            if (scroll_top >= t_lines) { scroll_top = t_lines - 1 }
-                            needs_redraw = 1
-                        } else if (sym == 65288) {
-                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
-                            if (cursor_col > 0) {
-                                forge new_l = delete_char_in_line(cur_l, cursor_col)
-                                ofs_array_set(editor_lines, cursor_row, new_l)
-                                cursor_col--
-                                is_dirty = 1
-                            } else if (cursor_row > 0) {
-                                forge prev_l: obsidian = ofs_array_get(editor_lines, cursor_row - 1)
-                                cursor_col = ofs_str_len(prev_l)
-                                ofs_array_set(editor_lines, cursor_row - 1, prev_l + cur_l)
-
-                                forge idx = cursor_row
-                                forge total_l = ofs_array_len(editor_lines)
-                                while (idx < total_l - 1) {
-                                    forge nxt: obsidian = ofs_array_get(editor_lines, idx + 1)
-                                    ofs_array_set(editor_lines, idx, nxt)
-                                    idx++
+                                needs_redraw = 1
+                            } else if (sym == 65361) {
+                                if (cursor_col > 0) {
+                                    cursor_col--
+                                } else if (cursor_row > 0) {
+                                    cursor_row--
+                                    forge l_txt: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                    cursor_col = ofs_str_len(l_txt)
+                                    if (cursor_row < scroll_top) { scroll_top = cursor_row }
                                 }
-                                ofs_array_pop(editor_lines)
-                                cursor_row--
-                                if (cursor_row < scroll_top) { scroll_top = cursor_row }
+                                needs_redraw = 1
+                            } else if (sym == 65363) {
+                                forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                forge l_len = ofs_str_len(cur_l)
+                                if (cursor_col < l_len) {
+                                    cursor_col++
+                                } else {
+                                    forge t_lines = ofs_array_len(editor_lines)
+                                    if (cursor_row < t_lines - 1) {
+                                        cursor_row++
+                                        cursor_col = 0
+                                        if (cursor_row >= scroll_top + 24) { scroll_top = cursor_row - 23 }
+                                    }
+                                }
+                                needs_redraw = 1
+                            } else if (sym == 65360) {
+                                cursor_col = 0
+                                needs_redraw = 1
+                            } else if (sym == 65367) {
+                                forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                cursor_col = ofs_str_len(cur_l)
+                                needs_redraw = 1
+                            } else if (sym == 65365) {
+                                if (cursor_row >= 15) { cursor_row = cursor_row - 15 }
+                                else { cursor_row = 0 }
+                                if (scroll_top >= 15) { scroll_top = scroll_top - 15 }
+                                else { scroll_top = 0 }
+                                needs_redraw = 1
+                            } else if (sym == 65366) {
+                                forge t_lines = ofs_array_len(editor_lines)
+                                cursor_row = cursor_row + 15
+                                if (cursor_row >= t_lines) { cursor_row = t_lines - 1 }
+                                scroll_top = scroll_top + 15
+                                if (scroll_top >= t_lines) { scroll_top = t_lines - 1 }
+                                needs_redraw = 1
+                            } else if (sym == 65288) {
+                                forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                if (cursor_col > 0) {
+                                    forge new_l = delete_char_in_line(cur_l, cursor_col)
+                                    ofs_array_set(editor_lines, cursor_row, new_l)
+                                    cursor_col--
+                                    is_dirty = 1
+                                } else if (cursor_row > 0) {
+                                    forge prev_l: obsidian = ofs_array_get(editor_lines, cursor_row - 1)
+                                    cursor_col = ofs_str_len(prev_l)
+                                    ofs_array_set(editor_lines, cursor_row - 1, prev_l + cur_l)
+
+                                    forge idx = cursor_row
+                                    forge total_l = ofs_array_len(editor_lines)
+                                    while (idx < total_l - 1) {
+                                        forge nxt: obsidian = ofs_array_get(editor_lines, idx + 1)
+                                        ofs_array_set(editor_lines, idx, nxt)
+                                        idx++
+                                    }
+                                    ofs_array_pop(editor_lines)
+                                    cursor_row--
+                                    if (cursor_row < scroll_top) { scroll_top = cursor_row }
+                                    is_dirty = 1
+                                }
+                                needs_redraw = 1
+                            } else if (sym == 65293) {
+                                forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                forge left_p = ofs_str_substr(cur_l, 0, cursor_col)
+                                forge right_p = split_line_at(cur_l, cursor_col)
+                                ofs_array_set(editor_lines, cursor_row, left_p)
+
+                                ofs_array_push(editor_lines, "")
+                                forge shift_idx = ofs_array_len(editor_lines) - 1
+                                while (shift_idx > cursor_row + 1) {
+                                    forge prev_item: obsidian = ofs_array_get(editor_lines, shift_idx - 1)
+                                    ofs_array_set(editor_lines, shift_idx, prev_item)
+                                    shift_idx--
+                                }
+                                ofs_array_set(editor_lines, cursor_row + 1, right_p)
+                                cursor_row++
+                                cursor_col = 0
+                                if (cursor_row >= scroll_top + 24) { scroll_top = cursor_row - 23 }
                                 is_dirty = 1
+                                needs_redraw = 1
+                            } else if (sym == 65289) {
+                                forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                forge new_l = insert_char_in_line(cur_l, cursor_col, "    ")
+                                ofs_array_set(editor_lines, cursor_row, new_l)
+                                cursor_col = cursor_col + 4
+                                is_dirty = 1
+                                needs_redraw = 1
+                            } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
+                                forge ch_buf: *stone = ofs_alloc(8)
+                                fracture {
+                                    *ch_buf = sym
+                                }
+                                forge ch_str: obsidian = ch_buf
+                                forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
+                                forge new_l = insert_char_in_line(cur_l, cursor_col, ch_str)
+                                ofs_array_set(editor_lines, cursor_row, new_l)
+                                cursor_col++
+                                is_dirty = 1
+                                needs_redraw = 1
                             }
-                            needs_redraw = 1
-                        } else if (sym == 65293) {
-                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
-                            forge left_p = ofs_str_substr(cur_l, 0, cursor_col)
-                            forge right_p = split_line_at(cur_l, cursor_col)
-                            ofs_array_set(editor_lines, cursor_row, left_p)
-
-                            ofs_array_push(editor_lines, "")
-                            forge shift_idx = ofs_array_len(editor_lines) - 1
-                            while (shift_idx > cursor_row + 1) {
-                                forge prev_item: obsidian = ofs_array_get(editor_lines, shift_idx - 1)
-                                ofs_array_set(editor_lines, shift_idx, prev_item)
-                                shift_idx--
-                            }
-                            ofs_array_set(editor_lines, cursor_row + 1, right_p)
-                            cursor_row++
-                            cursor_col = 0
-                            if (cursor_row >= scroll_top + 24) { scroll_top = cursor_row - 23 }
-                            is_dirty = 1
-                            needs_redraw = 1
-                        } else if (sym == 65289) {
-                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
-                            forge new_l = insert_char_in_line(cur_l, cursor_col, "    ")
-                            ofs_array_set(editor_lines, cursor_row, new_l)
-                            cursor_col = cursor_col + 4
-                            is_dirty = 1
-                            needs_redraw = 1
-                        } else if (sym >= 32 && sym <= 126 && is_ctrl == 0) {
-                            forge ch_buf: *stone = ofs_alloc(8)
-                            fracture {
-                                *ch_buf = sym
-                            }
-                            forge ch_str: obsidian = ch_buf
-                            forge cur_l: obsidian = ofs_array_get(editor_lines, cursor_row)
-                            forge new_l = insert_char_in_line(cur_l, cursor_col, ch_str)
-                            ofs_array_set(editor_lines, cursor_row, new_l)
-                            cursor_col++
-                            is_dirty = 1
-                            needs_redraw = 1
                         }
-                    }
-                } else if (ev_type == 22) {
-                    forge p_wh: *stone = fault_step(event_buf, 7)
-                    forge raw_wh: stone = 0
-                    fracture {
-                        raw_wh = *p_wh
-                    }
-                    forge new_w = (raw_wh % 4294967296) % 65536
-                    forge new_h = ((raw_wh / 4294967296) % 4294967296) % 65536
-                    echo("[OFS IDLE] ConfigureNotify: w=" + ofs_stone_to_obsidian(new_w) + " h=" + ofs_stone_to_obsidian(new_h))
-                    if (new_w > 100 && new_h > 100) {
-                        if (new_w != win_w || new_h != win_h) {
-                            win_w = new_w
-                            win_h = new_h
-                            if (pix != 0) {
-                                XFreePixmap(disp, pix)
-                            }
-                            pix = XCreatePixmap(disp, win, win_w, win_h, depth)
-                            if (g_xft_draw != 0) {
-                                XftDrawDestroy(g_xft_draw as *stone)
-                            }
-                            g_xft_draw = XftDrawCreate(disp, pix, g_xft_visual as *stone, g_xft_cmap) as stone
-                            needs_redraw = 1
+                    } else if (ev_type == 22) {
+                        forge p_wh: *stone = fault_step(event_buf, 7)
+                        forge raw_wh: stone = 0
+                        fracture {
+                            raw_wh = *p_wh
                         }
+                        forge new_w = (raw_wh % 4294967296) % 65536
+                        forge new_h = ((raw_wh / 4294967296) % 4294967296) % 65536
+                        echo("[OFS IDLE] ConfigureNotify: w=" + ofs_stone_to_obsidian(new_w) + " h=" + ofs_stone_to_obsidian(new_h))
+                        if (new_w > 100 && new_h > 100) {
+                            if (new_w != win_w || new_h != win_h) {
+                                win_w = new_w
+                                win_h = new_h
+                                if (pix != 0) {
+                                    XFreePixmap(disp, pix)
+                                }
+                                pix = XCreatePixmap(disp, win, win_w, win_h, depth)
+                                if (g_xft_draw != 0) {
+                                    XftDrawDestroy(g_xft_draw as *stone)
+                                }
+                                g_xft_draw = XftDrawCreate(disp, pix, g_xft_visual as *stone, g_xft_cmap) as stone
+                                needs_redraw = 1
+                            }
+                        }
+                    } else if (ev_type == 12) {
+                        needs_redraw = 1
                     }
-                } else if (ev_type == 12) {
-                    needs_redraw = 1
                 }
+
+                if (needs_redraw != 0) {
+                    forge cur_th = get_theme_by_id(active_theme_id)
+                    forge statusbar_y = win_h - 24
+                    forge panel_h = 220
+                    if (win_h < 650) { panel_h = 160 }
+                    forge panel_y = statusbar_y - panel_h
+
+                    draw_rect(disp, pix, gc, cur_th.bg_window, 0, 0, win_w, win_h)
+
+                    render_menu_bar(disp, pix, gc, hover_elem, cur_th, win_w)
+                    render_activity_bar(disp, pix, gc, active_activity, hover_elem, cur_th, win_h)
+                    render_sidebar(disp, pix, gc, active_activity, workspace_files, active_file_path, open_tabs, hover_elem, cur_th, search_query, workspace_folder, win_h, git_branch, git_commit_msg_buf, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types, ext_search_query, focused_area, active_theme_id, git_is_repo)
+                    render_editor_area(disp, pix, gc, open_tabs, active_tab_idx, hover_elem, cur_th, editor_lines, cursor_row, cursor_col, scroll_top, is_dirty, active_file_path, win_w, win_h, panel_y)
+                    render_bottom_panel(disp, pix, gc, active_panel_tab, hover_elem, cur_th, terminal_lines, lsp_err_count, active_file_name, cursor_row, cursor_col, terminal_input_buf, focused_area, win_w, win_h, panel_y)
+                    render_status_bar(disp, pix, gc, cur_th, cursor_row, cursor_col, lsp_err_count, active_file_name, is_dirty, win_w, win_h, git_branch)
+
+                    if (menu_open > 0) {
+                        render_dropdown_menu(disp, pix, gc, menu_open, menu_hover, cur_th)
+                    }
+
+                    if (modal_open > 0) {
+                        render_preferences_modal(disp, pix, gc, win_w, win_h, modal_tab, modal_theme, modal_font_size, modal_lsp, modal_autosave, modal_hover, cur_th)
+                    }
+
+                    if (folder_picker_open > 0) {
+                        render_folder_picker_modal(disp, pix, gc, win_w, win_h, folder_picker_input, hover_elem, cur_th)
+                    }
+
+                    if (palette_open > 0) {
+                        render_command_palette(disp, pix, gc, win_w, win_h, palette_query, palette_sel, cur_th)
+                    }
+
+                    XCopyArea(disp, pix, win, gc, 0, 0, win_w, win_h, 0, 0)
+                    XFlush(disp)
+                    needs_redraw = 0
+                }
+
+                usleep(16000)
             }
 
-            if (needs_redraw != 0) {
-                forge cur_th = get_theme_by_id(active_theme_id)
-                forge statusbar_y = win_h - 24
-                forge panel_h = 220
-                if (win_h < 650) { panel_h = 160 }
-                forge panel_y = statusbar_y - panel_h
-
-                draw_rect(disp, pix, gc, cur_th.bg_window, 0, 0, win_w, win_h)
-
-                render_menu_bar(disp, pix, gc, hover_elem, cur_th, win_w)
-                render_activity_bar(disp, pix, gc, active_activity, hover_elem, cur_th, win_h)
-                render_sidebar(disp, pix, gc, active_activity, workspace_files, active_file_path, open_tabs, hover_elem, cur_th, search_query, workspace_folder, win_h, git_branch, git_commit_msg_buf, git_staged_files, git_staged_types, git_unstaged_files, git_unstaged_types, ext_search_query, focused_area, active_theme_id, git_is_repo)
-                render_editor_area(disp, pix, gc, open_tabs, active_tab_idx, hover_elem, cur_th, editor_lines, cursor_row, cursor_col, scroll_top, is_dirty, active_file_path, win_w, win_h, panel_y)
-                render_bottom_panel(disp, pix, gc, active_panel_tab, hover_elem, cur_th, terminal_lines, lsp_err_count, active_file_name, cursor_row, cursor_col, terminal_input_buf, focused_area, win_w, win_h, panel_y)
-                render_status_bar(disp, pix, gc, cur_th, cursor_row, cursor_col, lsp_err_count, active_file_name, is_dirty, win_w, win_h, git_branch)
-
-                if (menu_open > 0) {
-                    render_dropdown_menu(disp, pix, gc, menu_open, menu_hover, cur_th)
-                }
-
-                if (modal_open > 0) {
-                    render_preferences_modal(disp, pix, gc, win_w, win_h, modal_tab, modal_theme, modal_font_size, modal_lsp, modal_autosave, modal_hover, cur_th)
-                }
-
-                if (folder_picker_open > 0) {
-                    render_folder_picker_modal(disp, pix, gc, win_w, win_h, folder_picker_input, hover_elem, cur_th)
-                }
-
-                if (palette_open > 0) {
-                    render_command_palette(disp, pix, gc, win_w, win_h, palette_query, palette_sel, cur_th)
-                }
-
-                XCopyArea(disp, pix, win, gc, 0, 0, win_w, win_h, 0, 0)
-                XFlush(disp)
-                needs_redraw = 0
+            echo("[OFS OLL Viewer] Encerrando visualizacao...")
+            if (g_xft_draw != 0) {
+                XftDrawDestroy(g_xft_draw as *stone)
+                g_xft_draw = 0
             }
-
-            usleep(16000)
+            XFreePixmap(disp, pix)
+            XDestroyWindow(disp, win)
+            XCloseDisplay(disp)
+            echo("[OFS OLL Viewer] Finalizado com sucesso.")
+            return 0
         }
-
-        echo("[OFS OLL Viewer] Encerrando visualizacao...")
-        if (g_xft_draw != 0) {
-            XftDrawDestroy(g_xft_draw as *stone)
-            g_xft_draw = 0
-        }
-        XFreePixmap(disp, pix)
-        XDestroyWindow(disp, win)
-        XCloseDisplay(disp)
-        echo("[OFS OLL Viewer] Finalizado com sucesso.")
-        return 0
     }
 }
 

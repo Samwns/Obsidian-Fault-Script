@@ -31,7 +31,8 @@ _set_runtime_in() { # dir -> imprime o runtime desse dir
 }
 _set_stdlib_in() { # dir -> imprime a stdlib desse dir
   local d="$1" s
-  for s in "$d/stdlib" "$d/../ofs/stdlib" "$d/../share/ofs/stdlib"; do
+  # .deb/.rpm/macOS: <prefix>/lib/ofs + <prefix>/share/ofs/stdlib
+  for s in "$d/stdlib" "$d/../ofs/stdlib" "$d/../share/ofs/stdlib" "$d/../../share/ofs/stdlib"; do
     [ -d "$s" ] && { (cd "$s" && pwd); return 0; }
   done
   return 1
@@ -44,7 +45,8 @@ _pick_set() {
     RES_CC="$(cd "$repo_root/dist" && pwd)/ofscc"; RES_RT="$(cd "$repo_root/dist" && pwd)/magma.o"
     RES_SL="$(cd "$repo_root/stdlib" && pwd)"; RES_FROM="repositorio"; return 0
   fi
-  local dirs=("$ROOT")
+  # pacote: wrapper em <prefix>/bin/ofs e o resto em <prefix>/lib/ofs (.deb, .rpm, macOS)
+  local dirs=("$ROOT" "$ROOT/../lib/ofs")
   [ "$IS_TERMUX" = true ] && dirs+=("$TERMUX_LIB")
   dirs+=("$HOME/.local/lib/ofs" "/usr/local/lib/ofs" "/usr/lib/ofs")
   for d in "${dirs[@]}"; do
@@ -360,6 +362,7 @@ ${c_head}Subcomandos:${c_off}
   ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o saida.ppm)
   ${c_cmd}doc [pasta|arq.ofs]${c_off} Documentacao gerada do codigo (-o saida, --check, --docs pasta)
   ${c_cmd}fmt [alvos]${c_off}         Formata .ofs no lugar (--check, --diff, --stdin)
+  ${c_cmd}quarry <subcmd>${c_off}     Pacotes: add, remove, list, search, update, install, publish
   ${c_cmd}build --target android${c_off} APK Android de um .ofs ou .oal (--install, --serial, --manifest)
   ${c_cmd}run <app.oal>${c_off}       Abre o app OAL numa janela de celular (X11)
   ${c_cmd}clean${c_off}               Limpa artefatos temporarios de build
@@ -388,6 +391,7 @@ ${c_head}Subcomandos:${c_off}
   ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o salida.ppm)
   ${c_cmd}doc [carpeta|arq.ofs]${c_off} Documentacion generada del codigo (-o salida, --check, --docs carpeta)
   ${c_cmd}fmt [destinos]${c_off}      Formatea .ofs en el sitio (--check, --diff, --stdin)
+  ${c_cmd}quarry <subcmd>${c_off}     Paquetes: add, remove, list, search, update, install, publish
   ${c_cmd}build --target android${c_off} APK Android de un .ofs o .oal (--install, --serial, --manifest)
   ${c_cmd}run <app.oal>${c_off}       Abre la app OAL en una ventana de movil (X11)
   ${c_cmd}clean${c_off}               Limpia artefactos temporales de build
@@ -416,6 +420,7 @@ ${c_head}Subcommands:${c_off}
   ${c_cmd}ui <file.oll>${c_off}       Render native OLL layout (-o output.ppm)
   ${c_cmd}doc [dir|file.ofs]${c_off}  Docs generated from source code (-o out, --check, --docs dir)
   ${c_cmd}fmt [targets]${c_off}       Format .ofs in place (--check, --diff, --stdin)
+  ${c_cmd}quarry <subcmd>${c_off}     Packages: add, remove, list, search, update, install, publish
   ${c_cmd}build --target android${c_off} Android APK from a .ofs or .oal (--install, --serial, --manifest)
   ${c_cmd}run <app.oal>${c_off}       Open an OAL app in a phone-sized X11 window
   ${c_cmd}clean${c_off}               Clean temporary build artifacts
@@ -938,6 +943,79 @@ cmd_fmt() {
   return 0
 }
 
+# ofs quarry: gerenciador de pacotes (ofs/tools/quarry.ofs, escrito em OFS).
+#   ofs quarry add|remove|list|search|update|install|publish [...]
+# Manifesto ofs.claim e lock ofs.lode na pasta atual; instala em $OFS_LIB_HOME
+# ou ~/.ofs/libs (onde o `attach` ja procura). Registro: OFS_QUARRY_REGISTRY
+# (URL http(s)/file:// ou caminho) ou --registry; padrao: registry.json do repo.
+cmd_quarry() {
+  local src sub="${1:-}"
+  case "$sub" in
+    ""|-h|--help|help)
+      case "${OFS_LANG:-en}" in
+        pt*) cat <<'EOF2'
+uso: ofs quarry <subcomando> [...]
+  add <pacote>[@versao|@canal]  adiciona ao ofs.claim, resolve, instala e grava o ofs.lode
+  remove <pacote>               tira do projeto e apaga o que ficou orfao
+  list                          pacotes instalados e versoes
+  search [termo]                procura no registro
+  update [pacote]               sobe versoes dentro das faixas do ofs.claim
+  install                       instala o que o ofs.claim/ofs.lode pedem (sha256 conferido)
+  publish [--out d] [--origin url] [--deposit registry.json]  gera .tar.gz + entrada de registro
+Opcao: --registry <url|caminho>   Env: OFS_QUARRY_REGISTRY, OFS_LIB_HOME
+EOF2
+        ;;
+        es*) cat <<'EOF2'
+uso: ofs quarry <subcomando> [...]
+  add <paquete>[@version|@canal]  agrega a ofs.claim, resuelve, instala y escribe ofs.lode
+  remove <paquete>                lo quita del proyecto y borra lo huerfano
+  list                            paquetes instalados y versiones
+  search [termino]                busca en el registro
+  update [paquete]                sube versiones dentro de los rangos de ofs.claim
+  install                         instala lo que piden ofs.claim/ofs.lode (sha256 verificado)
+  publish [--out d] [--origin url] [--deposit registry.json]  genera .tar.gz + entrada de registro
+Opcion: --registry <url|ruta>   Env: OFS_QUARRY_REGISTRY, OFS_LIB_HOME
+EOF2
+        ;;
+        *) cat <<'EOF2'
+usage: ofs quarry <subcommand> [...]
+  add <package>[@version|@channel]  add to ofs.claim, resolve, install and write ofs.lode
+  remove <package>                  drop from the project and delete orphans
+  list                              installed packages and versions
+  search [term]                     search the registry
+  update [package]                  raise versions within the ofs.claim ranges
+  install                           install what ofs.claim/ofs.lode ask for (sha256 verified)
+  publish [--out d] [--origin url] [--deposit registry.json]  build .tar.gz + registry entry
+Option: --registry <url|path>   Env: OFS_QUARRY_REGISTRY, OFS_LIB_HOME
+EOF2
+        ;;
+      esac
+      [ -n "$sub" ] && return 0; return 2 ;;
+  esac
+  shift
+  src="$(android_src_dir)" || { echo "ofs quarry: fonte do OFS (ofs/tools/quarry.ofs) nao encontrado; defina OFS_SOURCE=<repo>/ofs" >&2; return 2; }
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/ofs/tools"
+  mkdir -p "$cache"
+  local bin="$cache/quarry" tool_src="$src/tools/quarry.ofs"
+  [ -f "$tool_src" ] || { echo "ofs quarry: $tool_src nao existe" >&2; return 2; }
+  if [ ! -x "$bin" ] || tool_stale "$bin" \
+     || [ -n "$(find "$src/tools" -maxdepth 1 -name 'quarry*.ofs' -newer "$bin" -print -quit)" ] \
+     || [ -n "$(find "$OFS_STDLIB_PATH" -maxdepth 1 \( -name fs.ofs -o -name sha256.ofs \) -newer "$bin" -print -quit 2>/dev/null)" ]; then
+    echo "ofs quarry: compilando a ferramenta (primeira vez)..." >&2
+    local ll="$cache/quarry.ll"
+    OFSCC_INPUT="$tool_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" >"$cache/quarry.log" 2>&1 \
+      || { tail -20 "$cache/quarry.log" >&2; echo "ofs quarry: falha ao compilar o quarry" >&2; return 1; }
+    native_link "$ll" "$bin" linux
+    chmod +x "$bin"
+    tool_stamp "$bin"
+    rm -f "$ll"
+  fi
+  local args=""
+  [ "$#" -gt 0 ] && args="$(printf '%s\n' "$@")"
+  PWD="$(pwd)" QUARRY_CMD="$sub" QUARRY_ARGS="$args" \
+    QUARRY_CACHE="${QUARRY_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/ofs/quarry}" "$bin"
+}
+
 need_ofscc() {
   if [ ! -x "$OFSCC" ]; then
     echo "ofs: self-hosted compiler not found next to wrapper: $OFSCC" >&2
@@ -1080,6 +1158,11 @@ fi
 
 if [ "$cmd" = fmt ] || [ "$cmd" = polish ]; then
   cmd_fmt "$@"
+  exit $?
+fi
+
+if [ "$cmd" = quarry ]; then
+  cmd_quarry "$@"
   exit $?
 fi
 

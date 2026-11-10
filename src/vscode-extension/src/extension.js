@@ -3505,9 +3505,9 @@ function registerCompletionProvider(context) {
 
 function getInstalledPackagesDir() {
   if (process.platform === 'win32') {
-    return path.join(process.env.APPDATA || os.homedir(), 'ofs', 'src/packages');
+    return path.join(process.env.APPDATA || os.homedir(), 'ofs', 'libs');
   }
-  return path.join(os.homedir(), '.ofs', 'src/packages');
+  return path.join(os.homedir(), '.ofs', 'libs');
 }
 
 function getInstalledPackageInfo(name) {
@@ -3536,8 +3536,8 @@ async function fetchRegistryCached() {
 }
 
 function getRegistryStableVersion(registry, name) {
-  if (!Array.isArray(registry?.src/packages)) return null;
-  const pkg = registry.src/packages.find((p) => p.name === name);
+  if (!Array.isArray(registry?.packages)) return null;
+  const pkg = registry.packages.find((p) => p.name === name);
   return pkg?.channels?.stable || pkg?.channels?.latest || null;
 }
 

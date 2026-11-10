@@ -1,0 +1,94 @@
+// OFS stdlib — oal_android: backend Android da OAL (NativeActivity, OFS puro)
+// Liga o nucleo oal_runtime ao stdlib android.ofs: eventos do ciclo de vida,
+// toque e voltar viram chamadas oal.*; cada EV_FRAME redesenha se preciso e
+// copia o buffer para o ANativeWindow.
+
+attach {F:android.ofs}
+attach {F:oal_runtime.ofs}
+attach {F:android_input.ofs}
+
+extern vein AConfiguration_new() -> *stone
+extern vein AConfiguration_delete(cfg: *stone) -> void
+extern vein AConfiguration_fromAssetManager(cfg: *stone, am: *stone) -> void
+extern vein AConfiguration_getDensity(cfg: *stone) -> stone
+
+vein oal_backend_quit() -> void { android.finish() }
+vein oal_backend_request_frame() -> void { android.request_frame() }
+vein oal_backend_orientation(req: stone) -> bool {
+    forge r = android.ORIENT_REQ_FULL_SENSOR
+    if (req == oal.ORIENT_PORTRAIT) { r = android.ORIENT_REQ_SENSOR_PORTRAIT }
+    if (req == oal.ORIENT_LANDSCAPE) { r = android.ORIENT_REQ_SENSOR_LANDSCAPE }
+    if (req == oal.ORIENT_AUTO) { r = android.ORIENT_REQ_AUTO }
+    return android.set_orientation(r)
+}
+vein oal_backend_text_open(title: obsidian, text: obsidian, multiline: bool) -> bool {
+    ainput.ok_label = oal.edit_ok_label
+    ainput.cancel_label = oal.edit_cancel_label
+    return ainput.open(title, text, multiline)
+}
+vein oal_backend_text_poll() -> stone { return ainput.poll() }
+vein oal_backend_text_get() -> obsidian { return ainput.text() }
+vein oal_backend_log(text: obsidian) -> void { android.log_tag("oal", text) }
+
+vein _oal_android_density() -> stone {
+    fracture {
+        if (android.activity == null) { return 160 }
+        forge am = android.peek(android.activity, 8) as *stone      // +64 assetManager
+        forge cfg = AConfiguration_new()
+        AConfiguration_fromAssetManager(cfg, am)
+        forge d = android.s32(AConfiguration_getDensity(cfg))
+        AConfiguration_delete(cfg)
+        if (d <= 0 || d > 1000) { d = 160 }
+        return d
+    }
+}
+
+vein android_event(ev: stone) -> void {
+    if (ev == android.EV_CREATE) {
+        oal.set_density(_oal_android_density())
+        oal.start("/system/fonts/Roboto-Regular.ttf", "/system/fonts/Roboto-Bold.ttf", "/system/fonts/DroidSans.ttf")
+        oal.log("oal: dpi " + ofs_stone_to_obsidian(oal.density_dpi) + " dados " + android.internal_data_path())
+        return
+    }
+    if (ev == android.EV_FRAME) {
+        oal.frame(android.frame_ns / 1000000)
+        android.continuous = oal.wants_frames()
+        oal.resize(android.win_w, android.win_h)
+        if (android.content_bottom > 0) {
+            oal.set_insets4(android.content_top, android.win_h - android.content_bottom, android.content_left, android.win_w - android.content_right)
+        }
+        // so copia para a janela quando algo mudou (ou o sistema pediu)
+        if (oal.render() || android.redraw_needed) {
+            android.redraw_needed = false
+            if (android.lock()) {
+                android.blit(oal.pixels, oal.width, oal.height)
+                android.unlock_post()
+            }
+        }
+        return
+    }
+    if (ev == android.EV_TOUCH_DOWN || ev == android.EV_POINTER_DOWN) {
+        oal.touch_down_id(android.touch_id, android.touch_x, android.touch_y)
+    } else if (ev == android.EV_TOUCH_MOVE) {
+        oal.touch_move_id(android.touch_id, android.touch_x, android.touch_y)
+    } else if (ev == android.EV_TOUCH_UP || ev == android.EV_POINTER_UP) {
+        oal.touch_up_id(android.touch_id, android.touch_x, android.touch_y)
+    } else if (ev == android.EV_TOUCH_CANCEL) {
+        oal.touch_cancel()
+    } else if (ev == android.EV_KEY) {
+        if (oal.on_key(android.key_code, android.key_action, android.key_source)) { android.key_handled = true }
+    } else if (ev == android.EV_BACK) {
+        oal.on_back()
+    } else if (ev == android.EV_PAUSE) {
+        oal.on_lifecycle(oal.ON_PAUSE)
+    } else if (ev == android.EV_RESUME) {
+        oal.pad_connected = false
+        oal.on_lifecycle(oal.ON_RESUME)
+    } else if (ev == android.EV_LOW_MEMORY) {
+        oal.on_lifecycle(oal.ON_LOW_MEMORY)
+    }
+    if (ev == android.EV_CONFIG) {
+        oal.set_density(_oal_android_density())
+        return
+    }
+}

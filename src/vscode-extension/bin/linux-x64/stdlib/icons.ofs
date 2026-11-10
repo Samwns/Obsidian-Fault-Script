@@ -35,6 +35,50 @@ namespace icons {
     forge FILE: stone = 18
     forge BOOKMARK: stone = 19
     forge SHIELD: stone = 20
+    forge PLUGIN: stone = 21
+    forge SAVE: stone = 22
+    forge FOLDER: stone = 23
+    forge PLAY: stone = 24
+    forge HAMBURGER: stone = 25
+    forge GAMEPAD: stone = 26
+    forge AUTO: stone = 27
+    forge SKIP: stone = 28
+    forge BACKLOG: stone = 29
+    forge EYE_OFF: stone = 30
+    forge EYE: stone = 31
+    forge ROTATE: stone = 32
+    forge PORTRAIT: stone = 33
+    forge LANDSCAPE: stone = 34
+    forge TRASH: stone = 35
+    forge EDIT: stone = 36
+    forge IMAGE: stone = 37
+    forge VOLUME: stone = 38
+    forge TEXT: stone = 39
+    forge PALETTE: stone = 40
+    forge CHECK: stone = 41
+    forge STORAGE: stone = 42
+    forge WINDOWS: stone = 43
+    forge RENPY: stone = 44
+    forge UNITY: stone = 45
+    forge MOON: stone = 46
+    forge UNKNOWN: stone = 47
+    forge KEYBOARD: stone = 48
+    forge BACKSPACE: stone = 49
+    forge SHIFT: stone = 50
+    forge PAUSE: stone = 51
+    forge JOYSTICK: stone = 52
+    forge SPACE: stone = 53
+    forge CHEVRON: stone = 54
+    forge RESIZE: stone = 55
+    forge TABS: stone = 56
+    forge RPGM: stone = 57
+    forge TYRANO: stone = 58
+    // Formas de botao de controle (genericas, sem logotipos)
+    forge BTN_CROSS: stone = 59          // x
+    forge BTN_CIRCLE: stone = 60         // o
+    forge BTN_SQUARE: stone = 61
+    forge BTN_TRIANGLE: stone = 62
+    forge KEY_ENTER: stone = 63          // seta de Enter
 
     // Espessura do traco na grade 24x24.
     forge stroke: crystal = 2.0
@@ -84,24 +128,26 @@ namespace icons {
 
     // Une a forma atual (em raster) a mascara por cobertura maxima.
     vein _merge() -> void {
-        raster.to_alpha(_tmp, 0)
-        forge total = _n * _n
-        forge i = 0
-        while (i < total) {
-            forge pt: *stone = fault_step(_tmp, i)
-            forge pm: *stone = fault_step(_mask, i)
-            forge a = 0
-            forge m = 0
-            fracture {
-                a = *pt;
-                m = *pm;
-            }
-            if (a > m) {
+        fracture {
+            raster.to_alpha(_tmp, 0)
+            forge total = _n * _n
+            forge i = 0
+            while (i < total) {
+                forge pt: *stone = fault_step(_tmp, i)
+                forge pm: *stone = fault_step(_mask, i)
+                forge a = 0
+                forge m = 0
                 fracture {
-                    *pm = a;
+                    a = *pt;
+                    m = *pm;
                 }
+                if (a > m) {
+                    fracture {
+                        *pm = a;
+                    }
+                }
+                i++
             }
-            i++
         }
     }
 
@@ -147,6 +193,42 @@ namespace icons {
         _start()
         raster.add_circle(_gx(cx), _gx(cy), r * _scale)
         _merge()
+    }
+
+    // Recorta um circulo da mascara (mascara *= 1 - cobertura): luas, furos.
+    vein _cut_dot(cx: crystal, cy: crystal, r: crystal) -> void {
+        fracture {
+            _start()
+            raster.add_circle(_gx(cx), _gx(cy), r * _scale)
+            raster.to_alpha(_tmp, 0)
+            forge total = _n * _n
+            forge i = 0
+            while (i < total) {
+                forge pt: *stone = fault_step(_tmp, i)
+                forge pm: *stone = fault_step(_mask, i)
+                forge a = 0
+                forge m = 0
+                fracture {
+                    a = *pt;
+                    m = *pm;
+                }
+                if (a > 0) {
+                    forge v = (m * (255 - a)) / 255
+                    fracture {
+                        *pm = v;
+                    }
+                }
+                i++
+            }
+        }
+    }
+
+    // Retangulo de contorno (x0,y0)-(x1,y1).
+    vein _box(x0: crystal, y0: crystal, x1: crystal, y1: crystal) -> void {
+        _line(x0, y0, x1, y0)
+        _line(x1, y0, x1, y1)
+        _line(x1, y1, x0, y1)
+        _line(x0, y1, x0, y0)
     }
 
     vein _tri(ax: crystal, ay: crystal, bx: crystal, by: crystal, cx: crystal, cy: crystal) -> void {
@@ -274,6 +356,265 @@ namespace icons {
             _arc(12.0, 11.5, 7.6, 90.0, 173.0)
             _line(5.0, 12.5, 4.5, 6.0)
             _line(4.5, 6.0, 12.0, 3.0)
+        } else if (id == PLUGIN) {
+            // tomada: dois pinos, corpo arredondado e cabo
+            _line(9.0, 3.0, 9.0, 7.5)
+            _line(15.0, 3.0, 15.0, 7.5)
+            _line(5.5, 7.5, 18.5, 7.5)
+            _line(5.5, 7.5, 5.5, 11.0)
+            _line(18.5, 7.5, 18.5, 11.0)
+            _arc(12.0, 11.0, 6.5, 0.0, 180.0)
+            _line(12.0, 17.5, 12.0, 21.0)
+        } else if (id == SAVE) {
+            // disquete
+            _line(4.5, 4.5, 16.5, 4.5)
+            _line(16.5, 4.5, 19.5, 7.5)
+            _line(19.5, 7.5, 19.5, 19.5)
+            _line(19.5, 19.5, 4.5, 19.5)
+            _line(4.5, 19.5, 4.5, 4.5)
+            _line(8.0, 4.5, 8.0, 9.0)
+            _line(8.0, 9.0, 15.0, 9.0)
+            _line(15.0, 9.0, 15.0, 4.5)
+            _line(7.5, 19.5, 7.5, 14.0)
+            _line(7.5, 14.0, 16.5, 14.0)
+            _line(16.5, 14.0, 16.5, 19.5)
+        } else if (id == FOLDER) {
+            _line(3.5, 6.0, 9.5, 6.0)
+            _line(9.5, 6.0, 11.5, 8.5)
+            _line(11.5, 8.5, 20.5, 8.5)
+            _line(20.5, 8.5, 20.5, 19.0)
+            _line(20.5, 19.0, 3.5, 19.0)
+            _line(3.5, 19.0, 3.5, 6.0)
+            _line(3.5, 11.5, 20.5, 11.5)
+        } else if (id == PLAY) {
+            _tri(7.5, 4.5, 7.5, 19.5, 19.5, 12.0)
+        } else if (id == HAMBURGER) {
+            _line(4.5, 6.5, 19.5, 6.5)
+            _line(4.5, 12.0, 19.5, 12.0)
+            _line(4.5, 17.5, 19.5, 17.5)
+        } else if (id == GAMEPAD) {
+            _line(6.5, 7.5, 17.5, 7.5)
+            _arc(6.5, 12.5, 5.0, 90.0, 270.0)
+            _arc(17.5, 12.5, 5.0, 0.0 - 90.0, 90.0)
+            _line(6.5, 17.5, 17.5, 17.5)
+            _line(4.5, 12.5, 8.5, 12.5)
+            _line(6.5, 10.5, 6.5, 14.5)
+            _dot(16.0, 11.3, 1.1)
+            _dot(18.5, 13.7, 1.1)
+        } else if (id == AUTO) {
+            _arc(12.0, 12.0, 9.0, 0.0 - 50.0, 230.0)
+            _tri(18.8, 2.8, 20.6, 8.6, 14.8, 7.6)
+            _tri(10.0, 8.5, 10.0, 15.5, 15.5, 12.0)
+        } else if (id == SKIP) {
+            _tri(3.5, 6.0, 3.5, 18.0, 11.5, 12.0)
+            _tri(12.0, 6.0, 12.0, 18.0, 20.0, 12.0)
+        } else if (id == BACKLOG) {
+            _dot(5.0, 6.5, 1.5)
+            _dot(5.0, 12.0, 1.5)
+            _dot(5.0, 17.5, 1.5)
+            _line(9.0, 6.5, 20.0, 6.5)
+            _line(9.0, 12.0, 20.0, 12.0)
+            _line(9.0, 17.5, 16.0, 17.5)
+        } else if (id == EYE || id == EYE_OFF) {
+            _arc(12.0, 19.0, 11.0, 220.0, 320.0)
+            _arc(12.0, 5.0, 11.0, 40.0, 140.0)
+            _ring(12.0, 12.0, 3.0)
+            if (id == EYE_OFF) { _line(4.0, 20.0, 20.0, 4.0) }
+        } else if (id == ROTATE) {
+            // celular no centro + duas setas curvas (girar a tela)
+            _box(9.0, 6.0, 15.0, 18.0)
+            _arc(12.0, 12.0, 9.5, 200.0, 290.0)
+            _tri(14.0, 0.8, 14.0, 5.2, 17.8, 3.0)
+            _arc(12.0, 12.0, 9.5, 20.0, 110.0)
+            _tri(10.0, 18.8, 10.0, 23.2, 6.2, 21.0)
+        } else if (id == PORTRAIT) {
+            _box(7.0, 3.0, 17.0, 21.0)
+            _line(10.5, 18.0, 13.5, 18.0)
+        } else if (id == LANDSCAPE) {
+            _box(3.0, 7.0, 21.0, 17.0)
+            _line(18.0, 10.5, 18.0, 13.5)
+        } else if (id == TRASH) {
+            _line(4.0, 6.5, 20.0, 6.5)
+            _line(9.5, 6.5, 9.5, 3.5)
+            _line(9.5, 3.5, 14.5, 3.5)
+            _line(14.5, 3.5, 14.5, 6.5)
+            _line(6.0, 6.5, 7.0, 20.5)
+            _line(7.0, 20.5, 17.0, 20.5)
+            _line(17.0, 20.5, 18.0, 6.5)
+            _line(10.0, 10.0, 10.0, 17.0)
+            _line(14.0, 10.0, 14.0, 17.0)
+        } else if (id == EDIT) {
+            _line(5.0, 19.0, 6.0, 14.5)
+            _line(6.0, 14.5, 15.5, 5.0)
+            _line(15.5, 5.0, 19.0, 8.5)
+            _line(19.0, 8.5, 9.5, 18.0)
+            _line(9.5, 18.0, 5.0, 19.0)
+            _line(13.0, 7.5, 16.5, 11.0)
+        } else if (id == IMAGE) {
+            _box(3.5, 5.0, 20.5, 19.0)
+            _poly2(5.0, 17.0, 10.0, 11.5, 13.5, 15.0)
+            _poly2(12.0, 13.5, 15.5, 10.0, 19.0, 14.0)
+            _dot(8.5, 8.8, 1.6)
+        } else if (id == VOLUME) {
+            _line(4.0, 9.5, 7.5, 9.5)
+            _line(7.5, 9.5, 12.0, 5.0)
+            _line(12.0, 5.0, 12.0, 19.0)
+            _line(12.0, 19.0, 7.5, 14.5)
+            _line(7.5, 14.5, 4.0, 14.5)
+            _line(4.0, 14.5, 4.0, 9.5)
+            _arc(13.0, 12.0, 4.0, 0.0 - 45.0, 45.0)
+            _arc(13.0, 12.0, 7.5, 0.0 - 45.0, 45.0)
+        } else if (id == TEXT) {
+            _line(4.0, 5.0, 14.0, 5.0)
+            _line(9.0, 5.0, 9.0, 19.0)
+            _line(13.0, 11.0, 20.0, 11.0)
+            _line(16.5, 11.0, 16.5, 19.0)
+        } else if (id == PALETTE) {
+            _ring(12.0, 12.0, 8.5)
+            _dot(8.0, 9.5, 1.5)
+            _dot(12.0, 7.0, 1.5)
+            _dot(16.0, 9.5, 1.5)
+            _dot(15.0, 15.0, 2.0)
+        } else if (id == CHECK) {
+            _poly2(5.0, 12.5, 10.0, 17.5, 19.5, 7.0)
+        } else if (id == STORAGE) {
+            _line(9.0, 3.5, 18.5, 3.5)
+            _line(18.5, 3.5, 18.5, 20.5)
+            _line(18.5, 20.5, 5.5, 20.5)
+            _line(5.5, 20.5, 5.5, 7.0)
+            _line(5.5, 7.0, 9.0, 3.5)
+            _line(10.0, 7.0, 10.0, 9.5)
+            _line(13.0, 7.0, 13.0, 9.5)
+            _line(16.0, 7.0, 16.0, 9.5)
+        } else if (id == WINDOWS) {
+            // janela generica (programa de PC): moldura com barra de titulo
+            _box(3.0, 4.5, 21.0, 19.5)
+            _line(3.0, 8.5, 21.0, 8.5)
+            _dot(6.0, 6.5, 0.9)
+            _dot(8.8, 6.5, 0.9)
+            _line(7.5, 12.5, 10.5, 15.0)
+            _line(10.5, 15.0, 7.5, 17.0)
+            _line(12.5, 17.0, 16.5, 17.0)
+        } else if (id == RENPY) {
+            // balao de fala (visual novel com motor de script)
+            _line(5.0, 4.5, 19.0, 4.5)
+            _arc(19.0, 8.5, 4.0, 0.0 - 90.0, 90.0)
+            _line(19.0, 12.5, 11.0, 12.5)
+            _line(11.0, 12.5, 7.0, 17.0)
+            _line(7.0, 17.0, 7.5, 12.5)
+            _arc(5.0, 8.5, 4.0, 90.0, 270.0)
+            _dot(8.5, 8.5, 1.1)
+            _dot(12.0, 8.5, 1.1)
+            _dot(15.5, 8.5, 1.1)
+            _line(13.0, 19.5, 20.0, 19.5)
+        } else if (id == UNITY) {
+            // cubo isometrico (motor 3D)
+            _line(12.0, 3.0, 20.0, 7.5)
+            _line(20.0, 7.5, 20.0, 16.5)
+            _line(20.0, 16.5, 12.0, 21.0)
+            _line(12.0, 21.0, 4.0, 16.5)
+            _line(4.0, 16.5, 4.0, 7.5)
+            _line(4.0, 7.5, 12.0, 3.0)
+            _line(4.0, 7.5, 12.0, 12.0)
+            _line(20.0, 7.5, 12.0, 12.0)
+            _line(12.0, 12.0, 12.0, 21.0)
+        } else if (id == MOON) {
+            _dot(12.0, 12.0, 9.0)
+            _cut_dot(16.5, 8.5, 7.5)
+        } else if (id == UNKNOWN) {
+            _arc(12.0, 8.5, 4.5, 180.0, 400.0)
+            _line(14.6, 12.2, 12.0, 14.5)
+            _line(12.0, 14.5, 12.0, 16.0)
+            _dot(12.0, 19.5, 1.4)
+        } else if (id == KEYBOARD) {
+            _box(2.5, 6.0, 21.5, 18.0)
+            _dot(6.0, 9.5, 1.0)
+            _dot(9.3, 9.5, 1.0)
+            _dot(12.6, 9.5, 1.0)
+            _dot(15.9, 9.5, 1.0)
+            _dot(19.0, 9.5, 1.0)
+            _line(7.0, 14.5, 17.0, 14.5)
+        } else if (id == BACKSPACE) {
+            _line(8.0, 5.5, 20.5, 5.5)
+            _line(20.5, 5.5, 20.5, 18.5)
+            _line(20.5, 18.5, 8.0, 18.5)
+            _line(8.0, 18.5, 2.5, 12.0)
+            _line(2.5, 12.0, 8.0, 5.5)
+            _line(11.0, 9.0, 17.0, 15.0)
+            _line(17.0, 9.0, 11.0, 15.0)
+        } else if (id == SHIFT) {
+            _line(12.0, 3.5, 3.5, 12.5)
+            _line(3.5, 12.5, 8.0, 12.5)
+            _line(8.0, 12.5, 8.0, 20.0)
+            _line(8.0, 20.0, 16.0, 20.0)
+            _line(16.0, 20.0, 16.0, 12.5)
+            _line(16.0, 12.5, 20.5, 12.5)
+            _line(20.5, 12.5, 12.0, 3.5)
+        } else if (id == PAUSE) {
+            _line(8.0, 5.0, 8.0, 19.0)
+            _line(16.0, 5.0, 16.0, 19.0)
+        } else if (id == JOYSTICK) {
+            _ring(12.0, 12.0, 9.0)
+            _dot(12.0, 12.0, 4.0)
+        } else if (id == SPACE) {
+            _poly2(3.5, 11.0, 3.5, 16.0, 20.5, 16.0)
+            _line(20.5, 16.0, 20.5, 11.0)
+        } else if (id == CHEVRON) {
+            _poly2(9.0, 5.5, 15.5, 12.0, 9.0, 18.5)
+        } else if (id == RESIZE) {
+            _line(4.0, 4.0, 10.0, 10.0)
+            _poly2(4.0, 9.0, 4.0, 4.0, 9.0, 4.0)
+            _line(20.0, 20.0, 14.0, 14.0)
+            _poly2(20.0, 15.0, 20.0, 20.0, 15.0, 20.0)
+        } else if (id == TABS) {
+            _line(3.5, 20.0, 3.5, 6.0)
+            _line(3.5, 6.0, 10.5, 6.0)
+            _line(10.5, 6.0, 10.5, 10.0)
+            _line(10.5, 10.0, 20.5, 10.0)
+            _line(20.5, 10.0, 20.5, 20.0)
+            _line(20.5, 20.0, 3.5, 20.0)
+            _line(12.5, 6.0, 18.5, 6.0)
+        } else if (id == RPGM) {
+            // hexagono com pontos de dado (RPG de mesa; desenho proprio)
+            _line(12.0, 3.0, 20.0, 7.5)
+            _line(20.0, 7.5, 20.0, 16.5)
+            _line(20.0, 16.5, 12.0, 21.0)
+            _line(12.0, 21.0, 4.0, 16.5)
+            _line(4.0, 16.5, 4.0, 7.5)
+            _line(4.0, 7.5, 12.0, 3.0)
+            _dot(12.0, 12.0, 1.5)
+            _dot(8.5, 9.5, 1.2)
+            _dot(15.5, 14.5, 1.2)
+        } else if (id == TYRANO) {
+            // pergaminho de roteiro com linhas de texto e cursor
+            _line(6.0, 4.0, 18.0, 4.0)
+            _line(18.0, 4.0, 18.0, 17.0)
+            _line(18.0, 17.0, 6.0, 17.0)
+            _line(6.0, 17.0, 6.0, 4.0)
+            _arc(6.0, 19.0, 2.0, 90.0, 270.0)
+            _arc(18.0, 19.0, 2.0, 270.0, 450.0)
+            _line(6.0, 21.0, 18.0, 21.0)
+            _line(8.5, 8.0, 15.5, 8.0)
+            _line(8.5, 11.0, 13.0, 11.0)
+            _line(8.5, 14.0, 15.5, 14.0)
+        } else if (id == BTN_CROSS) {
+            _line(6.0, 6.0, 18.0, 18.0)
+            _line(18.0, 6.0, 6.0, 18.0)
+        } else if (id == BTN_CIRCLE) {
+            _ring(12.0, 12.0, 7.0)
+        } else if (id == BTN_SQUARE) {
+            _line(5.5, 5.5, 18.5, 5.5)
+            _line(18.5, 5.5, 18.5, 18.5)
+            _line(18.5, 18.5, 5.5, 18.5)
+            _line(5.5, 18.5, 5.5, 5.5)
+        } else if (id == BTN_TRIANGLE) {
+            _line(12.0, 4.5, 20.0, 18.5)
+            _line(20.0, 18.5, 4.0, 18.5)
+            _line(4.0, 18.5, 12.0, 4.5)
+        } else if (id == KEY_ENTER) {
+            _line(19.0, 5.0, 19.0, 13.0)
+            _line(19.0, 13.0, 6.0, 13.0)
+            _poly2(10.0, 8.5, 5.0, 13.0, 10.0, 17.5)
         }
     }
 
@@ -297,20 +638,22 @@ namespace icons {
     }
 
     vein _entry(id: stone, size: stone) -> stone {
-        if (_cache < 0) { _cache = hashmap.new(64) }
-        forge key = id * 4096 + size
-        forge hit = hashmap.get(_cache, key, -1)
-        if (hit >= 0) { return hit }
-        _begin(size)
-        _build(id)
-        forge cells = _n * _n
-        forge off = _pool_reserve(cells)
-        memcpy(fault_step(_pool, off), _mask, cells * 8)
-        ofs_array_push(_e_off, off)
-        ofs_array_push(_e_size, _n)
-        forge idx = ofs_array_len(_e_off) - 1
-        hashmap.set(_cache, key, idx)
-        return idx
+        fracture {
+            if (_cache < 0) { _cache = hashmap.new(64) }
+            forge key = id * 4096 + size
+            forge hit = hashmap.get(_cache, key, -1)
+            if (hit >= 0) { return hit }
+            _begin(size)
+            _build(id)
+            forge cells = _n * _n
+            forge off = _pool_reserve(cells)
+            memcpy(fault_step(_pool, off), _mask, cells * 8)
+            ofs_array_push(_e_off, off)
+            ofs_array_push(_e_size, _n)
+            forge idx = ofs_array_len(_e_off) - 1
+            hashmap.set(_cache, key, idx)
+            return idx
+        }
     }
 
     // Icone pelo nome ("settings", "search"...); -1 se desconhecido.
@@ -335,29 +678,79 @@ namespace icons {
         if (ofs_str_eq(n, "file")) { return 18 }
         if (ofs_str_eq(n, "bookmark")) { return 19 }
         if (ofs_str_eq(n, "shield")) { return 20 }
+        if (ofs_str_eq(n, "plugin") || ofs_str_eq(n, "plugins")) { return 21 }
+        if (ofs_str_eq(n, "save") || ofs_str_eq(n, "salvar")) { return 22 }
+        if (ofs_str_eq(n, "folder") || ofs_str_eq(n, "load") || ofs_str_eq(n, "carregar") || ofs_str_eq(n, "pasta")) { return 23 }
+        if (ofs_str_eq(n, "play") || ofs_str_eq(n, "jogar")) { return 24 }
+        if (ofs_str_eq(n, "hamburger")) { return 25 }
+        if (ofs_str_eq(n, "gamepad") || ofs_str_eq(n, "controle")) { return 26 }
+        if (ofs_str_eq(n, "import") || ofs_str_eq(n, "importar")) { return 13 }
+        if (ofs_str_eq(n, "config") || ofs_str_eq(n, "configuracoes")) { return 15 }
+        if (ofs_str_eq(n, "auto")) { return AUTO }
+        if (ofs_str_eq(n, "skip") || ofs_str_eq(n, "pular") || ofs_str_eq(n, "fast_forward")) { return SKIP }
+        if (ofs_str_eq(n, "backlog") || ofs_str_eq(n, "list") || ofs_str_eq(n, "lista")) { return BACKLOG }
+        if (ofs_str_eq(n, "eye_off") || ofs_str_eq(n, "hide") || ofs_str_eq(n, "esconder")) { return EYE_OFF }
+        if (ofs_str_eq(n, "eye") || ofs_str_eq(n, "show") || ofs_str_eq(n, "mostrar")) { return EYE }
+        if (ofs_str_eq(n, "rotate") || ofs_str_eq(n, "orientation") || ofs_str_eq(n, "orientacao") || ofs_str_eq(n, "girar")) { return ROTATE }
+        if (ofs_str_eq(n, "portrait") || ofs_str_eq(n, "retrato")) { return PORTRAIT }
+        if (ofs_str_eq(n, "landscape") || ofs_str_eq(n, "paisagem")) { return LANDSCAPE }
+        if (ofs_str_eq(n, "trash") || ofs_str_eq(n, "delete") || ofs_str_eq(n, "apagar") || ofs_str_eq(n, "lixeira")) { return TRASH }
+        if (ofs_str_eq(n, "edit") || ofs_str_eq(n, "editar") || ofs_str_eq(n, "rename")) { return EDIT }
+        if (ofs_str_eq(n, "image") || ofs_str_eq(n, "imagem") || ofs_str_eq(n, "cover") || ofs_str_eq(n, "capa")) { return IMAGE }
+        if (ofs_str_eq(n, "volume") || ofs_str_eq(n, "audio") || ofs_str_eq(n, "som")) { return VOLUME }
+        if (ofs_str_eq(n, "text") || ofs_str_eq(n, "texto") || ofs_str_eq(n, "font")) { return TEXT }
+        if (ofs_str_eq(n, "palette") || ofs_str_eq(n, "theme") || ofs_str_eq(n, "tema") || ofs_str_eq(n, "paleta")) { return PALETTE }
+        if (ofs_str_eq(n, "check") || ofs_str_eq(n, "ok") || ofs_str_eq(n, "enter")) { return CHECK }
+        if (ofs_str_eq(n, "storage") || ofs_str_eq(n, "sdcard") || ofs_str_eq(n, "armazenamento")) { return STORAGE }
+        if (ofs_str_eq(n, "windows") || ofs_str_eq(n, "exe") || ofs_str_eq(n, "window")) { return WINDOWS }
+        if (ofs_str_eq(n, "renpy") || ofs_str_eq(n, "vn") || ofs_str_eq(n, "chat")) { return RENPY }
+        if (ofs_str_eq(n, "unity") || ofs_str_eq(n, "cube") || ofs_str_eq(n, "cubo")) { return UNITY }
+        if (ofs_str_eq(n, "moon") || ofs_str_eq(n, "lua") || ofs_str_eq(n, "tactics_moon")) { return MOON }
+        if (ofs_str_eq(n, "unknown") || ofs_str_eq(n, "desconhecido") || ofs_str_eq(n, "help") || ofs_str_eq(n, "ajuda")) { return UNKNOWN }
+        if (ofs_str_eq(n, "keyboard") || ofs_str_eq(n, "teclado")) { return KEYBOARD }
+        if (ofs_str_eq(n, "backspace") || ofs_str_eq(n, "apagar_letra")) { return BACKSPACE }
+        if (ofs_str_eq(n, "shift") || ofs_str_eq(n, "up") || ofs_str_eq(n, "cima")) { return SHIFT }
+        if (ofs_str_eq(n, "pause") || ofs_str_eq(n, "pausa")) { return PAUSE }
+        if (ofs_str_eq(n, "joystick") || ofs_str_eq(n, "dpad") || ofs_str_eq(n, "controles")) { return JOYSTICK }
+        if (ofs_str_eq(n, "space") || ofs_str_eq(n, "espaco")) { return SPACE }
+        if (ofs_str_eq(n, "chevron") || ofs_str_eq(n, "next") || ofs_str_eq(n, "abrir")) { return CHEVRON }
+        if (ofs_str_eq(n, "resize") || ofs_str_eq(n, "tamanho") || ofs_str_eq(n, "size")) { return RESIZE }
+        if (ofs_str_eq(n, "tabs") || ofs_str_eq(n, "abas")) { return TABS }
+        if (ofs_str_eq(n, "rpgm") || ofs_str_eq(n, "dice") || ofs_str_eq(n, "dado")) { return RPGM }
+        if (ofs_str_eq(n, "tyrano") || ofs_str_eq(n, "scroll") || ofs_str_eq(n, "pergaminho")) { return TYRANO }
+        if (ofs_str_eq(n, "language") || ofs_str_eq(n, "idioma") || ofs_str_eq(n, "translate") || ofs_str_eq(n, "traducao")) { return 12 }
+        if (ofs_str_eq(n, "btn_cross") || ofs_str_eq(n, "cross")) { return BTN_CROSS }
+        if (ofs_str_eq(n, "btn_circle")) { return BTN_CIRCLE }
+        if (ofs_str_eq(n, "btn_square")) { return BTN_SQUARE }
+        if (ofs_str_eq(n, "btn_triangle")) { return BTN_TRIANGLE }
+        if (ofs_str_eq(n, "key_enter") || ofs_str_eq(n, "enter")) { return KEY_ENTER }
+        if (ofs_str_eq(n, "about") || ofs_str_eq(n, "sobre")) { return 8 }
+        if (ofs_str_eq(n, "permission") || ofs_str_eq(n, "permissao")) { return 20 }
         return -1
     }
 
     // Desenha o icone com o canto superior esquerdo em (x, y).
     vein draw(cv: Canvas, id: stone, x: stone, y: stone, size: stone, color: stone) -> void {
-        forge e = _entry(id, size)
-        forge off: stone = ofs_array_get(_e_off, e)
-        forge n: stone = ofs_array_get(_e_size, e)
-        forge yy = 0
-        while (yy < n) {
-            forge xx = 0
-            while (xx < n) {
-                forge p: *stone = fault_step(_pool, off + yy * n + xx)
-                forge a = 0
-                fracture {
-                    a = *p;
+        fracture {
+            forge e = _entry(id, size)
+            forge off: stone = ofs_array_get(_e_off, e)
+            forge n: stone = ofs_array_get(_e_size, e)
+            forge yy = 0
+            while (yy < n) {
+                forge xx = 0
+                while (xx < n) {
+                    forge p: *stone = fault_step(_pool, off + yy * n + xx)
+                    forge a = 0
+                    fracture {
+                        a = *p;
+                    }
+                    if (a > 0) {
+                        canvas.blend_pixel(cv, x - 1 + xx, y - 1 + yy, color, a)
+                    }
+                    xx++
                 }
-                if (a > 0) {
-                    canvas.blend_pixel(cv, x - 1 + xx, y - 1 + yy, color, a)
-                }
-                xx++
+                yy++
             }
-            yy++
         }
     }
 

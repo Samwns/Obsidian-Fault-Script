@@ -1,0 +1,104 @@
+// OFS stdlib — oal_x11: backend desktop da OAL
+// Abre uma janela X11 do tamanho de um celular para testar um app OAL no PC.
+//   R ou F2   gira (retrato <-> paisagem)
+//   Esc/Backspace  botao voltar
+//   roda do mouse  rola; clique e arraste = toque
+// Tamanho padrao: 412x868 dp (Moto G8 Power) com escala 1.0; OAL_SCALE=150
+// (x100) aumenta, OAL_SHOT=<arquivo.ppm> salva um quadro e sai (testes).
+
+attach {F:x11win.ofs}
+attach {F:oal_runtime.ofs}
+
+extern vein getenv(name: obsidian) -> obsidian
+extern vein atoi(s: obsidian) -> stone
+
+forge _oal_x11_quit: bool = false
+forge _oal_x11_frame_req: bool = true
+
+vein oal_backend_quit() -> void { _oal_x11_quit = true }
+vein oal_backend_request_frame() -> void { _oal_x11_frame_req = true }
+vein oal_backend_orientation(req: stone) -> bool {
+    // desktop (experimental): gire com R/F2
+    return false
+}
+vein oal_backend_log(text: obsidian) -> void { echo(text) }
+vein oal_backend_text_open(title: obsidian, text: obsidian, multiline: bool) -> bool { return false }
+vein oal_backend_text_poll() -> stone { return 2 }
+vein oal_backend_text_get() -> obsidian { return "" }
+
+vein _oal_env_num(name: obsidian, def: stone) -> stone {
+    forge v = getenv(name)
+    if (v == null) { return def }
+    if (ofs_str_len(v) == 0) { return def }
+    forge n = atoi(v) & 4294967295
+    if (n <= 0) { return def }
+    return n
+}
+
+namespace oal_x11 {
+    vein run(title: obsidian) -> void {
+        forge sc = _oal_env_num("OAL_SCALE", 100)
+        forge w = (412 * sc) / 100
+        forge h = (868 * sc) / 100
+        if (_oal_env_num("OAL_LANDSCAPE", 0) == 1) {
+            forge t = w
+            w = h
+            h = t
+        }
+        oal.set_density((160 * sc) / 100)
+        oal.start("/usr/share/fonts/google-droid-sans-fonts/DroidSans.ttf", "/usr/share/fonts/google-droid-sans-fonts/DroidSans-Bold.ttf", "/usr/share/fonts/dejavu-sans-fonts/DejaVuSans.ttf")
+        if (!x11win.open(title + " (OAL desktop)", w, h)) {
+            echo("oal_x11: nao abriu a janela X11")
+            return
+        }
+        oal.resize(w, h)
+        forge shot = getenv("OAL_SHOT")
+        forge shot_frames = 0
+        while (x11win.is_open() && !_oal_x11_quit) {
+            forge ev = x11win.poll()
+            while (ev != 0) {
+                if (ev == x11win.EV_CLOSE) { _oal_x11_quit = true }
+                if (ev == x11win.EV_RESIZE || ev == x11win.EV_EXPOSE) {
+                    oal.resize(x11win.width(), x11win.height())
+                    oal.redraw()
+                }
+                if (ev == x11win.EV_MOUSE_DOWN && x11win.ev_button == 1) { oal.touch_down(x11win.ev_x, x11win.ev_y) }
+                if (ev == x11win.EV_MOUSE_MOVE) { oal.touch_move(x11win.ev_x, x11win.ev_y) }
+                if (ev == x11win.EV_MOUSE_UP && x11win.ev_button == 1) { oal.touch_up(x11win.ev_x, x11win.ev_y) }
+                if (ev == x11win.EV_WHEEL) { oal.wheel(x11win.ev_button * oal.dp(48)) }
+                if (ev == x11win.EV_KEY) {
+                    forge k = x11win.ev_key
+                    if (k == 65307 || k == 65288) { oal.on_back() }
+                    if (k == 114 || k == 82 || k == 65471) {
+                        // gira: troca largura e altura da janela
+                        forge nw = oal.height
+                        forge nh = oal.width
+                        x11win.close()
+                        x11win.open(title + " (OAL desktop)", nw, nh)
+                        oal.resize(nw, nh)
+                    }
+                }
+                ev = x11win.poll()
+            }
+            if (oal.render() || _oal_x11_frame_req) {
+                _oal_x11_frame_req = false
+                forge cv: Canvas
+                cv.width = oal.width
+                cv.height = oal.height
+                cv.buffer = oal.pixels
+                x11win.present(cv)
+                shot_frames++
+            }
+            if (shot != null && ofs_str_len(shot) > 0 && shot_frames >= 2) {
+                forge cv2: Canvas
+                cv2.width = oal.width
+                cv2.height = oal.height
+                cv2.buffer = oal.pixels
+                canvas.save_ppm(cv2, shot)
+                _oal_x11_quit = true
+            }
+            x11win.sleep_ms(8)
+        }
+        x11win.close()
+    }
+}

@@ -1,0 +1,195 @@
+// OFS Standard Library — android_http: HTTP/HTTPS no Android sem libssl (JNI)
+//
+//   attach {F:android_http.ofs}
+//   if (ahttp.open("https://exemplo.org/arquivo.zip")) {   // bloqueia ate os cabecalhos
+//       // ahttp.status (200), ahttp.length (bytes ou -1)
+//       forge buf: *stone = ofs_alloc(ahttp.CHUNK + 8)
+//       forge n = ahttp.read(buf)       // ate CHUNK bytes; 0 = fim; < 0 = erro
+//       ...
+//       ahttp.close()
+//   }
+//   Tambem aceita "file:///caminho" e caminhos absolutos ("/sdcard/...") como origem
+//   (repositorio local de testes): mesma API, sem rede.
+//   forge txt = ahttp.get_text(url)     // corpo inteiro como texto ("" se falhar; ahttp.error)
+//
+// O OpenSSL do sistema (tls.ofs) nao e ligavel num APK (libssl nao e da NDK),
+// entao o HTTPS vai pelo java.net.HttpURLConnection do framework: valida o
+// certificado, segue redirecionamentos (GitHub Releases) e usa o proxy/rede do
+// aparelho. Precisa da permissao android.permission.INTERNET.
+// Roda na thread principal (JNI do android.ofs): a conexao bloqueia ate
+// ~4 s e cada read() ate ~4 s; por isso leia em passos pequenos, um por quadro.
+
+attach {F:android.ofs}
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+extern vein memcpy(dst: *stone, src: *stone, size: stone) -> *stone
+extern vein fopen(path: obsidian, mode: obsidian) -> *stone
+extern vein fclose(f: *stone) -> stone
+extern vein fread(buf: *stone, sz: stone, n: stone, f: *stone) -> stone
+extern vein fseek(f: *stone, offset: stone, whence: stone) -> stone
+extern vein ftell(f: *stone) -> stone
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+extern vein ofs_str_char_at(s: obsidian, idx: stone) -> stone
+extern vein ofs_str_eq(a: obsidian, b: obsidian) -> bool
+
+namespace ahttp {
+    forge CHUNK: stone = 65536
+    forge status: stone = 0
+    forge length: stone = -1
+    forge error: obsidian = ""
+    forge timeout_ms: stone = 4000
+    forge _conn: stone = 0
+    forge _in: stone = 0
+    forge _arr: stone = 0
+    forge _lax: bool = false
+    forge _fp: *stone = null          // origem local (file://)
+
+    // Libera a politica do StrictMode que proibe rede na thread principal.
+    vein _lax_policy() -> void {
+        if (_lax) { return }
+        _lax = true
+        forge b = android.jni_new("android/os/StrictMode$ThreadPolicy$Builder", "()V", 0, 0, 0, 0)
+        if (b == 0) { return }
+        forge b2 = android.jni_call(b, "permitAll", "()Landroid/os/StrictMode$ThreadPolicy$Builder;", 0, 0, 0, 0, 0, 0)
+        forge pol = android.jni_call(b2, "build", "()Landroid/os/StrictMode$ThreadPolicy;", 0, 0, 0, 0, 0, 0)
+        android.jni_scall("android/os/StrictMode", "setThreadPolicy", "(Landroid/os/StrictMode$ThreadPolicy;)V", pol, 0, 0, 0)
+        android.jni_delete(pol)
+        android.jni_delete(b2)
+        android.jni_delete(b)
+    }
+
+    vein is_open() -> bool { return _in != 0 || _fp != null }
+
+    vein close() -> void {
+        if (_fp != null) {
+            fclose(_fp)
+            _fp = null
+        }
+        if (_in != 0) {
+            android.jni_call(_in, "close", "()V", 0, 0, 0, 0, 0, 0)
+            android.jni_delete_global(_in)
+        }
+        if (_conn != 0) {
+            android.jni_call(_conn, "disconnect", "()V", 0, 0, 0, 0, 0, 0)
+            android.jni_delete_global(_conn)
+        }
+        _in = 0
+        _conn = 0
+    }
+
+    // Abre a conexao (GET). false se falhar (error) ou se o status for >= 400.
+    vein open(url: obsidian) -> bool {
+        close()
+        error = ""
+        status = 0
+        length = -1
+        if (ofs_str_len(url) > 0 && (ofs_str_char_at(url, 0) == 47 || ofs_str_eq(ofs_str_substr(url, 0, 7), "file://"))) {
+            forge lp = url
+            if (ofs_str_char_at(url, 0) != 47) { lp = ofs_str_substr(url, 7, ofs_str_len(url) - 7) }
+            _fp = fopen(lp, "rb")
+            if (_fp == null) { error = "arquivo nao encontrado"; status = 404; return false }
+            fseek(_fp, 0, 2)
+            length = ftell(_fp)
+            fseek(_fp, 0, 0)
+            status = 200
+            return true
+        }
+        _lax_policy()
+        forge ju = android.jni_string(url)
+        forge u = android.jni_new("java/net/URL", "(Ljava/lang/String;)V", ju, 0, 0, 0)
+        android.jni_delete(ju)
+        if (u == 0) { error = "URL invalida"; return false }
+        forge c = android.jni_call(u, "openConnection", "()Ljava/net/URLConnection;", 0, 0, 0, 0, 0, 0)
+        android.jni_delete(u)
+        if (c == 0) { error = "sem conexao"; return false }
+        android.jni_call(c, "setConnectTimeout", "(I)V", timeout_ms, 0, 0, 0, 0, 0)
+        android.jni_call(c, "setReadTimeout", "(I)V", timeout_ms, 0, 0, 0, 0, 0)
+        forge k = android.jni_string("User-Agent")
+        forge v = android.jni_string("MOON/0.2 (Android)")
+        android.jni_call(c, "setRequestProperty", "(Ljava/lang/String;Ljava/lang/String;)V", k, v, 0, 0, 0, 0)
+        android.jni_delete(k)
+        android.jni_delete(v)
+        status = android.jni_call(c, "getResponseCode", "()I", 0, 0, 0, 0, 0, 0)
+        if (android.jni_failed) {
+            error = "falha de rede"
+            status = 0
+            android.jni_delete(c)
+            return false
+        }
+        if (status >= 400) {
+            error = "HTTP " + ofs_stone_to_obsidian(status)
+            android.jni_delete(c)
+            return false
+        }
+        length = android.jni_call(c, "getContentLengthLong", "()J", 0, 0, 0, 0, 0, 0)
+        if (length < 0) { length = -1 }
+        forge ins = android.jni_call(c, "getInputStream", "()Ljava/io/InputStream;", 0, 0, 0, 0, 0, 0)
+        if (ins == 0) {
+            error = "sem corpo"
+            android.jni_delete(c)
+            return false
+        }
+        _conn = android.jni_global(c)
+        _in = android.jni_global(ins)
+        android.jni_delete(c)
+        android.jni_delete(ins)
+        if (_arr == 0) {
+            forge a = android.jni_new_byte_array(CHUNK)
+            _arr = android.jni_global(a)
+            android.jni_delete(a)
+        }
+        return true
+    }
+
+    // Le ate CHUNK bytes para dst. 0 = fim, < 0 = erro.
+    vein read(dst: *stone) -> stone {
+        if (_fp != null) { return fread(dst, 1, CHUNK, _fp) }
+        if (_in == 0) { return -1 }
+        forge n = android.jni_call(_in, "read", "([B)I", _arr, 0, 0, 0, 0, 0)
+        if (android.jni_failed) {
+            error = "falha na leitura"
+            return -1
+        }
+        if (n > 0) { android.jni_get_bytes(_arr, 0, n, dst) }
+        if (n < 0) { return 0 }
+        return n
+    }
+
+    // Corpo inteiro como texto (JSON pequeno). "" se falhar.
+    vein get_text(url: obsidian) -> obsidian {
+        fracture {
+            if (!open(url)) { return "" }
+            forge cap = 65536
+            forge buf: *stone = ofs_alloc(cap + 8)
+            forge total = 0
+            forge tmp: *stone = ofs_alloc(CHUNK + 8)
+            while (true) {
+                forge n = read(tmp)
+                if (n <= 0) { break }
+                if (total + n > cap) {
+                    forge ncap = cap * 2
+                    while (ncap < total + n) { ncap = ncap * 2 }
+                    forge nb: *stone = ofs_alloc(ncap + 8)
+                    memcpy(nb, buf, total)
+                    ofs_free(buf)
+                    buf = nb
+                    cap = ncap
+                }
+                memcpy(((buf as stone) + total) as *stone, tmp, n)
+                total = total + n
+                if (total > 4194304) { break }
+            }
+            ofs_free(tmp)
+            close()
+            forge p: *u8 = ((buf as stone) + total) as *u8
+            forge z: u8 = 0 as u8
+            fracture {
+                *p = z;
+            }
+            forge out = _android_strdup(buf)
+            ofs_free(buf)
+            return out
+        }
+    }
+}

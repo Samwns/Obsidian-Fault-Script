@@ -1,0 +1,246 @@
+// OFS Standard Library — sha256 (e crc32), 100% OFS
+//
+//   attach {F:sha256.ofs}
+//   forge h = sha256.file("/caminho/arquivo.bin")    // 64 hex minusculos, "" se nao abrir
+//   forge h2 = sha256.bytes(ptr, n)                    // ptr = endereco (stone) de n bytes
+//   forge c = sha256.crc32_update(0, ptr, n)           // CRC-32 (zip); encadeie passando o anterior
+//
+// Aritmetica de 32 bits em `stone` (64 bits) com mascara; le arquivos em
+// blocos de 64 KB (nao carrega o arquivo inteiro).
+
+extern vein fopen(path: obsidian, mode: obsidian) -> *stone
+extern vein fclose(f: *stone) -> stone
+extern vein fread(buf: *stone, sz: stone, n: stone, f: *stone) -> stone
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(ptr: *stone) -> void
+extern vein ofs_str_substr(s: obsidian, start: stone, len: stone) -> obsidian
+
+namespace sha256 {
+    forge _K: Array<stone> = [1116352408, 1899447441, 3049323471, 3921009573, 961987163, 1508970993, 2453635748, 2870763221, 3624381080, 310598401, 607225278, 1426881987, 1925078388, 2162078206, 2614888103, 3248222580, 3835390401, 4022224774, 264347078, 604807628, 770255983, 1249150122, 1555081692, 1996064986, 2554220882, 2821834349, 2952996808, 3210313671, 3336571891, 3584528711, 113926993, 338241895, 666307205, 773529912, 1294757372, 1396182291, 1695183700, 1986661051, 2177026350, 2456956037, 2730485921, 2820302411, 3259730800, 3345764771, 3516065817, 3600352804, 4094571909, 275423344, 430227734, 506948616, 659060556, 883997877, 958139571, 1322822218, 1537002063, 1747873779, 1955562222, 2024104815, 2227730452, 2361852424, 2428436474, 2756734187, 3204031479, 3329325298]
+    forge _h: Array<stone> = []
+    forge _w: stone = 0          // 64 palavras de 8 bytes
+    forge _buf: stone = 0        // bloco pendente (64 bytes)
+    forge _fill: stone = 0
+    forge _total: stone = 0
+    forge _crc_tab: stone = 0
+
+    vein _gb(base: stone, i: stone) -> stone {
+        fracture {
+            forge p: *u8 = (base + i) as *u8
+            forge v: u8 = 0 as u8
+            fracture {
+                v = *p;
+            }
+            return (v as stone) & 255
+        }
+    }
+    vein _pb(base: stone, i: stone, v: stone) -> void {
+        fracture {
+            forge p: *u8 = (base + i) as *u8
+            forge b: u8 = (v & 255) as u8
+            fracture {
+                *p = b;
+            }
+        }
+    }
+    vein _rw(base: stone, i: stone) -> stone {
+        fracture {
+            forge p: *stone = (base + i * 8) as *stone
+            forge v = 0
+            fracture {
+                v = *p;
+            }
+            return v
+        }
+    }
+    vein _ww(base: stone, i: stone, v: stone) -> void {
+        fracture {
+            forge p: *stone = (base + i * 8) as *stone
+            fracture {
+                *p = v;
+            }
+        }
+    }
+    vein _rotr(x: stone, n: stone) -> stone {
+        return ((x >> n) | (x << (32 - n))) & 4294967295
+    }
+
+    vein init() -> void {
+        fracture {
+            if (_w == 0) {
+                _w = ofs_alloc(64 * 8 + 8) as stone
+                _buf = ofs_alloc(72) as stone
+            }
+            _h = [1779033703, 3144134277, 1013904242, 2773480762, 1359893119, 2600822924, 528734635, 1541459225]
+            _fill = 0
+            _total = 0
+        }
+    }
+
+    vein _block(base: stone) -> void {
+        forge M = 4294967295
+        forge t = 0
+        while (t < 16) {
+            _ww(_w, t, (_gb(base, t * 4) << 24) | (_gb(base, t * 4 + 1) << 16) | (_gb(base, t * 4 + 2) << 8) | _gb(base, t * 4 + 3))
+            t++
+        }
+        while (t < 64) {
+            forge w15 = _rw(_w, t - 15)
+            forge w2 = _rw(_w, t - 2)
+            forge s0 = _rotr(w15, 7) ^ _rotr(w15, 18) ^ (w15 >> 3)
+            forge s1 = _rotr(w2, 17) ^ _rotr(w2, 19) ^ (w2 >> 10)
+            _ww(_w, t, (_rw(_w, t - 16) + s0 + _rw(_w, t - 7) + s1) & M)
+            t++
+        }
+        forge a: stone = ofs_array_get(_h, 0)
+        forge b: stone = ofs_array_get(_h, 1)
+        forge c: stone = ofs_array_get(_h, 2)
+        forge d: stone = ofs_array_get(_h, 3)
+        forge e: stone = ofs_array_get(_h, 4)
+        forge f: stone = ofs_array_get(_h, 5)
+        forge g: stone = ofs_array_get(_h, 6)
+        forge h: stone = ofs_array_get(_h, 7)
+        t = 0
+        while (t < 64) {
+            forge S1 = _rotr(e, 6) ^ _rotr(e, 11) ^ _rotr(e, 25)
+            forge ch = (e & f) ^ ((e ^ M) & g)
+            forge kt: stone = ofs_array_get(_K, t)
+            forge t1 = (h + S1 + ch + kt + _rw(_w, t)) & M
+            forge S0 = _rotr(a, 2) ^ _rotr(a, 13) ^ _rotr(a, 22)
+            forge maj = (a & b) ^ (a & c) ^ (b & c)
+            forge t2 = (S0 + maj) & M
+            h = g
+            g = f
+            f = e
+            e = (d + t1) & M
+            d = c
+            c = b
+            b = a
+            a = (t1 + t2) & M
+            t++
+        }
+        ofs_array_set(_h, 0, (ofs_array_get(_h, 0) + a) & M)
+        ofs_array_set(_h, 1, (ofs_array_get(_h, 1) + b) & M)
+        ofs_array_set(_h, 2, (ofs_array_get(_h, 2) + c) & M)
+        ofs_array_set(_h, 3, (ofs_array_get(_h, 3) + d) & M)
+        ofs_array_set(_h, 4, (ofs_array_get(_h, 4) + e) & M)
+        ofs_array_set(_h, 5, (ofs_array_get(_h, 5) + f) & M)
+        ofs_array_set(_h, 6, (ofs_array_get(_h, 6) + g) & M)
+        ofs_array_set(_h, 7, (ofs_array_get(_h, 7) + h) & M)
+    }
+
+    vein update(base: stone, n: stone) -> void {
+        _total = _total + n
+        forge i = 0
+        while (i < n) {
+            if (_fill == 0 && n - i >= 64) {
+                _block(base + i)
+                i = i + 64
+            } else {
+                _pb(_buf, _fill, _gb(base, i))
+                _fill++
+                i++
+                if (_fill == 64) {
+                    _block(_buf)
+                    _fill = 0
+                }
+            }
+        }
+    }
+
+    vein _hex8(v: stone) -> obsidian {
+        forge digits = "0123456789abcdef"
+        forge out = ""
+        forge k = 7
+        while (k >= 0) {
+            forge nib = (v >> (k * 4)) & 15
+            out = out + ofs_str_substr(digits, nib, 1)
+            k--
+        }
+        return out
+    }
+
+    vein final() -> obsidian {
+        forge bits = _total * 8
+        _pb(_buf, _fill, 128)
+        _fill++
+        if (_fill > 56) {
+            while (_fill < 64) {
+                _pb(_buf, _fill, 0)
+                _fill++
+            }
+            _block(_buf)
+            _fill = 0
+        }
+        while (_fill < 56) {
+            _pb(_buf, _fill, 0)
+            _fill++
+        }
+        forge k = 0
+        while (k < 8) {
+            _pb(_buf, 56 + k, (bits >> ((7 - k) * 8)) & 255)
+            k++
+        }
+        _block(_buf)
+        forge out = ""
+        k = 0
+        while (k < 8) {
+            out = out + _hex8(ofs_array_get(_h, k))
+            k++
+        }
+        return out
+    }
+
+    vein bytes(base: stone, n: stone) -> obsidian {
+        init()
+        update(base, n)
+        return final()
+    }
+
+    vein file(path: obsidian) -> obsidian {
+        fracture {
+            forge f = fopen(path, "rb")
+            if (f == null) { return "" }
+            init()
+            forge buf = ofs_alloc(65536 + 8)
+            while (true) {
+                forge n = fread(buf, 1, 65536, f)
+                if (n <= 0) { break }
+                update(buf as stone, n)
+            }
+            ofs_free(buf)
+            fclose(f)
+            return final()
+        }
+    }
+
+    // ── CRC-32 (polinomio 0xEDB88320), como no zip ───────────────────────
+    vein _crc_init() -> void {
+        fracture {
+            if (_crc_tab != 0) { return }
+            _crc_tab = ofs_alloc(256 * 8 + 8) as stone
+            forge n = 0
+            while (n < 256) {
+                forge c = n
+                forge k = 0
+                while (k < 8) {
+                    if ((c & 1) != 0) { c = 3988292384 ^ (c >> 1) } else { c = c >> 1 }
+                    k++
+                }
+                _ww(_crc_tab, n, c)
+                n++
+            }
+        }
+    }
+    // crc: valor anterior (0 no inicio)
+    vein crc32_update(crc: stone, base: stone, n: stone) -> stone {
+        _crc_init()
+        forge c = crc ^ 4294967295
+        forge i = 0
+        while (i < n) {
+            c = _rw(_crc_tab, (c ^ _gb(base, i)) & 255) ^ (c >> 8)
+            i++
+        }
+        return c ^ 4294967295
+    }
+}
