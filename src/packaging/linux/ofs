@@ -26,7 +26,8 @@ fi
 OFS_SRC_FROM=""
 _set_runtime_in() { # dir -> imprime o runtime desse dir
   local d="$1" r
-  for r in "$d/magma.o" "$d/libofs_runtime.a"; do [ -f "$r" ] && { printf '%s' "$r"; return 0; }; done
+  # pacote macOS: ofscc em <prefix>/bin e runtime em <prefix>/lib/ofs
+  for r in "$d/magma.o" "$d/libofs_runtime.a" "$d/../lib/ofs/magma.o"; do [ -f "$r" ] && { printf '%s' "$r"; return 0; }; done
   return 1
 }
 _set_stdlib_in() { # dir -> imprime a stdlib desse dir
