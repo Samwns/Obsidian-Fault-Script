@@ -202,7 +202,7 @@ vein site_benchmark(lang: obsidian) -> obsidian {
 
 vein page_nav(lang: obsidian) -> obsidian {
     forge pre = ""
-    forge book = "index.html"
+    forge book = "book/index.html"
     forge ref = "ref/index.html"
     forge bench = "benchmark.html"
     forge pt_href = "benchmark.html"
@@ -211,13 +211,14 @@ vein page_nav(lang: obsidian) -> obsidian {
     if (ofs_str_eq(lang, "pt") == false) {
         pre = "../"
         ref = "../ref/" + lang + "/index.html"
+        book = "../book/" + lang + "/index.html"
         pt_href = "../benchmark.html"
         en_href = "../en/benchmark.html"
         es_href = "../es/benchmark.html"
         if (ofs_str_eq(lang, "en")) { en_href = "benchmark.html" }
         if (ofs_str_eq(lang, "es")) { es_href = "benchmark.html" }
     }
-    forge brand = odl.a("brand", book, odl.img(pre + "ofs-256.png", "OFS logo") + odl.span("", "OFS"))
+    forge brand = odl.a("brand", ref, odl.img(pre + "ofs-256.png", "OFS logo") + odl.span("", "OFS"))
     forge tools = odl.div("nav-tools", site_language_select(lang, pt_href, en_href, es_href) + site_search(bn_t(lang, "Buscar", "Search", "Buscar")))
     forge links = odl.div("links", "<a href=\"" + book + "\">" + bn_t(lang, "Livro", "Book", "Libro") + "</a><a href=\"" + ref + "\">" + bn_t(lang, "Referência", "Reference", "Referencia") + "</a><a href=\"https://github.com/Samwns/Obsidian-Fault-Script/releases/latest\">Downloads</a><a href=\"" + bench + "\">Benchmark</a>" + tools)
     return odl.header("topbar", odl.nav("wrap nav", brand + links))

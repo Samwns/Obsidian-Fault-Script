@@ -384,13 +384,15 @@ vein rf_write_lang(lang: obsidian, outdir: obsidian) -> void {
     od_here = ""
     od_repo = rf_repo
     od_brand = "OFS"
+    od_icon_up = "../"
+    if (ofs_str_eq(lang, "pt") == false) { od_icon_up = "../../" }
     if (ofs_str_eq(lang, "pt")) {
         od_asset_up = ""
-        od_book_rel = "../index.html"
+        od_book_rel = "../book/index.html"
         od_license_href = "../legal/LICENSE"
     } else {
         od_asset_up = "../"
-        od_book_rel = "../../" + lang + "/index.html"
+        od_book_rel = "../../book/" + lang + "/index.html"
         od_license_href = "../../legal/LICENSE"
     }
     rf_build_nav(lang)

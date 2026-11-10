@@ -183,6 +183,8 @@ O verificador de tipos (`typeck`) calcula o tipo final de cada expressão e escr
 | `ofs_array_get(a, i)` / `ofs_array_pop(a)` | o elemento de `Array<T>` |
 | `cycle (x in a)` com `a: Array<T>` escalar | `x: T` |
 | `a op b` inteiro com inteiro | `stone` |
+| nome de uma `vein`/`extern` usado como valor (`forge f = dobro`) | `vein(T1, T2) -> R`, a assinatura dela (seção 4) |
+| `f(...)` com `f: vein(...) -> R` | `R` |
 
 **Conversões implícitas (aceitas)**
 
@@ -214,6 +216,9 @@ Saem como `[ERRO DE TIPO arquivo:linha:coluna]` com uma dica, nos dois modos, an
 | `s == 0` com `s: obsidian` | comparação entre tipos diferentes: converta com `as` |
 | `-texto`, `~c` | sinal só em números, `~` só em inteiros |
 | `s += 0.5` com `s: stone` | escreva `s = (s + 0.5) as stone` |
+| `forge f: vein(stone) -> stone = nome` com `nome(x: stone) -> obsidian` | a assinatura precisa ser igual (parâmetros e retorno) |
+| `f(1, 2)` ou `f("dez")` com `f: vein(stone) -> stone` | aridade e tipo de argumento conferidos na chamada de valor de vein |
+| `f + 1`, `f < g` com `f: vein(...)` | valor de vein só aceita `==`/`!=` (mesma assinatura ou `null`) e a chamada |
 
 **Avisos (não barram o programa)**
 
@@ -306,7 +311,58 @@ core main() {
 }
 ```
 
-> **Nota**: Expressões anônimas de função (`vein(...) -> ...` inline) estão especificadas na árvore sintática (`NK_LAMBDA`) e planejadas para o roadmap de evolução da linguagem. Atualmente, todas as funções devem ser declaradas com nome via `vein`.
+### Tipos de função e valores de vein
+
+Uma `vein` declarada é também um **valor**: o nome dela (sem chamar) tem o tipo de função `vein(T1, T2) -> R`, escrito com a mesma palavra que declara funções. Sem `-> R`, o retorno é `void`. O tipo vale em variável, parâmetro, retorno, campo de `monolith` e `Array<...>`, e não precisa de bloco de baixo nível: é seguro e tipado.
+
+```ofs
+monolith Operacao {
+    nome: obsidian
+    calc: vein(stone, stone) -> stone
+}
+
+vein dobro(x: stone) -> stone { return x * 2 }
+vein triplo(x: stone) -> stone { return x * 3 }
+vein soma(a: stone, b: stone) -> stone { return a + b }
+
+// vein como argumento e como retorno
+vein aplicar(f: vein(stone) -> stone, x: stone) -> stone { return f(x) }
+vein escolher(grande: bool) -> vein(stone) -> stone {
+    if (grande) { return triplo }
+    return dobro
+}
+
+core main() {
+    forge f: vein(stone) -> stone = dobro   // ou: forge f = dobro
+    echo(f(21))                  // 42
+    echo(aplicar(triplo, 4))     // 12
+    echo(escolher(true)(10))     // 30
+
+    forge op: Operacao
+    op.calc = soma
+    echo(op.calc(3, 4))          // 7
+
+    forge ops: Array<vein(stone, stone) -> stone> = [soma]
+    echo(ops[0](6, 7))           // 13
+
+    echo(f == dobro)             // true
+    echo(f)                      // dobro
+}
+```
+
+- **Valor:** o nome de uma `vein` do módulo, de `ns.vein`, de um método (`Rect__area`) ou de uma `extern`/`rift vein` (com `bind`, o símbolo nativo) é um valor do tipo da assinatura dela. Uma `extern` variádica (`printf`) não vira valor (erro claro).
+- **Chamada:** `f(x)` com `f` variável, parâmetro, global, campo (`s.cb(x)`), elemento (`a[i](x)`) ou resultado (`escolher(true)(10)`) é uma chamada indireta tipada. O `typeck` confere a aridade e os argumentos com as conversões da seção 2 (`f(5)` com parâmetro `crystal` vale `f(5.0)`); um argumento sem conversão definida (`obsidian` onde o tipo pede `stone`) é `[ERRO DE TIPO]`, não aviso. O resultado tem o tipo `R`.
+- **Assinatura exata:** guardar uma vein num lugar de tipo de função (`forge`, `=`, argumento, `return`, campo, `push`) exige a mesma assinatura, parâmetro a parâmetro e no retorno; o erro diz o que difere (`retorno: obsidian onde o tipo pede stone`). `null` cabe em qualquer tipo de função e é o valor inicial de variável e campo sem inicializador.
+- **Igualdade:** `==` e `!=` entre valores da mesma assinatura ou com `null`. Dois valores da mesma vein são iguais nos dois modos.
+- **`echo` e texto:** `echo(f)` e `"x" + f` dão o nome da vein (`dobro`; `ns.f` para `ns__f`), `null` se nulo e `<vein>` para um endereço que veio do C e não tem nome no programa. Igual nos dois modos.
+- **Chamar `null`:** erro de execução `ofs: chamada de vein nula (o valor de vein e null)` no stderr e código de saída 1, nos dois modos.
+- **Nativo:** o valor é o ponteiro da função (`ptr @dobro`) e a chamada é `call R (T1, T2) %f(...)` com a assinatura LLVM exata do tipo, inclusive `crystal`.
+- **Interpretador (`ofs run`):** o valor de uma vein interpretada é a própria vein (chamada direta, sem passar pelo C). Quando o valor vai para o C (argumento de `extern`/`rift vein`), ele vira o trampolim de callback da seção 11; quando vem do C (retorno de `extern`, parâmetro de callback, memória crua), a assinatura do tipo escolhe o trampolim do Rift. Um trampolim que volta do C é reconhecido como a vein de origem.
+- **Endereço cru:** `f as stone`, `f as *u8`, `endereco as vein(...)` e `fault_addr(f)` convertem entre valor de vein e endereço; só dentro de `abyss` (seção 12). `fault_call(f, args...)` com `f` de tipo de função confere a assinatura e vale `f(args...)`.
+- Na árvore, o tipo é um `NK_TYPE_FN` cujo `val` é o texto canônico sem espaços (`vein(stone,crystal)->stone`), o mesmo `type_str` de toda expressão desse tipo; a chamada indireta é um `NK_CALL` `__vein_call` com a vein em `c0`.
+- Testes: `ofs/tests/regress/vein_type_*.ofs`.
+
+> **Nota**: Expressões anônimas de função (`vein(...) -> ...` inline, que capturam variáveis: o `geode` do roadmap) estão especificadas na árvore sintática (`NK_LAMBDA`) e planejadas. Hoje uma vein é sempre declarada com nome; o valor de vein aponta para ela.
 
 ---
 
@@ -736,7 +792,18 @@ rift vein text_size(s: obsidian) -> stone bind "strlen" abi c
 
 ### Endereço de função e chamada indireta (`fault_addr`, `fault_call`)
 
-O OFS não tem tipo "ponteiro de função", mas pode obter o endereço de uma `vein` como `stone` e chamar um endereço pela convenção de chamada do sistema. Serve para callbacks de bibliotecas nativas (`qsort`, `ANativeActivity`, `ALooper`, `AChoreographer`) e para tabelas de funções nativas (JNI).
+O jeito tipado de passar uma vein ao C é o tipo de função (seção 4): declare o parâmetro da `rift vein` com a assinatura e passe o nome da vein, sem `abyss`:
+
+```ofs
+rift vein c_qsort(base: *stone, n: stone, size: stone, cmp: vein(*stone, *stone) -> stone) -> void bind "qsort" abi c
+
+core main() {
+    forge v: Array<stone> = [42, 7, 19]
+    c_qsort(ofs_array_data(v), ofs_array_len(v), 8, crescente)   // crescente: abaixo
+}
+```
+
+O caso cru continua existindo: obter o endereço de uma `vein` como `stone` e chamar um endereço pela convenção de chamada do sistema. Serve para tabelas de funções nativas (JNI) e para código antigo com o parâmetro declarado como `stone` (`ANativeActivity`, `ALooper`, `AChoreographer`).
 
 ```ofs
 rift vein c_qsort(base: *stone, n: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
@@ -760,8 +827,8 @@ core main() {
 }
 ```
 
-- `fault_addr(nome)` → `stone`: endereço da vein. Aceita `vein` do módulo, `ns.vein` e `extern`/`rift vein` (com `bind`, devolve o símbolo nativo). Em IR: `ptrtoint ptr @simbolo to i64`. Fora de uma vein, é erro semântico.
-- `fault_call(endereco, args...)` → `stone`: chamada indireta pela convenção de chamada do sistema (`inttoptr` + `call i64`). Argumentos inteiros, ponteiros e `obsidian`; o retorno é lido como `i64` (funções `void` devolvem lixo, ignore). Sem `float`/`double`.
+- `fault_addr(nome)` → `stone`: endereço da vein. Aceita `vein` do módulo, `ns.vein` e `extern`/`rift vein` (com `bind`, devolve o símbolo nativo). Em IR: `ptrtoint ptr @simbolo to i64`. `fault_addr(f)` com `f` valor de vein vale `f as stone`. Outra coisa é erro semântico.
+- `fault_call(endereco, args...)` → `stone`: chamada indireta pela convenção de chamada do sistema (`inttoptr` + `call i64`). Argumentos inteiros, ponteiros e `obsidian`; o retorno é lido como `i64` (funções `void` devolvem lixo, ignore). Sem `float`/`double`. Quando o primeiro argumento tem tipo de função (`fault_call(f, a, b)` com `f: vein(...)`), a assinatura é conferida (aridade e argumentos, como em `f(a, b)`) e a chamada é a tipada, com o retorno `R`.
 - A vein usada como callback deve ter parâmetros compatíveis com a convenção de chamada do sistema: `stone` para inteiros (inteiros de 32 bits chegam com o topo indefinido; mascare com `& 4294967295`) e `*stone` para ponteiros.
 - No interpretador (`ofs run`), `fault_addr` de `extern`/`rift vein` devolve o endereço nativo e `fault_addr` de uma vein interpretada devolve um trampolim nativo que reentra no interpretador (o `qsort` acima funciona igual). Ver "No interpretador (`ofs run`): o Rift".
 - Teste: `ofs/tests/runtime/test_fault_addr_qsort.ofs`.
@@ -788,7 +855,7 @@ O `ofs run` chama as mesmas funções nativas das bibliotecas do sistema que o b
 - **`&x`.** O endereço de uma variável do interpretador é real: no primeiro `&x` a variável passa a morar num slot de memória crua de 8 bytes (a função nativa pode ler e escrever nele: `sscanf(s, "%d", &n)`, `strtol(s, &fim, 10)`, `modf(x, &inteira)`), liberado quando a variável sai de escopo, como a `alloca` do nativo. `&x` de um `monolith` é o próprio bloco. Só existe endereço de variável (o nativo também não tem `&s.campo`/`&a[i]`: use `(&s) as stone + offset`); `&x` de uma variável `Array` é erro claro.
 - **`monolith` com layout do sistema.** As instâncias vivem em memória crua com o layout de `llvmgen.struct_layout` (o mesmo do código nativo: campos na ordem, cada um alinhado ao próprio tamanho, até 8; `bool` ocupa 4 bytes; `Array` e `monolith` aninhado ocupam 8). `s` ou `&s` passado à função nativa (`memcpy`, `qsort` de structs...) vê os mesmos bytes do build nativo. Como no nativo, `monolith` passado a uma vein é por referência e `forge y: T = x`/`y = x` copiam. Um campo `Array` guarda o array do interpretador (a função nativa não deve lê-lo).
 - **`Array` e strings.** Um `Array` passado à função nativa é o próprio `ofs_array` nativo (cabeçalho `[data, len, cap, elem_size]` + dados) da coluna de valores do interpretador; a função nativa escreve nos elementos no lugar e o comprimento é sincronizado na volta. Elementos de um só tipo (inteiros/ponteiros, `crystal`, `bool`, `obsidian` ou `monolith`); tipos misturados são erro claro. Um `Array` devolvido pela função nativa usa o mesmo bloco, sem cópia. `obsidian` já é o `char*`. Use `ofs_array_data(a)` para passar só os dados (ex.: `qsort`).
-- **Callbacks nativos → OFS.** `fault_addr(vein)` de uma vein interpretada liga a vein a um de 16 trampolins nativos (`__ofs_cb_0`..`__ofs_cb_15`, gerados pelo `llvmgen` no `ofscc`); a biblioteca chama o trampolim, que reentra no interpretador, inclusive dentro de uma chamada nativa feita pelo próprio programa (`qsort` dentro de `qsort`, `fault_call` de outro callback). A mesma vein reusa o slot. Até 6 parâmetros inteiros, ponteiros, `obsidian`, `bool` ou `monolith` (por ponteiro) e retorno inteiro/ponteiro. Mais de 16 veins diferentes, mais de 6 parâmetros ou `crystal`/`f32` no callback dão erro claro com código 1 (use `ofs run --native`). `f32` como argumento do Rift também ainda não é suportado.
+- **Callbacks nativos → OFS.** `fault_addr(vein)` de uma vein interpretada liga a vein a um de 16 trampolins nativos (`__ofs_cb_0`..`__ofs_cb_15`, gerados pelo `llvmgen` no `ofscc`); a biblioteca chama o trampolim, que reentra no interpretador, inclusive dentro de uma chamada nativa feita pelo próprio programa (`qsort` dentro de `qsort`, `fault_call` de outro callback). A mesma vein reusa o slot. Até 6 parâmetros inteiros, ponteiros, `obsidian`, `bool` ou `monolith` (por ponteiro) e retorno inteiro/ponteiro. Mais de 16 veins diferentes, mais de 6 parâmetros ou `crystal`/`f32` no callback dão erro claro com código 1 (use `ofs run --native`). O mesmo trampolim serve para um valor de vein passado num parâmetro `vein(...)` (seção 4); a assinatura já vem da declaração da vein, e o que falta para `crystal` são trampolins com registradores de ponto flutuante. `f32` como argumento do Rift também ainda não é suportado.
 - `bedrock`, `fracture` e `abyss` não mudam a execução nos dois modos (o nativo gera o mesmo código dentro deles); o `typeck` os exige para as operações de memória crua (ver seção 12, "Regras"). As células e regiões do `bedrock` (stdlib) usam a memória crua acima.
 - Testes: `ofs/tests/regress/ffi_*.ofs`, `ptr_widths.ofs`, `tests/parity/cases/` (`ptr_*`, `libc_*`, `monolith_memcpy`, `qsort_fault_addr`, `fault_call_basic`, `bedrock_block`).
 
@@ -863,9 +930,10 @@ O `typeck` exige um bloco de baixo nível para as operações que mexem em memó
 | `as` com ponteiro (`n as *u8`, `p as stone`, `s as *u8`, `p as *T`) | libera | libera |
 | `fault_step`, `fault_memcpy`, `fault_memset` | libera | libera |
 | `fault_call`, `fault_addr` | — | libera |
+| `as` entre valor de vein e endereço (`f as stone`, `n as vein(...)`) | — | libera |
 
 - Aritmética de endereço passa por essas operações: `p + 1` com ponteiro já é `[ERRO DE TIPO]`; use `fault_step(p, n)` ou `((p as stone) + n) as *T`, ambos dentro do bloco.
-- Continuam livres fora de bloco: chamar `extern`/`rift vein` (mesmo com ponteiro como argumento ou retorno, ex. `forge buf = ofs_alloc(64)`), comparar ponteiro com `null`, guardar e passar ponteiro adiante, e os intrínsecos de bits (`fault_count`, `fault_cut`, `fault_weave`...).
+- Continuam livres fora de bloco: chamar `extern`/`rift vein` (mesmo com ponteiro como argumento ou retorno, ex. `forge buf = ofs_alloc(64)`), comparar ponteiro com `null`, guardar e passar ponteiro adiante, os intrínsecos de bits (`fault_count`, `fault_cut`, `fault_weave`...) e tudo de valores de vein tipados (usar o nome da vein como valor, guardar, passar ao C num parâmetro `vein(...)`, chamar `f(x)`).
 - `tectonic X` vale como `X` (`tectonic abyss { }` = `abyss`); `tectonic { }` sozinho vale como `fracture`. Blocos aninhados somam: dentro de `abyss`, tudo é liberado.
 - A vein inteira pode ser marcada: `fracture vein ler(p: *u8) -> stone { return *p }`, `abyss vein chamar(f: stone) -> stone { return fault_call(f) }` (também em `namespace` e `impl`). O corpo vale como o bloco. Código que precisa compilar com um `ofscc` anterior a esta regra (o próprio compilador, por causa da semente, e o stdlib) usa o bloco `fracture { }` dentro da vein, que todo compilador entende.
 - Na árvore, o bloco é um `NK_BLOCK` com o nome no `val` (`"fracture"`, `"abyss"`...); o `llvmgen` e o interpretador o executam como um bloco comum (mesmo IR).

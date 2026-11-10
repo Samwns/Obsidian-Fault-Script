@@ -121,6 +121,7 @@ attach_decl ::= "attach" "{" caminho "}"          // ex.: attach {core}, attach 
 var_decl    ::= ("forge" | "const" | "shard") IDENT (":" type)? ("=" expr)? ";"?
 
 type        ::= IDENT | "Array" "<" type ">" | "*" type
+              | "vein" "(" (type ("," type)*)? ")" ("->" type)?   // tipo de funcao (F6)
 
 stmt        ::= var_decl | if_stmt | while_stmt | cycle_stmt | mine_stmt
               | match_stmt | return_stmt | throw_stmt | tremor_stmt
@@ -159,6 +160,8 @@ Pontos que a gramática não mostra:
 - `attach {caminho}` só vale no nível do arquivo. O texto entre as chaves é colado token a token (`F:` indica caminho de arquivo).
 - Não existe literal de struct (`P { x: 1 }`) nem `monolith ... layout ...`; o parser espera `{` logo depois do nome do `monolith`. Declare a variável (`forge p: P`) e atribua os campos.
 - `core` é palavra reservada: marca o ponto de entrada (`core main()`) e não serve como nome.
+- Tipo de função (F6): `vein(T1, T2) -> R` vira um `NK_TYPE_FN` com os tipos dos parâmetros em `extra`, o retorno em `c1` e, no `val`, o texto canônico sem espaços (`vein(T1,T2)->R`; sem `->`, `void`), que é o `type_str` de toda expressão desse tipo. As funções de texto do tipo (`vein_type_params`, `vein_type_ret`, `type_list_at`, que separa por vírgula fora de parênteses) ficam em `ast.ofs`, usadas pelos três estágios.
+- Chamada de algo que não é nome (`a[i](x)`, `f(1)(2)`, `s.a.b(x)`): o parser guarda a expressão chamada em `c0` do `NK_CALL`; o typeck decide se é valor de vein ou a chamada pelo nome de antes.
 
 ### Pool de nós da AST
 
@@ -276,7 +279,9 @@ resolve(name)
    - O número de argumentos deve bater com os parâmetros
    - Os tipos dos argumentos devem ser compatíveis com os parâmetros
 
-5. **Baixo nível exige bloco (F4)**: o parser guarda `fracture`/`bedrock`/`abyss`/`tectonic [X]` como `NK_BLOCK` com o nome no `val` (o corpo de `fracture vein`/`abyss vein` também); o `llvmgen` e o interpretador executam como bloco comum. O typeck conta a profundidade (`_fracture_depth`, `_abyss_depth`, no molde do `_anchor_depth`) e, em `require_fault`, cobra o bloco para `*p`, `&x`, `as` com ponteiro, `fault_step`/`fault_memcpy`/`fault_memset` (qualquer bloco) e `fault_call`/`fault_addr` (só `abyss`). Fora do bloco: `[AVISO DE FALHA arquivo:linha:col]` no stderr até 2027-01-09; com `OFS_STRICT_FAULT=1`, `[ERRO DE FALHA ...]` e `_semantic_errors++`. Regra completa: [LANGUAGE_REFERENCE.md](LANGUAGE_REFERENCE.md), seção 12.
+5. **Tipos de função (F6)**: o nome de uma `vein`/`extern` (`SYM_FN`) usado como valor recebe o tipo `vein(parametros)->retorno` da declaração (`fn_value_ident`; `extern` de símbolo C variádico é erro). `f(x)` com `f` variável/parâmetro de tipo vein, `s.campo(x)` com campo vein (`vein_field_callee`), `c0` vindo do parser e `fault_call(f, ...)` com `f` tipado viram `NK_CALL` `__vein_call` com a vein em `c0` (`check_vein_call`): aridade conferida e cada argumento convertido para o tipo do parâmetro com as regras da F3, mas sem conversão definida é `[ERRO DE TIPO]` (não aviso). `coerce_value` exige a mesma assinatura ao guardar um valor de vein (`fn_store_check`, com a dica do que difere); `==`/`!=` só entre a mesma assinatura ou com `null`; `as` entre vein e endereço exige `abyss`. `echo(f)` e `"x" + f` ganham a conversão `__ofs_vein_name` (o nome da vein nos dois modos).
+
+6. **Baixo nível exige bloco (F4)**: o parser guarda `fracture`/`bedrock`/`abyss`/`tectonic [X]` como `NK_BLOCK` com o nome no `val` (o corpo de `fracture vein`/`abyss vein` também); o `llvmgen` e o interpretador executam como bloco comum. O typeck conta a profundidade (`_fracture_depth`, `_abyss_depth`, no molde do `_anchor_depth`) e, em `require_fault`, cobra o bloco para `*p`, `&x`, `as` com ponteiro, `fault_step`/`fault_memcpy`/`fault_memset` (qualquer bloco) e `fault_call`/`fault_addr` (só `abyss`). Fora do bloco: `[AVISO DE FALHA arquivo:linha:col]` no stderr até 2027-01-09; com `OFS_STRICT_FAULT=1`, `[ERRO DE FALHA ...]` e `_semantic_errors++`. Regra completa: [LANGUAGE_REFERENCE.md](LANGUAGE_REFERENCE.md), seção 12.
 
 ### Tratamento de erros (atual)
 
@@ -301,6 +306,7 @@ O backend interpretador da OFS executa a árvore sintática (AST) tipada diretam
 5. **Ponteiros reais (F2)**: ponteiro é endereço (`VAL_INT` com tipo `*T`). `*p`/`*p = v` usam `mem_load`/`mem_store` pela classe de memória do tipo apontado (`MC_*`: largura, sinal, `f32`, `obsidian`, `*T`, `monolith`, variante), com o tipo estático do `typeck` pré-calculado por nó em `annotate_nodes` (o mesmo tipo que o `llvmgen` usa); a leitura/escrita é o próprio código nativo do interpretador (`fracture { *p8 = v as u8 }`). `&x` de variável troca a entrada por `VAL_BOXED`: o valor passa a viver num slot de 8 bytes (`box_var`), lido/escrito por `env_load`/`env_store` e liberado em `env_pop_one` (`_boxed_live` mantém o caminho rápido sem custo quando não há nenhum). `as` replica o `NK_CAST` do `llvmgen` (`eval_cast`). `monolith` vive em memória crua com o layout de `llvmgen.struct_layout` (a mesma função calcula o tamanho do `ofs_alloc` no nativo e os offsets no interpretador; `compute_layouts`), e o `VAL_OBJECT` guarda o endereço do bloco; campo `Array` guarda o handle interpretado como `-(h+1)`.
 6. **Builtins Integrados**: Resolução imediata de funções de entrada/saída (`echo`), strings (`ofs_str_*`), vetores (`ofs_array_*`) e matemáticas (`ofs_pow`, `ofs_sqrt`). A lista (`is_builtin`) é só um caminho rápido, não o limite do que pode ser chamado.
 7. **Rift (`extern vein`/`rift vein`)**: no carregamento (`collect_declarations` → `resolve_calls` → `ffi_check_symbols`), cada extern chamada vira um endereço via `dlsym(RTLD_DEFAULT, sym)` (com `bind`), depois de abrir `libm` e `OFS_FFI_LIBS`; símbolo ausente é o erro do linker (`undefined reference`), código 1. Veins de `stdlib/runtime/*.ofs` (faixas de linha marcadas por `expand_attaches` com `ast_mark_runtime_lines`) usam a versão nativa linkada no `ofscc`. A chamada (`call_extern`) converte os argumentos pelo tipo declarado (inteiros/ponteiros/`obsidian` como `i64`, `crystal` como `double`), grava num buffer e chama `__ofs_ffi_dispatch`, que o `llvmgen` define no próprio `ofscc` (`emit_ffi_dispatch`, quando o módulo declara essa extern): um `switch` com uma chamada de tipo LLVM exato por classe de assinatura (`ffi_sig`/`ffi_sig_supported`: até 4 args `i64|double` com retorno `i64|double`, até 12 só inteiros, variádicas de 1 a 3 fixos + até 4 extras; 155 casos). Por isso o `ofscc` precisa ser linkado com `-rdynamic` (exporta o runtime e o dispatcher para o `dlsym`). Na F2, `&x`, `monolith` (o bloco) e `Array` vão à função nativa como endereço: o `Array` é a coluna de valores do interpretador, que já é um `ofs_array` nativo (`arr_native_ptr`), com o comprimento sincronizado na volta (`ffi_sync_arrays`); um `Array` devolvido pela função nativa vira um array interpretado que usa o mesmo bloco (`arr_adopt`). Callbacks nativos → OFS: o módulo que declara `extern vein __ofs_cb_table` recebe do `llvmgen` (`emit_cb_trampolines`) 16 funções `__ofs_cb_K(i64 x 6)` que chamam `__ofs_cb_enter(K, ...)`, definida no fim do `interpreter.ofs`; `fault_addr` de uma vein interpretada liga a vein a um slot (`cb_slot_for`) e devolve o endereço de `__ofs_cb_K` (achado por `dlsym`, para um `ofscc` gerado por compilador antigo continuar ligando); `cb_enter` empilha os argumentos pelo tipo de cada parâmetro, roda a vein e devolve o resultado como `i64`, preservando os registradores do interpretador (reentrante: funciona dentro de uma chamada nativa feita pelo interpretador). Slots esgotados, mais de 6 parâmetros ou `crystal`/`f32` no callback são erro claro (código 1).
+8. **Valores de vein (F6)**: `VAL_FN` guarda o tipo (`_rt`), a vein interpretada (`_rr` = id do nó da declaração, ou -1), o endereço nativo (`_ri`, de `extern` ou vindo do C) e o nome (`_rs`). `resolve_calls` marca cada `NK_IDENT` de vein com `_naux` (vein `id+1`, extern `-(ei+1)`); `eval_ident` só usa isso se não houver variável com o nome. `__vein_call` (`CALL_VEIN`) chama a vein interpretada direto (`call_function_by_id`) ou o endereço nativo com a assinatura do tipo (`call_native_sig` → `ffi_call_addr`, o mesmo caminho de `call_extern`). Indo para o C (`ffi_arg_int`, `reg_as_int`, `as stone`), uma vein interpretada vira o trampolim `cb_slot_for`; voltando do C (`fn_from_raw`: retorno de extern, parâmetro de callback), um endereço de trampolim volta a ser a vein de origem e um de extern ganha o nome dela. Em memória crua (campo de `monolith`, `*p`) a classe `MC_FN` guarda o endereço nativo ou `-(id+1)` para uma vein interpretada, sem gastar trampolim.
 
 ---
 
@@ -321,6 +327,7 @@ void       → void
 u8, u16, u32, u64 → i8, i16, i32, i64
 i8, i32    → i8, i32
 Array<T>   → %struct.Array* (vetor dinâmico do Stack Magma)
+vein(T) -> R → ptr (ponteiro de função; a chamada usa o tipo R (T))
 ```
 
 ### Estratégia de emissão de LLVM IR
@@ -360,6 +367,10 @@ Um `extern vein` que o próprio módulo define não é mais declarado de novo (a
 ### Endereço de função (`fault_addr`, `fault_call`)
 
 `fault_addr(nome)`: o typeck troca o argumento pelo símbolo mangled (`ns.fn` → `ns__fn`) e exige que seja uma vein (`SYM_FN`); o llvmgen resolve `bind` de `extern`/`rift` e emite `ptrtoint ptr @simbolo to i64`. `fault_call(endereco, args...)` emite `inttoptr` + `call i64 %p(...)` com os tipos LLVM dos argumentos. Ver [LANGUAGE_REFERENCE.md](LANGUAGE_REFERENCE.md).
+
+### Valores de vein (F6)
+
+Um tipo `vein(...) -> R` é `ptr` no LLVM (8 bytes num `monolith`, como qualquer ponteiro). O nome de uma vein usado como valor (`NK_IDENT` com tipo vein que não é variável, `is_vein_ref`) vira `@simbolo` (com o `bind` da extern); um global iniciado com o nome de uma vein recebe a constante `@simbolo`. `__vein_call` (`emit_vein_call`) avalia a vein, testa `null` (desvia para `__ofs_vein_null`, que chama `ofs_array_fail` do runtime: mensagem e código 1) e emite `call R %f(T1 a, T2 b)` com a assinatura LLVM exata do tipo; cada argumento passa por `coerce_for_store` para o tipo do parâmetro. `==` entre valores de vein é `icmp ptr`. `__ofs_vein_name` é uma cadeia de `icmp eq ptr %p, @simbolo` sobre as veins que o módulo usa como valor. As duas funções auxiliares só são emitidas quando o módulo as usa: o IR de um programa sem valores de vein não muda.
 
 ## Fase 5: Driver do compilador
 

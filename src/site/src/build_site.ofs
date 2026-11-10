@@ -4,9 +4,10 @@ attach {F:book.ofs}
 attach {F:ref.ofs}
 
 vein write_pages(prefix: obsidian) {
-    write_file(prefix + "index.html", bk_page("pt"))
+    write_file(prefix + "book/index.html", bk_page("pt"))
+    rf_redirect(prefix + "index.html", "ref/index.html")
     rf_redirect(prefix + "language.html", "ref/Referencia_da_linguagem.html")
-    rf_redirect(prefix + "getting-started.html", "index.html")
+    rf_redirect(prefix + "getting-started.html", "book/index.html")
     rf_redirect(prefix + "compiler.html", "ref/Arquitetura_do_compilador.html")
     rf_redirect(prefix + "odl.html", "ref/ODL.html")
     rf_redirect(prefix + "oes.html", "ref/OES.html")
@@ -30,7 +31,8 @@ vein write_pages(prefix: obsidian) {
 }
 
 vein write_english_pages(prefix: obsidian) {
-    write_file(prefix + "en/index.html", bk_page("en"))
+    write_file(prefix + "book/en/index.html", bk_page("en"))
+    rf_redirect(prefix + "en/index.html", "../ref/en/index.html")
     rf_redirect(prefix + "en/language.html", "../ref/en/Language_reference.html")
     rf_redirect(prefix + "en/odl.html", "../ref/en/ODL.html")
     rf_redirect(prefix + "en/oes.html", "../ref/en/OES.html")
@@ -39,24 +41,25 @@ vein write_english_pages(prefix: obsidian) {
     rf_redirect(prefix + "en/oll.html", "../ref/en/Visual_UI.html")
     rf_redirect(prefix + "en/oal.html", "../ref/en/OAL.html")
     rf_redirect(prefix + "en/downloads.html", "https://github.com/Samwns/Obsidian-Fault-Script/releases/latest")
-    rf_redirect(prefix + "en/getting-started.html", "index.html")
+    rf_redirect(prefix + "en/getting-started.html", "../book/en/index.html")
     rf_redirect(prefix + "en/commands.html", "../ref/en/Tools.html")
     write_file(prefix + "en/benchmark.html", page_benchmark("en"))
 }
 
 vein write_spanish_pages(prefix: obsidian) {
-    write_file(prefix + "es/index.html", bk_page("es"))
+    write_file(prefix + "book/es/index.html", bk_page("es"))
+    rf_redirect(prefix + "es/index.html", "../ref/es/index.html")
     rf_redirect(prefix + "es/language.html", "../ref/es/Referencia_del_lenguaje.html")
     rf_redirect(prefix + "es/web.html", "../ref/es/Interfaz_web.html")
     rf_redirect(prefix + "es/stdlib.html", "../ref/es/Biblioteca_estandar.html")
     rf_redirect(prefix + "es/downloads.html", "https://github.com/Samwns/Obsidian-Fault-Script/releases/latest")
-    rf_redirect(prefix + "es/getting-started.html", "index.html")
+    rf_redirect(prefix + "es/getting-started.html", "../book/es/index.html")
     rf_redirect(prefix + "es/commands.html", "../ref/es/Herramientas.html")
     write_file(prefix + "es/benchmark.html", page_benchmark("es"))
 }
 
 core main() {
-    system("mkdir -p src/site/public/assets src/site/public/en src/site/public/es docs/assets docs/en docs/es")
+    system("mkdir -p src/site/public/assets src/site/public/en src/site/public/es docs/assets docs/en docs/es src/site/public/book/en src/site/public/book/es docs/book/en docs/book/es")
     write_pages("src/site/public/")
     write_english_pages("src/site/public/")
     write_spanish_pages("src/site/public/")
