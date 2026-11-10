@@ -2,7 +2,7 @@
 
 Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`). Não edite à mão.
 
-- Compilador: `ofs/dist/ofscc` (origem: padrão, sha256 5ead1acd0fed) (`OFSCC_MODE=ir` + `clang` + `ofs/dist/magma.o` (origem: padrão, sha256 dc55f59ceab9) x `OFSCC_MODE=run`), `OFS_STDLIB_PATH=ofs/stdlib`, `NO_COLOR=1`.
+- Compilador: `ofs/dist/ofscc` (origem: padrão, sha256 bd4c4b9d94cf) (`OFSCC_MODE=ir` + `clang` + `ofs/dist/magma.o` (origem: padrão, sha256 dc55f59ceab9) x `OFSCC_MODE=run`), `OFS_STDLIB_PATH=ofs/stdlib`, `NO_COLOR=1`.
 - Limites: `ulimit -v` 2 GB e `timeout 20s` por execução; cada modo roda num diretório limpo.
 - Compara stdout, stderr normalizado, exit code e arquivos gerados no cwd.
 - `erro esperado`: programas listados em `EXPECTED_ERR` (`run.sh`) devem falhar (rc ≠ 0) nos dois modos; fora do recurso x modo. Se só um modo falhar, é `difere`.
@@ -11,14 +11,14 @@ Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`).
 
 | Classe | Programas |
 |---|---|
-| igual | 82 |
-| erro esperado | 17 |
+| igual | 85 |
+| erro esperado | 22 |
 | difere | 0 |
 | só nativo | 1 |
 | só interpretado | 0 |
 | nenhum compila | 0 |
 | pulado | 14 |
-| **Total** | 114 |
+| **Total** | 122 |
 
 ## Recurso x modo
 
@@ -26,17 +26,17 @@ Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`).
 
 | Recurso | Programas | Nativo passa | Interpretado passa | Igual |
 |---|---|---|---|---|
-| aritmética e controle | 83 | 83/83 | 82/83 | 82/83 |
-| strings | 28 | 28/28 | 28/28 | 28/28 |
-| arrays | 23 | 23/23 | 23/23 | 23/23 |
-| monolith/impl | 14 | 14/14 | 14/14 | 14/14 |
-| namespaces | 4 | 4/4 | 4/4 | 4/4 |
+| aritmética e controle | 86 | 86/86 | 85/86 | 85/86 |
+| strings | 30 | 30/30 | 30/30 | 30/30 |
+| arrays | 25 | 25/25 | 25/25 | 25/25 |
+| monolith/impl | 16 | 16/16 | 16/16 | 16/16 |
+| namespaces | 5 | 5/5 | 5/5 | 5/5 |
 | strata/match | 5 | 5/5 | 5/5 | 5/5 |
 | `?`/outcome | 2 | 2/2 | 2/2 | 2/2 |
-| `extern` libc / `rift vein` | 23 | 23/23 | 22/23 | 22/23 |
-| ponteiros `*T` / `*p = v` | 22 | 22/22 | 21/22 | 21/22 |
-| `fault_addr`/`fault_call` | 7 | 7/7 | 6/7 | 6/7 |
-| `fracture`/`abyss`/`bedrock` | 25 | 25/25 | 24/25 | 24/25 |
+| `extern` libc / `rift vein` | 24 | 24/24 | 23/24 | 23/24 |
+| ponteiros `*T` / `*p = v` | 23 | 23/23 | 22/23 | 22/23 |
+| `fault_addr`/`fault_call` | 9 | 9/9 | 8/9 | 8/9 |
+| `fracture`/`abyss`/`bedrock` | 28 | 28/28 | 27/28 | 27/28 |
 | `asm` | 0 | 0/0 | 0/0 | 0/0 |
 
 ## Por programa
@@ -133,6 +133,14 @@ Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`).
 | `ofs/tests/regress/type_numeric_mix.ofs` | igual | 0 | 0 |  |
 | `ofs/tests/regress/undefined_ident.ofs` | erro esperado | - | 1 | falha nos dois modos (nativo: não compila, interp: rc=1) |
 | `ofs/tests/regress/variant_echo.ofs` | igual | 0 | 0 |  |
+| `ofs/tests/regress/vein_type_edges.ofs` | igual | 0 | 0 |  |
+| `ofs/tests/regress/vein_type_err_arg.ofs` | erro esperado | - | 1 | falha nos dois modos (nativo: não compila, interp: rc=1) |
+| `ofs/tests/regress/vein_type_err_arity.ofs` | erro esperado | - | 1 | falha nos dois modos (nativo: não compila, interp: rc=1) |
+| `ofs/tests/regress/vein_type_err_cast.ofs` | erro esperado | - | 1 | falha nos dois modos (nativo: não compila, interp: rc=1) |
+| `ofs/tests/regress/vein_type_err_ret.ofs` | erro esperado | - | 1 | falha nos dois modos (nativo: não compila, interp: rc=1) |
+| `ofs/tests/regress/vein_type_null_call.ofs` | erro esperado | 1 | 1 | falha nos dois modos (nativo: rc=1, interp: rc=1) |
+| `ofs/tests/regress/vein_type_qsort.ofs` | igual | 0 | 0 |  |
+| `ofs/tests/regress/vein_type_values.ofs` | igual | 0 | 0 |  |
 | `ofs/tests/release_windows_smoke.ofs` | pulado | - | - | UI/janela/rede (check-ok) |
 | `ofs/tests/runtime/test_fault_addr_qsort.ofs` | igual | 0 | 0 |  |
 | `ofs/tests/runtime/test_magma_foundation.ofs` | igual | 0 | 0 |  |

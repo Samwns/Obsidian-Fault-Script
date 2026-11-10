@@ -1,0 +1,8 @@
+// F6: vein com outro retorno nao cabe no tipo (assinatura exata)
+vein nome(x: stone) -> obsidian { return "pedra " + ofs_stone_to_obsidian(x) }
+
+core main() {
+    forge f: vein(stone) -> stone = nome
+    echo(f(1))
+    echo("nao chega aqui")
+}

@@ -57,4 +57,4 @@ forge NK_LAMBDA:     stone = 56   // c0=params, c1=ret_type, c2=body
 // ── Types ───────────────────────────────────────────────────────────────
 forge NK_TYPE:       stone = 60   // val=name ("stone", "Array<stone>", etc)
 forge NK_TYPE_ARRAY: stone = 61   // c0=element_type
-forge NK_TYPE_FN:    stone = 62   // c0=params, c1=ret_type
+forge NK_TYPE_FN:    stone = 62   // val=texto canonico "vein(T1,T2)->R", extra=tipos dos parametros, c1=ret_type

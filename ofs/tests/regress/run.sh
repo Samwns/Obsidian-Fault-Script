@@ -16,7 +16,10 @@
 # i64/i16, conversao em forge/argumento/return/compostos, `echo` de variante
 # com o nome nos dois modos; combinacoes sem sentido sao [ERRO DE TIPO]; F4:
 # operacoes de baixo nivel so dentro de fracture/bedrock/tectonic/abyss, com
-# OFS_STRICT_FAULT=1 e [ERRO DE FALHA]; sem ela, [AVISO DE FALHA] no stderr).
+# OFS_STRICT_FAULT=1 e [ERRO DE FALHA]; sem ela, [AVISO DE FALHA] no stderr);
+# F6: tipos de funcao `vein(T) -> R` (vein como argumento, variavel, campo,
+# Array, retorno, chamada indireta, qsort com comparador tipado, externs como
+# valor) e os erros de aridade/argumento/retorno/`as` fora de abyss.
 #   OFSCC_BIN=<ofscc>  (padrao: ofs/dist/ofscc)
 # Cada .ofs com .expected roda no build nativo e no interpretador; o
 # str_char_at_1mb usa o runtime compilado de stdlib/runtime/magma.ofs (como
@@ -98,6 +101,12 @@ compile_err type_err_crystal_mod "ERRO DE TIPO .*type_err_crystal_mod.ofs:4:13\]
 compile_err fault_err_deref "ERRO DE FALHA .*fault_err_deref.ofs:6:16\]: acesso por ponteiro '\*p'.*libera: fracture, bedrock ou abyss" "fracture vein"
 compile_err fault_err_call_fracture "ERRO DE FALHA .*fault_err_call_fracture.ofs:8:29\]: 'fault_call'.*libera: so abyss" "abyss {"
 compile_err fault_err_cast "ERRO DE FALHA .*fault_err_cast.ofs:6:21\]: 'as' com ponteiro (\*u8 as stone)"
+# F6: tipos de funcao `vein(...) -> R`: aridade, argumento e retorno
+# conferidos em compilacao; vein <-> endereco cru so em abyss
+compile_err vein_type_err_arity "ERRO DE TIPO .*vein_type_err_arity.ofs:6:11\]: chamada de 'f' com 2 argumento(s), mas o tipo vein(stone)->stone pede 1"
+compile_err vein_type_err_arg "ERRO DE TIPO .*vein_type_err_arg.ofs:6:17\]: argumento 1 da chamada: obsidian onde o tipo da vein pede stone"
+compile_err vein_type_err_ret "ERRO DE TIPO .*vein_type_err_ret.ofs:5:41\]: vein de assinatura vein(stone)->obsidian onde o tipo pede vein(stone)->stone" "retorno: obsidian onde o tipo pede stone"
+compile_err vein_type_err_cast "ERRO DE FALHA .*vein_type_err_cast.ofs:6:21\]: 'as' com valor de vein (vein(stone)->stone as stone).*libera: so abyss"
 
 # 2. saida esperada (nativo e interpretador)
 # (vazio desde a F2: memoria crua funciona no `ofs run`)
@@ -197,5 +206,18 @@ for m in run native; do
     fail "fault_warn_default ($m): sem o aviso"; tail -3 "$T/fw.err"
   else echo "ok: fault_warn_default ($m, aviso)"; fi
 done
+
+# 9. F6: chamar um valor de vein null: mensagem no stderr e rc 1 nos dois
+#    modos (o que veio antes no stdout fica)
+vnull_check() { # vnull_check <modo> <rc> <stdout> <stderr>
+  if [ "$2" -ne 1 ]; then fail "vein_type_null_call ($1): rc=$2 (esperado 1)"
+  elif ! grep -q "ofs: chamada de vein nula" "$4"; then fail "vein_type_null_call ($1): stderr sem a mensagem"; tail -3 "$4"
+  elif grep -q "nao chega aqui" "$3" || [ "$(head -1 "$3")" != "2" ]; then fail "vein_type_null_call ($1): stdout inesperado"; head -3 "$3"
+  else echo "ok: vein_type_null_call ($1, rc=1)"; fi
+}
+if native "$HERE/vein_type_null_call.ofs" "$T/vnull"; then
+  timeout 10 "$T/vnull" >"$T/vnull.out" 2>"$T/vnull.err"; vnull_check nativo $? "$T/vnull.out" "$T/vnull.err"
+else fail "vein_type_null_call: nao compila"; show_build_log "$T/build.log"; fi
+OFSCC_MODE=run OFSCC_INPUT="$HERE/vein_type_null_call.ofs" timeout 20 "$OFSCC" >"$T/vnull.out" 2>"$T/vnull.err"; vnull_check interp $? "$T/vnull.out" "$T/vnull.err"
 
 [ "$FAILED" -eq 0 ] && echo "regress: tudo ok" || { echo "regress: $FAILED falha(s)"; exit 1; }

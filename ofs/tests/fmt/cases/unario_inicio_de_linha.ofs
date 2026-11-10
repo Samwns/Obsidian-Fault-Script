@@ -1,0 +1,14 @@
+vein main() -> void {
+forge a = 1
+forge p = a
+fracture {
+forge x = a
+*p = 5
+forge y = a
+&x
+forge z = a
+-x
+forge w = (a
+*2)
+}
+}

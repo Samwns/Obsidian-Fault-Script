@@ -36,6 +36,11 @@ EXPECTED_ERR=(
   ofs/tests/regress/fault_err_deref.ofs
   ofs/tests/regress/fault_err_call_fracture.ofs
   ofs/tests/regress/fault_err_cast.ofs
+  ofs/tests/regress/vein_type_err_arity.ofs
+  ofs/tests/regress/vein_type_err_arg.ofs
+  ofs/tests/regress/vein_type_err_ret.ofs
+  ofs/tests/regress/vein_type_err_cast.ofs
+  ofs/tests/regress/vein_type_null_call.ofs  # chamada de vein null: rc 1 nos dois modos
   ofs/tests/regress/fault_warn_default.ofs  # so aviso sem OFS_STRICT_FAULT; aqui (estrito) e erro
 )
 is_expected() { # is_expected <arquivo absoluto>

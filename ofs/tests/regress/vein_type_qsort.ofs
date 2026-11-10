@@ -1,0 +1,69 @@
+// F6: comparador tipado para o C. O parametro `cmp` do qsort tem o tipo
+// vein(*stone, *stone) -> stone: o nome da vein vai direto, sem abyss nem
+// fault_addr (no `ofs run` vira o trampolim de callback da F2). Uma extern
+// da libc tambem e um valor de vein, chamado com a assinatura do tipo, e um
+// endereco que vem do C (dlsym) chega tipado.
+rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: vein(*stone, *stone) -> stone) -> void bind "qsort" abi c
+rift vein c_bsearch(key: *stone, base: *stone, count: stone, size: stone, cmp: vein(*stone, *stone) -> stone) -> *stone bind "bsearch" abi c
+extern vein ofs_array_data(arr: Array<stone>) -> *stone
+extern vein strcmp(a: obsidian, b: obsidian) -> i32
+extern vein pow(base: crystal, e: crystal) -> crystal
+extern vein labs(x: stone) -> stone
+// o tipo de funcao tambem vale no retorno de uma funcao C
+extern vein dlopen(path: obsidian, flags: stone) -> stone
+extern vein dlsym(handle: stone, name: obsidian) -> vein(stone) -> stone
+
+vein crescente(a: *stone, b: *stone) -> stone {
+    forge x = 0
+    forge y = 0
+    fracture { x = *a; y = *b; }
+    if (x < y) { return -1 }
+    if (x > y) { return 1 }
+    return 0
+}
+
+vein decrescente(a: *stone, b: *stone) -> stone {
+    return 0 - crescente(a, b)
+}
+
+vein linha(v: Array<stone>) -> obsidian {
+    forge s = ""
+    cycle (x in v) { s = s + ofs_stone_to_obsidian(x) + " " }
+    return s
+}
+
+vein ordenar(v: Array<stone>, cmp: vein(*stone, *stone) -> stone) -> void {
+    c_qsort(ofs_array_data(v), ofs_array_len(v), 8, cmp)
+}
+
+core main() {
+    forge v: Array<stone> = [42, 7, 19, 3, 88, 1, 56]
+    c_qsort(ofs_array_data(v), ofs_array_len(v), 8, crescente)
+    echo(linha(v))
+    forge ordem: vein(*stone, *stone) -> stone = decrescente
+    ordenar(v, ordem)
+    echo(linha(v))
+    ordenar(v, crescente)
+    forge chave: stone = 19
+    forge achou: *stone = null
+    fracture { achou = c_bsearch(&chave, ofs_array_data(v), ofs_array_len(v), 8, crescente) }
+    forge idx = 0
+    fracture { idx = ((achou as stone) - (ofs_array_data(v) as stone)) / 8 }
+    echo(idx)
+
+    // externs da libc como valor de vein (assinatura LLVM exata, inclusive crystal)
+    forge cmp: vein(obsidian, obsidian) -> i32 = strcmp
+    echo(cmp("basalto", "basalto") == 0)
+    echo(cmp("ardosia", "basalto") < 0)
+    echo(cmp)
+    forge potencia: vein(crystal, crystal) -> crystal = pow
+    echo(potencia(2, 10))
+    forge modulo: vein(stone) -> stone = labs
+    echo(modulo(-17))
+    echo(modulo == labs)
+
+    // valor de vein que vem do C: o retorno do dlsym ja tem o tipo vein(stone) -> stone
+    forge absoluto = dlsym(dlopen(null, 2), "labs")
+    echo(absoluto == null)
+    echo(absoluto(-42))
+}

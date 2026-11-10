@@ -1,0 +1,8 @@
+// F6: chamada de valor de vein com aridade errada e erro de compilacao
+vein dobro(x: stone) -> stone { return x * 2 }
+
+core main() {
+    forge f: vein(stone) -> stone = dobro
+    echo(f(1, 2))
+    echo("nao chega aqui")
+}

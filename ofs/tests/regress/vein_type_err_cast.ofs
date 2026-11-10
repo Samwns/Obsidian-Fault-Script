@@ -1,0 +1,9 @@
+// F6: valor de vein <-> endereco cru so dentro de abyss
+vein dobro(x: stone) -> stone { return x * 2 }
+
+core main() {
+    forge f = dobro
+    forge cru = f as stone
+    echo(cru)
+    echo("nao chega aqui")
+}

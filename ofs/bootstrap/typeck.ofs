@@ -41,6 +41,10 @@ namespace typeck {
     forge TY_ARR: stone = 8
     forge TY_OBJ: stone = 9
     forge TY_VOID: stone = 10
+    // F6: valor de vein, tipo `vein(T1,T2)->R` (texto canonico, ast.ofs)
+    forge TY_FN: stone = 11
+    // `extern`/`rift` de simbolo C variadico (printf...): nao vira valor
+    forge _variadic_fns: Array<obsidian> = []
     
     vein push_scope() -> void {
         _scope_depth++
@@ -124,6 +128,7 @@ namespace typeck {
     
     vein check_type_string(type_str: obsidian) -> bool {
         if (ofs_str_len(type_str) > 0 && ofs_str_char_at(type_str, 0) == 42) { return true }
+        if (vein_type_is(type_str)) { return true }
         if (ofs_str_eq(type_str, "stone")) { return true }
         if (ofs_str_eq(type_str, "crystal")) { return true }
         if (ofs_str_eq(type_str, "obsidian")) { return true }
@@ -195,6 +200,7 @@ namespace typeck {
         forge tl = ofs_str_len(t)
         if (tl == 0) { return TY_UNK }
         if (ofs_str_char_at(t, 0) == 42) { return TY_PTR }
+        if (vein_type_is(t)) { return TY_FN }
         if (is_int_type(t)) { return TY_INT }
         if (is_float_type(t)) { return TY_FLT }
         if (ofs_str_eq(t, "bool")) { return TY_BOOL }
@@ -244,21 +250,10 @@ namespace typeck {
         return out
     }
 
-    // i-esimo tipo de uma lista "a,b,c" ("" se nao existir)
+    // i-esimo tipo de uma lista "a,b,c" ("" se nao existir); um parametro
+    // pode ser um tipo de funcao com virgulas (ast.type_list_at)
     vein param_type_at(list: obsidian, idx: stone) -> obsidian {
-        forge len = ofs_str_len(list)
-        forge start = 0
-        forge k = 0
-        forge i = 0
-        while (i <= len) {
-            if (i == len || ofs_str_char_at(list, i) == 44) {
-                if (k == idx) { return ofs_str_substr(list, start, i - start) }
-                k++
-                start = i + 1
-            }
-            i++
-        }
-        return ""
+        return type_list_at(list, idx)
     }
 
     vein set_extra_at(parent_id: stone, idx: stone, child_id: stone) -> void {
@@ -318,6 +313,9 @@ namespace typeck {
         if (cls == TY_FLT) { fname = "ofs_crystal_to_obsidian" }
         if (cls == TY_BOOL) { fname = "__ofs_bool_text" }
         if (cls == TY_VAR) { fname = "__ofs_variant_name" }
+        // F6: valor de vein vira o nome da vein ("null" se nulo), igual nos
+        // dois modos
+        if (cls == TY_FN) { fname = "__ofs_vein_name" }
         if (ofs_str_eq(fname, "")) { return child_id }
         forge cn: Node = node_get(child_id)
         if (cls == TY_INT && !ofs_str_eq(cn.type_str, "stone")) {
@@ -343,6 +341,10 @@ namespace typeck {
         forge ft = node_type_of(child_id)
         forge fc = ty_class(ft)
         if (fc == TY_UNK || ofs_str_eq(ft, to_t)) { return child_id }
+        if (tc == TY_FN || fc == TY_FN) {
+            fn_store_check(child_id, ft, to_t)
+            return child_id
+        }
         if (tc == TY_FLT && fc == TY_INT) { return wrap_cast(child_id, to_t) }
         if (tc == TY_INT && (fc == TY_FLT || fc == TY_BOOL)) { return wrap_cast(child_id, to_t) }
         if (tc == TY_STR && (fc == TY_FLT || fc == TY_BOOL || fc == TY_VAR)) { return wrap_text(child_id, fc) }
@@ -371,6 +373,154 @@ namespace typeck {
         return false
     }
 
+    // F6: valor guardado num lugar de tipo de funcao (ou valor de vein num
+    // lugar de outro tipo): so a mesma assinatura ou null. Endereco cru <->
+    // vein so com `as` dentro de abyss.
+    vein fn_store_check(child_id: stone, ft: obsidian, to_t: obsidian) -> void {
+        forge fc = ty_class(ft)
+        forge tc = ty_class(to_t)
+        if (ofs_str_eq(ft, to_t)) { return }
+        if (fc == TY_NULL && tc == TY_FN) { return }
+        forge wn: Node = node_get(child_id)
+        if (fc == TY_FN && tc == TY_FN) {
+            type_error(wn, "vein de assinatura " + ft + " onde o tipo pede " + to_t,
+                fn_mismatch_hint(ft, to_t))
+            return
+        }
+        if (tc == TY_FN) {
+            forge h = "a vein precisa ter exatamente essa assinatura"
+            if (fc == TY_INT || fc == TY_PTR) { h = "endereco cru vira vein so com '(x as " + to_t + ")' dentro de abyss { }" }
+            type_error(wn, "valor " + ft + " guardado como " + to_t, h)
+            return
+        }
+        forge h2 = "um valor de vein so vai para um lugar do mesmo tipo vein(...)"
+        if (tc == TY_INT || tc == TY_PTR) { h2 = "o endereco cru sai com '(f as " + to_t + ")' dentro de abyss { } (ou declare o parametro como " + ft + ")" }
+        if (tc == TY_STR) { h2 = "o nome da vein sai com \"\" + f (ou echo(f))" }
+        type_error(wn, "valor de vein " + ft + " guardado como " + to_t, h2)
+    }
+
+    // o que difere entre duas assinaturas, para a dica
+    vein fn_mismatch_hint(have: obsidian, want: obsidian) -> obsidian {
+        forge hp = vein_type_params(have)
+        forge wp = vein_type_params(want)
+        forge hn = type_list_len(hp)
+        forge wn = type_list_len(wp)
+        if (hn != wn) {
+            return "aridade diferente: " + ofs_stone_to_obsidian(hn) + " parametro(s) onde o tipo pede " + ofs_stone_to_obsidian(wn)
+        }
+        forge i = 0
+        while (i < hn) {
+            forge a = type_list_at(hp, i)
+            forge b = type_list_at(wp, i)
+            if (!ofs_str_eq(a, b)) {
+                return "parametro " + ofs_stone_to_obsidian(i + 1) + ": " + a + " onde o tipo pede " + b
+            }
+            i++
+        }
+        return "retorno: " + vein_type_ret(have) + " onde o tipo pede " + vein_type_ret(want)
+    }
+
+    // tipo de valor de uma vein/extern declarada (sym SYM_FN)
+    vein fn_value_type(sym: Symbol) -> obsidian {
+        return vein_type_make(sym.param_types, sym.type_str)
+    }
+
+    // nome de vein usado como valor (`forge f = dobro`): tipo vein(...)
+    vein fn_value_ident(id: stone, sym: Symbol) -> obsidian {
+        forge n: Node = node_get(id)
+        if (list_has(_variadic_fns, sym.name)) {
+            type_error(n, "a vein variadica '" + sym.name + "' (simbolo C com '...') nao pode virar valor de vein",
+                "chame-a direto, ou declare um extern com os parametros fixos que voce usa")
+            node_set_type(id, "unknown")
+            return "unknown"
+        }
+        n.val = sym.name
+        node_set(id, n)
+        forge ft = fn_value_type(sym)
+        node_set_type(id, ft)
+        return ft
+    }
+
+    // Argumento de chamada de valor de vein: estrito (erro em vez de aviso)
+    vein coerce_arg_strict(call_id: stone, idx: stone, pt: obsidian) -> void {
+        forge aid = node_extra_at(call_id, idx)
+        forge ft = node_type_of(aid)
+        forge fc = ty_class(ft)
+        forge tc = ty_class(pt)
+        if (fc != TY_UNK && tc != TY_UNK && fc != TY_FN && tc != TY_FN && store_suspicious(fc, tc)) {
+            forge an: Node = node_get(aid)
+            type_error(an, "argumento " + ofs_stone_to_obsidian(idx + 1) + " da chamada: " + ft + " onde o tipo da vein pede " + pt,
+                "converta com 'as " + pt + "' se for intencional")
+            return
+        }
+        forge nid = coerce_value(aid, pt)
+        if (nid != aid) { set_extra_at(call_id, idx, nid) }
+    }
+
+    // Chamada de um valor de vein: `f(x)` com f variavel/parametro/campo/
+    // elemento do tipo vein(...). Vira NK_CALL "__vein_call" com a expressao
+    // da vein em c0 (os back-ends fazem chamada indireta). Aridade e tipos
+    // dos argumentos conferidos aqui (com as conversoes da F3).
+    vein check_vein_call(id: stone, callee_id: stone, args_checked: bool) -> obsidian {
+        forge cn: Node = node_get(id)
+        cn.val = "__vein_call"
+        cn.c0 = callee_id
+        node_set(id, cn)
+        forge ct = node_type_of(callee_id)
+        forge plist = vein_type_params(ct)
+        forge np = type_list_len(plist)
+        forge argc = node_extra_len(id)
+        forge i = 0
+        if (!args_checked) {
+            while (i < argc) {
+                check_node(node_extra_at(id, i))
+                i++
+            }
+        }
+        if (argc != np) {
+            forge who = "valor de vein"
+            forge ck = node_kind_of(callee_id)
+            if (ck == NK_IDENT || ck == NK_FIELD) { who = "'" + vein_display_name(node_val_of(callee_id)) + "'" }
+            type_error(cn, "chamada de " + who + " com " + ofs_stone_to_obsidian(argc) +
+                " argumento(s), mas o tipo " + ct + " pede " + ofs_stone_to_obsidian(np),
+                "o tipo de funcao diz a aridade: vein(parametros) -> retorno")
+        } else {
+            i = 0
+            while (i < argc) {
+                coerce_arg_strict(id, i, type_list_at(plist, i))
+                i++
+            }
+        }
+        forge rt = vein_type_ret(ct)
+        node_set_type(id, rt)
+        return rt
+    }
+
+    // `recv__campo(args)` (`recv.campo(args)`) com campo de tipo vein: devolve
+    // o id de um NK_FIELD novo (ja verificado), ou -1
+    vein vein_field_callee(id: stone, name: obsidian) -> stone {
+        forge nlen = ofs_str_len(name)
+        forge sep = -1
+        forge k = nlen - 2
+        while (k > 0 && sep < 0) {
+            if (ofs_str_char_at(name, k) == 95 && ofs_str_char_at(name, k + 1) == 95) { sep = k }
+            k--
+        }
+        if (sep <= 0 || sep + 2 >= nlen) { return -1 }
+        forge recv_name = ofs_str_substr(name, 0, sep)
+        forge fld = ofs_str_substr(name, sep + 2, nlen - sep - 2)
+        forge recv_sym: Symbol = resolve(recv_name)
+        if (ofs_str_eq(recv_sym.name, "")) { return -1 }
+        if (recv_sym.kind == SYM_FN || recv_sym.kind == SYM_MONOLITH) { return -1 }
+        if (!vein_type_is(field_type(recv_sym.type_str, fld))) { return -1 }
+        forge cn: Node = node_get(id)
+        forge base_id = node_new(NK_IDENT, recv_name, cn.line, cn.col)
+        forge fid = node_new(NK_FIELD, fld, cn.line, cn.col)
+        node_set_child(fid, 0, base_id)
+        check_node(fid)
+        return fid
+    }
+
     vein class_name(c: stone) -> obsidian {
         if (c == TY_INT) { return "inteiro" }
         if (c == TY_FLT) { return "crystal" }
@@ -382,6 +532,7 @@ namespace typeck {
         if (c == TY_ARR) { return "Array" }
         if (c == TY_OBJ) { return "monolith" }
         if (c == TY_VOID) { return "void" }
+        if (c == TY_FN) { return "vein" }
         return "?"
     }
 
@@ -425,6 +576,8 @@ namespace typeck {
             hint = "bits so existem em inteiros: converta com 'as stone'"
         } else if (lc == TY_VAR || rc == TY_VAR) {
             hint = "a etiqueta de uma variante sai com '(v as stone)'"
+        } else if (lc == TY_FN || rc == TY_FN) {
+            hint = "valor de vein so aceita == e != (com a mesma assinatura ou null) e a chamada f(...)"
         }
         type_error(n, msg, hint)
     }
@@ -484,6 +637,11 @@ namespace typeck {
                 if (lc == TY_FLT && rc == TY_INT) { node_set_child(id, 1, wrap_cast(n.c1, "crystal")) }
                 return "bool"
             }
+            if (lc == TY_FN && rc == TY_FN && eq && !ofs_str_eq(lt, rt)) {
+                type_error(n, "comparacao '" + op + "' entre veins de assinaturas diferentes (" + lt + " e " + rt + ")",
+                    fn_mismatch_hint(lt, rt))
+                return "bool"
+            }
             if (lc == rc && lc != TY_VOID) {
                 if (!eq && lc != TY_INT && lc != TY_FLT) {
                     type_error(n, "comparacao de ordem '" + op + "' entre " + lt + " e " + rt,
@@ -495,7 +653,7 @@ namespace typeck {
             if (eq && (lc == TY_NULL || rc == TY_NULL)) {
                 forge other = lc
                 if (lc == TY_NULL) { other = rc }
-                if (other == TY_STR || other == TY_PTR || other == TY_ARR || other == TY_OBJ || other == TY_NULL) { return "bool" }
+                if (other == TY_STR || other == TY_PTR || other == TY_ARR || other == TY_OBJ || other == TY_NULL || other == TY_FN) { return "bool" }
                 if (other == TY_INT) {
                     // endereco guardado em stone comparado com null: vale 0
                     forge null_id = n.c1
@@ -803,6 +961,13 @@ namespace typeck {
         declare(gv_sym)
     }
 
+    // extern/rift cujo simbolo C e variadico (llvmgen.variadic_fixed_count)
+    vein note_variadic_extern(decl_id: stone) -> void {
+        forge bsym = node_type_of(decl_id)
+        if (ofs_str_eq(bsym, "")) { bsym = node_val_of(decl_id) }
+        if (variadic_c_fixed(bsym) >= 0) { ofs_array_push(_variadic_fns, node_val_of(decl_id)) }
+    }
+
     vein check_node(id: stone) -> obsidian {
         if (id < 0) { return "void" }
 
@@ -854,6 +1019,8 @@ namespace typeck {
                 node_set_type(id, "unknown")
                 return "unknown"
             }
+            // F6: nome de vein/extern como valor (tipo vein(...)), sem abyss
+            if (sym.kind == SYM_FN) { return fn_value_ident(id, sym) }
             node_set_type(id, sym.type_str)
             return sym.type_str
         }
@@ -901,6 +1068,8 @@ namespace typeck {
                             n.val = fb.val + "__" + n.val
                             n.c0 = -1
                             node_set(id, n)
+                            // `ns.vein` como valor
+                            if (ns_sym.kind == SYM_FN) { return fn_value_ident(id, ns_sym) }
                             node_set_type(id, ns_sym.type_str)
                             return ns_sym.type_str
                         }
@@ -959,7 +1128,19 @@ namespace typeck {
             forge target_type = n.val
             forge cs = ty_class(src_type)
             forge ct = ty_class(target_type)
-            if ((ct == TY_PTR && cs != TY_NULL && !ofs_str_eq(src_type, target_type)) ||
+            if ((ct == TY_FN || cs == TY_FN) && !ofs_str_eq(src_type, target_type) && cs != TY_NULL) {
+                // F6: endereco cru <-> vein, ou troca de assinatura: so em abyss
+                forge fn_ok = (ct == TY_FN && (cs == TY_INT || cs == TY_PTR || cs == TY_FN || cs == TY_UNK)) ||
+                    (cs == TY_FN && (ct == TY_INT || ct == TY_PTR))
+                if (!fn_ok) {
+                    type_error(n, "'as' entre " + src_type + " e " + target_type + " nao existe",
+                        "vein vira endereco (as stone / as *u8) e endereco vira vein (as vein(...)), so dentro de abyss")
+                } else {
+                    forge fn_ex = "abyss { forge a = (f as " + target_type + ") }"
+                    if (ct == TY_FN) { fn_ex = "abyss { forge f = (endereco as " + target_type + ") }" }
+                    require_fault(n, "'as' com valor de vein (" + src_type + " as " + target_type + ")", true, fn_ex)
+                }
+            } else if ((ct == TY_PTR && cs != TY_NULL && !ofs_str_eq(src_type, target_type)) ||
                 (cs == TY_PTR && !ofs_str_eq(src_type, target_type))) {
                 require_fault(n, "'as' com ponteiro (" + src_type + " as " + target_type + ")", false,
                     "fracture { forge q = (p as stone) + 8 }")
@@ -1010,6 +1191,34 @@ namespace typeck {
         }
         
         if (n.kind == NK_CALL) {
+            // F6: chamada de valor de vein. (a) expressao em c0 (o parser a
+            // guarda quando quem e chamado nao e um nome: `a[i](x)`,
+            // `f(1)(2)`); (b) nome de variavel/parametro do tipo vein(...).
+            if (ofs_str_eq(n.val, "__vein_call") && n.c0 >= 0) {
+                check_node(n.c0)
+                return check_vein_call(id, n.c0, false)
+            }
+            if (n.c0 >= 0 && node_kind_of(n.c0) == NK_FIELD) {
+                // `a.b.f(x)`: se `f` e uma vein, a chamada pelo nome de antes
+                forge old_sym: Symbol = resolve(n.val)
+                if (old_sym.kind == SYM_FN) {
+                    n.c0 = -1
+                    node_set(id, n)
+                }
+            }
+            if (n.c0 >= 0) {
+                forge cal_t = check_node(n.c0)
+                if (vein_type_is(cal_t)) { return check_vein_call(id, n.c0, false) }
+                // nao e valor de vein: chamada pelo nome, como antes
+                n.c0 = -1
+                node_set(id, n)
+            }
+            forge vc_sym: Symbol = resolve(n.val)
+            if (!ofs_str_eq(vc_sym.name, "") && vc_sym.kind != SYM_FN && vein_type_is(vc_sym.type_str)) {
+                forge vc_id = node_new(NK_IDENT, n.val, n.line, n.col)
+                check_node(vc_id)
+                return check_vein_call(id, vc_id, false)
+            }
             // fault_addr(vein): endereco de uma vein como `stone` (ponteiro de
             // funcao C). O argumento e um nome de vein, nao uma expressao:
             // `ns.fn` vira o simbolo `ns__fn` e nao passa por check_node.
@@ -1025,6 +1234,20 @@ namespace typeck {
                         if (fa_base.kind == NK_IDENT) { fa_name = fa_base.val + "__" + fa.val }
                     }
                     forge fa_sym: Symbol = resolve(fa_name)
+                    if (!(!ofs_str_eq(fa_name, "") && fa_sym.kind == SYM_FN)) {
+                        // F6: fault_addr(valor de vein) = endereco cru (`f as stone`)
+                        forge fa_t = check_node(fa_id)
+                        if (vein_type_is(fa_t)) {
+                            forge fcn: Node = node_get(id)
+                            fcn.kind = NK_CAST
+                            fcn.val = "stone"
+                            fcn.c0 = fa_id
+                            fcn.extra = []
+                            node_set(id, fcn)
+                            node_set_type(id, "stone")
+                            return "stone"
+                        }
+                    }
                     if (!ofs_str_eq(fa_name, "") && fa_sym.kind == SYM_FN) {
                         fa.kind = NK_IDENT
                         fa.val = fa_name
@@ -1051,6 +1274,21 @@ namespace typeck {
                 check_node(arg_id)
                 i++
             }
+            if (ofs_str_eq(n.val, "fault_call") && argc >= 1 && vein_type_is(node_type_of(node_extra_at(id, 0)))) {
+                // F6: fault_call(f, args) com f de tipo vein(...): assinatura
+                // conferida e chamada tipada (= f(args))
+                forge fcl_callee = node_extra_at(id, 0)
+                forge fcl_extra: Array<stone> = []
+                forge fcl_i = 1
+                while (fcl_i < argc) {
+                    ofs_array_push(fcl_extra, node_extra_at(id, fcl_i))
+                    fcl_i++
+                }
+                forge fcl_n: Node = node_get(id)
+                fcl_n.extra = fcl_extra
+                node_set(id, fcl_n)
+                return check_vein_call(id, fcl_callee, true)
+            }
             if (ofs_str_eq(n.val, "fault_call") || ofs_str_eq(n.val, "fault_cut") || ofs_str_eq(n.val, "fault_patch") || ofs_str_eq(n.val, "fault_swap") || ofs_str_eq(n.val, "fault_count") || ofs_str_eq(n.val, "fault_lead") || ofs_str_eq(n.val, "fault_trail") || ofs_str_eq(n.val, "fault_spin_left") || ofs_str_eq(n.val, "fault_spin_right") || ofs_str_eq(n.val, "fault_weave")) {
                 node_set_type(id, "stone")
                 return "stone"
@@ -1069,6 +1307,8 @@ namespace typeck {
                 // tabela de nomes gerada pelo llvmgen)
                 forge ea = node_extra_at(id, 0)
                 if (ty_class(node_type_of(ea)) == TY_VAR) { set_extra_at(id, 0, wrap_text(ea, TY_VAR)) }
+                // valor de vein: o nome (o nativo usa a tabela do llvmgen)
+                if (ty_class(node_type_of(ea)) == TY_FN) { set_extra_at(id, 0, wrap_text(ea, TY_FN)) }
                 node_set_type(id, "void")
                 return "void"
             }
@@ -1118,7 +1358,10 @@ namespace typeck {
                 node_set_type(id, mt)
                 return mt
             }
-            if (ofs_str_eq(n.val, "ofs_crystal_to_obsidian") || ofs_str_eq(n.val, "__ofs_bool_text") || ofs_str_eq(n.val, "__ofs_variant_name")) {
+            // F6: `s.campo(args)` com campo de tipo vein(...)
+            forge vf_id = vein_field_callee(id, n.val)
+            if (vf_id >= 0) { return check_vein_call(id, vf_id, true) }
+            if (ofs_str_eq(n.val, "ofs_crystal_to_obsidian") || ofs_str_eq(n.val, "__ofs_bool_text") || ofs_str_eq(n.val, "__ofs_variant_name") || ofs_str_eq(n.val, "__ofs_vein_name")) {
                 node_set_type(id, "obsidian")
                 return "obsidian"
             }
@@ -1297,7 +1540,7 @@ namespace typeck {
             // elemento escalar declarado (crystal, bool, inteiros, strata)
             forge cr_et = array_elem_of(arr_t)
             forge cr_c = ty_class(cr_et)
-            if (cr_c == TY_INT || cr_c == TY_FLT || cr_c == TY_BOOL || (cr_c == TY_VAR && !ofs_str_eq(cr_et, "variant"))) {
+            if (cr_c == TY_INT || cr_c == TY_FLT || cr_c == TY_BOOL || cr_c == TY_FN || (cr_c == TY_VAR && !ofs_str_eq(cr_et, "variant"))) {
                 rsym.type_str = cr_et
             }
             rsym.kind = SYM_VAR
@@ -1481,6 +1724,7 @@ namespace typeck {
                     ext_sym.kind = SYM_FN
                     ext_sym.param_types = param_types_of(decl_id)
                     declare(ext_sym)
+                    note_variadic_extern(decl_id)
                 } else if (decl_kind == NK_VAR_DECL || decl_kind == NK_CONST_DECL) {
                     // global de topo usado numa vein antes da linha que o declara
                     predeclare_global(decl_id)
@@ -1513,6 +1757,7 @@ namespace typeck {
                             forge mc0 = node_child(member_id, 0)
                             if (mc0 >= 0) { member_sym.fn_arity = node_extra_len(mc0) }
                             declare(member_sym)
+                            if (member_kind == NK_EXTERN_VN || member_kind == NK_RIFT_VN) { note_variadic_extern(member_id) }
                         } else if (member_kind == NK_VAR_DECL || member_kind == NK_CONST_DECL) {
                             // globais de namespace (nome ja mangled ns__nome),
                             // visiveis de fora como `ns.nome`

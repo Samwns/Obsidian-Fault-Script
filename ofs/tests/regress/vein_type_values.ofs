@@ -1,0 +1,140 @@
+// F6: tipos de funcao `vein(T1, T2) -> R`. O nome de uma vein e um valor
+// desse tipo (sem abyss); chamar o valor e tipado (aridade, argumentos com
+// as conversoes da F3, retorno). Mesmo resultado no nativo e no `ofs run`.
+
+monolith Operacao {
+    nome: obsidian
+    calc: vein(stone, stone) -> stone
+}
+
+namespace mat {
+    vein quadrado(x: stone) -> stone { return x * x }
+}
+
+forge PADRAO: vein(stone) -> stone = dobro
+
+vein dobro(x: stone) -> stone { return x * 2 }
+vein triplo(x: stone) -> stone { return x * 3 }
+vein soma(a: stone, b: stone) -> stone { return a + b }
+vein produto(a: stone, b: stone) -> stone { return a * b }
+vein metade(x: crystal) -> crystal { return x / 2.0 }
+vein saudacao(nome: obsidian, alto: bool) -> obsidian {
+    if (alto) { return "OLA, " + nome }
+    return "ola, " + nome
+}
+vein avisar(msg: obsidian) -> void { echo("aviso: " + msg) }
+
+// vein como argumento
+vein aplicar(f: vein(stone) -> stone, x: stone) -> stone { return f(x) }
+vein aplicar_duas(f: vein(stone) -> stone, x: stone) -> stone { return f(f(x)) }
+
+// vein devolvida por vein
+vein escolher(grande: bool) -> vein(stone) -> stone {
+    if (grande) { return triplo }
+    return dobro
+}
+
+// vein que recebe e devolve vein
+vein compor_dobro(f: vein(stone) -> stone) -> vein(stone) -> stone {
+    if (f == dobro) { return mat.quadrado }
+    return f
+}
+
+vein dobrar_tudo(v: Array<stone>, f: vein(stone) -> stone) -> Array<stone> {
+    forge out: Array<stone> = []
+    cycle (x in v) { ofs_array_push(out, f(x)) }
+    return out
+}
+
+vein linha(v: Array<stone>) -> obsidian {
+    forge s = ""
+    cycle (x in v) { s = s + ofs_stone_to_obsidian(x) + " " }
+    return s
+}
+
+core main() {
+    // variavel
+    forge f: vein(stone) -> stone = dobro
+    echo(f(21))
+    forge g = triplo
+    echo(g(5))
+    f = g
+    echo(f(2))
+
+    // argumento e retorno
+    echo(aplicar(dobro, 7))
+    echo(aplicar_duas(triplo, 2))
+    echo(aplicar(mat.quadrado, 9))
+    echo(escolher(true)(10))
+    echo(escolher(false)(10))
+    forge h = escolher(true)
+    echo(h(1))
+    echo(compor_dobro(dobro)(6))
+    echo(compor_dobro(triplo)(6))
+    echo(linha(dobrar_tudo([1, 2, 3], mat.quadrado)))
+
+    // conversoes da F3 no argumento e no retorno
+    forge m: vein(crystal) -> crystal = metade
+    echo(m(5))
+    forge sd: vein(obsidian, bool) -> obsidian = saudacao
+    echo(sd("rocha", true))
+    echo(sd("rocha", false))
+    forge av: vein(obsidian) -> void = avisar
+    av("magma subindo")
+
+    // campo de monolith
+    forge op: Operacao
+    echo(op.calc == null)
+    op.nome = "soma"
+    op.calc = soma
+    echo(op.nome + " = " + ofs_stone_to_obsidian(op.calc(3, 4)))
+    echo(op.calc(10, 20))
+    forge op2: Operacao
+    op2.nome = "produto"
+    op2.calc = produto
+
+    // Array<vein(...)>
+    forge ops: Array<vein(stone, stone) -> stone> = [soma, produto]
+    ofs_array_push(ops, op.calc)
+    forge i = 0
+    while (i < ofs_array_len(ops)) {
+        echo(ops[i](6, 7))
+        i++
+    }
+    forge total = 0
+    cycle (cada in ops) { total = total + cada(2, 3) }
+    echo(total)
+    forge tabela: Array<Operacao> = [op, op2]
+    forge k = 0
+    while (k < ofs_array_len(tabela)) {
+        forge oo: Operacao = tabela[k]
+        echo(oo.nome + ": " + ofs_stone_to_obsidian(oo.calc(5, 5)))
+        k++
+    }
+
+    // global
+    echo(PADRAO(50))
+
+    // igualdade, null e echo (o nome da vein, igual nos dois modos)
+    forge vazio: vein(stone) -> stone = null
+    echo(vazio == null)
+    echo(f == null)
+    echo(f == triplo)
+    echo(f != dobro)
+    echo(ops[0] == soma)
+    echo(f)
+    echo(mat.quadrado)
+    echo(vazio)
+    echo("op.calc = " + op.calc)
+
+    // baixo nivel (abyss): endereco cru e volta, fault_call tipado
+    abyss {
+        forge cru = f as stone
+        echo(cru == fault_addr(triplo))
+        echo(fault_addr(f) == cru)
+        forge de_volta = cru as vein(stone) -> stone
+        echo(de_volta(4))
+        echo(de_volta)
+        echo(fault_call(f, 11))
+    }
+}

@@ -1,0 +1,53 @@
+// F6: casos de borda dos valores de vein: variavel sem valor (null),
+// monolith com campo vein passado a outra vein, recursao pelo valor, vein
+// que devolve vein, metodo de impl como valor, vein sem parametros e
+// ponteiro para variavel de vein (abyss).
+monolith Caixa {
+    f: vein(stone) -> stone
+    n: stone
+}
+monolith Rect { w: stone h: stone }
+impl Rect {
+    vein area(self: Rect) -> stone { return self.w * self.h }
+}
+vein dobro(x: stone) -> stone { return x * 2 }
+vein fat(n: stone) -> stone {
+    forge self_ref: vein(stone) -> stone = fat
+    if (n <= 1) { return 1 }
+    return n * self_ref(n - 1)
+}
+vein somador(a: stone) -> vein(stone) -> stone {
+    if (a > 0) { return dobro }
+    return fat
+}
+vein usa(c: Caixa) -> stone { return c.f(c.n) }
+vein nada() -> void { echo("nada") }
+core main() {
+    forge f: vein(stone) -> stone
+    echo(f == null)
+    echo(f)
+    forge c: Caixa
+    c.f = dobro
+    c.n = 21
+    echo(usa(c))
+    echo(fat(5))
+    echo(somador(1)(4))
+    echo(somador(0)(4))
+    forge r: Rect
+    r.w = 3
+    r.h = 4
+    forge ar: vein(Rect) -> stone = Rect__area
+    echo(ar(r))
+    echo(ar)
+    forge v: vein() -> void = nada
+    v()
+    echo(v)
+    forge g = dobro
+    abyss {
+        forge p: *vein(stone) -> stone = &g
+        forge h: vein(stone) -> stone = *p
+        echo(h(8))
+        *p = fat
+        echo(g(4))
+    }
+}

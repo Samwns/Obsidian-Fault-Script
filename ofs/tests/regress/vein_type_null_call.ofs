@@ -1,0 +1,11 @@
+// F6: chamar um valor de vein null e erro de execucao claro (stderr) com
+// rc 1 nos dois modos (antes do F6 nao havia valor de vein)
+vein dobro(x: stone) -> stone { return x * 2 }
+
+core main() {
+    forge f: vein(stone) -> stone = dobro
+    echo(f(1))
+    f = null
+    echo(f(3))
+    echo("nao chega aqui")
+}

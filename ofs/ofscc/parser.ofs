@@ -326,6 +326,17 @@ namespace parser {
             }
 
             forge call = node_new(NK_CALL, call_name, t.line, t.col)
+            // F6: chamada de um valor que nao e nome (`a[i](x)`, `f(1)(2)`,
+            // `s.a.b(x)`): a expressao vai em c0 e o typeck decide (valor de
+            // vein ou, como antes, a vein/metodo pelo nome).
+            if (callee.kind != NK_IDENT) {
+                forge simple_field = false
+                if (callee.kind == NK_FIELD) {
+                    forge fbase: Node = node_get(callee.c0)
+                    simple_field = fbase.kind == NK_IDENT
+                }
+                if (!simple_field) { node_set_child(call, 0, left) }
+            }
             while (_cur_kind() != TOK_RPAREN && _cur_kind() != TOK_EOF) {
                 forge arg = parse_expr(0)
                 node_add_extra(call, arg)
@@ -431,6 +442,47 @@ namespace parser {
             forge inner_node: Node = node_get(inner)
             forge ptr_type_name = "*" + inner_node.val
             return node_new(NK_TYPE, ptr_type_name, t.line, t.col)
+        }
+        // F6: tipo de funcao `vein(T1, T2) -> R` (sem `-> R`: void). O
+        // texto canonico, sem espacos, vai no `val` (e o type_str de toda
+        // expressao desse tipo): "vein(T1,T2)->R".
+        if (t.kind == TOK_VEIN) {
+            _advance()
+            forge fnt = node_new(NK_TYPE_FN, "", t.line, t.col)
+            if (!_expect(TOK_LPAREN)) {
+                _error("expected '(' after 'vein' in function type")
+                return fnt
+            }
+            forge plist = ""
+            forge pcount = 0
+            while (_cur_kind() != TOK_RPAREN && _cur_kind() != TOK_EOF) {
+                forge pt = parse_type()
+                if (pt < 0) { break }
+                node_add_extra(fnt, pt)
+                if (pcount > 0) { plist = plist + "," }
+                plist = plist + type_node_text(pt)
+                pcount++
+                if (_cur_kind() == TOK_COMMA) {
+                    _advance()
+                } else if (_cur_kind() != TOK_RPAREN) {
+                    _error("expected ',' or ')' in function type")
+                    break
+                }
+            }
+            if (!_expect(TOK_RPAREN)) {
+                _error("expected ')'")
+            }
+            forge fret = "void"
+            if (_cur_kind() == TOK_ARROW && ofs_str_eq(_cur_val(), "->")) {
+                _advance()
+                forge rt = parse_type()
+                node_set_child(fnt, 1, rt)
+                if (rt >= 0) { fret = type_node_text(rt) }
+            }
+            forge fn_node: Node = node_get(fnt)
+            fn_node.val = vein_type_make(plist, fret)
+            node_set(fnt, fn_node)
+            return fnt
         }
         if (t.kind != TOK_IDENT) {
             _error("expected type")

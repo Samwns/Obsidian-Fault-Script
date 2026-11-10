@@ -75,6 +75,10 @@ forge VAL_VARIANT: stone = 9
 // variavel cujo endereco foi tomado (&x): o valor vive em memoria crua;
 // _env_i = endereco, _env_type = tipo, _env_ref = classe de memoria (MC_*)
 forge VAL_BOXED: stone = 10
+// valor de vein (F6): _rt = tipo vein(...), _rr = vein interpretada (id do
+// no da declaracao) ou -1, _ri = endereco nativo (extern, ou vindo do C),
+// _rs = nome da vein ("" se o endereco nao tem nome no programa)
+forge VAL_FN: stone = 11
 
 forge EXEC_OK: stone = 0
 forge EXEC_RETURN: stone = 1
@@ -105,6 +109,9 @@ forge MC_PTR: stone = 11
 forge MC_ARRAY: stone = 12
 forge MC_OBJ: stone = 13
 forge MC_VARIANT: stone = 14
+// valor de vein em memoria crua: endereco nativo, ou -(id+1) para uma vein
+// interpretada (o C recebe trampolim quando o valor vai como argumento)
+forge MC_FN: stone = 15
 
 // Operadores decodificados uma vez (antes: ofs_str_eq por avaliacao e
 // ofs_str_substr — que aloca — em todo `x += 1`).
@@ -153,6 +160,8 @@ forge CALL_VARIANT: stone = 2
 forge CALL_FN: stone = 3
 forge CALL_DYN: stone = 4
 forge CALL_EXTERN: stone = 5
+// chamada de valor de vein (F6): NK_CALL "__vein_call", c0 = a vein
+forge CALL_VEIN: stone = 6
 
 // Classe de tipo de um parametro/retorno de `extern vein` (FFI)
 forge TC_INT: stone = 0
@@ -212,6 +221,7 @@ forge BI_FAULT_STEP: stone = 38
 // conversoes para texto inseridas pelo typeck (F3); iguais ao llvmgen
 forge BI_VARIANT_NAME: stone = 39
 forge BI_BOOL_TEXT: stone = 40
+forge BI_VEIN_NAME: stone = 41
 
 // Colunas de um array interpretado (bitmask em _arr_mask)
 forge COL_KIND: stone = 1
@@ -372,6 +382,9 @@ namespace interpreter {
     forge _cb_pcls: Array<Array> = []
     forge _cb_ptypes: Array<Array> = []
     forge _cb_rcls: Array<stone> = []
+    forge _cb_addr: Array<stone> = []
+    // extern usada como valor de vein (F6): nome de um endereco vindo do C
+    forge _ext_vref: Array<bool> = []
     // no da chamada em curso (fault_step le o tipo estatico do argumento)
     forge _cur_call_id: stone = -1
 
@@ -445,6 +458,10 @@ namespace interpreter {
         if (k == VAL_POINTER) { return "*ptr" }
         if (k == VAL_NULL) { return "null" }
         if (k == VAL_VARIANT) { return t }
+        if (k == VAL_FN) {
+            if (ofs_str_len(s) > 0) { return vein_display_name(s) }
+            return "<vein>"
+        }
         return ""
     }
 
@@ -463,6 +480,7 @@ namespace interpreter {
         if (k == VAL_NULL) { return false }
         if (k == VAL_VOID) { return false }
         if (k == VAL_VARIANT) { return true }
+        if (k == VAL_FN) { return true }
         return false
     }
 
@@ -654,6 +672,7 @@ namespace interpreter {
         if (ofs_str_eq(name, "ofs_sqrt")) { return BI_SQRT }
         if (ofs_str_eq(name, "__ofs_variant_name")) { return BI_VARIANT_NAME }
         if (ofs_str_eq(name, "__ofs_bool_text")) { return BI_BOOL_TEXT }
+        if (ofs_str_eq(name, "__ofs_vein_name")) { return BI_VEIN_NAME }
         if (ofs_str_char_at(name, 0) == 102 && ofs_str_len(name) > 6) { return fault_code(name) }
         return BI_NONE
     }
@@ -834,6 +853,7 @@ namespace interpreter {
         if (n == 0) { return MC_I64 }
         forge c0 = ofs_str_char_at(t, 0)
         if (c0 == 42) { return MC_PTR }
+        if (c0 == 118 && vein_type_is(t)) { return MC_FN }
         if (ofs_str_eq(t, "stone") || ofs_str_eq(t, "i64") || ofs_str_eq(t, "u64") || ofs_str_eq(t, "unknown")) { return MC_I64 }
         if (ofs_str_eq(t, "crystal") || ofs_str_eq(t, "f64")) { return MC_F64 }
         if (ofs_str_eq(t, "obsidian")) { return MC_STR }
@@ -1011,6 +1031,7 @@ namespace interpreter {
         if (_rk == VAL_OBJECT) { return _rr }
         if (_rk == VAL_ARRAY) { return arr_native_ptr(_rr) }
         if (_rk == VAL_VARIANT) { return variant_index(_rt) }
+        if (_rk == VAL_FN) { return fn_native_addr() }
         return 0
     }
 
@@ -1031,7 +1052,8 @@ namespace interpreter {
             return
         }
         if (c == MC_BOOL) { r_bool((v & 4294967295) != 0); return }
-        if (v == 0 && (c == MC_STR || c == MC_PTR || c == MC_OBJ || c == MC_ARRAY)) { r_null(); return }
+        if (v == 0 && (c == MC_STR || c == MC_PTR || c == MC_OBJ || c == MC_ARRAY || c == MC_FN)) { r_null(); return }
+        if (c == MC_FN) { fn_from_raw(v, t); return }
         if (c == MC_STR) { r_string(v as obsidian); return }
         if (c == MC_PTR) { r_int(v); _rt = t; return }
         if (c == MC_OBJ) { r_object(t, v); return }
@@ -1072,7 +1094,85 @@ namespace interpreter {
             mem_wr(a, MC_I64, ofs_stone_to_obsidian(_ri) as stone)
             return
         }
+        if (c == MC_FN) {
+            mem_wr(a, MC_I64, fn_raw_mem())
+            return
+        }
         mem_wr(a, c, reg_as_int())
+    }
+
+    // ── Valores de vein (F6) ──────────────────────────────────────────────
+
+    vein r_fn(t: obsidian, fid: stone, addr: stone, name: obsidian) -> void {
+        r_set(VAL_FN, t, addr, 0.0, false, name, fid)
+    }
+
+    // endereco nativo do valor de vein dos registradores (o que o C chama):
+    // vein interpretada = trampolim de callback (cb_slot_for)
+    vein fn_native_addr() -> stone {
+        if (_rk != VAL_FN) { return 0 }
+        if (_rr >= 0) { return cb_slot_for(_rr, _rs) }
+        return _ri
+    }
+
+    // palavra de memoria crua do valor de vein (campo de monolith, *p)
+    vein fn_raw_mem() -> stone {
+        if (_rk == VAL_FN && _rr >= 0) { return 0 - _rr - 1 }
+        return reg_as_int()
+    }
+
+    // palavra bruta (memoria, C, callback) de tipo vein t -> registradores
+    vein fn_from_raw(v: stone, t: obsidian) -> void {
+        if (v == 0) { r_null(); return }
+        if (v < 0) {
+            forge hid = 0 - v - 1
+            r_fn(t, hid, 0, nval(hid))
+            return
+        }
+        forge slot = 0
+        while (slot < ofs_array_len(_cb_addr)) {
+            forge sa: stone = ofs_array_get(_cb_addr, slot)
+            if (sa == v) {
+                forge sf: stone = ofs_array_get(_cb_fn, slot)
+                r_fn(t, sf, 0, nval(sf))
+                return
+            }
+            slot++
+        }
+        forge nm = ""
+        forge ei = 0
+        while (ei < ofs_array_len(_ext_vref)) {
+            forge used: bool = ofs_array_get(_ext_vref, ei)
+            if (used) {
+                if (ffi_resolve(ei) == v) {
+                    nm = ofs_array_get(_ext_names, ei)
+                    break
+                }
+            }
+            ei++
+        }
+        r_fn(t, -1, v, nm)
+    }
+
+    // chamada de um valor de vein (registradores = a vein; argumentos ja na
+    // pilha): interpretada direto, nativa pela assinatura do tipo
+    vein call_vein_value(num_args: stone, arg_base: stone) -> void {
+        if (_rk == VAL_NULL || (_rk == VAL_FN && _rr < 0 && _ri == 0)) {
+            ffi_stderr("ofs: chamada de vein nula (o valor de vein e null)\n")
+            exit(1)
+            return
+        }
+        if (_rk != VAL_FN) {
+            fault_runtime_error("chamada de valor que nao e vein")
+            return
+        }
+        if (_rr >= 0) {
+            call_function_by_id(_rr, num_args, arg_base)
+            return
+        }
+        forge what = "vein"
+        if (ofs_str_len(_rs) > 0) { what = "vein '" + _rs + "'" }
+        call_native_sig(_ri, _rt, num_args, arg_base, what)
     }
 
     // tipo apontado por um ponteiro de tipo pt ("*T" -> T; outro -> stone,
@@ -2068,6 +2168,14 @@ namespace interpreter {
 
     // resultado -> registradores
     vein call_builtin(code: stone, num_args: stone, arg_base: stone) -> void {
+        if (code == BI_VEIN_NAME) {
+            // F6: nome do valor de vein ("null" se nulo), como o nativo
+            if (num_args < 1) { r_string("null"); return }
+            load_arg(arg_base)
+            if (_rk == VAL_NULL) { r_string("null"); return }
+            r_string(r_to_string())
+            return
+        }
         if (code == BI_ECHO) {
             if (num_args == 1) {
                 // um argumento: sem concatenacao (o texto ja e o resultado)
@@ -2493,6 +2601,7 @@ namespace interpreter {
     vein ffi_type_class(t: obsidian) -> stone {
         if (ofs_str_len(t) == 0) { return TC_VOID }
         if (ofs_str_char_at(t, 0) == 42) { return TC_PTR }
+        if (vein_type_is(t)) { return TC_PTR }
         if (ofs_str_eq(t, "stone") || ofs_str_eq(t, "i64") || ofs_str_eq(t, "u64") || ofs_str_eq(t, "variant")) { return TC_INT }
         if (ofs_str_eq(t, "obsidian")) { return TC_STR }
         if (ofs_str_eq(t, "crystal") || ofs_str_eq(t, "f64")) { return TC_F64 }
@@ -2535,6 +2644,7 @@ namespace interpreter {
         ofs_array_push(_ext_pcls, pcls)
         ofs_array_push(_ext_rcls, ffi_type_class(rt))
         ofs_array_push(_ext_rtype, rt)
+        ofs_array_push(_ext_vref, false)
     }
 
     // Vein definida em stdlib/runtime/*.ofs cujo simbolo o ofscc exporta (o
@@ -2689,6 +2799,11 @@ namespace interpreter {
         else if (k == VAL_NULL || k == VAL_VOID) { v = 0 }
         else if (k == VAL_VARIANT) { v = variant_index(arg_t(pos)) }
         else if (k == VAL_OBJECT) { v = arg_ref(pos) }
+        else if (k == VAL_FN) {
+            // vein interpretada vai ao C como trampolim de callback
+            load_arg(pos)
+            v = fn_native_addr()
+        }
         else if (k == VAL_ARRAY) {
             // o ofs_array nativo do array; o comprimento volta na sincronia
             forge h = arg_ref(pos)
@@ -2780,7 +2895,30 @@ namespace interpreter {
         if (vfixed > np) { vfixed = -1 }
         if (vfixed < 0) { vfixed = 0 }
         forge rcls: stone = ofs_array_get(_ext_rcls, ei)
-        forge what = "extern '" + sym + "'"
+        forge rtype: obsidian = ofs_array_get(_ext_rtype, ei)
+        ffi_call_addr(addr, pcls, vfixed, rcls, rtype, "extern '" + sym + "'", num_args, arg_base)
+    }
+
+    // F6: chamada de um endereco nativo com a assinatura de um tipo vein(...)
+    // (valor de vein de extern ou vindo do C): a assinatura e conhecida pelo
+    // tipo, sem adivinhar pelos valores
+    vein call_native_sig(addr: stone, ft: obsidian, num_args: stone, arg_base: stone, what: obsidian) -> void {
+        ffi_init()
+        forge plist = vein_type_params(ft)
+        forge np = type_list_len(plist)
+        forge pcls: Array<stone> = []
+        forge j = 0
+        while (j < np) {
+            ofs_array_push(pcls, ffi_type_class(type_list_at(plist, j)))
+            j++
+        }
+        forge rt = vein_type_ret(ft)
+        ffi_call_addr(addr, pcls, 0, ffi_type_class(rt), rt, what, num_args, arg_base)
+    }
+
+    // chamada C de addr: argumentos pelas classes pcls, retorno rcls/rtype
+    vein ffi_call_addr(addr: stone, pcls: Array<stone>, vfixed: stone, rcls: stone, rtype: obsidian, what: obsidian, num_args: stone, arg_base: stone) -> void {
+        forge np = ofs_array_len(pcls)
         forge sync_base = ofs_array_len(_ffi_sync_h)
         if (num_args > FFI_MAX_ARGS) {
             fault_runtime_error(what + ": mais de 12 argumentos no FFI do interpretador")
@@ -2820,7 +2958,6 @@ namespace interpreter {
         forge retf = 0
         if (rcls == TC_F64) { retf = 1 }
         forge r = ffi_invoke(addr, num_args, fmask, retf, vfixed, what)
-        forge rtype: obsidian = ofs_array_get(_ext_rtype, ei)
         if (rcls == TC_AGG) {
             ffi_set_agg_result(r, rtype, sync_base)
         } else {
@@ -2875,6 +3012,7 @@ namespace interpreter {
         }
         if (rcls == TC_PTR) {
             if (r == 0) { r_null(); return }
+            if (vein_type_is(rtype)) { fn_from_raw(r, rtype); return }
             r_int(r)
             _rt = rtype
             return
@@ -3020,7 +3158,9 @@ namespace interpreter {
             ofs_array_push(_cb_pcls, pcls)
             ofs_array_push(_cb_ptypes, ptypes)
             ofs_array_push(_cb_rcls, rc)
-            return fault_call(_cb_table, n)
+            forge cba = fault_call(_cb_table, n)
+            ofs_array_push(_cb_addr, cba)
+            return cba
         }
     }
 
@@ -3123,6 +3263,10 @@ namespace interpreter {
 
     // compara o valor a* com os registradores
     vein val_equals_regs(ak: stone, at: obsidian, ai: stone, af: crystal, ab: bool, astr: obsidian, ar: stone) -> bool {
+        if (ak == VAL_FN && _rk == VAL_FN) {
+            if (ar >= 0 || _rr >= 0) { return ar == _rr }
+            return ai == _ri
+        }
         if (ak == VAL_VARIANT && _rk == VAL_VARIANT) {
             return ofs_str_eq(at, _rt)
         }
@@ -3294,6 +3438,22 @@ namespace interpreter {
         vidx = find_var(node_sym(id))
         if (vidx >= 0) {
             env_load(vidx)
+            return
+        }
+        // F6: nome de vein (_naux = id+1) ou de extern (_naux = -(ei+1))
+        forge fa = naux(id)
+        if (fa > 0) {
+            r_fn(ntype(id), fa - 1, 0, nval(id))
+            return
+        }
+        if (fa < 0) {
+            forge fei = 0 - fa - 1
+            forge faddr = ffi_resolve(fei)
+            if (faddr == 0) {
+                ffi_stderr(ffi_undefined_msg(ext_sym(fei)))
+                exit(1)
+            }
+            r_fn(ntype(id), -1, faddr, nval(id))
             return
         }
         r_null()
@@ -3484,6 +3644,14 @@ namespace interpreter {
         forge sstat = nop(id) - 1
         eval_expr(nc0(id))
         forge k = _rk
+        if (dc == MC_FN) {
+            // F6 (abyss): endereco cru ou outra vein -> vein do tipo dt
+            if (k == VAL_NULL) { return }
+            if (k == VAL_FN) { _rt = dt; return }
+            forge fv = reg_as_int()
+            fn_from_raw(fv, dt)
+            return
+        }
         if (dc == MC_STR) {
             if (k == VAL_STRING || k == VAL_NULL) { return }
             if (k == VAL_INT || k == VAL_OBJECT || k == VAL_ARRAY) {
@@ -3665,6 +3833,26 @@ namespace interpreter {
             ffi_fault_addr(id)
             return
         }
+        if (ck == CALL_VEIN) {
+            // F6: a vein (c0) e avaliada antes dos argumentos, como no nativo
+            eval_expr(nc0(id))
+            forge vk = _rk
+            forge vt: obsidian = _rt
+            forge vi = _ri
+            forge vs: obsidian = _rs
+            forge vr = _rr
+            while (ai < num_args) {
+                arg_id = ofs_array_get(args, ai)
+                eval_expr(arg_id)
+                arg_push_regs()
+                ai++
+            }
+            r_set(vk, vt, vi, 0.0, false, vs, vr)
+            _cur_call_id = id
+            call_vein_value(num_args, arg_base)
+            args_pop_to(arg_base)
+            return
+        }
         while (ai < num_args) {
             arg_id = ofs_array_get(args, ai)
             eval_expr(arg_id)
@@ -3714,6 +3902,10 @@ namespace interpreter {
     forge _cls_aux: stone = 0
 
     vein classify_call(name: obsidian) -> stone {
+        if (ofs_str_eq(name, "__vein_call")) {
+            _cls_aux = 0
+            return CALL_VEIN
+        }
         forge bi = builtin_code(name)
         if (bi != BI_NONE) {
             _cls_aux = bi
@@ -3786,6 +3978,31 @@ namespace interpreter {
                 forge ck = classify_call(name)
                 ofs_array_set(_nop, i, ck)
                 ofs_array_set(_naux, i, _cls_aux)
+            } else if (k == NK_IDENT) {
+                // F6: nome de vein/extern usado como valor (o typeck deu o
+                // tipo vein(...)); uma variavel com o mesmo nome vence em
+                // eval_ident
+                forge ityp: obsidian = ofs_array_get(_ntype, i)
+                if (vein_type_is(ityp)) {
+                    forge iname: obsidian = ofs_array_get(_nval, i)
+                    forge rfid = find_function(iname)
+                    if (rfid >= 0) {
+                        ofs_array_set(_naux, i, rfid + 1)
+                    } else {
+                        forge rei = find_extern(iname)
+                        if (rei >= 0) {
+                            forge resym = ext_sym(rei)
+                            forge rbfid = -1
+                            if (!ofs_str_eq(resym, iname)) { rbfid = find_function(resym) }
+                            if (rbfid >= 0) {
+                                ofs_array_set(_naux, i, rbfid + 1)
+                            } else {
+                                ofs_array_set(_naux, i, 0 - rei - 1)
+                                ofs_array_set(_ext_vref, rei, true)
+                            }
+                        }
+                    }
+                }
             }
             i++
         }
@@ -4390,6 +4607,8 @@ namespace interpreter {
         _cb_pcls = []
         _cb_ptypes = []
         _cb_rcls = []
+        _cb_addr = []
+        _ext_vref = []
         _cur_call_id = -1
 
         _func_names = []

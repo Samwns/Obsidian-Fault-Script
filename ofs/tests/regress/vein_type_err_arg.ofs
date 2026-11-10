@@ -1,0 +1,8 @@
+// F6: argumento de tipo errado numa chamada de valor de vein e erro
+vein dobro(x: stone) -> stone { return x * 2 }
+
+core main() {
+    forge f: vein(stone) -> stone = dobro
+    echo(f("dez"))
+    echo("nao chega aqui")
+}

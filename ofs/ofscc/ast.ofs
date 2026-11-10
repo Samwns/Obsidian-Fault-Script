@@ -160,6 +160,140 @@ vein node_line_of(id: stone) -> stone {
     return n.line
 }
 
+// ── Tipo de funcao (F6): `vein(T1, T2) -> R` ───────────────────────────
+// No texto canonico do tipo (o `val` do NK_TYPE_FN e o `type_str` de toda
+// expressao desse tipo) nao ha espacos: "vein(stone,crystal)->stone". Os
+// parametros podem ser outros tipos de funcao, entao a lista e separada
+// por virgulas fora de parenteses. Sem `-> R` o retorno e "void".
+
+vein vein_type_is(t: obsidian) -> bool {
+    if (t == null) { return false }
+    if (ofs_str_len(t) < 9) { return false }
+    return ofs_str_eq(ofs_str_substr(t, 0, 5), "vein(")
+}
+
+// posicao do ')' que fecha o '(' de "vein(" (-1 se malformado)
+vein vein_type_close(t: obsidian) -> stone {
+    forge depth = 0
+    forge i = 4
+    forge len = ofs_str_len(t)
+    while (i < len) {
+        forge c = ofs_str_char_at(t, i)
+        if (c == 40) { depth++ }
+        if (c == 41) {
+            depth--
+            if (depth == 0) { return i }
+        }
+        i++
+    }
+    return -1
+}
+
+// "T1,T2" de "vein(T1,T2)->R"
+vein vein_type_params(t: obsidian) -> obsidian {
+    if (!vein_type_is(t)) { return "" }
+    forge close = vein_type_close(t)
+    if (close < 0) { return "" }
+    return ofs_str_substr(t, 5, close - 5)
+}
+
+// "R" de "vein(T1,T2)->R"
+vein vein_type_ret(t: obsidian) -> obsidian {
+    if (!vein_type_is(t)) { return "unknown" }
+    forge close = vein_type_close(t)
+    if (close < 0) { return "unknown" }
+    forge rest = ofs_str_len(t) - close - 3
+    if (rest <= 0) { return "void" }
+    return ofs_str_substr(t, close + 3, rest)
+}
+
+vein vein_type_make(params: obsidian, ret: obsidian) -> obsidian {
+    forge r = ret
+    if (r == null || ofs_str_eq(r, "") || ofs_str_eq(r, "unknown")) { r = "void" }
+    return "vein(" + params + ")->" + r
+}
+
+// quantos tipos tem uma lista "a,b,c" (virgulas fora de parenteses)
+vein type_list_len(list: obsidian) -> stone {
+    forge len = ofs_str_len(list)
+    if (len == 0) { return 0 }
+    forge n = 1
+    forge depth = 0
+    forge i = 0
+    while (i < len) {
+        forge c = ofs_str_char_at(list, i)
+        if (c == 40) { depth++ }
+        if (c == 41) { depth-- }
+        if (c == 44 && depth == 0) { n++ }
+        i++
+    }
+    return n
+}
+
+// i-esimo tipo de uma lista "a,b,c" ("" se nao existir)
+vein type_list_at(list: obsidian, idx: stone) -> obsidian {
+    forge len = ofs_str_len(list)
+    if (len == 0) { return "" }
+    forge start = 0
+    forge k = 0
+    forge depth = 0
+    forge i = 0
+    while (i <= len) {
+        forge c = 44
+        if (i < len) { c = ofs_str_char_at(list, i) }
+        if (c == 40) { depth++ }
+        if (c == 41) { depth-- }
+        if (c == 44 && depth == 0) {
+            if (k == idx) { return ofs_str_substr(list, start, i - start) }
+            k++
+            start = i + 1
+        }
+        i++
+    }
+    return ""
+}
+
+// nome de vein para mostrar (echo de valor de vein): o simbolo mangled de
+// namespace/impl `ns__f` sai como o usuario escreve, `ns.f`
+vein vein_display_name(name: obsidian) -> obsidian {
+    forge len = ofs_str_len(name)
+    forge k = 1
+    while (k + 2 < len) {
+        if (ofs_str_char_at(name, k) == 95 && ofs_str_char_at(name, k + 1) == 95 && ofs_str_char_at(name, k - 1) != 95) {
+            return ofs_str_substr(name, 0, k) + "." + ofs_str_substr(name, k + 2, len - k - 2)
+        }
+        k++
+    }
+    return name
+}
+
+// Funcoes C variadicas conhecidas: quantos parametros fixos tem (-1 = nao
+// e variadica). Usada pelo llvmgen (declaracao com `...`), pelo
+// interpretador (FFI) e pelo typeck (variadica nao vira valor de vein).
+vein variadic_c_fixed(name: obsidian) -> stone {
+    if (ofs_str_eq(name, "printf") || ofs_str_eq(name, "scanf")) { return 1 }
+    if (ofs_str_eq(name, "fprintf") || ofs_str_eq(name, "sprintf") || ofs_str_eq(name, "dprintf")) { return 2 }
+    if (ofs_str_eq(name, "sscanf") || ofs_str_eq(name, "fscanf") || ofs_str_eq(name, "open")) { return 2 }
+    if (ofs_str_eq(name, "fcntl") || ofs_str_eq(name, "ioctl") || ofs_str_eq(name, "syslog")) { return 2 }
+    if (ofs_str_eq(name, "snprintf") || ofs_str_eq(name, "openat")) { return 3 }
+    return -1
+}
+
+// nome canonico de um no de tipo (o mesmo de typeck/llvmgen.type_node_name)
+vein type_node_text(id: stone) -> obsidian {
+    if (id < 0) { return "void" }
+    forge t: Node = node_get(id)
+    if (t.kind == NK_TYPE_ARRAY) {
+        forge inner = "stone"
+        if (t.c0 >= 0) {
+            forge tn: Node = node_get(t.c0)
+            inner = tn.val
+        }
+        return "Array<" + inner + ">"
+    }
+    return t.val
+}
+
 // ── Linhas do runtime no fonte expandido ───────────────────────────────
 // O driver junta os `attach` num fonte so; ele marca aqui as faixas de
 // linhas que vieram de stdlib/runtime/*.ofs. O interpretador (`ofs run`)
@@ -256,6 +390,7 @@ vein node_kind_name(kind: stone) -> obsidian {
     if (kind == NK_LIT_STRING) { return "LIT_STRING" }
     if (kind == NK_LIT_BOOL)   { return "LIT_BOOL" }
     if (kind == NK_TYPE)       { return "TYPE" }
+    if (kind == NK_TYPE_FN)    { return "TYPE_FN" }
     if (kind == NK_BLOCK)      { return "BLOCK" }
     if (kind == NK_NAMESPACE)  { return "NAMESPACE" }
     if (kind == NK_STRATA)     { return "STRATA" }

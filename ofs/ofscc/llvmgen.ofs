@@ -63,6 +63,13 @@ namespace llvmgen {
     // `extern vein` que o proprio modulo define (ex.: magma define ofs_alloc
     // e net.ofs o declara como extern -> "invalid redefinition" no LLVM).
     forge _decl_root: stone = -1
+    // F6: veins usadas como valor (simbolo LLVM e nome OFS), para a tabela de
+    // nomes de __ofs_vein_name; e se o modulo precisa dela / do erro de
+    // chamada de vein nula
+    forge _vref_syms: Array<obsidian> = []
+    forge _vref_names: Array<obsidian> = []
+    forge _vein_name_used: bool = false
+    forge _vein_null_used: bool = false
 
     // Normaliza o alvo pedido: apelidos curtos ou um triple completo.
     vein set_target(target: obsidian) -> void {
@@ -385,6 +392,8 @@ namespace llvmgen {
             return "0"
         }
         if (n.kind == NK_LIT_STRING) { return string_name_for(n.val) }
+        // F6: global iniciado com o nome de uma vein (constante do link)
+        if (is_vein_ref(id)) { return "@" + vein_ref_symbol(n.val) }
         // Literal numerico negativo (`forge x: stone = -1`): antes caia no
         // "return 0" final e o global nascia com 0 em vez do valor.
         if (n.kind == NK_UNARY_OP && ofs_str_eq(n.val, "-") && n.c0 >= 0) {
@@ -1133,12 +1142,7 @@ namespace llvmgen {
     forge _va_sigs: Array<obsidian> = []
 
     vein variadic_fixed_count(name: obsidian) -> stone {
-        if (ofs_str_eq(name, "printf") || ofs_str_eq(name, "scanf")) { return 1 }
-        if (ofs_str_eq(name, "fprintf") || ofs_str_eq(name, "sprintf") || ofs_str_eq(name, "dprintf")) { return 2 }
-        if (ofs_str_eq(name, "sscanf") || ofs_str_eq(name, "fscanf") || ofs_str_eq(name, "open")) { return 2 }
-        if (ofs_str_eq(name, "fcntl") || ofs_str_eq(name, "ioctl") || ofs_str_eq(name, "syslog")) { return 2 }
-        if (ofs_str_eq(name, "snprintf") || ofs_str_eq(name, "openat")) { return 3 }
-        return -1
+        return variadic_c_fixed(name)
     }
 
     vein variadic_sig(name: obsidian) -> obsidian {
@@ -1748,6 +1752,141 @@ namespace llvmgen {
         }
     }
 
+    // ── Valores de vein (F6) ──────────────────────────────────────────
+    // NK_IDENT que o typeck tipou como vein(...) e que nao e variavel: o
+    // nome de uma vein/extern usado como valor.
+    vein is_vein_ref(id: stone) -> bool {
+        if (node_kind_of(id) != NK_IDENT) { return false }
+        if (!vein_type_is(node_type_of(id))) { return false }
+        forge nm = node_val_of(id)
+        return var_index(nm) < 0 && global_index(nm) < 0
+    }
+
+    // simbolo LLVM de uma vein/extern pelo nome OFS (`bind "x"` do extern)
+    // e registro na tabela de nomes
+    vein vein_ref_symbol(name: obsidian) -> obsidian {
+        forge sym = name
+        forge i = 0
+        while (i < ofs_array_len(_bind_names)) {
+            forge bn: obsidian = ofs_array_get(_bind_names, i)
+            if (ofs_str_eq(bn, name)) {
+                sym = ofs_array_get(_bind_targets, i)
+                break
+            }
+            i++
+        }
+        if (!esc_list_has(_vref_syms, sym)) {
+            ofs_array_push(_vref_syms, sym)
+            ofs_array_push(_vref_names, name)
+        }
+        return sym
+    }
+
+    // chamada indireta `f(args)` (NK_CALL "__vein_call", c0 = valor de vein):
+    // assinatura LLVM exata do tipo; os argumentos ja vem convertidos pelo
+    // typeck e so ajustam a representacao (bool i1 -> i32, largura)
+    vein emit_vein_call(id: stone) -> void {
+        forge n: Node = node_get(id)
+        emit_expr(n.c0)
+        forge fp = _expr_val
+        forge ft = _expr_type
+        if (!vein_type_is(ft)) { ft = node_type_of(n.c0) }
+        forge plist = vein_type_params(ft)
+        forge rt = vein_type_ret(ft)
+        // valor nulo: mensagem e rc 1, como o interpretador
+        _vein_null_used = true
+        // (prefixos distintos: temporario e rotulo dividem o espaco de nomes)
+        forge isnull = next_tmp("vnull_c")
+        forge l_bad = next_label("vcall_null")
+        forge l_ok = next_label("vcall_ok")
+        cg_emit("  " + isnull + " = icmp eq ptr " + fp + ", null")
+        cg_emit("  br i1 " + isnull + ", label %" + l_bad + ", label %" + l_ok)
+        cg_emit(l_bad + ":")
+        cg_emit("  call void @__ofs_vein_null()")
+        cg_emit("  unreachable")
+        cg_emit(l_ok + ":")
+        forge args = ""
+        forge i = 0
+        forge argc = node_extra_len(id)
+        while (i < argc) {
+            if (i > 0) { args = args + ", " }
+            forge pt = type_list_at(plist, i)
+            if (ofs_str_eq(pt, "")) { pt = "stone" }
+            forge aid = node_get_extra(id, i)
+            if (is_array_get(aid)) {
+                emit_array_get(aid, pt)
+            } else {
+                emit_expr(aid)
+            }
+            forge av = coerce_for_store(_expr_val, _expr_type, pt)
+            args = args + llvm_type(pt) + " " + av
+            i++
+        }
+        forge rl = llvm_type(rt)
+        if (ofs_str_eq(rl, "void")) {
+            cg_emit("  call void " + fp + "(" + args + ")")
+            _expr_val = "0"
+            _expr_type = "void"
+            return
+        }
+        forge r = next_tmp("vcall")
+        cg_emit("  " + r + " = call " + rl + " " + fp + "(" + args + ")")
+        _expr_val = r
+        _expr_type = rt
+    }
+
+    // __ofs_vein_name (nome da vein de um valor, "null", ou "<vein>" para
+    // endereco que o programa nao nomeia) e __ofs_vein_null (erro de chamada
+    // de vein nula), emitidos so quando o modulo usa
+    vein emit_vein_helpers() -> void {
+        if (_vein_name_used) {
+            forge k = 0
+            while (k < ofs_array_len(_vref_names)) {
+                forge nm = vein_display_name(ofs_array_get(_vref_names, k))
+                cg_emit("@.ofs_vein_nm" + ofs_stone_to_obsidian(k) + " = private unnamed_addr constant [" +
+                    ofs_stone_to_obsidian(ofs_str_len(nm) + 1) + " x i8] c\"" + llvm_escape_string(nm) + "\", align 1")
+                k++
+            }
+            cg_emit("@.ofs_vein_null_txt = private unnamed_addr constant [5 x i8] c\"null\\00\", align 1")
+            cg_emit("@.ofs_vein_anon = private unnamed_addr constant [7 x i8] c\"<vein>\\00\", align 1")
+            cg_emit("define internal ptr @__ofs_vein_name(ptr %p) {")
+            cg_emit("entry:")
+            cg_emit("  %isnull = icmp eq ptr %p, null")
+            cg_emit("  br i1 %isnull, label %vn_null, label %vn_0")
+            cg_emit("vn_null:")
+            cg_emit("  ret ptr @.ofs_vein_null_txt")
+            k = 0
+            while (k < ofs_array_len(_vref_syms)) {
+                forge ks = ofs_stone_to_obsidian(k)
+                forge sy: obsidian = ofs_array_get(_vref_syms, k)
+                cg_emit("vn_" + ks + ":")
+                cg_emit("  %eq" + ks + " = icmp eq ptr %p, @" + sy)
+                cg_emit("  br i1 %eq" + ks + ", label %vh_" + ks + ", label %vn_" + ofs_stone_to_obsidian(k + 1))
+                cg_emit("vh_" + ks + ":")
+                cg_emit("  ret ptr @.ofs_vein_nm" + ks)
+                k++
+            }
+            cg_emit("vn_" + ofs_stone_to_obsidian(ofs_array_len(_vref_syms)) + ":")
+            cg_emit("  ret ptr @.ofs_vein_anon")
+            cg_emit("}")
+            cg_emit("")
+        }
+        if (_vein_null_used) {
+            forge msg = "chamada de vein nula (o valor de vein e null)"
+            cg_emit("@.ofs_vein_null_msg = private unnamed_addr constant [" + ofs_stone_to_obsidian(ofs_str_len(msg) + 1) +
+                " x i8] c\"" + llvm_escape_string(msg) + "\", align 1")
+            if (!is_known_extern("ofs_array_fail") && !(_decl_root >= 0 && is_defined_fn(_decl_root, "ofs_array_fail"))) {
+                cg_emit("declare void @ofs_array_fail(ptr, i64)")
+            }
+            cg_emit("define internal void @__ofs_vein_null() {")
+            cg_emit("entry:")
+            cg_emit("  call void @ofs_array_fail(ptr @.ofs_vein_null_msg, i64 " + ofs_stone_to_obsidian(ofs_str_len(msg)) + ")")
+            cg_emit("  unreachable")
+            cg_emit("}")
+            cg_emit("")
+        }
+    }
+
     vein emit_expr(id: stone) -> void {
         lower_ns_global(id)
         forge n: Node = node_get(id)
@@ -1803,6 +1942,12 @@ namespace llvmgen {
         }
 
         if (n.kind == NK_IDENT) {
+            if (is_vein_ref(id)) {
+                // F6: nome de vein como valor = o ponteiro da funcao
+                _expr_val = "@" + vein_ref_symbol(n.val)
+                _expr_type = n.type_str
+                return
+            }
             forge t = var_type(n.val)
             forge p = var_ptr(n.val)
             if (is_named_type(t)) {
@@ -2095,6 +2240,11 @@ namespace llvmgen {
                     } else {
                         cg_emit("  " + cmp_tmp + " = icmp eq ptr " + ptr_val + ", null")
                     }
+                    _expr_val = cmp_tmp
+                    _expr_type = "bool1"
+                } else if (vein_type_is(left_type) || vein_type_is(right_type)) {
+                    // F6: valores de vein = ponteiros de funcao
+                    cg_emit("  " + cmp_tmp + " = icmp " + pred + " ptr " + left + ", " + right)
                     _expr_val = cmp_tmp
                     _expr_type = "bool1"
                 } else if (ofs_str_eq(left_type, "obsidian") || ofs_str_eq(right_type, "obsidian")) {
@@ -2421,6 +2571,19 @@ namespace llvmgen {
         }
 
         if (n.kind == NK_CALL) {
+            if (ofs_str_eq(n.val, "__vein_call") && n.c0 >= 0) {
+                emit_vein_call(id)
+                return
+            }
+            if (ofs_str_eq(n.val, "__ofs_vein_name")) {
+                emit_expr(node_get_extra(id, 0))
+                _vein_name_used = true
+                forge vn_tmp = next_tmp("vein_name")
+                cg_emit("  " + vn_tmp + " = call ptr @__ofs_vein_name(ptr " + _expr_val + ")")
+                _expr_val = vn_tmp
+                _expr_type = "obsidian"
+                return
+            }
             // variant constructor with payload: Tag(payload) -> i64 tag (payload ignored for now)
             forge ctor_tag = variant_tag(n.val)
             if (ctor_tag >= 0) {
@@ -3004,6 +3167,9 @@ namespace llvmgen {
                 cg_emit("  store ptr null, ptr " + p)
             } else if (ofs_str_eq(t, "crystal")) {
                 cg_emit("  store double 0.0, ptr " + p)
+            } else if (ofs_str_eq(llvm_type(t), "ptr")) {
+                // vein(...), *T, Array<T>: nasce null (antes `store ptr 0`, IR invalido)
+                cg_emit("  store ptr null, ptr " + p)
             } else {
                 cg_emit("  store " + llvm_type(t) + " 0, ptr " + p)
             }
@@ -3602,6 +3768,8 @@ namespace llvmgen {
         }
         if (k == NK_CALL) {
             forge cnm = node_val_of(id)
+            // F6: a expressao da vein chamada so e lida
+            if (ofs_str_eq(cnm, "__vein_call")) { esc_walk(node_child(id, 0), 2) }
             forge mask = esc_call_mask(id, cnm)
             forge ci = 0
             forge ccnt = node_extra_len(id)
@@ -4218,6 +4386,10 @@ namespace llvmgen {
         _va_sigs = []
         _bind_names = []
         _bind_targets = []
+        _vref_syms = []
+        _vref_names = []
+        _vein_name_used = false
+        _vein_null_used = false
         collect_types(root_id)
         collect_all_strings()
         collect_globals(root_id)
@@ -4246,5 +4418,6 @@ namespace llvmgen {
             }
             i++
         }
+        emit_vein_helpers()
     }
 }

@@ -293,6 +293,7 @@ vein fm_roles() -> void {
     forge n = ofs_array_len(t_kind)
     forge prev = -1
     forge gdepth = 0
+    forge pdepth = 0
     forge i = 0
     while (i < n) {
         forge k = fm_g(t_kind, i)
@@ -300,6 +301,11 @@ vein fm_roles() -> void {
         if (k == 4) {
             forge po = false
             if (prev >= 0) { po = fm_operand_end(prev) }
+            // sem `;`, a quebra de linha termina o comando: `-`, `+`, `*`, `&` no
+            // comeco da linha (fora de parenteses/colchetes) sao unarios
+            if (po && pdepth == 0 && fm_g(t_nl, i) > 0) { po = false }
+            if (fm_is(i, "(") || fm_is(i, "[")) { pdepth = pdepth + 1 }
+            if ((fm_is(i, ")") || fm_is(i, "]")) && pdepth > 0) { pdepth = pdepth - 1 }
             if (fm_is(i, "!") || fm_is(i, "~")) {
                 ofs_array_set(t_role, i, 1)
             } else if (fm_is(i, "++") || fm_is(i, "--")) {
