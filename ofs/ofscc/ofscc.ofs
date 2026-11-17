@@ -551,6 +551,20 @@ vein _env(name: obsidian) -> obsidian {
     return v
 }
 
+// Caminho absoluto: `/x`, `\x` ou com letra de unidade do Windows (`D:/x`, `D:\x`).
+vein _is_abs_path(p: obsidian) -> bool {
+    forge n = ofs_str_len(p)
+    if (n == 0) { return false }
+    forge c0 = ofs_str_char_at(p, 0)
+    if (c0 == 47 || c0 == 92) { return true }
+    if (n >= 3 && ofs_str_char_at(p, 1) == 58) {
+        forge c2 = ofs_str_char_at(p, 2)
+        forge letter = (c0 >= 65 && c0 <= 90) || (c0 >= 97 && c0 <= 122)
+        if (letter && (c2 == 47 || c2 == 92)) { return true }
+    }
+    return false
+}
+
 vein _dir_join(dir: obsidian, rel: obsidian) -> obsidian {
     forge n = ofs_str_len(dir)
     if (n == 0) { return rel }
@@ -603,14 +617,14 @@ vein attach_candidates(base: obsidian, rel: obsidian, short_form: bool) -> Array
         if (!ofs_str_eq(std, "")) { ofs_array_push(c, _dir_join(std, rel)) }
         ofs_array_push(c, base + rel)
     } else {
-        if (ofs_str_len(rel) > 0 && ofs_str_char_at(rel, 0) == 47) {
+        if (_is_abs_path(rel)) {
             ofs_array_push(c, rel)
         } else {
             ofs_array_push(c, base + rel)
         }
         if (!ofs_str_eq(std, "")) { ofs_array_push(c, _dir_join(std, rel)) }
     }
-    if (ofs_str_len(rel) == 0 || ofs_str_char_at(rel, 0) != 47) {
+    if (!_is_abs_path(rel)) {
         forge dirs = attach_lib_dirs()
         forge i = 0
         while (i < ofs_array_len(dirs)) {
