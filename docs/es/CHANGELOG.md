@@ -6,6 +6,43 @@ Todos los cambios notables de este proyecto se registran aquí.
 
 ## [Unreleased]
 
+### Añadido — Idea 2: `ofs fossil` (grabar y volver en el tiempo) (2026-11-16)
+
+- `ofs fossil app.ofs` ejecuta interpretado y graba en un `.fossil` (formato versionado) las llamadas externas: entrada estándar, reloj, aleatorio, entorno, archivos, red y Rift, con el retorno y los bytes que C escribió en el buffer. `ofs fossil replay app.fossil` reproduce con salida idéntica sin tocar el mundo (archivo/red se vuelven no-op comprobado), avisa si el fuente cambió y diverge con código 3. `--to <paso|L<linea>|archivo:linea|vein>` muestra locales y globales; `--back N` y el modo `--dig` (`segue`, `cava`, `ir`, `ver`, `estrato`, `onde`) vuelven en el tiempo con capas de `fork`. VS Code: `OFS: Fossil` (ir a un punto, siguiente, anterior). Cristalización/OSR apagadas durante el fossil; el intérprete sin fossil no se volvió más lento. Prueba `ofs/tests/fossil/run.sh`.
+
+### Añadido — A5.3 arena `bedrock { }` y `geode` (closures) (2026-11-15)
+
+- Un `bedrock { }` que asigna memoria es una arena: lo que el propio bloque asigna (texto, `[...]`, `monolith`, `ofs_alloc`) se libera de una vez en cualquier salida del bloque. El texto que escapa se copia afuera; un `Array`/`monolith`/puntero/geode que escapa es `[ERRO DE ARENA]` (dentro de `abyss` vale). Arena léxica (las veins llamadas desde dentro usan el heap), igual en los dos modos, en la cristalización y en la Refract. Un bucle de 200 mil vueltas: 258 MB → 1,9 MB, mismo tiempo.
+- `[AVISO DE VAZAMENTO]` para `ofs_alloc` (y `malloc`/`calloc`/`realloc`) sin `seal`/`ofs_free`, return o dueño; `OFS_LEAK_WARN=0` lo silencia.
+- `geode (x: T) -> R { ... }`: vein sin nombre que captura por valor, con el tipo `vein(T)->R` de la F6; sin captura va al C como callback, con captura es un error claro en el C. El análisis de escape de la A6 trata los geodes (ya no se apaga). Extensión de VS Code (resaltado, tooltip, snippets) y `ofs fmt`.
+
+### Añadido — A5.1 contratos y tipos con regla (2026-11-15)
+
+- `mineral UserId = stone grain value > 0` (tipo con regla; `value` = el valor; forma corta `grain contains("@")`), `bearing` (precondición) y `settle` (poscondición; `result` = el retorno) en las veins. Una violación probada con literales/constantes es `[ERRO DE CONTRATO archivo:línea:col]`; en ejecución, `ofs: [CONTRATO VIOLADO ...]` con la regla y los valores en stderr y código 1, igual en los dos modos. `ofs build --release`/`OFS_CONTRACTS=0` quita las comprobaciones de ejecución. `ofs assay` prueba las veins en los límites de las reglas. `ofs doc` muestra contratos y minerales; en Fault Refract, un contrato cambiado es edición de la vein y una `grain` cambiada es cambio de tipo. Los programas sin contrato generan el mismo IR.
+- Un error de sintaxis dentro de un `attach` indica ese archivo y su línea (`[ERRO SINTATICO archivo:línea:col]`). `OFS_LIB_PATH` usa `;` en Windows (como el `PATH`).
+
+### Añadido — Fault Refract L0/L1: `ofs refract` (2026-11-15)
+
+- `ofs refract app.ofs` ejecuta el programa y aplica cada edición guardada sin reiniciar y sin perder el estado: observa el archivo y sus attach locales, recompila y verifica el programa en el mismo proceso y reemplaza solo las veins que cambiaron (celda de despacho por vein); la vein en ejecución termina en la versión antigua. Las veins cristalizadas (nativas) se recompilan en un `.so` nuevo en segundo plano. Un error de compilación mantiene la versión en ejecución; el cambio de firma de una vein en uso, el cambio de layout de un `monolith` con instancias, la eliminación de una vein en uso, el cambio de tipo de un global, una `extern` modificada y las variantes reordenadas se rechazan con un mensaje. Los globales nuevos empiezan con su valor inicial; los existentes conservan el suyo. `--quiet`, `OFS_REFRACT_PERIOD`. Ejemplo `ofs/examples/refract_demo.ofs`, prueba `ofs/tests/refract/run.sh`. Sin OSR (ola 4).
+
+### Añadido — F5/F6/F7: quartz, ejecución híbrida y tipos de vein (2026-11-12)
+
+- `quartz` sustituye el nombre planeado del ensamblador en línea: instrucciones AT&T o Intel, entradas y una salida escalar con restricciones LLVM, entradas de memoria y clobbers `melt`. Requiere `abyss` y emite LLVM `asm sideeffect`. El comando CLI `ofs asm` sigue generando un archivo `.s`.
+- `ofs run` carga las veins que contienen `quartz` como biblioteca nativa en el mismo proceso, con cierre de dependencias, caché por hash, llamadas tipadas y sincronización de globales y callbacks. Sin caché se necesita `clang`. Siguen documentados los límites de Rift para aridad, `f32` y callbacks de punto flotante.
+- Tipos `vein(T1, T2) -> R` (F6): valores de función, llamadas indirectas tipadas, parámetros, retornos, campos y arrays; aridad y firma verificadas, error claro al llamar una vein nula. Las direcciones crudas siguen requiriendo `abyss`.
+- Cristalización automática: calor por llamadas, umbral configurable (`OFS_CRYSTALLIZE_THRESHOLD`), compilación de biblioteca en segundo plano y despacho nativo en lote; `OFS_CRYSTALLIZE=0` desactiva. La generación de IR sigue siendo síncrona; la OSR de bucles activos llegó después (onda 4, arriba). Si falla la compilación opcional, continúa la interpretación.
+- F7: modelo de ejecución y bajo nivel seguro en pt/en/es, regla de oro vinculada a la matriz de paridad, referencia y arquitectura de quartz, tooltip, resaltado y snippet de VS Code. El libro usa los mismos capítulos Markdown.
+
+### Cambiado — F3/F4: tipos y bloques de bajo nivel (2026-11-09)
+
+- El verificador de tipos anota tipos y conversiones implícitas en la AST; los backends ejecutan esas conversiones. Las combinaciones aritméticas inválidas producen errores de tipo; se alinearon anchuras y signo de enteros y nombres de variantes en ambos modos.
+- `fracture`, `bedrock` y `tectonic` autorizan operaciones de puntero; `abyss` también autoriza direcciones y llamadas crudas. `OFS_STRICT_FAULT=1` ya exige estos bloques; la migración predeterminada avisa hasta 2027-01-09.
+- `ofs fmt` conserva `*p`, `&x` y `-x` como operadores unarios al inicio de una nueva instrucción y conserva las continuaciones reales de expresiones.
+
+### Cambiado — F3 (primer paso): nombres resueltos en el verificador de tipos (2026-11-09)
+
+- **ES** — Identificador indefinido es error de compilación (archivo:línea reales, "¿quiso decir?"); `attach` de módulo inexistente es error y `attach {x}` también busca en `$OFS_LIB_PATH` y `~/.ofs/libs`; `seal { … }` es sinónimo de `anchor`. Corregidos: `monolith` anidado en nativo, `(cond) as stone`, salida muda fuera del límite y globales en mayúscula leídos como variantes en `ofs run`.
+
 ### Corregido — compilador, memoria y paridad (2026-11-08/09)
 
 - `a[i] = v` y `a[i] op= v` ahora guardan en el binario nativo (antes la asignación desaparecía). `xs[i]` con `Array<obsidian>` como parámetro o campo se lee como texto. Una palabra reservada usada como nombre (`anchor`, `core`…) da un error claro. `snprintf` y otras funciones C variádicas se declaran con `...` (un `crystal` a veces salía como basura). Intrínsecos `fault_count`, `fault_lead`, `fault_trail`, `fault_spin_*`, `fault_weave`, `fault_memcpy`, `fault_memset`, `fault_unreachable` implementados (nativo e interpretado). `?` con la misma semántica en los dos modos. Un error de ejecución del intérprete sale con código 1.
@@ -22,6 +59,18 @@ Todos los cambios notables de este proyecto se registran aquí.
 ### Added / Adicionado — Termux
 
 - **ES** — **Termux**: OFS ahora corre en el teléfono (`ofs run`, `ofs build`, herramientas); el wrapper detecta Termux, paquete `ofs-termux-aarch64.tar.gz` (`src/packaging/termux/build_termux.sh`, adjuntado a la release por CI) e `install_termux.sh`. Ver `docs/es/GETTING_STARTED.md`.
+
+### Added — entrada de texto con el teclado del sistema (`android_input.ofs`, `oal.edit_open`)
+
+- **ES** — nuevo stdlib `android_input.ofs` (Dialog + `EditText` por JNI, sin Java propio) y `oal.edit_open`/`edit_state`/`edit_text`: teclado predeterminado de Android (Gboard) con cursor, desplazamiento, pegar y autocompletar en los campos de texto; el `keyboard` de OAL sigue como alternativa. Documentado en `docs/OAL_REFERENCE.md` y `docs/ANDROID.md`.
+
+### Added — OAL: barra de navegación inferior, menú desplegable, bottom sheet y pulsación larga
+
+- **ES** — **oalc + `oal_runtime`**: nuevos widgets genéricos `navbar` (pestañas abajo con icono y etiqueta; el contenido y los `fab` respetan su altura) y `popup menu|sheet` (menú desplegable ⋮ o bottom sheet, fondo oscurecido, tocar fuera cierra); atributo `long=acción(item)` en `card`/`item` (pulsación larga ~0,45 s, se cancela al arrastrar) y `bar "" logo=icono`. Las pilas de `fab` superiores se encogen para no tapar el D-pad/rombo del mismo lado. Documentado en `docs/OAL_REFERENCE.md`.
+
+### Fixed — compilador y runtime (`core`, `as crystal`, `ofs_str_char_at`, `impl`)
+
+- **ES** — **parser**: `core` como nombre de función (`vein core()`, también dentro de un `namespace`) descartaba el cuerpo en silencio; ahora es un error de compilación claro ("`core` e palavra reservada…"), y **cualquier error sintáctico termina `ofscc` con código 1** (antes los mensajes salían por stdout y el build seguía). Se corrigió el ejemplo `showcase.ofs`, que usaba un bloque `if (...): ... obsid` inexistente. **llvmgen**: `ofs_array_get(a, i) as crystal` (y `a[i] as T`) lee el elemento con el tipo de `Array<T>` y lo convierte (`sitofp` para `stone`), como `(x: stone) as crystal`; antes los bits del entero se leían como `double` (ya no hace falta pasar por una función con parámetro `stone`). **runtime (`facet.ofs`)**: la caché de `ofs_str_char_at` comparaba la cadena con `==` entre `obsidian`, que es `strcmp` (O(n) por llamada; un bucle sobre 1 MB causaba ANR en Android, cuyo runtime se compila desde este fuente); ahora compara punteros, O(1) amortizado. El índice es de byte. **typeck/intérprete**: `r.metodo(args)` de `impl T` pasa a `T__metodo(r, args)`; el build nativo generaba `@r__metodo` indefinido (`09_impl_methods`, ahora en la prueba diferencial). Pruebas: `ofs/tests/regress/run.sh`. Punto fijo del self-host mantenido (IR gen1 == gen2).
 
 ### Added — hex keyboard (OAL)
 

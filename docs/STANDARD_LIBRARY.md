@@ -71,7 +71,7 @@ core main() {
 }
 ```
 
-Só no código nativo por enquanto (usa memória crua do runtime; o `ofs run` ainda não alcança o Rift).
+Funciona igual no `ofs build` e no `ofs run` (usa memória crua do runtime, que o interpretador alcança pelo Rift).
 
 **Strings e memória.** Strings não têm GC nem contagem de referência: `t = s` faz as duas variáveis apontarem para o mesmo texto. O compilador nativo só reaproveita ou libera memória quando prova que ninguém mais vê o valor: `s = s + x` / `s += x` numa variável local que nunca é copiada para outro lugar crescem no lugar; as partes intermediárias de `a + b + c` e um `f(a + b)` cujo parâmetro não é guardado são liberados; arrays locais que não escapam são liberados no fim do escopo. Se a variável for copiada, guardada num campo/array ou passada para uma função que a guarda, tudo continua como antes (cópia nova a cada `+`).
 
@@ -228,6 +228,9 @@ Estruturas utilitárias para montagem e parsing de pacotes de dados binários em
 ### `rift.ofs`
 
 Camada do Rift: declaração e chamada de funções nativas de bibliotecas do sistema, pela convenção de chamada do sistema (conhecida tecnicamente como ABI C; não envolve código C).
+
+### `magma.ofs` (Ideia 5: `magma.cast`)
+Compilar e carregar um mod OFS com o programa rodando (no `ofs run` e no nativo): `magma.cast(fonte_ou_caminho)` → handle; `magma.cooled(m)`, `magma.crack(m)` (erro do compilador como valor), `magma.vent(m, "nome")` com o tipo de destino (`forge f: vein(stone) -> stone = magma.vent(m, "f")`; assinatura conferida, `null` se não bate), `magma.veins(m)`, `magma.release(m)` (o código fica carregado), `magma.caprock(teto)` (teto dos próximos mods). Quem chama `magma.cast` declara `claim magma`. Precisa do `ofscc` e do clang na máquina; cache dos `.so` por hash do IR em `~/.cache/ofs/magma`. Ver [LANGUAGE_REFERENCE.md](LANGUAGE_REFERENCE.md) (seção 12, `magma.cast`) e `ofs/examples/magma_cast_demo.ofs`.
 
 ### `memory_modes.ofs`
 

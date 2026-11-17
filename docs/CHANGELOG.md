@@ -6,6 +6,39 @@ All notable changes to this project are recorded here.
 
 ## [Unreleased]
 
+### Adicionado — Ideia 2: `ofs fossil` (gravar e voltar no tempo) (2026-11-16)
+
+- `ofs fossil app.ofs` roda interpretado e grava num `.fossil` (formato versionado) as chamadas externas: entrada padrão, relógio, aleatório, ambiente, arquivos, rede e Rift, com o retorno e os bytes que o C escreveu no buffer. `ofs fossil replay app.fossil` reproduz com saída idêntica sem tocar o mundo (arquivo/rede viram no-op conferido), avisa se o fonte mudou e diverge com código 3. `--to <passo|L<linha>|arquivo:linha|vein>` mostra locais e globais; `--back N` e o modo `--dig` (`segue`, `cava`, `ir`, `ver`, `estrato`, `onde`) voltam no tempo por camadas de `fork`. VS Code: `OFS: Fossil` (ir a um ponto, próximo, anterior). Cristalização/OSR desligadas durante o fossil; o interpretador sem fossil não ficou mais lento. Teste `ofs/tests/fossil/run.sh`.
+
+### Adicionado — A5.3 arena `bedrock { }` e `geode` (closures) (2026-11-15)
+
+- `bedrock { }` que aloca é uma arena: o que o próprio bloco aloca (texto, `[...]`, `monolith`, `ofs_alloc`) sai de uma vez em qualquer saída do bloco. Texto que escapa é copiado para fora; `Array`/`monolith`/ponteiro/geode que escapa é `[ERRO DE ARENA]` (dentro de `abyss` vale). Arena léxica (veins chamadas de dentro usam o heap), igual nos dois modos, na cristalização e na Refract. Laço de 200 mil voltas: 258 MB → 1,9 MB, mesmo tempo.
+- `[AVISO DE VAZAMENTO]` para `ofs_alloc` (e `malloc`/`calloc`/`realloc`) sem `seal`/`ofs_free`, return ou dono; `OFS_LEAK_WARN=0` silencia.
+- `geode (x: T) -> R { ... }`: vein sem nome que captura por valor, com o tipo `vein(T)->R` da F6; sem captura vai ao C como callback, com captura é erro claro no C. A análise de escape da A6 trata geodes (não se desliga mais). Extensão VS Code (realce, tooltip, snippets) e `ofs fmt`.
+
+### Adicionado — A5.1 contratos e tipos com regra (2026-11-15)
+
+- `mineral UserId = stone grain value > 0` (tipo com regra; `value` = o valor; forma curta `grain contains("@")`), `bearing` (pré-condição) e `settle` (pós-condição; `result` = o retorno) nas veins. Violação comprovada com literais/constantes é `[ERRO DE CONTRATO arquivo:linha:col]`; em execução, `ofs: [CONTRATO VIOLADO ...]` com a regra e os valores no stderr e código 1, igual nos dois modos. `ofs build --release`/`OFS_CONTRACTS=0` tira as checagens de execução. `ofs assay` testa as veins nos limites das regras. `ofs doc` mostra contratos e minerais; na Fault Refract, contrato alterado é edição da vein e `grain` alterada é mudança de tipo. Programas sem contrato geram o mesmo IR.
+- Erro de sintaxe dentro de um `attach` diz o arquivo e a linha dele (`[ERRO SINTATICO arquivo:linha:col]`). `OFS_LIB_PATH` usa `;` no Windows (como o `PATH`).
+
+### Adicionado — Fault Refract L0/L1: `ofs refract` (2026-11-15)
+
+- `ofs refract app.ofs` roda o programa e aplica cada edição salva sem reiniciar e sem perder o estado: observa o arquivo e os attach locais, recompila e checa o programa no próprio processo e troca só as veins que mudaram (célula de despacho por vein); a vein em execução termina na versão antiga. Veins cristalizadas (nativas) são recompiladas num `.so` novo em segundo plano. Erro de compilação mantém a versão em execução; mudança de assinatura de vein em uso, layout de `monolith` com instâncias, remoção de vein em uso, tipo de global, `extern` alterada e variantes reordenadas são recusadas com mensagem. Globais novos começam com o valor inicial; os existentes mantêm o valor. `--quiet`, `OFS_REFRACT_PERIOD`. Exemplo `ofs/examples/refract_demo.ofs`, teste `ofs/tests/refract/run.sh`. Sem OSR (onda 4).
+
+### Adicionado — F5/F6/F7: quartz, execução híbrida e tipos de vein (2026-11-12)
+
+- `quartz` substitui o nome planejado de assembly inline: instruções AT&T ou Intel, entradas e saída escalar com restrições LLVM, memória de entrada e clobbers `melt`. Exige `abyss`; gera LLVM `asm sideeffect`. O comando CLI `ofs asm` permanece disponível para emitir um arquivo `.s`.
+- `ofs run` carrega veins que contêm `quartz` como biblioteca nativa no mesmo processo, com fechamento de dependências, cache por hash, chamadas tipadas e sincronização de globais e callbacks. `clang` é necessário quando o módulo ainda não está no cache. Os limites de aridade, `f32` e callbacks de ponto flutuante do Rift continuam documentados.
+- Tipos `vein(T1, T2) -> R` (F6): valores de função, chamadas indiretas tipadas, parâmetros, retornos, campos e arrays; aridade e assinatura verificadas, mensagem clara ao chamar vein nula. Endereços crus continuam exigindo `abyss`.
+- Cristalização automática: calor por chamadas, limiar configurável (`OFS_CRYSTALLIZE_THRESHOLD`), biblioteca compilada em segundo plano e despacho nativo em lote; `OFS_CRYSTALLIZE=0` desativa. A geração de IR ainda é síncrona; a OSR de laços ativos veio depois, na onda 4 (acima). Falha da compilação opcional mantém a interpretação.
+- F7: modelo de execução e baixo nível seguro em pt/en/es, regra de ouro ligada à matriz de paridade, referência e arquitetura do `quartz`, tooltip, realce e snippet no VS Code. O livro usa os mesmos capítulos Markdown.
+
+### Alterado — F3/F4: tipos e baixo nível (2026-11-09)
+
+- O typeck anota tipos e conversões implícitas na AST; os backends executam essas conversões. Combinações aritméticas sem sentido dão erro de tipo; larguras e sinal de inteiros e nomes de variantes foram alinhados nos dois modos.
+- `fracture`, `bedrock` e `tectonic` autorizam operações de ponteiro; `abyss` também autoriza endereços e chamadas cruas. `OFS_STRICT_FAULT=1` já exige o bloco; o modo padrão de migração avisa até 2027-01-09.
+- `ofs fmt` preserva `*p`, `&x` e `-x` como unários no início de uma nova instrução, mantendo continuações reais de expressão.
+
 ### Changed / Alterado — F3 (primeiro passo): nomes resolvidos no typeck (2026-11-09)
 
 - **PT** — **Identificador indefinido é erro de compilação** (antes aviso, e o nome chegava ao `llc` como `%nome`), com `arquivo:linha:coluna` reais (mapa de linhas do fonte expandido) e "você quis dizer X?". Globais de topo usados antes da linha que os declara, variantes de `strata` fora do PascalCase (`RED`) e `monolith` como tipo de campo deixaram de dar aviso. **`attach` de módulo inexistente é erro** com a lista dos caminhos tentados; `attach {x}` procura também em `$OFS_LIB_PATH` (separado por `:`) e em `$OFS_LIB_HOME`/`~/.ofs/libs`. **`seal { … }`** é sinônimo de `anchor`. `[AVISO DE TIPO]` continua aviso e não aparece mais em cascata com `unknown`.

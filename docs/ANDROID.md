@@ -45,6 +45,61 @@ O que a CLI faz (`src/packaging/linux/ofs`, função `android_build`):
 
 O nome da `.so` vem de `android.app.lib_name` no manifesto. Arquivos intermediários ficam em `build/android/<nome>/` ao lado do fonte (ou em `OFS_ANDROID_BUILD`).
 
+## Edição ao vivo no aparelho (Fault Refract L3)
+
+Com o celular ligado por USB (depuração USB ativa), o app roda no aparelho e cada edição salva no PC entra nele **sem reinstalar e sem reiniciar o processo**: as veins editadas são trocadas na próxima chamada e os globais continuam com os valores que já tinham.
+
+```bash
+ofs refract --remote app.oal                   # build --refract, instala, abre, conecta e observa
+ofs refract --remote app.oal --serial 0064380838
+ofs build --target android app.oal --refract --install   # só o APK com as células e o agente
+```
+
+Exemplo: `ofs/examples/refract_android/` (contador por segundo; edite `painel.texto()` em `painel.ofs` e salve). Saída do PC:
+
+```text
+refract: conectado a org.ofs.refract.demo (pid 16109, geracao 0, porta 7341 -> localabstract:ofs-refract.org.ofs.refract.demo)
+refract: alteradas: painel.texto
+refract: geracao 1 aplicada no app em 1 ms: painel__texto (6272 bytes, pid 16109)
+```
+
+**Como funciona.**
+
+1. **Build `--refract`.** As veins do usuário (o arquivo principal e os `attach` locais; a stdlib fica de fora) ganham uma **célula de despacho** exportada (`@__ofs_cell.<vein>`, um ponteiro), e toda chamada direta a elas lê a célula. O `.so` leva o manifesto (`@__ofs_refract_manifest`: hash da árvore tipada e assinatura de cada vein, tipos dos globais, layout dos `monolith`, `extern`, variantes) e o agente `geophone` (stdlib `geophone.ofs`, anexado pelo `ofscc`). A lib ganha `-soname lib<nome>.so` para o remendo ligar contra ela. **Sem `--refract` nada disso existe**: o IR é idêntico ao de antes.
+2. **Agente (`geophone`).** Sobe como construtor da lib, na thread principal, e escuta no socket Unix abstrato `ofs-refract.<pacote>`. O socket entra no looper da thread principal (`ALooper_addFd`), então o remendo é aplicado **entre dois eventos** e o runtime (que não é thread-safe) não vê outra thread. Log: `adb logcat -s ofs-refract`.
+3. **PC (`ofs refract --remote`).** Faz o build com `--refract`, instala e abre, `adb forward tcp:7341 localabstract:ofs-refract.<pacote>`, conecta, pede o manifesto e observa o `.oal` e os `.ofs` do usuário. Ao salvar: `oalc` (se `.oal`), `ofscc` no modo remendo (`OFSCC_REFRACT=patch`: diff vein a vein contra o manifesto do app e as regras abaixo), `clang` do NDK (`--target=aarch64-linux-android26 -shared -fPIC -Wl,-Bsymbolic -Wl,--no-undefined`, ligado contra a `lib<nome>.so` do app), envia o `.so` e mostra a resposta do app.
+4. **No app.** O `.so` vai para `code_cache/ofs-refract/`, abre com `dlopen` e `__ofs_refract_install` grava nas células o endereço das veins novas. Os globais do remendo são os do app (`external`, mesmo endereço): o estado continua. Depois o agente chama `oal.refresh()` (app OAL) ou pede um quadro.
+
+**O que entra e o que é recusado.** Vein alterada com a mesma assinatura: trocada. Vein nova: vai no remendo (sem célula no app); ela e quem a chama entram de novo em todo remendo seguinte. Vein removida: fica no app, sem uso. `monolith` novo, `extern` nova e variantes acrescentadas no fim: aceitos. **Recusa** (o app segue com a versão anterior; a mensagem diz o motivo e pede reinstalar): assinatura nova de uma vein com célula, global novo ou com tipo novo, layout de `monolith` existente mudado (o app nativo não migra instâncias), `extern` com assinatura nova, variantes removidas ou reordenadas. Erro de compilação: nada é enviado. O remendo que usa um símbolo que o app não tem (um `attach` novo da stdlib) falha na ligação, no PC, com o nome do símbolo. Mudança no cabeçalho do `.oal` (`app`/`version`/`permission`) pede reinstalar.
+
+**Limites.** Uma vein em execução termina na versão antiga (sem OSR no nativo). Valor de vein guardado (callback entregue ao C, `fault_addr`) aponta para a versão do build: o PC avisa. O `.so` de cada remendo fica carregado até o processo acabar. Só aarch64/API 26+.
+
+**Segurança.** O agente só existe em builds `--refract` (nunca no build normal nem no de release). O socket é abstrato e local: de fora do aparelho só o `adb` o alcança, e o agente só aceita conexão de quem tem o uid do `adb` (shell, 2000), do root ou do próprio app (`SO_PEERCRED`); as outras são recusadas e registradas. Qualquer processo com acesso ao `adb` pode injetar código no app: é a mesma fronteira de confiança do `adb`/`run-as`; não distribua um APK `--refract`.
+
+**Protocolo v1** (linhas de texto terminadas em `\n`): ao conectar, o app manda `OFS-REFRACT 1 <pacote> <pid> <geracao>`; `MANIFEST` → as linhas do manifesto e `END`; `PATCH <geracao> <n>` seguido de `n` bytes do `.so` → `OK <geracao> <ms> <veins>` ou `ERR <geracao> <motivo>`; `PING` → `PONG`; `BYE` fecha. Manifesto: um registro por linha, campos separados por tab (`V <símbolo> <hash> <assinatura> <1|0 célula>`, `G <global> <tipo>`, `M <monolith> <campos>`, `X <extern> <forma>`, `S - <variantes>`); o app junta os registros de cada remendo (chave = os dois primeiros campos), então o PC sempre compara com o que está rodando.
+
+Variáveis: `OFS_REFRACT_PORT` (porta no PC, 7341), `OFS_REFRACT_PERIOD` (ms entre verificações, 300), `OFS_REFRACT_ONCE=1` (sai depois do primeiro remendo aplicado ou recusado). Teste no aparelho: `ofs/tests/refract/android.sh` (pula sem aparelho).
+
+## Windows
+
+O mesmo comando funciona no Windows (`src/packaging/windows/ofs.ps1`, função `Invoke-AndroidBuild`; mesmos passos do Linux). Requisitos além do OFS instalado:
+
+| Item | Onde / como instalar |
+|---|---|
+| LLVM (`clang` no PATH) | `winget install LLVM.LLVM` (compila o `oalc` no host) |
+| Android SDK | padrão `%LOCALAPPDATA%\Android\Sdk` (Android Studio) ou `ANDROID_SDK`/`ANDROID_HOME`/`ANDROID_SDK_ROOT` |
+| NDK | `ndk\<versão>\toolchains\llvm\prebuilt\windows-x86_64\bin\clang.exe` (`sdkmanager "ndk;29.0.14206865"`; ou `ANDROID_NDK`) |
+| build-tools | `build-tools\<versão>\aapt2.exe`, `zipalign.exe`, `apksigner.bat` (`sdkmanager "build-tools;37.0.0"`) |
+| `platforms` | `platforms\android-*\android.jar` (`sdkmanager "platforms;android-34"`) |
+| JDK 17+ | `keytool`, `jar` e o `apksigner`; achado por `JAVA_HOME`, `Program Files\Android\Android Studio\jbr`, Adoptium/Microsoft/Zulu ou PATH |
+
+```powershell
+ofs build --target android app.oal -o app-debug.apk
+ofs build --target android app.oal --install --serial <dispositivo>
+```
+
+Diferenças em relação ao Linux: o cache (`ofscc` com `OFSCC_TARGET` se o instalado for antigo, `oalc.exe`, `magma-aarch64.o`) fica em `%LOCALAPPDATA%\ofs\android\`; a chave de debug é `%USERPROFILE%\.android\debug.keystore` (ou uma gerada no cache com `keytool`); a `lib/` é gravada sem compressão com `jar` do JDK (sem `zip`). O instalador traz `tools\`, `stdlib\runtime\` e `ofscc\` (fonte) para isso; `OFS_SOURCE=<repo>\ofs` usa um checkout. Mensagens de erro dizem o que falta e o comando `sdkmanager` para instalar. Status: validado só por revisão contra o fluxo Linux e por CI informativo (`android-windows` em `build.yml`).
+
 ---
 
 ## Como o app roda (stdlib `android.ofs`)

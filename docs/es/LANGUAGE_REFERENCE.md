@@ -48,6 +48,79 @@ Un archivo `.ofs` puede contener:
 
 ---
 
+### Comentarios
+
+```ofs
+// Comentario de una línea
+
+/* Comentario
+   de varias líneas */
+
+forge x = 42  // comentario al final de la línea
+```
+
+### Terminación de instrucciones
+
+Las instrucciones terminan con un **salto de línea** o un **punto y coma**. Los saltos de línea dentro de `()`, `[]` y `{}` se ignoran (continuación implícita).
+
+```ofs
+forge x = 10; forge y = 20
+
+forge resultado = soma(
+    10,
+    20
+)
+```
+
+### Palabras reservadas
+
+| Palabra | Token | Finalidad |
+|---|---|---|
+| `core` | `KW_CORE` | Función de entrada |
+| `vein` | `KW_VEIN` | Definición de función |
+| `forge` | `KW_FORGE` | Declaración de variable |
+| `monolith` | `KW_MONOLITH` | Definición de struct |
+| `fracture` | `KW_FRACTURE` | Bloque de punteros seguro |
+| `abyss` | `KW_ABYSS` | Bloque de memoria insegura |
+| `cycle` | `KW_CYCLE` | Bucle |
+| `if` | `KW_IF` | Condicional |
+| `else` | `KW_ELSE` | Rama else |
+| `return` | `KW_RETURN` | Retorno desde función |
+| `echo` | `KW_ECHO` | Impresión (integrada) |
+| `in` | `KW_IN` | Bucle por rango |
+| `shard` | `KW_SHARD` | Tipo puntero |
+| `true` | `KW_TRUE` | Booleano verdadero |
+| `false` | `KW_FALSE` | Booleano falso |
+| `null` | `KW_NULL` | Valor nulo |
+| `break` | `KW_BREAK` | Salir del bucle |
+| `continue` | `KW_CONTINUE` | Omitir iteración |
+| `stone` | `KW_STONE` | Tipo entero (i64) |
+| `crystal` | `KW_CRYSTAL` | Tipo flotante (f64) |
+| `obsidian` | `KW_OBSIDIAN` | Tipo cadena (i8*) |
+| `bool` | `KW_BOOL` | Tipo booleano (i1) |
+| `void` | `KW_VOID` | Tipo void |
+| `attach` | `KW_IMPORT` | Adjuntar módulo |
+| `while` | `KW_WHILE` | Bucle solo con condición |
+| `extern` | `KW_EXTERN` | Función nativa del Rift (biblioteca del sistema) |
+| `rift` | `KW_RIFT` | Declaración de función nativa mediante el Rift |
+| `as` | `KW_AS` | Cast de tipo |
+| `match` | `KW_MATCH` | Coincidencia de patrones |
+| `case` | `KW_CASE` | Rama de match |
+| `default` | `KW_DEFAULT` | Rama de respaldo de match |
+| `const` | `KW_CONST` | Variable inmutable |
+| `strata` | `KW_STRATA` | Declaración de enum |
+| `tremor` | `KW_TREMOR` | Bloque de manejo de errores |
+| `catch` | `KW_CATCH` | Manejador de errores |
+| `throw` | `KW_THROW` | Lanzar valor de error |
+| `tectonic` | `KW_TECTONIC` | Prefijo de directiva de modo |
+| `bedrock` | `KW_BEDROCK` | Bloque de bajo nivel tipado; arena cuando asigna memoria (sección 12) |
+| `anchor` / `seal` | `TOK_ANCHOR` | Acción que se ejecuta al salir del ámbito (los dos nombres son el mismo token) |
+| `quartz` | `TOK_QUARTZ` | Ensamblador en línea, requiere `abyss` |
+
+Palabras de contexto (no reservadas; valen como nombre fuera de ahí): `mineral`, `grain`, `bearing`, `settle`, `value` y `result` (contratos, sección 4) y `geode` (función que captura, sección 4: solo cuando viene `geode (...)` seguido de `->` o `{`).
+
+---
+
 ## 2. Tipos
 
 ### Tipos primitivos
@@ -200,6 +273,8 @@ vein soma(a: stone, b: stone) -> stone {
 }
 ```
 
+**Valor por defecto de parámetro:** `vein escala(x: stone, k: stone = 2) -> stone`. El valor por defecto es un literal (número, texto, `bool`, `null` o `-número`) y los parámetros con valor por defecto van al final (`[ERRO SEMANTICO]` si no). La llamada que omite los últimos argumentos recibe el valor por defecto (`escala(5)` = `escala(5, 2)`), igual en nativo y en el intérprete; vale también para métodos de `impl`. Un tipo de función `vein(...)` no guarda valores por defecto: la llamada por valor de vein pasa todos los argumentos. En la Fault Refract, añadir un parámetro con valor por defecto a una vein en uso es un cambio aceptado (las llamadas antiguas reciben el valor por defecto).
+
 ### Entrada del programa
 
 ```ofs
@@ -291,7 +366,82 @@ core main() {
 - En el árbol el tipo es un `NK_TYPE_FN` cuyo `val` es el texto canónico sin espacios (`vein(stone,crystal)->stone`), el mismo `type_str` de toda expresión de ese tipo; la llamada indirecta es un `NK_CALL` `__vein_call` con la vein en `c0`.
 - Pruebas: `ofs/tests/regress/vein_type_*.ofs`.
 
-> **Nota**: Las expresiones anónimas de función (`vein(...) -> ...` en línea, que capturan variables: el `geode` de la hoja de ruta) están especificadas en el árbol sintáctico (`NK_LAMBDA`) y planificadas. Hoy una vein siempre se declara con nombre; el valor de vein apunta a ella.
+### `geode`: vein que captura (closure)
+
+`geode (parámetros) -> R { cuerpo }` es una **expresión**: una vein sin nombre que lee las variables del ámbito de fuera. El valor tiene el tipo de función `vein(T...) -> R` de arriba y se usa como cualquier valor de vein: guardarlo en variable, campo o `Array`, pasarlo, devolverlo y llamarlo. Sin `-> R`, el retorno es `void`. El nombre viene de la geoda, la piedra hueca que guarda lo que capturó.
+
+```ofs
+vein somador(base: stone) -> vein(stone) -> stone {
+    return geode (x: stone) -> stone { return x + base }
+}
+
+core main() {
+    forge k = 10
+    forge mais_k = geode (x: stone) -> stone { return x + k }
+    k = 100
+    echo(mais_k(5))             // 15: k se copió cuando nació el geode
+    forge s7 = somador(7)
+    echo(s7(1))                // 8
+    echo(mais_k)                // <geode>
+}
+```
+
+- **Captura por valor.** Toda variable local (o parámetro) de fuera que el cuerpo lee se vuelve una captura, copiada en el momento en que se crea el geode; cambiar la variable después no cambia el geode. Los globales no se capturan (el geode lee el global actual, como una vein). Un geode dentro de otro captura en cadena.
+- **Qué significa la copia:** lo mismo que pasar la variable como argumento de una vein. Números, `bool` y etiquetas de `strata` se copian; `obsidian` es un valor inmutable (la copia es el texto); `Array` y `monolith` son el mismo objeto (el geode ve los `push` y campos cambiados después, y lo que él cambia en elementos/campos se ve fuera). Para un `monolith` independiente, cópielo antes (`forge c: P = m`) y capture `c`.
+- **Asignar a una captura** dentro del geode (`n = n + 1`, `n++`, `&n`) es `[ERRO DE GEODE]`: la captura es una copia y la asignación no cambiaría la variable de fuera. Use una local (`forge v = n`) o devuelva el valor. `shatter`/`erode` en el cuerpo sin un bucle del propio geode también es error (el cuerpo es otra vein).
+- **Igualdad y texto:** cada creación de un geode con captura es un valor distinto (`==` solo es `true` consigo mismo); un geode sin captura es siempre el mismo valor. `echo(g)` y `"x" + g` dan `<geode>` en los dos modos.
+- **Rift (C):** un geode **sin captura** es una vein común y va al C como callback (`qsort(v, n, 8, geode (a: *stone, b: *stone) -> i32 { ... })`). Un geode **con captura** no puede ir al C (el C solo llama la dirección de una función): pasar un geode literal con captura a una `extern` es `[ERRO DE GEODE]` en compilación; si llega al C por una variable, o se vuelve dirección (`as stone`, `fault_addr`), el programa se detiene con `ofs: geode com captura nao pode ir para o C (Rift) nem virar endereco; ...` en stderr y código 1, en los dos modos.
+- **Cómo funciona:** el `typeck` encuentra las capturas y saca el cuerpo a una vein `__geode_<vein>_<k>(capturas..., parámetros...)` al final del programa. En el nativo, sin captura el valor es `ptr @__geode_...`; con captura es un entorno en el heap `[adaptador, marca, captura 0, ...]` (8 bytes cada una) y el valor es esa dirección con el bit 0 encendido; la llamada indirecta prueba el bit (solo en los módulos que tienen geode con captura, así que el IR de los demás programas no cambia) y llama `adaptador(entorno, args)`. En el intérprete el valor es la vein del cuerpo con un entorno (array interpretado con las capturas). El entorno vive hasta el fin del programa.
+- **Cristalización y Fault Refract:** en un programa con geode, la vein que maneja valores de vein (o llama a quien los maneja) queda interpretada; el cuerpo de un geode es una vein común y puede cristalizar. En `ofs refract`, editar el cuerpo de un geode (mismas capturas y parámetros) se cambia en vivo, incluso en los geodes ya creados; si las capturas cambian, los geodes ya creados siguen con el cuerpo antiguo y los creados después usan el nuevo.
+- Pruebas: `ofs/tests/regress/geode_*.ofs`, caso `geode` en `ofs/tests/refract/run.sh`.
+
+
+### Contratos y tipos con regla (`mineral`, `grain`, `bearing`, `settle`)
+
+Un **`mineral`** es un tipo con regla: un tipo base más una o más **`grain`** (en la regla, `value` es el valor comprobado). Una vein puede tener **`bearing`** (precondición: quien llama la garantiza) y **`settle`** (poscondición: vale para el retorno; `result` es el valor devuelto), tantos como quiera, entre la firma y el cuerpo.
+
+```ofs
+mineral UserId = stone grain value > 0
+mineral Email = obsidian grain contains("@")
+mineral Nota = stone grain value >= 0 grain value <= 10
+
+vein dividir(a: stone, b: stone) -> stone
+    bearing b != 0
+    settle result * b + a % b == a
+{
+    return a / b
+}
+```
+
+- **Compatibilidad:** el mineral es el tipo base para el typeck, el llvmgen y el intérprete. Base → mineral comprueba la regla (`forge x: UserId = e`, `x = e`, `x += e`, `x++`, campo `obj.f = e` de un monolith con campo mineral, argumento de un parámetro mineral, `return` de una vein `-> UserId`); mineral → base es libre. `Array<UserId>`, `*UserId`, `as UserId` y `vein(UserId)->T` valen como el base, sin comprobación.
+- **Mineral de mineral:** `mineral Pequeno = UserId grain value < 100` suma las reglas (las del base primero).
+- **Forma corta de `grain`:** una llamada sin `value` en los argumentos recibe `value` como 1.er argumento; `contains`/`len` sin vein con ese nombre son las de texto: `contains("@")` = `ofs_str_contains(value, "@")`, `len() >= 2` = `ofs_str_len(value) >= 2`.
+- **`result`** solo vale en `settle` (en `bearing` es error). En `settle`, los parámetros valen como a la entrada, aunque el cuerpo los cambie. En una vein sin retorno, `settle` se comprueba en cada `return` y al llegar al final.
+- **`mineral`, `grain`, `bearing`, `settle`, `value` y `result` son palabras de contexto**, no reservadas: siguen valiendo como nombres fuera de esas posiciones.
+
+**Cuándo se comprueba la regla**
+
+| Situación | Comprobación |
+|---|---|
+| Violación probada en compilación: literal, `const` o cuentas con ellos (`forge e: Email = "x"`, `dividir(1, 0)`, `return -1` en `-> UserId`, `settle` que solo depende de `result`) | `[ERRO DE CONTRATO archivo:línea:col]` con la regla y los valores, en los dos modos; también en release |
+| En ejecución (`ofs run` y `ofs build` por defecto) | `ofs: [CONTRATO VIOLADO archivo:línea:col]: bearing de 'dividir' falhou: b != 0 (b = 0)` en stderr y **código de salida 1**; el mismo texto en los dos modos |
+| Release: `ofs build --release` u `OFS_CONTRACTS=0` | sin comprobación en ejecución (la estática queda); el IR no tiene las comprobaciones |
+
+Un valor probado correcto en compilación no recibe comprobación en ejecución. La falla de contrato no es un `throw`: `tremor`/`catch` no la atrapa. Una salida por `?` (propagación) no comprueba `settle`.
+
+**Casos límite: `ofs assay archivo.ofs`.** Para cada vein con contrato y solo parámetros enteros (`stone`, `iN`, `uN` o mineral de base entera), genera casos en los límites de las reglas: cada comparación de un parámetro con una constante (`b != 0`, `n <= 10`, grain `value > 0`) da el valor de la frontera y ±1; un parámetro sin límite usa -1, 0 y 1 (hasta 64 casos por vein). Los casos fuera del `bearing`/la `grain` solo se listan (`--`); los demás se llaman (`ok`) y `settle` comprueba el resultado. La primera violación se detiene con el mensaje del contrato y código 1. Una regla que depende de algo más que constantes y parámetros deja la vein fuera (`pulada`). Veins de `impl`, parámetros no enteros e intervalos de bucle quedan para después.
+
+```
+$ ofs assay metade.ofs
+assay metade(n: stone)
+  --   metade(-1): fora do bearing n >= 0
+  ok   metade(0)
+ofs: [CONTRATO VIOLADO metade.ofs:3:5]: settle de 'metade' falhou: result * 2 == n (result = 0, n = 1)
+```
+
+**Fault Refract:** cambiar un `bearing`/`settle` es editar la vein (se cambia en vivo); cambiar la `grain` de un mineral usado en una firma es cambio de tipo (cambio rechazado si la vein está en uso).
+
+Pruebas: `ofs/tests/regress/contract_*.ofs`. Pendiente: comprobación de mineral en `Array<Mineral>`, en `as` y en globales con valor no literal; intervalos de bucle en la comprobación estática; `ofs assay` con parámetros no enteros y sin detenerse en la primera violación.
 
 ---
 
@@ -303,6 +453,28 @@ core main() {
 monolith Rect {
     w: stone
     h: stone
+}
+```
+
+Un campo puede ser otro `monolith`. El campo guarda una **referencia** al subobjeto (8 bytes en el layout del sistema); `forge c: Corpo` ya crea el subobjeto a cero, así que `c.pos.x = 1` funciona directamente. `c.pos = v` hace que el campo apunte a `v`; `forge w: Vec3 = c.pos` copia. Igual en nativo y en `ofs run` (prueba: `ofs/tests/regress/monolith_nested.ofs`).
+
+```ofs
+monolith Vec3 {
+    x: stone
+    y: stone
+    z: stone
+}
+
+monolith Corpo {
+    id: stone
+    pos: Vec3
+    massa: stone
+}
+
+core main() {
+    forge c: Corpo
+    c.pos.z = 3
+    echo(c.pos.z)   // 3
 }
 ```
 
@@ -383,6 +555,24 @@ vein map_array(arr: Array<stone>, fn: vein(stone) -> stone) -> Array<stone> {
 
 ---
 
+La indexación es **base cero** y tiene **verificación de límites** en tiempo de ejecución:
+
+```ofs
+forge nums = [10, 20, 30, 40, 50]
+forge primeiro = nums[0]   // 10
+nums[2] = 99               // modifica un elemento
+```
+
+Fuera de límites (`nums[7]`, `ofs_array_get`/`ofs_array_set`), el programa se detiene con código 1 y un mensaje en stderr, igual en los dos modos:
+
+```
+ofs: indice 7 fora do limite do array (tamanho 5)
+```
+
+La comprobación vale en `ofs run`, en el `ofs build` predeterminado y en `ofs build --release`: el camino rápido en línea de los arrays (A6) ya compara el índice con el tamaño antes del acceso directo y cae en el runtime cuando está fuera de límites. Costo medido (A5.4, `bench/`): ninguna diferencia perceptible en los 6 programas del benchmark (sort 14 × 13 ms); en un bucle que solo lee y escribe `a[k]` (100 millones de accesos) 137 × 126 ms (~9%). Por eso el release mantiene la comprobación (el IR del release no cambia).
+
+---
+
 ## 8. Control de flujo
 
 ### `if / else`
@@ -440,8 +630,8 @@ O con `match` (sinónimo: `assay`), que compara el valor con cada caso usando `=
 ```ofs
 match (code) {
     200 => { echo("ok") }
-    404 => { echo("no encontrado") }
-    _ => { echo("error") }
+    404 => { echo("nao encontrado") }
+    _ => { echo("erro") }
 }
 ```
 
@@ -506,6 +696,41 @@ core main() {
 
 Prueba: `ofs/tests/regress/question_propagation.ofs`.
 
+### `break` y `continue`
+
+```ofs
+cycle (forge i = 0; i < 100; i++) {
+    if (i == 50) {
+        break       // sale del bucle
+    }
+    if (i % 2 == 0) {
+        continue    // salta los números pares
+    }
+    echo(i)
+}
+```
+
+`break` y `continue` funcionan en `cycle` y en `while`. `while` es azúcar sintáctico para un `cycle` solo con condición.
+
+### `seal` y `anchor` (ejecutar al salir del ámbito)
+
+`seal { … }` y `anchor { … }` son **lo mismo** (el mismo token): registran una acción que se ejecuta cuando termina el ámbito actual, en cualquier salida (fin del bloque, `return`, `break`/`shatter`, `continue`/`erode`, propagación `?`). Varias acciones se ejecutan en orden inverso (la última registrada se ejecuta primero). `seal` es el nombre temático ("sella el recurso al salir"); `anchor` sigue siendo válido. Aceptan un bloque o un solo comando.
+
+```ofs
+vein copiar(origem: obsidian) -> stone {
+    forge f = fopen(origem, "r")
+    seal { fclose(f) }          // se ejecuta en cualquier return de abajo
+    anchor echo("fim de copiar") // igual que seal; se ejecuta antes de fclose (LIFO)
+    if (f == null) { return 1 }
+    // ...
+    return 0
+}
+```
+
+- La acción se evalúa **en la salida**, con los valores de ese momento.
+- `return`, `break`, `continue` y `throw` **dentro** de `seal`/`anchor` están prohibidos (error `E0042`).
+- Funciona igual en nativo y en `ofs run`. Prueba: `ofs/tests/regress/seal_defer.ofs`.
+
 ---
 
 ## 9. Operadores y casts
@@ -533,6 +758,35 @@ forge c: crystal = 10.5
 forge n: u8 = c as u8
 ```
 
+### Precedencia de operadores (de menor a mayor)
+
+| Nivel | Operadores | Asociatividad |
+|---|---|---|
+| 1 | `\|\|` | Izquierda |
+| 2 | `&&` | Izquierda |
+| 3 | `==` `!=` | Izquierda |
+| 4 | `<` `<=` `>` `>=` | Izquierda |
+| 5 | `\|` | Izquierda |
+| 6 | `^` | Izquierda |
+| 7 | `&` | Izquierda |
+| 8 | `<<` `>>` | Izquierda |
+| 9 | `+` `-` | Izquierda |
+| 10 | `*` `/` `%` | Izquierda |
+| 11 | Unarios: `-` `!` `&` `*` `++` `--` `~` | Derecha |
+
+### Casts permitidos
+
+| De | A | Resultado |
+|---|---|---|
+| `stone` | `crystal` | Entero a float |
+| `crystal` | `stone` | Float a entero (trunca) |
+| `bool` | `stone` | `true` → 1, `false` → 0 |
+| `stone` | `bool` | 0 → `false`, distinto de cero → `true` |
+| `bool` | `crystal` | `true` → 1.0, `false` → 0.0 |
+| `crystal` | `bool` | 0.0 → `false`, distinto de cero → `true` |
+
+Las conversiones de cadena (`obsidian`) requieren funciones de runtime (`ofs_stone_to_obsidian` etc.).
+
 ---
 
 ## 10. `attach`
@@ -559,11 +813,45 @@ attach {F:G:\projeto\minha_lib.ofs}
 
 `attach` incrusta el código OFS del otro archivo en el proceso de compilación. No carga ninguna DLL nativa.
 
+### Dónde busca `attach`
+
+Gana la primera opción que exista:
+
+| Forma | Orden de búsqueda |
+|---|---|
+| `attach {modulo}` | 1. `$OFS_STDLIB_PATH/modulo.ofs` · 2. la carpeta del archivo que hace el `attach` · 3. cada carpeta de `$OFS_LIB_PATH` (separadas por `:`; en Windows por `;`, como el `PATH`, porque `:` aparece en la letra de unidad `C:\libs`) · 4. `$OFS_LIB_HOME`, o `~/.ofs/libs` (donde instala `src/packages/install_library.sh`) |
+| `attach {F:ruta}` | 1. ruta absoluta, o relativa a la carpeta del archivo · 2. `$OFS_STDLIB_PATH/ruta` · 3. y 4. como arriba |
+
+En `attach {modulo}`, el guion se vuelve guion bajo (`terminal-colors` → `terminal_colors.ofs`). Un módulo que no existe en ninguno de esos lugares es **error de compilación**, con la lista de las rutas probadas:
+
+```
+[ERRO DE ATTACH app.ofs:2]: modulo 'graficos' nao encontrado
+  procurado em (nesta ordem):
+    /usr/lib/ofs/stdlib/graficos.ofs
+    ./graficos.ofs
+    /home/voce/.ofs/libs/graficos.ofs
+```
+
+(Antes, `attach {x}` de un módulo inexistente se ignoraba en silencio.)
+
+Un error de sintaxis dentro de un archivo adjunto indica el archivo y su propia línea: `[ERRO SINTATICO lib/util.ofs:4:11]: expected ')'` (antes salía solo `4:11`, la línea del fuente ya expandido).
+
+### Nombres indefinidos
+
+Usar un nombre que no fue declarado (variable, global, constante) es **error de compilación**, en los dos modos, con el archivo y la línea reales y una sugerencia cuando hay un nombre parecido:
+
+```
+[ERRO SEMANTICO calc.ofs:5:12]: identificador indefinido 'contadr'
+  voce quis dizer 'contador'?
+```
+
+Los globales de nivel superior pueden usarse en una `vein` antes de la línea que los declara. Un módulo verificado solo (`ofs check modulo.ofs`) no ve los nombres de quien lo adjunta: verifique el archivo principal. Los tipos incompatibles en una operación (`[AVISO DE TIPO]`) siguen siendo solo un aviso.
+
 ---
 
 ## 11. `extern vein` y `rift vein`
 
-El **Rift** (la grieta) es la frontera por la que OFS alcanza las bibliotecas nativas del sistema (libc, libm, X11, JNI de Android, kernel32). `extern vein` y `rift vein` declaran una función que vive en una biblioteca nativa.
+El **Rift** (la grieta) es la frontera por la que OFS alcanza las bibliotecas nativas del sistema (libc, libm, X11, JNI de Android, kernel32). `extern vein` y `rift vein` declaran una función que vive en una biblioteca nativa. No hay código C en OFS. (La convención de llamada del sistema se conoce técnicamente como ABI C; no involucra código C.)
 
 ### `extern vein`
 
@@ -648,9 +936,23 @@ Campos importantes:
 - **`&x`.** La dirección de una variable del intérprete es real: en el primer `&x` la variable pasa a vivir en un slot de memoria cruda de 8 bytes (la función nativa puede leerlo y escribirlo: `sscanf(s, "%d", &n)`, `strtol(s, &fin, 10)`, `modf(x, &entera)`), liberado cuando la variable sale de alcance, como la `alloca` del nativo. `&x` de un `monolith` es el propio bloque. Solo existe dirección de variable (el nativo tampoco tiene `&s.campo`/`&a[i]`: use `(&s) as stone + offset`); `&x` de una variable `Array` es un error claro.
 - **`monolith` con layout del sistema.** Las instancias viven en memoria cruda con el layout de `llvmgen.struct_layout` (el mismo del código nativo: campos en orden, cada uno alineado a su propio tamaño, hasta 8; `bool` ocupa 4 bytes; `Array` y `monolith` anidado ocupan 8). `s` o `&s` pasado a una función nativa (`memcpy`, `qsort` de structs...) ve los mismos bytes que el build nativo. Como en el nativo, un `monolith` pasado a una vein es por referencia y `forge y: T = x`/`y = x` copian. Un campo `Array` guarda el array del intérprete (la función nativa no debe leerlo).
 - **`Array` y strings.** Un `Array` pasado a una función nativa es el propio `ofs_array` nativo (cabecera `[data, len, cap, elem_size]` + datos) de la columna de valores del intérprete; la función nativa escribe los elementos en el lugar y la longitud se sincroniza a la vuelta. Elementos de un solo tipo (enteros/punteros, `crystal`, `bool`, `obsidian` o `monolith`); tipos mezclados son un error claro. Un `Array` devuelto por una función nativa usa el mismo bloque, sin copia. `obsidian` ya es el `char*`. Use `ofs_array_data(a)` para pasar solo los datos (ej.: `qsort`).
-- **Callbacks nativos → OFS.** `fault_addr(vein)` de una vein interpretada liga la vein a uno de 16 trampolines nativos (`__ofs_cb_0`..`__ofs_cb_15`, generados por el `llvmgen` dentro del `ofscc`); la biblioteca llama al trampolín, que reentra en el intérprete, incluso dentro de una llamada nativa hecha por el propio programa (`qsort` dentro de `qsort`, `fault_call` de otro callback). La misma vein reutiliza su slot. Hasta 6 parámetros enteros, punteros, `obsidian`, `bool` o `monolith` (por puntero) y retorno entero/puntero. Más de 16 veins distintas, más de 6 parámetros o `crystal`/`f32` en el callback dan un error claro con código 1 (use `ofs run --native`). El mismo trampolín sirve para un valor de vein pasado en un parámetro `vein(...)` (sección 4); la firma ya viene de la declaración de la vein, y lo que falta para `crystal` son trampolines con registros de punto flotante. `f32` como argumento del Rift tampoco está soportado aún.
-- `bedrock`, `fracture` y `abyss` no cambian la ejecución en los dos modos (el nativo genera el mismo código dentro de ellos); el `typeck` los exige para las operaciones de memoria cruda (ver sección 12, "Reglas"). Las celdas y regiones del `bedrock` (stdlib) usan la memoria cruda de arriba.
-- Pruebas: `ofs/tests/regress/ffi_*.ofs`, `tests/parity/cases/libc_*`.
+- **Callbacks nativos → OFS.** `fault_addr(vein)` de una vein interpretada liga la vein a uno de 16 trampolines nativos (`__ofs_cb_0`..`__ofs_cb_15`, generados por el `llvmgen` dentro del `ofscc`); la biblioteca llama al trampolín, que reentra en el intérprete, incluso dentro de una llamada nativa hecha por el propio programa (`qsort` dentro de `qsort`, `fault_call` de otro callback). La misma vein reutiliza su slot. Hasta 6 parámetros enteros, punteros, `obsidian`, `bool` o `monolith` (por puntero) y retorno entero/puntero. Un callback con `crystal`/`f32` (parámetro o retorno) usa otra tabla, `__ofs_cbx_0`..`__ofs_cbx_15`, que recibe también los registros de punto flotante (hasta 6 enteros y 8 `crystal`/`f32`; ola 4). Más de 16 veins distintas o parámetros más allá de esos límites dan un error claro con código 1 (use `ofs run --native`); en Windows x64 (registros por posición) el callback con `crystal`/`f32` sigue con error claro. El mismo trampolín sirve para un valor de vein pasado en un parámetro `vein(...)` (sección 4), y la cristalización usa los dos para volver a llamar veins interpretadas. `f32` en el Rift (parámetro y retorno, como `sqrtf`/`powf`) funciona en los dos modos.
+- `fracture` y `abyss` no cambian la ejecución en los dos modos (el nativo genera el mismo código dentro de ellos); el `typeck` los exige para las operaciones de memoria cruda (ver sección 12, "Reglas"). Un `bedrock` que asigna memoria es también una arena (sección 12); en el intérprete, el `ofs_alloc` escrito en el bloque viene de la arena del runtime y lo que puede salir de ella se decide en compilación, igual que en el nativo. Las celdas y regiones del `bedrock` (stdlib) usan la memoria cruda de arriba.
+- Pruebas: `ofs/tests/regress/ffi_*.ofs`, `ptr_widths.ofs`, `tests/parity/cases/` (`ptr_*`, `libc_*`, `monolith_memcpy`, `qsort_fault_addr`, `fault_call_basic`, `bedrock_block`).
+
+
+### Dirección de la interoperabilidad
+
+`extern vein` es la superficie actual del Rift, más adecuada para símbolos de runtime y bibliotecas nativas del sistema. El roadmap amplía esto a: fronteras con objetos y bibliotecas nativas, puentes hacia otros ecosistemas, embedding de Python y escapes de ensamblador específicos del destino. Esos ítems son roadmap, no recursos implementados hoy.
+
+### Patrón híbrido
+
+Es válido y recomendable mezclar alto y bajo nivel en el mismo archivo:
+
+- lógica de negocio en `vein` comunes;
+- llamada a bibliotecas nativas mediante el Rift (`rift vein`);
+- trabajo cercano a la máquina en `bedrock`;
+- almacenamiento explícito con `bedrock.ofs`.
 
 ---
 
@@ -670,7 +972,7 @@ Capa especial vinculada a intent/efectos.
 
 ### `bedrock`
 
-Vocabulario de OFS para memoria, regiones, lanes, packets e intrinsics `fault_*`.
+Vocabulario de OFS para memoria, regiones, lanes, packets e intrinsics `fault_*`. Como bloque, libera las operaciones de bajo nivel (F4) y, cuando el propio bloque asigna memoria, es una **arena** (abajo).
 
 Ejemplo:
 
@@ -685,6 +987,53 @@ core main() {
     bedrock_region_drop(region)
 }
 ```
+
+### Arena `bedrock { }` (A5.3)
+
+Un bloque `bedrock { ... }` (también `tectonic bedrock { }` y `bedrock vein f() { }`, que vuelve todo el cuerpo un bloque) en el que **el propio código del bloque asigna memoria** es una arena: todo lo que asigna viene de una región que se libera de una vez a la salida del bloque, en **cualquier** salida (fin, `return`, `shatter`/`erode`, `?`), después de los `seal`/`anchor` del bloque. Sigue liberando las operaciones de bajo nivel de la F4. Un `bedrock` que no asigna nada es solo el bloque de bajo nivel (el mismo código de antes).
+
+```ofs
+core main() {
+    forge total = 0
+    forge ultimo = ""
+    forge i = 0
+    while (i < 100000) {
+        bedrock {
+            forge partes: Array<obsidian> = []
+            ofs_array_push(partes, "k" + ofs_stone_to_obsidian(i))
+            forge buf: *stone = ofs_alloc(1024)
+            fracture { *buf = ofs_str_len(partes[0]) }
+            fracture { total = total + *buf }
+            ultimo = partes[0]          // el texto sale copiado
+        }                               // toda la arena se libera aquí
+        i++
+    }
+    echo(total)
+    echo(ultimo)
+}
+```
+
+- **Qué viene de la arena:** lo que el código escrito en el bloque asigna: concatenación y conversiones a texto, `[...]` y el crecimiento de un `Array` creado en el bloque, `forge m: Monolith`, `ofs_alloc`/`ofs_realloc` y los builtins de texto y de `Array` del runtime. `ofs_free` de un bloque de la arena no hace nada (sale con la región). La arena es **léxica**: una vein llamada desde dentro del bloque asigna en el heap normal (el compilador apaga la arena durante la llamada), y un `Array` de fuera que crece dentro del bloque sigue en el heap. Un `bedrock` dentro de otro abre su propia arena, que se cierra antes que la de fuera.
+- **Escape (regla):** un valor que puede estar en la arena y va fuera de ella se trata así: **el texto `obsidian` se copia al heap** automáticamente (solo si está de verdad en una arena viva); **`Array`, `monolith`, puntero y geode** son `[ERRO DE ARENA archivo:línea:col]` en compilación. "Fuera" es: `return` desde dentro del bloque, asignación a una variable declarada fuera del bloque (local, parámetro o global), campo o elemento de un objeto de fuera, `push`/`set` en un `Array` de fuera, argumento de una vein que guarda el parámetro (análisis por vein, la misma idea de la A6), de un valor de vein o de una función desconocida, y el runtime que guarda el puntero (título de la ventana). Copiar un `monolith` solo con campos numéricos a una variable de fuera vale (es una copia por valor). Las funciones C (`extern`/`rift`) no guardan los argumentos (convención del C); si una los guarda, asigne fuera del bedrock. Dentro de `abyss { }` el error no se da: el programador asume el riesgo.
+
+```
+[ERRO DE ARENA app.ofs:5:17]: valor alocado na arena do bedrock e guardado fora dele (a arena e liberada na saida do bloco)
+  dica: aloque fora do bedrock o que precisa sair dele (so texto obsidian e copiado para fora automaticamente), ou use abyss { } para assumir o risco
+```
+
+- **En los dos modos:** la regla se decide en compilación (`ofscc/sediment.ofs`, después del `typeck`), igual para el nativo, el intérprete, la cristalización y la Fault Refract. En el nativo, `ofs_arena_open()` en la entrada y `ofs_arena_close()` como anchor sintético; el runtime (`stdlib/runtime/reservoir.ofs`) saca los bloques de trozos de 64 KB que se duplican (en cero como el `calloc`) y guarda el mayor para la próxima arena. En el intérprete, el `ofs_alloc` escrito en el bloque viene de la misma arena del runtime y el texto copiado afuera pasa por la misma función (`ofs_arena_lift`).
+- **Medida** (bucle de 200 mil vueltas con 16 textos en un `Array`, un `monolith` y 1 KB de `ofs_alloc` por vuelta, nativo `-O2`): con `bedrock` 1,9 MB y 0,38 s; el mismo bucle en un bloque común (con `ofs_free` del buffer) 258 MB y 0,37 s.
+
+#### Aviso de fuga
+
+Un `forge p = ofs_alloc(n)` (o `malloc`, `calloc`, `realloc`, `ofs_realloc`) fuera de una arena cuyo puntero nunca llega a un `seal`/`anchor`, `ofs_free`, llamada (dueño), `return`, asignación, campo, `Array` o geode genera un aviso (no error) en stderr, en los dos modos; un `ofs_alloc(n)` suelto, con el resultado descartado, también. `OFS_LEAK_WARN=0` lo silencia.
+
+```
+[AVISO DE VAZAMENTO app.ofs:3:24]: 'p' recebe ofs_alloc e nunca chega a um seal/ofs_free, return ou dono (o bloco vaza)
+  dica: libere com seal { ofs_free(p) } logo depois, devolva ou guarde o ponteiro, ou aloque dentro de bedrock { } (a arena libera ao sair); OFS_LEAK_WARN=0 silencia
+```
+
+Pruebas: `ofs/tests/regress/bedrock_arena.ofs`, `arena_memory.ofs` (20 mil vueltas de 64 KB con `ulimit -v` de 256 MB en los dos modos), `arena_err_*.ofs`, `leak_warn.ofs`.
 
 ### Alias `tectonic`
 
@@ -729,15 +1078,166 @@ Con `OFS_STRICT_FAULT=1` (el modo de las pruebas del repositorio) la misma líne
 ```ofs
 core main() {
     forge x: stone = 10
+
     fracture {
         shard p: *stone = &x   // p apunta a x
         *p = 42
     }
+
     echo(x)  // imprime 42
 }
 ```
 
 Pruebas: `ofs/tests/regress/fault_blocks.ofs`, `fault_err_*.ofs`, `fault_warn_default.ofs`.
+
+### Intrínsecos `fault_*`
+
+Los de bits valen en cualquier lugar; `fault_step`, `fault_memcpy` y `fault_memset` piden `fracture`/`bedrock`/`abyss`, y `fault_addr`/`fault_call` piden `abyss` (tabla de arriba):
+
+- `fault_count(stone)` → conteo de bits 1 (popcount)
+- `fault_fence()` → barrera de memoria
+- `fault_prefetch(*stone)` → precarga de memoria para el destino del puntero
+- `fault_trap()` → trampa (trap) de la máquina
+- `fault_lead(stone)` → ceros a la izquierda
+- `fault_trail(stone)` → ceros a la derecha
+- `fault_swap(stone)` → intercambio de bytes
+- `fault_spin_left(stone, stone)` / `fault_spin_right(stone, stone)` → rotación de bits
+- `fault_step(*stone, stone)` → avance de puntero tipado, en elementos
+- `fault_addr(vein)` → dirección de la `vein` como `stone` (ver sección 11)
+- `fault_call(endereco, args...)` → llamada indirecta mediante la convención de llamada del sistema (ver sección 11)
+- `fault_cut(value, shift, width)` → extrae un campo de bits
+- `fault_patch(base, shift, width, insert)` → reemplaza un campo de bits
+- `fault_weave(mask, left, right)` → mezcla bits de `left` y `right` según `mask`
+- `fault_unreachable()` → marca el camino como inalcanzable (genera `llvm.trap` + `unreachable`)
+- `fault_memcpy(dst, src, len)` → copia de memoria en bloque (`llvm.memcpy`); `dst` y `src` son punteros
+- `fault_memset(dst, val, len)` → relleno de memoria con el byte `val` (`llvm.memset`); `dst` es puntero
+
+Semántica exacta (igual en el build nativo y en el intérprete `ofs run`):
+
+- Todo en 64 bits, complemento a 2: `fault_count(-1)` = 64; `fault_lead(0)` = `fault_trail(0)` = 64; `fault_lead(-1)` = 0.
+- `fault_spin_left`/`fault_spin_right`: rotación de 64 bits (`llvm.fshl`/`llvm.fshr`); la distancia se toma módulo 64 (`fault_spin_right(6, 65)` = 3).
+- `fault_weave(mask, left, right)` = `(left & mask) | (right & ~mask)`: el bit viene de `left` donde `mask` tiene 1 y de `right` donde tiene 0.
+- `fault_trap()` y `fault_unreachable()` terminan el proceso con SIGILL (el intérprete hace lo mismo con `raise(SIGILL)`).
+- `fault_fence()`/`fault_prefetch()` no hacen nada en el intérprete.
+- En el intérprete los punteros son direcciones reales: `fault_memcpy`/`fault_memset` copian/rellenan cualquier tamaño, y `fault_step`, `fault_addr` y `fault_call` funcionan como en nativo (ver "En el intérprete (`ofs run`): el Rift").
+- Prueba: `ofs/tests/regress/fault_intrinsics.ofs`.
+
+Estos intrínsecos cubren operaciones que el ensamblador ya tiene y le dan a OFS un vocabulario propio, orientado a la máquina.
+
+### `quartz`: ensamblador en línea
+
+`quartz` emite ensamblador directamente en el LLVM IR, con efecto secundario (`sideeffect`) por defecto. Solo se permite en `abyss { ... }` o `abyss vein`; `fracture` y `bedrock` solos no autorizan ensamblador. `asm` sigue siendo el comando CLI `ofs asm`, que genera un archivo `.s`.
+
+```ofs
+abyss vein somar(a: stone, b: stone) -> stone {
+    forge total: stone = 0
+    quartz {
+        "movq $1, $0"
+        "addq $2, $0"
+        in "r" a
+        in "r" b
+    } -> total "=&r"
+    return total
+}
+
+core main() {
+    echo(somar(20, 22)) // 42 (x86-64)
+}
+```
+
+- Sin salida: `quartz { "nop" }`. Con salida: `quartz { ... } -> variable "=r"`; declare antes la variable escalar. La restricción de salida es opcional (`=r` por defecto) y va en la misma línea que el destino. `+r` lee y escribe el destino; `=&r` marca una salida anticipada, que no puede compartir el registro de una entrada.
+- Entradas: `in "r" expresion`, `in "{rdi}" expresion` o `in "m" variable` (memoria de una variable escalar). Una única salida escalar puede vincularse a un registro. `$0` es la salida, cuando existe; las entradas siguientes son `$1`, `$2`, etc. Sin salida, la primera entrada es `$0`.
+- Clobbers: ponga `melt "rdx" "memory"` después de las instrucciones y entradas para declarar los registros y la memoria modificados. LLVM no descubre esos efectos por el texto; declare todos los efectos adicionales.
+- El dialecto por defecto es AT&T; `quartz att { ... }` es explícito y `quartz intel { ... }` selecciona Intel. Un `$` literal se escribe `$$`: `"shlq $$32, %rdx"`.
+- El texto es específico de la arquitectura. `OFSCC_TARGET` selecciona el destino, pero no traduce instrucciones x86-64 a AArch64/Android. Use ensamblador apropiado para el destino.
+- En `ofs build`, LLVM compila el fragmento. En `ofs run`, la vein que contiene `quartz` se carga como código nativo en el mismo proceso; vea [Modelo de ejecución](COMPILED_LANGUAGE.md).
+
+### Edición en vivo: `ofs refract` (Fault Refract)
+
+`ofs refract app.ofs` ejecuta el programa interpretado y, mientras está abierto, cambia las veins que usted edita y guarda. La unidad de cambio es la **vein**:
+
+- El cambio ocurre **entre llamadas**: la próxima llamada de la vein usa la versión nueva. Un **bucle** en ejecución en una vein editada (incluido el `while` del `main`) cambia en el próximo encabezado (**OSR**, ola 4): el bucle nuevo continúa con las variables locales como están, y el resto de la vein después de él también es el nuevo; una variable nueva antes del bucle recibe el valor inicial en el momento del cambio. Si una variable antes del bucle cambió de tipo (o el bucle está dentro de `cycle`/`match`/`bedrock`), el bucle termina en la versión antigua y la nueva vale en la próxima llamada. Fuera de un bucle, la llamada en ejecución termina en la versión antigua.
+- El **estado** continúa: los globales existentes mantienen su valor (el inicializador no se ejecuta de nuevo), y los arrays y objetos vivos no cambian. Un global nuevo se crea con el valor inicial.
+- Una vein **cristalizada** (nativa) o con `quartz` se recompila en un `.so` nuevo, junto con las veins nativas que la llaman; la versión nueva corre interpretada hasta que el `.so` esté listo (las que tienen `quartz`, que no corren interpretadas, se compilan antes del cambio).
+- El programa nuevo completo se verifica antes (sintaxis y tipos): con un error, nada cambia.
+- Una **firma compatible** cambia incluso con la vein en uso: parámetro nuevo al final con valor por defecto; retorno igual, que era `void`, entero estrecho donde era `stone`, `f32` donde era `crystal`.
+- **Un `monolith` con instancias vivas migra**: un campo nuevo recibe el valor por defecto del tipo, un campo eliminado desaparece, el orden puede cambiar y un campo numérico puede cambiar de tipo (el valor se convierte). Las instancias se reescriben en el lugar.
+- **Necesitan reinicio** (el cambio se rechaza y el programa sigue con la versión antigua): cambiar la firma de forma incompatible en una vein que una vein en ejecución todavía llama, o de una vein entregada a C como callback o usada como valor; eliminar una vein que algo en ejecución todavía llama; cambiar un campo de `monolith` vivo a un tipo que no convierte (p. ej. `stone` → `obsidian`) o hacer crecer el `monolith` más de 64 bytes; cambiar el tipo de un global; cambiar un `extern`; eliminar o reordenar variantes de `strata` (agregar al final sí se puede).
+
+Ejemplo: `ofs/examples/refract_demo.ofs`. Comando, mensajes y variables: [TOOLS.md](TOOLS.md). Mecanismo: [COMPILER_ARCHITECTURE.md](COMPILER_ARCHITECTURE.md).
+
+### Estrato y permisos por módulo (`stratum`, `claim`, `caprock`)
+
+Seguridad gradual (Idea 4) y permisos por módulo (A5.4), en una sola regla. Cada archivo (el principal y cada `attach`) es un **módulo** y declara arriba, antes del código (comentarios, líneas en blanco y `attach` pueden ir antes o entre estas líneas), **cuánto** bajo nivel usa y **cuál**:
+
+```ofs
+// io_crudo.ofs
+stratum fault          // opcional: fault es el predeterminado
+claim rift, abyss      // lo que usa el módulo
+
+extern vein getenv(name: obsidian) -> obsidian
+```
+
+| Estrato | Bajo nivel | Bloques | `claim` |
+|---|---|---|---|
+| `stratum crust` | ninguno: `*p`, `&x`, `as` con puntero, `fault_*` de memoria, `extern`/`rift vein`, `quartz` son `[ERRO DE ESTRATO]` | `fracture`/`tectonic`/`abyss` son error; `bedrock` vale solo como arena (no libera punteros) | ninguno (`claim` en un archivo `crust` es error) |
+| `stratum fault` (predeterminado) | solo dentro del bloque que lo libera (regla de la F4, tabla de arriba) | como en la F4 | pide lo que usa |
+| `stratum abyss` | en cualquier parte del archivo, sin bloque | opcionales | vale como `claim rift, abyss, quartz` |
+
+| Permiso | Libera | Ejemplo |
+|---|---|---|
+| `claim rift` | declarar `extern vein` y `rift vein` (convención de llamada del sistema, `abi c`) | `extern vein fopen(...)` |
+| `claim abyss` | bloque `abyss { }` y `abyss vein` | `abyss { forge r = fault_call(f) }` |
+| `claim quartz` | `quartz { }` (que sigue exigiendo `abyss`, así que va junto con `claim abyss`) | `claim abyss, quartz` |
+| `claim magma` | llamar a `magma.cast` (compilar y cargar código en ejecución; Idea 5). Sin él siempre es error | `claim magma` |
+
+- `fracture`/`bedrock`/`tectonic` no piden claim: el estrato `fault` ya los acepta; el estrato `crust` los rechaza.
+- `extern`/`rift vein` de un símbolo del runtime de OFS (nombre que empieza con `ofs_`, p. ej. `ofs_str_len`) no pide `claim rift`: es el propio lenguaje, no código C de afuera.
+- **Quien adjunta ve lo que pide el módulo:** `ofs check` lista, por módulo, el estrato y los claims (`[usa sem claim: ...]` y `[claim sem uso: ...]` cuando no coinciden), y `ofs doc` muestra sellos `stratum`/`claim`/`caprock` en la página del módulo.
+- **El principal restringe a los adjuntos** con `caprock` (solo en el programa principal; en un módulo es error): `caprock rift, abyss` deja que los adjuntos pidan como máximo eso; `caprock crust` no deja pedir nada. Un adjunto que pide, usa o es `stratum abyss` más allá del caprock es `[ERRO DE PERMISSAO principal:línea]` (siempre error: el caprock es opcional). El runtime (`stdlib/runtime/`) queda fuera del caprock; el propio principal también (sus claims valen para él).
+- Relación con los bloques: el estrato dice **dónde** puede aparecer el bajo nivel (en ningún lugar / en bloques / en cualquier lugar), los bloques marcan **el tramo** y el claim dice **qué** poder usa el módulo y es lo que ve quien adjunta. `abyss` nombra el bloque, el permiso y el estrato más profundo: el bloque libera un tramo, `claim abyss` autoriza al módulo a tener ese bloque, `stratum abyss` hace del archivo entero un bloque.
+- Forma de comentario: `//! claim rift` (y `//! stratum ...`) significa lo mismo. Es para código que también debe compilar con un `ofscc` anterior a la ola 5: el propio compilador (`ofs/ofscc/`), por la semilla `ofs/dist/ofscc`.
+- El driver lee estas líneas como texto (como el `attach`) y no las pasa al lexer; una directiva después del código, una palabra desconocida (`claim lava`) o un `stratum` repetido son `[ERRO DE ESTRATO archivo:línea]`.
+
+**Migración (igual que la F4).** Hasta el **2027-03-16**, el uso sin el claim es solo un aviso en stderr, un mensaje por módulo y permiso, y el programa compila igual:
+
+```
+[AVISO DE PERMISSAO app.ofs:3:17]: 'extern vein labs' sem 'claim rift' no topo do arquivo
+  dica: acrescente a linha 'claim rift' no topo de app.ofs (quem anexa o modulo ve o que ele pede no ofs check)
+[AVISO DE PERMISSAO] 1 uso(s) de baixo nivel sem 'claim' no topo do modulo: viram erro em 2027-03-16; OFS_STRICT_FAULT=1 ja trata como erro
+```
+
+Con `OFS_STRICT_FAULT=1` (la misma llave de la F4, modo de las pruebas del repositorio) pasa a `[ERRO DE PERMISSAO archivo:línea:col]`. Las violaciones de estrato (`crust`) y de `caprock` son siempre error, porque solo valen para quien las declara. El stdlib, el runtime, el compilador, las herramientas, los ejemplos y las pruebas del repositorio ya declaran lo que usan y pasan el modo estricto. Pruebas: `ofs/tests/regress/stratum_*.ofs`, `claim_*.ofs` y `stratum_mods/`.
+
+### Compilar y cargar OFS en ejecución: `magma.cast` (Idea 5)
+
+Un programa (en `ofs run` **y** en el binario de `ofs build`) compila un **mod** escrito en OFS mientras se ejecuta y llama a sus veins: plugins, scripts de juego, mods. El mod es un archivo OFS solo con veins (sin `core main`; el `attach` del stdlib vale). Módulo del stdlib: `attach {magma}`.
+
+```ofs
+attach {magma}
+claim magma                       // cargar código en ejecución es un permiso
+
+core main() {
+    forge m = magma.cast("mods/forja.ofs")      // ruta, o el propio fuente (texto con \n)
+    if (!magma.cooled(m)) {
+        echo(magma.crack(m))                    // el mensaje del compilador; el programa sigue
+        return
+    }
+    forge forjar: vein(stone) -> stone = magma.vent(m, "forjar")
+    echo(forjar(10))
+    forge erro: vein(crystal) -> stone = magma.vent(m, "forjar")
+    if (erro == null) { echo(magma.crack(m)) }  // firma del mod distinta de la pedida
+    magma.release(m)
+}
+```
+
+- `magma.cast(fuente)` → handle `stone` (siempre ≥ 1). Un `fuente` con salto de línea es el propio código; si no, es la ruta del archivo. Los errores (sintaxis, tipo, permiso, carga) no tumban el programa: `magma.cooled(m)` es `false` y `magma.crack(m)` trae el mensaje del compilador.
+- `magma.vent(m, "nombre")` → valor de vein **tipado** (F6): el tipo del lugar donde se guarda (`forge f: vein(T) -> R = ...`, `=`, argumento, `return`) es la firma pedida, comprobada en ejecución contra la declarada en el mod. Si no coincide o la vein no existe: `null` y el motivo en `magma.crack(m)`. Sin tipo de destino es `[ERRO DE TIPO]`.
+- `magma.veins(m)` lista `nombre: firma`; `magma.release(m)` deja de entregar veins (el código **queda cargado**, misma cautela de la onda 4 de la Refract); `magma.caprock("crust")` es el techo de los próximos mods.
+- **Globales:** el mod no ve los globales del programa ni al revés; la comunicación es por argumentos, retornos y valores de vein. El mismo fuente da el mismo `.so` y el mismo módulo; el mod editado es otro `.so` y la versión vieja sigue valiendo.
+- **Seguridad:** `magma.cast` pide `claim magma` en el encabezado (siempre error, sin migración); en `stratum crust` es `[ERRO DE ESTRATO]`; `stratum abyss` vale como `claim magma`; un `caprock` sin `magma` impide anexar el módulo. El mod se compila en modo estricto y con el techo de `magma.caprock`.
+- **Cómo funciona:** el `ofscc` compila el mod en un proceso aparte (`OFSCC_MODE=cast`: IR + manifiesto `@__magma_manifest`), clang genera el `.so` (`-shared -fPIC -O2 -Wl,-Bsymbolic`) en una caché por hash del IR (`OFS_MAGMA_CACHE` o `~/.cache/ofs/magma`) y se abre con `dlopen`. El mod usa el runtime del programa: `ofs run` ya está enlazado con `-rdynamic` y `ofs build` enlaza con `--export-dynamic` a quien usa `magma.cast`. Compilador: `OFS_MAGMA_OFSCC`, el propio `ofscc` en `ofs run`, o el instalado (como lo encuentra el wrapper); clang: `OFS_MAGMA_CC`. Linux y macOS.
+- Ejemplo: `ofs/examples/magma_cast_demo.ofs`. Pruebas: `ofs/tests/regress/magma/` y `magma_err_*.ofs`.
 
 ---
 
@@ -895,6 +1395,65 @@ El módulo `window` expone:
 - `input.is_down`
 - `input.key`
 
+### Módulos de la biblioteca estándar
+
+| Nombre | Descripción |
+|---|---|
+| `core` | Auxiliares de matemática, predicados, factorial, Fibonacci |
+| `math` | Primos, utilidades de dígitos, inversión de números |
+| `string` | Utilidades de cadenas: repeat, starts_with, is_empty |
+| `io` | prompt, print_separator, print_header |
+| `webserver` | Constructor de respuesta HTTP, tipos MIME, auxiliares de log |
+| `bedrock` | Celdas, regiones y auxiliares de campos de bits en el heap |
+| `bedrock-packet` | Auxiliares de layout de paquete sobre regiones `bedrock` |
+| `rift` | Wrappers del Rift (auxiliares de biblioteca nativa) |
+| `terminal-colors` | Salida de colores ANSI en la terminal |
+| `memory-modes` | Documentación y auxiliares de los modos fracture/abyss/fractal |
+| `test-lib` | Utilidades de pruebas unitarias |
+
+### Funciones matemáticas (`stdlib/core.ofs`)
+
+```ofs
+vein abs(x: stone) -> stone
+vein max(a: stone, b: stone) -> stone
+vein min(a: stone, b: stone) -> stone
+vein clamp(val: stone, lo: stone, hi: stone) -> stone
+```
+
+### Auxiliares de `bedrock.ofs`
+
+- Celdas: `bedrock_cell_new`, `bedrock_cell_read`, `bedrock_cell_write`, `bedrock_cell_add`, `bedrock_cell_sub`, `bedrock_cell_drop`.
+- Regiones: `bedrock_region_new`, `bedrock_region_read`, `bedrock_region_write`, `bedrock_region_add`, `bedrock_region_drop`, `bedrock_prefetch`.
+- Vistas: `bedrock_view_at`, `bedrock_view_read`, `bedrock_view_write`.
+- Campos y lanes: `bedrock_field_cut`, `bedrock_field_patch`, `bedrock_lane8_get/set`, `bedrock_lane16_le/be_get/set`, `bedrock_lane32_le/be_get/set`.
+- Barrera: `bedrock_barrier`.
+
+La finalidad de este módulo no es imitar APIs de otro lenguaje, sino hacer que la programación de bajo nivel crezca en el vocabulario propio de OFS. Los auxiliares de lanes dan una superficie con endianness para ventanas de bits orientadas a ABI, sin exigir desplazamientos manuales.
+
+### Auxiliares de `rift.ofs` y `bedrock_packet.ofs`
+
+- `rift.ofs`: `rift_text_size`, `rift_line`, `rift_banner`, `rift_report_line`. Permite consumir bibliotecas nativas del sistema mediante APIs en OFS.
+- `bedrock_packet.ofs`: `bedrock_packet_store`, `bedrock_packet_header`, `bedrock_packet_payload`, `bedrock_packet_opcode`, `bedrock_packet_lane`, `bedrock_packet_opcode_be16`, `bedrock_packet_tail_le16`, `bedrock_packet_set_opcode`, `bedrock_packet_set_lane`. Vistas de encabezado y payload sobre regiones `bedrock`.
+
+### Runtime nativo OFS (Stack Magma)
+
+La implementación principal del runtime y de la biblioteca estándar está escrita en OFS (`stdlib/runtime/`), sin runtime en otro lenguaje:
+
+| Subsistema | Módulo | Responsabilidad |
+|---|---|---|
+| **Magma** | `magma.ofs` | Bootstrap y orquestación de la ejecución del runtime nativo |
+| **Reservoir** | `reservoir.ofs` | Asignación y gestión de memoria (`ofs_alloc`, `ofs_free`) |
+| **Facet** | `facet.ofs` | Texto y conversión numérica (`ofs_str_*`, `ofs_*_to_*`) |
+| **Matrix** | `matrix.ofs` | Colecciones dinámicas y vectores (`ofs_array_*`) |
+| **Outlet** | `outlet.ofs` | Entrada y salida de la terminal (`echo_*`, colores ANSI, formato) |
+| **Foundation** | `foundation.ofs` | Sistema operativo y entorno (`ofs_getenv`, `ofs_mod`, `ofs_exit`) |
+| **Pulse** | `pulse.ofs` | Reloj monotónico de alta precisión y temporizadores (`now_ms`, `sleep_ms`) |
+| **Frame** | `frame.ofs` | Gestión de ventanas y superficies nativas |
+| **Impulse** | `impulse.ofs` | Eventos de entrada: ratón y teclado |
+| **Prism** | `prism.ofs` | Rasterización 2D de píxeles, geometría y superficies |
+
+Todas las primitivas de runtime son compiladas por `ofscc` directamente a LLVM IR nativo.
+
 ---
 
 ## 14. Comandos del compilador
@@ -954,800 +1513,3 @@ infuse fmt
 infuse {fmt:stable}
 reinfuse fmt
 ```
-
-### Precedencia de operadores (de menor a mayor)
-
-| Nivel | Operadores          | Asociatividad |
-|-------|---------------------|---------------|
-| 1     | `\|\|`              | Izquierda     |
-| 2     | `&&`                | Izquierda     |
-| 3     | `==` `!=`           | Izquierda     |
-| 4     | `<` `<=` `>` `>=`   | Izquierda     |
-| 5     | `|`                 | Izquierda     |
-| 6     | `^`                 | Izquierda     |
-| 7     | `&`                 | Izquierda     |
-| 8     | `<<` `>>`           | Izquierda     |
-| 9     | `+` `-`             | Izquierda     |
-| 10    | `*` `/` `%`         | Izquierda     |
-| 11    | Unarios: `-` `!` `&` `*` `++` `--` `~` | Derecha |
-
----
-## Control Flow
-
-### if / else
-
-```ofs
-if (condition) {
-    // then block
-}
-
-if (condition) {
-    // then block
-} else {
-    // else block
-}
-
-if (x > 100) {
-    echo("big")
-} else if (x > 50) {
-    echo("medium")
-} else {
-    echo("small")
-}
-```
-
-### cycle (bucle estilo C)
-
-```ofs
-cycle (forge i = 0; i < 10; i++) {
-    echo(i)
-}
-```
-
-**Sintaxis:**
-```
-cycle (<init>; <condition>; <step>) {
-    <body>
-}
-```
-
-### cycle (bucle por rango)
-
-```ofs
-forge nums = [1, 2, 3, 4, 5]
-cycle (n in nums) {
-    echo(n)
-}
-```
-
-**Sintaxis:**
-```
-cycle (<variable> in <collection>) {
-    <body>
-}
-```
-
-### break / continue
-
-```ofs
-cycle (forge i = 0; i < 100; i++) {
-    if (i == 50) {
-        break       // salir del bucle
-    }
-    if (i % 2 == 0) {
-        continue    // omitir los números pares
-    }
-    echo(i)
-}
-```
-
-### seal / anchor (ejecutar al salir del ámbito)
-
-`seal { … }` y `anchor { … }` son **lo mismo** (el mismo token): registran una acción que se ejecuta cuando termina el ámbito actual, en cualquier salida (fin del bloque, `return`, `break`/`shatter`, `continue`/`erode`, propagación `?`). Varias acciones se ejecutan en orden inverso (la última registrada va primero). `seal` es el nombre temático ("sella el recurso al salir"); `anchor` sigue valiendo. Aceptan un bloque o una sola instrucción.
-
-```ofs
-vein copiar(origen: obsidian) -> stone {
-    forge f = fopen(origen, "r")
-    seal { fclose(f) }           // se ejecuta en cualquier return de abajo
-    anchor echo("fin de copiar") // igual que seal; va antes del fclose (LIFO)
-    if (f == null) { return 1 }
-    // ...
-    return 0
-}
-```
-
-- La acción se evalúa **al salir**, con los valores de ese momento.
-- `return`, `break`, `continue` y `throw` **dentro** de `seal`/`anchor` están prohibidos (error `E0042`).
-- Funciona igual en nativo y en `ofs run`. Prueba: `ofs/tests/regress/seal_defer.ofs`.
-
-### while (bucle solo con condición)
-
-```ofs
-forge count: stone = 10
-while (count > 0) {
-    echo(count)
-    count -= 1
-}
-```
-
-**Sintaxis:**
-```
-while (<condition>) {
-    <body>
-}
-```
-
-`while` es azúcar sintáctico para un `cycle` con solo una condición. `break` y `continue` funcionan dentro de los bloques `while`.
-
----
-
-## Conversión de tipos (as)
-
-Use la palabra clave `as` para conversiones de tipo explícitas:
-
-```ofs
-forge x: stone = 42
-forge y: crystal = x as crystal    // entero a flotante
-
-forge pi: crystal = 3.14
-forge rounded: stone = pi as stone // flotante a entero (trunca)
-
-forge flag: bool = true
-forge num: stone = flag as stone   // bool a entero (0 o 1)
-```
-
-### Casts permitidos
-
-| Desde     | A         | Resultado               |
-|-----------|-----------|-------------------------|
-| `stone`   | `crystal` | Entero a flotante       |
-| `crystal` | `stone`   | Flotante a entero (trunca) |
-| `bool`    | `stone`   | `true` → 1, `false` → 0 |
-| `stone`   | `bool`    | 0 → `false`, distinto de cero → `true` |
-| `bool`    | `crystal` | `true` → 1.0, `false` → 0.0 |
-| `crystal` | `bool`    | 0.0 → `false`, distinto de cero → `true` |
-
-Nota: Los casts a cadena (`obsidian`) requieren funciones de runtime (`ofs_stone_to_obsidian`, etc.).
-
----
-
-## Importaciones
-
-Use `attach` para incorporar al ámbito módulos de la biblioteca estándar, paquetes o archivos locales.
-
-### Attach de biblioteca (stdlib / paquete)
-
-```ofs
-attach {core}
-attach {math}
-attach {webserver}
-attach {bedrock}
-attach {terminal-colors}
-attach {memory-modes}
-```
-
-El nombre dentro de `{}` corresponde a un módulo conocido de la biblioteca estándar o a un paquete instalado. El compilador resuelve el archivo automáticamente desde el directorio de la biblioteca estándar, `OFS_STDLIB_PATH` o `OFS_LIB_PATH`.
-
-### Attach de archivo
-
-```ofs
-attach {F:helpers.ofs}
-attach {F:../shared/utils.ofs}
-```
-
-Use el prefijo `F:` para referenciar un archivo `.ofs` concreto mediante una ruta relativa al archivo actual.
-
-Las declaraciones de `attach` deben aparecer en el nivel superior, antes o entre otras declaraciones. El preprocesador las resuelve antes de que se ejecuten el lexer y el parser, por lo que cada módulo se incrusta exactamente una vez (la deduplicación es automática).
-
-### Dónde busca `attach`
-
-Gana la primera opción que exista:
-
-| Forma | Orden de búsqueda |
-|---|---|
-| `attach {modulo}` | 1. `$OFS_STDLIB_PATH/modulo.ofs` · 2. carpeta del archivo que hace el `attach` · 3. cada carpeta de `$OFS_LIB_PATH` (separadas por `:`) · 4. `$OFS_LIB_HOME`, o `~/.ofs/libs` (donde instala `src/packages/install_library.sh`) |
-| `attach {F:ruta}` | 1. ruta absoluta, o relativa a la carpeta del archivo · 2. `$OFS_STDLIB_PATH/ruta` · 3. y 4. como arriba |
-
-En `attach {modulo}`, el guion se vuelve guion bajo (`terminal-colors` → `terminal_colors.ofs`). Un módulo que no existe en ninguno de esos lugares es **error de compilación**, con la lista de rutas probadas (`[ERRO DE ATTACH archivo:linea]: modulo 'x' nao encontrado`). Antes, `attach {x}` de un módulo inexistente se ignoraba en silencio.
-
-### Nombres indefinidos
-
-Usar un nombre no declarado (variable, global, constante) es **error de compilación** en los dos modos, con el archivo y la línea reales y una sugerencia cuando hay un nombre parecido (`[ERRO SEMANTICO calc.ofs:5:12]: identificador indefinido 'contadr'` / `voce quis dizer 'contador'?`). Los globales de nivel superior se pueden usar en una `vein` antes de la línea que los declara. Un módulo verificado solo (`ofs check modulo.ofs`) no ve los nombres del archivo que lo anexa: verifique el archivo principal. Los tipos incompatibles en una operación (`[AVISO DE TIPO]`) siguen siendo solo aviso.
-
-### Módulos de la biblioteca estándar
-
-| Nombre | Descripción |
-|------|-------------|
-| `core` | Auxiliares matemáticos, predicados, factorial, fibonacci |
-| `math` | Primos, utilidades de dígitos, inversión de números |
-| `string` | Utilidades de cadenas: repeat, starts_with, is_empty |
-| `io` | prompt, print_separator, print_header |
-| `webserver` | Constructor de respuestas HTTP, tipos MIME, auxiliares de registro |
-| `bedrock` | Celdas de heap de bajo nivel, regiones, auxiliares de campos de bits |
-| `bedrock-packet` | Auxiliares de layout de paquetes sobre regiones de bedrock |
-| `rift` | Envoltorios del Rift (auxiliares de biblioteca nativa) |
-| `terminal-colors` | Salida de colores ANSI en terminal |
-| `memory-modes` | Documentación y auxiliares para los modos fracture/abyss/fractal |
-| `test-lib` | Utilidades para pruebas unitarias |
-
----
-
-## Funciones externas
-
-El **Rift** (la grieta) es la frontera por la que OFS alcanza las bibliotecas nativas del sistema (libc, libm, X11, JNI de Android, kernel32). `extern vein` y `rift vein` declaran una función que vive en una biblioteca nativa. No hay código C en OFS. (La convención de llamada del sistema se conoce técnicamente como ABI de C; no implica código C.)
-
-Declare funciones de la biblioteca nativa del sistema mediante el Rift:
-
-```ofs
-extern vein ofs_pow(base: crystal, exp: crystal) -> crystal
-extern vein ofs_sqrt(val: crystal) -> crystal
-extern vein ofs_str_len(s: obsidian) -> stone
-
-core main() {
-    forge result = ofs_pow(2.0, 10.0)
-    echo(result)  // prints 1024
-}
-```
-
-Todas las funciones del runtime de OFS pueden accederse mediante declaraciones `extern`. Esto permite programar a bajo y alto nivel en el mismo lenguaje.
-
-### rift vein
-
-OFS ahora también admite `rift vein` como forma de declaración de funciones nativas mediante el Rift:
-
-```ofs
-rift vein strlen(text: obsidian) -> stone
-
-core main() {
-    echo(strlen("fault"))
-}
-```
-
-`rift vein` se reduce al mismo pipeline de llamadas nativas que `extern vein`, pero presenta la interoperabilidad como un límite nativo de OFS en lugar de enmarcar la característica solo como una declaración "extern".
-
-También puede añadir metadatos explícitos de interoperabilidad:
-
-```ofs
-rift vein text_size(text: obsidian) -> stone bind "strlen" abi c
-```
-
-- `bind "symbol"` define el nombre del símbolo de enlace externo.
-- `abi c` declara la ABI prevista.
-- `abi system` está reservado para llamadas en el límite de plataforma/sistema.
-
-### Dirección de interoperabilidad
-
-`extern vein` es la superficie actual del Rift. Hoy en día es más adecuada para símbolos de runtime y bibliotecas nativas del sistema.
-
-La hoja de ruta amplía esto hacia capas de interoperabilidad nativa más ricas para:
-
-- límites de objetos y bibliotecas nativas,
-- capas de puente hacia otros ecosistemas,
-- puentes de host/runtime,
-- incrustación de Python o bindings de host,
-- escapes de ensamblador específicos del destino.
-
-Estos son elementos de la hoja de ruta, no todos son funciones implementadas hoy.
-
----
-
-## Estructuras (monolith)
-
-Las estructuras se definen con la palabra clave `monolith`:
-
-```ofs
-monolith Player {
-    name: obsidian
-    hp:   stone
-    speed: crystal
-}
-```
-
-También puede declarar un modo de layout explícito:
-
-```ofs
-monolith Header layout packed {
-    tag: stone
-    flags: stone
-}
-```
-
-Modos de layout soportados actualmente:
-
-- `layout native`
-- `layout packed`
-- `layout c`
-
-`layout packed` se reduce a un layout de struct empaquetado de LLVM. `layout c` se acepta como intención explícita orientada a la ABI y actualmente se reduce igual que `native` hasta que se amplíe el subsistema completo de ABI/layout.
-
-### Creación de instancias
-
-```ofs
-forge hero: Player
-hero.name = "Obsidian Knight"
-hero.hp = 100
-hero.speed = 1.5
-```
-
-### Acceso a campos
-
-Use la notación de punto para acceder a los campos:
-
-```ofs
-echo(hero.name)     // "Obsidian Knight"
-echo(hero.hp)       // 100
-hero.hp -= 10       // recibe daño
-```
-
-Un campo puede ser otro `monolith`. El campo guarda una **referencia** al subobjeto (8 bytes en el layout del sistema); `forge c: Cuerpo` ya crea el subobjeto en cero, así que `c.pos.x = 1` funciona directamente. `c.pos = v` hace que el campo apunte a `v`; `forge w: Vec3 = c.pos` copia. Igual en nativo y en `ofs run` (prueba: `ofs/tests/regress/monolith_nested.ofs`).
-
-### Paso a funciones
-
-```ofs
-vein greet(p: Player) -> void {
-    echo(p.name)
-    echo(p.hp)
-}
-
-core main() {
-    forge hero: Player
-    hero.name = "Knight"
-    hero.hp = 100
-    hero.speed = 1.5
-    greet(hero)
-}
-```
-
----
-
-## Punteros (shard / fracture)
-
-Las operaciones con punteros solo están permitidas dentro de bloques `fracture` (seguro), `bedrock` (de bajo nivel tipado) o `abyss` (inseguro).
-
-### fracture (bloque de punteros seguro)
-
-```ofs
-core main() {
-    forge x: stone = 10
-
-    fracture {
-        shard p: *stone = &x   // p apunta a x
-        *p = 42                // desreferenciar y asignar
-    }
-
-    echo(x)  // prints 42
-}
-```
-
-**Reglas clave:**
-- Los punteros solo pueden crearse y usarse dentro de bloques `fracture`
-- El compilador verifica los tipos de todas las operaciones con punteros
-- `&x` toma la dirección de `x`
-- `*p` desreferencia el puntero `p`
-
-### Tipos de puntero
-
-```ofs
-shard p: *stone       // puntero a stone (i64*)
-shard q: *crystal     // puntero a crystal (f64*)
-shard s: *obsidian    // puntero a obsidian (i8**)
-```
-
-### bedrock (bloque de bajo nivel tipado)
-
-`bedrock` es el bloque de bajo nivel nativo de OFS para trabajo tipado cercano a la máquina.
-
-```ofs
-core main() {
-    forge x: stone = 10
-
-    bedrock {
-        shard p: *stone = &x
-        *p = *p + fault_spin_left(1, 3)
-    }
-
-    echo(x)
-}
-```
-
-Use `bedrock` cuando quiera control de bajo nivel e intrínsecos parecidos a los de la máquina, manteniendo las reglas tipadas de OFS.
-
----
-
-## Colecciones (Arrays)
-
-### Literales de array
-
-```ofs
-forge nums = [10, 20, 30, 40, 50]
-forge names = ["Alice", "Bob", "Charlie"]
-```
-
-Todos los elementos deben ser del mismo tipo. El tipo del array se infiere a partir de los elementos.
-
-### Indexación
-
-```ofs
-forge first = nums[0]    // 10
-forge last = nums[4]     // 50
-nums[2] = 99             // modificar elemento
-```
-
-La indexación de arrays es **basada en cero** y con **verificación de límites** en tiempo de ejecución. Fuera del límite (`a[7]`, `ofs_array_get`/`ofs_array_set`), el programa termina con código 1 y `ofs: indice 7 fora do limite do array (tamanho 5)` en stderr, en los dos modos.
-
-### Iteración
-
-```ofs
-// Por rango
-cycle (n in nums) {
-    echo(n)
-}
-
-// Por índice
-cycle (forge i = 0; i < 5; i++) {
-    echo(nums[i])
-}
-```
-
----
-
-## Memoria insegura (abyss)
-
-El bloque `abyss` permite operaciones de memoria crudas e inseguras:
-
-```ofs
-abyss {
-    // Raw memory access — no type checking
-    // Use with extreme caution
-}
-```
-
-**Reglas:**
-- La verificación de tipos se relaja dentro de los bloques `abyss`
-- Se permite el direccionamiento directo de memoria
-- Úselo solo cuando sea absolutamente necesario
-- Prefiera `fracture` para las operaciones con punteros
-
-### Alias de directiva: tectonic
-
-Puede usar `tectonic` como directiva de prefijo para los modos de memoria/efectos.
-Es una sintaxis alias que se asigna al mismo comportamiento de runtime/semántico:
-
-- `tectonic fracture { ... }` -> igual que `fracture { ... }`
-- `tectonic safe { ... }` -> igual que `fracture { ... }`
-- `tectonic abyss { ... }` -> igual que `abyss { ... }`
-- `tectonic unsafe { ... }` -> igual que `abyss { ... }`
-- `tectonic fractal { ... }` -> igual que `fractal { ... }`
-- `tectonic bedrock { ... }` -> igual que `bedrock { ... }`
-
-Ejemplo:
-
-```ofs
-core main() {
-    forge x: stone = 10
-
-    tectonic fracture {
-        shard p: *stone = &x
-        *p = 20
-    }
-
-    tectonic safe {
-        shard q: *stone = &x
-        *q = *q + 1
-    }
-
-    tectonic abyss {
-        shard raw: *stone = &x
-        *raw = *raw + 1
-    }
-
-    tectonic unsafe {
-        shard raw2: *stone = &x
-        *raw2 = *raw2 + 1
-    }
-
-    tectonic fractal {
-        echo("effect-lifted mode")
-    }
-
-    tectonic bedrock {
-        shard native: *stone = &x
-        *native = *native + 1
-    }
-}
-```
-
----
-
-## Funciones integradas
-
-### echo
-
-Función de impresión polimórfica: funciona con cualquier tipo:
-
-```ofs
-echo(42)              // prints: 42
-echo(3.14)            // prints: 3.14
-echo("hello")         // prints: hello
-echo(true)            // prints: true
-```
-
-`echo` selecciona automáticamente la función de impresión de runtime correcta según el tipo del argumento.
-
-### Intrínsecos fault_*
-
-Dentro de `bedrock`, `fracture` o `abyss`, OFS expone intrínsecos parecidos a los de la máquina con nombres nativos de OFS:
-
-```ofs
-bedrock {
-    forge x: stone = 0xF0F0
-    echo(fault_count(x))
-    echo(fault_lead(x))
-    echo(fault_trail(x))
-    echo(fault_swap(x))
-    echo(fault_spin_left(x, 4))
-    echo(fault_spin_right(x, 4))
-    echo(fault_weave(0xFF00, 0xAAAA, 0x5555))
-}
-```
-
-Intrínsecos disponibles:
-
-- `fault_count(stone)` -> conteo de población (bits a 1)
-- `fault_fence()` -> emite una barrera de memoria a nivel de máquina
-- `fault_prefetch(*stone)` -> solicita una captación previa a nivel de máquina para el destino de un puntero
-- `fault_trap()` -> emite una trampa a nivel de máquina
-- `fault_lead(stone)` -> cuenta los ceros a la izquierda
-- `fault_trail(stone)` -> cuenta los ceros a la derecha
-- `fault_swap(stone)` -> intercambio de bytes
-- `fault_spin_left(stone, stone)` -> rotación a la izquierda
-- `fault_spin_right(stone, stone)` -> rotación a la derecha
-- `fault_step(*stone, stone)` -> avance tipado de punteros en elementos
-- `fault_addr(vein)` -> dirección de la vein como `stone` (ver el Rift)
-- `fault_call(endereco, args...)` -> llamada indirecta mediante la convención de llamada del sistema (ver el Rift)
-- `fault_cut(value, shift, width)` -> extrae un campo de bits
-- `fault_patch(base, shift, width, insert)` -> reemplaza un campo de bits
-- `fault_weave(mask, left, right)` -> mezcla bits de `left` y `right` usando `mask`
-- `fault_unreachable()` -> marca el camino actual como inalcanzable, se reduce a IR `llvm.trap` + `unreachable`
-- `fault_memcpy(dst, src, len)` -> copia de memoria en bloque (se reduce a `llvm.memcpy`); `dst` y `src` deben ser punteros
-- `fault_memset(dst, val, len)` -> relleno de memoria en bloque con el byte `val` (se reduce a `llvm.memset`); `dst` debe ser un puntero
-
-Semántica exacta (igual en la compilación nativa y en el intérprete `ofs run`):
-
-- Todo en 64 bits, complemento a 2: `fault_count(-1)` = 64; `fault_lead(0)` = `fault_trail(0)` = 64; `fault_lead(-1)` = 0.
-- `fault_spin_left`/`fault_spin_right`: rotación de 64 bits (`llvm.fshl`/`llvm.fshr`); la distancia se toma módulo 64 (`fault_spin_right(6, 65)` = 3).
-- `fault_weave(mask, left, right)` = `(left & mask) | (right & ~mask)`: el bit viene de `left` donde `mask` tiene 1 y de `right` donde tiene 0.
-- `fault_trap()` y `fault_unreachable()` terminan el proceso con SIGILL (el intérprete hace lo mismo con `raise(SIGILL)`).
-- `fault_fence()`/`fault_prefetch()` no hacen nada en el intérprete.
-- En el intérprete los punteros son direcciones reales: `fault_memcpy`/`fault_memset` copian/rellenan cualquier tamaño, y `fault_step`, `fault_addr` y `fault_call` funcionan como en el nativo (ver "En el intérprete (`ofs run`): el Rift").
-- Prueba: `ofs/tests/regress/fault_intrinsics.ofs`.
-
-Estas funciones están diseñadas para cubrir operaciones que el ensamblador ya tiene, y al mismo tiempo dar a OFS espacio para su propio vocabulario orientado a la máquina.
-
-### asm (escape de ensamblador en línea) — planeado
-
-> **Estado: planeado.** El `asm` en línea todavía **no está disponible**: el lexer no reconoce la palabra `asm` y el backend LLVM no genera `InlineAsm`. El ejemplo muestra el diseño previsto y **no compila hoy**. Por ahora use los intrínsecos `fault_*`.
-
-Cuando ningún intrínseco `fault_*` cubre su necesidad, `asm` emitirá una cadena de ensamblador sin procesar directamente en ese punto del código. Solo se permitirá dentro de un bloque `bedrock`, `fracture` o `abyss`.
-
-```ofs
-bedrock {
-    asm "nop"     // planeado
-    asm "int3"    // planeado
-}
-```
-
-**Restricciones:**
-- Planeado: el argumento debe ser un literal de cadena.
-- La sintaxis de operandos de entrada/salida (restricciones completas estilo AT&T) todavía no es analizable; use los intrínsecos `fault_*` cuando necesite enlazar operandos.
-- Planeado: genera una llamada de ensamblador en línea sin valor de retorno en LLVM IR, reenviando la cadena de ensamblador textualmente.
-- Planeado: la expresión `asm` se reducirá a `InlineAsm` de LLVM, despachada en el análisis semántico y en la generación de código. Todavía no está implementado.
-
----
-
-## Comentarios
-
-```ofs
-// Comentario de una sola línea
-
-/* Comentario
-   de varias líneas */
-
-forge x = 42  // comentario en línea
-```
-
----
-
-## Terminación de sentencias
-
-Las sentencias terminan con **salto de línea** o **punto y coma**. Ambos son válidos:
-
-```ofs
-forge x = 10
-forge y = 20
-
-// O con punto y coma
-forge x = 10; forge y = 20
-```
-
-Los saltos de línea dentro de `()`, `[]` y `{}` se ignoran (continuación implícita de línea):
-
-```ofs
-forge result = add(
-    10,
-    20
-)
-```
-
----
-
-## Biblioteca estándar
-
-La biblioteca estándar se divide entre auxiliares orientados a la aplicación y auxiliares nativos de bajo nivel de OFS en desarrollo.
-
-Ejemplos:
-
-- `terminal_colors.ofs` para la presentación en terminal
-- `webserver.ofs` para auxiliares HTTP
-- `memory_modes.ofs` para las descripciones de los modos de memoria
-- `bedrock.ofs` para auxiliares de estado respaldado por heap de forma explícita, al estilo nativo de OFS
-- `rift.ofs` para envoltorios del Rift nativos de OFS
-
-- `bedrock_packet.ofs` para vistas de paquete/cabecera construidas sobre regiones de bajo nivel
-
-### Módulo Bedrock
-
-`bedrock.ofs` es la semilla actual de la programación de bajo nivel nativa de OFS.
-
-Proporciona auxiliares como:
-
-- `bedrock_cell_new(initial)`
-- `bedrock_cell_read(cell)`
-- `bedrock_cell_write(cell, value)`
-- `bedrock_cell_add(cell, delta)`
-- `bedrock_cell_sub(cell, delta)`
-- `bedrock_cell_drop(cell)`
-- `bedrock_region_new(len)`
-- `bedrock_region_read(region, index)`
-- `bedrock_region_write(region, index, value)`
-- `bedrock_region_add(region, index, delta)`
-- `bedrock_prefetch(region, index)`
-- `bedrock_region_drop(region)`
-- `bedrock_view_at(region, start, offset)`
-- `bedrock_view_read(region, start, offset)`
-- `bedrock_view_write(region, start, offset, value)`
-- `bedrock_field_cut(value, shift, width)`
-- `bedrock_field_patch(base, shift, width, insert)`
-- `bedrock_lane8_get(value, lane)`
-- `bedrock_lane8_set(value, lane, insert)`
-- `bedrock_lane16_le_get(value, lane)`
-- `bedrock_lane16_be_get(value, lane)`
-- `bedrock_lane16_le_set(value, lane, insert)`
-- `bedrock_lane16_be_set(value, lane, insert)`
-- `bedrock_lane32_le_get(value, lane)`
-- `bedrock_lane32_be_get(value, lane)`
-- `bedrock_lane32_le_set(value, lane, insert)`
-- `bedrock_lane32_be_set(value, lane, insert)`
-- `bedrock_barrier()`
-
-El propósito de este módulo no es imitar directamente las APIs de otro lenguaje, sino dejar que la programación de bajo nivel crezca con el vocabulario de OFS.
-
-Estos auxiliares de lanes también dan a OFS una superficie consciente del endianness para ventanas de bits orientadas a la ABI, sin obligar al usuario a recurrir a desplazamientos crudos en todas partes.
-
-### Módulo Rift
-
-`rift.ofs` es la primera superficie de interoperabilidad de la biblioteca estándar construida sobre `rift vein`.
-
-Proporciona envoltorios como:
-
-- `rift_text_size(text)`
-- `rift_line(text)`
-- `rift_banner(title)`
-- `rift_report_line(label, value)`
-
-El objetivo es que las bibliotecas nativas del sistema puedan consumirse mediante APIs orientadas a OFS, en lugar de exponer solo declaraciones crudas por todas partes.
-
-### Módulo Bedrock Packet
-
-`bedrock_packet.ofs` es el primer módulo estructurado de bajo nivel con estilo de objetos construido sobre regiones de bedrock.
-
-Proporciona auxiliares como:
-
-- `bedrock_packet_store(region, slot, header, payload)`
-- `bedrock_packet_header(region, slot)`
-- `bedrock_packet_payload(region, slot)`
-- `bedrock_packet_opcode(header)`
-- `bedrock_packet_lane(header)`
-- `bedrock_packet_opcode_be16(header)`
-- `bedrock_packet_tail_le16(header)`
-- `bedrock_packet_set_opcode(header, opcode)`
-- `bedrock_packet_set_lane(header, lane)`
-
-Esto forma parte de la dirección en la que la programación de bajo nivel de OFS adquiere sus propios objetos/módulos reutilizables, en lugar de exponer solo operaciones crudas.
-
-### Patrón de ejemplo híbrido
-
-Es válido y recomendable mezclar OFS de alto y bajo nivel en el mismo archivo:
-
-- lógica de negocio en funciones `vein` normales,
-- llamada a bibliotecas nativas mediante el Rift (`rift vein`),
-- trabajo cercano a la máquina en `bedrock`,
-- auxiliares explícitos de almacenamiento de `bedrock.ofs`.
-
-OFS incluye una biblioteca estándar escrita en el propio OFS (`stdlib/core.ofs`):
-
-### Funciones matemáticas
-
-```ofs
-vein abs(x: stone) -> stone         // valor absoluto
-vein max(a: stone, b: stone) -> stone  // máximo
-vein min(a: stone, b: stone) -> stone  // mínimo
-vein clamp(val: stone, lo: stone, hi: stone) -> stone  // limitar a un rango
-```
-
-### Runtime nativo de OFS (Stack Magma)
-
-La implementación principal del runtime y de la biblioteca estándar de OFS está escrita en OFS (`stdlib/runtime/`), sin una implementación de runtime en otro lenguaje:
-
-| Subsistema | Módulo | Responsabilidad |
-|---|---|---|
-| **Magma** | `magma.ofs` | Bootstrap y orquestador de ejecución del runtime nativo |
-| **Reservoir** | `reservoir.ofs` | Asignación y gestión de memoria (`ofs_alloc`, `ofs_free`) |
-| **Facet** | `facet.ofs` | Operaciones de texto y conversión numérica (`ofs_str_*`, `ofs_*_to_*`) |
-| **Matrix** | `matrix.ofs` | Colecciones dinámicas y vectores (`ofs_array_*`) |
-| **Outlet** | `outlet.ofs` | Entrada y salida de terminal (`echo_*`, colores ANSI, formato) |
-| **Foundation** | `foundation.ofs` | Abstracciones del sistema operativo y del entorno (`ofs_getenv`, `ofs_mod`, `ofs_exit`) |
-| **Pulse** | `pulse.ofs` | Reloj monotónico de alta precisión y temporizadores (`now_ms`, `sleep_ms`) |
-| **Frame** | `frame.ofs` | Gestión de ventanas y superficies nativas |
-| **Impulse** | `impulse.ofs` | Eventos de entrada: ratón y teclado |
-| **Prism** | `prism.ofs` | Rasterización 2D de píxeles, geometría y superficies |
-
-Todas las primitivas de runtime son compiladas directamente por `ofscc` a LLVM IR nativo, lo que garantiza que los programas de OFS se ejecuten sobre el propio runtime nativo sin depender de implementaciones en C.
-
----
-
-## Palabras clave
-
-Lista completa de palabras clave reservadas:
-
-| Palabra clave | Token            | Propósito                  |
-|------------|------------------|----------------------------|
-| `core`     | `KW_CORE`        | Función de entrada         |
-| `vein`     | `KW_VEIN`        | Definición de función      |
-| `forge`    | `KW_FORGE`       | Declaración de variable    |
-| `monolith` | `KW_MONOLITH`   | Definición de struct       |
-| `fracture` | `KW_FRACTURE`   | Bloque de punteros seguro  |
-| `abyss`    | `KW_ABYSS`      | Bloque de memoria insegura |
-| `cycle`    | `KW_CYCLE`       | Bucle                      |
-| `if`       | `KW_IF`          | Condicional                |
-| `else`     | `KW_ELSE`        | Rama else                  |
-| `return`   | `KW_RETURN`      | Retorno desde función      |
-| `echo`     | `KW_ECHO`        | Impresión (integrada)      |
-| `in`       | `KW_IN`          | Bucle por rango            |
-| `shard`    | `KW_SHARD`       | Tipo puntero               |
-| `true`     | `KW_TRUE`        | Booleano verdadero         |
-| `false`    | `KW_FALSE`       | Booleano falso             |
-| `null`     | `KW_NULL`        | Valor nulo                 |
-| `break`    | `KW_BREAK`       | Salir del bucle            |
-| `continue` | `KW_CONTINUE`    | Omitir iteración           |
-| `stone`    | `KW_STONE`       | Tipo entero (i64)          |
-| `crystal`  | `KW_CRYSTAL`     | Tipo flotante (f64)        |
-| `obsidian` | `KW_OBSIDIAN`    | Tipo cadena (i8*)          |
-| `bool`     | `KW_BOOL`        | Tipo booleano (i1)         |
-| `void`     | `KW_VOID`        | Tipo void                  |
-| `attach`   | `KW_IMPORT`      | Adjuntar módulo            |
-| `while`    | `KW_WHILE`       | Bucle solo con condición   |
-| `extern`   | `KW_EXTERN`      | Función nativa del Rift (biblioteca del sistema) |
-| `rift`     | `KW_RIFT`        | Declaración de función nativa mediante el Rift |
-| `as`       | `KW_AS`          | Cast de tipo              |
-| `match`    | `KW_MATCH`       | Coincidencia de patrones   |
-| `case`     | `KW_CASE`        | Rama de match              |
-| `default`  | `KW_DEFAULT`     | Rama de respaldo de match  |
-| `const`    | `KW_CONST`       | Variable inmutable         |
-| `strata`   | `KW_STRATA`      | Declaración de enum        |
-| `tremor`   | `KW_TREMOR`      | Bloque de manejo de errores |
-| `catch`    | `KW_CATCH`       | Manejador de errores       |
-| `throw`    | `KW_THROW`       | Lanzar valor de error      |
-| `tectonic` | `KW_TECTONIC`    | Prefijo de directiva de modo |
-| `bedrock`  | `KW_BEDROCK`     | Bloque de bajo nivel tipado |
-| `asm`      | `KW_ASM`         | Escape de ensamblador en línea (planeado, aún no disponible) |
