@@ -149,6 +149,10 @@ a.chip:hover { border-color: var(--accent); color: var(--accent2); }
 .b.cst { color: var(--pn); border-color: color-mix(in srgb, var(--pn) 45%, transparent); }
 .b.priv { opacity: .8; }
 .b.nodoc { color: var(--bad); border-color: color-mix(in srgb, var(--bad) 45%, transparent); background: color-mix(in srgb, var(--bad) 10%, transparent); }
+/* A5.4 + Ideia 4: estrato e permissoes do modulo */
+.b.stratum { color: var(--accent2); border-color: color-mix(in srgb, var(--accent) 45%, transparent); font-family: var(--mono); }
+.b.claim { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 50%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent); font-family: var(--mono); }
+.b.caprock { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, transparent); font-family: var(--mono); }
 .sig { background: var(--code); border: 1px solid var(--line); border-left: 3px solid var(--ribbon); border-radius: 10px; padding: 12px 14px; font-size: 13.5px; line-height: 1.6; }
 .sig code { background: none; border: 0; padding: 0; font-size: inherit; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--ink); }
 .k { color: var(--k); font-weight: 600; }
