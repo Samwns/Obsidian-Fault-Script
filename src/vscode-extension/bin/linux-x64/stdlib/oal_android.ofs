@@ -3,6 +3,8 @@
 // toque e voltar viram chamadas oal.*; cada EV_FRAME redesenha se preciso e
 // copia o buffer para o ANativeWindow.
 
+claim rift
+
 attach {F:android.ofs}
 attach {F:oal_runtime.ofs}
 attach {F:android_input.ofs}

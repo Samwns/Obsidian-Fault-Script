@@ -16,6 +16,8 @@
 //  - o retorno do JS para o OFS vai pelo document.title (webview.title()).
 // So na thread principal (callbacks do android.ofs).
 
+claim abyss
+
 attach {F:android.ofs}
 
 extern vein ofs_alloc(size: stone) -> *stone

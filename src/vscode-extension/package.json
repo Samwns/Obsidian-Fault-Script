@@ -26,9 +26,11 @@
   "activationEvents": [
     "onLanguage:ofs",
     "onLanguage:oll",
-    "onCommand:ofs.openStudio",
     "onCommand:ofs.runNative",
-    "onCommand:ofs.previewOll"
+    "onCommand:ofs.previewOll",
+    "onCommand:ofs.fossilReplay",
+    "onCommand:ofs.fossilNext",
+    "onCommand:ofs.fossilBack"
   ],
   "contributes": {
     "languages": [
@@ -186,56 +188,22 @@
         "icon": "$(layout)"
       },
       {
-        "command": "ofs.openStudio",
-        "title": "Open Studio IDLE (OLL Engine)",
-        "shortTitle": "Studio IDLE",
+        "command": "ofs.fossilReplay",
+        "title": "Fossil: Go to a Point of a Recording (.fossil)",
         "category": "OFS",
-        "icon": "$(layout)"
+        "icon": "$(history)"
       },
       {
-        "command": "ofs.launchNativeIdle",
-        "title": "Launch Native Studio IDLE (Linux X11)",
-        "shortTitle": "Native IDLE",
-        "category": "OFS",
-        "icon": "$(window)"
+        "command": "ofs.fossilNext",
+        "title": "Fossil: Next Step",
+        "category": "OFS"
       },
       {
-        "command": "ofs.refreshWorkspace",
-        "title": "Refresh OFS Studio Explorer",
-        "category": "OFS",
-        "icon": "$(refresh)"
-      },
-      {
-        "command": "ofs.setTheme",
-        "title": "Set OLL Theme",
+        "command": "ofs.fossilBack",
+        "title": "Fossil: Previous Step",
         "category": "OFS"
       }
     ],
-    "viewsContainers": {
-      "activitybar": [
-        {
-          "id": "ofs-studio",
-          "title": "OFS Studio",
-          "icon": "media/icon.svg"
-        }
-      ]
-    },
-    "views": {
-      "ofs-studio": [
-        {
-          "id": "ofs.workspaceView",
-          "name": "OFS Explorer"
-        },
-        {
-          "id": "ofs.actionsView",
-          "name": "Compilador & Ações"
-        },
-        {
-          "id": "ofs.themesView",
-          "name": "Temas Visuais OLL"
-        }
-      ]
-    },
     "debuggers": [
       {
         "type": "ofs-native",
@@ -309,11 +277,6 @@
           "command": "ofs.previewOll",
           "when": "resourceLangId == oll",
           "group": "navigation@2"
-        },
-        {
-          "command": "ofs.openStudio",
-          "when": "resourceLangId == ofs || resourceLangId == oll",
-          "group": "navigation@3"
         }
       ],
       "editor/title": [
@@ -331,23 +294,6 @@
           "command": "ofs.stopExecution",
           "when": "resourceLangId == ofs && ofs.executionRunning",
           "group": "navigation@2"
-        }
-      ],
-      "view/title": [
-        {
-          "command": "ofs.refreshWorkspace",
-          "when": "view == ofs.workspaceView",
-          "group": "navigation@1"
-        },
-        {
-          "command": "ofs.openStudio",
-          "when": "view == ofs.workspaceView",
-          "group": "navigation@2"
-        },
-        {
-          "command": "ofs.launchNativeIdle",
-          "when": "view == ofs.actionsView",
-          "group": "navigation@1"
         }
       ]
     },

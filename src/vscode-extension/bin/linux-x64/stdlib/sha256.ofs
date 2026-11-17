@@ -8,6 +8,8 @@
 // Aritmetica de 32 bits em `stone` (64 bits) com mascara; le arquivos em
 // blocos de 64 KB (nao carrega o arquivo inteiro).
 
+claim rift
+
 extern vein fopen(path: obsidian, mode: obsidian) -> *stone
 extern vein fclose(f: *stone) -> stone
 extern vein fread(buf: *stone, sz: stone, n: stone, f: *stone) -> stone

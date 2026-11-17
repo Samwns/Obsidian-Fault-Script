@@ -11,6 +11,9 @@
 //
 // Contrato (sem ponteiro de funcao para o codigo do app): o arquivo gerado
 // pelo oalc define as veins abaixo; o backend define as oal_backend_*.
+
+claim rift
+
 extern vein oal_app_init() -> void
 extern vein oal_app_build(screen: stone) -> void
 extern vein oal_app_action(action: stone, item: stone) -> void

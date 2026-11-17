@@ -1,3 +1,5 @@
+claim rift
+
 attach {F:bedrock.ofs}
 attach {F:window.ofs}
 attach {F:fs.ofs}

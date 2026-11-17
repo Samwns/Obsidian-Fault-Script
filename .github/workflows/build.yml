@@ -73,6 +73,11 @@ jobs:
           OFS_BIN: ${{ github.workspace }}/selfhost/ofs
         run: bash tests/render/run.sh
 
+      - name: Test crystallization (background, cache and fallback)
+        env:
+          OFSCC_BIN: ${{ github.workspace }}/selfhost/ofscc
+        run: bash ofs/tests/interpreter/test_crystallization.sh
+
       - name: Build OFS native wizard installer
         env:
           OFS_STDLIB: ${{ github.workspace }}/ofs/stdlib
@@ -214,6 +219,58 @@ jobs:
         run: |
           & "selfhost\ofscc.exe" --help
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+  # Informativo: valida `ofs build --target android` no Windows (NDK + build-tools).
+  android-windows:
+    name: Android APK (Windows, informativo)
+    runs-on: windows-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build OFS from repository sources
+        shell: powershell
+        run: |
+          $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
+          New-Item -ItemType Directory -Path selfhost -Force | Out-Null
+          & clang -Wno-override-module -c "ofs\dist\magma_windows.ll" -o "selfhost\magma.o"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $llvmIrFlags = @()
+          $clangVersion = (& clang --version | Out-String)
+          if ($clangVersion -match 'version 14\.') { $llvmIrFlags = @("-mllvm", "-opaque-pointers") }
+          & clang -Wno-override-module @llvmIrFlags "-Wl,/force:multiple" -O2 "ofs\dist\ofscc.ll" "selfhost\magma.o" -lws2_32 -o "selfhost\ofscc.exe"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item "src\packaging\windows\ofs.cmd" "selfhost\ofs.cmd"
+          (Get-Content "src\packaging\windows\ofs.ps1" -Raw).Replace("__OFS_VERSION__", "ci") | Set-Content "selfhost\ofs.ps1"
+          "OFS_CMD=$((Resolve-Path 'selfhost\ofs.cmd').Path)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "OFS_STDLIB=$(((Resolve-Path 'ofs\stdlib').Path).Replace('\', '/'))" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "OFS_SOURCE=$((Resolve-Path 'ofs').Path)" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: Install Android NDK and build-tools
+        shell: powershell
+        run: |
+          $sdk = $env:ANDROID_HOME
+          if (-not $sdk) { $sdk = "$env:LOCALAPPDATA\Android\Sdk" }
+          $sm = Join-Path $sdk "cmdline-tools\latest\bin\sdkmanager.bat"
+          if (-not (Test-Path $sm)) { Write-Error "sdkmanager nao encontrado em $sm"; exit 1 }
+          "y`n" * 20 | & $sm --licenses | Out-Null
+          & $sm "ndk;27.2.12479018" "build-tools;34.0.0" "platforms;android-34"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          "ANDROID_SDK=$sdk" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - name: Build APK from a .oal
+        shell: powershell
+        run: |
+          $env:PATH = "C:\Program Files\LLVM\bin;$env:PATH"
+          & "$env:OFS_CMD" build --target android ofs/tests/oal/use_form.oal -o "$PWD\use_form-debug.apk"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path use_form-debug.apk)) { Write-Error "APK nao gerado"; exit 1 }
+          Get-Item use_form-debug.apk | Format-List Name, Length
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-windows
+          path: use_form-debug.apk
 
   docs-check:
     name: Docs

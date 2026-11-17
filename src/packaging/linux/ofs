@@ -210,13 +210,23 @@ native_link() {
     return 0
   fi
 
+  # Ideia 5 (magma.cast): o mod carregado em execucao (.so) usa o runtime do
+  # proprio programa (mesmo heap, stdout e strings), entao o binario que chama
+  # magma.cast exporta os simbolos dele (como o ofscc, ligado com -rdynamic).
+  local magma_export=()
+  local magma_cflag=()
+  if grep -q '@magma__cast(' "$in_ll" 2>/dev/null; then
+    magma_export=(--export-dynamic)
+    magma_cflag=(-rdynamic)
+  fi
+
   if [ "$IS_TERMUX" = true ]; then
     local tclang="${PREFIX:-}/bin/clang"
     [ -x "$tclang" ] || tclang="$(command -v clang || true)"
     [ -n "$tclang" ] || { echo "ofs: clang nao encontrado (pkg install clang)" >&2; return 1; }
     local tcmd=("$tclang" -Wno-override-module)
     [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ] && tcmd+=("${OFS_LLVM_IR_FLAGS[@]}")
-    tcmd+=(-Wl,--allow-multiple-definition "$in_ll")
+    tcmd+=(-Wl,--allow-multiple-definition "${magma_cflag[@]}" "$in_ll")
     [ "${#magma_objs[@]}" -gt 0 ] && tcmd+=("${magma_objs[@]}")
     tcmd+=(-lm -o "$out_bin")
     "${tcmd[@]}"
@@ -230,9 +240,9 @@ native_link() {
     local ld_cmd=()
     if [ -x /usr/lib64/rocm/llvm/bin/ld.lld ]; then
       linker_bin="/usr/lib64/rocm/llvm/bin/ld.lld"
-      ld_cmd=("$linker_bin" --allow-multiple-definition -L/usr/lib64 -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
+      ld_cmd=("$linker_bin" --allow-multiple-definition "${magma_export[@]}" -L/usr/lib64 -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
     else
-      ld_cmd=("$linker_bin" --allow-multiple-definition -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
+      ld_cmd=("$linker_bin" --allow-multiple-definition "${magma_export[@]}" -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
     fi
     if [ "${#magma_objs[@]}" -gt 0 ]; then
       ld_cmd+=("${magma_objs[@]}")
@@ -255,7 +265,7 @@ native_link() {
     if [ "$(uname -s)" != "Darwin" ]; then
       clang_cmd+=(-Wl,--allow-multiple-definition)
     fi
-    clang_cmd+=("$in_ll")
+    clang_cmd+=("${magma_cflag[@]}" "$in_ll")
     if [ "${#magma_objs[@]}" -gt 0 ]; then
       clang_cmd+=("${magma_objs[@]}")
     fi
@@ -353,7 +363,12 @@ ${c_head}Uso:${c_off} ofs <arquivo.ofs>   (equivale a 'ofs run')
 
 ${c_head}Subcomandos:${c_off}
   ${c_cmd}run <arq.ofs>${c_off}       Executa interpretado (--native compila temporario)
-  ${c_cmd}build <arq.ofs>${c_off}     Compila para executavel nativo (-o saida)
+  ${c_cmd}refract <arq.ofs>${c_off}   Executa e aplica cada edicao salva sem reiniciar (--quiet)
+  ${c_cmd}refract --remote <app.oal>${c_off} Edicao ao vivo do app no celular (adb; --serial)
+  ${c_cmd}fossil <arq.ofs>${c_off}    Executa e grava as entradas externas num .fossil (-o arq.fossil)
+  ${c_cmd}fossil replay <f.fossil>${c_off} Reproduz a gravacao (--to <passo|L<linha>|vein>, --back N, --dig)
+  ${c_cmd}build <arq.ofs>${c_off}     Compila para executavel nativo (-o saida, --release sem checar contratos)
+  ${c_cmd}assay <arq.ofs>${c_off}     Testa os contratos nos limites (bearing/settle/grain)
   ${c_cmd}check <arq.ofs>${c_off}     Somente verificacao de tipos
   ${c_cmd}test [pasta]${c_off}      Roda *.ofs com .expected numa pasta (--run, --twin)
   ${c_cmd}twin <arq.ofs>${c_off}      Roda interpretado + nativo e compara saidas
@@ -364,7 +379,7 @@ ${c_head}Subcomandos:${c_off}
   ${c_cmd}doc [pasta|arq.ofs]${c_off} Documentacao gerada do codigo (-o saida, --check, --docs pasta)
   ${c_cmd}fmt [alvos]${c_off}         Formata .ofs no lugar (--check, --diff, --stdin)
   ${c_cmd}quarry <subcmd>${c_off}     Pacotes: add, remove, list, search, update, install, publish
-  ${c_cmd}build --target android${c_off} APK Android de um .ofs ou .oal (--install, --serial, --manifest)
+  ${c_cmd}build --target android${c_off} APK Android de um .ofs ou .oal (--install, --serial, --manifest, --refract)
   ${c_cmd}run <app.oal>${c_off}       Abre o app OAL numa janela de celular (X11)
   ${c_cmd}clean${c_off}               Limpa artefatos temporarios de build
   ${c_cmd}version${c_off}             Mostra a versao
@@ -382,7 +397,12 @@ ${c_head}Uso:${c_off} ofs <archivo.ofs>   (equivale a 'ofs run')
 
 ${c_head}Subcomandos:${c_off}
   ${c_cmd}run <arq.ofs>${c_off}       Ejecuta interpretado (--native compila temporal)
-  ${c_cmd}build <arq.ofs>${c_off}     Compila a ejecutable nativo (-o salida)
+  ${c_cmd}refract <arq.ofs>${c_off}   Ejecuta y aplica cada edicion guardada sin reiniciar (--quiet)
+  ${c_cmd}refract --remote <app.oal>${c_off} Edicion en vivo de la app en el celular (adb; --serial)
+  ${c_cmd}fossil <arq.ofs>${c_off}    Ejecuta y graba las entradas externas en un .fossil (-o arq.fossil)
+  ${c_cmd}fossil replay <f.fossil>${c_off} Reproduce la grabacion (--to <paso|L<linea>|vein>, --back N, --dig)
+  ${c_cmd}build <arq.ofs>${c_off}     Compila a ejecutable nativo (-o salida, --release sin chequear contratos)
+  ${c_cmd}assay <arq.ofs>${c_off}     Prueba los contratos en los limites (bearing/settle/grain)
   ${c_cmd}check <arq.ofs>${c_off}     Solo verificacion de tipos
   ${c_cmd}test [pasta]${c_off}      Ejecuta *.ofs con .expected en una carpeta (--run, --twin)
   ${c_cmd}twin <arq.ofs>${c_off}      Ejecuta interpretado + nativo y compara salidas
@@ -393,7 +413,7 @@ ${c_head}Subcomandos:${c_off}
   ${c_cmd}doc [carpeta|arq.ofs]${c_off} Documentacion generada del codigo (-o salida, --check, --docs carpeta)
   ${c_cmd}fmt [destinos]${c_off}      Formatea .ofs en el sitio (--check, --diff, --stdin)
   ${c_cmd}quarry <subcmd>${c_off}     Paquetes: add, remove, list, search, update, install, publish
-  ${c_cmd}build --target android${c_off} APK Android de un .ofs o .oal (--install, --serial, --manifest)
+  ${c_cmd}build --target android${c_off} APK Android de un .ofs o .oal (--install, --serial, --manifest, --refract)
   ${c_cmd}run <app.oal>${c_off}       Abre la app OAL en una ventana de movil (X11)
   ${c_cmd}clean${c_off}               Limpia artefactos temporales de build
   ${c_cmd}version${c_off}             Muestra la version
@@ -411,7 +431,12 @@ ${c_head}Usage:${c_off} ofs <file.ofs>   (same as 'ofs run')
 
 ${c_head}Subcommands:${c_off}
   ${c_cmd}run <file.ofs>${c_off}      Run interpreted (--native builds a temp binary)
-  ${c_cmd}build <file.ofs>${c_off}    Compile to a native executable (-o output)
+  ${c_cmd}refract <file.ofs>${c_off}  Run and apply every saved edit without restarting (--quiet)
+  ${c_cmd}refract --remote <app.oal>${c_off} Live-edit the app on the phone (adb; --serial)
+  ${c_cmd}fossil <file.ofs>${c_off}   Run and record the external inputs into a .fossil (-o file.fossil)
+  ${c_cmd}fossil replay <f.fossil>${c_off} Replay the recording (--to <step|L<line>|vein>, --back N, --dig)
+  ${c_cmd}build <file.ofs>${c_off}    Compile to a native executable (-o output, --release skips contract checks)
+  ${c_cmd}assay <file.ofs>${c_off}    Test contracts at their boundaries (bearing/settle/grain)
   ${c_cmd}check <file.ofs>${c_off}    Type-check only (no output)
   ${c_cmd}test [folder]${c_off}     Run *.ofs with .expected in a folder (--run, --twin)
   ${c_cmd}twin <file.ofs>${c_off}     Run interpreted + native and diff outputs
@@ -422,7 +447,7 @@ ${c_head}Subcommands:${c_off}
   ${c_cmd}doc [dir|file.ofs]${c_off}  Docs generated from source code (-o out, --check, --docs dir)
   ${c_cmd}fmt [targets]${c_off}       Format .ofs in place (--check, --diff, --stdin)
   ${c_cmd}quarry <subcmd>${c_off}     Packages: add, remove, list, search, update, install, publish
-  ${c_cmd}build --target android${c_off} Android APK from a .ofs or .oal (--install, --serial, --manifest)
+  ${c_cmd}build --target android${c_off} Android APK from a .ofs or .oal (--install, --serial, --manifest, --refract)
   ${c_cmd}run <app.oal>${c_off}       Open an OAL app in a phone-sized X11 window
   ${c_cmd}clean${c_off}               Clean temporary build artifacts
   ${c_cmd}version${c_off}             Print compiler version
@@ -575,6 +600,9 @@ run_update() {
 #                                     ao lado do fonte, ou um gerado)
 #   --install                         adb install -r + abre a activity
 #   --serial <id>                     adb -s <id> (ou ANDROID_SERIAL)
+#   --refract                         Fault Refract L3: celula de despacho por
+#                                     vein + agente geophone (so para depurar;
+#                                     sem a opcao o IR e o mesmo de sempre)
 # Env: ANDROID_SDK/ANDROID_HOME/ANDROID_SDK_ROOT, OFS_SOURCE (pasta ofs/ do
 #      repo, para compilar ofscc/oalc do fonte), OFS_ANDROID_KEYSTORE.
 # ---------------------------------------------------------------------------
@@ -638,9 +666,11 @@ android_tool() {
 }
 
 android_ir() {
-  OFSCC_TARGET=android OFSCC_INPUT="$1" OFSCC_MODE=ir OFSCC_C_OUT="$2" "$A_OFSCC" >"$2.log" 2>&1 \
-    || { cat "$2.log" >&2; android_die "ofscc falhou em $1"; }
-  [ -s "$2" ] || { cat "$2.log" >&2; android_die "ofscc nao gerou $2"; }
+  # $3.. = variaveis extras (ex.: OFSCC_REFRACT=cells no app do --refract)
+  local in="$1" out="$2"; shift 2
+  env "$@" OFSCC_TARGET=android OFSCC_INPUT="$in" OFSCC_MODE=ir OFSCC_C_OUT="$out" "$A_OFSCC" >"$out.log" 2>&1 \
+    || { cat "$out.log" >&2; android_die "ofscc falhou em $in"; }
+  [ -s "$out" ] || { cat "$out.log" >&2; android_die "ofscc nao gerou $out"; }
 }
 
 android_build() {
@@ -736,8 +766,17 @@ MAN
     android_ir "$magma_src" "$ANDROID_CACHE/magma.ll"
     "$CC" --target="$TRIPLE" -O2 -fPIC -Wno-override-module -c "$ANDROID_CACHE/magma.ll" -o "$magma_o"
   fi
-  android_step "IR aarch64: $(basename "$entry")"
-  android_ir "$entry" "$OUT/obj/app.ll"
+  local rf_env=() rf_link=()
+  if [ "$android_refract" = true ]; then
+    # Fault Refract L3: celulas por vein + manifesto + agente (geophone);
+    # o soname deixa o remendo (.so) ligar contra esta lib pelo nome
+    rf_env=(OFSCC_REFRACT=cells OFSCC_REFRACT_WATCH="$OUT/obj/refract_watch.txt")
+    rf_link=(-Wl,-soname,"lib$libname.so")
+    android_step "IR aarch64: $(basename "$entry") (refract: celulas + agente geophone)"
+  else
+    android_step "IR aarch64: $(basename "$entry")"
+  fi
+  android_ir "$entry" "$OUT/obj/app.ll" "${rf_env[@]}"
 
   android_step "clang do NDK ($TRIPLE) -> lib$libname.so"
   "$CC" --target="$TRIPLE" -O2 -fPIC -Wno-override-module -c "$OUT/obj/app.ll" -o "$OUT/obj/app.o"
@@ -747,8 +786,11 @@ MAN
   "$CC" --target="$TRIPLE" -shared -o "$OUT/apk/lib/arm64-v8a/lib$libname.so" \
     "$OUT/obj/app.o" "$magma_o" \
     -Wl,--allow-multiple-definition -Wl,-init,__ofs_init_globals \
-    -u ANativeActivity_onCreate -Wl,-z,max-page-size=16384 \
+    -u ANativeActivity_onCreate -Wl,-z,max-page-size=16384 "${rf_link[@]}" \
     -landroid -llog -laaudio -lm
+  # para o `ofs refract --remote` (mesmo shell)
+  RF3_OUT="$OUT"; RF3_LIB="$libname"; RF3_PKG="$pkg"; RF3_CC="$CC"; RF3_TRIPLE="$TRIPLE"
+  RF3_ENTRY="$entry"; RF3_SDK="$SDK"; RF3_INPUT="$abs_input"
 
   android_step "APK: aapt2 + zip + zipalign + apksigner"
   local res_args=()
@@ -790,6 +832,162 @@ MAN
     "${ADBS[@]}" install -r "$output"
     "${ADBS[@]}" shell am start -n "$pkg/android.app.NativeActivity"
   fi
+}
+
+# ---------------------------------------------------------------------------
+# Fault Refract L3: `ofs refract --remote app.oal|app.ofs` (Android)
+# Faz o build com --refract, instala e abre o app, conecta no agente
+# (geophone, socket abstrato ofs-refract.<pacote> via `adb forward`) e
+# observa os arquivos. A cada gravacao: oalc (se .oal), ofscc no modo
+# remendo (diff por vein contra o manifesto que o app mandou + regras), clang
+# do NDK (-shared -fPIC, ligado contra a lib do app), envio e a resposta do
+# app. Env: OFS_REFRACT_PORT (7341), OFS_REFRACT_PERIOD (ms, 300),
+# OFS_REFRACT_ONCE=1 (sai depois do primeiro remendo aceito ou recusado).
+# ---------------------------------------------------------------------------
+rf3_say() { echo "refract: $*" >&2; }
+
+# conecta e le a saudacao "OFS-REFRACT 1 <pacote> <pid> <geracao>"
+rf3_connect() {
+  local port="$1" tries=0 line
+  while [ "$tries" -lt 40 ]; do
+    exec 3>&-
+    if { exec 3<>"/dev/tcp/127.0.0.1/$port"; } 2>/dev/null; then
+      if IFS= read -r -t 3 -u 3 line 2>/dev/null; then
+        case "$line" in
+          "OFS-REFRACT 1 "*)
+            set -- $line
+            RF3_APP_PID="$4"; RF3_GEN="$5"
+            return 0 ;;
+          "OFS-REFRACT "*)
+            rf3_say "o app fala outra versao do protocolo: $line"; return 1 ;;
+        esac
+      fi
+    fi
+    tries=$((tries + 1))
+    sleep 0.5
+  done
+  return 1
+}
+
+# manifesto atual do app -> $1
+rf3_fetch_manifest() {
+  local out="$1" line
+  printf 'MANIFEST\n' >&3 || return 1
+  : > "$out.tmp"
+  while IFS= read -r -t 10 -u 3 line; do
+    [ "$line" = "END" ] && { mv "$out.tmp" "$out"; return 0; }
+    printf '%s\n' "$line" >> "$out.tmp"
+  done
+  return 1
+}
+
+rf3_watch_sig() {
+  local f
+  for f in "${RF3_WATCH[@]}"; do
+    if [ -f "$f" ]; then cksum < "$f"; else echo "-"; fi
+  done | cksum
+}
+
+refract_remote_run() {
+  local input="$1"
+  [ -n "$input" ] && [ -f "$input" ] || android_die "use: ofs refract --remote app.oal|app.ofs (arquivo nao encontrado: ${input:-})"
+  # sessao longa: o limite de CPU do wrapper vale por processo
+  ulimit -St unlimited 2>/dev/null || true
+  android_refract=true
+  android_install=true
+  android_build "$input" "$output"
+  local ADB="$RF3_SDK/platform-tools/adb"
+  [ -x "$ADB" ] || ADB="$(command -v adb || true)"
+  [ -n "$ADB" ] || android_die "adb nao encontrado"
+  local ADBS=("$ADB")
+  local serial="${android_serial:-${ANDROID_SERIAL:-}}"
+  [ -n "$serial" ] && ADBS+=(-s "$serial")
+  local port="${OFS_REFRACT_PORT:-7341}"
+  local sock="ofs-refract.$RF3_PKG"
+  local st="$RF3_OUT/refract"
+  rm -rf "$st"; mkdir -p "$st/gen"
+  "${ADBS[@]}" forward "tcp:$port" "localabstract:$sock" >/dev/null || android_die "adb forward tcp:$port localabstract:$sock falhou"
+  trap '"${ADBS[@]}" forward --remove "tcp:'"$port"'" >/dev/null 2>&1 || true; exec 3>&-' EXIT
+  trap 'exit 130' INT TERM
+  rf3_connect "$port" || android_die "o agente do app nao respondeu (localabstract:$sock); veja: adb logcat -s ofs-refract"
+  rf3_fetch_manifest "$st/base.txt" || android_die "o app nao mandou o manifesto"
+  # arquivos observados: os do usuario (o gerado pelo oalc sai; entra o .oal)
+  RF3_WATCH=()
+  case "$RF3_INPUT" in *.oal) RF3_WATCH+=("$RF3_INPUT") ;; esac
+  local f
+  while IFS= read -r f; do
+    [ -n "$f" ] && [ "$f" != "$RF3_ENTRY" ] && RF3_WATCH+=("$f")
+  done < "$RF3_OUT/obj/refract_watch.txt"
+  rf3_say "conectado a $RF3_PKG (pid $RF3_APP_PID, geracao $RF3_GEN, porta $port -> localabstract:$sock)"
+  rf3_say "observando: ${RF3_WATCH[*]}"
+  rf3_say "salve um arquivo para trocar as veins no app (Ctrl+C sai)"
+  local period="${OFS_REFRACT_PERIOD:-300}"
+  local nap; nap="$(awk "BEGIN { printf \"%.3f\", $period / 1000 }")"
+  local last; last="$(rf3_watch_sig)"
+  local base="${RF3_INPUT##*/}"; local app="${base%.*}"
+  while true; do
+    sleep "$nap"
+    local now; now="$(rf3_watch_sig)"
+    [ "$now" = "$last" ] && continue
+    # espera a gravacao terminar (conteudo estavel por um periodo)
+    sleep "$nap"
+    [ "$(rf3_watch_sig)" = "$now" ] || continue
+    last="$now"
+    local entry="$RF3_INPUT"
+    case "$RF3_INPUT" in
+      *.oal)
+        local oalc; oalc="$(android_tool oalc)"
+        if ! OALC_INPUT="$RF3_INPUT" OALC_OUT_DIR="$st/gen" OALC_TARGET=android "$oalc" > "$st/oalc.log" 2>&1; then
+          cat "$st/oalc.log" >&2; rf3_say "o oalc recusou o .oal; o app segue como estava"; continue
+        fi
+        if ! cmp -s "$st/gen/AndroidManifest.xml" "$RF3_OUT/AndroidManifest.xml"; then
+          rf3_say "o cabecalho do app (app/version/permission) mudou: isso exige reinstalar (ofs build --target android --refract --install)"
+          continue
+        fi
+        entry="$st/gen/${app}_oal.ofs" ;;
+    esac
+    local rc=0
+    OFSCC_TARGET=android OFSCC_REFRACT=patch OFSCC_REFRACT_BASE="$st/base.txt" OFSCC_REFRACT_WATCH="$st/watch.txt" \
+      OFSCC_INPUT="$entry" OFSCC_MODE=ir OFSCC_C_OUT="$st/patch.ll" "$A_OFSCC" > "$st/patch.log" 2>&1 || rc=$?
+    grep '^refract: ' "$st/patch.log" >&2 || true
+    if [ "$rc" = 3 ]; then continue; fi
+    if [ "$rc" = 4 ]; then [ "${OFS_REFRACT_ONCE:-0}" = 1 ] && return 4; continue; fi
+    if [ "$rc" != 0 ]; then
+      grep -v '^refract: \|^  [A-Z][a-z]* ok\|^  [A-Z][a-z]*ing' "$st/patch.log" >&2 || true
+      rf3_say "o programa nao compila; o app segue como estava"
+      continue
+    fi
+    local gen=$((RF3_GEN + 1))
+    local so="$st/patch-$gen.so"
+    if ! "$RF3_CC" --target="$RF3_TRIPLE" -O2 -fPIC -shared -Wno-override-module "$st/patch.ll" -o "$so" \
+        -L"$RF3_OUT/apk/lib/arm64-v8a" -l"$RF3_LIB" -Wl,-Bsymbolic -Wl,--no-undefined \
+        -Wl,-z,max-page-size=16384 -landroid -llog -laaudio -lm 2> "$st/link.log"; then
+      sed -n 's/.*undefined symbol: \(.*\)/\1/p' "$st/link.log" | sort -u | head -5 | while read -r sym; do
+        rf3_say "o remendo usa '$sym', que o app instalado nao tem (attach novo?): reinstale"
+      done
+      grep -q 'undefined symbol' "$st/link.log" || cat "$st/link.log" >&2
+      continue
+    fi
+    local size; size="$(wc -c < "$so" | tr -d ' ')"
+    local reply=""
+    if ! { printf 'PATCH %d %d\n' "$gen" "$size" >&3 && cat "$so" >&3 && IFS= read -r -t 30 -u 3 reply; }; then
+      rf3_say "a conexao com o app caiu; reconectando (o app reiniciou? a geracao volta a 0)"
+      rf3_connect "$port" && rf3_fetch_manifest "$st/base.txt" || android_die "sem conexao com o app"
+      last=""
+      continue
+    fi
+    case "$reply" in
+      "OK "*)
+        set -- $reply
+        RF3_GEN="$2"
+        rf3_say "geracao $2 aplicada no app em $3 ms: ${4:-} ($size bytes, pid $RF3_APP_PID)"
+        rf3_fetch_manifest "$st/base.txt" || rf3_say "aviso: manifesto nao atualizado"
+        [ "${OFS_REFRACT_ONCE:-0}" = 1 ] && return 0 ;;
+      *)
+        rf3_say "o app recusou o remendo: ${reply#ERR }"
+        [ "${OFS_REFRACT_ONCE:-0}" = 1 ] && return 5 ;;
+    esac
+  done
 }
 
 # .oal no desktop: oalc (OALC_TARGET=desktop) gera <nome>_oal.ofs com main()
@@ -1185,9 +1383,16 @@ run_native=false
 android_manifest=""
 android_install=false
 android_serial=""
+android_refract=false
+refract_remote=false
+fossil_file=""
+fossil_to=""
+fossil_back=""
+fossil_dig=false
+fossil_layer=""
 
 case "$mode" in
-  check|tokens|ast|ir|asm|build|run|clean|ui|test|twin|polish) ;;
+  check|tokens|ast|ir|asm|build|run|clean|ui|test|twin|polish|refract|assay|fossil) ;;
   *)
     input="$mode"
     mode="run"
@@ -1212,6 +1417,17 @@ while [ "$#" -gt 0 ]; do
       run_native=true
       shift
       ;;
+    --release)
+      # contratos (bearing/settle/grain): a checagem estatica fica, a de
+      # execucao sai do binario (padrao: ligada no run e no build)
+      export OFS_CONTRACTS=0
+      shift
+      ;;
+    --quiet|-q)
+      # ofs refract: so os avisos de troca somem (erros continuam)
+      export OFS_REFRACT_QUIET=1
+      shift
+      ;;
     --manifest)
       android_manifest="${2:-}"
       shift 2
@@ -1224,9 +1440,38 @@ while [ "$#" -gt 0 ]; do
       android_serial="${2:-}"
       shift 2
       ;;
+    --refract)
+      # ofs build --target android --refract: celulas + agente (Refract L3)
+      android_refract=true
+      shift
+      ;;
+    --remote)
+      # ofs refract --remote app.oal|app.ofs: edicao ao vivo no aparelho
+      refract_remote=true
+      shift
+      ;;
+    --to)
+      # ofs fossil replay: passo, L<linha>, arquivo.ofs:<linha> ou vein
+      fossil_to="${2:-}"
+      shift 2
+      ;;
+    --back)
+      fossil_back="${2:-}"
+      shift 2
+      ;;
+    --dig|-i)
+      fossil_dig=true
+      shift
+      ;;
+    --layer)
+      fossil_layer="${2:-}"
+      shift 2
+      ;;
     *)
       if [ -z "$input" ]; then
         input="$1"
+      elif [ "$mode" = "fossil" ] && [ -z "$fossil_file" ]; then
+        fossil_file="$1"
       fi
       shift
       ;;
@@ -1356,6 +1601,50 @@ EOF
     else
       OFSCC_INPUT="$input" OFSCC_MODE="run" "$OFSCC"
     fi
+    ;;
+  assay)
+    # A5.1: casos de borda das veins com contrato (fronteira e +-1), interpretado
+    case "$input" in
+      *.ofs) ;;
+      *) echo "ofs assay: use um arquivo .ofs" >&2; exit 2 ;;
+    esac
+    OFSCC_INPUT="$input" OFSCC_MODE=assay "$OFSCC"
+    ;;
+  fossil)
+    # ofs fossil (Ideia 2): grava as entradas externas de uma execucao
+    # interpretada; `ofs fossil replay arq.fossil` reproduz (cristalizacao e
+    # OSR ficam desligadas: tudo passa pelo interpretador)
+    if [ "$input" = "replay" ]; then
+      [ -n "$fossil_file" ] || { echo "ofs fossil replay: indique o arquivo .fossil" >&2; exit 2; }
+      [ -f "$fossil_file" ] || { echo "ofs fossil replay: '$fossil_file' nao existe" >&2; exit 2; }
+      fz_dig=0
+      [ "$fossil_dig" = true ] && fz_dig=1
+      env -u OFSCC_INPUT OFS_FOSSIL=replay OFS_FOSSIL_FILE="$fossil_file" \
+        OFS_FOSSIL_TO="$fossil_to" OFS_FOSSIL_BACK="$fossil_back" OFS_FOSSIL_DIG="$fz_dig" \
+        OFS_FOSSIL_LAYER="$fossil_layer" OFSCC_MODE=run "$OFSCC"
+    else
+      case "$input" in
+        *.ofs) ;;
+        *) echo "ofs fossil: use um arquivo .ofs (ou: ofs fossil replay arq.fossil)" >&2; exit 2 ;;
+      esac
+      [ -f "$input" ] || { echo "ofs fossil: '$input' nao existe" >&2; exit 2; }
+      abs_input="$(cd "$(dirname "$input")" && pwd)/$(basename "$input")"
+      [ -n "$output" ] || output="$name.fossil"
+      OFS_FOSSIL=record OFS_FOSSIL_FILE="$output" OFSCC_INPUT="$abs_input" OFSCC_MODE=run "$OFSCC"
+    fi
+    ;;
+  refract)
+    # Fault Refract L3: o app roda no aparelho e recebe as veins editadas
+    if [ "$refract_remote" = true ]; then
+      refract_remote_run "$input"
+      exit $?
+    fi
+    # Fault Refract: roda interpretado e troca ao vivo as veins editadas
+    case "$input" in
+      *.ofs) ;;
+      *) echo "ofs refract: use um arquivo .ofs (o programa roda interpretado; .oal: ofs refract --remote)" >&2; exit 2 ;;
+    esac
+    OFS_REFRACT=1 OFSCC_INPUT="$input" OFSCC_MODE=run "$OFSCC"
     ;;
   ui)
     [ -n "$output" ] || output="${name}_preview.ppm"

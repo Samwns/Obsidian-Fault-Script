@@ -119,6 +119,7 @@ jobs:
           bash ofs/tests/regress/run.sh
           bash ofs/tests/fmt/run.sh
           bash ofs/tests/interpreter/test_differential.sh
+          bash ofs/tests/interpreter/test_crystallization.sh
 
       - name: Gravar versao nos scripts Linux
         run: |
@@ -344,6 +345,10 @@ jobs:
           }
           New-Item -ItemType Directory -Path "$Dist\stdlib" -Force | Out-Null
           Copy-Item "ofs\stdlib\*.ofs" "$Dist\stdlib\" -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path "$Dist\stdlib\runtime" -Force | Out-Null
+          Copy-Item "ofs\stdlib\runtime\*.ofs" "$Dist\stdlib\runtime\" -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path "$Dist\ofscc" -Force | Out-Null
+          Copy-Item "ofs\ofscc\*.ofs" "$Dist\ofscc\" -ErrorAction SilentlyContinue
           New-Item -ItemType Directory -Path "$Dist\tools" -Force | Out-Null
           Copy-Item "ofs\tools\*.ofs" "$Dist\tools\" -ErrorAction SilentlyContinue
           Copy-Item "docs/legal/LICENSE" "$Dist\LICENSE.txt" -ErrorAction SilentlyContinue

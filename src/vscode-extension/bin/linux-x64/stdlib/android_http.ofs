@@ -19,6 +19,8 @@
 // Roda na thread principal (JNI do android.ofs): a conexao bloqueia ate
 // ~4 s e cada read() ate ~4 s; por isso leia em passos pequenos, um por quadro.
 
+claim rift
+
 attach {F:android.ofs}
 
 extern vein ofs_alloc(size: stone) -> *stone

@@ -11,6 +11,8 @@
 // Seguranca: o certificado e verificado contra as CAs do sistema e o nome
 // do host e conferido (SSL_set1_host). Falhas ficam em tls.last_error.
 
+claim rift
+
 extern vein TLS_client_method() -> *stone
 extern vein SSL_CTX_new(method: *stone) -> *stone
 extern vein SSL_CTX_set_default_verify_paths(ctx: *stone) -> stone

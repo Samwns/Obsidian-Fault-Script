@@ -258,13 +258,18 @@ const HOVER_DOCS = {
   },
   abyss: {
     description: 'Bloco de baixo nível sem rede de proteção (ponteiros e `fault_*`).',
-    context: 'Hoje é um bloco comum, equivalente a `fracture`/`bedrock` no código gerado. Prefira `fracture` ou `bedrock` quando possível.',
+    context: 'Libera tudo de baixo nível (inclusive `fault_call`, `fault_addr`, `quartz`); dentro de um `bedrock`, o que escapa da arena deixa de ser erro (risco do programador). Prefira `fracture` ou `bedrock` quando possível.',
     example: 'forge x = 1\nabyss {\n    shard p: *stone = &x\n    *p = 7\n}'
   },
   bedrock: {
-    description: 'Bloco de baixo nível tipado (ponteiros e intrínsecos `fault_*`).',
-    context: 'Hoje é um bloco comum que marca a região de baixo nível. Também é o nome da biblioteca `attach {bedrock}` (células e regiões).',
-    example: 'forge x = 1\nbedrock {\n    shard p: *stone = &x\n    *p = *p + fault_spin_left(1, 3)\n}'
+    description: 'Bloco de baixo nível tipado (ponteiros e intrínsecos `fault_*`) e, quando aloca, arena (A5.3).',
+    context: 'O que o próprio bloco aloca (texto, `[...]`, `monolith`, `ofs_alloc`) sai de uma vez na saída do bloco, em qualquer saída. Texto que sai do bloco é copiado; `Array`/`monolith`/ponteiro que escapa é `[ERRO DE ARENA]` (dentro de `abyss` vale). Veins chamadas de dentro alocam no heap normal. Também é o nome da biblioteca `attach {bedrock}` (células e regiões).',
+    example: 'while (i < n) {\n    bedrock {\n        forge s = "k" + ofs_stone_to_obsidian(i)\n        forge buf: *stone = ofs_alloc(1024)\n        ultimo = s   // texto sai copiado\n    }               // a arena sai aqui\n    i++\n}'
+  },
+  geode: {
+    description: 'Vein sem nome que captura por valor as variáveis de fora (closure): `geode (x: T) -> R { ... }`.',
+    context: 'O valor tem o tipo `vein(T) -> R`: guarda, passa, devolve e chama como qualquer valor de vein. A captura é copiada quando o geode nasce (texto e números; `Array`/`monolith` são o mesmo objeto, como argumento). Atribuir a uma captura dentro do geode é `[ERRO DE GEODE]`. Sem captura vai para o C como callback; com captura não.',
+    example: 'vein somador(base: stone) -> vein(stone) -> stone {\n    return geode (x: stone) -> stone { return x + base }\n}\n\ncore main() {\n    forge s7 = somador(7)\n    echo(s7(1))   // 8\n}'
   },
   tectonic: {
     description: 'Prefixo opcional de um bloco de baixo nível: `tectonic fracture|abyss|bedrock { ... }`.',
@@ -376,10 +381,60 @@ const HOVER_DOCS = {
     context: 'Soma `N * tamanho do tipo apontado`, como aritmética de ponteiros.',
     example: 'forge x = 1\nbedrock {\n    shard p: *stone = &x\n    shard q: *stone = fault_step(p, 0)\n    echo(*q)\n}'
   },
-  asm: {
-    description: 'Comando CLI que emite o assembly do alvo (`ofs asm`).',
-    context: 'O `asm` inline dentro de blocos de baixo nível ainda é planejado e não é aceito pelo compilador; use os intrínsecos `fault_*`.',
-    example: 'ofs asm main.ofs -o main'
+  mineral: {
+    description: 'Tipo com regra (A5.1): `mineral Nome = Base grain regra`.',
+    context: 'É compatível com o tipo base: base → mineral confere a `grain` (forge, atribuição, parâmetro, retorno); mineral → base é livre. Literal que viola a regra é `[ERRO DE CONTRATO]` na compilação.',
+    example: 'mineral UserId = stone grain value > 0\nmineral Email = obsidian grain contains("@")'
+  },
+  grain: {
+    description: 'Regra de um `mineral`; `value` é o valor conferido.',
+    context: 'Várias `grain` podem ser somadas. Forma curta: uma chamada sem `value` recebe `value` como 1º argumento (`contains("@")` = `ofs_str_contains(value, "@")`).',
+    example: 'mineral Nota = stone grain value >= 0 grain value <= 10'
+  },
+  bearing: {
+    description: 'Pré-condição da vein (quem chama garante), conferida na entrada.',
+    context: 'Violação: `ofs: [CONTRATO VIOLADO arquivo:l:c]` no stderr e código 1 (`ofs run` e `ofs build`); `ofs build --release` (OFS_CONTRACTS=0) tira a checagem. Com argumentos literais a violação é erro de compilação. `ofs assay` testa os limites.',
+    example: 'vein dividir(a: stone, b: stone) -> stone\n    bearing b != 0\n{\n    return a / b\n}'
+  },
+  settle: {
+    description: 'Pós-condição da vein, conferida em cada `return`; `result` é o valor devolvido.',
+    context: 'Os parâmetros valem como na entrada. Mesma regra de execução do `bearing` (stderr + código 1; `--release` desliga).',
+    example: 'vein metade(n: stone) -> stone\n    bearing n >= 0\n    settle result * 2 <= n\n{\n    return n / 2\n}'
+  },
+  result: {
+    description: 'No `settle`: o valor que a vein devolve.',
+    context: 'Só vale no `settle` (no `bearing` é `[ERRO DE CONTRATO]`); fora dos contratos é um nome comum.',
+    example: 'vein dobro(x: stone) -> stone settle result == x * 2 {\n    return x + x\n}'
+  },
+  stratum: {
+    description: 'Estrato do arquivo (Ideia 4, segurança gradual): `stratum crust`, `stratum fault` (padrão) ou `stratum abyss`, no topo do arquivo.',
+    context: '`crust` = nenhum baixo nível (nem bloco `fracture`/`abyss`, nem `extern`, ponteiro ou `quartz`; `bedrock` vale só como arena): `[ERRO DE ESTRATO]`. `fault` = regra da F4 (baixo nível só em bloco) + `claim`. `abyss` = baixo nível em qualquer lugar e vale como `claim` de tudo. O `ofs check` e o `ofs doc` mostram o estrato de cada módulo.',
+    example: 'stratum crust\n\nvein media(xs: Array<stone>) -> stone {\n    ...\n}'
+  },
+  claim: {
+    description: 'Permissões que o módulo pede (A5.4), no topo do arquivo: `claim rift` (extern/rift vein), `claim abyss` (bloco abyss), `claim quartz` (assembly), `claim magma` (`magma.cast`: compilar e carregar código em execução).',
+    context: 'Uso sem claim: `[AVISO DE PERMISSAO]` até 2027-03-16, depois erro; `OFS_STRICT_FAULT=1` já é `[ERRO DE PERMISSAO]`. `extern` de símbolo do runtime (`ofs_*`) não pede claim. Quem anexa o módulo vê o claim no `ofs check` e no `ofs doc`. Forma de comentário `//! claim rift` para código que compila com uma semente anterior.',
+    example: 'claim rift, abyss\n\nextern vein getenv(name: obsidian) -> obsidian'
+  },
+  magma: {
+    description: '`magma.cast` (Ideia 5, `attach {magma}`): compila e carrega um mod OFS com o programa rodando, no `ofs run` e no nativo. `magma.cast(fonte_ou_caminho)` → handle; `magma.cooled(m)`/`magma.crack(m)` (erro do compilador como valor); `magma.vent(m, "nome")` com o tipo de destino → valor de vein (assinatura conferida, `null` se não bate); `magma.veins`, `magma.release`, `magma.caprock`.',
+    context: 'Quem chama `magma.cast` declara `claim magma` (sempre erro sem ele; `stratum crust` nunca). O mod é compilado pelo `ofscc` num processo à parte e vira `.so` com o clang (cache por hash do IR em `~/.cache/ofs/magma`); usa o runtime do programa (o `ofs build` liga com `--export-dynamic`). O mod não vê os globais do programa: conversa por argumentos, retornos e valores de vein.',
+    example: 'attach {magma}\nclaim magma\n\ncore main() {\n    forge m = magma.cast("mods/forja.ofs")\n    if (!magma.cooled(m)) { echo(magma.crack(m)) }\n    forge forjar: vein(stone) -> stone = magma.vent(m, "forjar")\n    if (forjar != null) { echo(forjar(10)) }\n}'
+  },
+  caprock: {
+    description: 'Teto das permissões dos módulos anexados (A5.4), só no programa principal: `caprock rift, abyss` ou `caprock crust` (nada).',
+    context: 'Um módulo anexado que pede (ou usa, ou é `stratum abyss`) algo fora do caprock é `[ERRO DE PERMISSAO]`. O runtime (`stdlib/runtime`) fica fora da regra.',
+    example: 'caprock rift\nattach {io}\nattach {F:plugin.ofs}'
+  },
+  value: {
+    description: 'Na `grain` de um `mineral`: o valor conferido.',
+    context: 'Fora da `grain` é um nome comum.',
+    example: 'mineral Porta = stone grain value > 0 && value < 65536'
+  },
+  quartz: {
+    description: 'Assembly inline com efeito colateral; exige `abyss`.',
+    context: 'AT&T por padrão; entradas `in "r" valor`, saída `-> destino "=r"` e clobbers `melt "memory"`. `ofs run` carrega a vein como código nativo.',
+    example: 'abyss {\n    quartz { "nop" }\n}'
   },
   u8: {
     description: 'Inteiro sem sinal de 8 bits.',
@@ -1458,13 +1513,14 @@ function collectAttachSymbols(document) {
 
 const ANSI_REGEX = /\u001b\[[0-9;?]*[A-Za-z]/g;
 // Cabecalhos do ofscc:
-//   [ERRO SINTATICO l:c]: msg
+//   [ERRO SINTATICO arquivo:l:c]: msg   (antes so l:c; o arquivo e o do attach)
 //   [ERRO SEMANTICO arquivo:l:c]: msg   (+ "voce quis dizer", "dica:")
+//   [ERRO DE CONTRATO arquivo:l:c]: msg (+ "regra em arquivo:l:c")
 //   [ERRO DE ATTACH arquivo:l]: msg
 //   [AVISO DE TIPO arquivo:l:c]: msg
 //   [fault E0042] l:c: msg
 //   arquivo.ofs:l:c: msg                (formato legado)
-const COMPILER_HEADER_REGEX = /^\[(ERRO SINTATICO|ERRO SEMANTICO|ERRO DE ATTACH|AVISO DE TIPO|AVISO SEMANTICO)\s+(.+?)\]:\s*(.*)$/;
+const COMPILER_HEADER_REGEX = /^\[(ERRO SINTATICO|ERRO SEMANTICO|ERRO DE CONTRATO|ERRO DE ATTACH|AVISO DE TIPO|AVISO SEMANTICO)\s+(.+?)\]:\s*(.*)$/;
 const COMPILER_FAULT_REGEX = /^\[fault (E\d+)\]\s*(\d+):(\d+):\s*(.*)$/;
 
 function splitLocation(loc) {
@@ -2089,998 +2145,6 @@ function updateOllWebview(document) {
   if (ollWebviewPanel && activeOllDoc && document.uri.toString() === activeOllDoc.uri.toString()) {
     ollWebviewPanel.webview.html = generateOllPreviewHtml(document.getText());
   }
-}
-
-let studioIdlePanel = null;
-let studioIdleStatusBarItem = null;
-
-function showStudioIdleWebview(context) {
-  if (studioIdlePanel) {
-    studioIdlePanel.reveal(vscode.ViewColumn.One);
-    return;
-  }
-
-  const editor = vscode.window.activeTextEditor;
-  let activeName = 'main.ofs';
-  let activeContent = '';
-  let activeRelPath = 'idle/main.ofs';
-
-  const ws = getWorkspaceRoot();
-  const wsFiles = [];
-  if (ws) {
-    const scanDir = (dir, depth = 0) => {
-      if (depth > 2) return;
-      try {
-        const entries = fs.readdirSync(dir, { withFileTypes: true });
-        for (const e of entries) {
-          if (e.name.startsWith('.') || e.name === 'node_modules' || e.name === 'dist' || e.name === 'target') continue;
-          const full = path.join(dir, e.name);
-          if (e.isDirectory()) {
-            scanDir(full, depth + 1);
-          } else if (e.name.endsWith('.ofs') || e.name.endsWith('.oll') || e.name.endsWith('.md')) {
-            wsFiles.push({
-              name: e.name,
-              relPath: path.relative(ws, full),
-              fullPath: full
-            });
-          }
-        }
-      } catch {}
-    };
-    scanDir(ws);
-  }
-
-  if (editor && editor.document) {
-    activeName = path.basename(editor.document.fileName);
-    activeContent = editor.document.getText();
-    activeRelPath = ws ? path.relative(ws, editor.document.fileName) : activeName;
-  } else if (ws) {
-    const candidates = [
-      path.join(ws, 'idle', 'main.ofs'),
-      path.join(ws, 'src', 'main.ofs'),
-      path.join(ws, 'main.ofs')
-    ];
-    for (const c of candidates) {
-      if (fs.existsSync(c)) {
-        activeName = path.basename(c);
-        activeRelPath = path.relative(ws, c);
-        try { activeContent = fs.readFileSync(c, 'utf8'); } catch { }
-        break;
-      }
-    }
-  }
-
-  studioIdlePanel = vscode.window.createWebviewPanel(
-    'ofs.studioIdle',
-    'Obsidian Fault Script :: Studio IDLE',
-    vscode.ViewColumn.One,
-    {
-      enableScripts: true,
-      retainContextWhenHidden: true
-    }
-  );
-
-  studioIdlePanel.onDidDispose(() => {
-    studioIdlePanel = null;
-  });
-
-  studioIdlePanel.webview.onDidReceiveMessage(async (message) => {
-    switch (message.command) {
-      case 'run': {
-        const doc = vscode.window.activeTextEditor?.document;
-        if (doc && doc.languageId === 'ofs') {
-          runCurrentFile();
-        } else {
-          const ws = getWorkspaceRoot();
-          const ofsPath = await resolveReadyOfsPath();
-          const target = fs.existsSync(path.join(ws, 'idle', 'main.ofs')) ? 'idle/main.ofs' : (fs.existsSync(path.join(ws, 'src', 'main.ofs')) ? 'src/main.ofs' : 'main.ofs');
-          const terminal = getOrCreateExecutionTerminal(ws, ofsPath);
-          terminal.show(true);
-          terminal.sendText(`"${ofsPath}" run "${target}"`);
-        }
-        break;
-      }
-      case 'build': {
-        const ws = getWorkspaceRoot();
-        const ofsPath = await resolveReadyOfsPath();
-        const target = fs.existsSync(path.join(ws, 'idle', 'main.ofs')) ? 'idle/main.ofs' : (fs.existsSync(path.join(ws, 'src', 'main.ofs')) ? 'src/main.ofs' : 'main.ofs');
-        const terminal = getOrCreateExecutionTerminal(ws, ofsPath);
-        terminal.show(true);
-        terminal.sendText(`"${ofsPath}" build "${target}"`);
-        break;
-      }
-      case 'save': {
-        if (vscode.window.activeTextEditor) {
-          await vscode.window.activeTextEditor.document.save();
-          vscode.window.showInformationMessage('OFS Studio: Arquivo salvo com sucesso.');
-        } else if (message.content && message.filePath) {
-          const ws = getWorkspaceRoot();
-          if (ws) {
-            const fullP = path.isAbsolute(message.filePath) ? message.filePath : path.join(ws, message.filePath);
-            try {
-              fs.writeFileSync(fullP, message.content, 'utf8');
-              vscode.window.showInformationMessage(`OFS Studio: ${path.basename(fullP)} salvo.`);
-            } catch (err) {
-              vscode.window.showErrorMessage(`Falha ao salvar: ${err.message}`);
-            }
-          }
-        }
-        break;
-      }
-      case 'openFile': {
-        const ws = getWorkspaceRoot();
-        if (ws && message.filePath) {
-          const fullPath = path.isAbsolute(message.filePath) ? message.filePath : path.join(ws, message.filePath);
-          if (fs.existsSync(fullPath)) {
-            try {
-              const content = fs.readFileSync(fullPath, 'utf8');
-              studioIdlePanel.webview.postMessage({
-                type: 'loadFile',
-                filePath: message.filePath,
-                fileName: path.basename(fullPath),
-                content: content
-              });
-              const doc = await vscode.workspace.openTextDocument(fullPath);
-              await vscode.window.showTextDocument(doc, vscode.ViewColumn.Beside);
-            } catch (e) {
-              vscode.window.showErrorMessage(`Erro ao abrir arquivo: ${e.message}`);
-            }
-          }
-        }
-        break;
-      }
-      case 'showToast': {
-        if (message.text) {
-          vscode.window.showInformationMessage(message.text);
-        }
-        break;
-      }
-    }
-  });
-
-  studioIdlePanel.webview.html = generateStudioIdleHtml(activeName, activeContent, activeRelPath, wsFiles);
-}
-
-function updateStudioIdleWebview(document) {
-  if (studioIdlePanel && document) {
-    studioIdlePanel.webview.postMessage({
-      type: 'syncDocument',
-      fileName: path.basename(document.fileName),
-      filePath: vscode.workspace.asRelativePath(document.fileName),
-      content: document.getText()
-    });
-  }
-}
-
-function generateStudioIdleHtml(initialFileName, initialContent, initialRelPath = '', wsFiles = []) {
-  const safeContent = (initialContent || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-
-  const fileTreeHtml = (wsFiles && wsFiles.length > 0)
-    ? wsFiles.map(f => {
-        const isOfs = f.name.endsWith('.ofs');
-        const isOll = f.name.endsWith('.oll');
-        const stroke = isOfs ? '#C678DD' : (isOll ? '#98C379' : '#61AFEF');
-        const isActive = f.name === initialFileName ? 'active' : '';
-        const escaped = f.relPath.replace(/'/g, "\\'");
-        return `<div class="tree-node ${isActive}" onclick="loadFile('${escaped}')">
-          <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="${stroke}" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <span>${f.name}</span>
-        </div>`;
-      }).join('\n')
-    : `<div class="tree-node active" onclick="loadFile('${(initialRelPath || initialFileName).replace(/'/g, "\\'")}')">
-        <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#C678DD" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-        <span>${initialFileName}</span>
-      </div>`;
-
-  return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Obsidian Fault Script :: Studio IDLE</title>
-  <style>
-    :root {
-      --bg-window: #181825;
-      --bg-header: #181825;
-      --bg-sidebar: #1e1e2e;
-      --bg-editor: #181825;
-      --bg-panel: #181825;
-      --bg-statusbar: #181825;
-      --accent: #8957e5;
-      --accent-hover: #7b42f6;
-      --accent-fg: #ffffff;
-      --fg-primary: #cdd6f4;
-      --fg-secondary: #a6adc8;
-      --fg-muted: #6c7086;
-      --border-color: #313244;
-      --btn-bg: #313244;
-      --btn-hover: #45475a;
-      --btn-active: #585b70;
-      --gutter-bg: #1e1e2e;
-      --card-radius: 8px;
-      --btn-radius: 5px;
-    }
-
-    [data-theme="gtk"] {
-      --bg-window: #242424;
-      --bg-header: #303030;
-      --bg-sidebar: #282828;
-      --bg-editor: #1e1e1e;
-      --bg-panel: #242424;
-      --bg-statusbar: #242424;
-      --accent: #3584e4;
-      --accent-hover: #1c71d8;
-      --accent-fg: #ffffff;
-      --fg-primary: #ffffff;
-      --fg-secondary: #deddda;
-      --fg-muted: #9a9996;
-      --border-color: #383838;
-      --btn-bg: #383838;
-      --btn-hover: #484848;
-      --btn-active: #545454;
-      --gutter-bg: #282828;
-      --card-radius: 10px;
-      --btn-radius: 6px;
-    }
-
-    [data-theme="windows"] {
-      --bg-window: #202020;
-      --bg-header: #202020;
-      --bg-sidebar: #262626;
-      --bg-editor: #1c1c1c;
-      --bg-panel: #1c1c1c;
-      --bg-statusbar: #202020;
-      --accent: #60cdff;
-      --accent-hover: #4cc2ff;
-      --accent-fg: #000000;
-      --fg-primary: #ffffff;
-      --fg-secondary: #cccccc;
-      --fg-muted: #888888;
-      --border-color: #333333;
-      --btn-bg: #2d2d2d;
-      --btn-hover: #383838;
-      --btn-active: #444444;
-      --gutter-bg: #262626;
-      --card-radius: 8px;
-      --btn-radius: 4px;
-    }
-
-    [data-theme="neon"] {
-      --bg-window: #0b0b14;
-      --bg-header: #0f0f1c;
-      --bg-sidebar: #0d0d19;
-      --bg-editor: #0a0a10;
-      --bg-panel: #0d0d19;
-      --bg-statusbar: #0b0b14;
-      --accent: #00ffcc;
-      --accent-hover: #00e6b8;
-      --accent-fg: #000000;
-      --fg-primary: #00ffcc;
-      --fg-secondary: #ff79c6;
-      --fg-muted: #6272a4;
-      --border-color: #1f1f38;
-      --btn-bg: #16162a;
-      --btn-hover: #222240;
-      --btn-active: #303058;
-      --gutter-bg: #0d0d19;
-      --card-radius: 4px;
-      --btn-radius: 2px;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: var(--bg-window);
-      color: var(--fg-primary);
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      user-select: none;
-    }
-
-    .svg-icon {
-      display: inline-block;
-      vertical-align: middle;
-      flex-shrink: 0;
-    }
-
-    header {
-      height: 38px;
-      background: var(--bg-header);
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      padding: 0 12px;
-      gap: 12px;
-      font-size: 13px;
-    }
-    .logo-container {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      color: #c678dd;
-    }
-    .menu-bar {
-      display: flex;
-      gap: 4px;
-    }
-    .menu-item {
-      padding: 4px 8px;
-      border-radius: var(--btn-radius);
-      color: var(--fg-secondary);
-      cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-    }
-    .menu-item:hover {
-      background: var(--btn-hover);
-      color: #fff;
-    }
-    .search-box {
-      flex: 1;
-      max-width: 480px;
-      margin: 0 auto;
-      background: var(--btn-bg);
-      border: 1px solid var(--border-color);
-      border-radius: var(--btn-radius);
-      padding: 4px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--fg-muted);
-      font-size: 12px;
-      cursor: pointer;
-    }
-    .theme-selector {
-      display: flex;
-      gap: 4px;
-      align-items: center;
-    }
-    .theme-btn {
-      padding: 3px 8px;
-      font-size: 11px;
-      border-radius: var(--btn-radius);
-      background: var(--btn-bg);
-      color: var(--fg-secondary);
-      border: 1px solid var(--border-color);
-      cursor: pointer;
-    }
-    .theme-btn.active, .theme-btn:hover {
-      background: var(--accent);
-      color: var(--accent-fg);
-      border-color: var(--accent);
-    }
-
-    .main-workspace {
-      flex: 1;
-      display: flex;
-      overflow: hidden;
-    }
-
-    .activity-bar {
-      width: 50px;
-      background: var(--bg-sidebar);
-      border-right: 1px solid var(--border-color);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px 0;
-      gap: 12px;
-    }
-    .act-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: var(--btn-radius);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--fg-muted);
-      cursor: pointer;
-      position: relative;
-      transition: all 0.15s;
-    }
-    .act-btn:hover {
-      color: var(--accent-hover);
-      background: var(--btn-hover);
-    }
-    .act-btn.active {
-      color: #fff;
-    }
-    .act-btn.active::before {
-      content: "";
-      position: absolute;
-      left: 0;
-      top: 6px;
-      bottom: 6px;
-      width: 3px;
-      background: var(--accent);
-      border-radius: 0 2px 2px 0;
-    }
-
-    .sidebar {
-      width: 230px;
-      background: var(--bg-sidebar);
-      border-right: 1px solid var(--border-color);
-      display: flex;
-      flex-direction: column;
-    }
-    .sidebar-header {
-      padding: 10px 14px;
-      font-size: 11px;
-      font-weight: 700;
-      color: var(--fg-muted);
-      letter-spacing: 0.8px;
-      border-bottom: 1px solid var(--border-color);
-    }
-    .file-tree {
-      flex: 1;
-      overflow-y: auto;
-      padding: 8px 0;
-      font-size: 13px;
-    }
-    .tree-node {
-      padding: 5px 12px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      color: var(--fg-secondary);
-      border-radius: 4px;
-      margin: 1px 6px;
-    }
-    .tree-node:hover {
-      background: var(--btn-hover);
-      color: #fff;
-    }
-    .tree-node.active {
-      background: var(--btn-active);
-      color: #fff;
-      font-weight: 600;
-      border-left: 3px solid var(--accent);
-    }
-    .tree-node.indent-1 { padding-left: 24px; }
-    .tree-node.indent-2 { padding-left: 38px; }
-
-    .editor-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      background: var(--bg-editor);
-    }
-    .tabs-bar {
-      height: 38px;
-      background: var(--bg-header);
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 8px;
-    }
-    .tabs-list {
-      display: flex;
-      height: 100%;
-    }
-    .tab {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0 14px;
-      font-size: 13px;
-      color: var(--fg-muted);
-      cursor: pointer;
-      border-right: 1px solid var(--border-color);
-      background: var(--bg-header);
-      position: relative;
-    }
-    .tab.active {
-      background: var(--bg-editor);
-      color: #fff;
-    }
-    .tab.active::top {
-      content: "";
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--accent);
-    }
-    .tab .close-tab {
-      font-size: 12px;
-      border-radius: 3px;
-      padding: 2px;
-    }
-    .tab .close-tab:hover {
-      background: var(--btn-hover);
-      color: #fff;
-    }
-    .editor-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-    .action-btn {
-      padding: 5px 12px;
-      border-radius: var(--btn-radius);
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      border: 1px solid transparent;
-      transition: all 0.15s;
-    }
-    .action-btn.primary {
-      background: var(--accent);
-      color: var(--accent-fg);
-      border-color: var(--accent);
-    }
-    .action-btn.primary:hover {
-      background: var(--accent-hover);
-    }
-    .action-btn.secondary {
-      background: var(--btn-bg);
-      color: var(--fg-primary);
-      border-color: var(--border-color);
-    }
-    .action-btn.secondary:hover {
-      background: var(--btn-hover);
-    }
-
-    .editor-body {
-      flex: 1;
-      display: flex;
-      overflow: hidden;
-      position: relative;
-    }
-    .gutter {
-      width: 48px;
-      background: var(--gutter-bg);
-      border-right: 1px solid var(--border-color);
-      padding: 8px 0;
-      font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
-      font-size: 13px;
-      line-height: 20px;
-      color: var(--fg-muted);
-      text-align: right;
-      padding-right: 12px;
-      user-select: none;
-    }
-    .code-textarea {
-      flex: 1;
-      padding: 8px 14px;
-      font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
-      font-size: 13px;
-      line-height: 20px;
-      background: transparent;
-      color: var(--fg-primary);
-      border: none;
-      outline: none;
-      resize: none;
-      white-space: pre;
-      overflow: auto;
-      tab-size: 4;
-      caret-color: var(--accent);
-    }
-
-    .bottom-panel {
-      height: 190px;
-      background: var(--bg-panel);
-      border-top: 1px solid var(--border-color);
-      display: flex;
-      flex-direction: column;
-    }
-    .panel-tabs {
-      height: 32px;
-      border-bottom: 1px solid var(--border-color);
-      display: flex;
-      align-items: center;
-      padding: 0 12px;
-      gap: 16px;
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-    .ptab {
-      color: var(--fg-muted);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      height: 100%;
-      position: relative;
-    }
-    .ptab.active {
-      color: #fff;
-    }
-    .ptab.active::after {
-      content: "";
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 2px;
-      background: var(--accent);
-    }
-    .panel-content {
-      flex: 1;
-      padding: 10px 14px;
-      overflow-y: auto;
-      font-family: "JetBrains Mono", Consolas, "Courier New", monospace;
-      font-size: 12px;
-      line-height: 18px;
-    }
-    .terminal-line { color: var(--fg-primary); }
-    .terminal-line.success { color: #98c379; }
-    .terminal-line.error { color: #e06c75; }
-    .terminal-line.info { color: #61afef; }
-    .terminal-actions {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-
-    footer {
-      height: 24px;
-      background: var(--bg-statusbar);
-      border-top: 1px solid var(--border-color);
-      color: var(--fg-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 12px;
-      font-size: 11px;
-    }
-    .status-left, .status-right {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-  </style>
-</head>
-<body data-theme="dark_modern">
-  <header>
-    <div class="logo-container">
-      <svg class="svg-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#c678dd" stroke-width="2">
-        <polygon points="12,2 22,12 12,22 2,12"/>
-        <polygon points="12,6 18,12 12,18 6,12" stroke="#e5c07b"/>
-      </svg>
-      <span>OFS Studio</span>
-    </div>
-    <div class="menu-bar">
-      <div class="menu-item">Arquivo</div>
-      <div class="menu-item">Editar</div>
-      <div class="menu-item">Seleção</div>
-      <div class="menu-item">Exibir</div>
-      <div class="menu-item">Ir</div>
-      <div class="menu-item" onclick="triggerRun()">Executar</div>
-      <div class="menu-item">Terminal</div>
-      <div class="menu-item">Ajuda</div>
-    </div>
-    <div class="search-box">
-      <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <span>Obsidian Fault Script :: Studio IDLE (Ctrl+P)</span>
-    </div>
-    <div class="theme-selector">
-      <span style="font-size:11px; color:var(--fg-muted); margin-right:4px;">Tema:</span>
-      <button class="theme-btn active" onclick="setTheme('dark_modern')">Dark Modern</button>
-      <button class="theme-btn" onclick="setTheme('gtk')">GTK</button>
-      <button class="theme-btn" onclick="setTheme('windows')">Windows</button>
-      <button class="theme-btn" onclick="setTheme('neon')">Neon</button>
-    </div>
-  </header>
-
-  <div class="main-workspace">
-    <div class="activity-bar">
-      <div class="act-btn active" title="Explorador">
-        <svg class="svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M16 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M8 2h12a2 2 0 0 1 2 2v14"/></svg>
-      </div>
-      <div class="act-btn" title="Buscar">
-        <svg class="svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </div>
-      <div class="act-btn" title="Controle de Versão (Git)">
-        <svg class="svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="6" y1="3" x2="6" y2="21"/><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M6 12a9 9 0 0 1 9-9"/><circle cx="18" cy="6" r="3"/></svg>
-      </div>
-      <div class="act-btn" title="Executar & Depurar" onclick="triggerRun()">
-        <svg class="svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
-      </div>
-      <div class="act-btn" title="Pacotes & Módulos">
-        <svg class="svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-      </div>
-      <div style="flex:1"></div>
-      <div class="act-btn" title="Configurações">
-        <svg class="svg-icon" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      </div>
-    </div>
-
-    <div class="sidebar">
-      <div class="sidebar-header">EXPLORADOR</div>
-      <div class="file-tree">
-        <div class="tree-node" style="font-weight:600">
-          <svg class="svg-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#E5C07B" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-          <span>WORKSPACE</span>
-        </div>
-        ${fileTreeHtml}
-      </div>
-    </div>
-
-    <div class="editor-container">
-      <div class="tabs-bar">
-        <div class="tabs-list" id="tabsListEl">
-          <div class="tab active" id="activeTabEl">
-            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#c678dd"></span>
-            <span id="tabTitle">${initialFileName}</span>
-          </div>
-        </div>
-        <div class="editor-actions">
-          <button class="action-btn primary" onclick="triggerRun()">
-            <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><polygon points="6,4 20,12 6,20"/></svg>
-            <span>Run (AOT)</span>
-          </button>
-          <button class="action-btn secondary" onclick="triggerBuild()">
-            <span>🔨 Build</span>
-          </button>
-          <button class="action-btn secondary" onclick="triggerSave()">
-            <span>💾 Salvar</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="editor-body">
-        <div class="gutter" id="gutterEl">1<br>2<br>3<br>4<br>5<br>6<br>7<br>8<br>9<br>10<br>11<br>12<br>13<br>14<br>15<br>16<br>17<br>18<br>19<br>20</div>
-        <textarea class="code-textarea" id="codeEditor" spellcheck="false" oninput="onCodeChanged()" onkeydown="onKeyDown(event)">${safeContent}</textarea>
-      </div>
-
-      <div class="bottom-panel">
-        <div class="panel-tabs">
-          <div class="ptab active" onclick="switchPanelTab(0)">
-            <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
-            <span>TERMINAL</span>
-          </div>
-          <div class="ptab" onclick="switchPanelTab(1)">
-            <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#e06c75" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span>PROBLEMAS (0)</span>
-          </div>
-          <div class="ptab" onclick="switchPanelTab(2)">
-            <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            <span>SAÍDA</span>
-          </div>
-          <div class="ptab" onclick="switchPanelTab(3)">
-            <span>OLL PREVIEW</span>
-          </div>
-        </div>
-        <div class="panel-content" id="panelContentEl">
-          <div class="terminal-actions">
-            <button class="action-btn secondary" style="font-size:11px;padding:3px 8px;" onclick="triggerRun()">▶ Executar (AOT)</button>
-            <button class="action-btn secondary" style="font-size:11px;padding:3px 8px;" onclick="triggerBuild()">🔨 Compilar</button>
-            <button class="action-btn secondary" style="font-size:11px;padding:3px 8px;" onclick="clearTerminal()">🗑 Limpar</button>
-          </div>
-          <div class="terminal-line info">samns@linux-ofs:~/Obsidian-Fault-Script$ ofs --version</div>
-          <div class="terminal-line">Obsidian Fault Script Compiler (ofscc) v0.1 - AOT Linux x86_64</div>
-          <div class="terminal-line success">[OFS IDLE] Studio IDLE integrado com sucesso ao VS Code.</div>
-          <div class="terminal-line">Pressione 'Run (AOT)' ou use o terminal para compilar arquivos nativos.</div>
-          <div class="terminal-line info">samns@linux-ofs:~/Obsidian-Fault-Script$ <span style="display:inline-block;width:7px;height:14px;background:#cdd6f4;vertical-align:middle;"></span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <footer>
-    <div class="status-left">
-      <span>
-        <svg class="svg-icon" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="6" y1="3" x2="6" y2="21"/><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M6 12a9 9 0 0 1 9-9"/><circle cx="18" cy="6" r="3"/></svg>
-        main*
-      </span>
-      <span style="color:#98c379">0 (X)</span>
-      <span style="color:#e5c07b">0 (!)</span>
-      <span>OFS LSP: Pronto</span>
-      <span id="dirtyIndicator" style="color:#e5c07b; display:none;">[Modificado]</span>
-    </div>
-    <div class="status-right">
-      <span id="cursorPosEl">Ln 1, Col 1</span>
-      <span>Espaços: 4</span>
-      <span>UTF-8</span>
-      <span>LF</span>
-      <span>Obsidian Fault Script (OFS)</span>
-    </div>
-  </footer>
-
-  <script>
-    const vscode = acquireVsCodeApi();
-    let currentFilePath = "${(initialRelPath || initialFileName).replace(/\\/g, '/')}";
-
-    function setTheme(theme) {
-      document.body.setAttribute("data-theme", theme);
-      document.querySelectorAll(".theme-btn").forEach(btn => {
-        btn.classList.toggle("active", btn.textContent.toLowerCase().includes(theme.replace("_", "")));
-      });
-    }
-
-    function triggerRun() {
-      vscode.postMessage({ command: 'run' });
-      appendTerminal("samns@linux-ofs:~/Obsidian-Fault-Script$ ofs run " + currentFilePath, "info");
-      appendTerminal("[OFS Runner] Executando processo nativo...", "info");
-    }
-
-    function triggerBuild() {
-      vscode.postMessage({ command: 'build' });
-      appendTerminal("samns@linux-ofs:~/Obsidian-Fault-Script$ ofs build " + currentFilePath, "info");
-    }
-
-    function triggerSave() {
-      const content = document.getElementById("codeEditor").value;
-      vscode.postMessage({ command: 'save', filePath: currentFilePath, content: content });
-      document.getElementById("dirtyIndicator").style.display = "none";
-    }
-
-    function loadFile(filePath) {
-      vscode.postMessage({ command: 'openFile', filePath: filePath });
-    }
-
-    function updateGutter() {
-      const editor = document.getElementById("codeEditor");
-      const lines = editor.value.split("\\n").length;
-      let gutterHtml = "";
-      for (let i = 1; i <= Math.max(lines, 20); i++) {
-        gutterHtml += i + "<br>";
-      }
-      document.getElementById("gutterEl").innerHTML = gutterHtml;
-    }
-
-    function onCodeChanged() {
-      updateGutter();
-      document.getElementById("dirtyIndicator").style.display = "inline";
-      updateCursor();
-    }
-
-    function updateCursor() {
-      const editor = document.getElementById("codeEditor");
-      const text = editor.value.substring(0, editor.selectionStart);
-      const lines = text.split("\\n");
-      const row = lines.length;
-      const col = lines[lines.length - 1].length + 1;
-      document.getElementById("cursorPosEl").textContent = "Ln " + row + ", Col " + col;
-    }
-
-    function onKeyDown(e) {
-      if (e.ctrlKey && e.key === 's') {
-        e.preventDefault();
-        triggerSave();
-      } else if (e.key === 'F5') {
-        e.preventDefault();
-        triggerRun();
-      } else if (e.key === 'Tab') {
-        e.preventDefault();
-        const editor = document.getElementById("codeEditor");
-        const start = editor.selectionStart;
-        const end = editor.selectionEnd;
-        editor.value = editor.value.substring(0, start) + "    " + editor.value.substring(end);
-        editor.selectionStart = editor.selectionEnd = start + 4;
-        onCodeChanged();
-      }
-      setTimeout(updateCursor, 10);
-    }
-
-    function appendTerminal(line, type) {
-      const panel = document.getElementById("panelContentEl");
-      const div = document.createElement("div");
-      div.className = "terminal-line " + (type || "");
-      div.textContent = line;
-      panel.appendChild(div);
-      panel.scrollTop = panel.scrollHeight;
-    }
-
-    function clearTerminal() {
-      document.getElementById("panelContentEl").innerHTML = '<div class="terminal-actions"><button class="action-btn secondary" style="font-size:11px;padding:3px 8px;" onclick="triggerRun()">▶ Executar (AOT)</button><button class="action-btn secondary" style="font-size:11px;padding:3px 8px;" onclick="triggerBuild()">🔨 Compilar</button><button class="action-btn secondary" style="font-size:11px;padding:3px 8px;" onclick="clearTerminal()">🗑 Limpar</button></div>';
-    }
-
-    function switchPanelTab(idx) {
-      document.querySelectorAll(".ptab").forEach((tab, i) => {
-        tab.classList.toggle("active", i === idx);
-      });
-      if (idx === 1) {
-        document.getElementById("panelContentEl").innerHTML = '<div style="color:#98c379;font-weight:600;">[OFS LSP] Zero erros ou avisos encontrados no workspace.</div><div style="color:var(--fg-muted);margin-top:6px;">Todos os tipos e monólitos foram analisados com sucesso pelo compilador nativo OFS.</div>';
-      } else if (idx === 3) {
-        document.getElementById("panelContentEl").innerHTML = '<div style="padding:10px;background:var(--bg-editor);border:1px solid var(--border-color);border-radius:6px;max-width:300px;"><div style="font-weight:bold;margin-bottom:8px;">Pré-visualização OLL Component</div><button style="padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:4px;cursor:pointer;">Botão Primário OLL</button></div>';
-      }
-    }
-
-    window.addEventListener("message", (event) => {
-      const msg = event.data;
-      if (msg.type === "loadFile") {
-        currentFilePath = msg.filePath;
-        document.getElementById("tabTitle").textContent = msg.fileName;
-        document.getElementById("codeEditor").value = msg.content;
-        document.getElementById("dirtyIndicator").style.display = "none";
-        updateGutter();
-        updateCursor();
-      } else if (msg.type === "syncDocument") {
-        document.getElementById("codeEditor").value = msg.content;
-        updateGutter();
-        updateCursor();
-      } else if (msg.type === "setTheme") {
-        setTheme(msg.theme);
-      }
-    });
-
-    document.getElementById("codeEditor").addEventListener("click", updateCursor);
-    document.getElementById("codeEditor").addEventListener("keyup", updateCursor);
-    updateGutter();
-  </script>
-</body>
-</html>`;
-}
-
-async function runOllNative(document) {
-  if (!document) {
-    const editor = vscode.window.activeTextEditor;
-    if (editor) document = editor.document;
-  }
-  if (!document) return;
-
-  const file = document.fileName;
-  const cwd = path.dirname(file);
-  const ofsPath = resolveEffectiveOfsCompilerPath(cwd);
-
-  const terminal = getOrCreateExecutionTerminal(cwd, ofsPath);
-  terminal.show(true);
-  terminal.sendText(`"${ofsPath}" run "${path.basename(file)}"`);
-}
-
-const checkedExtraUris = new Map(); // documento -> URIs de arquivos attach com diagnosticos
-
-async function runOfsCheck(document, diagnosticCollection) {
-  if (!document || document.languageId !== 'ofs') {
-    return;
-  }
-
-  const ofsPath = await resolveReadyOfsPath();
-  if (!ofsPath) {
-    return;
-  }
-
-  const args = ['check', document.fileName];
-
-  const result = await runExecFile(ofsPath, args, { cwd: getWorkspaceRoot() || undefined });
-  const combined = `${result.stdout || ''}\n${result.stderr || ''}`;
-  const byFile = parseDiagnosticsByFile(document, combined);
-  const diagnostics = byFile.get(document.fileName) || [];
-
-  // limpa diagnosticos antigos de arquivos attach e aplica os novos
-  for (const old of checkedExtraUris.get(document.fileName) || []) {
-    diagnosticCollection.delete(old);
-  }
-  const extras = [];
-  for (const [file, list] of byFile) {
-    if (file !== document.fileName) {
-      const uri = vscode.Uri.file(file);
-      diagnosticCollection.set(uri, list);
-      extras.push(uri);
-    }
-  }
-  checkedExtraUris.set(document.fileName, extras);
-
-  if (!result.error) {
-    // sucesso: ainda podem existir avisos (ex.: AVISO DE TIPO)
-    diagnosticCollection.set(document.uri, diagnostics);
-    return;
-  }
-
-  if (diagnostics.length === 0) {
-    const fallbackRange = new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 1));
-    diagnosticCollection.set(document.uri, [
-      new vscode.Diagnostic(
-        fallbackRange,
-        combined.replace(ANSI_REGEX, '').trim() || 'OFS check failed. Verify ofs.path and compiler installation.',
-        vscode.DiagnosticSeverity.Error
-      )
-    ]);
-    return;
-  }
-
-  diagnosticCollection.set(document.uri, diagnostics);
 }
 
 function runCurrentFile() {
@@ -3735,148 +2799,6 @@ function registerHoverProvider(context) {
   context.subscriptions.push(provider);
 }
 
-class OfsWorkspaceTreeDataProvider {
-  constructor() {
-    this._onDidChangeTreeData = new vscode.EventEmitter();
-    this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-  }
-
-  refresh() {
-    this._onDidChangeTreeData.fire();
-  }
-
-  getTreeItem(element) {
-    return element;
-  }
-
-  async getChildren(element) {
-    const ws = getWorkspaceRoot();
-    if (!ws) {
-      return [new vscode.TreeItem('Nenhum workspace aberto', vscode.TreeItemCollapsibleState.None)];
-    }
-
-    if (!element) {
-      const ofsFiles = await vscode.workspace.findFiles('**/*.ofs', '**/node_modules/**');
-      const ollFiles = await vscode.workspace.findFiles('**/*.oll', '**/node_modules/**');
-      const docFiles = await vscode.workspace.findFiles('**/*.{odl,oes,md}', '**/node_modules/**');
-
-      const roots = [];
-      if (ofsFiles.length > 0) {
-        const item = new vscode.TreeItem(`Scripts OFS (${ofsFiles.length})`, vscode.TreeItemCollapsibleState.Expanded);
-        item.iconPath = new vscode.ThemeIcon('symbol-event');
-        item.contextValue = 'ofsFolder';
-        item.children = ofsFiles.sort((a, b) => a.fsPath.localeCompare(b.fsPath)).map(u => this.createFileItem(u, 'ofs'));
-        roots.push(item);
-      }
-      if (ollFiles.length > 0) {
-        const item = new vscode.TreeItem(`Layouts OLL (${ollFiles.length})`, vscode.TreeItemCollapsibleState.Expanded);
-        item.iconPath = new vscode.ThemeIcon('layout');
-        item.contextValue = 'ollFolder';
-        item.children = ollFiles.sort((a, b) => a.fsPath.localeCompare(b.fsPath)).map(u => this.createFileItem(u, 'oll'));
-        roots.push(item);
-      }
-      if (docFiles.length > 0) {
-        const item = new vscode.TreeItem(`Documentos & Estilos (${docFiles.length})`, vscode.TreeItemCollapsibleState.Collapsed);
-        item.iconPath = new vscode.ThemeIcon('book');
-        item.contextValue = 'docFolder';
-        item.children = docFiles.sort((a, b) => a.fsPath.localeCompare(b.fsPath)).map(u => this.createFileItem(u, 'doc'));
-        roots.push(item);
-      }
-      return roots;
-    }
-
-    return element.children || [];
-  }
-
-  createFileItem(uri, kind) {
-    const base = path.basename(uri.fsPath);
-    const rel = vscode.workspace.asRelativePath(uri);
-    const item = new vscode.TreeItem(base, vscode.TreeItemCollapsibleState.None);
-    item.resourceUri = uri;
-    item.description = rel !== base ? path.dirname(rel) : '';
-    item.command = {
-      command: 'vscode.open',
-      arguments: [uri],
-      title: 'Abrir Arquivo'
-    };
-    if (kind === 'ofs') {
-      item.iconPath = new vscode.ThemeIcon('file-code');
-    } else if (kind === 'oll') {
-      item.iconPath = new vscode.ThemeIcon('layout-sidebar-left');
-    } else {
-      item.iconPath = new vscode.ThemeIcon('file-text');
-    }
-    return item;
-  }
-}
-
-class OfsActionsTreeDataProvider {
-  getTreeItem(element) {
-    return element;
-  }
-
-  getChildren() {
-    return [
-      this.createActionItem('Compilar & Executar (Run)', 'ofs.runNative', 'play', 'Compila e executa o arquivo ativo imediatamente'),
-      this.createActionItem('Depurar Programa (Debug)', 'ofs.debugNative', 'debug-alt-small', 'Inicia sessão de depuração nativa GDB/LLDB'),
-      this.createActionItem('Verificar Sintaxe & Tipos (Check)', 'ofs.checkFile', 'check-all', 'Typecheck pelo compilador OFS Magma'),
-      this.createActionItem('Gerar Assembly LLVM Nativo (ASM)', 'ofs.emitAssembly', 'symbol-field', 'Gera código de montagem .s nativo'),
-      this.createActionItem('Live Preview OLL Layout', 'ofs.previewOll', 'layout', 'Pré-visualização em tempo real de layouts OLL'),
-      this.createActionItem('Executar Janela Nativa OLL', 'ofs.runOll', 'window', 'Abre layout em janela nativa X11 com aceleração'),
-      this.createActionItem('Abrir Obsidian Studio IDLE', 'ofs.openStudio', 'layout-sidebar-left', 'Abre a IDE integrada no VS Code'),
-      this.createActionItem('Executar Studio IDLE Nativo (Linux)', 'ofs.launchNativeIdle', 'terminal', 'Inicia o binário nativo da Studio IDLE')
-    ];
-  }
-
-  createActionItem(label, command, icon, tooltip) {
-    const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
-    item.command = { command, title: label };
-    item.tooltip = tooltip;
-    item.iconPath = new vscode.ThemeIcon(icon);
-    return item;
-  }
-}
-
-class OfsThemesTreeDataProvider {
-  constructor() {
-    this._onDidChangeTreeData = new vscode.EventEmitter();
-    this.onDidChangeTreeData = this._onDidChangeTreeData.event;
-    this.currentTheme = 'dark_modern';
-  }
-
-  setTheme(t) {
-    this.currentTheme = t;
-    this._onDidChangeTreeData.fire();
-  }
-
-  getTreeItem(element) {
-    return element;
-  }
-
-  getChildren() {
-    const themes = [
-      { id: 'dark_modern', name: 'Dark Modern (Obsidian Studio)', icon: 'color-mode' },
-      { id: 'gtk', name: 'GTK+ Dark Theme (Adwaita)', icon: 'symbol-color' },
-      { id: 'windows', name: 'Windows 11 Fluent Design', icon: 'window' },
-      { id: 'neon', name: 'Cyberpunk Neon Synthwave', icon: 'zap' }
-    ];
-
-    return themes.map(t => {
-      const active = this.currentTheme === t.id;
-      const label = active ? `● ${t.name}` : `○ ${t.name}`;
-      const item = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
-      item.command = {
-        command: 'ofs.setTheme',
-        arguments: [t.id],
-        title: 'Selecionar Tema'
-      };
-      item.tooltip = `Aplicar tema ${t.name} na Studio IDLE`;
-      item.iconPath = new vscode.ThemeIcon(t.icon);
-      return item;
-    });
-  }
-}
-
 // Formatacao: `ofs fmt --stdin` (ferramenta escrita em OFS). Para formatar ao salvar,
 // use a opcao padrao do VS Code: "[ofs]": { "editor.formatOnSave": true }.
 // `fmt` e um comando do wrapper `ofs`; o compilador embutido/do workspace pode
@@ -3949,6 +2871,114 @@ function registerFormattingProvider(context) {
   context.subscriptions.push(provider);
 }
 
+// ── ofs fossil (Ideia 2): mostrar no editor um ponto de uma gravacao ──────
+// Roda `ofs fossil replay <arq.fossil> --to <alvo>`, mostra o estado (locais
+// e globais) no canal "OFS Fossil" e marca a linha do passo no fonte. Proximo
+// e anterior reexecutam com --to passo+1 / passo-1 (o replay e deterministico).
+let fossilChannel = null;
+let fossilDecoration = null;
+const fossilState = { file: '', step: 0, target: '1' };
+
+function readFossilSource(fossilPath) {
+  try {
+    const buf = fs.readFileSync(fossilPath);
+    const nl1 = buf.indexOf(10);
+    if (nl1 < 0 || buf.slice(0, nl1).toString() !== 'OFS-FOSSIL 1') {
+      return '';
+    }
+    const nl2 = buf.indexOf(10, nl1 + 1);
+    const parts = buf.slice(nl1 + 1, nl2).toString().split(' ');
+    if (parts[0] !== 'S') {
+      return '';
+    }
+    const n = parseInt(parts[2], 10);
+    return buf.slice(nl2 + 1, nl2 + 1 + n).toString();
+  } catch (_err) {
+    return '';
+  }
+}
+
+function fossilSourceFor(mainSrc, base) {
+  if (!mainSrc) {
+    return '';
+  }
+  if (path.basename(mainSrc) === base) {
+    return mainSrc;
+  }
+  const sibling = path.join(path.dirname(mainSrc), base);
+  return fs.existsSync(sibling) ? sibling : '';
+}
+
+function runFossilTarget(fossilPath, target) {
+  if (!fossilChannel) {
+    fossilChannel = vscode.window.createOutputChannel('OFS Fossil');
+  }
+  if (!fossilDecoration) {
+    fossilDecoration = vscode.window.createTextEditorDecorationType({
+      isWholeLine: true,
+      backgroundColor: new vscode.ThemeColor('editor.stackFrameHighlightBackground'),
+      overviewRulerColor: new vscode.ThemeColor('editorOverviewRuler.infoForeground')
+    });
+  }
+  fossilState.file = fossilPath;
+  fossilState.target = target;
+  const args = ['fossil', 'replay', fossilPath, '--to', String(target)];
+  cp.execFile(getOfsPath(), args, { cwd: path.dirname(fossilPath), maxBuffer: 16 * 1024 * 1024 }, async (_error, stdout, stderr) => {
+    fossilChannel.clear();
+    fossilChannel.append(`$ ofs ${args.join(' ')}\n${stdout || ''}${stderr || ''}`);
+    fossilChannel.show(true);
+    const m = /^fossil: passo (\d+) \| ([^|]*):(\d+) \|/m.exec(stdout || '');
+    if (!m) {
+      vscode.window.showWarningMessage(`ofs fossil: ${(stderr || '').trim() || 'ponto nao encontrado'}`);
+      return;
+    }
+    fossilState.step = parseInt(m[1], 10);
+    const src = fossilSourceFor(readFossilSource(fossilPath), m[2].trim());
+    if (!src) {
+      return;
+    }
+    const doc = await vscode.workspace.openTextDocument(src);
+    const editor = await vscode.window.showTextDocument(doc, { preserveFocus: false, preview: false });
+    const line = Math.max(0, parseInt(m[3], 10) - 1);
+    const range = new vscode.Range(line, 0, line, 0);
+    editor.setDecorations(fossilDecoration, [range]);
+    editor.revealRange(range, vscode.TextEditorRevealType.InCenterIfOutsideViewport);
+    vscode.window.setStatusBarMessage(`fossil: passo ${fossilState.step}`, 8000);
+  });
+}
+
+async function fossilReplayCommand() {
+  let fossilPath = '';
+  const active = vscode.window.activeTextEditor;
+  if (active && active.document.fileName.endsWith('.fossil')) {
+    fossilPath = active.document.fileName;
+  } else if (fossilState.file) {
+    fossilPath = fossilState.file;
+  }
+  if (!fossilPath) {
+    const pick = await vscode.window.showOpenDialog({ canSelectMany: false, filters: { Fossil: ['fossil'] } });
+    if (!pick || pick.length === 0) {
+      return;
+    }
+    fossilPath = pick[0].fsPath;
+  }
+  const target = await vscode.window.showInputBox({
+    prompt: 'ofs fossil: ir para (passo, L<linha>, arquivo.ofs:<linha> ou nome da vein)',
+    value: fossilState.target
+  });
+  if (!target) {
+    return;
+  }
+  runFossilTarget(fossilPath, target.trim());
+}
+
+function fossilStepCommand(delta) {
+  if (!fossilState.file || fossilState.step <= 0) {
+    return fossilReplayCommand();
+  }
+  runFossilTarget(fossilState.file, String(Math.max(1, fossilState.step + delta)));
+}
+
 function activate(context) {
   extensionContextRef = context;
   if (context.globalStorageUri?.fsPath) {
@@ -3980,57 +3010,9 @@ function activate(context) {
   const stopCmd = vscode.commands.registerCommand('ofs.stopExecution', () => terminateActiveExecution());
   const runOllCmd = vscode.commands.registerCommand('ofs.runOll', () => runOllNative());
   const previewOllCmd = vscode.commands.registerCommand('ofs.previewOll', () => showOllLivePreview());
-  const openStudioCmd = vscode.commands.registerCommand('ofs.openStudio', () => showStudioIdleWebview(context));
-
-  studioIdleStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-  studioIdleStatusBarItem.command = 'ofs.openStudio';
-  studioIdleStatusBarItem.text = '$(layout) OFS Studio';
-  studioIdleStatusBarItem.tooltip = 'Abrir Obsidian Fault Script :: Studio IDLE';
-  studioIdleStatusBarItem.show();
-
-  const ofsWorkspaceProvider = new OfsWorkspaceTreeDataProvider();
-  const ofsActionsProvider = new OfsActionsTreeDataProvider();
-  const ofsThemesProvider = new OfsThemesTreeDataProvider();
-
-  vscode.window.registerTreeDataProvider('ofs.workspaceView', ofsWorkspaceProvider);
-  vscode.window.registerTreeDataProvider('ofs.actionsView', ofsActionsProvider);
-  vscode.window.registerTreeDataProvider('ofs.themesView', ofsThemesProvider);
-
-  const refreshWorkspaceCmd = vscode.commands.registerCommand('ofs.refreshWorkspace', () => {
-    ofsWorkspaceProvider.refresh();
-  });
-
-  const setThemeCmd = vscode.commands.registerCommand('ofs.setTheme', (themeId) => {
-    if (themeId) {
-      ofsThemesProvider.setTheme(themeId);
-      if (studioIdlePanel) {
-        studioIdlePanel.webview.postMessage({ type: 'setTheme', theme: themeId });
-      }
-      vscode.window.showInformationMessage(`Tema OLL alterado para: ${themeId}`);
-    }
-  });
-
-  const launchNativeCmd = vscode.commands.registerCommand('ofs.launchNativeIdle', () => {
-    const ws = getWorkspaceRoot();
-    const candidatePaths = [
-      path.join(ws, 'idle', 'dist', 'ofs_idle_linux'),
-      path.join(os.homedir(), '.local', 'bin', 'ofs_idle_linux'),
-      path.join(context.extensionPath, 'bin', 'linux-x64', 'ofs_idle_linux')
-    ];
-    let bin = candidatePaths.find(p => fs.existsSync(p));
-    if (!bin) {
-      vscode.window.showErrorMessage('Binário ofs_idle_linux não encontrado. Compile com ofs build idle/main.ofs.');
-      return;
-    }
-    const proc = cp.spawn(bin, [], {
-      cwd: path.join(ws, 'idle'),
-      detached: true,
-      stdio: 'ignore'
-    });
-    proc.unref();
-    vscode.window.showInformationMessage('Obsidian Fault Script :: Studio IDLE nativa iniciada com sucesso.');
-  });
-
+  const fossilReplayCmd = vscode.commands.registerCommand('ofs.fossilReplay', () => fossilReplayCommand());
+  const fossilNextCmd = vscode.commands.registerCommand('ofs.fossilNext', () => fossilStepCommand(1));
+  const fossilBackCmd = vscode.commands.registerCommand('ofs.fossilBack', () => fossilStepCommand(-1));
   context.subscriptions.push(
     nativeRunCmd,
     nativeDebugCmd,
@@ -4042,11 +3024,9 @@ function activate(context) {
     stopCmd,
     runOllCmd,
     previewOllCmd,
-    openStudioCmd,
-    refreshWorkspaceCmd,
-    setThemeCmd,
-    launchNativeCmd,
-    studioIdleStatusBarItem,
+    fossilReplayCmd,
+    fossilNextCmd,
+    fossilBackCmd,
     {
       dispose() {
         stopExecutionWatcher();
@@ -4100,12 +3080,10 @@ function activate(context) {
     vscode.workspace.onDidSaveTextDocument((document) => {
       runOfsCheck(document, diagnosticCollection);
       updateOllWebview(document);
-      updateStudioIdleWebview(document);
     }),
     vscode.workspace.onDidChangeTextDocument((event) => {
       refreshDiagnostics(event.document);
       updateOllWebview(event.document);
-      updateStudioIdleWebview(event.document);
     }),
     vscode.workspace.onDidCloseTextDocument((document) => diagnosticCollection.delete(document.uri))
   );

@@ -6,6 +6,8 @@
 // Tamanho padrao: 412x868 dp (Moto G8 Power) com escala 1.0; OAL_SCALE=150
 // (x100) aumenta, OAL_SHOT=<arquivo.ppm> salva um quadro e sai (testes).
 
+claim rift
+
 attach {F:x11win.ofs}
 attach {F:oal_runtime.ofs}
 

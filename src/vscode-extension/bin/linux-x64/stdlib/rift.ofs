@@ -1,6 +1,8 @@
 // OFS Standard Library — Rift Module
 // OFS-native wrappers around foreign runtime boundaries.
 
+claim rift
+
 rift vein strlen(text: obsidian) -> stone abi c
 rift vein puts(text: obsidian) -> stone abi c
 

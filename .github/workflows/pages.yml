@@ -37,7 +37,7 @@ jobs:
         run: |
           cp ofs/dist/magma.ll /tmp/magma.ll
           clang -Wno-override-module -c /tmp/magma.ll -o /tmp/magma.o
-          clang -Wno-override-module -Wl,--allow-multiple-definition -O2 ofs/dist/ofscc.ll /tmp/magma.o -lm -o /tmp/ofscc
+          clang -Wno-override-module -Wl,--allow-multiple-definition -rdynamic -O2 ofs/dist/ofscc.ll /tmp/magma.o -lm -o /tmp/ofscc
           chmod +x /tmp/ofscc
           sed 's/__OFS_VERSION__/pages/g' src/packaging/linux/ofs > /tmp/ofs
           chmod +x /tmp/ofs

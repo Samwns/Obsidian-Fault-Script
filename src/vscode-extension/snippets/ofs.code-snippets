@@ -189,7 +189,30 @@
       "bedrock {",
       "    $0",
       "}"
-    ]
+    ],
+    "description": "Bloco de baixo nivel; quando aloca, e uma arena (sai tudo ao fim do bloco)"
+  },
+  "Bedrock Arena Loop": {
+    "prefix": "bedrock-arena",
+    "body": [
+      "while (${1:i} < ${2:n}) {",
+      "    bedrock {",
+      "        forge ${3:tmp} = \"${4:k}\" + ofs_stone_to_obsidian(${1:i})",
+      "        $0",
+      "    }",
+      "    ${1:i}++",
+      "}"
+    ],
+    "description": "Laco com arena por volta: temporarios do bloco saem a cada volta"
+  },
+  "Geode": {
+    "prefix": "geode",
+    "body": [
+      "geode (${1:x}: ${2:stone}) -> ${3:stone} {",
+      "    return ${4:x}",
+      "}"
+    ],
+    "description": "Vein sem nome que captura por valor (closure); tipo vein(T) -> R"
   },
   "Rift Declaration": {
     "prefix": "rift",
@@ -436,5 +459,70 @@
       "}"
     ],
     "description": "Endereco de vein e chamada indireta"
+  },
+  "Mineral": {
+    "prefix": "mineral",
+    "body": [
+      "mineral ${1:UserId} = ${2:stone} grain ${3:value > 0}$0"
+    ],
+    "description": "Tipo com regra (grain; value = o valor conferido)"
+  },
+  "Claim do modulo": {
+    "prefix": "claim",
+    "body": [
+      "claim ${1|rift,abyss,quartz,magma,rift\\, abyss|}$0"
+    ],
+    "description": "Permissoes que o modulo pede, no topo do arquivo (A5.4): rift = extern/rift vein, abyss = bloco abyss, quartz = assembly, magma = magma.cast"
+  },
+  "Estrato do arquivo": {
+    "prefix": "stratum",
+    "body": [
+      "stratum ${1|crust,fault,abyss|}$0"
+    ],
+    "description": "Nivel de baixo nivel do arquivo (Ideia 4): crust = nenhum, fault = so em blocos (padrao), abyss = tudo"
+  },
+  "Mod em execucao (magma.cast)": {
+    "prefix": "magma",
+    "body": [
+      "forge ${1:m} = magma.cast(\"${2:mods/mod.ofs}\")",
+      "if (!magma.cooled($1)) {",
+      "    echo(magma.crack($1))",
+      "} else {",
+      "    forge ${3:f}: vein(${4:stone}) -> ${5:stone} = magma.vent($1, \"${6:nome}\")",
+      "    if ($3 != null) { echo($3(${7:10})) }",
+      "}$0"
+    ],
+    "description": "Compila e carrega um mod OFS com o programa rodando (Ideia 5; pede attach {magma} e claim magma no topo)"
+  },
+  "Caprock do principal": {
+    "prefix": "caprock",
+    "body": [
+      "caprock ${1|crust,rift,rift\\, abyss,rift\\, abyss\\, quartz,rift\\, abyss\\, magma|}$0"
+    ],
+    "description": "Teto das permissoes dos modulos anexados (so no programa principal; crust = nada)"
+  },
+  "Vein com contrato": {
+    "prefix": "bearing",
+    "body": [
+      "vein ${1:dividir}(${2:a}: stone, ${3:b}: stone) -> ${4:stone}",
+      "    bearing ${5:b != 0}",
+      "    settle ${6:result * b <= a}",
+      "{",
+      "    $0",
+      "}"
+    ],
+    "description": "Vein com pre-condicao (bearing) e pos-condicao (settle; result = o retorno)"
+  },
+  "Quartz": {
+    "prefix": "quartz",
+    "body": [
+      "abyss {",
+      "    quartz {",
+      "        \"${1:nop}\"",
+      "    }",
+      "$0",
+      "}"
+    ],
+    "description": "Assembly inline no alvo atual (AT&T; exige abyss)"
   }
 }

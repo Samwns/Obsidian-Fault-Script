@@ -16,6 +16,8 @@
 // A capacidade dobra quando enche (append amortizado O(1)). Usa memoria
 // crua do runtime; roda igual no build nativo e no `ofs run` (F2).
 
+claim rift
+
 extern vein ofs_alloc(size: stone) -> *stone
 extern vein ofs_realloc(ptr: *stone, size: stone) -> *stone
 extern vein ofs_free(ptr: *stone) -> void

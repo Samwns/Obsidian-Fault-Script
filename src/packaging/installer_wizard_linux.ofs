@@ -1,3 +1,5 @@
+claim rift
+
 attach {F:../../ofs/stdlib/oll.ofs}
 attach {F:../../ofs/stdlib/fs.ofs}
 

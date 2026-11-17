@@ -86,7 +86,27 @@
         },
         {
           "name": "keyword.control.ofs",
-          "match": "\\b(core|vein|forge|const|monolith|impl|namespace|strata|if|else|while|cycle|mine|match|assay|case|default|return|break|shatter|continue|erode|throw|tremor|catch|anchor|seal|fracture|abyss|bedrock|tectonic|attach|extern|rift|as|in|echo|shard)\\b"
+          "match": "\\b(core|vein|forge|const|monolith|impl|namespace|strata|if|else|while|cycle|mine|match|assay|case|default|return|break|shatter|continue|erode|throw|tremor|catch|anchor|seal|fracture|abyss|bedrock|tectonic|quartz|attach|extern|rift|as|in|echo|shard)\\b"
+        },
+        {
+          "comment": "geode: vein que captura (closure); palavra de contexto antes de `(`",
+          "name": "keyword.other.geode.ofs",
+          "match": "\\bgeode\\b(?=\\s*\\()"
+        },
+        {
+          "comment": "A5.1: `mineral Nome =` (tipo com regra; palavra de contexto)",
+          "name": "keyword.other.contract.ofs",
+          "match": "\\bmineral\\b(?=\\s+[A-Za-z_]\\w*\\s*=)"
+        },
+        {
+          "comment": "A5.1: clausula grain/bearing/settle ate o fim da linha ou o `{`; dentro dela `value` e `result` sao do contrato",
+          "begin": "\\b(grain|bearing|settle)\\b(?=\\s+[^=\\s(.:])",
+          "beginCaptures": { "1": { "name": "keyword.other.contract.ofs" } },
+          "end": "(?=\\{|$|\\b(?:grain|bearing|settle)\\b)",
+          "patterns": [
+            { "name": "variable.language.contract.ofs", "match": "\\b(value|result)\\b" },
+            { "include": "$self" }
+          ]
         },
         {
           "comment": "bind/abi: metadados de extern/rift vein",
