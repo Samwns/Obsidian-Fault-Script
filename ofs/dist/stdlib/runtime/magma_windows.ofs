@@ -1,3 +1,5 @@
+claim rift
+
 attach {F:reservoir.ofs}
 attach {F:facet.ofs}
 attach {F:matrix.ofs}

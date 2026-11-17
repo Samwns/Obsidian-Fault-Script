@@ -7,17 +7,70 @@ case "$OFS_VERSION" in
 esac
 OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OFSCC="${OFSCC:-$ROOT/ofscc}"
-RUNTIME="${OFS_RUNTIME:-}"
-if [ -z "$RUNTIME" ]; then
-  for runtime_candidate in "$ROOT/magma.o" "$ROOT/libofs_runtime.a" "$HOME/.local/lib/ofs/magma.o" "$HOME/.local/lib/ofs/libofs_runtime.a" \
-    "/usr/local/lib/ofs/magma.o" "/usr/local/lib/ofs/libofs_runtime.a" "/usr/lib/ofs/magma.o" "/usr/lib/ofs/libofs_runtime.a"; do
-    if [ -f "$runtime_candidate" ]; then
-      RUNTIME="$runtime_candidate"
-      break
-    fi
-  done
+
+# Termux (Android, aarch64): instalacao em $PREFIX/lib/ofs, alvo nativo aarch64-android.
+IS_TERMUX=false
+TERMUX_LIB=""
+if [ -n "${TERMUX_VERSION:-}" ] || case "${PREFIX:-}" in /data/data/com.termux*) true ;; *) false ;; esac; then
+  IS_TERMUX=true
+  TERMUX_LIB="${PREFIX:-/data/data/com.termux/files/usr}/lib/ofs"
+  export OFSCC_TARGET="${OFSCC_TARGET:-aarch64-unknown-linux-android}"
 fi
+
+# Resolucao de compilador, runtime e stdlib: sempre do MESMO conjunto.
+# Prioridade: (1) variaveis explicitas OFSCC / OFS_RUNTIME / OFS_STDLIB(_PATH);
+# (2) checkout do repositorio (ofs/dist/ofscc + ofs/dist/magma.o + ofs/stdlib);
+# (3) instalacao ao lado do wrapper (pacote) e Termux $PREFIX/lib/ofs;
+# (4) ~/.local/lib/ofs, /usr/local, /usr/lib/ofs (cada um como conjunto unico).
+# Uma variavel explicita vale so para o seu item; os demais vem do primeiro conjunto completo.
+OFS_SRC_FROM=""
+_set_runtime_in() { # dir -> imprime o runtime desse dir
+  local d="$1" r
+  # pacote macOS: ofscc em <prefix>/bin e runtime em <prefix>/lib/ofs
+  for r in "$d/magma.o" "$d/libofs_runtime.a" "$d/../lib/ofs/magma.o"; do [ -f "$r" ] && { printf '%s' "$r"; return 0; }; done
+  return 1
+}
+_set_stdlib_in() { # dir -> imprime a stdlib desse dir
+  local d="$1" s
+  # .deb/.rpm/macOS: <prefix>/lib/ofs + <prefix>/share/ofs/stdlib
+  for s in "$d/stdlib" "$d/../ofs/stdlib" "$d/../share/ofs/stdlib" "$d/../../share/ofs/stdlib"; do
+    [ -d "$s" ] && { (cd "$s" && pwd); return 0; }
+  done
+  return 1
+}
+_pick_set() {
+  local d rt sl
+  RES_CC=""; RES_RT=""; RES_SL=""; RES_FROM=""
+  local repo_root="$ROOT/../../../ofs"
+  if [ -x "$repo_root/dist/ofscc" ] && [ -f "$repo_root/dist/magma.o" ] && [ -d "$repo_root/stdlib" ]; then
+    RES_CC="$(cd "$repo_root/dist" && pwd)/ofscc"; RES_RT="$(cd "$repo_root/dist" && pwd)/magma.o"
+    RES_SL="$(cd "$repo_root/stdlib" && pwd)"; RES_FROM="repositorio"; return 0
+  fi
+  # pacote: wrapper em <prefix>/bin/ofs e o resto em <prefix>/lib/ofs (.deb, .rpm, macOS)
+  local dirs=("$ROOT" "$ROOT/../lib/ofs")
+  [ "$IS_TERMUX" = true ] && dirs+=("$TERMUX_LIB")
+  dirs+=("$HOME/.local/lib/ofs" "/usr/local/lib/ofs" "/usr/lib/ofs")
+  for d in "${dirs[@]}"; do
+    [ -x "$d/ofscc" ] || continue
+    rt="$(_set_runtime_in "$d")" || continue
+    sl="$(_set_stdlib_in "$d")" || sl=""
+    RES_CC="$d/ofscc"; RES_RT="$rt"; RES_SL="$sl"; RES_FROM="$d"; return 0
+  done
+  return 1
+}
+_pick_set || true
+
+OFS_CC_SRC="padrao"; OFS_RT_SRC="padrao"; OFS_SL_SRC="padrao"
+if [ -n "${OFSCC:-}" ]; then OFS_CC_SRC="OFSCC"; else OFSCC="${RES_CC:-$ROOT/ofscc}"; fi
+RUNTIME="${OFS_RUNTIME:-}"
+if [ -n "$RUNTIME" ]; then OFS_RT_SRC="OFS_RUNTIME"; else RUNTIME="${RES_RT:-}"; fi
+if [ -z "${OFS_STDLIB_PATH:-}" ] && [ -n "${OFS_STDLIB:-}" ]; then OFS_STDLIB_PATH="$OFS_STDLIB"; fi
+if [ -n "${OFS_STDLIB_PATH:-}" ]; then OFS_SL_SRC="OFS_STDLIB"; else OFS_STDLIB_PATH="${RES_SL:-}"; fi
+[ "$OFS_CC_SRC" = padrao ] && OFS_CC_SRC="${RES_FROM:-padrao}"
+[ "$OFS_RT_SRC" = padrao ] && OFS_RT_SRC="${RES_FROM:-padrao}"
+[ "$OFS_SL_SRC" = padrao ] && OFS_SL_SRC="${RES_FROM:-padrao}"
+export OFS_STDLIB_PATH OFS_STDLIB="$OFS_STDLIB_PATH"
+
 
 # Keep bootstrap resource use bounded while allowing callers to tighten the
 # limits. OFSCC_MAX_MEM is bytes (4 GiB by default); CPU time is seconds.
@@ -40,31 +93,6 @@ fi
 ulimit -Sc 0 2>/dev/null || true
 export OFS_RUNTIME="$RUNTIME"
 
-if [ -z "${OFS_STDLIB_PATH:-}" ] && [ -n "${OFS_STDLIB:-}" ]; then
-  export OFS_STDLIB_PATH="$OFS_STDLIB"
-fi
-if [ -z "${OFS_STDLIB:-}" ] && [ -n "${OFS_STDLIB_PATH:-}" ]; then
-  export OFS_STDLIB="$OFS_STDLIB_PATH"
-fi
-
-if [ -z "${OFS_STDLIB_PATH:-}" ]; then
-  if [ -d "$ROOT/stdlib" ]; then
-    export OFS_STDLIB_PATH="$ROOT/stdlib"
-  elif [ -d "$ROOT/../ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="$ROOT/../ofs/stdlib"
-  elif [ -d "$HOME/.local/lib/ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="$HOME/.local/lib/ofs/stdlib"
-  elif [ -d "$HOME/.local/share/ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="$HOME/.local/share/ofs/stdlib"
-  elif [ -d "/usr/local/share/ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="/usr/local/share/ofs/stdlib"
-  elif [ -d "/usr/lib/ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="/usr/lib/ofs/stdlib"
-  elif [ -d "/usr/share/ofs/stdlib" ]; then
-    export OFS_STDLIB_PATH="/usr/share/ofs/stdlib"
-  fi
-  export OFS_STDLIB="${OFS_STDLIB_PATH:-}"
-fi
 
 env_llvm_ir_flags="${OFS_LLVM_IR_FLAGS:-${LLVM_IR_FLAGS:-}}"
 detect_llvm_ir_flags() {
@@ -138,12 +166,9 @@ native_link() {
   fi
 
   extra_libs=(-lm)
-  # Bibliotecas extras do sistema para o link (ex.: OFS_LINK_LIBS="-lssl -lcrypto")
-  if [ -n "${OFS_LINK_LIBS:-}" ]; then
-    read -r -a _ofs_user_libs <<< "$OFS_LINK_LIBS"
-    extra_libs+=("${_ofs_user_libs[@]}")
-  fi
-  if [ "$(uname -s)" != "Darwin" ]; then
+  if [ "$IS_TERMUX" = true ]; then
+    : # bionic ja inclui pthread/dl; sem X11
+  elif [ "$(uname -s)" != "Darwin" ]; then
     if pkg-config --exists x11 2>/dev/null; then
       extra_libs+=(-lX11)
     elif [ -f /usr/lib64/libX11.so ] || [ -f /usr/lib/x86_64-linux-gnu/libX11.so ]; then
@@ -185,6 +210,29 @@ native_link() {
     return 0
   fi
 
+  # Ideia 5 (magma.cast): o mod carregado em execucao (.so) usa o runtime do
+  # proprio programa (mesmo heap, stdout e strings), entao o binario que chama
+  # magma.cast exporta os simbolos dele (como o ofscc, ligado com -rdynamic).
+  local magma_export=()
+  local magma_cflag=()
+  if grep -q '@magma__cast(' "$in_ll" 2>/dev/null; then
+    magma_export=(--export-dynamic)
+    magma_cflag=(-rdynamic)
+  fi
+
+  if [ "$IS_TERMUX" = true ]; then
+    local tclang="${PREFIX:-}/bin/clang"
+    [ -x "$tclang" ] || tclang="$(command -v clang || true)"
+    [ -n "$tclang" ] || { echo "ofs: clang nao encontrado (pkg install clang)" >&2; return 1; }
+    local tcmd=("$tclang" -Wno-override-module)
+    [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ] && tcmd+=("${OFS_LLVM_IR_FLAGS[@]}")
+    tcmd+=(-Wl,--allow-multiple-definition "${magma_cflag[@]}" "$in_ll")
+    [ "${#magma_objs[@]}" -gt 0 ] && tcmd+=("${magma_objs[@]}")
+    tcmd+=(-lm -o "$out_bin")
+    "${tcmd[@]}"
+    return 0
+  fi
+
   detect_crt_paths
   if command -v llc >/dev/null 2>&1 && [ -n "$CRT_DIR" ] && [ -n "$DYN_LINKER" ]; then
     llc -filetype=obj "$in_ll" -o "$obj"
@@ -192,9 +240,9 @@ native_link() {
     local ld_cmd=()
     if [ -x /usr/lib64/rocm/llvm/bin/ld.lld ]; then
       linker_bin="/usr/lib64/rocm/llvm/bin/ld.lld"
-      ld_cmd=("$linker_bin" --allow-multiple-definition -L/usr/lib64 -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
+      ld_cmd=("$linker_bin" --allow-multiple-definition "${magma_export[@]}" -L/usr/lib64 -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
     else
-      ld_cmd=("$linker_bin" --allow-multiple-definition -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
+      ld_cmd=("$linker_bin" --allow-multiple-definition "${magma_export[@]}" -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
     fi
     if [ "${#magma_objs[@]}" -gt 0 ]; then
       ld_cmd+=("${magma_objs[@]}")
@@ -217,7 +265,7 @@ native_link() {
     if [ "$(uname -s)" != "Darwin" ]; then
       clang_cmd+=(-Wl,--allow-multiple-definition)
     fi
-    clang_cmd+=("$in_ll")
+    clang_cmd+=("${magma_cflag[@]}" "$in_ll")
     if [ "${#magma_objs[@]}" -gt 0 ]; then
       clang_cmd+=("${magma_objs[@]}")
     fi
@@ -248,17 +296,8 @@ native_asm() {
   fi
 }
 
-if [ ! -x "$OFSCC" ] && [ -x "$HOME/.local/lib/ofs/ofscc" ]; then
-  OFSCC="$HOME/.local/lib/ofs/ofscc"
-fi
-if [ ! -x "$OFSCC" ] && command -v ofscc >/dev/null 2>&1; then
+if [ ! -x "$OFSCC" ] && [ "$OFS_CC_SRC" != OFSCC ] && command -v ofscc >/dev/null 2>&1; then
   OFSCC="$(command -v ofscc)"
-fi
-if [ ! -x "$OFSCC" ] && [ -x /usr/local/bin/ofscc ]; then
-  OFSCC="/usr/local/bin/ofscc"
-fi
-if [ ! -x "$OFSCC" ] && [ -x /usr/lib/ofs/ofscc ]; then
-  OFSCC="/usr/lib/ofs/ofscc"
 fi
 
 banner() {
@@ -283,7 +322,22 @@ show_version() {
   banner
   printf 'ofs %s - Obsidian Fault Script\n' "$OFS_VERSION"
   printf 'status: stable\n'
+  printf 'compilador: %s (%s)\n' "$OFSCC" "$OFS_CC_SRC"
+  printf 'runtime:    %s (%s)\n' "${OFS_RUNTIME:-?}" "$OFS_RT_SRC"
+  printf 'stdlib:     %s (%s)\n' "${OFS_STDLIB_PATH:-?}" "$OFS_SL_SRC"
 }
+
+# Chave do cache de ferramentas: caminho+mtime do compilador (arg 2, padrao
+# $OFSCC) e do runtime. Ferramenta cacheada com outra toolchain e recompilada.
+toolchain_key() {
+  local f out=""
+  for f in "${1:-$OFSCC}" "${OFS_RUNTIME:-}"; do
+    out="$out$f:$(stat -c %Y "$f" 2>/dev/null || stat -f %m "$f" 2>/dev/null || echo 0);"
+  done
+  printf '%s' "$out"
+}
+tool_stale() { [ "$(cat "$1.key" 2>/dev/null)" != "$(toolchain_key "${2:-}")" ]; }
+tool_stamp() { toolchain_key "${2:-}" > "$1.key"; }
 
 # Cores do help: ativadas por padrao; NO_COLOR (qualquer valor) ou TERM=dumb
 # desligam. Espelha reporter_detect_color() do ofscc.ofs.
@@ -309,14 +363,24 @@ ${c_head}Uso:${c_off} ofs <arquivo.ofs>   (equivale a 'ofs run')
 
 ${c_head}Subcomandos:${c_off}
   ${c_cmd}run <arq.ofs>${c_off}       Executa interpretado (--native compila temporario)
-  ${c_cmd}build <arq.ofs>${c_off}     Compila para executavel nativo (-o saida)
+  ${c_cmd}refract <arq.ofs>${c_off}   Executa e aplica cada edicao salva sem reiniciar (--quiet)
+  ${c_cmd}refract --remote <app.oal>${c_off} Edicao ao vivo do app no celular (adb; --serial)
+  ${c_cmd}fossil <arq.ofs>${c_off}    Executa e grava as entradas externas num .fossil (-o arq.fossil)
+  ${c_cmd}fossil replay <f.fossil>${c_off} Reproduz a gravacao (--to <passo|L<linha>|vein>, --back N, --dig)
+  ${c_cmd}build <arq.ofs>${c_off}     Compila para executavel nativo (-o saida, --release sem checar contratos)
+  ${c_cmd}assay <arq.ofs>${c_off}     Testa os contratos nos limites (bearing/settle/grain)
   ${c_cmd}check <arq.ofs>${c_off}     Somente verificacao de tipos
-  ${c_cmd}test <arq.ofs>${c_off}      Executa os testes (assay) do arquivo
+  ${c_cmd}test [pasta]${c_off}      Roda *.ofs com .expected numa pasta (--run, --twin)
   ${c_cmd}twin <arq.ofs>${c_off}      Roda interpretado + nativo e compara saidas
-  ${c_cmd}polish <arq.ofs>${c_off}    Verifica estilo e padroes do codigo
+  ${c_cmd}polish <arq.ofs>${c_off}    Sinonimo de fmt (formata/verifica estilo)
   ${c_cmd}language [en|pt|es]${c_off} Mostra/altera o idioma da CLI
   ${c_cmd}ir|asm|tokens|ast${c_off}   Artefatos de depuracao do compilador
   ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o saida.ppm)
+  ${c_cmd}doc [pasta|arq.ofs]${c_off} Documentacao gerada do codigo (-o saida, --check, --docs pasta)
+  ${c_cmd}fmt [alvos]${c_off}         Formata .ofs no lugar (--check, --diff, --stdin)
+  ${c_cmd}quarry <subcmd>${c_off}     Pacotes: add, remove, list, search, update, install, publish
+  ${c_cmd}build --target android${c_off} APK Android de um .ofs ou .oal (--install, --serial, --manifest, --refract)
+  ${c_cmd}run <app.oal>${c_off}       Abre o app OAL numa janela de celular (X11)
   ${c_cmd}clean${c_off}               Limpa artefatos temporarios de build
   ${c_cmd}version${c_off}             Mostra a versao
   ${c_cmd}update${c_off}              Atualiza para a ultima release
@@ -333,14 +397,24 @@ ${c_head}Uso:${c_off} ofs <archivo.ofs>   (equivale a 'ofs run')
 
 ${c_head}Subcomandos:${c_off}
   ${c_cmd}run <arq.ofs>${c_off}       Ejecuta interpretado (--native compila temporal)
-  ${c_cmd}build <arq.ofs>${c_off}     Compila a ejecutable nativo (-o salida)
+  ${c_cmd}refract <arq.ofs>${c_off}   Ejecuta y aplica cada edicion guardada sin reiniciar (--quiet)
+  ${c_cmd}refract --remote <app.oal>${c_off} Edicion en vivo de la app en el celular (adb; --serial)
+  ${c_cmd}fossil <arq.ofs>${c_off}    Ejecuta y graba las entradas externas en un .fossil (-o arq.fossil)
+  ${c_cmd}fossil replay <f.fossil>${c_off} Reproduce la grabacion (--to <paso|L<linea>|vein>, --back N, --dig)
+  ${c_cmd}build <arq.ofs>${c_off}     Compila a ejecutable nativo (-o salida, --release sin chequear contratos)
+  ${c_cmd}assay <arq.ofs>${c_off}     Prueba los contratos en los limites (bearing/settle/grain)
   ${c_cmd}check <arq.ofs>${c_off}     Solo verificacion de tipos
-  ${c_cmd}test <arq.ofs>${c_off}      Ejecuta las pruebas (assay) del archivo
+  ${c_cmd}test [pasta]${c_off}      Ejecuta *.ofs con .expected en una carpeta (--run, --twin)
   ${c_cmd}twin <arq.ofs>${c_off}      Ejecuta interpretado + nativo y compara salidas
-  ${c_cmd}polish <arq.ofs>${c_off}    Verifica estilo y patrones del codigo
+  ${c_cmd}polish <arq.ofs>${c_off}    Sinonimo de fmt (formatea/verifica estilo)
   ${c_cmd}language [en|pt|es]${c_off} Muestra/cambia el idioma de la CLI
   ${c_cmd}ir|asm|tokens|ast${c_off}   Artefactos de depuracion del compilador
   ${c_cmd}ui <arq.oll>${c_off}        Renderiza layout OLL nativo (-o salida.ppm)
+  ${c_cmd}doc [carpeta|arq.ofs]${c_off} Documentacion generada del codigo (-o salida, --check, --docs carpeta)
+  ${c_cmd}fmt [destinos]${c_off}      Formatea .ofs en el sitio (--check, --diff, --stdin)
+  ${c_cmd}quarry <subcmd>${c_off}     Paquetes: add, remove, list, search, update, install, publish
+  ${c_cmd}build --target android${c_off} APK Android de un .ofs o .oal (--install, --serial, --manifest, --refract)
+  ${c_cmd}run <app.oal>${c_off}       Abre la app OAL en una ventana de movil (X11)
   ${c_cmd}clean${c_off}               Limpia artefactos temporales de build
   ${c_cmd}version${c_off}             Muestra la version
   ${c_cmd}update${c_off}              Actualiza a la ultima release
@@ -357,14 +431,24 @@ ${c_head}Usage:${c_off} ofs <file.ofs>   (same as 'ofs run')
 
 ${c_head}Subcommands:${c_off}
   ${c_cmd}run <file.ofs>${c_off}      Run interpreted (--native builds a temp binary)
-  ${c_cmd}build <file.ofs>${c_off}    Compile to a native executable (-o output)
+  ${c_cmd}refract <file.ofs>${c_off}  Run and apply every saved edit without restarting (--quiet)
+  ${c_cmd}refract --remote <app.oal>${c_off} Live-edit the app on the phone (adb; --serial)
+  ${c_cmd}fossil <file.ofs>${c_off}   Run and record the external inputs into a .fossil (-o file.fossil)
+  ${c_cmd}fossil replay <f.fossil>${c_off} Replay the recording (--to <step|L<line>|vein>, --back N, --dig)
+  ${c_cmd}build <file.ofs>${c_off}    Compile to a native executable (-o output, --release skips contract checks)
+  ${c_cmd}assay <file.ofs>${c_off}    Test contracts at their boundaries (bearing/settle/grain)
   ${c_cmd}check <file.ofs>${c_off}    Type-check only (no output)
-  ${c_cmd}test <file.ofs>${c_off}     Run file tests (assay)
+  ${c_cmd}test [folder]${c_off}     Run *.ofs with .expected in a folder (--run, --twin)
   ${c_cmd}twin <file.ofs>${c_off}     Run interpreted + native and diff outputs
-  ${c_cmd}polish <file.ofs>${c_off}   Style and pattern checks
+  ${c_cmd}polish <file.ofs>${c_off}   Alias of fmt (format/check style)
   ${c_cmd}language [en|pt|es]${c_off} Show/change the CLI language
   ${c_cmd}ir|asm|tokens|ast${c_off}   Compiler debug artifacts
   ${c_cmd}ui <file.oll>${c_off}       Render native OLL layout (-o output.ppm)
+  ${c_cmd}doc [dir|file.ofs]${c_off}  Docs generated from source code (-o out, --check, --docs dir)
+  ${c_cmd}fmt [targets]${c_off}       Format .ofs in place (--check, --diff, --stdin)
+  ${c_cmd}quarry <subcmd>${c_off}     Packages: add, remove, list, search, update, install, publish
+  ${c_cmd}build --target android${c_off} Android APK from a .ofs or .oal (--install, --serial, --manifest, --refract)
+  ${c_cmd}run <app.oal>${c_off}       Open an OAL app in a phone-sized X11 window
   ${c_cmd}clean${c_off}               Clean temporary build artifacts
   ${c_cmd}version${c_off}             Print compiler version
   ${c_cmd}update${c_off}              Update to the latest release
@@ -508,6 +592,629 @@ run_update() {
   echo "Update completed to $latest"
 }
 
+# ---------------------------------------------------------------------------
+# Alvo Android (aarch64, API 26+): `ofs build --target android app.ofs|app.oal`
+# gera um APK sem Gradle/Java: NativeActivity + lib<nome>.so feita so de OFS
+# (stdlib android.ofs exporta ANativeActivity_onCreate; nenhum .c).
+#   --manifest <AndroidManifest.xml>  manifesto (padrao: o do .oal, o que esta
+#                                     ao lado do fonte, ou um gerado)
+#   --install                         adb install -r + abre a activity
+#   --serial <id>                     adb -s <id> (ou ANDROID_SERIAL)
+#   --refract                         Fault Refract L3: celula de despacho por
+#                                     vein + agente geophone (so para depurar;
+#                                     sem a opcao o IR e o mesmo de sempre)
+# Env: ANDROID_SDK/ANDROID_HOME/ANDROID_SDK_ROOT, OFS_SOURCE (pasta ofs/ do
+#      repo, para compilar ofscc/oalc do fonte), OFS_ANDROID_KEYSTORE.
+# ---------------------------------------------------------------------------
+android_die() { echo "ofs android: $*" >&2; exit 1; }
+android_step() { echo "==> $*" >&2; }
+
+android_src_dir() {
+  local c
+  for c in "${OFS_SOURCE:-}" "$ROOT/../../../ofs" "$ROOT/../ofs" "$ROOT/.." "$HOME/.local/lib/ofs/src"; do
+    if [ -n "$c" ] && [ -f "$c/ofscc/ofscc.ofs" ]; then
+      (cd "$c" && pwd)
+      return 0
+    fi
+  done
+  return 1
+}
+
+# ofscc com suporte a OFSCC_TARGET (o instalado pode ser anterior a isso).
+android_ofscc() {
+  local probe="$ANDROID_CACHE/probe.ofs"
+  printf 'core main() { echo("x") }\n' > "$probe"
+  if OFSCC_TARGET=android OFSCC_INPUT="$probe" OFSCC_MODE=ir OFSCC_C_OUT="$ANDROID_CACHE/probe.ll" "$OFSCC" >/dev/null 2>&1 \
+     && grep -q 'aarch64' "$ANDROID_CACHE/probe.ll" 2>/dev/null; then
+    A_OFSCC="$OFSCC"
+    return
+  fi
+  local src
+  src="$(android_src_dir)" || android_die "o ofscc instalado nao tem OFSCC_TARGET e o fonte do OFS nao foi achado (defina OFS_SOURCE=<repo>/ofs)"
+  A_OFSCC="$ANDROID_CACHE/ofscc"
+  if [ -x "$A_OFSCC" ] && [ -z "$(find "$src/ofscc" -name '*.ofs' -newer "$A_OFSCC" -print -quit)" ]; then
+    return
+  fi
+  android_step "compilando ofscc do fonte ($src/ofscc)"
+  local ll="$ANDROID_CACHE/ofscc.ll"
+  ( ulimit -St 300 2>/dev/null || true
+    OFSCC_INPUT="$src/ofscc/ofscc.ofs" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" >"$ANDROID_CACHE/ofscc.log" 2>&1 ) \
+    || { tail -20 "$ANDROID_CACHE/ofscc.log" >&2; android_die "falha ao compilar o ofscc"; }
+  native_link "$ll" "$A_OFSCC" linux
+  chmod +x "$A_OFSCC"
+  rm -f "$ll"
+}
+
+# Compila uma ferramenta .ofs do repo (ex.: tools/oalc.ofs) para o host.
+android_tool() {
+  local name="$1" src
+  src="$(android_src_dir)" || android_die "fonte do OFS nao encontrado para $name (defina OFS_SOURCE)"
+  local tool_src="$src/tools/$name.ofs"
+  [ -f "$tool_src" ] || android_die "$tool_src nao existe"
+  local bin="$ANDROID_CACHE/$name"
+  if [ ! -x "$bin" ] || tool_stale "$bin" "$A_OFSCC" || [ -n "$(find "$src/tools" "$OFS_STDLIB_PATH" -name '*.ofs' -newer "$bin" -print -quit)" ]; then
+    android_step "compilando $name"
+    local ll="$ANDROID_CACHE/$name.ll"
+    OFSCC_INPUT="$tool_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$A_OFSCC" >"$ANDROID_CACHE/$name.log" 2>&1 \
+      || { tail -20 "$ANDROID_CACHE/$name.log" >&2; android_die "falha ao compilar $name"; }
+    native_link "$ll" "$bin" linux
+    chmod +x "$bin"
+    tool_stamp "$bin" "$A_OFSCC"
+    rm -f "$ll"
+  fi
+  printf '%s\n' "$bin"
+}
+
+android_ir() {
+  # $3.. = variaveis extras (ex.: OFSCC_REFRACT=cells no app do --refract)
+  local in="$1" out="$2"; shift 2
+  env "$@" OFSCC_TARGET=android OFSCC_INPUT="$in" OFSCC_MODE=ir OFSCC_C_OUT="$out" "$A_OFSCC" >"$out.log" 2>&1 \
+    || { cat "$out.log" >&2; android_die "ofscc falhou em $in"; }
+  [ -s "$out" ] || { cat "$out.log" >&2; android_die "ofscc nao gerou $out"; }
+}
+
+android_build() {
+  local input="$1" output="$2"
+  local SDK="${ANDROID_SDK:-${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Android/Sdk}}}"
+  [ -d "$SDK" ] || android_die "Android SDK nao encontrado (defina ANDROID_SDK); precisa de ndk/, build-tools/ e platforms/"
+  local NDK BT PLAT
+  NDK="$(ls -d "$SDK"/ndk/* 2>/dev/null | sort -V | tail -1)"
+  BT="$(ls -d "$SDK"/build-tools/* 2>/dev/null | sort -V | tail -1)"
+  PLAT="$(ls -d "$SDK"/platforms/android-* 2>/dev/null | sort -V | tail -1)"
+  [ -n "$NDK" ] && [ -d "$NDK" ] || android_die "NDK nao encontrado em $SDK/ndk"
+  [ -x "$BT/aapt2" ] || android_die "build-tools (aapt2/zipalign/apksigner) nao encontrado em $SDK/build-tools"
+  [ -f "$PLAT/android.jar" ] || android_die "android.jar nao encontrado em $SDK/platforms"
+  local TRIPLE="aarch64-linux-android26"
+  local CC="$NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/clang"
+  [ -x "$CC" ] || android_die "clang do NDK nao encontrado: $CC"
+
+  ANDROID_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/ofs/android"
+  mkdir -p "$ANDROID_CACHE"
+  android_ofscc
+
+  local abs_input
+  abs_input="$(cd "$(dirname "$input")" && pwd)/$(basename "$input")"
+  local in_dir; in_dir="$(dirname "$abs_input")"
+  local base="${abs_input##*/}"; local app="${base%.*}"
+  local OUT="${OFS_ANDROID_BUILD:-$in_dir/build/android/$app}"
+  rm -rf "$OUT/obj" "$OUT/apk"
+  mkdir -p "$OUT/obj" "$OUT/apk/lib/arm64-v8a"
+  local entry="$abs_input"
+  local manifest="$android_manifest"
+
+  case "$abs_input" in
+    *.oal)
+      local oalc; oalc="$(android_tool oalc)"
+      android_step "oalc: $base -> AndroidManifest.xml + ${app}_oal.ofs"
+      OALC_INPUT="$abs_input" OALC_OUT_DIR="$OUT" OALC_TARGET=android "$oalc" \
+        || android_die "oalc falhou em $abs_input"
+      entry="$OUT/${app}_oal.ofs"
+      [ -n "$manifest" ] || manifest="$OUT/AndroidManifest.xml"
+      # icone (app icon "x.png") -> res/mipmap/ic_launcher.png; assets "dir" -> assets/
+      rm -rf "$OUT/res" "$OUT/assets"
+      if [ -f "$OUT/oal_icon.txt" ]; then
+        mkdir -p "$OUT/res/mipmap"
+        cp "$(cat "$OUT/oal_icon.txt")" "$OUT/res/mipmap/ic_launcher.png" || android_die "icone nao encontrado"
+      fi
+      if [ -f "$OUT/oal_assets.txt" ]; then
+        mkdir -p "$OUT/assets"
+        cp -r "$(cat "$OUT/oal_assets.txt")"/. "$OUT/assets/" || android_die "pasta de assets nao encontrada"
+      fi
+      ;;
+  esac
+  if [ -z "$manifest" ]; then
+    if [ -f "$in_dir/AndroidManifest.xml" ]; then
+      manifest="$in_dir/AndroidManifest.xml"
+    elif [ -f "$in_dir/android/AndroidManifest.xml" ]; then
+      manifest="$in_dir/android/AndroidManifest.xml"
+    else
+      manifest="$OUT/AndroidManifest.xml"
+      local pkgname; pkgname="$(printf '%s' "$app" | tr -c 'a-zA-Z0-9\n' '_' | tr 'A-Z' 'a-z')"
+      cat > "$manifest" <<MAN
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="org.ofs.$pkgname" android:versionCode="1" android:versionName="0.1.0">
+    <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="34" />
+    <application android:label="$app" android:hasCode="false" android:extractNativeLibs="true"
+        android:theme="@android:style/Theme.NoTitleBar.Fullscreen">
+        <activity android:name="android.app.NativeActivity" android:label="$app" android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|screenLayout|uiMode">
+            <meta-data android:name="android.app.lib_name" android:value="$pkgname" />
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+MAN
+    fi
+  fi
+  [ -f "$manifest" ] || android_die "manifesto nao encontrado: $manifest"
+  local libname pkg
+  libname="$(sed -n 's/.*android.app.lib_name"[^>]*android:value="\([^"]*\)".*/\1/p' "$manifest" | head -1)"
+  [ -n "$libname" ] || libname="main"
+  pkg="$(sed -n 's/.*package="\([^"]*\)".*/\1/p' "$manifest" | head -1)"
+  [ -n "$output" ] || output="$OUT/$app-debug.apk"
+  case "$output" in /*) ;; *) output="$PWD/$output" ;; esac
+
+  android_step "IR aarch64: runtime magma"
+  local magma_src="$OFS_STDLIB_PATH/runtime/magma.ofs"
+  [ -f "$magma_src" ] || android_die "runtime nao encontrado: $magma_src"
+  local magma_o="$ANDROID_CACHE/magma-aarch64.o"
+  if [ ! -f "$magma_o" ] || [ "$magma_src" -nt "$magma_o" ] || [ "$A_OFSCC" -nt "$magma_o" ]; then
+    android_ir "$magma_src" "$ANDROID_CACHE/magma.ll"
+    "$CC" --target="$TRIPLE" -O2 -fPIC -Wno-override-module -c "$ANDROID_CACHE/magma.ll" -o "$magma_o"
+  fi
+  local rf_env=() rf_link=()
+  if [ "$android_refract" = true ]; then
+    # Fault Refract L3: celulas por vein + manifesto + agente (geophone);
+    # o soname deixa o remendo (.so) ligar contra esta lib pelo nome
+    rf_env=(OFSCC_REFRACT=cells OFSCC_REFRACT_WATCH="$OUT/obj/refract_watch.txt")
+    rf_link=(-Wl,-soname,"lib$libname.so")
+    android_step "IR aarch64: $(basename "$entry") (refract: celulas + agente geophone)"
+  else
+    android_step "IR aarch64: $(basename "$entry")"
+  fi
+  android_ir "$entry" "$OUT/obj/app.ll" "${rf_env[@]}"
+
+  android_step "clang do NDK ($TRIPLE) -> lib$libname.so"
+  "$CC" --target="$TRIPLE" -O2 -fPIC -Wno-override-module -c "$OUT/obj/app.ll" -o "$OUT/obj/app.o"
+  # -init: o loader roda __ofs_init_globals (numa .so nao ha main()).
+  # app.o antes do magma.o: com --allow-multiple-definition vale o do app.
+  # 16 KB de pagina (Android 15+; inofensivo antes).
+  "$CC" --target="$TRIPLE" -shared -o "$OUT/apk/lib/arm64-v8a/lib$libname.so" \
+    "$OUT/obj/app.o" "$magma_o" \
+    -Wl,--allow-multiple-definition -Wl,-init,__ofs_init_globals \
+    -u ANativeActivity_onCreate -Wl,-z,max-page-size=16384 "${rf_link[@]}" \
+    -landroid -llog -laaudio -lm
+  # para o `ofs refract --remote` (mesmo shell)
+  RF3_OUT="$OUT"; RF3_LIB="$libname"; RF3_PKG="$pkg"; RF3_CC="$CC"; RF3_TRIPLE="$TRIPLE"
+  RF3_ENTRY="$entry"; RF3_SDK="$SDK"; RF3_INPUT="$abs_input"
+
+  android_step "APK: aapt2 + zip + zipalign + apksigner"
+  local res_args=()
+  if [ -d "$OUT/res" ]; then
+    "$BT/aapt2" compile --dir "$OUT/res" -o "$OUT/res.zip"
+    res_args=("$OUT/res.zip")
+  fi
+  rm -f "$OUT/unsigned.apk" "$OUT/aligned.apk"
+  "$BT/aapt2" link -o "$OUT/unsigned.apk" --manifest "$manifest" -I "$PLAT/android.jar" "${res_args[@]}"
+  if [ -d "$OUT/assets" ]; then
+    (cd "$OUT" && zip -q -r "$OUT/unsigned.apk" assets)
+  fi
+  (cd "$OUT/apk" && zip -q -0 -r "$OUT/unsigned.apk" lib)
+  "$BT/zipalign" -f -P 16 4 "$OUT/unsigned.apk" "$OUT/aligned.apk"
+  local KS="${OFS_ANDROID_KEYSTORE:-$HOME/.android/debug.keystore}"
+  if [ ! -f "$KS" ]; then
+    KS="$ANDROID_CACHE/debug.keystore"
+    if [ ! -f "$KS" ]; then
+      android_step "gerando keystore de debug ($KS)"
+      keytool -genkeypair -keystore "$KS" -storepass android -keypass android \
+        -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 \
+        -dname "CN=Android Debug,O=Android,C=US" >/dev/null 2>&1
+    fi
+  fi
+  mkdir -p "$(dirname "$output")"
+  "$BT/apksigner" sign --ks "$KS" --ks-pass pass:android --key-pass pass:android \
+    --ks-key-alias androiddebugkey --out "$output" "$OUT/aligned.apk"
+  rm -f "$OUT/unsigned.apk" "$OUT/aligned.apk" "$output.idsig"
+  echo "APK: $output"
+
+  if [ "$android_install" = true ]; then
+    local ADB="$SDK/platform-tools/adb"
+    [ -x "$ADB" ] || ADB="$(command -v adb || true)"
+    [ -n "$ADB" ] || android_die "adb nao encontrado"
+    local ADBS=("$ADB")
+    local serial="${android_serial:-${ANDROID_SERIAL:-}}"
+    [ -n "$serial" ] && ADBS+=(-s "$serial")
+    android_step "instalando e abrindo $pkg"
+    "${ADBS[@]}" install -r "$output"
+    "${ADBS[@]}" shell am start -n "$pkg/android.app.NativeActivity"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Fault Refract L3: `ofs refract --remote app.oal|app.ofs` (Android)
+# Faz o build com --refract, instala e abre o app, conecta no agente
+# (geophone, socket abstrato ofs-refract.<pacote> via `adb forward`) e
+# observa os arquivos. A cada gravacao: oalc (se .oal), ofscc no modo
+# remendo (diff por vein contra o manifesto que o app mandou + regras), clang
+# do NDK (-shared -fPIC, ligado contra a lib do app), envio e a resposta do
+# app. Env: OFS_REFRACT_PORT (7341), OFS_REFRACT_PERIOD (ms, 300),
+# OFS_REFRACT_ONCE=1 (sai depois do primeiro remendo aceito ou recusado).
+# ---------------------------------------------------------------------------
+rf3_say() { echo "refract: $*" >&2; }
+
+# conecta e le a saudacao "OFS-REFRACT 1 <pacote> <pid> <geracao>"
+rf3_connect() {
+  local port="$1" tries=0 line
+  while [ "$tries" -lt 40 ]; do
+    exec 3>&-
+    if { exec 3<>"/dev/tcp/127.0.0.1/$port"; } 2>/dev/null; then
+      if IFS= read -r -t 3 -u 3 line 2>/dev/null; then
+        case "$line" in
+          "OFS-REFRACT 1 "*)
+            set -- $line
+            RF3_APP_PID="$4"; RF3_GEN="$5"
+            return 0 ;;
+          "OFS-REFRACT "*)
+            rf3_say "o app fala outra versao do protocolo: $line"; return 1 ;;
+        esac
+      fi
+    fi
+    tries=$((tries + 1))
+    sleep 0.5
+  done
+  return 1
+}
+
+# manifesto atual do app -> $1
+rf3_fetch_manifest() {
+  local out="$1" line
+  printf 'MANIFEST\n' >&3 || return 1
+  : > "$out.tmp"
+  while IFS= read -r -t 10 -u 3 line; do
+    [ "$line" = "END" ] && { mv "$out.tmp" "$out"; return 0; }
+    printf '%s\n' "$line" >> "$out.tmp"
+  done
+  return 1
+}
+
+rf3_watch_sig() {
+  local f
+  for f in "${RF3_WATCH[@]}"; do
+    if [ -f "$f" ]; then cksum < "$f"; else echo "-"; fi
+  done | cksum
+}
+
+refract_remote_run() {
+  local input="$1"
+  [ -n "$input" ] && [ -f "$input" ] || android_die "use: ofs refract --remote app.oal|app.ofs (arquivo nao encontrado: ${input:-})"
+  # sessao longa: o limite de CPU do wrapper vale por processo
+  ulimit -St unlimited 2>/dev/null || true
+  android_refract=true
+  android_install=true
+  android_build "$input" "$output"
+  local ADB="$RF3_SDK/platform-tools/adb"
+  [ -x "$ADB" ] || ADB="$(command -v adb || true)"
+  [ -n "$ADB" ] || android_die "adb nao encontrado"
+  local ADBS=("$ADB")
+  local serial="${android_serial:-${ANDROID_SERIAL:-}}"
+  [ -n "$serial" ] && ADBS+=(-s "$serial")
+  local port="${OFS_REFRACT_PORT:-7341}"
+  local sock="ofs-refract.$RF3_PKG"
+  local st="$RF3_OUT/refract"
+  rm -rf "$st"; mkdir -p "$st/gen"
+  "${ADBS[@]}" forward "tcp:$port" "localabstract:$sock" >/dev/null || android_die "adb forward tcp:$port localabstract:$sock falhou"
+  trap '"${ADBS[@]}" forward --remove "tcp:'"$port"'" >/dev/null 2>&1 || true; exec 3>&-' EXIT
+  trap 'exit 130' INT TERM
+  rf3_connect "$port" || android_die "o agente do app nao respondeu (localabstract:$sock); veja: adb logcat -s ofs-refract"
+  rf3_fetch_manifest "$st/base.txt" || android_die "o app nao mandou o manifesto"
+  # arquivos observados: os do usuario (o gerado pelo oalc sai; entra o .oal)
+  RF3_WATCH=()
+  case "$RF3_INPUT" in *.oal) RF3_WATCH+=("$RF3_INPUT") ;; esac
+  local f
+  while IFS= read -r f; do
+    [ -n "$f" ] && [ "$f" != "$RF3_ENTRY" ] && RF3_WATCH+=("$f")
+  done < "$RF3_OUT/obj/refract_watch.txt"
+  rf3_say "conectado a $RF3_PKG (pid $RF3_APP_PID, geracao $RF3_GEN, porta $port -> localabstract:$sock)"
+  rf3_say "observando: ${RF3_WATCH[*]}"
+  rf3_say "salve um arquivo para trocar as veins no app (Ctrl+C sai)"
+  local period="${OFS_REFRACT_PERIOD:-300}"
+  local nap; nap="$(awk "BEGIN { printf \"%.3f\", $period / 1000 }")"
+  local last; last="$(rf3_watch_sig)"
+  local base="${RF3_INPUT##*/}"; local app="${base%.*}"
+  while true; do
+    sleep "$nap"
+    local now; now="$(rf3_watch_sig)"
+    [ "$now" = "$last" ] && continue
+    # espera a gravacao terminar (conteudo estavel por um periodo)
+    sleep "$nap"
+    [ "$(rf3_watch_sig)" = "$now" ] || continue
+    last="$now"
+    local entry="$RF3_INPUT"
+    case "$RF3_INPUT" in
+      *.oal)
+        local oalc; oalc="$(android_tool oalc)"
+        if ! OALC_INPUT="$RF3_INPUT" OALC_OUT_DIR="$st/gen" OALC_TARGET=android "$oalc" > "$st/oalc.log" 2>&1; then
+          cat "$st/oalc.log" >&2; rf3_say "o oalc recusou o .oal; o app segue como estava"; continue
+        fi
+        if ! cmp -s "$st/gen/AndroidManifest.xml" "$RF3_OUT/AndroidManifest.xml"; then
+          rf3_say "o cabecalho do app (app/version/permission) mudou: isso exige reinstalar (ofs build --target android --refract --install)"
+          continue
+        fi
+        entry="$st/gen/${app}_oal.ofs" ;;
+    esac
+    local rc=0
+    OFSCC_TARGET=android OFSCC_REFRACT=patch OFSCC_REFRACT_BASE="$st/base.txt" OFSCC_REFRACT_WATCH="$st/watch.txt" \
+      OFSCC_INPUT="$entry" OFSCC_MODE=ir OFSCC_C_OUT="$st/patch.ll" "$A_OFSCC" > "$st/patch.log" 2>&1 || rc=$?
+    grep '^refract: ' "$st/patch.log" >&2 || true
+    if [ "$rc" = 3 ]; then continue; fi
+    if [ "$rc" = 4 ]; then [ "${OFS_REFRACT_ONCE:-0}" = 1 ] && return 4; continue; fi
+    if [ "$rc" != 0 ]; then
+      grep -v '^refract: \|^  [A-Z][a-z]* ok\|^  [A-Z][a-z]*ing' "$st/patch.log" >&2 || true
+      rf3_say "o programa nao compila; o app segue como estava"
+      continue
+    fi
+    local gen=$((RF3_GEN + 1))
+    local so="$st/patch-$gen.so"
+    if ! "$RF3_CC" --target="$RF3_TRIPLE" -O2 -fPIC -shared -Wno-override-module "$st/patch.ll" -o "$so" \
+        -L"$RF3_OUT/apk/lib/arm64-v8a" -l"$RF3_LIB" -Wl,-Bsymbolic -Wl,--no-undefined \
+        -Wl,-z,max-page-size=16384 -landroid -llog -laaudio -lm 2> "$st/link.log"; then
+      sed -n 's/.*undefined symbol: \(.*\)/\1/p' "$st/link.log" | sort -u | head -5 | while read -r sym; do
+        rf3_say "o remendo usa '$sym', que o app instalado nao tem (attach novo?): reinstale"
+      done
+      grep -q 'undefined symbol' "$st/link.log" || cat "$st/link.log" >&2
+      continue
+    fi
+    local size; size="$(wc -c < "$so" | tr -d ' ')"
+    local reply=""
+    if ! { printf 'PATCH %d %d\n' "$gen" "$size" >&3 && cat "$so" >&3 && IFS= read -r -t 30 -u 3 reply; }; then
+      rf3_say "a conexao com o app caiu; reconectando (o app reiniciou? a geracao volta a 0)"
+      rf3_connect "$port" && rf3_fetch_manifest "$st/base.txt" || android_die "sem conexao com o app"
+      last=""
+      continue
+    fi
+    case "$reply" in
+      "OK "*)
+        set -- $reply
+        RF3_GEN="$2"
+        rf3_say "geracao $2 aplicada no app em $3 ms: ${4:-} ($size bytes, pid $RF3_APP_PID)"
+        rf3_fetch_manifest "$st/base.txt" || rf3_say "aviso: manifesto nao atualizado"
+        [ "${OFS_REFRACT_ONCE:-0}" = 1 ] && return 0 ;;
+      *)
+        rf3_say "o app recusou o remendo: ${reply#ERR }"
+        [ "${OFS_REFRACT_ONCE:-0}" = 1 ] && return 5 ;;
+    esac
+  done
+}
+
+# .oal no desktop: oalc (OALC_TARGET=desktop) gera <nome>_oal.ofs com main()
+# que abre a janela X11 do tamanho de um celular (backend oal_x11.ofs).
+oal_desktop_entry() {
+  local in="$1" dir="$2"
+  ANDROID_CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/ofs/android"
+  mkdir -p "$ANDROID_CACHE" "$dir"
+  android_ofscc
+  local oalc; oalc="$(android_tool oalc)"
+  local abs; abs="$(cd "$(dirname "$in")" && pwd)/$(basename "$in")"
+  OALC_INPUT="$abs" OALC_OUT_DIR="$dir" OALC_TARGET=desktop "$oalc" >&2 || android_die "oalc falhou em $in"
+  local b="${abs##*/}"
+  OAL_ENTRY="$dir/${b%.*}_oal.ofs"
+  OFSCC="$A_OFSCC"
+}
+
+# ofs doc: auto-documentacao gerada do codigo (ofs/tools/ofsdoc.ofs, escrito em OFS).
+#   ofs doc [entradas...] [-o saida] [--check] [--docs pasta] [--title nome] [--repo url] [--lang pt|en|es]
+# Sem entradas: ofs/stdlib, ofs/tools e ofs/ofscc do repositorio. --check nao gera
+# HTML: imprime a cobertura e sai com 1 se um .md citar funcao que nao existe.
+cmd_doc() {
+  local src out="" check=0 dump=0 docs="" title="" repo="" lang="" root="" defaults=0
+  local inputs=()
+  src="$(android_src_dir)" || { echo "ofs doc: fonte do OFS (ofs/tools/ofsdoc.ofs) nao encontrado; defina OFS_SOURCE=<repo>/ofs" >&2; return 2; }
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      -o|--output) out="${2:-}"; shift 2 ;;
+      --check) check=1; shift ;;
+      --dump) dump=1; shift ;;
+      --docs) docs="${2:-}"; shift 2 ;;
+      --title) title="${2:-}"; shift 2 ;;
+      --repo) repo="${2:-}"; shift 2 ;;
+      --lang) lang="${2:-}"; shift 2 ;;
+      *) inputs+=("$1"); shift ;;
+    esac
+  done
+  if [ "${#inputs[@]}" -eq 0 ]; then
+    defaults=1
+    inputs=("$src/stdlib" "$src/tools" "$src/ofscc")
+    root="$(cd "$src/.." && pwd)"
+    [ -n "$repo" ] || repo="https://github.com/$OFS_REPO"
+    [ -n "$docs" ] || { [ -d "$root/docs" ] && docs="$root/docs"; }
+    [ -n "$title" ] || title="OFS"
+  else
+    [ -n "$docs" ] || { [ -d docs ] && docs="docs"; }
+    [ -e "${inputs[0]}" ] || { echo "ofs doc: entrada nao encontrada: ${inputs[0]}" >&2; return 2; }
+    if [ -z "$title" ]; then
+      title="$(basename "$(cd "$(dirname "${inputs[0]}")" && pwd)/$(basename "${inputs[0]}")")"
+      title="${title%.ofs}"
+    fi
+  fi
+  [ -n "$out" ] || out="docs_api"
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/ofs/tools"
+  mkdir -p "$cache"
+  local bin="$cache/ofsdoc" tool_src="$src/tools/ofsdoc.ofs"
+  [ -f "$tool_src" ] || { echo "ofs doc: $tool_src nao existe" >&2; return 2; }
+  if [ ! -x "$bin" ] || tool_stale "$bin" || [ -n "$(find "$src/tools" -maxdepth 1 -name 'ofsdoc*.ofs' -newer "$bin" -print -quit)" ]; then
+    echo "ofs doc: compilando a ferramenta (primeira vez)..." >&2
+    local ll="$cache/ofsdoc.ll"
+    OFSCC_INPUT="$tool_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" >"$cache/ofsdoc.log" 2>&1 \
+      || { tail -20 "$cache/ofsdoc.log" >&2; echo "ofs doc: falha ao compilar o ofsdoc" >&2; return 1; }
+    native_link "$ll" "$bin" linux
+    chmod +x "$bin"
+    tool_stamp "$bin"
+    rm -f "$ll"
+  fi
+  local joined="" i
+  for i in "${inputs[@]}"; do
+    case "$i" in /*) ;; *) i="$(pwd)/$i" ;; esac
+    joined="${joined:+$joined:}${i%/}"
+  done
+  OFSDOC_INPUT="$joined" OFSDOC_OUT="$out" OFSDOC_DOCS="$docs" OFSDOC_CHECK="$check" OFSDOC_DUMP="$dump" \
+    OFSDOC_TITLE="$title" OFSDOC_REPO="$repo" OFSDOC_ROOT="$root" OFSDOC_LANG="${lang:-${OFS_LANG:-}}" \
+    OFSDOC_ASSETS="$src/tools/ofsdoc" "$bin"
+}
+
+# ofs fmt: formatador (ofs/tools/ofsfmt.ofs, escrito em OFS).
+#   ofs fmt [--check] [--diff] [--stdin] [arquivo.ofs|pasta ...]
+# Sem alvos: a pasta atual. Pastas sao percorridas recursivamente (so .ofs).
+cmd_fmt() {
+  local check=0 diff=0 stdin=0 src
+  local targets=()
+  src="$(android_src_dir)" || { echo "ofs fmt: fonte do OFS (ofs/tools/ofsfmt.ofs) nao encontrado; defina OFS_SOURCE=<repo>/ofs" >&2; return 2; }
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --check) check=1; shift ;;
+      --diff) diff=1; shift ;;
+      --stdin) stdin=1; shift ;;
+      -h|--help) echo "uso: ofs fmt [--check] [--diff] [--stdin] [arquivo.ofs|pasta ...]"; return 0 ;;
+      -*) echo "ofs fmt: opcao desconhecida: $1" >&2; return 2 ;;
+      *) targets+=("$1"); shift ;;
+    esac
+  done
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/ofs/tools"
+  mkdir -p "$cache"
+  local bin="$cache/ofsfmt" tool_src="$src/tools/ofsfmt.ofs"
+  [ -f "$tool_src" ] || { echo "ofs fmt: $tool_src nao existe" >&2; return 2; }
+  if [ ! -x "$bin" ] || tool_stale "$bin" || [ "$tool_src" -nt "$bin" ]; then
+    echo "ofs fmt: compilando a ferramenta (primeira vez)..." >&2
+    local ll="$cache/ofsfmt.ll"
+    OFSCC_INPUT="$tool_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" >"$cache/ofsfmt.log" 2>&1 \
+      || { tail -20 "$cache/ofsfmt.log" >&2; echo "ofs fmt: falha ao compilar o ofsfmt" >&2; return 1; }
+    native_link "$ll" "$bin" linux
+    chmod +x "$bin"
+    tool_stamp "$bin"
+    rm -f "$ll"
+  fi
+  local tmp; tmp="$(mktemp -d "${TMPDIR:-/tmp}/ofsfmt-XXXXXX")"
+  if [ "$stdin" = 1 ]; then
+    cat > "$tmp/in.ofs"
+    OFSFMT_INPUT="$tmp/in.ofs" OFSFMT_OUTPUT="$tmp/out.ofs" "$bin" >&2 || { rm -rf "$tmp"; return 1; }
+    [ -f "$tmp/out.ofs" ] || { rm -rf "$tmp"; echo "ofs fmt: o formatador nao gerou saida" >&2; return 1; }
+    cat "$tmp/out.ofs"
+    rm -rf "$tmp"
+    return 0
+  fi
+  [ "${#targets[@]}" -gt 0 ] || targets=(.)
+  local files=() t f
+  for t in "${targets[@]}"; do
+    if [ -d "$t" ]; then
+      while IFS= read -r f; do files+=("$f"); done < <(find "$t" -type f -name '*.ofs' -not -path '*/.git/*' | LC_ALL=C sort)
+    elif [ -f "$t" ]; then
+      files+=("$t")
+    else
+      echo "ofs fmt: alvo nao encontrado: $t" >&2; rm -rf "$tmp"; return 2
+    fi
+  done
+  local changed=0 failed=0
+  for f in "${files[@]}"; do
+    rm -f "$tmp/out.ofs"
+    OFSFMT_INPUT="$f" OFSFMT_OUTPUT="$tmp/out.ofs" "$bin" >&2
+    if [ ! -f "$tmp/out.ofs" ]; then echo "ofs fmt: falhou em $f" >&2; failed=$((failed + 1)); continue; fi
+    if ! cmp -s "$f" "$tmp/out.ofs"; then
+      changed=$((changed + 1))
+      if [ "$diff" = 1 ]; then
+        diff -u --label "$f" --label "$f (formatado)" "$f" "$tmp/out.ofs" || true
+      elif [ "$check" = 1 ]; then
+        echo "$f"
+      else
+        cat "$tmp/out.ofs" > "$f"
+        echo "formatado: $f"
+      fi
+    fi
+  done
+  rm -rf "$tmp"
+  [ "$failed" -eq 0 ] || return 1
+  if [ "$check" = 1 ] && [ "$changed" -gt 0 ]; then
+    echo "ofs fmt: $changed arquivo(s) precisam de formatacao" >&2
+    return 1
+  fi
+  return 0
+}
+
+# ofs quarry: gerenciador de pacotes (ofs/tools/quarry.ofs, escrito em OFS).
+#   ofs quarry add|remove|list|search|update|install|publish [...]
+# Manifesto ofs.claim e lock ofs.lode na pasta atual; instala em $OFS_LIB_HOME
+# ou ~/.ofs/libs (onde o `attach` ja procura). Registro: OFS_QUARRY_REGISTRY
+# (URL http(s)/file:// ou caminho) ou --registry; padrao: registry.json do repo.
+cmd_quarry() {
+  local src sub="${1:-}"
+  case "$sub" in
+    ""|-h|--help|help)
+      case "${OFS_LANG:-en}" in
+        pt*) cat <<'EOF2'
+uso: ofs quarry <subcomando> [...]
+  add <pacote>[@versao|@canal]  adiciona ao ofs.claim, resolve, instala e grava o ofs.lode
+  remove <pacote>               tira do projeto e apaga o que ficou orfao
+  list                          pacotes instalados e versoes
+  search [termo]                procura no registro
+  update [pacote]               sobe versoes dentro das faixas do ofs.claim
+  install                       instala o que o ofs.claim/ofs.lode pedem (sha256 conferido)
+  publish [--out d] [--origin url] [--deposit registry.json]  gera .tar.gz + entrada de registro
+Opcao: --registry <url|caminho>   Env: OFS_QUARRY_REGISTRY, OFS_LIB_HOME
+EOF2
+        ;;
+        es*) cat <<'EOF2'
+uso: ofs quarry <subcomando> [...]
+  add <paquete>[@version|@canal]  agrega a ofs.claim, resuelve, instala y escribe ofs.lode
+  remove <paquete>                lo quita del proyecto y borra lo huerfano
+  list                            paquetes instalados y versiones
+  search [termino]                busca en el registro
+  update [paquete]                sube versiones dentro de los rangos de ofs.claim
+  install                         instala lo que piden ofs.claim/ofs.lode (sha256 verificado)
+  publish [--out d] [--origin url] [--deposit registry.json]  genera .tar.gz + entrada de registro
+Opcion: --registry <url|ruta>   Env: OFS_QUARRY_REGISTRY, OFS_LIB_HOME
+EOF2
+        ;;
+        *) cat <<'EOF2'
+usage: ofs quarry <subcommand> [...]
+  add <package>[@version|@channel]  add to ofs.claim, resolve, install and write ofs.lode
+  remove <package>                  drop from the project and delete orphans
+  list                              installed packages and versions
+  search [term]                     search the registry
+  update [package]                  raise versions within the ofs.claim ranges
+  install                           install what ofs.claim/ofs.lode ask for (sha256 verified)
+  publish [--out d] [--origin url] [--deposit registry.json]  build .tar.gz + registry entry
+Option: --registry <url|path>   Env: OFS_QUARRY_REGISTRY, OFS_LIB_HOME
+EOF2
+        ;;
+      esac
+      [ -n "$sub" ] && return 0; return 2 ;;
+  esac
+  shift
+  src="$(android_src_dir)" || { echo "ofs quarry: fonte do OFS (ofs/tools/quarry.ofs) nao encontrado; defina OFS_SOURCE=<repo>/ofs" >&2; return 2; }
+  local cache="${XDG_CACHE_HOME:-$HOME/.cache}/ofs/tools"
+  mkdir -p "$cache"
+  local bin="$cache/quarry" tool_src="$src/tools/quarry.ofs"
+  [ -f "$tool_src" ] || { echo "ofs quarry: $tool_src nao existe" >&2; return 2; }
+  if [ ! -x "$bin" ] || tool_stale "$bin" \
+     || [ -n "$(find "$src/tools" -maxdepth 1 -name 'quarry*.ofs' -newer "$bin" -print -quit)" ] \
+     || [ -n "$(find "$OFS_STDLIB_PATH" -maxdepth 1 \( -name fs.ofs -o -name sha256.ofs \) -newer "$bin" -print -quit 2>/dev/null)" ]; then
+    echo "ofs quarry: compilando a ferramenta (primeira vez)..." >&2
+    local ll="$cache/quarry.ll"
+    OFSCC_INPUT="$tool_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" >"$cache/quarry.log" 2>&1 \
+      || { tail -20 "$cache/quarry.log" >&2; echo "ofs quarry: falha ao compilar o quarry" >&2; return 1; }
+    native_link "$ll" "$bin" linux
+    chmod +x "$bin"
+    tool_stamp "$bin"
+    rm -f "$ll"
+  fi
+  local args=""
+  [ "$#" -gt 0 ] && args="$(printf '%s\n' "$@")"
+  PWD="$(pwd)" QUARRY_CMD="$sub" QUARRY_ARGS="$args" \
+    QUARRY_CACHE="${QUARRY_CACHE:-${XDG_CACHE_HOME:-$HOME/.cache}/ofs/quarry}" "$bin"
+}
+
 need_ofscc() {
   if [ ! -x "$OFSCC" ]; then
     echo "ofs: self-hosted compiler not found next to wrapper: $OFSCC" >&2
@@ -542,17 +1249,150 @@ case "$cmd" in
     ;;
 esac
 
+# ---- helpers de twin/test: compila nativo e roda em diretorio limpo ----
+# _ofs_native_build <arq.ofs> <bin> <log> ; retorna 0 se compilou
+_ofs_native_build() {
+  local ll="$2.ll"
+  ( OFSCC_INPUT="$1" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC" ) >"$3" 2>&1 || return 1
+  [ -s "$ll" ] || return 1
+  ( native_link "$ll" "$2" linux ) >>"$3" 2>&1 || return 1
+  rm -f "$ll"; [ -f "$2" ] || return 1
+  chmod +x "$2" 2>/dev/null; return 0
+}
+# _ofs_run_native <bin> <dir> <out> <err> ; escreve codigo em $_RC
+_ofs_run_native() {
+  ( cd "$2" && timeout "${OFS_TEST_TIMEOUT:-30}" "$1" </dev/null >"$3" 2>"$4" ) && _RC=0 || _RC=$?
+}
+_ofs_run_interp() {
+  ( cd "$2" && OFSCC_MODE=run OFSCC_INPUT="$1" timeout "${OFS_TEST_TIMEOUT:-30}" "$OFSCC" </dev/null >"$3" 2>"$4" ) && _RC=0 || _RC=$?
+}
+_ofs_norm() { # remove cores, caminhos temporarios e linhas de progresso
+  sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' | sed -E "s#${TMPDIR:-/tmp}/[^ :\"']*#<TMP>#g; s#/tmp/[^ :\"']*#<TMP>#g" |
+    grep -vE '^[[:space:]]*(Parsing|Checking|Forging|Linking|Running|Interpreting)[[:space:]].*(ok|ms)' || true
+}
+
+# ofs twin <arq.ofs>: interpretado x nativo; compara stdout, codigo e stderr.
+# Define _TWIN_MSG com a primeira diferenca; retorna 0 iguais, 1 difere/falha.
+_ofs_twin_core() {
+  local f t; f="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
+  t="$(mktemp -d "${TMPDIR:-/tmp}/ofs-twin-XXXXXX")"
+  mkdir -p "$t/n" "$t/i"; _TWIN_MSG=""
+  if ! _ofs_native_build "$f" "$t/bin" "$t/log"; then
+    _TWIN_MSG="nativo nao compilou: $(grep -iE 'error|erro' "$t/log" | head -1 | cut -c1-120)"
+    rm -rf "$t"; return 1
+  fi
+  _ofs_run_native "$t/bin" "$t/n" "$t/n.out" "$t/n.err"; local nrc=$_RC
+  _ofs_run_interp "$f" "$t/i" "$t/i.out" "$t/i.err"; local irc=$_RC
+  _ofs_norm <"$t/n.out" >"$t/n.o"; _ofs_norm <"$t/i.out" >"$t/i.o"
+  _ofs_norm <"$t/n.err" >"$t/n.e"; _ofs_norm <"$t/i.err" >"$t/i.e"
+  local rc=0
+  if [ "$nrc" -ne "$irc" ]; then _TWIN_MSG="codigo de saida: nativo=$nrc interpretado=$irc"; rc=1
+  elif ! cmp -s "$t/n.o" "$t/i.o"; then
+    _TWIN_MSG="stdout difere: $(diff "$t/n.o" "$t/i.o" | grep -m1 '^[<>]' | cut -c1-120)  (< nativo, > interpretado)"; rc=1
+  elif ! cmp -s "$t/n.e" "$t/i.e"; then
+    _TWIN_MSG="stderr difere: $(diff "$t/n.e" "$t/i.e" | grep -m1 '^[<>]' | cut -c1-120)  (< nativo, > interpretado)"; rc=1
+  fi
+  rm -rf "$t"; return $rc
+}
+cmd_twin() {
+  case "${1:-}" in ""|-h|--help) echo "uso: ofs twin <arquivo.ofs>"; [ -n "${1:-}" ] && return 0; return 2 ;; esac
+  [ -f "$1" ] || { echo "ofs twin: arquivo nao encontrado: $1" >&2; return 2; }
+  if _ofs_twin_core "$1"; then echo "iguais: $1"; return 0; fi
+  echo "diferem: $1: $_TWIN_MSG"; return 1
+}
+
+# ofs test [--run] [--twin] [pasta]: *.ofs com .expected ao lado.
+cmd_test() {
+  local mode=native dir="" f
+  while [ "$#" -gt 0 ]; do
+    case "$1" in
+      --run) mode=run; shift ;;
+      --twin) mode=twin; shift ;;
+      -h|--help) echo "uso: ofs test [--run] [--twin] [pasta]   (padrao: ./tests)"; return 0 ;;
+      -*) echo "ofs test: opcao desconhecida: $1" >&2; return 2 ;;
+      *) dir="$1"; shift ;;
+    esac
+  done
+  [ -n "$dir" ] || dir="tests"
+  [ -d "$dir" ] || { echo "ofs test: pasta nao encontrada: $dir" >&2; return 2; }
+  local pass=0 fail=0 total=0 t
+  t="$(mktemp -d "${TMPDIR:-/tmp}/ofs-test-XXXXXX")"
+  while IFS= read -r f; do
+    [ -f "${f%.ofs}.expected" ] || continue
+    f="$(cd "$(dirname "$f")" && pwd)/$(basename "$f")"
+    total=$((total + 1)); rm -rf "$t/w"; mkdir -p "$t/w"
+    local why=""
+    if [ "$mode" = twin ]; then
+      _ofs_twin_core "$f" || why="twin: $_TWIN_MSG"
+    fi
+    if [ -z "$why" ]; then
+      if [ "$mode" = run ]; then
+        _ofs_run_interp "$f" "$t/w" "$t/out" "$t/err"
+      elif _ofs_native_build "$f" "$t/bin" "$t/log"; then
+        _ofs_run_native "$t/bin" "$t/w" "$t/out" "$t/err"
+      else
+        why="nao compilou: $(grep -iE 'error|erro' "$t/log" | head -1 | cut -c1-100)"
+      fi
+    fi
+    if [ -z "$why" ]; then
+      _ofs_norm <"$t/out" >"$t/o"; _ofs_norm <"${f%.ofs}.expected" >"$t/e"
+      cmp -s "$t/o" "$t/e" || why="saida difere do .expected: $(diff "$t/e" "$t/o" | grep -m1 '^[<>]' | cut -c1-100)"
+    fi
+    if [ -z "$why" ]; then pass=$((pass + 1)); echo "ok    $f"
+    else fail=$((fail + 1)); echo "FAIL  $f  ($why)"; fi
+    rm -f "$t/bin" "$t/out" "$t/err"
+  done < <(find "$dir" -name '*.ofs' | sort)
+  rm -rf "$t"
+  echo "resumo: $pass ok, $fail falha(s), $total teste(s)"
+  [ "$fail" -eq 0 ] || return 1
+}
+
 need_ofscc
 shift || true
+
+if [ "$cmd" = doc ]; then
+  cmd_doc "$@"
+  exit $?
+fi
+
+if [ "$cmd" = fmt ] || [ "$cmd" = polish ]; then
+  cmd_fmt "$@"
+  exit $?
+fi
+
+if [ "$cmd" = quarry ]; then
+  cmd_quarry "$@"
+  exit $?
+fi
+
+if [ "$cmd" = twin ]; then
+  cmd_twin "$@"
+  exit $?
+fi
+
+if [ "$cmd" = test ]; then
+  cmd_test "$@"
+  exit $?
+fi
 
 mode="$cmd"
 input=""
 output=""
 target_os="linux"
 run_native=false
+android_manifest=""
+android_install=false
+android_serial=""
+android_refract=false
+refract_remote=false
+fossil_file=""
+fossil_to=""
+fossil_back=""
+fossil_dig=false
+fossil_layer=""
 
 case "$mode" in
-  check|tokens|ast|ir|asm|build|run|clean|ui|test|twin|polish) ;;
+  check|tokens|ast|ir|asm|build|run|clean|ui|test|twin|polish|refract|assay|fossil) ;;
   *)
     input="$mode"
     mode="run"
@@ -577,9 +1417,61 @@ while [ "$#" -gt 0 ]; do
       run_native=true
       shift
       ;;
+    --release)
+      # contratos (bearing/settle/grain): a checagem estatica fica, a de
+      # execucao sai do binario (padrao: ligada no run e no build)
+      export OFS_CONTRACTS=0
+      shift
+      ;;
+    --quiet|-q)
+      # ofs refract: so os avisos de troca somem (erros continuam)
+      export OFS_REFRACT_QUIET=1
+      shift
+      ;;
+    --manifest)
+      android_manifest="${2:-}"
+      shift 2
+      ;;
+    --install)
+      android_install=true
+      shift
+      ;;
+    --serial)
+      android_serial="${2:-}"
+      shift 2
+      ;;
+    --refract)
+      # ofs build --target android --refract: celulas + agente (Refract L3)
+      android_refract=true
+      shift
+      ;;
+    --remote)
+      # ofs refract --remote app.oal|app.ofs: edicao ao vivo no aparelho
+      refract_remote=true
+      shift
+      ;;
+    --to)
+      # ofs fossil replay: passo, L<linha>, arquivo.ofs:<linha> ou vein
+      fossil_to="${2:-}"
+      shift 2
+      ;;
+    --back)
+      fossil_back="${2:-}"
+      shift 2
+      ;;
+    --dig|-i)
+      fossil_dig=true
+      shift
+      ;;
+    --layer)
+      fossil_layer="${2:-}"
+      shift 2
+      ;;
     *)
       if [ -z "$input" ]; then
         input="$1"
+      elif [ "$mode" = "fossil" ] && [ -z "$fossil_file" ]; then
+        fossil_file="$1"
       fi
       shift
       ;;
@@ -635,6 +1527,10 @@ case "$mode" in
     echo "Clean complete."
     ;;
   build)
+    if [ "$target_os" = "android" ]; then
+      android_build "$input" "$output"
+      exit 0
+    fi
     if [ "$target_os" = "windows" ] || [ "$target_os" = "win64" ]; then
       case "${output:-$name}" in *.exe) output="${output:-$name}" ;; *) output="${output:-$name}.exe" ;; esac
     else
@@ -653,6 +1549,10 @@ EOF
         OFSCC_INPUT="$oll_src" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
         rm -f "$oll_src"
         ;;
+      *.oal)
+        oal_desktop_entry "$input" "$work-oal"
+        OFSCC_INPUT="$OAL_ENTRY" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
+        ;;
       *)
         OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$ll" "$OFSCC"
         ;;
@@ -660,11 +1560,12 @@ EOF
     native_link "$ll" "$output" "$target_os"
     chmod +x "$output" 2>/dev/null || true
     rm -f "$ll"
+    rm -rf "$work-oal"
     echo "Built: $output"
     ;;
   run)
     case "$input" in
-      *.oll)
+      *.oll|*.oal)
         run_native=true
         ;;
     esac
@@ -685,6 +1586,10 @@ core main() {
 EOF
           OFSCC_INPUT="$oll_src" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC" >&2
           ;;
+        *.oal)
+          oal_desktop_entry "$input" "$run_tmp/oal"
+          OFSCC_INPUT="$OAL_ENTRY" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC" >&2
+          ;;
         *)
           OFSCC_INPUT="$input" OFSCC_MODE=ir OFSCC_C_OUT="$run_ll" "$OFSCC" >&2
           ;;
@@ -696,6 +1601,50 @@ EOF
     else
       OFSCC_INPUT="$input" OFSCC_MODE="run" "$OFSCC"
     fi
+    ;;
+  assay)
+    # A5.1: casos de borda das veins com contrato (fronteira e +-1), interpretado
+    case "$input" in
+      *.ofs) ;;
+      *) echo "ofs assay: use um arquivo .ofs" >&2; exit 2 ;;
+    esac
+    OFSCC_INPUT="$input" OFSCC_MODE=assay "$OFSCC"
+    ;;
+  fossil)
+    # ofs fossil (Ideia 2): grava as entradas externas de uma execucao
+    # interpretada; `ofs fossil replay arq.fossil` reproduz (cristalizacao e
+    # OSR ficam desligadas: tudo passa pelo interpretador)
+    if [ "$input" = "replay" ]; then
+      [ -n "$fossil_file" ] || { echo "ofs fossil replay: indique o arquivo .fossil" >&2; exit 2; }
+      [ -f "$fossil_file" ] || { echo "ofs fossil replay: '$fossil_file' nao existe" >&2; exit 2; }
+      fz_dig=0
+      [ "$fossil_dig" = true ] && fz_dig=1
+      env -u OFSCC_INPUT OFS_FOSSIL=replay OFS_FOSSIL_FILE="$fossil_file" \
+        OFS_FOSSIL_TO="$fossil_to" OFS_FOSSIL_BACK="$fossil_back" OFS_FOSSIL_DIG="$fz_dig" \
+        OFS_FOSSIL_LAYER="$fossil_layer" OFSCC_MODE=run "$OFSCC"
+    else
+      case "$input" in
+        *.ofs) ;;
+        *) echo "ofs fossil: use um arquivo .ofs (ou: ofs fossil replay arq.fossil)" >&2; exit 2 ;;
+      esac
+      [ -f "$input" ] || { echo "ofs fossil: '$input' nao existe" >&2; exit 2; }
+      abs_input="$(cd "$(dirname "$input")" && pwd)/$(basename "$input")"
+      [ -n "$output" ] || output="$name.fossil"
+      OFS_FOSSIL=record OFS_FOSSIL_FILE="$output" OFSCC_INPUT="$abs_input" OFSCC_MODE=run "$OFSCC"
+    fi
+    ;;
+  refract)
+    # Fault Refract L3: o app roda no aparelho e recebe as veins editadas
+    if [ "$refract_remote" = true ]; then
+      refract_remote_run "$input"
+      exit $?
+    fi
+    # Fault Refract: roda interpretado e troca ao vivo as veins editadas
+    case "$input" in
+      *.ofs) ;;
+      *) echo "ofs refract: use um arquivo .ofs (o programa roda interpretado; .oal: ofs refract --remote)" >&2; exit 2 ;;
+    esac
+    OFS_REFRACT=1 OFSCC_INPUT="$input" OFSCC_MODE=run "$OFSCC"
     ;;
   ui)
     [ -n "$output" ] || output="${name}_preview.ppm"

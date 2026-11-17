@@ -121,9 +121,9 @@ namespace parser {
     vein _error(msg: obsidian) -> void {
         _error_count = _error_count + 1
         forge t = _cur()
-        forge line_str = ofs_stone_to_obsidian(t.line)
-        forge col_str = ofs_stone_to_obsidian(t.col)
-        echo("[ERRO SINTATICO " + line_str + ":" + col_str + "]: " + msg)
+        // arquivo:linha:coluna de verdade (tambem dentro de um `attach`),
+        // pelo mapa de linhas do fonte expandido
+        echo("[ERRO SINTATICO " + ast_src_loc(t.line, t.col) + "]: " + msg)
         echo("  --> token encontrado: '" + t.val + "'")
         echo("  dica: confira delimitadores ({}, (), []), pontuacao ou palavras reservadas.")
     }
@@ -267,6 +267,11 @@ namespace parser {
             return node_new(NK_IDENT, "echo", t.line, t.col)
         }
         
+        // geode (closure): `geode (x: T, ...) -> R { corpo }`
+        if (t.kind == TOK_IDENT && ofs_str_eq(t.val, "geode") && _is_geode_start()) {
+            return parse_geode()
+        }
+
         // Identifier (might be function call)
         if (t.kind == TOK_IDENT) {
             _advance()
@@ -294,6 +299,8 @@ namespace parser {
         
         if (t.kind == TOK_CORE) {
             _error("`core` e palavra reservada (marca o ponto de entrada `core main()`) e nao pode ser usada como nome")
+        } else if (t.kind == TOK_QUARTZ) {
+            _error("quartz e um comando (assembly inline), nao um valor: escreva 'quartz { ... } -> variavel' numa linha propria")
         } else {
             _error("expected expression")
         }
@@ -303,6 +310,53 @@ namespace parser {
         return node_new(NK_LIT_INT, "0", t.line, t.col)
     }
     
+    // `geode` e palavra de contexto: so abre um geode quando vem `(`, a
+    // lista fecha e depois vem `->` ou `{` (uma chamada `geode(x)` de uma
+    // vein chamada geode segue valendo)
+    vein _is_geode_start() -> bool {
+        if (_peek_kind() != TOK_LPAREN) { return false }
+        forge depth = 0
+        forge i = _pos + 1
+        while (i < _len) {
+            forge tk: Token = ofs_array_get(_tokens, i)
+            if (tk.kind == TOK_LPAREN) { depth++ }
+            if (tk.kind == TOK_RPAREN) {
+                depth--
+                if (depth == 0) {
+                    if (i + 1 >= _len) { return false }
+                    forge nx: Token = ofs_array_get(_tokens, i + 1)
+                    return nx.kind == TOK_ARROW || nx.kind == TOK_LBRACE
+                }
+            }
+            if (tk.kind == TOK_EOF) { return false }
+            i++
+        }
+        return false
+    }
+
+    // NK_LAMBDA: c0 = parametros (NK_BLOCK de NK_PARAM), c1 = tipo de
+    // retorno (-1 = void), c2 = corpo. O typeck acha as capturas e tira o
+    // corpo para uma vein `__geode_<vein>_<k>` (ver typeck, geode).
+    vein parse_geode() -> stone {
+        forge t = _advance()
+        forge n = node_new(NK_LAMBDA, "", t.line, t.col)
+        forge params = parse_fn_params()
+        forge ret_type: stone = -1
+        if (_cur_kind() == TOK_ARROW) {
+            _advance()
+            ret_type = parse_type()
+        }
+        if (_cur_kind() != TOK_LBRACE) {
+            _error("expected '{' (corpo do geode)")
+            return n
+        }
+        forge body = parse_block()
+        node_set_child(n, 0, params)
+        node_set_child(n, 1, ret_type)
+        node_set_child(n, 2, body)
+        return n
+    }
+
     vein parse_postfix(left: stone) -> stone {
         forge t = _cur()
 
@@ -512,6 +566,105 @@ namespace parser {
     // ── Statement Parsing ──────────────────────────────────────────────
     
     
+    // ── quartz: assembly inline (F5) ────────────────────────────────
+    // quartz [intel] {
+    //     "instrucao" "instrucao" ...    (cada texto vira uma linha)
+    //     in "restricao" expressao       (entradas, em ordem)
+    //     melt "registrador" "memory"    (o que o trecho destroi)
+    // } [-> variavel ["restricao da saida", padrao "=r"]]
+    // Operandos no texto: $0 = destino (se houver), depois as entradas;
+    // um '$' literal e '$$' (regra do LLVM; AT&T: 'shlq $$32, %rdx').
+    vein _quartz_opt(val: obsidian, line: stone, col: stone) -> stone {
+        return node_new(NK_QUARTZ_OPT, val, line, col)
+    }
+
+    vein parse_quartz() -> stone {
+        forge t = _advance()
+        forge dialect = ""
+        if (_cur_kind() == TOK_IDENT && (ofs_str_eq(_cur_val(), "intel") || ofs_str_eq(_cur_val(), "att"))) {
+            if (ofs_str_eq(_cur_val(), "intel")) { dialect = "intel" }
+            _advance()
+        }
+        if (_cur_kind() != TOK_LBRACE) {
+            _error("esperava '{' depois de quartz (assembly inline: quartz { \"nop\" }); `quartz` e palavra reservada e nao pode ser usada como nome")
+            return -1
+        }
+        _advance()
+        forge n = node_new(NK_QUARTZ, "", t.line, t.col)
+        forge text = ""
+        forge lines = 0
+        forge melts = ""
+        while (_cur_kind() != TOK_RBRACE && _cur_kind() != TOK_EOF) {
+            forge k = _cur_kind()
+            if (k == TOK_STRING) {
+                if (lines > 0) { text = text + "\n" }
+                text = text + _cur_val()
+                lines++
+                _advance()
+            } else if (k == TOK_IN) {
+                forge it = _advance()
+                if (_cur_kind() != TOK_STRING) {
+                    _error("'in' dentro de quartz espera a restricao entre aspas e o valor (ex.: in \"r\" x)")
+                    return -1
+                }
+                forge cons = _cur_val()
+                _advance()
+                forge inp = node_new(NK_QUARTZ_IN, cons, it.line, it.col)
+                node_set_child(inp, 0, parse_expr(0))
+                node_add_extra(n, inp)
+            } else if (k == TOK_IDENT && ofs_str_eq(_cur_val(), "melt")) {
+                _advance()
+                if (_cur_kind() != TOK_STRING) {
+                    _error("'melt' dentro de quartz espera registradores entre aspas (ex.: melt \"rdx\" \"memory\")")
+                    return -1
+                }
+                while (_cur_kind() == TOK_STRING) {
+                    if (ofs_str_len(melts) > 0) { melts = melts + "," }
+                    melts = melts + _cur_val()
+                    _advance()
+                    if (_cur_kind() == TOK_COMMA) { _advance() }
+                }
+            } else if (k == TOK_COMMA || k == TOK_SEMI) {
+                _advance()
+            } else {
+                _error("dentro de quartz { } valem so instrucoes entre aspas, 'in \"restricao\" valor' e 'melt \"registrador\"'")
+                return -1
+            }
+        }
+        if (!_expect(TOK_RBRACE)) {
+            _error("esperava '}' fechando o quartz")
+            return -1
+        }
+        if (lines == 0) {
+            _error("quartz sem instrucao: escreva ao menos um texto entre aspas (ex.: quartz { \"nop\" })")
+            return -1
+        }
+        if (_cur_kind() == TOK_ARROW) {
+            _advance()
+            forge dt = _cur()
+            if (dt.kind != TOK_IDENT) {
+                _error("'->' depois de quartz espera o nome de uma variavel (ex.: quartz { \"rdtsc\" } -> t \"=A\")")
+                return -1
+            }
+            _advance()
+            node_set_child(n, 0, node_new(NK_IDENT, dt.val, dt.line, dt.col))
+            forge out_cons = "=r"
+            forge ct = _cur()
+            if (ct.kind == TOK_STRING && ct.line == dt.line) {
+                out_cons = ct.val
+                _advance()
+            }
+            node_set_child(n, 1, _quartz_opt(out_cons, dt.line, dt.col))
+        }
+        node_set_child(n, 2, _quartz_opt(melts, t.line, t.col))
+        node_set_child(n, 3, _quartz_opt(dialect, t.line, t.col))
+        forge qn: Node = node_get(n)
+        qn.val = text
+        node_set(n, qn)
+        if (_cur_kind() == TOK_SEMI) { _advance() }
+        return n
+    }
+
     vein parse_block() -> stone {
         forge line = _cur().line
         forge col = _cur().col
@@ -734,6 +887,10 @@ namespace parser {
             return node_new(NK_CONTINUE, "", line, col)
         }
 
+        if (t.kind == TOK_QUARTZ) {
+            return parse_quartz()
+        }
+
         if (t.kind == TOK_ANCHOR) {
             _advance()
             forge action = parse_stmt()
@@ -866,6 +1023,12 @@ namespace parser {
                 forge param_type = parse_type()
                 forge param = node_new(NK_PARAM, param_name, param_line, 0)
                 node_set_child(param, 0, param_type)
+                // valor padrao (onda 4): `vein f(a: stone, b: stone = 3)`;
+                // o typeck exige um literal e completa as chamadas
+                if (_cur_kind() == TOK_EQ) {
+                    _advance()
+                    node_set_child(param, 1, parse_expr(0))
+                }
                 node_add_extra(params, param)
                 
                 if (_cur_kind() == TOK_COMMA) {
@@ -911,6 +1074,19 @@ namespace parser {
             _advance()
             ret_type = parse_type()
         }
+
+        // A5.1: `bearing regra` (pre-condicao) e `settle regra` (pos-condicao),
+        // quantos quiser, antes do corpo; palavras de contexto (seguem nomes
+        // validos fora daqui)
+        forge contracts_blk: stone = -1
+        while (_cur_kind() == TOK_IDENT && (ofs_str_eq(_cur_val(), "bearing") || ofs_str_eq(_cur_val(), "settle"))) {
+            forge ct = _advance()
+            if (contracts_blk < 0) { contracts_blk = node_new(NK_BLOCK, "", ct.line, ct.col) }
+            forge rule = parse_expr(0)
+            forge cn = node_new(NK_CONTRACT, ct.val, ct.line, ct.col)
+            node_set_child(cn, 0, rule)
+            node_add_extra(contracts_blk, cn)
+        }
         
         forge body = parse_block()
         if (!ofs_str_eq(fault_kind, "")) { _mark_fault_block(body, fault_kind) }
@@ -923,6 +1099,33 @@ namespace parser {
         node_set_child(n, 0, params)
         node_set_child(n, 1, ret_type)
         node_set_child(n, 2, body)
+        node_set_child(n, 3, contracts_blk)
+        return n
+    }
+
+    // A5.1: `mineral Nome = T grain regra [grain regra ...]` (tipo com regra;
+    // `value` e o valor conferido). `mineral` so e palavra aqui, no comeco
+    // de uma declaracao do nivel de cima seguida de nome e '='.
+    vein _is_mineral_start() -> bool {
+        if (_cur_kind() != TOK_IDENT || !ofs_str_eq(_cur_val(), "mineral")) { return false }
+        return _peek_kind() == TOK_IDENT && _peek2_kind() == TOK_EQ
+    }
+
+    vein parse_mineral_decl() -> stone {
+        forge t = _advance()
+        forge nt = _advance()
+        _advance()
+        forge base = parse_type()
+        forge n = node_new(NK_MINERAL, nt.val, nt.line, nt.col)
+        node_set_child(n, 0, base)
+        while (_cur_kind() == TOK_IDENT && ofs_str_eq(_cur_val(), "grain")) {
+            forge gt = _advance()
+            forge rule = parse_expr(0)
+            forge gn = node_new(NK_CONTRACT, "grain", gt.line, gt.col)
+            node_set_child(gn, 0, rule)
+            node_add_extra(n, gn)
+        }
+        if (_cur_kind() == TOK_SEMI) { _advance() }
         return n
     }
 
@@ -1318,6 +1521,8 @@ namespace parser {
                 if (stmt >= 0) {
                     node_add_extra(program, stmt)
                 }
+            } else if (_is_mineral_start()) {
+                node_add_extra(program, parse_mineral_decl())
             } else if (t.kind == TOK_ATTACH) {
                 _advance()
                 if (!_expect(TOK_LBRACE)) { _error("expected '{'") }

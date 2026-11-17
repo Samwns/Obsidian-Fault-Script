@@ -1,5 +1,7 @@
 // OFS Compiler — Main Driver
 // Complete compilation pipeline and bootstrap
+// claim em forma de comentario: a semente (ofs/dist/ofscc) e anterior a onda 5
+//! claim rift
 
 attach {F:fileio.ofs}
 attach {F:tokens.ofs}
@@ -8,7 +10,9 @@ attach {F:ast.ofs}
 attach {F:symbols.ofs}
 attach {F:lexer.ofs}
 attach {F:parser.ofs}
+attach {F:contracts.ofs}
 attach {F:typeck.ofs}
+attach {F:sediment.ofs}
 attach {F:codegen.ofs}
 attach {F:llvmgen.ofs}
 attach {F:interpreter.ofs}
@@ -20,6 +24,8 @@ extern vein clock() -> stone
 extern vein memcpy(dst: *u8, src: *u8, count: stone) -> *u8
 
 forge _expanded_paths: Array<obsidian> = []
+// erros de attach e de cabecalho (stratum/claim/caprock) da expansao
+forge _attach_errors: stone = 0
 
 vein join_parts(parts: Array<obsidian>) -> obsidian {
     fracture {
@@ -138,6 +144,216 @@ vein attach_path_from_line(line: obsidian) -> obsidian {
     return ""
 }
 
+// ── Cabecalho do modulo: stratum / claim / caprock (A5.4 + Ideia 4) ───
+// Linhas no topo do arquivo (antes do codigo; comentarios, linhas em branco
+// e `attach` podem vir antes ou entre elas):
+//   stratum crust|fault|abyss
+//   claim rift, abyss, quartz      (um ou mais, separados por virgula)
+//   caprock rift, abyss, quartz    (so no principal; `caprock crust` = nada)
+// Forma de comentario `//! claim rift` (mesmo significado): para codigo que
+// tambem compila com uma semente anterior a onda 5 (o proprio ofscc). Como o
+// `attach`, o driver le essas linhas por texto e nao as passa ao lexer.
+
+vein hdr_is_space(c: stone) -> bool {
+    return c == 32 || c == 9 || c == 13
+}
+
+vein hdr_trim(s: obsidian) -> obsidian {
+    forge a = 0
+    forge b = ofs_str_len(s)
+    while (a < b && hdr_is_space(ofs_str_char_at(s, a))) { a++ }
+    while (b > a && hdr_is_space(ofs_str_char_at(s, b - 1))) { b-- }
+    return ofs_str_substr(s, a, b - a)
+}
+
+vein hdr_starts(s: obsidian, p: obsidian) -> bool {
+    forge n = ofs_str_len(p)
+    if (ofs_str_len(s) < n) { return false }
+    return ofs_str_eq(ofs_str_substr(s, 0, n), p)
+}
+
+// texto da diretiva sem a forma de comentario e sem comentario no fim
+// ("claim rift, abyss"), ou "" se a linha nao e diretiva
+vein hdr_directive(line: obsidian) -> obsidian {
+    forge t = hdr_trim(line)
+    if (hdr_starts(t, "//!")) {
+        t = hdr_trim(ofs_str_substr(t, 3, ofs_str_len(t) - 3))
+    }
+    forge cut = 0
+    forge n = ofs_str_len(t)
+    while (cut + 1 < n && !(ofs_str_char_at(t, cut) == 47 && ofs_str_char_at(t, cut + 1) == 47)) { cut++ }
+    if (cut + 1 < n) { t = hdr_trim(ofs_str_substr(t, 0, cut)) }
+    if (!(hdr_starts(t, "claim ") || hdr_starts(t, "stratum ") || hdr_starts(t, "caprock ") ||
+          hdr_starts(t, "claim\t") || hdr_starts(t, "stratum\t") || hdr_starts(t, "caprock\t"))) { return "" }
+    // so palavras minusculas, virgulas e espacos (`claim = 3` e codigo)
+    forge i = 0
+    while (i < ofs_str_len(t)) {
+        forge c = ofs_str_char_at(t, i)
+        if (!((c >= 97 && c <= 122) || c == 44 || hdr_is_space(c))) { return "" }
+        i++
+    }
+    return t
+}
+
+// palavras da diretiva (depois da palavra-chave), sem virgulas
+vein hdr_words(t: obsidian) -> Array<obsidian> {
+    forge out: Array<obsidian> = []
+    forge n = ofs_str_len(t)
+    forge i = 0
+    forge st = -1
+    while (i <= n) {
+        forge sep = (i == n)
+        if (!sep) {
+            forge c = ofs_str_char_at(t, i)
+            sep = (c == 44 || hdr_is_space(c))
+        }
+        if (sep) {
+            if (st >= 0) { ofs_array_push(out, ofs_str_substr(t, st, i - st)) }
+            st = -1
+        } else if (st < 0) {
+            st = i
+        }
+        i++
+    }
+    return out
+}
+
+vein hdr_claim_bit(w: obsidian) -> stone {
+    if (ofs_str_eq(w, "rift")) { return CLAIM_RIFT }
+    if (ofs_str_eq(w, "abyss")) { return CLAIM_ABYSS }
+    if (ofs_str_eq(w, "quartz")) { return CLAIM_QUARTZ }
+    if (ofs_str_eq(w, "magma")) { return CLAIM_MAGMA }
+    return 0
+}
+
+vein hdr_error(path: obsidian, file_line: stone, msg: obsidian, hint: obsidian) -> void {
+    _attach_errors++
+    echo("[ERRO DE ESTRATO " + path + ":" + ofs_stone_to_obsidian(file_line) + "]: " + msg)
+    if (ofs_str_len(hint) > 0) { echo("  dica: " + hint) }
+}
+
+// aplica a diretiva `t` (de hdr_directive) ao modulo `m`
+vein hdr_apply(m: stone, path: obsidian, file_line: stone, t: obsidian) -> void {
+    forge w = hdr_words(t)
+    forge kw: obsidian = ofs_array_get(w, 0)
+    forge nw = ofs_array_len(w)
+    if (nw < 2) {
+        hdr_error(path, file_line, "'" + kw + "' sem valor", "ex.: 'stratum fault', 'claim rift', 'caprock rift, quartz'")
+        return
+    }
+    if (ofs_str_eq(kw, "stratum")) {
+        forge v: obsidian = ofs_array_get(w, 1)
+        forge s = STRATUM_NONE
+        if (ofs_str_eq(v, "crust")) { s = STRATUM_CRUST }
+        if (ofs_str_eq(v, "fault")) { s = STRATUM_FAULT }
+        if (ofs_str_eq(v, "abyss")) { s = STRATUM_ABYSS }
+        if (s == STRATUM_NONE || nw > 2) {
+            hdr_error(path, file_line, "estrato '" + hdr_trim(ofs_str_substr(t, 8, ofs_str_len(t) - 8)) + "' nao existe", "um so: crust (sem baixo nivel), fault (baixo nivel em blocos) ou abyss (tudo)")
+            return
+        }
+        if (ast_mod_stratum_decl(m) != STRATUM_NONE) {
+            hdr_error(path, file_line, "'stratum' repetido no mesmo arquivo", "declare o estrato uma vez so")
+            return
+        }
+        ast_mod_set_stratum(m, s)
+        return
+    }
+    forge bits = 0
+    forge i = 1
+    while (i < nw) {
+        forge wi: obsidian = ofs_array_get(w, i)
+        forge b = hdr_claim_bit(wi)
+        if (b == 0 && ofs_str_eq(kw, "caprock") && ofs_str_eq(wi, "crust") && nw == 2) {
+            b = 0
+        } else if (b == 0) {
+            hdr_error(path, file_line, "'" + wi + "' nao e permissao de '" + kw + "'", "permissoes: rift (extern/rift vein), abyss (bloco abyss), quartz (assembly), magma (magma.cast)" )
+            return
+        }
+        bits = bits | b
+        i++
+    }
+    if (ofs_str_eq(kw, "claim")) {
+        ast_mod_add_claims(m, bits)
+    } else {
+        if (m != 0) {
+            hdr_error(path, file_line, "'caprock' so vale no programa principal", "o principal decide o que os modulos anexados podem pedir")
+            return
+        }
+        ast_mod_set_caprock(bits, file_line)
+    }
+}
+
+// posicao de `p` em `s` (ou -1); p tem 2 caracteres ("/*" ou "*/"), sem
+// alocar por linha
+vein hdr_find(s: obsidian, p: obsidian) -> stone {
+    forge n = ofs_str_len(s)
+    forge a = ofs_str_char_at(p, 0)
+    forge b = ofs_str_char_at(p, 1)
+    forge i = 0
+    while (i + 1 < n) {
+        if (ofs_str_char_at(s, i) == a && ofs_str_char_at(s, i + 1) == b) { return i }
+        i++
+    }
+    return -1
+}
+
+// primeiro caractere que nao e espaco (0 se a linha e vazia)
+vein hdr_first(s: obsidian) -> stone {
+    forge n = ofs_str_len(s)
+    forge i = 0
+    while (i < n && hdr_is_space(ofs_str_char_at(s, i))) { i++ }
+    if (i == n) { return 0 }
+    return ofs_str_char_at(s, i)
+}
+
+// caminho para o relatorio: a stdlib vira "stdlib/..."
+vein hdr_show_path(p: obsidian) -> obsidian {
+    forge std = _env("OFS_STDLIB_PATH")
+    if (ofs_str_len(std) > 0) {
+        std = normalize_path(std) + "/"
+        if (ofs_str_len(p) > ofs_str_len(std) && hdr_starts(p, std)) {
+            return "stdlib/" + ofs_str_substr(p, ofs_str_len(std), ofs_str_len(p) - ofs_str_len(std))
+        }
+    }
+    return p
+}
+
+// `ofs check`: estrato e permissoes dos modulos que declaram ou usam algo
+vein print_module_claims() -> void {
+    forge nm = ast_mod_count()
+    forge shown = 0
+    forge m = 0
+    while (m < nm) {
+        forge sd = ast_mod_stratum_decl(m)
+        forge al = ast_mod_allowed(m)
+        forge us = ast_mod_used(m)
+        if (sd != STRATUM_NONE || ast_mod_claims(m) != 0 || us != 0) {
+            if (shown == 0) { echo("Estrato e permissoes (stratum / claim) por modulo:") }
+            shown++
+            forge st = "stratum " + ast_stratum_name(ast_mod_stratum(m))
+            if (sd == STRATUM_NONE) { st = st + " (padrao)" }
+            forge cl = "sem claim"
+            if (ast_mod_stratum(m) == STRATUM_ABYSS) { cl = "claim rift, abyss, quartz (pelo estrato)" }
+            else if (al != 0) { cl = "claim " + ast_claims_text(al) }
+            forge miss = us - (us & al)
+            forge extra = ""
+            if (miss != 0 && ast_mod_stratum(m) != STRATUM_CRUST) { extra = "  [usa sem claim: " + ast_claims_text(miss) + "]" }
+            forge idle = ast_mod_claims(m) - (ast_mod_claims(m) & us)
+            if (idle != 0 && ast_mod_stratum(m) == STRATUM_FAULT) { extra = extra + "  [claim sem uso: " + ast_claims_text(idle) + "]" }
+            forge who = ""
+            if (m == 0) { who = " (principal)" }
+            echo("  " + hdr_show_path(ast_mod_path(m)) + who + ": " + st + ", " + cl + extra)
+        }
+        m++
+    }
+    forge cap = ast_mod_caprock()
+    if (cap >= 0) {
+        forge lib = ast_claims_text(cap)
+        if (cap == 0) { lib = "nada (crust)" }
+        echo("  caprock do principal: os anexados podem pedir " + lib)
+    }
+}
+
 vein file_exists(p: obsidian) -> bool {
     forge f = fopen(p, "r")
     if (f == null) { return false }
@@ -202,16 +418,69 @@ vein expand_attaches(path_in: obsidian, src: obsidian) -> obsidian {
     if (path_seen(path)) { return "" }
     remember_path(path)
     forge first_line = _expanded_lines + 1
+    ast_mod_add(path, path_is_runtime(path))
     forge res = expand_attaches_body(path, src)
     if (path_is_runtime(path)) { ast_mark_runtime_lines(first_line, _expanded_lines) }
     return res
+}
+
+// ── Fault Refract: recompilar o programa no proprio processo ──────────
+// `ofs refract` (OFS_REFRACT=1, modo run): o interpretador chama
+// refract_reload quando um arquivo observado muda. Mesmo caminho do inicio
+// (attach -> lexer -> parser -> typeck); os nos novos entram no mesmo pool.
+// Devolve a raiz nova, ou -1 com os erros ja impressos (no stdout, que o
+// interpretador desvia para o stderr durante a chamada).
+vein refract_reload(path: obsidian) -> stone {
+    if (!file_exists(path)) {
+        echo("[ERRO DE ATTACH " + path + "]: arquivo nao encontrado")
+        return -1
+    }
+    _expanded_paths = []
+    _expanded_lines = 0
+    _attach_errors = 0
+    ast_srcmap_reset()
+    forge src: obsidian = read_file(path)
+    src = expand_attaches(path, src)
+    if (_attach_errors > 0) { return -1 }
+    forge tokens: Array<Token> = lexer.lex(src)
+    forge root_id = parser.parse(tokens)
+    if (parser.error_count() > 0) { return -1 }
+    // contratos: um bearing/settle/grain alterado muda o corpo checado da
+    // vein (e a grain entra na assinatura), entao conta como edicao dela
+    contracts.process(root_id)
+    if (contracts.error_count() > 0) { return -1 }
+    typeck.reset()
+    typeck.check(root_id)
+    if (typeck.has_errors()) { return -1 }
+    // A5.3: arena do bedrock (escape) e aviso de vazamento
+    sediment.process(root_id)
+    if (sediment.error_count() > 0) { return -1 }
+    return root_id
+}
+
+// arquivos que a refract observa: o principal e os attach locais (fora da
+// stdlib instalada e do runtime)
+vein refract_paths() -> Array<obsidian> {
+    forge out: Array<obsidian> = []
+    forge std = _env("OFS_STDLIB_PATH")
+    if (ofs_str_len(std) > 0) { std = normalize_path(std) + "/" }
+    forge i = 0
+    while (i < ofs_array_len(_expanded_paths)) {
+        forge p: obsidian = ofs_array_get(_expanded_paths, i)
+        forge in_std = ofs_str_len(std) > 0 && ofs_str_len(p) > ofs_str_len(std) && ofs_str_eq(ofs_str_substr(p, 0, ofs_str_len(std)), std)
+        if (i == 0 || (!in_std && !path_is_runtime(p))) { ofs_array_push(out, p) }
+        i++
+    }
+    return out
 }
 
 // ── Busca dos modulos do `attach` ──────────────────────────────────────
 // Ordem (a primeira que existir vence):
 //   attach {modulo}       1. $OFS_STDLIB_PATH/modulo.ofs
 //                         2. pasta do arquivo que faz o attach
-//                         3. cada pasta de $OFS_LIB_PATH (separadas por ':')
+//                         3. cada pasta de $OFS_LIB_PATH (separadas por ':';
+//                            no Windows por ';', como o PATH, porque ':'
+//                            aparece na letra da unidade, C:\libs)
 //                         4. $OFS_LIB_HOME, ou ~/.ofs/libs (onde o
 //                            src/packages/install_library.sh instala)
 //   attach {F:caminho}    1. caminho absoluto, ou relativo a pasta do arquivo
@@ -220,7 +489,6 @@ vein expand_attaches(path_in: obsidian, src: obsidian) -> obsidian {
 // Modulo que nao existe em nenhum lugar e erro (antes era ignorado em
 // silencio e o programa quebrava depois, longe da causa).
 
-forge _attach_errors: stone = 0
 
 vein _env(name: obsidian) -> obsidian {
     forge v = getenv(name)
@@ -235,16 +503,29 @@ vein _dir_join(dir: obsidian, rel: obsidian) -> obsidian {
     return dir + "/" + rel
 }
 
-// pastas extras de bibliotecas: $OFS_LIB_PATH (a:b:c) e depois a pasta de
-// instalacao ($OFS_LIB_HOME ou ~/.ofs/libs)
+// O compilador esta rodando no Windows? (o Windows sempre define
+// OS=Windows_NT; o mesmo ofscc.ll serve aos dois sistemas)
+vein host_is_windows() -> bool {
+    return ofs_str_eq(_env("OS"), "Windows_NT")
+}
+
+// separador das listas de pastas (OFS_LIB_PATH): ';' no Windows, ':' no resto
+vein lib_path_sep() -> obsidian {
+    if (host_is_windows()) { return ";" }
+    return ":"
+}
+
+// pastas extras de bibliotecas: $OFS_LIB_PATH (a:b:c; no Windows a;b;c) e
+// depois a pasta de instalacao ($OFS_LIB_HOME ou ~/.ofs/libs)
 vein attach_lib_dirs() -> Array<obsidian> {
     forge dirs: Array<obsidian> = []
     forge lp = _env("OFS_LIB_PATH")
     forge n = ofs_str_len(lp)
+    forge sep = ofs_str_char_at(lib_path_sep(), 0)
     forge st = 0
     forge i = 0
     while (i <= n) {
-        if (i == n || ofs_str_char_at(lp, i) == 58) {
+        if (i == n || ofs_str_char_at(lp, i) == sep) {
             if (i > st) { ofs_array_push(dirs, ofs_str_substr(lp, st, i - st)) }
             st = i + 1
         }
@@ -302,7 +583,7 @@ vein resolve_attach(path: obsidian, file_line: stone, base: obsidian, rel: obsid
         echo("    " + ofs_array_get(c, i))
         i++
     }
-    echo("  dica: confira o nome, defina OFS_STDLIB_PATH ou acrescente a pasta da biblioteca em OFS_LIB_PATH (separada por ':').")
+    echo("  dica: confira o nome, defina OFS_STDLIB_PATH ou acrescente a pasta da biblioteca em OFS_LIB_PATH (separada por '" + lib_path_sep() + "').")
     return ""
 }
 
@@ -314,11 +595,39 @@ vein expand_attaches_body(path: obsidian, src: obsidian) -> obsidian {
     forge i = 0
     forge len = ofs_str_len(src)
     forge file_line = 1
+    // cabecalho (stratum/claim/caprock) e comentario de bloco aberto
+    forge hmod = ast_mod_index(path)
+    forge in_header = true
+    forge in_block = false
 
     while (i <= len) {
         if (i == len || ofs_str_char_at(src, i) == 10) {
             forge line = ofs_str_substr(src, start, i - start)
-            if (is_short_attach_line(line)) {
+            forge fc: stone = hdr_first(line)
+            forge dir = ""
+            // so linhas que comecam com c/s (claim/stratum/caprock) ou / (//!)
+            if (!in_block && (fc == 99 || fc == 115 || fc == 47)) { dir = hdr_directive(line) }
+            if (ofs_str_len(dir) > 0) {
+                if (!in_header) {
+                    hdr_error(path, file_line, "'" + ofs_array_get(hdr_words(dir), 0) + "' so vale no topo do arquivo (antes do codigo)",
+                        "mova a linha para o comeco do arquivo, junto dos attach")
+                } else if (hmod >= 0) {
+                    hdr_apply(hmod, path, file_line, dir)
+                }
+            } else if (is_short_attach_line(line) || is_attach_line(line)) {
+                // attach no topo mantem o cabecalho aberto
+            } else if (in_header && !in_block && fc != 0 && fc != 47) {
+                in_header = false
+            }
+            if (in_block) {
+                if (hdr_find(line, "*/") >= 0) { in_block = false }
+            } else if (fc == 47 || in_header) {
+                forge ob = hdr_find(line, "/*")
+                if (ob >= 0 && hdr_find(line, "*/") < ob) { in_block = true }
+            }
+            if (ofs_str_len(dir) > 0) {
+                // a diretiva nao vai ao lexer (como o attach)
+            } else if (is_short_attach_line(line)) {
                 forge mod_file = short_attach_file(line)
                 forge shown = ofs_str_substr(line, 8, ofs_str_len(mod_file) - 4)
                 forge mod_path = resolve_attach(path, file_line, base, mod_file, true, shown)
@@ -366,7 +675,8 @@ vein usage() -> void {
         _u("  ", "run <arq.ofs>",     "executa interpretado (--native compila temporario)")
         _u("  ", "build <arq.ofs>",   "compila para executavel nativo (-o saida)")
         _u("  ", "check <arq.ofs>",   "somente verificacao de tipos")
-        _u("  ", "test <arq.ofs>",    "executa testes (assay) do arquivo")
+        _u("  ", "test <arq.ofs>",    "executa testes do arquivo")
+        _u("  ", "assay <arq.ofs>",   "testa os contratos nos limites (bearing/settle/grain)")
         _u("  ", "twin <arq.ofs>",    "roda interpretado + nativo e compara saidas")
         _u("  ", "polish <arq.ofs>",  "verifica estilo e padroes do codigo")
         _u("  ", "language [en|pt|es]", "mostra/altera o idioma da CLI")
@@ -394,7 +704,8 @@ vein usage() -> void {
         _u("  ", "run <arq.ofs>",     "ejecuta interpretado (--native compila temporal)")
         _u("  ", "build <arq.ofs>",   "compila a ejecutable nativo (-o salida)")
         _u("  ", "check <arq.ofs>",   "solo verificacion de tipos")
-        _u("  ", "test <arq.ofs>",    "ejecuta las pruebas (assay) del archivo")
+        _u("  ", "test <arq.ofs>",    "ejecuta las pruebas del archivo")
+        _u("  ", "assay <arq.ofs>",   "prueba los contratos en los limites (bearing/settle/grain)")
         _u("  ", "twin <arq.ofs>",    "ejecuta interpretado + nativo y compara salidas")
         _u("  ", "polish <arq.ofs>",  "verifica estilo y patrones del codigo")
         _u("  ", "language [en|pt|es]", "muestra/cambia el idioma de la CLI")
@@ -421,7 +732,8 @@ vein usage() -> void {
     _u("  ", "run <file.ofs>",     "run interpreted (--native builds a temp binary)")
     _u("  ", "build <file.ofs>",   "compile to a native executable (-o output)")
     _u("  ", "check <file.ofs>",   "type-check only")
-    _u("  ", "test <file.ofs>",    "run file tests (assay)")
+    _u("  ", "test <file.ofs>",    "run file tests")
+    _u("  ", "assay <file.ofs>",   "test contracts at their boundaries (bearing/settle/grain)")
     _u("  ", "twin <file.ofs>",    "run interpreted + native and diff outputs")
     _u("  ", "polish <file.ofs>",  "style and pattern checks")
     _u("  ", "language [en|pt|es]", "show/change the CLI language")
@@ -503,6 +815,514 @@ vein parse_state_field(state: obsidian, field_idx: stone) -> obsidian {
     return ""
 }
 
+// ── Ideia 5: magma.cast (OFSCC_MODE=cast) ─────────────────────────────
+// O mod e um arquivo OFS sem `core main`, compilado para um .so pelo
+// stdlib/magma.ofs. O IR e o do `ir` mais @__magma_manifest: uma linha por
+// vein do arquivo do mod (nao dos attach) com o nome como o programa o pede,
+// o simbolo e a assinatura canonica da F6 ("dobro\tdobro\tvein(stone)->stone").
+// Devolve "-" (com o erro impresso) se o mod tem `core main`.
+vein magma_manifest_add(out: obsidian, decl_id: stone) -> obsidian {
+    forge d: Node = node_get(decl_id)
+    if (ofs_str_len(d.val) >= 2 && ofs_str_eq(ofs_str_substr(d.val, 0, 2), "__")) { return out }
+    if (ast_mod_of_line(d.line) != 0) { return out }
+    forge ret = "void"
+    if (d.c1 >= 0) { ret = typeck.type_node_name(d.c1) }
+    forge sig = vein_type_make(typeck.param_types_of(decl_id), ret)
+    return out + vein_display_name(d.val) + "\t" + d.val + "\t" + sig + "\n"
+}
+
+vein magma_manifest(root_id: stone) -> obsidian {
+    forge out = ""
+    forge i = 0
+    while (i < node_extra_len(root_id)) {
+        forge did = node_get_extra(root_id, i)
+        forge n: Node = node_get(did)
+        if (n.kind == NK_CORE_DECL || (n.kind == NK_FN_DECL && ofs_str_eq(n.val, "main"))) {
+            echo("[ERRO DE MAGMA " + ast_src_loc(n.line, n.col) + "]: um mod (magma.cast) nao tem 'core main'")
+            echo("  dica: o programa que carrega o mod e quem tem o main; o mod so declara veins")
+            return "-"
+        }
+        if (n.kind == NK_FN_DECL) { out = magma_manifest_add(out, did) }
+        if (n.kind == NK_NAMESPACE) {
+            forge j = 0
+            while (j < node_extra_len(did)) {
+                forge mid = node_get_extra(did, j)
+                if (node_kind_of(mid) == NK_FN_DECL) { out = magma_manifest_add(out, mid) }
+                j++
+            }
+        }
+        i++
+    }
+    return out
+}
+
+// ── Fault Refract L3 (remoto/Android) ─────────────────────────────────
+// OFSCC_REFRACT=cells (ofs build --target android --refract): as veins do
+// usuario (arquivo principal e attach locais, os mesmos que a refract
+// observa) ganham celula de despacho e o manifesto vai no .so; o agente
+// (stdlib/geophone.ofs) e anexado. OFSCC_REFRACT=patch com
+// OFSCC_REFRACT_BASE=<manifesto que o app mandou>: compara vein a vein,
+// aplica as regras e gera so o remendo (rc 0), ou nada (rc 3, sem mudanca;
+// rc 4, recusado). Formato do manifesto: uma linha por registro, campos
+// separados por tab, chave = os dois primeiros:
+//   V <simbolo> <hash> <assinatura> <1 = tem celula no app | 0>
+//   G <global> <tipo>   M <monolith> <campos>   X <extern> <forma>
+//   S - <variantes, em ordem>
+forge _r3_files: Array<obsidian> = []
+forge _r3_vkey: Array<obsidian> = []
+forge _r3_vid: Array<stone> = []
+forge _r3_rec: Array<obsidian> = []
+
+vein r3_fnv(s: obsidian, basis: stone) -> stone {
+    forge h = basis
+    forge i = 0
+    forge n = ofs_str_len(s)
+    while (i < n) {
+        h = h ^ (ofs_str_char_at(s, i) & 255)
+        h = h * 1099511628211
+        i++
+    }
+    return h
+}
+
+// hash estrutural da arvore tipada (como o rf_hash do interpretador)
+vein r3_hash(id: stone, h0: stone) -> stone {
+    if (id < 0) { return (h0 ^ 977) * 1099511628211 }
+    forge h = (h0 ^ (node_kind_of(id) + 1)) * 1099511628211
+    h = r3_fnv(node_val_of(id), h)
+    h = r3_fnv(node_type_of(id), (h ^ 31) * 1099511628211)
+    h = r3_hash(node_child(id, 0), h)
+    h = r3_hash(node_child(id, 1), h)
+    h = r3_hash(node_child(id, 2), h)
+    h = r3_hash(node_child(id, 3), h)
+    forge n = node_extra_len(id)
+    h = (h ^ (n + 4099)) * 1099511628211
+    forge i = 0
+    while (i < n) {
+        h = r3_hash(node_get_extra(id, i), h)
+        i++
+    }
+    return h
+}
+
+vein r3_tstr(tid: stone) -> obsidian {
+    if (tid < 0) { return "" }
+    forge t = node_val_of(tid)
+    if (node_kind_of(tid) == NK_TYPE_ARRAY) {
+        forge inner = "stone"
+        if (node_child(tid, 0) >= 0) { inner = node_val_of(node_child(tid, 0)) }
+        t = "Array<" + inner + ">"
+    }
+    forge note = contracts.type_note(tid)
+    if (ofs_str_len(note) > 0) { return t + "{" + note + "}" }
+    return t
+}
+
+vein r3_sig(fid: stone) -> obsidian {
+    forge params = node_child(fid, 0)
+    forge out = "("
+    forge j = 0
+    while (j < node_extra_len(params)) {
+        forge pid = node_get_extra(params, j)
+        forge pt = "stone"
+        if (node_child(pid, 0) >= 0) { pt = r3_tstr(node_child(pid, 0)) }
+        if (j > 0) { out = out + "," }
+        out = out + pt
+        j++
+    }
+    forge rt = "void"
+    if (node_child(fid, 1) >= 0) { rt = r3_tstr(node_child(fid, 1)) }
+    return out + ")->" + rt
+}
+
+vein r3_user_line(line: stone) -> bool {
+    forge f = ast_src_file(line)
+    forge i = 0
+    while (i < ofs_array_len(_r3_files)) {
+        forge p: obsidian = ofs_array_get(_r3_files, i)
+        if (ofs_str_eq(p, f)) { return true }
+        i++
+    }
+    return false
+}
+
+vein r3_add(kind: obsidian, key: obsidian, a: obsidian, b: obsidian) -> void {
+    forge line = kind + "\t" + key + "\t" + a
+    if (ofs_str_len(b) > 0) { line = line + "\t" + b }
+    ofs_array_push(_r3_rec, line)
+}
+
+vein r3_scan_decl(id: stone, ns: obsidian) -> void {
+    forge k = node_kind_of(id)
+    forge v = node_val_of(id)
+    if (k == NK_NAMESPACE || k == NK_IMPL) {
+        forge j = 0
+        while (j < node_extra_len(id)) {
+            r3_scan_decl(node_get_extra(id, j), v)
+            j++
+        }
+        return
+    }
+    if (!r3_user_line(node_line_of(id))) { return }
+    if (k == NK_FN_DECL) {
+        if (ofs_str_eq(v, "main")) { return }
+        ofs_array_push(_r3_vkey, v)
+        ofs_array_push(_r3_vid, id)
+    } else if (k == NK_VAR_DECL || k == NK_CONST_DECL) {
+        forge gt = node_type_of(id)
+        forge note = contracts.type_note(node_child(id, 0))
+        if (ofs_str_len(note) > 0) { gt = gt + "{" + note + "}" }
+        r3_add("G", v, gt, "")
+    } else if (k == NK_MONOLITH) {
+        forge shape = ""
+        forge fi = 0
+        while (fi < node_extra_len(id)) {
+            forge f_id = node_get_extra(id, fi)
+            forge ft = "stone"
+            if (node_child(f_id, 0) >= 0) { ft = r3_tstr(node_child(f_id, 0)) }
+            shape = shape + node_val_of(f_id) + ":" + ft + ";"
+            fi++
+        }
+        r3_add("M", v, shape, "")
+    } else if (k == NK_EXTERN_VN || k == NK_RIFT_VN) {
+        forge key = v
+        if (ofs_str_len(ns) > 0) { key = ns + "__" + v }
+        r3_add("X", key, r3_sig(id) + "|" + node_type_of(id) + "|" + ofs_stone_to_obsidian(k), "")
+    }
+}
+
+vein r3_variants(id: stone, acc: Array<obsidian>) -> void {
+    if (id < 0) { return }
+    if (node_kind_of(id) == NK_VARIANT) { ofs_array_push(acc, node_val_of(id)) }
+    forge j = 0
+    while (j < node_extra_len(id)) {
+        r3_variants(node_get_extra(id, j), acc)
+        j++
+    }
+}
+
+// varre o programa: veins do usuario (_r3_vkey/_r3_vid) e os registros
+// G/M/X/S (_r3_rec)
+vein r3_scan(root_id: stone) -> void {
+    _r3_files = refract_paths()
+    _r3_vkey = []
+    _r3_vid = []
+    _r3_rec = []
+    forge i = 0
+    while (i < node_extra_len(root_id)) {
+        r3_scan_decl(node_get_extra(root_id, i), "")
+        i++
+    }
+    forge vs: Array<obsidian> = []
+    r3_variants(root_id, vs)
+    forge s = ""
+    forge vi = 0
+    while (vi < ofs_array_len(vs)) {
+        if (vi > 0) { s = s + "," }
+        s = s + ofs_array_get(vs, vi)
+        vi++
+    }
+    r3_add("S", "-", s, "")
+}
+
+vein r3_vline(key: obsidian, fid: stone, cell: bool) -> obsidian {
+    forge c = "0"
+    if (cell) { c = "1" }
+    return "V\t" + key + "\t" + ofs_stone_to_obsidian(r3_hash(fid, 1469598103934665603)) + "\t" + r3_sig(fid) + "\t" + c + "\n"
+}
+
+vein r3_records_text() -> obsidian {
+    forge out = ""
+    forge i = 0
+    while (i < ofs_array_len(_r3_rec)) {
+        out = out + ofs_array_get(_r3_rec, i) + "\n"
+        i++
+    }
+    return out
+}
+
+vein r3_is_seam_name(key: obsidian) -> bool {
+    // geodes (`__geode_*`) e auxiliares gerados nao ganham celula
+    return !(ofs_str_len(key) >= 2 && ofs_str_eq(ofs_str_substr(key, 0, 2), "__"))
+}
+
+vein r3_fields(line: obsidian) -> Array<obsidian> {
+    forge out: Array<obsidian> = []
+    forge st = 0
+    forge i = 0
+    forge n = ofs_str_len(line)
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(line, i) == 9) {
+            ofs_array_push(out, ofs_str_substr(line, st, i - st))
+            st = i + 1
+        }
+        i++
+    }
+    return out
+}
+
+// linhas do manifesto (sem as vazias)
+vein r3_lines(text: obsidian) -> Array<obsidian> {
+    forge out: Array<obsidian> = []
+    forge st = 0
+    forge i = 0
+    forge n = ofs_str_len(text)
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(text, i) == 10) {
+            if (i > st) { ofs_array_push(out, ofs_str_substr(text, st, i - st)) }
+            st = i + 1
+        }
+        i++
+    }
+    return out
+}
+
+// campo `f` do registro `kind`/`key` da lista (ou "\t" se nao ha)
+vein r3_find(lines: Array<obsidian>, kind: obsidian, key: obsidian, f: stone) -> obsidian {
+    forge pre = kind + "\t" + key + "\t"
+    forge pl = ofs_str_len(pre)
+    forge i = 0
+    while (i < ofs_array_len(lines)) {
+        forge l: obsidian = ofs_array_get(lines, i)
+        if (ofs_str_len(l) >= pl && ofs_str_eq(ofs_str_substr(l, 0, pl), pre)) {
+            forge fs = r3_fields(l)
+            if (f < ofs_array_len(fs)) { return ofs_array_get(fs, f) }
+            return ""
+        }
+        i++
+    }
+    return "\t"
+}
+
+vein r3_has(list: Array<obsidian>, v: obsidian) -> bool {
+    forge i = 0
+    while (i < ofs_array_len(list)) {
+        forge x: obsidian = ofs_array_get(list, i)
+        if (ofs_str_eq(x, v)) { return true }
+        i++
+    }
+    return false
+}
+
+// o corpo usa (chama ou pega como valor) alguma vein da lista?
+vein r3_uses(id: stone, names: Array<obsidian>) -> bool {
+    if (id < 0) { return false }
+    forge k = node_kind_of(id)
+    if ((k == NK_CALL || k == NK_IDENT) && r3_has(names, node_val_of(id))) { return true }
+    forge s = 0
+    while (s < 4) {
+        if (r3_uses(node_child(id, s), names)) { return true }
+        s++
+    }
+    forge j = 0
+    while (j < node_extra_len(id)) {
+        if (r3_uses(node_get_extra(id, j), names)) { return true }
+        j++
+    }
+    return false
+}
+
+vein r3_names(list: Array<obsidian>) -> obsidian {
+    forge out = ""
+    forge i = 0
+    while (i < ofs_array_len(list)) {
+        if (i > 0) { out = out + ", " }
+        out = out + vein_display_name(ofs_array_get(list, i))
+        i++
+    }
+    return out
+}
+
+vein r3_reason(acc: obsidian, msg: obsidian) -> obsidian {
+    if (ofs_str_len(acc) == 0) { return msg }
+    return acc + "; " + msg
+}
+
+vein r3_watch_file() -> void {
+    forge wf = _env("OFSCC_REFRACT_WATCH")
+    if (ofs_str_len(wf) == 0) { return }
+    forge out = ""
+    forge i = 0
+    while (i < ofs_array_len(_r3_files)) {
+        out = out + ofs_array_get(_r3_files, i) + "\n"
+        i++
+    }
+    write_file(wf, out)
+}
+
+// build com celulas: devolve o manifesto e preenche `cells`
+vein r3_build_manifest(root_id: stone, cells: Array<obsidian>) -> obsidian {
+    r3_scan(root_id)
+    r3_watch_file()
+    forge out = "OFS-REFRACT-MANIFEST 1\n"
+    forge i = 0
+    while (i < ofs_array_len(_r3_vkey)) {
+        forge key: obsidian = ofs_array_get(_r3_vkey, i)
+        forge seam = r3_is_seam_name(key)
+        if (seam) { ofs_array_push(cells, key) }
+        out = out + r3_vline(key, ofs_array_get(_r3_vid, i), seam)
+        i++
+    }
+    return out + r3_records_text()
+}
+
+// remendo: decide o que entra (include), as celulas que o app tem (cells) e
+// devolve o manifesto do remendo; "" = nada a enviar (rc em _r3_rc)
+forge _r3_rc: stone = 0
+
+vein r3_patch_plan(root_id: stone, base_text: obsidian, cells: Array<obsidian>, include: Array<obsidian>) -> obsidian {
+    r3_scan(root_id)
+    r3_watch_file()
+    forge base = r3_lines(base_text)
+    forge changed: Array<obsidian> = []
+    forge fresh: Array<obsidian> = []
+    forge loose: Array<obsidian> = []
+    forge why = ""
+    forge i = 0
+    while (i < ofs_array_len(_r3_vkey)) {
+        forge key: obsidian = ofs_array_get(_r3_vkey, i)
+        forge fid: stone = ofs_array_get(_r3_vid, i)
+        forge bh = r3_find(base, "V", key, 2)
+        if (ofs_str_eq(bh, "\t")) {
+            ofs_array_push(fresh, key)
+            ofs_array_push(loose, key)
+        } else if (ofs_str_eq(r3_find(base, "V", key, 4), "1")) {
+            ofs_array_push(cells, key)
+            if (!ofs_str_eq(bh, ofs_stone_to_obsidian(r3_hash(fid, 1469598103934665603)))) {
+                forge osig = r3_find(base, "V", key, 3)
+                forge nsig = r3_sig(fid)
+                if (!ofs_str_eq(osig, nsig)) {
+                    why = r3_reason(why, "a assinatura de '" + vein_display_name(key) + "' mudou (" + osig + " -> " + nsig + "): o app chama a vein pela celula com a assinatura antiga")
+                } else {
+                    ofs_array_push(changed, key)
+                }
+            }
+        } else {
+            // sem celula no app (vein nova de um remendo anterior, geode):
+            // entra de novo em todo remendo
+            ofs_array_push(loose, key)
+            if (!ofs_str_eq(bh, ofs_stone_to_obsidian(r3_hash(fid, 1469598103934665603)))) { ofs_array_push(changed, key) }
+        }
+        i++
+    }
+    // globais, monoliths, externs e variantes
+    forge gone: Array<obsidian> = []
+    i = 0
+    while (i < ofs_array_len(base)) {
+        forge bf = r3_fields(ofs_array_get(base, i))
+        if (ofs_array_len(bf) >= 2 && ofs_str_eq(ofs_array_get(bf, 0), "V") && !r3_has(_r3_vkey, ofs_array_get(bf, 1))) {
+            ofs_array_push(gone, ofs_array_get(bf, 1))
+        }
+        i++
+    }
+    i = 0
+    while (i < ofs_array_len(_r3_rec)) {
+        forge rf = r3_fields(ofs_array_get(_r3_rec, i))
+        forge kind: obsidian = ofs_array_get(rf, 0)
+        forge key2: obsidian = ofs_array_get(rf, 1)
+        forge val: obsidian = ofs_array_get(rf, 2)
+        forge old = r3_find(base, kind, key2, 2)
+        forge shown = vein_display_name(key2)
+        if (ofs_str_eq(kind, "G")) {
+            if (ofs_str_eq(old, "\t")) {
+                why = r3_reason(why, "global novo '" + shown + "': o remendo nao cria globais no app")
+            } else if (!ofs_str_eq(old, val)) {
+                why = r3_reason(why, "o global '" + shown + "' mudou de tipo (" + old + " -> " + val + ")")
+            }
+        } else if (ofs_str_eq(kind, "M")) {
+            if (!ofs_str_eq(old, "\t") && !ofs_str_eq(old, val)) {
+                why = r3_reason(why, "o layout do monolith '" + shown + "' mudou (o app nativo nao migra instancias)")
+            }
+        } else if (ofs_str_eq(kind, "X")) {
+            if (!ofs_str_eq(old, "\t") && !ofs_str_eq(old, val)) {
+                why = r3_reason(why, "a extern '" + shown + "' mudou de assinatura")
+            }
+        } else if (ofs_str_eq(kind, "S")) {
+            if (!ofs_str_eq(old, "\t")) {
+                forge ol = ofs_str_len(old)
+                if (ol > 0 && !(ofs_str_len(val) >= ol && ofs_str_eq(ofs_str_substr(val, 0, ol), old) && (ofs_str_len(val) == ol || ofs_str_char_at(val, ol) == 44))) {
+                    why = r3_reason(why, "variantes de strata foram removidas ou reordenadas (so acrescentar no fim troca ao vivo)")
+                }
+            }
+        }
+        i++
+    }
+    if (ofs_str_len(why) > 0) {
+        echo("refract: recusada: " + why)
+        echo("refract: o app segue com a versao anterior; para aplicar, reinstale (ofs build --target android --refract --install)")
+        _r3_rc = 4
+        return ""
+    }
+    if (ofs_array_len(changed) == 0 && ofs_array_len(fresh) == 0) {
+        if (ofs_array_len(gone) > 0) { echo("refract: removidas (seguem no app, sem uso): " + r3_names(gone)) }
+        echo("refract: nenhuma vein mudou")
+        _r3_rc = 3
+        return ""
+    }
+    // entram: as alteradas, as sem celula (redefinidas) e as com celula que
+    // usam uma sem celula (a chamada a ela e direta)
+    i = 0
+    while (i < ofs_array_len(changed)) {
+        ofs_array_push(include, ofs_array_get(changed, i))
+        i++
+    }
+    i = 0
+    while (i < ofs_array_len(loose)) {
+        forge lk: obsidian = ofs_array_get(loose, i)
+        if (!r3_has(include, lk)) { ofs_array_push(include, lk) }
+        i++
+    }
+    forge relinked: Array<obsidian> = []
+    if (ofs_array_len(loose) > 0) {
+        i = 0
+        while (i < ofs_array_len(_r3_vkey)) {
+            forge ck: obsidian = ofs_array_get(_r3_vkey, i)
+            if (r3_has(cells, ck) && !r3_has(include, ck) && r3_uses(node_child(ofs_array_get(_r3_vid, i), 2), loose)) {
+                ofs_array_push(include, ck)
+                ofs_array_push(relinked, ck)
+            }
+            i++
+        }
+    }
+    // aviso: vein alterada usada como valor (callback guarda o endereco)
+    forge as_value: Array<obsidian> = []
+    i = 0
+    while (i < node_pool_len()) {
+        if (node_kind_of(i) == NK_IDENT) {
+            forge iv = node_val_of(i)
+            if (r3_has(changed, iv) && r3_has(cells, iv) && !r3_has(as_value, iv)) { ofs_array_push(as_value, iv) }
+        }
+        i++
+    }
+    forge mf = "OFS-REFRACT-MANIFEST 1\n"
+    i = 0
+    while (i < ofs_array_len(_r3_vkey)) {
+        forge key3: obsidian = ofs_array_get(_r3_vkey, i)
+        if (r3_has(include, key3)) { mf = mf + r3_vline(key3, ofs_array_get(_r3_vid, i), r3_has(cells, key3)) }
+        i++
+    }
+    i = 0
+    while (i < ofs_array_len(_r3_rec)) {
+        forge rl: obsidian = ofs_array_get(_r3_rec, i)
+        if (!ofs_str_eq(ofs_str_substr(rl, 0, 2), "G\t")) { mf = mf + rl + "\n" }
+        i++
+    }
+    forge shown_changed: Array<obsidian> = []
+    i = 0
+    while (i < ofs_array_len(changed)) {
+        forge cv: obsidian = ofs_array_get(changed, i)
+        if (!r3_has(fresh, cv)) { ofs_array_push(shown_changed, cv) }
+        i++
+    }
+    if (ofs_array_len(shown_changed) > 0) { echo("refract: alteradas: " + r3_names(shown_changed)) }
+    if (ofs_array_len(fresh) > 0) { echo("refract: novas: " + r3_names(fresh)) }
+    if (ofs_array_len(relinked) > 0) { echo("refract: religadas (chamam uma vein sem celula): " + r3_names(relinked)) }
+    if (ofs_array_len(gone) > 0) { echo("refract: removidas (seguem no app, sem uso): " + r3_names(gone)) }
+    if (ofs_array_len(as_value) > 0) { echo("refract: aviso: " + r3_names(as_value) + " tambem e usada como valor de vein; quem guardou o endereco (callback) segue na versao do build") }
+    _r3_rc = 0
+    return mf
+}
+
 core main() {
     forge input_file = "input.ofs"
     forge output_file = "a.out"
@@ -526,8 +1346,22 @@ core main() {
         compile_mode = "build-ir"
     }
 
-    forge is_run = ofs_str_eq(compile_mode, "run")
+    // `ofs assay`: roda interpretado um `core main` gerado com os casos de
+    // borda das veins com contrato (contracts.assay_source)
+    forge is_assay = ofs_str_eq(compile_mode, "assay")
+    forge is_run = ofs_str_eq(compile_mode, "run") || is_assay
     forge verbose = ofs_str_eq(getenv("OFS_VERBOSE"), "1")
+    // ofs fossil (Ideia 2): OFS_FOSSIL=record|replay, OFS_FOSSIL_FILE=arq.fossil
+    // (modo run). No replay sem OFSCC_INPUT, o programa e o do cabecalho.
+    forge fossil_mode = _env("OFS_FOSSIL")
+    if (is_run && ofs_str_eq(fossil_mode, "replay") && ofs_str_eq(_env("OFSCC_INPUT"), "")) {
+        forge fsrc = fz_header_source(_env("OFS_FOSSIL_FILE"))
+        if (ofs_str_len(fsrc) == 0) {
+            echo("ofs fossil: '" + _env("OFS_FOSSIL_FILE") + "' nao e um arquivo .fossil legivel")
+            exit(2)
+        }
+        input_file = fsrc
+    }
     forge msg_fmt = getenv("OFS_PROGRESS")
 
     // Configura reporter: locale + cor + tipo (Fase 3 Fancy)
@@ -579,7 +1413,21 @@ core main() {
     forge t0 = clock()
     forge src: obsidian = ""
     src = read_file(input_file)
+    // Fault Refract L3: o build com celulas (e o remendo) leva o agente
+    forge rf3 = _env("OFSCC_REFRACT")
+    forge rf3_on = !is_run && (ofs_str_eq(rf3, "cells") || ofs_str_eq(rf3, "patch"))
+    if (rf3_on) { src = src + "\nattach {geophone}\n" }
     src = expand_attaches(input_file, src)
+    // Ideia 5: teto do programa que carrega o mod (magma.caprock), que vale
+    // para o mod inteiro (inclusive o arquivo dele); com o caprock do proprio
+    // mod, vale a intersecao
+    forge is_cast = ofs_str_eq(compile_mode, "cast")
+    if (is_cast && ofs_str_len(_env("OFS_MAGMA_CAPROCK")) > 0 && _attach_errors == 0) {
+        forge own_cap = ast_mod_caprock()
+        hdr_apply(0, "OFS_MAGMA_CAPROCK", 0, "caprock " + _env("OFS_MAGMA_CAPROCK"))
+        if (own_cap >= 0 && ast_mod_caprock() >= 0) { ast_mod_set_caprock(own_cap & ast_mod_caprock(), 0) }
+        ast_mod_set_cast_ceiling(true)
+    }
     if (_attach_errors > 0) {
         reporter_flush()
         exit(1)
@@ -636,6 +1484,25 @@ core main() {
         echo("AST root kind: " + node_kind_name(root_node.kind))
         return
     }
+
+    // Fase 3b: contratos (A5.1). Checagens de execucao ligadas por padrao
+    // (ofs run, ofs build); OFS_CONTRACTS=0 (ofs build --release) desliga.
+    // A checagem estatica ([ERRO DE CONTRATO]) vale sempre.
+    contracts.set_runtime_checks(!ofs_str_eq(_env("OFS_CONTRACTS"), "0"))
+    if (is_assay) {
+        forge assay_src = contracts.assay_source(root_id)
+        if (contracts.error_count() > 0) {
+            reporter_flush()
+            exit(1)
+        }
+        contracts.assay_splice(root_id, parser.parse(lexer.lex(assay_src)))
+        contracts.set_runtime_checks(true)
+    }
+    contracts.process(root_id)
+    if (contracts.error_count() > 0) {
+        reporter_flush()
+        exit(1)
+    }
     
     // Phase 4: Type checking
     if (!is_run) { event_stage_start(STAGE_CHECK, "") }
@@ -650,17 +1517,62 @@ core main() {
         reporter_flush()
         exit(1)
     }
+    // Fase 4b (A5.3): arena do `bedrock { }` (o que escapa e copiado ou e
+    // [ERRO DE ARENA]) e [AVISO DE VAZAMENTO] de ofs_alloc sem dono
+    sediment.process(root_id)
+    if (sediment.error_count() > 0) {
+        reporter_flush()
+        exit(1)
+    }
 
     if (check_only) {
+        // A5.4: estrato e permissoes de cada modulo (o que os anexados pedem)
+        if (_reporter_kind != REPORTER_JSON) { print_module_claims() }
         event_finished(input_file, 0, 0.0)
         reporter_flush()
         return
     }
 
-    if (ofs_str_eq(compile_mode, "run")) {
+    forge rf3_patch = false
+    if (rf3_on) {
+        forge rf3_cells: Array<obsidian> = []
+        forge rf3_inc: Array<obsidian> = []
+        if (ofs_str_eq(rf3, "cells")) {
+            forge rf3_mf = r3_build_manifest(root_id, rf3_cells)
+            llvmgen.rf3_set(1, rf3_cells, rf3_inc, rf3_mf)
+        } else {
+            forge rf3_base = _env("OFSCC_REFRACT_BASE")
+            if (ofs_str_len(rf3_base) == 0 || !file_exists(rf3_base)) {
+                echo("refract: OFSCC_REFRACT_BASE (manifesto do app) nao encontrado: " + rf3_base)
+                exit(2)
+            }
+            forge rf3_pm = r3_patch_plan(root_id, read_file(rf3_base), rf3_cells, rf3_inc)
+            reporter_flush()
+            if (_r3_rc != 0) { exit(_r3_rc) }
+            llvmgen.rf3_set(2, rf3_cells, rf3_inc, rf3_pm)
+            rf3_patch = true
+        }
+    }
+
+    if (is_cast) {
+        forge mf = magma_manifest(root_id)
+        if (ofs_str_eq(mf, "-")) {
+            reporter_flush()
+            exit(1)
+        }
+        llvmgen.set_magma_manifest(mf)
+    }
+
+    if (is_run) {
         // Em modo run: apenas eventos silenciosos; stdout pertence ao programa
         reporter_flush()
+        if (ofs_str_eq(getenv("OFS_REFRACT"), "1")) { interpreter.rf_enable(input_file, refract_paths()) }
+        if (ofs_str_eq(fossil_mode, "record") || ofs_str_eq(fossil_mode, "replay")) {
+            forge fpaths = refract_paths()
+            if (!interpreter.fs_enable(fossil_mode, _env("OFS_FOSSIL_FILE"), fz_sources_hash(fpaths), fpaths)) { exit(2) }
+        }
         forge exit_code = interpreter.run(root_id)
+        interpreter.fs_finish(exit_code)
         exit(exit_code)
         return
     }
@@ -674,7 +1586,8 @@ core main() {
     if (ofs_str_eq(compile_mode, "c")) {
         codegen.generate(root_id)
     } else {
-        llvmgen.generate(root_id)
+        if (rf3_patch) { llvmgen.rf3_patch_generate(root_id) }
+        else { llvmgen.generate(root_id) }
     }
     cg_close()
     t1 = clock()
@@ -683,7 +1596,7 @@ core main() {
         event_stage_end(STAGE_FORGE, ms / 1000.0, "1 module")
     }
 
-    if (ofs_str_eq(compile_mode, "ir")) {
+    if (ofs_str_eq(compile_mode, "ir") || is_cast) {
         reporter_flush()
         return
     }

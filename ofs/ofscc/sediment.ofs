@@ -1,0 +1,1039 @@
+// OFS Compiler — Sedimento: arena do `bedrock { }` (A5.3) e aviso de
+// vazamento simples. Roda depois do typeck (usa os tipos), nos dois modos,
+// na mesma arvore para o llvmgen e o interpretador (e na Fault Refract).
+//
+// Arena (regra decidida em A5.3):
+//   - um bloco `bedrock { ... }` (tambem `tectonic bedrock`, `bedrock vein`)
+//     que aloca e uma arena: o que o PROPRIO codigo do bloco aloca
+//     (concatenacao, conversao para texto, `[...]`, `forge m: Monolith`,
+//     ofs_alloc/ofs_realloc, builtins de texto e de Array) vem de uma
+//     regiao liberada de uma vez na saida do bloco, em qualquer saida
+//     (return, shatter/erode, `?`). A arena e lexica: uma vein chamada de
+//     dentro aloca no heap normal (o llvmgen zera a arena ativa durante a
+//     chamada). O bloco que nao aloca nada continua so um bloco de baixo
+//     nivel (F4), sem arena (mesmo IR de antes). Marca: type_str "arena"
+//     no NK_BLOCK.
+//   - escape: um valor que pode estar na arena e vai para fora dela
+//     (return, atribuicao a variavel/global/parametro de fora, campo ou
+//     elemento de objeto de fora, push/set em Array de fora, argumento que
+//     a vein chamada guarda, valor de vein/C desconhecido) e:
+//       obsidian: copiado para o heap (__bedrock_lift(v) -> ofs_arena_lift,
+//         que so copia se o texto estiver mesmo numa arena viva);
+//       Array, monolith, ponteiro, geode: [ERRO DE ARENA] em compilacao
+//         (dentro de `abyss { }` vale: o programador assume o risco).
+//     Funcoes C (`extern`/`rift`) nao guardam ponteiros (convencao do C);
+//     as do runtime que guardam (titulo da janela) contam como quem guarda.
+//   - nivel de um valor: 0 = heap/fora; d = arena do bedrock de
+//     profundidade d. Variavel: nivel "de casa" = profundidade onde foi
+//     declarada; conteudo = maior nivel ja atribuido (ponto fixo por
+//     passadas). Parametro guardado: mascara por vein (ponto fixo entre as
+//     veins, pessimista com recursao).
+// Vazamento: `forge p = ofs_alloc(n)` (ou malloc/calloc/realloc/
+// ofs_realloc) fora de arena que nunca chega a um seal/anchor, ofs_free,
+// chamada (dono), return, atribuicao, campo, array ou geode gera
+// [AVISO DE VAZAMENTO] no stderr (OFS_LEAK_WARN=0 silencia).
+
+attach {F:nodes.ofs}
+attach {F:ast.ofs}
+
+namespace sediment {
+    forge _errors: stone = 0
+    forge _final: bool = false
+    // veins do programa e mascara de parametros guardados (bit i)
+    forge _fn_names: Array<obsidian> = []
+    forge _fn_ids: Array<stone> = []
+    forge _fn_kept: Array<stone> = []
+    forge _ext_names: Array<obsidian> = []
+    // variaveis visiveis na vein em analise
+    forge _vn: Array<obsidian> = []
+    forge _vkey: Array<stone> = []
+    forge _vhome: Array<stone> = []
+    forge _vtype: Array<obsidian> = []
+    forge _vscope: Array<stone> = []
+    // conteudo (nivel e mascara) por no de declaracao, entre passadas
+    forge _lvl: Array<stone> = []
+    forge _msk: Array<stone> = []
+    forge _scope: stone = 0
+    forge _bd: stone = 0
+    forge _ab: stone = 0
+    forge _sites: stone = 0
+    forge _kept: stone = 0
+    forge _em: stone = 0
+    forge _cur_fn: obsidian = ""
+    // vazamento
+    forge _lk_names: Array<obsidian> = []
+    forge _lk_sites: Array<stone> = []
+    forge _lk_what: Array<obsidian> = []
+    forge _leak_on: stone = -1
+
+    vein error_count() -> stone {
+        return _errors
+    }
+
+    vein note(msg: obsidian) -> void {
+        forge line = msg + "\n"
+        write(2, line, ofs_str_len(line))
+    }
+
+    vein arena_error(id: stone, msg: obsidian, hint: obsidian) -> void {
+        _errors++
+        forge n: Node = node_get(id)
+        echo("[ERRO DE ARENA " + ast_src_loc(n.line, n.col) + "]: " + msg)
+        if (!ofs_str_eq(hint, "")) { echo("  dica: " + hint) }
+    }
+
+    vein is_scalar(t: obsidian) -> bool {
+        if (ofs_str_eq(t, "bool1")) { return true }
+        return typeck.is_scalar_t(t)
+    }
+
+    // ── builtins do runtime (o que a arena conhece) ───────────────────
+    // 1 = so le (nao guarda, devolve numero), 2 = aloca um valor novo,
+    // 3 = devolve algo de dentro do 1o argumento, 4 = guarda o ultimo
+    // argumento dentro do 1o (push/set), 5 = runtime que guarda o ponteiro
+    // (conta como quem guarda). 0 = nao e builtin.
+    vein bi_kind(nm: obsidian) -> stone {
+        if (ofs_str_eq(nm, "ofs_str_concat") || ofs_str_eq(nm, "ofs_str_concat_ex") || ofs_str_eq(nm, "ofs_str_substr") || ofs_str_eq(nm, "ofs_str_upper")) { return 2 }
+        if (ofs_str_eq(nm, "ofs_str_lower") || ofs_str_eq(nm, "ofs_stone_to_obsidian") || ofs_str_eq(nm, "ofs_crystal_to_obsidian") || ofs_str_eq(nm, "ofs_alloc")) { return 2 }
+        if (ofs_str_eq(nm, "ofs_array_new") || ofs_str_eq(nm, "matrix__create") || ofs_str_eq(nm, "reservoir__alloc") || ofs_str_eq(nm, "__ofs_variant_name")) { return 2 }
+        if (ofs_str_eq(nm, "__ofs_bool_text") || ofs_str_eq(nm, "__ofs_vein_name") || ofs_str_eq(nm, "facet__concat") || ofs_str_eq(nm, "facet__substr")) { return 2 }
+        if (ofs_str_eq(nm, "facet__to_upper") || ofs_str_eq(nm, "facet__to_lower") || ofs_str_eq(nm, "facet__from_stone") || ofs_str_eq(nm, "facet__from_crystal")) { return 2 }
+        if (ofs_str_eq(nm, "ofs_array_get") || ofs_str_eq(nm, "ofs_array_pop") || ofs_str_eq(nm, "matrix__get") || ofs_str_eq(nm, "matrix__pop")) { return 3 }
+        if (ofs_str_eq(nm, "ofs_array_data") || ofs_str_eq(nm, "fault_step") || ofs_str_eq(nm, "ofs_realloc")) { return 3 }
+        if (ofs_str_eq(nm, "ofs_array_push") || ofs_str_eq(nm, "ofs_array_set") || ofs_str_eq(nm, "matrix__push") || ofs_str_eq(nm, "matrix__set")) { return 4 }
+        if (ofs_str_eq(nm, "ofs_window_create") || ofs_str_eq(nm, "ofs_window_set_title") || ofs_str_eq(nm, "frame__create") || ofs_str_eq(nm, "frame__set_title")) { return 5 }
+        if (ofs_str_eq(nm, "echo") || ofs_str_eq(nm, "ofs_str_len") || ofs_str_eq(nm, "ofs_str_char_at") || ofs_str_eq(nm, "ofs_str_char_at_known")) { return 1 }
+        if (ofs_str_eq(nm, "ofs_str_eq") || ofs_str_eq(nm, "ofs_str_contains") || ofs_str_eq(nm, "ofs_obsidian_to_stone") || ofs_str_eq(nm, "ofs_obsidian_to_crystal")) { return 1 }
+        if (ofs_str_eq(nm, "ofs_array_len") || ofs_str_eq(nm, "ofs_array_cap") || ofs_str_eq(nm, "ofs_array_elem_size") || ofs_str_eq(nm, "ofs_free")) { return 1 }
+        if (ofs_str_eq(nm, "ofs_array_free") || ofs_str_eq(nm, "ofs_str_release") || ofs_str_eq(nm, "reservoir__free") || ofs_str_eq(nm, "reservoir__zero")) { return 1 }
+        if (ofs_str_eq(nm, "reservoir__copy") || ofs_str_eq(nm, "ofs_pow") || ofs_str_eq(nm, "ofs_sqrt") || ofs_str_eq(nm, "__ofs_contract_fail")) { return 1 }
+        if (ofs_str_eq(nm, "facet__len") || ofs_str_eq(nm, "facet__char_at") || ofs_str_eq(nm, "facet__eq") || ofs_str_eq(nm, "facet__contains")) { return 1 }
+        if (ofs_str_eq(nm, "facet__to_stone") || ofs_str_eq(nm, "facet__to_crystal") || ofs_str_eq(nm, "matrix__length") || ofs_str_eq(nm, "matrix__capacity")) { return 1 }
+        if (ofs_str_eq(nm, "__bedrock_lift")) { return 1 }
+        if (ofs_str_len(nm) > 6 && ofs_str_eq(ofs_str_substr(nm, 0, 6), "fault_")) { return 1 }
+        return 0
+    }
+
+    // o llvmgen chama sem zerar a arena (o runtime aloca nela) so estes
+    vein arena_builtin(nm: obsidian) -> bool {
+        forge k = bi_kind(nm)
+        return k >= 1 && k <= 4
+    }
+
+    // ── veins e externs do programa ─────────────────────────────────────
+    vein fn_index(nm: obsidian) -> stone {
+        forge i = 0
+        while (i < ofs_array_len(_fn_names)) {
+            forge f: obsidian = ofs_array_get(_fn_names, i)
+            if (ofs_str_eq(f, nm)) { return i }
+            i++
+        }
+        return -1
+    }
+
+    vein is_extern(nm: obsidian) -> bool {
+        forge i = 0
+        while (i < ofs_array_len(_ext_names)) {
+            forge e: obsidian = ofs_array_get(_ext_names, i)
+            if (ofs_str_eq(e, nm)) { return true }
+            i++
+        }
+        return false
+    }
+
+    vein add_fn(nm: obsidian, id: stone) -> void {
+        ofs_array_push(_fn_names, nm)
+        ofs_array_push(_fn_ids, id)
+        ofs_array_push(_fn_kept, -1)
+    }
+
+    vein collect(root: stone) -> void {
+        forge i = 0
+        while (i < node_extra_len(root)) {
+            forge d = node_get_extra(root, i)
+            forge k = node_kind_of(d)
+            forge nm = node_val_of(d)
+            if (k == NK_FN_DECL || k == NK_CORE_DECL) {
+                add_fn(nm, d)
+            } else if (k == NK_EXTERN_VN || k == NK_RIFT_VN) {
+                ofs_array_push(_ext_names, nm)
+            } else if (k == NK_NAMESPACE || k == NK_IMPL) {
+                forge pre = nm + "__"
+                forge j = 0
+                while (j < node_extra_len(d)) {
+                    forge m = node_get_extra(d, j)
+                    forge mk = node_kind_of(m)
+                    forge mn = node_val_of(m)
+                    forge full = mn
+                    if (!(ofs_str_len(mn) > ofs_str_len(pre) && ofs_str_eq(ofs_str_substr(mn, 0, ofs_str_len(pre)), pre))) { full = pre + mn }
+                    if (mk == NK_FN_DECL || mk == NK_CORE_DECL) {
+                        add_fn(full, m)
+                        if (!ofs_str_eq(full, mn)) { add_fn(mn, m) }
+                    } else if (mk == NK_EXTERN_VN || mk == NK_RIFT_VN) {
+                        ofs_array_push(_ext_names, full)
+                        ofs_array_push(_ext_names, mn)
+                    }
+                    j++
+                }
+            }
+            i++
+        }
+    }
+
+    // ── variaveis ───────────────────────────────────────────────────────
+    vein var_find(nm: obsidian) -> stone {
+        forge i = ofs_array_len(_vn) - 1
+        while (i >= 0) {
+            forge v: obsidian = ofs_array_get(_vn, i)
+            if (ofs_str_eq(v, nm)) { return i }
+            i--
+        }
+        return -1
+    }
+
+    vein var_declare(nm: obsidian, key: stone, t: obsidian) -> void {
+        ofs_array_push(_vn, nm)
+        ofs_array_push(_vkey, key)
+        ofs_array_push(_vhome, _bd)
+        ofs_array_push(_vtype, t)
+        ofs_array_push(_vscope, _scope)
+    }
+
+    vein scope_push() -> void {
+        _scope++
+    }
+
+    vein scope_pop() -> void {
+        while (ofs_array_len(_vn) > 0) {
+            forge d: stone = ofs_array_get(_vscope, ofs_array_len(_vscope) - 1)
+            if (d < _scope) { break }
+            ofs_array_pop(_vn)
+            ofs_array_pop(_vkey)
+            ofs_array_pop(_vhome)
+            ofs_array_pop(_vtype)
+            ofs_array_pop(_vscope)
+        }
+        _scope--
+    }
+
+    vein key_ok(key: stone) -> bool {
+        return key >= 0 && key < ofs_array_len(_lvl)
+    }
+
+    vein content_join(key: stone, lvl: stone, m: stone) -> void {
+        if (!key_ok(key)) { return }
+        forge ol: stone = ofs_array_get(_lvl, key)
+        if (lvl > ol) { ofs_array_set(_lvl, key, lvl) }
+        forge om: stone = ofs_array_get(_msk, key)
+        ofs_array_set(_msk, key, om | m)
+    }
+
+    vein content_lvl(key: stone) -> stone {
+        if (!key_ok(key)) { return 0 }
+        forge l: stone = ofs_array_get(_lvl, key)
+        return l
+    }
+
+    vein content_msk(key: stone) -> stone {
+        if (!key_ok(key)) { return 0 }
+        forge m: stone = ofs_array_get(_msk, key)
+        return m
+    }
+
+    vein max2(a: stone, b: stone) -> stone {
+        if (a > b) { return a }
+        return b
+    }
+
+    // ── reescrita: troca um filho (slot 0..3 ou extra 10+i) ──────────────
+    vein child_at(parent: stone, slot: stone) -> stone {
+        if (slot >= 10) { return node_get_extra(parent, slot - 10) }
+        return node_child(parent, slot)
+    }
+
+    vein replace_child(parent: stone, slot: stone, nid: stone) -> void {
+        if (slot >= 10) {
+            forge pn: Node = node_get(parent)
+            forge ex: Array<stone> = pn.extra
+            ofs_array_set(ex, slot - 10, nid)
+            pn.extra = ex
+            node_set(parent, pn)
+            return
+        }
+        node_set_child(parent, slot, nid)
+    }
+
+    vein make_lift(v: stone) -> stone {
+        forge vn: Node = node_get(v)
+        forge w = node_new(NK_CALL, "__bedrock_lift", vn.line, vn.col)
+        node_add_extra(w, v)
+        node_set_type(w, "obsidian")
+        return w
+    }
+
+    // Valor `parent[slot]` de nivel `l` vai para um lugar de nivel `t`:
+    // obsidian e copiado para fora; o resto e erro (fora de abyss).
+    vein escape(parent: stone, slot: stone, l: stone, t: stone, what: obsidian) -> void {
+        if (!_final || l <= t) { return }
+        forge v = child_at(parent, slot)
+        if (v < 0) { return }
+        forge vt = node_type_of(v)
+        if (is_scalar(vt)) { return }
+        if (ofs_str_eq(vt, "obsidian")) {
+            if (node_kind_of(v) == NK_CALL && ofs_str_eq(node_val_of(v), "__bedrock_lift")) { return }
+            replace_child(parent, slot, make_lift(v))
+            return
+        }
+        if (_ab > 0) { return }
+        forge shown = vt
+        if (ofs_str_eq(shown, "") || ofs_str_eq(shown, "unknown")) { shown = "valor" }
+        arena_error(v, shown + " alocado na arena do bedrock " + what + " (a arena e liberada na saida do bloco)",
+            "aloque fora do bedrock o que precisa sair dele (so texto obsidian e copiado para fora automaticamente), ou use abyss { } para assumir o risco")
+    }
+
+    // subarvore sem efeito colateral (pode ser avaliada duas vezes)
+    vein is_pure(id: stone) -> bool {
+        if (id < 0) { return true }
+        forge k = node_kind_of(id)
+        if (k == NK_IDENT || k == NK_LIT_INT || k == NK_LIT_STRING || k == NK_LIT_BOOL || k == NK_LIT_NULL) { return true }
+        if (k == NK_FIELD) { return is_pure(node_child(id, 0)) }
+        if (k == NK_INDEX) { return is_pure(node_child(id, 0)) && is_pure(node_child(id, 1)) }
+        return false
+    }
+
+    // ── nivel das expressoes (_em = mascara de parametros da qual deriva) ─
+    vein ev(id: stone) -> stone {
+        _em = 0
+        if (id < 0) { return 0 }
+        forge k = node_kind_of(id)
+        forge t = node_type_of(id)
+        if (k == NK_LIT_INT || k == NK_LIT_FLOAT || k == NK_LIT_STRING || k == NK_LIT_BOOL || k == NK_LIT_NULL) { return 0 }
+        if (k == NK_IDENT) {
+            forge vi = var_find(node_val_of(id))
+            if (vi < 0) { return 0 }
+            forge key: stone = ofs_array_get(_vkey, vi)
+            forge vt: obsidian = ofs_array_get(_vtype, vi)
+            if (is_scalar(vt)) { return 0 }
+            _em = content_msk(key)
+            return content_lvl(key)
+        }
+        if (k == NK_LAMBDA) {
+            // as capturas ficam guardadas no geode (o ambiente e do heap)
+            forge gl = 0
+            forge gm = 0
+            forge gi = 0
+            while (gi < node_extra_len(id)) {
+                gl = max2(gl, ev(node_get_extra(id, gi)))
+                gm = gm | _em
+                gi++
+            }
+            _kept = _kept | gm
+            _em = gm
+            return gl
+        }
+        if (k == NK_ARRAY_LIT) {
+            forge am = 0
+            forge ai = 0
+            while (ai < node_extra_len(id)) {
+                ev(node_get_extra(id, ai))
+                am = am | _em
+                ai++
+            }
+            if (_bd > 0) { _sites++ }
+            _em = am
+            return _bd
+        }
+        if (k == NK_ASSIGN) {
+            return ev_assign(id, node_val_of(id))
+        }
+        if (k == NK_BIN_OP) {
+            forge op = node_val_of(id)
+            forge opl = ofs_str_len(op)
+            if (ofs_str_eq(op, "=") || (opl >= 2 && ofs_str_char_at(op, opl - 1) == 61 && !ofs_str_eq(op, "==") && !ofs_str_eq(op, "!=") && !ofs_str_eq(op, "<=") && !ofs_str_eq(op, ">="))) {
+                return ev_assign(id, op)
+            }
+            if (ofs_str_eq(op, "+") && ofs_str_eq(t, "obsidian")) {
+                ev(node_child(id, 0))
+                ev(node_child(id, 1))
+                if (_bd > 0) { _sites++ }
+                _em = 0
+                return _bd
+            }
+            forge l1 = ev(node_child(id, 0))
+            forge m1 = _em
+            forge l2 = ev(node_child(id, 1))
+            forge m2 = _em
+            if (is_scalar(t)) {
+                _em = 0
+                return 0
+            }
+            _em = m1 | m2
+            return max2(l1, l2)
+        }
+        if (k == NK_UNARY_OP) {
+            forge uop = node_val_of(id)
+            forge ul = ev(node_child(id, 0))
+            if (ofs_str_eq(uop, "*") && !is_scalar(t)) { return ul }
+            _em = 0
+            return 0
+        }
+        if (k == NK_POST_OP) {
+            forge pl = ev(node_child(id, 0))
+            if (ofs_str_eq(node_val_of(id), "?")) { return pl }
+            _em = 0
+            return 0
+        }
+        if (k == NK_CAST) {
+            forge cl = ev(node_child(id, 0))
+            if (is_scalar(node_val_of(id))) {
+                _em = 0
+                return 0
+            }
+            return cl
+        }
+        if (k == NK_INDEX) {
+            forge il = ev(node_child(id, 0))
+            forge im = _em
+            ev(node_child(id, 1))
+            if (is_scalar(t)) {
+                _em = 0
+                return 0
+            }
+            _em = im
+            return il
+        }
+        if (k == NK_FIELD) {
+            forge fl = ev(node_child(id, 0))
+            if (is_scalar(t)) {
+                _em = 0
+                return 0
+            }
+            return fl
+        }
+        if (k == NK_CALL) { return ev_call(id) }
+        // outro no: o maior dos filhos
+        forge ol = 0
+        forge om = 0
+        forge s = 0
+        while (s < 4) {
+            ol = max2(ol, ev(node_child(id, s)))
+            om = om | _em
+            s++
+        }
+        forge oi = 0
+        while (oi < node_extra_len(id)) {
+            ol = max2(ol, ev(node_get_extra(id, oi)))
+            om = om | _em
+            oi++
+        }
+        _em = om
+        return ol
+    }
+
+    // `x = v`, `x += v`, `o.f = v`, `a[i] = v`, `*p = v`
+    vein ev_assign(id: stone, op: obsidian) -> stone {
+        forge target = node_child(id, 0)
+        forge lv = ev(node_child(id, 1))
+        forge mv = _em
+        forge tk = node_kind_of(target)
+        forge tt = node_type_of(target)
+        forge is_cat = ofs_str_eq(op, "+=") && ofs_str_eq(tt, "obsidian")
+        forge home = 0
+        forge key = -1
+        forge local = false
+        if (tk == NK_IDENT) {
+            forge vi = var_find(node_val_of(target))
+            if (vi >= 0) {
+                home = ofs_array_get(_vhome, vi)
+                key = ofs_array_get(_vkey, vi)
+                local = true
+            }
+        } else if (tk == NK_FIELD || tk == NK_INDEX || tk == NK_UNARY_OP) {
+            home = ev(node_child(target, 0))
+            if (tk == NK_INDEX) { ev(node_child(target, 1)) }
+            // guardou num objeto: o parametro de onde veio o valor fica guardado
+            _kept = _kept | mv
+        }
+        if (!local && tk == NK_IDENT) {
+            // global (ou nome de fora da vein)
+            _kept = _kept | mv
+        }
+        if (is_cat) {
+            // `s += x` em obsidian: o resultado e um texto novo (na arena, se
+            // estiver num bedrock); para fora: `s = lift(s + x)`
+            if (_bd > 0) { _sites++ }
+            if (_final && _bd > home) {
+                if (is_pure(target)) {
+                    forge an: Node = node_get(id)
+                    forge cat = node_new(NK_BIN_OP, "+", an.line, an.col)
+                    node_set_child(cat, 0, target)
+                    node_set_child(cat, 1, node_child(id, 1))
+                    node_set_type(cat, "obsidian")
+                    forge an2: Node = node_get(id)
+                    an2.val = "="
+                    node_set(id, an2)
+                    node_set_child(id, 1, make_lift(cat))
+                } else {
+                    arena_error(target, "'+=' de texto num destino de fora do bedrock com efeito colateral",
+                        "guarde o destino numa variavel antes, ou escreva x = x + ... fora do bedrock")
+                }
+            }
+            if (local) { content_join(key, home, mv) }
+            _em = 0
+            return 0
+        }
+        if (ofs_str_eq(op, "=") || ofs_str_eq(op, "")) {
+            if (tk == NK_IDENT && typeck.is_mono_t(tt)) {
+                // copia da struct para a variavel: so os ponteiros de dentro
+                // podem escapar
+                if (typeck.mono_has_pointers(tt)) { escape(id, 1, lv, home, "e copiado (com os ponteiros dos campos) para fora") }
+            } else {
+                escape(id, 1, lv, home, "e guardado fora dele")
+            }
+            if (local) {
+                forge stored = lv
+                if (stored > home) { stored = home }
+                content_join(key, stored, mv)
+            }
+        }
+        _em = mv
+        return lv
+    }
+
+    vein ev_args_max(id: stone, first: stone) -> stone {
+        forge l = 0
+        forge m = 0
+        forge i = first
+        while (i < node_extra_len(id)) {
+            l = max2(l, ev(node_get_extra(id, i)))
+            m = m | _em
+            i++
+        }
+        _em = m
+        return l
+    }
+
+    vein ev_call(id: stone) -> stone {
+        forge nm = node_val_of(id)
+        forge rt = node_type_of(id)
+        forge argc = node_extra_len(id)
+        if (ofs_str_eq(nm, "__vein_call")) {
+            ev(node_child(id, 0))
+            return ev_keep_all(id, rt, "e passado a um valor de vein (pode guardar)")
+        }
+        forge bk = bi_kind(nm)
+        if (bk == 1) {
+            if (ofs_str_eq(nm, "__bedrock_lift")) {
+                ev_args_max(id, 0)
+                _em = 0
+                return 0
+            }
+            ev_args_max(id, 0)
+            _em = 0
+            return 0
+        }
+        if (bk == 2) {
+            ev_args_max(id, 0)
+            if (_bd > 0) { _sites++ }
+            _em = 0
+            if (is_scalar(rt)) { return 0 }
+            return _bd
+        }
+        if (bk == 3) {
+            forge l0 = 0
+            forge m0 = 0
+            if (argc > 0) {
+                l0 = ev(node_get_extra(id, 0))
+                m0 = _em
+            }
+            ev_args_max(id, 1)
+            if (ofs_str_eq(nm, "ofs_realloc")) {
+                if (_bd > 0) { _sites++ }
+                l0 = max2(l0, _bd)
+            }
+            if (is_scalar(rt)) {
+                _em = 0
+                return 0
+            }
+            _em = m0
+            return l0
+        }
+        if (bk == 4) {
+            if (argc < 2) {
+                ev_args_max(id, 0)
+                _em = 0
+                return 0
+            }
+            forge lb = ev(node_get_extra(id, 0))
+            forge mid = 1
+            while (mid < argc - 1) {
+                ev(node_get_extra(id, mid))
+                mid++
+            }
+            forge lv = ev(node_get_extra(id, argc - 1))
+            forge mv = _em
+            escape(id, 10 + argc - 1, lv, lb, "e guardado num Array de fora")
+            _kept = _kept | mv
+            if (_bd > 0) { _sites++ }
+            _em = 0
+            return 0
+        }
+        if (bk == 5) {
+            return ev_keep_all(id, rt, "e guardado pelo runtime")
+        }
+        forge fi = fn_index(nm)
+        if (fi >= 0) {
+            forge kept: stone = ofs_array_get(_fn_kept, fi)
+            forge l = 0
+            forge m = 0
+            forge i = 0
+            while (i < argc) {
+                forge al = ev(node_get_extra(id, i))
+                forge am = _em
+                forge kbit = true
+                if (i < 62) { kbit = ((kept >> i) & 1) != 0 }
+                if (kbit) {
+                    escape(id, 10 + i, al, 0, "e passado a '" + vein_display_name(nm) + "', que guarda o parametro " + ofs_stone_to_obsidian(i + 1))
+                    _kept = _kept | am
+                }
+                l = max2(l, al)
+                m = m | am
+                i++
+            }
+            if (is_scalar(rt)) {
+                _em = 0
+                return 0
+            }
+            _em = m
+            return l
+        }
+        if (is_extern(nm)) {
+            // C: nao guarda (convencao); geode com captura nao vai para o C
+            forge ei = 0
+            while (ei < argc) {
+                forge ea = node_get_extra(id, ei)
+                if (_final && node_kind_of(ea) == NK_LAMBDA && node_extra_len(ea) > 0) {
+                    _errors++
+                    forge en: Node = node_get(ea)
+                    echo("[ERRO DE GEODE " + ast_src_loc(en.line, en.col) + "]: geode que captura variaveis nao pode ir para o C ('" + nm + "' e extern)")
+                    echo("  dica: o C chama so o endereco da funcao; passe uma vein ou um geode sem captura")
+                }
+                ei++
+            }
+            forge xl = ev_args_max(id, 0)
+            if (is_scalar(rt)) {
+                _em = 0
+                return 0
+            }
+            return xl
+        }
+        return ev_keep_all(id, rt, "e passado a '" + vein_display_name(nm) + "' (desconhecida: pode guardar)")
+    }
+
+    vein ev_keep_all(id: stone, rt: obsidian, what: obsidian) -> stone {
+        forge l = 0
+        forge m = 0
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            forge al = ev(node_get_extra(id, i))
+            forge am = _em
+            escape(id, 10 + i, al, 0, what)
+            _kept = _kept | am
+            l = max2(l, al)
+            m = m | am
+            i++
+        }
+        if (is_scalar(rt)) {
+            _em = 0
+            return 0
+        }
+        _em = m
+        return l
+    }
+
+    // ── comandos ────────────────────────────────────────────────────────
+    vein decl_type(id: stone) -> obsidian {
+        forge t = node_type_of(id)
+        forge c0 = node_child(id, 0)
+        if (c0 >= 0) {
+            forge ann = typeck.type_node_name(c0)
+            if (!ofs_str_eq(ann, "")) { t = ann }
+        }
+        if (ofs_str_eq(t, "")) { t = "stone" }
+        return t
+    }
+
+    vein st(id: stone) -> void {
+        if (id < 0) { return }
+        forge k = node_kind_of(id)
+        if (k == NK_VAR_DECL || k == NK_CONST_DECL) {
+            forge t = decl_type(id)
+            forge l = 0
+            forge m = 0
+            if (node_child(id, 1) >= 0) {
+                l = ev(node_child(id, 1))
+                m = _em
+            }
+            if (typeck.is_mono_t(t)) {
+                // o objeto nasce aqui (na arena, num bedrock)
+                if (_bd > 0) { _sites++ }
+                l = _bd
+            }
+            var_declare(node_val_of(id), id, t)
+            if (!is_scalar(t)) { content_join(id, l, m) }
+            return
+        }
+        if (k == NK_BLOCK) {
+            forge bv = node_val_of(id)
+            forge is_br = ofs_str_eq(bv, "bedrock")
+            forge is_ab = ofs_str_eq(bv, "abyss")
+            scope_push()
+            if (is_br) { _bd++ }
+            if (is_ab) { _ab++ }
+            forge sites0 = _sites
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                st(node_get_extra(id, i))
+                i++
+            }
+            if (is_br) {
+                if (_final && _sites > sites0) { node_set_type(id, "arena") }
+                _bd--
+            }
+            if (is_ab) { _ab-- }
+            scope_pop()
+            return
+        }
+        if (k == NK_RETURN) {
+            if (node_child(id, 0) >= 0) {
+                forge rl = ev(node_child(id, 0))
+                if (_bd > 0) { escape(id, 0, rl, 0, "e devolvido (return)") }
+            }
+            return
+        }
+        if (k == NK_IF) {
+            ev(node_child(id, 0))
+            st(node_child(id, 1))
+            st(node_child(id, 2))
+            return
+        }
+        if (k == NK_WHILE) {
+            ev(node_child(id, 0))
+            st(node_child(id, 1))
+            return
+        }
+        if (k == NK_CYCLE_C) {
+            scope_push()
+            st(node_child(id, 0))
+            ev(node_child(id, 1))
+            st(node_child(id, 3))
+            st(node_child(id, 2))
+            scope_pop()
+            return
+        }
+        if (k == NK_CYCLE_RANGE) {
+            forge cl = ev(node_child(id, 0))
+            forge cm = _em
+            scope_push()
+            forge et = node_type_of(id)
+            var_declare(node_val_of(id), id, et)
+            if (!is_scalar(et)) { content_join(id, cl, cm) }
+            st(node_child(id, 1))
+            scope_pop()
+            return
+        }
+        if (k == NK_MATCH) {
+            ev(node_child(id, 0))
+            forge mi = 0
+            while (mi < node_extra_len(id)) {
+                forge c = node_get_extra(id, mi)
+                if (node_kind_of(c) == NK_CASE) {
+                    ev(node_child(c, 0))
+                    st(node_child(c, 1))
+                } else if (node_kind_of(c) == NK_DEFAULT) {
+                    st(node_child(c, 0))
+                } else {
+                    st(c)
+                }
+                mi++
+            }
+            return
+        }
+        if (k == NK_CASE) {
+            st(node_child(id, 1))
+            return
+        }
+        if (k == NK_DEFAULT) {
+            st(node_child(id, 0))
+            return
+        }
+        if (k == NK_TREMOR) {
+            st(node_child(id, 0))
+            scope_push()
+            forge cv = node_child(id, 1)
+            if (cv >= 0) { var_declare(node_val_of(cv), cv, "obsidian") }
+            st(node_child(id, 2))
+            scope_pop()
+            return
+        }
+        if (k == NK_ANCHOR) {
+            st(node_child(id, 0))
+            return
+        }
+        if (k == NK_BREAK || k == NK_CONTINUE || k == NK_STRATA || k == NK_ATTACH || k == NK_MONOLITH) { return }
+        ev(id)
+    }
+
+    vein walk_fn(fid: stone) -> stone {
+        _vn = []
+        _vkey = []
+        _vhome = []
+        _vtype = []
+        _vscope = []
+        _scope = 0
+        _bd = 0
+        _ab = 0
+        _kept = 0
+        _cur_fn = node_val_of(fid)
+        scope_push()
+        forge params = node_child(fid, 0)
+        if (params >= 0 && node_kind_of(fid) == NK_FN_DECL) {
+            forge i = 0
+            while (i < node_extra_len(params)) {
+                forge p = node_get_extra(params, i)
+                forge pt = "stone"
+                if (node_child(p, 0) >= 0) { pt = typeck.type_node_name(node_child(p, 0)) }
+                var_declare(node_val_of(p), p, pt)
+                if (i < 62 && !is_scalar(pt)) { content_join(p, 0, 1 << i) }
+                i++
+            }
+        }
+        st(node_child(fid, 2))
+        scope_pop()
+        return _kept
+    }
+
+    // ── vazamento simples ───────────────────────────────────────────────
+    vein leak_enabled() -> bool {
+        if (_leak_on < 0) {
+            _leak_on = 1
+            forge v = getenv("OFS_LEAK_WARN")
+            if (v != null && ofs_str_eq(v, "0")) { _leak_on = 0 }
+        }
+        return _leak_on == 1
+    }
+
+    vein alloc_name(id: stone) -> obsidian {
+        if (id < 0) { return "" }
+        if (node_kind_of(id) == NK_CAST) { return alloc_name(node_child(id, 0)) }
+        if (node_kind_of(id) != NK_CALL) { return "" }
+        forge nm = node_val_of(id)
+        if (ofs_str_eq(nm, "ofs_alloc") || ofs_str_eq(nm, "ofs_realloc") || ofs_str_eq(nm, "malloc") || ofs_str_eq(nm, "calloc")) { return nm }
+        if (ofs_str_eq(nm, "realloc") || ofs_str_eq(nm, "reservoir__alloc")) { return nm }
+        return ""
+    }
+
+    vein leak_warn(site: stone, msg: obsidian, hint: obsidian) -> void {
+        if (ast_line_is_runtime(node_line_of(site))) { return }
+        forge n: Node = node_get(site)
+        note("[AVISO DE VAZAMENTO " + ast_src_loc(n.line, n.col) + "]: " + msg)
+        note("  dica: " + hint)
+    }
+
+    // candidatos: `forge p = alloc(...)`, `p = alloc(...)`; `alloc(...)` solto
+    vein leak_collect(id: stone, arena: stone) -> void {
+        if (id < 0) { return }
+        forge k = node_kind_of(id)
+        if (k == NK_LAMBDA) { return }
+        forge in_arena = arena
+        if (k == NK_BLOCK && ofs_str_eq(node_type_of(id), "arena")) { in_arena = arena + 1 }
+        if (in_arena == 0) {
+            if (k == NK_VAR_DECL || k == NK_CONST_DECL) {
+                forge an = alloc_name(node_child(id, 1))
+                if (!ofs_str_eq(an, "")) {
+                    ofs_array_push(_lk_names, node_val_of(id))
+                    ofs_array_push(_lk_sites, node_child(id, 1))
+                    ofs_array_push(_lk_what, an)
+                }
+            }
+            if (k == NK_ASSIGN || k == NK_BIN_OP) {
+                if ((k == NK_ASSIGN || ofs_str_eq(node_val_of(id), "=")) && node_kind_of(node_child(id, 0)) == NK_IDENT) {
+                    forge an2 = alloc_name(node_child(id, 1))
+                    if (!ofs_str_eq(an2, "")) {
+                        ofs_array_push(_lk_names, node_val_of(node_child(id, 0)))
+                        ofs_array_push(_lk_sites, node_child(id, 1))
+                        ofs_array_push(_lk_what, an2)
+                    }
+                }
+            }
+            if (k == NK_BLOCK) {
+                // comando que e so a alocacao: o ponteiro some
+                forge bi = 0
+                while (bi < node_extra_len(id)) {
+                    forge s = node_get_extra(id, bi)
+                    forge sn = alloc_name(s)
+                    if (!ofs_str_eq(sn, "") && node_kind_of(s) == NK_CALL) {
+                        leak_warn(s, "o resultado de " + sn + " e descartado (o bloco nunca e liberado)",
+                            "guarde o ponteiro e libere com ofs_free (seal { ofs_free(p) }), ou aloque dentro de bedrock { }; OFS_LEAK_WARN=0 silencia")
+                    }
+                    bi++
+                }
+            }
+        }
+        forge s = 0
+        while (s < 4) {
+            leak_collect(node_child(id, s), in_arena)
+            s++
+        }
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            leak_collect(node_get_extra(id, i), in_arena)
+            i++
+        }
+    }
+
+    // `nm` aparece num uso que entrega o ponteiro a alguem (owner = o
+    // contexto ja entrega)
+    vein leak_owned(id: stone, nm: obsidian, owner: bool, site: stone) -> bool {
+        if (id < 0 || id == site) { return false }
+        forge k = node_kind_of(id)
+        if (k == NK_IDENT) { return owner && ofs_str_eq(node_val_of(id), nm) }
+        if (k == NK_ANCHOR || k == NK_LAMBDA || k == NK_RETURN || k == NK_ARRAY_LIT) { return leak_kids(id, nm, true, site) }
+        if (k == NK_CALL) {
+            if (ofs_str_eq(node_val_of(id), "__vein_call") && leak_owned(node_child(id, 0), nm, false, site)) { return true }
+            return leak_kids(id, nm, true, site)
+        }
+        if (k == NK_VAR_DECL || k == NK_CONST_DECL) { return leak_owned(node_child(id, 1), nm, true, site) }
+        if (k == NK_ASSIGN || (k == NK_BIN_OP && (ofs_str_eq(node_val_of(id), "=") || ofs_str_eq(node_val_of(id), "+=")))) {
+            // `o.f = p`/`a[i] = p`/`g = p`: entregue; `p.f = v`/`*p = v`: nao
+            return leak_owned(node_child(id, 1), nm, true, site)
+        }
+        if (k == NK_UNARY_OP) {
+            if (ofs_str_eq(node_val_of(id), "&")) { return leak_kids(id, nm, true, site) }
+            return leak_kids(id, nm, false, site)
+        }
+        if (k == NK_FIELD || k == NK_INDEX) { return leak_kids(id, nm, false, site) }
+        if (k == NK_BIN_OP) {
+            forge op = node_val_of(id)
+            if (ofs_str_eq(op, "==") || ofs_str_eq(op, "!=") || ofs_str_eq(op, "<") || ofs_str_eq(op, ">") || ofs_str_eq(op, "<=") || ofs_str_eq(op, ">=") || ofs_str_eq(op, "&&") || ofs_str_eq(op, "||")) {
+                return leak_kids(id, nm, false, site)
+            }
+            return leak_kids(id, nm, owner, site)
+        }
+        if (k == NK_CAST || k == NK_POST_OP) { return leak_kids(id, nm, owner, site) }
+        return leak_kids(id, nm, false, site)
+    }
+
+    vein leak_kids(id: stone, nm: obsidian, owner: bool, site: stone) -> bool {
+        forge s = 0
+        while (s < 4) {
+            if (leak_owned(node_child(id, s), nm, owner, site)) { return true }
+            s++
+        }
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            if (leak_owned(node_get_extra(id, i), nm, owner, site)) { return true }
+            i++
+        }
+        return false
+    }
+
+    // nome declarado (parametro ou forge) dentro de `id`
+    vein has_decl(id: stone, nm: obsidian) -> bool {
+        if (id < 0) { return false }
+        forge k = node_kind_of(id)
+        if (k == NK_LAMBDA) { return false }
+        if ((k == NK_VAR_DECL || k == NK_CONST_DECL || k == NK_PARAM || k == NK_CYCLE_RANGE) && ofs_str_eq(node_val_of(id), nm)) { return true }
+        forge s = 0
+        while (s < 4) {
+            if (has_decl(node_child(id, s), nm)) { return true }
+            s++
+        }
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            if (has_decl(node_get_extra(id, i), nm)) { return true }
+            i++
+        }
+        return false
+    }
+
+    vein leak_scan(fid: stone) -> void {
+        _lk_names = []
+        _lk_sites = []
+        _lk_what = []
+        forge body = node_child(fid, 2)
+        leak_collect(body, 0)
+        forge i = 0
+        while (i < ofs_array_len(_lk_names)) {
+            forge nm: obsidian = ofs_array_get(_lk_names, i)
+            forge site: stone = ofs_array_get(_lk_sites, i)
+            forge what: obsidian = ofs_array_get(_lk_what, i)
+            // atribuicao a global/campo de fora: o global e o dono
+            forge local = has_decl(node_child(fid, 0), nm) || has_decl(body, nm)
+            if (local && !leak_owned(body, nm, false, site)) {
+                leak_warn(site, "'" + nm + "' recebe " + what + " e nunca chega a um seal/ofs_free, return ou dono (o bloco vaza)",
+                    "libere com seal { ofs_free(" + nm + ") } logo depois, devolva ou guarde o ponteiro, ou aloque dentro de bedrock { } (a arena libera ao sair); OFS_LEAK_WARN=0 silencia")
+            }
+            i++
+        }
+    }
+
+    // ── entrada ─────────────────────────────────────────────────────────
+    vein process(root: stone) -> void {
+        _errors = 0
+        _fn_names = []
+        _fn_ids = []
+        _fn_kept = []
+        _ext_names = []
+        _lvl = []
+        _msk = []
+        _sites = 0
+        collect(root)
+        forge total = node_pool_len()
+        forge z = 0
+        while (z < total) {
+            ofs_array_push(_lvl, 0)
+            ofs_array_push(_msk, 0)
+            z++
+        }
+        // ponto fixo: parametros guardados (comeca pessimista) e conteudo
+        _final = false
+        forge pass = 0
+        while (pass < 4) {
+            forge i = 0
+            while (i < ofs_array_len(_fn_ids)) {
+                forge fid: stone = ofs_array_get(_fn_ids, i)
+                forge kept = walk_fn(fid)
+                // o mesmo no pode ter dois nomes (namespace): a mesma mascara
+                forge j = 0
+                while (j < ofs_array_len(_fn_ids)) {
+                    forge fj: stone = ofs_array_get(_fn_ids, j)
+                    if (fj == fid) { ofs_array_set(_fn_kept, j, kept) }
+                    j++
+                }
+                i++
+            }
+            pass++
+        }
+        _final = true
+        forge done: Array<stone> = []
+        forge fi = 0
+        while (fi < ofs_array_len(_fn_ids)) {
+            forge fid2: stone = ofs_array_get(_fn_ids, fi)
+            forge seen = false
+            forge di = 0
+            while (di < ofs_array_len(done)) {
+                forge dv: stone = ofs_array_get(done, di)
+                if (dv == fid2) { seen = true }
+                di++
+            }
+            if (!seen) {
+                ofs_array_push(done, fid2)
+                walk_fn(fid2)
+                if (leak_enabled()) { leak_scan(fid2) }
+            }
+            fi++
+        }
+        _final = false
+    }
+}

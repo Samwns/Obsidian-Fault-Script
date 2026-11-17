@@ -9,6 +9,8 @@
 //
 // Pixels ficam como 0xAARRGGBB (alfa 255 = opaco).
 
+claim rift
+
 attach {canvas}
 
 extern vein fopen(path: obsidian, mode: obsidian) -> *stone

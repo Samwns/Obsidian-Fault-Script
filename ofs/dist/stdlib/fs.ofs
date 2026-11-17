@@ -1,3 +1,5 @@
+claim rift
+
 extern vein fopen(path: obsidian, mode: obsidian) -> obsidian
 extern vein fclose(f: obsidian) -> stone
 extern vein fread(buf: obsidian, sz: stone, n: stone, f: obsidian) -> stone

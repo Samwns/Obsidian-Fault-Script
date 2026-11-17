@@ -15,6 +15,8 @@ forge FFI_BUF_BYTES: stone = 160
 // para __ofs_cb_enter (ver emit_cb_trampolines).
 forge FFI_CB_SLOTS: stone = 16
 forge FFI_CB_ARGS: stone = 6
+// registradores de ponto flutuante dos trampolins __ofs_cbx_K (onda 4)
+forge FFI_CB_FARGS: stone = 8
 
 namespace llvmgen {
     forge _tmp_counter: stone = 0
@@ -70,6 +72,18 @@ namespace llvmgen {
     forge _vref_names: Array<obsidian> = []
     forge _vein_name_used: bool = false
     forge _vein_null_used: bool = false
+    // A5.1: o modulo tem checagem de contrato (__ofs_contract_fail)
+    forge _contract_used: bool = false
+    // A5.3: arenas `bedrock` abertas na vein em emissao (o bloco marcado
+    // "arena" pelo sediment.ofs) e se o modulo usa o runtime de arena
+    forge _arena_depth: stone = 0
+    forge _arena_used: bool = false
+    // geode: o modulo tem geode com captura (valor de vein pode ser um
+    // fechamento: ponteiro marcado no bit 0 para [adaptador, MAGIC,
+    // capturas...]); adaptadores a emitir no fim
+    forge _geode_env_used: bool = false
+    forge _geode_adapt: Array<obsidian> = []
+    forge _geode_check_used: bool = false
 
     // Normaliza o alvo pedido: apelidos curtos ou um triple completo.
     vein set_target(target: obsidian) -> void {
@@ -202,6 +216,18 @@ namespace llvmgen {
         return offset
     }
 
+    // alocacao de um monolith no heap. No modulo hibrido (onda 4) passa pelo
+    // interpretador (__ofs_obj_alloc), que na Fault Refract registra a
+    // instancia para migrar o layout ao vivo.
+    vein obj_alloc_call(t: obsidian) -> obsidian {
+        forge sz = ofs_stone_to_obsidian(monolith_alloc_size(t))
+        if (_hy_shared) {
+            if (!hy_has(_hy_mono_used, t)) { ofs_array_push(_hy_mono_used, t) }
+            return "call ptr @__ofs_obj_alloc(i64 " + sz + ", ptr @.ofs_mt." + t + ")"
+        }
+        return "call ptr @ofs_alloc(i64 " + sz + ")"
+    }
+
     vein monolith_alloc_size(owner: obsidian) -> stone {
         forge types: Array<obsidian> = []
         forge offsets: Array<stone> = []
@@ -231,7 +257,7 @@ namespace llvmgen {
                     forge fname: obsidian = ofs_array_get(_field_names, i)
                     forge fptr = next_tmp("nest_ptr")
                     forge sub = next_tmp("nest_obj")
-                    cg_emit("  " + sub + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(monolith_alloc_size(ft)) + ")")
+                    cg_emit("  " + sub + " = " + obj_alloc_call(ft))
                     emit_init_nested(sub, ft, depth + 1)
                     cg_emit("  " + fptr + " = getelementptr inbounds %" + t + ", ptr " + obj + ", i32 0, i32 " + ofs_stone_to_obsidian(field_index(t, fname)))
                     cg_emit("  store ptr " + sub + ", ptr " + fptr)
@@ -642,7 +668,16 @@ namespace llvmgen {
         forge i = var_index(name)
         if (i < 0) {
             forge gi = global_index(name)
-            if (gi >= 0) { return "@" + name }
+            if (gi >= 0) {
+                // modulo hibrido (onda 4): o global vive numa celula do
+                // interpretador, a mesma para todos os .so
+                if (_hy_shared && variant_tag(name) < 0) {
+                    forge gp = next_tmp("gcell")
+                    cg_emit("  " + gp + " = load ptr, ptr @__ofsg." + name)
+                    return gp
+                }
+                return "@" + name
+            }
             return "%" + name
         }
         return ofs_array_get(_var_ptrs, i)
@@ -1344,6 +1379,77 @@ namespace llvmgen {
         cg_emit("bad:")
         cg_emit("  ret i64 0")
         cg_emit("}")
+        if (!cb_float_abi_ok()) { return }
+        // Onda 4: trampolins com registradores de ponto flutuante. Cada
+        // `__ofs_cbx_K(i64 x6, double x8)` recebe TODOS os registradores de
+        // argumento (SysV x86-64 e AArch64 numeram inteiros e floats em
+        // separado) e devolve `{ i64, double }`, que o LLVM poe em rax/x0 E
+        // em xmm0/d0: serve a callback que devolve inteiro, crystal ou f32
+        // (os bits do f32 vao na metade baixa). `__ofs_cbx_enter` (definida
+        // pelo interpretador) recebe os doubles como bits.
+        forge xparams = ""
+        forge xargs = ""
+        j = 0
+        while (j < FFI_CB_ARGS) {
+            if (j > 0) { xparams = xparams + ", " }
+            xparams = xparams + "i64 %a" + ofs_stone_to_obsidian(j)
+            xargs = xargs + ", i64 %a" + ofs_stone_to_obsidian(j)
+            j++
+        }
+        j = 0
+        while (j < FFI_CB_FARGS) {
+            xparams = xparams + ", double %d" + ofs_stone_to_obsidian(j)
+            xargs = xargs + ", i64 %b" + ofs_stone_to_obsidian(j)
+            j++
+        }
+        k = 0
+        while (k < FFI_CB_SLOTS) {
+            forge xs = ofs_stone_to_obsidian(k)
+            cg_emit("define { i64, double } @__ofs_cbx_" + xs + "(" + xparams + ") {")
+            cg_emit("entry:")
+            j = 0
+            while (j < FFI_CB_FARGS) {
+                forge js = ofs_stone_to_obsidian(j)
+                cg_emit("  %b" + js + " = bitcast double %d" + js + " to i64")
+                j++
+            }
+            cg_emit("  %r = call i64 @__ofs_cbx_enter(i64 " + xs + xargs + ")")
+            cg_emit("  %f = bitcast i64 %r to double")
+            cg_emit("  %s0 = insertvalue { i64, double } undef, i64 %r, 0")
+            cg_emit("  %s1 = insertvalue { i64, double } %s0, double %f, 1")
+            cg_emit("  ret { i64, double } %s1")
+            cg_emit("}")
+            k++
+        }
+        cg_emit("define i64 @__ofs_cbx_table(i64 %slot) {")
+        cg_emit("entry:")
+        cg_emit("  switch i64 %slot, label %bad [")
+        k = 0
+        while (k < FFI_CB_SLOTS) {
+            forge xs2 = ofs_stone_to_obsidian(k)
+            cg_emit("    i64 " + xs2 + ", label %t" + xs2)
+            k++
+        }
+        cg_emit("  ]")
+        k = 0
+        while (k < FFI_CB_SLOTS) {
+            forge xs3 = ofs_stone_to_obsidian(k)
+            cg_emit("t" + xs3 + ":")
+            cg_emit("  %p" + xs3 + " = ptrtoint ptr @__ofs_cbx_" + xs3 + " to i64")
+            cg_emit("  ret i64 %p" + xs3)
+            k++
+        }
+        cg_emit("bad:")
+        cg_emit("  ret i64 0")
+        cg_emit("}")
+    }
+
+    // Os trampolins com float dependem de inteiros e floats terem contagens
+    // de registradores separadas (SysV x86-64, AArch64). O Windows x64
+    // numera por posicao: la a callback com crystal/f32 segue com erro claro.
+    vein cb_float_abi_ok() -> bool {
+        if (ofs_str_contains(_target_triple, "windows") || ofs_str_contains(_target_triple, "mingw") || ofs_str_contains(_target_triple, "win32")) { return false }
+        return true
     }
 
     vein emit_extern_decls(id: stone) -> void {
@@ -1481,7 +1587,19 @@ namespace llvmgen {
             forge gid: stone = ofs_array_get(_global_inits, gi)
             forge vtag = variant_tag(gname)
             if (vtag >= 0) {
-                cg_emit("@" + gname + " = global i64 " + ofs_stone_to_obsidian(vtag))
+                if (_rf3_mode == 2) {
+                    // remendo da Refract L3: etiqueta local (variantes novas no fim)
+                    cg_emit("@" + gname + " = internal global i64 " + ofs_stone_to_obsidian(vtag))
+                } else {
+                    cg_emit("@" + gname + " = global i64 " + ofs_stone_to_obsidian(vtag))
+                }
+            } else if (_rf3_mode == 2) {
+                // remendo da Refract L3: o global e o do app (endereco unico)
+                cg_emit("@" + gname + " = external global " + llvm_type(gt))
+            } else if (_hy_shared) {
+                // ponteiro para a celula compartilhada (o interpretador
+                // preenche depois do dlopen)
+                cg_emit("@__ofsg." + gname + " = global ptr null")
             } else {
                 cg_emit("@" + gname + " = global " + llvm_type(gt) + " " + const_init_value(gid, gt))
             }
@@ -1823,16 +1941,286 @@ namespace llvmgen {
             i++
         }
         forge rl = llvm_type(rt)
+        forge ar_save = arena_suspend("__vein_call")
+        if (_geode_env_used) {
+            // geode com captura: ponteiro marcado (bit 0) para o ambiente
+            // [adaptador, MAGIC, capturas]; chama adaptador(ambiente, args)
+            forge fi = next_tmp("vfn_i")
+            forge tag = next_tmp("vfn_tag")
+            forge isg = next_tmp("vfn_isg")
+            forge l_chk = next_label("vcall_gchk")
+            forge l_geo = next_label("vcall_geode")
+            forge l_pln = next_label("vcall_plain")
+            forge l_end = next_label("vcall_end")
+            cg_emit("  " + fi + " = ptrtoint ptr " + fp + " to i64")
+            cg_emit("  " + tag + " = and i64 " + fi + ", 1")
+            cg_emit("  " + isg + " = icmp ne i64 " + tag + ", 0")
+            cg_emit("  br i1 " + isg + ", label %" + l_chk + ", label %" + l_pln)
+            cg_emit(l_chk + ":")
+            forge eb = next_tmp("venv_i")
+            forge env = next_tmp("venv")
+            forge mp = next_tmp("venv_mp")
+            forge mv = next_tmp("venv_m")
+            forge okm = next_tmp("venv_ok")
+            cg_emit("  " + eb + " = sub i64 " + fi + ", 1")
+            cg_emit("  " + env + " = inttoptr i64 " + eb + " to ptr")
+            cg_emit("  " + mp + " = getelementptr i8, ptr " + env + ", i64 8")
+            cg_emit("  " + mv + " = load i64, ptr " + mp)
+            cg_emit("  " + okm + " = icmp eq i64 " + mv + ", " + GEODE_MAGIC)
+            cg_emit("  br i1 " + okm + ", label %" + l_geo + ", label %" + l_pln)
+            cg_emit(l_geo + ":")
+            forge adp = next_tmp("vadapt")
+            cg_emit("  " + adp + " = load ptr, ptr " + env)
+            forge gargs = "ptr " + env
+            if (ofs_str_len(args) > 0) { gargs = gargs + ", " + args }
+            forge r1 = next_tmp("vcall_g")
+            if (ofs_str_eq(rl, "void")) {
+                cg_emit("  call void " + adp + "(" + gargs + ")")
+            } else {
+                cg_emit("  " + r1 + " = call " + rl + " " + adp + "(" + gargs + ")")
+            }
+            cg_emit("  br label %" + l_end)
+            cg_emit(l_pln + ":")
+            forge r2 = next_tmp("vcall_p")
+            if (ofs_str_eq(rl, "void")) {
+                cg_emit("  call void " + fp + "(" + args + ")")
+            } else {
+                cg_emit("  " + r2 + " = call " + rl + " " + fp + "(" + args + ")")
+            }
+            cg_emit("  br label %" + l_end)
+            cg_emit(l_end + ":")
+            if (ofs_str_eq(rl, "void")) {
+                arena_resume(ar_save)
+                _expr_val = "0"
+                _expr_type = "void"
+                return
+            }
+            forge rp = next_tmp("vcall")
+            // o phi vem antes de qualquer outra instrucao do bloco
+            cg_emit("  " + rp + " = phi " + rl + " [ " + r1 + ", %" + l_geo + " ], [ " + r2 + ", %" + l_pln + " ]")
+            arena_resume(ar_save)
+            _expr_val = rp
+            _expr_type = rt
+            return
+        }
         if (ofs_str_eq(rl, "void")) {
             cg_emit("  call void " + fp + "(" + args + ")")
+            arena_resume(ar_save)
             _expr_val = "0"
             _expr_type = "void"
             return
         }
         forge r = next_tmp("vcall")
         cg_emit("  " + r + " = call " + rl + " " + fp + "(" + args + ")")
+        arena_resume(ar_save)
         _expr_val = r
         _expr_type = rt
+    }
+
+    // ── A5.3: arena lexica ──────────────────────────────────────────────
+    // Chamada (que nao e builtin de texto/Array do runtime) dentro de um
+    // bedrock com arena: __ofs_arena_cur = null durante ela. Devolve o
+    // temporario com o valor salvo ("" = nada a restaurar).
+    vein arena_suspend(callee: obsidian) -> obsidian {
+        if (_arena_depth <= 0) { return "" }
+        if (sediment.arena_builtin(callee)) { return "" }
+        _arena_used = true
+        forge sv = next_tmp("arena_sv")
+        cg_emit("  " + sv + " = load ptr, ptr @__ofs_arena_cur")
+        cg_emit("  store ptr null, ptr @__ofs_arena_cur")
+        return sv
+    }
+
+    vein arena_resume(sv: obsidian) -> void {
+        if (ofs_str_eq(sv, "")) { return }
+        cg_emit("  store ptr " + sv + ", ptr @__ofs_arena_cur")
+    }
+
+    // ── geode (closures) ────────────────────────────────────────────────
+    // Sem captura: o valor e a propria vein `@__geode_<vein>_<k>` (vai ao C
+    // como qualquer vein). Com captura: ambiente no heap [adaptador
+    // `@__geode_...env`, MAGIC, captura 0, captura 1, ...] (8 bytes cada,
+    // copiadas na criacao) e o valor e o endereco com o bit 0 ligado.
+    forge GEODE_MAGIC: obsidian = "5139823476188839173"
+
+    vein emit_geode(id: stone) -> void {
+        forge n: Node = node_get(id)
+        forge gname = n.val
+        forge ncap = node_extra_len(id)
+        if (ncap == 0) {
+            _expr_val = "@" + vein_ref_symbol(gname)
+            _expr_type = n.type_str
+            return
+        }
+        _geode_env_used = true
+        if (!esc_list_has(_geode_adapt, gname)) { ofs_array_push(_geode_adapt, gname) }
+        // o ambiente e sempre do heap (o geode pode sair do bedrock)
+        forge ar_save = arena_suspend("__geode_env")
+        forge env = next_tmp("genv")
+        cg_emit("  " + env + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(16 + ncap * 8) + ")")
+        arena_resume(ar_save)
+        cg_emit("  store ptr @" + gname + ".env, ptr " + env)
+        forge mp = next_tmp("genv_m")
+        cg_emit("  " + mp + " = getelementptr i8, ptr " + env + ", i64 8")
+        cg_emit("  store i64 " + GEODE_MAGIC + ", ptr " + mp)
+        forge ci = 0
+        while (ci < ncap) {
+            forge cid = node_get_extra(id, ci)
+            forge ct = node_type_of(cid)
+            emit_expr(cid)
+            normalize_bool1()
+            forge cv = coerce_for_store(_expr_val, _expr_type, ct)
+            forge slot = next_tmp("genv_c")
+            cg_emit("  " + slot + " = getelementptr i8, ptr " + env + ", i64 " + ofs_stone_to_obsidian(16 + ci * 8))
+            cg_emit("  store " + llvm_type(ct) + " " + cv + ", ptr " + slot)
+            ci++
+        }
+        forge ei = next_tmp("genv_i")
+        forge et = next_tmp("genv_t")
+        forge ev = next_tmp("geode")
+        cg_emit("  " + ei + " = ptrtoint ptr " + env + " to i64")
+        cg_emit("  " + et + " = or i64 " + ei + ", 1")
+        cg_emit("  " + ev + " = inttoptr i64 " + et + " to ptr")
+        _fresh_val = ""
+        _expr_val = ev
+        _expr_type = n.type_str
+    }
+
+    // tipo LLVM de um parametro / do retorno de uma vein (como emit_function)
+    vein decl_param_llvm(param_id: stone) -> obsidian {
+        forge param: Node = node_get(param_id)
+        forge pt = "stone"
+        if (param.c0 >= 0) {
+            forge ptn: Node = node_get(param.c0)
+            pt = ptn.val
+            if (ptn.kind == NK_TYPE_ARRAY) { pt = "Array" }
+        }
+        return llvm_type(pt)
+    }
+
+    vein decl_ret_llvm(decl_id: stone) -> obsidian {
+        forge c1 = node_child(decl_id, 1)
+        if (c1 < 0) { return "void" }
+        forge rn: Node = node_get(c1)
+        forge rt = rn.val
+        if (rn.kind == NK_TYPE_ARRAY) { rt = "Array" }
+        return llvm_type(rt)
+    }
+
+    vein find_fn_decl(root_id: stone, name: obsidian) -> stone {
+        forge i = 0
+        while (i < node_extra_len(root_id)) {
+            forge d = node_get_extra(root_id, i)
+            forge k = node_kind_of(d)
+            if ((k == NK_FN_DECL || k == NK_CORE_DECL) && ofs_str_eq(node_val_of(d), name)) { return d }
+            i++
+        }
+        return -1
+    }
+
+    // adaptador `@nome.env(ptr env, params...)`: le as capturas do ambiente
+    // e chama a vein do corpo com (capturas..., params...)
+    vein emit_geode_adapter(root_id: stone, gname: obsidian, ncap: stone) -> void {
+        forge decl = find_fn_decl(root_id, gname)
+        if (decl < 0) { return }
+        forge params = node_child(decl, 0)
+        forge np = node_extra_len(params)
+        forge rl = decl_ret_llvm(decl)
+        forge sig = "ptr %env"
+        forge pi = ncap
+        while (pi < np) {
+            sig = sig + ", " + decl_param_llvm(node_get_extra(params, pi)) + " %a" + ofs_stone_to_obsidian(pi)
+            pi++
+        }
+        cg_emit("define internal " + rl + " @" + gname + ".env(" + sig + ") {")
+        cg_emit("entry:")
+        forge call_args = ""
+        forge ci = 0
+        while (ci < ncap) {
+            forge lt = decl_param_llvm(node_get_extra(params, ci))
+            forge cs = ofs_stone_to_obsidian(ci)
+            cg_emit("  %cp" + cs + " = getelementptr i8, ptr %env, i64 " + ofs_stone_to_obsidian(16 + ci * 8))
+            cg_emit("  %c" + cs + " = load " + lt + ", ptr %cp" + cs)
+            if (ci > 0) { call_args = call_args + ", " }
+            call_args = call_args + lt + " %c" + cs
+            ci++
+        }
+        pi = ncap
+        while (pi < np) {
+            if (ofs_str_len(call_args) > 0) { call_args = call_args + ", " }
+            call_args = call_args + decl_param_llvm(node_get_extra(params, pi)) + " %a" + ofs_stone_to_obsidian(pi)
+            pi++
+        }
+        if (ofs_str_eq(rl, "void")) {
+            cg_emit("  call void @" + gname + "(" + call_args + ")")
+            cg_emit("  ret void")
+        } else {
+            cg_emit("  %r = call " + rl + " @" + gname + "(" + call_args + ")")
+            cg_emit("  ret " + rl + " %r")
+        }
+        cg_emit("}")
+        cg_emit("")
+    }
+
+    // quantas capturas tem o geode `gname` (pelo NK_LAMBDA no pool)
+    vein geode_cap_count(gname: obsidian) -> stone {
+        forge i = node_pool_len() - 1
+        while (i >= 0) {
+            if (node_kind_of(i) == NK_LAMBDA && ofs_str_eq(node_val_of(i), gname)) { return node_extra_len(i) }
+            i--
+        }
+        return 0
+    }
+
+    // fim do modulo: declaracoes do runtime de arena e adaptadores de geode
+    vein emit_sediment_helpers(root_id: stone) -> void {
+        if (_arena_used) {
+            if (!is_known_extern("ofs_arena_open") && !is_defined_fn(root_id, "ofs_arena_open")) { cg_emit("declare ptr @ofs_arena_open()") }
+            if (!is_known_extern("ofs_arena_close") && !is_defined_fn(root_id, "ofs_arena_close")) { cg_emit("declare void @ofs_arena_close(ptr)") }
+            if (!is_known_extern("ofs_arena_lift") && !is_defined_fn(root_id, "ofs_arena_lift")) { cg_emit("declare ptr @ofs_arena_lift(ptr)") }
+            if (global_index("__ofs_arena_cur") < 0) { cg_emit("@__ofs_arena_cur = external global ptr") }
+            cg_emit("")
+        }
+        forge gi = 0
+        while (gi < ofs_array_len(_geode_adapt)) {
+            forge gn: obsidian = ofs_array_get(_geode_adapt, gi)
+            emit_geode_adapter(root_id, gn, geode_cap_count(gn))
+            gi++
+        }
+        if (_geode_check_used) {
+            forge msg = "geode com captura nao pode ir para o C (Rift) nem virar endereco; passe uma vein ou um geode sem captura"
+            cg_emit("@.ofs_geode_c_msg = private unnamed_addr constant [" + ofs_stone_to_obsidian(ofs_str_len(msg) + 1) +
+                " x i8] c\"" + llvm_escape_string(msg) + "\", align 1")
+            if (!is_known_extern("ofs_array_fail") && !is_defined_fn(root_id, "ofs_array_fail") && !_vein_null_used && !_contract_used) {
+                cg_emit("declare void @ofs_array_fail(ptr, i64)")
+            }
+            cg_emit("define internal void @__ofs_geode_c_check(ptr %f) {")
+            cg_emit("entry:")
+            cg_emit("  %fi = ptrtoint ptr %f to i64")
+            cg_emit("  %t = and i64 %fi, 1")
+            cg_emit("  %bad = icmp ne i64 %t, 0")
+            cg_emit("  br i1 %bad, label %fail, label %ok")
+            cg_emit("fail:")
+            cg_emit("  call void @ofs_array_fail(ptr @.ofs_geode_c_msg, i64 " + ofs_stone_to_obsidian(ofs_str_len(msg)) + ")")
+            cg_emit("  unreachable")
+            cg_emit("ok:")
+            cg_emit("  ret void")
+            cg_emit("}")
+            cg_emit("")
+        }
+    }
+
+    // o programa tem geode com captura? (decide o despacho das chamadas
+    // indiretas antes de emitir as veins)
+    vein scan_geodes() -> void {
+        forge i = 0
+        while (i < node_pool_len()) {
+            if (node_kind_of(i) == NK_LAMBDA && node_extra_len(i) > 0 && !ofs_str_eq(node_val_of(i), "")) {
+                _geode_env_used = true
+                return
+            }
+            i++
+        }
     }
 
     // __ofs_vein_name (nome da vein de um valor, "null", ou "<vein>" para
@@ -1849,10 +2237,25 @@ namespace llvmgen {
             }
             cg_emit("@.ofs_vein_null_txt = private unnamed_addr constant [5 x i8] c\"null\\00\", align 1")
             cg_emit("@.ofs_vein_anon = private unnamed_addr constant [7 x i8] c\"<vein>\\00\", align 1")
+            if (_geode_env_used) {
+                cg_emit("@.ofs_vein_geode = private unnamed_addr constant [8 x i8] c\"<geode>\\00\", align 1")
+            }
             cg_emit("define internal ptr @__ofs_vein_name(ptr %p) {")
             cg_emit("entry:")
             cg_emit("  %isnull = icmp eq ptr %p, null")
-            cg_emit("  br i1 %isnull, label %vn_null, label %vn_0")
+            if (_geode_env_used) {
+                // geode com captura (ponteiro marcado no bit 0)
+                cg_emit("  %pi = ptrtoint ptr %p to i64")
+                cg_emit("  %pt = and i64 %pi, 1")
+                cg_emit("  %isg = icmp ne i64 %pt, 0")
+                cg_emit("  br i1 %isnull, label %vn_null, label %vn_g")
+                cg_emit("vn_g:")
+                cg_emit("  br i1 %isg, label %vn_geode, label %vn_0")
+                cg_emit("vn_geode:")
+                cg_emit("  ret ptr @.ofs_vein_geode")
+            } else {
+                cg_emit("  br i1 %isnull, label %vn_null, label %vn_0")
+            }
             cg_emit("vn_null:")
             cg_emit("  ret ptr @.ofs_vein_null_txt")
             k = 0
@@ -1870,6 +2273,12 @@ namespace llvmgen {
             cg_emit("  ret ptr @.ofs_vein_anon")
             cg_emit("}")
             cg_emit("")
+        }
+        if (_contract_used && !_vein_null_used) {
+            if (!is_known_extern("ofs_array_fail") && !(_decl_root >= 0 && is_defined_fn(_decl_root, "ofs_array_fail"))) {
+                cg_emit("declare void @ofs_array_fail(ptr, i64)")
+                cg_emit("")
+            }
         }
         if (_vein_null_used) {
             forge msg = "chamada de vein nula (o valor de vein e null)"
@@ -1938,6 +2347,11 @@ namespace llvmgen {
             }
             _expr_val = arr
             _expr_type = "Array"
+            return
+        }
+
+        if (n.kind == NK_LAMBDA) {
+            emit_geode(id)
             return
         }
 
@@ -2381,6 +2795,10 @@ namespace llvmgen {
             }
             forge src_llvm = llvm_type(src_type)
             forge dst_llvm = llvm_type(dst_type)
+            if (_geode_env_used && vein_type_is(src_type) && !vein_type_is(dst_type)) {
+                _geode_check_used = true
+                cg_emit("  call void @__ofs_geode_c_check(ptr " + src_val + ")")
+            }
             if (ofs_str_eq(src_llvm, dst_llvm)) {
                 _expr_type = dst_type
                 return
@@ -2575,6 +2993,19 @@ namespace llvmgen {
                 emit_vein_call(id)
                 return
             }
+            if (ofs_str_eq(n.val, "__bedrock_lift")) {
+                // A5.3: texto que sai do bedrock: copia para o heap se estiver
+                // numa arena viva (ofs_arena_lift)
+                emit_expr(node_get_extra(id, 0))
+                forge lv = coerce_for_store(_expr_val, _expr_type, "obsidian")
+                _arena_used = true
+                forge lt = next_tmp("lift")
+                cg_emit("  " + lt + " = call ptr @ofs_arena_lift(ptr " + lv + ")")
+                _fresh_val = ""
+                _expr_val = lt
+                _expr_type = "obsidian"
+                return
+            }
             if (ofs_str_eq(n.val, "__ofs_vein_name")) {
                 emit_expr(node_get_extra(id, 0))
                 _vein_name_used = true
@@ -2739,6 +3170,20 @@ namespace llvmgen {
                 cg_emit("  " + fsw_tmp + " = call i64 @llvm.bswap.i64(i64 " + _expr_val + ")")
                 _expr_val = fsw_tmp
                 _expr_type = "stone"
+                return
+            }
+
+            // A5.1: contrato violado: "ofs: " + mensagem no stderr e exit(1)
+            // (ofs_array_fail do runtime; o interpretador faz o mesmo)
+            if (ofs_str_eq(n.val, "__ofs_contract_fail")) {
+                emit_expr(node_get_extra(id, 0))
+                forge cf_msg = _expr_val
+                forge cf_len = next_tmp("ctrlen")
+                cg_emit("  " + cf_len + " = call i64 @ofs_str_len(ptr " + cf_msg + ")")
+                cg_emit("  call void @ofs_array_fail(ptr " + cf_msg + ", i64 " + cf_len + ")")
+                _contract_used = true
+                _expr_val = "0"
+                _expr_type = "void"
                 return
             }
 
@@ -3051,6 +3496,11 @@ namespace llvmgen {
                     _expr_val = b_ext
                     _expr_type = "bool"
                 }
+                // geode com captura nao vai para o C (so o endereco da funcao)
+                if (_geode_env_used && vein_type_is(_expr_type) && !(_decl_root >= 0 && is_defined_fn(_decl_root, n.val))) {
+                    _geode_check_used = true
+                    cg_emit("  call void @__ofs_geode_c_check(ptr " + _expr_val + ")")
+                }
                 args = args + llvm_type(_expr_type) + " " + _expr_val
                 i++
             }
@@ -3069,11 +3519,20 @@ namespace llvmgen {
             if (ofs_str_eq(ret_type, "")) { ret_type = "stone" }
             forge ret_llvm = llvm_type(ret_type)
             forge va_sig = variadic_sig(callee)
+            // A5.3: a vein chamada de dentro do bedrock aloca no heap (a
+            // arena e lexica): __ofs_arena_cur = null durante a chamada
+            forge ar_save = arena_suspend(callee)
+            // Fault Refract L3: a vein do usuario e chamada pela celula
+            forge call_at = "@" + callee
+            if (_rf3_mode != 0 && ofs_str_eq(va_sig, "") && rf3_is_cell(callee)) {
+                call_at = next_tmp("seam")
+                cg_emit("  " + call_at + " = load ptr, ptr @__ofs_cell." + callee)
+            }
             if (ofs_str_eq(ret_llvm, "void")) {
                 if (!ofs_str_eq(va_sig, "")) {
                     cg_emit("  call " + va_sig + " @" + callee + "(" + args + ")")
                 } else {
-                    cg_emit("  call void @" + callee + "(" + args + ")")
+                    cg_emit("  call void " + call_at + "(" + args + ")")
                 }
                 _expr_val = "0"
                 _expr_type = "void"
@@ -3081,10 +3540,11 @@ namespace llvmgen {
                 forge call_tmp = next_tmp("call")
                 forge call_ty = ret_llvm
                 if (!ofs_str_eq(va_sig, "")) { call_ty = va_sig }
-                cg_emit("  " + call_tmp + " = call " + call_ty + " @" + callee + "(" + args + ")")
+                cg_emit("  " + call_tmp + " = call " + call_ty + " " + call_at + "(" + args + ")")
                 _expr_val = call_tmp
                 _expr_type = ret_type
             }
+            arena_resume(ar_save)
             forge fi2 = 0
             while (fi2 < ofs_array_len(free_after)) {
                 forge fv: obsidian = ofs_array_get(free_after, fi2)
@@ -3127,7 +3587,7 @@ namespace llvmgen {
                     ofs_array_push(_stack_obj_types, t)
                 } else {
                     forge mem = next_tmp("obj")
-                    cg_emit("  " + mem + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(monolith_alloc_size(t)) + ")")
+                    cg_emit("  " + mem + " = " + obj_alloc_call(t))
                     p = mem
                 }
             } else {
@@ -3211,7 +3671,10 @@ namespace llvmgen {
                         forge st: obsidian = ofs_array_get(_stack_obj_types, si)
                         forge hc = next_tmp("ret_obj")
                         forge hv = next_tmp("ret_copy")
-                        cg_emit("  " + hc + " = call ptr @ofs_alloc(i64 " + ofs_stone_to_obsidian(monolith_alloc_size(st)) + ")")
+                        // a copia sai da vein: nunca na arena de um bedrock
+                        forge rc_save = arena_suspend("__ret_copy")
+                        cg_emit("  " + hc + " = " + obj_alloc_call(st))
+                        arena_resume(rc_save)
                         cg_emit("  " + hv + " = load %" + st + ", ptr " + v)
                         cg_emit("  store %" + st + " " + hv + ", ptr " + hc)
                         v = hc
@@ -3256,12 +3719,31 @@ namespace llvmgen {
 
         if (n.kind == NK_BLOCK) {
             push_scope()
+            forge is_arena = ofs_str_eq(n.type_str, "arena")
+            if (is_arena) {
+                // A5.3: `bedrock { }` que aloca: abre a arena e registra o
+                // fechamento como anchor sintetico (roda em toda saida)
+                _arena_used = true
+                forge ar_slot = next_tmp("arena_slot")
+                forge ar_h = next_tmp("arena")
+                cg_emit("  " + ar_slot + " = alloca ptr, align 8")
+                cg_emit("  " + ar_h + " = call ptr @ofs_arena_open()")
+                cg_emit("  store ptr " + ar_h + ", ptr " + ar_slot)
+                register_scope_free(ar_slot, 3)
+                _arena_depth++
+            }
             forge bi = 0
             while (bi < node_extra_len(id)) {
                 emit_stmt(node_get_extra(id, bi))
                 bi++
             }
+            if (is_arena) { _arena_depth-- }
             pop_scope()
+            return
+        }
+
+        if (n.kind == NK_QUARTZ) {
+            emit_quartz(id)
             return
         }
 
@@ -3836,7 +4318,13 @@ namespace llvmgen {
             return
         }
         if (k == NK_LAMBDA) {
-            _esc_disabled = true
+            // geode: cada captura e copiada para o ambiente (escapa); o
+            // corpo e outra vein (__geode_*), analisada por si
+            forge gi = 0
+            while (gi < node_extra_len(id)) {
+                esc_walk(node_get_extra(id, gi), 1)
+                gi++
+            }
             return
         }
         if (k == NK_MATCH) {
@@ -4141,6 +4629,9 @@ namespace llvmgen {
             forge o = next_tmp("sf_own")
             cg_emit("  " + o + " = load i64, ptr " + p + "_own")
             cg_emit("  call void @ofs_str_release(ptr " + v + ", i64 " + o + ")")
+        } else if (kind == 3) {
+            // A5.3: fim do bedrock (qualquer saida): libera a arena
+            cg_emit("  call void @ofs_arena_close(ptr " + v + ")")
         } else {
             emit_arr_free_inline(v)
         }
@@ -4249,6 +4740,7 @@ namespace llvmgen {
             _sf_kinds = []
             _selfapp_name = ""
             _fresh_val = ""
+            _arena_depth = 0
             cg_emit("define i32 @main() {")
             cg_emit("entry:")
             cg_emit("  call void @__ofs_init_globals()")
@@ -4284,6 +4776,7 @@ namespace llvmgen {
             _sf_kinds = []
             _selfapp_name = ""
             _fresh_val = ""
+            _arena_depth = 0
             if (n.c1 >= 0) {
                 forge ret_node: Node = node_get(n.c1)
                 _current_ret_type = ret_node.val
@@ -4360,7 +4853,577 @@ namespace llvmgen {
         }
     }
 
-    vein generate(root_id: stone) -> void {
+    // ── quartz: assembly inline (F5) ──────────────────────────────────
+    // `call <T> asm sideeffect [inteldialect] "texto", "restricoes"(args)`.
+    // O texto vai como esta (sintaxe AT&T por padrao, a do LLVM; $N =
+    // operando, $$ = '$'); o compilador nao traduz entre arquiteturas.
+
+    // texto do asm no formato de string do LLVM (sem o \00 final)
+    vein quartz_escape(s: obsidian) -> obsidian {
+        forge e = llvm_escape_string(s)
+        return ofs_str_substr(e, 0, ofs_str_len(e) - 3)
+    }
+
+    vein starts_with(s: obsidian, p: obsidian) -> bool {
+        forge lp = ofs_str_len(p)
+        if (ofs_str_len(s) < lp) { return false }
+        return ofs_str_eq(ofs_str_substr(s, 0, lp), p)
+    }
+
+    // x86: o clang sempre marca flags/dirflag/fpsr como destruidos; o LLVM
+    // ignora esses nomes em outra arquitetura, entao sem triple (host) eles
+    // entram tambem
+    vein quartz_x86() -> bool {
+        if (ofs_str_eq(_target_triple, "")) { return true }
+        return starts_with(_target_triple, "x86_64") || starts_with(_target_triple, "i386") ||
+            starts_with(_target_triple, "i486") || starts_with(_target_triple, "i586") ||
+            starts_with(_target_triple, "i686") || starts_with(_target_triple, "amd64")
+    }
+
+    vein quartz_join(a: obsidian, sep: obsidian, b: obsidian) -> obsidian {
+        if (ofs_str_len(a) == 0) { return b }
+        return a + sep + b
+    }
+
+    // "rdx" / "{rdx}" / "~{rdx}" -> "~{rdx}"
+    vein quartz_clobber(m: obsidian) -> obsidian {
+        forge r = m
+        if (starts_with(r, "~")) { r = ofs_str_substr(r, 1, ofs_str_len(r) - 1) }
+        if (starts_with(r, "{") && ofs_str_len(r) >= 2) { r = ofs_str_substr(r, 1, ofs_str_len(r) - 2) }
+        return "~{" + r + "}"
+    }
+
+    vein emit_quartz(id: stone) -> void {
+        forge n: Node = node_get(id)
+        forge cons = ""
+        forge args = ""
+        forge ret_ll = "void"
+        forge dest_p = ""
+        forge tied = false
+        if (n.c0 >= 0) {
+            forge d: Node = node_get(n.c0)
+            forge dt = var_type(d.val)
+            dest_p = var_ptr(d.val)
+            ret_ll = llvm_type(dt)
+            forge oc = "=r"
+            if (n.c1 >= 0) { oc = node_val_of(n.c1) }
+            if (starts_with(oc, "+")) {
+                tied = true
+                oc = "=" + ofs_str_substr(oc, 1, ofs_str_len(oc) - 1)
+            }
+            cons = oc
+        }
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            forge inp: Node = node_get(node_get_extra(id, i))
+            forge c = inp.val
+            forge piece = ""
+            if (ofs_str_eq(c, "m") || ofs_str_eq(c, "*m")) {
+                // memoria: o endereco da variavel (operando indireto)
+                forge en: Node = node_get(inp.c0)
+                piece = "ptr elementtype(" + llvm_type(var_type(en.val)) + ") " + var_ptr(en.val)
+                c = "*m"
+            } else {
+                emit_expr(inp.c0)
+                forge v = _expr_val
+                forge t = _expr_type
+                if (ofs_str_eq(t, "bool1")) {
+                    v = coerce_for_store(v, "bool1", "bool")
+                    t = "bool"
+                }
+                forge ll = llvm_type(t)
+                if (ofs_str_eq(t, "null")) { ll = "ptr" }
+                piece = ll + " " + v
+            }
+            cons = quartz_join(cons, ",", c)
+            args = quartz_join(args, ", ", piece)
+            i++
+        }
+        if (tied) {
+            // "+r": o valor atual do destino entra no mesmo registrador ($0)
+            forge cur = next_tmp("qz_in")
+            cg_emit("  " + cur + " = load " + ret_ll + ", ptr " + dest_p)
+            cons = quartz_join(cons, ",", "0")
+            args = quartz_join(args, ", ", ret_ll + " " + cur)
+        }
+        if (n.c2 >= 0) {
+            forge ml = node_val_of(n.c2)
+            forge mlen = ofs_str_len(ml)
+            forge st = 0
+            forge k = 0
+            while (k <= mlen) {
+                if (k == mlen || ofs_str_char_at(ml, k) == 44) {
+                    if (k > st) { cons = quartz_join(cons, ",", quartz_clobber(ofs_str_substr(ml, st, k - st))) }
+                    st = k + 1
+                }
+                k++
+            }
+        }
+        if (quartz_x86()) {
+            if (!ofs_str_contains(cons, "~{dirflag}")) { cons = quartz_join(cons, ",", "~{dirflag}") }
+            if (!ofs_str_contains(cons, "~{fpsr}")) { cons = quartz_join(cons, ",", "~{fpsr}") }
+            if (!ofs_str_contains(cons, "~{flags}")) { cons = quartz_join(cons, ",", "~{flags}") }
+        }
+        forge dialect = ""
+        if (n.c3 >= 0 && ofs_str_eq(node_val_of(n.c3), "intel")) { dialect = " inteldialect" }
+        forge call_txt = "asm sideeffect" + dialect + " \"" + quartz_escape(n.val) + "\", \"" + cons + "\"(" + args + ")"
+        if (n.c0 >= 0) {
+            forge r = next_tmp("qz")
+            cg_emit("  " + r + " = call " + ret_ll + " " + call_txt)
+            cg_emit("  store " + ret_ll + " " + r + ", ptr " + dest_p)
+        } else {
+            cg_emit("  call void " + call_txt)
+        }
+    }
+
+    // ── Execucao hibrida (F5): modulo nativo com as veins que usam quartz ─
+    // O interpretador (`ofs run`) nao executa assembly: as veins com quartz
+    // (raizes) e tudo o que elas usam (fechamento: veins chamadas ou usadas
+    // como valor, globais, e todos os tipos/strings/externs do programa) viram
+    // um modulo que o interpretador compila para .so e carrega. As veins do
+    // runtime (stdlib/runtime) ficam so declaradas: o ofscc ja as exporta
+    // (-rdynamic) e o estado delas (alocador) tem de ser um so.
+    forge _hy_all_names: Array<obsidian> = []
+    forge _hy_all_ids: Array<stone> = []
+    forge _hy_fn_names: Array<obsidian> = []
+    forge _hy_fn_ids: Array<stone> = []
+    forge _hy_fn_ext: Array<bool> = []
+    forge _hy_glob_names: Array<obsidian> = []
+    forge _hy_glob_types: Array<obsidian> = []
+
+    // Identidade das veins do modulo: um ponteiro devolvido pelo nativo
+    // volta ao mesmo valor de vein no interpretador (echo e igualdade).
+    vein hy_fn_count() -> stone { return ofs_array_len(_hy_fn_ids) }
+    vein hy_fn_name(i: stone) -> obsidian { return ofs_array_get(_hy_fn_names, i) }
+    vein hy_fn_node(i: stone) -> stone {
+        forge ext: bool = ofs_array_get(_hy_fn_ext, i)
+        if (ext) { return -1 }
+        return ofs_array_get(_hy_fn_ids, i)
+    }
+
+    vein hy_glob_count() -> stone { return ofs_array_len(_hy_glob_names) }
+    vein hy_glob_name(i: stone) -> obsidian {
+        forge v: obsidian = ofs_array_get(_hy_glob_names, i)
+        return v
+    }
+    vein hy_glob_type(i: stone) -> obsidian {
+        forge v: obsidian = ofs_array_get(_hy_glob_types, i)
+        return v
+    }
+
+    vein hy_index_fns(root_id: stone) -> void {
+        forge i = 0
+        while (i < node_extra_len(root_id)) {
+            forge did = node_get_extra(root_id, i)
+            forge k = node_kind_of(did)
+            if (k == NK_CORE_DECL || k == NK_FN_DECL) {
+                ofs_array_push(_hy_all_names, node_val_of(did))
+                ofs_array_push(_hy_all_ids, did)
+            } else if (k == NK_NAMESPACE || k == NK_IMPL) {
+                hy_index_fns(did)
+            }
+            i++
+        }
+    }
+
+    vein hy_fn_id(name: obsidian) -> stone {
+        forge i = 0
+        while (i < ofs_array_len(_hy_all_names)) {
+            forge nm: obsidian = ofs_array_get(_hy_all_names, i)
+            if (ofs_str_eq(nm, name)) { return ofs_array_get(_hy_all_ids, i) }
+            i++
+        }
+        return -1
+    }
+
+    vein hy_has(list: Array<obsidian>, v: obsidian) -> bool {
+        forge i = 0
+        while (i < ofs_array_len(list)) {
+            forge x: obsidian = ofs_array_get(list, i)
+            if (ofs_str_eq(x, v)) { return true }
+            i++
+        }
+        return false
+    }
+
+    vein hy_add_fn(name: obsidian) -> void {
+        forge fid = hy_fn_id(name)
+        if (fid < 0) { return }
+        if (hy_has(_hy_fn_names, name)) { return }
+        ofs_array_push(_hy_fn_names, name)
+        ofs_array_push(_hy_fn_ids, fid)
+        ofs_array_push(_hy_fn_ext, ast_line_is_runtime(node_line_of(fid)))
+    }
+
+    vein hy_add_glob(name: obsidian) -> void {
+        forge gi = global_index(name)
+        if (gi < 0) { return }
+        if (hy_has(_hy_glob_names, name)) { return }
+        ofs_array_push(_hy_glob_names, name)
+        ofs_array_push(_hy_glob_types, ofs_array_get(_global_types, gi))
+    }
+
+    // metodo chamado por variavel (`obj__m` que o typeck nao resolveu):
+    // todas as veins `T__m`
+    vein hy_add_method_suffix(name: obsidian) -> void {
+        forge len = ofs_str_len(name)
+        forge k = len - 2
+        while (k > 0) {
+            if (ofs_str_char_at(name, k) == 95 && ofs_str_char_at(name, k + 1) == 95) { break }
+            k--
+        }
+        if (k <= 0) { return }
+        forge suffix = ofs_str_substr(name, k, len - k)
+        forge sl = ofs_str_len(suffix)
+        forge i = 0
+        while (i < ofs_array_len(_hy_all_names)) {
+            forge nm: obsidian = ofs_array_get(_hy_all_names, i)
+            forge nl = ofs_str_len(nm)
+            if (nl > sl && ofs_str_eq(ofs_str_substr(nm, nl - sl, sl), suffix)) { hy_add_fn(nm) }
+            i++
+        }
+    }
+
+    vein hy_walk(id: stone) -> void {
+        if (id < 0) { return }
+        forge k = node_kind_of(id)
+        forge v = node_val_of(id)
+        if (k == NK_CALL) {
+            if (hy_fn_id(v) >= 0) {
+                hy_add_fn(v)
+            } else {
+                forge bi = 0
+                forge bound = false
+                while (bi < ofs_array_len(_bind_names)) {
+                    forge bn: obsidian = ofs_array_get(_bind_names, bi)
+                    if (ofs_str_eq(bn, v)) {
+                        forge bt: obsidian = ofs_array_get(_bind_targets, bi)
+                        if (hy_fn_id(bt) >= 0) { hy_add_fn(bt) }
+                        bound = true
+                    }
+                    bi++
+                }
+                if (!bound && ofs_str_contains(v, "__")) { hy_add_method_suffix(v) }
+            }
+        } else if (k == NK_IDENT) {
+            if (hy_fn_id(v) >= 0) { hy_add_fn(v) }
+            hy_add_glob(v)
+        } else if (k == NK_FIELD) {
+            forge b = node_child(id, 0)
+            if (b >= 0 && node_kind_of(b) == NK_IDENT) { hy_add_glob(node_val_of(b) + "__" + v) }
+        }
+        hy_walk(node_child(id, 0))
+        hy_walk(node_child(id, 1))
+        hy_walk(node_child(id, 2))
+        hy_walk(node_child(id, 3))
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            hy_walk(node_get_extra(id, i))
+            i++
+        }
+    }
+
+    vein hy_in_closure(id: stone) -> bool {
+        forge i = 0
+        while (i < ofs_array_len(_hy_fn_ids)) {
+            forge f: stone = ofs_array_get(_hy_fn_ids, i)
+            if (f == id) {
+                forge ext: bool = ofs_array_get(_hy_fn_ext, i)
+                return !ext
+            }
+            i++
+        }
+        return false
+    }
+
+    // `declare` de uma vein do fechamento que fica fora do modulo (runtime)
+    vein hy_emit_declare(id: stone) -> void {
+        forge n: Node = node_get(id)
+        if (is_known_extern(n.val)) { return }
+        forge rt = "void"
+        if (n.c1 >= 0) {
+            forge rn: Node = node_get(n.c1)
+            rt = rn.val
+            if (rn.kind == NK_TYPE_ARRAY) { rt = "Array" }
+        }
+        forge ps = ""
+        forge pi = 0
+        while (n.c0 >= 0 && pi < node_extra_len(n.c0)) {
+            forge p: Node = node_get(node_get_extra(n.c0, pi))
+            forge pt = "stone"
+            if (p.c0 >= 0) {
+                forge ptn: Node = node_get(p.c0)
+                pt = ptn.val
+                if (ptn.kind == NK_TYPE_ARRAY) { pt = "Array" }
+            }
+            ps = quartz_join(ps, ", ", llvm_type(pt))
+            pi++
+        }
+        cg_emit("declare " + llvm_type(rt) + " @" + n.val + "(" + ps + ")")
+        ofs_array_push(_extern_names, n.val)
+    }
+
+    vein hy_emit_decl_fns(id: stone) -> void {
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            forge did = node_get_extra(id, i)
+            forge k = node_kind_of(did)
+            if (k == NK_CORE_DECL || k == NK_FN_DECL) {
+                if (hy_in_closure(did)) { emit_function(did) }
+            } else if (k == NK_NAMESPACE || k == NK_IMPL) {
+                hy_emit_decl_fns(did)
+            }
+            i++
+        }
+    }
+
+    // Gera (no arquivo aberto por cg_open) o modulo hibrido das raizes:
+    // depois, _hy_fn_names/_hy_fn_ext e _hy_glob_names/_hy_glob_types dizem
+    // o fechamento (o interpretador sincroniza esses globais na fronteira).
+    vein hy_generate(root_id: stone, roots: Array<obsidian>) -> void {
+        reset_state()
+        _hy_shared = true
+        _hy_mono_used = []
+        _hy_all_names = []
+        _hy_all_ids = []
+        _hy_fn_names = []
+        _hy_fn_ids = []
+        _hy_fn_ext = []
+        _hy_glob_names = []
+        _hy_glob_types = []
+        collect_types(root_id)
+        collect_all_strings()
+        collect_globals(root_id)
+        emit_header(root_id)
+        _init_internal = false
+        hy_index_fns(root_id)
+        forge ri = 0
+        while (ri < ofs_array_len(roots)) {
+            hy_add_fn(ofs_array_get(roots, ri))
+            ri++
+        }
+        // laços com OSR: o corpo entra no fechamento (veins e globais)
+        forge oi = 0
+        while (oi < ofs_array_len(_hy_osr_loops)) {
+            hy_walk(ofs_array_get(_hy_osr_loops, oi))
+            oi++
+        }
+        // Os globais sao celulas do interpretador (_hy_shared): o modulo nao
+        // tem inicializadores, entao eles nao entram no fechamento.
+        forge wi = 0
+        while (wi < ofs_array_len(_hy_fn_ids)) {
+            forge ext: bool = ofs_array_get(_hy_fn_ext, wi)
+            if (!ext) { hy_walk(ofs_array_get(_hy_fn_ids, wi)) }
+            wi++
+        }
+        // Os globais ja foram inicializados pelo interpretador, que e o
+        // dono deles. Nao emita novamente alocacoes nem efeitos de inicio.
+        // main (se for raiz nativa) ainda chama este gancho vazio.
+        cg_emit("define internal void @__ofs_init_globals() { ret void }")
+        esc_compute_masks(root_id)
+        scan_geodes()
+        hy_emit_decl_fns(root_id)
+        forge di = 0
+        while (di < ofs_array_len(_hy_fn_ids)) {
+            forge dext: bool = ofs_array_get(_hy_fn_ext, di)
+            if (dext) { hy_emit_declare(ofs_array_get(_hy_fn_ids, di)) }
+            di++
+        }
+        forge ok = 0
+        while (ok < ofs_array_len(_hy_osr_loops)) {
+            hy_emit_osr(ok)
+            ok++
+        }
+        emit_vein_helpers()
+        emit_sediment_helpers(root_id)
+        if (ofs_array_len(_hy_mono_used) > 0) {
+            cg_emit("declare ptr @__ofs_obj_alloc(i64, ptr)")
+            forge mu = 0
+            while (mu < ofs_array_len(_hy_mono_used)) {
+                forge mt: obsidian = ofs_array_get(_hy_mono_used, mu)
+                cg_emit("@.ofs_mt." + mt + " = private unnamed_addr constant [" + ofs_stone_to_obsidian(ofs_str_len(mt) + 1) + " x i8] c\"" + llvm_escape_string(mt) + "\", align 1")
+                mu++
+            }
+        }
+        _hy_shared = false
+    }
+
+    // ── OSR (onda 4): um laco quente vira funcao nativa no meio da execucao ─
+    // `__ofs_osr_<no do laco>(ptr %st) -> i64`: o interpretador grava em
+    // st[1..n] (8 bytes cada) as variaveis vivas do laco (as locais
+    // declaradas antes dele e usadas dentro dele, osr_decl_type), chama, e le
+    // de volta. A funcao entra pelo cabecalho do laco (testa a condicao),
+    // roda ate o fim (0) ou, com o gancho st[0] (Fault Refract), sai pelo
+    // cabecalho quando o gancho pede (1): o interpretador continua dali. O
+    // corpo nao tem return/throw/anchor/`?`/`&`/geode (o interpretador so pede
+    // OSR desses lacos), entao sair do laco e sempre pelo fim ou por break.
+    forge _hy_shared: bool = false
+    forge _hy_mono_used: Array<obsidian> = []
+    forge _hy_osr_loops: Array<stone> = []
+    forge _hy_osr_fids: Array<stone> = []
+    forge _hy_osr_decls: Array<Array> = []
+    forge _hy_osr_poll: bool = false
+
+    vein hy_osr_reset(poll: bool) -> void {
+        _hy_osr_loops = []
+        _hy_osr_fids = []
+        _hy_osr_decls = []
+        _hy_osr_poll = poll
+    }
+
+    vein hy_osr_add(loop: stone, fid: stone, decls: Array<stone>) -> void {
+        ofs_array_push(_hy_osr_loops, loop)
+        ofs_array_push(_hy_osr_fids, fid)
+        ofs_array_push(_hy_osr_decls, decls)
+    }
+
+    // tipo de uma variavel viva (parametro ou forge), como o emit_function
+    // e o emit_stmt a declaram
+    vein osr_decl_type(did: stone) -> obsidian {
+        if (node_kind_of(did) == NK_PARAM) { return esc_param_type(did) }
+        forge n: Node = node_get(did)
+        forge t = n.type_str
+        if (n.c0 >= 0) {
+            forge ann = type_node_name(n.c0)
+            if (!ofs_str_eq(ann, "")) { t = ann }
+        }
+        if (ofs_str_eq(t, "")) { t = "stone" }
+        return t
+    }
+
+    vein osr_write_back(decls: Array<stone>, ptrs: Array<obsidian>) -> void {
+        forge i = 0
+        while (i < ofs_array_len(decls)) {
+            forge p: obsidian = ofs_array_get(ptrs, i)
+            if (!ofs_str_eq(p, "")) {
+                forge t = osr_decl_type(ofs_array_get(decls, i))
+                forge v = next_tmp("osr_out")
+                cg_emit("  " + v + " = load " + llvm_type(t) + ", ptr " + p)
+                cg_emit("  store " + llvm_type(t) + " " + v + ", ptr %osr.s" + ofs_stone_to_obsidian(i))
+            }
+            i++
+        }
+    }
+
+    vein hy_emit_osr(k: stone) -> void {
+        forge loop: stone = ofs_array_get(_hy_osr_loops, k)
+        forge fid: stone = ofs_array_get(_hy_osr_fids, k)
+        forge decls: Array<stone> = ofs_array_get(_hy_osr_decls, k)
+        _var_names = []
+        _var_types = []
+        _var_ptrs = []
+        _var_depths = []
+        _scope_depth = 0
+        _terminated = false
+        _current_ret_type = "void"
+        esc_analyze(fid)
+        _own_ptrs = []
+        _free_arr_ptrs = []
+        _stack_obj_ptrs = []
+        _stack_obj_types = []
+        _sf_ptrs = []
+        _sf_kinds = []
+        _selfapp_name = ""
+        _fresh_val = ""
+        _arena_depth = 0
+        cg_emit("define i64 @__ofs_osr_" + ofs_stone_to_obsidian(loop) + "(ptr %osr.st) {")
+        cg_emit("entry:")
+        push_scope()
+        if (_hy_osr_poll) {
+            cg_emit("  %osr.poll = load ptr, ptr %osr.st")
+            cg_emit("  %osr.cnt = alloca i64, align 8")
+            cg_emit("  store i64 0, ptr %osr.cnt")
+        }
+        forge ptrs: Array<obsidian> = []
+        forge i = 0
+        while (i < ofs_array_len(decls)) {
+            forge did: stone = ofs_array_get(decls, i)
+            forge name = node_val_of(did)
+            forge t = osr_decl_type(did)
+            forge sx = ofs_stone_to_obsidian(i)
+            cg_emit("  %osr.s" + sx + " = getelementptr inbounds i64, ptr %osr.st, i64 " + ofs_stone_to_obsidian(i + 1))
+            if (is_named_type(t)) {
+                // monolith: o bloco do interpretador (mesmo layout)
+                cg_emit("  %osr.o" + sx + " = load ptr, ptr %osr.s" + sx)
+                declare_var(name, t, "%osr.o" + sx)
+                ofs_array_push(ptrs, "")
+            } else {
+                forge p = next_tmp(name)
+                cg_emit("  " + p + " = alloca " + storage_type(t) + ", align 8")
+                forge v = next_tmp("osr_in")
+                cg_emit("  " + v + " = load " + llvm_type(t) + ", ptr %osr.s" + sx)
+                cg_emit("  store " + llvm_type(t) + " " + v + ", ptr " + p)
+                declare_var(name, t, p)
+                // texto vindo do interpretador nao e deste quadro (dono 0)
+                if (ofs_str_eq(t, "obsidian") && esc_str_ok(name)) {
+                    cg_emit("  " + p + "_own = alloca i64, align 8")
+                    cg_emit("  store i64 0, ptr " + p + "_own")
+                    ofs_array_push(_own_ptrs, p)
+                }
+                ofs_array_push(ptrs, p)
+            }
+            i++
+        }
+        forge n: Node = node_get(loop)
+        forge cond_label = next_label("osr_cond")
+        forge test_label = next_label("osr_test")
+        forge body_label = next_label("osr_body")
+        forge end_label = next_label("osr_end")
+        push_loop(end_label, cond_label)
+        cg_emit("  br label %" + cond_label)
+        cg_emit("")
+        cg_emit(cond_label + ":")
+        if (_hy_osr_poll) {
+            // a cada 65536 voltas pergunta ao interpretador (gancho)
+            forge poll_label = next_label("osr_poll")
+            cg_emit("  %osr.c0." + cond_label + " = load i64, ptr %osr.cnt")
+            cg_emit("  %osr.c1." + cond_label + " = add i64 %osr.c0." + cond_label + ", 1")
+            cg_emit("  store i64 %osr.c1." + cond_label + ", ptr %osr.cnt")
+            cg_emit("  %osr.m." + cond_label + " = and i64 %osr.c1." + cond_label + ", 65535")
+            cg_emit("  %osr.z." + cond_label + " = icmp eq i64 %osr.m." + cond_label + ", 0")
+            cg_emit("  br i1 %osr.z." + cond_label + ", label %" + poll_label + ", label %" + test_label)
+            cg_emit(poll_label + ":")
+            cg_emit("  %osr.r." + cond_label + " = call i64 %osr.poll()")
+            cg_emit("  %osr.y." + cond_label + " = icmp ne i64 %osr.r." + cond_label + ", 0")
+            cg_emit("  br i1 %osr.y." + cond_label + ", label %osr.susp, label %" + test_label)
+        } else {
+            cg_emit("  br label %" + test_label)
+        }
+        cg_emit(test_label + ":")
+        emit_expr(n.c0)
+        forge cond = expr_as_i1()
+        cg_emit("  br i1 " + cond + ", label %" + body_label + ", label %" + end_label)
+        cg_emit("")
+        cg_emit(body_label + ":")
+        forge wstk = next_tmp("loop_stk")
+        cg_emit("  " + wstk + " = call ptr @llvm.stacksave()")
+        set_loop_save(wstk)
+        emit_loop_laa_guard()
+        _terminated = false
+        emit_stmt(n.c1)
+        if (!_terminated) {
+            cg_emit("  call void @llvm.stackrestore(ptr " + wstk + ")")
+            cg_emit("  br label %" + cond_label)
+        }
+        cg_emit("")
+        cg_emit(end_label + ":")
+        _terminated = false
+        pop_loop()
+        osr_write_back(decls, ptrs)
+        cg_emit("  ret i64 0")
+        if (_hy_osr_poll) {
+            cg_emit("osr.susp:")
+            osr_write_back(decls, ptrs)
+            cg_emit("  ret i64 1")
+        }
+        _terminated = true
+        pop_scope()
+        cg_emit("}")
+        cg_emit("")
+        _esc_disabled = true
+    }
+
+    vein reset_state() -> void {
         _tmp_counter = 0
         _label_counter = 0
         _str_counter = 0
@@ -4390,6 +5453,17 @@ namespace llvmgen {
         _vref_names = []
         _vein_name_used = false
         _vein_null_used = false
+        _contract_used = false
+        _arena_depth = 0
+        _arena_used = false
+        _geode_env_used = false
+        _geode_adapt = []
+        _geode_check_used = false
+    }
+
+    vein generate(root_id: stone) -> void {
+        reset_state()
+        _hy_shared = false
         collect_types(root_id)
         collect_all_strings()
         collect_globals(root_id)
@@ -4398,6 +5472,7 @@ namespace llvmgen {
         if (is_defined_fn(root_id, "ofs_alloc") && !module_has_main(root_id)) { _init_internal = true }
         emit_global_init()
         esc_compute_masks(root_id)
+        scan_geodes()
 
         forge i = 0
         while (i < node_extra_len(root_id)) {
@@ -4419,5 +5494,146 @@ namespace llvmgen {
             i++
         }
         emit_vein_helpers()
+        emit_sediment_helpers(root_id)
+        if (_rf3_mode == 1) { rf3_emit_cells() }
+        if (_magma_on) {
+            // Ideia 5: o manifesto do mod (stdlib/magma.ofs le com dlsym)
+            cg_emit("@__magma_manifest = constant [" + ofs_stone_to_obsidian(ofs_str_len(_magma_manifest) + 1) + " x i8] c\"" + llvm_escape_string(_magma_manifest) + "\", align 1")
+        }
+    }
+
+    // ── Ideia 5: magma.cast (OFSCC_MODE=cast) ─────────────────────────
+    forge _magma_on: bool = false
+    forge _magma_manifest: obsidian = ""
+
+    vein set_magma_manifest(text: obsidian) -> void {
+        _magma_on = true
+        _magma_manifest = text
+    }
+
+    // ── Fault Refract L3 (remoto/Android) ─────────────────────────────
+    // Modo 1 (`ofs build --target android --refract`, OFSCC_REFRACT=cells):
+    // cada vein do usuario ganha uma celula de despacho exportada,
+    // `@__ofs_cell.<vein> = global ptr @<vein>`, e toda chamada direta a ela
+    // le a celula (load + chamada indireta). `@__ofs_refract_manifest` leva o
+    // hash de cada vein, que o agente (stdlib/geophone.ofs) manda ao PC.
+    // Modo 2 (OFSCC_REFRACT=patch): o modulo do remendo. So as veins de
+    // _rf3_include sao definidas; os globais sao `external` (os do app, com
+    // o endereco unico de la: o estado continua), as variantes ficam locais,
+    // o resto que elas usam vira `declare` (o .so liga contra a lib do app) e
+    // `@__ofs_refract_install` grava o endereco novo na celula de cada vein
+    // trocada. Sem OFSCC_REFRACT nada disso existe (IR identico).
+    forge _rf3_mode: stone = 0
+    forge _rf3_cells: Array<obsidian> = []
+    forge _rf3_include: Array<obsidian> = []
+    forge _rf3_manifest: obsidian = ""
+
+    vein rf3_set(mode: stone, cells: Array<obsidian>, include: Array<obsidian>, manifest: obsidian) -> void {
+        _rf3_mode = mode
+        _rf3_cells = cells
+        _rf3_include = include
+        _rf3_manifest = manifest
+    }
+
+    vein rf3_is_cell(name: obsidian) -> bool {
+        if (_rf3_mode == 0) { return false }
+        return hy_has(_rf3_cells, name)
+    }
+
+    vein rf3_emit_manifest() -> void {
+        cg_emit("@__ofs_refract_manifest = constant [" + ofs_stone_to_obsidian(ofs_str_len(_rf3_manifest) + 1) + " x i8] c\"" + llvm_escape_string(_rf3_manifest) + "\", align 1")
+    }
+
+    vein rf3_emit_cells() -> void {
+        // o agente (geophone.awaken) sobe como construtor da lib, depois do
+        // __ofs_init_globals (que o build Android liga com -Wl,-init)
+        if (!_init_internal) {
+            cg_emit("@llvm.global_ctors = appending global [1 x { i32, ptr, ptr }] [{ i32, ptr, ptr } { i32 65535, ptr @__ofs_refract_awaken, ptr null }]")
+            cg_emit("define internal void @__ofs_refract_awaken() {")
+            cg_emit("entry:")
+            cg_emit("  call void @geophone__awaken()")
+            cg_emit("  ret void")
+            cg_emit("}")
+        }
+        forge i = 0
+        while (i < ofs_array_len(_rf3_cells)) {
+            forge c: obsidian = ofs_array_get(_rf3_cells, i)
+            cg_emit("@__ofs_cell." + c + " = global ptr @" + c)
+            i++
+        }
+        rf3_emit_manifest()
+    }
+
+    vein rf3_emit_included(id: stone) -> void {
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            forge did = node_get_extra(id, i)
+            forge k = node_kind_of(did)
+            if (k == NK_FN_DECL) {
+                if (hy_has(_rf3_include, node_val_of(did))) { emit_function(did) }
+            } else if (k == NK_NAMESPACE || k == NK_IMPL) {
+                rf3_emit_included(did)
+            }
+            i++
+        }
+    }
+
+    vein rf3_patch_generate(root_id: stone) -> void {
+        reset_state()
+        _hy_shared = false
+        _hy_mono_used = []
+        _hy_all_names = []
+        _hy_all_ids = []
+        _hy_fn_names = []
+        _hy_fn_ids = []
+        _hy_fn_ext = []
+        _hy_glob_names = []
+        _hy_glob_types = []
+        collect_types(root_id)
+        collect_all_strings()
+        collect_globals(root_id)
+        emit_header(root_id)
+        _init_internal = false
+        hy_index_fns(root_id)
+        forge ri = 0
+        while (ri < ofs_array_len(_rf3_include)) {
+            hy_add_fn(ofs_array_get(_rf3_include, ri))
+            ri++
+        }
+        // so o que as veins do remendo usam diretamente (o resto esta no app)
+        forge nroots = ofs_array_len(_hy_fn_ids)
+        forge wi = 0
+        while (wi < nroots) {
+            hy_walk(ofs_array_get(_hy_fn_ids, wi))
+            wi++
+        }
+        cg_emit("define internal void @__ofs_init_globals() { ret void }")
+        esc_compute_masks(root_id)
+        scan_geodes()
+        rf3_emit_included(root_id)
+        forge di = 0
+        while (di < ofs_array_len(_hy_fn_ids)) {
+            forge dn: obsidian = ofs_array_get(_hy_fn_names, di)
+            if (!hy_has(_rf3_include, dn)) { hy_emit_declare(ofs_array_get(_hy_fn_ids, di)) }
+            di++
+        }
+        emit_vein_helpers()
+        emit_sediment_helpers(root_id)
+        forge ci = 0
+        while (ci < ofs_array_len(_rf3_cells)) {
+            cg_emit("@__ofs_cell." + ofs_array_get(_rf3_cells, ci) + " = external global ptr")
+            ci++
+        }
+        cg_emit("define void @__ofs_refract_install() {")
+        cg_emit("entry:")
+        forge ii = 0
+        while (ii < ofs_array_len(_rf3_include)) {
+            forge inc: obsidian = ofs_array_get(_rf3_include, ii)
+            if (hy_has(_rf3_cells, inc)) { cg_emit("  store ptr @" + inc + ", ptr @__ofs_cell." + inc) }
+            ii++
+        }
+        cg_emit("  ret void")
+        cg_emit("}")
+        rf3_emit_manifest()
     }
 }

@@ -7,6 +7,8 @@
 // por qj_first/qj_next). Strings guardam o texto JSON *com* os escapes
 // (qj_str decodifica os comuns); qj_dump reescreve sem perder nada.
 
+claim rift
+
 attach {F:fs.ofs}
 attach {F:sha256.ofs}
 

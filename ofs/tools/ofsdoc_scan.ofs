@@ -12,6 +12,8 @@
 // balanceadas, strings e comentarios ignorados (limitacao: `{` de container
 // ou de corpo na mesma linha da declaracao, como no stdlib).
 
+claim rift
+
 extern vein getenv(name: obsidian) -> obsidian
 extern vein exit(code: stone) -> void
 extern vein system(cmd: obsidian) -> stone
@@ -231,6 +233,11 @@ forge od_m_lr: Array<obsidian> = []
 forge od_m_see: Array<obsidian> = []
 forge od_m_pub: Array<stone> = []
 forge od_m_pubdoc: Array<stone> = []
+// A5.4 + Ideia 4: cabecalho do modulo (`stratum`, `claim`, `caprock`; tambem
+// na forma `//! claim rift`). "" = nao declarado (estrato vale fault)
+forge od_m_stratum: Array<obsidian> = []
+forge od_m_claims: Array<obsidian> = []
+forge od_m_caprock: Array<obsidian> = []
 
 forge od_i_mod: Array<stone> = []
 forge od_i_kind: Array<obsidian> = []      // vein rift extern core monolith strata const global type
@@ -254,6 +261,7 @@ forge od_i_nxq: Array<stone> = []
 forge od_i_stamp: Array<stone> = []
 forge od_i_fields: Array<obsidian> = []    // "nome\ttipo\tdoc\n..." (monolith) ou variantes (strata)
 forge od_i_val: Array<obsidian> = []       // valor de const/global
+forge od_i_rules: Array<obsidian> = []     // contratos (A5.1): "bearing\tregra\n", "settle\t...", "grain\t..."
 
 forge od_hk: Array<obsidian> = []
 forge od_hv: Array<stone> = []
@@ -307,6 +315,7 @@ vein od_new_item(mi: stone, kind: obsidian, name: obsidian, owner: obsidian, oki
     ofs_array_push(od_i_stamp, -1)
     ofs_array_push(od_i_fields, "")
     ofs_array_push(od_i_val, "")
+    ofs_array_push(od_i_rules, "")
     return idx
 }
 
@@ -530,6 +539,98 @@ vein od_pub_flag(kind: obsidian, name: obsidian) -> stone {
     return 1
 }
 
+// ---------------------------------------------------------------- contratos (A5.1)
+
+// codigo da linha sem o comentario `//` (as strings ficam, para o texto das regras)
+vein od_code_of(raw: obsidian) -> obsidian {
+    forge n = ofs_str_len(raw)
+    forge i = 0
+    forge q = false
+    while (i < n) {
+        forge c = ofs_str_char_at(raw, i)
+        if (q) {
+            if (c == 92) { i = i + 1 } else if (c == 34) { q = false }
+        } else {
+            if (c == 34) { q = true }
+            if (c == 47 && i + 1 < n && ofs_str_char_at(raw, i + 1) == 47) { return od_sub(raw, 0, i) }
+        }
+        i = i + 1
+    }
+    return raw
+}
+
+// a palavra `kw` comeca em i (fora de string, como palavra inteira)?
+vein od_word_at(s: obsidian, i: stone, kw: obsidian) -> bool {
+    forge n = ofs_str_len(s)
+    forge m = ofs_str_len(kw)
+    if (i + m > n) { return false }
+    if (ofs_str_eq(od_sub(s, i, i + m), kw) == false) { return false }
+    if (i > 0 && od_isid(ofs_str_char_at(s, i - 1))) { return false }
+    if (i + m < n && od_isid(ofs_str_char_at(s, i + m))) { return false }
+    return true
+}
+
+vein od_rule_kw_at(s: obsidian, i: stone) -> obsidian {
+    if (od_word_at(s, i, "bearing")) { return "bearing" }
+    if (od_word_at(s, i, "settle")) { return "settle" }
+    if (od_word_at(s, i, "grain")) { return "grain" }
+    return ""
+}
+
+// posicao da primeira palavra de contrato fora de string (-1 se nao ha)
+vein od_rule_start(s: obsidian) -> stone {
+    forge n = ofs_str_len(s)
+    forge i = 0
+    forge q = false
+    while (i < n) {
+        forge c = ofs_str_char_at(s, i)
+        if (q) {
+            if (c == 92) { i = i + 1 } else if (c == 34) { q = false }
+        } else {
+            if (c == 34) { q = true }
+            else if (ofs_str_len(od_rule_kw_at(s, i)) > 0) { return i }
+        }
+        i = i + 1
+    }
+    return -1
+}
+
+// acrescenta ao item as regras `bearing/settle/grain ...` do texto (para no `{`)
+vein od_add_rules(item: obsidian, idx: stone, s0: obsidian) -> void {
+    forge s = od_code_of(s0)
+    forge n = ofs_str_len(s)
+    forge i = od_rule_start(s)
+    if (i < 0) { return }
+    forge kw = ""
+    forge st = 0
+    forge q = false
+    forge out = od_s(od_i_rules, idx)
+    while (i <= n) {
+        forge c = 0
+        if (i < n) { c = ofs_str_char_at(s, i) }
+        forge nk = ""
+        if (i < n && q == false && c != 34) { nk = od_rule_kw_at(s, i) }
+        forge stop = i == n || (q == false && c == 123)
+        if (ofs_str_len(nk) > 0 || stop) {
+            if (ofs_str_len(kw) > 0) {
+                forge txt = od_trim(od_sub(s, st, i))
+                if (ofs_str_len(txt) > 0) { out = out + kw + "\t" + txt + "\n" }
+            }
+            if (stop) { i = n + 1 } else {
+                kw = nk
+                st = i + ofs_str_len(nk)
+                i = st
+            }
+        } else {
+            if (q) {
+                if (c == 92) { i = i + 1 } else if (c == 34) { q = false }
+            } else if (c == 34) { q = true }
+            i = i + 1
+        }
+    }
+    ofs_array_set(od_i_rules, idx, out)
+}
+
 vein od_do_fn(kind: obsidian, rest: obsidian, raw: obsidian, t: obsidian, ln: stone, doc: obsidian) -> void {
     forge ne = od_ident_end(rest, 0)
     forge name = od_sub(rest, 0, ne)
@@ -567,6 +668,8 @@ vein od_do_fn(kind: obsidian, rest: obsidian, raw: obsidian, t: obsidian, ln: st
             if (a1 >= 0 && a1 < cut) { cut = a1 }
             a1 = od_find(r, " abi", 0)
             if (a1 >= 0 && a1 < cut) { cut = a1 }
+            a1 = od_rule_start(r)
+            if (a1 >= 0 && a1 < cut) { cut = a1 }
             ret = od_trim(od_sub(r, 0, cut))
         }
     }
@@ -577,6 +680,7 @@ vein od_do_fn(kind: obsidian, rest: obsidian, raw: obsidian, t: obsidian, ln: st
     forge sig = prefix + " " + name + "(" + od_params_join(params) + ")"
     if (ofs_str_len(ret) > 0) { sig = sig + " -> " + ret }
     ofs_array_set(od_i_sig, idx, sig)
+    od_add_rules("", idx, od_tail(raw, od_find(raw, ")", 0) + 1))
     ofs_array_set(od_i_params, idx, params)
     ofs_array_set(od_i_ret, idx, ret)
     if (ofs_str_eq(kind, "vein") || ofs_str_eq(kind, "rift")) { ofs_array_set(od_i_pub, idx, od_pub_flag(kind, name)) }
@@ -703,6 +807,23 @@ vein od_decl(t: obsidian, raw: obsidian, ln: stone, doc: obsidian) -> void {
         od_do_global("const", od_after_kw(t, "const "), ln, doc)
     } else if (od_starts(t, "forge ")) {
         od_do_global("global", od_after_kw(t, "forge "), ln, doc)
+    } else if (od_starts(t, "mineral ")) {
+        // A5.1: tipo com regra (`mineral UserId = stone grain value > 0`)
+        forge restm = od_after_kw(t, "mineral ")
+        forge namem = od_sub(restm, 0, od_ident_end(restm, 0))
+        forge idxm = od_new_item(od_cur_mod, "mineral", namem, "", "", ln, doc)
+        forge codem = od_code_of(raw)
+        forge eqm = od_find(codem, "=", 0)
+        forge basem = ""
+        if (eqm >= 0) {
+            forge afterm = od_tail(codem, eqm + 1)
+            forge gm = od_rule_start(afterm)
+            if (gm >= 0) { basem = od_trim(od_sub(afterm, 0, gm)) } else { basem = od_trim(afterm) }
+        }
+        ofs_array_set(od_i_sig, idxm, "mineral " + namem + " = " + basem)
+        ofs_array_set(od_i_ret, idxm, basem)
+        od_add_rules("", idxm, codem)
+        ofs_array_set(od_i_pub, idxm, od_pub_flag("mineral", namem))
     } else if (od_starts(t, "type ")) {
         forge rest3 = od_after_kw(t, "type ")
         forge name3 = od_sub(rest3, 0, od_ident_end(rest3, 0))
@@ -756,7 +877,8 @@ vein od_handle_code(t0: obsidian, raw0: obsidian, ln0: stone) -> void {
     if (od_cur_item < 0 && d0 == od_base_depth()) {
         od_decl(t, raw, ln, doc)
     } else if (od_cur_item >= 0 && od_seen_open == false) {
-        // corpo ainda nao abriu: `{` em outra linha
+        // corpo ainda nao abriu: `{` em outra linha (antes dele, os contratos)
+        if (od_rule_start(t) == 0) { od_add_rules("", od_cur_item, raw) }
         if (od_find(t, "{", 0) >= 0) { od_seen_open = true od_call_from = od_find(t, "{", 0) + 1 }
     }
     if (od_cur_item >= 0 && od_call_from < 0 && d0 > od_body_depth) { od_call_from = 0 }
@@ -773,7 +895,65 @@ vein od_is_banner(s: obsidian) -> bool {
     return od_starts(t, "──") || od_starts(t, "---") || od_starts(t, "===") || od_starts(t, "***") || od_starts(t, "━━") || od_starts(t, "═")
 }
 
+// "claim rift, abyss" normalizado (palavras separadas por ", ") se a linha e
+// uma diretiva de cabecalho; senao ""
+vein od_directive(raw: obsidian) -> obsidian {
+    forge t = od_trim(raw)
+    if (od_starts(t, "//!")) { t = od_trim(od_tail(t, 3)) }
+    forge cut = od_find(t, "//", 0)
+    if (cut >= 0) { t = od_trim(od_sub(t, 0, cut)) }
+    forge kw = ""
+    if (od_starts(t, "claim ")) { kw = "claim" }
+    if (od_starts(t, "stratum ")) { kw = "stratum" }
+    if (od_starts(t, "caprock ")) { kw = "caprock" }
+    if (ofs_str_len(kw) == 0) { return "" }
+    forge words = ""
+    forge n = ofs_str_len(t)
+    forge i = ofs_str_len(kw)
+    forge st = -1
+    while (i <= n) {
+        forge c = 32
+        if (i < n) { c = ofs_str_char_at(t, i) }
+        if (i < n && c >= 97 && c <= 122) {
+            if (st < 0) { st = i }
+        } else if (c == 32 || c == 44 || c == 9) {
+            if (st >= 0) {
+                if (ofs_str_len(words) > 0) { words = words + ", " }
+                words = words + od_sub(t, st, i)
+            }
+            st = -1
+        } else {
+            return ""
+        }
+        i = i + 1
+    }
+    if (ofs_str_len(words) == 0) { return "" }
+    return kw + " " + words
+}
+
+vein od_apply_directive(dv: obsidian) -> void {
+    forge sp = od_find(dv, " ", 0)
+    forge kw = od_sub(dv, 0, sp)
+    forge v = od_tail(dv, sp + 1)
+    if (ofs_str_eq(kw, "stratum")) {
+        ofs_array_set(od_m_stratum, od_cur_mod, v)
+    } else if (ofs_str_eq(kw, "claim")) {
+        forge cur = od_s(od_m_claims, od_cur_mod)
+        if (ofs_str_len(cur) > 0) { cur = cur + ", " }
+        ofs_array_set(od_m_claims, od_cur_mod, cur + v)
+    } else {
+        ofs_array_set(od_m_caprock, od_cur_mod, v)
+    }
+}
+
 vein od_scan_line(raw: obsidian, ln: stone) -> void {
+    if (od_in_block == false) {
+        forge dv = od_directive(raw)
+        if (ofs_str_len(dv) > 0) {
+            od_apply_directive(dv)
+            return
+        }
+    }
     forge was_block = od_in_block
     forge code = od_strip(raw)
     forge t = od_trim(code)
@@ -865,6 +1045,9 @@ vein od_scan_file(path: obsidian, group: obsidian, rel: obsidian) -> void {
     ofs_array_push(od_m_see, "")
     ofs_array_push(od_m_pub, 0)
     ofs_array_push(od_m_pubdoc, 0)
+    ofs_array_push(od_m_stratum, "")
+    ofs_array_push(od_m_claims, "")
+    ofs_array_push(od_m_caprock, "")
     od_cur_mod = mi
     od_depth = 0
     od_in_block = false
@@ -973,7 +1156,7 @@ vein od_index() -> void {
     while (i < ni) {
         forge kind = od_s(od_i_kind, i)
         forge name = od_s(od_i_name, i)
-        if (ofs_str_eq(kind, "monolith") || ofs_str_eq(kind, "strata") || ofs_str_eq(kind, "type")) {
+        if (ofs_str_eq(kind, "monolith") || ofs_str_eq(kind, "strata") || ofs_str_eq(kind, "type") || ofs_str_eq(kind, "mineral")) {
             forge hd = od_h_put("T:" + name, i)
             if (hd >= 0) { ofs_array_set(od_i_nxs, od_chain_tail_s(hd), i) }
         } else {

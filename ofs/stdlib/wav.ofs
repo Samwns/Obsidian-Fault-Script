@@ -13,6 +13,8 @@
 // por muitos jogos de PC dos anos 90). Sem dependencias de plataforma: a
 // saida de som fica em audio_android.ofs (AAudio).
 
+claim rift
+
 extern vein fopen(path: obsidian, mode: obsidian) -> *stone
 extern vein fclose(f: *stone) -> stone
 extern vein fread(buf: *stone, sz: stone, n: stone, f: *stone) -> stone

@@ -1,14 +1,17 @@
 // Memory Modes Library
 // Nomes e descricao dos blocos de modo de memoria da OFS.
 //
-// Nao ha coletor de lixo (GC) em OFS. fracture, bedrock, abyss e tectonic sao
-// hoje blocos comuns: marcadores de codigo de baixo nivel, sem mudar a
-// semantica de memoria. A memoria e liberada pelo compilador (strings e arrays
-// locais no fim do escopo, quando nao escapam) ou a mao, pelo programa.
+// Nao ha coletor de lixo (GC) em OFS. fracture, abyss e tectonic sao
+// marcadores de codigo de baixo nivel (F4), sem mudar a semantica de memoria.
+// bedrock tambem e, e quando o proprio bloco aloca vira uma arena (A5.3): o
+// que ele aloca sai de uma vez na saida do bloco. O resto da memoria e
+// liberado pelo compilador (strings e arrays locais no fim do escopo, quando
+// nao escapam) ou a mao, pelo programa.
 
 vein explain_memory_modes() {
-    echo("Memory Modes (marcadores de codigo de baixo nivel; nao ha GC):")
-    echo("- fracture/bedrock/abyss/tectonic: blocos comuns, sem efeito proprio na memoria")
+    echo("Memory Modes (blocos de baixo nivel; nao ha GC):")
+    echo("- fracture/abyss/tectonic: liberam operacoes de baixo nivel, sem efeito proprio na memoria")
+    echo("- bedrock: idem; quando o bloco aloca, e uma arena liberada de uma vez na saida")
     echo("- liberacao: o compilador libera strings e arrays locais no fim do escopo, quando nao escapam")
     echo("- o resto da memoria e gerenciado a mao pelo programa")
 }

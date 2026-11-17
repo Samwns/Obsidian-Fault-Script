@@ -20,6 +20,13 @@ namespace typeck {
     forge _abyss_depth: stone = 0
     forge _fault_strict: stone = -1
     forge _fault_warnings: stone = 0
+    // A5.4: usos de baixo nivel sem `claim` (avisos) e os pares
+    // modulo*8+bit ja avisados (uma mensagem por modulo e permissao);
+    // pilha dos blocos de baixo nivel (1 = conta na profundidade, 0 = nao:
+    // `bedrock` num arquivo `stratum crust` e so arena)
+    forge _perm_uses: stone = 0
+    forge _perm_seen: Array<stone> = []
+    forge _fb_counted: Array<stone> = []
     forge _semantic_errors: stone = 0
     forge _check_visits: stone = 0
     // F3: tipos nomeados conhecidos e o retorno da vein em verificacao
@@ -45,6 +52,24 @@ namespace typeck {
     forge TY_FN: stone = 11
     // `extern`/`rift` de simbolo C variadico (printf...): nao vira valor
     forge _variadic_fns: Array<obsidian> = []
+    // veins com parametros de valor padrao (onda 4): nome -> declaracao
+    forge _dflt_names: Array<obsidian> = []
+    forge _dflt_decls: Array<stone> = []
+    // geode (closures): profundidade de escopo dos parametros da vein em
+    // verificacao (simbolos de profundidade >= _fn_base sao locais dela), a
+    // pilha de geodes abertos (profundidade dos parametros de cada um) e as
+    // capturas achadas (por posicao na pilha). O corpo de cada geode vira
+    // uma vein `__geode_<vein>_<k>` no fim do programa (_root_id), com as
+    // capturas como primeiros parametros.
+    forge _fn_base: stone = 1099511627776
+    forge _fn_owner: obsidian = "global"
+    forge _geode_k: stone = 0
+    forge _gd_base: Array<stone> = []
+    forge _cap_gd: Array<stone> = []
+    forge _cap_name: Array<obsidian> = []
+    forge _cap_type: Array<obsidian> = []
+    forge _root_id: stone = -1
+    forge _loop_depth: stone = 0
     
     vein push_scope() -> void {
         _scope_depth++
@@ -89,6 +114,212 @@ namespace typeck {
         dummy.kind = SYM_UNKNOWN
         dummy.param_types = ""
         return dummy
+    }
+
+    // posicao do simbolo visivel com esse nome (-1 se nenhum)
+    vein resolve_index(name: obsidian) -> stone {
+        forge i = ofs_array_len(_symbols) - 1
+        while (i >= 0) {
+            forge sym: Symbol = ofs_array_get(_symbols, i)
+            if (ofs_str_eq(sym.name, name)) { return i }
+            i--
+        }
+        return -1
+    }
+
+    // ── geode (closures) ─────────────────────────────────────────────
+    vein geode_error(n: Node, msg: obsidian, hint: obsidian) -> void {
+        _semantic_errors++
+        echo("[ERRO DE GEODE " + ast_src_loc(n.line, n.col) + "]: " + msg)
+        if (!ofs_str_eq(hint, "")) { echo("  dica: " + hint) }
+    }
+
+    // profundidade de um simbolo local da vein em verificacao (-1 se nao e
+    // variavel/parametro local: global, vein, monolith)
+    vein local_depth(name: obsidian) -> stone {
+        forge si = resolve_index(name)
+        if (si < 0) { return -1 }
+        forge sym: Symbol = ofs_array_get(_symbols, si)
+        if (sym.kind != SYM_VAR && sym.kind != SYM_PARAM && sym.kind != SYM_CONST) { return -1 }
+        forge d: stone = ofs_array_get(_symbol_depths, si)
+        if (d < _fn_base) { return -1 }
+        return d
+    }
+
+    // identificador lido dentro de geode(s): variavel de fora de cada geode
+    // aberto que esta abaixo dele vira captura desse geode
+    vein note_capture(name: obsidian, t: obsidian) -> void {
+        forge g = ofs_array_len(_gd_base) - 1
+        if (g < 0) { return }
+        forge d = local_depth(name)
+        if (d < 0) { return }
+        while (g >= 0) {
+            forge base: stone = ofs_array_get(_gd_base, g)
+            if (d >= base) { return }
+            forge seen = false
+            forge ci = 0
+            while (ci < ofs_array_len(_cap_gd)) {
+                forge cg: stone = ofs_array_get(_cap_gd, ci)
+                forge cn: obsidian = ofs_array_get(_cap_name, ci)
+                if (cg == g && ofs_str_eq(cn, name)) { seen = true }
+                ci++
+            }
+            if (!seen) {
+                ofs_array_push(_cap_gd, g)
+                ofs_array_push(_cap_name, name)
+                ofs_array_push(_cap_type, t)
+            }
+            g--
+        }
+    }
+
+    // atribuir a uma captura dentro do geode: erro (a captura e uma copia)
+    vein check_capture_store(target_id: stone, what: obsidian) -> void {
+        forge g = ofs_array_len(_gd_base) - 1
+        if (g < 0 || target_id < 0) { return }
+        if (node_kind_of(target_id) != NK_IDENT) { return }
+        forge nm = node_val_of(target_id)
+        forge d = local_depth(nm)
+        if (d < 0) { return }
+        forge base: stone = ofs_array_get(_gd_base, g)
+        if (d >= base) { return }
+        geode_error(node_get(target_id), "'" + nm + "' foi capturada por valor pelo geode: " + what + " aqui nao muda a variavel de fora",
+            "use uma copia local (forge v = " + nm + "), ou devolva o valor novo e atribua fora do geode")
+    }
+
+    // no de tipo a partir do texto canonico (parametro da vein do geode)
+    vein make_type_node(t: obsidian, line: stone, col: stone) -> stone {
+        forge tl = ofs_str_len(t)
+        if (tl > 7 && ofs_str_eq(ofs_str_substr(t, 0, 6), "Array<") && ofs_str_char_at(t, tl - 1) == 62) {
+            forge an = node_new(NK_TYPE_ARRAY, "Array", line, col)
+            node_set_child(an, 0, make_type_node(ofs_str_substr(t, 6, tl - 7), line, col))
+            return an
+        }
+        if (vein_type_is(t)) {
+            forge fnn = node_new(NK_TYPE_FN, t, line, col)
+            forge pl = vein_type_params(t)
+            forge pi = 0
+            while (pi < type_list_len(pl)) {
+                node_add_extra(fnn, make_type_node(type_list_at(pl, pi), line, col))
+                pi++
+            }
+            forge rt = vein_type_ret(t)
+            if (!ofs_str_eq(rt, "void")) { node_set_child(fnn, 1, make_type_node(rt, line, col)) }
+            return fnn
+        }
+        return node_new(NK_TYPE, t, line, col)
+    }
+
+    // `geode (params) -> R { corpo }`: confere o corpo no escopo de quem o
+    // cria (as variaveis de fora que ele le viram capturas), tira o corpo
+    // para a vein `__geode_<vein>_<k>(capturas..., params...)` no fim do
+    // programa e deixa no NK_LAMBDA: val = nome dessa vein, extra = as
+    // capturas (NK_IDENT, na ordem), c0..c3 = -1. Tipo: vein(params)->R.
+    vein check_geode(id: stone) -> obsidian {
+        forge n: Node = node_get(id)
+        forge gi = ofs_array_len(_gd_base)
+        push_scope()
+        ofs_array_push(_gd_base, _scope_depth)
+        forge plist = ""
+        forge params_id = n.c0
+        forge pc = 0
+        if (params_id >= 0) {
+            while (pc < node_extra_len(params_id)) {
+                forge pid = node_extra_at(params_id, pc)
+                forge ptid = node_child(pid, 0)
+                forge pts = "unknown"
+                if (ptid >= 0) { pts = type_node_name(ptid) }
+                if (pc > 0) { plist = plist + "," }
+                plist = plist + pts
+                forge psym: Symbol
+                psym.name = node_val_of(pid)
+                psym.type_str = pts
+                psym.kind = SYM_PARAM
+                declare(psym)
+                pc++
+            }
+        }
+        forge ret = "void"
+        if (n.c1 >= 0) { ret = type_node_name(n.c1) }
+        forge saved_ret = _cur_ret
+        forge saved_anchor = _anchor_depth
+        forge saved_loop = _loop_depth
+        _cur_ret = ret
+        _anchor_depth = 0
+        _loop_depth = 0
+        if (n.c2 >= 0) { check_node(n.c2) }
+        _cur_ret = saved_ret
+        _anchor_depth = saved_anchor
+        _loop_depth = saved_loop
+        ofs_array_pop(_gd_base)
+        pop_scope()
+        // capturas deste geode (as dos geodes de dentro ja sairam)
+        forge cnames: Array<obsidian> = []
+        forge ctypes: Array<obsidian> = []
+        forge kg: Array<stone> = []
+        forge kn: Array<obsidian> = []
+        forge kt: Array<obsidian> = []
+        forge ci = 0
+        while (ci < ofs_array_len(_cap_gd)) {
+            forge cg: stone = ofs_array_get(_cap_gd, ci)
+            forge cn: obsidian = ofs_array_get(_cap_name, ci)
+            forge ct: obsidian = ofs_array_get(_cap_type, ci)
+            if (cg == gi) {
+                ofs_array_push(cnames, cn)
+                ofs_array_push(ctypes, ct)
+            } else {
+                ofs_array_push(kg, cg)
+                ofs_array_push(kn, cn)
+                ofs_array_push(kt, ct)
+            }
+            ci++
+        }
+        _cap_gd = kg
+        _cap_name = kn
+        _cap_type = kt
+        // a vein do corpo
+        forge gname = "__geode_" + _fn_owner + "_" + ofs_stone_to_obsidian(_geode_k)
+        _geode_k++
+        forge lp = node_new(NK_BLOCK, "", n.line, n.col)
+        forge li = 0
+        while (li < ofs_array_len(cnames)) {
+            forge cpn = node_new(NK_PARAM, ofs_array_get(cnames, li), n.line, 0)
+            node_set_child(cpn, 0, make_type_node(ofs_array_get(ctypes, li), n.line, n.col))
+            node_add_extra(lp, cpn)
+            li++
+        }
+        if (params_id >= 0) {
+            forge oi = 0
+            while (oi < node_extra_len(params_id)) {
+                node_add_extra(lp, node_extra_at(params_id, oi))
+                oi++
+            }
+        }
+        forge decl = node_new(NK_FN_DECL, gname, n.line, n.col)
+        node_set_child(decl, 0, lp)
+        node_set_child(decl, 1, n.c1)
+        node_set_child(decl, 2, n.c2)
+        if (_root_id >= 0) { node_add_extra(_root_id, decl) }
+        // o no do geode: nome da vein + capturas
+        forge gn: Node = node_get(id)
+        gn.val = gname
+        gn.c0 = -1
+        gn.c1 = -1
+        gn.c2 = -1
+        gn.c3 = -1
+        forge caps: Array<stone> = []
+        li = 0
+        while (li < ofs_array_len(cnames)) {
+            forge cid = node_new(NK_IDENT, ofs_array_get(cnames, li), n.line, n.col)
+            node_set_type(cid, ofs_array_get(ctypes, li))
+            ofs_array_push(caps, cid)
+            li++
+        }
+        gn.extra = caps
+        node_set(id, gn)
+        forge gt = vein_type_make(plist, ret)
+        node_set_type(id, gt)
+        return gt
     }
 
     vein type_node_name(id: stone) -> obsidian {
@@ -232,6 +463,101 @@ namespace typeck {
     }
 
     // tipos dos parametros de uma vein/extern, separados por ','
+    // Parametro com valor padrao (onda 4): `b: stone = 3`. O padrao e um
+    // literal (numero, texto, bool, null, ou -numero) e os parametros com
+    // padrao ficam no fim; a chamada que omite os ultimos argumentos ganha
+    // uma copia do literal (fill_defaults), entao o nativo e o interpretador
+    // veem a chamada completa. A Fault Refract usa isso para aceitar um
+    // parametro novo numa vein em uso (as chamadas antigas recebem o padrao).
+    vein default_is_literal(d: stone) -> bool {
+        forge k = node_kind_of(d)
+        if (k == NK_LIT_INT || k == NK_LIT_FLOAT || k == NK_LIT_STRING || k == NK_LIT_BOOL || k == NK_LIT_NULL) { return true }
+        if (k == NK_UNARY_OP && ofs_str_eq(node_val_of(d), "-")) {
+            forge c = node_child(d, 0)
+            return c >= 0 && (node_kind_of(c) == NK_LIT_INT || node_kind_of(c) == NK_LIT_FLOAT)
+        }
+        return false
+    }
+
+    vein note_defaults(decl_id: stone) -> void {
+        forge params_id = node_child(decl_id, 0)
+        if (params_id < 0) { return }
+        forge any = false
+        forge i = 0
+        while (i < node_extra_len(params_id)) {
+            forge pid = node_extra_at(params_id, i)
+            forge d = node_child(pid, 1)
+            forge pn: Node = node_get(pid)
+            if (d >= 0) {
+                any = true
+                if (!default_is_literal(d)) {
+                    _semantic_errors++
+                    echo("[ERRO SEMANTICO " + ofs_stone_to_obsidian(pn.line) + ":" + ofs_stone_to_obsidian(pn.col) + "]: o valor padrao do parametro '" + pn.val + "' precisa ser um literal (numero, texto, bool ou null)")
+                } else {
+                    forge pt = "unknown"
+                    if (node_child(pid, 0) >= 0) { pt = type_node_name(node_child(pid, 0)) }
+                    check_node(d)
+                    node_set_child(pid, 1, coerce_value(d, pt))
+                }
+            } else if (any) {
+                _semantic_errors++
+                echo("[ERRO SEMANTICO " + ofs_stone_to_obsidian(pn.line) + ":" + ofs_stone_to_obsidian(pn.col) + "]: o parametro '" + pn.val + "' vem depois de um parametro com valor padrao e tambem precisa de um")
+            }
+            i++
+        }
+        if (any) {
+            ofs_array_push(_dflt_names, node_val_of(decl_id))
+            ofs_array_push(_dflt_decls, decl_id)
+        }
+    }
+
+    vein clone_literal(d: stone) -> stone {
+        forge n: Node = node_get(d)
+        forge c = node_new(n.kind, n.val, n.line, n.col)
+        if (n.c0 >= 0) { node_set_child(c, 0, clone_literal(n.c0)) }
+        return c
+    }
+
+    vein default_decl(name: obsidian) -> stone {
+        forge di = ofs_array_len(_dflt_names) - 1
+        while (di >= 0) {
+            forge dn: obsidian = ofs_array_get(_dflt_names, di)
+            if (ofs_str_eq(dn, name)) { return ofs_array_get(_dflt_decls, di) }
+            di--
+        }
+        return -1
+    }
+
+    // os parametros de `from` em diante tem valor padrao?
+    vein defaults_cover(name: obsidian, from: stone) -> bool {
+        forge decl = default_decl(name)
+        if (decl < 0) { return false }
+        forge params_id = node_child(decl, 0)
+        forge i = from
+        while (i < node_extra_len(params_id)) {
+            if (node_child(node_extra_at(params_id, i), 1) < 0) { return false }
+            i++
+        }
+        return true
+    }
+
+    // chamada com menos argumentos: completa com os padroes dos ultimos
+    vein fill_defaults(call_id: stone, name: obsidian) -> void {
+        forge decl = default_decl(name)
+        if (decl < 0) { return }
+        forge params_id = node_child(decl, 0)
+        forge np = node_extra_len(params_id)
+        forge argc = node_extra_len(call_id)
+        while (argc < np) {
+            forge d = node_child(node_extra_at(params_id, argc), 1)
+            if (d < 0) { return }
+            forge c = clone_literal(d)
+            check_node(c)
+            node_add_extra(call_id, c)
+            argc++
+        }
+    }
+
     vein param_types_of(decl_id: stone) -> obsidian {
         forge params_id = node_child(decl_id, 0)
         if (params_id < 0) { return "" }
@@ -328,6 +654,30 @@ namespace typeck {
         return cid
     }
 
+    // ── Ideia 5: magma.vent(m, "nome") ────────────────────────────────
+    // O tipo vein(...) do lugar onde o valor e guardado (forge com tipo, `=`,
+    // argumento, return) e a assinatura pedida ao mod: vira o 3o argumento
+    // (texto canonico, conferido em execucao contra o manifesto do mod) e o
+    // endereco devolvido vira valor de vein desse tipo (NK_CAST gerado aqui,
+    // sem abyss: o stdlib so devolve um endereco se a assinatura bate).
+    vein is_magma_vent(id: stone) -> bool {
+        if (node_kind_of(id) != NK_CALL || !ofs_str_eq(node_val_of(id), "magma__vent")) { return false }
+        if (node_extra_len(id) != 3) { return false }
+        forge sig = node_extra_at(id, 2)
+        return node_kind_of(sig) == NK_LIT_STRING && ofs_str_len(node_val_of(sig)) == 0
+    }
+
+    vein magma_vent_seat(child_id: stone, to_t: obsidian) -> stone {
+        forge sig: Node = node_get(node_extra_at(child_id, 2))
+        sig.val = to_t
+        node_set(node_extra_at(child_id, 2), sig)
+        forge cn: Node = node_get(child_id)
+        forge cid = node_new(NK_CAST, to_t, cn.line, cn.col)
+        node_set_child(cid, 0, child_id)
+        node_set_type(cid, to_t)
+        return cid
+    }
+
     // Valor `child_id` guardado num lugar do tipo `to_t` (forge com tipo,
     // `=`, argumento, return, elemento de array): devolve o no a usar.
     //   inteiro -> crystal; crystal -> inteiro (trunca, como `as`);
@@ -338,6 +688,7 @@ namespace typeck {
         if (child_id < 0) { return child_id }
         forge tc = ty_class(to_t)
         if (tc == TY_UNK) { return child_id }
+        if (tc == TY_FN && is_magma_vent(child_id)) { return magma_vent_seat(child_id, to_t) }
         forge ft = node_type_of(child_id)
         forge fc = ty_class(ft)
         if (fc == TY_UNK || ofs_str_eq(ft, to_t)) { return child_id }
@@ -732,6 +1083,150 @@ namespace typeck {
         else { _fracture_depth-- }
     }
 
+    // ── Estrato e permissoes por modulo (A5.4 + Ideia 4) ─────────────
+    // O modulo de cada no vem da linha dele (ast_mod_of_line). Regra
+    // (docs/LANGUAGE_REFERENCE.md, secao 12):
+    //   stratum crust: nenhuma operacao de baixo nivel, nenhum bloco
+    //     fracture/tectonic/abyss, nenhum extern/rift/quartz ([ERRO DE ESTRATO]);
+    //     bedrock vale so como arena
+    //   stratum fault (padrao): regra da F4 + `claim` para extern/rift vein
+    //     (rift), bloco abyss (abyss) e quartz (quartz)
+    //   stratum abyss: baixo nivel em qualquer lugar e vale como claim de tudo
+    // Uso sem claim: [AVISO DE PERMISSAO] ate 2027-03-16, depois erro;
+    // OFS_STRICT_FAULT=1 ja e [ERRO DE PERMISSAO] (mesma chave da F4).
+    vein stratum_error(n: Node, op: obsidian) -> void {
+        _semantic_errors++
+        echo("[ERRO DE ESTRATO " + ast_src_loc(n.line, n.col) + "]: " + op + " num arquivo 'stratum crust' (sem baixo nivel)")
+        echo("  dica: leve o codigo para um modulo 'stratum fault' (com o claim que ele pede) e anexe-o, ou mude o estrato deste arquivo")
+    }
+
+    vein claim_name(bit: stone) -> obsidian {
+        if (bit == CLAIM_RIFT) { return "rift" }
+        if (bit == CLAIM_ABYSS) { return "abyss" }
+        if (bit == CLAIM_MAGMA) { return "magma" }
+        return "quartz"
+    }
+
+    // `what` usa a permissao `bit` no modulo do no `n`
+    vein require_claim(n: Node, bit: stone, what: obsidian) -> void {
+        forge m = ast_mod_of_line(n.line)
+        if (m < 0) { return }
+        ast_mod_mark_used(m, bit)
+        if (ast_mod_stratum(m) == STRATUM_CRUST) {
+            stratum_error(n, what)
+            return
+        }
+        if ((ast_mod_allowed(m) & bit) != 0) { return }
+        // o resumo da migracao (aviso ate 2027-03-16) nao conta o magma
+        if (bit != CLAIM_MAGMA) { _perm_uses++ }
+        forge key = m * 16 + bit
+        forge i = 0
+        while (i < ofs_array_len(_perm_seen)) {
+            forge k: stone = ofs_array_get(_perm_seen, i)
+            if (k == key) { return }
+            i++
+        }
+        ofs_array_push(_perm_seen, key)
+        forge loc = ast_src_loc(n.line, n.col)
+        forge cn = claim_name(bit)
+        forge msg = what + " sem 'claim " + cn + "' no topo do arquivo"
+        forge hint = "  dica: acrescente a linha 'claim " + cn + "' no topo de " + ast_mod_path(m) + " (quem anexa o modulo ve o que ele pede no ofs check)"
+        // magma (Ideia 5) nasceu com a onda 5: sem migracao, sempre erro
+        if (fault_strict() || bit == CLAIM_MAGMA) {
+            _semantic_errors++
+            echo("[ERRO DE PERMISSAO " + loc + "]: " + msg)
+            echo(hint)
+        } else {
+            fault_note("[AVISO DE PERMISSAO " + loc + "]: " + msg)
+            fault_note(hint)
+        }
+    }
+
+    // extern/rift vein de simbolo do runtime do OFS (ofs_*) nao pede claim
+    vein is_runtime_symbol(name: obsidian) -> bool {
+        if (ofs_str_len(name) < 4) { return false }
+        return ofs_str_eq(ofs_str_substr(name, 0, 4), "ofs_")
+    }
+
+    vein check_extern_claim(decl_id: stone) -> void {
+        forge d: Node = node_get(decl_id)
+        if (is_runtime_symbol(d.val)) { return }
+        forge what = "'extern vein " + d.val + "'"
+        if (d.kind == NK_RIFT_VN) { what = "'rift vein " + d.val + "'" }
+        require_claim(d, CLAIM_RIFT, what)
+    }
+
+    // entrada num bloco fracture/bedrock/tectonic/abyss (ou vein marcada)
+    vein fault_block_open(n: Node, kind: obsidian) -> void {
+        forge counted = 1
+        forge m = ast_mod_of_line(n.line)
+        if (m >= 0 && ast_mod_stratum(m) == STRATUM_CRUST) {
+            if (ofs_str_eq(kind, "bedrock")) {
+                counted = 0
+            } else {
+                stratum_error(n, "bloco '" + kind + "'")
+            }
+        } else if (ofs_str_eq(kind, "abyss")) {
+            require_claim(n, CLAIM_ABYSS, "bloco 'abyss'")
+        }
+        ofs_array_push(_fb_counted, counted)
+        if (counted == 1) { fault_block_enter(kind) }
+    }
+
+    vein fault_block_close(kind: obsidian) -> void {
+        forge counted: stone = ofs_array_pop(_fb_counted)
+        if (counted == 1) { fault_block_leave(kind) }
+    }
+
+    // fim da checagem: claim em arquivo crust, caprock do principal e o
+    // resumo dos avisos
+    vein check_modules() -> void {
+        forge nm = ast_mod_count()
+        forge m = 0
+        while (m < nm) {
+            if (ast_mod_stratum(m) == STRATUM_CRUST && ast_mod_claims(m) != 0) {
+                _semantic_errors++
+                echo("[ERRO DE ESTRATO " + ast_mod_path(m) + "]: 'claim " + ast_claims_text(ast_mod_claims(m)) + "' num arquivo 'stratum crust' (sem baixo nivel)")
+                echo("  dica: tire o claim ou use 'stratum fault'")
+            }
+            m++
+        }
+        forge cap = ast_mod_caprock()
+        if (cap >= 0 && nm > 0) {
+            m = 1
+            // Ideia 5: o teto do magma.caprock vale tambem para o arquivo
+            // principal do mod
+            if (ast_mod_cast_ceiling()) { m = 0 }
+            while (m < nm) {
+                if (!ast_mod_is_runtime(m)) {
+                    forge want = ast_mod_allowed(m) | ast_mod_used(m)
+                    forge extra = want - (want & cap)
+                    if (extra != 0) {
+                        _semantic_errors++
+                        forge lib = ast_claims_text(cap)
+                        if (cap == 0) { lib = "nada (caprock crust)" }
+                        forge how = "pede"
+                        if (ast_mod_stratum(m) == STRATUM_ABYSS) { how = "e 'stratum abyss' (pede tudo):" }
+                        if (ast_mod_cast_ceiling()) {
+                            echo("[ERRO DE PERMISSAO " + ast_mod_path(m) + "]: o mod " + how + " '" + ast_claims_text(extra) +
+                                "', mas o magma.caprock do programa que o carrega libera so: " + lib)
+                            echo("  dica: tire o baixo nivel do mod, ou o programa que carrega libera mais com magma.caprock(\"...\")")
+                        } else {
+                        echo("[ERRO DE PERMISSAO " + ast_mod_path(0) + ":" + ofs_stone_to_obsidian(ast_mod_caprock_line()) + "]: o modulo " +
+                            ast_mod_path(m) + " " + how + " '" + ast_claims_text(extra) + "', mas o caprock do programa principal libera so: " + lib)
+                        echo("  dica: acrescente a permissao ao 'caprock' do principal, ou troque o modulo por um que nao a peca")
+                        }
+                    }
+                }
+                m++
+            }
+        }
+        if (_perm_uses > 0 && !fault_strict()) {
+            fault_note("[AVISO DE PERMISSAO] " + ofs_stone_to_obsidian(_perm_uses) +
+                " uso(s) de baixo nivel sem 'claim' no topo do modulo: viram erro em 2027-03-16; OFS_STRICT_FAULT=1 ja trata como erro")
+        }
+    }
+
     vein is_fault_block(n: Node) -> bool {
         return n.kind == NK_BLOCK && ofs_str_len(n.val) > 0
     }
@@ -741,6 +1236,16 @@ namespace typeck {
     vein require_fault(n: Node, op: obsidian, need_abyss: bool, example: obsidian) -> void {
         if (_abyss_depth > 0) { return }
         if (!need_abyss && _fracture_depth > 0) { return }
+        // estrato do arquivo: abyss libera tudo; crust nao libera nada
+        forge fm = ast_mod_of_line(n.line)
+        if (fm >= 0) {
+            forge fst = ast_mod_stratum(fm)
+            if (fst == STRATUM_ABYSS) { return }
+            if (fst == STRATUM_CRUST) {
+                stratum_error(n, op)
+                return
+            }
+        }
         forge blocks = "fracture, bedrock ou abyss"
         forge vein_mark = "fracture vein"
         if (need_abyss) {
@@ -759,6 +1264,132 @@ namespace typeck {
             fault_note("[AVISO DE FALHA " + loc + "]: " + op + " fora de bloco de baixo nivel (libera: " + blocks + ")")
             fault_note(hint)
         }
+    }
+
+    // ── quartz (F5): assembly inline ─────────────────────────────────
+    vein quartz_error(n: Node, msg: obsidian, hint: obsidian) -> void {
+        _semantic_errors++
+        echo("[ERRO DE QUARTZO " + ast_src_loc(n.line, n.col) + "]: " + msg)
+        if (!ofs_str_eq(hint, "")) { echo("  dica: " + hint) }
+    }
+
+    // tipos que cabem num registrador e podem ser destino de quartz
+    vein quartz_scalar(t: obsidian) -> bool {
+        if (t == null || ofs_str_len(t) == 0) { return false }
+        if (ofs_str_char_at(t, 0) == 42) { return true }
+        if (is_int_type(t) || is_float_type(t)) { return true }
+        return ofs_str_eq(t, "bool") || ofs_str_eq(t, "f32") || ofs_str_eq(t, "ptr")
+    }
+
+    vein quartz_is_digit(c: stone) -> bool {
+        return c >= 48 && c <= 57
+    }
+
+    // confere os operandos $N do texto: N < nops; '$' sozinho = erro
+    vein quartz_check_operands(n: Node, text: obsidian, nops: stone) -> void {
+        forge len = ofs_str_len(text)
+        forge i = 0
+        while (i < len) {
+            if (ofs_str_char_at(text, i) == 36) {
+                if (i + 1 < len && ofs_str_char_at(text, i + 1) == 36) {
+                    i = i + 2
+                } else {
+                    forge j = i + 1
+                    if (j < len && ofs_str_char_at(text, j) == 123) { j++ }
+                    forge start = j
+                    forge idx = 0
+                    while (j < len && quartz_is_digit(ofs_str_char_at(text, j))) {
+                        idx = idx * 10 + ofs_str_char_at(text, j) - 48
+                        j++
+                    }
+                    if (j == start) {
+                        quartz_error(n, "'$' sozinho no texto do quartz: os operandos sao $0, $1, ... e um '$' literal e '$$'",
+                            "imediato AT&T: 'shlq $$32, %rdx' (o LLVM le '$32' como o operando 32)")
+                        return
+                    }
+                    if (idx >= nops) {
+                        forge has = "nenhum operando"
+                        if (nops > 0) { has = ofs_stone_to_obsidian(nops) + " operando(s), $0 a $" + ofs_stone_to_obsidian(nops - 1) }
+                        quartz_error(n, "operando $" + ofs_stone_to_obsidian(idx) + " nao existe: este quartz tem " + has,
+                            "$0 e o destino (-> x), se houver; depois vem cada 'in', na ordem")
+                        return
+                    }
+                    i = j
+                }
+            } else {
+                i++
+            }
+        }
+    }
+
+    vein check_quartz(id: stone) -> void {
+        forge n: Node = node_get(id)
+        forge nops = 0
+        if (n.c0 >= 0) {
+            forge d: Node = node_get(n.c0)
+            forge dsym: Symbol = resolve(d.val)
+            if (dsym.kind == SYM_CONST) {
+                quartz_error(d, "destino '" + d.val + "' do quartz e constante", "use forge para uma saida modificavel")
+                return
+            }
+            if (dsym.kind != SYM_VAR && dsym.kind != SYM_PARAM) {
+                quartz_error(d, "destino '" + d.val + "' do quartz nao e uma variavel declarada",
+                    "declare antes: 'forge " + d.val + ": stone = 0' e depois 'quartz { ... } -> " + d.val + "'")
+                return
+            }
+            if (!quartz_scalar(dsym.type_str)) {
+                quartz_error(d, "destino '" + d.val + "' do quartz e " + dsym.type_str + "; precisa caber num registrador (stone, iN/uN, bool, crystal, f32, ponteiro)", "")
+                return
+            }
+            node_set_type(n.c0, dsym.type_str)
+            nops = 1
+            if (n.c1 >= 0) {
+                forge oc = node_val_of(n.c1)
+                if (ofs_str_contains(oc, ",") || ofs_str_contains(oc, "*")) {
+                    quartz_error(d, "quartz suporta uma saida direta em registrador", "para memoria, passe o endereco como entrada e declare melt \"memory\"")
+                    return
+                }
+                if (ofs_str_eq(oc, "=m") || ofs_str_eq(oc, "+m") || ofs_str_eq(oc, "=&m")) {
+                    quartz_error(d, "saida de memoria no quartz precisa ser uma entrada de endereco", "use in \"r\" ponteiro e melt \"memory\"")
+                    return
+                }
+                if (ofs_str_len(oc) == 0 || (ofs_str_char_at(oc, 0) != 61 && ofs_str_char_at(oc, 0) != 43)) {
+                    quartz_error(d, "restricao da saida '" + oc + "' precisa comecar com '=' (so escreve) ou '+' (le e escreve)",
+                        "ex.: -> " + d.val + " \"=r\"  (qualquer registrador), \"={rax}\" (rax), \"+r\" (entra e sai)")
+                    return
+                }
+            }
+        }
+        forge ni = node_extra_len(id)
+        forge i = 0
+        while (i < ni) {
+            forge inp_id = node_extra_at(id, i)
+            forge inp: Node = node_get(inp_id)
+            forge cons = inp.val
+            if (ofs_str_len(cons) == 0 || ofs_str_char_at(cons, 0) == 61 || ofs_str_char_at(cons, 0) == 43 || ofs_str_char_at(cons, 0) == 126) {
+                quartz_error(inp, "restricao de entrada '" + cons + "' invalida (sem '=', '+' ou '~': isso e de saida ou de melt)",
+                    "ex.: in \"r\" x  (registrador), in \"{rdi}\" x (rdi), in \"m\" x (memoria)")
+                return
+            }
+            forge it = check_node(inp.c0)
+            if (!quartz_scalar(it) && !ofs_str_eq(it, "obsidian") && !ofs_str_eq(it, "null")) {
+                quartz_error(inp, "entrada do quartz precisa ser escalar ou ponteiro (recebeu " + it + ")", "passe o endereco para arrays e monoliths")
+                return
+            }
+            if (ofs_str_eq(cons, "m") || ofs_str_eq(cons, "*m")) {
+                // memoria: o endereco de uma variavel escalar
+                forge e: Node = node_get(inp.c0)
+                forge esym: Symbol = resolve(e.val)
+                if (e.kind != NK_IDENT || (esym.kind != SYM_VAR && esym.kind != SYM_PARAM) || !quartz_scalar(esym.type_str)) {
+                    quartz_error(inp, "entrada de memoria ('" + cons + "') precisa ser uma variavel escalar (o quartz recebe o endereco dela)",
+                        "ex.: in \"m\" contador")
+                    return
+                }
+            }
+            nops++
+            i++
+        }
+        quartz_check_operands(n, n.val, nops)
     }
 
     vein fault_note(msg: obsidian) -> void {
@@ -881,7 +1512,7 @@ namespace typeck {
         forge m_sym: Symbol = resolve(mname)
         if (ofs_str_eq(m_sym.name, "") || m_sym.kind != SYM_FN) { return "" }
         forge cn: Node = node_get(id)
-        if (m_sym.fn_arity == argc + 1) {
+        if (m_sym.fn_arity == argc + 1 || (m_sym.fn_arity > argc + 1 && defaults_cover(mname, argc + 1))) {
             forge recv_id = node_new(NK_IDENT, recv_name, cn.line, cn.col)
             check_node(recv_id)
             forge new_extra: Array<stone> = []
@@ -1021,8 +1652,13 @@ namespace typeck {
             }
             // F6: nome de vein/extern como valor (tipo vein(...)), sem abyss
             if (sym.kind == SYM_FN) { return fn_value_ident(id, sym) }
+            if (ofs_array_len(_gd_base) > 0) { note_capture(n.val, sym.type_str) }
             node_set_type(id, sym.type_str)
             return sym.type_str
+        }
+
+        if (n.kind == NK_LAMBDA) {
+            return check_geode(id)
         }
         
         if (n.kind == NK_BIN_OP) {
@@ -1034,6 +1670,10 @@ namespace typeck {
                 return "bool"
             }
             // atribuicao escrita como operador binario (`x = v`, `x += v`)
+            forge bopl = ofs_str_len(n.val)
+            if (ofs_str_eq(n.val, "=") || (bopl >= 2 && ofs_str_char_at(n.val, bopl - 1) == 61 && !is_cmp_op(n.val))) {
+                check_capture_store(n.c0, "atribuir")
+            }
             if (ofs_str_eq(n.val, "=")) {
                 node_set_child(id, 1, coerce_value(n.c1, left_type))
                 node_set_type(id, left_type)
@@ -1095,6 +1735,7 @@ namespace typeck {
 
         if (n.kind == NK_ASSIGN) {
             forge target_type = check_node(n.c0)
+            check_capture_store(n.c0, "atribuir")
             check_node(n.c1)
             if (ofs_str_eq(n.val, "=") || ofs_str_eq(n.val, "")) {
                 node_set_child(id, 1, coerce_value(n.c1, target_type))
@@ -1107,6 +1748,7 @@ namespace typeck {
 
         if (n.kind == NK_POST_OP) {
             forge operand_type = check_node(n.c0)
+            if (!ofs_str_eq(n.val, "?")) { check_capture_store(n.c0, "'" + n.val + "'") }
             if (ofs_str_eq(n.val, "?")) {
                 // `Solid(v)?` vale v (tipo do payload); qualquer outro `x?`
                 // vale a etiqueta da variante (stone). Ver llvmgen.emit_try.
@@ -1152,6 +1794,7 @@ namespace typeck {
         if (n.kind == NK_UNARY_OP) {
             forge operand_type = check_node(n.c0)
             if (ofs_str_eq(n.val, "&")) {
+                check_capture_store(n.c0, "tomar o endereco '&'")
                 require_fault(n, "endereco '&x'", false, "fracture { shard p: *stone = &x }")
                 forge ptr_t = "*" + operand_type
                 node_set_type(id, ptr_t)
@@ -1297,6 +1940,12 @@ namespace typeck {
                 node_set_type(id, "void")
                 return "void"
             }
+            // A5.1: falha de contrato inserida por contracts.ofs (mensagem
+            // no stderr e codigo 1 nos dois modos)
+            if (ofs_str_eq(n.val, "__ofs_contract_fail")) {
+                node_set_type(id, "void")
+                return "void"
+            }
             if (ofs_str_eq(n.val, "fault_step")) {
                 forge st_t = check_node(node_get_extra(id, 0))
                 node_set_type(id, st_t)
@@ -1342,8 +1991,14 @@ namespace typeck {
                 node_set_type(id, "void")
                 return "void"
             }
+            // Ideia 5: compilar e carregar codigo em execucao pede 'claim
+            // magma' (stratum crust: nunca)
+            if (ofs_str_eq(n.val, "magma__cast")) {
+                require_claim(n, CLAIM_MAGMA, "'magma.cast' (compilar e carregar codigo em execucao)")
+            }
             forge fn_sym: Symbol = resolve(n.val)
             if (!ofs_str_eq(fn_sym.name, "")) {
+                fill_defaults(id, n.val)
                 coerce_args(id, fn_sym.param_types)
                 node_set_type(id, fn_sym.type_str)
                 return fn_sym.type_str
@@ -1353,6 +2008,7 @@ namespace typeck {
             // para `T__area(r, ...)` (receptor como primeiro argumento).
             forge mt = check_method_call(id, n.val, argc)
             if (!ofs_str_eq(mt, "")) {
+                fill_defaults(id, node_val_of(id))
                 forge m_sym: Symbol = resolve(node_val_of(id))
                 coerce_args(id, m_sym.param_types)
                 node_set_type(id, mt)
@@ -1427,6 +2083,10 @@ namespace typeck {
             } else if (init_id >= 0) {
                 // Infer from initializer
                 type_str = check_node(init_id)
+                if (is_magma_vent(init_id)) {
+                    type_error(n, "magma.vent precisa do tipo de vein pedido ao mod",
+                        "declare o tipo: forge " + n.val + ": vein(stone) -> stone = magma.vent(m, \"nome\")")
+                }
             }
             
             // Declare symbol
@@ -1454,6 +2114,12 @@ namespace typeck {
         }
 
         if (n.kind == NK_BREAK || n.kind == NK_CONTINUE) {
+            if (ofs_array_len(_gd_base) > 0 && _loop_depth == 0) {
+                forge bw = "shatter/break"
+                if (n.kind == NK_CONTINUE) { bw = "erode/continue" }
+                geode_error(n, "'" + bw + "' fora de laco dentro do geode (o corpo do geode e outra vein: nao sai do laco de fora)",
+                    "devolva um valor (return) e decida fora do geode")
+            }
             if (_anchor_depth > 0) {
                 if (n.kind == NK_BREAK) { report_anchor_control(n, "shatter") }
                 else { report_anchor_control(n, "erode") }
@@ -1464,6 +2130,13 @@ namespace typeck {
         if (n.kind == NK_THROW) {
             if (_anchor_depth > 0) { report_anchor_control(n, "throw") }
             if (n.c0 >= 0) { check_node(n.c0) }
+            return "void"
+        }
+
+        if (n.kind == NK_QUARTZ) {
+            require_fault(n, "'quartz' (assembly inline)", true, "abyss { quartz { \"nop\" } }")
+            require_claim(n, CLAIM_QUARTZ, "'quartz' (assembly inline)")
+            check_quartz(id)
             return "void"
         }
 
@@ -1513,7 +2186,9 @@ namespace typeck {
         if (n.kind == NK_WHILE) {
             check_node(n.c0)  // condition
             push_scope()
+            _loop_depth++
             check_node(n.c1)  // body
+            _loop_depth--
             pop_scope()
             return "void"
         }
@@ -1522,7 +2197,9 @@ namespace typeck {
             push_scope()
             if (n.c0 >= 0) { check_node(n.c0) }
             if (n.c1 >= 0) { check_node(n.c1) }
+            _loop_depth++
             if (n.c3 >= 0) { check_node(n.c3) }
+            _loop_depth--
             if (n.c2 >= 0) { check_node(n.c2) }
             pop_scope()
             return "void"
@@ -1546,7 +2223,9 @@ namespace typeck {
             rsym.kind = SYM_VAR
             declare(rsym)
             node_set_type(id, rsym.type_str)
+            _loop_depth++
             check_node(n.c1)
+            _loop_depth--
             pop_scope()
             return "void"
         }
@@ -1554,7 +2233,7 @@ namespace typeck {
         if (n.kind == NK_BLOCK) {
             forge fault_kind = n.val
             forge is_fault = is_fault_block(n)
-            if (is_fault) { fault_block_enter(fault_kind) }
+            if (is_fault) { fault_block_open(n, fault_kind) }
             forge i = 0
             forge stmtc = node_extra_len(id)
             while (i < stmtc) {
@@ -1562,7 +2241,7 @@ namespace typeck {
                 check_node(stmt_id)
                 i++
             }
-            if (is_fault) { fault_block_leave(fault_kind) }
+            if (is_fault) { fault_block_close(fault_kind) }
             return "void"
         }
 
@@ -1590,6 +2269,14 @@ namespace typeck {
         if (n.kind == NK_FN_DECL || n.kind == NK_CORE_DECL) {
             push_scope()
             forge saved_ret = _cur_ret
+            forge saved_base = _fn_base
+            forge saved_owner = _fn_owner
+            forge saved_gk = _geode_k
+            _fn_base = _scope_depth
+            _fn_owner = n.val
+            _geode_k = 0
+            // Ideia 5: o modulo que implementa magma.cast carrega codigo
+            if (ofs_str_eq(n.val, "magma__cast")) { require_claim(n, CLAIM_MAGMA, "definir 'magma.cast' (carregar codigo em execucao)") }
             _cur_ret = "unknown"
             if (n.c1 >= 0) { _cur_ret = type_node_name(n.c1) }
             
@@ -1620,6 +2307,9 @@ namespace typeck {
                 check_node(body_id)
             }
             _cur_ret = saved_ret
+            _fn_base = saved_base
+            _fn_owner = saved_owner
+            _geode_k = saved_gk
             
             pop_scope()
             return "void"
@@ -1696,6 +2386,7 @@ namespace typeck {
         }
         
         if (n.kind == NK_PROGRAM) {
+            _root_id = id
             // predeclare top-level functions for call resolution
             forge d = 0
             forge dcount = node_extra_len(id)
@@ -1713,6 +2404,7 @@ namespace typeck {
                     fn_sym.kind = SYM_FN
                     fn_sym.param_types = param_types_of(decl_id)
                     declare(fn_sym)
+                    note_defaults(decl_id)
                 } else if (decl_kind == NK_EXTERN_VN || decl_kind == NK_RIFT_VN) {
                     forge ext_sym: Symbol
                     ext_sym.name = node_val_of(decl_id)
@@ -1725,6 +2417,7 @@ namespace typeck {
                     ext_sym.param_types = param_types_of(decl_id)
                     declare(ext_sym)
                     note_variadic_extern(decl_id)
+                    check_extern_claim(decl_id)
                 } else if (decl_kind == NK_VAR_DECL || decl_kind == NK_CONST_DECL) {
                     // global de topo usado numa vein antes da linha que o declara
                     predeclare_global(decl_id)
@@ -1757,7 +2450,11 @@ namespace typeck {
                             forge mc0 = node_child(member_id, 0)
                             if (mc0 >= 0) { member_sym.fn_arity = node_extra_len(mc0) }
                             declare(member_sym)
-                            if (member_kind == NK_EXTERN_VN || member_kind == NK_RIFT_VN) { note_variadic_extern(member_id) }
+                            if (member_kind == NK_FN_DECL) { note_defaults(member_id) }
+                            if (member_kind == NK_EXTERN_VN || member_kind == NK_RIFT_VN) {
+                                note_variadic_extern(member_id)
+                                check_extern_claim(member_id)
+                            }
                         } else if (member_kind == NK_VAR_DECL || member_kind == NK_CONST_DECL) {
                             // globais de namespace (nome ja mangled ns__nome),
                             // visiveis de fora como `ns.nome`
@@ -1796,9 +2493,20 @@ namespace typeck {
         _fracture_depth = 0
         _abyss_depth = 0
         _fault_warnings = 0
+        _perm_uses = 0
+        _perm_seen = []
+        _fb_counted = []
         _semantic_errors = 0
         _cur_ret = "unknown"
         _check_visits = 0
+        _fn_base = 1099511627776
+        _fn_owner = "global"
+        _geode_k = 0
+        _gd_base = []
+        _cap_gd = []
+        _cap_name = []
+        _cap_type = []
+        _loop_depth = 0
         push_scope()
         check_node(root_id)
         pop_scope()
@@ -1806,6 +2514,54 @@ namespace typeck {
             fault_note("[AVISO DE FALHA] " + ofs_stone_to_obsidian(_fault_warnings) +
                 " operacao(oes) de baixo nivel fora de bloco: viram erro em 2027-01-09; OFS_STRICT_FAULT=1 ja trata como erro")
         }
+        check_modules()
+    }
+
+    // estado zerado para checar outro programa no mesmo processo (Fault
+    // Refract: a versao nova e checada do zero, como numa execucao nova)
+    vein reset() -> void {
+        _symbols = []
+        _symbol_depths = []
+        _scope_depth = 0
+        _field_owners = []
+        _field_names = []
+        _field_types = []
+        _strata_types = []
+        _mono_types = []
+        _variadic_fns = []
+        _dflt_names = []
+        _dflt_decls = []
+    }
+
+    // A5.3 (sediment.ofs): strata (etiqueta i64) e monolith conhecidos
+    vein is_strata_t(t: obsidian) -> bool {
+        return list_has(_strata_types, t)
+    }
+
+    // valor sem memoria propria (numero, bool, etiqueta de strata, void)
+    vein is_scalar_t(t: obsidian) -> bool {
+        forge c = ty_class(t)
+        return c == TY_INT || c == TY_FLT || c == TY_BOOL || c == TY_VAR || c == TY_VOID || c == TY_NULL
+    }
+
+    vein is_mono_t(t: obsidian) -> bool {
+        return list_has(_mono_types, t)
+    }
+
+    // o monolith tem campo que aponta para memoria (texto, Array, ponteiro,
+    // outro monolith, vein)? copia-lo por valor copia esses ponteiros
+    vein mono_has_pointers(t: obsidian) -> bool {
+        forge i = 0
+        while (i < ofs_array_len(_field_owners)) {
+            forge fo: obsidian = ofs_array_get(_field_owners, i)
+            if (ofs_str_eq(fo, t)) {
+                forge ft: obsidian = ofs_array_get(_field_types, i)
+                forge c = ty_class(ft)
+                if (c != TY_INT && c != TY_FLT && c != TY_BOOL && c != TY_VAR) { return true }
+            }
+            i++
+        }
+        return false
     }
 
     vein fault_warning_count() -> stone {

@@ -1,3 +1,5 @@
+claim rift
+
 attach {F:reservoir.ofs}
 
 extern vein strlen(s: obsidian) -> stone
@@ -21,8 +23,8 @@ vein ofs_str_len(s: obsidian) -> stone {
 // mesma string. A comparacao do cache e de PONTEIRO: `s == __ofs_charat_s`
 // entre `obsidian` vira strcmp (O(n) por chamada; laco sobre 1 MB = ANR no
 // Android, onde o runtime e compilado deste fonte).
-forge __ofs_charat_s: obsidian = null
-forge __ofs_charat_n: stone = 0
+// (__ofs_charat_s/__ofs_charat_n ficam em reservoir.ofs: a arena do
+// bedrock zera o cache quando fecha)
 
 vein ofs_str_char_at(s: obsidian, idx: stone) -> stone {
     fracture {
@@ -141,7 +143,7 @@ vein ofs_str_concat_ex(a: obsidian, b: obsidian, flags: stone) -> obsidian {
         fracture { *term = 0 as u8 }
         if ((flags & 2) != 0 && b != null) {
             __ofs_str_forget(b)
-            free(b as *stone)
+            ofs_free(b as *stone)
         }
         return res
     }
@@ -152,7 +154,7 @@ vein ofs_str_release(s: obsidian, own: stone) -> void {
     fracture {
         if (own != 0 && s != null) {
             __ofs_str_forget(s)
-            free(s as *stone)
+            ofs_free(s as *stone)
         }
     }
 }

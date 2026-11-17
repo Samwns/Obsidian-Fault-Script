@@ -1,0 +1,397 @@
+// OFS Compiler — ofs fossil (Ideia 2): o arquivo .fossil
+// claim em forma de comentario: a semente (ofs/dist/ofscc) e anterior a onda 5
+//! claim rift
+//
+// `ofs fossil app.ofs` roda o programa interpretado e grava num .fossil tudo o
+// que vem de fora e nao e deterministico: as chamadas externas pelo Rift
+// (extern/rift vein e as veins nativas do runtime, todas passam por
+// interpreter.call_extern -> ffi_call_addr), com o retorno e os bytes que o C
+// escreveu na memoria do programa. `ofs fossil replay app.fossil` roda de
+// novo devolvendo o gravado no lugar dessas chamadas. Este arquivo tem o
+// formato (leitura e escrita) e a tabela de politica por simbolo; o gancho e
+// a navegacao no tempo ficam no interpretador (secao "ofs fossil").
+//
+// Formato (versao 1): texto com cargas brutas prefixadas pelo tamanho.
+//   OFS-FOSSIL 1\n
+//   S <hash do fonte> <n>\n<caminho do principal, n bytes>\n
+//   E <simbolo> <rk> <rv> [<fbits> [<hash>]]\n  uma chamada externa (zeros
+//                                             do fim omitidos)
+//     [<n>\n<n bytes>\n]                       carga do retorno (rk 1 e 3)
+//     [M <arg> <n>\n<n bytes>\n]*              memoria escrita pelo C no arg
+//   F <passos> <eventos> <codigo de saida>\n   fim (gravado na saida)
+// rk: 0 = valor bruto rv; 1 = texto (carga); 2 = o proprio argumento rv
+// (fgets devolve o buffer); 3 = bloco de memoria novo (carga; localtime).
+// fbits: bits do retorno em ponto flutuante. hash: FNV-1a dos dados de
+// saida (write/fwrite/fputs...), conferido no replay (0 = sem conferencia).
+
+extern vein fflush(f: obsidian) -> stone
+
+// politica de uma chamada externa
+forge FZ_LIVE: stone = 0
+forge FZ_WORLD: stone = 1
+forge FZ_OUT: stone = 2
+forge FZ_EXIT: stone = 3
+// retorno
+forge FZ_RM_NORMAL: stone = 0
+forge FZ_RM_OPAQUE: stone = 1
+forge FZ_RM_RBUF: stone = 2
+forge FZ_NONE: stone = 15
+// tamanho da memoria escrita pelo C (efeito)
+forge FZ_EK_R: stone = 1
+forge FZ_EK_RA1: stone = 2
+forge FZ_EK_STR: stone = 3
+forge FZ_EK_16: stone = 4
+forge FZ_EK_8: stone = 5
+forge FZ_EK_56: stone = 6
+forge FZ_EK_144: stone = 7
+// quando a saida e o console (no replay ela roda de verdade)
+forge FZ_CK_NEVER: stone = 0
+forge FZ_CK_ALWAYS: stone = 1
+forge FZ_CK_FD: stone = 2
+forge FZ_CK_FILE: stone = 3
+// dados conferidos pelo hash
+forge FZ_HK_A2: stone = 1
+forge FZ_HK_A1A2: stone = 2
+forge FZ_HK_STR: stone = 3
+forge FZ_HK_VAL: stone = 4
+// bloco devolvido por localtime/gmtime (struct tm)
+forge FZ_RBUF_BYTES: stone = 56
+
+// spec = pol | rm<<4 | arg do efeito<<8 | tamanho<<12 | console<<16 |
+//        arg do console<<20 | arg do hash<<24 | dados do hash<<28
+vein fz_mk(pol: stone, rm: stone, earg: stone, ek: stone, ck: stone, carg: stone, harg: stone, hk: stone) -> stone {
+    return pol | (rm << 4) | (earg << 8) | (ek << 12) | (ck << 16) | (carg << 20) | (harg << 24) | (hk << 28)
+}
+
+vein fz_field(sp: stone, shift: stone) -> stone {
+    return (sp >> shift) & 15
+}
+
+vein fz_plain() -> stone { return fz_mk(FZ_WORLD, FZ_RM_NORMAL, FZ_NONE, 0, 0, 0, FZ_NONE, 0) }
+vein fz_eff(arg: stone, ek: stone) -> stone { return fz_mk(FZ_WORLD, FZ_RM_NORMAL, arg, ek, 0, 0, FZ_NONE, 0) }
+vein fz_out(ck: stone, carg: stone, harg: stone, hk: stone) -> stone { return fz_mk(FZ_OUT, FZ_RM_NORMAL, FZ_NONE, 0, ck, carg, harg, hk) }
+
+vein fz_in(sym: obsidian, list: obsidian) -> bool {
+    return ofs_str_contains(list, " " + sym + " ")
+}
+
+// politica do simbolo C (0 = roda de verdade nos dois modos: funcoes puras,
+// memoria, texto, matematica)
+vein fz_spec(sym: obsidian) -> stone {
+    // entrada: o C escreve no buffer do programa
+    if (fz_in(sym, " read pread recv recvfrom SSL_read AAsset_read getrandom ")) {
+        if (ofs_str_eq(sym, "getrandom")) { return fz_eff(0, FZ_EK_R) }
+        return fz_eff(1, FZ_EK_R)
+    }
+    if (ofs_str_eq(sym, "fread")) { return fz_eff(0, FZ_EK_RA1) }
+    if (ofs_str_eq(sym, "fgets") || ofs_str_eq(sym, "getcwd")) { return fz_eff(0, FZ_EK_STR) }
+    if (ofs_str_eq(sym, "clock_gettime")) { return fz_eff(1, FZ_EK_16) }
+    if (ofs_str_eq(sym, "gettimeofday")) { return fz_eff(0, FZ_EK_16) }
+    if (ofs_str_eq(sym, "time")) { return fz_eff(0, FZ_EK_8) }
+    if (ofs_str_eq(sym, "localtime_r") || ofs_str_eq(sym, "gmtime_r")) { return fz_eff(1, FZ_EK_56) }
+    if (fz_in(sym, " stat lstat fstat ")) { return fz_eff(1, FZ_EK_144) }
+    if (ofs_str_eq(sym, "localtime") || ofs_str_eq(sym, "gmtime")) {
+        return fz_mk(FZ_WORLD, FZ_RM_RBUF, FZ_NONE, 0, 0, 0, FZ_NONE, 0)
+    }
+    // ponteiros opacos (FILE*, DIR*): o valor gravado so volta ao C gravado
+    if (fz_in(sym, " fopen fdopen freopen popen tmpfile opendir ")) {
+        return fz_mk(FZ_WORLD, FZ_RM_OPAQUE, FZ_NONE, 0, 0, 0, FZ_NONE, 0)
+    }
+    // entrada padrao, relogio, aleatorio, ambiente, processo, arquivos, rede
+    if (fz_in(sym, " getchar fgetc getc ofs_read_line getenv secure_getenv ofs_getenv foundation__get_env ")) { return fz_plain() }
+    if (fz_in(sym, " clock pulse__now_ms pulse__wall_time pulse__sleep_ms usleep sleep nanosleep ")) { return fz_plain() }
+    if (fz_in(sym, " rand random rand_r lrand48 mrand48 drand48 srand srandom srand48 arc4random arc4random_uniform ")) { return fz_plain() }
+    if (fz_in(sym, " getpid getppid getuid isatty ")) { return fz_plain() }
+    if (fz_in(sym, " fclose pclose closedir fseek ftell rewind feof ferror fileno access chdir ")) { return fz_plain() }
+    if (fz_in(sym, " open openat close remove unlink rename mkdir rmdir system ")) { return fz_plain() }
+    if (fz_in(sym, " socket connect bind listen accept setsockopt shutdown closesocket ")) { return fz_plain() }
+    // saida: gravada com o hash dos dados; no replay so o console roda
+    if (ofs_str_eq(sym, "write")) { return fz_out(FZ_CK_FD, 0, 1, FZ_HK_A2) }
+    if (ofs_str_eq(sym, "dprintf")) { return fz_out(FZ_CK_FD, 0, 1, FZ_HK_STR) }
+    if (ofs_str_eq(sym, "fwrite")) { return fz_out(FZ_CK_FILE, 3, 0, FZ_HK_A1A2) }
+    if (ofs_str_eq(sym, "fputs")) { return fz_out(FZ_CK_FILE, 1, 0, FZ_HK_STR) }
+    if (ofs_str_eq(sym, "fputc") || ofs_str_eq(sym, "putc")) { return fz_out(FZ_CK_FILE, 1, 0, FZ_HK_VAL) }
+    if (ofs_str_eq(sym, "fprintf")) { return fz_out(FZ_CK_FILE, 0, 1, FZ_HK_STR) }
+    if (ofs_str_eq(sym, "fflush")) { return fz_out(FZ_CK_FILE, 0, FZ_NONE, 0) }
+    if (ofs_str_eq(sym, "printf") || ofs_str_eq(sym, "puts")) { return fz_out(FZ_CK_ALWAYS, 0, 0, FZ_HK_STR) }
+    if (ofs_str_eq(sym, "putchar")) { return fz_out(FZ_CK_ALWAYS, 0, 0, FZ_HK_VAL) }
+    if (fz_in(sym, " send sendto SSL_write ")) { return fz_out(FZ_CK_NEVER, 0, 1, FZ_HK_A2) }
+    if (ofs_str_eq(sym, "prism__save_ppm")) { return fz_out(FZ_CK_NEVER, 0, FZ_NONE, 0) }
+    // saida do processo: o fossil fecha antes
+    if (fz_in(sym, " exit _exit ofs_exit foundation__terminate ")) { return FZ_EXIT }
+    return 0
+}
+
+// ── bytes crus ──────────────────────────────────────────────────────────
+
+vein fz_byte_at(a: stone) -> stone {
+    fracture {
+        forge p: *u8 = a as *u8
+        forge v: u8 = 0
+        fracture { v = *p }
+        return v as stone
+    }
+}
+
+vein fz_set_byte(a: stone, v: stone) -> void {
+    fracture {
+        forge p: *u8 = a as *u8
+        fracture { *p = v as u8 }
+    }
+}
+
+vein fz_copy(dst: stone, src: stone, n: stone) -> void {
+    if (n <= 0) { return }
+    fracture {
+        memcpy(dst as *u8, src as *u8, n)
+    }
+}
+
+// n bytes em a -> obsidian novo (com o zero final)
+vein fz_text(a: stone, n: stone) -> obsidian {
+    forge out: obsidian = ofs_alloc(n + 1)
+    fz_copy(out as stone, a, n)
+    fz_set_byte(out as stone + n, 0)
+    return out
+}
+
+// FNV-1a de n bytes crus
+vein fz_hash_raw(a: stone, n: stone, basis: stone) -> stone {
+    forge h = basis
+    forge i = 0
+    while (i < n) {
+        h = h ^ fz_byte_at(a + i)
+        h = h * 1099511628211
+        i++
+    }
+    return h
+}
+
+vein fz_hash_int(v: stone, basis: stone) -> stone {
+    forge h = basis
+    forge i = 0
+    while (i < 8) {
+        h = h ^ ((v >> (8 * i)) & 255)
+        h = h * 1099511628211
+        i++
+    }
+    return h
+}
+
+// hash do conteudo dos arquivos do programa (o principal e os attach locais)
+vein fz_sources_hash(paths: Array<obsidian>) -> stone {
+    forge h = 1469598103934665603
+    forge i = 0
+    while (i < ofs_array_len(paths)) {
+        forge p: obsidian = ofs_array_get(paths, i)
+        forge f = fopen(p, "rb")
+        if (f != null) {
+            fseek(f, 0, 2)
+            forge size = ftell(f)
+            fseek(f, 0, 0)
+            if (size > 0) {
+                forge buf = ofs_alloc(size + 1)
+                fread(buf, 1, size, f)
+                h = fz_hash_raw(buf as stone, size, h)
+                ofs_free(buf)
+            }
+            fclose(f)
+        }
+        h = h ^ 10
+        h = h * 1099511628211
+        i++
+    }
+    if (h == 0) { h = 1 }
+    return h
+}
+
+// ── escrita ─────────────────────────────────────────────────────────────
+
+forge _fz_w: obsidian = null
+
+vein fz_create(path: obsidian) -> bool {
+    _fz_w = fopen(path, "wb")
+    return _fz_w != null
+}
+
+vein fz_put(s: obsidian) -> void {
+    if (_fz_w == null) { return }
+    fputs(s, _fz_w)
+}
+
+vein fz_put_raw(a: stone, n: stone) -> void {
+    if (_fz_w == null || n <= 0) { return }
+    fwrite(a as obsidian, 1, n, _fz_w)
+}
+
+// carga: "<n>\n<bytes>\n"
+vein fz_put_blob(a: stone, n: stone) -> void {
+    fz_put(ofs_stone_to_obsidian(n) + "\n")
+    fz_put_raw(a, n)
+    fz_put("\n")
+}
+
+vein fz_sync() -> void {
+    if (_fz_w != null) { fflush(_fz_w) }
+}
+
+vein fz_close() -> void {
+    if (_fz_w == null) { return }
+    fclose(_fz_w)
+    _fz_w = null
+}
+
+vein fz_header_write(src: obsidian, hash: stone) -> void {
+    fz_put("OFS-FOSSIL 1\n")
+    fz_put("S " + ofs_stone_to_obsidian(hash) + " ")
+    fz_put_blob(src as stone, ofs_str_len(src))
+    fz_sync()
+}
+
+// ── leitura ─────────────────────────────────────────────────────────────
+
+forge _fz_rb: stone = 0
+forge _fz_rlen: stone = 0
+forge _fz_rpos: stone = 0
+forge _fz_hdr_hash: stone = 0
+forge _fz_hdr_src: obsidian = ""
+forge _fz_hdr_err: obsidian = ""
+// a ultima palavra lida terminou a linha
+forge _fz_eol: bool = false
+
+vein fz_load(path: obsidian) -> bool {
+    forge f = fopen(path, "rb")
+    if (f == null) { return false }
+    fseek(f, 0, 2)
+    forge size = ftell(f)
+    fseek(f, 0, 0)
+    if (size < 0) { size = 0 }
+    forge buf = ofs_alloc(size + 1)
+    fread(buf, 1, size, f)
+    fclose(f)
+    _fz_rb = buf as stone
+    _fz_rlen = size
+    _fz_rpos = 0
+    return true
+}
+
+vein fz_peek() -> stone {
+    if (_fz_rpos >= _fz_rlen) { return -1 }
+    return fz_byte_at(_fz_rb + _fz_rpos)
+}
+
+// palavra ate o espaco ou a quebra de linha (consome o separador)
+vein fz_word() -> obsidian {
+    forge st = _fz_rpos
+    while (_fz_rpos < _fz_rlen) {
+        forge c = fz_byte_at(_fz_rb + _fz_rpos)
+        if (c == 32 || c == 10) { break }
+        _fz_rpos++
+    }
+    forge w = fz_text(_fz_rb + st, _fz_rpos - st)
+    _fz_eol = true
+    if (_fz_rpos < _fz_rlen) {
+        _fz_eol = fz_byte_at(_fz_rb + _fz_rpos) == 10
+        _fz_rpos++
+    }
+    return w
+}
+
+vein fz_parse_int(w: obsidian) -> stone {
+    forge n = ofs_str_len(w)
+    forge i = 0
+    forge neg = false
+    if (n > 0 && ofs_str_char_at(w, 0) == 45) {
+        neg = true
+        i = 1
+    }
+    forge v = 0
+    while (i < n) {
+        forge c = ofs_str_char_at(w, i)
+        if (c < 48 || c > 57) { break }
+        v = v * 10 + (c - 48)
+        i++
+    }
+    if (neg) { return 0 - v }
+    return v
+}
+
+vein fz_int() -> stone {
+    return fz_parse_int(fz_word())
+}
+
+// n bytes da carga (endereco no buffer lido) e a quebra de linha depois
+vein fz_take(n: stone) -> stone {
+    forge a = _fz_rb + _fz_rpos
+    if (n < 0) { n = 0 }
+    if (_fz_rpos + n > _fz_rlen) { n = _fz_rlen - _fz_rpos }
+    _fz_rpos = _fz_rpos + n
+    if (fz_peek() == 10) { _fz_rpos++ }
+    return a
+}
+
+// cabecalho: false com _fz_hdr_err
+vein fz_header_read() -> bool {
+    forge magic = fz_word()
+    if (!ofs_str_eq(magic, "OFS-FOSSIL")) {
+        _fz_hdr_err = "nao e um arquivo .fossil"
+        return false
+    }
+    forge ver = fz_int()
+    if (ver != 1) {
+        _fz_hdr_err = "versao " + ofs_stone_to_obsidian(ver) + " do formato nao suportada (este ofscc le a 1)"
+        return false
+    }
+    if (!ofs_str_eq(fz_word(), "S")) {
+        _fz_hdr_err = "cabecalho sem o registro S (fonte)"
+        return false
+    }
+    _fz_hdr_hash = fz_int()
+    forge n = fz_int()
+    _fz_hdr_src = fz_text(fz_take(n), n)
+    return true
+}
+
+// caminho do programa gravado ("" se o arquivo nao for um fossil)
+vein fz_header_source(path: obsidian) -> obsidian {
+    if (path == null || !fz_load(path)) { return "" }
+    if (!fz_header_read()) { return "" }
+    return _fz_hdr_src
+}
+
+// linha `line` (1..) de um arquivo de texto, para mostrar onde o replay esta
+forge _fz_line_path: obsidian = ""
+forge _fz_line_buf: obsidian = ""
+forge _fz_line_len: stone = 0
+
+vein fz_source_line(path: obsidian, line: stone) -> obsidian {
+    if (!ofs_str_eq(path, _fz_line_path)) {
+        _fz_line_path = path
+        _fz_line_buf = ""
+        _fz_line_len = 0
+        forge f = fopen(path, "rb")
+        if (f != null) {
+            fseek(f, 0, 2)
+            forge size = ftell(f)
+            fseek(f, 0, 0)
+            if (size > 0) {
+                _fz_line_buf = ofs_alloc(size + 1)
+                fread(_fz_line_buf, 1, size, f)
+                fz_set_byte(_fz_line_buf as stone + size, 0)
+                _fz_line_len = size
+            }
+            fclose(f)
+        }
+    }
+    forge a = _fz_line_buf as stone
+    forge i = 0
+    forge cur = 1
+    while (i < _fz_line_len && cur < line) {
+        if (fz_byte_at(a + i) == 10) { cur++ }
+        i++
+    }
+    if (cur != line) { return "" }
+    forge st = i
+    while (i < _fz_line_len && fz_byte_at(a + i) != 10) { i++ }
+    return fz_text(a + st, i - st)
+}

@@ -30,6 +30,8 @@
 // Limites: sem zip64 (4 GB), sem criptografia, sem multi-volume. O arquivo
 // aberto para leitura fica inteiro na memoria. Um zip por vez em cada modo.
 
+claim rift
+
 attach {F:png.ofs}
 attach {F:sha256.ofs}
 

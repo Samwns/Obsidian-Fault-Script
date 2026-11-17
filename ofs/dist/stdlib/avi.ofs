@@ -17,6 +17,8 @@
 // no tempo recomeca do quadro 0). O arquivo fica aberto e cada quadro e
 // lido do disco na hora (videos de 100 MB nao vao para a memoria).
 
+claim rift
+
 extern vein fopen(path: obsidian, mode: obsidian) -> *stone
 extern vein fclose(f: *stone) -> stone
 extern vein fread(buf: *stone, sz: stone, n: stone, f: *stone) -> stone

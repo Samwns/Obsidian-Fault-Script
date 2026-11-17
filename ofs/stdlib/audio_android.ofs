@@ -18,6 +18,8 @@
 // callback passar por pelo menos dois ciclos (audio.pump).
 // Linkar com -laaudio (`ofs build --target android` ja faz).
 
+claim rift, abyss
+
 attach {F:wav.ofs}
 
 rift vein _aa_create_builder(out: *stone) -> stone bind "AAudio_createStreamBuilder" abi c

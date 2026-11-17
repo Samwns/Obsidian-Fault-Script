@@ -48,6 +48,10 @@ source_filename = "ofs_module"
 @str.42 = private unnamed_addr constant [11 x i8] c"ws2_32.dll\00", align 1
 @__ofs_charat_s = global ptr null
 @__ofs_charat_n = global i64 0
+@__ofs_arena_cur = global ptr null
+@__ofs_arena_top = global ptr null
+@__ofs_arena_spare = global ptr null
+@__ofs_arena_hit = global ptr null
 @_frame_title = global ptr @str.27
 @_frame_width = global i64 1024
 @_frame_height = global i64 768
@@ -294,25 +298,39 @@ if_else31:
   br label %if_end32
 
 if_end32:
-  %ptr31 = alloca ptr, align 8
-  %size_val32 = load i64, ptr %size.addr
-  %call33 = call ptr @calloc(i64 1, i64 %size_val32)
-  store ptr %call33, ptr %ptr31
-  %ptr_val34 = load ptr, ptr %ptr31
-  %cmp35 = icmp eq ptr %ptr_val34, null
-  br i1 %cmp35, label %if_then33, label %if_else34
+  %__ofs_arena_cur_val31 = load ptr, ptr @__ofs_arena_cur
+  %cmp32 = icmp ne ptr %__ofs_arena_cur_val31, null
+  br i1 %cmp32, label %if_then33, label %if_else34
 
 if_then33:
-  %size_val36 = load i64, ptr %size.addr
-  call void @ofs_out_of_memory(i64 %size_val36)
-  br label %if_end35
+  %__ofs_arena_cur_val33 = load ptr, ptr @__ofs_arena_cur
+  %size_val34 = load i64, ptr %size.addr
+  %call35 = call ptr @__ofs_arena_alloc(ptr %__ofs_arena_cur_val33, i64 %size_val34)
+  ret ptr %call35
 
 if_else34:
   br label %if_end35
 
 if_end35:
-  %ptr_val37 = load ptr, ptr %ptr31
-  ret ptr %ptr_val37
+  %ptr36 = alloca ptr, align 8
+  %size_val37 = load i64, ptr %size.addr
+  %call38 = call ptr @calloc(i64 1, i64 %size_val37)
+  store ptr %call38, ptr %ptr36
+  %ptr_val39 = load ptr, ptr %ptr36
+  %cmp40 = icmp eq ptr %ptr_val39, null
+  br i1 %cmp40, label %if_then36, label %if_else37
+
+if_then36:
+  %size_val41 = load i64, ptr %size.addr
+  call void @ofs_out_of_memory(i64 %size_val41)
+  br label %if_end38
+
+if_else37:
+  br label %if_end38
+
+if_end38:
+  %ptr_val42 = load ptr, ptr %ptr36
+  ret ptr %ptr_val42
 }
 
 define ptr @ofs_realloc(ptr %ptr, i64 %size) {
@@ -321,75 +339,1010 @@ entry:
   store ptr %ptr, ptr %ptr.addr
   %size.addr = alloca i64, align 8
   store i64 %size, ptr %size.addr
-  %size_val38 = load i64, ptr %size.addr
-  %cmp39 = icmp sle i64 %size_val38, 0
-  br i1 %cmp39, label %if_then36, label %if_else37
-
-if_then36:
-  store i64 1, ptr %size.addr
-  br label %if_end38
-
-if_else37:
-  br label %if_end38
-
-if_end38:
-  %np40 = alloca ptr, align 8
-  %ptr_val41 = load ptr, ptr %ptr.addr
-  %size_val42 = load i64, ptr %size.addr
-  %call43 = call ptr @realloc(ptr %ptr_val41, i64 %size_val42)
-  store ptr %call43, ptr %np40
-  %np_val44 = load ptr, ptr %np40
-  %cmp45 = icmp eq ptr %np_val44, null
-  br i1 %cmp45, label %if_then39, label %if_else40
+  %size_val43 = load i64, ptr %size.addr
+  %cmp44 = icmp sle i64 %size_val43, 0
+  br i1 %cmp44, label %if_then39, label %if_else40
 
 if_then39:
-  %size_val46 = load i64, ptr %size.addr
-  call void @ofs_out_of_memory(i64 %size_val46)
+  store i64 1, ptr %size.addr
   br label %if_end41
 
 if_else40:
   br label %if_end41
 
 if_end41:
-  %np_val47 = load ptr, ptr %np40
-  ret ptr %np_val47
+  %sc_slot45 = alloca i1, align 1
+  %__ofs_arena_top_val46 = load ptr, ptr @__ofs_arena_top
+  %cmp47 = icmp ne ptr %__ofs_arena_top_val46, null
+  store i1 %cmp47, ptr %sc_slot45
+  br i1 %cmp47, label %sc_rhs42, label %sc_end43
+
+sc_rhs42:
+  %ptr_val48 = load ptr, ptr %ptr.addr
+  %cmp49 = icmp ne ptr %ptr_val48, null
+  store i1 %cmp49, ptr %sc_slot45
+  br label %sc_end43
+
+sc_end43:
+  %sc50 = load i1, ptr %sc_slot45
+  br i1 %sc50, label %if_then44, label %if_else45
+
+if_then44:
+  %rc51 = alloca ptr, align 8
+  %ptr_val52 = load ptr, ptr %ptr.addr
+  %call53 = call ptr @__ofs_arena_chunk_of(ptr %ptr_val52)
+  store ptr %call53, ptr %rc51
+  %rc_val54 = load ptr, ptr %rc51
+  %cmp55 = icmp ne ptr %rc_val54, null
+  br i1 %cmp55, label %if_then47, label %if_else48
+
+if_then47:
+  %rc_val56 = load ptr, ptr %rc51
+  %ptr_val57 = load ptr, ptr %ptr.addr
+  %size_val58 = load i64, ptr %size.addr
+  %call59 = call ptr @__ofs_arena_regrow(ptr %rc_val56, ptr %ptr_val57, i64 %size_val58)
+  ret ptr %call59
+
+if_else48:
+  br label %if_end49
+
+if_end49:
+  br label %if_end46
+
+if_else45:
+  br label %if_end46
+
+if_end46:
+  %np60 = alloca ptr, align 8
+  %ptr_val61 = load ptr, ptr %ptr.addr
+  %size_val62 = load i64, ptr %size.addr
+  %call63 = call ptr @realloc(ptr %ptr_val61, i64 %size_val62)
+  store ptr %call63, ptr %np60
+  %np_val64 = load ptr, ptr %np60
+  %cmp65 = icmp eq ptr %np_val64, null
+  br i1 %cmp65, label %if_then50, label %if_else51
+
+if_then50:
+  %size_val66 = load i64, ptr %size.addr
+  call void @ofs_out_of_memory(i64 %size_val66)
+  br label %if_end52
+
+if_else51:
+  br label %if_end52
+
+if_end52:
+  %np_val67 = load ptr, ptr %np60
+  ret ptr %np_val67
 }
 
 define void @ofs_free(ptr %ptr) {
 entry:
   %ptr.addr = alloca ptr, align 8
   store ptr %ptr, ptr %ptr.addr
-  %ptr_val48 = load ptr, ptr %ptr.addr
-  %cmp49 = icmp ne ptr %ptr_val48, null
-  br i1 %cmp49, label %if_then42, label %if_else43
+  %ptr_val68 = load ptr, ptr %ptr.addr
+  %cmp69 = icmp ne ptr %ptr_val68, null
+  br i1 %cmp69, label %if_then53, label %if_else54
 
-if_then42:
-  %ptr_val50 = load ptr, ptr %ptr.addr
-  call void @free(ptr %ptr_val50)
-  br label %if_end44
+if_then53:
+  %__ofs_arena_top_val70 = load ptr, ptr @__ofs_arena_top
+  %cmp71 = icmp ne ptr %__ofs_arena_top_val70, null
+  br i1 %cmp71, label %if_then56, label %if_else57
 
-if_else43:
-  br label %if_end44
+if_then56:
+  %ptr_val72 = load ptr, ptr %ptr.addr
+  %call73 = call ptr @__ofs_arena_chunk_of(ptr %ptr_val72)
+  %cmp74 = icmp ne ptr %call73, null
+  br i1 %cmp74, label %if_then59, label %if_else60
 
-if_end44:
+if_then59:
   ret void
+
+if_else60:
+  br label %if_end61
+
+if_end61:
+  br label %if_end58
+
+if_else57:
+  br label %if_end58
+
+if_end58:
+  %ptr_val75 = load ptr, ptr %ptr.addr
+  call void @free(ptr %ptr_val75)
+  br label %if_end55
+
+if_else54:
+  br label %if_end55
+
+if_end55:
+  ret void
+}
+
+define i64 @__ofs_ar_get(ptr %p, i64 %i) {
+entry:
+  %p.addr = alloca ptr, align 8
+  store ptr %p, ptr %p.addr
+  %i.addr = alloca i64, align 8
+  store i64 %i, ptr %i.addr
+  %q76 = alloca ptr, align 8
+  %p_val77 = load ptr, ptr %p.addr
+  %i_val78 = load i64, ptr %i.addr
+  %fault_step79 = getelementptr inbounds i64, ptr %p_val77, i64 %i_val78
+  store ptr %fault_step79, ptr %q76
+  %q_val80 = load ptr, ptr %q76
+  %deref81 = load i64, ptr %q_val80
+  ret i64 %deref81
+}
+
+define void @__ofs_ar_set(ptr %p, i64 %i, i64 %v) {
+entry:
+  %p.addr = alloca ptr, align 8
+  store ptr %p, ptr %p.addr
+  %i.addr = alloca i64, align 8
+  store i64 %i, ptr %i.addr
+  %v.addr = alloca i64, align 8
+  store i64 %v, ptr %v.addr
+  %q82 = alloca ptr, align 8
+  %p_val83 = load ptr, ptr %p.addr
+  %i_val84 = load i64, ptr %i.addr
+  %fault_step85 = getelementptr inbounds i64, ptr %p_val83, i64 %i_val84
+  store ptr %fault_step85, ptr %q82
+  %q_val86 = load ptr, ptr %q82
+  %v_val87 = load i64, ptr %v.addr
+  store i64 %v_val87, ptr %q_val86
+  ret void
+}
+
+define i64 @__ofs_ar_round(i64 %n) {
+entry:
+  %n.addr = alloca i64, align 8
+  store i64 %n, ptr %n.addr
+  %n_val88 = load i64, ptr %n.addr
+  %op89 = add i64 %n_val88, 15
+  %op90 = sub i64 0, 16
+  %bit91 = and i64 %op89, %op90
+  ret i64 %bit91
+}
+
+define ptr @__ofs_arena_chunk(ptr %a, i64 %need) {
+entry:
+  %a.addr = alloca ptr, align 8
+  store ptr %a, ptr %a.addr
+  %need.addr = alloca i64, align 8
+  store i64 %need, ptr %need.addr
+  %cap92 = alloca i64, align 8
+  store i64 65536, ptr %cap92
+  %head93 = alloca i64, align 8
+  %a_val94 = load ptr, ptr %a.addr
+  %call95 = call i64 @__ofs_ar_get(ptr %a_val94, i64 2)
+  store i64 %call95, ptr %head93
+  %head_val96 = load i64, ptr %head93
+  %cmp97 = icmp ne i64 %head_val96, 0
+  br i1 %cmp97, label %if_then62, label %if_else63
+
+if_then62:
+  %head_val98 = load i64, ptr %head93
+  %cast99 = inttoptr i64 %head_val98 to ptr
+  %call100 = call i64 @__ofs_ar_get(ptr %cast99, i64 1)
+  %op101 = mul i64 %call100, 2
+  store i64 %op101, ptr %cap92
+  %cap_val102 = load i64, ptr %cap92
+  %cmp103 = icmp sgt i64 %cap_val102, 16777216
+  br i1 %cmp103, label %if_then65, label %if_else66
+
+if_then65:
+  store i64 16777216, ptr %cap92
+  br label %if_end67
+
+if_else66:
+  br label %if_end67
+
+if_end67:
+  br label %if_end64
+
+if_else63:
+  br label %if_end64
+
+if_end64:
+  %cap_val104 = load i64, ptr %cap92
+  %need_val105 = load i64, ptr %need.addr
+  %cmp106 = icmp slt i64 %cap_val104, %need_val105
+  br i1 %cmp106, label %if_then68, label %if_else69
+
+if_then68:
+  %need_val107 = load i64, ptr %need.addr
+  store i64 %need_val107, ptr %cap92
+  br label %if_end70
+
+if_else69:
+  br label %if_end70
+
+if_end70:
+  %c108 = alloca ptr, align 8
+  store ptr null, ptr %c108
+  %sc_slot109 = alloca i1, align 1
+  %__ofs_arena_spare_val110 = load ptr, ptr @__ofs_arena_spare
+  %cmp111 = icmp ne ptr %__ofs_arena_spare_val110, null
+  store i1 %cmp111, ptr %sc_slot109
+  br i1 %cmp111, label %sc_rhs71, label %sc_end72
+
+sc_rhs71:
+  %__ofs_arena_spare_val112 = load ptr, ptr @__ofs_arena_spare
+  %call113 = call i64 @__ofs_ar_get(ptr %__ofs_arena_spare_val112, i64 1)
+  %cap_val114 = load i64, ptr %cap92
+  %cmp115 = icmp sge i64 %call113, %cap_val114
+  store i1 %cmp115, ptr %sc_slot109
+  br label %sc_end72
+
+sc_end72:
+  %sc116 = load i1, ptr %sc_slot109
+  br i1 %sc116, label %if_then73, label %if_else74
+
+if_then73:
+  %__ofs_arena_spare_val117 = load ptr, ptr @__ofs_arena_spare
+  store ptr %__ofs_arena_spare_val117, ptr %c108
+  store ptr null, ptr @__ofs_arena_spare
+  %c_val118 = load ptr, ptr %c108
+  %call119 = call i64 @__ofs_ar_get(ptr %c_val118, i64 1)
+  store i64 %call119, ptr %cap92
+  br label %if_end75
+
+if_else74:
+  %cap_val120 = load i64, ptr %cap92
+  %op121 = add i64 %cap_val120, 32
+  %call122 = call ptr @malloc(i64 %op121)
+  store ptr %call122, ptr %c108
+  %c_val123 = load ptr, ptr %c108
+  %cmp124 = icmp eq ptr %c_val123, null
+  br i1 %cmp124, label %if_then76, label %if_else77
+
+if_then76:
+  %cap_val125 = load i64, ptr %cap92
+  %op126 = add i64 %cap_val125, 32
+  call void @ofs_out_of_memory(i64 %op126)
+  br label %if_end78
+
+if_else77:
+  br label %if_end78
+
+if_end78:
+  br label %if_end75
+
+if_end75:
+  %c_val127 = load ptr, ptr %c108
+  %head_val128 = load i64, ptr %head93
+  call void @__ofs_ar_set(ptr %c_val127, i64 0, i64 %head_val128)
+  %c_val129 = load ptr, ptr %c108
+  %cap_val130 = load i64, ptr %cap92
+  call void @__ofs_ar_set(ptr %c_val129, i64 1, i64 %cap_val130)
+  %c_val131 = load ptr, ptr %c108
+  call void @__ofs_ar_set(ptr %c_val131, i64 2, i64 0)
+  %c_val132 = load ptr, ptr %c108
+  %op133 = sub i64 0, 1
+  call void @__ofs_ar_set(ptr %c_val132, i64 3, i64 %op133)
+  %a_val134 = load ptr, ptr %a.addr
+  %c_val135 = load ptr, ptr %c108
+  %cast136 = ptrtoint ptr %c_val135 to i64
+  call void @__ofs_ar_set(ptr %a_val134, i64 2, i64 %cast136)
+  %c_val137 = load ptr, ptr %c108
+  ret ptr %c_val137
+}
+
+define ptr @__ofs_arena_alloc(ptr %a, i64 %size) {
+entry:
+  %a.addr = alloca ptr, align 8
+  store ptr %a, ptr %a.addr
+  %size.addr = alloca i64, align 8
+  store i64 %size, ptr %size.addr
+  %need138 = alloca i64, align 8
+  %size_val139 = load i64, ptr %size.addr
+  %call140 = call i64 @__ofs_ar_round(i64 %size_val139)
+  %op141 = add i64 16, %call140
+  store i64 %op141, ptr %need138
+  %c142 = alloca i64, align 8
+  %a_val143 = load ptr, ptr %a.addr
+  %call144 = call i64 @__ofs_ar_get(ptr %a_val143, i64 2)
+  store i64 %call144, ptr %c142
+  %sc_slot145 = alloca i1, align 1
+  %c_val146 = load i64, ptr %c142
+  %cmp147 = icmp eq i64 %c_val146, 0
+  store i1 %cmp147, ptr %sc_slot145
+  br i1 %cmp147, label %sc_end80, label %sc_rhs79
+
+sc_rhs79:
+  %c_val148 = load i64, ptr %c142
+  %cast149 = inttoptr i64 %c_val148 to ptr
+  %call150 = call i64 @__ofs_ar_get(ptr %cast149, i64 2)
+  %need_val151 = load i64, ptr %need138
+  %op152 = add i64 %call150, %need_val151
+  %c_val153 = load i64, ptr %c142
+  %cast154 = inttoptr i64 %c_val153 to ptr
+  %call155 = call i64 @__ofs_ar_get(ptr %cast154, i64 1)
+  %cmp156 = icmp sgt i64 %op152, %call155
+  store i1 %cmp156, ptr %sc_slot145
+  br label %sc_end80
+
+sc_end80:
+  %sc157 = load i1, ptr %sc_slot145
+  br i1 %sc157, label %if_then81, label %if_else82
+
+if_then81:
+  %a_val158 = load ptr, ptr %a.addr
+  %need_val159 = load i64, ptr %need138
+  %call160 = call ptr @__ofs_arena_chunk(ptr %a_val158, i64 %need_val159)
+  %cast161 = ptrtoint ptr %call160 to i64
+  store i64 %cast161, ptr %c142
+  br label %if_end83
+
+if_else82:
+  br label %if_end83
+
+if_end83:
+  %cp162 = alloca ptr, align 8
+  %c_val163 = load i64, ptr %c142
+  %cast164 = inttoptr i64 %c_val163 to ptr
+  store ptr %cast164, ptr %cp162
+  %off165 = alloca i64, align 8
+  %cp_val166 = load ptr, ptr %cp162
+  %call167 = call i64 @__ofs_ar_get(ptr %cp_val166, i64 2)
+  store i64 %call167, ptr %off165
+  %blk168 = alloca i64, align 8
+  %c_val169 = load i64, ptr %c142
+  %op170 = add i64 %c_val169, 32
+  %off_val171 = load i64, ptr %off165
+  %op172 = add i64 %op170, %off_val171
+  store i64 %op172, ptr %blk168
+  %blk_val173 = load i64, ptr %blk168
+  %cast174 = inttoptr i64 %blk_val173 to ptr
+  %size_val175 = load i64, ptr %size.addr
+  call void @__ofs_ar_set(ptr %cast174, i64 0, i64 %size_val175)
+  %blk_val176 = load i64, ptr %blk168
+  %cast177 = inttoptr i64 %blk_val176 to ptr
+  call void @__ofs_ar_set(ptr %cast177, i64 1, i64 0)
+  %pay178 = alloca ptr, align 8
+  %blk_val179 = load i64, ptr %blk168
+  %op180 = add i64 %blk_val179, 16
+  %cast181 = inttoptr i64 %op180 to ptr
+  store ptr %cast181, ptr %pay178
+  %pay_val182 = load ptr, ptr %pay178
+  %size_val183 = load i64, ptr %size.addr
+  %call184 = call ptr @memset(ptr %pay_val182, i64 0, i64 %size_val183)
+  %cp_val185 = load ptr, ptr %cp162
+  %off_val186 = load i64, ptr %off165
+  call void @__ofs_ar_set(ptr %cp_val185, i64 3, i64 %off_val186)
+  %cp_val187 = load ptr, ptr %cp162
+  %off_val188 = load i64, ptr %off165
+  %need_val189 = load i64, ptr %need138
+  %op190 = add i64 %off_val188, %need_val189
+  call void @__ofs_ar_set(ptr %cp_val187, i64 2, i64 %op190)
+  %a_val191 = load ptr, ptr %a.addr
+  %a_val192 = load ptr, ptr %a.addr
+  %call193 = call i64 @__ofs_ar_get(ptr %a_val192, i64 3)
+  %size_val194 = load i64, ptr %size.addr
+  %op195 = add i64 %call193, %size_val194
+  call void @__ofs_ar_set(ptr %a_val191, i64 3, i64 %op195)
+  %pay_val196 = load ptr, ptr %pay178
+  ret ptr %pay_val196
+}
+
+define ptr @__ofs_arena_chunk_of(ptr %p) {
+entry:
+  %p.addr = alloca ptr, align 8
+  store ptr %p, ptr %p.addr
+  %pv197 = alloca i64, align 8
+  %p_val198 = load ptr, ptr %p.addr
+  %cast199 = ptrtoint ptr %p_val198 to i64
+  store i64 %cast199, ptr %pv197
+  %a200 = alloca ptr, align 8
+  %__ofs_arena_top_val201 = load ptr, ptr @__ofs_arena_top
+  store ptr %__ofs_arena_top_val201, ptr %a200
+  br label %while_cond84
+
+while_cond84:
+  %a_val202 = load ptr, ptr %a200
+  %cmp203 = icmp ne ptr %a_val202, null
+  br i1 %cmp203, label %while_body85, label %while_end86
+
+while_body85:
+  %loop_stk204 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %c205 = alloca i64, align 8
+  %a_val206 = load ptr, ptr %a200
+  %call207 = call i64 @__ofs_ar_get(ptr %a_val206, i64 2)
+  store i64 %call207, ptr %c205
+  br label %while_cond87
+
+while_cond87:
+  %c_val208 = load i64, ptr %c205
+  %cmp209 = icmp ne i64 %c_val208, 0
+  br i1 %cmp209, label %while_body88, label %while_end89
+
+while_body88:
+  %loop_stk210 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %lo211 = alloca i64, align 8
+  %c_val212 = load i64, ptr %c205
+  %op213 = add i64 %c_val212, 32
+  store i64 %op213, ptr %lo211
+  %sc_slot214 = alloca i1, align 1
+  %pv_val215 = load i64, ptr %pv197
+  %lo_val216 = load i64, ptr %lo211
+  %cmp217 = icmp sge i64 %pv_val215, %lo_val216
+  store i1 %cmp217, ptr %sc_slot214
+  br i1 %cmp217, label %sc_rhs90, label %sc_end91
+
+sc_rhs90:
+  %pv_val218 = load i64, ptr %pv197
+  %lo_val219 = load i64, ptr %lo211
+  %c_val220 = load i64, ptr %c205
+  %cast221 = inttoptr i64 %c_val220 to ptr
+  %call222 = call i64 @__ofs_ar_get(ptr %cast221, i64 2)
+  %op223 = add i64 %lo_val219, %call222
+  %cmp224 = icmp slt i64 %pv_val218, %op223
+  store i1 %cmp224, ptr %sc_slot214
+  br label %sc_end91
+
+sc_end91:
+  %sc225 = load i1, ptr %sc_slot214
+  br i1 %sc225, label %if_then92, label %if_else93
+
+if_then92:
+  %a_val226 = load ptr, ptr %a200
+  store ptr %a_val226, ptr @__ofs_arena_hit
+  %c_val227 = load i64, ptr %c205
+  %cast228 = inttoptr i64 %c_val227 to ptr
+  ret ptr %cast228
+
+if_else93:
+  br label %if_end94
+
+if_end94:
+  %c_val229 = load i64, ptr %c205
+  %cast230 = inttoptr i64 %c_val229 to ptr
+  %call231 = call i64 @__ofs_ar_get(ptr %cast230, i64 0)
+  store i64 %call231, ptr %c205
+  call void @llvm.stackrestore(ptr %loop_stk210)
+  br label %while_cond87
+
+while_end89:
+  %a_val232 = load ptr, ptr %a200
+  %call233 = call i64 @__ofs_ar_get(ptr %a_val232, i64 0)
+  %cast234 = inttoptr i64 %call233 to ptr
+  store ptr %cast234, ptr %a200
+  call void @llvm.stackrestore(ptr %loop_stk204)
+  br label %while_cond84
+
+while_end86:
+  ret ptr null
+}
+
+define ptr @__ofs_arena_regrow(ptr %c, ptr %p, i64 %size) {
+entry:
+  %c.addr = alloca ptr, align 8
+  store ptr %c, ptr %c.addr
+  %p.addr = alloca ptr, align 8
+  store ptr %p, ptr %p.addr
+  %size.addr = alloca i64, align 8
+  store i64 %size, ptr %size.addr
+  %pv235 = alloca i64, align 8
+  %p_val236 = load ptr, ptr %p.addr
+  %cast237 = ptrtoint ptr %p_val236 to i64
+  store i64 %cast237, ptr %pv235
+  %old238 = alloca i64, align 8
+  %pv_val239 = load i64, ptr %pv235
+  %op240 = sub i64 %pv_val239, 16
+  %cast241 = inttoptr i64 %op240 to ptr
+  %call242 = call i64 @__ofs_ar_get(ptr %cast241, i64 0)
+  store i64 %call242, ptr %old238
+  %a243 = alloca ptr, align 8
+  %__ofs_arena_hit_val244 = load ptr, ptr @__ofs_arena_hit
+  store ptr %__ofs_arena_hit_val244, ptr %a243
+  %off245 = alloca i64, align 8
+  %c_val246 = load ptr, ptr %c.addr
+  %call247 = call i64 @__ofs_ar_get(ptr %c_val246, i64 3)
+  store i64 %call247, ptr %off245
+  %sc_slot248 = alloca i1, align 1
+  %a_val249 = load ptr, ptr %a243
+  %call250 = call i64 @__ofs_ar_get(ptr %a_val249, i64 2)
+  %c_val251 = load ptr, ptr %c.addr
+  %cast252 = ptrtoint ptr %c_val251 to i64
+  %cmp253 = icmp eq i64 %call250, %cast252
+  store i1 %cmp253, ptr %sc_slot248
+  br i1 %cmp253, label %sc_rhs95, label %sc_end96
+
+sc_rhs95:
+  %pv_val254 = load i64, ptr %pv235
+  %c_val255 = load ptr, ptr %c.addr
+  %cast256 = ptrtoint ptr %c_val255 to i64
+  %op257 = add i64 %cast256, 32
+  %off_val258 = load i64, ptr %off245
+  %op259 = add i64 %op257, %off_val258
+  %op260 = add i64 %op259, 16
+  %cmp261 = icmp eq i64 %pv_val254, %op260
+  store i1 %cmp261, ptr %sc_slot248
+  br label %sc_end96
+
+sc_end96:
+  %sc262 = load i1, ptr %sc_slot248
+  br i1 %sc262, label %if_then97, label %if_else98
+
+if_then97:
+  %need263 = alloca i64, align 8
+  %size_val264 = load i64, ptr %size.addr
+  %call265 = call i64 @__ofs_ar_round(i64 %size_val264)
+  %op266 = add i64 16, %call265
+  store i64 %op266, ptr %need263
+  %off_val267 = load i64, ptr %off245
+  %need_val268 = load i64, ptr %need263
+  %op269 = add i64 %off_val267, %need_val268
+  %c_val270 = load ptr, ptr %c.addr
+  %call271 = call i64 @__ofs_ar_get(ptr %c_val270, i64 1)
+  %cmp272 = icmp sle i64 %op269, %call271
+  br i1 %cmp272, label %if_then100, label %if_else101
+
+if_then100:
+  %size_val273 = load i64, ptr %size.addr
+  %old_val274 = load i64, ptr %old238
+  %cmp275 = icmp sgt i64 %size_val273, %old_val274
+  br i1 %cmp275, label %if_then103, label %if_else104
+
+if_then103:
+  %pv_val276 = load i64, ptr %pv235
+  %old_val277 = load i64, ptr %old238
+  %op278 = add i64 %pv_val276, %old_val277
+  %cast279 = inttoptr i64 %op278 to ptr
+  %size_val280 = load i64, ptr %size.addr
+  %old_val281 = load i64, ptr %old238
+  %op282 = sub i64 %size_val280, %old_val281
+  %call283 = call ptr @memset(ptr %cast279, i64 0, i64 %op282)
+  br label %if_end105
+
+if_else104:
+  br label %if_end105
+
+if_end105:
+  %pv_val284 = load i64, ptr %pv235
+  %op285 = sub i64 %pv_val284, 16
+  %cast286 = inttoptr i64 %op285 to ptr
+  %size_val287 = load i64, ptr %size.addr
+  call void @__ofs_ar_set(ptr %cast286, i64 0, i64 %size_val287)
+  %c_val288 = load ptr, ptr %c.addr
+  %off_val289 = load i64, ptr %off245
+  %need_val290 = load i64, ptr %need263
+  %op291 = add i64 %off_val289, %need_val290
+  call void @__ofs_ar_set(ptr %c_val288, i64 2, i64 %op291)
+  %p_val292 = load ptr, ptr %p.addr
+  ret ptr %p_val292
+
+if_else101:
+  br label %if_end102
+
+if_end102:
+  br label %if_end99
+
+if_else98:
+  br label %if_end99
+
+if_end99:
+  %np293 = alloca ptr, align 8
+  %a_val294 = load ptr, ptr %a243
+  %size_val295 = load i64, ptr %size.addr
+  %call296 = call ptr @__ofs_arena_alloc(ptr %a_val294, i64 %size_val295)
+  store ptr %call296, ptr %np293
+  %n297 = alloca i64, align 8
+  %old_val298 = load i64, ptr %old238
+  store i64 %old_val298, ptr %n297
+  %size_val299 = load i64, ptr %size.addr
+  %n_val300 = load i64, ptr %n297
+  %cmp301 = icmp slt i64 %size_val299, %n_val300
+  br i1 %cmp301, label %if_then106, label %if_else107
+
+if_then106:
+  %size_val302 = load i64, ptr %size.addr
+  store i64 %size_val302, ptr %n297
+  br label %if_end108
+
+if_else107:
+  br label %if_end108
+
+if_end108:
+  %n_val303 = load i64, ptr %n297
+  %cmp304 = icmp sgt i64 %n_val303, 0
+  br i1 %cmp304, label %if_then109, label %if_else110
+
+if_then109:
+  %np_val305 = load ptr, ptr %np293
+  %p_val306 = load ptr, ptr %p.addr
+  %n_val307 = load i64, ptr %n297
+  %call308 = call ptr @memcpy(ptr %np_val305, ptr %p_val306, i64 %n_val307)
+  br label %if_end111
+
+if_else110:
+  br label %if_end111
+
+if_end111:
+  %np_val309 = load ptr, ptr %np293
+  ret ptr %np_val309
+}
+
+define ptr @ofs_arena_open() {
+entry:
+  %a310 = alloca ptr, align 8
+  %call311 = call ptr @malloc(i64 32)
+  store ptr %call311, ptr %a310
+  %a_val312 = load ptr, ptr %a310
+  %cmp313 = icmp eq ptr %a_val312, null
+  br i1 %cmp313, label %if_then112, label %if_else113
+
+if_then112:
+  call void @ofs_out_of_memory(i64 32)
+  br label %if_end114
+
+if_else113:
+  br label %if_end114
+
+if_end114:
+  %a_val314 = load ptr, ptr %a310
+  %__ofs_arena_top_val315 = load ptr, ptr @__ofs_arena_top
+  %cast316 = ptrtoint ptr %__ofs_arena_top_val315 to i64
+  call void @__ofs_ar_set(ptr %a_val314, i64 0, i64 %cast316)
+  %a_val317 = load ptr, ptr %a310
+  %__ofs_arena_cur_val318 = load ptr, ptr @__ofs_arena_cur
+  %cast319 = ptrtoint ptr %__ofs_arena_cur_val318 to i64
+  call void @__ofs_ar_set(ptr %a_val317, i64 1, i64 %cast319)
+  %a_val320 = load ptr, ptr %a310
+  call void @__ofs_ar_set(ptr %a_val320, i64 2, i64 0)
+  %a_val321 = load ptr, ptr %a310
+  call void @__ofs_ar_set(ptr %a_val321, i64 3, i64 0)
+  %a_val322 = load ptr, ptr %a310
+  store ptr %a_val322, ptr @__ofs_arena_top
+  %a_val323 = load ptr, ptr %a310
+  store ptr %a_val323, ptr @__ofs_arena_cur
+  %a_val324 = load ptr, ptr %a310
+  ret ptr %a_val324
+}
+
+define void @ofs_arena_close(ptr %a) {
+entry:
+  %a.addr = alloca ptr, align 8
+  store ptr %a, ptr %a.addr
+  %a_val325 = load ptr, ptr %a.addr
+  %cmp326 = icmp eq ptr %a_val325, null
+  br i1 %cmp326, label %if_then115, label %if_else116
+
+if_then115:
+  ret void
+
+if_else116:
+  br label %if_end117
+
+if_end117:
+  br label %while_cond118
+
+while_cond118:
+  %__ofs_arena_top_val327 = load ptr, ptr @__ofs_arena_top
+  %cmp328 = icmp ne ptr %__ofs_arena_top_val327, null
+  br i1 %cmp328, label %while_body119, label %while_end120
+
+while_body119:
+  %loop_stk329 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %t330 = alloca ptr, align 8
+  %__ofs_arena_top_val331 = load ptr, ptr @__ofs_arena_top
+  store ptr %__ofs_arena_top_val331, ptr %t330
+  %t_val332 = load ptr, ptr %t330
+  %call333 = call i64 @__ofs_ar_get(ptr %t_val332, i64 0)
+  %cast334 = inttoptr i64 %call333 to ptr
+  store ptr %cast334, ptr @__ofs_arena_top
+  %c335 = alloca i64, align 8
+  %t_val336 = load ptr, ptr %t330
+  %call337 = call i64 @__ofs_ar_get(ptr %t_val336, i64 2)
+  store i64 %call337, ptr %c335
+  br label %while_cond121
+
+while_cond121:
+  %c_val338 = load i64, ptr %c335
+  %cmp339 = icmp ne i64 %c_val338, 0
+  br i1 %cmp339, label %while_body122, label %while_end123
+
+while_body122:
+  %loop_stk340 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %nxt341 = alloca i64, align 8
+  %c_val342 = load i64, ptr %c335
+  %cast343 = inttoptr i64 %c_val342 to ptr
+  %call344 = call i64 @__ofs_ar_get(ptr %cast343, i64 0)
+  store i64 %call344, ptr %nxt341
+  %__ofs_arena_spare_val345 = load ptr, ptr @__ofs_arena_spare
+  %cmp346 = icmp eq ptr %__ofs_arena_spare_val345, null
+  br i1 %cmp346, label %if_then124, label %if_else125
+
+if_then124:
+  %c_val347 = load i64, ptr %c335
+  %cast348 = inttoptr i64 %c_val347 to ptr
+  store ptr %cast348, ptr @__ofs_arena_spare
+  br label %if_end126
+
+if_else125:
+  %c_val349 = load i64, ptr %c335
+  %cast350 = inttoptr i64 %c_val349 to ptr
+  %call351 = call i64 @__ofs_ar_get(ptr %cast350, i64 1)
+  %__ofs_arena_spare_val352 = load ptr, ptr @__ofs_arena_spare
+  %call353 = call i64 @__ofs_ar_get(ptr %__ofs_arena_spare_val352, i64 1)
+  %cmp354 = icmp sgt i64 %call351, %call353
+  br i1 %cmp354, label %if_then127, label %if_else128
+
+if_then127:
+  %__ofs_arena_spare_val355 = load ptr, ptr @__ofs_arena_spare
+  call void @free(ptr %__ofs_arena_spare_val355)
+  %c_val356 = load i64, ptr %c335
+  %cast357 = inttoptr i64 %c_val356 to ptr
+  store ptr %cast357, ptr @__ofs_arena_spare
+  br label %if_end129
+
+if_else128:
+  %c_val358 = load i64, ptr %c335
+  %cast359 = inttoptr i64 %c_val358 to ptr
+  call void @free(ptr %cast359)
+  br label %if_end129
+
+if_end129:
+  br label %if_end126
+
+if_end126:
+  %nxt_val360 = load i64, ptr %nxt341
+  store i64 %nxt_val360, ptr %c335
+  call void @llvm.stackrestore(ptr %loop_stk340)
+  br label %while_cond121
+
+while_end123:
+  %t_val361 = load ptr, ptr %t330
+  %call362 = call i64 @__ofs_ar_get(ptr %t_val361, i64 1)
+  %cast363 = inttoptr i64 %call362 to ptr
+  store ptr %cast363, ptr @__ofs_arena_cur
+  %t_val364 = load ptr, ptr %t330
+  call void @free(ptr %t_val364)
+  %t_val365 = load ptr, ptr %t330
+  %cast366 = ptrtoint ptr %t_val365 to i64
+  %a_val367 = load ptr, ptr %a.addr
+  %cast368 = ptrtoint ptr %a_val367 to i64
+  %cmp369 = icmp eq i64 %cast366, %cast368
+  br i1 %cmp369, label %if_then130, label %if_else131
+
+if_then130:
+  br label %while_end120
+
+if_else131:
+  br label %if_end132
+
+if_end132:
+  call void @llvm.stackrestore(ptr %loop_stk329)
+  br label %while_cond118
+
+while_end120:
+  store ptr null, ptr @__ofs_charat_s
+  store i64 0, ptr @__ofs_charat_n
+  ret void
+}
+
+define ptr @__ofs_alloc_like(ptr %owner, i64 %size) {
+entry:
+  %owner.addr = alloca ptr, align 8
+  store ptr %owner, ptr %owner.addr
+  %size.addr = alloca i64, align 8
+  store i64 %size, ptr %size.addr
+  %__ofs_arena_top_val370 = load ptr, ptr @__ofs_arena_top
+  %cmp371 = icmp ne ptr %__ofs_arena_top_val370, null
+  br i1 %cmp371, label %if_then133, label %if_else134
+
+if_then133:
+  %owner_val372 = load ptr, ptr %owner.addr
+  %call373 = call ptr @__ofs_arena_chunk_of(ptr %owner_val372)
+  %cmp374 = icmp ne ptr %call373, null
+  br i1 %cmp374, label %if_then136, label %if_else137
+
+if_then136:
+  %__ofs_arena_hit_val375 = load ptr, ptr @__ofs_arena_hit
+  %size_val376 = load i64, ptr %size.addr
+  %call377 = call ptr @__ofs_arena_alloc(ptr %__ofs_arena_hit_val375, i64 %size_val376)
+  ret ptr %call377
+
+if_else137:
+  br label %if_end138
+
+if_end138:
+  br label %if_end135
+
+if_else134:
+  br label %if_end135
+
+if_end135:
+  %size_val378 = load i64, ptr %size.addr
+  %cmp379 = icmp sle i64 %size_val378, 0
+  br i1 %cmp379, label %if_then139, label %if_else140
+
+if_then139:
+  store i64 1, ptr %size.addr
+  br label %if_end141
+
+if_else140:
+  br label %if_end141
+
+if_end141:
+  %ptr380 = alloca ptr, align 8
+  %size_val381 = load i64, ptr %size.addr
+  %call382 = call ptr @calloc(i64 1, i64 %size_val381)
+  store ptr %call382, ptr %ptr380
+  %ptr_val383 = load ptr, ptr %ptr380
+  %cmp384 = icmp eq ptr %ptr_val383, null
+  br i1 %cmp384, label %if_then142, label %if_else143
+
+if_then142:
+  %size_val385 = load i64, ptr %size.addr
+  call void @ofs_out_of_memory(i64 %size_val385)
+  br label %if_end144
+
+if_else143:
+  br label %if_end144
+
+if_end144:
+  %ptr_val386 = load ptr, ptr %ptr380
+  ret ptr %ptr_val386
+}
+
+define ptr @ofs_arena_use(ptr %a) {
+entry:
+  %a.addr = alloca ptr, align 8
+  store ptr %a, ptr %a.addr
+  %old387 = alloca ptr, align 8
+  %__ofs_arena_cur_val388 = load ptr, ptr @__ofs_arena_cur
+  store ptr %__ofs_arena_cur_val388, ptr %old387
+  %a_val389 = load ptr, ptr %a.addr
+  store ptr %a_val389, ptr @__ofs_arena_cur
+  %old_val390 = load ptr, ptr %old387
+  ret ptr %old_val390
+}
+
+define ptr @ofs_arena_lift(ptr %s) {
+entry:
+  %s.addr = alloca ptr, align 8
+  store ptr %s, ptr %s.addr
+  %sc_slot391 = alloca i1, align 1
+  %s_val392 = load ptr, ptr %s.addr
+  %cmp393 = icmp eq ptr %s_val392, null
+  store i1 %cmp393, ptr %sc_slot391
+  br i1 %cmp393, label %sc_end146, label %sc_rhs145
+
+sc_rhs145:
+  %__ofs_arena_top_val394 = load ptr, ptr @__ofs_arena_top
+  %cmp395 = icmp eq ptr %__ofs_arena_top_val394, null
+  store i1 %cmp395, ptr %sc_slot391
+  br label %sc_end146
+
+sc_end146:
+  %sc396 = load i1, ptr %sc_slot391
+  br i1 %sc396, label %if_then147, label %if_else148
+
+if_then147:
+  %s_val397 = load ptr, ptr %s.addr
+  ret ptr %s_val397
+
+if_else148:
+  br label %if_end149
+
+if_end149:
+  %s_val398 = load ptr, ptr %s.addr
+  %call399 = call ptr @__ofs_arena_chunk_of(ptr %s_val398)
+  %cmp400 = icmp eq ptr %call399, null
+  br i1 %cmp400, label %if_then150, label %if_else151
+
+if_then150:
+  %s_val401 = load ptr, ptr %s.addr
+  ret ptr %s_val401
+
+if_else151:
+  br label %if_end152
+
+if_end152:
+  %n402 = alloca i64, align 8
+  store i64 0, ptr %n402
+  %pv403 = alloca i64, align 8
+  %s_val404 = load ptr, ptr %s.addr
+  %cast405 = ptrtoint ptr %s_val404 to i64
+  store i64 %cast405, ptr %pv403
+  %b406 = alloca i8, align 8
+  %cast407 = trunc i64 1 to i8
+  store i8 %cast407, ptr %b406
+  br label %while_cond153
+
+while_cond153:
+  %cond408 = icmp ne i32 1, 0
+  br i1 %cond408, label %while_body154, label %while_end155
+
+while_body154:
+  %loop_stk409 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %bp410 = alloca ptr, align 8
+  %pv_val411 = load i64, ptr %pv403
+  %n_val412 = load i64, ptr %n402
+  %op413 = add i64 %pv_val411, %n_val412
+  %cast414 = inttoptr i64 %op413 to ptr
+  store ptr %cast414, ptr %bp410
+  %bp_val415 = load ptr, ptr %bp410
+  %deref416 = load i8, ptr %bp_val415
+  store i8 %deref416, ptr %b406
+  %b_val417 = load i8, ptr %b406
+  %cast418 = zext i8 %b_val417 to i64
+  %cmp419 = icmp eq i64 %cast418, 0
+  br i1 %cmp419, label %if_then156, label %if_else157
+
+if_then156:
+  br label %while_end155
+
+if_else157:
+  br label %if_end158
+
+if_end158:
+  %n_val420 = load i64, ptr %n402
+  %op421 = add i64 %n_val420, 1
+  store i64 %op421, ptr %n402
+  call void @llvm.stackrestore(ptr %loop_stk409)
+  br label %while_cond153
+
+while_end155:
+  %r422 = alloca ptr, align 8
+  %n_val423 = load i64, ptr %n402
+  %op424 = add i64 %n_val423, 1
+  %call425 = call ptr @calloc(i64 1, i64 %op424)
+  store ptr %call425, ptr %r422
+  %r_val426 = load ptr, ptr %r422
+  %cmp427 = icmp eq ptr %r_val426, null
+  br i1 %cmp427, label %if_then159, label %if_else160
+
+if_then159:
+  %n_val428 = load i64, ptr %n402
+  %op429 = add i64 %n_val428, 1
+  call void @ofs_out_of_memory(i64 %op429)
+  br label %if_end161
+
+if_else160:
+  br label %if_end161
+
+if_end161:
+  %n_val430 = load i64, ptr %n402
+  %cmp431 = icmp sgt i64 %n_val430, 0
+  br i1 %cmp431, label %if_then162, label %if_else163
+
+if_then162:
+  %r_val432 = load ptr, ptr %r422
+  %s_val433 = load ptr, ptr %s.addr
+  %n_val434 = load i64, ptr %n402
+  %call435 = call ptr @memcpy(ptr %r_val432, ptr %s_val433, i64 %n_val434)
+  br label %if_end164
+
+if_else163:
+  br label %if_end164
+
+if_end164:
+  %r_val436 = load ptr, ptr %r422
+  ret ptr %r_val436
 }
 
 define ptr @reservoir__alloc(i64 %size) {
 entry:
   %size.addr = alloca i64, align 8
   store i64 %size, ptr %size.addr
-  %size_val51 = load i64, ptr %size.addr
-  %call52 = call ptr @ofs_alloc(i64 %size_val51)
-  ret ptr %call52
+  %size_val437 = load i64, ptr %size.addr
+  %call438 = call ptr @ofs_alloc(i64 %size_val437)
+  ret ptr %call438
 }
 
 define void @reservoir__free(ptr %ptr) {
 entry:
   %ptr.addr = alloca ptr, align 8
   store ptr %ptr, ptr %ptr.addr
-  %ptr_val53 = load ptr, ptr %ptr.addr
-  call void @ofs_free(ptr %ptr_val53)
+  %ptr_val439 = load ptr, ptr %ptr.addr
+  call void @ofs_free(ptr %ptr_val439)
   ret void
 }
 
@@ -399,32 +1352,32 @@ entry:
   store ptr %ptr, ptr %ptr.addr
   %size.addr = alloca i64, align 8
   store i64 %size, ptr %size.addr
-  %sc_slot54 = alloca i1, align 1
-  %ptr_val55 = load ptr, ptr %ptr.addr
-  %cmp56 = icmp ne ptr %ptr_val55, null
-  store i1 %cmp56, ptr %sc_slot54
-  br i1 %cmp56, label %sc_rhs45, label %sc_end46
+  %sc_slot440 = alloca i1, align 1
+  %ptr_val441 = load ptr, ptr %ptr.addr
+  %cmp442 = icmp ne ptr %ptr_val441, null
+  store i1 %cmp442, ptr %sc_slot440
+  br i1 %cmp442, label %sc_rhs165, label %sc_end166
 
-sc_rhs45:
-  %size_val57 = load i64, ptr %size.addr
-  %cmp58 = icmp sgt i64 %size_val57, 0
-  store i1 %cmp58, ptr %sc_slot54
-  br label %sc_end46
+sc_rhs165:
+  %size_val443 = load i64, ptr %size.addr
+  %cmp444 = icmp sgt i64 %size_val443, 0
+  store i1 %cmp444, ptr %sc_slot440
+  br label %sc_end166
 
-sc_end46:
-  %sc59 = load i1, ptr %sc_slot54
-  br i1 %sc59, label %if_then47, label %if_else48
+sc_end166:
+  %sc445 = load i1, ptr %sc_slot440
+  br i1 %sc445, label %if_then167, label %if_else168
 
-if_then47:
-  %ptr_val60 = load ptr, ptr %ptr.addr
-  %size_val61 = load i64, ptr %size.addr
-  %call62 = call ptr @memset(ptr %ptr_val60, i64 0, i64 %size_val61)
-  br label %if_end49
+if_then167:
+  %ptr_val446 = load ptr, ptr %ptr.addr
+  %size_val447 = load i64, ptr %size.addr
+  %call448 = call ptr @memset(ptr %ptr_val446, i64 0, i64 %size_val447)
+  br label %if_end169
 
-if_else48:
-  br label %if_end49
+if_else168:
+  br label %if_end169
 
-if_end49:
+if_end169:
   ret void
 }
 
@@ -436,45 +1389,45 @@ entry:
   store ptr %src, ptr %src.addr
   %size.addr = alloca i64, align 8
   store i64 %size, ptr %size.addr
-  %sc_slot63 = alloca i1, align 1
-  %sc_slot64 = alloca i1, align 1
-  %dst_val65 = load ptr, ptr %dst.addr
-  %cmp66 = icmp ne ptr %dst_val65, null
-  store i1 %cmp66, ptr %sc_slot64
-  br i1 %cmp66, label %sc_rhs52, label %sc_end53
+  %sc_slot449 = alloca i1, align 1
+  %sc_slot450 = alloca i1, align 1
+  %dst_val451 = load ptr, ptr %dst.addr
+  %cmp452 = icmp ne ptr %dst_val451, null
+  store i1 %cmp452, ptr %sc_slot450
+  br i1 %cmp452, label %sc_rhs172, label %sc_end173
 
-sc_rhs52:
-  %src_val67 = load ptr, ptr %src.addr
-  %cmp68 = icmp ne ptr %src_val67, null
-  store i1 %cmp68, ptr %sc_slot64
-  br label %sc_end53
+sc_rhs172:
+  %src_val453 = load ptr, ptr %src.addr
+  %cmp454 = icmp ne ptr %src_val453, null
+  store i1 %cmp454, ptr %sc_slot450
+  br label %sc_end173
 
-sc_end53:
-  %sc69 = load i1, ptr %sc_slot64
-  store i1 %sc69, ptr %sc_slot63
-  br i1 %sc69, label %sc_rhs50, label %sc_end51
+sc_end173:
+  %sc455 = load i1, ptr %sc_slot450
+  store i1 %sc455, ptr %sc_slot449
+  br i1 %sc455, label %sc_rhs170, label %sc_end171
 
-sc_rhs50:
-  %size_val70 = load i64, ptr %size.addr
-  %cmp71 = icmp sgt i64 %size_val70, 0
-  store i1 %cmp71, ptr %sc_slot63
-  br label %sc_end51
+sc_rhs170:
+  %size_val456 = load i64, ptr %size.addr
+  %cmp457 = icmp sgt i64 %size_val456, 0
+  store i1 %cmp457, ptr %sc_slot449
+  br label %sc_end171
 
-sc_end51:
-  %sc72 = load i1, ptr %sc_slot63
-  br i1 %sc72, label %if_then54, label %if_else55
+sc_end171:
+  %sc458 = load i1, ptr %sc_slot449
+  br i1 %sc458, label %if_then174, label %if_else175
 
-if_then54:
-  %dst_val73 = load ptr, ptr %dst.addr
-  %src_val74 = load ptr, ptr %src.addr
-  %size_val75 = load i64, ptr %size.addr
-  %call76 = call ptr @memcpy(ptr %dst_val73, ptr %src_val74, i64 %size_val75)
-  br label %if_end56
+if_then174:
+  %dst_val459 = load ptr, ptr %dst.addr
+  %src_val460 = load ptr, ptr %src.addr
+  %size_val461 = load i64, ptr %size.addr
+  %call462 = call ptr @memcpy(ptr %dst_val459, ptr %src_val460, i64 %size_val461)
+  br label %if_end176
 
-if_else55:
-  br label %if_end56
+if_else175:
+  br label %if_end176
 
-if_end56:
+if_end176:
   ret void
 }
 
@@ -484,26 +1437,26 @@ entry:
   store ptr %s, ptr %s.addr
   %s.addr_own = alloca i64, align 8
   store i64 0, ptr %s.addr_own
-  %s_val77 = load ptr, ptr %s.addr
-  %cmp78 = icmp eq ptr %s_val77, null
-  br i1 %cmp78, label %if_then57, label %if_else58
+  %s_val463 = load ptr, ptr %s.addr
+  %cmp464 = icmp eq ptr %s_val463, null
+  br i1 %cmp464, label %if_then177, label %if_else178
 
-if_then57:
-  %sf_val79 = load ptr, ptr %s.addr
-  %sf_own80 = load i64, ptr %s.addr_own
-  call void @ofs_str_release(ptr %sf_val79, i64 %sf_own80)
+if_then177:
+  %sf_val465 = load ptr, ptr %s.addr
+  %sf_own466 = load i64, ptr %s.addr_own
+  call void @ofs_str_release(ptr %sf_val465, i64 %sf_own466)
   ret i64 0
 
-if_else58:
-  br label %if_end59
+if_else178:
+  br label %if_end179
 
-if_end59:
-  %s_val81 = load ptr, ptr %s.addr
-  %call82 = call i64 @strlen(ptr %s_val81)
-  %sf_val83 = load ptr, ptr %s.addr
-  %sf_own84 = load i64, ptr %s.addr_own
-  call void @ofs_str_release(ptr %sf_val83, i64 %sf_own84)
-  ret i64 %call82
+if_end179:
+  %s_val467 = load ptr, ptr %s.addr
+  %call468 = call i64 @strlen(ptr %s_val467)
+  %sf_val469 = load ptr, ptr %s.addr
+  %sf_own470 = load i64, ptr %s.addr_own
+  call void @ofs_str_release(ptr %sf_val469, i64 %sf_own470)
+  ret i64 %call468
 }
 
 define i64 @ofs_str_char_at(ptr %s, i64 %idx) {
@@ -512,124 +1465,124 @@ entry:
   store ptr %s, ptr %s.addr
   %idx.addr = alloca i64, align 8
   store i64 %idx, ptr %idx.addr
-  %sc_slot85 = alloca i1, align 1
-  %s_val86 = load ptr, ptr %s.addr
-  %cmp87 = icmp eq ptr %s_val86, null
-  store i1 %cmp87, ptr %sc_slot85
-  br i1 %cmp87, label %sc_end61, label %sc_rhs60
+  %sc_slot471 = alloca i1, align 1
+  %s_val472 = load ptr, ptr %s.addr
+  %cmp473 = icmp eq ptr %s_val472, null
+  store i1 %cmp473, ptr %sc_slot471
+  br i1 %cmp473, label %sc_end181, label %sc_rhs180
 
-sc_rhs60:
-  %idx_val88 = load i64, ptr %idx.addr
-  %cmp89 = icmp slt i64 %idx_val88, 0
-  store i1 %cmp89, ptr %sc_slot85
-  br label %sc_end61
+sc_rhs180:
+  %idx_val474 = load i64, ptr %idx.addr
+  %cmp475 = icmp slt i64 %idx_val474, 0
+  store i1 %cmp475, ptr %sc_slot471
+  br label %sc_end181
 
-sc_end61:
-  %sc90 = load i1, ptr %sc_slot85
-  br i1 %sc90, label %if_then62, label %if_else63
+sc_end181:
+  %sc476 = load i1, ptr %sc_slot471
+  br i1 %sc476, label %if_then182, label %if_else183
 
-if_then62:
-  %neg91 = sub i64 0, 1
-  ret i64 %neg91
+if_then182:
+  %neg477 = sub i64 0, 1
+  ret i64 %neg477
 
-if_else63:
-  br label %if_end64
+if_else183:
+  br label %if_end184
 
-if_end64:
-  %slen92 = alloca i64, align 8
-  store i64 0, ptr %slen92
-  %cached93 = alloca i32, align 8
-  store i32 0, ptr %cached93
-  %s_val94 = load ptr, ptr %s.addr
-  %cast95 = ptrtoint ptr %s_val94 to i64
-  %__ofs_charat_s_val96 = load ptr, ptr @__ofs_charat_s
-  %cast97 = ptrtoint ptr %__ofs_charat_s_val96 to i64
-  %cmp98 = icmp eq i64 %cast95, %cast97
-  br i1 %cmp98, label %if_then65, label %if_else66
+if_end184:
+  %slen478 = alloca i64, align 8
+  store i64 0, ptr %slen478
+  %cached479 = alloca i32, align 8
+  store i32 0, ptr %cached479
+  %s_val480 = load ptr, ptr %s.addr
+  %cast481 = ptrtoint ptr %s_val480 to i64
+  %__ofs_charat_s_val482 = load ptr, ptr @__ofs_charat_s
+  %cast483 = ptrtoint ptr %__ofs_charat_s_val482 to i64
+  %cmp484 = icmp eq i64 %cast481, %cast483
+  br i1 %cmp484, label %if_then185, label %if_else186
 
-if_then65:
-  %tp99 = alloca ptr, align 8
-  %s_val100 = load ptr, ptr %s.addr
-  %cast101 = ptrtoint ptr %s_val100 to i64
-  %__ofs_charat_n_val102 = load i64, ptr @__ofs_charat_n
-  %op103 = add i64 %cast101, %__ofs_charat_n_val102
-  %cast104 = inttoptr i64 %op103 to ptr
-  store ptr %cast104, ptr %tp99
-  %tb105 = alloca i8, align 8
-  %cast106 = trunc i64 1 to i8
-  store i8 %cast106, ptr %tb105
-  %tp_val107 = load ptr, ptr %tp99
-  %deref108 = load i8, ptr %tp_val107
-  store i8 %deref108, ptr %tb105
-  %tb_val109 = load i8, ptr %tb105
-  %cast110 = zext i8 %tb_val109 to i64
-  %cmp111 = icmp eq i64 %cast110, 0
-  br i1 %cmp111, label %if_then68, label %if_else69
+if_then185:
+  %tp485 = alloca ptr, align 8
+  %s_val486 = load ptr, ptr %s.addr
+  %cast487 = ptrtoint ptr %s_val486 to i64
+  %__ofs_charat_n_val488 = load i64, ptr @__ofs_charat_n
+  %op489 = add i64 %cast487, %__ofs_charat_n_val488
+  %cast490 = inttoptr i64 %op489 to ptr
+  store ptr %cast490, ptr %tp485
+  %tb491 = alloca i8, align 8
+  %cast492 = trunc i64 1 to i8
+  store i8 %cast492, ptr %tb491
+  %tp_val493 = load ptr, ptr %tp485
+  %deref494 = load i8, ptr %tp_val493
+  store i8 %deref494, ptr %tb491
+  %tb_val495 = load i8, ptr %tb491
+  %cast496 = zext i8 %tb_val495 to i64
+  %cmp497 = icmp eq i64 %cast496, 0
+  br i1 %cmp497, label %if_then188, label %if_else189
 
-if_then68:
-  %__ofs_charat_n_val112 = load i64, ptr @__ofs_charat_n
-  store i64 %__ofs_charat_n_val112, ptr %slen92
-  store i32 1, ptr %cached93
-  br label %if_end70
+if_then188:
+  %__ofs_charat_n_val498 = load i64, ptr @__ofs_charat_n
+  store i64 %__ofs_charat_n_val498, ptr %slen478
+  store i32 1, ptr %cached479
+  br label %if_end190
 
-if_else69:
-  br label %if_end70
+if_else189:
+  br label %if_end190
 
-if_end70:
-  br label %if_end67
+if_end190:
+  br label %if_end187
 
-if_else66:
-  br label %if_end67
+if_else186:
+  br label %if_end187
 
-if_end67:
-  %cached_val113 = load i32, ptr %cached93
-  %cond114 = icmp ne i32 %cached_val113, 0
-  %not115 = xor i1 %cond114, true
-  br i1 %not115, label %if_then71, label %if_else72
+if_end187:
+  %cached_val499 = load i32, ptr %cached479
+  %cond500 = icmp ne i32 %cached_val499, 0
+  %not501 = xor i1 %cond500, true
+  br i1 %not501, label %if_then191, label %if_else192
 
-if_then71:
-  %s_val116 = load ptr, ptr %s.addr
-  %strlen117 = call i64 @ofs_str_len(ptr %s_val116)
-  store i64 %strlen117, ptr %slen92
-  %s_val118 = load ptr, ptr %s.addr
-  store ptr %s_val118, ptr @__ofs_charat_s
-  %slen_val119 = load i64, ptr %slen92
-  store i64 %slen_val119, ptr @__ofs_charat_n
-  br label %if_end73
+if_then191:
+  %s_val502 = load ptr, ptr %s.addr
+  %strlen503 = call i64 @ofs_str_len(ptr %s_val502)
+  store i64 %strlen503, ptr %slen478
+  %s_val504 = load ptr, ptr %s.addr
+  store ptr %s_val504, ptr @__ofs_charat_s
+  %slen_val505 = load i64, ptr %slen478
+  store i64 %slen_val505, ptr @__ofs_charat_n
+  br label %if_end193
 
-if_else72:
-  br label %if_end73
+if_else192:
+  br label %if_end193
 
-if_end73:
-  %idx_val120 = load i64, ptr %idx.addr
-  %slen_val121 = load i64, ptr %slen92
-  %cmp122 = icmp sge i64 %idx_val120, %slen_val121
-  br i1 %cmp122, label %if_then74, label %if_else75
+if_end193:
+  %idx_val506 = load i64, ptr %idx.addr
+  %slen_val507 = load i64, ptr %slen478
+  %cmp508 = icmp sge i64 %idx_val506, %slen_val507
+  br i1 %cmp508, label %if_then194, label %if_else195
 
-if_then74:
-  %neg123 = sub i64 0, 1
-  ret i64 %neg123
+if_then194:
+  %neg509 = sub i64 0, 1
+  ret i64 %neg509
 
-if_else75:
-  br label %if_end76
+if_else195:
+  br label %if_end196
 
-if_end76:
-  %p124 = alloca ptr, align 8
-  %s_val125 = load ptr, ptr %s.addr
-  %cast126 = ptrtoint ptr %s_val125 to i64
-  %idx_val127 = load i64, ptr %idx.addr
-  %op128 = add i64 %cast126, %idx_val127
-  %cast129 = inttoptr i64 %op128 to ptr
-  store ptr %cast129, ptr %p124
-  %b130 = alloca i8, align 8
-  %cast131 = trunc i64 0 to i8
-  store i8 %cast131, ptr %b130
-  %p_val132 = load ptr, ptr %p124
-  %deref133 = load i8, ptr %p_val132
-  store i8 %deref133, ptr %b130
-  %b_val134 = load i8, ptr %b130
-  %cast135 = zext i8 %b_val134 to i64
-  ret i64 %cast135
+if_end196:
+  %p510 = alloca ptr, align 8
+  %s_val511 = load ptr, ptr %s.addr
+  %cast512 = ptrtoint ptr %s_val511 to i64
+  %idx_val513 = load i64, ptr %idx.addr
+  %op514 = add i64 %cast512, %idx_val513
+  %cast515 = inttoptr i64 %op514 to ptr
+  store ptr %cast515, ptr %p510
+  %b516 = alloca i8, align 8
+  %cast517 = trunc i64 0 to i8
+  store i8 %cast517, ptr %b516
+  %p_val518 = load ptr, ptr %p510
+  %deref519 = load i8, ptr %p_val518
+  store i8 %deref519, ptr %b516
+  %b_val520 = load i8, ptr %b516
+  %cast521 = zext i8 %b_val520 to i64
+  ret i64 %cast521
 }
 
 define i64 @ofs_str_char_at_known(ptr %s, i64 %idx) {
@@ -638,22 +1591,22 @@ entry:
   store ptr %s, ptr %s.addr
   %idx.addr = alloca i64, align 8
   store i64 %idx, ptr %idx.addr
-  %p136 = alloca ptr, align 8
-  %s_val137 = load ptr, ptr %s.addr
-  %cast138 = ptrtoint ptr %s_val137 to i64
-  %idx_val139 = load i64, ptr %idx.addr
-  %op140 = add i64 %cast138, %idx_val139
-  %cast141 = inttoptr i64 %op140 to ptr
-  store ptr %cast141, ptr %p136
-  %b142 = alloca i8, align 8
-  %cast143 = trunc i64 0 to i8
-  store i8 %cast143, ptr %b142
-  %p_val144 = load ptr, ptr %p136
-  %deref145 = load i8, ptr %p_val144
-  store i8 %deref145, ptr %b142
-  %b_val146 = load i8, ptr %b142
-  %cast147 = zext i8 %b_val146 to i64
-  ret i64 %cast147
+  %p522 = alloca ptr, align 8
+  %s_val523 = load ptr, ptr %s.addr
+  %cast524 = ptrtoint ptr %s_val523 to i64
+  %idx_val525 = load i64, ptr %idx.addr
+  %op526 = add i64 %cast524, %idx_val525
+  %cast527 = inttoptr i64 %op526 to ptr
+  store ptr %cast527, ptr %p522
+  %b528 = alloca i8, align 8
+  %cast529 = trunc i64 0 to i8
+  store i8 %cast529, ptr %b528
+  %p_val530 = load ptr, ptr %p522
+  %deref531 = load i8, ptr %p_val530
+  store i8 %deref531, ptr %b528
+  %b_val532 = load i8, ptr %b528
+  %cast533 = zext i8 %b_val532 to i64
+  ret i64 %cast533
 }
 
 define i32 @ofs_str_eq(ptr %a, ptr %b) {
@@ -666,89 +1619,89 @@ entry:
   store ptr %b, ptr %b.addr
   %b.addr_own = alloca i64, align 8
   store i64 0, ptr %b.addr_own
-  %sc_slot148 = alloca i1, align 1
-  %a_val149 = load ptr, ptr %a.addr
-  %cmp150 = icmp eq ptr %a_val149, null
-  store i1 %cmp150, ptr %sc_slot148
-  br i1 %cmp150, label %sc_rhs77, label %sc_end78
+  %sc_slot534 = alloca i1, align 1
+  %a_val535 = load ptr, ptr %a.addr
+  %cmp536 = icmp eq ptr %a_val535, null
+  store i1 %cmp536, ptr %sc_slot534
+  br i1 %cmp536, label %sc_rhs197, label %sc_end198
 
-sc_rhs77:
-  %b_val151 = load ptr, ptr %b.addr
-  %cmp152 = icmp eq ptr %b_val151, null
-  store i1 %cmp152, ptr %sc_slot148
-  br label %sc_end78
+sc_rhs197:
+  %b_val537 = load ptr, ptr %b.addr
+  %cmp538 = icmp eq ptr %b_val537, null
+  store i1 %cmp538, ptr %sc_slot534
+  br label %sc_end198
 
-sc_end78:
-  %sc153 = load i1, ptr %sc_slot148
-  br i1 %sc153, label %if_then79, label %if_else80
+sc_end198:
+  %sc539 = load i1, ptr %sc_slot534
+  br i1 %sc539, label %if_then199, label %if_else200
 
-if_then79:
-  %sf_val154 = load ptr, ptr %b.addr
-  %sf_own155 = load i64, ptr %b.addr_own
-  call void @ofs_str_release(ptr %sf_val154, i64 %sf_own155)
-  %sf_val156 = load ptr, ptr %a.addr
-  %sf_own157 = load i64, ptr %a.addr_own
-  call void @ofs_str_release(ptr %sf_val156, i64 %sf_own157)
+if_then199:
+  %sf_val540 = load ptr, ptr %b.addr
+  %sf_own541 = load i64, ptr %b.addr_own
+  call void @ofs_str_release(ptr %sf_val540, i64 %sf_own541)
+  %sf_val542 = load ptr, ptr %a.addr
+  %sf_own543 = load i64, ptr %a.addr_own
+  call void @ofs_str_release(ptr %sf_val542, i64 %sf_own543)
   ret i32 1
 
-if_else80:
-  br label %if_end81
+if_else200:
+  br label %if_end201
 
-if_end81:
-  %sc_slot158 = alloca i1, align 1
-  %a_val159 = load ptr, ptr %a.addr
-  %cmp160 = icmp eq ptr %a_val159, null
-  store i1 %cmp160, ptr %sc_slot158
-  br i1 %cmp160, label %sc_end83, label %sc_rhs82
+if_end201:
+  %sc_slot544 = alloca i1, align 1
+  %a_val545 = load ptr, ptr %a.addr
+  %cmp546 = icmp eq ptr %a_val545, null
+  store i1 %cmp546, ptr %sc_slot544
+  br i1 %cmp546, label %sc_end203, label %sc_rhs202
 
-sc_rhs82:
-  %b_val161 = load ptr, ptr %b.addr
-  %cmp162 = icmp eq ptr %b_val161, null
-  store i1 %cmp162, ptr %sc_slot158
-  br label %sc_end83
+sc_rhs202:
+  %b_val547 = load ptr, ptr %b.addr
+  %cmp548 = icmp eq ptr %b_val547, null
+  store i1 %cmp548, ptr %sc_slot544
+  br label %sc_end203
 
-sc_end83:
-  %sc163 = load i1, ptr %sc_slot158
-  br i1 %sc163, label %if_then84, label %if_else85
+sc_end203:
+  %sc549 = load i1, ptr %sc_slot544
+  br i1 %sc549, label %if_then204, label %if_else205
 
-if_then84:
-  %sf_val164 = load ptr, ptr %b.addr
-  %sf_own165 = load i64, ptr %b.addr_own
-  call void @ofs_str_release(ptr %sf_val164, i64 %sf_own165)
-  %sf_val166 = load ptr, ptr %a.addr
-  %sf_own167 = load i64, ptr %a.addr_own
-  call void @ofs_str_release(ptr %sf_val166, i64 %sf_own167)
+if_then204:
+  %sf_val550 = load ptr, ptr %b.addr
+  %sf_own551 = load i64, ptr %b.addr_own
+  call void @ofs_str_release(ptr %sf_val550, i64 %sf_own551)
+  %sf_val552 = load ptr, ptr %a.addr
+  %sf_own553 = load i64, ptr %a.addr_own
+  call void @ofs_str_release(ptr %sf_val552, i64 %sf_own553)
   ret i32 0
 
-if_else85:
-  br label %if_end86
+if_else205:
+  br label %if_end206
 
-if_end86:
-  %a_val168 = load ptr, ptr %a.addr
-  %b_val169 = load ptr, ptr %b.addr
-  %call170 = call i64 @strcmp(ptr %a_val168, ptr %b_val169)
-  %cmp171 = icmp eq i64 %call170, 0
-  br i1 %cmp171, label %if_then87, label %if_else88
+if_end206:
+  %a_val554 = load ptr, ptr %a.addr
+  %b_val555 = load ptr, ptr %b.addr
+  %call556 = call i64 @strcmp(ptr %a_val554, ptr %b_val555)
+  %cmp557 = icmp eq i64 %call556, 0
+  br i1 %cmp557, label %if_then207, label %if_else208
 
-if_then87:
-  %sf_val172 = load ptr, ptr %b.addr
-  %sf_own173 = load i64, ptr %b.addr_own
-  call void @ofs_str_release(ptr %sf_val172, i64 %sf_own173)
-  %sf_val174 = load ptr, ptr %a.addr
-  %sf_own175 = load i64, ptr %a.addr_own
-  call void @ofs_str_release(ptr %sf_val174, i64 %sf_own175)
+if_then207:
+  %sf_val558 = load ptr, ptr %b.addr
+  %sf_own559 = load i64, ptr %b.addr_own
+  call void @ofs_str_release(ptr %sf_val558, i64 %sf_own559)
+  %sf_val560 = load ptr, ptr %a.addr
+  %sf_own561 = load i64, ptr %a.addr_own
+  call void @ofs_str_release(ptr %sf_val560, i64 %sf_own561)
   ret i32 1
 
-if_else88:
-  br label %if_end89
+if_else208:
+  br label %if_end209
 
-if_end89:
-  %sf_val176 = load ptr, ptr %b.addr
-  %sf_own177 = load i64, ptr %b.addr_own
-  call void @ofs_str_release(ptr %sf_val176, i64 %sf_own177)
-  %sf_val178 = load ptr, ptr %a.addr
-  %sf_own179 = load i64, ptr %a.addr_own
-  call void @ofs_str_release(ptr %sf_val178, i64 %sf_own179)
+if_end209:
+  %sf_val562 = load ptr, ptr %b.addr
+  %sf_own563 = load i64, ptr %b.addr_own
+  call void @ofs_str_release(ptr %sf_val562, i64 %sf_own563)
+  %sf_val564 = load ptr, ptr %a.addr
+  %sf_own565 = load i64, ptr %a.addr_own
+  call void @ofs_str_release(ptr %sf_val564, i64 %sf_own565)
   ret i32 0
 }
 
@@ -758,85 +1711,85 @@ entry:
   store ptr %a, ptr %a.addr
   %b.addr = alloca ptr, align 8
   store ptr %b, ptr %b.addr
-  %la180 = alloca i64, align 8
-  %a_val181 = load ptr, ptr %a.addr
-  %strlen182 = call i64 @ofs_str_len(ptr %a_val181)
-  store i64 %strlen182, ptr %la180
-  %lb183 = alloca i64, align 8
-  %b_val184 = load ptr, ptr %b.addr
-  %strlen185 = call i64 @ofs_str_len(ptr %b_val184)
-  store i64 %strlen185, ptr %lb183
-  %total186 = alloca i64, align 8
-  %la_val187 = load i64, ptr %la180
-  %lb_val188 = load i64, ptr %lb183
-  %op189 = add i64 %la_val187, %lb_val188
-  store i64 %op189, ptr %total186
-  %res190 = alloca ptr, align 8
-  %total_val191 = load i64, ptr %total186
-  %op192 = add i64 %total_val191, 1
-  %call193 = call ptr @ofs_alloc(i64 %op192)
-  store ptr %call193, ptr %res190
-  %la_val194 = load i64, ptr %la180
-  %cmp195 = icmp sgt i64 %la_val194, 0
-  br i1 %cmp195, label %if_then90, label %if_else91
+  %la566 = alloca i64, align 8
+  %a_val567 = load ptr, ptr %a.addr
+  %strlen568 = call i64 @ofs_str_len(ptr %a_val567)
+  store i64 %strlen568, ptr %la566
+  %lb569 = alloca i64, align 8
+  %b_val570 = load ptr, ptr %b.addr
+  %strlen571 = call i64 @ofs_str_len(ptr %b_val570)
+  store i64 %strlen571, ptr %lb569
+  %total572 = alloca i64, align 8
+  %la_val573 = load i64, ptr %la566
+  %lb_val574 = load i64, ptr %lb569
+  %op575 = add i64 %la_val573, %lb_val574
+  store i64 %op575, ptr %total572
+  %res576 = alloca ptr, align 8
+  %total_val577 = load i64, ptr %total572
+  %op578 = add i64 %total_val577, 1
+  %call579 = call ptr @ofs_alloc(i64 %op578)
+  store ptr %call579, ptr %res576
+  %la_val580 = load i64, ptr %la566
+  %cmp581 = icmp sgt i64 %la_val580, 0
+  br i1 %cmp581, label %if_then210, label %if_else211
 
-if_then90:
-  %res_val196 = load ptr, ptr %res190
-  %a_val197 = load ptr, ptr %a.addr
-  %la_val198 = load i64, ptr %la180
-  %call199 = call ptr @memcpy(ptr %res_val196, ptr %a_val197, i64 %la_val198)
-  br label %if_end92
+if_then210:
+  %res_val582 = load ptr, ptr %res576
+  %a_val583 = load ptr, ptr %a.addr
+  %la_val584 = load i64, ptr %la566
+  %call585 = call ptr @memcpy(ptr %res_val582, ptr %a_val583, i64 %la_val584)
+  br label %if_end212
 
-if_else91:
-  br label %if_end92
+if_else211:
+  br label %if_end212
 
-if_end92:
-  %lb_val200 = load i64, ptr %lb183
-  %cmp201 = icmp sgt i64 %lb_val200, 0
-  br i1 %cmp201, label %if_then93, label %if_else94
+if_end212:
+  %lb_val586 = load i64, ptr %lb569
+  %cmp587 = icmp sgt i64 %lb_val586, 0
+  br i1 %cmp587, label %if_then213, label %if_else214
 
-if_then93:
-  %resp202 = alloca i64, align 8
-  %res_val203 = load ptr, ptr %res190
-  %cast204 = ptrtoint ptr %res_val203 to i64
-  %la_val205 = load i64, ptr %la180
-  %op206 = add i64 %cast204, %la_val205
-  store i64 %op206, ptr %resp202
-  %resp_val207 = load i64, ptr %resp202
-  %cast208 = inttoptr i64 %resp_val207 to ptr
-  %b_val209 = load ptr, ptr %b.addr
-  %lb_val210 = load i64, ptr %lb183
-  %call211 = call ptr @memcpy(ptr %cast208, ptr %b_val209, i64 %lb_val210)
-  br label %if_end95
+if_then213:
+  %resp588 = alloca i64, align 8
+  %res_val589 = load ptr, ptr %res576
+  %cast590 = ptrtoint ptr %res_val589 to i64
+  %la_val591 = load i64, ptr %la566
+  %op592 = add i64 %cast590, %la_val591
+  store i64 %op592, ptr %resp588
+  %resp_val593 = load i64, ptr %resp588
+  %cast594 = inttoptr i64 %resp_val593 to ptr
+  %b_val595 = load ptr, ptr %b.addr
+  %lb_val596 = load i64, ptr %lb569
+  %call597 = call ptr @memcpy(ptr %cast594, ptr %b_val595, i64 %lb_val596)
+  br label %if_end215
 
-if_else94:
-  br label %if_end95
+if_else214:
+  br label %if_end215
 
-if_end95:
-  %res_val212 = load ptr, ptr %res190
-  ret ptr %res_val212
+if_end215:
+  %res_val598 = load ptr, ptr %res576
+  ret ptr %res_val598
 }
 
 define void @__ofs_str_forget(ptr %p) {
 entry:
   %p.addr = alloca ptr, align 8
   store ptr %p, ptr %p.addr
-  %p_val213 = load ptr, ptr %p.addr
-  %cast214 = ptrtoint ptr %p_val213 to i64
-  %__ofs_charat_s_val215 = load ptr, ptr @__ofs_charat_s
-  %cast216 = ptrtoint ptr %__ofs_charat_s_val215 to i64
-  %cmp217 = icmp eq i64 %cast214, %cast216
-  br i1 %cmp217, label %if_then96, label %if_else97
+  %p_val599 = load ptr, ptr %p.addr
+  %cast600 = ptrtoint ptr %p_val599 to i64
+  %__ofs_charat_s_val601 = load ptr, ptr @__ofs_charat_s
+  %cast602 = ptrtoint ptr %__ofs_charat_s_val601 to i64
+  %cmp603 = icmp eq i64 %cast600, %cast602
+  br i1 %cmp603, label %if_then216, label %if_else217
 
-if_then96:
+if_then216:
   store ptr null, ptr @__ofs_charat_s
   store i64 0, ptr @__ofs_charat_n
-  br label %if_end98
+  br label %if_end218
 
-if_else97:
-  br label %if_end98
+if_else217:
+  br label %if_end218
 
-if_end98:
+if_end218:
   ret void
 }
 
@@ -848,213 +1801,213 @@ entry:
   store ptr %b, ptr %b.addr
   %flags.addr = alloca i64, align 8
   store i64 %flags, ptr %flags.addr
-  %la218 = alloca i64, align 8
-  %a_val219 = load ptr, ptr %a.addr
-  %strlen220 = call i64 @ofs_str_len(ptr %a_val219)
-  store i64 %strlen220, ptr %la218
-  %lb221 = alloca i64, align 8
-  %b_val222 = load ptr, ptr %b.addr
-  %strlen223 = call i64 @ofs_str_len(ptr %b_val222)
-  store i64 %strlen223, ptr %lb221
-  %total224 = alloca i64, align 8
-  %la_val225 = load i64, ptr %la218
-  %lb_val226 = load i64, ptr %lb221
-  %op227 = add i64 %la_val225, %lb_val226
-  store i64 %op227, ptr %total224
-  %res228 = alloca ptr, align 8
-  store ptr null, ptr %res228
-  %src229 = alloca i64, align 8
-  %b_val230 = load ptr, ptr %b.addr
-  %cast231 = ptrtoint ptr %b_val230 to i64
-  store i64 %cast231, ptr %src229
-  %sc_slot232 = alloca i1, align 1
-  %flags_val233 = load i64, ptr %flags.addr
-  %bit234 = and i64 %flags_val233, 1
-  %cmp235 = icmp ne i64 %bit234, 0
-  store i1 %cmp235, ptr %sc_slot232
-  br i1 %cmp235, label %sc_rhs99, label %sc_end100
+  %la604 = alloca i64, align 8
+  %a_val605 = load ptr, ptr %a.addr
+  %strlen606 = call i64 @ofs_str_len(ptr %a_val605)
+  store i64 %strlen606, ptr %la604
+  %lb607 = alloca i64, align 8
+  %b_val608 = load ptr, ptr %b.addr
+  %strlen609 = call i64 @ofs_str_len(ptr %b_val608)
+  store i64 %strlen609, ptr %lb607
+  %total610 = alloca i64, align 8
+  %la_val611 = load i64, ptr %la604
+  %lb_val612 = load i64, ptr %lb607
+  %op613 = add i64 %la_val611, %lb_val612
+  store i64 %op613, ptr %total610
+  %res614 = alloca ptr, align 8
+  store ptr null, ptr %res614
+  %src615 = alloca i64, align 8
+  %b_val616 = load ptr, ptr %b.addr
+  %cast617 = ptrtoint ptr %b_val616 to i64
+  store i64 %cast617, ptr %src615
+  %sc_slot618 = alloca i1, align 1
+  %flags_val619 = load i64, ptr %flags.addr
+  %bit620 = and i64 %flags_val619, 1
+  %cmp621 = icmp ne i64 %bit620, 0
+  store i1 %cmp621, ptr %sc_slot618
+  br i1 %cmp621, label %sc_rhs219, label %sc_end220
 
-sc_rhs99:
-  %a_val236 = load ptr, ptr %a.addr
-  %cmp237 = icmp ne ptr %a_val236, null
-  store i1 %cmp237, ptr %sc_slot232
-  br label %sc_end100
+sc_rhs219:
+  %a_val622 = load ptr, ptr %a.addr
+  %cmp623 = icmp ne ptr %a_val622, null
+  store i1 %cmp623, ptr %sc_slot618
+  br label %sc_end220
 
-sc_end100:
-  %sc238 = load i1, ptr %sc_slot232
-  br i1 %sc238, label %if_then101, label %if_else102
+sc_end220:
+  %sc624 = load i1, ptr %sc_slot618
+  br i1 %sc624, label %if_then221, label %if_else222
 
-if_then101:
-  %ab239 = alloca i64, align 8
-  %a_val240 = load ptr, ptr %a.addr
-  %cast241 = ptrtoint ptr %a_val240 to i64
-  store i64 %cast241, ptr %ab239
-  %inside242 = alloca i32, align 8
-  store i32 0, ptr %inside242
-  %sc_slot243 = alloca i1, align 1
-  %src_val244 = load i64, ptr %src229
-  %ab_val245 = load i64, ptr %ab239
-  %cmp246 = icmp sge i64 %src_val244, %ab_val245
-  store i1 %cmp246, ptr %sc_slot243
-  br i1 %cmp246, label %sc_rhs104, label %sc_end105
+if_then221:
+  %ab625 = alloca i64, align 8
+  %a_val626 = load ptr, ptr %a.addr
+  %cast627 = ptrtoint ptr %a_val626 to i64
+  store i64 %cast627, ptr %ab625
+  %inside628 = alloca i32, align 8
+  store i32 0, ptr %inside628
+  %sc_slot629 = alloca i1, align 1
+  %src_val630 = load i64, ptr %src615
+  %ab_val631 = load i64, ptr %ab625
+  %cmp632 = icmp sge i64 %src_val630, %ab_val631
+  store i1 %cmp632, ptr %sc_slot629
+  br i1 %cmp632, label %sc_rhs224, label %sc_end225
 
-sc_rhs104:
-  %src_val247 = load i64, ptr %src229
-  %ab_val248 = load i64, ptr %ab239
-  %la_val249 = load i64, ptr %la218
-  %op250 = add i64 %ab_val248, %la_val249
-  %cmp251 = icmp sle i64 %src_val247, %op250
-  store i1 %cmp251, ptr %sc_slot243
-  br label %sc_end105
+sc_rhs224:
+  %src_val633 = load i64, ptr %src615
+  %ab_val634 = load i64, ptr %ab625
+  %la_val635 = load i64, ptr %la604
+  %op636 = add i64 %ab_val634, %la_val635
+  %cmp637 = icmp sle i64 %src_val633, %op636
+  store i1 %cmp637, ptr %sc_slot629
+  br label %sc_end225
 
-sc_end105:
-  %sc252 = load i1, ptr %sc_slot243
-  br i1 %sc252, label %if_then106, label %if_else107
+sc_end225:
+  %sc638 = load i1, ptr %sc_slot629
+  br i1 %sc638, label %if_then226, label %if_else227
 
-if_then106:
-  store i32 1, ptr %inside242
-  br label %if_end108
+if_then226:
+  store i32 1, ptr %inside628
+  br label %if_end228
 
-if_else107:
-  br label %if_end108
+if_else227:
+  br label %if_end228
 
-if_end108:
-  %a_val253 = load ptr, ptr %a.addr
-  call void @__ofs_str_forget(ptr %a_val253)
-  %a_val254 = load ptr, ptr %a.addr
-  %total_val255 = load i64, ptr %total224
-  %op256 = add i64 %total_val255, 1
-  %call257 = call ptr @ofs_realloc(ptr %a_val254, i64 %op256)
-  store ptr %call257, ptr %res228
-  %inside_val258 = load i32, ptr %inside242
-  %cond259 = icmp ne i32 %inside_val258, 0
-  br i1 %cond259, label %if_then109, label %if_else110
+if_end228:
+  %a_val639 = load ptr, ptr %a.addr
+  call void @__ofs_str_forget(ptr %a_val639)
+  %a_val640 = load ptr, ptr %a.addr
+  %total_val641 = load i64, ptr %total610
+  %op642 = add i64 %total_val641, 1
+  %call643 = call ptr @ofs_realloc(ptr %a_val640, i64 %op642)
+  store ptr %call643, ptr %res614
+  %inside_val644 = load i32, ptr %inside628
+  %cond645 = icmp ne i32 %inside_val644, 0
+  br i1 %cond645, label %if_then229, label %if_else230
 
-if_then109:
-  %res_val260 = load ptr, ptr %res228
-  %cast261 = ptrtoint ptr %res_val260 to i64
-  %src_val262 = load i64, ptr %src229
-  %ab_val263 = load i64, ptr %ab239
-  %op264 = sub i64 %src_val262, %ab_val263
-  %op265 = add i64 %cast261, %op264
-  store i64 %op265, ptr %src229
-  br label %if_end111
+if_then229:
+  %res_val646 = load ptr, ptr %res614
+  %cast647 = ptrtoint ptr %res_val646 to i64
+  %src_val648 = load i64, ptr %src615
+  %ab_val649 = load i64, ptr %ab625
+  %op650 = sub i64 %src_val648, %ab_val649
+  %op651 = add i64 %cast647, %op650
+  store i64 %op651, ptr %src615
+  br label %if_end231
 
-if_else110:
-  br label %if_end111
+if_else230:
+  br label %if_end231
 
-if_end111:
-  %lb_val266 = load i64, ptr %lb221
-  %cmp267 = icmp sgt i64 %lb_val266, 0
-  br i1 %cmp267, label %if_then112, label %if_else113
+if_end231:
+  %lb_val652 = load i64, ptr %lb607
+  %cmp653 = icmp sgt i64 %lb_val652, 0
+  br i1 %cmp653, label %if_then232, label %if_else233
 
-if_then112:
-  %rp268 = alloca i64, align 8
-  %res_val269 = load ptr, ptr %res228
-  %cast270 = ptrtoint ptr %res_val269 to i64
-  %la_val271 = load i64, ptr %la218
-  %op272 = add i64 %cast270, %la_val271
-  store i64 %op272, ptr %rp268
-  %rp_val273 = load i64, ptr %rp268
-  %cast274 = inttoptr i64 %rp_val273 to ptr
-  %src_val275 = load i64, ptr %src229
-  %cast276 = inttoptr i64 %src_val275 to ptr
-  %lb_val277 = load i64, ptr %lb221
-  %call278 = call ptr @memmove(ptr %cast274, ptr %cast276, i64 %lb_val277)
-  br label %if_end114
+if_then232:
+  %rp654 = alloca i64, align 8
+  %res_val655 = load ptr, ptr %res614
+  %cast656 = ptrtoint ptr %res_val655 to i64
+  %la_val657 = load i64, ptr %la604
+  %op658 = add i64 %cast656, %la_val657
+  store i64 %op658, ptr %rp654
+  %rp_val659 = load i64, ptr %rp654
+  %cast660 = inttoptr i64 %rp_val659 to ptr
+  %src_val661 = load i64, ptr %src615
+  %cast662 = inttoptr i64 %src_val661 to ptr
+  %lb_val663 = load i64, ptr %lb607
+  %call664 = call ptr @memmove(ptr %cast660, ptr %cast662, i64 %lb_val663)
+  br label %if_end234
 
-if_else113:
-  br label %if_end114
+if_else233:
+  br label %if_end234
 
-if_end114:
-  br label %if_end103
+if_end234:
+  br label %if_end223
 
-if_else102:
-  %total_val279 = load i64, ptr %total224
-  %op280 = add i64 %total_val279, 1
-  %call281 = call ptr @ofs_alloc(i64 %op280)
-  store ptr %call281, ptr %res228
-  %la_val282 = load i64, ptr %la218
-  %cmp283 = icmp sgt i64 %la_val282, 0
-  br i1 %cmp283, label %if_then115, label %if_else116
+if_else222:
+  %total_val665 = load i64, ptr %total610
+  %op666 = add i64 %total_val665, 1
+  %call667 = call ptr @ofs_alloc(i64 %op666)
+  store ptr %call667, ptr %res614
+  %la_val668 = load i64, ptr %la604
+  %cmp669 = icmp sgt i64 %la_val668, 0
+  br i1 %cmp669, label %if_then235, label %if_else236
 
-if_then115:
-  %res_val284 = load ptr, ptr %res228
-  %a_val285 = load ptr, ptr %a.addr
-  %la_val286 = load i64, ptr %la218
-  %call287 = call ptr @memcpy(ptr %res_val284, ptr %a_val285, i64 %la_val286)
-  br label %if_end117
+if_then235:
+  %res_val670 = load ptr, ptr %res614
+  %a_val671 = load ptr, ptr %a.addr
+  %la_val672 = load i64, ptr %la604
+  %call673 = call ptr @memcpy(ptr %res_val670, ptr %a_val671, i64 %la_val672)
+  br label %if_end237
 
-if_else116:
-  br label %if_end117
+if_else236:
+  br label %if_end237
 
-if_end117:
-  %lb_val288 = load i64, ptr %lb221
-  %cmp289 = icmp sgt i64 %lb_val288, 0
-  br i1 %cmp289, label %if_then118, label %if_else119
+if_end237:
+  %lb_val674 = load i64, ptr %lb607
+  %cmp675 = icmp sgt i64 %lb_val674, 0
+  br i1 %cmp675, label %if_then238, label %if_else239
 
-if_then118:
-  %rp2290 = alloca i64, align 8
-  %res_val291 = load ptr, ptr %res228
-  %cast292 = ptrtoint ptr %res_val291 to i64
-  %la_val293 = load i64, ptr %la218
-  %op294 = add i64 %cast292, %la_val293
-  store i64 %op294, ptr %rp2290
-  %rp2_val295 = load i64, ptr %rp2290
-  %cast296 = inttoptr i64 %rp2_val295 to ptr
-  %src_val297 = load i64, ptr %src229
-  %cast298 = inttoptr i64 %src_val297 to ptr
-  %lb_val299 = load i64, ptr %lb221
-  %call300 = call ptr @memcpy(ptr %cast296, ptr %cast298, i64 %lb_val299)
-  br label %if_end120
+if_then238:
+  %rp2676 = alloca i64, align 8
+  %res_val677 = load ptr, ptr %res614
+  %cast678 = ptrtoint ptr %res_val677 to i64
+  %la_val679 = load i64, ptr %la604
+  %op680 = add i64 %cast678, %la_val679
+  store i64 %op680, ptr %rp2676
+  %rp2_val681 = load i64, ptr %rp2676
+  %cast682 = inttoptr i64 %rp2_val681 to ptr
+  %src_val683 = load i64, ptr %src615
+  %cast684 = inttoptr i64 %src_val683 to ptr
+  %lb_val685 = load i64, ptr %lb607
+  %call686 = call ptr @memcpy(ptr %cast682, ptr %cast684, i64 %lb_val685)
+  br label %if_end240
 
-if_else119:
-  br label %if_end120
+if_else239:
+  br label %if_end240
 
-if_end120:
-  br label %if_end103
+if_end240:
+  br label %if_end223
 
-if_end103:
-  %term301 = alloca ptr, align 8
-  %res_val302 = load ptr, ptr %res228
-  %cast303 = ptrtoint ptr %res_val302 to i64
-  %total_val304 = load i64, ptr %total224
-  %op305 = add i64 %cast303, %total_val304
-  %cast306 = inttoptr i64 %op305 to ptr
-  store ptr %cast306, ptr %term301
-  %term_val307 = load ptr, ptr %term301
-  %cast308 = trunc i64 0 to i8
-  store i8 %cast308, ptr %term_val307
-  %sc_slot309 = alloca i1, align 1
-  %flags_val310 = load i64, ptr %flags.addr
-  %bit311 = and i64 %flags_val310, 2
-  %cmp312 = icmp ne i64 %bit311, 0
-  store i1 %cmp312, ptr %sc_slot309
-  br i1 %cmp312, label %sc_rhs121, label %sc_end122
+if_end223:
+  %term687 = alloca ptr, align 8
+  %res_val688 = load ptr, ptr %res614
+  %cast689 = ptrtoint ptr %res_val688 to i64
+  %total_val690 = load i64, ptr %total610
+  %op691 = add i64 %cast689, %total_val690
+  %cast692 = inttoptr i64 %op691 to ptr
+  store ptr %cast692, ptr %term687
+  %term_val693 = load ptr, ptr %term687
+  %cast694 = trunc i64 0 to i8
+  store i8 %cast694, ptr %term_val693
+  %sc_slot695 = alloca i1, align 1
+  %flags_val696 = load i64, ptr %flags.addr
+  %bit697 = and i64 %flags_val696, 2
+  %cmp698 = icmp ne i64 %bit697, 0
+  store i1 %cmp698, ptr %sc_slot695
+  br i1 %cmp698, label %sc_rhs241, label %sc_end242
 
-sc_rhs121:
-  %b_val313 = load ptr, ptr %b.addr
-  %cmp314 = icmp ne ptr %b_val313, null
-  store i1 %cmp314, ptr %sc_slot309
-  br label %sc_end122
+sc_rhs241:
+  %b_val699 = load ptr, ptr %b.addr
+  %cmp700 = icmp ne ptr %b_val699, null
+  store i1 %cmp700, ptr %sc_slot695
+  br label %sc_end242
 
-sc_end122:
-  %sc315 = load i1, ptr %sc_slot309
-  br i1 %sc315, label %if_then123, label %if_else124
+sc_end242:
+  %sc701 = load i1, ptr %sc_slot695
+  br i1 %sc701, label %if_then243, label %if_else244
 
-if_then123:
-  %b_val316 = load ptr, ptr %b.addr
-  call void @__ofs_str_forget(ptr %b_val316)
-  %b_val317 = load ptr, ptr %b.addr
-  call void @free(ptr %b_val317)
-  br label %if_end125
+if_then243:
+  %b_val702 = load ptr, ptr %b.addr
+  call void @__ofs_str_forget(ptr %b_val702)
+  %b_val703 = load ptr, ptr %b.addr
+  call void @ofs_free(ptr %b_val703)
+  br label %if_end245
 
-if_else124:
-  br label %if_end125
+if_else244:
+  br label %if_end245
 
-if_end125:
-  %res_val318 = load ptr, ptr %res228
-  ret ptr %res_val318
+if_end245:
+  %res_val704 = load ptr, ptr %res614
+  ret ptr %res_val704
 }
 
 define void @ofs_str_release(ptr %s, i64 %own) {
@@ -1063,33 +2016,33 @@ entry:
   store ptr %s, ptr %s.addr
   %own.addr = alloca i64, align 8
   store i64 %own, ptr %own.addr
-  %sc_slot319 = alloca i1, align 1
-  %own_val320 = load i64, ptr %own.addr
-  %cmp321 = icmp ne i64 %own_val320, 0
-  store i1 %cmp321, ptr %sc_slot319
-  br i1 %cmp321, label %sc_rhs126, label %sc_end127
+  %sc_slot705 = alloca i1, align 1
+  %own_val706 = load i64, ptr %own.addr
+  %cmp707 = icmp ne i64 %own_val706, 0
+  store i1 %cmp707, ptr %sc_slot705
+  br i1 %cmp707, label %sc_rhs246, label %sc_end247
 
-sc_rhs126:
-  %s_val322 = load ptr, ptr %s.addr
-  %cmp323 = icmp ne ptr %s_val322, null
-  store i1 %cmp323, ptr %sc_slot319
-  br label %sc_end127
+sc_rhs246:
+  %s_val708 = load ptr, ptr %s.addr
+  %cmp709 = icmp ne ptr %s_val708, null
+  store i1 %cmp709, ptr %sc_slot705
+  br label %sc_end247
 
-sc_end127:
-  %sc324 = load i1, ptr %sc_slot319
-  br i1 %sc324, label %if_then128, label %if_else129
+sc_end247:
+  %sc710 = load i1, ptr %sc_slot705
+  br i1 %sc710, label %if_then248, label %if_else249
 
-if_then128:
-  %s_val325 = load ptr, ptr %s.addr
-  call void @__ofs_str_forget(ptr %s_val325)
-  %s_val326 = load ptr, ptr %s.addr
-  call void @free(ptr %s_val326)
-  br label %if_end130
+if_then248:
+  %s_val711 = load ptr, ptr %s.addr
+  call void @__ofs_str_forget(ptr %s_val711)
+  %s_val712 = load ptr, ptr %s.addr
+  call void @ofs_free(ptr %s_val712)
+  br label %if_end250
 
-if_else129:
-  br label %if_end130
+if_else249:
+  br label %if_end250
 
-if_end130:
+if_end250:
   ret void
 }
 
@@ -1101,114 +2054,114 @@ entry:
   store i64 %start, ptr %start.addr
   %len.addr = alloca i64, align 8
   store i64 %len, ptr %len.addr
-  %s_val327 = load ptr, ptr %s.addr
-  %cmp328 = icmp eq ptr %s_val327, null
-  br i1 %cmp328, label %if_then131, label %if_else132
+  %s_val713 = load ptr, ptr %s.addr
+  %cmp714 = icmp eq ptr %s_val713, null
+  br i1 %cmp714, label %if_then251, label %if_else252
 
-if_then131:
+if_then251:
   ret ptr @str.12
 
-if_else132:
-  br label %if_end133
+if_else252:
+  br label %if_end253
 
-if_end133:
-  %slen329 = alloca i64, align 8
-  %s_val330 = load ptr, ptr %s.addr
-  %strlen331 = call i64 @ofs_str_len(ptr %s_val330)
-  store i64 %strlen331, ptr %slen329
-  %start_val332 = load i64, ptr %start.addr
-  %cmp333 = icmp slt i64 %start_val332, 0
-  br i1 %cmp333, label %if_then134, label %if_else135
+if_end253:
+  %slen715 = alloca i64, align 8
+  %s_val716 = load ptr, ptr %s.addr
+  %strlen717 = call i64 @ofs_str_len(ptr %s_val716)
+  store i64 %strlen717, ptr %slen715
+  %start_val718 = load i64, ptr %start.addr
+  %cmp719 = icmp slt i64 %start_val718, 0
+  br i1 %cmp719, label %if_then254, label %if_else255
 
-if_then134:
+if_then254:
   store i64 0, ptr %start.addr
-  br label %if_end136
+  br label %if_end256
 
-if_else135:
-  br label %if_end136
+if_else255:
+  br label %if_end256
 
-if_end136:
-  %start_val334 = load i64, ptr %start.addr
-  %slen_val335 = load i64, ptr %slen329
-  %cmp336 = icmp sge i64 %start_val334, %slen_val335
-  br i1 %cmp336, label %if_then137, label %if_else138
+if_end256:
+  %start_val720 = load i64, ptr %start.addr
+  %slen_val721 = load i64, ptr %slen715
+  %cmp722 = icmp sge i64 %start_val720, %slen_val721
+  br i1 %cmp722, label %if_then257, label %if_else258
 
-if_then137:
+if_then257:
   ret ptr @str.12
 
-if_else138:
-  br label %if_end139
+if_else258:
+  br label %if_end259
 
-if_end139:
-  %sc_slot337 = alloca i1, align 1
-  %len_val338 = load i64, ptr %len.addr
-  %cmp339 = icmp slt i64 %len_val338, 0
-  store i1 %cmp339, ptr %sc_slot337
-  br i1 %cmp339, label %sc_end141, label %sc_rhs140
+if_end259:
+  %sc_slot723 = alloca i1, align 1
+  %len_val724 = load i64, ptr %len.addr
+  %cmp725 = icmp slt i64 %len_val724, 0
+  store i1 %cmp725, ptr %sc_slot723
+  br i1 %cmp725, label %sc_end261, label %sc_rhs260
 
-sc_rhs140:
-  %start_val340 = load i64, ptr %start.addr
-  %len_val341 = load i64, ptr %len.addr
-  %op342 = add i64 %start_val340, %len_val341
-  %slen_val343 = load i64, ptr %slen329
-  %cmp344 = icmp sgt i64 %op342, %slen_val343
-  store i1 %cmp344, ptr %sc_slot337
-  br label %sc_end141
+sc_rhs260:
+  %start_val726 = load i64, ptr %start.addr
+  %len_val727 = load i64, ptr %len.addr
+  %op728 = add i64 %start_val726, %len_val727
+  %slen_val729 = load i64, ptr %slen715
+  %cmp730 = icmp sgt i64 %op728, %slen_val729
+  store i1 %cmp730, ptr %sc_slot723
+  br label %sc_end261
 
-sc_end141:
-  %sc345 = load i1, ptr %sc_slot337
-  br i1 %sc345, label %if_then142, label %if_else143
+sc_end261:
+  %sc731 = load i1, ptr %sc_slot723
+  br i1 %sc731, label %if_then262, label %if_else263
 
-if_then142:
-  %slen_val346 = load i64, ptr %slen329
-  %start_val347 = load i64, ptr %start.addr
-  %op348 = sub i64 %slen_val346, %start_val347
-  store i64 %op348, ptr %len.addr
-  br label %if_end144
+if_then262:
+  %slen_val732 = load i64, ptr %slen715
+  %start_val733 = load i64, ptr %start.addr
+  %op734 = sub i64 %slen_val732, %start_val733
+  store i64 %op734, ptr %len.addr
+  br label %if_end264
 
-if_else143:
-  br label %if_end144
+if_else263:
+  br label %if_end264
 
-if_end144:
-  %res349 = alloca ptr, align 8
-  %len_val350 = load i64, ptr %len.addr
-  %op351 = add i64 %len_val350, 1
-  %call352 = call ptr @ofs_alloc(i64 %op351)
-  store ptr %call352, ptr %res349
-  %len_val353 = load i64, ptr %len.addr
-  %cmp354 = icmp sgt i64 %len_val353, 0
-  br i1 %cmp354, label %if_then145, label %if_else146
+if_end264:
+  %res735 = alloca ptr, align 8
+  %len_val736 = load i64, ptr %len.addr
+  %op737 = add i64 %len_val736, 1
+  %call738 = call ptr @ofs_alloc(i64 %op737)
+  store ptr %call738, ptr %res735
+  %len_val739 = load i64, ptr %len.addr
+  %cmp740 = icmp sgt i64 %len_val739, 0
+  br i1 %cmp740, label %if_then265, label %if_else266
 
-if_then145:
-  %sp355 = alloca i64, align 8
-  %s_val356 = load ptr, ptr %s.addr
-  %cast357 = ptrtoint ptr %s_val356 to i64
-  %start_val358 = load i64, ptr %start.addr
-  %op359 = add i64 %cast357, %start_val358
-  store i64 %op359, ptr %sp355
-  %res_val360 = load ptr, ptr %res349
-  %sp_val361 = load i64, ptr %sp355
-  %cast362 = inttoptr i64 %sp_val361 to ptr
-  %len_val363 = load i64, ptr %len.addr
-  %call364 = call ptr @memcpy(ptr %res_val360, ptr %cast362, i64 %len_val363)
-  br label %if_end147
+if_then265:
+  %sp741 = alloca i64, align 8
+  %s_val742 = load ptr, ptr %s.addr
+  %cast743 = ptrtoint ptr %s_val742 to i64
+  %start_val744 = load i64, ptr %start.addr
+  %op745 = add i64 %cast743, %start_val744
+  store i64 %op745, ptr %sp741
+  %res_val746 = load ptr, ptr %res735
+  %sp_val747 = load i64, ptr %sp741
+  %cast748 = inttoptr i64 %sp_val747 to ptr
+  %len_val749 = load i64, ptr %len.addr
+  %call750 = call ptr @memcpy(ptr %res_val746, ptr %cast748, i64 %len_val749)
+  br label %if_end267
 
-if_else146:
-  br label %if_end147
+if_else266:
+  br label %if_end267
 
-if_end147:
-  %term365 = alloca ptr, align 8
-  %res_val366 = load ptr, ptr %res349
-  %cast367 = ptrtoint ptr %res_val366 to i64
-  %len_val368 = load i64, ptr %len.addr
-  %op369 = add i64 %cast367, %len_val368
-  %cast370 = inttoptr i64 %op369 to ptr
-  store ptr %cast370, ptr %term365
-  %term_val371 = load ptr, ptr %term365
-  %cast372 = trunc i64 0 to i8
-  store i8 %cast372, ptr %term_val371
-  %res_val373 = load ptr, ptr %res349
-  ret ptr %res_val373
+if_end267:
+  %term751 = alloca ptr, align 8
+  %res_val752 = load ptr, ptr %res735
+  %cast753 = ptrtoint ptr %res_val752 to i64
+  %len_val754 = load i64, ptr %len.addr
+  %op755 = add i64 %cast753, %len_val754
+  %cast756 = inttoptr i64 %op755 to ptr
+  store ptr %cast756, ptr %term751
+  %term_val757 = load ptr, ptr %term751
+  %cast758 = trunc i64 0 to i8
+  store i8 %cast758, ptr %term_val757
+  %res_val759 = load ptr, ptr %res735
+  ret ptr %res_val759
 }
 
 define i32 @ofs_str_contains(ptr %haystack, ptr %needle) {
@@ -1217,53 +2170,53 @@ entry:
   store ptr %haystack, ptr %haystack.addr
   %needle.addr = alloca ptr, align 8
   store ptr %needle, ptr %needle.addr
-  %sc_slot374 = alloca i1, align 1
-  %haystack_val375 = load ptr, ptr %haystack.addr
-  %cmp376 = icmp eq ptr %haystack_val375, null
-  store i1 %cmp376, ptr %sc_slot374
-  br i1 %cmp376, label %sc_end149, label %sc_rhs148
+  %sc_slot760 = alloca i1, align 1
+  %haystack_val761 = load ptr, ptr %haystack.addr
+  %cmp762 = icmp eq ptr %haystack_val761, null
+  store i1 %cmp762, ptr %sc_slot760
+  br i1 %cmp762, label %sc_end269, label %sc_rhs268
 
-sc_rhs148:
-  %needle_val377 = load ptr, ptr %needle.addr
-  %cmp378 = icmp eq ptr %needle_val377, null
-  store i1 %cmp378, ptr %sc_slot374
-  br label %sc_end149
+sc_rhs268:
+  %needle_val763 = load ptr, ptr %needle.addr
+  %cmp764 = icmp eq ptr %needle_val763, null
+  store i1 %cmp764, ptr %sc_slot760
+  br label %sc_end269
 
-sc_end149:
-  %sc379 = load i1, ptr %sc_slot374
-  br i1 %sc379, label %if_then150, label %if_else151
+sc_end269:
+  %sc765 = load i1, ptr %sc_slot760
+  br i1 %sc765, label %if_then270, label %if_else271
 
-if_then150:
+if_then270:
   ret i32 0
 
-if_else151:
-  br label %if_end152
+if_else271:
+  br label %if_end272
 
-if_end152:
-  %p380 = alloca ptr, align 8
-  %p380_own = alloca i64, align 8
-  store i64 0, ptr %p380_own
-  %haystack_val381 = load ptr, ptr %haystack.addr
-  %needle_val382 = load ptr, ptr %needle.addr
-  %call383 = call ptr @strstr(ptr %haystack_val381, ptr %needle_val382)
-  store ptr %call383, ptr %p380
-  %p_val384 = load ptr, ptr %p380
-  %cmp385 = icmp ne ptr %p_val384, null
-  br i1 %cmp385, label %if_then153, label %if_else154
+if_end272:
+  %p766 = alloca ptr, align 8
+  %p766_own = alloca i64, align 8
+  store i64 0, ptr %p766_own
+  %haystack_val767 = load ptr, ptr %haystack.addr
+  %needle_val768 = load ptr, ptr %needle.addr
+  %call769 = call ptr @strstr(ptr %haystack_val767, ptr %needle_val768)
+  store ptr %call769, ptr %p766
+  %p_val770 = load ptr, ptr %p766
+  %cmp771 = icmp ne ptr %p_val770, null
+  br i1 %cmp771, label %if_then273, label %if_else274
 
-if_then153:
-  %sf_val386 = load ptr, ptr %p380
-  %sf_own387 = load i64, ptr %p380_own
-  call void @ofs_str_release(ptr %sf_val386, i64 %sf_own387)
+if_then273:
+  %sf_val772 = load ptr, ptr %p766
+  %sf_own773 = load i64, ptr %p766_own
+  call void @ofs_str_release(ptr %sf_val772, i64 %sf_own773)
   ret i32 1
 
-if_else154:
-  br label %if_end155
+if_else274:
+  br label %if_end275
 
-if_end155:
-  %sf_val388 = load ptr, ptr %p380
-  %sf_own389 = load i64, ptr %p380_own
-  call void @ofs_str_release(ptr %sf_val388, i64 %sf_own389)
+if_end275:
+  %sf_val774 = load ptr, ptr %p766
+  %sf_own775 = load i64, ptr %p766_own
+  call void @ofs_str_release(ptr %sf_val774, i64 %sf_own775)
   ret i32 0
 }
 
@@ -1271,509 +2224,513 @@ define ptr @ofs_str_upper(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %s_val390 = load ptr, ptr %s.addr
-  %cmp391 = icmp eq ptr %s_val390, null
-  br i1 %cmp391, label %if_then156, label %if_else157
+  %s_val776 = load ptr, ptr %s.addr
+  %cmp777 = icmp eq ptr %s_val776, null
+  br i1 %cmp777, label %if_then276, label %if_else277
 
-if_then156:
+if_then276:
   ret ptr @str.12
 
-if_else157:
-  br label %if_end158
+if_else277:
+  br label %if_end278
 
-if_end158:
-  %slen392 = alloca i64, align 8
-  %s_val393 = load ptr, ptr %s.addr
-  %strlen394 = call i64 @ofs_str_len(ptr %s_val393)
-  store i64 %strlen394, ptr %slen392
-  %res395 = alloca ptr, align 8
-  %slen_val396 = load i64, ptr %slen392
-  %op397 = add i64 %slen_val396, 1
-  %call398 = call ptr @ofs_alloc(i64 %op397)
-  store ptr %call398, ptr %res395
-  %i399 = alloca i64, align 8
-  store i64 0, ptr %i399
-  br label %while_cond159
+if_end278:
+  %slen778 = alloca i64, align 8
+  %s_val779 = load ptr, ptr %s.addr
+  %strlen780 = call i64 @ofs_str_len(ptr %s_val779)
+  store i64 %strlen780, ptr %slen778
+  %res781 = alloca ptr, align 8
+  %slen_val782 = load i64, ptr %slen778
+  %op783 = add i64 %slen_val782, 1
+  %call784 = call ptr @ofs_alloc(i64 %op783)
+  store ptr %call784, ptr %res781
+  %i785 = alloca i64, align 8
+  store i64 0, ptr %i785
+  br label %while_cond279
 
-while_cond159:
-  %i_val400 = load i64, ptr %i399
-  %slen_val401 = load i64, ptr %slen392
-  %cmp402 = icmp slt i64 %i_val400, %slen_val401
-  br i1 %cmp402, label %while_body160, label %while_end161
+while_cond279:
+  %i_val786 = load i64, ptr %i785
+  %slen_val787 = load i64, ptr %slen778
+  %cmp788 = icmp slt i64 %i_val786, %slen_val787
+  br i1 %cmp788, label %while_body280, label %while_end281
 
-while_body160:
-  %loop_stk403 = call ptr @llvm.stacksave()
-  %c404 = alloca i64, align 8
-  %s_val405 = load ptr, ptr %s.addr
-  %i_val406 = load i64, ptr %i399
-  %call407 = call i64 @ofs_str_char_at(ptr %s_val405, i64 %i_val406)
-  store i64 %call407, ptr %c404
-  %sc_slot408 = alloca i1, align 1
-  %c_val409 = load i64, ptr %c404
-  %cmp410 = icmp sge i64 %c_val409, 97
-  store i1 %cmp410, ptr %sc_slot408
-  br i1 %cmp410, label %sc_rhs162, label %sc_end163
+while_body280:
+  %loop_stk789 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %c790 = alloca i64, align 8
+  %s_val791 = load ptr, ptr %s.addr
+  %i_val792 = load i64, ptr %i785
+  %call793 = call i64 @ofs_str_char_at(ptr %s_val791, i64 %i_val792)
+  store i64 %call793, ptr %c790
+  %sc_slot794 = alloca i1, align 1
+  %c_val795 = load i64, ptr %c790
+  %cmp796 = icmp sge i64 %c_val795, 97
+  store i1 %cmp796, ptr %sc_slot794
+  br i1 %cmp796, label %sc_rhs282, label %sc_end283
 
-sc_rhs162:
-  %c_val411 = load i64, ptr %c404
-  %cmp412 = icmp sle i64 %c_val411, 122
-  store i1 %cmp412, ptr %sc_slot408
-  br label %sc_end163
+sc_rhs282:
+  %c_val797 = load i64, ptr %c790
+  %cmp798 = icmp sle i64 %c_val797, 122
+  store i1 %cmp798, ptr %sc_slot794
+  br label %sc_end283
 
-sc_end163:
-  %sc413 = load i1, ptr %sc_slot408
-  br i1 %sc413, label %if_then164, label %if_else165
+sc_end283:
+  %sc799 = load i1, ptr %sc_slot794
+  br i1 %sc799, label %if_then284, label %if_else285
 
-if_then164:
-  %c_val414 = load i64, ptr %c404
-  %op415 = sub i64 %c_val414, 32
-  store i64 %op415, ptr %c404
-  br label %if_end166
+if_then284:
+  %c_val800 = load i64, ptr %c790
+  %op801 = sub i64 %c_val800, 32
+  store i64 %op801, ptr %c790
+  br label %if_end286
 
-if_else165:
-  br label %if_end166
+if_else285:
+  br label %if_end286
 
-if_end166:
-  %p416 = alloca ptr, align 8
-  %res_val417 = load ptr, ptr %res395
-  %cast418 = ptrtoint ptr %res_val417 to i64
-  %i_val419 = load i64, ptr %i399
-  %op420 = add i64 %cast418, %i_val419
-  %cast421 = inttoptr i64 %op420 to ptr
-  store ptr %cast421, ptr %p416
-  %p_val422 = load ptr, ptr %p416
-  %c_val423 = load i64, ptr %c404
-  %cast424 = trunc i64 %c_val423 to i8
-  store i8 %cast424, ptr %p_val422
-  %post_old425 = load i64, ptr %i399
-  %post_new426 = add i64 %post_old425, 1
-  store i64 %post_new426, ptr %i399
-  call void @llvm.stackrestore(ptr %loop_stk403)
-  br label %while_cond159
+if_end286:
+  %p802 = alloca ptr, align 8
+  %res_val803 = load ptr, ptr %res781
+  %cast804 = ptrtoint ptr %res_val803 to i64
+  %i_val805 = load i64, ptr %i785
+  %op806 = add i64 %cast804, %i_val805
+  %cast807 = inttoptr i64 %op806 to ptr
+  store ptr %cast807, ptr %p802
+  %p_val808 = load ptr, ptr %p802
+  %c_val809 = load i64, ptr %c790
+  %cast810 = trunc i64 %c_val809 to i8
+  store i8 %cast810, ptr %p_val808
+  %post_old811 = load i64, ptr %i785
+  %post_new812 = add i64 %post_old811, 1
+  store i64 %post_new812, ptr %i785
+  call void @llvm.stackrestore(ptr %loop_stk789)
+  br label %while_cond279
 
-while_end161:
-  %res_val427 = load ptr, ptr %res395
-  ret ptr %res_val427
+while_end281:
+  %res_val813 = load ptr, ptr %res781
+  ret ptr %res_val813
 }
 
 define ptr @ofs_str_lower(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %s_val428 = load ptr, ptr %s.addr
-  %cmp429 = icmp eq ptr %s_val428, null
-  br i1 %cmp429, label %if_then167, label %if_else168
+  %s_val814 = load ptr, ptr %s.addr
+  %cmp815 = icmp eq ptr %s_val814, null
+  br i1 %cmp815, label %if_then287, label %if_else288
 
-if_then167:
+if_then287:
   ret ptr @str.12
 
-if_else168:
-  br label %if_end169
+if_else288:
+  br label %if_end289
 
-if_end169:
-  %slen430 = alloca i64, align 8
-  %s_val431 = load ptr, ptr %s.addr
-  %strlen432 = call i64 @ofs_str_len(ptr %s_val431)
-  store i64 %strlen432, ptr %slen430
-  %res433 = alloca ptr, align 8
-  %slen_val434 = load i64, ptr %slen430
-  %op435 = add i64 %slen_val434, 1
-  %call436 = call ptr @ofs_alloc(i64 %op435)
-  store ptr %call436, ptr %res433
-  %i437 = alloca i64, align 8
-  store i64 0, ptr %i437
-  br label %while_cond170
+if_end289:
+  %slen816 = alloca i64, align 8
+  %s_val817 = load ptr, ptr %s.addr
+  %strlen818 = call i64 @ofs_str_len(ptr %s_val817)
+  store i64 %strlen818, ptr %slen816
+  %res819 = alloca ptr, align 8
+  %slen_val820 = load i64, ptr %slen816
+  %op821 = add i64 %slen_val820, 1
+  %call822 = call ptr @ofs_alloc(i64 %op821)
+  store ptr %call822, ptr %res819
+  %i823 = alloca i64, align 8
+  store i64 0, ptr %i823
+  br label %while_cond290
 
-while_cond170:
-  %i_val438 = load i64, ptr %i437
-  %slen_val439 = load i64, ptr %slen430
-  %cmp440 = icmp slt i64 %i_val438, %slen_val439
-  br i1 %cmp440, label %while_body171, label %while_end172
+while_cond290:
+  %i_val824 = load i64, ptr %i823
+  %slen_val825 = load i64, ptr %slen816
+  %cmp826 = icmp slt i64 %i_val824, %slen_val825
+  br i1 %cmp826, label %while_body291, label %while_end292
 
-while_body171:
-  %loop_stk441 = call ptr @llvm.stacksave()
-  %c442 = alloca i64, align 8
-  %s_val443 = load ptr, ptr %s.addr
-  %i_val444 = load i64, ptr %i437
-  %call445 = call i64 @ofs_str_char_at(ptr %s_val443, i64 %i_val444)
-  store i64 %call445, ptr %c442
-  %sc_slot446 = alloca i1, align 1
-  %c_val447 = load i64, ptr %c442
-  %cmp448 = icmp sge i64 %c_val447, 65
-  store i1 %cmp448, ptr %sc_slot446
-  br i1 %cmp448, label %sc_rhs173, label %sc_end174
+while_body291:
+  %loop_stk827 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %c828 = alloca i64, align 8
+  %s_val829 = load ptr, ptr %s.addr
+  %i_val830 = load i64, ptr %i823
+  %call831 = call i64 @ofs_str_char_at(ptr %s_val829, i64 %i_val830)
+  store i64 %call831, ptr %c828
+  %sc_slot832 = alloca i1, align 1
+  %c_val833 = load i64, ptr %c828
+  %cmp834 = icmp sge i64 %c_val833, 65
+  store i1 %cmp834, ptr %sc_slot832
+  br i1 %cmp834, label %sc_rhs293, label %sc_end294
 
-sc_rhs173:
-  %c_val449 = load i64, ptr %c442
-  %cmp450 = icmp sle i64 %c_val449, 90
-  store i1 %cmp450, ptr %sc_slot446
-  br label %sc_end174
+sc_rhs293:
+  %c_val835 = load i64, ptr %c828
+  %cmp836 = icmp sle i64 %c_val835, 90
+  store i1 %cmp836, ptr %sc_slot832
+  br label %sc_end294
 
-sc_end174:
-  %sc451 = load i1, ptr %sc_slot446
-  br i1 %sc451, label %if_then175, label %if_else176
+sc_end294:
+  %sc837 = load i1, ptr %sc_slot832
+  br i1 %sc837, label %if_then295, label %if_else296
 
-if_then175:
-  %c_val452 = load i64, ptr %c442
-  %op453 = add i64 %c_val452, 32
-  store i64 %op453, ptr %c442
-  br label %if_end177
+if_then295:
+  %c_val838 = load i64, ptr %c828
+  %op839 = add i64 %c_val838, 32
+  store i64 %op839, ptr %c828
+  br label %if_end297
 
-if_else176:
-  br label %if_end177
+if_else296:
+  br label %if_end297
 
-if_end177:
-  %p454 = alloca ptr, align 8
-  %res_val455 = load ptr, ptr %res433
-  %cast456 = ptrtoint ptr %res_val455 to i64
-  %i_val457 = load i64, ptr %i437
-  %op458 = add i64 %cast456, %i_val457
-  %cast459 = inttoptr i64 %op458 to ptr
-  store ptr %cast459, ptr %p454
-  %p_val460 = load ptr, ptr %p454
-  %c_val461 = load i64, ptr %c442
-  %cast462 = trunc i64 %c_val461 to i8
-  store i8 %cast462, ptr %p_val460
-  %post_old463 = load i64, ptr %i437
-  %post_new464 = add i64 %post_old463, 1
-  store i64 %post_new464, ptr %i437
-  call void @llvm.stackrestore(ptr %loop_stk441)
-  br label %while_cond170
+if_end297:
+  %p840 = alloca ptr, align 8
+  %res_val841 = load ptr, ptr %res819
+  %cast842 = ptrtoint ptr %res_val841 to i64
+  %i_val843 = load i64, ptr %i823
+  %op844 = add i64 %cast842, %i_val843
+  %cast845 = inttoptr i64 %op844 to ptr
+  store ptr %cast845, ptr %p840
+  %p_val846 = load ptr, ptr %p840
+  %c_val847 = load i64, ptr %c828
+  %cast848 = trunc i64 %c_val847 to i8
+  store i8 %cast848, ptr %p_val846
+  %post_old849 = load i64, ptr %i823
+  %post_new850 = add i64 %post_old849, 1
+  store i64 %post_new850, ptr %i823
+  call void @llvm.stackrestore(ptr %loop_stk827)
+  br label %while_cond290
 
-while_end172:
-  %res_val465 = load ptr, ptr %res433
-  ret ptr %res_val465
+while_end292:
+  %res_val851 = load ptr, ptr %res819
+  ret ptr %res_val851
 }
 
 define ptr @ofs_stone_to_obsidian(i64 %v) {
 entry:
   %v.addr = alloca i64, align 8
   store i64 %v, ptr %v.addr
-  %buf466 = alloca ptr, align 8
-  %call467 = call ptr @ofs_alloc(i64 32)
-  store ptr %call467, ptr %buf466
-  %base468 = alloca i64, align 8
-  %buf_val469 = load ptr, ptr %buf466
-  %cast470 = ptrtoint ptr %buf_val469 to i64
-  store i64 %cast470, ptr %base468
-  %pos471 = alloca i64, align 8
-  %base_val472 = load i64, ptr %base468
-  %op473 = add i64 %base_val472, 31
-  store i64 %op473, ptr %pos471
-  %pz474 = alloca ptr, align 8
-  %pos_val475 = load i64, ptr %pos471
-  %cast476 = inttoptr i64 %pos_val475 to ptr
-  store ptr %cast476, ptr %pz474
-  %pz_val477 = load ptr, ptr %pz474
-  %cast478 = trunc i64 0 to i8
-  store i8 %cast478, ptr %pz_val477
-  %n479 = alloca i64, align 8
-  %v_val480 = load i64, ptr %v.addr
-  store i64 %v_val480, ptr %n479
-  %neg481 = alloca i32, align 8
-  store i32 0, ptr %neg481
-  %n_val482 = load i64, ptr %n479
-  %cmp483 = icmp slt i64 %n_val482, 0
-  br i1 %cmp483, label %if_then178, label %if_else179
+  %buf852 = alloca ptr, align 8
+  %call853 = call ptr @ofs_alloc(i64 32)
+  store ptr %call853, ptr %buf852
+  %base854 = alloca i64, align 8
+  %buf_val855 = load ptr, ptr %buf852
+  %cast856 = ptrtoint ptr %buf_val855 to i64
+  store i64 %cast856, ptr %base854
+  %pos857 = alloca i64, align 8
+  %base_val858 = load i64, ptr %base854
+  %op859 = add i64 %base_val858, 31
+  store i64 %op859, ptr %pos857
+  %pz860 = alloca ptr, align 8
+  %pos_val861 = load i64, ptr %pos857
+  %cast862 = inttoptr i64 %pos_val861 to ptr
+  store ptr %cast862, ptr %pz860
+  %pz_val863 = load ptr, ptr %pz860
+  %cast864 = trunc i64 0 to i8
+  store i8 %cast864, ptr %pz_val863
+  %n865 = alloca i64, align 8
+  %v_val866 = load i64, ptr %v.addr
+  store i64 %v_val866, ptr %n865
+  %neg867 = alloca i32, align 8
+  store i32 0, ptr %neg867
+  %n_val868 = load i64, ptr %n865
+  %cmp869 = icmp slt i64 %n_val868, 0
+  br i1 %cmp869, label %if_then298, label %if_else299
 
-if_then178:
-  store i32 1, ptr %neg481
-  br label %if_end180
+if_then298:
+  store i32 1, ptr %neg867
+  br label %if_end300
 
-if_else179:
-  br label %if_end180
+if_else299:
+  br label %if_end300
 
-if_end180:
-  %n_val484 = load i64, ptr %n479
-  %cmp485 = icmp eq i64 %n_val484, 0
-  br i1 %cmp485, label %if_then181, label %if_else182
+if_end300:
+  %n_val870 = load i64, ptr %n865
+  %cmp871 = icmp eq i64 %n_val870, 0
+  br i1 %cmp871, label %if_then301, label %if_else302
 
-if_then181:
-  %pos_val486 = load i64, ptr %pos471
-  %op487 = sub i64 %pos_val486, 1
-  store i64 %op487, ptr %pos471
-  %p0488 = alloca ptr, align 8
-  %pos_val489 = load i64, ptr %pos471
-  %cast490 = inttoptr i64 %pos_val489 to ptr
-  store ptr %cast490, ptr %p0488
-  %p0_val491 = load ptr, ptr %p0488
-  %cast492 = trunc i64 48 to i8
-  store i8 %cast492, ptr %p0_val491
-  br label %if_end183
+if_then301:
+  %pos_val872 = load i64, ptr %pos857
+  %op873 = sub i64 %pos_val872, 1
+  store i64 %op873, ptr %pos857
+  %p0874 = alloca ptr, align 8
+  %pos_val875 = load i64, ptr %pos857
+  %cast876 = inttoptr i64 %pos_val875 to ptr
+  store ptr %cast876, ptr %p0874
+  %p0_val877 = load ptr, ptr %p0874
+  %cast878 = trunc i64 48 to i8
+  store i8 %cast878, ptr %p0_val877
+  br label %if_end303
 
-if_else182:
-  br label %while_cond184
+if_else302:
+  br label %while_cond304
 
-while_cond184:
-  %n_val493 = load i64, ptr %n479
-  %cmp494 = icmp ne i64 %n_val493, 0
-  br i1 %cmp494, label %while_body185, label %while_end186
+while_cond304:
+  %n_val879 = load i64, ptr %n865
+  %cmp880 = icmp ne i64 %n_val879, 0
+  br i1 %cmp880, label %while_body305, label %while_end306
 
-while_body185:
-  %loop_stk495 = call ptr @llvm.stacksave()
-  %d496 = alloca i64, align 8
-  %n_val497 = load i64, ptr %n479
-  %op498 = srem i64 %n_val497, 10
-  store i64 %op498, ptr %d496
-  %d_val499 = load i64, ptr %d496
-  %cmp500 = icmp slt i64 %d_val499, 0
-  br i1 %cmp500, label %if_then187, label %if_else188
+while_body305:
+  %loop_stk881 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %d882 = alloca i64, align 8
+  %n_val883 = load i64, ptr %n865
+  %op884 = srem i64 %n_val883, 10
+  store i64 %op884, ptr %d882
+  %d_val885 = load i64, ptr %d882
+  %cmp886 = icmp slt i64 %d_val885, 0
+  br i1 %cmp886, label %if_then307, label %if_else308
 
-if_then187:
-  %d_val501 = load i64, ptr %d496
-  %op502 = sub i64 0, %d_val501
-  store i64 %op502, ptr %d496
-  br label %if_end189
+if_then307:
+  %d_val887 = load i64, ptr %d882
+  %op888 = sub i64 0, %d_val887
+  store i64 %op888, ptr %d882
+  br label %if_end309
 
-if_else188:
-  br label %if_end189
+if_else308:
+  br label %if_end309
 
-if_end189:
-  %pos_val503 = load i64, ptr %pos471
-  %op504 = sub i64 %pos_val503, 1
-  store i64 %op504, ptr %pos471
-  %pd505 = alloca ptr, align 8
-  %pos_val506 = load i64, ptr %pos471
-  %cast507 = inttoptr i64 %pos_val506 to ptr
-  store ptr %cast507, ptr %pd505
-  %pd_val508 = load ptr, ptr %pd505
-  %d_val509 = load i64, ptr %d496
-  %op510 = add i64 48, %d_val509
-  %cast511 = trunc i64 %op510 to i8
-  store i8 %cast511, ptr %pd_val508
-  %n_val512 = load i64, ptr %n479
-  %op513 = sdiv i64 %n_val512, 10
-  store i64 %op513, ptr %n479
-  call void @llvm.stackrestore(ptr %loop_stk495)
-  br label %while_cond184
+if_end309:
+  %pos_val889 = load i64, ptr %pos857
+  %op890 = sub i64 %pos_val889, 1
+  store i64 %op890, ptr %pos857
+  %pd891 = alloca ptr, align 8
+  %pos_val892 = load i64, ptr %pos857
+  %cast893 = inttoptr i64 %pos_val892 to ptr
+  store ptr %cast893, ptr %pd891
+  %pd_val894 = load ptr, ptr %pd891
+  %d_val895 = load i64, ptr %d882
+  %op896 = add i64 48, %d_val895
+  %cast897 = trunc i64 %op896 to i8
+  store i8 %cast897, ptr %pd_val894
+  %n_val898 = load i64, ptr %n865
+  %op899 = sdiv i64 %n_val898, 10
+  store i64 %op899, ptr %n865
+  call void @llvm.stackrestore(ptr %loop_stk881)
+  br label %while_cond304
 
-while_end186:
-  br label %if_end183
+while_end306:
+  br label %if_end303
 
-if_end183:
-  %neg_val514 = load i32, ptr %neg481
-  %cond515 = icmp ne i32 %neg_val514, 0
-  br i1 %cond515, label %if_then190, label %if_else191
+if_end303:
+  %neg_val900 = load i32, ptr %neg867
+  %cond901 = icmp ne i32 %neg_val900, 0
+  br i1 %cond901, label %if_then310, label %if_else311
 
-if_then190:
-  %pos_val516 = load i64, ptr %pos471
-  %op517 = sub i64 %pos_val516, 1
-  store i64 %op517, ptr %pos471
-  %pm518 = alloca ptr, align 8
-  %pos_val519 = load i64, ptr %pos471
-  %cast520 = inttoptr i64 %pos_val519 to ptr
-  store ptr %cast520, ptr %pm518
-  %pm_val521 = load ptr, ptr %pm518
-  %cast522 = trunc i64 45 to i8
-  store i8 %cast522, ptr %pm_val521
-  br label %if_end192
+if_then310:
+  %pos_val902 = load i64, ptr %pos857
+  %op903 = sub i64 %pos_val902, 1
+  store i64 %op903, ptr %pos857
+  %pm904 = alloca ptr, align 8
+  %pos_val905 = load i64, ptr %pos857
+  %cast906 = inttoptr i64 %pos_val905 to ptr
+  store ptr %cast906, ptr %pm904
+  %pm_val907 = load ptr, ptr %pm904
+  %cast908 = trunc i64 45 to i8
+  store i8 %cast908, ptr %pm_val907
+  br label %if_end312
 
-if_else191:
-  br label %if_end192
+if_else311:
+  br label %if_end312
 
-if_end192:
-  %pos_val523 = load i64, ptr %pos471
-  %cast524 = inttoptr i64 %pos_val523 to ptr
-  ret ptr %cast524
+if_end312:
+  %pos_val909 = load i64, ptr %pos857
+  %cast910 = inttoptr i64 %pos_val909 to ptr
+  ret ptr %cast910
 }
 
 define ptr @ofs_crystal_to_obsidian(double %v) {
 entry:
   %v.addr = alloca double, align 8
   store double %v, ptr %v.addr
-  %buf525 = alloca ptr, align 8
-  %call526 = call ptr @ofs_alloc(i64 64)
-  store ptr %call526, ptr %buf525
-  %buf_val527 = load ptr, ptr %buf525
-  %v_val528 = load double, ptr %v.addr
-  %call529 = call i64 (ptr, i64, ptr, ...) @snprintf(ptr %buf_val527, i64 64, ptr @str.13, double %v_val528)
-  %slen530 = alloca i64, align 8
-  %buf_val531 = load ptr, ptr %buf525
-  %strlen532 = call i64 @ofs_str_len(ptr %buf_val531)
-  store i64 %strlen532, ptr %slen530
-  %slen_val533 = load i64, ptr %slen530
-  %cmp534 = icmp slt i64 %slen_val533, 61
-  br i1 %cmp534, label %if_then193, label %if_else194
+  %buf911 = alloca ptr, align 8
+  %call912 = call ptr @ofs_alloc(i64 64)
+  store ptr %call912, ptr %buf911
+  %buf_val913 = load ptr, ptr %buf911
+  %v_val914 = load double, ptr %v.addr
+  %call915 = call i64 (ptr, i64, ptr, ...) @snprintf(ptr %buf_val913, i64 64, ptr @str.13, double %v_val914)
+  %slen916 = alloca i64, align 8
+  %buf_val917 = load ptr, ptr %buf911
+  %strlen918 = call i64 @ofs_str_len(ptr %buf_val917)
+  store i64 %strlen918, ptr %slen916
+  %slen_val919 = load i64, ptr %slen916
+  %cmp920 = icmp slt i64 %slen_val919, 61
+  br i1 %cmp920, label %if_then313, label %if_else314
 
-if_then193:
-  %has_special535 = alloca i32, align 8
-  store i32 0, ptr %has_special535
-  %i536 = alloca i64, align 8
-  store i64 0, ptr %i536
-  br label %while_cond196
+if_then313:
+  %has_special921 = alloca i32, align 8
+  store i32 0, ptr %has_special921
+  %i922 = alloca i64, align 8
+  store i64 0, ptr %i922
+  br label %while_cond316
 
-while_cond196:
-  %i_val537 = load i64, ptr %i536
-  %slen_val538 = load i64, ptr %slen530
-  %cmp539 = icmp slt i64 %i_val537, %slen_val538
-  br i1 %cmp539, label %while_body197, label %while_end198
+while_cond316:
+  %i_val923 = load i64, ptr %i922
+  %slen_val924 = load i64, ptr %slen916
+  %cmp925 = icmp slt i64 %i_val923, %slen_val924
+  br i1 %cmp925, label %while_body317, label %while_end318
 
-while_body197:
-  %loop_stk540 = call ptr @llvm.stacksave()
-  %c541 = alloca i64, align 8
-  %buf_val542 = load ptr, ptr %buf525
-  %i_val543 = load i64, ptr %i536
-  %call544 = call i64 @ofs_str_char_at_known(ptr %buf_val542, i64 %i_val543)
-  store i64 %call544, ptr %c541
-  %c_val545 = load i64, ptr %c541
-  %cmp546 = icmp eq i64 %c_val545, 46
-  br i1 %cmp546, label %if_then199, label %if_else200
+while_body317:
+  %loop_stk926 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %c927 = alloca i64, align 8
+  %buf_val928 = load ptr, ptr %buf911
+  %i_val929 = load i64, ptr %i922
+  %call930 = call i64 @ofs_str_char_at_known(ptr %buf_val928, i64 %i_val929)
+  store i64 %call930, ptr %c927
+  %c_val931 = load i64, ptr %c927
+  %cmp932 = icmp eq i64 %c_val931, 46
+  br i1 %cmp932, label %if_then319, label %if_else320
 
-if_then199:
-  store i32 1, ptr %has_special535
-  br label %if_end201
+if_then319:
+  store i32 1, ptr %has_special921
+  br label %if_end321
 
-if_else200:
-  br label %if_end201
+if_else320:
+  br label %if_end321
 
-if_end201:
-  %c_val547 = load i64, ptr %c541
-  %cmp548 = icmp eq i64 %c_val547, 101
-  br i1 %cmp548, label %if_then202, label %if_else203
+if_end321:
+  %c_val933 = load i64, ptr %c927
+  %cmp934 = icmp eq i64 %c_val933, 101
+  br i1 %cmp934, label %if_then322, label %if_else323
 
-if_then202:
-  store i32 1, ptr %has_special535
-  br label %if_end204
+if_then322:
+  store i32 1, ptr %has_special921
+  br label %if_end324
 
-if_else203:
-  br label %if_end204
+if_else323:
+  br label %if_end324
 
-if_end204:
-  %c_val549 = load i64, ptr %c541
-  %cmp550 = icmp eq i64 %c_val549, 69
-  br i1 %cmp550, label %if_then205, label %if_else206
+if_end324:
+  %c_val935 = load i64, ptr %c927
+  %cmp936 = icmp eq i64 %c_val935, 69
+  br i1 %cmp936, label %if_then325, label %if_else326
 
-if_then205:
-  store i32 1, ptr %has_special535
-  br label %if_end207
+if_then325:
+  store i32 1, ptr %has_special921
+  br label %if_end327
 
-if_else206:
-  br label %if_end207
+if_else326:
+  br label %if_end327
 
-if_end207:
-  %c_val551 = load i64, ptr %c541
-  %cmp552 = icmp eq i64 %c_val551, 110
-  br i1 %cmp552, label %if_then208, label %if_else209
+if_end327:
+  %c_val937 = load i64, ptr %c927
+  %cmp938 = icmp eq i64 %c_val937, 110
+  br i1 %cmp938, label %if_then328, label %if_else329
 
-if_then208:
-  store i32 1, ptr %has_special535
-  br label %if_end210
+if_then328:
+  store i32 1, ptr %has_special921
+  br label %if_end330
 
-if_else209:
-  br label %if_end210
+if_else329:
+  br label %if_end330
 
-if_end210:
-  %c_val553 = load i64, ptr %c541
-  %cmp554 = icmp eq i64 %c_val553, 78
-  br i1 %cmp554, label %if_then211, label %if_else212
+if_end330:
+  %c_val939 = load i64, ptr %c927
+  %cmp940 = icmp eq i64 %c_val939, 78
+  br i1 %cmp940, label %if_then331, label %if_else332
 
-if_then211:
-  store i32 1, ptr %has_special535
-  br label %if_end213
+if_then331:
+  store i32 1, ptr %has_special921
+  br label %if_end333
 
-if_else212:
-  br label %if_end213
+if_else332:
+  br label %if_end333
 
-if_end213:
-  %post_old555 = load i64, ptr %i536
-  %post_new556 = add i64 %post_old555, 1
-  store i64 %post_new556, ptr %i536
-  call void @llvm.stackrestore(ptr %loop_stk540)
-  br label %while_cond196
+if_end333:
+  %post_old941 = load i64, ptr %i922
+  %post_new942 = add i64 %post_old941, 1
+  store i64 %post_new942, ptr %i922
+  call void @llvm.stackrestore(ptr %loop_stk926)
+  br label %while_cond316
 
-while_end198:
-  %has_special_val557 = load i32, ptr %has_special535
-  %cond558 = icmp ne i32 %has_special_val557, 0
-  %not559 = xor i1 %cond558, true
-  br i1 %not559, label %if_then214, label %if_else215
+while_end318:
+  %has_special_val943 = load i32, ptr %has_special921
+  %cond944 = icmp ne i32 %has_special_val943, 0
+  %not945 = xor i1 %cond944, true
+  br i1 %not945, label %if_then334, label %if_else335
 
-if_then214:
-  %pd560 = alloca ptr, align 8
-  %buf_val561 = load ptr, ptr %buf525
-  %cast562 = ptrtoint ptr %buf_val561 to i64
-  %slen_val563 = load i64, ptr %slen530
-  %op564 = add i64 %cast562, %slen_val563
-  %cast565 = inttoptr i64 %op564 to ptr
-  store ptr %cast565, ptr %pd560
-  %pd_val566 = load ptr, ptr %pd560
-  %cast567 = trunc i64 46 to i8
-  store i8 %cast567, ptr %pd_val566
-  %pz568 = alloca ptr, align 8
-  %buf_val569 = load ptr, ptr %buf525
-  %cast570 = ptrtoint ptr %buf_val569 to i64
-  %slen_val571 = load i64, ptr %slen530
-  %op572 = add i64 %cast570, %slen_val571
-  %op573 = add i64 %op572, 1
-  %cast574 = inttoptr i64 %op573 to ptr
-  store ptr %cast574, ptr %pz568
-  %pz_val575 = load ptr, ptr %pz568
-  %cast576 = trunc i64 48 to i8
-  store i8 %cast576, ptr %pz_val575
-  %pn577 = alloca ptr, align 8
-  %buf_val578 = load ptr, ptr %buf525
-  %cast579 = ptrtoint ptr %buf_val578 to i64
-  %slen_val580 = load i64, ptr %slen530
-  %op581 = add i64 %cast579, %slen_val580
-  %op582 = add i64 %op581, 2
-  %cast583 = inttoptr i64 %op582 to ptr
-  store ptr %cast583, ptr %pn577
-  %pn_val584 = load ptr, ptr %pn577
-  %cast585 = trunc i64 0 to i8
-  store i8 %cast585, ptr %pn_val584
-  br label %if_end216
+if_then334:
+  %pd946 = alloca ptr, align 8
+  %buf_val947 = load ptr, ptr %buf911
+  %cast948 = ptrtoint ptr %buf_val947 to i64
+  %slen_val949 = load i64, ptr %slen916
+  %op950 = add i64 %cast948, %slen_val949
+  %cast951 = inttoptr i64 %op950 to ptr
+  store ptr %cast951, ptr %pd946
+  %pd_val952 = load ptr, ptr %pd946
+  %cast953 = trunc i64 46 to i8
+  store i8 %cast953, ptr %pd_val952
+  %pz954 = alloca ptr, align 8
+  %buf_val955 = load ptr, ptr %buf911
+  %cast956 = ptrtoint ptr %buf_val955 to i64
+  %slen_val957 = load i64, ptr %slen916
+  %op958 = add i64 %cast956, %slen_val957
+  %op959 = add i64 %op958, 1
+  %cast960 = inttoptr i64 %op959 to ptr
+  store ptr %cast960, ptr %pz954
+  %pz_val961 = load ptr, ptr %pz954
+  %cast962 = trunc i64 48 to i8
+  store i8 %cast962, ptr %pz_val961
+  %pn963 = alloca ptr, align 8
+  %buf_val964 = load ptr, ptr %buf911
+  %cast965 = ptrtoint ptr %buf_val964 to i64
+  %slen_val966 = load i64, ptr %slen916
+  %op967 = add i64 %cast965, %slen_val966
+  %op968 = add i64 %op967, 2
+  %cast969 = inttoptr i64 %op968 to ptr
+  store ptr %cast969, ptr %pn963
+  %pn_val970 = load ptr, ptr %pn963
+  %cast971 = trunc i64 0 to i8
+  store i8 %cast971, ptr %pn_val970
+  br label %if_end336
 
-if_else215:
-  br label %if_end216
+if_else335:
+  br label %if_end336
 
-if_end216:
-  br label %if_end195
+if_end336:
+  br label %if_end315
 
-if_else194:
-  br label %if_end195
+if_else314:
+  br label %if_end315
 
-if_end195:
-  %buf_val586 = load ptr, ptr %buf525
-  ret ptr %buf_val586
+if_end315:
+  %buf_val972 = load ptr, ptr %buf911
+  ret ptr %buf_val972
 }
 
 define i64 @ofs_obsidian_to_stone(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %s_val587 = load ptr, ptr %s.addr
-  %cmp588 = icmp eq ptr %s_val587, null
-  br i1 %cmp588, label %if_then217, label %if_else218
+  %s_val973 = load ptr, ptr %s.addr
+  %cmp974 = icmp eq ptr %s_val973, null
+  br i1 %cmp974, label %if_then337, label %if_else338
 
-if_then217:
+if_then337:
   ret i64 0
 
-if_else218:
-  br label %if_end219
+if_else338:
+  br label %if_end339
 
-if_end219:
-  %s_val589 = load ptr, ptr %s.addr
-  %call590 = call i64 @strtoll(ptr %s_val589, ptr null, i64 10)
-  ret i64 %call590
+if_end339:
+  %s_val975 = load ptr, ptr %s.addr
+  %call976 = call i64 @strtoll(ptr %s_val975, ptr null, i64 10)
+  ret i64 %call976
 }
 
 define double @ofs_obsidian_to_crystal(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %s_val591 = load ptr, ptr %s.addr
-  %cmp592 = icmp eq ptr %s_val591, null
-  br i1 %cmp592, label %if_then220, label %if_else221
+  %s_val977 = load ptr, ptr %s.addr
+  %cmp978 = icmp eq ptr %s_val977, null
+  br i1 %cmp978, label %if_then340, label %if_else341
 
-if_then220:
+if_then340:
   ret double 0.0
 
-if_else221:
-  br label %if_end222
+if_else341:
+  br label %if_end342
 
-if_end222:
-  %s_val593 = load ptr, ptr %s.addr
-  %call594 = call double @strtod(ptr %s_val593, ptr null)
-  ret double %call594
+if_end342:
+  %s_val979 = load ptr, ptr %s.addr
+  %call980 = call double @strtod(ptr %s_val979, ptr null)
+  ret double %call980
 }
 
 define i64 @facet__len(ptr %s) {
@@ -1782,12 +2739,12 @@ entry:
   store ptr %s, ptr %s.addr
   %s.addr_own = alloca i64, align 8
   store i64 0, ptr %s.addr_own
-  %s_val595 = load ptr, ptr %s.addr
-  %strlen596 = call i64 @ofs_str_len(ptr %s_val595)
-  %sf_val597 = load ptr, ptr %s.addr
-  %sf_own598 = load i64, ptr %s.addr_own
-  call void @ofs_str_release(ptr %sf_val597, i64 %sf_own598)
-  ret i64 %strlen596
+  %s_val981 = load ptr, ptr %s.addr
+  %strlen982 = call i64 @ofs_str_len(ptr %s_val981)
+  %sf_val983 = load ptr, ptr %s.addr
+  %sf_own984 = load i64, ptr %s.addr_own
+  call void @ofs_str_release(ptr %sf_val983, i64 %sf_own984)
+  ret i64 %strlen982
 }
 
 define i64 @facet__char_at(ptr %s, i64 %idx) {
@@ -1796,10 +2753,10 @@ entry:
   store ptr %s, ptr %s.addr
   %idx.addr = alloca i64, align 8
   store i64 %idx, ptr %idx.addr
-  %s_val599 = load ptr, ptr %s.addr
-  %idx_val600 = load i64, ptr %idx.addr
-  %call601 = call i64 @ofs_str_char_at(ptr %s_val599, i64 %idx_val600)
-  ret i64 %call601
+  %s_val985 = load ptr, ptr %s.addr
+  %idx_val986 = load i64, ptr %idx.addr
+  %call987 = call i64 @ofs_str_char_at(ptr %s_val985, i64 %idx_val986)
+  ret i64 %call987
 }
 
 define i32 @facet__eq(ptr %a, ptr %b) {
@@ -1812,16 +2769,16 @@ entry:
   store ptr %b, ptr %b.addr
   %b.addr_own = alloca i64, align 8
   store i64 0, ptr %b.addr_own
-  %a_val602 = load ptr, ptr %a.addr
-  %b_val603 = load ptr, ptr %b.addr
-  %streq604 = call i32 @ofs_str_eq(ptr %a_val602, ptr %b_val603)
-  %sf_val605 = load ptr, ptr %b.addr
-  %sf_own606 = load i64, ptr %b.addr_own
-  call void @ofs_str_release(ptr %sf_val605, i64 %sf_own606)
-  %sf_val607 = load ptr, ptr %a.addr
-  %sf_own608 = load i64, ptr %a.addr_own
-  call void @ofs_str_release(ptr %sf_val607, i64 %sf_own608)
-  ret i32 %streq604
+  %a_val988 = load ptr, ptr %a.addr
+  %b_val989 = load ptr, ptr %b.addr
+  %streq990 = call i32 @ofs_str_eq(ptr %a_val988, ptr %b_val989)
+  %sf_val991 = load ptr, ptr %b.addr
+  %sf_own992 = load i64, ptr %b.addr_own
+  call void @ofs_str_release(ptr %sf_val991, i64 %sf_own992)
+  %sf_val993 = load ptr, ptr %a.addr
+  %sf_own994 = load i64, ptr %a.addr_own
+  call void @ofs_str_release(ptr %sf_val993, i64 %sf_own994)
+  ret i32 %streq990
 }
 
 define ptr @facet__concat(ptr %a, ptr %b) {
@@ -1830,10 +2787,10 @@ entry:
   store ptr %a, ptr %a.addr
   %b.addr = alloca ptr, align 8
   store ptr %b, ptr %b.addr
-  %a_val609 = load ptr, ptr %a.addr
-  %b_val610 = load ptr, ptr %b.addr
-  %call611 = call ptr @ofs_str_concat(ptr %a_val609, ptr %b_val610)
-  ret ptr %call611
+  %a_val995 = load ptr, ptr %a.addr
+  %b_val996 = load ptr, ptr %b.addr
+  %call997 = call ptr @ofs_str_concat(ptr %a_val995, ptr %b_val996)
+  ret ptr %call997
 }
 
 define ptr @facet__substr(ptr %s, i64 %start, i64 %count) {
@@ -1844,11 +2801,11 @@ entry:
   store i64 %start, ptr %start.addr
   %count.addr = alloca i64, align 8
   store i64 %count, ptr %count.addr
-  %s_val612 = load ptr, ptr %s.addr
-  %start_val613 = load i64, ptr %start.addr
-  %count_val614 = load i64, ptr %count.addr
-  %call615 = call ptr @ofs_str_substr(ptr %s_val612, i64 %start_val613, i64 %count_val614)
-  ret ptr %call615
+  %s_val998 = load ptr, ptr %s.addr
+  %start_val999 = load i64, ptr %start.addr
+  %count_val1000 = load i64, ptr %count.addr
+  %call1001 = call ptr @ofs_str_substr(ptr %s_val998, i64 %start_val999, i64 %count_val1000)
+  ret ptr %call1001
 }
 
 define i32 @facet__contains(ptr %haystack, ptr %needle) {
@@ -1857,64 +2814,64 @@ entry:
   store ptr %haystack, ptr %haystack.addr
   %needle.addr = alloca ptr, align 8
   store ptr %needle, ptr %needle.addr
-  %haystack_val616 = load ptr, ptr %haystack.addr
-  %needle_val617 = load ptr, ptr %needle.addr
-  %strcontains618 = call i32 @ofs_str_contains(ptr %haystack_val616, ptr %needle_val617)
-  ret i32 %strcontains618
+  %haystack_val1002 = load ptr, ptr %haystack.addr
+  %needle_val1003 = load ptr, ptr %needle.addr
+  %strcontains1004 = call i32 @ofs_str_contains(ptr %haystack_val1002, ptr %needle_val1003)
+  ret i32 %strcontains1004
 }
 
 define ptr @facet__to_upper(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %s_val619 = load ptr, ptr %s.addr
-  %call620 = call ptr @ofs_str_upper(ptr %s_val619)
-  ret ptr %call620
+  %s_val1005 = load ptr, ptr %s.addr
+  %call1006 = call ptr @ofs_str_upper(ptr %s_val1005)
+  ret ptr %call1006
 }
 
 define ptr @facet__to_lower(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %s_val621 = load ptr, ptr %s.addr
-  %call622 = call ptr @ofs_str_lower(ptr %s_val621)
-  ret ptr %call622
+  %s_val1007 = load ptr, ptr %s.addr
+  %call1008 = call ptr @ofs_str_lower(ptr %s_val1007)
+  ret ptr %call1008
 }
 
 define ptr @facet__from_stone(i64 %v) {
 entry:
   %v.addr = alloca i64, align 8
   store i64 %v, ptr %v.addr
-  %v_val623 = load i64, ptr %v.addr
-  %stone_to_str624 = call ptr @ofs_stone_to_obsidian(i64 %v_val623)
-  ret ptr %stone_to_str624
+  %v_val1009 = load i64, ptr %v.addr
+  %stone_to_str1010 = call ptr @ofs_stone_to_obsidian(i64 %v_val1009)
+  ret ptr %stone_to_str1010
 }
 
 define i64 @facet__to_stone(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %s_val625 = load ptr, ptr %s.addr
-  %call626 = call i64 @ofs_obsidian_to_stone(ptr %s_val625)
-  ret i64 %call626
+  %s_val1011 = load ptr, ptr %s.addr
+  %call1012 = call i64 @ofs_obsidian_to_stone(ptr %s_val1011)
+  ret i64 %call1012
 }
 
 define ptr @facet__from_crystal(double %v) {
 entry:
   %v.addr = alloca double, align 8
   store double %v, ptr %v.addr
-  %v_val627 = load double, ptr %v.addr
-  %call628 = call ptr @ofs_crystal_to_obsidian(double %v_val627)
-  ret ptr %call628
+  %v_val1013 = load double, ptr %v.addr
+  %call1014 = call ptr @ofs_crystal_to_obsidian(double %v_val1013)
+  ret ptr %call1014
 }
 
 define double @facet__to_crystal(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %s_val629 = load ptr, ptr %s.addr
-  %call630 = call double @ofs_obsidian_to_crystal(ptr %s_val629)
-  ret double %call630
+  %s_val1015 = load ptr, ptr %s.addr
+  %call1016 = call double @ofs_obsidian_to_crystal(ptr %s_val1015)
+  ret double %call1016
 }
 
 define void @_store_stone(ptr %p, i64 %v) {
@@ -1923,9 +2880,9 @@ entry:
   store ptr %p, ptr %p.addr
   %v.addr = alloca i64, align 8
   store i64 %v, ptr %v.addr
-  %p_val631 = load ptr, ptr %p.addr
-  %v_val632 = load i64, ptr %v.addr
-  store i64 %v_val632, ptr %p_val631
+  %p_val1017 = load ptr, ptr %p.addr
+  %v_val1018 = load i64, ptr %v.addr
+  store i64 %v_val1018, ptr %p_val1017
   ret void
 }
 
@@ -1933,32 +2890,32 @@ define i64 @_load_stone(ptr %p) {
 entry:
   %p.addr = alloca ptr, align 8
   store ptr %p, ptr %p.addr
-  %p_val633 = load ptr, ptr %p.addr
-  %deref634 = load i64, ptr %p_val633
-  ret i64 %deref634
+  %p_val1019 = load ptr, ptr %p.addr
+  %deref1020 = load i64, ptr %p_val1019
+  ret i64 %deref1020
 }
 
 define void @__ofs_arr_num(i64 %n) {
 entry:
   %n.addr = alloca i64, align 8
   store i64 %n, ptr %n.addr
-  %n_val635 = load i64, ptr %n.addr
-  %cmp636 = icmp slt i64 %n_val635, 0
-  br i1 %cmp636, label %if_then223, label %if_else224
+  %n_val1021 = load i64, ptr %n.addr
+  %cmp1022 = icmp slt i64 %n_val1021, 0
+  br i1 %cmp1022, label %if_then343, label %if_else344
 
-if_then223:
-  %call637 = call i64 @write(i64 2, ptr @str.14, i64 1)
-  %n_val638 = load i64, ptr %n.addr
-  %op639 = sub i64 0, %n_val638
-  call void @__ofs_oom_num(i64 %op639)
+if_then343:
+  %call1023 = call i64 @write(i64 2, ptr @str.14, i64 1)
+  %n_val1024 = load i64, ptr %n.addr
+  %op1025 = sub i64 0, %n_val1024
+  call void @__ofs_oom_num(i64 %op1025)
   ret void
 
-if_else224:
-  br label %if_end225
+if_else344:
+  br label %if_end345
 
-if_end225:
-  %n_val640 = load i64, ptr %n.addr
-  call void @__ofs_oom_num(i64 %n_val640)
+if_end345:
+  %n_val1026 = load i64, ptr %n.addr
+  call void @__ofs_oom_num(i64 %n_val1026)
   ret void
 }
 
@@ -1968,13 +2925,13 @@ entry:
   store i64 %idx, ptr %idx.addr
   %len.addr = alloca i64, align 8
   store i64 %len, ptr %len.addr
-  %call641 = call i64 @write(i64 2, ptr @str.15, i64 12)
-  %idx_val642 = load i64, ptr %idx.addr
-  call void @__ofs_arr_num(i64 %idx_val642)
-  %call643 = call i64 @write(i64 2, ptr @str.16, i64 34)
-  %len_val644 = load i64, ptr %len.addr
-  call void @__ofs_arr_num(i64 %len_val644)
-  %call645 = call i64 @write(i64 2, ptr @str.17, i64 2)
+  %call1027 = call i64 @write(i64 2, ptr @str.15, i64 12)
+  %idx_val1028 = load i64, ptr %idx.addr
+  call void @__ofs_arr_num(i64 %idx_val1028)
+  %call1029 = call i64 @write(i64 2, ptr @str.16, i64 34)
+  %len_val1030 = load i64, ptr %len.addr
+  call void @__ofs_arr_num(i64 %len_val1030)
+  %call1031 = call i64 @write(i64 2, ptr @str.17, i64 2)
   call void @exit(i64 1)
   ret void
 }
@@ -1985,11 +2942,11 @@ entry:
   store ptr %msg, ptr %msg.addr
   %n.addr = alloca i64, align 8
   store i64 %n, ptr %n.addr
-  %call646 = call i64 @write(i64 2, ptr @str.18, i64 5)
-  %msg_val647 = load ptr, ptr %msg.addr
-  %n_val648 = load i64, ptr %n.addr
-  %call649 = call i64 @write(i64 2, ptr %msg_val647, i64 %n_val648)
-  %call650 = call i64 @write(i64 2, ptr @str.19, i64 1)
+  %call1032 = call i64 @write(i64 2, ptr @str.18, i64 5)
+  %msg_val1033 = load ptr, ptr %msg.addr
+  %n_val1034 = load i64, ptr %n.addr
+  %call1035 = call i64 @write(i64 2, ptr %msg_val1033, i64 %n_val1034)
+  %call1036 = call i64 @write(i64 2, ptr @str.19, i64 1)
   call void @exit(i64 1)
   ret void
 }
@@ -2000,120 +2957,120 @@ entry:
   store i64 %initial_cap, ptr %initial_cap.addr
   %elem_size.addr = alloca i64, align 8
   store i64 %elem_size, ptr %elem_size.addr
-  %initial_cap_val651 = load i64, ptr %initial_cap.addr
-  %cmp652 = icmp sle i64 %initial_cap_val651, 0
-  br i1 %cmp652, label %if_then226, label %if_else227
+  %initial_cap_val1037 = load i64, ptr %initial_cap.addr
+  %cmp1038 = icmp sle i64 %initial_cap_val1037, 0
+  br i1 %cmp1038, label %if_then346, label %if_else347
 
-if_then226:
+if_then346:
   store i64 4, ptr %initial_cap.addr
-  br label %if_end228
+  br label %if_end348
 
-if_else227:
-  br label %if_end228
+if_else347:
+  br label %if_end348
 
-if_end228:
-  %elem_size_val653 = load i64, ptr %elem_size.addr
-  %cmp654 = icmp sle i64 %elem_size_val653, 0
-  br i1 %cmp654, label %if_then229, label %if_else230
+if_end348:
+  %elem_size_val1039 = load i64, ptr %elem_size.addr
+  %cmp1040 = icmp sle i64 %elem_size_val1039, 0
+  br i1 %cmp1040, label %if_then349, label %if_else350
 
-if_then229:
+if_then349:
   store i64 8, ptr %elem_size.addr
-  br label %if_end231
+  br label %if_end351
 
-if_else230:
-  br label %if_end231
+if_else350:
+  br label %if_end351
 
-if_end231:
-  %arr655 = alloca ptr, align 8
-  %initial_cap_val656 = load i64, ptr %initial_cap.addr
-  %elem_size_val657 = load i64, ptr %elem_size.addr
-  %op658 = mul i64 %initial_cap_val656, %elem_size_val657
-  %op659 = add i64 32, %op658
-  %call660 = call ptr @ofs_alloc(i64 %op659)
-  store ptr %call660, ptr %arr655
-  %data661 = alloca i64, align 8
-  %arr_val662 = load ptr, ptr %arr655
-  %cast663 = ptrtoint ptr %arr_val662 to i64
-  %op664 = add i64 %cast663, 32
-  store i64 %op664, ptr %data661
-  %p1665 = alloca ptr, align 8
-  %arr_val666 = load ptr, ptr %arr655
-  %fault_step667 = getelementptr inbounds i64, ptr %arr_val666, i64 1
-  store ptr %fault_step667, ptr %p1665
-  %p2668 = alloca ptr, align 8
-  %arr_val669 = load ptr, ptr %arr655
-  %fault_step670 = getelementptr inbounds i64, ptr %arr_val669, i64 2
-  store ptr %fault_step670, ptr %p2668
-  %p3671 = alloca ptr, align 8
-  %arr_val672 = load ptr, ptr %arr655
-  %fault_step673 = getelementptr inbounds i64, ptr %arr_val672, i64 3
-  store ptr %fault_step673, ptr %p3671
-  %arr_val674 = load ptr, ptr %arr655
-  %data_val675 = load i64, ptr %data661
-  store i64 %data_val675, ptr %arr_val674
-  %p1_val676 = load ptr, ptr %p1665
-  store i64 0, ptr %p1_val676
-  %p2_val677 = load ptr, ptr %p2668
-  %initial_cap_val678 = load i64, ptr %initial_cap.addr
-  store i64 %initial_cap_val678, ptr %p2_val677
-  %p3_val679 = load ptr, ptr %p3671
-  %elem_size_val680 = load i64, ptr %elem_size.addr
-  store i64 %elem_size_val680, ptr %p3_val679
-  %arr_val681 = load ptr, ptr %arr655
-  ret ptr %arr_val681
+if_end351:
+  %arr1041 = alloca ptr, align 8
+  %initial_cap_val1042 = load i64, ptr %initial_cap.addr
+  %elem_size_val1043 = load i64, ptr %elem_size.addr
+  %op1044 = mul i64 %initial_cap_val1042, %elem_size_val1043
+  %op1045 = add i64 32, %op1044
+  %call1046 = call ptr @ofs_alloc(i64 %op1045)
+  store ptr %call1046, ptr %arr1041
+  %data1047 = alloca i64, align 8
+  %arr_val1048 = load ptr, ptr %arr1041
+  %cast1049 = ptrtoint ptr %arr_val1048 to i64
+  %op1050 = add i64 %cast1049, 32
+  store i64 %op1050, ptr %data1047
+  %p11051 = alloca ptr, align 8
+  %arr_val1052 = load ptr, ptr %arr1041
+  %fault_step1053 = getelementptr inbounds i64, ptr %arr_val1052, i64 1
+  store ptr %fault_step1053, ptr %p11051
+  %p21054 = alloca ptr, align 8
+  %arr_val1055 = load ptr, ptr %arr1041
+  %fault_step1056 = getelementptr inbounds i64, ptr %arr_val1055, i64 2
+  store ptr %fault_step1056, ptr %p21054
+  %p31057 = alloca ptr, align 8
+  %arr_val1058 = load ptr, ptr %arr1041
+  %fault_step1059 = getelementptr inbounds i64, ptr %arr_val1058, i64 3
+  store ptr %fault_step1059, ptr %p31057
+  %arr_val1060 = load ptr, ptr %arr1041
+  %data_val1061 = load i64, ptr %data1047
+  store i64 %data_val1061, ptr %arr_val1060
+  %p1_val1062 = load ptr, ptr %p11051
+  store i64 0, ptr %p1_val1062
+  %p2_val1063 = load ptr, ptr %p21054
+  %initial_cap_val1064 = load i64, ptr %initial_cap.addr
+  store i64 %initial_cap_val1064, ptr %p2_val1063
+  %p3_val1065 = load ptr, ptr %p31057
+  %elem_size_val1066 = load i64, ptr %elem_size.addr
+  store i64 %elem_size_val1066, ptr %p3_val1065
+  %arr_val1067 = load ptr, ptr %arr1041
+  ret ptr %arr_val1067
 }
 
 define void @ofs_array_free(ptr %arr) {
 entry:
   %arr.addr = alloca ptr, align 8
   store ptr %arr, ptr %arr.addr
-  %arr_val682 = load ptr, ptr %arr.addr
-  %cmp683 = icmp eq ptr %arr_val682, null
-  br i1 %cmp683, label %if_then232, label %if_else233
+  %arr_val1068 = load ptr, ptr %arr.addr
+  %cmp1069 = icmp eq ptr %arr_val1068, null
+  br i1 %cmp1069, label %if_then352, label %if_else353
 
-if_then232:
+if_then352:
   ret void
 
-if_else233:
-  br label %if_end234
+if_else353:
+  br label %if_end354
 
-if_end234:
-  %d684 = alloca i64, align 8
-  store i64 0, ptr %d684
-  %arr_val685 = load ptr, ptr %arr.addr
-  %deref686 = load i64, ptr %arr_val685
-  store i64 %deref686, ptr %d684
-  %sc_slot687 = alloca i1, align 1
-  %d_val688 = load i64, ptr %d684
-  %cmp689 = icmp ne i64 %d_val688, 0
-  store i1 %cmp689, ptr %sc_slot687
-  br i1 %cmp689, label %sc_rhs235, label %sc_end236
+if_end354:
+  %d1070 = alloca i64, align 8
+  store i64 0, ptr %d1070
+  %arr_val1071 = load ptr, ptr %arr.addr
+  %deref1072 = load i64, ptr %arr_val1071
+  store i64 %deref1072, ptr %d1070
+  %sc_slot1073 = alloca i1, align 1
+  %d_val1074 = load i64, ptr %d1070
+  %cmp1075 = icmp ne i64 %d_val1074, 0
+  store i1 %cmp1075, ptr %sc_slot1073
+  br i1 %cmp1075, label %sc_rhs355, label %sc_end356
 
-sc_rhs235:
-  %d_val690 = load i64, ptr %d684
-  %arr_val691 = load ptr, ptr %arr.addr
-  %cast692 = ptrtoint ptr %arr_val691 to i64
-  %op693 = add i64 %cast692, 32
-  %cmp694 = icmp ne i64 %d_val690, %op693
-  store i1 %cmp694, ptr %sc_slot687
-  br label %sc_end236
+sc_rhs355:
+  %d_val1076 = load i64, ptr %d1070
+  %arr_val1077 = load ptr, ptr %arr.addr
+  %cast1078 = ptrtoint ptr %arr_val1077 to i64
+  %op1079 = add i64 %cast1078, 32
+  %cmp1080 = icmp ne i64 %d_val1076, %op1079
+  store i1 %cmp1080, ptr %sc_slot1073
+  br label %sc_end356
 
-sc_end236:
-  %sc695 = load i1, ptr %sc_slot687
-  br i1 %sc695, label %if_then237, label %if_else238
+sc_end356:
+  %sc1081 = load i1, ptr %sc_slot1073
+  br i1 %sc1081, label %if_then357, label %if_else358
 
-if_then237:
-  %d_val696 = load i64, ptr %d684
-  %cast697 = inttoptr i64 %d_val696 to ptr
-  call void @free(ptr %cast697)
-  br label %if_end239
+if_then357:
+  %d_val1082 = load i64, ptr %d1070
+  %cast1083 = inttoptr i64 %d_val1082 to ptr
+  call void @ofs_free(ptr %cast1083)
+  br label %if_end359
 
-if_else238:
-  br label %if_end239
+if_else358:
+  br label %if_end359
 
-if_end239:
-  %arr_val698 = load ptr, ptr %arr.addr
-  call void @free(ptr %arr_val698)
+if_end359:
+  %arr_val1084 = load ptr, ptr %arr.addr
+  call void @ofs_free(ptr %arr_val1084)
   ret void
 }
 
@@ -2121,97 +3078,97 @@ define i64 @ofs_array_len(ptr %arr) {
 entry:
   %arr.addr = alloca ptr, align 8
   store ptr %arr, ptr %arr.addr
-  %arr_val699 = load ptr, ptr %arr.addr
-  %cmp700 = icmp eq ptr %arr_val699, null
-  br i1 %cmp700, label %if_then240, label %if_else241
+  %arr_val1085 = load ptr, ptr %arr.addr
+  %cmp1086 = icmp eq ptr %arr_val1085, null
+  br i1 %cmp1086, label %if_then360, label %if_else361
 
-if_then240:
+if_then360:
   ret i64 0
 
-if_else241:
-  br label %if_end242
+if_else361:
+  br label %if_end362
 
-if_end242:
-  %p1701 = alloca ptr, align 8
-  %arr_val702 = load ptr, ptr %arr.addr
-  %fault_step703 = getelementptr inbounds i64, ptr %arr_val702, i64 1
-  store ptr %fault_step703, ptr %p1701
-  %p1_val704 = load ptr, ptr %p1701
-  %deref705 = load i64, ptr %p1_val704
-  ret i64 %deref705
+if_end362:
+  %p11087 = alloca ptr, align 8
+  %arr_val1088 = load ptr, ptr %arr.addr
+  %fault_step1089 = getelementptr inbounds i64, ptr %arr_val1088, i64 1
+  store ptr %fault_step1089, ptr %p11087
+  %p1_val1090 = load ptr, ptr %p11087
+  %deref1091 = load i64, ptr %p1_val1090
+  ret i64 %deref1091
 }
 
 define i64 @ofs_array_cap(ptr %arr) {
 entry:
   %arr.addr = alloca ptr, align 8
   store ptr %arr, ptr %arr.addr
-  %arr_val706 = load ptr, ptr %arr.addr
-  %cmp707 = icmp eq ptr %arr_val706, null
-  br i1 %cmp707, label %if_then243, label %if_else244
+  %arr_val1092 = load ptr, ptr %arr.addr
+  %cmp1093 = icmp eq ptr %arr_val1092, null
+  br i1 %cmp1093, label %if_then363, label %if_else364
 
-if_then243:
+if_then363:
   ret i64 0
 
-if_else244:
-  br label %if_end245
+if_else364:
+  br label %if_end365
 
-if_end245:
-  %p2708 = alloca ptr, align 8
-  %arr_val709 = load ptr, ptr %arr.addr
-  %fault_step710 = getelementptr inbounds i64, ptr %arr_val709, i64 2
-  store ptr %fault_step710, ptr %p2708
-  %p2_val711 = load ptr, ptr %p2708
-  %deref712 = load i64, ptr %p2_val711
-  ret i64 %deref712
+if_end365:
+  %p21094 = alloca ptr, align 8
+  %arr_val1095 = load ptr, ptr %arr.addr
+  %fault_step1096 = getelementptr inbounds i64, ptr %arr_val1095, i64 2
+  store ptr %fault_step1096, ptr %p21094
+  %p2_val1097 = load ptr, ptr %p21094
+  %deref1098 = load i64, ptr %p2_val1097
+  ret i64 %deref1098
 }
 
 define i64 @ofs_array_elem_size(ptr %arr) {
 entry:
   %arr.addr = alloca ptr, align 8
   store ptr %arr, ptr %arr.addr
-  %arr_val713 = load ptr, ptr %arr.addr
-  %cmp714 = icmp eq ptr %arr_val713, null
-  br i1 %cmp714, label %if_then246, label %if_else247
+  %arr_val1099 = load ptr, ptr %arr.addr
+  %cmp1100 = icmp eq ptr %arr_val1099, null
+  br i1 %cmp1100, label %if_then366, label %if_else367
 
-if_then246:
+if_then366:
   ret i64 8
 
-if_else247:
-  br label %if_end248
+if_else367:
+  br label %if_end368
 
-if_end248:
-  %p3715 = alloca ptr, align 8
-  %arr_val716 = load ptr, ptr %arr.addr
-  %fault_step717 = getelementptr inbounds i64, ptr %arr_val716, i64 3
-  store ptr %fault_step717, ptr %p3715
-  %p3_val718 = load ptr, ptr %p3715
-  %deref719 = load i64, ptr %p3_val718
-  ret i64 %deref719
+if_end368:
+  %p31101 = alloca ptr, align 8
+  %arr_val1102 = load ptr, ptr %arr.addr
+  %fault_step1103 = getelementptr inbounds i64, ptr %arr_val1102, i64 3
+  store ptr %fault_step1103, ptr %p31101
+  %p3_val1104 = load ptr, ptr %p31101
+  %deref1105 = load i64, ptr %p3_val1104
+  ret i64 %deref1105
 }
 
 define ptr @ofs_array_data(ptr %arr) {
 entry:
   %arr.addr = alloca ptr, align 8
   store ptr %arr, ptr %arr.addr
-  %arr_val720 = load ptr, ptr %arr.addr
-  %cmp721 = icmp eq ptr %arr_val720, null
-  br i1 %cmp721, label %if_then249, label %if_else250
+  %arr_val1106 = load ptr, ptr %arr.addr
+  %cmp1107 = icmp eq ptr %arr_val1106, null
+  br i1 %cmp1107, label %if_then369, label %if_else370
 
-if_then249:
+if_then369:
   ret ptr null
 
-if_else250:
-  br label %if_end251
+if_else370:
+  br label %if_end371
 
-if_end251:
-  %d722 = alloca i64, align 8
-  store i64 0, ptr %d722
-  %arr_val723 = load ptr, ptr %arr.addr
-  %deref724 = load i64, ptr %arr_val723
-  store i64 %deref724, ptr %d722
-  %d_val725 = load i64, ptr %d722
-  %cast726 = inttoptr i64 %d_val725 to ptr
-  ret ptr %cast726
+if_end371:
+  %d1108 = alloca i64, align 8
+  store i64 0, ptr %d1108
+  %arr_val1109 = load ptr, ptr %arr.addr
+  %deref1110 = load i64, ptr %arr_val1109
+  store i64 %deref1110, ptr %d1108
+  %d_val1111 = load i64, ptr %d1108
+  %cast1112 = inttoptr i64 %d_val1111 to ptr
+  ret ptr %cast1112
 }
 
 define void @ofs_array_push(ptr %arr, ptr %elem) {
@@ -2220,190 +3177,191 @@ entry:
   store ptr %arr, ptr %arr.addr
   %elem.addr = alloca ptr, align 8
   store ptr %elem, ptr %elem.addr
-  %arr_val727 = load ptr, ptr %arr.addr
-  %cmp728 = icmp eq ptr %arr_val727, null
-  br i1 %cmp728, label %if_then252, label %if_else253
+  %arr_val1113 = load ptr, ptr %arr.addr
+  %cmp1114 = icmp eq ptr %arr_val1113, null
+  br i1 %cmp1114, label %if_then372, label %if_else373
 
-if_then252:
+if_then372:
   ret void
 
-if_else253:
-  br label %if_end254
+if_else373:
+  br label %if_end374
 
-if_end254:
-  %p1729 = alloca ptr, align 8
-  %arr_val730 = load ptr, ptr %arr.addr
-  %fault_step731 = getelementptr inbounds i64, ptr %arr_val730, i64 1
-  store ptr %fault_step731, ptr %p1729
-  %p2732 = alloca ptr, align 8
-  %arr_val733 = load ptr, ptr %arr.addr
-  %fault_step734 = getelementptr inbounds i64, ptr %arr_val733, i64 2
-  store ptr %fault_step734, ptr %p2732
-  %p3735 = alloca ptr, align 8
-  %arr_val736 = load ptr, ptr %arr.addr
-  %fault_step737 = getelementptr inbounds i64, ptr %arr_val736, i64 3
-  store ptr %fault_step737, ptr %p3735
-  %cur_len738 = alloca i64, align 8
-  store i64 0, ptr %cur_len738
-  %cur_cap739 = alloca i64, align 8
-  store i64 0, ptr %cur_cap739
-  %esz740 = alloca i64, align 8
-  store i64 0, ptr %esz740
-  %cur_data741 = alloca i64, align 8
-  store i64 0, ptr %cur_data741
-  %p1_val742 = load ptr, ptr %p1729
-  %deref743 = load i64, ptr %p1_val742
-  store i64 %deref743, ptr %cur_len738
-  %p2_val744 = load ptr, ptr %p2732
-  %deref745 = load i64, ptr %p2_val744
-  store i64 %deref745, ptr %cur_cap739
-  %p3_val746 = load ptr, ptr %p3735
-  %deref747 = load i64, ptr %p3_val746
-  store i64 %deref747, ptr %esz740
-  %arr_val748 = load ptr, ptr %arr.addr
-  %deref749 = load i64, ptr %arr_val748
-  store i64 %deref749, ptr %cur_data741
-  %cur_len_val750 = load i64, ptr %cur_len738
-  %cur_cap_val751 = load i64, ptr %cur_cap739
-  %cmp752 = icmp sge i64 %cur_len_val750, %cur_cap_val751
-  br i1 %cmp752, label %if_then255, label %if_else256
+if_end374:
+  %p11115 = alloca ptr, align 8
+  %arr_val1116 = load ptr, ptr %arr.addr
+  %fault_step1117 = getelementptr inbounds i64, ptr %arr_val1116, i64 1
+  store ptr %fault_step1117, ptr %p11115
+  %p21118 = alloca ptr, align 8
+  %arr_val1119 = load ptr, ptr %arr.addr
+  %fault_step1120 = getelementptr inbounds i64, ptr %arr_val1119, i64 2
+  store ptr %fault_step1120, ptr %p21118
+  %p31121 = alloca ptr, align 8
+  %arr_val1122 = load ptr, ptr %arr.addr
+  %fault_step1123 = getelementptr inbounds i64, ptr %arr_val1122, i64 3
+  store ptr %fault_step1123, ptr %p31121
+  %cur_len1124 = alloca i64, align 8
+  store i64 0, ptr %cur_len1124
+  %cur_cap1125 = alloca i64, align 8
+  store i64 0, ptr %cur_cap1125
+  %esz1126 = alloca i64, align 8
+  store i64 0, ptr %esz1126
+  %cur_data1127 = alloca i64, align 8
+  store i64 0, ptr %cur_data1127
+  %p1_val1128 = load ptr, ptr %p11115
+  %deref1129 = load i64, ptr %p1_val1128
+  store i64 %deref1129, ptr %cur_len1124
+  %p2_val1130 = load ptr, ptr %p21118
+  %deref1131 = load i64, ptr %p2_val1130
+  store i64 %deref1131, ptr %cur_cap1125
+  %p3_val1132 = load ptr, ptr %p31121
+  %deref1133 = load i64, ptr %p3_val1132
+  store i64 %deref1133, ptr %esz1126
+  %arr_val1134 = load ptr, ptr %arr.addr
+  %deref1135 = load i64, ptr %arr_val1134
+  store i64 %deref1135, ptr %cur_data1127
+  %cur_len_val1136 = load i64, ptr %cur_len1124
+  %cur_cap_val1137 = load i64, ptr %cur_cap1125
+  %cmp1138 = icmp sge i64 %cur_len_val1136, %cur_cap_val1137
+  br i1 %cmp1138, label %if_then375, label %if_else376
 
-if_then255:
-  %new_cap753 = alloca i64, align 8
-  %cur_cap_val754 = load i64, ptr %cur_cap739
-  %op755 = mul i64 %cur_cap_val754, 2
-  store i64 %op755, ptr %new_cap753
-  %new_cap_val756 = load i64, ptr %new_cap753
-  %cmp757 = icmp slt i64 %new_cap_val756, 4
-  br i1 %cmp757, label %if_then258, label %if_else259
+if_then375:
+  %new_cap1139 = alloca i64, align 8
+  %cur_cap_val1140 = load i64, ptr %cur_cap1125
+  %op1141 = mul i64 %cur_cap_val1140, 2
+  store i64 %op1141, ptr %new_cap1139
+  %new_cap_val1142 = load i64, ptr %new_cap1139
+  %cmp1143 = icmp slt i64 %new_cap_val1142, 4
+  br i1 %cmp1143, label %if_then378, label %if_else379
 
-if_then258:
-  store i64 4, ptr %new_cap753
-  br label %if_end260
+if_then378:
+  store i64 4, ptr %new_cap1139
+  br label %if_end380
 
-if_else259:
-  br label %if_end260
+if_else379:
+  br label %if_end380
 
-if_end260:
-  %new_data758 = alloca ptr, align 8
-  %new_cap_val759 = load i64, ptr %new_cap753
-  %esz_val760 = load i64, ptr %esz740
-  %op761 = mul i64 %new_cap_val759, %esz_val760
-  %call762 = call ptr @ofs_alloc(i64 %op761)
-  store ptr %call762, ptr %new_data758
-  %sc_slot763 = alloca i1, align 1
-  %cur_len_val764 = load i64, ptr %cur_len738
-  %cmp765 = icmp sgt i64 %cur_len_val764, 0
-  store i1 %cmp765, ptr %sc_slot763
-  br i1 %cmp765, label %sc_rhs261, label %sc_end262
+if_end380:
+  %new_data1144 = alloca ptr, align 8
+  %arr_val1145 = load ptr, ptr %arr.addr
+  %new_cap_val1146 = load i64, ptr %new_cap1139
+  %esz_val1147 = load i64, ptr %esz1126
+  %op1148 = mul i64 %new_cap_val1146, %esz_val1147
+  %call1149 = call ptr @__ofs_alloc_like(ptr %arr_val1145, i64 %op1148)
+  store ptr %call1149, ptr %new_data1144
+  %sc_slot1150 = alloca i1, align 1
+  %cur_len_val1151 = load i64, ptr %cur_len1124
+  %cmp1152 = icmp sgt i64 %cur_len_val1151, 0
+  store i1 %cmp1152, ptr %sc_slot1150
+  br i1 %cmp1152, label %sc_rhs381, label %sc_end382
 
-sc_rhs261:
-  %cur_data_val766 = load i64, ptr %cur_data741
-  %cmp767 = icmp ne i64 %cur_data_val766, 0
-  store i1 %cmp767, ptr %sc_slot763
-  br label %sc_end262
+sc_rhs381:
+  %cur_data_val1153 = load i64, ptr %cur_data1127
+  %cmp1154 = icmp ne i64 %cur_data_val1153, 0
+  store i1 %cmp1154, ptr %sc_slot1150
+  br label %sc_end382
 
-sc_end262:
-  %sc768 = load i1, ptr %sc_slot763
-  br i1 %sc768, label %if_then263, label %if_else264
+sc_end382:
+  %sc1155 = load i1, ptr %sc_slot1150
+  br i1 %sc1155, label %if_then383, label %if_else384
 
-if_then263:
-  %new_data_val769 = load ptr, ptr %new_data758
-  %cur_data_val770 = load i64, ptr %cur_data741
-  %cast771 = inttoptr i64 %cur_data_val770 to ptr
-  %cur_len_val772 = load i64, ptr %cur_len738
-  %esz_val773 = load i64, ptr %esz740
-  %op774 = mul i64 %cur_len_val772, %esz_val773
-  %call775 = call ptr @memcpy(ptr %new_data_val769, ptr %cast771, i64 %op774)
-  br label %if_end265
+if_then383:
+  %new_data_val1156 = load ptr, ptr %new_data1144
+  %cur_data_val1157 = load i64, ptr %cur_data1127
+  %cast1158 = inttoptr i64 %cur_data_val1157 to ptr
+  %cur_len_val1159 = load i64, ptr %cur_len1124
+  %esz_val1160 = load i64, ptr %esz1126
+  %op1161 = mul i64 %cur_len_val1159, %esz_val1160
+  %call1162 = call ptr @memcpy(ptr %new_data_val1156, ptr %cast1158, i64 %op1161)
+  br label %if_end385
 
-if_else264:
-  br label %if_end265
+if_else384:
+  br label %if_end385
 
-if_end265:
-  %sc_slot776 = alloca i1, align 1
-  %cur_data_val777 = load i64, ptr %cur_data741
-  %cmp778 = icmp ne i64 %cur_data_val777, 0
-  store i1 %cmp778, ptr %sc_slot776
-  br i1 %cmp778, label %sc_rhs266, label %sc_end267
+if_end385:
+  %sc_slot1163 = alloca i1, align 1
+  %cur_data_val1164 = load i64, ptr %cur_data1127
+  %cmp1165 = icmp ne i64 %cur_data_val1164, 0
+  store i1 %cmp1165, ptr %sc_slot1163
+  br i1 %cmp1165, label %sc_rhs386, label %sc_end387
 
-sc_rhs266:
-  %cur_data_val779 = load i64, ptr %cur_data741
-  %arr_val780 = load ptr, ptr %arr.addr
-  %cast781 = ptrtoint ptr %arr_val780 to i64
-  %op782 = add i64 %cast781, 32
-  %cmp783 = icmp ne i64 %cur_data_val779, %op782
-  store i1 %cmp783, ptr %sc_slot776
-  br label %sc_end267
+sc_rhs386:
+  %cur_data_val1166 = load i64, ptr %cur_data1127
+  %arr_val1167 = load ptr, ptr %arr.addr
+  %cast1168 = ptrtoint ptr %arr_val1167 to i64
+  %op1169 = add i64 %cast1168, 32
+  %cmp1170 = icmp ne i64 %cur_data_val1166, %op1169
+  store i1 %cmp1170, ptr %sc_slot1163
+  br label %sc_end387
 
-sc_end267:
-  %sc784 = load i1, ptr %sc_slot776
-  br i1 %sc784, label %if_then268, label %if_else269
+sc_end387:
+  %sc1171 = load i1, ptr %sc_slot1163
+  br i1 %sc1171, label %if_then388, label %if_else389
 
-if_then268:
-  %cur_data_val785 = load i64, ptr %cur_data741
-  %cast786 = inttoptr i64 %cur_data_val785 to ptr
-  call void @free(ptr %cast786)
-  br label %if_end270
+if_then388:
+  %cur_data_val1172 = load i64, ptr %cur_data1127
+  %cast1173 = inttoptr i64 %cur_data_val1172 to ptr
+  call void @ofs_free(ptr %cast1173)
+  br label %if_end390
 
-if_else269:
-  br label %if_end270
+if_else389:
+  br label %if_end390
 
-if_end270:
-  %new_data_val787 = load ptr, ptr %new_data758
-  %cast788 = ptrtoint ptr %new_data_val787 to i64
-  store i64 %cast788, ptr %cur_data741
-  %arr_val789 = load ptr, ptr %arr.addr
-  %cur_data_val790 = load i64, ptr %cur_data741
-  store i64 %cur_data_val790, ptr %arr_val789
-  %p2_val791 = load ptr, ptr %p2732
-  %new_cap_val792 = load i64, ptr %new_cap753
-  store i64 %new_cap_val792, ptr %p2_val791
-  br label %if_end257
+if_end390:
+  %new_data_val1174 = load ptr, ptr %new_data1144
+  %cast1175 = ptrtoint ptr %new_data_val1174 to i64
+  store i64 %cast1175, ptr %cur_data1127
+  %arr_val1176 = load ptr, ptr %arr.addr
+  %cur_data_val1177 = load i64, ptr %cur_data1127
+  store i64 %cur_data_val1177, ptr %arr_val1176
+  %p2_val1178 = load ptr, ptr %p21118
+  %new_cap_val1179 = load i64, ptr %new_cap1139
+  store i64 %new_cap_val1179, ptr %p2_val1178
+  br label %if_end377
 
-if_else256:
-  br label %if_end257
+if_else376:
+  br label %if_end377
 
-if_end257:
-  %dest793 = alloca i64, align 8
-  %cur_data_val794 = load i64, ptr %cur_data741
-  %cur_len_val795 = load i64, ptr %cur_len738
-  %esz_val796 = load i64, ptr %esz740
-  %op797 = mul i64 %cur_len_val795, %esz_val796
-  %op798 = add i64 %cur_data_val794, %op797
-  store i64 %op798, ptr %dest793
-  %esz_val799 = load i64, ptr %esz740
-  %cmp800 = icmp eq i64 %esz_val799, 8
-  br i1 %cmp800, label %if_then271, label %if_else272
+if_end377:
+  %dest1180 = alloca i64, align 8
+  %cur_data_val1181 = load i64, ptr %cur_data1127
+  %cur_len_val1182 = load i64, ptr %cur_len1124
+  %esz_val1183 = load i64, ptr %esz1126
+  %op1184 = mul i64 %cur_len_val1182, %esz_val1183
+  %op1185 = add i64 %cur_data_val1181, %op1184
+  store i64 %op1185, ptr %dest1180
+  %esz_val1186 = load i64, ptr %esz1126
+  %cmp1187 = icmp eq i64 %esz_val1186, 8
+  br i1 %cmp1187, label %if_then391, label %if_else392
 
-if_then271:
-  %dp801 = alloca ptr, align 8
-  %dest_val802 = load i64, ptr %dest793
-  %cast803 = inttoptr i64 %dest_val802 to ptr
-  store ptr %cast803, ptr %dp801
-  %ev804 = alloca i64, align 8
-  store i64 0, ptr %ev804
-  %elem_val805 = load ptr, ptr %elem.addr
-  %deref806 = load i64, ptr %elem_val805
-  store i64 %deref806, ptr %ev804
-  %dp_val807 = load ptr, ptr %dp801
-  %ev_val808 = load i64, ptr %ev804
-  store i64 %ev_val808, ptr %dp_val807
-  br label %if_end273
+if_then391:
+  %dp1188 = alloca ptr, align 8
+  %dest_val1189 = load i64, ptr %dest1180
+  %cast1190 = inttoptr i64 %dest_val1189 to ptr
+  store ptr %cast1190, ptr %dp1188
+  %ev1191 = alloca i64, align 8
+  store i64 0, ptr %ev1191
+  %elem_val1192 = load ptr, ptr %elem.addr
+  %deref1193 = load i64, ptr %elem_val1192
+  store i64 %deref1193, ptr %ev1191
+  %dp_val1194 = load ptr, ptr %dp1188
+  %ev_val1195 = load i64, ptr %ev1191
+  store i64 %ev_val1195, ptr %dp_val1194
+  br label %if_end393
 
-if_else272:
-  %dest_val809 = load i64, ptr %dest793
-  %cast810 = inttoptr i64 %dest_val809 to ptr
-  %elem_val811 = load ptr, ptr %elem.addr
-  %esz_val812 = load i64, ptr %esz740
-  %call813 = call ptr @memcpy(ptr %cast810, ptr %elem_val811, i64 %esz_val812)
-  br label %if_end273
+if_else392:
+  %dest_val1196 = load i64, ptr %dest1180
+  %cast1197 = inttoptr i64 %dest_val1196 to ptr
+  %elem_val1198 = load ptr, ptr %elem.addr
+  %esz_val1199 = load i64, ptr %esz1126
+  %call1200 = call ptr @memcpy(ptr %cast1197, ptr %elem_val1198, i64 %esz_val1199)
+  br label %if_end393
 
-if_end273:
-  %p1_val814 = load ptr, ptr %p1729
-  %cur_len_val815 = load i64, ptr %cur_len738
-  %op816 = add i64 %cur_len_val815, 1
-  store i64 %op816, ptr %p1_val814
+if_end393:
+  %p1_val1201 = load ptr, ptr %p11115
+  %cur_len_val1202 = load i64, ptr %cur_len1124
+  %op1203 = add i64 %cur_len_val1202, 1
+  store i64 %op1203, ptr %p1_val1201
   ret void
 }
 
@@ -2413,78 +3371,78 @@ entry:
   store ptr %arr, ptr %arr.addr
   %idx.addr = alloca i64, align 8
   store i64 %idx, ptr %idx.addr
-  %arr_val817 = load ptr, ptr %arr.addr
-  %cmp818 = icmp eq ptr %arr_val817, null
-  br i1 %cmp818, label %if_then274, label %if_else275
+  %arr_val1204 = load ptr, ptr %arr.addr
+  %cmp1205 = icmp eq ptr %arr_val1204, null
+  br i1 %cmp1205, label %if_then394, label %if_else395
 
-if_then274:
+if_then394:
   call void @ofs_array_fail(ptr @str.20, i64 19)
-  br label %if_end276
+  br label %if_end396
 
-if_else275:
-  br label %if_end276
+if_else395:
+  br label %if_end396
 
-if_end276:
-  %p1819 = alloca ptr, align 8
-  %arr_val820 = load ptr, ptr %arr.addr
-  %fault_step821 = getelementptr inbounds i64, ptr %arr_val820, i64 1
-  store ptr %fault_step821, ptr %p1819
-  %p3822 = alloca ptr, align 8
-  %arr_val823 = load ptr, ptr %arr.addr
-  %fault_step824 = getelementptr inbounds i64, ptr %arr_val823, i64 3
-  store ptr %fault_step824, ptr %p3822
-  %cur_len825 = alloca i64, align 8
-  store i64 0, ptr %cur_len825
-  %esz826 = alloca i64, align 8
-  store i64 0, ptr %esz826
-  %cur_data827 = alloca i64, align 8
-  store i64 0, ptr %cur_data827
-  %p1_val828 = load ptr, ptr %p1819
-  %deref829 = load i64, ptr %p1_val828
-  store i64 %deref829, ptr %cur_len825
-  %p3_val830 = load ptr, ptr %p3822
-  %deref831 = load i64, ptr %p3_val830
-  store i64 %deref831, ptr %esz826
-  %arr_val832 = load ptr, ptr %arr.addr
-  %deref833 = load i64, ptr %arr_val832
-  store i64 %deref833, ptr %cur_data827
-  %sc_slot834 = alloca i1, align 1
-  %idx_val835 = load i64, ptr %idx.addr
-  %cmp836 = icmp slt i64 %idx_val835, 0
-  store i1 %cmp836, ptr %sc_slot834
-  br i1 %cmp836, label %sc_end278, label %sc_rhs277
+if_end396:
+  %p11206 = alloca ptr, align 8
+  %arr_val1207 = load ptr, ptr %arr.addr
+  %fault_step1208 = getelementptr inbounds i64, ptr %arr_val1207, i64 1
+  store ptr %fault_step1208, ptr %p11206
+  %p31209 = alloca ptr, align 8
+  %arr_val1210 = load ptr, ptr %arr.addr
+  %fault_step1211 = getelementptr inbounds i64, ptr %arr_val1210, i64 3
+  store ptr %fault_step1211, ptr %p31209
+  %cur_len1212 = alloca i64, align 8
+  store i64 0, ptr %cur_len1212
+  %esz1213 = alloca i64, align 8
+  store i64 0, ptr %esz1213
+  %cur_data1214 = alloca i64, align 8
+  store i64 0, ptr %cur_data1214
+  %p1_val1215 = load ptr, ptr %p11206
+  %deref1216 = load i64, ptr %p1_val1215
+  store i64 %deref1216, ptr %cur_len1212
+  %p3_val1217 = load ptr, ptr %p31209
+  %deref1218 = load i64, ptr %p3_val1217
+  store i64 %deref1218, ptr %esz1213
+  %arr_val1219 = load ptr, ptr %arr.addr
+  %deref1220 = load i64, ptr %arr_val1219
+  store i64 %deref1220, ptr %cur_data1214
+  %sc_slot1221 = alloca i1, align 1
+  %idx_val1222 = load i64, ptr %idx.addr
+  %cmp1223 = icmp slt i64 %idx_val1222, 0
+  store i1 %cmp1223, ptr %sc_slot1221
+  br i1 %cmp1223, label %sc_end398, label %sc_rhs397
 
-sc_rhs277:
-  %idx_val837 = load i64, ptr %idx.addr
-  %cur_len_val838 = load i64, ptr %cur_len825
-  %cmp839 = icmp sge i64 %idx_val837, %cur_len_val838
-  store i1 %cmp839, ptr %sc_slot834
-  br label %sc_end278
+sc_rhs397:
+  %idx_val1224 = load i64, ptr %idx.addr
+  %cur_len_val1225 = load i64, ptr %cur_len1212
+  %cmp1226 = icmp sge i64 %idx_val1224, %cur_len_val1225
+  store i1 %cmp1226, ptr %sc_slot1221
+  br label %sc_end398
 
-sc_end278:
-  %sc840 = load i1, ptr %sc_slot834
-  br i1 %sc840, label %if_then279, label %if_else280
+sc_end398:
+  %sc1227 = load i1, ptr %sc_slot1221
+  br i1 %sc1227, label %if_then399, label %if_else400
 
-if_then279:
-  %idx_val841 = load i64, ptr %idx.addr
-  %cur_len_val842 = load i64, ptr %cur_len825
-  call void @ofs_array_oob(i64 %idx_val841, i64 %cur_len_val842)
-  br label %if_end281
+if_then399:
+  %idx_val1228 = load i64, ptr %idx.addr
+  %cur_len_val1229 = load i64, ptr %cur_len1212
+  call void @ofs_array_oob(i64 %idx_val1228, i64 %cur_len_val1229)
+  br label %if_end401
 
-if_else280:
-  br label %if_end281
+if_else400:
+  br label %if_end401
 
-if_end281:
-  %ptr843 = alloca i64, align 8
-  %cur_data_val844 = load i64, ptr %cur_data827
-  %idx_val845 = load i64, ptr %idx.addr
-  %esz_val846 = load i64, ptr %esz826
-  %op847 = mul i64 %idx_val845, %esz_val846
-  %op848 = add i64 %cur_data_val844, %op847
-  store i64 %op848, ptr %ptr843
-  %ptr_val849 = load i64, ptr %ptr843
-  %cast850 = inttoptr i64 %ptr_val849 to ptr
-  ret ptr %cast850
+if_end401:
+  %ptr1230 = alloca i64, align 8
+  %cur_data_val1231 = load i64, ptr %cur_data1214
+  %idx_val1232 = load i64, ptr %idx.addr
+  %esz_val1233 = load i64, ptr %esz1213
+  %op1234 = mul i64 %idx_val1232, %esz_val1233
+  %op1235 = add i64 %cur_data_val1231, %op1234
+  store i64 %op1235, ptr %ptr1230
+  %ptr_val1236 = load i64, ptr %ptr1230
+  %cast1237 = inttoptr i64 %ptr_val1236 to ptr
+  ret ptr %cast1237
 }
 
 define void @ofs_array_set(ptr %arr, i64 %idx, ptr %elem) {
@@ -2495,80 +3453,80 @@ entry:
   store i64 %idx, ptr %idx.addr
   %elem.addr = alloca ptr, align 8
   store ptr %elem, ptr %elem.addr
-  %arr_val851 = load ptr, ptr %arr.addr
-  %cmp852 = icmp eq ptr %arr_val851, null
-  br i1 %cmp852, label %if_then282, label %if_else283
+  %arr_val1238 = load ptr, ptr %arr.addr
+  %cmp1239 = icmp eq ptr %arr_val1238, null
+  br i1 %cmp1239, label %if_then402, label %if_else403
 
-if_then282:
+if_then402:
   call void @ofs_array_fail(ptr @str.20, i64 19)
-  br label %if_end284
+  br label %if_end404
 
-if_else283:
-  br label %if_end284
+if_else403:
+  br label %if_end404
 
-if_end284:
-  %p1853 = alloca ptr, align 8
-  %arr_val854 = load ptr, ptr %arr.addr
-  %fault_step855 = getelementptr inbounds i64, ptr %arr_val854, i64 1
-  store ptr %fault_step855, ptr %p1853
-  %p3856 = alloca ptr, align 8
-  %arr_val857 = load ptr, ptr %arr.addr
-  %fault_step858 = getelementptr inbounds i64, ptr %arr_val857, i64 3
-  store ptr %fault_step858, ptr %p3856
-  %cur_len859 = alloca i64, align 8
-  store i64 0, ptr %cur_len859
-  %esz860 = alloca i64, align 8
-  store i64 0, ptr %esz860
-  %cur_data861 = alloca i64, align 8
-  store i64 0, ptr %cur_data861
-  %p1_val862 = load ptr, ptr %p1853
-  %deref863 = load i64, ptr %p1_val862
-  store i64 %deref863, ptr %cur_len859
-  %p3_val864 = load ptr, ptr %p3856
-  %deref865 = load i64, ptr %p3_val864
-  store i64 %deref865, ptr %esz860
-  %arr_val866 = load ptr, ptr %arr.addr
-  %deref867 = load i64, ptr %arr_val866
-  store i64 %deref867, ptr %cur_data861
-  %sc_slot868 = alloca i1, align 1
-  %idx_val869 = load i64, ptr %idx.addr
-  %cmp870 = icmp slt i64 %idx_val869, 0
-  store i1 %cmp870, ptr %sc_slot868
-  br i1 %cmp870, label %sc_end286, label %sc_rhs285
+if_end404:
+  %p11240 = alloca ptr, align 8
+  %arr_val1241 = load ptr, ptr %arr.addr
+  %fault_step1242 = getelementptr inbounds i64, ptr %arr_val1241, i64 1
+  store ptr %fault_step1242, ptr %p11240
+  %p31243 = alloca ptr, align 8
+  %arr_val1244 = load ptr, ptr %arr.addr
+  %fault_step1245 = getelementptr inbounds i64, ptr %arr_val1244, i64 3
+  store ptr %fault_step1245, ptr %p31243
+  %cur_len1246 = alloca i64, align 8
+  store i64 0, ptr %cur_len1246
+  %esz1247 = alloca i64, align 8
+  store i64 0, ptr %esz1247
+  %cur_data1248 = alloca i64, align 8
+  store i64 0, ptr %cur_data1248
+  %p1_val1249 = load ptr, ptr %p11240
+  %deref1250 = load i64, ptr %p1_val1249
+  store i64 %deref1250, ptr %cur_len1246
+  %p3_val1251 = load ptr, ptr %p31243
+  %deref1252 = load i64, ptr %p3_val1251
+  store i64 %deref1252, ptr %esz1247
+  %arr_val1253 = load ptr, ptr %arr.addr
+  %deref1254 = load i64, ptr %arr_val1253
+  store i64 %deref1254, ptr %cur_data1248
+  %sc_slot1255 = alloca i1, align 1
+  %idx_val1256 = load i64, ptr %idx.addr
+  %cmp1257 = icmp slt i64 %idx_val1256, 0
+  store i1 %cmp1257, ptr %sc_slot1255
+  br i1 %cmp1257, label %sc_end406, label %sc_rhs405
 
-sc_rhs285:
-  %idx_val871 = load i64, ptr %idx.addr
-  %cur_len_val872 = load i64, ptr %cur_len859
-  %cmp873 = icmp sge i64 %idx_val871, %cur_len_val872
-  store i1 %cmp873, ptr %sc_slot868
-  br label %sc_end286
+sc_rhs405:
+  %idx_val1258 = load i64, ptr %idx.addr
+  %cur_len_val1259 = load i64, ptr %cur_len1246
+  %cmp1260 = icmp sge i64 %idx_val1258, %cur_len_val1259
+  store i1 %cmp1260, ptr %sc_slot1255
+  br label %sc_end406
 
-sc_end286:
-  %sc874 = load i1, ptr %sc_slot868
-  br i1 %sc874, label %if_then287, label %if_else288
+sc_end406:
+  %sc1261 = load i1, ptr %sc_slot1255
+  br i1 %sc1261, label %if_then407, label %if_else408
 
-if_then287:
-  %idx_val875 = load i64, ptr %idx.addr
-  %cur_len_val876 = load i64, ptr %cur_len859
-  call void @ofs_array_oob(i64 %idx_val875, i64 %cur_len_val876)
-  br label %if_end289
+if_then407:
+  %idx_val1262 = load i64, ptr %idx.addr
+  %cur_len_val1263 = load i64, ptr %cur_len1246
+  call void @ofs_array_oob(i64 %idx_val1262, i64 %cur_len_val1263)
+  br label %if_end409
 
-if_else288:
-  br label %if_end289
+if_else408:
+  br label %if_end409
 
-if_end289:
-  %ptr877 = alloca i64, align 8
-  %cur_data_val878 = load i64, ptr %cur_data861
-  %idx_val879 = load i64, ptr %idx.addr
-  %esz_val880 = load i64, ptr %esz860
-  %op881 = mul i64 %idx_val879, %esz_val880
-  %op882 = add i64 %cur_data_val878, %op881
-  store i64 %op882, ptr %ptr877
-  %ptr_val883 = load i64, ptr %ptr877
-  %cast884 = inttoptr i64 %ptr_val883 to ptr
-  %elem_val885 = load ptr, ptr %elem.addr
-  %esz_val886 = load i64, ptr %esz860
-  %call887 = call ptr @memcpy(ptr %cast884, ptr %elem_val885, i64 %esz_val886)
+if_end409:
+  %ptr1264 = alloca i64, align 8
+  %cur_data_val1265 = load i64, ptr %cur_data1248
+  %idx_val1266 = load i64, ptr %idx.addr
+  %esz_val1267 = load i64, ptr %esz1247
+  %op1268 = mul i64 %idx_val1266, %esz_val1267
+  %op1269 = add i64 %cur_data_val1265, %op1268
+  store i64 %op1269, ptr %ptr1264
+  %ptr_val1270 = load i64, ptr %ptr1264
+  %cast1271 = inttoptr i64 %ptr_val1270 to ptr
+  %elem_val1272 = load ptr, ptr %elem.addr
+  %esz_val1273 = load i64, ptr %esz1247
+  %call1274 = call ptr @memcpy(ptr %cast1271, ptr %elem_val1272, i64 %esz_val1273)
   ret void
 }
 
@@ -2576,70 +3534,70 @@ define ptr @ofs_array_pop(ptr %arr) {
 entry:
   %arr.addr = alloca ptr, align 8
   store ptr %arr, ptr %arr.addr
-  %arr_val888 = load ptr, ptr %arr.addr
-  %cmp889 = icmp eq ptr %arr_val888, null
-  br i1 %cmp889, label %if_then290, label %if_else291
+  %arr_val1275 = load ptr, ptr %arr.addr
+  %cmp1276 = icmp eq ptr %arr_val1275, null
+  br i1 %cmp1276, label %if_then410, label %if_else411
 
-if_then290:
+if_then410:
   call void @ofs_array_fail(ptr @str.20, i64 19)
-  br label %if_end292
+  br label %if_end412
 
-if_else291:
-  br label %if_end292
+if_else411:
+  br label %if_end412
 
-if_end292:
-  %p1890 = alloca ptr, align 8
-  %arr_val891 = load ptr, ptr %arr.addr
-  %fault_step892 = getelementptr inbounds i64, ptr %arr_val891, i64 1
-  store ptr %fault_step892, ptr %p1890
-  %p3893 = alloca ptr, align 8
-  %arr_val894 = load ptr, ptr %arr.addr
-  %fault_step895 = getelementptr inbounds i64, ptr %arr_val894, i64 3
-  store ptr %fault_step895, ptr %p3893
-  %cur_len896 = alloca i64, align 8
-  store i64 0, ptr %cur_len896
-  %esz897 = alloca i64, align 8
-  store i64 0, ptr %esz897
-  %cur_data898 = alloca i64, align 8
-  store i64 0, ptr %cur_data898
-  %p1_val899 = load ptr, ptr %p1890
-  %deref900 = load i64, ptr %p1_val899
-  store i64 %deref900, ptr %cur_len896
-  %p3_val901 = load ptr, ptr %p3893
-  %deref902 = load i64, ptr %p3_val901
-  store i64 %deref902, ptr %esz897
-  %arr_val903 = load ptr, ptr %arr.addr
-  %deref904 = load i64, ptr %arr_val903
-  store i64 %deref904, ptr %cur_data898
-  %cur_len_val905 = load i64, ptr %cur_len896
-  %cmp906 = icmp sle i64 %cur_len_val905, 0
-  br i1 %cmp906, label %if_then293, label %if_else294
+if_end412:
+  %p11277 = alloca ptr, align 8
+  %arr_val1278 = load ptr, ptr %arr.addr
+  %fault_step1279 = getelementptr inbounds i64, ptr %arr_val1278, i64 1
+  store ptr %fault_step1279, ptr %p11277
+  %p31280 = alloca ptr, align 8
+  %arr_val1281 = load ptr, ptr %arr.addr
+  %fault_step1282 = getelementptr inbounds i64, ptr %arr_val1281, i64 3
+  store ptr %fault_step1282, ptr %p31280
+  %cur_len1283 = alloca i64, align 8
+  store i64 0, ptr %cur_len1283
+  %esz1284 = alloca i64, align 8
+  store i64 0, ptr %esz1284
+  %cur_data1285 = alloca i64, align 8
+  store i64 0, ptr %cur_data1285
+  %p1_val1286 = load ptr, ptr %p11277
+  %deref1287 = load i64, ptr %p1_val1286
+  store i64 %deref1287, ptr %cur_len1283
+  %p3_val1288 = load ptr, ptr %p31280
+  %deref1289 = load i64, ptr %p3_val1288
+  store i64 %deref1289, ptr %esz1284
+  %arr_val1290 = load ptr, ptr %arr.addr
+  %deref1291 = load i64, ptr %arr_val1290
+  store i64 %deref1291, ptr %cur_data1285
+  %cur_len_val1292 = load i64, ptr %cur_len1283
+  %cmp1293 = icmp sle i64 %cur_len_val1292, 0
+  br i1 %cmp1293, label %if_then413, label %if_else414
 
-if_then293:
+if_then413:
   call void @ofs_array_fail(ptr @str.21, i64 28)
-  br label %if_end295
+  br label %if_end415
 
-if_else294:
-  br label %if_end295
+if_else414:
+  br label %if_end415
 
-if_end295:
-  %new_len907 = alloca i64, align 8
-  %cur_len_val908 = load i64, ptr %cur_len896
-  %op909 = sub i64 %cur_len_val908, 1
-  store i64 %op909, ptr %new_len907
-  %p1_val910 = load ptr, ptr %p1890
-  %new_len_val911 = load i64, ptr %new_len907
-  store i64 %new_len_val911, ptr %p1_val910
-  %ptr912 = alloca i64, align 8
-  %cur_data_val913 = load i64, ptr %cur_data898
-  %new_len_val914 = load i64, ptr %new_len907
-  %esz_val915 = load i64, ptr %esz897
-  %op916 = mul i64 %new_len_val914, %esz_val915
-  %op917 = add i64 %cur_data_val913, %op916
-  store i64 %op917, ptr %ptr912
-  %ptr_val918 = load i64, ptr %ptr912
-  %cast919 = inttoptr i64 %ptr_val918 to ptr
-  ret ptr %cast919
+if_end415:
+  %new_len1294 = alloca i64, align 8
+  %cur_len_val1295 = load i64, ptr %cur_len1283
+  %op1296 = sub i64 %cur_len_val1295, 1
+  store i64 %op1296, ptr %new_len1294
+  %p1_val1297 = load ptr, ptr %p11277
+  %new_len_val1298 = load i64, ptr %new_len1294
+  store i64 %new_len_val1298, ptr %p1_val1297
+  %ptr1299 = alloca i64, align 8
+  %cur_data_val1300 = load i64, ptr %cur_data1285
+  %new_len_val1301 = load i64, ptr %new_len1294
+  %esz_val1302 = load i64, ptr %esz1284
+  %op1303 = mul i64 %new_len_val1301, %esz_val1302
+  %op1304 = add i64 %cur_data_val1300, %op1303
+  store i64 %op1304, ptr %ptr1299
+  %ptr_val1305 = load i64, ptr %ptr1299
+  %cast1306 = inttoptr i64 %ptr_val1305 to ptr
+  ret ptr %cast1306
 }
 
 define ptr @matrix__create(i64 %initial_cap, i64 %elem_size) {
@@ -2648,40 +3606,40 @@ entry:
   store i64 %initial_cap, ptr %initial_cap.addr
   %elem_size.addr = alloca i64, align 8
   store i64 %elem_size, ptr %elem_size.addr
-  %initial_cap_val920 = load i64, ptr %initial_cap.addr
-  %elem_size_val921 = load i64, ptr %elem_size.addr
-  %call922 = call ptr @ofs_array_new(i64 %initial_cap_val920, i64 %elem_size_val921)
-  ret ptr %call922
+  %initial_cap_val1307 = load i64, ptr %initial_cap.addr
+  %elem_size_val1308 = load i64, ptr %elem_size.addr
+  %call1309 = call ptr @ofs_array_new(i64 %initial_cap_val1307, i64 %elem_size_val1308)
+  ret ptr %call1309
 }
 
 define i64 @matrix__length(ptr %arr) {
 entry:
   %arr.addr = alloca ptr, align 8
   store ptr %arr, ptr %arr.addr
-  %arr_val923 = load ptr, ptr %arr.addr
-  %arr_isnull924 = icmp eq ptr %arr_val923, null
-  br i1 %arr_isnull924, label %arr_nul298, label %arr_chk296
+  %arr_val1310 = load ptr, ptr %arr.addr
+  %arr_isnull1311 = icmp eq ptr %arr_val1310, null
+  br i1 %arr_isnull1311, label %arr_nul418, label %arr_chk416
 
-arr_nul298:
-  br label %arr_end297
+arr_nul418:
+  br label %arr_end417
 
-arr_chk296:
-  %ahp926 = getelementptr i64, ptr %arr_val923, i64 1
-  %ah925 = load i64, ptr %ahp926
-  br label %arr_end297
+arr_chk416:
+  %ahp1313 = getelementptr i64, ptr %arr_val1310, i64 1
+  %ah1312 = load i64, ptr %ahp1313
+  br label %arr_end417
 
-arr_end297:
-  %arr_len927 = phi i64 [ 0, %arr_nul298 ], [ %ah925, %arr_chk296 ]
-  ret i64 %arr_len927
+arr_end417:
+  %arr_len1314 = phi i64 [ 0, %arr_nul418 ], [ %ah1312, %arr_chk416 ]
+  ret i64 %arr_len1314
 }
 
 define i64 @matrix__capacity(ptr %arr) {
 entry:
   %arr.addr = alloca ptr, align 8
   store ptr %arr, ptr %arr.addr
-  %arr_val928 = load ptr, ptr %arr.addr
-  %call929 = call i64 @ofs_array_cap(ptr %arr_val928)
-  ret i64 %call929
+  %arr_val1315 = load ptr, ptr %arr.addr
+  %call1316 = call i64 @ofs_array_cap(ptr %arr_val1315)
+  ret i64 %call1316
 }
 
 define void @matrix__push(ptr %arr, i64 %val) {
@@ -2690,39 +3648,39 @@ entry:
   store ptr %arr, ptr %arr.addr
   %val.addr = alloca i64, align 8
   store i64 %val, ptr %val.addr
-  %arr_val930 = load ptr, ptr %arr.addr
-  %val_val931 = load i64, ptr %val.addr
-  %arr_isnull932 = icmp eq ptr %arr_val930, null
-  br i1 %arr_isnull932, label %arr_slow300, label %arr_chk302
+  %arr_val1317 = load ptr, ptr %arr.addr
+  %val_val1318 = load i64, ptr %val.addr
+  %arr_isnull1319 = icmp eq ptr %arr_val1317, null
+  br i1 %arr_isnull1319, label %arr_slow420, label %arr_chk422
 
-arr_chk302:
-  %ahp934 = getelementptr i64, ptr %arr_val930, i64 1
-  %ah933 = load i64, ptr %ahp934
-  %ahp936 = getelementptr i64, ptr %arr_val930, i64 2
-  %ah935 = load i64, ptr %ahp936
-  %ahp938 = getelementptr i64, ptr %arr_val930, i64 3
-  %ah937 = load i64, ptr %ahp938
-  %arr_room939 = icmp slt i64 %ah933, %ah935
-  %arr_e8940 = icmp eq i64 %ah937, 8
-  %arr_ok941 = and i1 %arr_room939, %arr_e8940
-  br i1 %arr_ok941, label %arr_fast299, label %arr_slow300
+arr_chk422:
+  %ahp1321 = getelementptr i64, ptr %arr_val1317, i64 1
+  %ah1320 = load i64, ptr %ahp1321
+  %ahp1323 = getelementptr i64, ptr %arr_val1317, i64 2
+  %ah1322 = load i64, ptr %ahp1323
+  %ahp1325 = getelementptr i64, ptr %arr_val1317, i64 3
+  %ah1324 = load i64, ptr %ahp1325
+  %arr_room1326 = icmp slt i64 %ah1320, %ah1322
+  %arr_e81327 = icmp eq i64 %ah1324, 8
+  %arr_ok1328 = and i1 %arr_room1326, %arr_e81327
+  br i1 %arr_ok1328, label %arr_fast419, label %arr_slow420
 
-arr_fast299:
-  %ah942 = load ptr, ptr %arr_val930
-  %arr_fp943 = getelementptr i64, ptr %ah942, i64 %ah933
-  store i64 %val_val931, ptr %arr_fp943
-  %arr_nlen944 = add i64 %ah933, 1
-  %arr_lenp945 = getelementptr i64, ptr %arr_val930, i64 1
-  store i64 %arr_nlen944, ptr %arr_lenp945
-  br label %arr_end301
+arr_fast419:
+  %ah1329 = load ptr, ptr %arr_val1317
+  %arr_fp1330 = getelementptr i64, ptr %ah1329, i64 %ah1320
+  store i64 %val_val1318, ptr %arr_fp1330
+  %arr_nlen1331 = add i64 %ah1320, 1
+  %arr_lenp1332 = getelementptr i64, ptr %arr_val1317, i64 1
+  store i64 %arr_nlen1331, ptr %arr_lenp1332
+  br label %arr_end421
 
-arr_slow300:
-  %arr_push946 = alloca i64, align 8
-  store i64 %val_val931, ptr %arr_push946
-  call void @ofs_array_push(ptr %arr_val930, ptr %arr_push946)
-  br label %arr_end301
+arr_slow420:
+  %arr_push1333 = alloca i64, align 8
+  store i64 %val_val1318, ptr %arr_push1333
+  call void @ofs_array_push(ptr %arr_val1317, ptr %arr_push1333)
+  br label %arr_end421
 
-arr_end301:
+arr_end421:
   ret void
 }
 
@@ -2732,34 +3690,34 @@ entry:
   store ptr %arr, ptr %arr.addr
   %idx.addr = alloca i64, align 8
   store i64 %idx, ptr %idx.addr
-  %arr_val947 = load ptr, ptr %arr.addr
-  %idx_val948 = load i64, ptr %idx.addr
-  %arr_isnull949 = icmp eq ptr %arr_val947, null
-  br i1 %arr_isnull949, label %arr_slow304, label %arr_chk306
+  %arr_val1334 = load ptr, ptr %arr.addr
+  %idx_val1335 = load i64, ptr %idx.addr
+  %arr_isnull1336 = icmp eq ptr %arr_val1334, null
+  br i1 %arr_isnull1336, label %arr_slow424, label %arr_chk426
 
-arr_chk306:
-  %ahp951 = getelementptr i64, ptr %arr_val947, i64 1
-  %ah950 = load i64, ptr %ahp951
-  %ahp953 = getelementptr i64, ptr %arr_val947, i64 3
-  %ah952 = load i64, ptr %ahp953
-  %arr_inb954 = icmp ult i64 %idx_val948, %ah950
-  %arr_e8955 = icmp eq i64 %ah952, 8
-  %arr_ok956 = and i1 %arr_inb954, %arr_e8955
-  br i1 %arr_ok956, label %arr_fast303, label %arr_slow304
+arr_chk426:
+  %ahp1338 = getelementptr i64, ptr %arr_val1334, i64 1
+  %ah1337 = load i64, ptr %ahp1338
+  %ahp1340 = getelementptr i64, ptr %arr_val1334, i64 3
+  %ah1339 = load i64, ptr %ahp1340
+  %arr_inb1341 = icmp ult i64 %idx_val1335, %ah1337
+  %arr_e81342 = icmp eq i64 %ah1339, 8
+  %arr_ok1343 = and i1 %arr_inb1341, %arr_e81342
+  br i1 %arr_ok1343, label %arr_fast423, label %arr_slow424
 
-arr_fast303:
-  %ah957 = load ptr, ptr %arr_val947
-  %arr_fp958 = getelementptr i64, ptr %ah957, i64 %idx_val948
-  br label %arr_end305
+arr_fast423:
+  %ah1344 = load ptr, ptr %arr_val1334
+  %arr_fp1345 = getelementptr i64, ptr %ah1344, i64 %idx_val1335
+  br label %arr_end425
 
-arr_slow304:
-  %arr_sp959 = call ptr @ofs_array_get(ptr %arr_val947, i64 %idx_val948)
-  br label %arr_end305
+arr_slow424:
+  %arr_sp1346 = call ptr @ofs_array_get(ptr %arr_val1334, i64 %idx_val1335)
+  br label %arr_end425
 
-arr_end305:
-  %arr_ptr960 = phi ptr [ %arr_fp958, %arr_fast303 ], [ %arr_sp959, %arr_slow304 ]
-  %arr_item961 = load i64, ptr %arr_ptr960
-  ret i64 %arr_item961
+arr_end425:
+  %arr_ptr1347 = phi ptr [ %arr_fp1345, %arr_fast423 ], [ %arr_sp1346, %arr_slow424 ]
+  %arr_item1348 = load i64, ptr %arr_ptr1347
+  ret i64 %arr_item1348
 }
 
 define void @matrix__set(ptr %arr, i64 %idx, i64 %val) {
@@ -2770,35 +3728,35 @@ entry:
   store i64 %idx, ptr %idx.addr
   %val.addr = alloca i64, align 8
   store i64 %val, ptr %val.addr
-  %arr_val962 = load ptr, ptr %arr.addr
-  %idx_val963 = load i64, ptr %idx.addr
-  %val_val964 = load i64, ptr %val.addr
-  %arr_isnull965 = icmp eq ptr %arr_val962, null
-  br i1 %arr_isnull965, label %arr_slow308, label %arr_chk310
+  %arr_val1349 = load ptr, ptr %arr.addr
+  %idx_val1350 = load i64, ptr %idx.addr
+  %val_val1351 = load i64, ptr %val.addr
+  %arr_isnull1352 = icmp eq ptr %arr_val1349, null
+  br i1 %arr_isnull1352, label %arr_slow428, label %arr_chk430
 
-arr_chk310:
-  %ahp967 = getelementptr i64, ptr %arr_val962, i64 1
-  %ah966 = load i64, ptr %ahp967
-  %ahp969 = getelementptr i64, ptr %arr_val962, i64 3
-  %ah968 = load i64, ptr %ahp969
-  %arr_inb970 = icmp ult i64 %idx_val963, %ah966
-  %arr_e8971 = icmp eq i64 %ah968, 8
-  %arr_ok972 = and i1 %arr_inb970, %arr_e8971
-  br i1 %arr_ok972, label %arr_fast307, label %arr_slow308
+arr_chk430:
+  %ahp1354 = getelementptr i64, ptr %arr_val1349, i64 1
+  %ah1353 = load i64, ptr %ahp1354
+  %ahp1356 = getelementptr i64, ptr %arr_val1349, i64 3
+  %ah1355 = load i64, ptr %ahp1356
+  %arr_inb1357 = icmp ult i64 %idx_val1350, %ah1353
+  %arr_e81358 = icmp eq i64 %ah1355, 8
+  %arr_ok1359 = and i1 %arr_inb1357, %arr_e81358
+  br i1 %arr_ok1359, label %arr_fast427, label %arr_slow428
 
-arr_fast307:
-  %ah973 = load ptr, ptr %arr_val962
-  %arr_fp974 = getelementptr i64, ptr %ah973, i64 %idx_val963
-  store i64 %val_val964, ptr %arr_fp974
-  br label %arr_end309
+arr_fast427:
+  %ah1360 = load ptr, ptr %arr_val1349
+  %arr_fp1361 = getelementptr i64, ptr %ah1360, i64 %idx_val1350
+  store i64 %val_val1351, ptr %arr_fp1361
+  br label %arr_end429
 
-arr_slow308:
-  %idx_set975 = alloca i64, align 8
-  store i64 %val_val964, ptr %idx_set975
-  call void @ofs_array_set(ptr %arr_val962, i64 %idx_val963, ptr %idx_set975)
-  br label %arr_end309
+arr_slow428:
+  %idx_set1362 = alloca i64, align 8
+  store i64 %val_val1351, ptr %idx_set1362
+  call void @ofs_array_set(ptr %arr_val1349, i64 %idx_val1350, ptr %idx_set1362)
+  br label %arr_end429
 
-arr_end309:
+arr_end429:
   ret void
 }
 
@@ -2806,9 +3764,9 @@ define ptr @matrix__pop(ptr %arr) {
 entry:
   %arr.addr = alloca ptr, align 8
   store ptr %arr, ptr %arr.addr
-  %arr_val976 = load ptr, ptr %arr.addr
-  %arr_pop977 = call ptr @ofs_array_pop(ptr %arr_val976)
-  ret ptr %arr_pop977
+  %arr_val1363 = load ptr, ptr %arr.addr
+  %arr_pop1364 = call ptr @ofs_array_pop(ptr %arr_val1363)
+  ret ptr %arr_pop1364
 }
 
 define void @echo_obsidian(ptr %s) {
@@ -2817,23 +3775,23 @@ entry:
   store ptr %s, ptr %s.addr
   %s.addr_own = alloca i64, align 8
   store i64 0, ptr %s.addr_own
-  %s_val978 = load ptr, ptr %s.addr
-  %cmp979 = icmp eq ptr %s_val978, null
-  br i1 %cmp979, label %if_then311, label %if_else312
+  %s_val1365 = load ptr, ptr %s.addr
+  %cmp1366 = icmp eq ptr %s_val1365, null
+  br i1 %cmp1366, label %if_then431, label %if_else432
 
-if_then311:
-  %call980 = call i64 @puts(ptr @str.22)
-  br label %if_end313
+if_then431:
+  %call1367 = call i64 @puts(ptr @str.22)
+  br label %if_end433
 
-if_else312:
-  %s_val981 = load ptr, ptr %s.addr
-  %call982 = call i64 @puts(ptr %s_val981)
-  br label %if_end313
+if_else432:
+  %s_val1368 = load ptr, ptr %s.addr
+  %call1369 = call i64 @puts(ptr %s_val1368)
+  br label %if_end433
 
-if_end313:
-  %sf_val983 = load ptr, ptr %s.addr
-  %sf_own984 = load i64, ptr %s.addr_own
-  call void @ofs_str_release(ptr %sf_val983, i64 %sf_own984)
+if_end433:
+  %sf_val1370 = load ptr, ptr %s.addr
+  %sf_own1371 = load i64, ptr %s.addr_own
+  call void @ofs_str_release(ptr %sf_val1370, i64 %sf_own1371)
   ret void
 }
 
@@ -2841,17 +3799,17 @@ define void @echo_stone(i64 %v) {
 entry:
   %v.addr = alloca i64, align 8
   store i64 %v, ptr %v.addr
-  %s985 = alloca ptr, align 8
-  %s985_own = alloca i64, align 8
-  store i64 0, ptr %s985_own
-  %v_val986 = load i64, ptr %v.addr
-  %stone_to_str987 = call ptr @ofs_stone_to_obsidian(i64 %v_val986)
-  store ptr %stone_to_str987, ptr %s985
-  %s_val988 = load ptr, ptr %s985
-  call void @echo_obsidian(ptr %s_val988)
-  %sf_val989 = load ptr, ptr %s985
-  %sf_own990 = load i64, ptr %s985_own
-  call void @ofs_str_release(ptr %sf_val989, i64 %sf_own990)
+  %s1372 = alloca ptr, align 8
+  %s1372_own = alloca i64, align 8
+  store i64 0, ptr %s1372_own
+  %v_val1373 = load i64, ptr %v.addr
+  %stone_to_str1374 = call ptr @ofs_stone_to_obsidian(i64 %v_val1373)
+  store ptr %stone_to_str1374, ptr %s1372
+  %s_val1375 = load ptr, ptr %s1372
+  call void @echo_obsidian(ptr %s_val1375)
+  %sf_val1376 = load ptr, ptr %s1372
+  %sf_own1377 = load i64, ptr %s1372_own
+  call void @ofs_str_release(ptr %sf_val1376, i64 %sf_own1377)
   ret void
 }
 
@@ -2859,17 +3817,17 @@ define void @echo_crystal(double %v) {
 entry:
   %v.addr = alloca double, align 8
   store double %v, ptr %v.addr
-  %s991 = alloca ptr, align 8
-  %s991_own = alloca i64, align 8
-  store i64 0, ptr %s991_own
-  %v_val992 = load double, ptr %v.addr
-  %call993 = call ptr @ofs_crystal_to_obsidian(double %v_val992)
-  store ptr %call993, ptr %s991
-  %s_val994 = load ptr, ptr %s991
-  call void @echo_obsidian(ptr %s_val994)
-  %sf_val995 = load ptr, ptr %s991
-  %sf_own996 = load i64, ptr %s991_own
-  call void @ofs_str_release(ptr %sf_val995, i64 %sf_own996)
+  %s1378 = alloca ptr, align 8
+  %s1378_own = alloca i64, align 8
+  store i64 0, ptr %s1378_own
+  %v_val1379 = load double, ptr %v.addr
+  %call1380 = call ptr @ofs_crystal_to_obsidian(double %v_val1379)
+  store ptr %call1380, ptr %s1378
+  %s_val1381 = load ptr, ptr %s1378
+  call void @echo_obsidian(ptr %s_val1381)
+  %sf_val1382 = load ptr, ptr %s1378
+  %sf_own1383 = load i64, ptr %s1378_own
+  call void @ofs_str_release(ptr %sf_val1382, i64 %sf_own1383)
   ret void
 }
 
@@ -2877,25 +3835,25 @@ define void @echo_bool(i64 %v) {
 entry:
   %v.addr = alloca i64, align 8
   store i64 %v, ptr %v.addr
-  %v_val997 = load i64, ptr %v.addr
-  %cmp998 = icmp ne i64 %v_val997, 0
-  br i1 %cmp998, label %if_then314, label %if_else315
+  %v_val1384 = load i64, ptr %v.addr
+  %cmp1385 = icmp ne i64 %v_val1384, 0
+  br i1 %cmp1385, label %if_then434, label %if_else435
 
-if_then314:
-  %call999 = call i64 @puts(ptr @str.23)
-  br label %if_end316
+if_then434:
+  %call1386 = call i64 @puts(ptr @str.23)
+  br label %if_end436
 
-if_else315:
-  %call1000 = call i64 @puts(ptr @str.24)
-  br label %if_end316
+if_else435:
+  %call1387 = call i64 @puts(ptr @str.24)
+  br label %if_end436
 
-if_end316:
+if_end436:
   ret void
 }
 
 define void @echo_newline() {
 entry:
-  %call1001 = call i64 @putchar(i64 10)
+  %call1388 = call i64 @putchar(i64 10)
   ret void
 }
 
@@ -2903,19 +3861,19 @@ define void @echo_obsidian_nn(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %s_val1002 = load ptr, ptr %s.addr
-  %cmp1003 = icmp ne ptr %s_val1002, null
-  br i1 %cmp1003, label %if_then317, label %if_else318
+  %s_val1389 = load ptr, ptr %s.addr
+  %cmp1390 = icmp ne ptr %s_val1389, null
+  br i1 %cmp1390, label %if_then437, label %if_else438
 
-if_then317:
-  %s_val1004 = load ptr, ptr %s.addr
-  %call1005 = call i64 (ptr, ...) @printf(ptr @str.25, ptr %s_val1004)
-  br label %if_end319
+if_then437:
+  %s_val1391 = load ptr, ptr %s.addr
+  %call1392 = call i64 (ptr, ...) @printf(ptr @str.25, ptr %s_val1391)
+  br label %if_end439
 
-if_else318:
-  br label %if_end319
+if_else438:
+  br label %if_end439
 
-if_end319:
+if_end439:
   ret void
 }
 
@@ -2923,12 +3881,12 @@ define void @echo_stone_nn(i64 %v) {
 entry:
   %v.addr = alloca i64, align 8
   store i64 %v, ptr %v.addr
-  %s1006 = alloca ptr, align 8
-  %v_val1007 = load i64, ptr %v.addr
-  %stone_to_str1008 = call ptr @ofs_stone_to_obsidian(i64 %v_val1007)
-  store ptr %stone_to_str1008, ptr %s1006
-  %s_val1009 = load ptr, ptr %s1006
-  call void @echo_obsidian_nn(ptr %s_val1009)
+  %s1393 = alloca ptr, align 8
+  %v_val1394 = load i64, ptr %v.addr
+  %stone_to_str1395 = call ptr @ofs_stone_to_obsidian(i64 %v_val1394)
+  store ptr %stone_to_str1395, ptr %s1393
+  %s_val1396 = load ptr, ptr %s1393
+  call void @echo_obsidian_nn(ptr %s_val1396)
   ret void
 }
 
@@ -2936,12 +3894,12 @@ define void @echo_crystal_nn(double %v) {
 entry:
   %v.addr = alloca double, align 8
   store double %v, ptr %v.addr
-  %s1010 = alloca ptr, align 8
-  %v_val1011 = load double, ptr %v.addr
-  %call1012 = call ptr @ofs_crystal_to_obsidian(double %v_val1011)
-  store ptr %call1012, ptr %s1010
-  %s_val1013 = load ptr, ptr %s1010
-  call void @echo_obsidian_nn(ptr %s_val1013)
+  %s1397 = alloca ptr, align 8
+  %v_val1398 = load double, ptr %v.addr
+  %call1399 = call ptr @ofs_crystal_to_obsidian(double %v_val1398)
+  store ptr %call1399, ptr %s1397
+  %s_val1400 = load ptr, ptr %s1397
+  call void @echo_obsidian_nn(ptr %s_val1400)
   ret void
 }
 
@@ -2951,60 +3909,60 @@ entry:
   store ptr %ansi, ptr %ansi.addr
   %text.addr = alloca ptr, align 8
   store ptr %text, ptr %text.addr
-  %c1014 = alloca ptr, align 8
-  %c1014_own = alloca i64, align 8
-  store i64 0, ptr %c1014_own
-  %ansi_val1015 = load ptr, ptr %ansi.addr
-  store ptr %ansi_val1015, ptr %c1014
-  %c_val1016 = load ptr, ptr %c1014
-  %cmp1017 = icmp eq ptr %c_val1016, null
-  br i1 %cmp1017, label %if_then320, label %if_else321
+  %c1401 = alloca ptr, align 8
+  %c1401_own = alloca i64, align 8
+  store i64 0, ptr %c1401_own
+  %ansi_val1402 = load ptr, ptr %ansi.addr
+  store ptr %ansi_val1402, ptr %c1401
+  %c_val1403 = load ptr, ptr %c1401
+  %cmp1404 = icmp eq ptr %c_val1403, null
+  br i1 %cmp1404, label %if_then440, label %if_else441
 
-if_then320:
-  %own_old1018 = load ptr, ptr %c1014
-  %own_flag1019 = load i64, ptr %c1014_own
-  call void @ofs_str_release(ptr %own_old1018, i64 %own_flag1019)
-  store ptr @str.26, ptr %c1014
-  store i64 0, ptr %c1014_own
-  br label %if_end322
+if_then440:
+  %own_old1405 = load ptr, ptr %c1401
+  %own_flag1406 = load i64, ptr %c1401_own
+  call void @ofs_str_release(ptr %own_old1405, i64 %own_flag1406)
+  store ptr @str.26, ptr %c1401
+  store i64 0, ptr %c1401_own
+  br label %if_end442
 
-if_else321:
-  br label %if_end322
+if_else441:
+  br label %if_end442
 
-if_end322:
-  %t1020 = alloca ptr, align 8
-  %t1020_own = alloca i64, align 8
-  store i64 0, ptr %t1020_own
-  %text_val1021 = load ptr, ptr %text.addr
-  store ptr %text_val1021, ptr %t1020
-  %t_val1022 = load ptr, ptr %t1020
-  %cmp1023 = icmp eq ptr %t_val1022, null
-  br i1 %cmp1023, label %if_then323, label %if_else324
+if_end442:
+  %t1407 = alloca ptr, align 8
+  %t1407_own = alloca i64, align 8
+  store i64 0, ptr %t1407_own
+  %text_val1408 = load ptr, ptr %text.addr
+  store ptr %text_val1408, ptr %t1407
+  %t_val1409 = load ptr, ptr %t1407
+  %cmp1410 = icmp eq ptr %t_val1409, null
+  br i1 %cmp1410, label %if_then443, label %if_else444
 
-if_then323:
-  %own_old1024 = load ptr, ptr %t1020
-  %own_flag1025 = load i64, ptr %t1020_own
-  call void @ofs_str_release(ptr %own_old1024, i64 %own_flag1025)
-  store ptr @str.12, ptr %t1020
-  store i64 0, ptr %t1020_own
-  br label %if_end325
+if_then443:
+  %own_old1411 = load ptr, ptr %t1407
+  %own_flag1412 = load i64, ptr %t1407_own
+  call void @ofs_str_release(ptr %own_old1411, i64 %own_flag1412)
+  store ptr @str.12, ptr %t1407
+  store i64 0, ptr %t1407_own
+  br label %if_end445
 
-if_else324:
-  br label %if_end325
+if_else444:
+  br label %if_end445
 
-if_end325:
-  %c_val1026 = load ptr, ptr %c1014
-  %t_val1027 = load ptr, ptr %t1020
-  %concat1028 = call ptr @ofs_str_concat(ptr %c_val1026, ptr %t_val1027)
-  %concat1029 = call ptr @ofs_str_concat_ex(ptr %concat1028, ptr @str.26, i64 1)
-  call void @echo_obsidian(ptr %concat1029)
-  call void @ofs_str_release(ptr %concat1029, i64 1)
-  %sf_val1030 = load ptr, ptr %t1020
-  %sf_own1031 = load i64, ptr %t1020_own
-  call void @ofs_str_release(ptr %sf_val1030, i64 %sf_own1031)
-  %sf_val1032 = load ptr, ptr %c1014
-  %sf_own1033 = load i64, ptr %c1014_own
-  call void @ofs_str_release(ptr %sf_val1032, i64 %sf_own1033)
+if_end445:
+  %c_val1413 = load ptr, ptr %c1401
+  %t_val1414 = load ptr, ptr %t1407
+  %concat1415 = call ptr @ofs_str_concat(ptr %c_val1413, ptr %t_val1414)
+  %concat1416 = call ptr @ofs_str_concat_ex(ptr %concat1415, ptr @str.26, i64 1)
+  call void @echo_obsidian(ptr %concat1416)
+  call void @ofs_str_release(ptr %concat1416, i64 1)
+  %sf_val1417 = load ptr, ptr %t1407
+  %sf_own1418 = load i64, ptr %t1407_own
+  call void @ofs_str_release(ptr %sf_val1417, i64 %sf_own1418)
+  %sf_val1419 = load ptr, ptr %c1401
+  %sf_own1420 = load i64, ptr %c1401_own
+  call void @ofs_str_release(ptr %sf_val1419, i64 %sf_own1420)
   ret void
 }
 
@@ -3012,8 +3970,8 @@ define void @outlet__print(ptr %s) {
 entry:
   %s.addr = alloca ptr, align 8
   store ptr %s, ptr %s.addr
-  %s_val1034 = load ptr, ptr %s.addr
-  call void @echo_obsidian_nn(ptr %s_val1034)
+  %s_val1421 = load ptr, ptr %s.addr
+  call void @echo_obsidian_nn(ptr %s_val1421)
   ret void
 }
 
@@ -3023,11 +3981,11 @@ entry:
   store ptr %s, ptr %s.addr
   %s.addr_own = alloca i64, align 8
   store i64 0, ptr %s.addr_own
-  %s_val1035 = load ptr, ptr %s.addr
-  call void @echo_obsidian(ptr %s_val1035)
-  %sf_val1036 = load ptr, ptr %s.addr
-  %sf_own1037 = load i64, ptr %s.addr_own
-  call void @ofs_str_release(ptr %sf_val1036, i64 %sf_own1037)
+  %s_val1422 = load ptr, ptr %s.addr
+  call void @echo_obsidian(ptr %s_val1422)
+  %sf_val1423 = load ptr, ptr %s.addr
+  %sf_own1424 = load i64, ptr %s.addr_own
+  call void @ofs_str_release(ptr %sf_val1423, i64 %sf_own1424)
   ret void
 }
 
@@ -3035,8 +3993,8 @@ define void @outlet__print_stone(i64 %v) {
 entry:
   %v.addr = alloca i64, align 8
   store i64 %v, ptr %v.addr
-  %v_val1038 = load i64, ptr %v.addr
-  call void @echo_stone_nn(i64 %v_val1038)
+  %v_val1425 = load i64, ptr %v.addr
+  call void @echo_stone_nn(i64 %v_val1425)
   ret void
 }
 
@@ -3044,8 +4002,8 @@ define void @outlet__println_stone(i64 %v) {
 entry:
   %v.addr = alloca i64, align 8
   store i64 %v, ptr %v.addr
-  %v_val1039 = load i64, ptr %v.addr
-  call void @echo_stone(i64 %v_val1039)
+  %v_val1426 = load i64, ptr %v.addr
+  call void @echo_stone(i64 %v_val1426)
   ret void
 }
 
@@ -3053,8 +4011,8 @@ define void @outlet__print_crystal(double %v) {
 entry:
   %v.addr = alloca double, align 8
   store double %v, ptr %v.addr
-  %v_val1040 = load double, ptr %v.addr
-  call void @echo_crystal_nn(double %v_val1040)
+  %v_val1427 = load double, ptr %v.addr
+  call void @echo_crystal_nn(double %v_val1427)
   ret void
 }
 
@@ -3062,8 +4020,8 @@ define void @outlet__println_crystal(double %v) {
 entry:
   %v.addr = alloca double, align 8
   store double %v, ptr %v.addr
-  %v_val1041 = load double, ptr %v.addr
-  call void @echo_crystal(double %v_val1041)
+  %v_val1428 = load double, ptr %v.addr
+  call void @echo_crystal(double %v_val1428)
   ret void
 }
 
@@ -3079,9 +4037,9 @@ entry:
   store ptr %ansi, ptr %ansi.addr
   %text.addr = alloca ptr, align 8
   store ptr %text, ptr %text.addr
-  %ansi_val1042 = load ptr, ptr %ansi.addr
-  %text_val1043 = load ptr, ptr %text.addr
-  call void @ofs_echo_color(ptr %ansi_val1042, ptr %text_val1043)
+  %ansi_val1429 = load ptr, ptr %ansi.addr
+  %text_val1430 = load ptr, ptr %text.addr
+  call void @ofs_echo_color(ptr %ansi_val1429, ptr %text_val1430)
   ret void
 }
 
@@ -3089,36 +4047,36 @@ define ptr @ofs_getenv(ptr %name) {
 entry:
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %name_val1044 = load ptr, ptr %name.addr
-  %cmp1045 = icmp eq ptr %name_val1044, null
-  br i1 %cmp1045, label %if_then326, label %if_else327
+  %name_val1431 = load ptr, ptr %name.addr
+  %cmp1432 = icmp eq ptr %name_val1431, null
+  br i1 %cmp1432, label %if_then446, label %if_else447
 
-if_then326:
+if_then446:
   ret ptr @str.12
 
-if_else327:
-  br label %if_end328
+if_else447:
+  br label %if_end448
 
-if_end328:
-  %v1046 = alloca ptr, align 8
-  %v1046_own = alloca i64, align 8
-  store i64 0, ptr %v1046_own
-  %name_val1047 = load ptr, ptr %name.addr
-  %call1048 = call ptr @getenv(ptr %name_val1047)
-  store ptr %call1048, ptr %v1046
-  %v_val1049 = load ptr, ptr %v1046
-  %cmp1050 = icmp eq ptr %v_val1049, null
-  br i1 %cmp1050, label %if_then329, label %if_else330
+if_end448:
+  %v1433 = alloca ptr, align 8
+  %v1433_own = alloca i64, align 8
+  store i64 0, ptr %v1433_own
+  %name_val1434 = load ptr, ptr %name.addr
+  %call1435 = call ptr @getenv(ptr %name_val1434)
+  store ptr %call1435, ptr %v1433
+  %v_val1436 = load ptr, ptr %v1433
+  %cmp1437 = icmp eq ptr %v_val1436, null
+  br i1 %cmp1437, label %if_then449, label %if_else450
 
-if_then329:
+if_then449:
   ret ptr @str.12
 
-if_else330:
-  br label %if_end331
+if_else450:
+  br label %if_end451
 
-if_end331:
-  %v_val1051 = load ptr, ptr %v1046
-  ret ptr %v_val1051
+if_end451:
+  %v_val1438 = load ptr, ptr %v1433
+  ret ptr %v_val1438
 }
 
 define i64 @ofs_mod(i64 %a, i64 %b) {
@@ -3127,63 +4085,63 @@ entry:
   store i64 %a, ptr %a.addr
   %b.addr = alloca i64, align 8
   store i64 %b, ptr %b.addr
-  %b_val1052 = load i64, ptr %b.addr
-  %cmp1053 = icmp eq i64 %b_val1052, 0
-  br i1 %cmp1053, label %if_then332, label %if_else333
+  %b_val1439 = load i64, ptr %b.addr
+  %cmp1440 = icmp eq i64 %b_val1439, 0
+  br i1 %cmp1440, label %if_then452, label %if_else453
 
-if_then332:
+if_then452:
   call void @exit(i64 1)
-  br label %if_end334
+  br label %if_end454
 
-if_else333:
-  br label %if_end334
+if_else453:
+  br label %if_end454
 
-if_end334:
-  %r1054 = alloca i64, align 8
-  %a_val1055 = load i64, ptr %a.addr
-  %b_val1056 = load i64, ptr %b.addr
-  %op1057 = srem i64 %a_val1055, %b_val1056
-  store i64 %op1057, ptr %r1054
-  %r_val1058 = load i64, ptr %r1054
-  %cmp1059 = icmp slt i64 %r_val1058, 0
-  br i1 %cmp1059, label %if_then335, label %if_else336
+if_end454:
+  %r1441 = alloca i64, align 8
+  %a_val1442 = load i64, ptr %a.addr
+  %b_val1443 = load i64, ptr %b.addr
+  %op1444 = srem i64 %a_val1442, %b_val1443
+  store i64 %op1444, ptr %r1441
+  %r_val1445 = load i64, ptr %r1441
+  %cmp1446 = icmp slt i64 %r_val1445, 0
+  br i1 %cmp1446, label %if_then455, label %if_else456
 
-if_then335:
-  %b_val1060 = load i64, ptr %b.addr
-  %cmp1061 = icmp slt i64 %b_val1060, 0
-  br i1 %cmp1061, label %if_then338, label %if_else339
+if_then455:
+  %b_val1447 = load i64, ptr %b.addr
+  %cmp1448 = icmp slt i64 %b_val1447, 0
+  br i1 %cmp1448, label %if_then458, label %if_else459
 
-if_then338:
-  %r_val1062 = load i64, ptr %r1054
-  %b_val1063 = load i64, ptr %b.addr
-  %op1064 = sub i64 %r_val1062, %b_val1063
-  store i64 %op1064, ptr %r1054
-  br label %if_end340
+if_then458:
+  %r_val1449 = load i64, ptr %r1441
+  %b_val1450 = load i64, ptr %b.addr
+  %op1451 = sub i64 %r_val1449, %b_val1450
+  store i64 %op1451, ptr %r1441
+  br label %if_end460
 
-if_else339:
-  %r_val1065 = load i64, ptr %r1054
-  %b_val1066 = load i64, ptr %b.addr
-  %op1067 = add i64 %r_val1065, %b_val1066
-  store i64 %op1067, ptr %r1054
-  br label %if_end340
+if_else459:
+  %r_val1452 = load i64, ptr %r1441
+  %b_val1453 = load i64, ptr %b.addr
+  %op1454 = add i64 %r_val1452, %b_val1453
+  store i64 %op1454, ptr %r1441
+  br label %if_end460
 
-if_end340:
-  br label %if_end337
+if_end460:
+  br label %if_end457
 
-if_else336:
-  br label %if_end337
+if_else456:
+  br label %if_end457
 
-if_end337:
-  %r_val1068 = load i64, ptr %r1054
-  ret i64 %r_val1068
+if_end457:
+  %r_val1455 = load i64, ptr %r1441
+  ret i64 %r_val1455
 }
 
 define void @ofs_exit(i64 %code) {
 entry:
   %code.addr = alloca i64, align 8
   store i64 %code, ptr %code.addr
-  %code_val1069 = load i64, ptr %code.addr
-  call void @exit(i64 %code_val1069)
+  %code_val1456 = load i64, ptr %code.addr
+  call void @exit(i64 %code_val1456)
   ret void
 }
 
@@ -3191,17 +4149,17 @@ define ptr @foundation__get_env(ptr %name) {
 entry:
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %name_val1070 = load ptr, ptr %name.addr
-  %call1071 = call ptr @ofs_getenv(ptr %name_val1070)
-  ret ptr %call1071
+  %name_val1457 = load ptr, ptr %name.addr
+  %call1458 = call ptr @ofs_getenv(ptr %name_val1457)
+  ret ptr %call1458
 }
 
 define void @foundation__terminate(i64 %code) {
 entry:
   %code.addr = alloca i64, align 8
   store i64 %code, ptr %code.addr
-  %code_val1072 = load i64, ptr %code.addr
-  call void @ofs_exit(i64 %code_val1072)
+  %code_val1459 = load i64, ptr %code.addr
+  call void @ofs_exit(i64 %code_val1459)
   ret void
 }
 
@@ -3211,10 +4169,10 @@ entry:
   store i64 %a, ptr %a.addr
   %b.addr = alloca i64, align 8
   store i64 %b, ptr %b.addr
-  %a_val1073 = load i64, ptr %a.addr
-  %b_val1074 = load i64, ptr %b.addr
-  %call1075 = call i64 @ofs_mod(i64 %a_val1073, i64 %b_val1074)
-  ret i64 %call1075
+  %a_val1460 = load i64, ptr %a.addr
+  %b_val1461 = load i64, ptr %b.addr
+  %call1462 = call i64 @ofs_mod(i64 %a_val1460, i64 %b_val1461)
+  ret i64 %call1462
 }
 
 define void @ofs_window_create(ptr %title, i64 %w, i64 %h) {
@@ -3225,34 +4183,34 @@ entry:
   store i64 %w, ptr %w.addr
   %h.addr = alloca i64, align 8
   store i64 %h, ptr %h.addr
-  %title_val1076 = load ptr, ptr %title.addr
-  store ptr %title_val1076, ptr @_frame_title
-  %w_val1077 = load i64, ptr %w.addr
-  %cmp1078 = icmp sgt i64 %w_val1077, 0
-  br i1 %cmp1078, label %if_then341, label %if_else342
+  %title_val1463 = load ptr, ptr %title.addr
+  store ptr %title_val1463, ptr @_frame_title
+  %w_val1464 = load i64, ptr %w.addr
+  %cmp1465 = icmp sgt i64 %w_val1464, 0
+  br i1 %cmp1465, label %if_then461, label %if_else462
 
-if_then341:
-  %w_val1079 = load i64, ptr %w.addr
-  store i64 %w_val1079, ptr @_frame_width
-  br label %if_end343
+if_then461:
+  %w_val1466 = load i64, ptr %w.addr
+  store i64 %w_val1466, ptr @_frame_width
+  br label %if_end463
 
-if_else342:
-  br label %if_end343
+if_else462:
+  br label %if_end463
 
-if_end343:
-  %h_val1080 = load i64, ptr %h.addr
-  %cmp1081 = icmp sgt i64 %h_val1080, 0
-  br i1 %cmp1081, label %if_then344, label %if_else345
+if_end463:
+  %h_val1467 = load i64, ptr %h.addr
+  %cmp1468 = icmp sgt i64 %h_val1467, 0
+  br i1 %cmp1468, label %if_then464, label %if_else465
 
-if_then344:
-  %h_val1082 = load i64, ptr %h.addr
-  store i64 %h_val1082, ptr @_frame_height
-  br label %if_end346
+if_then464:
+  %h_val1469 = load i64, ptr %h.addr
+  store i64 %h_val1469, ptr @_frame_height
+  br label %if_end466
 
-if_else345:
-  br label %if_end346
+if_else465:
+  br label %if_end466
 
-if_end346:
+if_end466:
   store i64 1, ptr @_frame_open
   ret void
 }
@@ -3279,34 +4237,34 @@ entry:
 
 define i64 @ofs_window_poll() {
 entry:
-  %_frame_open_val1083 = load i64, ptr @_frame_open
-  ret i64 %_frame_open_val1083
+  %_frame_open_val1470 = load i64, ptr @_frame_open
+  ret i64 %_frame_open_val1470
 }
 
 define i64 @ofs_window_is_open() {
 entry:
-  %_frame_open_val1084 = load i64, ptr @_frame_open
-  ret i64 %_frame_open_val1084
+  %_frame_open_val1471 = load i64, ptr @_frame_open
+  ret i64 %_frame_open_val1471
 }
 
 define i64 @ofs_window_width() {
 entry:
-  %_frame_width_val1085 = load i64, ptr @_frame_width
-  ret i64 %_frame_width_val1085
+  %_frame_width_val1472 = load i64, ptr @_frame_width
+  ret i64 %_frame_width_val1472
 }
 
 define i64 @ofs_window_height() {
 entry:
-  %_frame_height_val1086 = load i64, ptr @_frame_height
-  ret i64 %_frame_height_val1086
+  %_frame_height_val1473 = load i64, ptr @_frame_height
+  ret i64 %_frame_height_val1473
 }
 
 define void @ofs_window_set_title(ptr %t) {
 entry:
   %t.addr = alloca ptr, align 8
   store ptr %t, ptr %t.addr
-  %t_val1087 = load ptr, ptr %t.addr
-  store ptr %t_val1087, ptr @_frame_title
+  %t_val1474 = load ptr, ptr %t.addr
+  store ptr %t_val1474, ptr @_frame_title
   ret void
 }
 
@@ -3318,10 +4276,10 @@ entry:
   store i64 %w, ptr %w.addr
   %h.addr = alloca i64, align 8
   store i64 %h, ptr %h.addr
-  %title_val1088 = load ptr, ptr %title.addr
-  %w_val1089 = load i64, ptr %w.addr
-  %h_val1090 = load i64, ptr %h.addr
-  call void @ofs_window_create(ptr %title_val1088, i64 %w_val1089, i64 %h_val1090)
+  %title_val1475 = load ptr, ptr %title.addr
+  %w_val1476 = load i64, ptr %w.addr
+  %h_val1477 = load i64, ptr %h.addr
+  call void @ofs_window_create(ptr %title_val1475, i64 %w_val1476, i64 %h_val1477)
   ret void
 }
 
@@ -3335,108 +4293,108 @@ define void @frame__present(i64 %buf) {
 entry:
   %buf.addr = alloca i64, align 8
   store i64 %buf, ptr %buf.addr
-  %buf_val1091 = load i64, ptr %buf.addr
-  call void @ofs_window_present(i64 %buf_val1091)
+  %buf_val1478 = load i64, ptr %buf.addr
+  call void @ofs_window_present(i64 %buf_val1478)
   ret void
 }
 
 define i32 @frame__poll() {
 entry:
-  %call1092 = call i64 @ofs_window_poll()
-  %cmp1093 = icmp ne i64 %call1092, 0
-  %zext1094 = zext i1 %cmp1093 to i32
-  ret i32 %zext1094
+  %call1479 = call i64 @ofs_window_poll()
+  %cmp1480 = icmp ne i64 %call1479, 0
+  %zext1481 = zext i1 %cmp1480 to i32
+  ret i32 %zext1481
 }
 
 define i32 @frame__is_open() {
 entry:
-  %call1095 = call i64 @ofs_window_is_open()
-  %cmp1096 = icmp ne i64 %call1095, 0
-  %zext1097 = zext i1 %cmp1096 to i32
-  ret i32 %zext1097
+  %call1482 = call i64 @ofs_window_is_open()
+  %cmp1483 = icmp ne i64 %call1482, 0
+  %zext1484 = zext i1 %cmp1483 to i32
+  ret i32 %zext1484
 }
 
 define i64 @frame__width() {
 entry:
-  %call1098 = call i64 @ofs_window_width()
-  ret i64 %call1098
+  %call1485 = call i64 @ofs_window_width()
+  ret i64 %call1485
 }
 
 define i64 @frame__height() {
 entry:
-  %call1099 = call i64 @ofs_window_height()
-  ret i64 %call1099
+  %call1486 = call i64 @ofs_window_height()
+  ret i64 %call1486
 }
 
 define void @frame__set_title(ptr %t) {
 entry:
   %t.addr = alloca ptr, align 8
   store ptr %t, ptr %t.addr
-  %t_val1100 = load ptr, ptr %t.addr
-  call void @ofs_window_set_title(ptr %t_val1100)
+  %t_val1487 = load ptr, ptr %t.addr
+  call void @ofs_window_set_title(ptr %t_val1487)
   ret void
 }
 
 define i64 @ofs_mouse_x() {
 entry:
-  %_impulse_mx_val1101 = load i64, ptr @_impulse_mx
-  ret i64 %_impulse_mx_val1101
+  %_impulse_mx_val1488 = load i64, ptr @_impulse_mx
+  ret i64 %_impulse_mx_val1488
 }
 
 define i64 @ofs_mouse_y() {
 entry:
-  %_impulse_my_val1102 = load i64, ptr @_impulse_my
-  ret i64 %_impulse_my_val1102
+  %_impulse_my_val1489 = load i64, ptr @_impulse_my
+  ret i64 %_impulse_my_val1489
 }
 
 define i64 @ofs_mouse_btn(i64 %b) {
 entry:
   %b.addr = alloca i64, align 8
   store i64 %b, ptr %b.addr
-  %_impulse_mbtn_val1103 = load i64, ptr @_impulse_mbtn
-  ret i64 %_impulse_mbtn_val1103
+  %_impulse_mbtn_val1490 = load i64, ptr @_impulse_mbtn
+  ret i64 %_impulse_mbtn_val1490
 }
 
 define i64 @ofs_key_down(i64 %k) {
 entry:
   %k.addr = alloca i64, align 8
   store i64 %k, ptr %k.addr
-  %_impulse_key_val1104 = load i64, ptr @_impulse_key
-  ret i64 %_impulse_key_val1104
+  %_impulse_key_val1491 = load i64, ptr @_impulse_key
+  ret i64 %_impulse_key_val1491
 }
 
 define i64 @impulse__mouse_x() {
 entry:
-  %call1105 = call i64 @ofs_mouse_x()
-  ret i64 %call1105
+  %call1492 = call i64 @ofs_mouse_x()
+  ret i64 %call1492
 }
 
 define i64 @impulse__mouse_y() {
 entry:
-  %call1106 = call i64 @ofs_mouse_y()
-  ret i64 %call1106
+  %call1493 = call i64 @ofs_mouse_y()
+  ret i64 %call1493
 }
 
 define i32 @impulse__is_down(i64 %btn) {
 entry:
   %btn.addr = alloca i64, align 8
   store i64 %btn, ptr %btn.addr
-  %btn_val1107 = load i64, ptr %btn.addr
-  %call1108 = call i64 @ofs_mouse_btn(i64 %btn_val1107)
-  %cmp1109 = icmp ne i64 %call1108, 0
-  %zext1110 = zext i1 %cmp1109 to i32
-  ret i32 %zext1110
+  %btn_val1494 = load i64, ptr %btn.addr
+  %call1495 = call i64 @ofs_mouse_btn(i64 %btn_val1494)
+  %cmp1496 = icmp ne i64 %call1495, 0
+  %zext1497 = zext i1 %cmp1496 to i32
+  ret i32 %zext1497
 }
 
 define i32 @impulse__key(i64 %sc) {
 entry:
   %sc.addr = alloca i64, align 8
   store i64 %sc, ptr %sc.addr
-  %sc_val1111 = load i64, ptr %sc.addr
-  %call1112 = call i64 @ofs_key_down(i64 %sc_val1111)
-  %cmp1113 = icmp ne i64 %call1112, 0
-  %zext1114 = zext i1 %cmp1113 to i32
-  ret i32 %zext1114
+  %sc_val1498 = load i64, ptr %sc.addr
+  %call1499 = call i64 @ofs_key_down(i64 %sc_val1498)
+  %cmp1500 = icmp ne i64 %call1499, 0
+  %zext1501 = zext i1 %cmp1500 to i32
+  ret i32 %zext1501
 }
 
 define ptr @prism__create(i64 %w, i64 %h) {
@@ -3445,33 +4403,33 @@ entry:
   store i64 %w, ptr %w.addr
   %h.addr = alloca i64, align 8
   store i64 %h, ptr %h.addr
-  %sobj1116 = alloca %Surface, align 8
-  store %Surface zeroinitializer, ptr %sobj1116
-  %field_ptr1117 = getelementptr inbounds %Surface, ptr %sobj1116, i32 0, i32 0
-  %w_val1118 = load i64, ptr %w.addr
-  store i64 %w_val1118, ptr %field_ptr1117
-  %field_ptr1119 = getelementptr inbounds %Surface, ptr %sobj1116, i32 0, i32 1
-  %h_val1120 = load i64, ptr %h.addr
-  store i64 %h_val1120, ptr %field_ptr1119
-  %field_ptr1121 = getelementptr inbounds %Surface, ptr %sobj1116, i32 0, i32 2
-  %w_val1122 = load i64, ptr %w.addr
-  %h_val1123 = load i64, ptr %h.addr
-  %op1124 = mul i64 %w_val1122, %h_val1123
-  %op1125 = mul i64 %op1124, 8
-  %call1126 = call ptr @ofs_alloc(i64 %op1125)
-  store ptr %call1126, ptr %field_ptr1121
-  call void @prism__clear(ptr %sobj1116, i64 16777215)
-  %ret_obj1127 = call ptr @ofs_alloc(i64 24)
-  %ret_copy1128 = load %Surface, ptr %sobj1116
-  store %Surface %ret_copy1128, ptr %ret_obj1127
-  ret ptr %ret_obj1127
+  %sobj1503 = alloca %Surface, align 8
+  store %Surface zeroinitializer, ptr %sobj1503
+  %field_ptr1504 = getelementptr inbounds %Surface, ptr %sobj1503, i32 0, i32 0
+  %w_val1505 = load i64, ptr %w.addr
+  store i64 %w_val1505, ptr %field_ptr1504
+  %field_ptr1506 = getelementptr inbounds %Surface, ptr %sobj1503, i32 0, i32 1
+  %h_val1507 = load i64, ptr %h.addr
+  store i64 %h_val1507, ptr %field_ptr1506
+  %field_ptr1508 = getelementptr inbounds %Surface, ptr %sobj1503, i32 0, i32 2
+  %w_val1509 = load i64, ptr %w.addr
+  %h_val1510 = load i64, ptr %h.addr
+  %op1511 = mul i64 %w_val1509, %h_val1510
+  %op1512 = mul i64 %op1511, 8
+  %call1513 = call ptr @ofs_alloc(i64 %op1512)
+  store ptr %call1513, ptr %field_ptr1508
+  call void @prism__clear(ptr %sobj1503, i64 16777215)
+  %ret_obj1514 = call ptr @ofs_alloc(i64 24)
+  %ret_copy1515 = load %Surface, ptr %sobj1503
+  store %Surface %ret_copy1515, ptr %ret_obj1514
+  ret ptr %ret_obj1514
 }
 
 define void @prism__destroy(ptr %surf) {
 entry:
-  %field_ptr1129 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 2
-  %field1130 = load ptr, ptr %field_ptr1129
-  call void @ofs_free(ptr %field1130)
+  %field_ptr1516 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 2
+  %field1517 = load ptr, ptr %field_ptr1516
+  call void @ofs_free(ptr %field1517)
   ret void
 }
 
@@ -3481,91 +4439,92 @@ entry:
   store i64 %x, ptr %x.addr
   %y.addr = alloca i64, align 8
   store i64 %y, ptr %y.addr
-  %sc_slot1131 = alloca i1, align 1
-  %sc_slot1132 = alloca i1, align 1
-  %sc_slot1133 = alloca i1, align 1
-  %x_val1134 = load i64, ptr %x.addr
-  %cmp1135 = icmp sge i64 %x_val1134, 0
-  store i1 %cmp1135, ptr %sc_slot1133
-  br i1 %cmp1135, label %sc_rhs351, label %sc_end352
+  %sc_slot1518 = alloca i1, align 1
+  %sc_slot1519 = alloca i1, align 1
+  %sc_slot1520 = alloca i1, align 1
+  %x_val1521 = load i64, ptr %x.addr
+  %cmp1522 = icmp sge i64 %x_val1521, 0
+  store i1 %cmp1522, ptr %sc_slot1520
+  br i1 %cmp1522, label %sc_rhs471, label %sc_end472
 
-sc_rhs351:
-  %y_val1136 = load i64, ptr %y.addr
-  %cmp1137 = icmp sge i64 %y_val1136, 0
-  store i1 %cmp1137, ptr %sc_slot1133
-  br label %sc_end352
+sc_rhs471:
+  %y_val1523 = load i64, ptr %y.addr
+  %cmp1524 = icmp sge i64 %y_val1523, 0
+  store i1 %cmp1524, ptr %sc_slot1520
+  br label %sc_end472
 
-sc_end352:
-  %sc1138 = load i1, ptr %sc_slot1133
-  store i1 %sc1138, ptr %sc_slot1132
-  br i1 %sc1138, label %sc_rhs349, label %sc_end350
+sc_end472:
+  %sc1525 = load i1, ptr %sc_slot1520
+  store i1 %sc1525, ptr %sc_slot1519
+  br i1 %sc1525, label %sc_rhs469, label %sc_end470
 
-sc_rhs349:
-  %x_val1139 = load i64, ptr %x.addr
-  %field_ptr1140 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
-  %field1141 = load i64, ptr %field_ptr1140
-  %cmp1142 = icmp slt i64 %x_val1139, %field1141
-  store i1 %cmp1142, ptr %sc_slot1132
-  br label %sc_end350
+sc_rhs469:
+  %x_val1526 = load i64, ptr %x.addr
+  %field_ptr1527 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
+  %field1528 = load i64, ptr %field_ptr1527
+  %cmp1529 = icmp slt i64 %x_val1526, %field1528
+  store i1 %cmp1529, ptr %sc_slot1519
+  br label %sc_end470
 
-sc_end350:
-  %sc1143 = load i1, ptr %sc_slot1132
-  store i1 %sc1143, ptr %sc_slot1131
-  br i1 %sc1143, label %sc_rhs347, label %sc_end348
+sc_end470:
+  %sc1530 = load i1, ptr %sc_slot1519
+  store i1 %sc1530, ptr %sc_slot1518
+  br i1 %sc1530, label %sc_rhs467, label %sc_end468
 
-sc_rhs347:
-  %y_val1144 = load i64, ptr %y.addr
-  %field_ptr1145 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 1
-  %field1146 = load i64, ptr %field_ptr1145
-  %cmp1147 = icmp slt i64 %y_val1144, %field1146
-  store i1 %cmp1147, ptr %sc_slot1131
-  br label %sc_end348
+sc_rhs467:
+  %y_val1531 = load i64, ptr %y.addr
+  %field_ptr1532 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 1
+  %field1533 = load i64, ptr %field_ptr1532
+  %cmp1534 = icmp slt i64 %y_val1531, %field1533
+  store i1 %cmp1534, ptr %sc_slot1518
+  br label %sc_end468
 
-sc_end348:
-  %sc1148 = load i1, ptr %sc_slot1131
-  %zext1149 = zext i1 %sc1148 to i32
-  ret i32 %zext1149
+sc_end468:
+  %sc1535 = load i1, ptr %sc_slot1518
+  %zext1536 = zext i1 %sc1535 to i32
+  ret i32 %zext1536
 }
 
 define void @prism__clear(ptr %surf, i64 %color) {
 entry:
   %color.addr = alloca i64, align 8
   store i64 %color, ptr %color.addr
-  %total1150 = alloca i64, align 8
-  %field_ptr1151 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
-  %field1152 = load i64, ptr %field_ptr1151
-  %field_ptr1153 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 1
-  %field1154 = load i64, ptr %field_ptr1153
-  %op1155 = mul i64 %field1152, %field1154
-  store i64 %op1155, ptr %total1150
-  %i1156 = alloca i64, align 8
-  store i64 0, ptr %i1156
-  br label %while_cond353
+  %total1537 = alloca i64, align 8
+  %field_ptr1538 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
+  %field1539 = load i64, ptr %field_ptr1538
+  %field_ptr1540 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 1
+  %field1541 = load i64, ptr %field_ptr1540
+  %op1542 = mul i64 %field1539, %field1541
+  store i64 %op1542, ptr %total1537
+  %i1543 = alloca i64, align 8
+  store i64 0, ptr %i1543
+  br label %while_cond473
 
-while_cond353:
-  %i_val1157 = load i64, ptr %i1156
-  %total_val1158 = load i64, ptr %total1150
-  %cmp1159 = icmp slt i64 %i_val1157, %total_val1158
-  br i1 %cmp1159, label %while_body354, label %while_end355
+while_cond473:
+  %i_val1544 = load i64, ptr %i1543
+  %total_val1545 = load i64, ptr %total1537
+  %cmp1546 = icmp slt i64 %i_val1544, %total_val1545
+  br i1 %cmp1546, label %while_body474, label %while_end475
 
-while_body354:
-  %loop_stk1160 = call ptr @llvm.stacksave()
-  %p1161 = alloca ptr, align 8
-  %field_ptr1162 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 2
-  %field1163 = load ptr, ptr %field_ptr1162
-  %i_val1164 = load i64, ptr %i1156
-  %fault_step1165 = getelementptr inbounds i64, ptr %field1163, i64 %i_val1164
-  store ptr %fault_step1165, ptr %p1161
-  %p_val1166 = load ptr, ptr %p1161
-  %color_val1167 = load i64, ptr %color.addr
-  store i64 %color_val1167, ptr %p_val1166
-  %post_old1168 = load i64, ptr %i1156
-  %post_new1169 = add i64 %post_old1168, 1
-  store i64 %post_new1169, ptr %i1156
-  call void @llvm.stackrestore(ptr %loop_stk1160)
-  br label %while_cond353
+while_body474:
+  %loop_stk1547 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %p1548 = alloca ptr, align 8
+  %field_ptr1549 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 2
+  %field1550 = load ptr, ptr %field_ptr1549
+  %i_val1551 = load i64, ptr %i1543
+  %fault_step1552 = getelementptr inbounds i64, ptr %field1550, i64 %i_val1551
+  store ptr %fault_step1552, ptr %p1548
+  %p_val1553 = load ptr, ptr %p1548
+  %color_val1554 = load i64, ptr %color.addr
+  store i64 %color_val1554, ptr %p_val1553
+  %post_old1555 = load i64, ptr %i1543
+  %post_new1556 = add i64 %post_old1555, 1
+  store i64 %post_new1556, ptr %i1543
+  call void @llvm.stackrestore(ptr %loop_stk1547)
+  br label %while_cond473
 
-while_end355:
+while_end475:
   ret void
 }
 
@@ -3577,37 +4536,37 @@ entry:
   store i64 %y, ptr %y.addr
   %color.addr = alloca i64, align 8
   store i64 %color, ptr %color.addr
-  %x_val1170 = load i64, ptr %x.addr
-  %y_val1171 = load i64, ptr %y.addr
-  %call1172 = call i32 @prism__in_bounds(ptr %surf, i64 %x_val1170, i64 %y_val1171)
-  %cond1173 = icmp ne i32 %call1172, 0
-  %not1174 = xor i1 %cond1173, true
-  br i1 %not1174, label %if_then356, label %if_else357
+  %x_val1557 = load i64, ptr %x.addr
+  %y_val1558 = load i64, ptr %y.addr
+  %call1559 = call i32 @prism__in_bounds(ptr %surf, i64 %x_val1557, i64 %y_val1558)
+  %cond1560 = icmp ne i32 %call1559, 0
+  %not1561 = xor i1 %cond1560, true
+  br i1 %not1561, label %if_then476, label %if_else477
 
-if_then356:
+if_then476:
   ret void
 
-if_else357:
-  br label %if_end358
+if_else477:
+  br label %if_end478
 
-if_end358:
-  %idx1175 = alloca i64, align 8
-  %y_val1176 = load i64, ptr %y.addr
-  %field_ptr1177 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
-  %field1178 = load i64, ptr %field_ptr1177
-  %op1179 = mul i64 %y_val1176, %field1178
-  %x_val1180 = load i64, ptr %x.addr
-  %op1181 = add i64 %op1179, %x_val1180
-  store i64 %op1181, ptr %idx1175
-  %p1182 = alloca ptr, align 8
-  %field_ptr1183 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 2
-  %field1184 = load ptr, ptr %field_ptr1183
-  %idx_val1185 = load i64, ptr %idx1175
-  %fault_step1186 = getelementptr inbounds i64, ptr %field1184, i64 %idx_val1185
-  store ptr %fault_step1186, ptr %p1182
-  %p_val1187 = load ptr, ptr %p1182
-  %color_val1188 = load i64, ptr %color.addr
-  store i64 %color_val1188, ptr %p_val1187
+if_end478:
+  %idx1562 = alloca i64, align 8
+  %y_val1563 = load i64, ptr %y.addr
+  %field_ptr1564 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
+  %field1565 = load i64, ptr %field_ptr1564
+  %op1566 = mul i64 %y_val1563, %field1565
+  %x_val1567 = load i64, ptr %x.addr
+  %op1568 = add i64 %op1566, %x_val1567
+  store i64 %op1568, ptr %idx1562
+  %p1569 = alloca ptr, align 8
+  %field_ptr1570 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 2
+  %field1571 = load ptr, ptr %field_ptr1570
+  %idx_val1572 = load i64, ptr %idx1562
+  %fault_step1573 = getelementptr inbounds i64, ptr %field1571, i64 %idx_val1572
+  store ptr %fault_step1573, ptr %p1569
+  %p_val1574 = load ptr, ptr %p1569
+  %color_val1575 = load i64, ptr %color.addr
+  store i64 %color_val1575, ptr %p_val1574
   ret void
 }
 
@@ -3617,37 +4576,37 @@ entry:
   store i64 %x, ptr %x.addr
   %y.addr = alloca i64, align 8
   store i64 %y, ptr %y.addr
-  %x_val1189 = load i64, ptr %x.addr
-  %y_val1190 = load i64, ptr %y.addr
-  %call1191 = call i32 @prism__in_bounds(ptr %surf, i64 %x_val1189, i64 %y_val1190)
-  %cond1192 = icmp ne i32 %call1191, 0
-  %not1193 = xor i1 %cond1192, true
-  br i1 %not1193, label %if_then359, label %if_else360
+  %x_val1576 = load i64, ptr %x.addr
+  %y_val1577 = load i64, ptr %y.addr
+  %call1578 = call i32 @prism__in_bounds(ptr %surf, i64 %x_val1576, i64 %y_val1577)
+  %cond1579 = icmp ne i32 %call1578, 0
+  %not1580 = xor i1 %cond1579, true
+  br i1 %not1580, label %if_then479, label %if_else480
 
-if_then359:
+if_then479:
   ret i64 0
 
-if_else360:
-  br label %if_end361
+if_else480:
+  br label %if_end481
 
-if_end361:
-  %idx1194 = alloca i64, align 8
-  %y_val1195 = load i64, ptr %y.addr
-  %field_ptr1196 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
-  %field1197 = load i64, ptr %field_ptr1196
-  %op1198 = mul i64 %y_val1195, %field1197
-  %x_val1199 = load i64, ptr %x.addr
-  %op1200 = add i64 %op1198, %x_val1199
-  store i64 %op1200, ptr %idx1194
-  %p1201 = alloca ptr, align 8
-  %field_ptr1202 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 2
-  %field1203 = load ptr, ptr %field_ptr1202
-  %idx_val1204 = load i64, ptr %idx1194
-  %fault_step1205 = getelementptr inbounds i64, ptr %field1203, i64 %idx_val1204
-  store ptr %fault_step1205, ptr %p1201
-  %p_val1206 = load ptr, ptr %p1201
-  %deref1207 = load i64, ptr %p_val1206
-  ret i64 %deref1207
+if_end481:
+  %idx1581 = alloca i64, align 8
+  %y_val1582 = load i64, ptr %y.addr
+  %field_ptr1583 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
+  %field1584 = load i64, ptr %field_ptr1583
+  %op1585 = mul i64 %y_val1582, %field1584
+  %x_val1586 = load i64, ptr %x.addr
+  %op1587 = add i64 %op1585, %x_val1586
+  store i64 %op1587, ptr %idx1581
+  %p1588 = alloca ptr, align 8
+  %field_ptr1589 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 2
+  %field1590 = load ptr, ptr %field_ptr1589
+  %idx_val1591 = load i64, ptr %idx1581
+  %fault_step1592 = getelementptr inbounds i64, ptr %field1590, i64 %idx_val1591
+  store ptr %fault_step1592, ptr %p1588
+  %p_val1593 = load ptr, ptr %p1588
+  %deref1594 = load i64, ptr %p_val1593
+  ret i64 %deref1594
 }
 
 define void @prism__fill_rect(ptr %surf, i64 %x, i64 %y, i64 %w, i64 %h, i64 %color) {
@@ -3662,52 +4621,54 @@ entry:
   store i64 %h, ptr %h.addr
   %color.addr = alloca i64, align 8
   store i64 %color, ptr %color.addr
-  %yy1208 = alloca i64, align 8
-  store i64 0, ptr %yy1208
-  br label %while_cond362
+  %yy1595 = alloca i64, align 8
+  store i64 0, ptr %yy1595
+  br label %while_cond482
 
-while_cond362:
-  %yy_val1209 = load i64, ptr %yy1208
-  %h_val1210 = load i64, ptr %h.addr
-  %cmp1211 = icmp slt i64 %yy_val1209, %h_val1210
-  br i1 %cmp1211, label %while_body363, label %while_end364
+while_cond482:
+  %yy_val1596 = load i64, ptr %yy1595
+  %h_val1597 = load i64, ptr %h.addr
+  %cmp1598 = icmp slt i64 %yy_val1596, %h_val1597
+  br i1 %cmp1598, label %while_body483, label %while_end484
 
-while_body363:
-  %loop_stk1212 = call ptr @llvm.stacksave()
-  %xx1213 = alloca i64, align 8
-  store i64 0, ptr %xx1213
-  br label %while_cond365
+while_body483:
+  %loop_stk1599 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %xx1600 = alloca i64, align 8
+  store i64 0, ptr %xx1600
+  br label %while_cond485
 
-while_cond365:
-  %xx_val1214 = load i64, ptr %xx1213
-  %w_val1215 = load i64, ptr %w.addr
-  %cmp1216 = icmp slt i64 %xx_val1214, %w_val1215
-  br i1 %cmp1216, label %while_body366, label %while_end367
+while_cond485:
+  %xx_val1601 = load i64, ptr %xx1600
+  %w_val1602 = load i64, ptr %w.addr
+  %cmp1603 = icmp slt i64 %xx_val1601, %w_val1602
+  br i1 %cmp1603, label %while_body486, label %while_end487
 
-while_body366:
-  %loop_stk1217 = call ptr @llvm.stacksave()
-  %x_val1218 = load i64, ptr %x.addr
-  %xx_val1219 = load i64, ptr %xx1213
-  %op1220 = add i64 %x_val1218, %xx_val1219
-  %y_val1221 = load i64, ptr %y.addr
-  %yy_val1222 = load i64, ptr %yy1208
-  %op1223 = add i64 %y_val1221, %yy_val1222
-  %color_val1224 = load i64, ptr %color.addr
-  call void @prism__set_pixel(ptr %surf, i64 %op1220, i64 %op1223, i64 %color_val1224)
-  %post_old1225 = load i64, ptr %xx1213
-  %post_new1226 = add i64 %post_old1225, 1
-  store i64 %post_new1226, ptr %xx1213
-  call void @llvm.stackrestore(ptr %loop_stk1217)
-  br label %while_cond365
+while_body486:
+  %loop_stk1604 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %x_val1605 = load i64, ptr %x.addr
+  %xx_val1606 = load i64, ptr %xx1600
+  %op1607 = add i64 %x_val1605, %xx_val1606
+  %y_val1608 = load i64, ptr %y.addr
+  %yy_val1609 = load i64, ptr %yy1595
+  %op1610 = add i64 %y_val1608, %yy_val1609
+  %color_val1611 = load i64, ptr %color.addr
+  call void @prism__set_pixel(ptr %surf, i64 %op1607, i64 %op1610, i64 %color_val1611)
+  %post_old1612 = load i64, ptr %xx1600
+  %post_new1613 = add i64 %post_old1612, 1
+  store i64 %post_new1613, ptr %xx1600
+  call void @llvm.stackrestore(ptr %loop_stk1604)
+  br label %while_cond485
 
-while_end367:
-  %post_old1227 = load i64, ptr %yy1208
-  %post_new1228 = add i64 %post_old1227, 1
-  store i64 %post_new1228, ptr %yy1208
-  call void @llvm.stackrestore(ptr %loop_stk1212)
-  br label %while_cond362
+while_end487:
+  %post_old1614 = load i64, ptr %yy1595
+  %post_new1615 = add i64 %post_old1614, 1
+  store i64 %post_new1615, ptr %yy1595
+  call void @llvm.stackrestore(ptr %loop_stk1599)
+  br label %while_cond482
 
-while_end364:
+while_end484:
   ret void
 }
 
@@ -3715,185 +4676,187 @@ define i32 @prism__save_ppm(ptr %surf, ptr %path) {
 entry:
   %path.addr = alloca ptr, align 8
   store ptr %path, ptr %path.addr
-  %f1229 = alloca ptr, align 8
-  %path_val1230 = load ptr, ptr %path.addr
-  %call1231 = call ptr @fopen(ptr %path_val1230, ptr @str.28)
-  store ptr %call1231, ptr %f1229
-  %f_val1232 = load ptr, ptr %f1229
-  %cmp1233 = icmp eq ptr %f_val1232, null
-  br i1 %cmp1233, label %if_then368, label %if_else369
+  %f1616 = alloca ptr, align 8
+  %path_val1617 = load ptr, ptr %path.addr
+  %call1618 = call ptr @fopen(ptr %path_val1617, ptr @str.28)
+  store ptr %call1618, ptr %f1616
+  %f_val1619 = load ptr, ptr %f1616
+  %cmp1620 = icmp eq ptr %f_val1619, null
+  br i1 %cmp1620, label %if_then488, label %if_else489
 
-if_then368:
+if_then488:
   ret i32 0
 
-if_else369:
-  br label %if_end370
+if_else489:
+  br label %if_end490
 
-if_end370:
-  %header1234 = alloca ptr, align 8
-  %header1234_own = alloca i64, align 8
-  store i64 0, ptr %header1234_own
-  %field_ptr1235 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
-  %field1236 = load i64, ptr %field_ptr1235
-  %stone_to_str1237 = call ptr @ofs_stone_to_obsidian(i64 %field1236)
-  %concat1238 = call ptr @ofs_str_concat(ptr @str.29, ptr %stone_to_str1237)
-  %concat1239 = call ptr @ofs_str_concat_ex(ptr %concat1238, ptr @str.30, i64 1)
-  %field_ptr1240 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 1
-  %field1241 = load i64, ptr %field_ptr1240
-  %stone_to_str1242 = call ptr @ofs_stone_to_obsidian(i64 %field1241)
-  %concat1243 = call ptr @ofs_str_concat_ex(ptr %concat1239, ptr %stone_to_str1242, i64 1)
-  %concat1244 = call ptr @ofs_str_concat_ex(ptr %concat1243, ptr @str.31, i64 1)
-  store ptr %concat1244, ptr %header1234
-  store i64 1, ptr %header1234_own
-  %header_val1245 = load ptr, ptr %header1234
-  %f_val1246 = load ptr, ptr %f1229
-  %call1247 = call i64 @fputs(ptr %header_val1245, ptr %f_val1246)
-  %total1248 = alloca i64, align 8
-  %field_ptr1249 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
-  %field1250 = load i64, ptr %field_ptr1249
-  %field_ptr1251 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 1
-  %field1252 = load i64, ptr %field_ptr1251
-  %op1253 = mul i64 %field1250, %field1252
-  store i64 %op1253, ptr %total1248
-  %i1254 = alloca i64, align 8
-  store i64 0, ptr %i1254
-  br label %while_cond371
+if_end490:
+  %header1621 = alloca ptr, align 8
+  %header1621_own = alloca i64, align 8
+  store i64 0, ptr %header1621_own
+  %field_ptr1622 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
+  %field1623 = load i64, ptr %field_ptr1622
+  %stone_to_str1624 = call ptr @ofs_stone_to_obsidian(i64 %field1623)
+  %concat1625 = call ptr @ofs_str_concat(ptr @str.29, ptr %stone_to_str1624)
+  %concat1626 = call ptr @ofs_str_concat_ex(ptr %concat1625, ptr @str.30, i64 1)
+  %field_ptr1627 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 1
+  %field1628 = load i64, ptr %field_ptr1627
+  %stone_to_str1629 = call ptr @ofs_stone_to_obsidian(i64 %field1628)
+  %concat1630 = call ptr @ofs_str_concat_ex(ptr %concat1626, ptr %stone_to_str1629, i64 1)
+  %concat1631 = call ptr @ofs_str_concat_ex(ptr %concat1630, ptr @str.31, i64 1)
+  store ptr %concat1631, ptr %header1621
+  store i64 1, ptr %header1621_own
+  %header_val1632 = load ptr, ptr %header1621
+  %f_val1633 = load ptr, ptr %f1616
+  %call1634 = call i64 @fputs(ptr %header_val1632, ptr %f_val1633)
+  %total1635 = alloca i64, align 8
+  %field_ptr1636 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 0
+  %field1637 = load i64, ptr %field_ptr1636
+  %field_ptr1638 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 1
+  %field1639 = load i64, ptr %field_ptr1638
+  %op1640 = mul i64 %field1637, %field1639
+  store i64 %op1640, ptr %total1635
+  %i1641 = alloca i64, align 8
+  store i64 0, ptr %i1641
+  br label %while_cond491
 
-while_cond371:
-  %i_val1255 = load i64, ptr %i1254
-  %total_val1256 = load i64, ptr %total1248
-  %cmp1257 = icmp slt i64 %i_val1255, %total_val1256
-  br i1 %cmp1257, label %while_body372, label %while_end373
+while_cond491:
+  %i_val1642 = load i64, ptr %i1641
+  %total_val1643 = load i64, ptr %total1635
+  %cmp1644 = icmp slt i64 %i_val1642, %total_val1643
+  br i1 %cmp1644, label %while_body492, label %while_end493
 
-while_body372:
-  %loop_stk1258 = call ptr @llvm.stacksave()
-  %p1259 = alloca ptr, align 8
-  %field_ptr1260 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 2
-  %field1261 = load ptr, ptr %field_ptr1260
-  %i_val1262 = load i64, ptr %i1254
-  %fault_step1263 = getelementptr inbounds i64, ptr %field1261, i64 %i_val1262
-  store ptr %fault_step1263, ptr %p1259
-  %col1264 = alloca i64, align 8
-  store i64 0, ptr %col1264
-  %p_val1265 = load ptr, ptr %p1259
-  %deref1266 = load i64, ptr %p_val1265
-  store i64 %deref1266, ptr %col1264
-  %r1267 = alloca i64, align 8
-  %col_val1268 = load i64, ptr %col1264
-  %op1269 = sdiv i64 %col_val1268, 65536
-  %op1270 = srem i64 %op1269, 256
-  store i64 %op1270, ptr %r1267
-  %g1271 = alloca i64, align 8
-  %col_val1272 = load i64, ptr %col1264
-  %op1273 = sdiv i64 %col_val1272, 256
-  %op1274 = srem i64 %op1273, 256
-  store i64 %op1274, ptr %g1271
-  %b1275 = alloca i64, align 8
-  %col_val1276 = load i64, ptr %col1264
-  %op1277 = srem i64 %col_val1276, 256
-  store i64 %op1277, ptr %b1275
-  %r_val1278 = load i64, ptr %r1267
-  %f_val1279 = load ptr, ptr %f1229
-  %call1280 = call i64 @fputc(i64 %r_val1278, ptr %f_val1279)
-  %g_val1281 = load i64, ptr %g1271
-  %f_val1282 = load ptr, ptr %f1229
-  %call1283 = call i64 @fputc(i64 %g_val1281, ptr %f_val1282)
-  %b_val1284 = load i64, ptr %b1275
-  %f_val1285 = load ptr, ptr %f1229
-  %call1286 = call i64 @fputc(i64 %b_val1284, ptr %f_val1285)
-  %post_old1287 = load i64, ptr %i1254
-  %post_new1288 = add i64 %post_old1287, 1
-  store i64 %post_new1288, ptr %i1254
-  call void @llvm.stackrestore(ptr %loop_stk1258)
-  br label %while_cond371
+while_body492:
+  %loop_stk1645 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %p1646 = alloca ptr, align 8
+  %field_ptr1647 = getelementptr inbounds %Surface, ptr %surf, i32 0, i32 2
+  %field1648 = load ptr, ptr %field_ptr1647
+  %i_val1649 = load i64, ptr %i1641
+  %fault_step1650 = getelementptr inbounds i64, ptr %field1648, i64 %i_val1649
+  store ptr %fault_step1650, ptr %p1646
+  %col1651 = alloca i64, align 8
+  store i64 0, ptr %col1651
+  %p_val1652 = load ptr, ptr %p1646
+  %deref1653 = load i64, ptr %p_val1652
+  store i64 %deref1653, ptr %col1651
+  %r1654 = alloca i64, align 8
+  %col_val1655 = load i64, ptr %col1651
+  %op1656 = sdiv i64 %col_val1655, 65536
+  %op1657 = srem i64 %op1656, 256
+  store i64 %op1657, ptr %r1654
+  %g1658 = alloca i64, align 8
+  %col_val1659 = load i64, ptr %col1651
+  %op1660 = sdiv i64 %col_val1659, 256
+  %op1661 = srem i64 %op1660, 256
+  store i64 %op1661, ptr %g1658
+  %b1662 = alloca i64, align 8
+  %col_val1663 = load i64, ptr %col1651
+  %op1664 = srem i64 %col_val1663, 256
+  store i64 %op1664, ptr %b1662
+  %r_val1665 = load i64, ptr %r1654
+  %f_val1666 = load ptr, ptr %f1616
+  %call1667 = call i64 @fputc(i64 %r_val1665, ptr %f_val1666)
+  %g_val1668 = load i64, ptr %g1658
+  %f_val1669 = load ptr, ptr %f1616
+  %call1670 = call i64 @fputc(i64 %g_val1668, ptr %f_val1669)
+  %b_val1671 = load i64, ptr %b1662
+  %f_val1672 = load ptr, ptr %f1616
+  %call1673 = call i64 @fputc(i64 %b_val1671, ptr %f_val1672)
+  %post_old1674 = load i64, ptr %i1641
+  %post_new1675 = add i64 %post_old1674, 1
+  store i64 %post_new1675, ptr %i1641
+  call void @llvm.stackrestore(ptr %loop_stk1645)
+  br label %while_cond491
 
-while_end373:
-  %f_val1289 = load ptr, ptr %f1229
-  %call1290 = call i64 @fclose(ptr %f_val1289)
-  %sf_val1291 = load ptr, ptr %header1234
-  %sf_own1292 = load i64, ptr %header1234_own
-  call void @ofs_str_release(ptr %sf_val1291, i64 %sf_own1292)
+while_end493:
+  %f_val1676 = load ptr, ptr %f1616
+  %call1677 = call i64 @fclose(ptr %f_val1676)
+  %sf_val1678 = load ptr, ptr %header1621
+  %sf_own1679 = load i64, ptr %header1621_own
+  call void @ofs_str_release(ptr %sf_val1678, i64 %sf_own1679)
   ret i32 1
 }
 
 define ptr @ofs_read_line() {
 entry:
-  %buffer1293 = alloca ptr, align 8
-  %call1294 = call ptr @ofs_alloc(i64 4096)
-  store ptr %call1294, ptr %buffer1293
-  %length1295 = alloca i64, align 8
-  store i64 0, ptr %length1295
-  br label %while_cond374
+  %buffer1680 = alloca ptr, align 8
+  %call1681 = call ptr @ofs_alloc(i64 4096)
+  store ptr %call1681, ptr %buffer1680
+  %length1682 = alloca i64, align 8
+  store i64 0, ptr %length1682
+  br label %while_cond494
 
-while_cond374:
-  %length_val1296 = load i64, ptr %length1295
-  %cmp1297 = icmp slt i64 %length_val1296, 4095
-  br i1 %cmp1297, label %while_body375, label %while_end376
+while_cond494:
+  %length_val1683 = load i64, ptr %length1682
+  %cmp1684 = icmp slt i64 %length_val1683, 4095
+  br i1 %cmp1684, label %while_body495, label %while_end496
 
-while_body375:
-  %loop_stk1298 = call ptr @llvm.stacksave()
-  %ch1299 = alloca i64, align 8
-  %call1300 = call i64 @getchar()
-  store i64 %call1300, ptr %ch1299
-  %sc_slot1301 = alloca i1, align 1
-  %ch_val1302 = load i64, ptr %ch1299
-  %cmp1303 = icmp slt i64 %ch_val1302, 0
-  store i1 %cmp1303, ptr %sc_slot1301
-  br i1 %cmp1303, label %sc_end378, label %sc_rhs377
+while_body495:
+  %loop_stk1685 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %ch1686 = alloca i64, align 8
+  %call1687 = call i64 @getchar()
+  store i64 %call1687, ptr %ch1686
+  %sc_slot1688 = alloca i1, align 1
+  %ch_val1689 = load i64, ptr %ch1686
+  %cmp1690 = icmp slt i64 %ch_val1689, 0
+  store i1 %cmp1690, ptr %sc_slot1688
+  br i1 %cmp1690, label %sc_end498, label %sc_rhs497
 
-sc_rhs377:
-  %ch_val1304 = load i64, ptr %ch1299
-  %cmp1305 = icmp eq i64 %ch_val1304, 10
-  store i1 %cmp1305, ptr %sc_slot1301
-  br label %sc_end378
+sc_rhs497:
+  %ch_val1691 = load i64, ptr %ch1686
+  %cmp1692 = icmp eq i64 %ch_val1691, 10
+  store i1 %cmp1692, ptr %sc_slot1688
+  br label %sc_end498
 
-sc_end378:
-  %sc1306 = load i1, ptr %sc_slot1301
-  br i1 %sc1306, label %if_then379, label %if_else380
+sc_end498:
+  %sc1693 = load i1, ptr %sc_slot1688
+  br i1 %sc1693, label %if_then499, label %if_else500
 
-if_then379:
-  br label %while_end376
+if_then499:
+  br label %while_end496
 
-if_else380:
-  br label %if_end381
+if_else500:
+  br label %if_end501
 
-if_end381:
-  %dst1307 = alloca ptr, align 8
-  %buffer_val1308 = load ptr, ptr %buffer1293
-  %cast1309 = ptrtoint ptr %buffer_val1308 to i64
-  %length_val1310 = load i64, ptr %length1295
-  %op1311 = add i64 %cast1309, %length_val1310
-  %cast1312 = inttoptr i64 %op1311 to ptr
-  store ptr %cast1312, ptr %dst1307
-  %byte1313 = alloca i8, align 8
-  %ch_val1314 = load i64, ptr %ch1299
-  %cast1315 = trunc i64 %ch_val1314 to i8
-  store i8 %cast1315, ptr %byte1313
-  %dst_val1316 = load ptr, ptr %dst1307
-  %byte_val1317 = load i8, ptr %byte1313
-  store i8 %byte_val1317, ptr %dst_val1316
-  %post_old1318 = load i64, ptr %length1295
-  %post_new1319 = add i64 %post_old1318, 1
-  store i64 %post_new1319, ptr %length1295
-  call void @llvm.stackrestore(ptr %loop_stk1298)
-  br label %while_cond374
+if_end501:
+  %dst1694 = alloca ptr, align 8
+  %buffer_val1695 = load ptr, ptr %buffer1680
+  %cast1696 = ptrtoint ptr %buffer_val1695 to i64
+  %length_val1697 = load i64, ptr %length1682
+  %op1698 = add i64 %cast1696, %length_val1697
+  %cast1699 = inttoptr i64 %op1698 to ptr
+  store ptr %cast1699, ptr %dst1694
+  %byte1700 = alloca i8, align 8
+  %ch_val1701 = load i64, ptr %ch1686
+  %cast1702 = trunc i64 %ch_val1701 to i8
+  store i8 %cast1702, ptr %byte1700
+  %dst_val1703 = load ptr, ptr %dst1694
+  %byte_val1704 = load i8, ptr %byte1700
+  store i8 %byte_val1704, ptr %dst_val1703
+  %post_old1705 = load i64, ptr %length1682
+  %post_new1706 = add i64 %post_old1705, 1
+  store i64 %post_new1706, ptr %length1682
+  call void @llvm.stackrestore(ptr %loop_stk1685)
+  br label %while_cond494
 
-while_end376:
-  %terminator1320 = alloca ptr, align 8
-  %buffer_val1321 = load ptr, ptr %buffer1293
-  %cast1322 = ptrtoint ptr %buffer_val1321 to i64
-  %length_val1323 = load i64, ptr %length1295
-  %op1324 = add i64 %cast1322, %length_val1323
-  %cast1325 = inttoptr i64 %op1324 to ptr
-  store ptr %cast1325, ptr %terminator1320
-  %zero1326 = alloca i8, align 8
-  %cast1327 = trunc i64 0 to i8
-  store i8 %cast1327, ptr %zero1326
-  %terminator_val1328 = load ptr, ptr %terminator1320
-  %zero_val1329 = load i8, ptr %zero1326
-  store i8 %zero_val1329, ptr %terminator_val1328
-  %buffer_val1330 = load ptr, ptr %buffer1293
-  ret ptr %buffer_val1330
+while_end496:
+  %terminator1707 = alloca ptr, align 8
+  %buffer_val1708 = load ptr, ptr %buffer1680
+  %cast1709 = ptrtoint ptr %buffer_val1708 to i64
+  %length_val1710 = load i64, ptr %length1682
+  %op1711 = add i64 %cast1709, %length_val1710
+  %cast1712 = inttoptr i64 %op1711 to ptr
+  store ptr %cast1712, ptr %terminator1707
+  %zero1713 = alloca i8, align 8
+  %cast1714 = trunc i64 0 to i8
+  store i8 %cast1714, ptr %zero1713
+  %terminator_val1715 = load ptr, ptr %terminator1707
+  %zero_val1716 = load i8, ptr %zero1713
+  store i8 %zero_val1716, ptr %terminator_val1715
+  %buffer_val1717 = load ptr, ptr %buffer1680
+  ret ptr %buffer_val1717
 }
 
 define i64 @net_windows__tcp_listen(i64 %port, i64 %backlog) {
@@ -3902,143 +4865,143 @@ entry:
   store i64 %port, ptr %port.addr
   %backlog.addr = alloca i64, align 8
   store i64 %backlog, ptr %backlog.addr
-  %startup_data1331 = alloca ptr, align 8
-  %call1332 = call ptr @ofs_alloc(i64 512)
-  store ptr %call1332, ptr %startup_data1331
-  %server1333 = alloca i64, align 8
-  %neg1334 = sub i64 0, 1
-  store i64 %neg1334, ptr %server1333
-  %address1335 = alloca ptr, align 8
-  %call1336 = call ptr @ofs_alloc(i64 16)
-  store ptr %call1336, ptr %address1335
-  %portnet1337 = alloca i64, align 8
-  store i64 0, ptr %portnet1337
-  %bindresult1338 = alloca i64, align 8
-  %neg1339 = sub i64 0, 1
-  store i64 %neg1339, ptr %bindresult1338
-  %listenresult1340 = alloca i64, align 8
-  %neg1341 = sub i64 0, 1
-  store i64 %neg1341, ptr %listenresult1340
-  %startup_data_val1342 = load ptr, ptr %startup_data1331
-  %call1343 = call i64 @WSAStartup(i64 514, ptr %startup_data_val1342)
-  %cmp1344 = icmp ne i64 %call1343, 0
-  br i1 %cmp1344, label %if_then382, label %if_else383
+  %startup_data1718 = alloca ptr, align 8
+  %call1719 = call ptr @ofs_alloc(i64 512)
+  store ptr %call1719, ptr %startup_data1718
+  %server1720 = alloca i64, align 8
+  %neg1721 = sub i64 0, 1
+  store i64 %neg1721, ptr %server1720
+  %address1722 = alloca ptr, align 8
+  %call1723 = call ptr @ofs_alloc(i64 16)
+  store ptr %call1723, ptr %address1722
+  %portnet1724 = alloca i64, align 8
+  store i64 0, ptr %portnet1724
+  %bindresult1725 = alloca i64, align 8
+  %neg1726 = sub i64 0, 1
+  store i64 %neg1726, ptr %bindresult1725
+  %listenresult1727 = alloca i64, align 8
+  %neg1728 = sub i64 0, 1
+  store i64 %neg1728, ptr %listenresult1727
+  %startup_data_val1729 = load ptr, ptr %startup_data1718
+  %call1730 = call i64 @WSAStartup(i64 514, ptr %startup_data_val1729)
+  %cmp1731 = icmp ne i64 %call1730, 0
+  br i1 %cmp1731, label %if_then502, label %if_else503
 
-if_then382:
-  %startup_data_val1345 = load ptr, ptr %startup_data1331
-  call void @ofs_free(ptr %startup_data_val1345)
-  %neg1346 = sub i64 0, 1
-  ret i64 %neg1346
+if_then502:
+  %startup_data_val1732 = load ptr, ptr %startup_data1718
+  call void @ofs_free(ptr %startup_data_val1732)
+  %neg1733 = sub i64 0, 1
+  ret i64 %neg1733
 
-if_else383:
-  br label %if_end384
+if_else503:
+  br label %if_end504
 
-if_end384:
-  %call1347 = call i64 @socket(i64 2, i64 1, i64 6)
-  store i64 %call1347, ptr %server1333
-  %server_val1348 = load i64, ptr %server1333
-  %cmp1349 = icmp slt i64 %server_val1348, 0
-  br i1 %cmp1349, label %if_then385, label %if_else386
+if_end504:
+  %call1734 = call i64 @socket(i64 2, i64 1, i64 6)
+  store i64 %call1734, ptr %server1720
+  %server_val1735 = load i64, ptr %server1720
+  %cmp1736 = icmp slt i64 %server_val1735, 0
+  br i1 %cmp1736, label %if_then505, label %if_else506
 
-if_then385:
-  %call1350 = call i64 @WSACleanup()
-  %startup_data_val1351 = load ptr, ptr %startup_data1331
-  call void @ofs_free(ptr %startup_data_val1351)
-  %neg1352 = sub i64 0, 1
-  ret i64 %neg1352
+if_then505:
+  %call1737 = call i64 @WSACleanup()
+  %startup_data_val1738 = load ptr, ptr %startup_data1718
+  call void @ofs_free(ptr %startup_data_val1738)
+  %neg1739 = sub i64 0, 1
+  ret i64 %neg1739
 
-if_else386:
-  br label %if_end387
+if_else506:
+  br label %if_end507
 
-if_end387:
-  %port_val1353 = load i64, ptr %port.addr
-  %call1354 = call i64 @htons(i64 %port_val1353)
-  store i64 %call1354, ptr %portnet1337
-  %address_val1355 = load ptr, ptr %address1335
-  %portnet_val1356 = load i64, ptr %portnet1337
-  %op1357 = mul i64 %portnet_val1356, 65536
-  %op1358 = add i64 2, %op1357
-  store i64 %op1358, ptr %address_val1355
-  %server_val1359 = load i64, ptr %server1333
-  %address_val1360 = load ptr, ptr %address1335
-  %call1361 = call i64 @bind(i64 %server_val1359, ptr %address_val1360, i64 16)
-  store i64 %call1361, ptr %bindresult1338
-  %bindresult_val1362 = load i64, ptr %bindresult1338
-  %cmp1363 = icmp ne i64 %bindresult_val1362, 0
-  br i1 %cmp1363, label %if_then388, label %if_else389
+if_end507:
+  %port_val1740 = load i64, ptr %port.addr
+  %call1741 = call i64 @htons(i64 %port_val1740)
+  store i64 %call1741, ptr %portnet1724
+  %address_val1742 = load ptr, ptr %address1722
+  %portnet_val1743 = load i64, ptr %portnet1724
+  %op1744 = mul i64 %portnet_val1743, 65536
+  %op1745 = add i64 2, %op1744
+  store i64 %op1745, ptr %address_val1742
+  %server_val1746 = load i64, ptr %server1720
+  %address_val1747 = load ptr, ptr %address1722
+  %call1748 = call i64 @bind(i64 %server_val1746, ptr %address_val1747, i64 16)
+  store i64 %call1748, ptr %bindresult1725
+  %bindresult_val1749 = load i64, ptr %bindresult1725
+  %cmp1750 = icmp ne i64 %bindresult_val1749, 0
+  br i1 %cmp1750, label %if_then508, label %if_else509
 
-if_then388:
-  %server_val1364 = load i64, ptr %server1333
-  %call1365 = call i64 @closesocket(i64 %server_val1364)
-  %call1366 = call i64 @WSACleanup()
-  %address_val1367 = load ptr, ptr %address1335
-  call void @ofs_free(ptr %address_val1367)
-  %startup_data_val1368 = load ptr, ptr %startup_data1331
-  call void @ofs_free(ptr %startup_data_val1368)
-  %neg1369 = sub i64 0, 1
-  ret i64 %neg1369
+if_then508:
+  %server_val1751 = load i64, ptr %server1720
+  %call1752 = call i64 @closesocket(i64 %server_val1751)
+  %call1753 = call i64 @WSACleanup()
+  %address_val1754 = load ptr, ptr %address1722
+  call void @ofs_free(ptr %address_val1754)
+  %startup_data_val1755 = load ptr, ptr %startup_data1718
+  call void @ofs_free(ptr %startup_data_val1755)
+  %neg1756 = sub i64 0, 1
+  ret i64 %neg1756
 
-if_else389:
-  br label %if_end390
+if_else509:
+  br label %if_end510
 
-if_end390:
-  %server_val1370 = load i64, ptr %server1333
-  %backlog_val1371 = load i64, ptr %backlog.addr
-  %call1372 = call i64 @listen(i64 %server_val1370, i64 %backlog_val1371)
-  store i64 %call1372, ptr %listenresult1340
-  %listenresult_val1373 = load i64, ptr %listenresult1340
-  %cmp1374 = icmp ne i64 %listenresult_val1373, 0
-  br i1 %cmp1374, label %if_then391, label %if_else392
+if_end510:
+  %server_val1757 = load i64, ptr %server1720
+  %backlog_val1758 = load i64, ptr %backlog.addr
+  %call1759 = call i64 @listen(i64 %server_val1757, i64 %backlog_val1758)
+  store i64 %call1759, ptr %listenresult1727
+  %listenresult_val1760 = load i64, ptr %listenresult1727
+  %cmp1761 = icmp ne i64 %listenresult_val1760, 0
+  br i1 %cmp1761, label %if_then511, label %if_else512
 
-if_then391:
-  %server_val1375 = load i64, ptr %server1333
-  %call1376 = call i64 @closesocket(i64 %server_val1375)
-  %call1377 = call i64 @WSACleanup()
-  %address_val1378 = load ptr, ptr %address1335
-  call void @ofs_free(ptr %address_val1378)
-  %startup_data_val1379 = load ptr, ptr %startup_data1331
-  call void @ofs_free(ptr %startup_data_val1379)
-  %neg1380 = sub i64 0, 1
-  ret i64 %neg1380
+if_then511:
+  %server_val1762 = load i64, ptr %server1720
+  %call1763 = call i64 @closesocket(i64 %server_val1762)
+  %call1764 = call i64 @WSACleanup()
+  %address_val1765 = load ptr, ptr %address1722
+  call void @ofs_free(ptr %address_val1765)
+  %startup_data_val1766 = load ptr, ptr %startup_data1718
+  call void @ofs_free(ptr %startup_data_val1766)
+  %neg1767 = sub i64 0, 1
+  ret i64 %neg1767
 
-if_else392:
-  br label %if_end393
+if_else512:
+  br label %if_end513
 
-if_end393:
-  %address_val1381 = load ptr, ptr %address1335
-  call void @ofs_free(ptr %address_val1381)
-  %startup_data_val1382 = load ptr, ptr %startup_data1331
-  call void @ofs_free(ptr %startup_data_val1382)
-  %server_val1383 = load i64, ptr %server1333
-  ret i64 %server_val1383
+if_end513:
+  %address_val1768 = load ptr, ptr %address1722
+  call void @ofs_free(ptr %address_val1768)
+  %startup_data_val1769 = load ptr, ptr %startup_data1718
+  call void @ofs_free(ptr %startup_data_val1769)
+  %server_val1770 = load i64, ptr %server1720
+  ret i64 %server_val1770
 }
 
 define i64 @net_windows__tcp_accept(i64 %server) {
 entry:
   %server.addr = alloca i64, align 8
   store i64 %server, ptr %server.addr
-  %address1384 = alloca ptr, align 8
-  %call1385 = call ptr @ofs_alloc(i64 16)
-  store ptr %call1385, ptr %address1384
-  %addresslen1386 = alloca ptr, align 8
-  %call1387 = call ptr @ofs_alloc(i64 8)
-  store ptr %call1387, ptr %addresslen1386
-  %client1388 = alloca i64, align 8
-  %neg1389 = sub i64 0, 1
-  store i64 %neg1389, ptr %client1388
-  %addresslen_val1390 = load ptr, ptr %addresslen1386
-  store i64 16, ptr %addresslen_val1390
-  %server_val1391 = load i64, ptr %server.addr
-  %address_val1392 = load ptr, ptr %address1384
-  %addresslen_val1393 = load ptr, ptr %addresslen1386
-  %call1394 = call i64 @accept(i64 %server_val1391, ptr %address_val1392, ptr %addresslen_val1393)
-  store i64 %call1394, ptr %client1388
-  %address_val1395 = load ptr, ptr %address1384
-  call void @ofs_free(ptr %address_val1395)
-  %addresslen_val1396 = load ptr, ptr %addresslen1386
-  call void @ofs_free(ptr %addresslen_val1396)
-  %client_val1397 = load i64, ptr %client1388
-  ret i64 %client_val1397
+  %address1771 = alloca ptr, align 8
+  %call1772 = call ptr @ofs_alloc(i64 16)
+  store ptr %call1772, ptr %address1771
+  %addresslen1773 = alloca ptr, align 8
+  %call1774 = call ptr @ofs_alloc(i64 8)
+  store ptr %call1774, ptr %addresslen1773
+  %client1775 = alloca i64, align 8
+  %neg1776 = sub i64 0, 1
+  store i64 %neg1776, ptr %client1775
+  %addresslen_val1777 = load ptr, ptr %addresslen1773
+  store i64 16, ptr %addresslen_val1777
+  %server_val1778 = load i64, ptr %server.addr
+  %address_val1779 = load ptr, ptr %address1771
+  %addresslen_val1780 = load ptr, ptr %addresslen1773
+  %call1781 = call i64 @accept(i64 %server_val1778, ptr %address_val1779, ptr %addresslen_val1780)
+  store i64 %call1781, ptr %client1775
+  %address_val1782 = load ptr, ptr %address1771
+  call void @ofs_free(ptr %address_val1782)
+  %addresslen_val1783 = load ptr, ptr %addresslen1773
+  call void @ofs_free(ptr %addresslen_val1783)
+  %client_val1784 = load i64, ptr %client1775
+  ret i64 %client_val1784
 }
 
 define i64 @net_windows__tcp_send_all(i64 %client, ptr %data) {
@@ -4047,73 +5010,74 @@ entry:
   store i64 %client, ptr %client.addr
   %data.addr = alloca ptr, align 8
   store ptr %data, ptr %data.addr
-  %length1398 = alloca i64, align 8
-  %data_val1399 = load ptr, ptr %data.addr
-  %strlen1400 = call i64 @ofs_str_len(ptr %data_val1399)
-  store i64 %strlen1400, ptr %length1398
-  %sent1401 = alloca i64, align 8
-  store i64 0, ptr %sent1401
-  br label %while_cond394
+  %length1785 = alloca i64, align 8
+  %data_val1786 = load ptr, ptr %data.addr
+  %strlen1787 = call i64 @ofs_str_len(ptr %data_val1786)
+  store i64 %strlen1787, ptr %length1785
+  %sent1788 = alloca i64, align 8
+  store i64 0, ptr %sent1788
+  br label %while_cond514
 
-while_cond394:
-  %sent_val1402 = load i64, ptr %sent1401
-  %length_val1403 = load i64, ptr %length1398
-  %cmp1404 = icmp slt i64 %sent_val1402, %length_val1403
-  br i1 %cmp1404, label %while_body395, label %while_end396
+while_cond514:
+  %sent_val1789 = load i64, ptr %sent1788
+  %length_val1790 = load i64, ptr %length1785
+  %cmp1791 = icmp slt i64 %sent_val1789, %length_val1790
+  br i1 %cmp1791, label %while_body515, label %while_end516
 
-while_body395:
-  %loop_stk1405 = call ptr @llvm.stacksave()
-  %chunk1406 = alloca ptr, align 8
-  %data_val1407 = load ptr, ptr %data.addr
-  %cast1408 = ptrtoint ptr %data_val1407 to i64
-  %sent_val1409 = load i64, ptr %sent1401
-  %op1410 = add i64 %cast1408, %sent_val1409
-  %cast1411 = inttoptr i64 %op1410 to ptr
-  store ptr %cast1411, ptr %chunk1406
-  %count1412 = alloca i64, align 8
-  %client_val1413 = load i64, ptr %client.addr
-  %chunk_val1414 = load ptr, ptr %chunk1406
-  %length_val1415 = load i64, ptr %length1398
-  %sent_val1416 = load i64, ptr %sent1401
-  %op1417 = sub i64 %length_val1415, %sent_val1416
-  %call1418 = call i64 @send(i64 %client_val1413, ptr %chunk_val1414, i64 %op1417, i64 0)
-  store i64 %call1418, ptr %count1412
-  %count_val1419 = load i64, ptr %count1412
-  %cmp1420 = icmp sle i64 %count_val1419, 0
-  br i1 %cmp1420, label %if_then397, label %if_else398
+while_body515:
+  %loop_stk1792 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %chunk1793 = alloca ptr, align 8
+  %data_val1794 = load ptr, ptr %data.addr
+  %cast1795 = ptrtoint ptr %data_val1794 to i64
+  %sent_val1796 = load i64, ptr %sent1788
+  %op1797 = add i64 %cast1795, %sent_val1796
+  %cast1798 = inttoptr i64 %op1797 to ptr
+  store ptr %cast1798, ptr %chunk1793
+  %count1799 = alloca i64, align 8
+  %client_val1800 = load i64, ptr %client.addr
+  %chunk_val1801 = load ptr, ptr %chunk1793
+  %length_val1802 = load i64, ptr %length1785
+  %sent_val1803 = load i64, ptr %sent1788
+  %op1804 = sub i64 %length_val1802, %sent_val1803
+  %call1805 = call i64 @send(i64 %client_val1800, ptr %chunk_val1801, i64 %op1804, i64 0)
+  store i64 %call1805, ptr %count1799
+  %count_val1806 = load i64, ptr %count1799
+  %cmp1807 = icmp sle i64 %count_val1806, 0
+  br i1 %cmp1807, label %if_then517, label %if_else518
 
-if_then397:
-  %neg1421 = sub i64 0, 1
-  ret i64 %neg1421
+if_then517:
+  %neg1808 = sub i64 0, 1
+  ret i64 %neg1808
 
-if_else398:
-  br label %if_end399
+if_else518:
+  br label %if_end519
 
-if_end399:
-  %sent_val1422 = load i64, ptr %sent1401
-  %count_val1423 = load i64, ptr %count1412
-  %op1424 = add i64 %sent_val1422, %count_val1423
-  store i64 %op1424, ptr %sent1401
-  call void @llvm.stackrestore(ptr %loop_stk1405)
-  br label %while_cond394
+if_end519:
+  %sent_val1809 = load i64, ptr %sent1788
+  %count_val1810 = load i64, ptr %count1799
+  %op1811 = add i64 %sent_val1809, %count_val1810
+  store i64 %op1811, ptr %sent1788
+  call void @llvm.stackrestore(ptr %loop_stk1792)
+  br label %while_cond514
 
-while_end396:
-  %sent_val1425 = load i64, ptr %sent1401
-  ret i64 %sent_val1425
+while_end516:
+  %sent_val1812 = load i64, ptr %sent1788
+  ret i64 %sent_val1812
 }
 
 define void @net_windows__tcp_drain_request(i64 %client) {
 entry:
   %client.addr = alloca i64, align 8
   store i64 %client, ptr %client.addr
-  %buffer1426 = alloca ptr, align 8
-  %call1427 = call ptr @ofs_alloc(i64 2048)
-  store ptr %call1427, ptr %buffer1426
-  %client_val1428 = load i64, ptr %client.addr
-  %buffer_val1429 = load ptr, ptr %buffer1426
-  %call1430 = call i64 @recv(i64 %client_val1428, ptr %buffer_val1429, i64 2047, i64 0)
-  %buffer_val1431 = load ptr, ptr %buffer1426
-  call void @ofs_free(ptr %buffer_val1431)
+  %buffer1813 = alloca ptr, align 8
+  %call1814 = call ptr @ofs_alloc(i64 2048)
+  store ptr %call1814, ptr %buffer1813
+  %client_val1815 = load i64, ptr %client.addr
+  %buffer_val1816 = load ptr, ptr %buffer1813
+  %call1817 = call i64 @recv(i64 %client_val1815, ptr %buffer_val1816, i64 2047, i64 0)
+  %buffer_val1818 = load ptr, ptr %buffer1813
+  call void @ofs_free(ptr %buffer_val1818)
   ret void
 }
 
@@ -4121,8 +5085,8 @@ define void @net_windows__tcp_close(i64 %client) {
 entry:
   %client.addr = alloca i64, align 8
   store i64 %client, ptr %client.addr
-  %client_val1432 = load i64, ptr %client.addr
-  %call1433 = call i64 @closesocket(i64 %client_val1432)
+  %client_val1819 = load i64, ptr %client.addr
+  %call1820 = call i64 @closesocket(i64 %client_val1819)
   ret void
 }
 
@@ -4130,9 +5094,9 @@ define void @net_windows__tcp_close_server(i64 %server) {
 entry:
   %server.addr = alloca i64, align 8
   store i64 %server, ptr %server.addr
-  %server_val1434 = load i64, ptr %server.addr
-  %call1435 = call i64 @closesocket(i64 %server_val1434)
-  %call1436 = call i64 @WSACleanup()
+  %server_val1821 = load i64, ptr %server.addr
+  %call1822 = call i64 @closesocket(i64 %server_val1821)
+  %call1823 = call i64 @WSACleanup()
   ret void
 }
 
@@ -4142,92 +5106,92 @@ entry:
   store ptr %content_type, ptr %content_type.addr
   %body.addr = alloca ptr, align 8
   store ptr %body, ptr %body.addr
-  %type1437 = alloca ptr, align 8
-  %type1437_own = alloca i64, align 8
-  store i64 0, ptr %type1437_own
-  %content_type_val1438 = load ptr, ptr %content_type.addr
-  store ptr %content_type_val1438, ptr %type1437
-  %sc_slot1439 = alloca i1, align 1
-  %type_val1440 = load ptr, ptr %type1437
-  %cmp1441 = icmp eq ptr %type_val1440, null
-  store i1 %cmp1441, ptr %sc_slot1439
-  br i1 %cmp1441, label %sc_end401, label %sc_rhs400
+  %type1824 = alloca ptr, align 8
+  %type1824_own = alloca i64, align 8
+  store i64 0, ptr %type1824_own
+  %content_type_val1825 = load ptr, ptr %content_type.addr
+  store ptr %content_type_val1825, ptr %type1824
+  %sc_slot1826 = alloca i1, align 1
+  %type_val1827 = load ptr, ptr %type1824
+  %cmp1828 = icmp eq ptr %type_val1827, null
+  store i1 %cmp1828, ptr %sc_slot1826
+  br i1 %cmp1828, label %sc_end521, label %sc_rhs520
 
-sc_rhs400:
-  %type_val1442 = load ptr, ptr %type1437
-  %cmp1443 = call i32 @ofs_str_eq(ptr %type_val1442, ptr @str.12)
-  %str_cmp1444 = icmp ne i32 %cmp1443, 0
-  store i1 %str_cmp1444, ptr %sc_slot1439
-  br label %sc_end401
+sc_rhs520:
+  %type_val1829 = load ptr, ptr %type1824
+  %cmp1830 = call i32 @ofs_str_eq(ptr %type_val1829, ptr @str.12)
+  %str_cmp1831 = icmp ne i32 %cmp1830, 0
+  store i1 %str_cmp1831, ptr %sc_slot1826
+  br label %sc_end521
 
-sc_end401:
-  %sc1445 = load i1, ptr %sc_slot1439
-  br i1 %sc1445, label %if_then402, label %if_else403
+sc_end521:
+  %sc1832 = load i1, ptr %sc_slot1826
+  br i1 %sc1832, label %if_then522, label %if_else523
 
-if_then402:
-  %own_old1446 = load ptr, ptr %type1437
-  %own_flag1447 = load i64, ptr %type1437_own
-  call void @ofs_str_release(ptr %own_old1446, i64 %own_flag1447)
-  store ptr @str.32, ptr %type1437
-  store i64 0, ptr %type1437_own
-  br label %if_end404
+if_then522:
+  %own_old1833 = load ptr, ptr %type1824
+  %own_flag1834 = load i64, ptr %type1824_own
+  call void @ofs_str_release(ptr %own_old1833, i64 %own_flag1834)
+  store ptr @str.32, ptr %type1824
+  store i64 0, ptr %type1824_own
+  br label %if_end524
 
-if_else403:
-  br label %if_end404
+if_else523:
+  br label %if_end524
 
-if_end404:
-  %payload1448 = alloca ptr, align 8
-  %payload1448_own = alloca i64, align 8
-  store i64 0, ptr %payload1448_own
-  %body_val1449 = load ptr, ptr %body.addr
-  store ptr %body_val1449, ptr %payload1448
-  %payload_val1450 = load ptr, ptr %payload1448
-  %cmp1451 = icmp eq ptr %payload_val1450, null
-  br i1 %cmp1451, label %if_then405, label %if_else406
+if_end524:
+  %payload1835 = alloca ptr, align 8
+  %payload1835_own = alloca i64, align 8
+  store i64 0, ptr %payload1835_own
+  %body_val1836 = load ptr, ptr %body.addr
+  store ptr %body_val1836, ptr %payload1835
+  %payload_val1837 = load ptr, ptr %payload1835
+  %cmp1838 = icmp eq ptr %payload_val1837, null
+  br i1 %cmp1838, label %if_then525, label %if_else526
 
-if_then405:
-  %own_old1452 = load ptr, ptr %payload1448
-  %own_flag1453 = load i64, ptr %payload1448_own
-  call void @ofs_str_release(ptr %own_old1452, i64 %own_flag1453)
-  store ptr @str.12, ptr %payload1448
-  store i64 0, ptr %payload1448_own
-  br label %if_end407
+if_then525:
+  %own_old1839 = load ptr, ptr %payload1835
+  %own_flag1840 = load i64, ptr %payload1835_own
+  call void @ofs_str_release(ptr %own_old1839, i64 %own_flag1840)
+  store ptr @str.12, ptr %payload1835
+  store i64 0, ptr %payload1835_own
+  br label %if_end527
 
-if_else406:
-  br label %if_end407
+if_else526:
+  br label %if_end527
 
-if_end407:
-  %response1454 = alloca ptr, align 8
-  %response1454_own = alloca i64, align 8
-  store i64 0, ptr %response1454_own
-  %type_val1455 = load ptr, ptr %type1437
-  %concat1456 = call ptr @ofs_str_concat(ptr @str.33, ptr %type_val1455)
-  store ptr %concat1456, ptr %response1454
-  store i64 1, ptr %response1454_own
-  %response_val1457 = load ptr, ptr %response1454
-  %own_flag1459 = load i64, ptr %response1454_own
-  %concat1458 = call ptr @ofs_str_concat_ex(ptr %response_val1457, ptr @str.34, i64 %own_flag1459)
-  %payload_val1460 = load ptr, ptr %payload1448
-  %strlen1461 = call i64 @ofs_str_len(ptr %payload_val1460)
-  %stone_to_str1462 = call ptr @ofs_stone_to_obsidian(i64 %strlen1461)
-  %concat1463 = call ptr @ofs_str_concat_ex(ptr %concat1458, ptr %stone_to_str1462, i64 1)
-  store ptr %concat1463, ptr %response1454
-  store i64 1, ptr %response1454_own
-  %response_val1464 = load ptr, ptr %response1454
-  %own_flag1466 = load i64, ptr %response1454_own
-  %concat1465 = call ptr @ofs_str_concat_ex(ptr %response_val1464, ptr @str.35, i64 %own_flag1466)
-  %payload_val1467 = load ptr, ptr %payload1448
-  %concat1468 = call ptr @ofs_str_concat_ex(ptr %concat1465, ptr %payload_val1467, i64 1)
-  store ptr %concat1468, ptr %response1454
-  store i64 1, ptr %response1454_own
-  %response_val1469 = load ptr, ptr %response1454
-  %sf_val1470 = load ptr, ptr %payload1448
-  %sf_own1471 = load i64, ptr %payload1448_own
-  call void @ofs_str_release(ptr %sf_val1470, i64 %sf_own1471)
-  %sf_val1472 = load ptr, ptr %type1437
-  %sf_own1473 = load i64, ptr %type1437_own
-  call void @ofs_str_release(ptr %sf_val1472, i64 %sf_own1473)
-  ret ptr %response_val1469
+if_end527:
+  %response1841 = alloca ptr, align 8
+  %response1841_own = alloca i64, align 8
+  store i64 0, ptr %response1841_own
+  %type_val1842 = load ptr, ptr %type1824
+  %concat1843 = call ptr @ofs_str_concat(ptr @str.33, ptr %type_val1842)
+  store ptr %concat1843, ptr %response1841
+  store i64 1, ptr %response1841_own
+  %response_val1844 = load ptr, ptr %response1841
+  %own_flag1846 = load i64, ptr %response1841_own
+  %concat1845 = call ptr @ofs_str_concat_ex(ptr %response_val1844, ptr @str.34, i64 %own_flag1846)
+  %payload_val1847 = load ptr, ptr %payload1835
+  %strlen1848 = call i64 @ofs_str_len(ptr %payload_val1847)
+  %stone_to_str1849 = call ptr @ofs_stone_to_obsidian(i64 %strlen1848)
+  %concat1850 = call ptr @ofs_str_concat_ex(ptr %concat1845, ptr %stone_to_str1849, i64 1)
+  store ptr %concat1850, ptr %response1841
+  store i64 1, ptr %response1841_own
+  %response_val1851 = load ptr, ptr %response1841
+  %own_flag1853 = load i64, ptr %response1841_own
+  %concat1852 = call ptr @ofs_str_concat_ex(ptr %response_val1851, ptr @str.35, i64 %own_flag1853)
+  %payload_val1854 = load ptr, ptr %payload1835
+  %concat1855 = call ptr @ofs_str_concat_ex(ptr %concat1852, ptr %payload_val1854, i64 1)
+  store ptr %concat1855, ptr %response1841
+  store i64 1, ptr %response1841_own
+  %response_val1856 = load ptr, ptr %response1841
+  %sf_val1857 = load ptr, ptr %payload1835
+  %sf_own1858 = load i64, ptr %payload1835_own
+  call void @ofs_str_release(ptr %sf_val1857, i64 %sf_own1858)
+  %sf_val1859 = load ptr, ptr %type1824
+  %sf_own1860 = load i64, ptr %type1824_own
+  call void @ofs_str_release(ptr %sf_val1859, i64 %sf_own1860)
+  ret ptr %response_val1856
 }
 
 define i64 @ofs_webserver_serve_once(i64 %port, ptr %content_type, ptr %body) {
@@ -4238,91 +5202,91 @@ entry:
   store ptr %content_type, ptr %content_type.addr
   %body.addr = alloca ptr, align 8
   store ptr %body, ptr %body.addr
-  %sc_slot1474 = alloca i1, align 1
-  %port_val1475 = load i64, ptr %port.addr
-  %cmp1476 = icmp sle i64 %port_val1475, 0
-  store i1 %cmp1476, ptr %sc_slot1474
-  br i1 %cmp1476, label %sc_end409, label %sc_rhs408
+  %sc_slot1861 = alloca i1, align 1
+  %port_val1862 = load i64, ptr %port.addr
+  %cmp1863 = icmp sle i64 %port_val1862, 0
+  store i1 %cmp1863, ptr %sc_slot1861
+  br i1 %cmp1863, label %sc_end529, label %sc_rhs528
 
-sc_rhs408:
-  %port_val1477 = load i64, ptr %port.addr
-  %cmp1478 = icmp sgt i64 %port_val1477, 65535
-  store i1 %cmp1478, ptr %sc_slot1474
-  br label %sc_end409
+sc_rhs528:
+  %port_val1864 = load i64, ptr %port.addr
+  %cmp1865 = icmp sgt i64 %port_val1864, 65535
+  store i1 %cmp1865, ptr %sc_slot1861
+  br label %sc_end529
 
-sc_end409:
-  %sc1479 = load i1, ptr %sc_slot1474
-  br i1 %sc1479, label %if_then410, label %if_else411
+sc_end529:
+  %sc1866 = load i1, ptr %sc_slot1861
+  br i1 %sc1866, label %if_then530, label %if_else531
 
-if_then410:
+if_then530:
   store i64 8080, ptr %port.addr
-  br label %if_end412
+  br label %if_end532
 
-if_else411:
-  br label %if_end412
+if_else531:
+  br label %if_end532
 
-if_end412:
-  %response1480 = alloca ptr, align 8
-  %content_type_val1481 = load ptr, ptr %content_type.addr
-  %body_val1482 = load ptr, ptr %body.addr
-  %call1483 = call ptr @_ofs_webserver_response_windows(ptr %content_type_val1481, ptr %body_val1482)
-  store ptr %call1483, ptr %response1480
-  %server1484 = alloca i64, align 8
-  %port_val1485 = load i64, ptr %port.addr
-  %call1486 = call i64 @net_windows__tcp_listen(i64 %port_val1485, i64 16)
-  store i64 %call1486, ptr %server1484
-  %server_val1487 = load i64, ptr %server1484
-  %cmp1488 = icmp slt i64 %server_val1487, 0
-  br i1 %cmp1488, label %if_then413, label %if_else414
+if_end532:
+  %response1867 = alloca ptr, align 8
+  %content_type_val1868 = load ptr, ptr %content_type.addr
+  %body_val1869 = load ptr, ptr %body.addr
+  %call1870 = call ptr @_ofs_webserver_response_windows(ptr %content_type_val1868, ptr %body_val1869)
+  store ptr %call1870, ptr %response1867
+  %server1871 = alloca i64, align 8
+  %port_val1872 = load i64, ptr %port.addr
+  %call1873 = call i64 @net_windows__tcp_listen(i64 %port_val1872, i64 16)
+  store i64 %call1873, ptr %server1871
+  %server_val1874 = load i64, ptr %server1871
+  %cmp1875 = icmp slt i64 %server_val1874, 0
+  br i1 %cmp1875, label %if_then533, label %if_else534
 
-if_then413:
+if_then533:
   ret i64 2
 
-if_else414:
-  br label %if_end415
+if_else534:
+  br label %if_end535
 
-if_end415:
-  %client1489 = alloca i64, align 8
-  %server_val1490 = load i64, ptr %server1484
-  %call1491 = call i64 @net_windows__tcp_accept(i64 %server_val1490)
-  store i64 %call1491, ptr %client1489
-  %client_val1492 = load i64, ptr %client1489
-  %cmp1493 = icmp slt i64 %client_val1492, 0
-  br i1 %cmp1493, label %if_then416, label %if_else417
+if_end535:
+  %client1876 = alloca i64, align 8
+  %server_val1877 = load i64, ptr %server1871
+  %call1878 = call i64 @net_windows__tcp_accept(i64 %server_val1877)
+  store i64 %call1878, ptr %client1876
+  %client_val1879 = load i64, ptr %client1876
+  %cmp1880 = icmp slt i64 %client_val1879, 0
+  br i1 %cmp1880, label %if_then536, label %if_else537
 
-if_then416:
-  %server_val1494 = load i64, ptr %server1484
-  call void @net_windows__tcp_close_server(i64 %server_val1494)
+if_then536:
+  %server_val1881 = load i64, ptr %server1871
+  call void @net_windows__tcp_close_server(i64 %server_val1881)
   ret i64 3
 
-if_else417:
-  br label %if_end418
+if_else537:
+  br label %if_end538
 
-if_end418:
-  %client_val1495 = load i64, ptr %client1489
-  call void @net_windows__tcp_drain_request(i64 %client_val1495)
-  %sent1496 = alloca i64, align 8
-  %client_val1497 = load i64, ptr %client1489
-  %response_val1498 = load ptr, ptr %response1480
-  %call1499 = call i64 @net_windows__tcp_send_all(i64 %client_val1497, ptr %response_val1498)
-  store i64 %call1499, ptr %sent1496
-  %client_val1500 = load i64, ptr %client1489
-  call void @net_windows__tcp_close(i64 %client_val1500)
-  %server_val1501 = load i64, ptr %server1484
-  call void @net_windows__tcp_close_server(i64 %server_val1501)
-  %sent_val1502 = load i64, ptr %sent1496
-  %response_val1503 = load ptr, ptr %response1480
-  %strlen1504 = call i64 @ofs_str_len(ptr %response_val1503)
-  %cmp1505 = icmp slt i64 %sent_val1502, %strlen1504
-  br i1 %cmp1505, label %if_then419, label %if_else420
+if_end538:
+  %client_val1882 = load i64, ptr %client1876
+  call void @net_windows__tcp_drain_request(i64 %client_val1882)
+  %sent1883 = alloca i64, align 8
+  %client_val1884 = load i64, ptr %client1876
+  %response_val1885 = load ptr, ptr %response1867
+  %call1886 = call i64 @net_windows__tcp_send_all(i64 %client_val1884, ptr %response_val1885)
+  store i64 %call1886, ptr %sent1883
+  %client_val1887 = load i64, ptr %client1876
+  call void @net_windows__tcp_close(i64 %client_val1887)
+  %server_val1888 = load i64, ptr %server1871
+  call void @net_windows__tcp_close_server(i64 %server_val1888)
+  %sent_val1889 = load i64, ptr %sent1883
+  %response_val1890 = load ptr, ptr %response1867
+  %strlen1891 = call i64 @ofs_str_len(ptr %response_val1890)
+  %cmp1892 = icmp slt i64 %sent_val1889, %strlen1891
+  br i1 %cmp1892, label %if_then539, label %if_else540
 
-if_then419:
+if_then539:
   ret i64 3
 
-if_else420:
-  br label %if_end421
+if_else540:
+  br label %if_end541
 
-if_end421:
+if_end541:
   ret i64 0
 }
 
@@ -4334,89 +5298,90 @@ entry:
   store ptr %content_type, ptr %content_type.addr
   %body.addr = alloca ptr, align 8
   store ptr %body, ptr %body.addr
-  %sc_slot1506 = alloca i1, align 1
-  %port_val1507 = load i64, ptr %port.addr
-  %cmp1508 = icmp sle i64 %port_val1507, 0
-  store i1 %cmp1508, ptr %sc_slot1506
-  br i1 %cmp1508, label %sc_end423, label %sc_rhs422
+  %sc_slot1893 = alloca i1, align 1
+  %port_val1894 = load i64, ptr %port.addr
+  %cmp1895 = icmp sle i64 %port_val1894, 0
+  store i1 %cmp1895, ptr %sc_slot1893
+  br i1 %cmp1895, label %sc_end543, label %sc_rhs542
 
-sc_rhs422:
-  %port_val1509 = load i64, ptr %port.addr
-  %cmp1510 = icmp sgt i64 %port_val1509, 65535
-  store i1 %cmp1510, ptr %sc_slot1506
-  br label %sc_end423
+sc_rhs542:
+  %port_val1896 = load i64, ptr %port.addr
+  %cmp1897 = icmp sgt i64 %port_val1896, 65535
+  store i1 %cmp1897, ptr %sc_slot1893
+  br label %sc_end543
 
-sc_end423:
-  %sc1511 = load i1, ptr %sc_slot1506
-  br i1 %sc1511, label %if_then424, label %if_else425
+sc_end543:
+  %sc1898 = load i1, ptr %sc_slot1893
+  br i1 %sc1898, label %if_then544, label %if_else545
 
-if_then424:
+if_then544:
   store i64 8080, ptr %port.addr
-  br label %if_end426
+  br label %if_end546
 
-if_else425:
-  br label %if_end426
+if_else545:
+  br label %if_end546
 
-if_end426:
-  %response1512 = alloca ptr, align 8
-  %content_type_val1513 = load ptr, ptr %content_type.addr
-  %body_val1514 = load ptr, ptr %body.addr
-  %call1515 = call ptr @_ofs_webserver_response_windows(ptr %content_type_val1513, ptr %body_val1514)
-  store ptr %call1515, ptr %response1512
-  %server1516 = alloca i64, align 8
-  %port_val1517 = load i64, ptr %port.addr
-  %call1518 = call i64 @net_windows__tcp_listen(i64 %port_val1517, i64 16)
-  store i64 %call1518, ptr %server1516
-  %server_val1519 = load i64, ptr %server1516
-  %cmp1520 = icmp slt i64 %server_val1519, 0
-  br i1 %cmp1520, label %if_then427, label %if_else428
+if_end546:
+  %response1899 = alloca ptr, align 8
+  %content_type_val1900 = load ptr, ptr %content_type.addr
+  %body_val1901 = load ptr, ptr %body.addr
+  %call1902 = call ptr @_ofs_webserver_response_windows(ptr %content_type_val1900, ptr %body_val1901)
+  store ptr %call1902, ptr %response1899
+  %server1903 = alloca i64, align 8
+  %port_val1904 = load i64, ptr %port.addr
+  %call1905 = call i64 @net_windows__tcp_listen(i64 %port_val1904, i64 16)
+  store i64 %call1905, ptr %server1903
+  %server_val1906 = load i64, ptr %server1903
+  %cmp1907 = icmp slt i64 %server_val1906, 0
+  br i1 %cmp1907, label %if_then547, label %if_else548
 
-if_then427:
+if_then547:
   ret i64 2
 
-if_else428:
-  br label %if_end429
+if_else548:
+  br label %if_end549
 
-if_end429:
-  %port_val1521 = load i64, ptr %port.addr
-  %stone_to_str1522 = call ptr @ofs_stone_to_obsidian(i64 %port_val1521)
-  %concat1523 = call ptr @ofs_str_concat(ptr @str.36, ptr %stone_to_str1522)
-  call void @echo_obsidian(ptr %concat1523)
-  call void @ofs_str_release(ptr %concat1523, i64 1)
-  br label %while_cond430
+if_end549:
+  %port_val1908 = load i64, ptr %port.addr
+  %stone_to_str1909 = call ptr @ofs_stone_to_obsidian(i64 %port_val1908)
+  %concat1910 = call ptr @ofs_str_concat(ptr @str.36, ptr %stone_to_str1909)
+  call void @echo_obsidian(ptr %concat1910)
+  call void @ofs_str_release(ptr %concat1910, i64 1)
+  br label %while_cond550
 
-while_cond430:
-  %cond1524 = icmp ne i32 1, 0
-  br i1 %cond1524, label %while_body431, label %while_end432
+while_cond550:
+  %cond1911 = icmp ne i32 1, 0
+  br i1 %cond1911, label %while_body551, label %while_end552
 
-while_body431:
-  %loop_stk1525 = call ptr @llvm.stacksave()
-  %client1526 = alloca i64, align 8
-  %server_val1527 = load i64, ptr %server1516
-  %call1528 = call i64 @net_windows__tcp_accept(i64 %server_val1527)
-  store i64 %call1528, ptr %client1526
-  %client_val1529 = load i64, ptr %client1526
-  %cmp1530 = icmp sge i64 %client_val1529, 0
-  br i1 %cmp1530, label %if_then433, label %if_else434
+while_body551:
+  %loop_stk1912 = call ptr @llvm.stacksave()
+  call void asm sideeffect "", ""() inaccessiblememonly nounwind
+  %client1913 = alloca i64, align 8
+  %server_val1914 = load i64, ptr %server1903
+  %call1915 = call i64 @net_windows__tcp_accept(i64 %server_val1914)
+  store i64 %call1915, ptr %client1913
+  %client_val1916 = load i64, ptr %client1913
+  %cmp1917 = icmp sge i64 %client_val1916, 0
+  br i1 %cmp1917, label %if_then553, label %if_else554
 
-if_then433:
-  %client_val1531 = load i64, ptr %client1526
-  call void @net_windows__tcp_drain_request(i64 %client_val1531)
-  %client_val1532 = load i64, ptr %client1526
-  %response_val1533 = load ptr, ptr %response1512
-  %call1534 = call i64 @net_windows__tcp_send_all(i64 %client_val1532, ptr %response_val1533)
-  %client_val1535 = load i64, ptr %client1526
-  call void @net_windows__tcp_close(i64 %client_val1535)
-  br label %if_end435
+if_then553:
+  %client_val1918 = load i64, ptr %client1913
+  call void @net_windows__tcp_drain_request(i64 %client_val1918)
+  %client_val1919 = load i64, ptr %client1913
+  %response_val1920 = load ptr, ptr %response1899
+  %call1921 = call i64 @net_windows__tcp_send_all(i64 %client_val1919, ptr %response_val1920)
+  %client_val1922 = load i64, ptr %client1913
+  call void @net_windows__tcp_close(i64 %client_val1922)
+  br label %if_end555
 
-if_else434:
-  br label %if_end435
+if_else554:
+  br label %if_end555
 
-if_end435:
-  call void @llvm.stackrestore(ptr %loop_stk1525)
-  br label %while_cond430
+if_end555:
+  call void @llvm.stackrestore(ptr %loop_stk1912)
+  br label %while_cond550
 
-while_end432:
+while_end552:
   ret i64 0
 }
 
@@ -4426,19 +5391,19 @@ entry:
   store double %base, ptr %base.addr
   %exp.addr = alloca double, align 8
   store double %exp, ptr %exp.addr
-  %base_val1536 = load double, ptr %base.addr
-  %exp_val1537 = load double, ptr %exp.addr
-  %call1538 = call double @pow(double %base_val1536, double %exp_val1537)
-  ret double %call1538
+  %base_val1923 = load double, ptr %base.addr
+  %exp_val1924 = load double, ptr %exp.addr
+  %call1925 = call double @pow(double %base_val1923, double %exp_val1924)
+  ret double %call1925
 }
 
 define double @ofs_sqrt(double %value) {
 entry:
   %value.addr = alloca double, align 8
   store double %value, ptr %value.addr
-  %value_val1539 = load double, ptr %value.addr
-  %call1540 = call double @sqrt(double %value_val1539)
-  ret double %call1540
+  %value_val1926 = load double, ptr %value.addr
+  %call1927 = call double @sqrt(double %value_val1926)
+  ret double %call1927
 }
 
 define i64 @dlopen(ptr %path, i64 %flags) {
@@ -4447,9 +5412,9 @@ entry:
   store ptr %path, ptr %path.addr
   %flags.addr = alloca i64, align 8
   store i64 %flags, ptr %flags.addr
-  %path_val1541 = load ptr, ptr %path.addr
-  %call1542 = call i64 @LoadLibraryA(ptr %path_val1541)
-  ret i64 %call1542
+  %path_val1928 = load ptr, ptr %path.addr
+  %call1929 = call i64 @LoadLibraryA(ptr %path_val1928)
+  ret i64 %call1929
 }
 
 define i64 @_ofs_win_proc_in(ptr %dll, ptr %name) {
@@ -4458,25 +5423,25 @@ entry:
   store ptr %dll, ptr %dll.addr
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %m1543 = alloca i64, align 8
-  %dll_val1544 = load ptr, ptr %dll.addr
-  %call1545 = call i64 @GetModuleHandleA(ptr %dll_val1544)
-  store i64 %call1545, ptr %m1543
-  %m_val1546 = load i64, ptr %m1543
-  %cmp1547 = icmp eq i64 %m_val1546, 0
-  br i1 %cmp1547, label %if_then436, label %if_else437
+  %m1930 = alloca i64, align 8
+  %dll_val1931 = load ptr, ptr %dll.addr
+  %call1932 = call i64 @GetModuleHandleA(ptr %dll_val1931)
+  store i64 %call1932, ptr %m1930
+  %m_val1933 = load i64, ptr %m1930
+  %cmp1934 = icmp eq i64 %m_val1933, 0
+  br i1 %cmp1934, label %if_then556, label %if_else557
 
-if_then436:
+if_then556:
   ret i64 0
 
-if_else437:
-  br label %if_end438
+if_else557:
+  br label %if_end558
 
-if_end438:
-  %m_val1548 = load i64, ptr %m1543
-  %name_val1549 = load ptr, ptr %name.addr
-  %call1550 = call i64 @GetProcAddress(i64 %m_val1548, ptr %name_val1549)
-  ret i64 %call1550
+if_end558:
+  %m_val1935 = load i64, ptr %m1930
+  %name_val1936 = load ptr, ptr %name.addr
+  %call1937 = call i64 @GetProcAddress(i64 %m_val1935, ptr %name_val1936)
+  ret i64 %call1937
 }
 
 define i64 @dlsym(i64 %handle, ptr %name) {
@@ -4485,110 +5450,110 @@ entry:
   store i64 %handle, ptr %handle.addr
   %name.addr = alloca ptr, align 8
   store ptr %name, ptr %name.addr
-  %handle_val1551 = load i64, ptr %handle.addr
-  %cmp1552 = icmp ne i64 %handle_val1551, 0
-  br i1 %cmp1552, label %if_then439, label %if_else440
+  %handle_val1938 = load i64, ptr %handle.addr
+  %cmp1939 = icmp ne i64 %handle_val1938, 0
+  br i1 %cmp1939, label %if_then559, label %if_else560
 
-if_then439:
-  %handle_val1553 = load i64, ptr %handle.addr
-  %name_val1554 = load ptr, ptr %name.addr
-  %call1555 = call i64 @GetProcAddress(i64 %handle_val1553, ptr %name_val1554)
-  ret i64 %call1555
+if_then559:
+  %handle_val1940 = load i64, ptr %handle.addr
+  %name_val1941 = load ptr, ptr %name.addr
+  %call1942 = call i64 @GetProcAddress(i64 %handle_val1940, ptr %name_val1941)
+  ret i64 %call1942
 
-if_else440:
-  br label %if_end441
+if_else560:
+  br label %if_end561
 
-if_end441:
-  %a1556 = alloca i64, align 8
-  %call1557 = call i64 @GetModuleHandleA(ptr null)
-  %name_val1558 = load ptr, ptr %name.addr
-  %call1559 = call i64 @GetProcAddress(i64 %call1557, ptr %name_val1558)
-  store i64 %call1559, ptr %a1556
-  %a_val1560 = load i64, ptr %a1556
-  %cmp1561 = icmp eq i64 %a_val1560, 0
-  br i1 %cmp1561, label %if_then442, label %if_else443
+if_end561:
+  %a1943 = alloca i64, align 8
+  %call1944 = call i64 @GetModuleHandleA(ptr null)
+  %name_val1945 = load ptr, ptr %name.addr
+  %call1946 = call i64 @GetProcAddress(i64 %call1944, ptr %name_val1945)
+  store i64 %call1946, ptr %a1943
+  %a_val1947 = load i64, ptr %a1943
+  %cmp1948 = icmp eq i64 %a_val1947, 0
+  br i1 %cmp1948, label %if_then562, label %if_else563
 
-if_then442:
-  %name_val1562 = load ptr, ptr %name.addr
-  %call1563 = call i64 @_ofs_win_proc_in(ptr @str.37, ptr %name_val1562)
-  store i64 %call1563, ptr %a1556
-  br label %if_end444
+if_then562:
+  %name_val1949 = load ptr, ptr %name.addr
+  %call1950 = call i64 @_ofs_win_proc_in(ptr @str.37, ptr %name_val1949)
+  store i64 %call1950, ptr %a1943
+  br label %if_end564
 
-if_else443:
-  br label %if_end444
+if_else563:
+  br label %if_end564
 
-if_end444:
-  %a_val1564 = load i64, ptr %a1556
-  %cmp1565 = icmp eq i64 %a_val1564, 0
-  br i1 %cmp1565, label %if_then445, label %if_else446
+if_end564:
+  %a_val1951 = load i64, ptr %a1943
+  %cmp1952 = icmp eq i64 %a_val1951, 0
+  br i1 %cmp1952, label %if_then565, label %if_else566
 
-if_then445:
-  %name_val1566 = load ptr, ptr %name.addr
-  %call1567 = call i64 @_ofs_win_proc_in(ptr @str.38, ptr %name_val1566)
-  store i64 %call1567, ptr %a1556
-  br label %if_end447
+if_then565:
+  %name_val1953 = load ptr, ptr %name.addr
+  %call1954 = call i64 @_ofs_win_proc_in(ptr @str.38, ptr %name_val1953)
+  store i64 %call1954, ptr %a1943
+  br label %if_end567
 
-if_else446:
-  br label %if_end447
+if_else566:
+  br label %if_end567
 
-if_end447:
-  %a_val1568 = load i64, ptr %a1556
-  %cmp1569 = icmp eq i64 %a_val1568, 0
-  br i1 %cmp1569, label %if_then448, label %if_else449
+if_end567:
+  %a_val1955 = load i64, ptr %a1943
+  %cmp1956 = icmp eq i64 %a_val1955, 0
+  br i1 %cmp1956, label %if_then568, label %if_else569
 
-if_then448:
-  %name_val1570 = load ptr, ptr %name.addr
-  %call1571 = call i64 @_ofs_win_proc_in(ptr @str.39, ptr %name_val1570)
-  store i64 %call1571, ptr %a1556
-  br label %if_end450
+if_then568:
+  %name_val1957 = load ptr, ptr %name.addr
+  %call1958 = call i64 @_ofs_win_proc_in(ptr @str.39, ptr %name_val1957)
+  store i64 %call1958, ptr %a1943
+  br label %if_end570
 
-if_else449:
-  br label %if_end450
+if_else569:
+  br label %if_end570
 
-if_end450:
-  %a_val1572 = load i64, ptr %a1556
-  %cmp1573 = icmp eq i64 %a_val1572, 0
-  br i1 %cmp1573, label %if_then451, label %if_else452
+if_end570:
+  %a_val1959 = load i64, ptr %a1943
+  %cmp1960 = icmp eq i64 %a_val1959, 0
+  br i1 %cmp1960, label %if_then571, label %if_else572
 
-if_then451:
-  %name_val1574 = load ptr, ptr %name.addr
-  %call1575 = call i64 @_ofs_win_proc_in(ptr @str.40, ptr %name_val1574)
-  store i64 %call1575, ptr %a1556
-  br label %if_end453
+if_then571:
+  %name_val1961 = load ptr, ptr %name.addr
+  %call1962 = call i64 @_ofs_win_proc_in(ptr @str.40, ptr %name_val1961)
+  store i64 %call1962, ptr %a1943
+  br label %if_end573
 
-if_else452:
-  br label %if_end453
+if_else572:
+  br label %if_end573
 
-if_end453:
-  %a_val1576 = load i64, ptr %a1556
-  %cmp1577 = icmp eq i64 %a_val1576, 0
-  br i1 %cmp1577, label %if_then454, label %if_else455
+if_end573:
+  %a_val1963 = load i64, ptr %a1943
+  %cmp1964 = icmp eq i64 %a_val1963, 0
+  br i1 %cmp1964, label %if_then574, label %if_else575
 
-if_then454:
-  %name_val1578 = load ptr, ptr %name.addr
-  %call1579 = call i64 @_ofs_win_proc_in(ptr @str.41, ptr %name_val1578)
-  store i64 %call1579, ptr %a1556
-  br label %if_end456
+if_then574:
+  %name_val1965 = load ptr, ptr %name.addr
+  %call1966 = call i64 @_ofs_win_proc_in(ptr @str.41, ptr %name_val1965)
+  store i64 %call1966, ptr %a1943
+  br label %if_end576
 
-if_else455:
-  br label %if_end456
+if_else575:
+  br label %if_end576
 
-if_end456:
-  %a_val1580 = load i64, ptr %a1556
-  %cmp1581 = icmp eq i64 %a_val1580, 0
-  br i1 %cmp1581, label %if_then457, label %if_else458
+if_end576:
+  %a_val1967 = load i64, ptr %a1943
+  %cmp1968 = icmp eq i64 %a_val1967, 0
+  br i1 %cmp1968, label %if_then577, label %if_else578
 
-if_then457:
-  %name_val1582 = load ptr, ptr %name.addr
-  %call1583 = call i64 @_ofs_win_proc_in(ptr @str.42, ptr %name_val1582)
-  store i64 %call1583, ptr %a1556
-  br label %if_end459
+if_then577:
+  %name_val1969 = load ptr, ptr %name.addr
+  %call1970 = call i64 @_ofs_win_proc_in(ptr @str.42, ptr %name_val1969)
+  store i64 %call1970, ptr %a1943
+  br label %if_end579
 
-if_else458:
-  br label %if_end459
+if_else578:
+  br label %if_end579
 
-if_end459:
-  %a_val1584 = load i64, ptr %a1556
-  ret i64 %a_val1584
+if_end579:
+  %a_val1971 = load i64, ptr %a1943
+  ret i64 %a_val1971
 }
 

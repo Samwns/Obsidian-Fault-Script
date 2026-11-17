@@ -1,3 +1,5 @@
+claim rift
+
 attach {F:reservoir.ofs}
 
 extern vein getchar() -> stone

@@ -74,7 +74,7 @@ vein od_qual(i: stone) -> obsidian {
 
 vein od_is_type(i: stone) -> bool {
     forge k = od_s(od_i_kind, i)
-    return ofs_str_eq(k, "monolith") || ofs_str_eq(k, "strata") || ofs_str_eq(k, "type")
+    return ofs_str_eq(k, "monolith") || ofs_str_eq(k, "strata") || ofs_str_eq(k, "type") || ofs_str_eq(k, "mineral")
 }
 
 vein od_anchor(i: stone) -> obsidian {
@@ -104,7 +104,7 @@ vein od_is_builtin_type(tok: obsidian) -> bool {
 }
 
 vein od_is_decl_kw(tok: obsidian) -> bool {
-    return ofs_str_eq(tok, "vein") || ofs_str_eq(tok, "rift") || ofs_str_eq(tok, "extern") || ofs_str_eq(tok, "core") || ofs_str_eq(tok, "monolith") || ofs_str_eq(tok, "strata") || ofs_str_eq(tok, "const") || ofs_str_eq(tok, "forge") || ofs_str_eq(tok, "type")
+    return ofs_str_eq(tok, "vein") || ofs_str_eq(tok, "rift") || ofs_str_eq(tok, "extern") || ofs_str_eq(tok, "core") || ofs_str_eq(tok, "monolith") || ofs_str_eq(tok, "strata") || ofs_str_eq(tok, "const") || ofs_str_eq(tok, "forge") || ofs_str_eq(tok, "type") || ofs_str_eq(tok, "mineral")
 }
 
 // tipo/assinatura -> HTML com palavras-chave, tipos nativos e links para monolith
@@ -536,6 +536,8 @@ vein od_card(i: stone) -> void {
         od_badge("mono", "monolith")
     } else if (ofs_str_eq(kind, "strata")) {
         od_badge("mono", "strata")
+    } else if (ofs_str_eq(kind, "mineral")) {
+        od_badge("mono", od_t(od_lang, "mineral (tipo com regra)", "mineral (refined type)", "mineral (tipo con regla)"))
     } else if (ofs_str_eq(kind, "const")) {
         od_badge("cst", "const")
     } else if (ofs_str_eq(kind, "global")) {
@@ -555,6 +557,30 @@ vein od_card(i: stone) -> void {
         od_w("<div class=\"doc\">")
         od_doc_write(doc)
         od_w("</div>")
+    }
+    // contratos (A5.1): bearing/settle da vein, grain do mineral
+    forge rl = od_s(od_i_rules, i)
+    if (ofs_str_len(rl) > 0) {
+        od_w("<h4>" + od_t(od_lang, "Contratos", "Contracts", "Contratos") + "</h4><div class=\"tw\"><table class=\"pt\"><tbody>")
+        forge rn = ofs_str_len(rl)
+        forge rst = 0
+        forge rk = 0
+        while (rk < rn) {
+            if (ofs_str_char_at(rl, rk) == 10) {
+                forge rrow = od_sub(rl, rst, rk)
+                forge rtb = od_find(rrow, "\t", 0)
+                if (rtb >= 0) {
+                    forge rkw = od_sub(rrow, 0, rtb)
+                    forge rwhat = od_t(od_lang, "pos-condicao: vale para o resultado", "postcondition: holds for the result", "poscondicion: vale para el resultado")
+                    if (ofs_str_eq(rkw, "bearing")) { rwhat = od_t(od_lang, "pre-condicao: quem chama garante", "precondition: the caller guarantees", "precondicion: quien llama garantiza") }
+                    if (ofs_str_eq(rkw, "grain")) { rwhat = od_t(od_lang, "regra do tipo (value = o valor)", "type rule (value = the value)", "regla del tipo (value = el valor)") }
+                    od_w("<tr><td><code class=\"pn\">" + od_esc(rkw) + "</code></td><td><code>" + od_esc(od_tail(rrow, rtb + 1)) + "</code></td><td>" + rwhat + "</td></tr>")
+                }
+                rst = rk + 1
+            }
+            rk = rk + 1
+        }
+        od_w("</tbody></table></div>")
     }
     // campos (monolith / variantes de strata)
     if (od_is_type(i) && ofs_str_len(od_s(od_i_fields, i)) > 0) {
@@ -740,6 +766,14 @@ vein od_page_module(mi: stone, outdir: obsidian) -> void {
             a = e + 1
         }
     }
+    // A5.4 + Ideia 4: estrato e permissoes que o modulo pede
+    forge msd = od_s(od_m_stratum, mi)
+    forge mcl = od_s(od_m_claims, mi)
+    forge mcp = od_s(od_m_caprock, mi)
+    if (ofs_str_len(msd) > 0) { od_badge("stratum", "stratum " + od_esc(msd)) }
+    if (ofs_str_len(mcl) > 0) { od_badge("claim", "claim " + od_esc(mcl)) }
+    if (ofs_str_eq(msd, "abyss")) { od_badge("claim", od_t(od_lang, "pede tudo (rift, abyss, quartz, magma)", "asks for everything (rift, abyss, quartz, magma)", "pide todo (rift, abyss, quartz, magma)")) }
+    if (ofs_str_len(mcp) > 0) { od_badge("caprock", "caprock " + od_esc(mcp)) }
     od_w("<span class=\"stat\">" + od_itos(od_m_pub[mi]) + " " + od_t(od_lang, "funções públicas", "public functions", "funciones públicas") + "</span>")
     if (od_m_pub[mi] > 0) { od_pill(od_m_pubdoc[mi], od_m_pub[mi]) }
     forge su = od_src_url(mi, 0)
@@ -765,21 +799,21 @@ vein od_page_module(mi: stone, outdir: obsidian) -> void {
         od_w("</p>")
     }
     // indice rapido
-    forge ntypes = od_count_kind(mi, ",monolith,strata,type,", 0)
+    forge ntypes = od_count_kind(mi, ",monolith,strata,type,mineral,", 0)
     forge nfun = od_count_kind(mi, ",vein,rift,core,", 1)
     forge nconst = od_count_kind(mi, ",const,global,", 1)
     forge npriv = od_count_kind(mi, ",vein,rift,core,", 0) - nfun
     forge next = od_count_kind(mi, ",extern,", 0)
     if (ntypes + nfun + nconst > 0) {
         od_w("<nav class=\"qi\" aria-label=\"" + od_t(od_lang, "Neste módulo", "In this module", "En este módulo") + "\"><ul class=\"chips\">")
-        od_index_chips(mi, ",monolith,strata,type,")
+        od_index_chips(mi, ",monolith,strata,type,mineral,")
         od_index_chips(mi, ",const,global,")
         od_index_chips(mi, ",vein,rift,core,")
         od_w("</ul></nav>")
     }
     if (ntypes > 0) {
         od_section_open("tipos", od_t(od_lang, "Tipos", "Types", "Tipos"), ntypes)
-        od_cards_of(mi, ",monolith,strata,type,", 2)
+        od_cards_of(mi, ",monolith,strata,type,mineral,", 2)
         od_w("</section>")
     }
     if (nconst > 0) {

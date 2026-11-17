@@ -24,6 +24,8 @@
 // Pendente: quebra automatica de linhas acima de 100 colunas e ordenacao de
 // `attach`.
 
+claim rift
+
 extern vein getenv(name: obsidian) -> obsidian
 extern vein fopen(path: obsidian, mode: obsidian) -> obsidian
 extern vein fclose(f: obsidian) -> stone
@@ -144,7 +146,8 @@ vein fm_kwclass(w: obsidian) -> stone {
     if (ofs_str_eq(w, "if") || ofs_str_eq(w, "else") || ofs_str_eq(w, "while") ||
         ofs_str_eq(w, "cycle") || ofs_str_eq(w, "match") || ofs_str_eq(w, "case") ||
         ofs_str_eq(w, "catch") || ofs_str_eq(w, "return") || ofs_str_eq(w, "throw") ||
-        ofs_str_eq(w, "as") || ofs_str_eq(w, "in") || ofs_str_eq(w, "assay")) { return 3 }
+        ofs_str_eq(w, "as") || ofs_str_eq(w, "in") || ofs_str_eq(w, "assay") ||
+        ofs_str_eq(w, "geode")) { return 3 }
     if (ofs_str_eq(w, "forge") || ofs_str_eq(w, "vein") || ofs_str_eq(w, "monolith") ||
         ofs_str_eq(w, "const") || ofs_str_eq(w, "strata") || ofs_str_eq(w, "default") ||
         ofs_str_eq(w, "tremor") || ofs_str_eq(w, "attach") || ofs_str_eq(w, "extern") ||
@@ -375,6 +378,9 @@ vein fm_space(p: stone, i: stone) -> bool {
 
 // ------------------------------------------------------------------ recuo
 
+// linha em que abriu o bloco que o `}` do comeco desta linha fecha (-1)
+forge fm_closed_l: stone = -1
+
 // colunas de recuo para uma linha que comeca no token i (prev = ultimo token de codigo antes)
 vein fm_indent(i: stone, prev: stone) -> stone {
     forge braces = 0
@@ -388,7 +394,7 @@ vein fm_indent(i: stone, prev: stone) -> stone {
             seen_brace = true
         } else if (!seen_brace) {
             forge ln = fm_g(stk_l, j)
-            if (ln != lastl) { contl = contl + 1 lastl = ln }
+            if (ln != lastl && ln != fm_closed_l) { contl = contl + 1 lastl = ln }
         }
         j = j - 1
     }
@@ -404,6 +410,15 @@ vein fm_indent(i: stone, prev: stone) -> stone {
         }
         if (fm_g(t_kind, i) == 4 && fm_g(t_role, i) == 0) {
             if (fm_is(i, "&&") || fm_is(i, "||")) { extra = 1 }
+        }
+        // A5.1: `bearing`/`settle`/`grain` em linha propria continuam o
+        // cabecalho da vein/mineral (um recuo); `grain = 1` segue nome comum
+        if (fm_is(i, "bearing") || fm_is(i, "settle") || fm_is(i, "grain")) {
+            forge nx = i + 1
+            if (nx < ofs_array_len(t_kind)) {
+                if (!(fm_is(nx, "=") || fm_is(nx, "+=") || fm_is(nx, "-=") || fm_is(nx, "*=") || fm_is(nx, "/=") ||
+                      fm_is(nx, "(") || fm_is(nx, ".") || fm_is(nx, "++") || fm_is(nx, "--") || fm_is(nx, ":"))) { extra = 1 }
+            }
         }
     }
     return 4 * (braces + contl + extra)
@@ -484,8 +499,14 @@ vein fm_format() -> void {
                 continue
             }
         }
+        fm_closed_l = -1
         if (k == 4 && fm_is_closer(i)) {
             if (ofs_array_len(stk_k) > 0) {
+                // `})` de um bloco aberto dentro de `f(...`: o `}` fecha na
+                // coluna da linha que abriu o bloco (geode como argumento)
+                if (startline && fm_is(i, "}") && fm_g(stk_k, ofs_array_len(stk_k) - 1) == 0) {
+                    fm_closed_l = fm_g(stk_l, ofs_array_len(stk_l) - 1)
+                }
                 ofs_array_pop(stk_k)
                 ofs_array_pop(stk_l)
             }

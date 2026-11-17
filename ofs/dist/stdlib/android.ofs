@@ -26,6 +26,9 @@
 // indefinido/zerado; use android.s32() para recuperar o valor com sinal.
 
 // --- contrato com o programa ---
+
+claim rift, abyss
+
 extern vein android_event(ev: stone) -> void
 
 // --- libandroid ---

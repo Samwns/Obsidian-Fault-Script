@@ -16,6 +16,8 @@
 // Coordenadas sao crystal em pixels do canvas. Cor no formato do canvas:
 // 0xRRGGBB opaco, ou argb(a, r, g, b) com alfa no byte alto.
 
+claim rift
+
 attach {F:canvas.ofs}
 
 extern vein ofs_alloc(size: stone) -> *stone

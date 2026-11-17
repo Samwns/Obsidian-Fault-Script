@@ -1,0 +1,423 @@
+// OFS Standard Library — magma: compilar e carregar OFS com o programa
+// rodando (Ideia 5, `magma.cast`). Plugins e mods escritos em OFS.
+//
+//   attach {magma}
+//   claim magma                                  // no topo de quem chama magma.cast
+//
+//   forge m = magma.cast("mods/dobro.ofs")       // caminho, ou o proprio fonte (texto com \n)
+//   if (!magma.cooled(m)) { echo(magma.crack(m)) }       // erro do compilador, sem derrubar o programa
+//   forge dobro: vein(stone) -> stone = magma.vent(m, "dobro")
+//   if (dobro != null) { echo(dobro(21)) }        // assinatura errada/sem a vein: null + magma.crack(m)
+//   magma.release(m)                              // nao entrega mais veins (o codigo fica carregado)
+//   magma.caprock("crust")                        // teto dos proximos mods ("" = sem teto)
+//
+// Como funciona (igual no `ofs run` e no binario do `ofs build`): o mod e
+// compilado pelo ofscc num processo a parte (OFSCC_MODE=cast: IR + manifesto
+// das veins com a assinatura canonica da F6), vira .so com o clang
+// (-shared -fPIC -O2 -Wl,-Bsymbolic) num cache por hash do IR gerado (o fonte
+// expandido com os attach, o clang e o sistema), e e aberto com dlopen
+// (RTLD_LOCAL). O mod usa o runtime do programa que o carrega (mesmo heap,
+// stdout e strings): no `ofs run` o ofscc ja e ligado com -rdynamic; o
+// `ofs build` liga com --export-dynamic quem usa magma.cast.
+// Compilador: OFS_MAGMA_OFSCC, o proprio ofscc (no `ofs run`), $OFSCC, o
+// ofscc ao lado do `ofs` do PATH, ~/.local/lib/ofs, `ofscc` do PATH,
+// /usr/local/bin, /usr/lib/ofs. clang: OFS_MAGMA_CC (ou OFS_QUARTZ_CC).
+// Cache: OFS_MAGMA_CACHE, $XDG_CACHE_HOME/ofs/magma ou ~/.cache/ofs/magma.
+// Ver docs/STANDARD_LIBRARY.md (magma) e docs/COMPILER_ARCHITECTURE.md.
+
+claim rift, abyss, magma
+
+attach {fs}
+
+extern vein getenv(name: obsidian) -> obsidian
+extern vein system(cmd: obsidian) -> stone
+extern vein getpid() -> stone
+extern vein dlopen(path: obsidian, flags: stone) -> stone
+extern vein dlsym(handle: stone, name: obsidian) -> stone
+extern vein dlerror() -> obsidian
+extern vein mkdtemp(template: obsidian) -> obsidian
+extern vein remove(path: obsidian) -> stone
+extern vein rmdir(path: obsidian) -> stone
+
+namespace magma {
+    // um registro por magma.cast (o handle e indice + 1)
+    forge _lib: Array<stone> = []           // handle do dlopen (0 = nao esfriou)
+    forge _manifest: Array<obsidian> = []   // "nome\tsimbolo\tassinatura\n" por vein
+    forge _crack: Array<obsidian> = []      // ultima falha ("" = nenhuma)
+    forge _gone: Array<bool> = []           // magma.release
+    forge _inited: Array<stone> = []        // handles do dlopen ja iniciados
+    forge _ceiling: obsidian = ""
+
+    vein _env(name: obsidian) -> obsidian {
+        forge v = getenv(name)
+        if (v == null) { return "" }
+        return v
+    }
+
+    // texto entre aspas simples para o sh
+    vein _q(s: obsidian) -> obsidian {
+        forge out = "'"
+        forge i = 0
+        forge n = ofs_str_len(s)
+        while (i < n) {
+            if (ofs_str_char_at(s, i) == 39) { out = out + "'\\''" }
+            else { out = out + ofs_str_substr(s, i, 1) }
+            i++
+        }
+        return out + "'"
+    }
+
+    vein _add(lib: stone, manifest: obsidian, crack: obsidian) -> stone {
+        ofs_array_push(_lib, lib)
+        ofs_array_push(_manifest, manifest)
+        ofs_array_push(_crack, crack)
+        ofs_array_push(_gone, false)
+        return ofs_array_len(_lib)
+    }
+
+    vein _valid(m: stone) -> bool {
+        return m >= 1 && m <= ofs_array_len(_lib)
+    }
+
+    vein _set_crack(m: stone, msg: obsidian) -> void {
+        if (_valid(m)) { ofs_array_set(_crack, m - 1, msg) }
+    }
+
+    // log do compilador sem as linhas de progresso (Reading/Lexing/...)
+    vein _clean_log(log: obsidian) -> obsidian {
+        forge out = ""
+        forge start = 0
+        forge n = ofs_str_len(log)
+        forge i = 0
+        while (i <= n) {
+            if (i == n || ofs_str_char_at(log, i) == 10) {
+                forge line = ofs_str_substr(log, start, i - start)
+                forge keep = ofs_str_len(line) > 0
+                if (keep && ofs_str_char_at(line, 0) == 32 && ofs_str_contains(line, " ms") && (ofs_str_contains(line, " ok") || ofs_str_contains(line, " fail"))) { keep = false }
+                if (keep && ofs_str_char_at(line, 0) == 91 && (ofs_str_contains(line, "] start") || ofs_str_contains(line, "] ok") || ofs_str_contains(line, "] done"))) { keep = false }
+                if (keep) {
+                    if (ofs_str_len(out) > 0) { out = out + "\n" }
+                    out = out + line
+                }
+                start = i + 1
+            }
+            i++
+        }
+        return out
+    }
+
+    // `s` com cada `de` trocado por `para`
+    vein _swap(s: obsidian, de: obsidian, para: obsidian) -> obsidian {
+        forge out = ""
+        forge n = ofs_str_len(s)
+        forge k = ofs_str_len(de)
+        forge i = 0
+        while (i < n) {
+            if (k > 0 && i + k <= n && ofs_str_eq(ofs_str_substr(s, i, k), de)) {
+                out = out + para
+                i = i + k
+            } else {
+                out = out + ofs_str_substr(s, i, 1)
+                i++
+            }
+        }
+        return out
+    }
+
+    // pasta do cache dos .so
+    vein _cache_dir() -> obsidian {
+        forge d = _env("OFS_MAGMA_CACHE")
+        if (ofs_str_len(d) > 0) { return d }
+        forge x = _env("XDG_CACHE_HOME")
+        if (ofs_str_len(x) > 0) { return x + "/ofs/magma" }
+        forge h = _env("HOME")
+        if (ofs_str_len(h) == 0) { h = "/tmp" }
+        return h + "/.cache/ofs/magma"
+    }
+
+    vein _cleanup(t: obsidian) -> void {
+        remove(t + "/cast.sh")
+        remove(t + "/mod.ofs")
+        remove(t + "/mod.ll")
+        remove(t + "/mod.so")
+        remove(t + "/log")
+        remove(t + "/so")
+        rmdir(t)
+    }
+
+    // o ofscc que esta rodando o programa (`ofs run`): ele mesmo compila o mod
+    vein _self() -> obsidian {
+        abyss {
+            if (dlsym(0, "interpreter__run") == 0) { return "" }
+            return "/proc/" + ofs_stone_to_obsidian(getpid()) + "/exe"
+        }
+    }
+
+    // Teto para os proximos mods: "crust" (nenhum baixo nivel), "rift",
+    // "rift, abyss"...; "" = sem teto (o mod declara o que pede)
+    vein caprock(teto: obsidian) -> void {
+        _ceiling = teto
+    }
+
+    // Compila e carrega um mod: `fonte` e um caminho (.ofs) ou o proprio
+    // fonte (texto com quebra de linha). Devolve o handle (sempre >= 1);
+    // magma.cooled(m) diz se deu certo e magma.crack(m) traz o erro.
+    vein cast(fonte: obsidian) -> stone {
+        if (ofs_str_eq(_env("OS"), "Windows_NT")) {
+            return _add(0, "", "magma.cast: ainda nao existe no Windows (so Linux e macOS)")
+        }
+        abyss {
+            if (dlsym(0, "ofs_str_concat") == 0) {
+                return _add(0, "", "magma.cast: este programa nao exporta o runtime do OFS para o mod; compile com `ofs build` (que liga com --export-dynamic) ou ligue com -rdynamic")
+            }
+        }
+        forge base = _env("TMPDIR")
+        if (ofs_str_len(base) == 0) { base = "/tmp" }
+        forge t = mkdtemp(base + "/ofs-magma-XXXXXX")
+        if (t == null) { return _add(0, "", "magma.cast: nao foi possivel criar a pasta temporaria em " + base) }
+        forge src = fonte
+        if (ofs_str_contains(fonte, "\n")) {
+            src = t + "/mod.ofs"
+            fs.write(src, fonte)
+        } else if (!fs.exists(fonte)) {
+            _cleanup(t)
+            return _add(0, "", "magma.cast: arquivo nao encontrado: " + fonte)
+        }
+        forge b = "T=" + _q(t) + "\nSRC=" + _q(src) + "\nCAP=" + _q(_ceiling) + "\nCACHE=" + _q(_cache_dir()) + "\nSELF=" + _q(_self()) + "\n"
+        b = b + "L=$(ulimit -v); if [ \"$L\" = unlimited ] || [ \"$L\" -gt 3000000 ]; then ulimit -v 3000000; fi\n"
+        b = b + "C=\"${OFS_MAGMA_OFSCC:-}\"\n"
+        b = b + "if [ -z \"$C\" ] && [ -n \"$SELF\" ]; then C=\"$SELF\"; fi\n"
+        b = b + "if [ -z \"$C\" ] && [ -n \"${OFSCC:-}\" ]; then C=\"$OFSCC\"; fi\n"
+        b = b + "if [ -z \"$C\" ]; then W=$(command -v ofs 2>/dev/null) && W=$(readlink -f \"$W\") && [ -x \"$(dirname \"$W\")/ofscc\" ] && C=\"$(dirname \"$W\")/ofscc\"; fi\n"
+        b = b + "for c in \"$HOME/.local/lib/ofs/ofscc\" \"$(command -v ofscc 2>/dev/null)\" /usr/local/bin/ofscc /usr/lib/ofs/ofscc; do if [ -z \"$C\" ] && [ -n \"$c\" ] && [ -x \"$c\" ]; then C=\"$c\"; fi; done\n"
+        b = b + "if [ -z \"$C\" ] || [ ! -x \"$C\" ]; then echo \"compilador ofscc nao encontrado: instale o OFS ou defina OFS_MAGMA_OFSCC=/caminho/do/ofscc\" > \"$T/log\"; exit 3; fi\n"
+        b = b + "STD=\"${OFS_STDLIB_PATH:-}\"\n"
+        b = b + "if [ -z \"$STD\" ]; then D=$(dirname \"$(readlink -f \"$C\")\"); for s in \"$D/stdlib\" \"$D/../ofs/stdlib\" \"$D/../share/ofs/stdlib\" \"$HOME/.local/lib/ofs/stdlib\" \"$HOME/.local/share/ofs/stdlib\" /usr/local/share/ofs/stdlib /usr/lib/ofs/stdlib /usr/share/ofs/stdlib; do if [ -z \"$STD\" ] && [ -d \"$s\" ]; then STD=\"$s\"; fi; done; fi\n"
+        b = b + "OFS_STDLIB_PATH=\"$STD\" OFS_STDLIB=\"$STD\" NO_COLOR=1 OFS_PROGRESS=plain OFS_ANIM=0 OFS_STRICT_FAULT=1 OFS_REFRACT= OFS_MAGMA_CAPROCK=\"$CAP\" OFSCC_MODE=cast OFSCC_INPUT=\"$SRC\" OFSCC_C_OUT=\"$T/mod.ll\" timeout 120 \"$C\" > \"$T/log\" 2>&1 || exit 1\n"
+        b = b + "grep -q __magma_manifest \"$T/mod.ll\" 2>/dev/null || { echo \"o ofscc $C nao conhece magma.cast (OFSCC_MODE=cast): atualize o OFS ou defina OFS_MAGMA_OFSCC\" > \"$T/log\"; exit 3; }\n"
+        b = b + "CC=\"${OFS_MAGMA_CC:-${OFS_QUARTZ_CC:-clang}}\"\n"
+        b = b + "command -v \"$CC\" > /dev/null 2>&1 || { echo \"o clang ($CC) nao foi encontrado: instale o clang ou defina OFS_MAGMA_CC\" > \"$T/log\"; exit 4; }\n"
+        b = b + "O=; if \"$CC\" --version 2>/dev/null | grep -Eq 'version 14[.]|clang-1400[.]'; then O='-mllvm -opaque-pointers'; fi\n"
+        b = b + "F='-shared -fPIC -O2 -Wno-override-module -Wl,-Bsymbolic'\n"
+        b = b + "if [ \"$(uname -s)\" = Darwin ]; then F='-shared -fPIC -O2 -Wno-override-module -undefined dynamic_lookup'; fi\n"
+        b = b + "K=$( { cat \"$T/mod.ll\"; echo \"$CC $O $F\"; \"$CC\" --version 2>/dev/null; uname -sm; } | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-32 )\n"
+        b = b + "mkdir -p -m 700 \"$CACHE\" || { echo \"nao foi possivel criar o cache $CACHE\" > \"$T/log\"; exit 2; }\n"
+        b = b + "SO=\"$CACHE/$K.so\"; H=cache\n"
+        b = b + "if [ ! -f \"$SO\" ]; then H=compilado; timeout 120 \"$CC\" $O $F \"$T/mod.ll\" -lm -o \"$T/mod.so\" > \"$T/log\" 2>&1 || exit 2; cp \"$T/mod.so\" \"$SO.$$\" && mv -f \"$SO.$$\" \"$SO\" || exit 2; fi\n"
+        b = b + "printf '%s' \"$SO\" > \"$T/so\"\n"
+        b = b + "if [ \"${OFS_VERBOSE:-}\" = 1 ]; then echo \"magma.cast: $SO ($H)\" >&2; fi\n"
+        fs.write(t + "/cast.sh", b)
+        forge st = system("sh " + _q(t + "/cast.sh"))
+        forge rc = (st >> 8) & 255
+        if (st == -1) { rc = 127 }
+        if (rc != 0) {
+            // fonte em texto: o arquivo temporario aparece como <fonte>
+            forge log = _swap(_clean_log(fs.read(t + "/log")), t + "/mod.ofs", "<fonte>")
+            forge msg = "magma.cast: " + log
+            if (rc == 1) { msg = "magma.cast: o mod nao compilou\n" + log }
+            if (rc == 2) { msg = "magma.cast: o clang nao gerou o modulo nativo\n" + log }
+            _cleanup(t)
+            return _add(0, "", msg)
+        }
+        forge so = fs.read(t + "/so")
+        _cleanup(t)
+        forge lib = dlopen(so, 2)
+        if (lib == 0) {
+            forge de = dlerror()
+            forge why = ""
+            if (de != null) { why = "" + de }
+            remove(so)
+            return _add(0, "", "magma.cast: nao foi possivel carregar " + so + " (cache removido): " + why)
+        }
+        forge manifest = ""
+        abyss {
+            forge ma = dlsym(lib, "__magma_manifest")
+            if (ma == 0) { return _add(0, "", "magma.cast: " + so + " nao e um mod do OFS (sem manifesto)") }
+            manifest = "" + (ma as obsidian)
+            // o mesmo .so (mesmo fonte) e o mesmo modulo: os globais do mod
+            // sao iniciados uma vez so
+            forge seen = false
+            forge i = 0
+            while (i < ofs_array_len(_inited)) {
+                forge h: stone = ofs_array_get(_inited, i)
+                if (h == lib) { seen = true }
+                i++
+            }
+            if (!seen) {
+                ofs_array_push(_inited, lib)
+                forge init = dlsym(lib, "__ofs_init_globals")
+                if (init != 0) { fault_call(init) }
+            }
+        }
+        return _add(lib, manifest, "")
+    }
+
+    // o mod compilou e carregou?
+    vein cooled(m: stone) -> bool {
+        if (!_valid(m)) { return false }
+        forge lib: stone = ofs_array_get(_lib, m - 1)
+        return lib != 0
+    }
+
+    // a ultima falha do mod (compilacao, carga ou magma.vent); "" se nenhuma
+    vein crack(m: stone) -> obsidian {
+        if (!_valid(m)) { return "magma: handle invalido " + ofs_stone_to_obsidian(m) }
+        forge c: obsidian = ofs_array_get(_crack, m - 1)
+        return c
+    }
+
+    // as veins que o mod entrega ("nome: assinatura" por linha)
+    vein veins(m: stone) -> obsidian {
+        if (!_valid(m)) { return "" }
+        forge mf: obsidian = ofs_array_get(_manifest, m - 1)
+        forge out = ""
+        forge parts = _lines(mf)
+        forge i = 0
+        while (i < ofs_array_len(parts)) {
+            forge f = _fields(ofs_array_get(parts, i))
+            if (ofs_str_len(out) > 0) { out = out + "\n" }
+            out = out + ofs_array_get(f, 0) + ": " + ofs_array_get(f, 2)
+            i++
+        }
+        return out
+    }
+
+    vein _split(s: obsidian, sep: stone) -> Array<obsidian> {
+        forge out: Array<obsidian> = []
+        forge start = 0
+        forge n = ofs_str_len(s)
+        forge i = 0
+        while (i < n) {
+            if (ofs_str_char_at(s, i) == sep) {
+                ofs_array_push(out, ofs_str_substr(s, start, i - start))
+                start = i + 1
+            }
+            i++
+        }
+        if (start < n) { ofs_array_push(out, ofs_str_substr(s, start, n - start)) }
+        return out
+    }
+
+    vein _lines(s: obsidian) -> Array<obsidian> { return _split(s, 10) }
+    vein _fields(s: obsidian) -> Array<obsidian> { return _split(s, 9) }
+
+    // "T1,T2" de "vein(T1,T2)->R" e o "R"
+    vein _close(t: obsidian) -> stone {
+        forge depth = 0
+        forge i = 4
+        while (i < ofs_str_len(t)) {
+            forge c = ofs_str_char_at(t, i)
+            if (c == 40) { depth++ }
+            if (c == 41) {
+                depth--
+                if (depth == 0) { return i }
+            }
+            i++
+        }
+        return -1
+    }
+
+    vein _params(t: obsidian) -> Array<obsidian> {
+        forge out: Array<obsidian> = []
+        forge cl = _close(t)
+        if (cl < 0) { return out }
+        forge list = ofs_str_substr(t, 5, cl - 5)
+        forge depth = 0
+        forge start = 0
+        forge i = 0
+        forge n = ofs_str_len(list)
+        while (i <= n) {
+            forge c = 44
+            if (i < n) { c = ofs_str_char_at(list, i) }
+            if (c == 40) { depth++ }
+            if (c == 41) { depth-- }
+            if (c == 44 && depth == 0 && n > 0) {
+                ofs_array_push(out, ofs_str_substr(list, start, i - start))
+                start = i + 1
+            }
+            i++
+        }
+        return out
+    }
+
+    vein _ret(t: obsidian) -> obsidian {
+        forge cl = _close(t)
+        if (cl < 0) { return "" }
+        return ofs_str_substr(t, cl + 3, ofs_str_len(t) - cl - 3)
+    }
+
+    // o que difere entre a assinatura do mod e a pedida
+    vein _diff(have: obsidian, want: obsidian) -> obsidian {
+        forge hp = _params(have)
+        forge wp = _params(want)
+        if (ofs_array_len(hp) != ofs_array_len(wp)) {
+            return "aridade: " + ofs_stone_to_obsidian(ofs_array_len(hp)) + " parametro(s) no mod, o tipo pede " + ofs_stone_to_obsidian(ofs_array_len(wp))
+        }
+        forge i = 0
+        while (i < ofs_array_len(hp)) {
+            forge a: obsidian = ofs_array_get(hp, i)
+            forge b: obsidian = ofs_array_get(wp, i)
+            if (!ofs_str_eq(a, b)) { return "parametro " + ofs_stone_to_obsidian(i + 1) + ": " + a + " no mod, o tipo pede " + b }
+            i++
+        }
+        return "retorno: " + _ret(have) + " no mod, o tipo pede " + _ret(want)
+    }
+
+    // Endereco da vein `nome` do mod, se a assinatura dele e `assinatura`
+    // (texto canonico da F6). Escrito como `forge f: vein(T) -> R =
+    // magma.vent(m, "nome")`: o compilador preenche a assinatura com o tipo
+    // pedido e o resultado ja e o valor de vein (null quando falha, com o
+    // motivo em magma.crack(m)).
+    vein vent(m: stone, nome: obsidian, assinatura: obsidian = "") -> stone {
+        if (!_valid(m)) { return 0 }
+        if (!cooled(m)) { return 0 }
+        forge gone: bool = ofs_array_get(_gone, m - 1)
+        if (gone) {
+            _set_crack(m, "magma.vent: o mod foi liberado (magma.release); faca outro magma.cast")
+            return 0
+        }
+        if (ofs_str_len(assinatura) == 0) {
+            _set_crack(m, "magma.vent: diga o tipo pedido: forge f: vein(stone) -> stone = magma.vent(m, \"" + nome + "\")")
+            return 0
+        }
+        forge mf: obsidian = ofs_array_get(_manifest, m - 1)
+        forge rows = _lines(mf)
+        forge have = ""
+        forge i = 0
+        while (i < ofs_array_len(rows)) {
+            forge f = _fields(ofs_array_get(rows, i))
+            if (ofs_array_len(f) == 3) {
+                forge fn: obsidian = ofs_array_get(f, 0)
+                forge fs2: obsidian = ofs_array_get(f, 1)
+                if (ofs_str_eq(fn, nome) || ofs_str_eq(fs2, nome)) {
+                    forge sig: obsidian = ofs_array_get(f, 2)
+                    if (!ofs_str_eq(sig, assinatura)) {
+                        _set_crack(m, "magma.vent: '" + nome + "' no mod e " + sig + ", o tipo pedido e " + assinatura + " (" + _diff(sig, assinatura) + ")")
+                        return 0
+                    }
+                    forge lib: stone = ofs_array_get(_lib, m - 1)
+                    forge addr = dlsym(lib, fs2)
+                    if (addr == 0) {
+                        _set_crack(m, "magma.vent: simbolo '" + fs2 + "' ausente no modulo")
+                        return 0
+                    }
+                    _set_crack(m, "")
+                    return addr
+                }
+                if (ofs_str_len(have) > 0) { have = have + ", " }
+                have = have + fn
+            }
+            i++
+        }
+        if (ofs_str_len(have) == 0) { have = "nenhuma" }
+        _set_crack(m, "magma.vent: o mod nao tem a vein '" + nome + "' (tem: " + have + ")")
+        return 0
+    }
+
+    // O mod para de entregar veins. O .so fica carregado (sem dlclose): os
+    // valores de vein ja entregues, os textos literais e os enderecos do mod
+    // podem estar guardados no programa (mesma cautela da onda 4 da Refract).
+    vein release(m: stone) -> void {
+        if (_valid(m)) { ofs_array_set(_gone, m - 1, true) }
+    }
+}

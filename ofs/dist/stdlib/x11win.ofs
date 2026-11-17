@@ -11,6 +11,8 @@
 //       x11win.sleep_ms(8)
 //   }
 
+claim rift
+
 attach {F:canvas.ofs}
 
 extern vein ofs_alloc(size: stone) -> *stone

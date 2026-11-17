@@ -10,6 +10,8 @@
 //                          copia para res/mipmap)
 // Sintaxe: docs/OAL_REFERENCE.md.
 
+claim rift
+
 attach {F:web_language_common.ofs}
 attach {F:fileio.ofs}
 

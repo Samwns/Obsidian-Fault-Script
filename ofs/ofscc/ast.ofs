@@ -257,6 +257,8 @@ vein type_list_at(list: obsidian, idx: stone) -> obsidian {
 // namespace/impl `ns__f` sai como o usuario escreve, `ns.f`
 vein vein_display_name(name: obsidian) -> obsidian {
     forge len = ofs_str_len(name)
+    // geode: a vein do corpo (`__geode_<vein>_<k>`) nao tem nome no programa
+    if (len > 8 && ofs_str_eq(ofs_str_substr(name, 0, 8), "__geode_")) { return "<geode>" }
     forge k = 1
     while (k + 2 < len) {
         if (ofs_str_char_at(name, k) == 95 && ofs_str_char_at(name, k + 1) == 95 && ofs_str_char_at(name, k - 1) != 95) {
@@ -330,6 +332,9 @@ forge _srcmap_exp: Array<stone> = []
 forge _srcmap_file: Array<obsidian> = []
 forge _srcmap_line: Array<stone> = []
 
+// modulo (indice em _mod_path) de cada faixa do mapa
+forge _srcmap_mod: Array<stone> = []
+
 vein ast_srcmap_add(exp_line: stone, file: obsidian, file_line: stone) -> void {
     forge n = ofs_array_len(_srcmap_exp)
     if (n > 0) {
@@ -341,6 +346,206 @@ vein ast_srcmap_add(exp_line: stone, file: obsidian, file_line: stone) -> void {
     ofs_array_push(_srcmap_exp, exp_line)
     ofs_array_push(_srcmap_file, file)
     ofs_array_push(_srcmap_line, file_line)
+    ofs_array_push(_srcmap_mod, ast_mod_index(file))
+}
+
+// Fault Refract: a versao nova do programa e expandida do zero
+vein ast_srcmap_reset() -> void {
+    _srcmap_exp = []
+    _srcmap_file = []
+    _srcmap_line = []
+    _srcmap_mod = []
+    _runtime_line_lo = []
+    _runtime_line_hi = []
+    ast_mod_reset()
+}
+
+// ── Estrato e permissoes por modulo (A5.4 + Ideia 4) ──────────────────
+// Cada arquivo do programa (o principal e cada `attach`) e um modulo. O
+// driver le o cabecalho dele (`stratum`, `claim`, `caprock`; ver
+// docs/LANGUAGE_REFERENCE.md, secao 12) e guarda aqui; o typeck confere
+// cada operacao de baixo nivel contra o modulo de onde ela veio (pela linha
+// do fonte expandido) e anota o que o modulo de fato usa.
+//   stratum crust: nada de baixo nivel (nem bloco fracture/abyss)
+//   stratum fault: baixo nivel so dentro de bloco (regra da F4; padrao)
+//   stratum abyss: baixo nivel em qualquer lugar; vale como `claim` de tudo
+//   claim rift|abyss|quartz|magma: o que o modulo usa (`extern`/`rift vein`,
+//     bloco `abyss`, `quartz`, `magma.cast` = compilar e carregar codigo)
+//   caprock ...: (so no principal) o maximo que os modulos anexados podem pedir
+forge STRATUM_NONE: stone = -1
+forge STRATUM_CRUST: stone = 0
+forge STRATUM_FAULT: stone = 1
+forge STRATUM_ABYSS: stone = 2
+forge CLAIM_RIFT: stone = 1
+forge CLAIM_ABYSS: stone = 2
+forge CLAIM_QUARTZ: stone = 4
+// Ideia 5: magma.cast (compilar e carregar OFS com o programa rodando)
+forge CLAIM_MAGMA: stone = 8
+forge CLAIM_ALL: stone = 15
+
+forge _mod_path: Array<obsidian> = []
+forge _mod_stratum: Array<stone> = []
+forge _mod_claims: Array<stone> = []
+forge _mod_used: Array<stone> = []
+forge _mod_runtime: Array<stone> = []
+// mascara que o principal libera aos anexados (-1 = sem caprock)
+forge _mod_caprock: stone = -1
+forge _mod_caprock_line: stone = 0
+
+vein ast_mod_reset() -> void {
+    _mod_path = []
+    _mod_stratum = []
+    _mod_claims = []
+    _mod_used = []
+    _mod_runtime = []
+    _mod_caprock = -1
+    _mod_caprock_line = 0
+}
+
+vein ast_mod_index(path: obsidian) -> stone {
+    forge i = ofs_array_len(_mod_path) - 1
+    while (i >= 0) {
+        if (ofs_str_eq(ofs_array_get(_mod_path, i), path)) { return i }
+        i--
+    }
+    return -1
+}
+
+vein ast_mod_add(path: obsidian, is_runtime: bool) -> stone {
+    forge k = ast_mod_index(path)
+    if (k >= 0) { return k }
+    ofs_array_push(_mod_path, path)
+    ofs_array_push(_mod_stratum, STRATUM_NONE)
+    ofs_array_push(_mod_claims, 0)
+    ofs_array_push(_mod_used, 0)
+    forge rt = 0
+    if (is_runtime) { rt = 1 }
+    ofs_array_push(_mod_runtime, rt)
+    return ofs_array_len(_mod_path) - 1
+}
+
+vein ast_mod_count() -> stone {
+    return ofs_array_len(_mod_path)
+}
+
+vein ast_mod_path(m: stone) -> obsidian {
+    return ofs_array_get(_mod_path, m)
+}
+
+// estrato declarado (STRATUM_NONE se o arquivo nao declarou)
+vein ast_mod_stratum_decl(m: stone) -> stone {
+    return ofs_array_get(_mod_stratum, m)
+}
+
+// estrato que vale (sem declaracao = fault)
+vein ast_mod_stratum(m: stone) -> stone {
+    forge s: stone = ofs_array_get(_mod_stratum, m)
+    if (s == STRATUM_NONE) { return STRATUM_FAULT }
+    return s
+}
+
+vein ast_mod_set_stratum(m: stone, s: stone) -> void {
+    ofs_array_set(_mod_stratum, m, s)
+}
+
+// claims declarados (bits CLAIM_*)
+vein ast_mod_claims(m: stone) -> stone {
+    return ofs_array_get(_mod_claims, m)
+}
+
+// o que o modulo pode usar: os claims, ou tudo no stratum abyss
+vein ast_mod_allowed(m: stone) -> stone {
+    if (ast_mod_stratum(m) == STRATUM_ABYSS) { return CLAIM_ALL }
+    if (ast_mod_stratum(m) == STRATUM_CRUST) { return 0 }
+    return ofs_array_get(_mod_claims, m)
+}
+
+vein ast_mod_add_claims(m: stone, bits: stone) -> void {
+    forge c: stone = ofs_array_get(_mod_claims, m)
+    ofs_array_set(_mod_claims, m, c | bits)
+}
+
+vein ast_mod_used(m: stone) -> stone {
+    return ofs_array_get(_mod_used, m)
+}
+
+vein ast_mod_mark_used(m: stone, bit: stone) -> void {
+    forge u: stone = ofs_array_get(_mod_used, m)
+    ofs_array_set(_mod_used, m, u | bit)
+}
+
+vein ast_mod_is_runtime(m: stone) -> bool {
+    forge r: stone = ofs_array_get(_mod_runtime, m)
+    return r == 1
+}
+
+vein ast_mod_set_caprock(bits: stone, line: stone) -> void {
+    _mod_caprock = bits
+    _mod_caprock_line = line
+}
+
+vein ast_mod_caprock() -> stone {
+    return _mod_caprock
+}
+
+vein ast_mod_caprock_line() -> stone {
+    return _mod_caprock_line
+}
+
+// Ideia 5: teto que o programa que carrega um mod (magma.caprock) impoe ao
+// mod inteiro, inclusive ao arquivo principal dele (OFS_MAGMA_CAPROCK)
+forge _mod_cap_cast: bool = false
+
+vein ast_mod_set_cast_ceiling(on: bool) -> void {
+    _mod_cap_cast = on
+}
+
+vein ast_mod_cast_ceiling() -> bool {
+    return _mod_cap_cast
+}
+
+// modulo da linha `exp_line` do fonte expandido (-1 sem mapa)
+vein ast_mod_of_line(exp_line: stone) -> stone {
+    forge lo = 0
+    forge hi = ofs_array_len(_srcmap_exp) - 1
+    forge best = -1
+    while (lo <= hi) {
+        forge mid = (lo + hi) / 2
+        forge e: stone = ofs_array_get(_srcmap_exp, mid)
+        if (e <= exp_line) {
+            best = mid
+            lo = mid + 1
+        } else {
+            hi = mid - 1
+        }
+    }
+    if (best < 0) { return -1 }
+    return ofs_array_get(_srcmap_mod, best)
+}
+
+// "rift, abyss, quartz, magma" (ordem fixa) ou "" para 0
+vein ast_claims_text(bits: stone) -> obsidian {
+    forge out = ""
+    if ((bits & CLAIM_RIFT) != 0) { out = "rift" }
+    if ((bits & CLAIM_ABYSS) != 0) {
+        if (ofs_str_len(out) > 0) { out = out + ", " }
+        out = out + "abyss"
+    }
+    if ((bits & CLAIM_QUARTZ) != 0) {
+        if (ofs_str_len(out) > 0) { out = out + ", " }
+        out = out + "quartz"
+    }
+    if ((bits & CLAIM_MAGMA) != 0) {
+        if (ofs_str_len(out) > 0) { out = out + ", " }
+        out = out + "magma"
+    }
+    return out
+}
+
+vein ast_stratum_name(s: stone) -> obsidian {
+    if (s == STRATUM_CRUST) { return "crust" }
+    if (s == STRATUM_ABYSS) { return "abyss" }
+    return "fault"
 }
 
 // "arquivo:linha:coluna" da linha expandida (ou "linha:coluna" sem mapa)
@@ -363,6 +568,67 @@ vein ast_src_loc(exp_line: stone, col: stone) -> obsidian {
     forge bl: stone = ofs_array_get(_srcmap_line, best)
     forge bf: obsidian = ofs_array_get(_srcmap_file, best)
     return bf + ":" + ofs_stone_to_obsidian(bl + exp_line - be) + ":" + ofs_stone_to_obsidian(col)
+}
+
+// ofs fossil: arquivo e linha de verdade da linha expandida ("" / exp_line
+// sem mapa) e o caminho inverso (-1 se a linha nao existe no fonte expandido)
+vein ast_srcmap_at(exp_line: stone) -> stone {
+    forge lo = 0
+    forge hi = ofs_array_len(_srcmap_exp) - 1
+    forge best = -1
+    while (lo <= hi) {
+        forge mid = (lo + hi) / 2
+        forge e: stone = ofs_array_get(_srcmap_exp, mid)
+        if (e <= exp_line) {
+            best = mid
+            lo = mid + 1
+        } else {
+            hi = mid - 1
+        }
+    }
+    return best
+}
+
+vein ast_src_file(exp_line: stone) -> obsidian {
+    forge best = ast_srcmap_at(exp_line)
+    if (best < 0) { return "" }
+    forge bf: obsidian = ofs_array_get(_srcmap_file, best)
+    return bf
+}
+
+vein ast_src_line(exp_line: stone) -> stone {
+    forge best = ast_srcmap_at(exp_line)
+    if (best < 0) { return exp_line }
+    forge be: stone = ofs_array_get(_srcmap_exp, best)
+    forge bl: stone = ofs_array_get(_srcmap_line, best)
+    return bl + exp_line - be
+}
+
+// `file` vale pelo caminho inteiro ou pelo fim dele ("app.ofs", "dir/app.ofs")
+vein ast_exp_line(file: obsidian, line: stone) -> stone {
+    forge n = ofs_array_len(_srcmap_exp)
+    forge i = 0
+    while (i < n) {
+        forge f: obsidian = ofs_array_get(_srcmap_file, i)
+        forge fl = ofs_str_len(f)
+        forge ql = ofs_str_len(file)
+        forge same = ofs_str_eq(f, file)
+        if (!same && fl > ql && ofs_str_char_at(f, fl - ql - 1) == 47) {
+            same = ofs_str_eq(ofs_str_substr(f, fl - ql, ql), file)
+        }
+        if (same) {
+            forge e: stone = ofs_array_get(_srcmap_exp, i)
+            forge l: stone = ofs_array_get(_srcmap_line, i)
+            forge span = 1000000000
+            if (i + 1 < n) {
+                forge en: stone = ofs_array_get(_srcmap_exp, i + 1)
+                span = en - e
+            }
+            if (line >= l && line < l + span) { return e + line - l }
+        }
+        i++
+    }
+    return -1
 }
 
 // ── Debug/Display ──────────────────────────────────────────────────────
@@ -403,6 +669,7 @@ vein node_kind_name(kind: stone) -> obsidian {
     if (kind == NK_CONTINUE)   { return "CONTINUE" }
     if (kind == NK_FIELD)      { return "FIELD" }
     if (kind == NK_INDEX)      { return "INDEX" }
+    if (kind == NK_QUARTZ)     { return "QUARTZ" }
     return "?"
 }
 

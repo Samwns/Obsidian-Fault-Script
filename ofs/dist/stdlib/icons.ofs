@@ -6,6 +6,8 @@
 //
 //   icons.draw(cv, icons.BACK, x, y, 20, 13421772)
 
+claim rift
+
 attach {F:raster.ofs}
 attach {F:hashmap.ofs}
 

@@ -1,0 +1,487 @@
+// OFS stdlib — geophone: agente da Fault Refract L3 no app Android
+//
+// Nao se anexa a mao: o ofscc o anexa so no build com celulas
+// (`ofs build --target android --refract`, OFSCC_REFRACT=cells). O build
+// normal e o de release nao o tem (nem as celulas).
+//
+// Escuta num socket Unix abstrato `ofs-refract.<pacote>`, que de fora do
+// aparelho so o adb alcanca (`adb forward tcp:P localabstract:...`), e so
+// aceita conexao do uid do adb (shell, 2000), do root ou do proprio app
+// (SO_PEERCRED). Tudo roda na thread principal: o socket entra no looper
+// dela (ALooper_addFd, como a entrada do android.ofs), entao o remendo e
+// aplicado entre dois eventos e o runtime magma (que nao e thread-safe) nao
+// ve outra thread.
+//
+// Protocolo v1, linhas de texto terminadas em '\n':
+//   app -> PC ao conectar: OFS-REFRACT 1 <pacote> <pid> <geracao>
+//   PC -> app: MANIFEST              app -> PC: o manifesto (linhas) e END
+//   PC -> app: PATCH <geracao> <n>   seguido de n bytes do .so
+//              app -> PC: OK <geracao> <ms> <veins> | ERR <geracao> <motivo>
+//   PC -> app: PING -> PONG          BYE -> fecha a conexao
+// O .so vai para code_cache/ofs-refract/, abre com dlopen e
+// __ofs_refract_install grava nas celulas o endereco das veins novas.
+
+claim rift, abyss
+
+attach {F:android.ofs}
+
+rift vein _geo_socket(domain: stone, kind: stone, proto: stone) -> stone bind "socket" abi c
+rift vein _geo_bind(fd: stone, addr: *stone, len: stone) -> stone bind "bind" abi c
+rift vein _geo_listen(fd: stone, backlog: stone) -> stone bind "listen" abi c
+rift vein _geo_accept4(fd: stone, addr: *stone, len: *stone, flags: stone) -> stone bind "accept4" abi c
+rift vein _geo_getsockopt(fd: stone, level: stone, name: stone, val: *stone, len: *stone) -> stone bind "getsockopt" abi c
+rift vein _geo_read(fd: stone, buf: stone, n: stone) -> stone bind "read" abi c
+rift vein _geo_write(fd: stone, buf: stone, n: stone) -> stone bind "write" abi c
+rift vein _geo_close(fd: stone) -> stone bind "close" abi c
+rift vein _geo_open(path: obsidian, flags: stone, mode: stone) -> stone bind "open" abi c
+rift vein _geo_mkdir(path: obsidian, mode: stone) -> stone bind "mkdir" abi c
+rift vein _geo_getpid() -> stone bind "getpid" abi c
+rift vein _geo_getuid() -> stone bind "getuid" abi c
+rift vein _geo_usleep(us: stone) -> stone bind "usleep" abi c
+rift vein _geo_clock_gettime(clock: stone, ts: *stone) -> stone bind "clock_gettime" abi c
+rift vein _geo_strdup(p: stone) -> obsidian bind "strdup" abi c
+rift vein _geo_strndup(p: stone, n: stone) -> obsidian bind "strndup" abi c
+rift vein _geo_dlopen(path: stone, flags: stone) -> stone bind "dlopen" abi c
+rift vein _geo_dlsym(h: stone, name: obsidian) -> stone bind "dlsym" abi c
+rift vein _geo_dlerror() -> stone bind "dlerror" abi c
+rift vein _geo_dladdr(addr: stone, info: *stone) -> stone bind "dladdr" abi c
+rift vein _geo_looper_for_thread() -> *stone bind "ALooper_forThread" abi c
+rift vein _geo_looper_add_fd(looper: *stone, fd: stone, ident: stone, events: stone, cb: stone, data: *stone) -> stone bind "ALooper_addFd" abi c
+rift vein _geo_looper_remove_fd(looper: *stone, fd: stone) -> stone bind "ALooper_removeFd" abi c
+
+namespace geophone {
+    forge VERSION: stone = 1
+    forge BUF: stone = 65536
+    forge MAX_SO: stone = 67108864      // 64 MB por remendo
+
+    forge port_name: obsidian = ""      // nome do socket abstrato
+    forge generation: stone = 0         // ultimo remendo aplicado
+    forge _pkg: obsidian = ""
+    forge _dir: obsidian = ""
+    forge _fd: stone = -1               // socket que escuta
+    forge _cfd: stone = -1              // conexao do PC (uma por vez)
+    forge _looper: *stone = null
+    forge _buf: *stone = null
+    forge _word: *stone = null
+    forge _self: stone = 0              // handle do proprio .so (dlopen NOLOAD)
+    forge _manifest: Array<obsidian> = []
+    forge _hdr: obsidian = ""
+    forge _need: stone = 0              // bytes do .so que ainda faltam
+    forge _out: stone = -1              // arquivo do .so sendo gravado
+    forge _pgen: stone = 0
+    forge _ppath: obsidian = ""
+    forge awake: bool = false
+
+    vein log(text: obsidian) -> void {
+        android.log_tag("ofs-refract", text)
+    }
+
+    vein _byte(p: *stone, i: stone) -> stone {
+        abyss {
+            forge q: *u8 = ((p as stone) + i) as *u8
+            forge v: u8 = 0 as u8
+            v = *q
+            return (v as stone) & 255
+        }
+    }
+
+    vein _set_byte(p: *stone, i: stone, v: stone) -> void {
+        abyss {
+            forge q: *u8 = ((p as stone) + i) as *u8
+            *q = (v & 255) as u8
+        }
+    }
+
+    // texto dos bytes [i, i + n) do buffer
+    vein _text(p: *stone, i: stone, n: stone) -> obsidian {
+        if (n <= 0) { return "" }
+        abyss {
+            return _geo_strndup((p as stone) + i, n)
+        }
+    }
+
+    vein _num(s: obsidian) -> stone {
+        forge v = 0
+        forge i = 0
+        forge n = ofs_str_len(s)
+        if (n == 0) { return -1 }
+        while (i < n) {
+            forge c = ofs_str_char_at(s, i)
+            if (c < 48 || c > 57) { return -1 }
+            v = v * 10 + (c - 48)
+            i++
+        }
+        return v
+    }
+
+    vein _words(line: obsidian) -> Array<obsidian> {
+        forge out: Array<obsidian> = []
+        forge st = 0
+        forge i = 0
+        forge n = ofs_str_len(line)
+        while (i <= n) {
+            if (i == n || ofs_str_char_at(line, i) == 32) {
+                if (i > st) { ofs_array_push(out, ofs_str_substr(line, st, i - st)) }
+                st = i + 1
+            }
+            i++
+        }
+        return out
+    }
+
+    vein _lines(text: obsidian) -> Array<obsidian> {
+        forge out: Array<obsidian> = []
+        forge st = 0
+        forge i = 0
+        forge n = ofs_str_len(text)
+        while (i <= n) {
+            if (i == n || ofs_str_char_at(text, i) == 10) {
+                if (i > st) { ofs_array_push(out, ofs_str_substr(text, st, i - st)) }
+                st = i + 1
+            }
+            i++
+        }
+        return out
+    }
+
+    vein _now_ms() -> stone {
+        abyss {
+            _geo_clock_gettime(1, _word)
+            return android.peek(_word, 0) * 1000 + android.peek(_word, 1) / 1000000
+        }
+    }
+
+    // handle do proprio .so: dladdr de uma vein daqui + dlopen(RTLD_NOLOAD)
+    vein _self_handle() -> stone {
+        if (_self != 0) { return _self }
+        abyss {
+            forge info: *stone = ofs_alloc(32)
+            if (android.s32(_geo_dladdr(fault_addr(_on_accept), info)) != 0) {
+                forge fname = android.peek(info, 0)
+                if (fname != 0) { _self = _geo_dlopen(fname, 2 | 4) }
+            }
+        }
+        return _self
+    }
+
+    vein _c_text(addr: stone) -> obsidian {
+        if (addr == 0) { return "" }
+        return _geo_strdup(addr)
+    }
+
+    // pacote do processo (/proc/self/cmdline, sem o ":processo")
+    vein _process_name() -> obsidian {
+        forge fd = android.s32(_geo_open("/proc/self/cmdline", 0, 0))
+        if (fd < 0) { return "" }
+        abyss {
+            forge n = android.s32(_geo_read(fd, _buf as stone, 255))
+            _geo_close(fd)
+            if (n <= 0) { return "" }
+            forge s = _geo_strndup(_buf as stone, n)
+            forge i = 0
+            while (i < ofs_str_len(s)) {
+                if (ofs_str_char_at(s, i) == 58) { return ofs_str_substr(s, 0, i) }
+                i++
+            }
+            return s
+        }
+    }
+
+    // Sobe o agente. O build com celulas chama daqui um construtor da lib
+    // (llvm.global_ctors, depois do __ofs_init_globals), na thread que a
+    // carrega: a principal, que tem looper.
+    vein awaken() -> void {
+        if (awake) { return }
+        awake = _awaken()
+    }
+
+    vein _awaken() -> bool {
+        abyss {
+            _buf = ofs_alloc(BUF + 16)
+            _word = ofs_alloc(32)
+            _pkg = _process_name()
+            if (ofs_str_len(_pkg) == 0) {
+                log("geophone: pacote do processo desconhecido; agente desligado")
+                return false
+            }
+            port_name = "ofs-refract." + _pkg
+            _geo_mkdir("/data/data/" + _pkg + "/code_cache", 448)
+            _dir = "/data/data/" + _pkg + "/code_cache/ofs-refract"
+            _geo_mkdir(_dir, 448)
+            _manifest = _lines(_c_text(_geo_dlsym(_self_handle(), "__ofs_refract_manifest")))
+            // AF_UNIX, SOCK_STREAM | SOCK_NONBLOCK | SOCK_CLOEXEC
+            forge fd = android.s32(_geo_socket(1, 1 | 2048 | 524288, 0))
+            if (fd < 0) {
+                log("geophone: socket falhou; agente desligado")
+                return false
+            }
+            // sockaddr_un { sa_family = AF_UNIX, sun_path = "\0" + nome }
+            forge addr: *stone = ofs_alloc(128)
+            forge i = 0
+            while (i < 128) {
+                _set_byte(addr, i, 0)
+                i++
+            }
+            _set_byte(addr, 0, 1)
+            forge nl = ofs_str_len(port_name)
+            i = 0
+            while (i < nl) {
+                _set_byte(addr, 3 + i, ofs_str_char_at(port_name, i))
+                i++
+            }
+            if (android.s32(_geo_bind(fd, addr, 3 + nl)) != 0) {
+                log("geophone: bind de localabstract:" + port_name + " falhou (outro processo do app ja escuta?)")
+                _geo_close(fd)
+                return false
+            }
+            _geo_listen(fd, 2)
+            _looper = _geo_looper_for_thread()
+            if (_looper == null) {
+                log("geophone: a thread que carregou a lib nao tem looper; agente desligado")
+                _geo_close(fd)
+                return false
+            }
+            // ALOOPER_POLL_CALLBACK (-2), ALOOPER_EVENT_INPUT (1)
+            _geo_looper_add_fd(_looper, fd, -2, 1, fault_addr(_on_accept), null)
+            _fd = fd
+            log("geophone: escutando em localabstract:" + port_name + " (pid " + ofs_stone_to_obsidian(android.s32(_geo_getpid())) + ", " + ofs_stone_to_obsidian(ofs_array_len(_manifest)) + " registros)")
+            return true
+        }
+    }
+
+    vein _send(text: obsidian) -> void {
+        if (_cfd < 0) { return }
+        abyss {
+            forge n = ofs_str_len(text)
+            forge off = 0
+            forge tries = 0
+            while (off < n && tries < 5000) {
+                forge w = android.s32(_geo_write(_cfd, (text as stone) + off, n - off))
+                if (w > 0) {
+                    off = off + w
+                } else {
+                    tries++
+                    _geo_usleep(1000)
+                }
+            }
+        }
+    }
+
+    vein _drop() -> void {
+        if (_cfd >= 0) {
+            _geo_looper_remove_fd(_looper, _cfd)
+            _geo_close(_cfd)
+            log("geophone: PC desconectado")
+        }
+        if (_out >= 0) { _geo_close(_out) }
+        _cfd = -1
+        _out = -1
+        _need = 0
+        _hdr = ""
+    }
+
+    // int (*ALooper_callbackFunc)(int fd, int events, void* data): 1 = continua
+    vein _on_accept(fd: stone, events: stone, data: *stone) -> stone {
+        abyss {
+            forge c = android.s32(_geo_accept4(_fd, null, null, 2048 | 524288))
+            if (c < 0) { return 1 }
+            // struct ucred { pid, uid, gid } (int32 cada)
+            android.poke(_word, 0, 0)
+            android.poke(_word, 1, 0)
+            android.poke(_word, 2, 12)
+            forge lenp: *stone = fault_step(_word, 2)
+            _geo_getsockopt(c, 1, 17, _word, lenp)
+            forge uid = (android.peek(_word, 0) >> 32) & 4294967295
+            forge own = android.s32(_geo_getuid())
+            if (uid != 2000 && uid != 0 && uid != own) {
+                log("geophone: conexao recusada (uid " + ofs_stone_to_obsidian(uid) + "; so adb/shell, root ou o proprio app)")
+                _geo_close(c)
+                return 1
+            }
+            if (_cfd >= 0) { _drop() }
+            _cfd = c
+            _hdr = ""
+            _need = 0
+            _geo_looper_add_fd(_looper, c, -2, 1, fault_addr(_on_data), null)
+            _send("OFS-REFRACT " + ofs_stone_to_obsidian(VERSION) + " " + _pkg + " " + ofs_stone_to_obsidian(android.s32(_geo_getpid())) + " " + ofs_stone_to_obsidian(generation) + "\n")
+            log("geophone: PC conectado (uid " + ofs_stone_to_obsidian(uid) + ")")
+            return 1
+        }
+    }
+
+    vein _on_data(fd: stone, events: stone, data: *stone) -> stone {
+        forge cfd = android.s32(fd)
+        if (cfd != _cfd) { return 0 }
+        abyss {
+            forge n = android.s32(_geo_read(cfd, _buf as stone, BUF))
+            if (n == 0) {
+                _drop()
+                return 0
+            }
+            if (n < 0) {
+                // ALOOPER_EVENT_ERROR (2) / HANGUP (4)
+                if ((events & 6) != 0) {
+                    _drop()
+                    return 0
+                }
+                return 1
+            }
+            _feed(n)
+        }
+        if (_cfd < 0) { return 0 }
+        return 1
+    }
+
+    vein _feed(n: stone) -> void {
+        abyss {
+            forge i = 0
+            while (i < n && _cfd >= 0) {
+                if (_need > 0) {
+                    forge take = n - i
+                    if (take > _need) { take = _need }
+                    forge w = android.s32(_geo_write(_out, (_buf as stone) + i, take))
+                    if (w != take) {
+                        _send("ERR " + ofs_stone_to_obsidian(_pgen) + " falha ao gravar " + _ppath + "\n")
+                        _drop()
+                        return
+                    }
+                    _need = _need - take
+                    i = i + take
+                    if (_need == 0) {
+                        _geo_close(_out)
+                        _out = -1
+                        _apply()
+                    }
+                } else {
+                    forge j = i
+                    while (j < n && _byte(_buf, j) != 10) { j++ }
+                    _hdr = _hdr + _text(_buf, i, j - i)
+                    if (j < n) {
+                        forge line = _hdr
+                        _hdr = ""
+                        i = j + 1
+                        _command(line)
+                    } else {
+                        i = n
+                    }
+                }
+            }
+        }
+    }
+
+    vein _command(line: obsidian) -> void {
+        forge w = _words(line)
+        if (ofs_array_len(w) == 0) { return }
+        forge cmd: obsidian = ofs_array_get(w, 0)
+        if (ofs_str_eq(cmd, "PING")) {
+            _send("PONG\n")
+        } else if (ofs_str_eq(cmd, "MANIFEST")) {
+            forge out = ""
+            forge i = 0
+            while (i < ofs_array_len(_manifest)) {
+                out = out + ofs_array_get(_manifest, i) + "\n"
+                i++
+            }
+            _send(out + "END\n")
+        } else if (ofs_str_eq(cmd, "BYE")) {
+            _drop()
+        } else if (ofs_str_eq(cmd, "PATCH") && ofs_array_len(w) >= 3) {
+            forge g = _num(ofs_array_get(w, 1))
+            forge size = _num(ofs_array_get(w, 2))
+            if (g <= generation || size <= 0 || size > MAX_SO) {
+                _send("ERR " + ofs_stone_to_obsidian(g) + " PATCH invalido (geracao <= " + ofs_stone_to_obsidian(generation) + " ou tamanho fora de 1.." + ofs_stone_to_obsidian(MAX_SO) + ")\n")
+                _drop()
+                return
+            }
+            _pgen = g
+            _ppath = _dir + "/p" + ofs_stone_to_obsidian(android.s32(_geo_getpid())) + "-" + ofs_stone_to_obsidian(g) + ".so"
+            // O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0700
+            _out = android.s32(_geo_open(_ppath, 1 | 64 | 512 | 524288, 448))
+            if (_out < 0) {
+                _send("ERR " + ofs_stone_to_obsidian(g) + " nao abriu " + _ppath + "\n")
+                _drop()
+                return
+            }
+            _need = size
+        } else {
+            _send("ERR 0 comando desconhecido: " + cmd + "\n")
+        }
+    }
+
+    // chave do registro: os dois primeiros campos ("V\tsimbolo")
+    vein _key(rec: obsidian) -> obsidian {
+        forge tabs = 0
+        forge i = 0
+        while (i < ofs_str_len(rec)) {
+            if (ofs_str_char_at(rec, i) == 9) {
+                tabs++
+                if (tabs == 2) { return ofs_str_substr(rec, 0, i) }
+            }
+            i++
+        }
+        return rec
+    }
+
+    // junta o manifesto do remendo ao atual; devolve as veins trocadas
+    vein _merge(text: obsidian) -> obsidian {
+        forge add = _lines(text)
+        forge names = ""
+        forge i = 1
+        while (i < ofs_array_len(add)) {
+            forge rec: obsidian = ofs_array_get(add, i)
+            forge k = _key(rec)
+            forge found = false
+            forge j = 0
+            while (j < ofs_array_len(_manifest)) {
+                if (ofs_str_eq(_key(ofs_array_get(_manifest, j)), k)) {
+                    ofs_array_set(_manifest, j, rec)
+                    found = true
+                    break
+                }
+                j++
+            }
+            if (!found) { ofs_array_push(_manifest, rec) }
+            if (ofs_str_len(k) > 2 && ofs_str_eq(ofs_str_substr(k, 0, 2), "V\t")) {
+                if (ofs_str_len(names) > 0) { names = names + "," }
+                names = names + ofs_str_substr(k, 2, ofs_str_len(k) - 2)
+            }
+            i++
+        }
+        return names
+    }
+
+    vein _apply() -> void {
+        forge gs = ofs_stone_to_obsidian(_pgen)
+        abyss {
+            forge t0 = _now_ms()
+            forge h = _geo_dlopen(_ppath as stone, 2)
+            if (h == 0) {
+                forge why = _c_text(_geo_dlerror())
+                log("geophone: geracao " + gs + " recusada: dlopen: " + why)
+                _send("ERR " + gs + " dlopen: " + why + "\n")
+                return
+            }
+            forge inst = _geo_dlsym(h, "__ofs_refract_install")
+            if (inst == 0) {
+                _send("ERR " + gs + " o .so nao tem __ofs_refract_install\n")
+                return
+            }
+            forge names = _merge(_c_text(_geo_dlsym(h, "__ofs_refract_manifest")))
+            // entre dois eventos da thread principal: a proxima chamada de
+            // cada vein trocada ja le a celula nova
+            fault_call(inst)
+            generation = _pgen
+            forge ms = _now_ms() - t0
+            log("geophone: geracao " + gs + " aplicada em " + ofs_stone_to_obsidian(ms) + " ms: " + names)
+            _send("OK " + gs + " " + ofs_stone_to_obsidian(ms) + " " + names + "\n")
+            // tela: OAL reconstroi (oal.refresh); senao, redesenha
+            forge refresh = _geo_dlsym(_self_handle(), "oal__refresh")
+            if (refresh != 0) {
+                fault_call(refresh)
+            } else {
+                android.redraw_needed = true
+                android.request_frame()
+            }
+        }
+    }
+}

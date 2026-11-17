@@ -1,3 +1,5 @@
+claim rift
+
 extern vein ofs_alloc(size: stone) -> *stone
 extern vein ofs_stone_to_obsidian(val: stone) -> obsidian
 extern vein ofs_str_len(s: obsidian) -> stone

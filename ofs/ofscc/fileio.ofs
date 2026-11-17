@@ -1,5 +1,7 @@
 // OFS Compiler — File I/O Wrapper
 // FFI declarations and file utilities
+// claim em forma de comentario: a semente (ofs/dist/ofscc) e anterior a onda 5
+//! claim rift
 
 // ── C FFI Declarations ──────────────────────────────────────────────────
 

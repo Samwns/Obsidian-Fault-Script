@@ -1,3 +1,5 @@
+claim rift
+
 extern vein calloc(num: stone, size: stone) -> *stone
 extern vein free(ptr: *stone) -> void
 extern vein malloc(size: stone) -> *stone
@@ -37,6 +39,8 @@ vein ofs_out_of_memory(size: stone) -> void {
 
 vein ofs_alloc(size: stone) -> *stone {
     if (size <= 0) { size = 1 }
+    // A5.3: dentro de um `bedrock { }` com arena ativa, o bloco vem da regiao
+    if (__ofs_arena_cur != null) { return __ofs_arena_alloc(__ofs_arena_cur, size) }
     forge ptr: *stone = calloc(1, size)
     if (ptr == null) {
         ofs_out_of_memory(size)
@@ -48,6 +52,11 @@ vein ofs_alloc(size: stone) -> *stone {
 // blocos vindos de ofs_alloc/ofs_realloc (sem pools: realloc/free do libc).
 vein ofs_realloc(ptr: *stone, size: stone) -> *stone {
     if (size <= 0) { size = 1 }
+    // bloco de uma arena viva: cresce no lugar (ultimo bloco) ou copia
+    if (__ofs_arena_top != null && ptr != null) {
+        forge rc = __ofs_arena_chunk_of(ptr)
+        if (rc != null) { return __ofs_arena_regrow(rc, ptr, size) }
+    }
     forge np: *stone = realloc(ptr, size)
     if (np == null) {
         ofs_out_of_memory(size)
@@ -57,7 +66,234 @@ vein ofs_realloc(ptr: *stone, size: stone) -> *stone {
 
 vein ofs_free(ptr: *stone) -> void {
     if (ptr != null) {
+        // bloco de arena: sai junto com a regiao, no fim do bedrock
+        if (__ofs_arena_top != null) {
+            if (__ofs_arena_chunk_of(ptr) != null) { return }
+        }
         free(ptr)
+    }
+}
+
+// ── Arena do `bedrock { }` (A5.3) ───────────────────────────────────────
+// O llvmgen abre uma arena na entrada de um bloco `bedrock` que aloca
+// (ofs_arena_open) e a fecha em qualquer saida (anchor sintetico:
+// ofs_arena_close). Enquanto __ofs_arena_cur aponta para ela, ofs_alloc
+// tira os blocos da regiao (bump, zerados como o calloc); o codigo gerado
+// zera __ofs_arena_cur durante chamadas a veins (elas alocam no heap
+// normal: a arena e lexica). ofs_free de um bloco da arena nao faz nada,
+// ofs_realloc cresce no lugar ou copia. Ao fechar, os pedacos voltam ao
+// sistema (o maior fica guardado para a proxima arena).
+// Arena (32 bytes, malloc): [0] arena de fora (lista das vivas),
+//   [1] __ofs_arena_cur de antes, [2] pedaco mais novo, [3] bytes pedidos.
+// Pedaco: [0] pedaco anterior, [1] capacidade, [2] usado, [3] deslocamento
+//   do ultimo bloco; dados em +32. Bloco: [tamanho, 0] + carga (16 bytes).
+// cache de ofs_str_char_at (facet.ofs): definido aqui porque a arena o
+// zera ao fechar (o texto pode ter sido da arena)
+forge __ofs_charat_s: obsidian = null
+forge __ofs_charat_n: stone = 0
+forge __ofs_arena_cur: *stone = null
+forge __ofs_arena_top: *stone = null
+forge __ofs_arena_spare: *stone = null
+forge __ofs_arena_hit: *stone = null
+
+vein __ofs_ar_get(p: *stone, i: stone) -> stone {
+    fracture {
+        forge q: *stone = fault_step(p, i)
+        return *q
+    }
+}
+
+vein __ofs_ar_set(p: *stone, i: stone, v: stone) -> void {
+    fracture {
+        forge q: *stone = fault_step(p, i)
+        *q = v
+    }
+}
+
+vein __ofs_ar_round(n: stone) -> stone {
+    return (n + 15) & (0 - 16)
+}
+
+// pedaco novo (ou o guardado, se couber) com pelo menos `need` bytes
+vein __ofs_arena_chunk(a: *stone, need: stone) -> *stone {
+    fracture {
+        forge cap: stone = 65536
+        forge head = __ofs_ar_get(a, 2)
+        if (head != 0) {
+            cap = __ofs_ar_get(head as *stone, 1) * 2
+            if (cap > 16777216) { cap = 16777216 }
+        }
+        if (cap < need) { cap = need }
+        forge c: *stone = null
+        if (__ofs_arena_spare != null && __ofs_ar_get(__ofs_arena_spare, 1) >= cap) {
+            c = __ofs_arena_spare
+            __ofs_arena_spare = null
+            cap = __ofs_ar_get(c, 1)
+        } else {
+            c = malloc(cap + 32)
+            if (c == null) { ofs_out_of_memory(cap + 32) }
+        }
+        __ofs_ar_set(c, 0, head)
+        __ofs_ar_set(c, 1, cap)
+        __ofs_ar_set(c, 2, 0)
+        __ofs_ar_set(c, 3, 0 - 1)
+        __ofs_ar_set(a, 2, c as stone)
+        return c
+    }
+}
+
+vein __ofs_arena_alloc(a: *stone, size: stone) -> *stone {
+    fracture {
+        forge need = 16 + __ofs_ar_round(size)
+        forge c = __ofs_ar_get(a, 2)
+        if (c == 0 || __ofs_ar_get(c as *stone, 2) + need > __ofs_ar_get(c as *stone, 1)) {
+            c = __ofs_arena_chunk(a, need) as stone
+        }
+        forge cp: *stone = c as *stone
+        forge off = __ofs_ar_get(cp, 2)
+        forge blk: stone = c + 32 + off
+        __ofs_ar_set(blk as *stone, 0, size)
+        __ofs_ar_set(blk as *stone, 1, 0)
+        forge pay: *stone = (blk + 16) as *stone
+        memset(pay, 0, size)
+        __ofs_ar_set(cp, 3, off)
+        __ofs_ar_set(cp, 2, off + need)
+        __ofs_ar_set(a, 3, __ofs_ar_get(a, 3) + size)
+        return pay
+    }
+}
+
+// pedaco de alguma arena viva que contem p (null se nenhum); a arena dona
+// fica em __ofs_arena_hit
+vein __ofs_arena_chunk_of(p: *stone) -> *stone {
+    fracture {
+        forge pv: stone = p as stone
+        forge a: *stone = __ofs_arena_top
+        while (a != null) {
+            forge c = __ofs_ar_get(a, 2)
+            while (c != 0) {
+                forge lo: stone = c + 32
+                if (pv >= lo && pv < lo + __ofs_ar_get(c as *stone, 2)) {
+                    __ofs_arena_hit = a
+                    return c as *stone
+                }
+                c = __ofs_ar_get(c as *stone, 0)
+            }
+            a = __ofs_ar_get(a, 0) as *stone
+        }
+        return null
+    }
+}
+
+vein __ofs_arena_regrow(c: *stone, p: *stone, size: stone) -> *stone {
+    fracture {
+        forge pv: stone = p as stone
+        forge old = __ofs_ar_get((pv - 16) as *stone, 0)
+        forge a: *stone = __ofs_arena_hit
+        forge off = __ofs_ar_get(c, 3)
+        // ultimo bloco do pedaco mais novo da arena: cresce no lugar
+        if (__ofs_ar_get(a, 2) == c as stone && pv == c as stone + 32 + off + 16) {
+            forge need = 16 + __ofs_ar_round(size)
+            if (off + need <= __ofs_ar_get(c, 1)) {
+                if (size > old) { memset((pv + old) as *stone, 0, size - old) }
+                __ofs_ar_set((pv - 16) as *stone, 0, size)
+                __ofs_ar_set(c, 2, off + need)
+                return p
+            }
+        }
+        // o bloco novo fica na mesma arena (a dona do antigo)
+        forge np: *stone = __ofs_arena_alloc(a, size)
+        forge n = old
+        if (size < n) { n = size }
+        if (n > 0) { memcpy(np, p, n) }
+        return np
+    }
+}
+
+vein ofs_arena_open() -> *stone {
+    forge a: *stone = malloc(32)
+    if (a == null) { ofs_out_of_memory(32) }
+    fracture {
+        __ofs_ar_set(a, 0, __ofs_arena_top as stone)
+        __ofs_ar_set(a, 1, __ofs_arena_cur as stone)
+    }
+    __ofs_ar_set(a, 2, 0)
+    __ofs_ar_set(a, 3, 0)
+    __ofs_arena_top = a
+    __ofs_arena_cur = a
+    return a
+}
+
+// fecha `a` (e as que ficaram abertas por cima dela): libera os pedacos,
+// guarda o maior e volta __ofs_arena_cur ao valor de antes da abertura
+vein ofs_arena_close(a: *stone) -> void {
+    if (a == null) { return }
+    fracture {
+        while (__ofs_arena_top != null) {
+            forge t: *stone = __ofs_arena_top
+            __ofs_arena_top = __ofs_ar_get(t, 0) as *stone
+            forge c = __ofs_ar_get(t, 2)
+            while (c != 0) {
+                forge nxt = __ofs_ar_get(c as *stone, 0)
+                if (__ofs_arena_spare == null) {
+                    __ofs_arena_spare = c as *stone
+                } else if (__ofs_ar_get(c as *stone, 1) > __ofs_ar_get(__ofs_arena_spare, 1)) {
+                    free(__ofs_arena_spare)
+                    __ofs_arena_spare = c as *stone
+                } else {
+                    free(c as *stone)
+                }
+                c = nxt
+            }
+            __ofs_arena_cur = __ofs_ar_get(t, 1) as *stone
+            free(t)
+            if ((t as stone) == (a as stone)) { break }
+        }
+        // o cache de ofs_str_char_at pode apontar para um texto da arena
+        __ofs_charat_s = null
+        __ofs_charat_n = 0
+    }
+}
+
+// bloco que cresce junto de um objeto existente (dados de um Array): na
+// mesma arena do objeto, ou no heap se ele e do heap (nunca na arena ativa:
+// um Array de fora do bedrock que cresce dentro dele continua no heap)
+vein __ofs_alloc_like(owner: *stone, size: stone) -> *stone {
+    if (__ofs_arena_top != null) {
+        if (__ofs_arena_chunk_of(owner) != null) { return __ofs_arena_alloc(__ofs_arena_hit, size) }
+    }
+    if (size <= 0) { size = 1 }
+    forge ptr: *stone = calloc(1, size)
+    if (ptr == null) { ofs_out_of_memory(size) }
+    return ptr
+}
+
+// troca a arena que recebe as alocacoes; devolve a anterior (o
+// interpretador usa para as chamadas de ofs_alloc do proprio bloco)
+vein ofs_arena_use(a: *stone) -> *stone {
+    forge old: *stone = __ofs_arena_cur
+    __ofs_arena_cur = a
+    return old
+}
+
+// valor obsidian que sai do bedrock: copia para o heap se esta numa arena
+vein ofs_arena_lift(s: *stone) -> *stone {
+    if (s == null || __ofs_arena_top == null) { return s }
+    if (__ofs_arena_chunk_of(s) == null) { return s }
+    fracture {
+        forge n: stone = 0
+        forge pv: stone = s as stone
+        forge b: u8 = 1 as u8
+        while (true) {
+            forge bp: *u8 = (pv + n) as *u8
+            fracture { b = *bp }
+            if ((b as stone) == 0) { break }
+            n = n + 1
+        }
+        forge r: *stone = calloc(1, n + 1)
+        if (r == null) { ofs_out_of_memory(n + 1) }
+        if (n > 0) { memcpy(r, s, n) }
+        return r
     }
 }
 

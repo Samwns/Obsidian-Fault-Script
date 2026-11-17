@@ -1,0 +1,2093 @@
+// OFS Compiler — Contratos e minerais (A5.1)
+//
+//   mineral UserId = stone grain value > 0           tipo com regra
+//   mineral Email = obsidian grain contains("@")     (forma curta: value entra
+//                                                     como 1o argumento)
+//   vein dividir(a: stone, b: stone) -> stone
+//       bearing b != 0                               pre-condicao
+//       settle result * b == a                       pos-condicao
+//   { ... }
+//
+// Roda depois do parser e antes do typeck, nos dois modos (mesma arvore
+// para o llvmgen e o interpretador):
+//   1. registra os `mineral` e tira as declaracoes da arvore;
+//   2. checagem estatica: com literais/constantes, uma regra que da falso
+//      com certeza e [ERRO DE CONTRATO arquivo:linha:col];
+//   3. checagem em tempo de execucao (padrao; OFS_CONTRACTS=0 ou
+//      `ofs build --release` desliga): insere `if (!(regra)) falha` na
+//      entrada da vein (bearing e parametros de mineral), depois de cada
+//      `forge`/atribuicao de mineral e em cada `return` (settle e retorno
+//      de mineral). A falha chama __ofs_contract_fail(msg): "ofs: " + msg
+//      no stderr e codigo de saida 1, igual nos dois modos;
+//   4. apaga os minerais: todo tipo `UserId` vira o base (`stone`), entao o
+//      typeck, o llvmgen e o interpretador nao mudam (base -> mineral checa
+//      a regra; mineral -> base e livre).
+// `ofs assay` (assay_source): gera um `core main` que chama cada vein com
+// bearing simples sobre inteiros nos limites (fronteira e +-1).
+
+attach {F:nodes.ofs}
+attach {F:ast.ofs}
+
+namespace contracts {
+    forge _errors: stone = 0
+    forge _checks_on: bool = true
+    // primeiro no do programa atual (a Fault Refract acrescenta versoes)
+    forge _erase_from: stone = 0
+
+    // ── minerais ─────────────────────────────────────────────────────
+    forge _m_names: Array<obsidian> = []
+    forge _m_raw: Array<obsidian> = []      // texto do tipo base como escrito
+    forge _m_base: Array<obsidian> = []     // base apagado (sem minerais)
+    forge _m_parent: Array<stone> = []      // mineral base (ou -1)
+    forge _m_line: Array<stone> = []
+    forge _m_col: Array<stone> = []
+    forge _m_doc: Array<obsidian> = []      // "stone grain value > 0" (refract)
+    // regras (grain) de cada mineral
+    forge _r_owner: Array<stone> = []
+    forge _r_expr: Array<stone> = []
+    forge _r_text: Array<obsidian> = []
+    forge _r_line: Array<stone> = []
+    forge _r_col: Array<stone> = []
+
+    // notas para a Fault Refract: no de tipo apagado -> mineral + regras
+    forge _note_ids: Array<stone> = []
+    forge _note_txt: Array<obsidian> = []
+
+    // veins conhecidas (para a checagem estatica das chamadas)
+    forge _v_keys: Array<obsidian> = []
+    forge _v_decl: Array<stone> = []
+
+    // constantes globais com valor literal
+    forge _k_names: Array<obsidian> = []
+    forge _k_kind: Array<stone> = []
+    forge _k_int: Array<stone> = []
+    forge _k_str: Array<obsidian> = []
+
+    // campos de monolith com tipo mineral: "Mono.campo" -> mineral
+    forge _f_keys: Array<obsidian> = []
+    forge _f_min: Array<stone> = []
+
+    // escopo da vein em processamento: nome -> tipo declarado (como
+    // escrito, "" se inferido); marcadores de bloco em _sc_marks
+    forge _sc_names: Array<obsidian> = []
+    forge _sc_types: Array<obsidian> = []
+    forge _sc_marks: Array<stone> = []
+    forge _globals_n: stone = 0
+
+    // vein em processamento
+    forge _cv_name: obsidian = ""
+    forge _cv_ret_type: stone = -1
+    forge _cv_ret_min: stone = -1
+    forge _cv_settles: Array<stone> = []
+    forge _cv_void: bool = true
+    forge _cv_pnames: Array<obsidian> = []
+    forge _cv_ptypes: Array<obsidian> = []
+    forge _cv_snap_from: Array<obsidian> = []
+    forge _cv_snap_to: Array<obsidian> = []
+
+    // substituicao do clone: identificador -> no modelo
+    forge _sub_names: Array<obsidian> = []
+    forge _sub_nodes: Array<stone> = []
+
+    // avaliador estatico: valor em registradores
+    forge EV_UNK: stone = 0
+    forge EV_INT: stone = 1
+    forge EV_BOOL: stone = 2
+    forge EV_STR: stone = 3
+    forge _ev_k: stone = 0
+    forge _ev_i: stone = 0
+    forge _ev_s: obsidian = ""
+    forge _env_names: Array<obsidian> = []
+    forge _env_k: Array<stone> = []
+    forge _env_i: Array<stone> = []
+    forge _env_s: Array<obsidian> = []
+    // true: identificador declarado no escopo local e desconhecido
+    forge _ev_locals: bool = false
+
+    vein error_count() -> stone {
+        return _errors
+    }
+
+    vein set_runtime_checks(on: bool) -> void {
+        _checks_on = on
+    }
+
+    // ── utilitarios ─────────────────────────────────────────────────
+
+    vein list_index(list: Array<obsidian>, v: obsidian) -> stone {
+        forge i = ofs_array_len(list) - 1
+        while (i >= 0) {
+            forge s: obsidian = ofs_array_get(list, i)
+            if (ofs_str_eq(s, v)) { return i }
+            i--
+        }
+        return -1
+    }
+
+    vein mineral_index(name: obsidian) -> stone {
+        return list_index(_m_names, name)
+    }
+
+    vein is_mineral(name: obsidian) -> bool {
+        return mineral_index(name) >= 0
+    }
+
+    vein is_ident_char(c: stone) -> bool {
+        return (c >= 97 && c <= 122) || (c >= 65 && c <= 90) || (c >= 48 && c <= 57) || c == 95
+    }
+
+    vein contract_error(line: stone, col: stone, msg: obsidian, hint: obsidian) -> void {
+        _errors++
+        echo("[ERRO DE CONTRATO " + ast_src_loc(line, col) + "]: " + msg)
+        if (!ofs_str_eq(hint, "")) { echo("  " + hint) }
+    }
+
+    vein is_int_name(t: obsidian) -> bool {
+        return ofs_str_eq(t, "stone") || ofs_str_eq(t, "i64") || ofs_str_eq(t, "i32") || ofs_str_eq(t, "i16") ||
+            ofs_str_eq(t, "i8") || ofs_str_eq(t, "u64") || ofs_str_eq(t, "u32") || ofs_str_eq(t, "u16") || ofs_str_eq(t, "u8")
+    }
+
+    vein is_unsigned_name(t: obsidian) -> bool {
+        return ofs_str_eq(t, "u64") || ofs_str_eq(t, "u32") || ofs_str_eq(t, "u16") || ofs_str_eq(t, "u8")
+    }
+
+    // ── texto de uma expressao (para mensagens e documentacao) ─────
+
+    vein op_prec(op: obsidian) -> stone {
+        if (ofs_str_eq(op, "||")) { return 20 }
+        if (ofs_str_eq(op, "&&")) { return 30 }
+        if (ofs_str_eq(op, "==") || ofs_str_eq(op, "!=")) { return 40 }
+        if (ofs_str_eq(op, "<") || ofs_str_eq(op, "<=") || ofs_str_eq(op, ">") || ofs_str_eq(op, ">=")) { return 50 }
+        if (ofs_str_eq(op, "|")) { return 60 }
+        if (ofs_str_eq(op, "^")) { return 70 }
+        if (ofs_str_eq(op, "&")) { return 80 }
+        if (ofs_str_eq(op, "<<") || ofs_str_eq(op, ">>")) { return 90 }
+        if (ofs_str_eq(op, "+") || ofs_str_eq(op, "-")) { return 100 }
+        if (ofs_str_eq(op, "*") || ofs_str_eq(op, "/") || ofs_str_eq(op, "%")) { return 110 }
+        return 10
+    }
+
+    vein quote_text(s: obsidian) -> obsidian {
+        forge out = "\""
+        forge i = 0
+        forge n = ofs_str_len(s)
+        while (i < n) {
+            forge c = ofs_str_char_at(s, i)
+            if (c == 34) { out = out + "\\\"" }
+            else if (c == 92) { out = out + "\\\\" }
+            else if (c == 10) { out = out + "\\n" }
+            else if (c == 9) { out = out + "\\t" }
+            else { out = out + ofs_str_substr(s, i, 1) }
+            i++
+        }
+        return out + "\""
+    }
+
+    vein expr_text_p(id: stone, parent_prec: stone) -> obsidian {
+        if (id < 0) { return "" }
+        forge k = node_kind_of(id)
+        forge v: obsidian = node_val_of(id)
+        if (k == NK_LIT_INT || k == NK_LIT_FLOAT || k == NK_IDENT) { return v }
+        if (k == NK_LIT_BOOL) { return v }
+        if (k == NK_LIT_NULL) { return "null" }
+        if (k == NK_LIT_STRING) { return quote_text(v) }
+        if (k == NK_BIN_OP) {
+            forge p = op_prec(v)
+            forge s = expr_text_p(node_child(id, 0), p) + " " + v + " " + expr_text_p(node_child(id, 1), p + 1)
+            if (p < parent_prec) { return "(" + s + ")" }
+            return s
+        }
+        if (k == NK_UNARY_OP) { return v + expr_text_p(node_child(id, 0), 200) }
+        if (k == NK_POST_OP) { return expr_text_p(node_child(id, 0), 200) + v }
+        if (k == NK_CAST) { return expr_text_p(node_child(id, 0), 200) + " as " + v }
+        if (k == NK_FIELD) { return expr_text_p(node_child(id, 0), 200) + "." + v }
+        if (k == NK_INDEX) { return expr_text_p(node_child(id, 0), 200) + "[" + expr_text_p(node_child(id, 1), 0) + "]" }
+        if (k == NK_CALL) {
+            forge out = vein_display_name(v)
+            if (node_child(id, 0) >= 0) { out = expr_text_p(node_child(id, 0), 200) }
+            out = out + "("
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                if (i > 0) { out = out + ", " }
+                out = out + expr_text_p(node_extra_at(id, i), 0)
+                i++
+            }
+            return out + ")"
+        }
+        if (k == NK_ARRAY_LIT) {
+            forge out2 = "["
+            forge j = 0
+            while (j < node_extra_len(id)) {
+                if (j > 0) { out2 = out2 + ", " }
+                out2 = out2 + expr_text_p(node_extra_at(id, j), 0)
+                j++
+            }
+            return out2 + "]"
+        }
+        return "?"
+    }
+
+    vein expr_text(id: stone) -> obsidian {
+        return expr_text_p(id, 0)
+    }
+
+    // ── construcao de nos ───────────────────────────────────────────
+
+    vein mk_ident(name: obsidian, line: stone, col: stone) -> stone {
+        return node_new(NK_IDENT, name, line, col)
+    }
+
+    vein mk_str(text: obsidian, line: stone, col: stone) -> stone {
+        return node_new(NK_LIT_STRING, text, line, col)
+    }
+
+    vein mk_bin(op: obsidian, l: stone, r: stone, line: stone, col: stone) -> stone {
+        forge n = node_new(NK_BIN_OP, op, line, col)
+        node_set_child(n, 0, l)
+        node_set_child(n, 1, r)
+        return n
+    }
+
+    vein mk_call1(name: obsidian, a: stone, line: stone, col: stone) -> stone {
+        forge n = node_new(NK_CALL, name, line, col)
+        node_add_extra(n, a)
+        return n
+    }
+
+    vein mk_cast(type_name: obsidian, e: stone, line: stone, col: stone) -> stone {
+        forge n = node_new(NK_CAST, type_name, line, col)
+        node_set_child(n, 0, e)
+        return n
+    }
+
+    vein mk_type(type_name: obsidian, line: stone, col: stone) -> stone {
+        return node_new(NK_TYPE, type_name, line, col)
+    }
+
+    vein mk_block(line: stone, col: stone) -> stone {
+        return node_new(NK_BLOCK, "", line, col)
+    }
+
+    // copia profunda; um identificador em _sub_names vira uma copia (sem
+    // nova substituicao) do no modelo
+    vein clone_ex(id: stone, subst: bool) -> stone {
+        if (id < 0) { return -1 }
+        forge n: Node = node_get(id)
+        if (subst && n.kind == NK_IDENT) {
+            forge si = list_index(_sub_names, n.val)
+            if (si >= 0) {
+                forge model: stone = ofs_array_get(_sub_nodes, si)
+                return clone_ex(model, false)
+            }
+        }
+        forge c = node_new(n.kind, n.val, n.line, n.col)
+        if (!ofs_str_eq(n.type_str, "")) { node_set_type(c, n.type_str) }
+        node_set_child(c, 0, clone_ex(n.c0, subst))
+        node_set_child(c, 1, clone_ex(n.c1, subst))
+        node_set_child(c, 2, clone_ex(n.c2, subst))
+        node_set_child(c, 3, clone_ex(n.c3, subst))
+        forge i = 0
+        forge ne = ofs_array_len(n.extra)
+        while (i < ne) {
+            node_add_extra(c, clone_ex(ofs_array_get(n.extra, i), subst))
+            i++
+        }
+        return c
+    }
+
+    vein clone(id: stone) -> stone {
+        return clone_ex(id, false)
+    }
+
+    vein sub_reset() -> void {
+        _sub_names = []
+        _sub_nodes = []
+    }
+
+    vein sub_add(name: obsidian, model: stone) -> void {
+        ofs_array_push(_sub_names, name)
+        ofs_array_push(_sub_nodes, model)
+    }
+
+    vein clone_sub(id: stone) -> stone {
+        return clone_ex(id, true)
+    }
+
+    // o identificador `name` aparece na expressao?
+    vein mentions(id: stone, name: obsidian) -> bool {
+        if (id < 0) { return false }
+        forge k = node_kind_of(id)
+        if (k == NK_IDENT) { return ofs_str_eq(node_val_of(id), name) }
+        if (mentions(node_child(id, 0), name) || mentions(node_child(id, 1), name)) { return true }
+        if (mentions(node_child(id, 2), name) || mentions(node_child(id, 3), name)) { return true }
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            if (mentions(node_extra_at(id, i), name)) { return true }
+            i++
+        }
+        return false
+    }
+
+    // identificadores da expressao, em ordem, sem repetir
+    vein collect_idents(id: stone, out: Array<obsidian>) -> void {
+        if (id < 0) { return }
+        forge k = node_kind_of(id)
+        if (k == NK_IDENT) {
+            forge nm: obsidian = node_val_of(id)
+            if (list_index(out, nm) < 0) { ofs_array_push(out, nm) }
+            return
+        }
+        if (k == NK_CALL && node_child(id, 0) < 0) {
+            // o nome da vein chamada nao e valor
+        }
+        collect_idents(node_child(id, 0), out)
+        collect_idents(node_child(id, 1), out)
+        collect_idents(node_child(id, 2), out)
+        collect_idents(node_child(id, 3), out)
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            collect_idents(node_extra_at(id, i), out)
+            i++
+        }
+    }
+
+    // ── tipos: apagar minerais ──────────────────────────────────────
+
+    forge _erase_depth: stone = 0
+
+    // troca cada nome de mineral no texto do tipo pelo base apagado
+    // ("Array<UserId>" -> "Array<stone>", "vein(UserId)->Email" ...)
+    vein erase_text(t: obsidian) -> obsidian {
+        if (t == null) { return t }
+        if (ofs_array_len(_m_names) == 0) { return t }
+        forge out = ""
+        forge n = ofs_str_len(t)
+        forge i = 0
+        forge changed = false
+        while (i < n) {
+            forge c = ofs_str_char_at(t, i)
+            if (is_ident_char(c)) {
+                forge j = i
+                while (j < n && is_ident_char(ofs_str_char_at(t, j))) { j++ }
+                forge w = ofs_str_substr(t, i, j - i)
+                forge mi = mineral_index(w)
+                if (mi >= 0) {
+                    out = out + mineral_base(mi)
+                    changed = true
+                } else {
+                    out = out + w
+                }
+                i = j
+            } else {
+                out = out + ofs_str_substr(t, i, 1)
+                i++
+            }
+        }
+        if (!changed) { return t }
+        return out
+    }
+
+    vein mineral_base(mi: stone) -> obsidian {
+        forge b: obsidian = ofs_array_get(_m_base, mi)
+        if (!ofs_str_eq(b, "")) { return b }
+        // ainda nao resolvido (mineral de mineral): resolve agora
+        if (_erase_depth > 32) { return "stone" }
+        _erase_depth++
+        forge raw: obsidian = ofs_array_get(_m_raw, mi)
+        forge r = erase_text(raw)
+        _erase_depth--
+        ofs_array_set(_m_base, mi, r)
+        return r
+    }
+
+    // regras de um mineral, as do mineral base primeiro
+    vein mineral_rules(mi: stone, out: Array<stone>, depth: stone) -> void {
+        if (mi < 0 || depth > 32) { return }
+        forge par: stone = ofs_array_get(_m_parent, mi)
+        if (par >= 0) { mineral_rules(par, out, depth + 1) }
+        forge i = 0
+        while (i < ofs_array_len(_r_owner)) {
+            forge o: stone = ofs_array_get(_r_owner, i)
+            if (o == mi) { ofs_array_push(out, i) }
+            i++
+        }
+    }
+
+    vein rules_of(mi: stone) -> Array<stone> {
+        forge out: Array<stone> = []
+        mineral_rules(mi, out, 0)
+        return out
+    }
+
+    // "UserId" -> indice do mineral se o tipo declarado e exatamente um mineral
+    vein type_mineral(type_id: stone) -> stone {
+        if (type_id < 0) { return -1 }
+        if (node_kind_of(type_id) != NK_TYPE) { return -1 }
+        return mineral_index(node_val_of(type_id))
+    }
+
+    vein type_raw(type_id: stone) -> obsidian {
+        if (type_id < 0) { return "" }
+        return type_node_text(type_id)
+    }
+
+    // Fault Refract: "UserId = stone grain value > 0" para um no de tipo
+    // apagado (a regra faz parte do tipo: mudar a grain muda a assinatura)
+    vein type_note(type_id: stone) -> obsidian {
+        forge i = ofs_array_len(_note_ids) - 1
+        while (i >= 0) {
+            forge nid: stone = ofs_array_get(_note_ids, i)
+            if (nid == type_id) { return ofs_array_get(_note_txt, i) }
+            i--
+        }
+        return ""
+    }
+
+    vein mineral_doc(mi: stone) -> obsidian {
+        forge out = ofs_array_get(_m_names, mi) + " = " + ofs_array_get(_m_raw, mi)
+        forge i = 0
+        while (i < ofs_array_len(_r_owner)) {
+            forge o: stone = ofs_array_get(_r_owner, i)
+            if (o == mi) { out = out + " grain " + ofs_array_get(_r_text, i) }
+            i++
+        }
+        forge par: stone = ofs_array_get(_m_parent, mi)
+        if (par >= 0) { out = out + " {" + mineral_doc(par) + "}" }
+        return out
+    }
+
+    // apaga os minerais de todos os nos de tipo/cast do programa
+    vein erase_pool() -> void {
+        forge n = node_pool_len()
+        forge i = _erase_from
+        while (i < n) {
+            forge k = node_kind_of(i)
+            if (k == NK_TYPE || k == NK_TYPE_FN || k == NK_CAST) {
+                forge v: obsidian = node_val_of(i)
+                forge e = erase_text(v)
+                if (!ofs_str_eq(e, v)) {
+                    forge nd: Node = node_get(i)
+                    nd.val = e
+                    node_set(i, nd)
+                    if (k == NK_TYPE) {
+                        forge note = ""
+                        forge mi = mineral_index(v)
+                        if (mi >= 0) { note = mineral_doc(mi) } else { note = v }
+                        ofs_array_push(_note_ids, i)
+                        ofs_array_push(_note_txt, note)
+                    }
+                }
+            }
+            i++
+        }
+    }
+
+    // ── grain: forma curta ─────────────────────────────────────────
+    // na grain, uma chamada sem `value` nos argumentos recebe `value` como
+    // 1o argumento; `contains`/`len` sem vein com esse nome sao as do texto
+
+    vein grain_shorthand(id: stone) -> void {
+        if (id < 0) { return }
+        forge k = node_kind_of(id)
+        if (k == NK_CALL && node_child(id, 0) < 0) {
+            forge has_value = false
+            forge i = 0
+            while (i < node_extra_len(id)) {
+                if (mentions(node_extra_at(id, i), "value")) { has_value = true }
+                i++
+            }
+            forge nd: Node = node_get(id)
+            if (!has_value) {
+                forge args: Array<stone> = []
+                ofs_array_push(args, mk_ident("value", nd.line, nd.col))
+                forge j = 0
+                while (j < ofs_array_len(nd.extra)) {
+                    ofs_array_push(args, ofs_array_get(nd.extra, j))
+                    j++
+                }
+                nd.extra = args
+            }
+            if (list_index(_v_keys, nd.val) < 0) {
+                if (ofs_str_eq(nd.val, "contains")) { nd.val = "ofs_str_contains" }
+                if (ofs_str_eq(nd.val, "len")) { nd.val = "ofs_str_len" }
+            }
+            node_set(id, nd)
+        }
+        grain_shorthand(node_child(id, 0))
+        grain_shorthand(node_child(id, 1))
+        grain_shorthand(node_child(id, 2))
+        grain_shorthand(node_child(id, 3))
+        forge e = 0
+        while (e < node_extra_len(id)) {
+            grain_shorthand(node_extra_at(id, e))
+            e++
+        }
+    }
+
+    // ── avaliador estatico ─────────────────────────────────────────
+
+    vein env_reset() -> void {
+        _env_names = []
+        _env_k = []
+        _env_i = []
+        _env_s = []
+    }
+
+    vein env_bind(name: obsidian, k: stone, iv: stone, sv: obsidian) -> void {
+        ofs_array_push(_env_names, name)
+        ofs_array_push(_env_k, k)
+        ofs_array_push(_env_i, iv)
+        ofs_array_push(_env_s, sv)
+    }
+
+    vein ev_set(k: stone, iv: stone, sv: obsidian) -> stone {
+        _ev_k = k
+        _ev_i = iv
+        _ev_s = sv
+        return k
+    }
+
+    vein ev_unk() -> stone {
+        return ev_set(EV_UNK, 0, "")
+    }
+
+    vein ev_bool(b: bool) -> stone {
+        if (b) { return ev_set(EV_BOOL, 1, "") }
+        return ev_set(EV_BOOL, 0, "")
+    }
+
+    // texto decimal/hexadecimal de um literal inteiro (-1 em ok = invalido)
+    forge _lit_ok: bool = false
+    vein parse_int_text(s: obsidian) -> stone {
+        _lit_ok = false
+        forge n = ofs_str_len(s)
+        if (n == 0) { return 0 }
+        forge v = 0
+        forge i = 0
+        if (n > 2 && ofs_str_char_at(s, 0) == 48 && (ofs_str_char_at(s, 1) == 120 || ofs_str_char_at(s, 1) == 88)) {
+            i = 2
+            while (i < n) {
+                forge c = ofs_str_char_at(s, i)
+                forge d = -1
+                if (c >= 48 && c <= 57) { d = c - 48 }
+                if (c >= 97 && c <= 102) { d = c - 87 }
+                if (c >= 65 && c <= 70) { d = c - 55 }
+                if (d < 0) { return 0 }
+                v = v * 16 + d
+                i++
+            }
+            _lit_ok = true
+            return v
+        }
+        while (i < n) {
+            forge c2 = ofs_str_char_at(s, i)
+            if (c2 < 48 || c2 > 57) { return 0 }
+            v = v * 10 + (c2 - 48)
+            i++
+        }
+        _lit_ok = true
+        return v
+    }
+
+    vein local_declared(name: obsidian) -> bool {
+        forge i = ofs_array_len(_sc_names) - 1
+        while (i >= _globals_n) {
+            forge s: obsidian = ofs_array_get(_sc_names, i)
+            if (ofs_str_eq(s, name)) { return true }
+            i--
+        }
+        return false
+    }
+
+    vein ev(id: stone) -> stone {
+        if (id < 0) { return ev_unk() }
+        forge k = node_kind_of(id)
+        forge v: obsidian = node_val_of(id)
+        if (k == NK_LIT_INT) {
+            forge iv = parse_int_text(v)
+            if (!_lit_ok) { return ev_unk() }
+            return ev_set(EV_INT, iv, "")
+        }
+        if (k == NK_LIT_BOOL) { return ev_bool(ofs_str_eq(v, "true")) }
+        if (k == NK_LIT_STRING) { return ev_set(EV_STR, 0, v) }
+        if (k == NK_IDENT) {
+            forge ei = list_index(_env_names, v)
+            if (ei >= 0) {
+                return ev_set(ofs_array_get(_env_k, ei), ofs_array_get(_env_i, ei), ofs_array_get(_env_s, ei))
+            }
+            if (_ev_locals && local_declared(v)) { return ev_unk() }
+            forge ki = list_index(_k_names, v)
+            if (ki >= 0) {
+                return ev_set(ofs_array_get(_k_kind, ki), ofs_array_get(_k_int, ki), ofs_array_get(_k_str, ki))
+            }
+            return ev_unk()
+        }
+        if (k == NK_UNARY_OP) {
+            forge uk = ev(node_child(id, 0))
+            if (ofs_str_eq(v, "-") && uk == EV_INT) { return ev_set(EV_INT, 0 - _ev_i, "") }
+            if (ofs_str_eq(v, "~") && uk == EV_INT) { return ev_set(EV_INT, ~_ev_i, "") }
+            if (ofs_str_eq(v, "!") && uk == EV_BOOL) { return ev_bool(_ev_i == 0) }
+            return ev_unk()
+        }
+        if (k == NK_CAST) {
+            forge ck = ev(node_child(id, 0))
+            if (ck == EV_INT && is_int_name(v)) { return ck }
+            return ev_unk()
+        }
+        if (k == NK_CALL && node_child(id, 0) < 0) {
+            if ((ofs_str_eq(v, "ofs_str_contains") || ofs_str_eq(v, "ofs_str_eq")) && node_extra_len(id) == 2) {
+                forge a1 = ev(node_extra_at(id, 0))
+                forge s1 = _ev_s
+                if (a1 != EV_STR) { return ev_unk() }
+                forge a2 = ev(node_extra_at(id, 1))
+                if (a2 != EV_STR) { return ev_unk() }
+                if (ofs_str_eq(v, "ofs_str_eq")) { return ev_bool(ofs_str_eq(s1, _ev_s)) }
+                return ev_bool(ofs_str_contains(s1, _ev_s))
+            }
+            if (ofs_str_eq(v, "ofs_str_len") && node_extra_len(id) == 1) {
+                if (ev(node_extra_at(id, 0)) != EV_STR) { return ev_unk() }
+                return ev_set(EV_INT, ofs_str_len(_ev_s), "")
+            }
+            return ev_unk()
+        }
+        if (k == NK_BIN_OP) {
+            forge lk = ev(node_child(id, 0))
+            forge li = _ev_i
+            forge ls = _ev_s
+            if (ofs_str_eq(v, "&&")) {
+                if (lk == EV_BOOL && li == 0) { return ev_bool(false) }
+                forge rk0 = ev(node_child(id, 1))
+                if (rk0 == EV_BOOL && _ev_i == 0) { return ev_bool(false) }
+                if (lk == EV_BOOL && rk0 == EV_BOOL) { return ev_bool(true) }
+                return ev_unk()
+            }
+            if (ofs_str_eq(v, "||")) {
+                if (lk == EV_BOOL && li != 0) { return ev_bool(true) }
+                forge rk1 = ev(node_child(id, 1))
+                if (rk1 == EV_BOOL && _ev_i != 0) { return ev_bool(true) }
+                if (lk == EV_BOOL && rk1 == EV_BOOL) { return ev_bool(false) }
+                return ev_unk()
+            }
+            forge rk = ev(node_child(id, 1))
+            forge ri = _ev_i
+            forge rs = _ev_s
+            if (lk == EV_UNK || rk == EV_UNK || lk != rk) { return ev_unk() }
+            if (lk == EV_INT) {
+                if (ofs_str_eq(v, "+")) { return ev_set(EV_INT, li + ri, "") }
+                if (ofs_str_eq(v, "-")) { return ev_set(EV_INT, li - ri, "") }
+                if (ofs_str_eq(v, "*")) { return ev_set(EV_INT, li * ri, "") }
+                if (ofs_str_eq(v, "/")) {
+                    if (ri == 0) { return ev_unk() }
+                    return ev_set(EV_INT, li / ri, "")
+                }
+                if (ofs_str_eq(v, "%")) {
+                    if (ri == 0) { return ev_unk() }
+                    return ev_set(EV_INT, li % ri, "")
+                }
+                if (ofs_str_eq(v, "&")) { return ev_set(EV_INT, li & ri, "") }
+                if (ofs_str_eq(v, "|")) { return ev_set(EV_INT, li | ri, "") }
+                if (ofs_str_eq(v, "^")) { return ev_set(EV_INT, li ^ ri, "") }
+                if (ofs_str_eq(v, "<")) { return ev_bool(li < ri) }
+                if (ofs_str_eq(v, "<=")) { return ev_bool(li <= ri) }
+                if (ofs_str_eq(v, ">")) { return ev_bool(li > ri) }
+                if (ofs_str_eq(v, ">=")) { return ev_bool(li >= ri) }
+                if (ofs_str_eq(v, "==")) { return ev_bool(li == ri) }
+                if (ofs_str_eq(v, "!=")) { return ev_bool(li != ri) }
+                return ev_unk()
+            }
+            if (lk == EV_STR) {
+                if (ofs_str_eq(v, "==")) { return ev_bool(ofs_str_eq(ls, rs)) }
+                if (ofs_str_eq(v, "!=")) { return ev_bool(!ofs_str_eq(ls, rs)) }
+                if (ofs_str_eq(v, "+")) { return ev_set(EV_STR, 0, ls + rs) }
+                return ev_unk()
+            }
+            if (lk == EV_BOOL) {
+                if (ofs_str_eq(v, "==")) { return ev_bool(li == ri) }
+                if (ofs_str_eq(v, "!=")) { return ev_bool(li != ri) }
+            }
+            return ev_unk()
+        }
+        return ev_unk()
+    }
+
+    // valor atual do avaliador como texto ("0", "\"abc\"", "true")
+    vein ev_text(k: stone, iv: stone, sv: obsidian) -> obsidian {
+        if (k == EV_INT) { return ofs_stone_to_obsidian(iv) }
+        if (k == EV_BOOL) {
+            if (iv != 0) { return "true" }
+            return "false"
+        }
+        if (k == EV_STR) { return quote_text(sv) }
+        return "?"
+    }
+
+    // avalia a regra com `value` = valor da expressao `arg` (ja avaliada em
+    // _ev_*): 1 = vale, 0 = falha com certeza, -1 = nao da para saber
+    vein rule_holds_with(rule_expr: stone, name: obsidian, k: stone, iv: stone, sv: obsidian) -> stone {
+        forge saved_locals = _ev_locals
+        _ev_locals = false
+        env_reset()
+        env_bind(name, k, iv, sv)
+        forge rk = ev(rule_expr)
+        _ev_locals = saved_locals
+        env_reset()
+        if (rk != EV_BOOL) { return -1 }
+        if (_ev_i != 0) { return 1 }
+        return 0
+    }
+
+    // checagem estatica de um valor (expressao `e`) indo para o mineral `mi`:
+    // true se todas as regras valem com certeza (dispensa a de execucao)
+    vein static_grain(mi: stone, e: stone, line: stone, col: stone, where: obsidian) -> bool {
+        _ev_locals = true
+        forge k = ev(e)
+        _ev_locals = false
+        if (k == EV_UNK) { return false }
+        forge iv = _ev_i
+        forge sv = _ev_s
+        forge rules = rules_of(mi)
+        forge all_ok = true
+        forge i = 0
+        while (i < ofs_array_len(rules)) {
+            forge ri: stone = ofs_array_get(rules, i)
+            forge h = rule_holds_with(ofs_array_get(_r_expr, ri), "value", k, iv, sv)
+            if (h == 0) {
+                contract_error(line, col, "o valor " + ev_text(k, iv, sv) + " " + where + " nao cumpre a grain de '" +
+                    ofs_array_get(_m_names, mi) + "': " + ofs_array_get(_r_text, ri),
+                    "regra em " + ast_src_loc(ofs_array_get(_r_line, ri), ofs_array_get(_r_col, ri)))
+                return true
+            }
+            if (h < 0) { all_ok = false }
+            i++
+        }
+        return all_ok
+    }
+
+    // ── escopo ──────────────────────────────────────────────────────
+
+    vein sc_push() -> void {
+        ofs_array_push(_sc_marks, ofs_array_len(_sc_names))
+    }
+
+    vein sc_pop() -> void {
+        forge n = ofs_array_len(_sc_marks)
+        if (n == 0) { return }
+        forge m: stone = ofs_array_get(_sc_marks, n - 1)
+        ofs_array_pop(_sc_marks)
+        while (ofs_array_len(_sc_names) > m) {
+            ofs_array_pop(_sc_names)
+            ofs_array_pop(_sc_types)
+        }
+    }
+
+    vein sc_declare(name: obsidian, raw_type: obsidian) -> void {
+        ofs_array_push(_sc_names, name)
+        ofs_array_push(_sc_types, raw_type)
+    }
+
+    vein sc_type(name: obsidian) -> obsidian {
+        forge i = ofs_array_len(_sc_names) - 1
+        while (i >= 0) {
+            forge s: obsidian = ofs_array_get(_sc_names, i)
+            if (ofs_str_eq(s, name)) { return ofs_array_get(_sc_types, i) }
+            i--
+        }
+        return ""
+    }
+
+    // mineral do alvo de uma atribuicao (`x` ou `obj.campo`), ou -1
+    vein target_mineral(target: stone) -> stone {
+        forge k = node_kind_of(target)
+        if (k == NK_IDENT) { return mineral_index(sc_type(node_val_of(target))) }
+        if (k == NK_FIELD) {
+            forge base = node_child(target, 0)
+            if (node_kind_of(base) != NK_IDENT) { return -1 }
+            forge owner = sc_type(node_val_of(base))
+            if (ofs_str_eq(owner, "")) { return -1 }
+            forge fi = list_index(_f_keys, owner + "." + node_val_of(target))
+            if (fi < 0) { return -1 }
+            return ofs_array_get(_f_min, fi)
+        }
+        return -1
+    }
+
+    // ── mensagens e checagens de execucao ───────────────────────────
+
+    // texto de um valor em execucao, pelo tipo apagado; -1 = sem texto
+    vein fmt_value(e: stone, t: obsidian, line: stone, col: stone) -> stone {
+        if (is_int_name(t)) {
+            forge iv = e
+            if (!ofs_str_eq(t, "stone")) { iv = mk_cast("stone", e, line, col) }
+            return mk_call1("ofs_stone_to_obsidian", iv, line, col)
+        }
+        if (ofs_str_eq(t, "crystal") || ofs_str_eq(t, "f64") || ofs_str_eq(t, "f32")) {
+            forge cv = e
+            if (!ofs_str_eq(t, "crystal")) { cv = mk_cast("crystal", e, line, col) }
+            return mk_call1("ofs_crystal_to_obsidian", cv, line, col)
+        }
+        if (ofs_str_eq(t, "obsidian")) {
+            return mk_bin("+", mk_bin("+", mk_str("\"", line, col), e, line, col), mk_str("\"", line, col), line, col)
+        }
+        if (ofs_str_eq(t, "bool")) { return mk_call1("__ofs_bool_text", e, line, col) }
+        return -1
+    }
+
+    // `if (!(cond)) { __ofs_contract_fail(msg) }`
+    vein mk_check(cond: stone, msg: stone, line: stone, col: stone) -> stone {
+        forge neg = node_new(NK_UNARY_OP, "!", line, col)
+        node_set_child(neg, 0, cond)
+        forge body = mk_block(line, col)
+        node_add_extra(body, mk_call1("__ofs_contract_fail", msg, line, col))
+        forge n = node_new(NK_IF, "", line, col)
+        node_set_child(n, 0, neg)
+        node_set_child(n, 1, body)
+        node_set_child(n, 2, -1)
+        return n
+    }
+
+    // checagens de execucao de um valor indo para o mineral `mi`; `target`
+    // e a expressao do valor (copiada em cada uso)
+    vein grain_checks(mi: stone, target: stone, where: obsidian, line: stone, col: stone, out: Array<stone>) -> void {
+        forge rules = rules_of(mi)
+        forge base = mineral_base(mi)
+        forge i = 0
+        while (i < ofs_array_len(rules)) {
+            forge ri: stone = ofs_array_get(rules, i)
+            sub_reset()
+            sub_add("value", target)
+            forge cond = clone_sub(ofs_array_get(_r_expr, ri))
+            sub_reset()
+            forge head = "[CONTRATO VIOLADO " + ast_src_loc(line, col) + "]: grain de '" + ofs_array_get(_m_names, mi) +
+                "' falhou " + where + ": " + ofs_array_get(_r_text, ri) + " (value = "
+            forge msg = mk_str(head, line, col)
+            forge fv = fmt_value(clone(target), base, line, col)
+            if (fv >= 0) {
+                msg = mk_bin("+", mk_bin("+", msg, fv, line, col), mk_str(")", line, col), line, col)
+            } else {
+                msg = mk_str(head + "?)", line, col)
+            }
+            ofs_array_push(out, mk_check(cond, msg, line, col))
+            i++
+        }
+    }
+
+    // nome mostrado de um identificador da regra (snapshot/resultado)
+    vein shown_name(nm: obsidian) -> obsidian {
+        if (ofs_str_eq(nm, "__settle_result")) { return "result" }
+        forge si = list_index(_cv_snap_to, nm)
+        if (si >= 0) { return ofs_array_get(_cv_snap_from, si) }
+        return nm
+    }
+
+    // tipo (apagado) de um identificador da regra; "" se nao for parametro
+    vein rule_ident_type(nm: obsidian) -> obsidian {
+        if (ofs_str_eq(nm, "__settle_result")) {
+            if (_cv_ret_type < 0) { return "" }
+            return erase_text(type_raw(_cv_ret_type))
+        }
+        forge orig = shown_name(nm)
+        forge pi = list_index(_cv_pnames, orig)
+        if (pi < 0) { return "" }
+        return erase_text(ofs_array_get(_cv_ptypes, pi))
+    }
+
+    // checagem de bearing/settle ja com a condicao final (cond)
+    vein rule_check(kind: obsidian, cond: stone, text: obsidian, line: stone, col: stone) -> stone {
+        forge head = "[CONTRATO VIOLADO " + ast_src_loc(line, col) + "]: " + kind + " de '" + vein_display_name(_cv_name) + "' falhou: " + text
+        forge names: Array<obsidian> = []
+        collect_idents(cond, names)
+        forge msg = -1
+        forge first = true
+        forge i = 0
+        while (i < ofs_array_len(names)) {
+            forge nm: obsidian = ofs_array_get(names, i)
+            forge t = rule_ident_type(nm)
+            if (!ofs_str_eq(t, "")) {
+                forge fv = fmt_value(mk_ident(nm, line, col), t, line, col)
+                if (fv >= 0) {
+                    forge sep = ", "
+                    if (first) { sep = " (" }
+                    first = false
+                    if (msg < 0) { msg = mk_str(head + sep + shown_name(nm) + " = ", line, col) }
+                    else { msg = mk_bin("+", msg, mk_str(sep + shown_name(nm) + " = ", line, col), line, col) }
+                    msg = mk_bin("+", msg, fv, line, col)
+                }
+            }
+            i++
+        }
+        if (msg < 0) { msg = mk_str(head, line, col) }
+        else { msg = mk_bin("+", msg, mk_str(")", line, col), line, col) }
+        return mk_check(cond, msg, line, col)
+    }
+
+    // ── corpo da vein ───────────────────────────────────────────────
+
+    vein is_assign_op(op: obsidian) -> bool {
+        return ofs_str_eq(op, "=") || ofs_str_eq(op, "+=") || ofs_str_eq(op, "-=") || ofs_str_eq(op, "*=") ||
+            ofs_str_eq(op, "/=") || ofs_str_eq(op, "%=")
+    }
+
+    // o parametro e alterado no corpo? (settle compara com o valor de entrada)
+    vein assigns(id: stone, name: obsidian) -> bool {
+        if (id < 0) { return false }
+        forge k = node_kind_of(id)
+        if (k == NK_BIN_OP && is_assign_op(node_val_of(id))) {
+            forge t = node_child(id, 0)
+            if (node_kind_of(t) == NK_IDENT && ofs_str_eq(node_val_of(t), name)) { return true }
+        }
+        if (k == NK_POST_OP) {
+            forge t2 = node_child(id, 0)
+            if (node_kind_of(t2) == NK_IDENT && ofs_str_eq(node_val_of(t2), name) && !ofs_str_eq(node_val_of(id), "?")) { return true }
+        }
+        if (k == NK_LAMBDA) { return false }
+        if (assigns(node_child(id, 0), name) || assigns(node_child(id, 1), name)) { return true }
+        if (assigns(node_child(id, 2), name) || assigns(node_child(id, 3), name)) { return true }
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            if (assigns(node_extra_at(id, i), name)) { return true }
+            i++
+        }
+        return false
+    }
+
+    // checagens do settle e do retorno de mineral sobre `__settle_result`
+    vein return_checks(line: stone, col: stone, out: Array<stone>) -> void {
+        if (_cv_ret_min >= 0 && !_cv_void) {
+            grain_checks(_cv_ret_min, mk_ident("__settle_result", line, col), "no retorno de '" + vein_display_name(_cv_name) + "'", line, col, out)
+        }
+        forge i = 0
+        while (i < ofs_array_len(_cv_settles)) {
+            forge s: stone = ofs_array_get(_cv_settles, i)
+            sub_reset()
+            sub_add("result", mk_ident("__settle_result", line, col))
+            forge j = 0
+            while (j < ofs_array_len(_cv_snap_from)) {
+                sub_add(ofs_array_get(_cv_snap_from, j), mk_ident(ofs_array_get(_cv_snap_to, j), line, col))
+                j++
+            }
+            forge expr = node_child(s, 0)
+            forge cond = clone_sub(expr)
+            sub_reset()
+            ofs_array_push(out, rule_check("settle", cond, expr_text(expr), node_line_of(s), node_col_of(s)))
+            i++
+        }
+    }
+
+    vein node_col_of(id: stone) -> stone {
+        forge n: Node = node_get(id)
+        return n.col
+    }
+
+    // checagem estatica do settle/retorno de mineral com `return literal`
+    vein static_return(e: stone, line: stone, col: stone) -> bool {
+        forge all_ok = true
+        if (_cv_ret_min >= 0) {
+            if (!static_grain(_cv_ret_min, e, node_line_of(e), node_col_of(e), "no retorno de '" + vein_display_name(_cv_name) + "'")) { all_ok = false }
+        }
+        _ev_locals = true
+        forge k = ev(e)
+        _ev_locals = false
+        if (k == EV_UNK) { return false }
+        forge iv = _ev_i
+        forge sv = _ev_s
+        forge i = 0
+        while (i < ofs_array_len(_cv_settles)) {
+            forge s: stone = ofs_array_get(_cv_settles, i)
+            forge expr = node_child(s, 0)
+            // so settle que depende apenas de `result` (e constantes)
+            forge names: Array<obsidian> = []
+            collect_idents(expr, names)
+            forge only_result = true
+            forge j = 0
+            while (j < ofs_array_len(names)) {
+                forge nm: obsidian = ofs_array_get(names, j)
+                if (!ofs_str_eq(nm, "result") && (list_index(_cv_pnames, nm) >= 0 || list_index(_k_names, nm) < 0)) { only_result = false }
+                j++
+            }
+            if (only_result) {
+                forge h = rule_holds_with(expr, "result", k, iv, sv)
+                if (h == 0) {
+                    contract_error(line, col, "o retorno " + ev_text(k, iv, sv) + " de '" + vein_display_name(_cv_name) + "' viola o settle " + expr_text(expr),
+                        "regra em " + ast_src_loc(node_line_of(s), node_col_of(s)))
+                }
+                if (h != 1) { all_ok = false }
+            } else {
+                all_ok = false
+            }
+            i++
+        }
+        return all_ok
+    }
+
+    vein needs_return_rewrite() -> bool {
+        return ofs_array_len(_cv_settles) > 0 || (_cv_ret_min >= 0 && !_cv_void)
+    }
+
+    // `return e` -> `{ forge __settle_result: R = e; checagens; return __settle_result }`
+    vein rewrite_return(ret_id: stone) -> stone {
+        forge line = node_line_of(ret_id)
+        forge col = node_col_of(ret_id)
+        forge e = node_child(ret_id, 0)
+        if (e >= 0) {
+            if (static_return(e, line, col)) { return ret_id }
+        }
+        if (!_checks_on) { return ret_id }
+        forge blk = mk_block(line, col)
+        if (e >= 0 && !_cv_void) {
+            forge decl = node_new(NK_VAR_DECL, "__settle_result", line, col)
+            node_set_child(decl, 0, clone(_cv_ret_type))
+            node_set_child(decl, 1, e)
+            node_add_extra(blk, decl)
+            forge checks: Array<stone> = []
+            return_checks(line, col, checks)
+            forge i = 0
+            while (i < ofs_array_len(checks)) {
+                node_add_extra(blk, ofs_array_get(checks, i))
+                i++
+            }
+            node_set_child(ret_id, 0, mk_ident("__settle_result", line, col))
+            node_add_extra(blk, ret_id)
+            return blk
+        }
+        // vein sem retorno: settle antes de sair
+        forge checks2: Array<stone> = []
+        return_checks(line, col, checks2)
+        forge j = 0
+        while (j < ofs_array_len(checks2)) {
+            node_add_extra(blk, ofs_array_get(checks2, j))
+            j++
+        }
+        node_add_extra(blk, ret_id)
+        return blk
+    }
+
+    // checagem estatica de chamadas a veins com contrato (argumentos
+    // literais ou constantes), em qualquer expressao
+    vein static_call(id: stone) -> void {
+        forge name: obsidian = node_val_of(id)
+        forge vi = list_index(_v_keys, name)
+        if (vi < 0) { return }
+        if (local_declared(name)) { return }
+        forge decl: stone = ofs_array_get(_v_decl, vi)
+        forge params = node_child(decl, 0)
+        forge np = node_extra_len(params)
+        if (np != node_extra_len(id)) { return }
+        // argumentos conhecidos
+        forge ak: Array<stone> = []
+        forge ai: Array<stone> = []
+        forge asv: Array<obsidian> = []
+        forge i = 0
+        while (i < np) {
+            _ev_locals = true
+            forge k = ev(node_extra_at(id, i))
+            _ev_locals = false
+            ofs_array_push(ak, k)
+            ofs_array_push(ai, _ev_i)
+            ofs_array_push(asv, _ev_s)
+            // parametro de mineral com argumento conhecido
+            forge pid = node_extra_at(params, i)
+            forge pmi = type_mineral(node_child(pid, 0))
+            if (pmi >= 0 && k != EV_UNK) {
+                forge an = node_extra_at(id, i)
+                static_grain(pmi, an, node_line_of(an), node_col_of(an), "no parametro '" + node_val_of(pid) + "' de '" + vein_display_name(name) + "'")
+            }
+            i++
+        }
+        forge cb = node_child(decl, 3)
+        if (cb < 0) { return }
+        forge c = 0
+        while (c < node_extra_len(cb)) {
+            forge cn = node_extra_at(cb, c)
+            if (ofs_str_eq(node_val_of(cn), "bearing")) {
+                env_reset()
+                forge known = ""
+                forge j = 0
+                while (j < np) {
+                    forge pnm: obsidian = node_val_of(node_extra_at(params, j))
+                    forge kk: stone = ofs_array_get(ak, j)
+                    env_bind(pnm, kk, ofs_array_get(ai, j), ofs_array_get(asv, j))
+                    j++
+                }
+                forge expr = node_child(cn, 0)
+                forge rk = ev(expr)
+                if (rk == EV_BOOL && _ev_i == 0) {
+                    forge names: Array<obsidian> = []
+                    collect_idents(expr, names)
+                    forge m = 0
+                    while (m < ofs_array_len(names)) {
+                        forge nm: obsidian = ofs_array_get(names, m)
+                        forge ix = list_index(_env_names, nm)
+                        if (ix >= 0) {
+                            forge xk: stone = ofs_array_get(_env_k, ix)
+                            if (xk != EV_UNK) {
+                                if (!ofs_str_eq(known, "")) { known = known + ", " }
+                                known = known + nm + " = " + ev_text(xk, ofs_array_get(_env_i, ix), ofs_array_get(_env_s, ix))
+                            }
+                        }
+                        m++
+                    }
+                    if (!ofs_str_eq(known, "")) { known = " (" + known + ")" }
+                    contract_error(node_line_of(id), node_col_of(id), "a chamada de '" + vein_display_name(name) + "' viola o bearing " + expr_text(expr) + known,
+                        "regra em " + ast_src_loc(node_line_of(cn), node_col_of(cn)))
+                }
+                env_reset()
+            }
+            c++
+        }
+    }
+
+    // percorre uma expressao procurando chamadas (checagem estatica)
+    vein walk_expr(id: stone) -> void {
+        if (id < 0) { return }
+        forge k = node_kind_of(id)
+        if (k == NK_LAMBDA) { return }
+        if (k == NK_CALL && node_child(id, 0) < 0) { static_call(id) }
+        walk_expr(node_child(id, 0))
+        walk_expr(node_child(id, 1))
+        walk_expr(node_child(id, 2))
+        walk_expr(node_child(id, 3))
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            walk_expr(node_extra_at(id, i))
+            i++
+        }
+    }
+
+    // um comando; devolve o comando (talvez trocado) e poe em `after` as
+    // checagens que vem logo depois dele
+    vein walk_stmt(id: stone, after: Array<stone>) -> stone {
+        if (id < 0) { return id }
+        forge k = node_kind_of(id)
+        forge line = node_line_of(id)
+        forge col = node_col_of(id)
+        if (k == NK_BLOCK) {
+            walk_block(id)
+            return id
+        }
+        if (k == NK_VAR_DECL || k == NK_CONST_DECL) {
+            forge init = node_child(id, 1)
+            walk_expr(init)
+            forge tnode = node_child(id, 0)
+            forge name: obsidian = node_val_of(id)
+            sc_declare(name, type_raw(tnode))
+            forge mi = type_mineral(tnode)
+            if (mi >= 0 && init >= 0) {
+                forge proven = static_grain(mi, init, node_line_of(init), node_col_of(init), "em '" + name + "'")
+                if (!proven && _checks_on) { grain_checks(mi, mk_ident(name, line, col), "em '" + name + "'", line, col, after) }
+            }
+            return id
+        }
+        if (k == NK_IF) {
+            walk_expr(node_child(id, 0))
+            walk_sub(node_child(id, 1))
+            forge el = node_child(id, 2)
+            if (el >= 0) {
+                if (node_kind_of(el) == NK_BLOCK) { walk_sub(el) }
+                else {
+                    forge a2: Array<stone> = []
+                    forge el2 = walk_stmt(el, a2)
+                    node_set_child(id, 2, wrap_after(el2, a2))
+                }
+            }
+            return id
+        }
+        if (k == NK_WHILE) {
+            walk_expr(node_child(id, 0))
+            walk_sub(node_child(id, 1))
+            return id
+        }
+        if (k == NK_CYCLE_C) {
+            sc_push()
+            forge a3: Array<stone> = []
+            walk_stmt(node_child(id, 0), a3)
+            walk_expr(node_child(id, 1))
+            walk_expr(node_child(id, 2))
+            walk_sub(node_child(id, 3))
+            sc_pop()
+            return id
+        }
+        if (k == NK_CYCLE_RANGE) {
+            walk_expr(node_child(id, 0))
+            sc_push()
+            sc_declare(node_val_of(id), "")
+            walk_sub(node_child(id, 1))
+            sc_pop()
+            return id
+        }
+        if (k == NK_TREMOR) {
+            walk_sub(node_child(id, 0))
+            sc_push()
+            forge cv = node_child(id, 1)
+            if (cv >= 0) { sc_declare(node_val_of(cv), "") }
+            walk_sub(node_child(id, 2))
+            sc_pop()
+            return id
+        }
+        if (k == NK_ANCHOR) {
+            walk_expr(node_child(id, 0))
+            return id
+        }
+        if (k == NK_RETURN) {
+            walk_expr(node_child(id, 0))
+            if (needs_return_rewrite()) { return rewrite_return(id) }
+            return id
+        }
+        // comando-expressao: atribuicao a variavel/campo de mineral
+        walk_expr(id)
+        if (k == NK_BIN_OP && is_assign_op(node_val_of(id))) {
+            forge target = node_child(id, 0)
+            forge tmi = target_mineral(target)
+            if (tmi >= 0) {
+                forge where = "em '" + expr_text(target) + "'"
+                forge proven2 = false
+                if (ofs_str_eq(node_val_of(id), "=")) {
+                    forge rhs = node_child(id, 1)
+                    proven2 = static_grain(tmi, rhs, node_line_of(rhs), node_col_of(rhs), where)
+                }
+                if (!proven2 && _checks_on) { grain_checks(tmi, target, where, line, col, after) }
+            }
+        }
+        if (k == NK_POST_OP && !ofs_str_eq(node_val_of(id), "?")) {
+            forge t2 = node_child(id, 0)
+            forge pmi = target_mineral(t2)
+            if (pmi >= 0 && _checks_on) { grain_checks(pmi, t2, "em '" + expr_text(t2) + "'", line, col, after) }
+        }
+        return id
+    }
+
+    // comando + checagens -> bloco (quando nao ha lista para inserir)
+    vein wrap_after(stmt: stone, after: Array<stone>) -> stone {
+        if (ofs_array_len(after) == 0) { return stmt }
+        forge b = mk_block(node_line_of(stmt), node_col_of(stmt))
+        node_add_extra(b, stmt)
+        forge i = 0
+        while (i < ofs_array_len(after)) {
+            node_add_extra(b, ofs_array_get(after, i))
+            i++
+        }
+        return b
+    }
+
+    vein walk_sub(id: stone) -> void {
+        if (id < 0) { return }
+        if (node_kind_of(id) == NK_BLOCK) {
+            walk_block(id)
+            return
+        }
+        forge a: Array<stone> = []
+        walk_stmt(id, a)
+    }
+
+    vein walk_block(id: stone) -> void {
+        sc_push()
+        forge nd: Node = node_get(id)
+        forge out: Array<stone> = []
+        forge changed = false
+        forge i = 0
+        forge n = ofs_array_len(nd.extra)
+        while (i < n) {
+            forge s: stone = ofs_array_get(nd.extra, i)
+            forge after: Array<stone> = []
+            forge s2 = walk_stmt(s, after)
+            if (s2 != s) { changed = true }
+            ofs_array_push(out, s2)
+            forge j = 0
+            while (j < ofs_array_len(after)) {
+                ofs_array_push(out, ofs_array_get(after, j))
+                changed = true
+                j++
+            }
+            i++
+        }
+        sc_pop()
+        if (changed) {
+            forge nd2: Node = node_get(id)
+            nd2.extra = out
+            node_set(id, nd2)
+        }
+    }
+
+    // ── uma vein ────────────────────────────────────────────────────
+
+    vein process_vein(decl: stone, key: obsidian) -> void {
+        _cv_name = key
+        forge params = node_child(decl, 0)
+        forge ret = node_child(decl, 1)
+        forge body = node_child(decl, 2)
+        forge cb = node_child(decl, 3)
+        _cv_ret_type = ret
+        _cv_ret_min = type_mineral(ret)
+        _cv_void = ret < 0 || ofs_str_eq(type_raw(ret), "void")
+        _cv_settles = []
+        _cv_pnames = []
+        _cv_ptypes = []
+        _cv_snap_from = []
+        _cv_snap_to = []
+        forge bearings: Array<stone> = []
+        forge has_param_min = false
+        forge np = node_extra_len(params)
+        forge i = 0
+        while (i < np) {
+            forge pid = node_extra_at(params, i)
+            ofs_array_push(_cv_pnames, node_val_of(pid))
+            ofs_array_push(_cv_ptypes, type_raw(node_child(pid, 0)))
+            if (type_mineral(node_child(pid, 0)) >= 0) { has_param_min = true }
+            i++
+        }
+        if (cb >= 0) {
+            forge c = 0
+            while (c < node_extra_len(cb)) {
+                forge cn = node_extra_at(cb, c)
+                forge expr = node_child(cn, 0)
+                if (ofs_str_eq(node_val_of(cn), "bearing")) {
+                    if (mentions(expr, "result") && list_index(_cv_pnames, "result") < 0) {
+                        contract_error(node_line_of(cn), node_col_of(cn), "'result' so vale no settle (o bearing e conferido antes de a vein rodar)",
+                            "dica: use 'settle' para regras sobre o resultado")
+                    }
+                    ofs_array_push(bearings, cn)
+                } else {
+                    if (_cv_void && mentions(expr, "result")) {
+                        contract_error(node_line_of(cn), node_col_of(cn), "settle com 'result' em vein sem retorno ('" + vein_display_name(key) + "')",
+                            "dica: declare o tipo de retorno (-> T) ou tire 'result' da regra")
+                    }
+                    ofs_array_push(_cv_settles, cn)
+                }
+                c++
+            }
+        }
+        if (body < 0) { return }
+        if (ofs_array_len(bearings) == 0 && ofs_array_len(_cv_settles) == 0 && !has_param_min && _cv_ret_min < 0 && ofs_array_len(_m_names) == 0) {
+            // sem contrato e sem mineral: so a checagem estatica das chamadas
+            sc_push()
+            forge q = 0
+            while (q < np) {
+                sc_declare(ofs_array_get(_cv_pnames, q), ofs_array_get(_cv_ptypes, q))
+                q++
+            }
+            walk_block(body)
+            sc_pop()
+            return
+        }
+        // snapshot dos parametros alterados no corpo e citados num settle
+        forge prefix: Array<stone> = []
+        forge line = node_line_of(decl)
+        forge col = node_col_of(decl)
+        if (_checks_on) {
+            forge s = 0
+            while (s < np) {
+                forge pnm: obsidian = ofs_array_get(_cv_pnames, s)
+                forge cited = false
+                forge t = 0
+                while (t < ofs_array_len(_cv_settles)) {
+                    if (mentions(node_child(ofs_array_get(_cv_settles, t), 0), pnm)) { cited = true }
+                    t++
+                }
+                if (cited && assigns(body, pnm)) {
+                    forge snap = "__settle_in_" + pnm
+                    ofs_array_push(_cv_snap_from, pnm)
+                    ofs_array_push(_cv_snap_to, snap)
+                    forge sd = node_new(NK_VAR_DECL, snap, line, col)
+                    node_set_child(sd, 0, clone(node_child(node_extra_at(params, s), 0)))
+                    node_set_child(sd, 1, mk_ident(pnm, line, col))
+                    ofs_array_push(prefix, sd)
+                }
+                s++
+            }
+            // parametros de mineral e bearings na entrada
+            forge p = 0
+            while (p < np) {
+                forge pid2 = node_extra_at(params, p)
+                forge ptn = node_child(pid2, 0)
+                forge pmi = type_mineral(ptn)
+                if (pmi >= 0) {
+                    grain_checks(pmi, mk_ident(node_val_of(pid2), node_line_of(ptn), node_col_of(ptn)),
+                        "no parametro '" + node_val_of(pid2) + "' de '" + vein_display_name(key) + "'", node_line_of(ptn), node_col_of(ptn), prefix)
+                }
+                p++
+            }
+            forge b = 0
+            while (b < ofs_array_len(bearings)) {
+                forge bn: stone = ofs_array_get(bearings, b)
+                forge bexpr = node_child(bn, 0)
+                ofs_array_push(prefix, rule_check("bearing", clone(bexpr), expr_text(bexpr), node_line_of(bn), node_col_of(bn)))
+                b++
+            }
+        }
+        // corpo: params no escopo
+        sc_push()
+        forge q2 = 0
+        while (q2 < np) {
+            sc_declare(ofs_array_get(_cv_pnames, q2), ofs_array_get(_cv_ptypes, q2))
+            q2++
+        }
+        walk_block(body)
+        sc_pop()
+        // vein sem retorno com settle: confere tambem ao cair no fim
+        if (_checks_on && _cv_void && ofs_array_len(_cv_settles) > 0) {
+            forge bl = node_extra_len(body)
+            forge last = -1
+            if (bl > 0) { last = node_extra_at(body, bl - 1) }
+            if (last < 0 || node_kind_of(last) != NK_RETURN) {
+                forge endc: Array<stone> = []
+                return_checks(line, col, endc)
+                forge e = 0
+                while (e < ofs_array_len(endc)) {
+                    node_add_extra(body, ofs_array_get(endc, e))
+                    e++
+                }
+            }
+        }
+        if (ofs_array_len(prefix) > 0) {
+            forge bd: Node = node_get(body)
+            forge nx: Array<stone> = []
+            forge u = 0
+            while (u < ofs_array_len(prefix)) {
+                ofs_array_push(nx, ofs_array_get(prefix, u))
+                u++
+            }
+            forge w = 0
+            while (w < ofs_array_len(bd.extra)) {
+                ofs_array_push(nx, ofs_array_get(bd.extra, w))
+                w++
+            }
+            bd.extra = nx
+            node_set(body, bd)
+        }
+    }
+
+    // ── registro ────────────────────────────────────────────────────
+
+    vein reset() -> void {
+        _errors = 0
+        _m_names = []
+        _m_raw = []
+        _m_base = []
+        _m_parent = []
+        _m_line = []
+        _m_col = []
+        _m_doc = []
+        _r_owner = []
+        _r_expr = []
+        _r_text = []
+        _r_line = []
+        _r_col = []
+        _v_keys = []
+        _v_decl = []
+        _k_names = []
+        _k_kind = []
+        _k_int = []
+        _k_str = []
+        _f_keys = []
+        _f_min = []
+        _sc_names = []
+        _sc_types = []
+        _sc_marks = []
+        _globals_n = 0
+        env_reset()
+        sub_reset()
+    }
+
+    // nome com o prefixo do namespace/impl (o parser pode ja ter posto)
+    vein member_key(prefix: obsidian, name: obsidian) -> obsidian {
+        forge pre = prefix + "__"
+        if (ofs_str_len(name) > ofs_str_len(pre) && ofs_str_eq(ofs_str_substr(name, 0, ofs_str_len(pre)), pre)) { return name }
+        return pre + name
+    }
+
+    vein register_vein(key: obsidian, decl: stone) -> void {
+        ofs_array_push(_v_keys, key)
+        ofs_array_push(_v_decl, decl)
+    }
+
+    vein register_const(decl: stone) -> void {
+        forge init = node_child(decl, 1)
+        if (init < 0) { return }
+        forge k = ev(init)
+        if (k == EV_UNK) { return }
+        ofs_array_push(_k_names, node_val_of(decl))
+        ofs_array_push(_k_kind, k)
+        ofs_array_push(_k_int, _ev_i)
+        ofs_array_push(_k_str, _ev_s)
+    }
+
+    vein register_mineral(id: stone) -> void {
+        forge name: obsidian = node_val_of(id)
+        forge line = node_line_of(id)
+        forge col = node_col_of(id)
+        if (mineral_index(name) >= 0) {
+            contract_error(line, col, "mineral '" + name + "' declarado duas vezes", "")
+            return
+        }
+        forge base_id = node_child(id, 0)
+        ofs_array_push(_m_names, name)
+        ofs_array_push(_m_raw, type_raw(base_id))
+        ofs_array_push(_m_base, "")
+        ofs_array_push(_m_parent, -1)
+        ofs_array_push(_m_line, line)
+        ofs_array_push(_m_col, col)
+        ofs_array_push(_m_doc, "")
+        forge mi = ofs_array_len(_m_names) - 1
+        forge i = 0
+        while (i < node_extra_len(id)) {
+            forge g = node_extra_at(id, i)
+            forge expr = node_child(g, 0)
+            ofs_array_push(_r_owner, mi)
+            ofs_array_push(_r_expr, expr)
+            ofs_array_push(_r_text, expr_text(expr))
+            ofs_array_push(_r_line, node_line_of(g))
+            ofs_array_push(_r_col, node_col_of(g))
+            i++
+        }
+    }
+
+    vein is_named_type(root: stone, name: obsidian) -> bool {
+        forge i = 0
+        while (i < node_extra_len(root)) {
+            forge c = node_extra_at(root, i)
+            forge k = node_kind_of(c)
+            if ((k == NK_MONOLITH || k == NK_STRATA) && ofs_str_eq(node_val_of(c), name)) { return true }
+            i++
+        }
+        return false
+    }
+
+    vein builtin_type(t: obsidian) -> bool {
+        return is_int_name(t) || ofs_str_eq(t, "crystal") || ofs_str_eq(t, "f64") || ofs_str_eq(t, "f32") ||
+            ofs_str_eq(t, "obsidian") || ofs_str_eq(t, "bool") || ofs_str_eq(t, "void")
+    }
+
+    // a declaracao tem contrato (bearing/settle)?
+    vein decl_has_contract(decl: stone) -> bool {
+        return node_child(decl, 3) >= 0
+    }
+
+    // ── entrada ─────────────────────────────────────────────────────
+
+    vein process(root: stone) -> void {
+        reset()
+        // 1. minerais (e se ha algum contrato)
+        forge any = false
+        forge len = node_extra_len(root)
+        forge kept: Array<stone> = []
+        forge removed = false
+        forge i = 0
+        while (i < len) {
+            forge c = node_extra_at(root, i)
+            forge k = node_kind_of(c)
+            if (k == NK_MINERAL) {
+                register_mineral(c)
+                removed = true
+                any = true
+            } else {
+                ofs_array_push(kept, c)
+                if ((k == NK_FN_DECL || k == NK_CORE_DECL) && decl_has_contract(c)) { any = true }
+                if (k == NK_NAMESPACE || k == NK_IMPL) {
+                    forge j = 0
+                    while (j < node_extra_len(c)) {
+                        forge m = node_extra_at(c, j)
+                        forge mk = node_kind_of(m)
+                        if ((mk == NK_FN_DECL || mk == NK_CORE_DECL) && decl_has_contract(m)) { any = true }
+                        if (mk == NK_MINERAL) {
+                            contract_error(node_line_of(m), node_col_of(m), "mineral so pode ser declarado no nivel de cima do arquivo", "")
+                        }
+                        j++
+                    }
+                }
+            }
+            i++
+        }
+        if (removed) {
+            forge rn: Node = node_get(root)
+            rn.extra = kept
+            node_set(root, rn)
+        }
+        if (!any) {
+            _erase_from = node_pool_len()
+            return
+        }
+        len = node_extra_len(root)
+        // 2. resolve os minerais (base, mineral de mineral) e confere nomes
+        forge m2 = 0
+        while (m2 < ofs_array_len(_m_names)) {
+            forge raw: obsidian = ofs_array_get(_m_raw, m2)
+            forge mname: obsidian = ofs_array_get(_m_names, m2)
+            forge pi = mineral_index(raw)
+            if (pi >= 0) {
+                if (pi == m2) {
+                    contract_error(ofs_array_get(_m_line, m2), ofs_array_get(_m_col, m2), "mineral '" + mname + "' nao pode ser base de si mesmo", "")
+                } else {
+                    ofs_array_set(_m_parent, m2, pi)
+                }
+            }
+            if (builtin_type(mname) || is_named_type(root, mname)) {
+                contract_error(ofs_array_get(_m_line, m2), ofs_array_get(_m_col, m2), "o nome '" + mname + "' ja e um tipo; escolha outro nome para o mineral", "")
+            }
+            m2++
+        }
+        // ciclo entre minerais (A = B, B = A)
+        forge m3 = 0
+        while (m3 < ofs_array_len(_m_names)) {
+            forge steps = 0
+            forge cur: stone = ofs_array_get(_m_parent, m3)
+            while (cur >= 0 && steps < 64) {
+                cur = ofs_array_get(_m_parent, cur)
+                steps++
+            }
+            if (steps >= 64) {
+                contract_error(ofs_array_get(_m_line, m3), ofs_array_get(_m_col, m3), "minerais em ciclo: '" + ofs_array_get(_m_names, m3) + "'", "")
+                ofs_array_set(_m_parent, m3, -1)
+            }
+            m3++
+        }
+        // 3. veins, constantes e campos conhecidos
+        i = 0
+        while (i < len) {
+            forge c2 = node_extra_at(root, i)
+            forge k2 = node_kind_of(c2)
+            forge nm: obsidian = node_val_of(c2)
+            if (k2 == NK_FN_DECL) { register_vein(nm, c2) }
+            if (k2 == NK_CONST_DECL) { register_const(c2) }
+            if (k2 == NK_NAMESPACE) {
+                forge j2 = 0
+                while (j2 < node_extra_len(c2)) {
+                    forge m4 = node_extra_at(c2, j2)
+                    if (node_kind_of(m4) == NK_FN_DECL) { register_vein(member_key(nm, node_val_of(m4)), m4) }
+                    j2++
+                }
+            }
+            if (k2 == NK_IMPL) {
+                forge j3 = 0
+                while (j3 < node_extra_len(c2)) {
+                    forge m5 = node_extra_at(c2, j3)
+                    if (node_kind_of(m5) == NK_FN_DECL) { register_vein(member_key(nm, node_val_of(m5)), m5) }
+                    j3++
+                }
+            }
+            if (k2 == NK_MONOLITH) {
+                forge f = 0
+                while (f < node_extra_len(c2)) {
+                    forge fd = node_extra_at(c2, f)
+                    forge fmi = type_mineral(node_child(fd, 0))
+                    if (fmi >= 0) {
+                        ofs_array_push(_f_keys, nm + "." + node_val_of(fd))
+                        ofs_array_push(_f_min, fmi)
+                    }
+                    f++
+                }
+            }
+            i++
+        }
+        // forma curta das grains (depois de conhecer as veins)
+        forge g = 0
+        while (g < ofs_array_len(_r_expr)) {
+            grain_shorthand(ofs_array_get(_r_expr, g))
+            g++
+        }
+        // 4. globais (escopo de baixo) e veins
+        i = 0
+        while (i < len) {
+            forge c3 = node_extra_at(root, i)
+            forge k3 = node_kind_of(c3)
+            if (k3 == NK_VAR_DECL || k3 == NK_CONST_DECL) {
+                sc_declare(node_val_of(c3), type_raw(node_child(c3, 0)))
+            }
+            i++
+        }
+        _globals_n = ofs_array_len(_sc_names)
+        i = 0
+        while (i < len) {
+            forge c4 = node_extra_at(root, i)
+            forge k4 = node_kind_of(c4)
+            forge nm4: obsidian = node_val_of(c4)
+            if (k4 == NK_FN_DECL || k4 == NK_CORE_DECL) { process_vein(c4, nm4) }
+            if (k4 == NK_VAR_DECL || k4 == NK_CONST_DECL) {
+                forge init = node_child(c4, 1)
+                walk_expr(init)
+                forge gmi = type_mineral(node_child(c4, 0))
+                if (gmi >= 0 && init >= 0) {
+                    static_grain(gmi, init, node_line_of(init), node_col_of(init), "em '" + nm4 + "'")
+                }
+            }
+            if (k4 == NK_NAMESPACE || k4 == NK_IMPL) {
+                forge j4 = 0
+                while (j4 < node_extra_len(c4)) {
+                    forge m6 = node_extra_at(c4, j4)
+                    forge mk6 = node_kind_of(m6)
+                    if (mk6 == NK_FN_DECL || mk6 == NK_CORE_DECL) {
+                        sc_push()
+                        if (k4 == NK_IMPL) { sc_declare("self", nm4) }
+                        process_vein(m6, member_key(nm4, node_val_of(m6)))
+                        sc_pop()
+                    }
+                    j4++
+                }
+            }
+            i++
+        }
+        // 5. contratos ja viraram codigo: tira da arvore
+        clear_contracts(root)
+        // 6. apaga os minerais dos tipos
+        erase_pool()
+        _erase_from = node_pool_len()
+    }
+
+    vein clear_contracts(root: stone) -> void {
+        forge i = 0
+        while (i < node_extra_len(root)) {
+            forge c = node_extra_at(root, i)
+            forge k = node_kind_of(c)
+            if (k == NK_FN_DECL || k == NK_CORE_DECL) { node_set_child(c, 3, -1) }
+            if (k == NK_NAMESPACE || k == NK_IMPL) {
+                forge j = 0
+                while (j < node_extra_len(c)) {
+                    forge m = node_extra_at(c, j)
+                    forge mk = node_kind_of(m)
+                    if (mk == NK_FN_DECL || mk == NK_CORE_DECL) { node_set_child(m, 3, -1) }
+                    j++
+                }
+            }
+            i++
+        }
+    }
+
+    // ── ofs assay: casos de borda ───────────────────────────────────
+    // Para cada vein com contrato e so parametros inteiros: os limites de
+    // cada parametro saem das comparacoes com constante nas regras
+    // (`b != 0`, `n >= 10`, grain `value > 0`): o valor da fronteira e +-1;
+    // parametro sem limite usa -1, 0 e 1. Casos fora do bearing so sao
+    // listados; os outros sao chamados (o settle confere o resultado e
+    // uma violacao para com a mensagem do contrato e codigo 1).
+
+    forge _as_lines: Array<obsidian> = []
+    forge _as_vals: Array<stone> = []
+
+    vein as_line(s: obsidian) -> void {
+        ofs_array_push(_as_lines, s)
+    }
+
+    vein add_bound(v: stone) -> void {
+        forge i = 0
+        while (i < ofs_array_len(_as_vals)) {
+            forge x: stone = ofs_array_get(_as_vals, i)
+            if (x == v) { return }
+            i++
+        }
+        ofs_array_push(_as_vals, v)
+    }
+
+    vein is_cmp(op: obsidian) -> bool {
+        return ofs_str_eq(op, "<") || ofs_str_eq(op, "<=") || ofs_str_eq(op, ">") || ofs_str_eq(op, ">=") ||
+            ofs_str_eq(op, "==") || ofs_str_eq(op, "!=")
+    }
+
+    // limites de `name` numa regra: `name OP k` / `k OP name` com k constante
+    vein bounds_of(id: stone, name: obsidian) -> void {
+        if (id < 0) { return }
+        forge k = node_kind_of(id)
+        if (k == NK_BIN_OP) {
+            forge op: obsidian = node_val_of(id)
+            if (is_cmp(op)) {
+                forge l = node_child(id, 0)
+                forge r = node_child(id, 1)
+                forge other = -1
+                if (node_kind_of(l) == NK_IDENT && ofs_str_eq(node_val_of(l), name)) { other = r }
+                if (node_kind_of(r) == NK_IDENT && ofs_str_eq(node_val_of(r), name)) { other = l }
+                if (other >= 0) {
+                    env_reset()
+                    if (ev(other) == EV_INT) {
+                        forge b = _ev_i
+                        add_bound(b - 1)
+                        add_bound(b)
+                        add_bound(b + 1)
+                    }
+                }
+                return
+            }
+            bounds_of(node_child(id, 0), name)
+            bounds_of(node_child(id, 1), name)
+            return
+        }
+        if (k == NK_UNARY_OP) { bounds_of(node_child(id, 0), name) }
+    }
+
+    vein sort_vals() -> void {
+        forge n = ofs_array_len(_as_vals)
+        forge i = 1
+        while (i < n) {
+            forge x: stone = ofs_array_get(_as_vals, i)
+            forge j = i - 1
+            while (j >= 0 && ofs_array_get(_as_vals, j) > x) {
+                ofs_array_set(_as_vals, j + 1, ofs_array_get(_as_vals, j))
+                j--
+            }
+            ofs_array_set(_as_vals, j + 1, x)
+            i++
+        }
+    }
+
+    // tipo inteiro (direto ou mineral de base inteira)
+    vein int_param_type(raw: obsidian) -> bool {
+        if (is_int_name(raw)) { return true }
+        forge mi = mineral_index(raw)
+        if (mi < 0) { return false }
+        return is_int_name(mineral_base(mi))
+    }
+
+    vein assay_vein(decl: stone, key: obsidian, stats: Array<stone>) -> void {
+        forge params = node_child(decl, 0)
+        forge np = node_extra_len(params)
+        forge cb = node_child(decl, 3)
+        if (np == 0) { return }
+        forge has_contract = cb >= 0
+        forge i = 0
+        while (i < np) {
+            forge pid = node_extra_at(params, i)
+            forge raw = type_raw(node_child(pid, 0))
+            if (type_mineral(node_child(pid, 0)) >= 0) { has_contract = true }
+            if (!int_param_type(raw)) { return }
+            i++
+        }
+        if (!has_contract) { return }
+        forge shown = vein_display_name(key)
+        // valores de cada parametro (concatenados; inicio e tamanho)
+        forge all: Array<stone> = []
+        forge starts: Array<stone> = []
+        forge counts: Array<stone> = []
+        forge total = 1
+        i = 0
+        while (i < np) {
+            forge pid2 = node_extra_at(params, i)
+            forge pnm: obsidian = node_val_of(pid2)
+            forge raw2 = type_raw(node_child(pid2, 0))
+            _as_vals = []
+            if (cb >= 0) {
+                forge c = 0
+                while (c < node_extra_len(cb)) {
+                    forge cn = node_extra_at(cb, c)
+                    if (ofs_str_eq(node_val_of(cn), "bearing")) { bounds_of(node_child(cn, 0), pnm) }
+                    c++
+                }
+            }
+            forge pmi = mineral_index(raw2)
+            if (pmi >= 0) {
+                forge rules = rules_of(pmi)
+                forge r = 0
+                while (r < ofs_array_len(rules)) {
+                    bounds_of(ofs_array_get(_r_expr, ofs_array_get(rules, r)), "value")
+                    r++
+                }
+            }
+            if (ofs_array_len(_as_vals) == 0) {
+                add_bound(-1)
+                add_bound(0)
+                add_bound(1)
+            }
+            sort_vals()
+            ofs_array_push(starts, ofs_array_len(all))
+            forge cnt = 0
+            forge u = is_unsigned_name(raw2) || (pmi >= 0 && is_unsigned_name(mineral_base(pmi)))
+            forge q = 0
+            while (q < ofs_array_len(_as_vals)) {
+                forge v: stone = ofs_array_get(_as_vals, q)
+                if (!u || v >= 0) {
+                    ofs_array_push(all, v)
+                    cnt++
+                }
+                q++
+            }
+            ofs_array_push(counts, cnt)
+            total = total * cnt
+            i++
+        }
+        forge sig = shown + "("
+        i = 0
+        while (i < np) {
+            forge pid3 = node_extra_at(params, i)
+            if (i > 0) { sig = sig + ", " }
+            sig = sig + node_val_of(pid3) + ": " + type_raw(node_child(pid3, 0))
+            i++
+        }
+        sig = sig + ")"
+        if (total == 0) { return }
+        forge vlines: Array<obsidian> = []
+        ofs_array_push(vlines, "    echo(" + quote_text("assay " + sig) + ")")
+        forge limit = 64
+        forge idx: Array<stone> = []
+        i = 0
+        while (i < np) {
+            ofs_array_push(idx, 0)
+            i++
+        }
+        forge done = 0
+        forge ran = 0
+        forge outside = 0
+        while (done < total && done < limit) {
+            // valores do caso
+            env_reset()
+            forge args = ""
+            i = 0
+            while (i < np) {
+                forge pid4 = node_extra_at(params, i)
+                forge v2: stone = ofs_array_get(all, ofs_array_get(starts, i) + ofs_array_get(idx, i))
+                env_bind(node_val_of(pid4), EV_INT, v2, "")
+                if (i > 0) { args = args + ", " }
+                args = args + ofs_stone_to_obsidian(v2)
+                i++
+            }
+            forge call = shown + "(" + args + ")"
+            // o caso cumpre as regras de entrada?
+            forge why = ""
+            forge simple = true
+            if (cb >= 0) {
+                forge c2 = 0
+                while (c2 < node_extra_len(cb)) {
+                    forge cn2 = node_extra_at(cb, c2)
+                    if (ofs_str_eq(node_val_of(cn2), "bearing") && ofs_str_eq(why, "")) {
+                        forge bk = ev(node_child(cn2, 0))
+                        if (bk != EV_BOOL) { simple = false }
+                        else if (_ev_i == 0) { why = "fora do bearing " + expr_text(node_child(cn2, 0)) }
+                    }
+                    c2++
+                }
+            }
+            i = 0
+            while (i < np && ofs_str_eq(why, "") && simple) {
+                forge pid5 = node_extra_at(params, i)
+                forge pmi2 = mineral_index(type_raw(node_child(pid5, 0)))
+                if (pmi2 >= 0) {
+                    forge v3: stone = ofs_array_get(all, ofs_array_get(starts, i) + ofs_array_get(idx, i))
+                    forge rules2 = rules_of(pmi2)
+                    forge r2 = 0
+                    while (r2 < ofs_array_len(rules2)) {
+                        forge ri: stone = ofs_array_get(rules2, r2)
+                        forge h = rule_holds_with(ofs_array_get(_r_expr, ri), "value", EV_INT, v3, "")
+                        if (h < 0) { simple = false }
+                        if (h == 0 && ofs_str_eq(why, "")) { why = "fora da grain de '" + ofs_array_get(_m_names, pmi2) + "' em " + node_val_of(pid5) }
+                        r2++
+                    }
+                    // rule_holds_with limpa o ambiente: refaz para os bearings seguintes
+                    env_reset()
+                    forge t = 0
+                    while (t < np) {
+                        forge pid6 = node_extra_at(params, t)
+                        env_bind(node_val_of(pid6), EV_INT, ofs_array_get(all, ofs_array_get(starts, t) + ofs_array_get(idx, t)), "")
+                        t++
+                    }
+                }
+                i++
+            }
+            if (!simple) {
+                // regra que o assay nao sabe avaliar: a vein fica de fora
+                as_line("    echo(" + quote_text("assay " + sig) + ")")
+                as_line("    echo(" + quote_text("  pulada: regra que depende de mais que constantes e parametros") + ")")
+                env_reset()
+                return
+            }
+            if (ofs_str_eq(why, "")) {
+                ofs_array_push(vlines, "    " + call)
+                ofs_array_push(vlines, "    echo(" + quote_text("  ok   " + call) + ")")
+                ran++
+            } else {
+                ofs_array_push(vlines, "    echo(" + quote_text("  --   " + call + ": " + why) + ")")
+                outside++
+            }
+            done++
+            // proximo caso (odometro, o ultimo parametro varia mais rapido)
+            forge d = np - 1
+            while (d >= 0) {
+                forge nv: stone = ofs_array_get(idx, d) + 1
+                if (nv < ofs_array_get(counts, d)) {
+                    ofs_array_set(idx, d, nv)
+                    d = -1
+                } else {
+                    ofs_array_set(idx, d, 0)
+                    d--
+                }
+            }
+        }
+        forge vl = 0
+        while (vl < ofs_array_len(vlines)) {
+            as_line(ofs_array_get(vlines, vl))
+            vl++
+        }
+        if (total > limit) {
+            as_line("    echo(" + quote_text("  (" + ofs_stone_to_obsidian(total - limit) + " caso(s) alem do limite de " + ofs_stone_to_obsidian(limit) + " ficaram de fora)") + ")")
+        }
+        env_reset()
+        ofs_array_set(stats, 0, ofs_array_get(stats, 0) + 1)
+        ofs_array_set(stats, 1, ofs_array_get(stats, 1) + ran)
+        ofs_array_set(stats, 2, ofs_array_get(stats, 2) + outside)
+    }
+
+    // fonte do `core main` do assay (antes de process: os contratos ainda
+    // estao na arvore)
+    vein assay_source(root: stone) -> obsidian {
+        reset()
+        _as_lines = []
+        forge len = node_extra_len(root)
+        forge i = 0
+        while (i < len) {
+            forge c = node_extra_at(root, i)
+            if (node_kind_of(c) == NK_MINERAL) { register_mineral(c) }
+            if (node_kind_of(c) == NK_CONST_DECL) { register_const(c) }
+            i++
+        }
+        forge m = 0
+        while (m < ofs_array_len(_m_names)) {
+            forge pi = mineral_index(ofs_array_get(_m_raw, m))
+            if (pi >= 0 && pi != m) { ofs_array_set(_m_parent, m, pi) }
+            m++
+        }
+        forge stats: Array<stone> = [0, 0, 0, 0]
+        i = 0
+        while (i < len) {
+            forge c2 = node_extra_at(root, i)
+            forge k2 = node_kind_of(c2)
+            if (k2 == NK_FN_DECL) { assay_vein(c2, node_val_of(c2), stats) }
+            if (k2 == NK_NAMESPACE) {
+                forge j = 0
+                while (j < node_extra_len(c2)) {
+                    forge mm = node_extra_at(c2, j)
+                    if (node_kind_of(mm) == NK_FN_DECL) { assay_vein(mm, member_key(node_val_of(c2), node_val_of(mm)), stats) }
+                    j++
+                }
+            }
+            i++
+        }
+        forge out = "core main() {\n"
+        forge l = 0
+        while (l < ofs_array_len(_as_lines)) {
+            out = out + ofs_array_get(_as_lines, l) + "\n"
+            l++
+        }
+        forge nv: stone = ofs_array_get(stats, 0)
+        if (nv == 0) {
+            out = out + "    echo(" + quote_text("assay: nenhuma vein com contrato e parametros inteiros") + ")\n"
+        } else {
+            out = out + "    echo(" + quote_text("assay: " + ofs_stone_to_obsidian(ofs_array_get(stats, 1)) + " caso(s) ok em " +
+                ofs_stone_to_obsidian(nv) + " vein(s); " + ofs_stone_to_obsidian(ofs_array_get(stats, 2)) + " fora das regras de entrada") + ")\n"
+        }
+        out = out + "}\n"
+        reset()
+        return out
+    }
+
+    // troca o `core main` do programa pelo do assay
+    vein assay_splice(root: stone, snippet: stone) -> void {
+        forge rn: Node = node_get(root)
+        forge kept: Array<stone> = []
+        forge i = 0
+        while (i < ofs_array_len(rn.extra)) {
+            forge c: stone = ofs_array_get(rn.extra, i)
+            if (node_kind_of(c) != NK_CORE_DECL) { ofs_array_push(kept, c) }
+            i++
+        }
+        forge j = 0
+        while (j < node_extra_len(snippet)) {
+            ofs_array_push(kept, node_extra_at(snippet, j))
+            j++
+        }
+        rn.extra = kept
+        node_set(root, rn)
+    }
+}

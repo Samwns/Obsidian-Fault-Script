@@ -1,3 +1,5 @@
+claim rift
+
 attach {F:web_language_common.ofs}
 attach {F:fileio.ofs}
 

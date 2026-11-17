@@ -77,8 +77,8 @@ vein ofs_array_free(arr: *stone) -> void {
         if (arr == null) { return }
         forge d: stone = 0
         fracture { d = *arr }
-        if (d != 0 && d != arr as stone + 32) { free(d as *stone) }
-        free(arr)
+        if (d != 0 && d != arr as stone + 32) { ofs_free(d as *stone) }
+        ofs_free(arr)
     }
 }
 
@@ -142,11 +142,11 @@ vein ofs_array_push(arr: *stone, elem: *stone) -> void {
         if (cur_len >= cur_cap) {
             forge new_cap = cur_cap * 2
             if (new_cap < 4) { new_cap = 4 }
-            forge new_data: *stone = ofs_alloc(new_cap * esz)
+            forge new_data: *stone = __ofs_alloc_like(arr, new_cap * esz)
             if (cur_len > 0 && cur_data != 0) {
                 memcpy(new_data, cur_data as *stone, cur_len * esz)
             }
-            if (cur_data != 0 && cur_data != arr as stone + 32) { free(cur_data as *stone) }
+            if (cur_data != 0 && cur_data != arr as stone + 32) { ofs_free(cur_data as *stone) }
             cur_data = new_data as stone
             fracture {
                 *arr = cur_data

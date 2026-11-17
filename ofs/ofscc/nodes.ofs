@@ -3,7 +3,7 @@
 
 // ── Declaration Nodes ───────────────────────────────────────────────────
 forge NK_PROGRAM:    stone = 1    // root: extra = top-level statements
-forge NK_FN_DECL:    stone = 2    // val=name, c0=params(block), c1=ret_type, c2=body
+forge NK_FN_DECL:    stone = 2    // val=name, c0=params(block), c1=ret_type, c2=body, c3=contratos (ou -1)
 forge NK_CORE_DECL:  stone = 3    // same as NK_FN_DECL
 forge NK_VAR_DECL:   stone = 4    // val=name, c0=type_node, c1=init_expr
 forge NK_CONST_DECL: stone = 5    // val=name, c0=type_node, c1=init_expr
@@ -16,7 +16,13 @@ forge NK_VARIANT:    stone = 11   // val=name, c0=associated_type (or -1)
 forge NK_EXTERN_VN:  stone = 12   // val=name, c0=params, c1=ret_type
 forge NK_RIFT_VN:    stone = 13   // val=name, c0=params, c1=ret_type
 forge NK_ATTACH:     stone = 14   // val=path
-forge NK_PARAM:      stone = 15   // val=name, c0=type_node
+forge NK_PARAM:      stone = 15   // val=name, c0=type_node, c1=valor padrao (literal) ou -1
+// A5.1 contratos (consumidos por contracts.ofs antes do typeck):
+// `mineral Nome = T grain regra ...`: val=nome, c0=tipo base, extra=NK_CONTRACT("grain")
+forge NK_MINERAL:    stone = 16
+// `bearing`/`settle`/`grain`: val=palavra, c0=regra; os de uma vein ficam
+// num NK_BLOCK no c3 do NK_FN_DECL
+forge NK_CONTRACT:   stone = 17
 
 // ── Control Flow ────────────────────────────────────────────────────────
 forge NK_IF:         stone = 20   // c0=cond, c1=then_block, c2=else_block (or -1)
@@ -32,6 +38,13 @@ forge NK_CONTINUE:   stone = 29
 forge NK_THROW:      stone = 30   // c0=expr
 forge NK_TREMOR:     stone = 31   // c0=body, c1=catch_var(ident), c2=catch_body
 forge NK_ANCHOR:     stone = 32   // c0=action_stmt_or_block
+// assembly inline (F5): val=texto (linhas separadas por \n), c0=destino
+// (NK_IDENT) ou -1, c1=NK_QUARTZ_OPT restricao da saida, c2=NK_QUARTZ_OPT
+// registradores que o trecho destroi ("rdx,memory"), c3=NK_QUARTZ_OPT
+// dialeto ("intel" ou ""), extra=entradas (NK_QUARTZ_IN)
+forge NK_QUARTZ:     stone = 33
+forge NK_QUARTZ_IN:  stone = 34   // val=restricao ("r", "m", "{rax}"), c0=expressao
+forge NK_QUARTZ_OPT: stone = 35   // val=texto (opcao do quartz; nao e expressao)
 
 // ── Expressions ─────────────────────────────────────────────────────────
 forge NK_BLOCK:      stone = 40   // extra=statements; val="" ou fracture/bedrock/abyss/tectonic (F4)

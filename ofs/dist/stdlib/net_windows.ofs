@@ -1,3 +1,5 @@
+claim rift
+
 rift vein WSAStartup(version: stone, data: *stone) -> stone abi c
 rift vein WSACleanup() -> stone abi c
 rift vein socket(domain: stone, kind: stone, protocol: stone) -> stone abi c
