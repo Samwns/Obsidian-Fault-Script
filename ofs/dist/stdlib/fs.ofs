@@ -12,7 +12,7 @@ extern vein ofs_str_len(s: obsidian) -> stone
 
 namespace fs {
     vein exists(path: obsidian) -> bool {
-        forge f = fopen(path, "r")
+        forge f = fopen(path, "rb")
         if (f == null) {
             return false
         }

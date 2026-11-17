@@ -1074,7 +1074,7 @@ vein attach_line(line: obsidian) -> obsidian {
     }
     forge mod_file = wl_replace(ofs_str_substr(line, 8, close - 8), "-", "_") + ".ofs"
     forge local_path = abs_path(mod_file)
-    forge f = fopen(local_path, "r")
+    forge f = fopen(local_path, "rb")
     if (f != null) {
         fclose(f)
         return "attach {F:" + local_path + "}"

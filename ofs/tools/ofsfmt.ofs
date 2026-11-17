@@ -113,7 +113,7 @@ vein fm_spaces(n: stone) -> void {
 }
 
 vein fm_read(path: obsidian) -> bool {
-    forge f = fopen(path, "r")
+    forge f = fopen(path, "rb")
     if (f == null) { return false }
     fseek(f, 0, 2)
     forge size = ftell(f)

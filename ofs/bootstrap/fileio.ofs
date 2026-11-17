@@ -31,7 +31,7 @@ extern vein ofs_array_pop(a: Array) -> stone
 // ── File Reading ────────────────────────────────────────────────────────
 
 vein read_file(path: obsidian) -> obsidian {
-    forge f = fopen(path, "r")
+    forge f = fopen(path, "rb")
     if (f == null) {
         echo("erro: nao foi possivel abrir arquivo: " + path)
         exit(1)

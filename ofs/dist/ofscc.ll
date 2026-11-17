@@ -6,7 +6,7 @@ source_filename = "ofs_module"
 %Symbol = type { ptr, ptr, i64, i64, ptr, i32 }
 %Event = type { i64, i64, i64, ptr, ptr, ptr, double, i64, i64, ptr, ptr, ptr }
 
-@str.0 = private unnamed_addr constant [2 x i8] c"r\00", align 1
+@str.0 = private unnamed_addr constant [3 x i8] c"rb\00", align 1
 @str.1 = private unnamed_addr constant [39 x i8] c"erro: nao foi possivel abrir arquivo: \00", align 1
 @str.2 = private unnamed_addr constant [2 x i8] c"w\00", align 1
 @str.3 = private unnamed_addr constant [2 x i8] c"\0A\00", align 1
@@ -1457,734 +1457,733 @@ source_filename = "ofs_module"
 @str.1448 = private unnamed_addr constant [24 x i8] c" send sendto SSL_write \00", align 1
 @str.1449 = private unnamed_addr constant [16 x i8] c"prism__save_ppm\00", align 1
 @str.1450 = private unnamed_addr constant [44 x i8] c" exit _exit ofs_exit foundation__terminate \00", align 1
-@str.1451 = private unnamed_addr constant [3 x i8] c"rb\00", align 1
-@str.1452 = private unnamed_addr constant [3 x i8] c"wb\00", align 1
-@str.1453 = private unnamed_addr constant [14 x i8] c"OFS-FOSSIL 1\0A\00", align 1
-@str.1454 = private unnamed_addr constant [3 x i8] c"S \00", align 1
-@str.1455 = private unnamed_addr constant [11 x i8] c"OFS-FOSSIL\00", align 1
-@str.1456 = private unnamed_addr constant [25 x i8] c"nao e um arquivo .fossil\00", align 1
-@str.1457 = private unnamed_addr constant [8 x i8] c"versao \00", align 1
-@str.1458 = private unnamed_addr constant [46 x i8] c" do formato nao suportada (este ofscc le a 1)\00", align 1
-@str.1459 = private unnamed_addr constant [2 x i8] c"S\00", align 1
-@str.1460 = private unnamed_addr constant [35 x i8] c"cabecalho sem o registro S (fonte)\00", align 1
-@str.1461 = private unnamed_addr constant [8 x i8] c"[array]\00", align 1
-@str.1462 = private unnamed_addr constant [5 x i8] c"*ptr\00", align 1
-@str.1463 = private unnamed_addr constant [7 x i8] c"<vein>\00", align 1
-@str.1464 = private unnamed_addr constant [5 x i8] c"etch\00", align 1
-@str.1465 = private unnamed_addr constant [7 x i8] c"etchln\00", align 1
-@str.1466 = private unnamed_addr constant [5 x i8] c"mold\00", align 1
-@str.1467 = private unnamed_addr constant [111 x i8] c"ofs: geode com captura nao pode ir para o C (Rift) nem virar endereco; passe uma vein ou um geode sem captura\0A\00", align 1
-@str.1468 = private unnamed_addr constant [52 x i8] c"ofs: chamada de vein nula (o valor de vein e null)\0A\00", align 1
-@str.1469 = private unnamed_addr constant [32 x i8] c"chamada de valor que nao e vein\00", align 1
-@str.1470 = private unnamed_addr constant [7 x i8] c"vein '\00", align 1
-@str.1471 = private unnamed_addr constant [14 x i8] c"ofs_arena_use\00", align 1
-@str.1472 = private unnamed_addr constant [18 x i8] c"__ofs_arena_alloc\00", align 1
-@str.1473 = private unnamed_addr constant [13 x i8] c"ofs: indice \00", align 1
-@str.1474 = private unnamed_addr constant [35 x i8] c" fora do limite do array (tamanho \00", align 1
-@str.1475 = private unnamed_addr constant [53 x i8] c"Array com elementos de tipos diferentes passado ao C\00", align 1
-@str.1476 = private unnamed_addr constant [10 x i8] c"Array de \00", align 1
-@str.1477 = private unnamed_addr constant [100 x i8] c" passado ao C: no interpretador so Array de inteiros/ponteiros, crystal, bool, obsidian ou monolith\00", align 1
-@str.1478 = private unnamed_addr constant [108 x i8] c"&x de uma variavel Array ainda nao e suportado no interpretador (use ofs_array_data(x) ou ofs run --native)\00", align 1
-@str.1479 = private unnamed_addr constant [37 x i8] c"&x de monolith nulo no interpretador\00", align 1
-@str.1480 = private unnamed_addr constant [46 x i8] c"atribuicao a campo que o monolith nao declara\00", align 1
-@str.1481 = private unnamed_addr constant [6 x i8] c"ofs: \00", align 1
-@str.1482 = private unnamed_addr constant [28 x i8] c"Interpreter runtime error: \00", align 1
-@str.1483 = private unnamed_addr constant [57 x i8] c"fault_memcpy/fault_memset esperam (ponteiro, valor, len)\00", align 1
-@str.1484 = private unnamed_addr constant [10 x i8] c"libm.so.6\00", align 1
-@str.1485 = private unnamed_addr constant [8 x i8] c"libm.so\00", align 1
-@str.1486 = private unnamed_addr constant [13 x i8] c"OFS_FFI_LIBS\00", align 1
-@str.1487 = private unnamed_addr constant [41 x i8] c"ofs run: aviso: nao foi possivel abrir '\00", align 1
-@str.1488 = private unnamed_addr constant [18 x i8] c"' (OFS_FFI_LIBS)\0A\00", align 1
-@str.1489 = private unnamed_addr constant [16 x i8] c"OFS_RUN_RUNTIME\00", align 1
-@str.1490 = private unnamed_addr constant [7 x i8] c"interp\00", align 1
-@str.1491 = private unnamed_addr constant [12 x i8] c"libX11.so.6\00", align 1
-@str.1492 = private unnamed_addr constant [12 x i8] c"libXft.so.2\00", align 1
-@str.1493 = private unnamed_addr constant [40 x i8] c"ofs run: erro: undefined reference to `\00", align 1
-@str.1494 = private unnamed_addr constant [39 x i8] c"' (extern vein sem simbolo no processo\00", align 1
-@str.1495 = private unnamed_addr constant [9 x i8] c" nem em \00", align 1
-@str.1496 = private unnamed_addr constant [43 x i8] c"; outras bibliotecas: OFS_FFI_LIBS=libx.so\00", align 1
-@str.1497 = private unnamed_addr constant [58 x i8] c"; este ofscc nao exporta o runtime: linke-o com -rdynamic\00", align 1
-@str.1498 = private unnamed_addr constant [33 x i8] c": assinatura FFI sem trampolim (\00", align 1
-@str.1499 = private unnamed_addr constant [66 x i8] c" args; ate 4 com crystal, 12 so inteiros, variadica ate 4 extras)\00", align 1
-@str.1500 = private unnamed_addr constant [97 x i8] c": crystal no FFI precisa dos trampolins (__ofs_ffi_dispatch) e de um ofscc linkado com -rdynamic\00", align 1
-@str.1501 = private unnamed_addr constant [31 x i8] c": assinatura FFI sem trampolim\00", align 1
-@str.1502 = private unnamed_addr constant [9 x i8] c"extern '\00", align 1
-@str.1503 = private unnamed_addr constant [48 x i8] c": mais de 12 argumentos no FFI do interpretador\00", align 1
-@str.1504 = private unnamed_addr constant [57 x i8] c": crystal depois do 6o argumento no FFI do interpretador\00", align 1
-@str.1505 = private unnamed_addr constant [75 x i8] c": f32 depois do 6o argumento ou na parte variadica no FFI do interpretador\00", align 1
-@str.1506 = private unnamed_addr constant [37 x i8] c"fault_addr espera o nome de uma vein\00", align 1
-@str.1507 = private unnamed_addr constant [70 x i8] c"fault_call: o primeiro argumento precisa ser um endereco (fault_addr)\00", align 1
-@str.1508 = private unnamed_addr constant [51 x i8] c"fault_call: mais de 12 argumentos no interpretador\00", align 1
-@str.1509 = private unnamed_addr constant [43 x i8] c"fault_call: crystal depois do 6o argumento\00", align 1
-@str.1510 = private unnamed_addr constant [14 x i8] c"ofs refract: \00", align 1
-@str.1511 = private unnamed_addr constant [10 x i8] c"ofs run: \00", align 1
-@str.1512 = private unnamed_addr constant [5 x i8] c"'\5C''\00", align 1
-@str.1513 = private unnamed_addr constant [17 x i8] c"0123456789abcdef\00", align 1
-@str.1514 = private unnamed_addr constant [17 x i8] c"OFS_QUARTZ_CACHE\00", align 1
-@str.1515 = private unnamed_addr constant [15 x i8] c"XDG_CACHE_HOME\00", align 1
-@str.1516 = private unnamed_addr constant [12 x i8] c"/ofs/quartz\00", align 1
-@str.1517 = private unnamed_addr constant [5 x i8] c"HOME\00", align 1
-@str.1518 = private unnamed_addr constant [5 x i8] c"/tmp\00", align 1
-@str.1519 = private unnamed_addr constant [19 x i8] c"/.cache/ofs/quartz\00", align 1
-@str.1520 = private unnamed_addr constant [8 x i8] c"dlerror\00", align 1
-@str.1521 = private unnamed_addr constant [16 x i8] c"OFS_CRYSTALLIZE\00", align 1
-@str.1522 = private unnamed_addr constant [26 x i8] c"OFS_CRYSTALLIZE_THRESHOLD\00", align 1
-@str.1523 = private unnamed_addr constant [5 x i8] c"1000\00", align 1
-@str.1524 = private unnamed_addr constant [71 x i8] c"OFS_CRYSTALLIZE_THRESHOLD precisa ser inteiro positivo (1..1000000000)\00", align 1
-@str.1525 = private unnamed_addr constant [80 x i8] c"callback de ponto flutuante sem trampolim neste ofscc; continuando interpretado\00", align 1
-@str.1526 = private unnamed_addr constant [8 x i8] c"OFS_OSR\00", align 1
-@str.1527 = private unnamed_addr constant [8 x i8] c"mkdtemp\00", align 1
-@str.1528 = private unnamed_addr constant [139 x i8] c"este programa usa quartz (assembly inline), que roda nativo, mas este ofscc nao exporta o runtime (ligue-o com -rdynamic); use `ofs build`\00", align 1
-@str.1529 = private unnamed_addr constant [7 x i8] c"TMPDIR\00", align 1
-@str.1530 = private unnamed_addr constant [19 x i8] c"/ofs-quartz-XXXXXX\00", align 1
-@str.1531 = private unnamed_addr constant [59 x i8] c"criacao segura de temporario indisponivel nesta plataforma\00", align 1
-@str.1532 = private unnamed_addr constant [87 x i8] c"nao foi possivel criar temporario seguro para quartz nesta plataforma; use `ofs build`\00", align 1
-@str.1533 = private unnamed_addr constant [11 x i8] c"/module.ll\00", align 1
-@str.1534 = private unnamed_addr constant [24 x i8] c"nao foi possivel criar \00", align 1
-@str.1535 = private unnamed_addr constant [30 x i8] c" (execucao hibrida do quartz)\00", align 1
-@str.1536 = private unnamed_addr constant [14 x i8] c"OFS_QUARTZ_CC\00", align 1
-@str.1537 = private unnamed_addr constant [6 x i8] c"clang\00", align 1
-@str.1538 = private unnamed_addr constant [39 x i8] c"-shared -fPIC -O2 -Wno-override-module\00", align 1
-@str.1539 = private unnamed_addr constant [27 x i8] c" -undefined dynamic_lookup\00", align 1
-@str.1540 = private unnamed_addr constant [16 x i8] c" -Wl,-Bsymbolic\00", align 1
-@str.1541 = private unnamed_addr constant [10 x i8] c"/identity\00", align 1
-@str.1542 = private unnamed_addr constant [3 x i8] c"( \00", align 1
-@str.1543 = private unnamed_addr constant [27 x i8] c" --version; uname -sm ) > \00", align 1
-@str.1544 = private unnamed_addr constant [13 x i8] c" 2>/dev/null\00", align 1
-@str.1545 = private unnamed_addr constant [4 x i8] c".so\00", align 1
-@str.1546 = private unnamed_addr constant [6 x i8] c"cache\00", align 1
-@str.1547 = private unnamed_addr constant [10 x i8] c"compilado\00", align 1
-@str.1548 = private unnamed_addr constant [12 x i8] c"command -v \00", align 1
-@str.1549 = private unnamed_addr constant [17 x i8] c" >/dev/null 2>&1\00", align 1
-@str.1550 = private unnamed_addr constant [47 x i8] c"clang nao encontrado; cristalizacao desativada\00", align 1
-@str.1551 = private unnamed_addr constant [80 x i8] c"este programa usa quartz e precisa do clang; instale o clang ou use `ofs build`\00", align 1
-@str.1552 = private unnamed_addr constant [11 x i8] c"/module.so\00", align 1
-@str.1553 = private unnamed_addr constant [7 x i8] c"/ready\00", align 1
-@str.1554 = private unnamed_addr constant [11 x i8] c"/clang.log\00", align 1
-@str.1555 = private unnamed_addr constant [110 x i8] c"L=$(ulimit -v); if [ \22$L\22 = unlimited ] || [ \22$L\22 -gt 3000000 ]; then ulimit -v 3000000; fi; mkdir -p -m 700 \00", align 1
-@str.1556 = private unnamed_addr constant [12 x i8] c" && O=; if \00", align 1
-@str.1557 = private unnamed_addr constant [104 x i8] c" --version 2>/dev/null | grep -Eq 'version 14[.]|clang-1400[.]'; then O='-mllvm -opaque-pointers'; fi; \00", align 1
-@str.1558 = private unnamed_addr constant [13 x i8] c"timeout 120 \00", align 1
-@str.1559 = private unnamed_addr constant [5 x i8] c" $O \00", align 1
-@str.1560 = private unnamed_addr constant [5 x i8] c" -o \00", align 1
-@str.1561 = private unnamed_addr constant [8 x i8] c" && cp \00", align 1
-@str.1562 = private unnamed_addr constant [11 x i8] c" && mv -f \00", align 1
-@str.1563 = private unnamed_addr constant [7 x i8] c"rm -f \00", align 1
-@str.1564 = private unnamed_addr constant [5 x i8] c".tmp\00", align 1
-@str.1565 = private unnamed_addr constant [11 x i8] c"/abandoned\00", align 1
-@str.1566 = private unnamed_addr constant [9 x i8] c"; rmdir \00", align 1
-@str.1567 = private unnamed_addr constant [5 x i8] c"( ( \00", align 1
-@str.1568 = private unnamed_addr constant [6 x i8] c" ) > \00", align 1
-@str.1569 = private unnamed_addr constant [25 x i8] c" 2>&1; printf '%s' $? > \00", align 1
-@str.1570 = private unnamed_addr constant [6 x i8] c"; mv \00", align 1
-@str.1571 = private unnamed_addr constant [11 x i8] c"; if [ -f \00", align 1
-@str.1572 = private unnamed_addr constant [17 x i8] c" ] || ! kill -0 \00", align 1
-@str.1573 = private unnamed_addr constant [20 x i8] c" 2>/dev/null; then \00", align 1
-@str.1574 = private unnamed_addr constant [36 x i8] c"; fi ) </dev/null >/dev/null 2>&1 &\00", align 1
-@str.1575 = private unnamed_addr constant [48 x i8] c"nao foi possivel iniciar clang em segundo plano\00", align 1
-@str.1576 = private unnamed_addr constant [54 x i8] c"o clang nao compilou as veins com quartz (erro acima)\00", align 1
-@str.1577 = private unnamed_addr constant [35 x i8] c"cache nativo invalido (removido): \00", align 1
-@str.1578 = private unnamed_addr constant [27 x i8] c"nao foi possivel carregar \00", align 1
-@str.1579 = private unnamed_addr constant [39 x i8] c" (cache removido; execute novamente): \00", align 1
-@str.1580 = private unnamed_addr constant [14 x i8] c"vein nativa '\00", align 1
-@str.1581 = private unnamed_addr constant [15 x i8] c"' nao esta em \00", align 1
-@str.1582 = private unnamed_addr constant [139 x i8] c"' (com quartz): assinatura sem trampolim FFI (ate 12 parametros inteiros/ponteiro, ou ate 4 com crystal); divida a vein ou use `ofs build`\00", align 1
-@str.1583 = private unnamed_addr constant [8 x i8] c"__ofsg.\00", align 1
-@str.1584 = private unnamed_addr constant [11 x i8] c"__ofs_osr_\00", align 1
-@str.1585 = private unnamed_addr constant [12 x i8] c"OFS_VERBOSE\00", align 1
-@str.1586 = private unnamed_addr constant [14 x i8] c"cristalizacao\00", align 1
-@str.1587 = private unnamed_addr constant [8 x i8] c"refract\00", align 1
-@str.1588 = private unnamed_addr constant [6 x i8] c"osr (\00", align 1
-@str.1589 = private unnamed_addr constant [5 x i8] c"laco\00", align 1
-@str.1590 = private unnamed_addr constant [6 x i8] c"lacos\00", align 1
-@str.1591 = private unnamed_addr constant [21 x i8] c" vein(s) nativa(s) (\00", align 1
-@str.1592 = private unnamed_addr constant [4 x i8] c"): \00", align 1
-@str.1593 = private unnamed_addr constant [25 x i8] c"ofs run: cristalizacao: \00", align 1
-@str.1594 = private unnamed_addr constant [67 x i8] c"ofs run: osr: o clang nao compilou o laco; ele segue interpretado\0A\00", align 1
-@str.1595 = private unnamed_addr constant [75 x i8] c"recristalizacao indisponivel (clang falhou); as veins seguem interpretadas\00", align 1
-@str.1596 = private unnamed_addr constant [57 x i8] c"compilacao nativa indisponivel; continuando interpretado\00", align 1
-@str.1597 = private unnamed_addr constant [14 x i8] c"segundo plano\00", align 1
-@str.1598 = private unnamed_addr constant [35 x i8] c"cristalizada(s) de novo (.so novo)\00", align 1
-@str.1599 = private unnamed_addr constant [48 x i8] c"runtime sem -rdynamic; continuando interpretado\00", align 1
-@str.1600 = private unnamed_addr constant [15 x i8] c"__ofs_osr_poll\00", align 1
-@str.1601 = private unnamed_addr constant [24 x i8] c"ofs run: osr: laco de '\00", align 1
-@str.1602 = private unnamed_addr constant [19 x i8] c"' terminou nativo\0A\00", align 1
-@str.1603 = private unnamed_addr constant [12 x i8] c"o laco de '\00", align 1
-@str.1604 = private unnamed_addr constant [53 x i8] c"' sumiu na versao nova; ele termina na versao antiga\00", align 1
-@str.1605 = private unnamed_addr constant [100 x i8] c"' esta dentro de cycle/match/bedrock; ele termina na versao antiga e a nova vale na proxima chamada\00", align 1
-@str.1606 = private unnamed_addr constant [17 x i8] c"parametro novo '\00", align 1
-@str.1607 = private unnamed_addr constant [21 x i8] c"' mudou de tipo (de \00", align 1
-@str.1608 = private unnamed_addr constant [7 x i8] c" para \00", align 1
-@str.1609 = private unnamed_addr constant [27 x i8] c"' segue na versao antiga: \00", align 1
-@str.1610 = private unnamed_addr constant [33 x i8] c"; a nova vale na proxima chamada\00", align 1
-@str.1611 = private unnamed_addr constant [10 x i8] c"laco de '\00", align 1
-@str.1612 = private unnamed_addr constant [32 x i8] c"' continua na versao nova (OSR)\00", align 1
-@str.1613 = private unnamed_addr constant [58 x i8] c"variavel(is) nova(s) antes do laco, com o valor inicial: \00", align 1
-@str.1614 = private unnamed_addr constant [27 x i8] c"variavel(is) removida(s): \00", align 1
-@str.1615 = private unnamed_addr constant [16 x i8] c"__ofs_cbx_table\00", align 1
-@str.1616 = private unnamed_addr constant [12 x i8] c"fault_addr(\00", align 1
-@str.1617 = private unnamed_addr constant [121 x i8] c"): callback para o C precisa dos trampolins __ofs_cb_table (ofscc compilado por um ofscc com F2 e linkado com -rdynamic)\00", align 1
-@str.1618 = private unnamed_addr constant [38 x i8] c"): trampolins de callback esgotados (\00", align 1
-@str.1619 = private unnamed_addr constant [32 x i8] c" veins diferentes por execucao)\00", align 1
-@str.1620 = private unnamed_addr constant [110 x i8] c"): callback com crystal/f32 precisa dos trampolins com ponto flutuante (ofscc da onda 4, fora do Windows x64)\00", align 1
-@str.1621 = private unnamed_addr constant [25 x i8] c"): callback com mais de \00", align 1
-@str.1622 = private unnamed_addr constant [35 x i8] c" parametros inteiros/ponteiros ou \00", align 1
-@str.1623 = private unnamed_addr constant [13 x i8] c" crystal/f32\00", align 1
-@str.1624 = private unnamed_addr constant [24 x i8] c": variavel desconhecida\00", align 1
-@str.1625 = private unnamed_addr constant [85 x i8] c"&expr: so existe endereco de variavel (&x); para um campo use (&s) as stone + offset\00", align 1
-@str.1626 = private unnamed_addr constant [7 x i8] c"*stone\00", align 1
-@str.1627 = private unnamed_addr constant [48 x i8] c"Interpreter runtime error: undefined function '\00", align 1
-@str.1628 = private unnamed_addr constant [97 x i8] c"quartz (assembly inline) nao roda no interpretador; a vein devia rodar nativa (execucao hibrida)\00", align 1
-@str.1629 = private unnamed_addr constant [16 x i8] c"Runtime throw: \00", align 1
-@str.1630 = private unnamed_addr constant [14 x i8] c"Runtime throw\00", align 1
-@str.1631 = private unnamed_addr constant [18 x i8] c"OFS_REFRACT_QUIET\00", align 1
-@str.1632 = private unnamed_addr constant [19 x i8] c"OFS_REFRACT_PERIOD\00", align 1
-@str.1633 = private unnamed_addr constant [4 x i8] c"200\00", align 1
-@str.1634 = private unnamed_addr constant [73 x i8] c"OFS_REFRACT_PERIOD precisa ser um inteiro de 10 a 60000 (ms); usando 200\00", align 1
-@str.1635 = private unnamed_addr constant [3 x i8] c"1 \00", align 1
-@str.1636 = private unnamed_addr constant [4 x i8] c"dup\00", align 1
-@str.1637 = private unnamed_addr constant [5 x i8] c"dup2\00", align 1
-@str.1638 = private unnamed_addr constant [7 x i8] c"fileno\00", align 1
-@str.1639 = private unnamed_addr constant [8 x i8] c"_fileno\00", align 1
-@str.1640 = private unnamed_addr constant [6 x i8] c"close\00", align 1
-@str.1641 = private unnamed_addr constant [18 x i8] c"OFS_REFRACT_DRAFT\00", align 1
-@str.1642 = private unnamed_addr constant [7 x i8] c"getuid\00", align 1
-@str.1643 = private unnamed_addr constant [16 x i8] c"XDG_RUNTIME_DIR\00", align 1
-@str.1644 = private unnamed_addr constant [14 x i8] c"/ofs-refract-\00", align 1
-@str.1645 = private unnamed_addr constant [14 x i8] c"mkdir -m 700 \00", align 1
-@str.1646 = private unnamed_addr constant [20 x i8] c" 2>/dev/null; [ -d \00", align 1
-@str.1647 = private unnamed_addr constant [14 x i8] c" ] && [ ! -L \00", align 1
-@str.1648 = private unnamed_addr constant [12 x i8] c" ] && [ -O \00", align 1
-@str.1649 = private unnamed_addr constant [17 x i8] c" ] && chmod 700 \00", align 1
-@str.1650 = private unnamed_addr constant [14 x i8] c" && mkdir -p \00", align 1
-@str.1651 = private unnamed_addr constant [6 x i8] c"/lava\00", align 1
-@str.1652 = private unnamed_addr constant [7 x i8] c"/pulse\00", align 1
-@str.1653 = private unnamed_addr constant [16 x i8] c" && { for p in \00", align 1
-@str.1654 = private unnamed_addr constant [86 x i8] c"/*; do n=${p##*/}; n=${n%.eco}; kill -0 \22$n\22 2>/dev/null || rm -f \22$p\22; done; true; }\00", align 1
-@str.1655 = private unnamed_addr constant [17 x i8] c"lava desligada: \00", align 1
-@str.1656 = private unnamed_addr constant [59 x i8] c" nao e uma pasta sua (0700); edicoes sem salvar nao entram\00", align 1
-@str.1657 = private unnamed_addr constant [5 x i8] c"TEMP\00", align 1
-@str.1658 = private unnamed_addr constant [4 x i8] c"TMP\00", align 1
-@str.1659 = private unnamed_addr constant [13 x i8] c"/ofs-refract\00", align 1
-@str.1660 = private unnamed_addr constant [7 x i8] c"_mkdir\00", align 1
-@str.1661 = private unnamed_addr constant [8 x i8] c"/pulse/\00", align 1
-@str.1662 = private unnamed_addr constant [5 x i8] c".eco\00", align 1
-@str.1663 = private unnamed_addr constant [8 x i8] c"_getcwd\00", align 1
-@str.1664 = private unnamed_addr constant [4 x i8] c"PWD\00", align 1
-@str.1665 = private unnamed_addr constant [7 x i8] c"/lava/\00", align 1
-@str.1666 = private unnamed_addr constant [4 x i8] c" (+\00", align 1
-@str.1667 = private unnamed_addr constant [13 x i8] c"attach local\00", align 1
-@str.1668 = private unnamed_addr constant [14 x i8] c"attach locais\00", align 1
-@str.1669 = private unnamed_addr constant [12 x i8] c"observando \00", align 1
-@str.1670 = private unnamed_addr constant [48 x i8] c"; salve (ou so edite, no VS Code) para refratar\00", align 1
-@str.1671 = private unnamed_addr constant [22 x i8] c"; salve para refratar\00", align 1
-@str.1672 = private unnamed_addr constant [80 x i8] c"erro de compilacao no rascunho do editor (acima); a versao em execucao continua\00", align 1
-@str.1673 = private unnamed_addr constant [3 x i8] c"; \00", align 1
-@str.1674 = private unnamed_addr constant [26 x i8] c"parametro novo com padrao\00", align 1
-@str.1675 = private unnamed_addr constant [28 x i8] c"parametros novos com padrao\00", align 1
-@str.1676 = private unnamed_addr constant [14 x i8] c"retorno novo \00", align 1
-@str.1677 = private unnamed_addr constant [27 x i8] c" (a chamada antiga ignora)\00", align 1
-@str.1678 = private unnamed_addr constant [9 x i8] c"retorno \00", align 1
-@str.1679 = private unnamed_addr constant [10 x i8] c" cabe em \00", align 1
-@str.1680 = private unnamed_addr constant [21 x i8] c"retorno f32 cabe em \00", align 1
-@str.1681 = private unnamed_addr constant [6 x i8] c"' de \00", align 1
-@str.1682 = private unnamed_addr constant [13 x i8] c"o monolith '\00", align 1
-@str.1683 = private unnamed_addr constant [7 x i8] c"' tem \00", align 1
-@str.1684 = private unnamed_addr constant [15 x i8] c"instancia viva\00", align 1
-@str.1685 = private unnamed_addr constant [17 x i8] c"instancias vivas\00", align 1
-@str.1686 = private unnamed_addr constant [50 x i8] c" e um campo mudou para um tipo que nao converte (\00", align 1
-@str.1687 = private unnamed_addr constant [16 x i8] c"' cresceu para \00", align 1
-@str.1688 = private unnamed_addr constant [45 x i8] c" bytes e as instancias vivas tem lugar para \00", align 1
-@str.1689 = private unnamed_addr constant [12 x i8] c" (folga de \00", align 1
-@str.1690 = private unnamed_addr constant [8 x i8] c" bytes)\00", align 1
-@str.1691 = private unnamed_addr constant [11 x i8] c"monolith '\00", align 1
-@str.1692 = private unnamed_addr constant [20 x i8] c"' migrado ao vivo (\00", align 1
-@str.1693 = private unnamed_addr constant [10 x i8] c"instancia\00", align 1
-@str.1694 = private unnamed_addr constant [11 x i8] c"instancias\00", align 1
-@str.1695 = private unnamed_addr constant [40 x i8] c"; campo(s) novo(s) com o valor padrao: \00", align 1
-@str.1696 = private unnamed_addr constant [16 x i8] c"; removido(s): \00", align 1
-@str.1697 = private unnamed_addr constant [18 x i8] c"; convertido(s): \00", align 1
-@str.1698 = private unnamed_addr constant [39 x i8] c"sem compilacao nativa nesta execucao: \00", align 1
-@str.1699 = private unnamed_addr constant [26 x i8] c" segue(m) interpretada(s)\00", align 1
-@str.1700 = private unnamed_addr constant [35 x i8] c"recristalizando em segundo plano: \00", align 1
-@str.1701 = private unnamed_addr constant [32 x i8] c"cristalizada(s) de novo (cache)\00", align 1
-@str.1702 = private unnamed_addr constant [21 x i8] c"clang indisponivel: \00", align 1
-@str.1703 = private unnamed_addr constant [58 x i8] c"erro de compilacao (acima); a versao em execucao continua\00", align 1
-@str.1704 = private unnamed_addr constant [18 x i8] c"a assinatura de '\00", align 1
-@str.1705 = private unnamed_addr constant [12 x i8] c"' mudou de \00", align 1
-@str.1706 = private unnamed_addr constant [39 x i8] c" e ela foi entregue ao C como callback\00", align 1
-@str.1707 = private unnamed_addr constant [34 x i8] c" e ela e usada como valor de vein\00", align 1
-@str.1708 = private unnamed_addr constant [15 x i8] c": compativel (\00", align 1
-@str.1709 = private unnamed_addr constant [5 x i8] c"), '\00", align 1
-@str.1710 = private unnamed_addr constant [17 x i8] c"' segue chamando\00", align 1
-@str.1711 = private unnamed_addr constant [5 x i8] c" e '\00", align 1
-@str.1712 = private unnamed_addr constant [115 x i8] c"', em execucao, ainda a chama com a antiga (aceito so parametro novo no fim com valor padrao e retorno compativel)\00", align 1
-@str.1713 = private unnamed_addr constant [9 x i8] c"a vein '\00", align 1
-@str.1714 = private unnamed_addr constant [22 x i8] c"' foi removida, mas '\00", align 1
-@str.1715 = private unnamed_addr constant [30 x i8] c"', em execucao, ainda a chama\00", align 1
-@str.1716 = private unnamed_addr constant [50 x i8] c"' foi removida, mas o C ainda a tem como callback\00", align 1
-@str.1717 = private unnamed_addr constant [11 x i8] c"o global '\00", align 1
-@str.1718 = private unnamed_addr constant [45 x i8] c"globais novos demais nesta execucao (limite \00", align 1
-@str.1719 = private unnamed_addr constant [16 x i8] c"a extern nova '\00", align 1
-@str.1720 = private unnamed_addr constant [32 x i8] c"' nao tem simbolo no processo (\00", align 1
-@str.1721 = private unnamed_addr constant [11 x i8] c"a extern '\00", align 1
-@str.1722 = private unnamed_addr constant [22 x i8] c"' mudou de assinatura\00", align 1
-@str.1723 = private unnamed_addr constant [89 x i8] c"variantes de strata foram removidas ou reordenadas (so acrescentar no fim troca ao vivo)\00", align 1
-@str.1724 = private unnamed_addr constant [17 x i8] c"troca recusada: \00", align 1
-@str.1725 = private unnamed_addr constant [78 x i8] c". O programa segue com a versao anterior; reinicie (ofs refract) para aplicar\00", align 1
-@str.1726 = private unnamed_addr constant [114 x i8] c"troca recusada: as veins com quartz da versao nova nao compilaram (acima). O programa segue com a versao anterior\00", align 1
-@str.1727 = private unnamed_addr constant [15 x i8] c"vein refratada\00", align 1
-@str.1728 = private unnamed_addr constant [17 x i8] c"veins refratadas\00", align 1
-@str.1729 = private unnamed_addr constant [10 x i8] c"vein nova\00", align 1
-@str.1730 = private unnamed_addr constant [12 x i8] c"veins novas\00", align 1
-@str.1731 = private unnamed_addr constant [12 x i8] c"global novo\00", align 1
-@str.1732 = private unnamed_addr constant [14 x i8] c"globais novos\00", align 1
-@str.1733 = private unnamed_addr constant [14 x i8] c"vein removida\00", align 1
-@str.1734 = private unnamed_addr constant [16 x i8] c"veins removidas\00", align 1
-@str.1735 = private unnamed_addr constant [25 x i8] c"monolith com layout novo\00", align 1
-@str.1736 = private unnamed_addr constant [26 x i8] c"monoliths com layout novo\00", align 1
-@str.1737 = private unnamed_addr constant [19 x i8] c"nenhuma vein mudou\00", align 1
-@str.1738 = private unnamed_addr constant [101 x i8] c" em execucao: troca no proximo cabecalho de laco (OSR); fora de laco, a nova vale na proxima chamada\00", align 1
-@str.1739 = private unnamed_addr constant [33 x i8] c"cristalizada(s) de novo (quartz)\00", align 1
-@str.1740 = private unnamed_addr constant [57 x i8] c"recristalizacao na fila (espera a compilacao em curso): \00", align 1
-@str.1741 = private unnamed_addr constant [17 x i8] c"OFS_FOSSIL_WORLD\00", align 1
-@str.1742 = private unnamed_addr constant [7 x i8] c"record\00", align 1
-@str.1743 = private unnamed_addr constant [37 x i8] c"ofs fossil: nao foi possivel criar '\00", align 1
-@str.1744 = private unnamed_addr constant [3 x i8] c"'\0A\00", align 1
-@str.1745 = private unnamed_addr constant [16 x i8] c"OFS_FOSSIL_SYNC\00", align 1
-@str.1746 = private unnamed_addr constant [35 x i8] c"ofs fossil: nao foi possivel ler '\00", align 1
-@str.1747 = private unnamed_addr constant [14 x i8] c"ofs fossil: '\00", align 1
-@str.1748 = private unnamed_addr constant [103 x i8] c"ofs fossil: aviso: o programa mudou desde a gravacao (o hash do fonte difere); o replay pode divergir\0A\00", align 1
-@str.1749 = private unnamed_addr constant [14 x i8] c"OFS_FOSSIL_TO\00", align 1
-@str.1750 = private unnamed_addr constant [16 x i8] c"OFS_FOSSIL_BACK\00", align 1
-@str.1751 = private unnamed_addr constant [15 x i8] c"OFS_FOSSIL_DIG\00", align 1
-@str.1752 = private unnamed_addr constant [17 x i8] c"OFS_FOSSIL_LAYER\00", align 1
-@str.1753 = private unnamed_addr constant [110 x i8] c"ofs fossil: aviso: veins com quartz rodam nativas; as chamadas externas feitas dentro delas nao sao gravadas\0A\00", align 1
-@str.1754 = private unnamed_addr constant [7 x i8] c"stdout\00", align 1
-@str.1755 = private unnamed_addr constant [7 x i8] c"stderr\00", align 1
-@str.1756 = private unnamed_addr constant [5 x i8] c"fork\00", align 1
-@str.1757 = private unnamed_addr constant [5 x i8] c"pipe\00", align 1
-@str.1758 = private unnamed_addr constant [74 x i8] c"ofs fossil: voltar no tempo precisa de fork/pipe (Linux, Android, macOS)\0A\00", align 1
-@str.1759 = private unnamed_addr constant [19 x i8] c"ofs fossil: alvo '\00", align 1
-@str.1760 = private unnamed_addr constant [82 x i8] c"' invalido (use um passo, L<linha>, <arquivo.ofs>:<linha> ou o nome de uma vein)\0A\00", align 1
-@str.1761 = private unnamed_addr constant [6 x i8] c"linha\00", align 1
-@str.1762 = private unnamed_addr constant [5 x i8] c"line\00", align 1
-@str.1763 = private unnamed_addr constant [2 x i8] c"L\00", align 1
-@str.1764 = private unnamed_addr constant [3 x i8] c"L \00", align 1
-@str.1765 = private unnamed_addr constant [4 x i8] c"go \00", align 1
-@str.1766 = private unnamed_addr constant [6 x i8] c"_exit\00", align 1
-@str.1767 = private unnamed_addr constant [3 x i8] c"A \00", align 1
-@str.1768 = private unnamed_addr constant [8 x i8] c"getppid\00", align 1
-@str.1769 = private unnamed_addr constant [5 x i8] c"kill\00", align 1
-@str.1770 = private unnamed_addr constant [8 x i8] c"waitpid\00", align 1
-@str.1771 = private unnamed_addr constant [3 x i8] c"K \00", align 1
-@str.1772 = private unnamed_addr constant [39 x i8] c"fossil: nenhuma camada antes do passo \00", align 1
-@str.1773 = private unnamed_addr constant [3 x i8] c"H \00", align 1
-@str.1774 = private unnamed_addr constant [3 x i8] c"X \00", align 1
-@str.1775 = private unnamed_addr constant [6 x i8] c"prctl\00", align 1
-@str.1776 = private unnamed_addr constant [25 x i8] c"ofs fossil: fork falhou\0A\00", align 1
-@str.1777 = private unnamed_addr constant [34 x i8] c"ofs fossil: o replay caiu (sinal \00", align 1
-@str.1778 = private unnamed_addr constant [5 x i8] c"read\00", align 1
-@str.1779 = private unnamed_addr constant [32 x i8] c"fossil: fim do programa (passo \00", align 1
-@str.1780 = private unnamed_addr constant [10 x i8] c", codigo \00", align 1
-@str.1781 = private unnamed_addr constant [10 x i8] c"(globais)\00", align 1
-@str.1782 = private unnamed_addr constant [15 x i8] c"fossil: passo \00", align 1
-@str.1783 = private unnamed_addr constant [4 x i8] c" | \00", align 1
-@str.1784 = private unnamed_addr constant [9 x i8] c" | vein \00", align 1
-@str.1785 = private unnamed_addr constant [16 x i8] c"<ponteiro do C>\00", align 1
-@str.1786 = private unnamed_addr constant [8 x i8] c" itens]\00", align 1
-@str.1787 = private unnamed_addr constant [8 x i8] c", ... (\00", align 1
-@str.1788 = private unnamed_addr constant [8 x i8] c" itens)\00", align 1
-@str.1789 = private unnamed_addr constant [7 x i8] c" {...}\00", align 1
-@str.1790 = private unnamed_addr constant [4 x i8] c" { \00", align 1
-@str.1791 = private unnamed_addr constant [11 x i8] c"  locais:\0A\00", align 1
-@str.1792 = private unnamed_addr constant [15 x i8] c"    (nenhuma)\0A\00", align 1
-@str.1793 = private unnamed_addr constant [12 x i8] c"  globais:\0A\00", align 1
-@str.1794 = private unnamed_addr constant [14 x i8] c"    (nenhum)\0A\00", align 1
-@str.1795 = private unnamed_addr constant [4 x i8] c"  '\00", align 1
-@str.1796 = private unnamed_addr constant [26 x i8] c"' nao existe neste ponto\0A\00", align 1
-@str.1797 = private unnamed_addr constant [66 x i8] c"  segue [n]   (n)  avanca n passos mostrando a saida do programa\0A\00", align 1
-@str.1798 = private unnamed_addr constant [44 x i8] c"  cava [n]    (b)  volta n passos no tempo\0A\00", align 1
-@str.1799 = private unnamed_addr constant [74 x i8] c"  ir <alvo>   (g)  vai a um passo, L<linha>, arquivo.ofs:<linha> ou vein\0A\00", align 1
-@str.1800 = private unnamed_addr constant [40 x i8] c"  ver <nome>  (p)  mostra uma variavel\0A\00", align 1
-@str.1801 = private unnamed_addr constant [57 x i8] c"  estrato     (e)  mostra as variaveis locais e globais\0A\00", align 1
-@str.1802 = private unnamed_addr constant [52 x i8] c"  onde        (w)  mostra o passo e a linha atuais\0A\00", align 1
-@str.1803 = private unnamed_addr constant [28 x i8] c"  sai         (q)  encerra\0A\00", align 1
-@str.1804 = private unnamed_addr constant [10 x i8] c"(fossil) \00", align 1
-@str.1805 = private unnamed_addr constant [6 x i8] c"segue\00", align 1
-@str.1806 = private unnamed_addr constant [2 x i8] c"n\00", align 1
-@str.1807 = private unnamed_addr constant [36 x i8] c"  o programa ja terminou; use cava\0A\00", align 1
-@str.1808 = private unnamed_addr constant [5 x i8] c"cava\00", align 1
-@str.1809 = private unnamed_addr constant [2 x i8] c"b\00", align 1
-@str.1810 = private unnamed_addr constant [3 x i8] c"ir\00", align 1
-@str.1811 = private unnamed_addr constant [2 x i8] c"g\00", align 1
-@str.1812 = private unnamed_addr constant [32 x i8] c"  o programa terminou no passo \00", align 1
-@str.1813 = private unnamed_addr constant [50 x i8] c"  o programa ja terminou; use cava ou ir <passo>\0A\00", align 1
-@str.1814 = private unnamed_addr constant [18 x i8] c"  alvo invalido: \00", align 1
-@str.1815 = private unnamed_addr constant [4 x i8] c"ver\00", align 1
-@str.1816 = private unnamed_addr constant [2 x i8] c"p\00", align 1
-@str.1817 = private unnamed_addr constant [8 x i8] c"estrato\00", align 1
-@str.1818 = private unnamed_addr constant [2 x i8] c"e\00", align 1
-@str.1819 = private unnamed_addr constant [5 x i8] c"onde\00", align 1
-@str.1820 = private unnamed_addr constant [4 x i8] c"sai\00", align 1
-@str.1821 = private unnamed_addr constant [2 x i8] c"q\00", align 1
-@str.1822 = private unnamed_addr constant [6 x i8] c"ajuda\00", align 1
-@str.1823 = private unnamed_addr constant [2 x i8] c"h\00", align 1
-@str.1824 = private unnamed_addr constant [25 x i8] c"  comando desconhecido: \00", align 1
-@str.1825 = private unnamed_addr constant [28 x i8] c" (ajuda lista os comandos)\0A\00", align 1
-@str.1826 = private unnamed_addr constant [3 x i8] c"E \00", align 1
-@str.1827 = private unnamed_addr constant [3 x i8] c"M \00", align 1
-@str.1828 = private unnamed_addr constant [41 x i8] c"ofs fossil: o replay divergiu no evento \00", align 1
-@str.1829 = private unnamed_addr constant [9 x i8] c" (passo \00", align 1
-@str.1830 = private unnamed_addr constant [43 x i8] c"a gravacao acabou, mas o programa chamou '\00", align 1
-@str.1831 = private unnamed_addr constant [17 x i8] c"a gravacao tem '\00", align 1
-@str.1832 = private unnamed_addr constant [23 x i8] c"', o programa chamou '\00", align 1
-@str.1833 = private unnamed_addr constant [32 x i8] c"ofs fossil: aviso: a saida de '\00", align 1
-@str.1834 = private unnamed_addr constant [11 x i8] c"' (evento \00", align 1
-@str.1835 = private unnamed_addr constant [21 x i8] c") difere da gravada\0A\00", align 1
-@str.1836 = private unnamed_addr constant [3 x i8] c"F \00", align 1
-@str.1837 = private unnamed_addr constant [24 x i8] c"ofs fossil: gravado em \00", align 1
-@str.1838 = private unnamed_addr constant [21 x i8] c" chamadas externas, \00", align 1
-@str.1839 = private unnamed_addr constant [10 x i8] c" passos)\0A\00", align 1
-@str.1840 = private unnamed_addr constant [91 x i8] c"ofs fossil: aviso: o programa terminou antes de fazer todas as chamadas externas gravadas\0A\00", align 1
-@str.1841 = private unnamed_addr constant [35 x i8] c"ofs fossil: aviso: o replay andou \00", align 1
-@str.1842 = private unnamed_addr constant [22 x i8] c" passos; a gravacao, \00", align 1
-@str.1843 = private unnamed_addr constant [34 x i8] c"fossil: o alvo nao foi alcancado\0A\00", align 1
-@str.1844 = private unnamed_addr constant [47 x i8] c"' nao alcancado (o programa terminou no passo \00", align 1
-@str.1845 = private unnamed_addr constant [13 x i8] c"ofs fossil: \00", align 1
-@str.1846 = private unnamed_addr constant [34 x i8] c" saida(s) diferentes da gravacao\0A\00", align 1
-@str.1847 = private unnamed_addr constant [72 x i8] c"Interpreter error: entry point 'core main()' or 'vein main()' not found\00", align 1
-@str.1848 = private unnamed_addr constant [3 x i8] c"en\00", align 1
-@str.1849 = private unnamed_addr constant [3 x i8] c"pt\00", align 1
-@str.1850 = private unnamed_addr constant [3 x i8] c"es\00", align 1
-@str.1851 = private unnamed_addr constant [9 x i8] c"OFS_LANG\00", align 1
-@str.1852 = private unnamed_addr constant [5 x i8] c"LANG\00", align 1
-@str.1853 = private unnamed_addr constant [10 x i8] c"Attaching\00", align 1
-@str.1854 = private unnamed_addr constant [8 x i8] c"Reading\00", align 1
-@str.1855 = private unnamed_addr constant [7 x i8] c"Lexing\00", align 1
-@str.1856 = private unnamed_addr constant [8 x i8] c"Parsing\00", align 1
-@str.1857 = private unnamed_addr constant [9 x i8] c"Checking\00", align 1
-@str.1858 = private unnamed_addr constant [8 x i8] c"Forging\00", align 1
-@str.1859 = private unnamed_addr constant [8 x i8] c"Linking\00", align 1
-@str.1860 = private unnamed_addr constant [8 x i8] c"Running\00", align 1
-@str.1861 = private unnamed_addr constant [9 x i8] c"Finished\00", align 1
-@str.1862 = private unnamed_addr constant [11 x i8] c"Importando\00", align 1
-@str.1863 = private unnamed_addr constant [6 x i8] c"Lendo\00", align 1
-@str.1864 = private unnamed_addr constant [8 x i8] c"Lexando\00", align 1
-@str.1865 = private unnamed_addr constant [11 x i8] c"Analisando\00", align 1
-@str.1866 = private unnamed_addr constant [12 x i8] c"Verificando\00", align 1
-@str.1867 = private unnamed_addr constant [9 x i8] c"Forjando\00", align 1
-@str.1868 = private unnamed_addr constant [8 x i8] c"Ligando\00", align 1
-@str.1869 = private unnamed_addr constant [11 x i8] c"Executando\00", align 1
-@str.1870 = private unnamed_addr constant [11 x i8] c"Concluído\00", align 1
-@str.1871 = private unnamed_addr constant [8 x i8] c"Leyendo\00", align 1
-@str.1872 = private unnamed_addr constant [11 x i8] c"Analizando\00", align 1
-@str.1873 = private unnamed_addr constant [10 x i8] c"Enlazando\00", align 1
-@str.1874 = private unnamed_addr constant [11 x i8] c"Ejecutando\00", align 1
-@str.1875 = private unnamed_addr constant [10 x i8] c"Terminado\00", align 1
-@str.1876 = private unnamed_addr constant [13 x i8] c"stub_command\00", align 1
-@str.1877 = private unnamed_addr constant [46 x i8] c"comando reservado para trabalho futuro da CLI\00", align 1
-@str.1878 = private unnamed_addr constant [48 x i8] c"comando reservado para trabajo futuro de la CLI\00", align 1
-@str.1879 = private unnamed_addr constant [40 x i8] c"command is reserved for future CLI work\00", align 1
-@str.1880 = private unnamed_addr constant [18 x i8] c"runtime_not_found\00", align 1
-@str.1881 = private unnamed_addr constant [50 x i8] c"runtime OFS não encontrado (defina OFS_RUNTIME):\00", align 1
-@str.1882 = private unnamed_addr constant [48 x i8] c"runtime OFS no encontrado (define OFS_RUNTIME):\00", align 1
-@str.1883 = private unnamed_addr constant [41 x i8] c"OFS runtime not found (set OFS_RUNTIME):\00", align 1
-@str.1884 = private unnamed_addr constant [12 x i8] c"link_failed\00", align 1
-@str.1885 = private unnamed_addr constant [17 x i8] c"ligação falhou\00", align 1
-@str.1886 = private unnamed_addr constant [14 x i8] c"enlace falló\00", align 1
-@str.1887 = private unnamed_addr constant [12 x i8] c"link failed\00", align 1
-@str.1888 = private unnamed_addr constant [5 x i8] c"note\00", align 1
-@str.1889 = private unnamed_addr constant [6 x i8] c"aviso\00", align 1
-@str.1890 = private unnamed_addr constant [5 x i8] c"warn\00", align 1
-@str.1891 = private unnamed_addr constant [6 x i8] c"falha\00", align 1
-@str.1892 = private unnamed_addr constant [6 x i8] c"fallo\00", align 1
-@str.1893 = private unnamed_addr constant [5 x i8] c"[32m\00", align 1
-@str.1894 = private unnamed_addr constant [5 x i8] c"[36m\00", align 1
-@str.1895 = private unnamed_addr constant [5 x i8] c"[33m\00", align 1
-@str.1896 = private unnamed_addr constant [5 x i8] c"[31m\00", align 1
-@str.1897 = private unnamed_addr constant [4 x i8] c"[2m\00", align 1
-@str.1898 = private unnamed_addr constant [4 x i8] c"[0m\00", align 1
-@str.1899 = private unnamed_addr constant [9 x i8] c"NO_COLOR\00", align 1
-@str.1900 = private unnamed_addr constant [5 x i8] c"TERM\00", align 1
-@str.1901 = private unnamed_addr constant [5 x i8] c"dumb\00", align 1
-@str.1902 = private unnamed_addr constant [4 x i8] c"→\00", align 1
-@str.1903 = private unnamed_addr constant [4 x i8] c"✓\00", align 1
-@str.1904 = private unnamed_addr constant [4 x i8] c" ms\00", align 1
-@str.1905 = private unnamed_addr constant [4 x i8] c"ℹ\00", align 1
-@str.1906 = private unnamed_addr constant [4 x i8] c"⚠\00", align 1
-@str.1907 = private unnamed_addr constant [4 x i8] c"✗\00", align 1
-@str.1908 = private unnamed_addr constant [8 x i8] c"       \00", align 1
-@str.1909 = private unnamed_addr constant [5 x i8] c"done\00", align 1
-@str.1910 = private unnamed_addr constant [5 x i8] c" · \00", align 1
-@str.1911 = private unnamed_addr constant [7 x i8] c" B · \00", align 1
-@str.1912 = private unnamed_addr constant [4 x i8] c"lex\00", align 1
-@str.1913 = private unnamed_addr constant [6 x i8] c"parse\00", align 1
-@str.1914 = private unnamed_addr constant [6 x i8] c"check\00", align 1
-@str.1915 = private unnamed_addr constant [5 x i8] c"link\00", align 1
-@str.1916 = private unnamed_addr constant [4 x i8] c"run\00", align 1
-@str.1917 = private unnamed_addr constant [12 x i8] c"stage_start\00", align 1
-@str.1918 = private unnamed_addr constant [10 x i8] c"stage_end\00", align 1
-@str.1919 = private unnamed_addr constant [11 x i8] c"diagnostic\00", align 1
-@str.1920 = private unnamed_addr constant [9 x i8] c"finished\00", align 1
-@str.1921 = private unnamed_addr constant [12 x i8] c"program_out\00", align 1
-@str.1922 = private unnamed_addr constant [5 x i8] c"-\5C|/\00", align 1
-@str.1923 = private unnamed_addr constant [10 x i8] c"{\22kind\22:\22\00", align 1
-@str.1924 = private unnamed_addr constant [12 x i8] c",\22locale\22:\22\00", align 1
-@str.1925 = private unnamed_addr constant [11 x i8] c",\22stage\22:\22\00", align 1
-@str.1926 = private unnamed_addr constant [11 x i8] c",\22level\22:\22\00", align 1
-@str.1927 = private unnamed_addr constant [10 x i8] c",\22code\22:\22\00", align 1
-@str.1928 = private unnamed_addr constant [9 x i8] c",\22line\22:\00", align 1
-@str.1929 = private unnamed_addr constant [8 x i8] c",\22col\22:\00", align 1
-@str.1930 = private unnamed_addr constant [13 x i8] c",\22msg_key\22:\22\00", align 1
-@str.1931 = private unnamed_addr constant [9 x i8] c",\22msg\22:\22\00", align 1
-@str.1932 = private unnamed_addr constant [10 x i8] c",\22args\22:[\00", align 1
-@str.1933 = private unnamed_addr constant [12 x i8] c",\22target\22:\22\00", align 1
-@str.1934 = private unnamed_addr constant [10 x i8] c",\22info\22:\22\00", align 1
-@str.1935 = private unnamed_addr constant [7 x i8] c",\22ms\22:\00", align 1
-@str.1936 = private unnamed_addr constant [22 x i8] c",\22duration_ms_total\22:\00", align 1
-@str.1937 = private unnamed_addr constant [9 x i8] c"] start \00", align 1
-@str.1938 = private unnamed_addr constant [4 x i8] c" ok\00", align 1
-@str.1939 = private unnamed_addr constant [6 x i8] c"done \00", align 1
-@str.1940 = private unnamed_addr constant [11 x i8] c"attach {F:\00", align 1
-@str.1941 = private unnamed_addr constant [9 x i8] c"attach {\00", align 1
-@str.1942 = private unnamed_addr constant [5 x i8] c".ofs\00", align 1
-@str.1943 = private unnamed_addr constant [4 x i8] c"//!\00", align 1
-@str.1944 = private unnamed_addr constant [7 x i8] c"claim \00", align 1
-@str.1945 = private unnamed_addr constant [9 x i8] c"stratum \00", align 1
-@str.1946 = private unnamed_addr constant [9 x i8] c"caprock \00", align 1
-@str.1947 = private unnamed_addr constant [7 x i8] c"claim\09\00", align 1
-@str.1948 = private unnamed_addr constant [9 x i8] c"stratum\09\00", align 1
-@str.1949 = private unnamed_addr constant [9 x i8] c"caprock\09\00", align 1
-@str.1950 = private unnamed_addr constant [12 x i8] c"' sem valor\00", align 1
-@str.1951 = private unnamed_addr constant [59 x i8] c"ex.: 'stratum fault', 'claim rift', 'caprock rift, quartz'\00", align 1
-@str.1952 = private unnamed_addr constant [8 x i8] c"stratum\00", align 1
-@str.1953 = private unnamed_addr constant [10 x i8] c"estrato '\00", align 1
-@str.1954 = private unnamed_addr constant [13 x i8] c"' nao existe\00", align 1
-@str.1955 = private unnamed_addr constant [78 x i8] c"um so: crust (sem baixo nivel), fault (baixo nivel em blocos) ou abyss (tudo)\00", align 1
-@str.1956 = private unnamed_addr constant [36 x i8] c"'stratum' repetido no mesmo arquivo\00", align 1
-@str.1957 = private unnamed_addr constant [29 x i8] c"declare o estrato uma vez so\00", align 1
-@str.1958 = private unnamed_addr constant [8 x i8] c"caprock\00", align 1
-@str.1959 = private unnamed_addr constant [23 x i8] c"' nao e permissao de '\00", align 1
-@str.1960 = private unnamed_addr constant [96 x i8] c"permissoes: rift (extern/rift vein), abyss (bloco abyss), quartz (assembly), magma (magma.cast)\00", align 1
-@str.1961 = private unnamed_addr constant [6 x i8] c"claim\00", align 1
-@str.1962 = private unnamed_addr constant [40 x i8] c"'caprock' so vale no programa principal\00", align 1
-@str.1963 = private unnamed_addr constant [57 x i8] c"o principal decide o que os modulos anexados podem pedir\00", align 1
-@str.1964 = private unnamed_addr constant [16 x i8] c"OFS_STDLIB_PATH\00", align 1
-@str.1965 = private unnamed_addr constant [8 x i8] c"stdlib/\00", align 1
-@str.1966 = private unnamed_addr constant [51 x i8] c"Estrato e permissoes (stratum / claim) por modulo:\00", align 1
-@str.1967 = private unnamed_addr constant [10 x i8] c" (padrao)\00", align 1
-@str.1968 = private unnamed_addr constant [10 x i8] c"sem claim\00", align 1
-@str.1969 = private unnamed_addr constant [41 x i8] c"claim rift, abyss, quartz (pelo estrato)\00", align 1
-@str.1970 = private unnamed_addr constant [19 x i8] c"  [usa sem claim: \00", align 1
-@str.1971 = private unnamed_addr constant [19 x i8] c"  [claim sem uso: \00", align 1
-@str.1972 = private unnamed_addr constant [13 x i8] c" (principal)\00", align 1
-@str.1973 = private unnamed_addr constant [13 x i8] c"nada (crust)\00", align 1
-@str.1974 = private unnamed_addr constant [49 x i8] c"  caprock do principal: os anexados podem pedir \00", align 1
-@str.1975 = private unnamed_addr constant [3 x i8] c"..\00", align 1
-@str.1976 = private unnamed_addr constant [16 x i8] c"stdlib/runtime/\00", align 1
-@str.1977 = private unnamed_addr constant [17 x i8] c"[ERRO DE ATTACH \00", align 1
-@str.1978 = private unnamed_addr constant [26 x i8] c"]: arquivo nao encontrado\00", align 1
-@str.1979 = private unnamed_addr constant [11 x i8] c"OFSCC_LAVA\00", align 1
-@str.1980 = private unnamed_addr constant [3 x i8] c"OS\00", align 1
-@str.1981 = private unnamed_addr constant [11 x i8] c"Windows_NT\00", align 1
-@str.1982 = private unnamed_addr constant [13 x i8] c"OFS_LIB_PATH\00", align 1
-@str.1983 = private unnamed_addr constant [13 x i8] c"OFS_LIB_HOME\00", align 1
-@str.1984 = private unnamed_addr constant [11 x i8] c"/.ofs/libs\00", align 1
-@str.1985 = private unnamed_addr constant [12 x i8] c"]: modulo '\00", align 1
-@str.1986 = private unnamed_addr constant [17 x i8] c"' nao encontrado\00", align 1
-@str.1987 = private unnamed_addr constant [30 x i8] c"  procurado em (nesta ordem):\00", align 1
-@str.1988 = private unnamed_addr constant [115 x i8] c"  dica: confira o nome, defina OFS_STDLIB_PATH ou acrescente a pasta da biblioteca em OFS_LIB_PATH (separada por '\00", align 1
-@str.1989 = private unnamed_addr constant [4 x i8] c"').\00", align 1
-@str.1990 = private unnamed_addr constant [47 x i8] c"' so vale no topo do arquivo (antes do codigo)\00", align 1
-@str.1991 = private unnamed_addr constant [56 x i8] c"mova a linha para o comeco do arquivo, junto dos attach\00", align 1
-@str.1992 = private unnamed_addr constant [3 x i8] c"*/\00", align 1
-@str.1993 = private unnamed_addr constant [3 x i8] c"/*\00", align 1
-@str.1994 = private unnamed_addr constant [3 x i8] c"F:\00", align 1
-@str.1995 = private unnamed_addr constant [4 x i8] c"ofs\00", align 1
-@str.1996 = private unnamed_addr constant [36 x i8] c" - compilador Obsidian Fault Script\00", align 1
-@str.1997 = private unnamed_addr constant [5 x i8] c"Uso:\00", align 1
-@str.1998 = private unnamed_addr constant [44 x i8] c" ofs <arquivo.ofs>   (equivale a 'ofs run')\00", align 1
-@str.1999 = private unnamed_addr constant [13 x i8] c"Subcomandos:\00", align 1
-@str.2000 = private unnamed_addr constant [14 x i8] c"run <arq.ofs>\00", align 1
-@str.2001 = private unnamed_addr constant [51 x i8] c"executa interpretado (--native compila temporario)\00", align 1
-@str.2002 = private unnamed_addr constant [16 x i8] c"build <arq.ofs>\00", align 1
-@str.2003 = private unnamed_addr constant [42 x i8] c"compila para executavel nativo (-o saida)\00", align 1
-@str.2004 = private unnamed_addr constant [16 x i8] c"check <arq.ofs>\00", align 1
-@str.2005 = private unnamed_addr constant [29 x i8] c"somente verificacao de tipos\00", align 1
-@str.2006 = private unnamed_addr constant [15 x i8] c"test <arq.ofs>\00", align 1
-@str.2007 = private unnamed_addr constant [26 x i8] c"executa testes do arquivo\00", align 1
-@str.2008 = private unnamed_addr constant [16 x i8] c"assay <arq.ofs>\00", align 1
-@str.2009 = private unnamed_addr constant [54 x i8] c"testa os contratos nos limites (bearing/settle/grain)\00", align 1
-@str.2010 = private unnamed_addr constant [15 x i8] c"twin <arq.ofs>\00", align 1
-@str.2011 = private unnamed_addr constant [44 x i8] c"roda interpretado + nativo e compara saidas\00", align 1
-@str.2012 = private unnamed_addr constant [17 x i8] c"polish <arq.ofs>\00", align 1
-@str.2013 = private unnamed_addr constant [36 x i8] c"verifica estilo e padroes do codigo\00", align 1
-@str.2014 = private unnamed_addr constant [20 x i8] c"language [en|pt|es]\00", align 1
-@str.2015 = private unnamed_addr constant [30 x i8] c"mostra/altera o idioma da CLI\00", align 1
-@str.2016 = private unnamed_addr constant [18 x i8] c"ir|asm|tokens|ast\00", align 1
-@str.2017 = private unnamed_addr constant [37 x i8] c"artefatos de depuracao do compilador\00", align 1
-@str.2018 = private unnamed_addr constant [13 x i8] c"ui <arq.oll>\00", align 1
-@str.2019 = private unnamed_addr constant [43 x i8] c"renderiza layout OLL nativo (-o saida.ppm)\00", align 1
-@str.2020 = private unnamed_addr constant [6 x i8] c"clean\00", align 1
-@str.2021 = private unnamed_addr constant [37 x i8] c"limpa artefatos temporarios de build\00", align 1
-@str.2022 = private unnamed_addr constant [8 x i8] c"version\00", align 1
-@str.2023 = private unnamed_addr constant [16 x i8] c"mostra a versao\00", align 1
-@str.2024 = private unnamed_addr constant [7 x i8] c"update\00", align 1
-@str.2025 = private unnamed_addr constant [31 x i8] c"atualiza para a ultima release\00", align 1
-@str.2026 = private unnamed_addr constant [31 x i8] c"Opcoes do ofscc (nivel baixo):\00", align 1
-@str.2027 = private unnamed_addr constant [11 x i8] c"-o <saida>\00", align 1
-@str.2028 = private unnamed_addr constant [36 x i8] c"executavel de saida (padrao: a.out)\00", align 1
-@str.2029 = private unnamed_addr constant [12 x i8] c"-O0/-O2/-O3\00", align 1
-@str.2030 = private unnamed_addr constant [30 x i8] c"otimizacao LLVM (padrao: -O2)\00", align 1
-@str.2031 = private unnamed_addr constant [16 x i8] c"--emit-ir <arq>\00", align 1
-@str.2032 = private unnamed_addr constant [39 x i8] c"caminho do LLVM IR (padrao: output.ll)\00", align 1
-@str.2033 = private unnamed_addr constant [23 x i8] c"--check/--tokens/--ast\00", align 1
-@str.2034 = private unnamed_addr constant [18 x i8] c"modos de inspecao\00", align 1
-@str.2035 = private unnamed_addr constant [104 x i8] c"Env: OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT, OFS_LANG, OFS_PROGRESS, OFS_VERBOSE\00", align 1
-@str.2036 = private unnamed_addr constant [44 x i8] c" ofs <archivo.ofs>   (equivale a 'ofs run')\00", align 1
-@str.2037 = private unnamed_addr constant [49 x i8] c"ejecuta interpretado (--native compila temporal)\00", align 1
-@str.2038 = private unnamed_addr constant [40 x i8] c"compila a ejecutable nativo (-o salida)\00", align 1
-@str.2039 = private unnamed_addr constant [27 x i8] c"solo verificacion de tipos\00", align 1
-@str.2040 = private unnamed_addr constant [32 x i8] c"ejecuta las pruebas del archivo\00", align 1
-@str.2041 = private unnamed_addr constant [59 x i8] c"prueba los contratos en los limites (bearing/settle/grain)\00", align 1
-@str.2042 = private unnamed_addr constant [48 x i8] c"ejecuta interpretado + nativo y compara salidas\00", align 1
-@str.2043 = private unnamed_addr constant [38 x i8] c"verifica estilo y patrones del codigo\00", align 1
-@str.2044 = private unnamed_addr constant [35 x i8] c"muestra/cambia el idioma de la CLI\00", align 1
-@str.2045 = private unnamed_addr constant [40 x i8] c"artefactos de depuracion del compilador\00", align 1
-@str.2046 = private unnamed_addr constant [44 x i8] c"renderiza layout OLL nativo (-o salida.ppm)\00", align 1
-@str.2047 = private unnamed_addr constant [38 x i8] c"limpia artefactos temporales de build\00", align 1
-@str.2048 = private unnamed_addr constant [19 x i8] c"muestra la version\00", align 1
-@str.2049 = private unnamed_addr constant [30 x i8] c"actualiza a la ultima release\00", align 1
-@str.2050 = private unnamed_addr constant [32 x i8] c"Opciones de ofscc (bajo nivel):\00", align 1
-@str.2051 = private unnamed_addr constant [12 x i8] c"-o <salida>\00", align 1
-@str.2052 = private unnamed_addr constant [38 x i8] c"ejecutable de salida (defecto: a.out)\00", align 1
-@str.2053 = private unnamed_addr constant [33 x i8] c"optimizacion LLVM (defecto: -O2)\00", align 1
-@str.2054 = private unnamed_addr constant [38 x i8] c"ruta del LLVM IR (defecto: output.ll)\00", align 1
-@str.2055 = private unnamed_addr constant [20 x i8] c"modos de inspeccion\00", align 1
-@str.2056 = private unnamed_addr constant [34 x i8] c" - Obsidian Fault Script compiler\00", align 1
-@str.2057 = private unnamed_addr constant [7 x i8] c"Usage:\00", align 1
-@str.2058 = private unnamed_addr constant [38 x i8] c" ofs <file.ofs>   (same as 'ofs run')\00", align 1
-@str.2059 = private unnamed_addr constant [13 x i8] c"Subcommands:\00", align 1
-@str.2060 = private unnamed_addr constant [15 x i8] c"run <file.ofs>\00", align 1
-@str.2061 = private unnamed_addr constant [48 x i8] c"run interpreted (--native builds a temp binary)\00", align 1
-@str.2062 = private unnamed_addr constant [17 x i8] c"build <file.ofs>\00", align 1
-@str.2063 = private unnamed_addr constant [43 x i8] c"compile to a native executable (-o output)\00", align 1
-@str.2064 = private unnamed_addr constant [17 x i8] c"check <file.ofs>\00", align 1
-@str.2065 = private unnamed_addr constant [16 x i8] c"type-check only\00", align 1
-@str.2066 = private unnamed_addr constant [16 x i8] c"test <file.ofs>\00", align 1
-@str.2067 = private unnamed_addr constant [15 x i8] c"run file tests\00", align 1
-@str.2068 = private unnamed_addr constant [17 x i8] c"assay <file.ofs>\00", align 1
-@str.2069 = private unnamed_addr constant [58 x i8] c"test contracts at their boundaries (bearing/settle/grain)\00", align 1
-@str.2070 = private unnamed_addr constant [16 x i8] c"twin <file.ofs>\00", align 1
-@str.2071 = private unnamed_addr constant [42 x i8] c"run interpreted + native and diff outputs\00", align 1
-@str.2072 = private unnamed_addr constant [18 x i8] c"polish <file.ofs>\00", align 1
-@str.2073 = private unnamed_addr constant [25 x i8] c"style and pattern checks\00", align 1
-@str.2074 = private unnamed_addr constant [29 x i8] c"show/change the CLI language\00", align 1
-@str.2075 = private unnamed_addr constant [25 x i8] c"compiler debug artifacts\00", align 1
-@str.2076 = private unnamed_addr constant [14 x i8] c"ui <file.oll>\00", align 1
-@str.2077 = private unnamed_addr constant [41 x i8] c"render native OLL layout (-o output.ppm)\00", align 1
-@str.2078 = private unnamed_addr constant [32 x i8] c"clean temporary build artifacts\00", align 1
-@str.2079 = private unnamed_addr constant [27 x i8] c"print the compiler version\00", align 1
-@str.2080 = private unnamed_addr constant [29 x i8] c"update to the latest release\00", align 1
-@str.2081 = private unnamed_addr constant [25 x i8] c"Low-level ofscc options:\00", align 1
-@str.2082 = private unnamed_addr constant [12 x i8] c"-o <output>\00", align 1
-@str.2083 = private unnamed_addr constant [35 x i8] c"output executable (default: a.out)\00", align 1
-@str.2084 = private unnamed_addr constant [39 x i8] c"LLVM optimization level (default: -O2)\00", align 1
-@str.2085 = private unnamed_addr constant [17 x i8] c"--emit-ir <file>\00", align 1
-@str.2086 = private unnamed_addr constant [41 x i8] c"LLVM IR output path (default: output.ll)\00", align 1
-@str.2087 = private unnamed_addr constant [17 x i8] c"inspection modes\00", align 1
-@str.2088 = private unnamed_addr constant [12 x i8] c"OFSCC_INPUT\00", align 1
-@str.2089 = private unnamed_addr constant [13 x i8] c"OFSCC_OUTPUT\00", align 1
-@str.2090 = private unnamed_addr constant [12 x i8] c"OFSCC_C_OUT\00", align 1
-@str.2091 = private unnamed_addr constant [11 x i8] c"OFSCC_MODE\00", align 1
-@str.2092 = private unnamed_addr constant [7 x i8] c"tokens\00", align 1
-@str.2093 = private unnamed_addr constant [4 x i8] c"ast\00", align 1
-@str.2094 = private unnamed_addr constant [10 x i8] c"OFSCC_OPT\00", align 1
-@str.2095 = private unnamed_addr constant [4 x i8] c"-O0\00", align 1
-@str.2096 = private unnamed_addr constant [4 x i8] c"-O2\00", align 1
-@str.2097 = private unnamed_addr constant [4 x i8] c"-O3\00", align 1
-@str.2098 = private unnamed_addr constant [2 x i8] c"\09\00", align 1
-@str.2099 = private unnamed_addr constant [16 x i8] c"[ERRO DE MAGMA \00", align 1
-@str.2100 = private unnamed_addr constant [43 x i8] c"]: um mod (magma.cast) nao tem 'core main'\00", align 1
-@str.2101 = private unnamed_addr constant [79 x i8] c"  dica: o programa que carrega o mod e quem tem o main; o mod so declara veins\00", align 1
-@str.2102 = private unnamed_addr constant [2 x i8] c"G\00", align 1
-@str.2103 = private unnamed_addr constant [2 x i8] c"M\00", align 1
-@str.2104 = private unnamed_addr constant [2 x i8] c"X\00", align 1
-@str.2105 = private unnamed_addr constant [3 x i8] c"V\09\00", align 1
-@str.2106 = private unnamed_addr constant [20 x i8] c"OFSCC_REFRACT_WATCH\00", align 1
-@str.2107 = private unnamed_addr constant [24 x i8] c"OFS-REFRACT-MANIFEST 1\0A\00", align 1
-@str.2108 = private unnamed_addr constant [2 x i8] c"V\00", align 1
-@str.2109 = private unnamed_addr constant [10 x i8] c"' mudou (\00", align 1
-@str.2110 = private unnamed_addr constant [5 x i8] c" -> \00", align 1
-@str.2111 = private unnamed_addr constant [58 x i8] c"): o app chama a vein pela celula com a assinatura antiga\00", align 1
-@str.2112 = private unnamed_addr constant [14 x i8] c"global novo '\00", align 1
-@str.2113 = private unnamed_addr constant [37 x i8] c"': o remendo nao cria globais no app\00", align 1
-@str.2114 = private unnamed_addr constant [18 x i8] c"' mudou de tipo (\00", align 1
-@str.2115 = private unnamed_addr constant [23 x i8] c"o layout do monolith '\00", align 1
-@str.2116 = private unnamed_addr constant [44 x i8] c"' mudou (o app nativo nao migra instancias)\00", align 1
-@str.2117 = private unnamed_addr constant [20 x i8] c"refract: recusada: \00", align 1
-@str.2118 = private unnamed_addr constant [117 x i8] c"refract: o app segue com a versao anterior; para aplicar, reinstale (ofs build --target android --refract --install)\00", align 1
-@str.2119 = private unnamed_addr constant [46 x i8] c"refract: removidas (seguem no app, sem uso): \00", align 1
-@str.2120 = private unnamed_addr constant [28 x i8] c"refract: nenhuma vein mudou\00", align 1
-@str.2121 = private unnamed_addr constant [3 x i8] c"G\09\00", align 1
-@str.2122 = private unnamed_addr constant [21 x i8] c"refract: alteradas: \00", align 1
-@str.2123 = private unnamed_addr constant [17 x i8] c"refract: novas: \00", align 1
-@str.2124 = private unnamed_addr constant [50 x i8] c"refract: religadas (chamam uma vein sem celula): \00", align 1
-@str.2125 = private unnamed_addr constant [17 x i8] c"refract: aviso: \00", align 1
-@str.2126 = private unnamed_addr constant [96 x i8] c" tambem e usada como valor de vein; quem guardou o endereco (callback) segue na versao do build\00", align 1
-@str.2127 = private unnamed_addr constant [10 x i8] c"input.ofs\00", align 1
-@str.2128 = private unnamed_addr constant [6 x i8] c"a.out\00", align 1
-@str.2129 = private unnamed_addr constant [10 x i8] c"output.ll\00", align 1
-@str.2130 = private unnamed_addr constant [9 x i8] c"build-ir\00", align 1
-@str.2131 = private unnamed_addr constant [11 x i8] c"OFS_FOSSIL\00", align 1
-@str.2132 = private unnamed_addr constant [7 x i8] c"replay\00", align 1
-@str.2133 = private unnamed_addr constant [16 x i8] c"OFS_FOSSIL_FILE\00", align 1
-@str.2134 = private unnamed_addr constant [35 x i8] c"' nao e um arquivo .fossil legivel\00", align 1
-@str.2135 = private unnamed_addr constant [13 x i8] c"OFS_PROGRESS\00", align 1
-@str.2136 = private unnamed_addr constant [9 x i8] c"OFS_ANIM\00", align 1
-@str.2137 = private unnamed_addr constant [5 x i8] c"json\00", align 1
-@str.2138 = private unnamed_addr constant [6 x i8] c"fancy\00", align 1
-@str.2139 = private unnamed_addr constant [6 x i8] c"plain\00", align 1
-@str.2140 = private unnamed_addr constant [7 x i8] c"--help\00", align 1
-@str.2141 = private unnamed_addr constant [5 x i8] c"twin\00", align 1
-@str.2142 = private unnamed_addr constant [7 x i8] c"polish\00", align 1
-@str.2143 = private unnamed_addr constant [5 x i8] c"test\00", align 1
-@str.2144 = private unnamed_addr constant [6 x i8] c"probe\00", align 1
-@str.2145 = private unnamed_addr constant [18 x i8] c"OFSCC_TWIN_TARGET\00", align 1
-@str.2146 = private unnamed_addr constant [32 x i8] c"{\22kind\22:\22twin_start\22,\22target\22:\22\00", align 1
-@str.2147 = private unnamed_addr constant [3 x i8] c"\22}\00", align 1
-@str.2148 = private unnamed_addr constant [33 x i8] c"{\22kind\22:\22twin_result\22,\22target\22:\22\00", align 1
-@str.2149 = private unnamed_addr constant [49 x i8] c"\22,\22match\22:false,\22reason\22:\22twin_not_implemented\22}\00", align 1
-@str.2150 = private unnamed_addr constant [9 x i8] c"language\00", align 1
-@str.2151 = private unnamed_addr constant [15 x i8] c"ofs language: \00", align 1
-@str.2152 = private unnamed_addr constant [14 x i8] c"OFSCC_REFRACT\00", align 1
-@str.2153 = private unnamed_addr constant [6 x i8] c"cells\00", align 1
-@str.2154 = private unnamed_addr constant [6 x i8] c"patch\00", align 1
-@str.2155 = private unnamed_addr constant [20 x i8] c"\0Aattach {geophone}\0A\00", align 1
-@str.2156 = private unnamed_addr constant [18 x i8] c"OFS_MAGMA_CAPROCK\00", align 1
-@str.2157 = private unnamed_addr constant [18 x i8] c"OFS_DUMP_EXPANDED\00", align 1
-@str.2158 = private unnamed_addr constant [5 x i8] c"tok(\00", align 1
-@str.2159 = private unnamed_addr constant [4 x i8] c") '\00", align 1
-@str.2160 = private unnamed_addr constant [16 x i8] c"AST root kind: \00", align 1
-@str.2161 = private unnamed_addr constant [14 x i8] c"OFS_CONTRACTS\00", align 1
-@str.2162 = private unnamed_addr constant [19 x i8] c"OFSCC_REFRACT_BASE\00", align 1
-@str.2163 = private unnamed_addr constant [64 x i8] c"refract: OFSCC_REFRACT_BASE (manifesto do app) nao encontrado: \00", align 1
-@str.2164 = private unnamed_addr constant [12 x i8] c"OFS_REFRACT\00", align 1
-@str.2165 = private unnamed_addr constant [13 x i8] c"OFSCC_TARGET\00", align 1
-@str.2166 = private unnamed_addr constant [2 x i8] c"c\00", align 1
-@str.2167 = private unnamed_addr constant [9 x i8] c"1 module\00", align 1
-@str.2168 = private unnamed_addr constant [3 x i8] c".o\00", align 1
-@str.2169 = private unnamed_addr constant [12 x i8] c"OFS_RUNTIME\00", align 1
-@str.2170 = private unnamed_addr constant [36 x i8] c"/usr/local/lib/ofs/libofs_runtime.a\00", align 1
-@str.2171 = private unnamed_addr constant [5 x i8] c"gcc \00", align 1
-@str.2172 = private unnamed_addr constant [6 x i8] c" 2>&1\00", align 1
-@str.2173 = private unnamed_addr constant [19 x i8] c"llc -filetype=obj \00", align 1
-@str.2174 = private unnamed_addr constant [89 x i8] c" && (ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib64/crt1.o /usr/lib64/crti.o \00", align 1
-@str.2175 = private unnamed_addr constant [31 x i8] c" -lc -lm /usr/lib64/crtn.o -o \00", align 1
-@str.2176 = private unnamed_addr constant [138 x i8] c" 2>&1 || ld -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o \00", align 1
-@str.2177 = private unnamed_addr constant [46 x i8] c" -lc -lm /usr/lib/x86_64-linux-gnu/crtn.o -o \00", align 1
-@str.2178 = private unnamed_addr constant [7 x i8] c" 2>&1)\00", align 1
+@str.1451 = private unnamed_addr constant [3 x i8] c"wb\00", align 1
+@str.1452 = private unnamed_addr constant [14 x i8] c"OFS-FOSSIL 1\0A\00", align 1
+@str.1453 = private unnamed_addr constant [3 x i8] c"S \00", align 1
+@str.1454 = private unnamed_addr constant [11 x i8] c"OFS-FOSSIL\00", align 1
+@str.1455 = private unnamed_addr constant [25 x i8] c"nao e um arquivo .fossil\00", align 1
+@str.1456 = private unnamed_addr constant [8 x i8] c"versao \00", align 1
+@str.1457 = private unnamed_addr constant [46 x i8] c" do formato nao suportada (este ofscc le a 1)\00", align 1
+@str.1458 = private unnamed_addr constant [2 x i8] c"S\00", align 1
+@str.1459 = private unnamed_addr constant [35 x i8] c"cabecalho sem o registro S (fonte)\00", align 1
+@str.1460 = private unnamed_addr constant [8 x i8] c"[array]\00", align 1
+@str.1461 = private unnamed_addr constant [5 x i8] c"*ptr\00", align 1
+@str.1462 = private unnamed_addr constant [7 x i8] c"<vein>\00", align 1
+@str.1463 = private unnamed_addr constant [5 x i8] c"etch\00", align 1
+@str.1464 = private unnamed_addr constant [7 x i8] c"etchln\00", align 1
+@str.1465 = private unnamed_addr constant [5 x i8] c"mold\00", align 1
+@str.1466 = private unnamed_addr constant [111 x i8] c"ofs: geode com captura nao pode ir para o C (Rift) nem virar endereco; passe uma vein ou um geode sem captura\0A\00", align 1
+@str.1467 = private unnamed_addr constant [52 x i8] c"ofs: chamada de vein nula (o valor de vein e null)\0A\00", align 1
+@str.1468 = private unnamed_addr constant [32 x i8] c"chamada de valor que nao e vein\00", align 1
+@str.1469 = private unnamed_addr constant [7 x i8] c"vein '\00", align 1
+@str.1470 = private unnamed_addr constant [14 x i8] c"ofs_arena_use\00", align 1
+@str.1471 = private unnamed_addr constant [18 x i8] c"__ofs_arena_alloc\00", align 1
+@str.1472 = private unnamed_addr constant [13 x i8] c"ofs: indice \00", align 1
+@str.1473 = private unnamed_addr constant [35 x i8] c" fora do limite do array (tamanho \00", align 1
+@str.1474 = private unnamed_addr constant [53 x i8] c"Array com elementos de tipos diferentes passado ao C\00", align 1
+@str.1475 = private unnamed_addr constant [10 x i8] c"Array de \00", align 1
+@str.1476 = private unnamed_addr constant [100 x i8] c" passado ao C: no interpretador so Array de inteiros/ponteiros, crystal, bool, obsidian ou monolith\00", align 1
+@str.1477 = private unnamed_addr constant [108 x i8] c"&x de uma variavel Array ainda nao e suportado no interpretador (use ofs_array_data(x) ou ofs run --native)\00", align 1
+@str.1478 = private unnamed_addr constant [37 x i8] c"&x de monolith nulo no interpretador\00", align 1
+@str.1479 = private unnamed_addr constant [46 x i8] c"atribuicao a campo que o monolith nao declara\00", align 1
+@str.1480 = private unnamed_addr constant [6 x i8] c"ofs: \00", align 1
+@str.1481 = private unnamed_addr constant [28 x i8] c"Interpreter runtime error: \00", align 1
+@str.1482 = private unnamed_addr constant [57 x i8] c"fault_memcpy/fault_memset esperam (ponteiro, valor, len)\00", align 1
+@str.1483 = private unnamed_addr constant [10 x i8] c"libm.so.6\00", align 1
+@str.1484 = private unnamed_addr constant [8 x i8] c"libm.so\00", align 1
+@str.1485 = private unnamed_addr constant [13 x i8] c"OFS_FFI_LIBS\00", align 1
+@str.1486 = private unnamed_addr constant [41 x i8] c"ofs run: aviso: nao foi possivel abrir '\00", align 1
+@str.1487 = private unnamed_addr constant [18 x i8] c"' (OFS_FFI_LIBS)\0A\00", align 1
+@str.1488 = private unnamed_addr constant [16 x i8] c"OFS_RUN_RUNTIME\00", align 1
+@str.1489 = private unnamed_addr constant [7 x i8] c"interp\00", align 1
+@str.1490 = private unnamed_addr constant [12 x i8] c"libX11.so.6\00", align 1
+@str.1491 = private unnamed_addr constant [12 x i8] c"libXft.so.2\00", align 1
+@str.1492 = private unnamed_addr constant [40 x i8] c"ofs run: erro: undefined reference to `\00", align 1
+@str.1493 = private unnamed_addr constant [39 x i8] c"' (extern vein sem simbolo no processo\00", align 1
+@str.1494 = private unnamed_addr constant [9 x i8] c" nem em \00", align 1
+@str.1495 = private unnamed_addr constant [43 x i8] c"; outras bibliotecas: OFS_FFI_LIBS=libx.so\00", align 1
+@str.1496 = private unnamed_addr constant [58 x i8] c"; este ofscc nao exporta o runtime: linke-o com -rdynamic\00", align 1
+@str.1497 = private unnamed_addr constant [33 x i8] c": assinatura FFI sem trampolim (\00", align 1
+@str.1498 = private unnamed_addr constant [66 x i8] c" args; ate 4 com crystal, 12 so inteiros, variadica ate 4 extras)\00", align 1
+@str.1499 = private unnamed_addr constant [97 x i8] c": crystal no FFI precisa dos trampolins (__ofs_ffi_dispatch) e de um ofscc linkado com -rdynamic\00", align 1
+@str.1500 = private unnamed_addr constant [31 x i8] c": assinatura FFI sem trampolim\00", align 1
+@str.1501 = private unnamed_addr constant [9 x i8] c"extern '\00", align 1
+@str.1502 = private unnamed_addr constant [48 x i8] c": mais de 12 argumentos no FFI do interpretador\00", align 1
+@str.1503 = private unnamed_addr constant [57 x i8] c": crystal depois do 6o argumento no FFI do interpretador\00", align 1
+@str.1504 = private unnamed_addr constant [75 x i8] c": f32 depois do 6o argumento ou na parte variadica no FFI do interpretador\00", align 1
+@str.1505 = private unnamed_addr constant [37 x i8] c"fault_addr espera o nome de uma vein\00", align 1
+@str.1506 = private unnamed_addr constant [70 x i8] c"fault_call: o primeiro argumento precisa ser um endereco (fault_addr)\00", align 1
+@str.1507 = private unnamed_addr constant [51 x i8] c"fault_call: mais de 12 argumentos no interpretador\00", align 1
+@str.1508 = private unnamed_addr constant [43 x i8] c"fault_call: crystal depois do 6o argumento\00", align 1
+@str.1509 = private unnamed_addr constant [14 x i8] c"ofs refract: \00", align 1
+@str.1510 = private unnamed_addr constant [10 x i8] c"ofs run: \00", align 1
+@str.1511 = private unnamed_addr constant [5 x i8] c"'\5C''\00", align 1
+@str.1512 = private unnamed_addr constant [17 x i8] c"0123456789abcdef\00", align 1
+@str.1513 = private unnamed_addr constant [17 x i8] c"OFS_QUARTZ_CACHE\00", align 1
+@str.1514 = private unnamed_addr constant [15 x i8] c"XDG_CACHE_HOME\00", align 1
+@str.1515 = private unnamed_addr constant [12 x i8] c"/ofs/quartz\00", align 1
+@str.1516 = private unnamed_addr constant [5 x i8] c"HOME\00", align 1
+@str.1517 = private unnamed_addr constant [5 x i8] c"/tmp\00", align 1
+@str.1518 = private unnamed_addr constant [19 x i8] c"/.cache/ofs/quartz\00", align 1
+@str.1519 = private unnamed_addr constant [8 x i8] c"dlerror\00", align 1
+@str.1520 = private unnamed_addr constant [16 x i8] c"OFS_CRYSTALLIZE\00", align 1
+@str.1521 = private unnamed_addr constant [26 x i8] c"OFS_CRYSTALLIZE_THRESHOLD\00", align 1
+@str.1522 = private unnamed_addr constant [5 x i8] c"1000\00", align 1
+@str.1523 = private unnamed_addr constant [71 x i8] c"OFS_CRYSTALLIZE_THRESHOLD precisa ser inteiro positivo (1..1000000000)\00", align 1
+@str.1524 = private unnamed_addr constant [80 x i8] c"callback de ponto flutuante sem trampolim neste ofscc; continuando interpretado\00", align 1
+@str.1525 = private unnamed_addr constant [8 x i8] c"OFS_OSR\00", align 1
+@str.1526 = private unnamed_addr constant [8 x i8] c"mkdtemp\00", align 1
+@str.1527 = private unnamed_addr constant [139 x i8] c"este programa usa quartz (assembly inline), que roda nativo, mas este ofscc nao exporta o runtime (ligue-o com -rdynamic); use `ofs build`\00", align 1
+@str.1528 = private unnamed_addr constant [7 x i8] c"TMPDIR\00", align 1
+@str.1529 = private unnamed_addr constant [19 x i8] c"/ofs-quartz-XXXXXX\00", align 1
+@str.1530 = private unnamed_addr constant [59 x i8] c"criacao segura de temporario indisponivel nesta plataforma\00", align 1
+@str.1531 = private unnamed_addr constant [87 x i8] c"nao foi possivel criar temporario seguro para quartz nesta plataforma; use `ofs build`\00", align 1
+@str.1532 = private unnamed_addr constant [11 x i8] c"/module.ll\00", align 1
+@str.1533 = private unnamed_addr constant [24 x i8] c"nao foi possivel criar \00", align 1
+@str.1534 = private unnamed_addr constant [30 x i8] c" (execucao hibrida do quartz)\00", align 1
+@str.1535 = private unnamed_addr constant [14 x i8] c"OFS_QUARTZ_CC\00", align 1
+@str.1536 = private unnamed_addr constant [6 x i8] c"clang\00", align 1
+@str.1537 = private unnamed_addr constant [39 x i8] c"-shared -fPIC -O2 -Wno-override-module\00", align 1
+@str.1538 = private unnamed_addr constant [27 x i8] c" -undefined dynamic_lookup\00", align 1
+@str.1539 = private unnamed_addr constant [16 x i8] c" -Wl,-Bsymbolic\00", align 1
+@str.1540 = private unnamed_addr constant [10 x i8] c"/identity\00", align 1
+@str.1541 = private unnamed_addr constant [3 x i8] c"( \00", align 1
+@str.1542 = private unnamed_addr constant [27 x i8] c" --version; uname -sm ) > \00", align 1
+@str.1543 = private unnamed_addr constant [13 x i8] c" 2>/dev/null\00", align 1
+@str.1544 = private unnamed_addr constant [4 x i8] c".so\00", align 1
+@str.1545 = private unnamed_addr constant [6 x i8] c"cache\00", align 1
+@str.1546 = private unnamed_addr constant [10 x i8] c"compilado\00", align 1
+@str.1547 = private unnamed_addr constant [12 x i8] c"command -v \00", align 1
+@str.1548 = private unnamed_addr constant [17 x i8] c" >/dev/null 2>&1\00", align 1
+@str.1549 = private unnamed_addr constant [47 x i8] c"clang nao encontrado; cristalizacao desativada\00", align 1
+@str.1550 = private unnamed_addr constant [80 x i8] c"este programa usa quartz e precisa do clang; instale o clang ou use `ofs build`\00", align 1
+@str.1551 = private unnamed_addr constant [11 x i8] c"/module.so\00", align 1
+@str.1552 = private unnamed_addr constant [7 x i8] c"/ready\00", align 1
+@str.1553 = private unnamed_addr constant [11 x i8] c"/clang.log\00", align 1
+@str.1554 = private unnamed_addr constant [110 x i8] c"L=$(ulimit -v); if [ \22$L\22 = unlimited ] || [ \22$L\22 -gt 3000000 ]; then ulimit -v 3000000; fi; mkdir -p -m 700 \00", align 1
+@str.1555 = private unnamed_addr constant [12 x i8] c" && O=; if \00", align 1
+@str.1556 = private unnamed_addr constant [104 x i8] c" --version 2>/dev/null | grep -Eq 'version 14[.]|clang-1400[.]'; then O='-mllvm -opaque-pointers'; fi; \00", align 1
+@str.1557 = private unnamed_addr constant [13 x i8] c"timeout 120 \00", align 1
+@str.1558 = private unnamed_addr constant [5 x i8] c" $O \00", align 1
+@str.1559 = private unnamed_addr constant [5 x i8] c" -o \00", align 1
+@str.1560 = private unnamed_addr constant [8 x i8] c" && cp \00", align 1
+@str.1561 = private unnamed_addr constant [11 x i8] c" && mv -f \00", align 1
+@str.1562 = private unnamed_addr constant [7 x i8] c"rm -f \00", align 1
+@str.1563 = private unnamed_addr constant [5 x i8] c".tmp\00", align 1
+@str.1564 = private unnamed_addr constant [11 x i8] c"/abandoned\00", align 1
+@str.1565 = private unnamed_addr constant [9 x i8] c"; rmdir \00", align 1
+@str.1566 = private unnamed_addr constant [5 x i8] c"( ( \00", align 1
+@str.1567 = private unnamed_addr constant [6 x i8] c" ) > \00", align 1
+@str.1568 = private unnamed_addr constant [25 x i8] c" 2>&1; printf '%s' $? > \00", align 1
+@str.1569 = private unnamed_addr constant [6 x i8] c"; mv \00", align 1
+@str.1570 = private unnamed_addr constant [11 x i8] c"; if [ -f \00", align 1
+@str.1571 = private unnamed_addr constant [17 x i8] c" ] || ! kill -0 \00", align 1
+@str.1572 = private unnamed_addr constant [20 x i8] c" 2>/dev/null; then \00", align 1
+@str.1573 = private unnamed_addr constant [36 x i8] c"; fi ) </dev/null >/dev/null 2>&1 &\00", align 1
+@str.1574 = private unnamed_addr constant [48 x i8] c"nao foi possivel iniciar clang em segundo plano\00", align 1
+@str.1575 = private unnamed_addr constant [54 x i8] c"o clang nao compilou as veins com quartz (erro acima)\00", align 1
+@str.1576 = private unnamed_addr constant [35 x i8] c"cache nativo invalido (removido): \00", align 1
+@str.1577 = private unnamed_addr constant [27 x i8] c"nao foi possivel carregar \00", align 1
+@str.1578 = private unnamed_addr constant [39 x i8] c" (cache removido; execute novamente): \00", align 1
+@str.1579 = private unnamed_addr constant [14 x i8] c"vein nativa '\00", align 1
+@str.1580 = private unnamed_addr constant [15 x i8] c"' nao esta em \00", align 1
+@str.1581 = private unnamed_addr constant [139 x i8] c"' (com quartz): assinatura sem trampolim FFI (ate 12 parametros inteiros/ponteiro, ou ate 4 com crystal); divida a vein ou use `ofs build`\00", align 1
+@str.1582 = private unnamed_addr constant [8 x i8] c"__ofsg.\00", align 1
+@str.1583 = private unnamed_addr constant [11 x i8] c"__ofs_osr_\00", align 1
+@str.1584 = private unnamed_addr constant [12 x i8] c"OFS_VERBOSE\00", align 1
+@str.1585 = private unnamed_addr constant [14 x i8] c"cristalizacao\00", align 1
+@str.1586 = private unnamed_addr constant [8 x i8] c"refract\00", align 1
+@str.1587 = private unnamed_addr constant [6 x i8] c"osr (\00", align 1
+@str.1588 = private unnamed_addr constant [5 x i8] c"laco\00", align 1
+@str.1589 = private unnamed_addr constant [6 x i8] c"lacos\00", align 1
+@str.1590 = private unnamed_addr constant [21 x i8] c" vein(s) nativa(s) (\00", align 1
+@str.1591 = private unnamed_addr constant [4 x i8] c"): \00", align 1
+@str.1592 = private unnamed_addr constant [25 x i8] c"ofs run: cristalizacao: \00", align 1
+@str.1593 = private unnamed_addr constant [67 x i8] c"ofs run: osr: o clang nao compilou o laco; ele segue interpretado\0A\00", align 1
+@str.1594 = private unnamed_addr constant [75 x i8] c"recristalizacao indisponivel (clang falhou); as veins seguem interpretadas\00", align 1
+@str.1595 = private unnamed_addr constant [57 x i8] c"compilacao nativa indisponivel; continuando interpretado\00", align 1
+@str.1596 = private unnamed_addr constant [14 x i8] c"segundo plano\00", align 1
+@str.1597 = private unnamed_addr constant [35 x i8] c"cristalizada(s) de novo (.so novo)\00", align 1
+@str.1598 = private unnamed_addr constant [48 x i8] c"runtime sem -rdynamic; continuando interpretado\00", align 1
+@str.1599 = private unnamed_addr constant [15 x i8] c"__ofs_osr_poll\00", align 1
+@str.1600 = private unnamed_addr constant [24 x i8] c"ofs run: osr: laco de '\00", align 1
+@str.1601 = private unnamed_addr constant [19 x i8] c"' terminou nativo\0A\00", align 1
+@str.1602 = private unnamed_addr constant [12 x i8] c"o laco de '\00", align 1
+@str.1603 = private unnamed_addr constant [53 x i8] c"' sumiu na versao nova; ele termina na versao antiga\00", align 1
+@str.1604 = private unnamed_addr constant [100 x i8] c"' esta dentro de cycle/match/bedrock; ele termina na versao antiga e a nova vale na proxima chamada\00", align 1
+@str.1605 = private unnamed_addr constant [17 x i8] c"parametro novo '\00", align 1
+@str.1606 = private unnamed_addr constant [21 x i8] c"' mudou de tipo (de \00", align 1
+@str.1607 = private unnamed_addr constant [7 x i8] c" para \00", align 1
+@str.1608 = private unnamed_addr constant [27 x i8] c"' segue na versao antiga: \00", align 1
+@str.1609 = private unnamed_addr constant [33 x i8] c"; a nova vale na proxima chamada\00", align 1
+@str.1610 = private unnamed_addr constant [10 x i8] c"laco de '\00", align 1
+@str.1611 = private unnamed_addr constant [32 x i8] c"' continua na versao nova (OSR)\00", align 1
+@str.1612 = private unnamed_addr constant [58 x i8] c"variavel(is) nova(s) antes do laco, com o valor inicial: \00", align 1
+@str.1613 = private unnamed_addr constant [27 x i8] c"variavel(is) removida(s): \00", align 1
+@str.1614 = private unnamed_addr constant [16 x i8] c"__ofs_cbx_table\00", align 1
+@str.1615 = private unnamed_addr constant [12 x i8] c"fault_addr(\00", align 1
+@str.1616 = private unnamed_addr constant [121 x i8] c"): callback para o C precisa dos trampolins __ofs_cb_table (ofscc compilado por um ofscc com F2 e linkado com -rdynamic)\00", align 1
+@str.1617 = private unnamed_addr constant [38 x i8] c"): trampolins de callback esgotados (\00", align 1
+@str.1618 = private unnamed_addr constant [32 x i8] c" veins diferentes por execucao)\00", align 1
+@str.1619 = private unnamed_addr constant [110 x i8] c"): callback com crystal/f32 precisa dos trampolins com ponto flutuante (ofscc da onda 4, fora do Windows x64)\00", align 1
+@str.1620 = private unnamed_addr constant [25 x i8] c"): callback com mais de \00", align 1
+@str.1621 = private unnamed_addr constant [35 x i8] c" parametros inteiros/ponteiros ou \00", align 1
+@str.1622 = private unnamed_addr constant [13 x i8] c" crystal/f32\00", align 1
+@str.1623 = private unnamed_addr constant [24 x i8] c": variavel desconhecida\00", align 1
+@str.1624 = private unnamed_addr constant [85 x i8] c"&expr: so existe endereco de variavel (&x); para um campo use (&s) as stone + offset\00", align 1
+@str.1625 = private unnamed_addr constant [7 x i8] c"*stone\00", align 1
+@str.1626 = private unnamed_addr constant [48 x i8] c"Interpreter runtime error: undefined function '\00", align 1
+@str.1627 = private unnamed_addr constant [97 x i8] c"quartz (assembly inline) nao roda no interpretador; a vein devia rodar nativa (execucao hibrida)\00", align 1
+@str.1628 = private unnamed_addr constant [16 x i8] c"Runtime throw: \00", align 1
+@str.1629 = private unnamed_addr constant [14 x i8] c"Runtime throw\00", align 1
+@str.1630 = private unnamed_addr constant [18 x i8] c"OFS_REFRACT_QUIET\00", align 1
+@str.1631 = private unnamed_addr constant [19 x i8] c"OFS_REFRACT_PERIOD\00", align 1
+@str.1632 = private unnamed_addr constant [4 x i8] c"200\00", align 1
+@str.1633 = private unnamed_addr constant [73 x i8] c"OFS_REFRACT_PERIOD precisa ser um inteiro de 10 a 60000 (ms); usando 200\00", align 1
+@str.1634 = private unnamed_addr constant [3 x i8] c"1 \00", align 1
+@str.1635 = private unnamed_addr constant [4 x i8] c"dup\00", align 1
+@str.1636 = private unnamed_addr constant [5 x i8] c"dup2\00", align 1
+@str.1637 = private unnamed_addr constant [7 x i8] c"fileno\00", align 1
+@str.1638 = private unnamed_addr constant [8 x i8] c"_fileno\00", align 1
+@str.1639 = private unnamed_addr constant [6 x i8] c"close\00", align 1
+@str.1640 = private unnamed_addr constant [18 x i8] c"OFS_REFRACT_DRAFT\00", align 1
+@str.1641 = private unnamed_addr constant [7 x i8] c"getuid\00", align 1
+@str.1642 = private unnamed_addr constant [16 x i8] c"XDG_RUNTIME_DIR\00", align 1
+@str.1643 = private unnamed_addr constant [14 x i8] c"/ofs-refract-\00", align 1
+@str.1644 = private unnamed_addr constant [14 x i8] c"mkdir -m 700 \00", align 1
+@str.1645 = private unnamed_addr constant [20 x i8] c" 2>/dev/null; [ -d \00", align 1
+@str.1646 = private unnamed_addr constant [14 x i8] c" ] && [ ! -L \00", align 1
+@str.1647 = private unnamed_addr constant [12 x i8] c" ] && [ -O \00", align 1
+@str.1648 = private unnamed_addr constant [17 x i8] c" ] && chmod 700 \00", align 1
+@str.1649 = private unnamed_addr constant [14 x i8] c" && mkdir -p \00", align 1
+@str.1650 = private unnamed_addr constant [6 x i8] c"/lava\00", align 1
+@str.1651 = private unnamed_addr constant [7 x i8] c"/pulse\00", align 1
+@str.1652 = private unnamed_addr constant [16 x i8] c" && { for p in \00", align 1
+@str.1653 = private unnamed_addr constant [86 x i8] c"/*; do n=${p##*/}; n=${n%.eco}; kill -0 \22$n\22 2>/dev/null || rm -f \22$p\22; done; true; }\00", align 1
+@str.1654 = private unnamed_addr constant [17 x i8] c"lava desligada: \00", align 1
+@str.1655 = private unnamed_addr constant [59 x i8] c" nao e uma pasta sua (0700); edicoes sem salvar nao entram\00", align 1
+@str.1656 = private unnamed_addr constant [5 x i8] c"TEMP\00", align 1
+@str.1657 = private unnamed_addr constant [4 x i8] c"TMP\00", align 1
+@str.1658 = private unnamed_addr constant [13 x i8] c"/ofs-refract\00", align 1
+@str.1659 = private unnamed_addr constant [7 x i8] c"_mkdir\00", align 1
+@str.1660 = private unnamed_addr constant [8 x i8] c"/pulse/\00", align 1
+@str.1661 = private unnamed_addr constant [5 x i8] c".eco\00", align 1
+@str.1662 = private unnamed_addr constant [8 x i8] c"_getcwd\00", align 1
+@str.1663 = private unnamed_addr constant [4 x i8] c"PWD\00", align 1
+@str.1664 = private unnamed_addr constant [7 x i8] c"/lava/\00", align 1
+@str.1665 = private unnamed_addr constant [4 x i8] c" (+\00", align 1
+@str.1666 = private unnamed_addr constant [13 x i8] c"attach local\00", align 1
+@str.1667 = private unnamed_addr constant [14 x i8] c"attach locais\00", align 1
+@str.1668 = private unnamed_addr constant [12 x i8] c"observando \00", align 1
+@str.1669 = private unnamed_addr constant [48 x i8] c"; salve (ou so edite, no VS Code) para refratar\00", align 1
+@str.1670 = private unnamed_addr constant [22 x i8] c"; salve para refratar\00", align 1
+@str.1671 = private unnamed_addr constant [80 x i8] c"erro de compilacao no rascunho do editor (acima); a versao em execucao continua\00", align 1
+@str.1672 = private unnamed_addr constant [3 x i8] c"; \00", align 1
+@str.1673 = private unnamed_addr constant [26 x i8] c"parametro novo com padrao\00", align 1
+@str.1674 = private unnamed_addr constant [28 x i8] c"parametros novos com padrao\00", align 1
+@str.1675 = private unnamed_addr constant [14 x i8] c"retorno novo \00", align 1
+@str.1676 = private unnamed_addr constant [27 x i8] c" (a chamada antiga ignora)\00", align 1
+@str.1677 = private unnamed_addr constant [9 x i8] c"retorno \00", align 1
+@str.1678 = private unnamed_addr constant [10 x i8] c" cabe em \00", align 1
+@str.1679 = private unnamed_addr constant [21 x i8] c"retorno f32 cabe em \00", align 1
+@str.1680 = private unnamed_addr constant [6 x i8] c"' de \00", align 1
+@str.1681 = private unnamed_addr constant [13 x i8] c"o monolith '\00", align 1
+@str.1682 = private unnamed_addr constant [7 x i8] c"' tem \00", align 1
+@str.1683 = private unnamed_addr constant [15 x i8] c"instancia viva\00", align 1
+@str.1684 = private unnamed_addr constant [17 x i8] c"instancias vivas\00", align 1
+@str.1685 = private unnamed_addr constant [50 x i8] c" e um campo mudou para um tipo que nao converte (\00", align 1
+@str.1686 = private unnamed_addr constant [16 x i8] c"' cresceu para \00", align 1
+@str.1687 = private unnamed_addr constant [45 x i8] c" bytes e as instancias vivas tem lugar para \00", align 1
+@str.1688 = private unnamed_addr constant [12 x i8] c" (folga de \00", align 1
+@str.1689 = private unnamed_addr constant [8 x i8] c" bytes)\00", align 1
+@str.1690 = private unnamed_addr constant [11 x i8] c"monolith '\00", align 1
+@str.1691 = private unnamed_addr constant [20 x i8] c"' migrado ao vivo (\00", align 1
+@str.1692 = private unnamed_addr constant [10 x i8] c"instancia\00", align 1
+@str.1693 = private unnamed_addr constant [11 x i8] c"instancias\00", align 1
+@str.1694 = private unnamed_addr constant [40 x i8] c"; campo(s) novo(s) com o valor padrao: \00", align 1
+@str.1695 = private unnamed_addr constant [16 x i8] c"; removido(s): \00", align 1
+@str.1696 = private unnamed_addr constant [18 x i8] c"; convertido(s): \00", align 1
+@str.1697 = private unnamed_addr constant [39 x i8] c"sem compilacao nativa nesta execucao: \00", align 1
+@str.1698 = private unnamed_addr constant [26 x i8] c" segue(m) interpretada(s)\00", align 1
+@str.1699 = private unnamed_addr constant [35 x i8] c"recristalizando em segundo plano: \00", align 1
+@str.1700 = private unnamed_addr constant [32 x i8] c"cristalizada(s) de novo (cache)\00", align 1
+@str.1701 = private unnamed_addr constant [21 x i8] c"clang indisponivel: \00", align 1
+@str.1702 = private unnamed_addr constant [58 x i8] c"erro de compilacao (acima); a versao em execucao continua\00", align 1
+@str.1703 = private unnamed_addr constant [18 x i8] c"a assinatura de '\00", align 1
+@str.1704 = private unnamed_addr constant [12 x i8] c"' mudou de \00", align 1
+@str.1705 = private unnamed_addr constant [39 x i8] c" e ela foi entregue ao C como callback\00", align 1
+@str.1706 = private unnamed_addr constant [34 x i8] c" e ela e usada como valor de vein\00", align 1
+@str.1707 = private unnamed_addr constant [15 x i8] c": compativel (\00", align 1
+@str.1708 = private unnamed_addr constant [5 x i8] c"), '\00", align 1
+@str.1709 = private unnamed_addr constant [17 x i8] c"' segue chamando\00", align 1
+@str.1710 = private unnamed_addr constant [5 x i8] c" e '\00", align 1
+@str.1711 = private unnamed_addr constant [115 x i8] c"', em execucao, ainda a chama com a antiga (aceito so parametro novo no fim com valor padrao e retorno compativel)\00", align 1
+@str.1712 = private unnamed_addr constant [9 x i8] c"a vein '\00", align 1
+@str.1713 = private unnamed_addr constant [22 x i8] c"' foi removida, mas '\00", align 1
+@str.1714 = private unnamed_addr constant [30 x i8] c"', em execucao, ainda a chama\00", align 1
+@str.1715 = private unnamed_addr constant [50 x i8] c"' foi removida, mas o C ainda a tem como callback\00", align 1
+@str.1716 = private unnamed_addr constant [11 x i8] c"o global '\00", align 1
+@str.1717 = private unnamed_addr constant [45 x i8] c"globais novos demais nesta execucao (limite \00", align 1
+@str.1718 = private unnamed_addr constant [16 x i8] c"a extern nova '\00", align 1
+@str.1719 = private unnamed_addr constant [32 x i8] c"' nao tem simbolo no processo (\00", align 1
+@str.1720 = private unnamed_addr constant [11 x i8] c"a extern '\00", align 1
+@str.1721 = private unnamed_addr constant [22 x i8] c"' mudou de assinatura\00", align 1
+@str.1722 = private unnamed_addr constant [89 x i8] c"variantes de strata foram removidas ou reordenadas (so acrescentar no fim troca ao vivo)\00", align 1
+@str.1723 = private unnamed_addr constant [17 x i8] c"troca recusada: \00", align 1
+@str.1724 = private unnamed_addr constant [78 x i8] c". O programa segue com a versao anterior; reinicie (ofs refract) para aplicar\00", align 1
+@str.1725 = private unnamed_addr constant [114 x i8] c"troca recusada: as veins com quartz da versao nova nao compilaram (acima). O programa segue com a versao anterior\00", align 1
+@str.1726 = private unnamed_addr constant [15 x i8] c"vein refratada\00", align 1
+@str.1727 = private unnamed_addr constant [17 x i8] c"veins refratadas\00", align 1
+@str.1728 = private unnamed_addr constant [10 x i8] c"vein nova\00", align 1
+@str.1729 = private unnamed_addr constant [12 x i8] c"veins novas\00", align 1
+@str.1730 = private unnamed_addr constant [12 x i8] c"global novo\00", align 1
+@str.1731 = private unnamed_addr constant [14 x i8] c"globais novos\00", align 1
+@str.1732 = private unnamed_addr constant [14 x i8] c"vein removida\00", align 1
+@str.1733 = private unnamed_addr constant [16 x i8] c"veins removidas\00", align 1
+@str.1734 = private unnamed_addr constant [25 x i8] c"monolith com layout novo\00", align 1
+@str.1735 = private unnamed_addr constant [26 x i8] c"monoliths com layout novo\00", align 1
+@str.1736 = private unnamed_addr constant [19 x i8] c"nenhuma vein mudou\00", align 1
+@str.1737 = private unnamed_addr constant [101 x i8] c" em execucao: troca no proximo cabecalho de laco (OSR); fora de laco, a nova vale na proxima chamada\00", align 1
+@str.1738 = private unnamed_addr constant [33 x i8] c"cristalizada(s) de novo (quartz)\00", align 1
+@str.1739 = private unnamed_addr constant [57 x i8] c"recristalizacao na fila (espera a compilacao em curso): \00", align 1
+@str.1740 = private unnamed_addr constant [17 x i8] c"OFS_FOSSIL_WORLD\00", align 1
+@str.1741 = private unnamed_addr constant [7 x i8] c"record\00", align 1
+@str.1742 = private unnamed_addr constant [37 x i8] c"ofs fossil: nao foi possivel criar '\00", align 1
+@str.1743 = private unnamed_addr constant [3 x i8] c"'\0A\00", align 1
+@str.1744 = private unnamed_addr constant [16 x i8] c"OFS_FOSSIL_SYNC\00", align 1
+@str.1745 = private unnamed_addr constant [35 x i8] c"ofs fossil: nao foi possivel ler '\00", align 1
+@str.1746 = private unnamed_addr constant [14 x i8] c"ofs fossil: '\00", align 1
+@str.1747 = private unnamed_addr constant [103 x i8] c"ofs fossil: aviso: o programa mudou desde a gravacao (o hash do fonte difere); o replay pode divergir\0A\00", align 1
+@str.1748 = private unnamed_addr constant [14 x i8] c"OFS_FOSSIL_TO\00", align 1
+@str.1749 = private unnamed_addr constant [16 x i8] c"OFS_FOSSIL_BACK\00", align 1
+@str.1750 = private unnamed_addr constant [15 x i8] c"OFS_FOSSIL_DIG\00", align 1
+@str.1751 = private unnamed_addr constant [17 x i8] c"OFS_FOSSIL_LAYER\00", align 1
+@str.1752 = private unnamed_addr constant [110 x i8] c"ofs fossil: aviso: veins com quartz rodam nativas; as chamadas externas feitas dentro delas nao sao gravadas\0A\00", align 1
+@str.1753 = private unnamed_addr constant [7 x i8] c"stdout\00", align 1
+@str.1754 = private unnamed_addr constant [7 x i8] c"stderr\00", align 1
+@str.1755 = private unnamed_addr constant [5 x i8] c"fork\00", align 1
+@str.1756 = private unnamed_addr constant [5 x i8] c"pipe\00", align 1
+@str.1757 = private unnamed_addr constant [74 x i8] c"ofs fossil: voltar no tempo precisa de fork/pipe (Linux, Android, macOS)\0A\00", align 1
+@str.1758 = private unnamed_addr constant [19 x i8] c"ofs fossil: alvo '\00", align 1
+@str.1759 = private unnamed_addr constant [82 x i8] c"' invalido (use um passo, L<linha>, <arquivo.ofs>:<linha> ou o nome de uma vein)\0A\00", align 1
+@str.1760 = private unnamed_addr constant [6 x i8] c"linha\00", align 1
+@str.1761 = private unnamed_addr constant [5 x i8] c"line\00", align 1
+@str.1762 = private unnamed_addr constant [2 x i8] c"L\00", align 1
+@str.1763 = private unnamed_addr constant [3 x i8] c"L \00", align 1
+@str.1764 = private unnamed_addr constant [4 x i8] c"go \00", align 1
+@str.1765 = private unnamed_addr constant [6 x i8] c"_exit\00", align 1
+@str.1766 = private unnamed_addr constant [3 x i8] c"A \00", align 1
+@str.1767 = private unnamed_addr constant [8 x i8] c"getppid\00", align 1
+@str.1768 = private unnamed_addr constant [5 x i8] c"kill\00", align 1
+@str.1769 = private unnamed_addr constant [8 x i8] c"waitpid\00", align 1
+@str.1770 = private unnamed_addr constant [3 x i8] c"K \00", align 1
+@str.1771 = private unnamed_addr constant [39 x i8] c"fossil: nenhuma camada antes do passo \00", align 1
+@str.1772 = private unnamed_addr constant [3 x i8] c"H \00", align 1
+@str.1773 = private unnamed_addr constant [3 x i8] c"X \00", align 1
+@str.1774 = private unnamed_addr constant [6 x i8] c"prctl\00", align 1
+@str.1775 = private unnamed_addr constant [25 x i8] c"ofs fossil: fork falhou\0A\00", align 1
+@str.1776 = private unnamed_addr constant [34 x i8] c"ofs fossil: o replay caiu (sinal \00", align 1
+@str.1777 = private unnamed_addr constant [5 x i8] c"read\00", align 1
+@str.1778 = private unnamed_addr constant [32 x i8] c"fossil: fim do programa (passo \00", align 1
+@str.1779 = private unnamed_addr constant [10 x i8] c", codigo \00", align 1
+@str.1780 = private unnamed_addr constant [10 x i8] c"(globais)\00", align 1
+@str.1781 = private unnamed_addr constant [15 x i8] c"fossil: passo \00", align 1
+@str.1782 = private unnamed_addr constant [4 x i8] c" | \00", align 1
+@str.1783 = private unnamed_addr constant [9 x i8] c" | vein \00", align 1
+@str.1784 = private unnamed_addr constant [16 x i8] c"<ponteiro do C>\00", align 1
+@str.1785 = private unnamed_addr constant [8 x i8] c" itens]\00", align 1
+@str.1786 = private unnamed_addr constant [8 x i8] c", ... (\00", align 1
+@str.1787 = private unnamed_addr constant [8 x i8] c" itens)\00", align 1
+@str.1788 = private unnamed_addr constant [7 x i8] c" {...}\00", align 1
+@str.1789 = private unnamed_addr constant [4 x i8] c" { \00", align 1
+@str.1790 = private unnamed_addr constant [11 x i8] c"  locais:\0A\00", align 1
+@str.1791 = private unnamed_addr constant [15 x i8] c"    (nenhuma)\0A\00", align 1
+@str.1792 = private unnamed_addr constant [12 x i8] c"  globais:\0A\00", align 1
+@str.1793 = private unnamed_addr constant [14 x i8] c"    (nenhum)\0A\00", align 1
+@str.1794 = private unnamed_addr constant [4 x i8] c"  '\00", align 1
+@str.1795 = private unnamed_addr constant [26 x i8] c"' nao existe neste ponto\0A\00", align 1
+@str.1796 = private unnamed_addr constant [66 x i8] c"  segue [n]   (n)  avanca n passos mostrando a saida do programa\0A\00", align 1
+@str.1797 = private unnamed_addr constant [44 x i8] c"  cava [n]    (b)  volta n passos no tempo\0A\00", align 1
+@str.1798 = private unnamed_addr constant [74 x i8] c"  ir <alvo>   (g)  vai a um passo, L<linha>, arquivo.ofs:<linha> ou vein\0A\00", align 1
+@str.1799 = private unnamed_addr constant [40 x i8] c"  ver <nome>  (p)  mostra uma variavel\0A\00", align 1
+@str.1800 = private unnamed_addr constant [57 x i8] c"  estrato     (e)  mostra as variaveis locais e globais\0A\00", align 1
+@str.1801 = private unnamed_addr constant [52 x i8] c"  onde        (w)  mostra o passo e a linha atuais\0A\00", align 1
+@str.1802 = private unnamed_addr constant [28 x i8] c"  sai         (q)  encerra\0A\00", align 1
+@str.1803 = private unnamed_addr constant [10 x i8] c"(fossil) \00", align 1
+@str.1804 = private unnamed_addr constant [6 x i8] c"segue\00", align 1
+@str.1805 = private unnamed_addr constant [2 x i8] c"n\00", align 1
+@str.1806 = private unnamed_addr constant [36 x i8] c"  o programa ja terminou; use cava\0A\00", align 1
+@str.1807 = private unnamed_addr constant [5 x i8] c"cava\00", align 1
+@str.1808 = private unnamed_addr constant [2 x i8] c"b\00", align 1
+@str.1809 = private unnamed_addr constant [3 x i8] c"ir\00", align 1
+@str.1810 = private unnamed_addr constant [2 x i8] c"g\00", align 1
+@str.1811 = private unnamed_addr constant [32 x i8] c"  o programa terminou no passo \00", align 1
+@str.1812 = private unnamed_addr constant [50 x i8] c"  o programa ja terminou; use cava ou ir <passo>\0A\00", align 1
+@str.1813 = private unnamed_addr constant [18 x i8] c"  alvo invalido: \00", align 1
+@str.1814 = private unnamed_addr constant [4 x i8] c"ver\00", align 1
+@str.1815 = private unnamed_addr constant [2 x i8] c"p\00", align 1
+@str.1816 = private unnamed_addr constant [8 x i8] c"estrato\00", align 1
+@str.1817 = private unnamed_addr constant [2 x i8] c"e\00", align 1
+@str.1818 = private unnamed_addr constant [5 x i8] c"onde\00", align 1
+@str.1819 = private unnamed_addr constant [4 x i8] c"sai\00", align 1
+@str.1820 = private unnamed_addr constant [2 x i8] c"q\00", align 1
+@str.1821 = private unnamed_addr constant [6 x i8] c"ajuda\00", align 1
+@str.1822 = private unnamed_addr constant [2 x i8] c"h\00", align 1
+@str.1823 = private unnamed_addr constant [25 x i8] c"  comando desconhecido: \00", align 1
+@str.1824 = private unnamed_addr constant [28 x i8] c" (ajuda lista os comandos)\0A\00", align 1
+@str.1825 = private unnamed_addr constant [3 x i8] c"E \00", align 1
+@str.1826 = private unnamed_addr constant [3 x i8] c"M \00", align 1
+@str.1827 = private unnamed_addr constant [41 x i8] c"ofs fossil: o replay divergiu no evento \00", align 1
+@str.1828 = private unnamed_addr constant [9 x i8] c" (passo \00", align 1
+@str.1829 = private unnamed_addr constant [43 x i8] c"a gravacao acabou, mas o programa chamou '\00", align 1
+@str.1830 = private unnamed_addr constant [17 x i8] c"a gravacao tem '\00", align 1
+@str.1831 = private unnamed_addr constant [23 x i8] c"', o programa chamou '\00", align 1
+@str.1832 = private unnamed_addr constant [32 x i8] c"ofs fossil: aviso: a saida de '\00", align 1
+@str.1833 = private unnamed_addr constant [11 x i8] c"' (evento \00", align 1
+@str.1834 = private unnamed_addr constant [21 x i8] c") difere da gravada\0A\00", align 1
+@str.1835 = private unnamed_addr constant [3 x i8] c"F \00", align 1
+@str.1836 = private unnamed_addr constant [24 x i8] c"ofs fossil: gravado em \00", align 1
+@str.1837 = private unnamed_addr constant [21 x i8] c" chamadas externas, \00", align 1
+@str.1838 = private unnamed_addr constant [10 x i8] c" passos)\0A\00", align 1
+@str.1839 = private unnamed_addr constant [91 x i8] c"ofs fossil: aviso: o programa terminou antes de fazer todas as chamadas externas gravadas\0A\00", align 1
+@str.1840 = private unnamed_addr constant [35 x i8] c"ofs fossil: aviso: o replay andou \00", align 1
+@str.1841 = private unnamed_addr constant [22 x i8] c" passos; a gravacao, \00", align 1
+@str.1842 = private unnamed_addr constant [34 x i8] c"fossil: o alvo nao foi alcancado\0A\00", align 1
+@str.1843 = private unnamed_addr constant [47 x i8] c"' nao alcancado (o programa terminou no passo \00", align 1
+@str.1844 = private unnamed_addr constant [13 x i8] c"ofs fossil: \00", align 1
+@str.1845 = private unnamed_addr constant [34 x i8] c" saida(s) diferentes da gravacao\0A\00", align 1
+@str.1846 = private unnamed_addr constant [72 x i8] c"Interpreter error: entry point 'core main()' or 'vein main()' not found\00", align 1
+@str.1847 = private unnamed_addr constant [3 x i8] c"en\00", align 1
+@str.1848 = private unnamed_addr constant [3 x i8] c"pt\00", align 1
+@str.1849 = private unnamed_addr constant [3 x i8] c"es\00", align 1
+@str.1850 = private unnamed_addr constant [9 x i8] c"OFS_LANG\00", align 1
+@str.1851 = private unnamed_addr constant [5 x i8] c"LANG\00", align 1
+@str.1852 = private unnamed_addr constant [10 x i8] c"Attaching\00", align 1
+@str.1853 = private unnamed_addr constant [8 x i8] c"Reading\00", align 1
+@str.1854 = private unnamed_addr constant [7 x i8] c"Lexing\00", align 1
+@str.1855 = private unnamed_addr constant [8 x i8] c"Parsing\00", align 1
+@str.1856 = private unnamed_addr constant [9 x i8] c"Checking\00", align 1
+@str.1857 = private unnamed_addr constant [8 x i8] c"Forging\00", align 1
+@str.1858 = private unnamed_addr constant [8 x i8] c"Linking\00", align 1
+@str.1859 = private unnamed_addr constant [8 x i8] c"Running\00", align 1
+@str.1860 = private unnamed_addr constant [9 x i8] c"Finished\00", align 1
+@str.1861 = private unnamed_addr constant [11 x i8] c"Importando\00", align 1
+@str.1862 = private unnamed_addr constant [6 x i8] c"Lendo\00", align 1
+@str.1863 = private unnamed_addr constant [8 x i8] c"Lexando\00", align 1
+@str.1864 = private unnamed_addr constant [11 x i8] c"Analisando\00", align 1
+@str.1865 = private unnamed_addr constant [12 x i8] c"Verificando\00", align 1
+@str.1866 = private unnamed_addr constant [9 x i8] c"Forjando\00", align 1
+@str.1867 = private unnamed_addr constant [8 x i8] c"Ligando\00", align 1
+@str.1868 = private unnamed_addr constant [11 x i8] c"Executando\00", align 1
+@str.1869 = private unnamed_addr constant [11 x i8] c"Concluído\00", align 1
+@str.1870 = private unnamed_addr constant [8 x i8] c"Leyendo\00", align 1
+@str.1871 = private unnamed_addr constant [11 x i8] c"Analizando\00", align 1
+@str.1872 = private unnamed_addr constant [10 x i8] c"Enlazando\00", align 1
+@str.1873 = private unnamed_addr constant [11 x i8] c"Ejecutando\00", align 1
+@str.1874 = private unnamed_addr constant [10 x i8] c"Terminado\00", align 1
+@str.1875 = private unnamed_addr constant [13 x i8] c"stub_command\00", align 1
+@str.1876 = private unnamed_addr constant [46 x i8] c"comando reservado para trabalho futuro da CLI\00", align 1
+@str.1877 = private unnamed_addr constant [48 x i8] c"comando reservado para trabajo futuro de la CLI\00", align 1
+@str.1878 = private unnamed_addr constant [40 x i8] c"command is reserved for future CLI work\00", align 1
+@str.1879 = private unnamed_addr constant [18 x i8] c"runtime_not_found\00", align 1
+@str.1880 = private unnamed_addr constant [50 x i8] c"runtime OFS não encontrado (defina OFS_RUNTIME):\00", align 1
+@str.1881 = private unnamed_addr constant [48 x i8] c"runtime OFS no encontrado (define OFS_RUNTIME):\00", align 1
+@str.1882 = private unnamed_addr constant [41 x i8] c"OFS runtime not found (set OFS_RUNTIME):\00", align 1
+@str.1883 = private unnamed_addr constant [12 x i8] c"link_failed\00", align 1
+@str.1884 = private unnamed_addr constant [17 x i8] c"ligação falhou\00", align 1
+@str.1885 = private unnamed_addr constant [14 x i8] c"enlace falló\00", align 1
+@str.1886 = private unnamed_addr constant [12 x i8] c"link failed\00", align 1
+@str.1887 = private unnamed_addr constant [5 x i8] c"note\00", align 1
+@str.1888 = private unnamed_addr constant [6 x i8] c"aviso\00", align 1
+@str.1889 = private unnamed_addr constant [5 x i8] c"warn\00", align 1
+@str.1890 = private unnamed_addr constant [6 x i8] c"falha\00", align 1
+@str.1891 = private unnamed_addr constant [6 x i8] c"fallo\00", align 1
+@str.1892 = private unnamed_addr constant [5 x i8] c"[32m\00", align 1
+@str.1893 = private unnamed_addr constant [5 x i8] c"[36m\00", align 1
+@str.1894 = private unnamed_addr constant [5 x i8] c"[33m\00", align 1
+@str.1895 = private unnamed_addr constant [5 x i8] c"[31m\00", align 1
+@str.1896 = private unnamed_addr constant [4 x i8] c"[2m\00", align 1
+@str.1897 = private unnamed_addr constant [4 x i8] c"[0m\00", align 1
+@str.1898 = private unnamed_addr constant [9 x i8] c"NO_COLOR\00", align 1
+@str.1899 = private unnamed_addr constant [5 x i8] c"TERM\00", align 1
+@str.1900 = private unnamed_addr constant [5 x i8] c"dumb\00", align 1
+@str.1901 = private unnamed_addr constant [4 x i8] c"→\00", align 1
+@str.1902 = private unnamed_addr constant [4 x i8] c"✓\00", align 1
+@str.1903 = private unnamed_addr constant [4 x i8] c" ms\00", align 1
+@str.1904 = private unnamed_addr constant [4 x i8] c"ℹ\00", align 1
+@str.1905 = private unnamed_addr constant [4 x i8] c"⚠\00", align 1
+@str.1906 = private unnamed_addr constant [4 x i8] c"✗\00", align 1
+@str.1907 = private unnamed_addr constant [8 x i8] c"       \00", align 1
+@str.1908 = private unnamed_addr constant [5 x i8] c"done\00", align 1
+@str.1909 = private unnamed_addr constant [5 x i8] c" · \00", align 1
+@str.1910 = private unnamed_addr constant [7 x i8] c" B · \00", align 1
+@str.1911 = private unnamed_addr constant [4 x i8] c"lex\00", align 1
+@str.1912 = private unnamed_addr constant [6 x i8] c"parse\00", align 1
+@str.1913 = private unnamed_addr constant [6 x i8] c"check\00", align 1
+@str.1914 = private unnamed_addr constant [5 x i8] c"link\00", align 1
+@str.1915 = private unnamed_addr constant [4 x i8] c"run\00", align 1
+@str.1916 = private unnamed_addr constant [12 x i8] c"stage_start\00", align 1
+@str.1917 = private unnamed_addr constant [10 x i8] c"stage_end\00", align 1
+@str.1918 = private unnamed_addr constant [11 x i8] c"diagnostic\00", align 1
+@str.1919 = private unnamed_addr constant [9 x i8] c"finished\00", align 1
+@str.1920 = private unnamed_addr constant [12 x i8] c"program_out\00", align 1
+@str.1921 = private unnamed_addr constant [5 x i8] c"-\5C|/\00", align 1
+@str.1922 = private unnamed_addr constant [10 x i8] c"{\22kind\22:\22\00", align 1
+@str.1923 = private unnamed_addr constant [12 x i8] c",\22locale\22:\22\00", align 1
+@str.1924 = private unnamed_addr constant [11 x i8] c",\22stage\22:\22\00", align 1
+@str.1925 = private unnamed_addr constant [11 x i8] c",\22level\22:\22\00", align 1
+@str.1926 = private unnamed_addr constant [10 x i8] c",\22code\22:\22\00", align 1
+@str.1927 = private unnamed_addr constant [9 x i8] c",\22line\22:\00", align 1
+@str.1928 = private unnamed_addr constant [8 x i8] c",\22col\22:\00", align 1
+@str.1929 = private unnamed_addr constant [13 x i8] c",\22msg_key\22:\22\00", align 1
+@str.1930 = private unnamed_addr constant [9 x i8] c",\22msg\22:\22\00", align 1
+@str.1931 = private unnamed_addr constant [10 x i8] c",\22args\22:[\00", align 1
+@str.1932 = private unnamed_addr constant [12 x i8] c",\22target\22:\22\00", align 1
+@str.1933 = private unnamed_addr constant [10 x i8] c",\22info\22:\22\00", align 1
+@str.1934 = private unnamed_addr constant [7 x i8] c",\22ms\22:\00", align 1
+@str.1935 = private unnamed_addr constant [22 x i8] c",\22duration_ms_total\22:\00", align 1
+@str.1936 = private unnamed_addr constant [9 x i8] c"] start \00", align 1
+@str.1937 = private unnamed_addr constant [4 x i8] c" ok\00", align 1
+@str.1938 = private unnamed_addr constant [6 x i8] c"done \00", align 1
+@str.1939 = private unnamed_addr constant [11 x i8] c"attach {F:\00", align 1
+@str.1940 = private unnamed_addr constant [9 x i8] c"attach {\00", align 1
+@str.1941 = private unnamed_addr constant [5 x i8] c".ofs\00", align 1
+@str.1942 = private unnamed_addr constant [4 x i8] c"//!\00", align 1
+@str.1943 = private unnamed_addr constant [7 x i8] c"claim \00", align 1
+@str.1944 = private unnamed_addr constant [9 x i8] c"stratum \00", align 1
+@str.1945 = private unnamed_addr constant [9 x i8] c"caprock \00", align 1
+@str.1946 = private unnamed_addr constant [7 x i8] c"claim\09\00", align 1
+@str.1947 = private unnamed_addr constant [9 x i8] c"stratum\09\00", align 1
+@str.1948 = private unnamed_addr constant [9 x i8] c"caprock\09\00", align 1
+@str.1949 = private unnamed_addr constant [12 x i8] c"' sem valor\00", align 1
+@str.1950 = private unnamed_addr constant [59 x i8] c"ex.: 'stratum fault', 'claim rift', 'caprock rift, quartz'\00", align 1
+@str.1951 = private unnamed_addr constant [8 x i8] c"stratum\00", align 1
+@str.1952 = private unnamed_addr constant [10 x i8] c"estrato '\00", align 1
+@str.1953 = private unnamed_addr constant [13 x i8] c"' nao existe\00", align 1
+@str.1954 = private unnamed_addr constant [78 x i8] c"um so: crust (sem baixo nivel), fault (baixo nivel em blocos) ou abyss (tudo)\00", align 1
+@str.1955 = private unnamed_addr constant [36 x i8] c"'stratum' repetido no mesmo arquivo\00", align 1
+@str.1956 = private unnamed_addr constant [29 x i8] c"declare o estrato uma vez so\00", align 1
+@str.1957 = private unnamed_addr constant [8 x i8] c"caprock\00", align 1
+@str.1958 = private unnamed_addr constant [23 x i8] c"' nao e permissao de '\00", align 1
+@str.1959 = private unnamed_addr constant [96 x i8] c"permissoes: rift (extern/rift vein), abyss (bloco abyss), quartz (assembly), magma (magma.cast)\00", align 1
+@str.1960 = private unnamed_addr constant [6 x i8] c"claim\00", align 1
+@str.1961 = private unnamed_addr constant [40 x i8] c"'caprock' so vale no programa principal\00", align 1
+@str.1962 = private unnamed_addr constant [57 x i8] c"o principal decide o que os modulos anexados podem pedir\00", align 1
+@str.1963 = private unnamed_addr constant [16 x i8] c"OFS_STDLIB_PATH\00", align 1
+@str.1964 = private unnamed_addr constant [8 x i8] c"stdlib/\00", align 1
+@str.1965 = private unnamed_addr constant [51 x i8] c"Estrato e permissoes (stratum / claim) por modulo:\00", align 1
+@str.1966 = private unnamed_addr constant [10 x i8] c" (padrao)\00", align 1
+@str.1967 = private unnamed_addr constant [10 x i8] c"sem claim\00", align 1
+@str.1968 = private unnamed_addr constant [41 x i8] c"claim rift, abyss, quartz (pelo estrato)\00", align 1
+@str.1969 = private unnamed_addr constant [19 x i8] c"  [usa sem claim: \00", align 1
+@str.1970 = private unnamed_addr constant [19 x i8] c"  [claim sem uso: \00", align 1
+@str.1971 = private unnamed_addr constant [13 x i8] c" (principal)\00", align 1
+@str.1972 = private unnamed_addr constant [13 x i8] c"nada (crust)\00", align 1
+@str.1973 = private unnamed_addr constant [49 x i8] c"  caprock do principal: os anexados podem pedir \00", align 1
+@str.1974 = private unnamed_addr constant [3 x i8] c"..\00", align 1
+@str.1975 = private unnamed_addr constant [16 x i8] c"stdlib/runtime/\00", align 1
+@str.1976 = private unnamed_addr constant [17 x i8] c"[ERRO DE ATTACH \00", align 1
+@str.1977 = private unnamed_addr constant [26 x i8] c"]: arquivo nao encontrado\00", align 1
+@str.1978 = private unnamed_addr constant [11 x i8] c"OFSCC_LAVA\00", align 1
+@str.1979 = private unnamed_addr constant [3 x i8] c"OS\00", align 1
+@str.1980 = private unnamed_addr constant [11 x i8] c"Windows_NT\00", align 1
+@str.1981 = private unnamed_addr constant [13 x i8] c"OFS_LIB_PATH\00", align 1
+@str.1982 = private unnamed_addr constant [13 x i8] c"OFS_LIB_HOME\00", align 1
+@str.1983 = private unnamed_addr constant [11 x i8] c"/.ofs/libs\00", align 1
+@str.1984 = private unnamed_addr constant [12 x i8] c"]: modulo '\00", align 1
+@str.1985 = private unnamed_addr constant [17 x i8] c"' nao encontrado\00", align 1
+@str.1986 = private unnamed_addr constant [30 x i8] c"  procurado em (nesta ordem):\00", align 1
+@str.1987 = private unnamed_addr constant [115 x i8] c"  dica: confira o nome, defina OFS_STDLIB_PATH ou acrescente a pasta da biblioteca em OFS_LIB_PATH (separada por '\00", align 1
+@str.1988 = private unnamed_addr constant [4 x i8] c"').\00", align 1
+@str.1989 = private unnamed_addr constant [47 x i8] c"' so vale no topo do arquivo (antes do codigo)\00", align 1
+@str.1990 = private unnamed_addr constant [56 x i8] c"mova a linha para o comeco do arquivo, junto dos attach\00", align 1
+@str.1991 = private unnamed_addr constant [3 x i8] c"*/\00", align 1
+@str.1992 = private unnamed_addr constant [3 x i8] c"/*\00", align 1
+@str.1993 = private unnamed_addr constant [3 x i8] c"F:\00", align 1
+@str.1994 = private unnamed_addr constant [4 x i8] c"ofs\00", align 1
+@str.1995 = private unnamed_addr constant [36 x i8] c" - compilador Obsidian Fault Script\00", align 1
+@str.1996 = private unnamed_addr constant [5 x i8] c"Uso:\00", align 1
+@str.1997 = private unnamed_addr constant [44 x i8] c" ofs <arquivo.ofs>   (equivale a 'ofs run')\00", align 1
+@str.1998 = private unnamed_addr constant [13 x i8] c"Subcomandos:\00", align 1
+@str.1999 = private unnamed_addr constant [14 x i8] c"run <arq.ofs>\00", align 1
+@str.2000 = private unnamed_addr constant [51 x i8] c"executa interpretado (--native compila temporario)\00", align 1
+@str.2001 = private unnamed_addr constant [16 x i8] c"build <arq.ofs>\00", align 1
+@str.2002 = private unnamed_addr constant [42 x i8] c"compila para executavel nativo (-o saida)\00", align 1
+@str.2003 = private unnamed_addr constant [16 x i8] c"check <arq.ofs>\00", align 1
+@str.2004 = private unnamed_addr constant [29 x i8] c"somente verificacao de tipos\00", align 1
+@str.2005 = private unnamed_addr constant [15 x i8] c"test <arq.ofs>\00", align 1
+@str.2006 = private unnamed_addr constant [26 x i8] c"executa testes do arquivo\00", align 1
+@str.2007 = private unnamed_addr constant [16 x i8] c"assay <arq.ofs>\00", align 1
+@str.2008 = private unnamed_addr constant [54 x i8] c"testa os contratos nos limites (bearing/settle/grain)\00", align 1
+@str.2009 = private unnamed_addr constant [15 x i8] c"twin <arq.ofs>\00", align 1
+@str.2010 = private unnamed_addr constant [44 x i8] c"roda interpretado + nativo e compara saidas\00", align 1
+@str.2011 = private unnamed_addr constant [17 x i8] c"polish <arq.ofs>\00", align 1
+@str.2012 = private unnamed_addr constant [36 x i8] c"verifica estilo e padroes do codigo\00", align 1
+@str.2013 = private unnamed_addr constant [20 x i8] c"language [en|pt|es]\00", align 1
+@str.2014 = private unnamed_addr constant [30 x i8] c"mostra/altera o idioma da CLI\00", align 1
+@str.2015 = private unnamed_addr constant [18 x i8] c"ir|asm|tokens|ast\00", align 1
+@str.2016 = private unnamed_addr constant [37 x i8] c"artefatos de depuracao do compilador\00", align 1
+@str.2017 = private unnamed_addr constant [13 x i8] c"ui <arq.oll>\00", align 1
+@str.2018 = private unnamed_addr constant [43 x i8] c"renderiza layout OLL nativo (-o saida.ppm)\00", align 1
+@str.2019 = private unnamed_addr constant [6 x i8] c"clean\00", align 1
+@str.2020 = private unnamed_addr constant [37 x i8] c"limpa artefatos temporarios de build\00", align 1
+@str.2021 = private unnamed_addr constant [8 x i8] c"version\00", align 1
+@str.2022 = private unnamed_addr constant [16 x i8] c"mostra a versao\00", align 1
+@str.2023 = private unnamed_addr constant [7 x i8] c"update\00", align 1
+@str.2024 = private unnamed_addr constant [31 x i8] c"atualiza para a ultima release\00", align 1
+@str.2025 = private unnamed_addr constant [31 x i8] c"Opcoes do ofscc (nivel baixo):\00", align 1
+@str.2026 = private unnamed_addr constant [11 x i8] c"-o <saida>\00", align 1
+@str.2027 = private unnamed_addr constant [36 x i8] c"executavel de saida (padrao: a.out)\00", align 1
+@str.2028 = private unnamed_addr constant [12 x i8] c"-O0/-O2/-O3\00", align 1
+@str.2029 = private unnamed_addr constant [30 x i8] c"otimizacao LLVM (padrao: -O2)\00", align 1
+@str.2030 = private unnamed_addr constant [16 x i8] c"--emit-ir <arq>\00", align 1
+@str.2031 = private unnamed_addr constant [39 x i8] c"caminho do LLVM IR (padrao: output.ll)\00", align 1
+@str.2032 = private unnamed_addr constant [23 x i8] c"--check/--tokens/--ast\00", align 1
+@str.2033 = private unnamed_addr constant [18 x i8] c"modos de inspecao\00", align 1
+@str.2034 = private unnamed_addr constant [104 x i8] c"Env: OFSCC_INPUT, OFSCC_OUTPUT, OFSCC_C_OUT, OFSCC_MODE, OFSCC_OPT, OFS_LANG, OFS_PROGRESS, OFS_VERBOSE\00", align 1
+@str.2035 = private unnamed_addr constant [44 x i8] c" ofs <archivo.ofs>   (equivale a 'ofs run')\00", align 1
+@str.2036 = private unnamed_addr constant [49 x i8] c"ejecuta interpretado (--native compila temporal)\00", align 1
+@str.2037 = private unnamed_addr constant [40 x i8] c"compila a ejecutable nativo (-o salida)\00", align 1
+@str.2038 = private unnamed_addr constant [27 x i8] c"solo verificacion de tipos\00", align 1
+@str.2039 = private unnamed_addr constant [32 x i8] c"ejecuta las pruebas del archivo\00", align 1
+@str.2040 = private unnamed_addr constant [59 x i8] c"prueba los contratos en los limites (bearing/settle/grain)\00", align 1
+@str.2041 = private unnamed_addr constant [48 x i8] c"ejecuta interpretado + nativo y compara salidas\00", align 1
+@str.2042 = private unnamed_addr constant [38 x i8] c"verifica estilo y patrones del codigo\00", align 1
+@str.2043 = private unnamed_addr constant [35 x i8] c"muestra/cambia el idioma de la CLI\00", align 1
+@str.2044 = private unnamed_addr constant [40 x i8] c"artefactos de depuracion del compilador\00", align 1
+@str.2045 = private unnamed_addr constant [44 x i8] c"renderiza layout OLL nativo (-o salida.ppm)\00", align 1
+@str.2046 = private unnamed_addr constant [38 x i8] c"limpia artefactos temporales de build\00", align 1
+@str.2047 = private unnamed_addr constant [19 x i8] c"muestra la version\00", align 1
+@str.2048 = private unnamed_addr constant [30 x i8] c"actualiza a la ultima release\00", align 1
+@str.2049 = private unnamed_addr constant [32 x i8] c"Opciones de ofscc (bajo nivel):\00", align 1
+@str.2050 = private unnamed_addr constant [12 x i8] c"-o <salida>\00", align 1
+@str.2051 = private unnamed_addr constant [38 x i8] c"ejecutable de salida (defecto: a.out)\00", align 1
+@str.2052 = private unnamed_addr constant [33 x i8] c"optimizacion LLVM (defecto: -O2)\00", align 1
+@str.2053 = private unnamed_addr constant [38 x i8] c"ruta del LLVM IR (defecto: output.ll)\00", align 1
+@str.2054 = private unnamed_addr constant [20 x i8] c"modos de inspeccion\00", align 1
+@str.2055 = private unnamed_addr constant [34 x i8] c" - Obsidian Fault Script compiler\00", align 1
+@str.2056 = private unnamed_addr constant [7 x i8] c"Usage:\00", align 1
+@str.2057 = private unnamed_addr constant [38 x i8] c" ofs <file.ofs>   (same as 'ofs run')\00", align 1
+@str.2058 = private unnamed_addr constant [13 x i8] c"Subcommands:\00", align 1
+@str.2059 = private unnamed_addr constant [15 x i8] c"run <file.ofs>\00", align 1
+@str.2060 = private unnamed_addr constant [48 x i8] c"run interpreted (--native builds a temp binary)\00", align 1
+@str.2061 = private unnamed_addr constant [17 x i8] c"build <file.ofs>\00", align 1
+@str.2062 = private unnamed_addr constant [43 x i8] c"compile to a native executable (-o output)\00", align 1
+@str.2063 = private unnamed_addr constant [17 x i8] c"check <file.ofs>\00", align 1
+@str.2064 = private unnamed_addr constant [16 x i8] c"type-check only\00", align 1
+@str.2065 = private unnamed_addr constant [16 x i8] c"test <file.ofs>\00", align 1
+@str.2066 = private unnamed_addr constant [15 x i8] c"run file tests\00", align 1
+@str.2067 = private unnamed_addr constant [17 x i8] c"assay <file.ofs>\00", align 1
+@str.2068 = private unnamed_addr constant [58 x i8] c"test contracts at their boundaries (bearing/settle/grain)\00", align 1
+@str.2069 = private unnamed_addr constant [16 x i8] c"twin <file.ofs>\00", align 1
+@str.2070 = private unnamed_addr constant [42 x i8] c"run interpreted + native and diff outputs\00", align 1
+@str.2071 = private unnamed_addr constant [18 x i8] c"polish <file.ofs>\00", align 1
+@str.2072 = private unnamed_addr constant [25 x i8] c"style and pattern checks\00", align 1
+@str.2073 = private unnamed_addr constant [29 x i8] c"show/change the CLI language\00", align 1
+@str.2074 = private unnamed_addr constant [25 x i8] c"compiler debug artifacts\00", align 1
+@str.2075 = private unnamed_addr constant [14 x i8] c"ui <file.oll>\00", align 1
+@str.2076 = private unnamed_addr constant [41 x i8] c"render native OLL layout (-o output.ppm)\00", align 1
+@str.2077 = private unnamed_addr constant [32 x i8] c"clean temporary build artifacts\00", align 1
+@str.2078 = private unnamed_addr constant [27 x i8] c"print the compiler version\00", align 1
+@str.2079 = private unnamed_addr constant [29 x i8] c"update to the latest release\00", align 1
+@str.2080 = private unnamed_addr constant [25 x i8] c"Low-level ofscc options:\00", align 1
+@str.2081 = private unnamed_addr constant [12 x i8] c"-o <output>\00", align 1
+@str.2082 = private unnamed_addr constant [35 x i8] c"output executable (default: a.out)\00", align 1
+@str.2083 = private unnamed_addr constant [39 x i8] c"LLVM optimization level (default: -O2)\00", align 1
+@str.2084 = private unnamed_addr constant [17 x i8] c"--emit-ir <file>\00", align 1
+@str.2085 = private unnamed_addr constant [41 x i8] c"LLVM IR output path (default: output.ll)\00", align 1
+@str.2086 = private unnamed_addr constant [17 x i8] c"inspection modes\00", align 1
+@str.2087 = private unnamed_addr constant [12 x i8] c"OFSCC_INPUT\00", align 1
+@str.2088 = private unnamed_addr constant [13 x i8] c"OFSCC_OUTPUT\00", align 1
+@str.2089 = private unnamed_addr constant [12 x i8] c"OFSCC_C_OUT\00", align 1
+@str.2090 = private unnamed_addr constant [11 x i8] c"OFSCC_MODE\00", align 1
+@str.2091 = private unnamed_addr constant [7 x i8] c"tokens\00", align 1
+@str.2092 = private unnamed_addr constant [4 x i8] c"ast\00", align 1
+@str.2093 = private unnamed_addr constant [10 x i8] c"OFSCC_OPT\00", align 1
+@str.2094 = private unnamed_addr constant [4 x i8] c"-O0\00", align 1
+@str.2095 = private unnamed_addr constant [4 x i8] c"-O2\00", align 1
+@str.2096 = private unnamed_addr constant [4 x i8] c"-O3\00", align 1
+@str.2097 = private unnamed_addr constant [2 x i8] c"\09\00", align 1
+@str.2098 = private unnamed_addr constant [16 x i8] c"[ERRO DE MAGMA \00", align 1
+@str.2099 = private unnamed_addr constant [43 x i8] c"]: um mod (magma.cast) nao tem 'core main'\00", align 1
+@str.2100 = private unnamed_addr constant [79 x i8] c"  dica: o programa que carrega o mod e quem tem o main; o mod so declara veins\00", align 1
+@str.2101 = private unnamed_addr constant [2 x i8] c"G\00", align 1
+@str.2102 = private unnamed_addr constant [2 x i8] c"M\00", align 1
+@str.2103 = private unnamed_addr constant [2 x i8] c"X\00", align 1
+@str.2104 = private unnamed_addr constant [3 x i8] c"V\09\00", align 1
+@str.2105 = private unnamed_addr constant [20 x i8] c"OFSCC_REFRACT_WATCH\00", align 1
+@str.2106 = private unnamed_addr constant [24 x i8] c"OFS-REFRACT-MANIFEST 1\0A\00", align 1
+@str.2107 = private unnamed_addr constant [2 x i8] c"V\00", align 1
+@str.2108 = private unnamed_addr constant [10 x i8] c"' mudou (\00", align 1
+@str.2109 = private unnamed_addr constant [5 x i8] c" -> \00", align 1
+@str.2110 = private unnamed_addr constant [58 x i8] c"): o app chama a vein pela celula com a assinatura antiga\00", align 1
+@str.2111 = private unnamed_addr constant [14 x i8] c"global novo '\00", align 1
+@str.2112 = private unnamed_addr constant [37 x i8] c"': o remendo nao cria globais no app\00", align 1
+@str.2113 = private unnamed_addr constant [18 x i8] c"' mudou de tipo (\00", align 1
+@str.2114 = private unnamed_addr constant [23 x i8] c"o layout do monolith '\00", align 1
+@str.2115 = private unnamed_addr constant [44 x i8] c"' mudou (o app nativo nao migra instancias)\00", align 1
+@str.2116 = private unnamed_addr constant [20 x i8] c"refract: recusada: \00", align 1
+@str.2117 = private unnamed_addr constant [117 x i8] c"refract: o app segue com a versao anterior; para aplicar, reinstale (ofs build --target android --refract --install)\00", align 1
+@str.2118 = private unnamed_addr constant [46 x i8] c"refract: removidas (seguem no app, sem uso): \00", align 1
+@str.2119 = private unnamed_addr constant [28 x i8] c"refract: nenhuma vein mudou\00", align 1
+@str.2120 = private unnamed_addr constant [3 x i8] c"G\09\00", align 1
+@str.2121 = private unnamed_addr constant [21 x i8] c"refract: alteradas: \00", align 1
+@str.2122 = private unnamed_addr constant [17 x i8] c"refract: novas: \00", align 1
+@str.2123 = private unnamed_addr constant [50 x i8] c"refract: religadas (chamam uma vein sem celula): \00", align 1
+@str.2124 = private unnamed_addr constant [17 x i8] c"refract: aviso: \00", align 1
+@str.2125 = private unnamed_addr constant [96 x i8] c" tambem e usada como valor de vein; quem guardou o endereco (callback) segue na versao do build\00", align 1
+@str.2126 = private unnamed_addr constant [10 x i8] c"input.ofs\00", align 1
+@str.2127 = private unnamed_addr constant [6 x i8] c"a.out\00", align 1
+@str.2128 = private unnamed_addr constant [10 x i8] c"output.ll\00", align 1
+@str.2129 = private unnamed_addr constant [9 x i8] c"build-ir\00", align 1
+@str.2130 = private unnamed_addr constant [11 x i8] c"OFS_FOSSIL\00", align 1
+@str.2131 = private unnamed_addr constant [7 x i8] c"replay\00", align 1
+@str.2132 = private unnamed_addr constant [16 x i8] c"OFS_FOSSIL_FILE\00", align 1
+@str.2133 = private unnamed_addr constant [35 x i8] c"' nao e um arquivo .fossil legivel\00", align 1
+@str.2134 = private unnamed_addr constant [13 x i8] c"OFS_PROGRESS\00", align 1
+@str.2135 = private unnamed_addr constant [9 x i8] c"OFS_ANIM\00", align 1
+@str.2136 = private unnamed_addr constant [5 x i8] c"json\00", align 1
+@str.2137 = private unnamed_addr constant [6 x i8] c"fancy\00", align 1
+@str.2138 = private unnamed_addr constant [6 x i8] c"plain\00", align 1
+@str.2139 = private unnamed_addr constant [7 x i8] c"--help\00", align 1
+@str.2140 = private unnamed_addr constant [5 x i8] c"twin\00", align 1
+@str.2141 = private unnamed_addr constant [7 x i8] c"polish\00", align 1
+@str.2142 = private unnamed_addr constant [5 x i8] c"test\00", align 1
+@str.2143 = private unnamed_addr constant [6 x i8] c"probe\00", align 1
+@str.2144 = private unnamed_addr constant [18 x i8] c"OFSCC_TWIN_TARGET\00", align 1
+@str.2145 = private unnamed_addr constant [32 x i8] c"{\22kind\22:\22twin_start\22,\22target\22:\22\00", align 1
+@str.2146 = private unnamed_addr constant [3 x i8] c"\22}\00", align 1
+@str.2147 = private unnamed_addr constant [33 x i8] c"{\22kind\22:\22twin_result\22,\22target\22:\22\00", align 1
+@str.2148 = private unnamed_addr constant [49 x i8] c"\22,\22match\22:false,\22reason\22:\22twin_not_implemented\22}\00", align 1
+@str.2149 = private unnamed_addr constant [9 x i8] c"language\00", align 1
+@str.2150 = private unnamed_addr constant [15 x i8] c"ofs language: \00", align 1
+@str.2151 = private unnamed_addr constant [14 x i8] c"OFSCC_REFRACT\00", align 1
+@str.2152 = private unnamed_addr constant [6 x i8] c"cells\00", align 1
+@str.2153 = private unnamed_addr constant [6 x i8] c"patch\00", align 1
+@str.2154 = private unnamed_addr constant [20 x i8] c"\0Aattach {geophone}\0A\00", align 1
+@str.2155 = private unnamed_addr constant [18 x i8] c"OFS_MAGMA_CAPROCK\00", align 1
+@str.2156 = private unnamed_addr constant [18 x i8] c"OFS_DUMP_EXPANDED\00", align 1
+@str.2157 = private unnamed_addr constant [5 x i8] c"tok(\00", align 1
+@str.2158 = private unnamed_addr constant [4 x i8] c") '\00", align 1
+@str.2159 = private unnamed_addr constant [16 x i8] c"AST root kind: \00", align 1
+@str.2160 = private unnamed_addr constant [14 x i8] c"OFS_CONTRACTS\00", align 1
+@str.2161 = private unnamed_addr constant [19 x i8] c"OFSCC_REFRACT_BASE\00", align 1
+@str.2162 = private unnamed_addr constant [64 x i8] c"refract: OFSCC_REFRACT_BASE (manifesto do app) nao encontrado: \00", align 1
+@str.2163 = private unnamed_addr constant [12 x i8] c"OFS_REFRACT\00", align 1
+@str.2164 = private unnamed_addr constant [13 x i8] c"OFSCC_TARGET\00", align 1
+@str.2165 = private unnamed_addr constant [2 x i8] c"c\00", align 1
+@str.2166 = private unnamed_addr constant [9 x i8] c"1 module\00", align 1
+@str.2167 = private unnamed_addr constant [3 x i8] c".o\00", align 1
+@str.2168 = private unnamed_addr constant [12 x i8] c"OFS_RUNTIME\00", align 1
+@str.2169 = private unnamed_addr constant [36 x i8] c"/usr/local/lib/ofs/libofs_runtime.a\00", align 1
+@str.2170 = private unnamed_addr constant [5 x i8] c"gcc \00", align 1
+@str.2171 = private unnamed_addr constant [6 x i8] c" 2>&1\00", align 1
+@str.2172 = private unnamed_addr constant [19 x i8] c"llc -filetype=obj \00", align 1
+@str.2173 = private unnamed_addr constant [89 x i8] c" && (ld -dynamic-linker /lib64/ld-linux-x86-64.so.2 /usr/lib64/crt1.o /usr/lib64/crti.o \00", align 1
+@str.2174 = private unnamed_addr constant [31 x i8] c" -lc -lm /usr/lib64/crtn.o -o \00", align 1
+@str.2175 = private unnamed_addr constant [138 x i8] c" 2>&1 || ld -dynamic-linker /lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 /usr/lib/x86_64-linux-gnu/crt1.o /usr/lib/x86_64-linux-gnu/crti.o \00", align 1
+@str.2176 = private unnamed_addr constant [46 x i8] c" -lc -lm /usr/lib/x86_64-linux-gnu/crtn.o -o \00", align 1
+@str.2177 = private unnamed_addr constant [7 x i8] c" 2>&1)\00", align 1
 @_out_file = global ptr null
 @TOK_FORGE = global i64 1
 @TOK_VEIN = global i64 2
@@ -3145,13 +3144,13 @@ source_filename = "ofs_module"
 @REPORTER_JSON = global i64 3
 @_reporter_kind = global i64 0
 @_reporter_verbose = global i32 0
-@_locale = global ptr @str.1848
-@_ansi_ok = global ptr @str.1893
-@_ansi_run = global ptr @str.1894
-@_ansi_warn = global ptr @str.1895
-@_ansi_fault = global ptr @str.1896
-@_ansi_dim = global ptr @str.1897
-@_ansi_reset = global ptr @str.1898
+@_locale = global ptr @str.1847
+@_ansi_ok = global ptr @str.1892
+@_ansi_run = global ptr @str.1893
+@_ansi_warn = global ptr @str.1894
+@_ansi_fault = global ptr @str.1895
+@_ansi_dim = global ptr @str.1896
+@_ansi_reset = global ptr @str.1897
 @_ansi_esc = global ptr @str.75
 @_use_color = global i32 0
 @_anim_enabled = global i32 0
@@ -108352,7 +108351,7 @@ arr_end13364:
   store ptr %arr_item45127, ptr %p45112
   %f45128 = alloca ptr, align 8
   %p_val45129 = load ptr, ptr %p45112
-  %call45130 = call ptr @fopen(ptr %p_val45129, ptr @str.1451)
+  %call45130 = call ptr @fopen(ptr %p_val45129, ptr @str.0)
   store ptr %call45130, ptr %f45128
   %f_val45131 = load ptr, ptr %f45128
   %cmp45132 = icmp ne ptr %f_val45131, null
@@ -108437,7 +108436,7 @@ entry:
   %path.addr = alloca ptr, align 8
   store ptr %path, ptr %path.addr
   %path_val45167 = load ptr, ptr %path.addr
-  %call45168 = call ptr @fopen(ptr %path_val45167, ptr @str.1452)
+  %call45168 = call ptr @fopen(ptr %path_val45167, ptr @str.1451)
   store ptr %call45168, ptr @_fz_w
   %_fz_w_val45169 = load ptr, ptr @_fz_w
   %cmp45170 = icmp ne ptr %_fz_w_val45169, null
@@ -108572,10 +108571,10 @@ entry:
   store ptr %src, ptr %src.addr
   %hash.addr = alloca i64, align 8
   store i64 %hash, ptr %hash.addr
-  call void @fz_put(ptr @str.1453)
+  call void @fz_put(ptr @str.1452)
   %hash_val45205 = load i64, ptr %hash.addr
   %stone_to_str45206 = call ptr @ofs_stone_to_obsidian(i64 %hash_val45205)
-  %concat45207 = call ptr @ofs_str_concat(ptr @str.1454, ptr %stone_to_str45206)
+  %concat45207 = call ptr @ofs_str_concat(ptr @str.1453, ptr %stone_to_str45206)
   %concat45208 = call ptr @ofs_str_concat_ex(ptr %concat45207, ptr @str.264, i64 1)
   call void @fz_put(ptr %concat45208)
   call void @ofs_str_release(ptr %concat45208, i64 1)
@@ -108594,7 +108593,7 @@ entry:
   store ptr %path, ptr %path.addr
   %f45213 = alloca ptr, align 8
   %path_val45214 = load ptr, ptr %path.addr
-  %call45215 = call ptr @fopen(ptr %path_val45214, ptr @str.1451)
+  %call45215 = call ptr @fopen(ptr %path_val45214, ptr @str.0)
   store ptr %call45215, ptr %f45213
   %f_val45216 = load ptr, ptr %f45213
   %cmp45217 = icmp eq ptr %f_val45216, null
@@ -108952,13 +108951,13 @@ entry:
   %call45355 = call ptr @fz_word()
   store ptr %call45355, ptr %magic45354
   %magic_val45356 = load ptr, ptr %magic45354
-  %streq45357 = call i32 @ofs_str_eq(ptr %magic_val45356, ptr @str.1455)
+  %streq45357 = call i32 @ofs_str_eq(ptr %magic_val45356, ptr @str.1454)
   %cond45358 = icmp ne i32 %streq45357, 0
   %not45359 = xor i1 %cond45358, true
   br i1 %not45359, label %if_then13434, label %if_else13435
 
 if_then13434:
-  store ptr @str.1456, ptr @_fz_hdr_err
+  store ptr @str.1455, ptr @_fz_hdr_err
   %sf_val45360 = load ptr, ptr %magic45354
   %sf_own45361 = load i64, ptr %magic45354_own
   call void @ofs_str_release(ptr %sf_val45360, i64 %sf_own45361)
@@ -108978,8 +108977,8 @@ if_end13436:
 if_then13437:
   %ver_val45366 = load i64, ptr %ver45362
   %stone_to_str45367 = call ptr @ofs_stone_to_obsidian(i64 %ver_val45366)
-  %concat45368 = call ptr @ofs_str_concat(ptr @str.1457, ptr %stone_to_str45367)
-  %concat45369 = call ptr @ofs_str_concat_ex(ptr %concat45368, ptr @str.1458, i64 1)
+  %concat45368 = call ptr @ofs_str_concat(ptr @str.1456, ptr %stone_to_str45367)
+  %concat45369 = call ptr @ofs_str_concat_ex(ptr %concat45368, ptr @str.1457, i64 1)
   store ptr %concat45369, ptr @_fz_hdr_err
   %sf_val45370 = load ptr, ptr %magic45354
   %sf_own45371 = load i64, ptr %magic45354_own
@@ -108991,13 +108990,13 @@ if_else13438:
 
 if_end13439:
   %call45372 = call ptr @fz_word()
-  %streq45373 = call i32 @ofs_str_eq(ptr %call45372, ptr @str.1459)
+  %streq45373 = call i32 @ofs_str_eq(ptr %call45372, ptr @str.1458)
   %cond45374 = icmp ne i32 %streq45373, 0
   %not45375 = xor i1 %cond45374, true
   br i1 %not45375, label %if_then13440, label %if_else13441
 
 if_then13440:
-  store ptr @str.1460, ptr @_fz_hdr_err
+  store ptr @str.1459, ptr @_fz_hdr_err
   %sf_val45376 = load ptr, ptr %magic45354
   %sf_own45377 = load i64, ptr %magic45354_own
   call void @ofs_str_release(ptr %sf_val45376, i64 %sf_own45377)
@@ -109088,7 +109087,7 @@ if_then13451:
   store i64 0, ptr @_fz_line_len
   %f45405 = alloca ptr, align 8
   %path_val45406 = load ptr, ptr %path.addr
-  %call45407 = call ptr @fopen(ptr %path_val45406, ptr @str.1451)
+  %call45407 = call ptr @fopen(ptr %path_val45406, ptr @str.0)
   store ptr %call45407, ptr %f45405
   %f_val45408 = load ptr, ptr %f45405
   %cmp45409 = icmp ne ptr %f_val45408, null
@@ -109713,7 +109712,7 @@ if_end13538:
   br i1 %cmp45608, label %if_then13539, label %if_else13540
 
 if_then13539:
-  ret ptr @str.1461
+  ret ptr @str.1460
 
 if_else13540:
   br label %if_end13541
@@ -109740,7 +109739,7 @@ if_end13544:
   br i1 %cmp45617, label %if_then13545, label %if_else13546
 
 if_then13545:
-  ret ptr @str.1462
+  ret ptr @str.1461
 
 if_else13546:
   br label %if_end13547
@@ -109791,7 +109790,7 @@ if_else13558:
   br label %if_end13559
 
 if_end13559:
-  ret ptr @str.1463
+  ret ptr @str.1462
 
 if_else13555:
   br label %if_end13556
@@ -111325,7 +111324,7 @@ if_else13801:
 
 if_end13802:
   %name_val46197 = load ptr, ptr %name.addr
-  %streq46198 = call i32 @ofs_str_eq(ptr %name_val46197, ptr @str.1464)
+  %streq46198 = call i32 @ofs_str_eq(ptr %name_val46197, ptr @str.1463)
   %cond46199 = icmp ne i32 %streq46198, 0
   br i1 %cond46199, label %if_then13803, label %if_else13804
 
@@ -111341,7 +111340,7 @@ if_else13804:
 
 if_end13805:
   %name_val46203 = load ptr, ptr %name.addr
-  %streq46204 = call i32 @ofs_str_eq(ptr %name_val46203, ptr @str.1465)
+  %streq46204 = call i32 @ofs_str_eq(ptr %name_val46203, ptr @str.1464)
   %cond46205 = icmp ne i32 %streq46204, 0
   br i1 %cond46205, label %if_then13806, label %if_else13807
 
@@ -111357,7 +111356,7 @@ if_else13807:
 
 if_end13808:
   %name_val46209 = load ptr, ptr %name.addr
-  %streq46210 = call i32 @ofs_str_eq(ptr %name_val46209, ptr @str.1466)
+  %streq46210 = call i32 @ofs_str_eq(ptr %name_val46209, ptr @str.1465)
   %cond46211 = icmp ne i32 %streq46210, 0
   br i1 %cond46211, label %if_then13809, label %if_else13810
 
@@ -115662,7 +115661,7 @@ if_then14467:
   br i1 %cmp47881, label %if_then14470, label %if_else14471
 
 if_then14470:
-  call void @interpreter__ffi_stderr(ptr @str.1467)
+  call void @interpreter__ffi_stderr(ptr @str.1466)
   call void @exit(i64 1)
   br label %if_end14472
 
@@ -116153,7 +116152,7 @@ sc_end14539:
   br i1 %sc48085, label %if_then14544, label %if_else14545
 
 if_then14544:
-  call void @interpreter__ffi_stderr(ptr @str.1468)
+  call void @interpreter__ffi_stderr(ptr @str.1467)
   call void @exit(i64 1)
   ret void
 
@@ -116167,7 +116166,7 @@ if_end14546:
   br i1 %cmp48088, label %if_then14547, label %if_else14548
 
 if_then14547:
-  call void @interpreter__fault_runtime_error(ptr @str.1469)
+  call void @interpreter__fault_runtime_error(ptr @str.1468)
   ret void
 
 if_else14548:
@@ -116215,7 +116214,7 @@ if_end14552:
 
 if_then14556:
   %interpreter___rs_val48105 = load ptr, ptr @interpreter___rs
-  %concat48106 = call ptr @ofs_str_concat(ptr @str.1470, ptr %interpreter___rs_val48105)
+  %concat48106 = call ptr @ofs_str_concat(ptr @str.1469, ptr %interpreter___rs_val48105)
   %concat48107 = call ptr @ofs_str_concat_ex(ptr %concat48106, ptr @str.173, i64 1)
   store ptr %concat48107, ptr %what48101
   br label %if_end14558
@@ -116487,13 +116486,13 @@ if_end14583:
   %call48227 = call i64 @dlsym(i64 %call48226, ptr @str.1093)
   store i64 %call48227, ptr @interpreter___ar_close_fn
   %call48228 = call i64 @interpreter__ffi_rtld_default()
-  %call48229 = call i64 @dlsym(i64 %call48228, ptr @str.1471)
+  %call48229 = call i64 @dlsym(i64 %call48228, ptr @str.1470)
   store i64 %call48229, ptr @interpreter___ar_use_fn
   %call48230 = call i64 @interpreter__ffi_rtld_default()
   %call48231 = call i64 @dlsym(i64 %call48230, ptr @str.1095)
   store i64 %call48231, ptr @interpreter___ar_lift_fn
   %call48232 = call i64 @interpreter__ffi_rtld_default()
-  %call48233 = call i64 @dlsym(i64 %call48232, ptr @str.1472)
+  %call48233 = call i64 @dlsym(i64 %call48232, ptr @str.1471)
   store i64 %call48233, ptr @interpreter___ar_alloc_fn
   %sc_slot48234 = alloca i1, align 1
   %sc_slot48235 = alloca i1, align 1
@@ -117153,8 +117152,8 @@ if_end14672:
   %msg48493 = alloca ptr, align 8
   %idx_val48494 = load i64, ptr %idx.addr
   %stone_to_str48495 = call ptr @ofs_stone_to_obsidian(i64 %idx_val48494)
-  %concat48496 = call ptr @ofs_str_concat(ptr @str.1473, ptr %stone_to_str48495)
-  %concat48497 = call ptr @ofs_str_concat_ex(ptr %concat48496, ptr @str.1474, i64 1)
+  %concat48496 = call ptr @ofs_str_concat(ptr @str.1472, ptr %stone_to_str48495)
+  %concat48497 = call ptr @ofs_str_concat_ex(ptr %concat48496, ptr @str.1473, i64 1)
   %len_val48498 = load i64, ptr %len48470
   %stone_to_str48499 = call ptr @ofs_stone_to_obsidian(i64 %len_val48498)
   %concat48500 = call ptr @ofs_str_concat_ex(ptr %concat48497, ptr %stone_to_str48499, i64 1)
@@ -121362,7 +121361,7 @@ arr_end15284:
   br i1 %cmp50482, label %if_then15286, label %if_else15287
 
 if_then15286:
-  call void @interpreter__fault_runtime_error(ptr @str.1475)
+  call void @interpreter__fault_runtime_error(ptr @str.1474)
   ret i64 0
 
 if_else15287:
@@ -121428,8 +121427,8 @@ if_else15299:
 if_then15301:
   %k0_val50504 = load i64, ptr %k050444
   %call50505 = call ptr @interpreter__kind_type_name(i64 %k0_val50504)
-  %concat50506 = call ptr @ofs_str_concat(ptr @str.1476, ptr %call50505)
-  %concat50507 = call ptr @ofs_str_concat_ex(ptr %concat50506, ptr @str.1477, i64 1)
+  %concat50506 = call ptr @ofs_str_concat(ptr @str.1475, ptr %call50505)
+  %concat50507 = call ptr @ofs_str_concat_ex(ptr %concat50506, ptr @str.1476, i64 1)
   call void @interpreter__fault_runtime_error(ptr %concat50507)
   call void @ofs_str_release(ptr %concat50507, i64 1)
   ret i64 0
@@ -126353,7 +126352,7 @@ sc_end15984:
   br i1 %sc52743, label %if_then15985, label %if_else15986
 
 if_then15985:
-  call void @interpreter__fault_runtime_error(ptr @str.1478)
+  call void @interpreter__fault_runtime_error(ptr @str.1477)
   ret i64 0
 
 if_else15986:
@@ -126379,7 +126378,7 @@ sc_end15989:
   br i1 %sc52751, label %if_then15990, label %if_else15991
 
 if_then15990:
-  call void @interpreter__fault_runtime_error(ptr @str.1479)
+  call void @interpreter__fault_runtime_error(ptr @str.1478)
   ret i64 0
 
 if_else15991:
@@ -126748,7 +126747,7 @@ if_then16046:
   br i1 %cmp52883, label %if_then16049, label %if_else16050
 
 if_then16049:
-  call void @interpreter__fault_runtime_error(ptr @str.1480)
+  call void @interpreter__fault_runtime_error(ptr @str.1479)
   %sf_val52884 = load ptr, ptr %lfield.addr
   %sf_own52885 = load i64, ptr %lfield.addr_own
   call void @ofs_str_release(ptr %sf_val52884, i64 %sf_own52885)
@@ -129651,7 +129650,7 @@ if_end16459:
 if_then16466:
   %arg_base_val54117 = load i64, ptr %arg_base.addr
   %call54118 = call ptr @interpreter__arg_s(i64 %arg_base_val54117)
-  %concat54119 = call ptr @ofs_str_concat(ptr @str.1481, ptr %call54118)
+  %concat54119 = call ptr @ofs_str_concat(ptr @str.1480, ptr %call54118)
   %concat54120 = call ptr @ofs_str_concat_ex(ptr %concat54119, ptr @str.3, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat54120)
   call void @exit(i64 1)
@@ -130331,7 +130330,7 @@ entry:
   %msg.addr_own = alloca i64, align 8
   store i64 0, ptr %msg.addr_own
   %msg_val54372 = load ptr, ptr %msg.addr
-  %concat54373 = call ptr @ofs_str_concat(ptr @str.1482, ptr %msg_val54372)
+  %concat54373 = call ptr @ofs_str_concat(ptr @str.1481, ptr %msg_val54372)
   call void @echo_obsidian(ptr %concat54373)
   call void @ofs_str_release(ptr %concat54373, i64 1)
   %interpreter___fs_mode_val54374 = load i64, ptr @interpreter___fs_mode
@@ -130366,7 +130365,7 @@ entry:
   br i1 %cmp54379, label %if_then16566, label %if_else16567
 
 if_then16566:
-  call void @interpreter__fault_runtime_error(ptr @str.1483)
+  call void @interpreter__fault_runtime_error(ptr @str.1482)
   ret void
 
 if_else16567:
@@ -130852,13 +130851,13 @@ if_else16640:
   br label %if_end16641
 
 if_end16641:
-  %call54561 = call i32 @interpreter__ffi_open_lib(ptr @str.1484)
+  %call54561 = call i32 @interpreter__ffi_open_lib(ptr @str.1483)
   %cond54562 = icmp ne i32 %call54561, 0
   %not54563 = xor i1 %cond54562, true
   br i1 %not54563, label %if_then16642, label %if_else16643
 
 if_then16642:
-  %call54564 = call i32 @interpreter__ffi_open_lib(ptr @str.1485)
+  %call54564 = call i32 @interpreter__ffi_open_lib(ptr @str.1484)
   br label %if_end16644
 
 if_else16643:
@@ -130868,7 +130867,7 @@ if_end16644:
   %extra54565 = alloca ptr, align 8
   %extra54565_own = alloca i64, align 8
   store i64 0, ptr %extra54565_own
-  %call54566 = call ptr @getenv(ptr @str.1486)
+  %call54566 = call ptr @getenv(ptr @str.1485)
   store ptr %call54566, ptr %extra54565
   %extra_val54567 = load ptr, ptr %extra54565
   %cmp54568 = icmp ne ptr %extra_val54567, null
@@ -130943,8 +130942,8 @@ sc_end16657:
 
 if_then16658:
   %lib_val54603 = load ptr, ptr %lib54587
-  %concat54604 = call ptr @ofs_str_concat(ptr @str.1487, ptr %lib_val54603)
-  %concat54605 = call ptr @ofs_str_concat_ex(ptr %concat54604, ptr @str.1488, i64 1)
+  %concat54604 = call ptr @ofs_str_concat(ptr @str.1486, ptr %lib_val54603)
+  %concat54605 = call ptr @ofs_str_concat_ex(ptr %concat54604, ptr @str.1487, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat54605)
   br label %if_end16660
 
@@ -131806,7 +131805,7 @@ if_end16776:
   %mode54969 = alloca ptr, align 8
   %mode54969_own = alloca i64, align 8
   store i64 0, ptr %mode54969_own
-  %call54970 = call ptr @getenv(ptr @str.1489)
+  %call54970 = call ptr @getenv(ptr @str.1488)
   store ptr %call54970, ptr %mode54969
   %sc_slot54971 = alloca i1, align 1
   %mode_val54972 = load ptr, ptr %mode54969
@@ -131816,7 +131815,7 @@ if_end16776:
 
 sc_rhs16777:
   %mode_val54974 = load ptr, ptr %mode54969
-  %streq54975 = call i32 @ofs_str_eq(ptr %mode_val54974, ptr @str.1490)
+  %streq54975 = call i32 @ofs_str_eq(ptr %mode_val54974, ptr @str.1489)
   %cond54976 = icmp ne i32 %streq54975, 0
   store i1 %cond54976, ptr %sc_slot54971
   br label %sc_end16778
@@ -132342,8 +132341,8 @@ sc_end16848:
 
 if_then16849:
   store i32 1, ptr @interpreter___ffi_ui_libs
-  %call55192 = call i32 @interpreter__ffi_open_lib(ptr @str.1491)
-  %call55193 = call i32 @interpreter__ffi_open_lib(ptr @str.1492)
+  %call55192 = call i32 @interpreter__ffi_open_lib(ptr @str.1490)
+  %call55193 = call i32 @interpreter__ffi_open_lib(ptr @str.1491)
   %call55194 = call i64 @interpreter__ffi_rtld_default()
   %ei_val55195 = load i64, ptr %ei.addr
   %call55196 = call ptr @interpreter__ext_sym(i64 %ei_val55195)
@@ -132398,8 +132397,8 @@ entry:
   %m55213_own = alloca i64, align 8
   store i64 0, ptr %m55213_own
   %sym_val55214 = load ptr, ptr %sym.addr
-  %concat55215 = call ptr @ofs_str_concat(ptr @str.1493, ptr %sym_val55214)
-  %concat55216 = call ptr @ofs_str_concat_ex(ptr %concat55215, ptr @str.1494, i64 1)
+  %concat55215 = call ptr @ofs_str_concat(ptr @str.1492, ptr %sym_val55214)
+  %concat55216 = call ptr @ofs_str_concat_ex(ptr %concat55215, ptr @str.1493, i64 1)
   store ptr %concat55216, ptr %m55213
   store i64 1, ptr %m55213_own
   %interpreter___ffi_libs_val55217 = load ptr, ptr @interpreter___ffi_libs
@@ -132410,7 +132409,7 @@ entry:
 if_then16856:
   %m_val55220 = load ptr, ptr %m55213
   %own_flag55222 = load i64, ptr %m55213_own
-  %concat55221 = call ptr @ofs_str_concat_ex(ptr %m_val55220, ptr @str.1495, i64 %own_flag55222)
+  %concat55221 = call ptr @ofs_str_concat_ex(ptr %m_val55220, ptr @str.1494, i64 %own_flag55222)
   %interpreter___ffi_libs_val55223 = load ptr, ptr @interpreter___ffi_libs
   %concat55224 = call ptr @ofs_str_concat_ex(ptr %concat55221, ptr %interpreter___ffi_libs_val55223, i64 1)
   store ptr %concat55224, ptr %m55213
@@ -132423,7 +132422,7 @@ if_else16857:
 if_end16858:
   %m_val55225 = load ptr, ptr %m55213
   %own_flag55227 = load i64, ptr %m55213_own
-  %concat55226 = call ptr @ofs_str_concat_ex(ptr %m_val55225, ptr @str.1496, i64 %own_flag55227)
+  %concat55226 = call ptr @ofs_str_concat_ex(ptr %m_val55225, ptr @str.1495, i64 %own_flag55227)
   store ptr %concat55226, ptr %m55213
   store i64 1, ptr %m55213_own
   %interpreter___ffi_exports_val55228 = load i32, ptr @interpreter___ffi_exports
@@ -132434,7 +132433,7 @@ if_end16858:
 if_then16859:
   %m_val55231 = load ptr, ptr %m55213
   %own_flag55233 = load i64, ptr %m55213_own
-  %concat55232 = call ptr @ofs_str_concat_ex(ptr %m_val55231, ptr @str.1497, i64 %own_flag55233)
+  %concat55232 = call ptr @ofs_str_concat_ex(ptr %m_val55231, ptr @str.1496, i64 %own_flag55233)
   store ptr %concat55232, ptr %m55213
   store i64 1, ptr %m55213_own
   br label %if_end16861
@@ -133363,11 +133362,11 @@ entry:
 
 if_then16995:
   %what_val55596 = load ptr, ptr %what.addr
-  %concat55597 = call ptr @ofs_str_concat(ptr %what_val55596, ptr @str.1498)
+  %concat55597 = call ptr @ofs_str_concat(ptr %what_val55596, ptr @str.1497)
   %nargs_val55598 = load i64, ptr %nargs.addr
   %stone_to_str55599 = call ptr @ofs_stone_to_obsidian(i64 %nargs_val55598)
   %concat55600 = call ptr @ofs_str_concat_ex(ptr %concat55597, ptr %stone_to_str55599, i64 1)
-  %concat55601 = call ptr @ofs_str_concat_ex(ptr %concat55600, ptr @str.1499, i64 1)
+  %concat55601 = call ptr @ofs_str_concat_ex(ptr %concat55600, ptr @str.1498, i64 1)
   call void @interpreter__fault_runtime_error(ptr %concat55601)
   call void @ofs_str_release(ptr %concat55601, i64 1)
   %sf_val55602 = load ptr, ptr %what.addr
@@ -133402,7 +133401,7 @@ sc_end17002:
 
 if_then17003:
   %what_val55612 = load ptr, ptr %what.addr
-  %concat55613 = call ptr @ofs_str_concat(ptr %what_val55612, ptr @str.1500)
+  %concat55613 = call ptr @ofs_str_concat(ptr %what_val55612, ptr @str.1499)
   call void @interpreter__fault_runtime_error(ptr %concat55613)
   call void @ofs_str_release(ptr %concat55613, i64 1)
   %sf_val55614 = load ptr, ptr %what.addr
@@ -133459,7 +133458,7 @@ if_end17000:
 
 if_then17006:
   %what_val55648 = load ptr, ptr %what.addr
-  %concat55649 = call ptr @ofs_str_concat(ptr %what_val55648, ptr @str.1501)
+  %concat55649 = call ptr @ofs_str_concat(ptr %what_val55648, ptr @str.1500)
   call void @interpreter__fault_runtime_error(ptr %concat55649)
   call void @ofs_str_release(ptr %concat55649, i64 1)
   %sf_val55650 = load ptr, ptr %what.addr
@@ -133707,7 +133706,7 @@ arr_end17041:
   %rcls_val55755 = load i64, ptr %rcls55720
   %rtype_val55756 = load ptr, ptr %rtype55736
   %sym_val55757 = load ptr, ptr %sym55667
-  %concat55758 = call ptr @ofs_str_concat(ptr @str.1502, ptr %sym_val55757)
+  %concat55758 = call ptr @ofs_str_concat(ptr @str.1501, ptr %sym_val55757)
   %concat55759 = call ptr @ofs_str_concat_ex(ptr %concat55758, ptr @str.173, i64 1)
   %num_args_val55760 = load i64, ptr %num_args.addr
   %arg_base_val55761 = load i64, ptr %arg_base.addr
@@ -133918,7 +133917,7 @@ arr_end17058:
 
 if_then17060:
   %what_val55841 = load ptr, ptr %what.addr
-  %concat55842 = call ptr @ofs_str_concat(ptr %what_val55841, ptr @str.1503)
+  %concat55842 = call ptr @ofs_str_concat(ptr %what_val55841, ptr @str.1502)
   call void @interpreter__fault_runtime_error(ptr %concat55842)
   call void @ofs_str_release(ptr %concat55842, i64 1)
   %sf_val55843 = load ptr, ptr %what.addr
@@ -134017,7 +134016,7 @@ if_then17076:
 
 if_then17079:
   %what_val55883 = load ptr, ptr %what.addr
-  %concat55884 = call ptr @ofs_str_concat(ptr %what_val55883, ptr @str.1504)
+  %concat55884 = call ptr @ofs_str_concat(ptr %what_val55883, ptr @str.1503)
   call void @interpreter__fault_runtime_error(ptr %concat55884)
   call void @ofs_str_release(ptr %concat55884, i64 1)
   %sf_val55885 = load ptr, ptr %what.addr
@@ -134082,7 +134081,7 @@ sc_end17086:
 
 if_then17089:
   %what_val55912 = load ptr, ptr %what.addr
-  %concat55913 = call ptr @ofs_str_concat(ptr %what_val55912, ptr @str.1505)
+  %concat55913 = call ptr @ofs_str_concat(ptr %what_val55912, ptr @str.1504)
   call void @interpreter__fault_runtime_error(ptr %concat55913)
   call void @ofs_str_release(ptr %concat55913, i64 1)
   %sf_val55914 = load ptr, ptr %what.addr
@@ -134701,7 +134700,7 @@ if_end17175:
   br i1 %cmp56166, label %if_then17176, label %if_else17177
 
 if_then17176:
-  call void @interpreter__fault_runtime_error(ptr @str.1506)
+  call void @interpreter__fault_runtime_error(ptr @str.1505)
   %sf_val56167 = load ptr, ptr %name56149
   %sf_own56168 = load i64, ptr %name56149_own
   call void @ofs_str_release(ptr %sf_val56167, i64 %sf_own56168)
@@ -134767,7 +134766,7 @@ if_end17184:
   br i1 %cmp56187, label %if_then17185, label %if_else17186
 
 if_then17185:
-  call void @interpreter__fault_runtime_error(ptr @str.1507)
+  call void @interpreter__fault_runtime_error(ptr @str.1506)
   ret void
 
 if_else17186:
@@ -134805,7 +134804,7 @@ arr_end17189:
   br i1 %cmp56202, label %if_then17191, label %if_else17192
 
 if_then17191:
-  call void @interpreter__fault_runtime_error(ptr @str.1508)
+  call void @interpreter__fault_runtime_error(ptr @str.1507)
   ret void
 
 if_else17192:
@@ -134845,7 +134844,7 @@ if_then17197:
   br i1 %cmp56219, label %if_then17200, label %if_else17201
 
 if_then17200:
-  call void @interpreter__fault_runtime_error(ptr @str.1509)
+  call void @interpreter__fault_runtime_error(ptr @str.1508)
   ret void
 
 if_else17201:
@@ -135249,7 +135248,7 @@ entry:
 if_then17256:
   store i32 1, ptr @interpreter___hy_soft_err
   %msg_val56371 = load ptr, ptr %msg.addr
-  %concat56372 = call ptr @ofs_str_concat(ptr @str.1510, ptr %msg_val56371)
+  %concat56372 = call ptr @ofs_str_concat(ptr @str.1509, ptr %msg_val56371)
   %concat56373 = call ptr @ofs_str_concat_ex(ptr %concat56372, ptr @str.3, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat56373)
   %sf_val56374 = load ptr, ptr %msg.addr
@@ -135262,7 +135261,7 @@ if_else17257:
 
 if_end17258:
   %msg_val56376 = load ptr, ptr %msg.addr
-  %concat56377 = call ptr @ofs_str_concat(ptr @str.1511, ptr %msg_val56376)
+  %concat56377 = call ptr @ofs_str_concat(ptr @str.1510, ptr %msg_val56376)
   %concat56378 = call ptr @ofs_str_concat_ex(ptr %concat56377, ptr @str.3, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat56378)
   call void @exit(i64 1)
@@ -135308,7 +135307,7 @@ while_body17260:
 if_then17262:
   %out_val56394 = load ptr, ptr %out56381
   %own_flag56396 = load i64, ptr %out56381_own
-  %concat56395 = call ptr @ofs_str_concat_ex(ptr %out_val56394, ptr @str.1512, i64 %own_flag56396)
+  %concat56395 = call ptr @ofs_str_concat_ex(ptr %out_val56394, ptr @str.1511, i64 %own_flag56396)
   store ptr %concat56395, ptr %out56381
   store i64 1, ptr %out56381_own
   br label %if_end17264
@@ -135350,7 +135349,7 @@ entry:
   %digits56411 = alloca ptr, align 8
   %digits56411_own = alloca i64, align 8
   store i64 0, ptr %digits56411_own
-  store ptr @str.1513, ptr %digits56411
+  store ptr @str.1512, ptr %digits56411
   %out56412 = alloca ptr, align 8
   %out56412_own = alloca i64, align 8
   store i64 0, ptr %out56412_own
@@ -135496,7 +135495,7 @@ entry:
   %d56469 = alloca ptr, align 8
   %d56469_own = alloca i64, align 8
   store i64 0, ptr %d56469_own
-  %call56470 = call ptr @getenv(ptr @str.1514)
+  %call56470 = call ptr @getenv(ptr @str.1513)
   store ptr %call56470, ptr %d56469
   %sc_slot56471 = alloca i1, align 1
   %d_val56472 = load ptr, ptr %d56469
@@ -135526,7 +135525,7 @@ if_end17280:
   %x56479 = alloca ptr, align 8
   %x56479_own = alloca i64, align 8
   store i64 0, ptr %x56479_own
-  %call56480 = call ptr @getenv(ptr @str.1515)
+  %call56480 = call ptr @getenv(ptr @str.1514)
   store ptr %call56480, ptr %x56479
   %sc_slot56481 = alloca i1, align 1
   %x_val56482 = load ptr, ptr %x56479
@@ -135547,7 +135546,7 @@ sc_end17282:
 
 if_then17283:
   %x_val56488 = load ptr, ptr %x56479
-  %concat56489 = call ptr @ofs_str_concat(ptr %x_val56488, ptr @str.1516)
+  %concat56489 = call ptr @ofs_str_concat(ptr %x_val56488, ptr @str.1515)
   %sf_val56490 = load ptr, ptr %x56479
   %sf_own56491 = load i64, ptr %x56479_own
   call void @ofs_str_release(ptr %sf_val56490, i64 %sf_own56491)
@@ -135557,8 +135556,8 @@ if_else17284:
   br label %if_end17285
 
 if_end17285:
-  %call56492 = call ptr @interpreter__hy_env_or(ptr @str.1517, ptr @str.1518)
-  %concat56493 = call ptr @ofs_str_concat(ptr %call56492, ptr @str.1519)
+  %call56492 = call ptr @interpreter__hy_env_or(ptr @str.1516, ptr @str.1517)
+  %concat56493 = call ptr @ofs_str_concat(ptr %call56492, ptr @str.1518)
   %sf_val56494 = load ptr, ptr %x56479
   %sf_own56495 = load i64, ptr %x56479_own
   call void @ofs_str_release(ptr %sf_val56494, i64 %sf_own56495)
@@ -135571,7 +135570,7 @@ entry:
   store ptr %path, ptr %path.addr
   %f56496 = alloca ptr, align 8
   %path_val56497 = load ptr, ptr %path.addr
-  %call56498 = call ptr @fopen(ptr %path_val56497, ptr @str.1451)
+  %call56498 = call ptr @fopen(ptr %path_val56497, ptr @str.0)
   store ptr %call56498, ptr %f56496
   %f_val56499 = load ptr, ptr %f56496
   %cmp56500 = icmp eq ptr %f_val56499, null
@@ -135593,7 +135592,7 @@ define ptr @interpreter__hy_dlerror() {
 entry:
   %de56503 = alloca i64, align 8
   %call56504 = call i64 @interpreter__ffi_rtld_default()
-  %call56505 = call i64 @dlsym(i64 %call56504, ptr @str.1520)
+  %call56505 = call i64 @dlsym(i64 %call56504, ptr @str.1519)
   store i64 %call56505, ptr %de56503
   %de_val56506 = load i64, ptr %de56503
   %cmp56507 = icmp eq i64 %de_val56506, 0
@@ -136605,7 +136604,7 @@ entry:
   store i64 %root_id, ptr %root_id.addr
   %root_id_val56881 = load i64, ptr %root_id.addr
   store i64 %root_id_val56881, ptr @interpreter___cr_root
-  %call56882 = call ptr @interpreter__hy_env_or(ptr @str.1521, ptr @str.683)
+  %call56882 = call ptr @interpreter__hy_env_or(ptr @str.1520, ptr @str.683)
   %streq56883 = call i32 @ofs_str_eq(ptr %call56882, ptr @str.185)
   %cond56884 = icmp ne i32 %streq56883, 0
   %not56885 = xor i1 %cond56884, true
@@ -136626,7 +136625,7 @@ if_end17447:
   %lim56889 = alloca ptr, align 8
   %lim56889_own = alloca i64, align 8
   store i64 0, ptr %lim56889_own
-  %call56890 = call ptr @interpreter__hy_env_or(ptr @str.1522, ptr @str.1523)
+  %call56890 = call ptr @interpreter__hy_env_or(ptr @str.1521, ptr @str.1522)
   store ptr %call56890, ptr %lim56889
   %parsed56891 = alloca i64, align 8
   store i64 0, ptr %parsed56891
@@ -136678,7 +136677,7 @@ sc_end17452:
   br i1 %sc56911, label %if_then17455, label %if_else17456
 
 if_then17455:
-  call void @interpreter__hy_fail(ptr @str.1524)
+  call void @interpreter__hy_fail(ptr @str.1523)
   br label %if_end17457
 
 if_else17456:
@@ -136715,7 +136714,7 @@ sc_end17459:
   br i1 %sc56924, label %if_then17460, label %if_else17461
 
 if_then17460:
-  call void @interpreter__hy_fail(ptr @str.1524)
+  call void @interpreter__hy_fail(ptr @str.1523)
   br label %if_end17462
 
 if_else17461:
@@ -136929,7 +136928,7 @@ sc_end17482:
   br i1 %sc57016, label %if_then17491, label %if_else17492
 
 if_then17491:
-  call void @interpreter__cr_abandon(ptr @str.1525)
+  call void @interpreter__cr_abandon(ptr @str.1524)
   br label %if_end17493
 
 if_else17492:
@@ -136953,7 +136952,7 @@ while_end17465:
   br i1 %cond57023, label %sc_rhs17494, label %sc_end17495
 
 sc_rhs17494:
-  %call57024 = call ptr @interpreter__hy_env_or(ptr @str.1526, ptr @str.683)
+  %call57024 = call ptr @interpreter__hy_env_or(ptr @str.1525, ptr @str.683)
   %streq57025 = call i32 @ofs_str_eq(ptr %call57024, ptr @str.185)
   %cond57026 = icmp ne i32 %streq57025, 0
   %not57027 = xor i1 %cond57026, true
@@ -137344,7 +137343,7 @@ entry:
   store ptr %template, ptr %template.addr
   %mk57190 = alloca i64, align 8
   %call57191 = call i64 @interpreter__ffi_rtld_default()
-  %call57192 = call i64 @dlsym(i64 %call57191, ptr @str.1527)
+  %call57192 = call i64 @dlsym(i64 %call57191, ptr @str.1526)
   store i64 %call57192, ptr %mk57190
   %mk_val57193 = load i64, ptr %mk57190
   %cmp57194 = icmp eq i64 %mk_val57193, 0
@@ -137383,7 +137382,7 @@ entry:
   br i1 %not57203, label %if_then17555, label %if_else17556
 
 if_then17555:
-  call void @interpreter__hy_fail(ptr @str.1528)
+  call void @interpreter__hy_fail(ptr @str.1527)
   ret void
 
 if_else17556:
@@ -137391,8 +137390,8 @@ if_else17556:
 
 if_end17557:
   %temp57204 = alloca ptr, align 8
-  %call57205 = call ptr @interpreter__hy_env_or(ptr @str.1529, ptr @str.1518)
-  %concat57206 = call ptr @ofs_str_concat(ptr %call57205, ptr @str.1530)
+  %call57205 = call ptr @interpreter__hy_env_or(ptr @str.1528, ptr @str.1517)
+  %concat57206 = call ptr @ofs_str_concat(ptr %call57205, ptr @str.1529)
   %call57207 = call ptr @interpreter__hy_mkdtemp(ptr %concat57206)
   store ptr %call57207, ptr %temp57204
   %temp_val57208 = load ptr, ptr %temp57204
@@ -137405,14 +137404,14 @@ if_then17558:
   br i1 %cond57211, label %if_then17561, label %if_else17562
 
 if_then17561:
-  call void @interpreter__cr_abandon(ptr @str.1531)
+  call void @interpreter__cr_abandon(ptr @str.1530)
   ret void
 
 if_else17562:
   br label %if_end17563
 
 if_end17563:
-  call void @interpreter__hy_fail(ptr @str.1532)
+  call void @interpreter__hy_fail(ptr @str.1531)
   ret void
 
 if_else17559:
@@ -137423,7 +137422,7 @@ if_end17560:
   store ptr %temp_val57212, ptr @interpreter___hy_temp
   %ll57213 = alloca ptr, align 8
   %temp_val57214 = load ptr, ptr %temp57204
-  %concat57215 = call ptr @ofs_str_concat(ptr %temp_val57214, ptr @str.1533)
+  %concat57215 = call ptr @ofs_str_concat(ptr %temp_val57214, ptr @str.1532)
   store ptr %concat57215, ptr %ll57213
   %probe57216 = alloca ptr, align 8
   %ll_val57217 = load ptr, ptr %ll57213
@@ -137435,8 +137434,8 @@ if_end17560:
 
 if_then17564:
   %ll_val57221 = load ptr, ptr %ll57213
-  %concat57222 = call ptr @ofs_str_concat(ptr @str.1534, ptr %ll_val57221)
-  %concat57223 = call ptr @ofs_str_concat_ex(ptr %concat57222, ptr @str.1535, i64 1)
+  %concat57222 = call ptr @ofs_str_concat(ptr @str.1533, ptr %ll_val57221)
+  %concat57223 = call ptr @ofs_str_concat_ex(ptr %concat57222, ptr @str.1534, i64 1)
   call void @interpreter__hy_fail(ptr %concat57223)
   call void @ofs_str_release(ptr %concat57223, i64 1)
   ret void
@@ -137626,12 +137625,12 @@ while_end17569:
   %cc57315 = alloca ptr, align 8
   %cc57315_own = alloca i64, align 8
   store i64 0, ptr %cc57315_own
-  %call57316 = call ptr @interpreter__hy_env_or(ptr @str.1536, ptr @str.1537)
+  %call57316 = call ptr @interpreter__hy_env_or(ptr @str.1535, ptr @str.1536)
   store ptr %call57316, ptr %cc57315
   %flags57317 = alloca ptr, align 8
   %flags57317_own = alloca i64, align 8
   store i64 0, ptr %flags57317_own
-  store ptr @str.1538, ptr %flags57317
+  store ptr @str.1537, ptr %flags57317
   %interpreter___ffi_macos_val57318 = load i32, ptr @interpreter___ffi_macos
   %cond57319 = icmp ne i32 %interpreter___ffi_macos_val57318, 0
   br i1 %cond57319, label %if_then17589, label %if_else17590
@@ -137639,7 +137638,7 @@ while_end17569:
 if_then17589:
   %flags_val57320 = load ptr, ptr %flags57317
   %own_flag57322 = load i64, ptr %flags57317_own
-  %concat57321 = call ptr @ofs_str_concat_ex(ptr %flags_val57320, ptr @str.1539, i64 %own_flag57322)
+  %concat57321 = call ptr @ofs_str_concat_ex(ptr %flags_val57320, ptr @str.1538, i64 %own_flag57322)
   store ptr %concat57321, ptr %flags57317
   store i64 1, ptr %flags57317_own
   br label %if_end17591
@@ -137647,7 +137646,7 @@ if_then17589:
 if_else17590:
   %flags_val57323 = load ptr, ptr %flags57317
   %own_flag57325 = load i64, ptr %flags57317_own
-  %concat57324 = call ptr @ofs_str_concat_ex(ptr %flags_val57323, ptr @str.1540, i64 %own_flag57325)
+  %concat57324 = call ptr @ofs_str_concat_ex(ptr %flags_val57323, ptr @str.1539, i64 %own_flag57325)
   store ptr %concat57324, ptr %flags57317
   store i64 1, ptr %flags57317_own
   br label %if_end17591
@@ -137655,16 +137654,16 @@ if_else17590:
 if_end17591:
   %identity57326 = alloca ptr, align 8
   %temp_val57327 = load ptr, ptr %temp57204
-  %concat57328 = call ptr @ofs_str_concat(ptr %temp_val57327, ptr @str.1541)
+  %concat57328 = call ptr @ofs_str_concat(ptr %temp_val57327, ptr @str.1540)
   store ptr %concat57328, ptr %identity57326
   %cc_val57329 = load ptr, ptr %cc57315
   %call57330 = call ptr @interpreter__hy_q(ptr %cc_val57329)
-  %concat57331 = call ptr @ofs_str_concat(ptr @str.1542, ptr %call57330)
-  %concat57332 = call ptr @ofs_str_concat_ex(ptr %concat57331, ptr @str.1543, i64 1)
+  %concat57331 = call ptr @ofs_str_concat(ptr @str.1541, ptr %call57330)
+  %concat57332 = call ptr @ofs_str_concat_ex(ptr %concat57331, ptr @str.1542, i64 1)
   %identity_val57333 = load ptr, ptr %identity57326
   %call57334 = call ptr @interpreter__hy_q(ptr %identity_val57333)
   %concat57335 = call ptr @ofs_str_concat_ex(ptr %concat57332, ptr %call57334, i64 1)
-  %concat57336 = call ptr @ofs_str_concat_ex(ptr %concat57335, ptr @str.1544, i64 1)
+  %concat57336 = call ptr @ofs_str_concat_ex(ptr %concat57335, ptr @str.1543, i64 1)
   %call57337 = call i64 @system(ptr %concat57336)
   %keytxt57338 = alloca ptr, align 8
   %keytxt57338_own = alloca i64, align 8
@@ -137707,12 +137706,12 @@ if_end17591:
   %concat57365 = call ptr @ofs_str_concat(ptr %cache_val57364, ptr @str.69)
   %key_val57366 = load ptr, ptr %key57352
   %concat57367 = call ptr @ofs_str_concat_ex(ptr %concat57365, ptr %key_val57366, i64 1)
-  %concat57368 = call ptr @ofs_str_concat_ex(ptr %concat57367, ptr @str.1545, i64 1)
+  %concat57368 = call ptr @ofs_str_concat_ex(ptr %concat57367, ptr @str.1544, i64 1)
   store ptr %concat57368, ptr %so57363
   %how57369 = alloca ptr, align 8
   %how57369_own = alloca i64, align 8
   store i64 0, ptr %how57369_own
-  store ptr @str.1546, ptr %how57369
+  store ptr @str.1545, ptr %how57369
   %so_val57370 = load ptr, ptr %so57363
   %call57371 = call i32 @interpreter__hy_file_exists(ptr %so_val57370)
   %cond57372 = icmp ne i32 %call57371, 0
@@ -137723,12 +137722,12 @@ if_then17592:
   %own_old57374 = load ptr, ptr %how57369
   %own_flag57375 = load i64, ptr %how57369_own
   call void @ofs_str_release(ptr %own_old57374, i64 %own_flag57375)
-  store ptr @str.1547, ptr %how57369
+  store ptr @str.1546, ptr %how57369
   store i64 0, ptr %how57369_own
   %cc_val57376 = load ptr, ptr %cc57315
   %call57377 = call ptr @interpreter__hy_q(ptr %cc_val57376)
-  %concat57378 = call ptr @ofs_str_concat(ptr @str.1548, ptr %call57377)
-  %concat57379 = call ptr @ofs_str_concat_ex(ptr %concat57378, ptr @str.1549, i64 1)
+  %concat57378 = call ptr @ofs_str_concat(ptr @str.1547, ptr %call57377)
+  %concat57379 = call ptr @ofs_str_concat_ex(ptr %concat57378, ptr @str.1548, i64 1)
   %call57380 = call i64 @system(ptr %concat57379)
   %bit57381 = and i64 %call57380, 4294967295
   %cmp57382 = icmp ne i64 %bit57381, 0
@@ -137744,7 +137743,7 @@ if_then17595:
   br i1 %cond57388, label %if_then17598, label %if_else17599
 
 if_then17598:
-  call void @interpreter__cr_abandon(ptr @str.1550)
+  call void @interpreter__cr_abandon(ptr @str.1549)
   %sf_val57389 = load ptr, ptr %how57369
   %sf_own57390 = load i64, ptr %how57369_own
   call void @ofs_str_release(ptr %sf_val57389, i64 %sf_own57390)
@@ -137772,7 +137771,7 @@ if_else17599:
   br label %if_end17600
 
 if_end17600:
-  call void @interpreter__hy_fail(ptr @str.1551)
+  call void @interpreter__hy_fail(ptr @str.1550)
   %sf_val57403 = load ptr, ptr %how57369
   %sf_own57404 = load i64, ptr %how57369_own
   call void @ofs_str_release(ptr %sf_val57403, i64 %sf_own57404)
@@ -137804,16 +137803,16 @@ if_end17597:
   %tmp_so57417_own = alloca i64, align 8
   store i64 0, ptr %tmp_so57417_own
   %temp_val57418 = load ptr, ptr %temp57204
-  %concat57419 = call ptr @ofs_str_concat(ptr %temp_val57418, ptr @str.1552)
+  %concat57419 = call ptr @ofs_str_concat(ptr %temp_val57418, ptr @str.1551)
   store ptr %concat57419, ptr %tmp_so57417
   store i64 1, ptr %tmp_so57417_own
   %ready57420 = alloca ptr, align 8
   %temp_val57421 = load ptr, ptr %temp57204
-  %concat57422 = call ptr @ofs_str_concat(ptr %temp_val57421, ptr @str.1553)
+  %concat57422 = call ptr @ofs_str_concat(ptr %temp_val57421, ptr @str.1552)
   store ptr %concat57422, ptr %ready57420
   %log57423 = alloca ptr, align 8
   %temp_val57424 = load ptr, ptr %temp57204
-  %concat57425 = call ptr @ofs_str_concat(ptr %temp_val57424, ptr @str.1554)
+  %concat57425 = call ptr @ofs_str_concat(ptr %temp_val57424, ptr @str.1553)
   store ptr %concat57425, ptr %log57423
   %stage57426 = alloca ptr, align 8
   %stage57426_own = alloca i64, align 8
@@ -137829,28 +137828,28 @@ if_end17597:
   %cmd57433 = alloca ptr, align 8
   %cache_val57434 = load ptr, ptr %cache57361
   %call57435 = call ptr @interpreter__hy_q(ptr %cache_val57434)
-  %concat57436 = call ptr @ofs_str_concat(ptr @str.1555, ptr %call57435)
-  %concat57437 = call ptr @ofs_str_concat_ex(ptr %concat57436, ptr @str.1556, i64 1)
+  %concat57436 = call ptr @ofs_str_concat(ptr @str.1554, ptr %call57435)
+  %concat57437 = call ptr @ofs_str_concat_ex(ptr %concat57436, ptr @str.1555, i64 1)
   %cc_val57438 = load ptr, ptr %cc57315
   %call57439 = call ptr @interpreter__hy_q(ptr %cc_val57438)
   %concat57440 = call ptr @ofs_str_concat_ex(ptr %concat57437, ptr %call57439, i64 1)
-  %concat57441 = call ptr @ofs_str_concat_ex(ptr %concat57440, ptr @str.1557, i64 1)
-  %concat57442 = call ptr @ofs_str_concat_ex(ptr %concat57441, ptr @str.1558, i64 1)
+  %concat57441 = call ptr @ofs_str_concat_ex(ptr %concat57440, ptr @str.1556, i64 1)
+  %concat57442 = call ptr @ofs_str_concat_ex(ptr %concat57441, ptr @str.1557, i64 1)
   %cc_val57443 = load ptr, ptr %cc57315
   %call57444 = call ptr @interpreter__hy_q(ptr %cc_val57443)
   %concat57445 = call ptr @ofs_str_concat_ex(ptr %concat57442, ptr %call57444, i64 1)
-  %concat57446 = call ptr @ofs_str_concat_ex(ptr %concat57445, ptr @str.1559, i64 1)
+  %concat57446 = call ptr @ofs_str_concat_ex(ptr %concat57445, ptr @str.1558, i64 1)
   %flags_val57447 = load ptr, ptr %flags57317
   %concat57448 = call ptr @ofs_str_concat_ex(ptr %concat57446, ptr %flags_val57447, i64 1)
   %concat57449 = call ptr @ofs_str_concat_ex(ptr %concat57448, ptr @str.264, i64 1)
   %ll_val57450 = load ptr, ptr %ll57213
   %call57451 = call ptr @interpreter__hy_q(ptr %ll_val57450)
   %concat57452 = call ptr @ofs_str_concat_ex(ptr %concat57449, ptr %call57451, i64 1)
-  %concat57453 = call ptr @ofs_str_concat_ex(ptr %concat57452, ptr @str.1560, i64 1)
+  %concat57453 = call ptr @ofs_str_concat_ex(ptr %concat57452, ptr @str.1559, i64 1)
   %tmp_so_val57454 = load ptr, ptr %tmp_so57417
   %call57455 = call ptr @interpreter__hy_q(ptr %tmp_so_val57454)
   %concat57456 = call ptr @ofs_str_concat_ex(ptr %concat57453, ptr %call57455, i64 1)
-  %concat57457 = call ptr @ofs_str_concat_ex(ptr %concat57456, ptr @str.1561, i64 1)
+  %concat57457 = call ptr @ofs_str_concat_ex(ptr %concat57456, ptr @str.1560, i64 1)
   %tmp_so_val57458 = load ptr, ptr %tmp_so57417
   %call57459 = call ptr @interpreter__hy_q(ptr %tmp_so_val57458)
   %concat57460 = call ptr @ofs_str_concat_ex(ptr %concat57457, ptr %call57459, i64 1)
@@ -137858,7 +137857,7 @@ if_end17597:
   %stage_val57462 = load ptr, ptr %stage57426
   %call57463 = call ptr @interpreter__hy_q(ptr %stage_val57462)
   %concat57464 = call ptr @ofs_str_concat_ex(ptr %concat57461, ptr %call57463, i64 1)
-  %concat57465 = call ptr @ofs_str_concat_ex(ptr %concat57464, ptr @str.1562, i64 1)
+  %concat57465 = call ptr @ofs_str_concat_ex(ptr %concat57464, ptr @str.1561, i64 1)
   %stage_val57466 = load ptr, ptr %stage57426
   %call57467 = call ptr @interpreter__hy_q(ptr %stage_val57466)
   %concat57468 = call ptr @ofs_str_concat_ex(ptr %concat57465, ptr %call57467, i64 1)
@@ -137894,7 +137893,7 @@ if_then17601:
   store i64 0, ptr %cleanup57483_own
   %ll_val57484 = load ptr, ptr %ll57213
   %call57485 = call ptr @interpreter__hy_q(ptr %ll_val57484)
-  %concat57486 = call ptr @ofs_str_concat(ptr @str.1563, ptr %call57485)
+  %concat57486 = call ptr @ofs_str_concat(ptr @str.1562, ptr %call57485)
   %concat57487 = call ptr @ofs_str_concat_ex(ptr %concat57486, ptr @str.264, i64 1)
   %tmp_so_val57488 = load ptr, ptr %tmp_so57417
   %call57489 = call ptr @interpreter__hy_q(ptr %tmp_so_val57488)
@@ -137909,17 +137908,17 @@ if_then17601:
   %concat57498 = call ptr @ofs_str_concat_ex(ptr %concat57495, ptr %call57497, i64 1)
   %concat57499 = call ptr @ofs_str_concat_ex(ptr %concat57498, ptr @str.264, i64 1)
   %ready_val57500 = load ptr, ptr %ready57420
-  %concat57501 = call ptr @ofs_str_concat(ptr %ready_val57500, ptr @str.1564)
+  %concat57501 = call ptr @ofs_str_concat(ptr %ready_val57500, ptr @str.1563)
   %call57502 = call ptr @interpreter__hy_q(ptr %concat57501)
   call void @ofs_str_release(ptr %concat57501, i64 1)
   %concat57503 = call ptr @ofs_str_concat_ex(ptr %concat57499, ptr %call57502, i64 1)
   %concat57504 = call ptr @ofs_str_concat_ex(ptr %concat57503, ptr @str.264, i64 1)
   %temp_val57505 = load ptr, ptr %temp57204
-  %concat57506 = call ptr @ofs_str_concat(ptr %temp_val57505, ptr @str.1565)
+  %concat57506 = call ptr @ofs_str_concat(ptr %temp_val57505, ptr @str.1564)
   %call57507 = call ptr @interpreter__hy_q(ptr %concat57506)
   call void @ofs_str_release(ptr %concat57506, i64 1)
   %concat57508 = call ptr @ofs_str_concat_ex(ptr %concat57504, ptr %call57507, i64 1)
-  %concat57509 = call ptr @ofs_str_concat_ex(ptr %concat57508, ptr @str.1566, i64 1)
+  %concat57509 = call ptr @ofs_str_concat_ex(ptr %concat57508, ptr @str.1565, i64 1)
   %temp_val57510 = load ptr, ptr %temp57204
   %call57511 = call ptr @interpreter__hy_q(ptr %temp_val57510)
   %concat57512 = call ptr @ofs_str_concat_ex(ptr %concat57509, ptr %call57511, i64 1)
@@ -137927,20 +137926,20 @@ if_then17601:
   store i64 1, ptr %cleanup57483_own
   %launch57513 = alloca ptr, align 8
   %cmd_val57514 = load ptr, ptr %cmd57433
-  %concat57515 = call ptr @ofs_str_concat(ptr @str.1567, ptr %cmd_val57514)
-  %concat57516 = call ptr @ofs_str_concat_ex(ptr %concat57515, ptr @str.1568, i64 1)
+  %concat57515 = call ptr @ofs_str_concat(ptr @str.1566, ptr %cmd_val57514)
+  %concat57516 = call ptr @ofs_str_concat_ex(ptr %concat57515, ptr @str.1567, i64 1)
   %log_val57517 = load ptr, ptr %log57423
   %call57518 = call ptr @interpreter__hy_q(ptr %log_val57517)
   %concat57519 = call ptr @ofs_str_concat_ex(ptr %concat57516, ptr %call57518, i64 1)
-  %concat57520 = call ptr @ofs_str_concat_ex(ptr %concat57519, ptr @str.1569, i64 1)
+  %concat57520 = call ptr @ofs_str_concat_ex(ptr %concat57519, ptr @str.1568, i64 1)
   %ready_val57521 = load ptr, ptr %ready57420
-  %concat57522 = call ptr @ofs_str_concat(ptr %ready_val57521, ptr @str.1564)
+  %concat57522 = call ptr @ofs_str_concat(ptr %ready_val57521, ptr @str.1563)
   %call57523 = call ptr @interpreter__hy_q(ptr %concat57522)
   call void @ofs_str_release(ptr %concat57522, i64 1)
   %concat57524 = call ptr @ofs_str_concat_ex(ptr %concat57520, ptr %call57523, i64 1)
-  %concat57525 = call ptr @ofs_str_concat_ex(ptr %concat57524, ptr @str.1570, i64 1)
+  %concat57525 = call ptr @ofs_str_concat_ex(ptr %concat57524, ptr @str.1569, i64 1)
   %ready_val57526 = load ptr, ptr %ready57420
-  %concat57527 = call ptr @ofs_str_concat(ptr %ready_val57526, ptr @str.1564)
+  %concat57527 = call ptr @ofs_str_concat(ptr %ready_val57526, ptr @str.1563)
   %call57528 = call ptr @interpreter__hy_q(ptr %concat57527)
   call void @ofs_str_release(ptr %concat57527, i64 1)
   %concat57529 = call ptr @ofs_str_concat_ex(ptr %concat57525, ptr %call57528, i64 1)
@@ -137948,20 +137947,20 @@ if_then17601:
   %ready_val57531 = load ptr, ptr %ready57420
   %call57532 = call ptr @interpreter__hy_q(ptr %ready_val57531)
   %concat57533 = call ptr @ofs_str_concat_ex(ptr %concat57530, ptr %call57532, i64 1)
-  %concat57534 = call ptr @ofs_str_concat_ex(ptr %concat57533, ptr @str.1571, i64 1)
+  %concat57534 = call ptr @ofs_str_concat_ex(ptr %concat57533, ptr @str.1570, i64 1)
   %temp_val57535 = load ptr, ptr %temp57204
-  %concat57536 = call ptr @ofs_str_concat(ptr %temp_val57535, ptr @str.1565)
+  %concat57536 = call ptr @ofs_str_concat(ptr %temp_val57535, ptr @str.1564)
   %call57537 = call ptr @interpreter__hy_q(ptr %concat57536)
   call void @ofs_str_release(ptr %concat57536, i64 1)
   %concat57538 = call ptr @ofs_str_concat_ex(ptr %concat57534, ptr %call57537, i64 1)
-  %concat57539 = call ptr @ofs_str_concat_ex(ptr %concat57538, ptr @str.1572, i64 1)
+  %concat57539 = call ptr @ofs_str_concat_ex(ptr %concat57538, ptr @str.1571, i64 1)
   %call57540 = call i64 @getpid()
   %stone_to_str57541 = call ptr @ofs_stone_to_obsidian(i64 %call57540)
   %concat57542 = call ptr @ofs_str_concat_ex(ptr %concat57539, ptr %stone_to_str57541, i64 1)
-  %concat57543 = call ptr @ofs_str_concat_ex(ptr %concat57542, ptr @str.1573, i64 1)
+  %concat57543 = call ptr @ofs_str_concat_ex(ptr %concat57542, ptr @str.1572, i64 1)
   %cleanup_val57544 = load ptr, ptr %cleanup57483
   %concat57545 = call ptr @ofs_str_concat_ex(ptr %concat57543, ptr %cleanup_val57544, i64 1)
-  %concat57546 = call ptr @ofs_str_concat_ex(ptr %concat57545, ptr @str.1574, i64 1)
+  %concat57546 = call ptr @ofs_str_concat_ex(ptr %concat57545, ptr @str.1573, i64 1)
   store ptr %concat57546, ptr %launch57513
   %launch_val57547 = load ptr, ptr %launch57513
   %call57548 = call i64 @system(ptr %launch_val57547)
@@ -137970,7 +137969,7 @@ if_then17601:
   br i1 %cmp57550, label %if_then17604, label %if_else17605
 
 if_then17604:
-  call void @interpreter__cr_abandon(ptr @str.1575)
+  call void @interpreter__cr_abandon(ptr @str.1574)
   br label %if_end17606
 
 if_else17605:
@@ -138024,7 +138023,7 @@ if_then17607:
   %call57576 = call i64 @remove(ptr %ll_val57575)
   %temp_val57577 = load ptr, ptr %temp57204
   %call57578 = call i64 @rmdir(ptr %temp_val57577)
-  call void @interpreter__hy_fail(ptr @str.1576)
+  call void @interpreter__hy_fail(ptr @str.1575)
   %sf_val57579 = load ptr, ptr %stage57426
   %sf_own57580 = load i64, ptr %stage57426_own
   call void @ofs_str_release(ptr %sf_val57579, i64 %sf_own57580)
@@ -138073,7 +138072,7 @@ if_end17594:
   %ll_val57601 = load ptr, ptr %ll57213
   %call57602 = call i64 @remove(ptr %ll_val57601)
   %temp_val57603 = load ptr, ptr %temp57204
-  %concat57604 = call ptr @ofs_str_concat(ptr %temp_val57603, ptr @str.1552)
+  %concat57604 = call ptr @ofs_str_concat(ptr %temp_val57603, ptr @str.1551)
   %call57605 = call i64 @remove(ptr %concat57604)
   %temp_val57606 = load ptr, ptr %temp57204
   %call57607 = call i64 @rmdir(ptr %temp_val57606)
@@ -138190,7 +138189,7 @@ sc_end17617:
 
 if_then17620:
   %err_val57655 = load ptr, ptr %err57640
-  %concat57656 = call ptr @ofs_str_concat(ptr @str.1577, ptr %err_val57655)
+  %concat57656 = call ptr @ofs_str_concat(ptr @str.1576, ptr %err_val57655)
   call void @interpreter__cr_abandon(ptr %concat57656)
   call void @ofs_str_release(ptr %concat57656, i64 1)
   %sf_val57657 = load ptr, ptr %err57640
@@ -138206,8 +138205,8 @@ if_else17621:
 
 if_end17622:
   %so_val57661 = load ptr, ptr %so.addr
-  %concat57662 = call ptr @ofs_str_concat(ptr @str.1578, ptr %so_val57661)
-  %concat57663 = call ptr @ofs_str_concat_ex(ptr %concat57662, ptr @str.1579, i64 1)
+  %concat57662 = call ptr @ofs_str_concat(ptr @str.1577, ptr %so_val57661)
+  %concat57663 = call ptr @ofs_str_concat_ex(ptr %concat57662, ptr @str.1578, i64 1)
   %err_val57664 = load ptr, ptr %err57640
   %concat57665 = call ptr @ofs_str_concat_ex(ptr %concat57663, ptr %err_val57664, i64 1)
   call void @interpreter__hy_fail(ptr %concat57665)
@@ -138517,8 +138516,8 @@ if_then17666:
 
 if_else17667:
   %rname_val57807 = load ptr, ptr %rname57757
-  %concat57808 = call ptr @ofs_str_concat(ptr @str.1580, ptr %rname_val57807)
-  %concat57809 = call ptr @ofs_str_concat_ex(ptr %concat57808, ptr @str.1581, i64 1)
+  %concat57808 = call ptr @ofs_str_concat(ptr @str.1579, ptr %rname_val57807)
+  %concat57809 = call ptr @ofs_str_concat_ex(ptr %concat57808, ptr @str.1580, i64 1)
   %so_val57810 = load ptr, ptr %so.addr
   %concat57811 = call ptr @ofs_str_concat_ex(ptr %concat57809, ptr %so_val57810, i64 1)
   call void @interpreter__hy_fail(ptr %concat57811)
@@ -138802,8 +138801,8 @@ if_then17705:
 
 if_else17706:
   %rname_val57927 = load ptr, ptr %rname57757
-  %concat57928 = call ptr @ofs_str_concat(ptr @str.1470, ptr %rname_val57927)
-  %concat57929 = call ptr @ofs_str_concat_ex(ptr %concat57928, ptr @str.1582, i64 1)
+  %concat57928 = call ptr @ofs_str_concat(ptr @str.1469, ptr %rname_val57927)
+  %concat57929 = call ptr @ofs_str_concat_ex(ptr %concat57928, ptr @str.1581, i64 1)
   call void @interpreter__hy_fail(ptr %concat57929)
   call void @ofs_str_release(ptr %concat57929, i64 1)
   %sf_val57930 = load ptr, ptr %how.addr
@@ -138866,7 +138865,7 @@ while_body17712:
   %gvar57952 = alloca i64, align 8
   %h_val57953 = load i64, ptr %h57634
   %gname_val57954 = load ptr, ptr %gname57949
-  %concat57955 = call ptr @ofs_str_concat(ptr @str.1583, ptr %gname_val57954)
+  %concat57955 = call ptr @ofs_str_concat(ptr @str.1582, ptr %gname_val57954)
   %call57956 = call i64 @dlsym(i64 %h_val57953, ptr %concat57955)
   store i64 %call57956, ptr %gvar57952
   %gsym57957 = alloca i64, align 8
@@ -138972,7 +138971,7 @@ arr_end17727:
   %h_val58002 = load i64, ptr %h57634
   %lp_val58003 = load i64, ptr %lp57985
   %stone_to_str58004 = call ptr @ofs_stone_to_obsidian(i64 %lp_val58003)
-  %concat58005 = call ptr @ofs_str_concat(ptr @str.1584, ptr %stone_to_str58004)
+  %concat58005 = call ptr @ofs_str_concat(ptr @str.1583, ptr %stone_to_str58004)
   %call58006 = call i64 @dlsym(i64 %h_val58002, ptr %concat58005)
   store i64 %call58006, ptr %oaddr58001
   %oaddr_val58007 = load i64, ptr %oaddr58001
@@ -139024,7 +139023,7 @@ if_end17731:
 
 while_end17721:
   store i32 1, ptr @interpreter___hy_on
-  %call58025 = call ptr @interpreter__hy_env_or(ptr @str.1585, ptr @str.75)
+  %call58025 = call ptr @interpreter__hy_env_or(ptr @str.1584, ptr @str.75)
   %streq58026 = call i32 @ofs_str_eq(ptr %call58025, ptr @str.683)
   %cond58027 = icmp ne i32 %streq58026, 0
   br i1 %cond58027, label %if_then17736, label %if_else17737
@@ -139042,7 +139041,7 @@ if_then17739:
   %own_old58031 = load ptr, ptr %feature58028
   %own_flag58032 = load i64, ptr %feature58028_own
   call void @ofs_str_release(ptr %own_old58031, i64 %own_flag58032)
-  store ptr @str.1586, ptr %feature58028
+  store ptr @str.1585, ptr %feature58028
   store i64 0, ptr %feature58028_own
   br label %if_end17741
 
@@ -139058,7 +139057,7 @@ if_then17742:
   %own_old58035 = load ptr, ptr %feature58028
   %own_flag58036 = load i64, ptr %feature58028_own
   call void @ofs_str_release(ptr %own_old58035, i64 %own_flag58036)
-  store ptr @str.1587, ptr %feature58028
+  store ptr @str.1586, ptr %feature58028
   store i64 0, ptr %feature58028_own
   br label %if_end17744
 
@@ -139098,8 +139097,8 @@ arr_chk17751:
 
 arr_end17752:
   %arr_len58047 = phi i64 [ 0, %arr_nul17753 ], [ %ah58045, %arr_chk17751 ]
-  %call58048 = call ptr @interpreter__rf_plural(i64 %arr_len58047, ptr @str.1589, ptr @str.1590)
-  %concat58049 = call ptr @ofs_str_concat(ptr @str.1588, ptr %call58048)
+  %call58048 = call ptr @interpreter__rf_plural(i64 %arr_len58047, ptr @str.1588, ptr @str.1589)
+  %concat58049 = call ptr @ofs_str_concat(ptr @str.1587, ptr %call58048)
   %concat58050 = call ptr @ofs_str_concat_ex(ptr %concat58049, ptr @str.163, i64 1)
   %own_old58051 = load ptr, ptr %feature58028
   %own_flag58052 = load i64, ptr %feature58028_own
@@ -139113,15 +139112,15 @@ if_else17749:
 
 if_end17750:
   %feature_val58053 = load ptr, ptr %feature58028
-  %concat58054 = call ptr @ofs_str_concat(ptr @str.1511, ptr %feature_val58053)
+  %concat58054 = call ptr @ofs_str_concat(ptr @str.1510, ptr %feature_val58053)
   %concat58055 = call ptr @ofs_str_concat_ex(ptr %concat58054, ptr @str.291, i64 1)
   %loaded_val58056 = load i64, ptr %loaded57727
   %stone_to_str58057 = call ptr @ofs_stone_to_obsidian(i64 %loaded_val58056)
   %concat58058 = call ptr @ofs_str_concat_ex(ptr %concat58055, ptr %stone_to_str58057, i64 1)
-  %concat58059 = call ptr @ofs_str_concat_ex(ptr %concat58058, ptr @str.1591, i64 1)
+  %concat58059 = call ptr @ofs_str_concat_ex(ptr %concat58058, ptr @str.1590, i64 1)
   %how_val58060 = load ptr, ptr %how.addr
   %concat58061 = call ptr @ofs_str_concat_ex(ptr %concat58059, ptr %how_val58060, i64 1)
-  %concat58062 = call ptr @ofs_str_concat_ex(ptr %concat58061, ptr @str.1592, i64 1)
+  %concat58062 = call ptr @ofs_str_concat_ex(ptr %concat58061, ptr @str.1591, i64 1)
   %so_val58063 = load ptr, ptr %so.addr
   %concat58064 = call ptr @ofs_str_concat_ex(ptr %concat58062, ptr %so_val58063, i64 1)
   %concat58065 = call ptr @ofs_str_concat_ex(ptr %concat58064, ptr @str.3, i64 1)
@@ -139525,14 +139524,14 @@ entry:
   store i32 0, ptr @interpreter___cr_enabled
   store i32 0, ptr @interpreter___cr_pending
   store i32 1, ptr @interpreter___cr_done
-  %call58247 = call ptr @interpreter__hy_env_or(ptr @str.1585, ptr @str.75)
+  %call58247 = call ptr @interpreter__hy_env_or(ptr @str.1584, ptr @str.75)
   %streq58248 = call i32 @ofs_str_eq(ptr %call58247, ptr @str.683)
   %cond58249 = icmp ne i32 %streq58248, 0
   br i1 %cond58249, label %if_then17801, label %if_else17802
 
 if_then17801:
   %msg_val58250 = load ptr, ptr %msg.addr
-  %concat58251 = call ptr @ofs_str_concat(ptr @str.1593, ptr %msg_val58250)
+  %concat58251 = call ptr @ofs_str_concat(ptr @str.1592, ptr %msg_val58250)
   %concat58252 = call ptr @ofs_str_concat_ex(ptr %concat58251, ptr @str.3, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat58252)
   br label %if_end17803
@@ -139550,10 +139549,10 @@ if_end17803:
 define void @interpreter__cr_cleanup() {
 entry:
   %interpreter___cr_dir_val58255 = load ptr, ptr @interpreter___cr_dir
-  %concat58256 = call ptr @ofs_str_concat(ptr %interpreter___cr_dir_val58255, ptr @str.1533)
+  %concat58256 = call ptr @ofs_str_concat(ptr %interpreter___cr_dir_val58255, ptr @str.1532)
   %call58257 = call i64 @remove(ptr %concat58256)
   %interpreter___cr_dir_val58258 = load ptr, ptr @interpreter___cr_dir
-  %concat58259 = call ptr @ofs_str_concat(ptr %interpreter___cr_dir_val58258, ptr @str.1552)
+  %concat58259 = call ptr @ofs_str_concat(ptr %interpreter___cr_dir_val58258, ptr @str.1551)
   %call58260 = call i64 @remove(ptr %concat58259)
   %interpreter___cr_log_val58261 = load ptr, ptr @interpreter___cr_log
   %call58262 = call i64 @remove(ptr %interpreter___cr_log_val58261)
@@ -139580,7 +139579,7 @@ if_else17805:
 if_end17806:
   %f58270 = alloca ptr, align 8
   %interpreter___cr_dir_val58271 = load ptr, ptr @interpreter___cr_dir
-  %concat58272 = call ptr @ofs_str_concat(ptr %interpreter___cr_dir_val58271, ptr @str.1565)
+  %concat58272 = call ptr @ofs_str_concat(ptr %interpreter___cr_dir_val58271, ptr @str.1564)
   %call58273 = call ptr @fopen(ptr %concat58272, ptr @str.2)
   store ptr %call58273, ptr %f58270
   %f_val58274 = load ptr, ptr %f58270
@@ -139603,7 +139602,7 @@ if_end17809:
 
 if_then17810:
   %interpreter___cr_dir_val58281 = load ptr, ptr @interpreter___cr_dir
-  %concat58282 = call ptr @ofs_str_concat(ptr %interpreter___cr_dir_val58281, ptr @str.1565)
+  %concat58282 = call ptr @ofs_str_concat(ptr %interpreter___cr_dir_val58281, ptr @str.1564)
   %call58283 = call i64 @remove(ptr %concat58282)
   call void @interpreter__cr_cleanup()
   br label %if_end17812
@@ -139683,13 +139682,13 @@ if_then17824:
   store i32 0, ptr @interpreter___cr_pending
   %interpreter___cr_jloops_val58308 = load ptr, ptr @interpreter___cr_jloops
   call void @interpreter__osr_mark(ptr %interpreter___cr_jloops_val58308, i64 2)
-  %call58309 = call ptr @interpreter__hy_env_or(ptr @str.1585, ptr @str.75)
+  %call58309 = call ptr @interpreter__hy_env_or(ptr @str.1584, ptr @str.75)
   %streq58310 = call i32 @ofs_str_eq(ptr %call58309, ptr @str.683)
   %cond58311 = icmp ne i32 %streq58310, 0
   br i1 %cond58311, label %if_then17827, label %if_else17828
 
 if_then17827:
-  call void @interpreter__ffi_stderr(ptr @str.1594)
+  call void @interpreter__ffi_stderr(ptr @str.1593)
   br label %if_end17829
 
 if_else17828:
@@ -139711,7 +139710,7 @@ if_end17826:
 
 if_then17830:
   store i32 0, ptr @interpreter___cr_pending
-  call void @interpreter__rf_note(ptr @str.1595)
+  call void @interpreter__rf_note(ptr @str.1594)
   %sf_val58316 = load ptr, ptr %status58295
   %sf_own58317 = load i64, ptr %status58295_own
   call void @ofs_str_release(ptr %sf_val58316, i64 %sf_own58317)
@@ -139721,7 +139720,7 @@ if_else17831:
   br label %if_end17832
 
 if_end17832:
-  call void @interpreter__cr_abandon(ptr @str.1596)
+  call void @interpreter__cr_abandon(ptr @str.1595)
   %sf_val58318 = load ptr, ptr %status58295
   %sf_own58319 = load i64, ptr %status58295_own
   call void @ofs_str_release(ptr %sf_val58318, i64 %sf_own58319)
@@ -139798,7 +139797,7 @@ if_end17837:
   %interpreter___cr_so_val58339 = load ptr, ptr @interpreter___cr_so
   %interpreter___cr_jnames_val58340 = load ptr, ptr @interpreter___cr_jnames
   %interpreter___cr_jfids_val58341 = load ptr, ptr @interpreter___cr_jfids
-  call void @interpreter__hy_load(ptr %interpreter___cr_so_val58339, ptr @str.1597, ptr %interpreter___cr_jnames_val58340, ptr %interpreter___cr_jfids_val58341)
+  call void @interpreter__hy_load(ptr %interpreter___cr_so_val58339, ptr @str.1596, ptr %interpreter___cr_jnames_val58340, ptr %interpreter___cr_jfids_val58341)
   %arr58342 = call ptr @ofs_alloc(i64 64)
   %arr_data58343 = getelementptr i8, ptr %arr58342, i64 32
   store ptr %arr_data58343, ptr %arr58342
@@ -139841,7 +139840,7 @@ if_end17848:
 
 if_then17849:
   %interpreter___cr_jnames_val58356 = load ptr, ptr @interpreter___cr_jnames
-  call void @interpreter__rf_note_list(ptr @str.1598, ptr %interpreter___cr_jnames_val58356)
+  call void @interpreter__rf_note_list(ptr @str.1597, ptr %interpreter___cr_jnames_val58356)
   br label %if_end17851
 
 if_else17850:
@@ -140053,7 +140052,7 @@ if_end17884:
   br i1 %not58435, label %if_then17885, label %if_else17886
 
 if_then17885:
-  call void @interpreter__cr_abandon(ptr @str.1599)
+  call void @interpreter__cr_abandon(ptr @str.1598)
   ret void
 
 if_else17886:
@@ -142216,7 +142215,7 @@ arr_end18189:
   %rtype_val59452 = load ptr, ptr %rtype59395
   %fid_val59453 = load i64, ptr %fid59411
   %call59454 = call ptr @interpreter__nval(i64 %fid_val59453)
-  %concat59455 = call ptr @ofs_str_concat(ptr @str.1580, ptr %call59454)
+  %concat59455 = call ptr @ofs_str_concat(ptr @str.1579, ptr %call59454)
   %concat59456 = call ptr @ofs_str_concat_ex(ptr %concat59455, ptr @str.173, i64 1)
   %num_args_val59457 = load i64, ptr %num_args.addr
   %arg_base_val59458 = load i64, ptr %arg_base.addr
@@ -144986,7 +144985,7 @@ if_then18608:
 
 if_then18611:
   %call60599 = call i64 @interpreter__ffi_rtld_default()
-  %call60600 = call i64 @dlsym(i64 %call60599, ptr @str.1600)
+  %call60600 = call i64 @dlsym(i64 %call60599, ptr @str.1599)
   store i64 %call60600, ptr @interpreter___osr_poll_fn
   br label %if_end18613
 
@@ -146314,7 +146313,7 @@ while_end18752:
   %sr_val61210 = load i64, ptr %sr60776
   call void @interpreter__r_set(i64 %sk_val61204, ptr %stt_val61205, i64 %si_val61206, double %sf_val61207, i32 %sb_val61208, ptr %ss_val61209, i64 %sr_val61210)
   %sc_slot61211 = alloca i1, align 1
-  %call61212 = call ptr @interpreter__hy_env_or(ptr @str.1585, ptr @str.75)
+  %call61212 = call ptr @interpreter__hy_env_or(ptr @str.1584, ptr @str.75)
   %streq61213 = call i32 @ofs_str_eq(ptr %call61212, ptr @str.683)
   %cond61214 = icmp ne i32 %streq61213, 0
   store i1 %cond61214, ptr %sc_slot61211
@@ -146333,8 +146332,8 @@ sc_end18792:
 if_then18793:
   %interpreter___cur_fn_id_val61218 = load i64, ptr @interpreter___cur_fn_id
   %call61219 = call ptr @interpreter__nval(i64 %interpreter___cur_fn_id_val61218)
-  %concat61220 = call ptr @ofs_str_concat(ptr @str.1601, ptr %call61219)
-  %concat61221 = call ptr @ofs_str_concat_ex(ptr %concat61220, ptr @str.1602, i64 1)
+  %concat61220 = call ptr @ofs_str_concat(ptr @str.1600, ptr %call61219)
+  %concat61221 = call ptr @ofs_str_concat_ex(ptr %concat61220, ptr @str.1601, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat61221)
   br label %if_end18795
 
@@ -147034,8 +147033,8 @@ if_end18904:
 
 if_then18905:
   %who_val61478 = load ptr, ptr %who61457
-  %concat61479 = call ptr @ofs_str_concat(ptr @str.1603, ptr %who_val61478)
-  %concat61480 = call ptr @ofs_str_concat_ex(ptr %concat61479, ptr @str.1604, i64 1)
+  %concat61479 = call ptr @ofs_str_concat(ptr @str.1602, ptr %who_val61478)
+  %concat61480 = call ptr @ofs_str_concat_ex(ptr %concat61479, ptr @str.1603, i64 1)
   call void @interpreter__rf_info(ptr %concat61480)
   call void @ofs_str_release(ptr %concat61480, i64 1)
   %neg61481 = sub i64 0, 1
@@ -147209,8 +147208,8 @@ if_end18928:
 
 if_then18929:
   %who_val61562 = load ptr, ptr %who61457
-  %concat61563 = call ptr @ofs_str_concat(ptr @str.1603, ptr %who_val61562)
-  %concat61564 = call ptr @ofs_str_concat_ex(ptr %concat61563, ptr @str.1605, i64 1)
+  %concat61563 = call ptr @ofs_str_concat(ptr @str.1602, ptr %who_val61562)
+  %concat61564 = call ptr @ofs_str_concat_ex(ptr %concat61563, ptr @str.1604, i64 1)
   call void @interpreter__rf_info(ptr %concat61564)
   call void @ofs_str_release(ptr %concat61564, i64 1)
   %neg61565 = sub i64 0, 1
@@ -147329,7 +147328,7 @@ if_then18942:
 if_then18945:
   %why_val61618 = load ptr, ptr %why61576
   %dn_val61619 = load ptr, ptr %dn61602
-  %concat61620 = call ptr @ofs_str_concat(ptr @str.1606, ptr %dn_val61619)
+  %concat61620 = call ptr @ofs_str_concat(ptr @str.1605, ptr %dn_val61619)
   %concat61621 = call ptr @ofs_str_concat_ex(ptr %concat61620, ptr @str.173, i64 1)
   %call61622 = call ptr @interpreter__rf_reason(ptr %why_val61618, ptr %concat61621)
   %own_old61623 = load ptr, ptr %why61576
@@ -147391,11 +147390,11 @@ if_then18952:
   %why_val61648 = load ptr, ptr %why61576
   %dn_val61649 = load ptr, ptr %dn61602
   %concat61650 = call ptr @ofs_str_concat(ptr @str.173, ptr %dn_val61649)
-  %concat61651 = call ptr @ofs_str_concat_ex(ptr %concat61650, ptr @str.1607, i64 1)
+  %concat61651 = call ptr @ofs_str_concat_ex(ptr %concat61650, ptr @str.1606, i64 1)
   %oi_val61652 = load i64, ptr %oi61608
   %call61653 = call ptr @llvmgen__osr_decl_type(i64 %oi_val61652)
   %concat61654 = call ptr @ofs_str_concat_ex(ptr %concat61651, ptr %call61653, i64 1)
-  %concat61655 = call ptr @ofs_str_concat_ex(ptr %concat61654, ptr @str.1608, i64 1)
+  %concat61655 = call ptr @ofs_str_concat_ex(ptr %concat61654, ptr @str.1607, i64 1)
   %dt_val61656 = load ptr, ptr %dt61605
   %concat61657 = call ptr @ofs_str_concat_ex(ptr %concat61655, ptr %dt_val61656, i64 1)
   %concat61658 = call ptr @ofs_str_concat_ex(ptr %concat61657, ptr @str.163, i64 1)
@@ -147560,11 +147559,11 @@ while_end18957:
 
 if_then18974:
   %who_val61728 = load ptr, ptr %who61457
-  %concat61729 = call ptr @ofs_str_concat(ptr @str.1603, ptr %who_val61728)
-  %concat61730 = call ptr @ofs_str_concat_ex(ptr %concat61729, ptr @str.1609, i64 1)
+  %concat61729 = call ptr @ofs_str_concat(ptr @str.1602, ptr %who_val61728)
+  %concat61730 = call ptr @ofs_str_concat_ex(ptr %concat61729, ptr @str.1608, i64 1)
   %why_val61731 = load ptr, ptr %why61576
   %concat61732 = call ptr @ofs_str_concat_ex(ptr %concat61730, ptr %why_val61731, i64 1)
-  %concat61733 = call ptr @ofs_str_concat_ex(ptr %concat61732, ptr @str.1610, i64 1)
+  %concat61733 = call ptr @ofs_str_concat_ex(ptr %concat61732, ptr @str.1609, i64 1)
   call void @interpreter__rf_info(ptr %concat61733)
   call void @ofs_str_release(ptr %concat61733, i64 1)
   %neg61734 = sub i64 0, 1
@@ -147880,8 +147879,8 @@ entry:
   %fid_val61864 = load i64, ptr %fid61849
   %call61865 = call ptr @interpreter__nval(i64 %fid_val61864)
   %call61866 = call ptr @vein_display_name(ptr %call61865)
-  %concat61867 = call ptr @ofs_str_concat(ptr @str.1611, ptr %call61866)
-  %concat61868 = call ptr @ofs_str_concat_ex(ptr %concat61867, ptr @str.1612, i64 1)
+  %concat61867 = call ptr @ofs_str_concat(ptr @str.1610, ptr %call61866)
+  %concat61868 = call ptr @ofs_str_concat_ex(ptr %concat61867, ptr @str.1611, i64 1)
   call void @interpreter__rf_info(ptr %concat61868)
   call void @ofs_str_release(ptr %concat61868, i64 1)
   %fid_val61869 = load i64, ptr %fid61849
@@ -148123,7 +148122,7 @@ arr_end19048:
 if_then19050:
   %added_val61977 = load ptr, ptr %added61919
   %call61978 = call ptr @interpreter__rf_join(ptr %added_val61977)
-  %concat61979 = call ptr @ofs_str_concat(ptr @str.1613, ptr %call61978)
+  %concat61979 = call ptr @ofs_str_concat(ptr @str.1612, ptr %call61978)
   call void @interpreter__rf_info(ptr %concat61979)
   call void @ofs_str_release(ptr %concat61979, i64 1)
   br label %if_end19052
@@ -148152,7 +148151,7 @@ arr_end19054:
 if_then19056:
   %interpreter___rf_osr_hide_val61986 = load ptr, ptr @interpreter___rf_osr_hide
   %call61987 = call ptr @interpreter__rf_join(ptr %interpreter___rf_osr_hide_val61986)
-  %concat61988 = call ptr @ofs_str_concat(ptr @str.1614, ptr %call61987)
+  %concat61988 = call ptr @ofs_str_concat(ptr @str.1613, ptr %call61987)
   call void @interpreter__rf_info(ptr %concat61988)
   call void @ofs_str_release(ptr %concat61988, i64 1)
   br label %if_end19058
@@ -148425,7 +148424,7 @@ if_then19103:
   store i32 1, ptr @interpreter___cbx_checked
   call void @interpreter__ffi_init()
   %call62089 = call i64 @interpreter__ffi_rtld_default()
-  %call62090 = call i64 @dlsym(i64 %call62089, ptr @str.1615)
+  %call62090 = call i64 @dlsym(i64 %call62089, ptr @str.1614)
   store i64 %call62090, ptr @interpreter___cbx_table
   br label %if_end19105
 
@@ -148462,8 +148461,8 @@ if_then19106:
 
 if_then19109:
   %name_val62100 = load ptr, ptr %name.addr
-  %concat62101 = call ptr @ofs_str_concat(ptr @str.1616, ptr %name_val62100)
-  %concat62102 = call ptr @ofs_str_concat_ex(ptr %concat62101, ptr @str.1617, i64 1)
+  %concat62101 = call ptr @ofs_str_concat(ptr @str.1615, ptr %name_val62100)
+  %concat62102 = call ptr @ofs_str_concat_ex(ptr %concat62101, ptr @str.1616, i64 1)
   call void @interpreter__fault_runtime_error(ptr %concat62102)
   call void @ofs_str_release(ptr %concat62102, i64 1)
   %sf_val62103 = load ptr, ptr %name.addr
@@ -148598,12 +148597,12 @@ while_end19117:
 
 if_then19129:
   %name_val62159 = load ptr, ptr %name.addr
-  %concat62160 = call ptr @ofs_str_concat(ptr @str.1616, ptr %name_val62159)
-  %concat62161 = call ptr @ofs_str_concat_ex(ptr %concat62160, ptr @str.1618, i64 1)
+  %concat62160 = call ptr @ofs_str_concat(ptr @str.1615, ptr %name_val62159)
+  %concat62161 = call ptr @ofs_str_concat_ex(ptr %concat62160, ptr @str.1617, i64 1)
   %FFI_CB_SLOTS_val62162 = load i64, ptr @FFI_CB_SLOTS
   %stone_to_str62163 = call ptr @ofs_stone_to_obsidian(i64 %FFI_CB_SLOTS_val62162)
   %concat62164 = call ptr @ofs_str_concat_ex(ptr %concat62161, ptr %stone_to_str62163, i64 1)
-  %concat62165 = call ptr @ofs_str_concat_ex(ptr %concat62164, ptr @str.1619, i64 1)
+  %concat62165 = call ptr @ofs_str_concat_ex(ptr %concat62164, ptr @str.1618, i64 1)
   call void @interpreter__fault_runtime_error(ptr %concat62165)
   call void @ofs_str_release(ptr %concat62165, i64 1)
   %sf_val62166 = load ptr, ptr %name.addr
@@ -148867,8 +148866,8 @@ sc_end19159:
 
 if_then19160:
   %name_val62286 = load ptr, ptr %name.addr
-  %concat62287 = call ptr @ofs_str_concat(ptr @str.1616, ptr %name_val62286)
-  %concat62288 = call ptr @ofs_str_concat_ex(ptr %concat62287, ptr @str.1620, i64 1)
+  %concat62287 = call ptr @ofs_str_concat(ptr @str.1615, ptr %name_val62286)
+  %concat62288 = call ptr @ofs_str_concat_ex(ptr %concat62287, ptr @str.1619, i64 1)
   call void @interpreter__fault_runtime_error(ptr %concat62288)
   call void @ofs_str_release(ptr %concat62288, i64 1)
   %sf_val62289 = load ptr, ptr %rt62253
@@ -148903,16 +148902,16 @@ sc_end19164:
 
 if_then19165:
   %name_val62301 = load ptr, ptr %name.addr
-  %concat62302 = call ptr @ofs_str_concat(ptr @str.1616, ptr %name_val62301)
-  %concat62303 = call ptr @ofs_str_concat_ex(ptr %concat62302, ptr @str.1621, i64 1)
+  %concat62302 = call ptr @ofs_str_concat(ptr @str.1615, ptr %name_val62301)
+  %concat62303 = call ptr @ofs_str_concat_ex(ptr %concat62302, ptr @str.1620, i64 1)
   %FFI_CB_ARGS_val62304 = load i64, ptr @FFI_CB_ARGS
   %stone_to_str62305 = call ptr @ofs_stone_to_obsidian(i64 %FFI_CB_ARGS_val62304)
   %concat62306 = call ptr @ofs_str_concat_ex(ptr %concat62303, ptr %stone_to_str62305, i64 1)
-  %concat62307 = call ptr @ofs_str_concat_ex(ptr %concat62306, ptr @str.1622, i64 1)
+  %concat62307 = call ptr @ofs_str_concat_ex(ptr %concat62306, ptr @str.1621, i64 1)
   %FFI_CB_FARGS_val62308 = load i64, ptr @FFI_CB_FARGS
   %stone_to_str62309 = call ptr @ofs_stone_to_obsidian(i64 %FFI_CB_FARGS_val62308)
   %concat62310 = call ptr @ofs_str_concat_ex(ptr %concat62307, ptr %stone_to_str62309, i64 1)
-  %concat62311 = call ptr @ofs_str_concat_ex(ptr %concat62310, ptr @str.1623, i64 1)
+  %concat62311 = call ptr @ofs_str_concat_ex(ptr %concat62310, ptr @str.1622, i64 1)
   call void @interpreter__fault_runtime_error(ptr %concat62311)
   call void @ofs_str_release(ptr %concat62311, i64 1)
   %sf_val62312 = load ptr, ptr %rt62253
@@ -152812,7 +152811,7 @@ if_then19717:
   %c_val63863 = load i64, ptr %c63848
   %call63864 = call ptr @interpreter__nval(i64 %c_val63863)
   %concat63865 = call ptr @ofs_str_concat(ptr @str.157, ptr %call63864)
-  %concat63866 = call ptr @ofs_str_concat_ex(ptr %concat63865, ptr @str.1624, i64 1)
+  %concat63866 = call ptr @ofs_str_concat_ex(ptr %concat63865, ptr @str.1623, i64 1)
   call void @interpreter__fault_runtime_error(ptr %concat63866)
   call void @ofs_str_release(ptr %concat63866, i64 1)
   ret void
@@ -152908,7 +152907,7 @@ if_else19715:
   br label %if_end19716
 
 if_end19716:
-  call void @interpreter__fault_runtime_error(ptr @str.1625)
+  call void @interpreter__fault_runtime_error(ptr @str.1624)
   ret void
 }
 
@@ -154273,7 +154272,7 @@ sc_end19939:
   br i1 %sc64453, label %if_then19940, label %if_else19941
 
 if_then19940:
-  store ptr @str.1626, ptr %apt64443
+  store ptr @str.1625, ptr %apt64443
   br label %if_end19942
 
 if_else19941:
@@ -156350,7 +156349,7 @@ arr_end20217:
 
 if_then20219:
   %name_val65392 = load ptr, ptr %name65124
-  %concat65393 = call ptr @ofs_str_concat(ptr @str.1627, ptr %name_val65392)
+  %concat65393 = call ptr @ofs_str_concat(ptr @str.1626, ptr %name_val65392)
   %concat65394 = call ptr @ofs_str_concat_ex(ptr %concat65393, ptr @str.173, i64 1)
   store ptr %concat65394, ptr %msg65373
   %interpreter___dyn_errmsg_val65395 = load ptr, ptr @interpreter___dyn_errmsg
@@ -157486,7 +157485,7 @@ if_end20408:
   br i1 %cmp65823, label %if_then20409, label %if_else20410
 
 if_then20409:
-  call void @interpreter__fault_runtime_error(ptr @str.1628)
+  call void @interpreter__fault_runtime_error(ptr @str.1627)
   %EXEC_OK_val65824 = load i64, ptr @EXEC_OK
   ret i64 %EXEC_OK_val65824
 
@@ -158501,7 +158500,7 @@ if_then20550:
   call void @interpreter__eval_expr(i64 %texpr_val66210)
   call void @interpreter__set_return_from_regs()
   %call66211 = call ptr @interpreter__r_to_string()
-  %concat66212 = call ptr @ofs_str_concat(ptr @str.1629, ptr %call66211)
+  %concat66212 = call ptr @ofs_str_concat(ptr @str.1628, ptr %call66211)
   call void @echo_obsidian(ptr %concat66212)
   call void @ofs_str_release(ptr %concat66212, i64 1)
   br label %if_end20552
@@ -158509,7 +158508,7 @@ if_then20550:
 if_else20551:
   call void @interpreter__r_void()
   call void @interpreter__set_return_from_regs()
-  call void @echo_obsidian(ptr @str.1630)
+  call void @echo_obsidian(ptr @str.1629)
   br label %if_end20552
 
 if_end20552:
@@ -159929,13 +159928,13 @@ entry:
   store ptr %path_val66822, ptr @interpreter___rf_path
   %files_val66823 = load ptr, ptr %files.addr
   store ptr %files_val66823, ptr @interpreter___rf_files
-  %call66824 = call ptr @interpreter__hy_env_or(ptr @str.1631, ptr @str.75)
+  %call66824 = call ptr @interpreter__hy_env_or(ptr @str.1630, ptr @str.75)
   %streq66825 = call i32 @ofs_str_eq(ptr %call66824, ptr @str.683)
   store i32 %streq66825, ptr @interpreter___rf_quiet
   %per66826 = alloca ptr, align 8
   %per66826_own = alloca i64, align 8
   store i64 0, ptr %per66826_own
-  %call66827 = call ptr @interpreter__hy_env_or(ptr @str.1632, ptr @str.1633)
+  %call66827 = call ptr @interpreter__hy_env_or(ptr @str.1631, ptr @str.1632)
   store ptr %call66827, ptr %per66826
   %parsed66828 = alloca i64, align 8
   store i64 0, ptr %parsed66828
@@ -160060,7 +160059,7 @@ if_then20767:
   br label %if_end20769
 
 if_else20768:
-  call void @interpreter__rf_note(ptr @str.1634)
+  call void @interpreter__rf_note(ptr @str.1633)
   br label %if_end20769
 
 if_end20769:
@@ -160077,7 +160076,7 @@ entry:
   %msg.addr_own = alloca i64, align 8
   store i64 0, ptr %msg.addr_own
   %msg_val66879 = load ptr, ptr %msg.addr
-  %concat66880 = call ptr @ofs_str_concat(ptr @str.1510, ptr %msg_val66879)
+  %concat66880 = call ptr @ofs_str_concat(ptr @str.1509, ptr %msg_val66879)
   %concat66881 = call ptr @ofs_str_concat_ex(ptr %concat66880, ptr @str.3, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat66881)
   %sf_val66882 = load ptr, ptr %msg.addr
@@ -160227,7 +160226,7 @@ entry:
 
 if_then20786:
   %one_val66931 = load ptr, ptr %one.addr
-  %concat66932 = call ptr @ofs_str_concat(ptr @str.1635, ptr %one_val66931)
+  %concat66932 = call ptr @ofs_str_concat(ptr @str.1634, ptr %one_val66931)
   %sf_val66933 = load ptr, ptr %many.addr
   %sf_own66934 = load i64, ptr %many.addr_own
   call void @ofs_str_release(ptr %sf_val66933, i64 %sf_own66934)
@@ -160685,11 +160684,11 @@ entry:
   call void @interpreter__rf_flush()
   %dupf67110 = alloca i64, align 8
   %call67111 = call i64 @interpreter__ffi_rtld_default()
-  %call67112 = call i64 @dlsym(i64 %call67111, ptr @str.1636)
+  %call67112 = call i64 @dlsym(i64 %call67111, ptr @str.1635)
   store i64 %call67112, ptr %dupf67110
   %dup2f67113 = alloca i64, align 8
   %call67114 = call i64 @interpreter__ffi_rtld_default()
-  %call67115 = call i64 @dlsym(i64 %call67114, ptr @str.1637)
+  %call67115 = call i64 @dlsym(i64 %call67114, ptr @str.1636)
   store i64 %call67115, ptr %dup2f67113
   %sc_slot67116 = alloca i1, align 1
   %dupf_val67117 = load i64, ptr %dupf67110
@@ -160747,15 +160746,15 @@ entry:
   call void @interpreter__rf_flush()
   %dupf67135 = alloca i64, align 8
   %call67136 = call i64 @interpreter__ffi_rtld_default()
-  %call67137 = call i64 @dlsym(i64 %call67136, ptr @str.1636)
+  %call67137 = call i64 @dlsym(i64 %call67136, ptr @str.1635)
   store i64 %call67137, ptr %dupf67135
   %dup2f67138 = alloca i64, align 8
   %call67139 = call i64 @interpreter__ffi_rtld_default()
-  %call67140 = call i64 @dlsym(i64 %call67139, ptr @str.1637)
+  %call67140 = call i64 @dlsym(i64 %call67139, ptr @str.1636)
   store i64 %call67140, ptr %dup2f67138
   %filenof67141 = alloca i64, align 8
   %call67142 = call i64 @interpreter__ffi_rtld_default()
-  %call67143 = call i64 @dlsym(i64 %call67142, ptr @str.1638)
+  %call67143 = call i64 @dlsym(i64 %call67142, ptr @str.1637)
   store i64 %call67143, ptr %filenof67141
   %filenof_val67144 = load i64, ptr %filenof67141
   %cmp67145 = icmp eq i64 %filenof_val67144, 0
@@ -160763,7 +160762,7 @@ entry:
 
 if_then20858:
   %call67146 = call i64 @interpreter__ffi_rtld_default()
-  %call67147 = call i64 @dlsym(i64 %call67146, ptr @str.1639)
+  %call67147 = call i64 @dlsym(i64 %call67146, ptr @str.1638)
   store i64 %call67147, ptr %filenof67141
   br label %if_end20860
 
@@ -160809,7 +160808,7 @@ if_else20866:
 if_end20867:
   %f67159 = alloca ptr, align 8
   %path_val67160 = load ptr, ptr %path.addr
-  %call67161 = call ptr @fopen(ptr %path_val67160, ptr @str.1452)
+  %call67161 = call ptr @fopen(ptr %path_val67160, ptr @str.1451)
   store ptr %call67161, ptr %f67159
   %f_val67162 = load ptr, ptr %f67159
   %cmp67163 = icmp eq ptr %f_val67162, null
@@ -160876,11 +160875,11 @@ if_else20875:
 if_end20876:
   %dup2f67189 = alloca i64, align 8
   %call67190 = call i64 @interpreter__ffi_rtld_default()
-  %call67191 = call i64 @dlsym(i64 %call67190, ptr @str.1637)
+  %call67191 = call i64 @dlsym(i64 %call67190, ptr @str.1636)
   store i64 %call67191, ptr %dup2f67189
   %closef67192 = alloca i64, align 8
   %call67193 = call i64 @interpreter__ffi_rtld_default()
-  %call67194 = call i64 @dlsym(i64 %call67193, ptr @str.1640)
+  %call67194 = call i64 @dlsym(i64 %call67193, ptr @str.1639)
   store i64 %call67194, ptr %closef67192
   %dup2f_val67195 = load i64, ptr %dup2f67189
   %cmp67196 = icmp ne i64 %dup2f_val67195, 0
@@ -160940,7 +160939,7 @@ entry:
   store i64 %basis, ptr %basis.addr
   %f67211 = alloca ptr, align 8
   %path_val67212 = load ptr, ptr %path.addr
-  %call67213 = call ptr @fopen(ptr %path_val67212, ptr @str.1451)
+  %call67213 = call ptr @fopen(ptr %path_val67212, ptr @str.0)
   store ptr %call67213, ptr %f67211
   %f_val67214 = load ptr, ptr %f67211
   %cmp67215 = icmp eq ptr %f_val67214, null
@@ -161558,7 +161557,7 @@ while_end20894:
 
 define void @interpreter__rf_lava_init() {
 entry:
-  %call67498 = call ptr @interpreter__hy_env_or(ptr @str.1641, ptr @str.683)
+  %call67498 = call ptr @interpreter__hy_env_or(ptr @str.1640, ptr @str.683)
   %streq67499 = call i32 @ofs_str_eq(ptr %call67498, ptr @str.185)
   %cond67500 = icmp ne i32 %streq67499, 0
   br i1 %cond67500, label %if_then20971, label %if_else20972
@@ -161574,15 +161573,15 @@ if_end20973:
   store ptr @str.75, ptr %root67501
   %uidf67502 = alloca i64, align 8
   %call67503 = call i64 @interpreter__ffi_rtld_default()
-  %call67504 = call i64 @dlsym(i64 %call67503, ptr @str.1642)
+  %call67504 = call i64 @dlsym(i64 %call67503, ptr @str.1641)
   store i64 %call67504, ptr %uidf67502
   %uidf_val67505 = load i64, ptr %uidf67502
   %cmp67506 = icmp ne i64 %uidf_val67505, 0
   br i1 %cmp67506, label %if_then20974, label %if_else20975
 
 if_then20974:
-  %call67507 = call ptr @interpreter__hy_env_or(ptr @str.1643, ptr @str.1518)
-  %concat67508 = call ptr @ofs_str_concat(ptr %call67507, ptr @str.1644)
+  %call67507 = call ptr @interpreter__hy_env_or(ptr @str.1642, ptr @str.1517)
+  %concat67508 = call ptr @ofs_str_concat(ptr %call67507, ptr @str.1643)
   %uidf_val67509 = load i64, ptr %uidf67502
   %fn_ptr67510 = inttoptr i64 %uidf_val67509 to ptr
   %icall67511 = call i64 %fn_ptr67510(i64 0)
@@ -161598,38 +161597,38 @@ if_then20974:
   store ptr %call67517, ptr %q67515
   %cmd67518 = alloca ptr, align 8
   %q_val67519 = load ptr, ptr %q67515
-  %concat67520 = call ptr @ofs_str_concat(ptr @str.1645, ptr %q_val67519)
-  %concat67521 = call ptr @ofs_str_concat_ex(ptr %concat67520, ptr @str.1646, i64 1)
+  %concat67520 = call ptr @ofs_str_concat(ptr @str.1644, ptr %q_val67519)
+  %concat67521 = call ptr @ofs_str_concat_ex(ptr %concat67520, ptr @str.1645, i64 1)
   %q_val67522 = load ptr, ptr %q67515
   %concat67523 = call ptr @ofs_str_concat_ex(ptr %concat67521, ptr %q_val67522, i64 1)
-  %concat67524 = call ptr @ofs_str_concat_ex(ptr %concat67523, ptr @str.1647, i64 1)
+  %concat67524 = call ptr @ofs_str_concat_ex(ptr %concat67523, ptr @str.1646, i64 1)
   %q_val67525 = load ptr, ptr %q67515
   %concat67526 = call ptr @ofs_str_concat_ex(ptr %concat67524, ptr %q_val67525, i64 1)
-  %concat67527 = call ptr @ofs_str_concat_ex(ptr %concat67526, ptr @str.1648, i64 1)
+  %concat67527 = call ptr @ofs_str_concat_ex(ptr %concat67526, ptr @str.1647, i64 1)
   %q_val67528 = load ptr, ptr %q67515
   %concat67529 = call ptr @ofs_str_concat_ex(ptr %concat67527, ptr %q_val67528, i64 1)
-  %concat67530 = call ptr @ofs_str_concat_ex(ptr %concat67529, ptr @str.1649, i64 1)
+  %concat67530 = call ptr @ofs_str_concat_ex(ptr %concat67529, ptr @str.1648, i64 1)
   %q_val67531 = load ptr, ptr %q67515
   %concat67532 = call ptr @ofs_str_concat_ex(ptr %concat67530, ptr %q_val67531, i64 1)
-  %concat67533 = call ptr @ofs_str_concat_ex(ptr %concat67532, ptr @str.1650, i64 1)
+  %concat67533 = call ptr @ofs_str_concat_ex(ptr %concat67532, ptr @str.1649, i64 1)
   %root_val67534 = load ptr, ptr %root67501
-  %concat67535 = call ptr @ofs_str_concat(ptr %root_val67534, ptr @str.1651)
+  %concat67535 = call ptr @ofs_str_concat(ptr %root_val67534, ptr @str.1650)
   %call67536 = call ptr @interpreter__hy_q(ptr %concat67535)
   call void @ofs_str_release(ptr %concat67535, i64 1)
   %concat67537 = call ptr @ofs_str_concat_ex(ptr %concat67533, ptr %call67536, i64 1)
   %concat67538 = call ptr @ofs_str_concat_ex(ptr %concat67537, ptr @str.264, i64 1)
   %root_val67539 = load ptr, ptr %root67501
-  %concat67540 = call ptr @ofs_str_concat(ptr %root_val67539, ptr @str.1652)
+  %concat67540 = call ptr @ofs_str_concat(ptr %root_val67539, ptr @str.1651)
   %call67541 = call ptr @interpreter__hy_q(ptr %concat67540)
   call void @ofs_str_release(ptr %concat67540, i64 1)
   %concat67542 = call ptr @ofs_str_concat_ex(ptr %concat67538, ptr %call67541, i64 1)
-  %concat67543 = call ptr @ofs_str_concat_ex(ptr %concat67542, ptr @str.1653, i64 1)
+  %concat67543 = call ptr @ofs_str_concat_ex(ptr %concat67542, ptr @str.1652, i64 1)
   %root_val67544 = load ptr, ptr %root67501
-  %concat67545 = call ptr @ofs_str_concat(ptr %root_val67544, ptr @str.1652)
+  %concat67545 = call ptr @ofs_str_concat(ptr %root_val67544, ptr @str.1651)
   %call67546 = call ptr @interpreter__hy_q(ptr %concat67545)
   call void @ofs_str_release(ptr %concat67545, i64 1)
   %concat67547 = call ptr @ofs_str_concat_ex(ptr %concat67543, ptr %call67546, i64 1)
-  %concat67548 = call ptr @ofs_str_concat_ex(ptr %concat67547, ptr @str.1654, i64 1)
+  %concat67548 = call ptr @ofs_str_concat_ex(ptr %concat67547, ptr @str.1653, i64 1)
   store ptr %concat67548, ptr %cmd67518
   %cmd_val67549 = load ptr, ptr %cmd67518
   %call67550 = call i64 @system(ptr %cmd_val67549)
@@ -161639,8 +161638,8 @@ if_then20974:
 
 if_then20977:
   %root_val67553 = load ptr, ptr %root67501
-  %concat67554 = call ptr @ofs_str_concat(ptr @str.1655, ptr %root_val67553)
-  %concat67555 = call ptr @ofs_str_concat_ex(ptr %concat67554, ptr @str.1656, i64 1)
+  %concat67554 = call ptr @ofs_str_concat(ptr @str.1654, ptr %root_val67553)
+  %concat67555 = call ptr @ofs_str_concat_ex(ptr %concat67554, ptr @str.1655, i64 1)
   call void @interpreter__rf_note(ptr %concat67555)
   call void @ofs_str_release(ptr %concat67555, i64 1)
   %sf_val67556 = load ptr, ptr %q67515
@@ -161661,8 +161660,8 @@ if_else20975:
   %tmp67560 = alloca ptr, align 8
   %tmp67560_own = alloca i64, align 8
   store i64 0, ptr %tmp67560_own
-  %call67561 = call ptr @interpreter__hy_env_or(ptr @str.1658, ptr @str.75)
-  %call67562 = call ptr @interpreter__hy_env_or(ptr @str.1657, ptr %call67561)
+  %call67561 = call ptr @interpreter__hy_env_or(ptr @str.1657, ptr @str.75)
+  %call67562 = call ptr @interpreter__hy_env_or(ptr @str.1656, ptr %call67561)
   store ptr %call67562, ptr %tmp67560
   %tmp_val67563 = load ptr, ptr %tmp67560
   %strlen67564 = call i64 @ofs_str_len(ptr %tmp_val67563)
@@ -161681,11 +161680,11 @@ if_else20981:
 if_end20982:
   %tmp_val67568 = load ptr, ptr %tmp67560
   %call67569 = call ptr @interpreter__rf_slashes(ptr %tmp_val67568)
-  %concat67570 = call ptr @ofs_str_concat(ptr %call67569, ptr @str.1659)
+  %concat67570 = call ptr @ofs_str_concat(ptr %call67569, ptr @str.1658)
   store ptr %concat67570, ptr %root67501
   %mk67571 = alloca i64, align 8
   %call67572 = call i64 @interpreter__ffi_rtld_default()
-  %call67573 = call i64 @dlsym(i64 %call67572, ptr @str.1660)
+  %call67573 = call i64 @dlsym(i64 %call67572, ptr @str.1659)
   store i64 %call67573, ptr %mk67571
   %mk_val67574 = load i64, ptr %mk67571
   %cmp67575 = icmp eq i64 %mk_val67574, 0
@@ -161708,7 +161707,7 @@ if_end20985:
   %icall67582 = call i64 %fn_ptr67581(i64 %cast67580)
   %lroot67583 = alloca ptr, align 8
   %root_val67584 = load ptr, ptr %root67501
-  %concat67585 = call ptr @ofs_str_concat(ptr %root_val67584, ptr @str.1651)
+  %concat67585 = call ptr @ofs_str_concat(ptr %root_val67584, ptr @str.1650)
   store ptr %concat67585, ptr %lroot67583
   %mk_val67586 = load i64, ptr %mk67571
   %lroot_val67587 = load ptr, ptr %lroot67583
@@ -161717,7 +161716,7 @@ if_end20985:
   %icall67590 = call i64 %fn_ptr67589(i64 %cast67588)
   %proot67591 = alloca ptr, align 8
   %root_val67592 = load ptr, ptr %root67501
-  %concat67593 = call ptr @ofs_str_concat(ptr %root_val67592, ptr @str.1652)
+  %concat67593 = call ptr @ofs_str_concat(ptr %root_val67592, ptr @str.1651)
   store ptr %concat67593, ptr %proot67591
   %mk_val67594 = load i64, ptr %mk67571
   %proot_val67595 = load ptr, ptr %proot67591
@@ -161739,19 +161738,19 @@ if_end20976:
   %stone_to_str67604 = call ptr @ofs_stone_to_obsidian(i64 %call67603)
   store ptr %stone_to_str67604, ptr %pid67602
   %root_val67605 = load ptr, ptr %root67501
-  %concat67606 = call ptr @ofs_str_concat(ptr %root_val67605, ptr @str.1661)
+  %concat67606 = call ptr @ofs_str_concat(ptr %root_val67605, ptr @str.1660)
   %pid_val67607 = load ptr, ptr %pid67602
   %concat67608 = call ptr @ofs_str_concat_ex(ptr %concat67606, ptr %pid_val67607, i64 1)
   store ptr %concat67608, ptr @interpreter___rf_lava_pulse
   %root_val67609 = load ptr, ptr %root67501
-  %concat67610 = call ptr @ofs_str_concat(ptr %root_val67609, ptr @str.1661)
+  %concat67610 = call ptr @ofs_str_concat(ptr %root_val67609, ptr @str.1660)
   %pid_val67611 = load ptr, ptr %pid67602
   %concat67612 = call ptr @ofs_str_concat_ex(ptr %concat67610, ptr %pid_val67611, i64 1)
-  %concat67613 = call ptr @ofs_str_concat_ex(ptr %concat67612, ptr @str.1662, i64 1)
+  %concat67613 = call ptr @ofs_str_concat_ex(ptr %concat67612, ptr @str.1661, i64 1)
   store ptr %concat67613, ptr @interpreter___rf_lava_eco
   %f67614 = alloca ptr, align 8
   %interpreter___rf_lava_pulse_val67615 = load ptr, ptr @interpreter___rf_lava_pulse
-  %call67616 = call ptr @fopen(ptr %interpreter___rf_lava_pulse_val67615, ptr @str.1452)
+  %call67616 = call ptr @fopen(ptr %interpreter___rf_lava_pulse_val67615, ptr @str.1451)
   store ptr %call67616, ptr %f67614
   %f_val67617 = load ptr, ptr %f67614
   %cmp67618 = icmp ne ptr %f_val67617, null
@@ -161965,7 +161964,7 @@ entry:
 
 if_then21009:
   %call67715 = call i64 @interpreter__ffi_rtld_default()
-  %call67716 = call i64 @dlsym(i64 %call67715, ptr @str.1663)
+  %call67716 = call i64 @dlsym(i64 %call67715, ptr @str.1662)
   store i64 %call67716, ptr %g67710
   br label %if_end21011
 
@@ -162008,7 +162007,7 @@ if_else21013:
   br label %if_end21014
 
 if_end21014:
-  %call67732 = call ptr @interpreter__hy_env_or(ptr @str.1664, ptr @str.82)
+  %call67732 = call ptr @interpreter__hy_env_or(ptr @str.1663, ptr @str.82)
   %call67733 = call ptr @interpreter__rf_slashes(ptr %call67732)
   ret ptr %call67733
 }
@@ -162164,7 +162163,7 @@ while_body21034:
 
 while_end21035:
   %interpreter___rf_lava_root_val67797 = load ptr, ptr @interpreter___rf_lava_root
-  %concat67798 = call ptr @ofs_str_concat(ptr %interpreter___rf_lava_root_val67797, ptr @str.1665)
+  %concat67798 = call ptr @ofs_str_concat(ptr %interpreter___rf_lava_root_val67797, ptr @str.1664)
   %a_val67799 = load ptr, ptr %a67734
   %concat67800 = call ptr @ofs_str_concat_ex(ptr %concat67798, ptr %a_val67799, i64 1)
   %sf_val67801 = load ptr, ptr %cwd.addr
@@ -165630,9 +165629,9 @@ arr_end21461:
 if_then21463:
   %what_val69400 = load ptr, ptr %what69396
   %own_flag69402 = load i64, ptr %what69396_own
-  %concat69401 = call ptr @ofs_str_concat_ex(ptr %what_val69400, ptr @str.1666, i64 %own_flag69402)
+  %concat69401 = call ptr @ofs_str_concat_ex(ptr %what_val69400, ptr @str.1665, i64 %own_flag69402)
   %extra_val69403 = load i64, ptr %extra69389
-  %call69404 = call ptr @interpreter__rf_plural(i64 %extra_val69403, ptr @str.1667, ptr @str.1668)
+  %call69404 = call ptr @interpreter__rf_plural(i64 %extra_val69403, ptr @str.1666, ptr @str.1667)
   %concat69405 = call ptr @ofs_str_concat_ex(ptr %concat69401, ptr %call69404, i64 1)
   %concat69406 = call ptr @ofs_str_concat_ex(ptr %concat69405, ptr @str.163, i64 1)
   store ptr %concat69406, ptr %what69396
@@ -165650,16 +165649,16 @@ if_end21465:
 
 if_then21466:
   %what_val69410 = load ptr, ptr %what69396
-  %concat69411 = call ptr @ofs_str_concat(ptr @str.1669, ptr %what_val69410)
-  %concat69412 = call ptr @ofs_str_concat_ex(ptr %concat69411, ptr @str.1670, i64 1)
+  %concat69411 = call ptr @ofs_str_concat(ptr @str.1668, ptr %what_val69410)
+  %concat69412 = call ptr @ofs_str_concat_ex(ptr %concat69411, ptr @str.1669, i64 1)
   call void @interpreter__rf_info(ptr %concat69412)
   call void @ofs_str_release(ptr %concat69412, i64 1)
   br label %if_end21468
 
 if_else21467:
   %what_val69413 = load ptr, ptr %what69396
-  %concat69414 = call ptr @ofs_str_concat(ptr @str.1669, ptr %what_val69413)
-  %concat69415 = call ptr @ofs_str_concat_ex(ptr %concat69414, ptr @str.1671, i64 1)
+  %concat69414 = call ptr @ofs_str_concat(ptr @str.1668, ptr %what_val69413)
+  %concat69415 = call ptr @ofs_str_concat_ex(ptr %concat69414, ptr @str.1670, i64 1)
   call void @interpreter__rf_info(ptr %concat69415)
   call void @ofs_str_release(ptr %concat69415, i64 1)
   br label %if_end21468
@@ -165869,7 +165868,7 @@ if_then21498:
   store ptr %interpreter___rf_err_text_val69499, ptr @interpreter___rf_err_shown
   %interpreter___rf_err_text_val69500 = load ptr, ptr @interpreter___rf_err_text
   call void @interpreter__ffi_stderr(ptr %interpreter___rf_err_text_val69500)
-  call void @interpreter__rf_note(ptr @str.1672)
+  call void @interpreter__rf_note(ptr @str.1671)
   br label %if_end21500
 
 if_else21499:
@@ -167506,7 +167505,7 @@ if_else21742:
 
 if_end21743:
   %acc_val70162 = load ptr, ptr %acc.addr
-  %concat70163 = call ptr @ofs_str_concat(ptr %acc_val70162, ptr @str.1673)
+  %concat70163 = call ptr @ofs_str_concat(ptr %acc_val70162, ptr @str.1672)
   %msg_val70164 = load ptr, ptr %msg.addr
   %concat70165 = call ptr @ofs_str_concat_ex(ptr %concat70163, ptr %msg_val70164, i64 1)
   %sf_val70166 = load ptr, ptr %acc.addr
@@ -167887,7 +167886,7 @@ arr_chk21792:
 
 arr_end21793:
   %arr_len70318 = phi i64 [ 0, %arr_nul21794 ], [ %ah70316, %arr_chk21792 ]
-  %call70319 = call ptr @interpreter__rf_plural(i64 %arr_len70318, ptr @str.1674, ptr @str.1675)
+  %call70319 = call ptr @interpreter__rf_plural(i64 %arr_len70318, ptr @str.1673, ptr @str.1674)
   %concat70320 = call ptr @ofs_str_concat(ptr %call70319, ptr @str.291)
   %added_val70321 = load ptr, ptr %added70266
   %call70322 = call ptr @interpreter__rf_join(ptr %added_val70321)
@@ -167931,8 +167930,8 @@ if_then21795:
 if_then21798:
   %desc_val70340 = load ptr, ptr %desc70307
   %nrt_val70341 = load ptr, ptr %nrt70329
-  %concat70342 = call ptr @ofs_str_concat(ptr @str.1676, ptr %nrt_val70341)
-  %concat70343 = call ptr @ofs_str_concat_ex(ptr %concat70342, ptr @str.1677, i64 1)
+  %concat70342 = call ptr @ofs_str_concat(ptr @str.1675, ptr %nrt_val70341)
+  %concat70343 = call ptr @ofs_str_concat_ex(ptr %concat70342, ptr @str.1676, i64 1)
   %call70344 = call ptr @interpreter__rf_reason(ptr %desc_val70340, ptr %concat70343)
   %own_old70345 = load ptr, ptr %desc70307
   %own_flag70346 = load i64, ptr %desc70307_own
@@ -167976,8 +167975,8 @@ sc_end21802:
 if_then21805:
   %desc_val70360 = load ptr, ptr %desc70307
   %nrt_val70361 = load ptr, ptr %nrt70329
-  %concat70362 = call ptr @ofs_str_concat(ptr @str.1678, ptr %nrt_val70361)
-  %concat70363 = call ptr @ofs_str_concat_ex(ptr %concat70362, ptr @str.1679, i64 1)
+  %concat70362 = call ptr @ofs_str_concat(ptr @str.1677, ptr %nrt_val70361)
+  %concat70363 = call ptr @ofs_str_concat_ex(ptr %concat70362, ptr @str.1678, i64 1)
   %ort_val70364 = load ptr, ptr %ort70326
   %concat70365 = call ptr @ofs_str_concat_ex(ptr %concat70363, ptr %ort_val70364, i64 1)
   %call70366 = call ptr @interpreter__rf_reason(ptr %desc_val70360, ptr %concat70365)
@@ -168023,7 +168022,7 @@ sc_end21809:
 if_then21812:
   %desc_val70382 = load ptr, ptr %desc70307
   %ort_val70383 = load ptr, ptr %ort70326
-  %concat70384 = call ptr @ofs_str_concat(ptr @str.1680, ptr %ort_val70383)
+  %concat70384 = call ptr @ofs_str_concat(ptr @str.1679, ptr %ort_val70383)
   %call70385 = call ptr @interpreter__rf_reason(ptr %desc_val70382, ptr %concat70384)
   %own_old70386 = load ptr, ptr %desc70307
   %own_flag70387 = load i64, ptr %desc70307_own
@@ -168443,10 +168442,10 @@ if_then21867:
   %bad_val70567 = load ptr, ptr %bad70463
   %on_val70568 = load ptr, ptr %on70508
   %concat70569 = call ptr @ofs_str_concat(ptr @str.173, ptr %on_val70568)
-  %concat70570 = call ptr @ofs_str_concat_ex(ptr %concat70569, ptr @str.1681, i64 1)
+  %concat70570 = call ptr @ofs_str_concat_ex(ptr %concat70569, ptr @str.1680, i64 1)
   %ot_val70571 = load ptr, ptr %ot70531
   %concat70572 = call ptr @ofs_str_concat_ex(ptr %concat70570, ptr %ot_val70571, i64 1)
-  %concat70573 = call ptr @ofs_str_concat_ex(ptr %concat70572, ptr @str.1608, i64 1)
+  %concat70573 = call ptr @ofs_str_concat_ex(ptr %concat70572, ptr @str.1607, i64 1)
   %nt_val70574 = load ptr, ptr %nt70479
   %concat70575 = call ptr @ofs_str_concat_ex(ptr %concat70573, ptr %nt_val70574, i64 1)
   %call70576 = call ptr @interpreter__rf_reason(ptr %bad_val70567, ptr %concat70575)
@@ -168494,13 +168493,13 @@ while_end21841:
 
 if_then21870:
   %mkey_val70590 = load ptr, ptr %mkey.addr
-  %concat70591 = call ptr @ofs_str_concat(ptr @str.1682, ptr %mkey_val70590)
-  %concat70592 = call ptr @ofs_str_concat_ex(ptr %concat70591, ptr @str.1683, i64 1)
+  %concat70591 = call ptr @ofs_str_concat(ptr @str.1681, ptr %mkey_val70590)
+  %concat70592 = call ptr @ofs_str_concat_ex(ptr %concat70591, ptr @str.1682, i64 1)
   %mi_val70593 = load i64, ptr %mi.addr
   %call70594 = call i64 @interpreter__rf_instances(i64 %mi_val70593)
-  %call70595 = call ptr @interpreter__rf_plural(i64 %call70594, ptr @str.1684, ptr @str.1685)
+  %call70595 = call ptr @interpreter__rf_plural(i64 %call70594, ptr @str.1683, ptr @str.1684)
   %concat70596 = call ptr @ofs_str_concat_ex(ptr %concat70592, ptr %call70595, i64 1)
-  %concat70597 = call ptr @ofs_str_concat_ex(ptr %concat70596, ptr @str.1686, i64 1)
+  %concat70597 = call ptr @ofs_str_concat_ex(ptr %concat70596, ptr @str.1685, i64 1)
   %bad_val70598 = load ptr, ptr %bad70463
   %concat70599 = call ptr @ofs_str_concat_ex(ptr %concat70597, ptr %bad_val70598, i64 1)
   %concat70600 = call ptr @ofs_str_concat_ex(ptr %concat70599, ptr @str.163, i64 1)
@@ -168700,20 +168699,20 @@ sc_end21900:
 
 if_then21901:
   %mkey_val70682 = load ptr, ptr %mkey.addr
-  %concat70683 = call ptr @ofs_str_concat(ptr @str.1682, ptr %mkey_val70682)
-  %concat70684 = call ptr @ofs_str_concat_ex(ptr %concat70683, ptr @str.1687, i64 1)
+  %concat70683 = call ptr @ofs_str_concat(ptr @str.1681, ptr %mkey_val70682)
+  %concat70684 = call ptr @ofs_str_concat_ex(ptr %concat70683, ptr @str.1686, i64 1)
   %nsize_val70685 = load i64, ptr %nsize70615
   %stone_to_str70686 = call ptr @ofs_stone_to_obsidian(i64 %nsize_val70685)
   %concat70687 = call ptr @ofs_str_concat_ex(ptr %concat70684, ptr %stone_to_str70686, i64 1)
-  %concat70688 = call ptr @ofs_str_concat_ex(ptr %concat70687, ptr @str.1688, i64 1)
+  %concat70688 = call ptr @ofs_str_concat_ex(ptr %concat70687, ptr @str.1687, i64 1)
   %mincap_val70689 = load i64, ptr %mincap70620
   %stone_to_str70690 = call ptr @ofs_stone_to_obsidian(i64 %mincap_val70689)
   %concat70691 = call ptr @ofs_str_concat_ex(ptr %concat70688, ptr %stone_to_str70690, i64 1)
-  %concat70692 = call ptr @ofs_str_concat_ex(ptr %concat70691, ptr @str.1689, i64 1)
+  %concat70692 = call ptr @ofs_str_concat_ex(ptr %concat70691, ptr @str.1688, i64 1)
   %interpreter__RF_OBJ_SLACK_val70693 = load i64, ptr @interpreter__RF_OBJ_SLACK
   %stone_to_str70694 = call ptr @ofs_stone_to_obsidian(i64 %interpreter__RF_OBJ_SLACK_val70693)
   %concat70695 = call ptr @ofs_str_concat_ex(ptr %concat70692, ptr %stone_to_str70694, i64 1)
-  %concat70696 = call ptr @ofs_str_concat_ex(ptr %concat70695, ptr @str.1690, i64 1)
+  %concat70696 = call ptr @ofs_str_concat_ex(ptr %concat70695, ptr @str.1689, i64 1)
   %sf_val70697 = load ptr, ptr %noffs70610
   %afree_null70698 = icmp eq ptr %sf_val70697, null
   br i1 %afree_null70698, label %afree_end21907, label %afree_chk21904
@@ -169909,10 +169908,10 @@ arr_slow22058:
 arr_end22059:
   %arr_ptr71285 = phi ptr [ %arr_fp71283, %arr_fast22057 ], [ %arr_sp71284, %arr_slow22058 ]
   %arr_item71286 = load ptr, ptr %arr_ptr71285
-  %concat71287 = call ptr @ofs_str_concat(ptr @str.1691, ptr %arr_item71286)
-  %concat71288 = call ptr @ofs_str_concat_ex(ptr %concat71287, ptr @str.1692, i64 1)
+  %concat71287 = call ptr @ofs_str_concat(ptr @str.1690, ptr %arr_item71286)
+  %concat71288 = call ptr @ofs_str_concat_ex(ptr %concat71287, ptr @str.1691, i64 1)
   %count_val71289 = load i64, ptr %count70792
-  %call71290 = call ptr @interpreter__rf_plural(i64 %count_val71289, ptr @str.1693, ptr @str.1694)
+  %call71290 = call ptr @interpreter__rf_plural(i64 %count_val71289, ptr @str.1692, ptr @str.1693)
   %concat71291 = call ptr @ofs_str_concat_ex(ptr %concat71288, ptr %call71290, i64 1)
   %concat71292 = call ptr @ofs_str_concat_ex(ptr %concat71291, ptr @str.163, i64 1)
   store ptr %concat71292, ptr %rep71271
@@ -169937,7 +169936,7 @@ arr_end22062:
 if_then22064:
   %rep_val71299 = load ptr, ptr %rep71271
   %own_flag71301 = load i64, ptr %rep71271_own
-  %concat71300 = call ptr @ofs_str_concat_ex(ptr %rep_val71299, ptr @str.1695, i64 %own_flag71301)
+  %concat71300 = call ptr @ofs_str_concat_ex(ptr %rep_val71299, ptr @str.1694, i64 %own_flag71301)
   %added_val71302 = load ptr, ptr %added71081
   %call71303 = call ptr @interpreter__rf_join(ptr %added_val71302)
   %concat71304 = call ptr @ofs_str_concat_ex(ptr %concat71300, ptr %call71303, i64 1)
@@ -169969,7 +169968,7 @@ arr_end22068:
 if_then22070:
   %rep_val71311 = load ptr, ptr %rep71271
   %own_flag71313 = load i64, ptr %rep71271_own
-  %concat71312 = call ptr @ofs_str_concat_ex(ptr %rep_val71311, ptr @str.1696, i64 %own_flag71313)
+  %concat71312 = call ptr @ofs_str_concat_ex(ptr %rep_val71311, ptr @str.1695, i64 %own_flag71313)
   %removed_val71314 = load ptr, ptr %removed71205
   %call71315 = call ptr @interpreter__rf_join(ptr %removed_val71314)
   %concat71316 = call ptr @ofs_str_concat_ex(ptr %concat71312, ptr %call71315, i64 1)
@@ -170001,7 +170000,7 @@ arr_end22074:
 if_then22076:
   %rep_val71323 = load ptr, ptr %rep71271
   %own_flag71325 = load i64, ptr %rep71271_own
-  %concat71324 = call ptr @ofs_str_concat_ex(ptr %rep_val71323, ptr @str.1697, i64 %own_flag71325)
+  %concat71324 = call ptr @ofs_str_concat_ex(ptr %rep_val71323, ptr @str.1696, i64 %own_flag71325)
   %conv_val71326 = load ptr, ptr %conv71086
   %call71327 = call ptr @interpreter__rf_join(ptr %conv_val71326)
   %concat71328 = call ptr @ofs_str_concat_ex(ptr %concat71324, ptr %call71327, i64 1)
@@ -170545,8 +170544,8 @@ sc_end22157:
 if_then22158:
   %names_val71548 = load ptr, ptr %names71414
   %call71549 = call ptr @interpreter__rf_join(ptr %names_val71548)
-  %concat71550 = call ptr @ofs_str_concat(ptr @str.1698, ptr %call71549)
-  %concat71551 = call ptr @ofs_str_concat_ex(ptr %concat71550, ptr @str.1699, i64 1)
+  %concat71550 = call ptr @ofs_str_concat(ptr @str.1697, ptr %call71549)
+  %concat71551 = call ptr @ofs_str_concat_ex(ptr %concat71550, ptr @str.1698, i64 1)
   call void @interpreter__rf_info(ptr %concat71551)
   call void @ofs_str_release(ptr %concat71551, i64 1)
   ret void
@@ -170559,7 +170558,7 @@ if_end22160:
   store i32 0, ptr @interpreter___cr_josr
   %names_val71552 = load ptr, ptr %names71414
   %call71553 = call ptr @interpreter__rf_join(ptr %names_val71552)
-  %concat71554 = call ptr @ofs_str_concat(ptr @str.1700, ptr %call71553)
+  %concat71554 = call ptr @ofs_str_concat(ptr @str.1699, ptr %call71553)
   call void @interpreter__rf_info(ptr %concat71554)
   call void @ofs_str_release(ptr %concat71554, i64 1)
   %interpreter___rf_root_val71555 = load i64, ptr @interpreter___rf_root
@@ -170585,7 +170584,7 @@ sc_end22162:
 
 if_then22163:
   %names_val71565 = load ptr, ptr %names71414
-  call void @interpreter__rf_note_list(ptr @str.1701, ptr %names_val71565)
+  call void @interpreter__rf_note_list(ptr @str.1700, ptr %names_val71565)
   br label %if_end22165
 
 if_else22164:
@@ -170597,8 +170596,8 @@ if_else22164:
 if_then22166:
   %names_val71569 = load ptr, ptr %names71414
   %call71570 = call ptr @interpreter__rf_join(ptr %names_val71569)
-  %concat71571 = call ptr @ofs_str_concat(ptr @str.1702, ptr %call71570)
-  %concat71572 = call ptr @ofs_str_concat_ex(ptr %concat71571, ptr @str.1699, i64 1)
+  %concat71571 = call ptr @ofs_str_concat(ptr @str.1701, ptr %call71570)
+  %concat71572 = call ptr @ofs_str_concat_ex(ptr %concat71571, ptr @str.1698, i64 1)
   call void @interpreter__rf_note(ptr %concat71572)
   call void @ofs_str_release(ptr %concat71572, i64 1)
   br label %if_end22168
@@ -170688,7 +170687,7 @@ if_else22178:
   br label %if_end22179
 
 if_end22179:
-  call void @interpreter__rf_note(ptr @str.1703)
+  call void @interpreter__rf_note(ptr @str.1702)
   ret void
 
 if_else22175:
@@ -171493,11 +171492,11 @@ if_then22272:
   store i64 0, ptr %shown72002_own
   %cname_val72003 = load ptr, ptr %cname71939
   %call72004 = call ptr @vein_display_name(ptr %cname_val72003)
-  %concat72005 = call ptr @ofs_str_concat(ptr @str.1704, ptr %call72004)
-  %concat72006 = call ptr @ofs_str_concat_ex(ptr %concat72005, ptr @str.1705, i64 1)
+  %concat72005 = call ptr @ofs_str_concat(ptr @str.1703, ptr %call72004)
+  %concat72006 = call ptr @ofs_str_concat_ex(ptr %concat72005, ptr @str.1704, i64 1)
   %osig_val72007 = load ptr, ptr %osig71972
   %concat72008 = call ptr @ofs_str_concat_ex(ptr %concat72006, ptr %osig_val72007, i64 1)
-  %concat72009 = call ptr @ofs_str_concat_ex(ptr %concat72008, ptr @str.1608, i64 1)
+  %concat72009 = call ptr @ofs_str_concat_ex(ptr %concat72008, ptr @str.1607, i64 1)
   %nsig_val72010 = load ptr, ptr %nsig71988
   %concat72011 = call ptr @ofs_str_concat_ex(ptr %concat72009, ptr %nsig_val72010, i64 1)
   store ptr %concat72011, ptr %shown72002
@@ -171514,7 +171513,7 @@ if_then22272:
 if_then22275:
   %why_val72018 = load ptr, ptr %why71872
   %shown_val72019 = load ptr, ptr %shown72002
-  %concat72020 = call ptr @ofs_str_concat(ptr %shown_val72019, ptr @str.1706)
+  %concat72020 = call ptr @ofs_str_concat(ptr %shown_val72019, ptr @str.1705)
   %call72021 = call ptr @interpreter__rf_reason(ptr %why_val72018, ptr %concat72020)
   %own_old72022 = load ptr, ptr %why71872
   %own_flag72023 = load i64, ptr %why71872_own
@@ -171532,7 +171531,7 @@ if_else22276:
 if_then22278:
   %why_val72027 = load ptr, ptr %why71872
   %shown_val72028 = load ptr, ptr %shown72002
-  %concat72029 = call ptr @ofs_str_concat(ptr %shown_val72028, ptr @str.1707)
+  %concat72029 = call ptr @ofs_str_concat(ptr %shown_val72028, ptr @str.1706)
   %call72030 = call ptr @interpreter__rf_reason(ptr %why_val72027, ptr %concat72029)
   %own_old72031 = load ptr, ptr %why71872
   %own_flag72032 = load i64, ptr %why71872_own
@@ -171563,14 +171562,14 @@ if_then22281:
 if_then22284:
   %sig_ok_val72043 = load ptr, ptr %sig_ok71873
   %shown_val72044 = load ptr, ptr %shown72002
-  %concat72045 = call ptr @ofs_str_concat(ptr %shown_val72044, ptr @str.1708)
+  %concat72045 = call ptr @ofs_str_concat(ptr %shown_val72044, ptr @str.1707)
   %compat_val72046 = load ptr, ptr %compat72036
   %concat72047 = call ptr @ofs_str_concat_ex(ptr %concat72045, ptr %compat_val72046, i64 1)
-  %concat72048 = call ptr @ofs_str_concat_ex(ptr %concat72047, ptr @str.1709, i64 1)
+  %concat72048 = call ptr @ofs_str_concat_ex(ptr %concat72047, ptr @str.1708, i64 1)
   %user_val72049 = load ptr, ptr %user72012
   %call72050 = call ptr @vein_display_name(ptr %user_val72049)
   %concat72051 = call ptr @ofs_str_concat_ex(ptr %concat72048, ptr %call72050, i64 1)
-  %concat72052 = call ptr @ofs_str_concat_ex(ptr %concat72051, ptr @str.1710, i64 1)
+  %concat72052 = call ptr @ofs_str_concat_ex(ptr %concat72051, ptr @str.1709, i64 1)
   %arr_isnull72053 = icmp eq ptr %sig_ok_val72043, null
   br i1 %arr_isnull72053, label %arr_slow22288, label %arr_chk22290
 
@@ -171607,11 +171606,11 @@ arr_end22289:
 if_else22285:
   %why_val72068 = load ptr, ptr %why71872
   %shown_val72069 = load ptr, ptr %shown72002
-  %concat72070 = call ptr @ofs_str_concat(ptr %shown_val72069, ptr @str.1711)
+  %concat72070 = call ptr @ofs_str_concat(ptr %shown_val72069, ptr @str.1710)
   %user_val72071 = load ptr, ptr %user72012
   %call72072 = call ptr @vein_display_name(ptr %user_val72071)
   %concat72073 = call ptr @ofs_str_concat_ex(ptr %concat72070, ptr %call72072, i64 1)
-  %concat72074 = call ptr @ofs_str_concat_ex(ptr %concat72073, ptr @str.1712, i64 1)
+  %concat72074 = call ptr @ofs_str_concat_ex(ptr %concat72073, ptr @str.1711, i64 1)
   %call72075 = call ptr @interpreter__rf_reason(ptr %why_val72068, ptr %concat72074)
   %own_old72076 = load ptr, ptr %why71872
   %own_flag72077 = load i64, ptr %why71872_own
@@ -171833,12 +171832,12 @@ if_then22319:
   %why_val72174 = load ptr, ptr %why71872
   %rkey_val72175 = load ptr, ptr %rkey72127
   %call72176 = call ptr @vein_display_name(ptr %rkey_val72175)
-  %concat72177 = call ptr @ofs_str_concat(ptr @str.1713, ptr %call72176)
-  %concat72178 = call ptr @ofs_str_concat_ex(ptr %concat72177, ptr @str.1714, i64 1)
+  %concat72177 = call ptr @ofs_str_concat(ptr @str.1712, ptr %call72176)
+  %concat72178 = call ptr @ofs_str_concat_ex(ptr %concat72177, ptr @str.1713, i64 1)
   %ruser_val72179 = load ptr, ptr %ruser72161
   %call72180 = call ptr @vein_display_name(ptr %ruser_val72179)
   %concat72181 = call ptr @ofs_str_concat_ex(ptr %concat72178, ptr %call72180, i64 1)
-  %concat72182 = call ptr @ofs_str_concat_ex(ptr %concat72181, ptr @str.1715, i64 1)
+  %concat72182 = call ptr @ofs_str_concat_ex(ptr %concat72181, ptr @str.1714, i64 1)
   %call72183 = call ptr @interpreter__rf_reason(ptr %why_val72174, ptr %concat72182)
   %own_old72184 = load ptr, ptr %why71872
   %own_flag72185 = load i64, ptr %why71872_own
@@ -171857,8 +171856,8 @@ if_then22322:
   %why_val72189 = load ptr, ptr %why71872
   %rkey_val72190 = load ptr, ptr %rkey72127
   %call72191 = call ptr @vein_display_name(ptr %rkey_val72190)
-  %concat72192 = call ptr @ofs_str_concat(ptr @str.1713, ptr %call72191)
-  %concat72193 = call ptr @ofs_str_concat_ex(ptr %concat72192, ptr @str.1716, i64 1)
+  %concat72192 = call ptr @ofs_str_concat(ptr @str.1712, ptr %call72191)
+  %concat72193 = call ptr @ofs_str_concat_ex(ptr %concat72192, ptr @str.1715, i64 1)
   %call72194 = call ptr @interpreter__rf_reason(ptr %why_val72189, ptr %concat72193)
   %own_old72195 = load ptr, ptr %why71872
   %own_flag72196 = load i64, ptr %why71872_own
@@ -172468,11 +172467,11 @@ if_then22400:
   %why_val72482 = load ptr, ptr %why71872
   %gkey_val72483 = load ptr, ptr %gkey72405
   %call72484 = call ptr @vein_display_name(ptr %gkey_val72483)
-  %concat72485 = call ptr @ofs_str_concat(ptr @str.1717, ptr %call72484)
-  %concat72486 = call ptr @ofs_str_concat_ex(ptr %concat72485, ptr @str.1607, i64 1)
+  %concat72485 = call ptr @ofs_str_concat(ptr @str.1716, ptr %call72484)
+  %concat72486 = call ptr @ofs_str_concat_ex(ptr %concat72485, ptr @str.1606, i64 1)
   %ogt_val72487 = load ptr, ptr %ogt72460
   %concat72488 = call ptr @ofs_str_concat_ex(ptr %concat72486, ptr %ogt_val72487, i64 1)
-  %concat72489 = call ptr @ofs_str_concat_ex(ptr %concat72488, ptr @str.1608, i64 1)
+  %concat72489 = call ptr @ofs_str_concat_ex(ptr %concat72488, ptr @str.1607, i64 1)
   %gnode_val72490 = load i64, ptr %gnode72421
   %call72491 = call ptr @interpreter__rf_gtype(i64 %gnode_val72490)
   %concat72492 = call ptr @ofs_str_concat_ex(ptr %concat72489, ptr %call72491, i64 1)
@@ -172526,7 +172525,7 @@ if_then22406:
   %why_val72510 = load ptr, ptr %why71872
   %interpreter__RF_GLOBAL_SLOTS_val72511 = load i64, ptr @interpreter__RF_GLOBAL_SLOTS
   %stone_to_str72512 = call ptr @ofs_stone_to_obsidian(i64 %interpreter__RF_GLOBAL_SLOTS_val72511)
-  %concat72513 = call ptr @ofs_str_concat(ptr @str.1718, ptr %stone_to_str72512)
+  %concat72513 = call ptr @ofs_str_concat(ptr @str.1717, ptr %stone_to_str72512)
   %concat72514 = call ptr @ofs_str_concat_ex(ptr %concat72513, ptr @str.163, i64 1)
   %call72515 = call ptr @interpreter__rf_reason(ptr %why_val72510, ptr %concat72514)
   %own_old72516 = load ptr, ptr %why71872
@@ -172686,8 +172685,8 @@ sc_end22430:
 if_then22431:
   %why_val72586 = load ptr, ptr %why71872
   %ekey_val72587 = load ptr, ptr %ekey72531
-  %concat72588 = call ptr @ofs_str_concat(ptr @str.1719, ptr %ekey_val72587)
-  %concat72589 = call ptr @ofs_str_concat_ex(ptr %concat72588, ptr @str.1720, i64 1)
+  %concat72588 = call ptr @ofs_str_concat(ptr @str.1718, ptr %ekey_val72587)
+  %concat72589 = call ptr @ofs_str_concat_ex(ptr %concat72588, ptr @str.1719, i64 1)
   %esym_val72590 = load ptr, ptr %esym72569
   %concat72591 = call ptr @ofs_str_concat_ex(ptr %concat72589, ptr %esym_val72590, i64 1)
   %concat72592 = call ptr @ofs_str_concat_ex(ptr %concat72591, ptr @str.163, i64 1)
@@ -172781,8 +172780,8 @@ arr_end22440:
 if_then22442:
   %why_val72635 = load ptr, ptr %why71872
   %ekey_val72636 = load ptr, ptr %ekey72531
-  %concat72637 = call ptr @ofs_str_concat(ptr @str.1721, ptr %ekey_val72636)
-  %concat72638 = call ptr @ofs_str_concat_ex(ptr %concat72637, ptr @str.1722, i64 1)
+  %concat72637 = call ptr @ofs_str_concat(ptr @str.1720, ptr %ekey_val72636)
+  %concat72638 = call ptr @ofs_str_concat_ex(ptr %concat72637, ptr @str.1721, i64 1)
   %call72639 = call ptr @interpreter__rf_reason(ptr %why_val72635, ptr %concat72638)
   %own_old72640 = load ptr, ptr %why71872
   %own_flag72641 = load i64, ptr %why71872_own
@@ -173060,7 +173059,7 @@ sc_end22473:
 
 if_then22481:
   %why_val72761 = load ptr, ptr %why71872
-  %call72762 = call ptr @interpreter__rf_reason(ptr %why_val72761, ptr @str.1723)
+  %call72762 = call ptr @interpreter__rf_reason(ptr %why_val72761, ptr @str.1722)
   %own_old72763 = load ptr, ptr %why71872
   %own_flag72764 = load i64, ptr %why71872_own
   call void @ofs_str_release(ptr %own_old72763, i64 %own_flag72764)
@@ -173092,8 +173091,8 @@ while_end22464:
 
 if_then22484:
   %why_val72774 = load ptr, ptr %why71872
-  %concat72775 = call ptr @ofs_str_concat(ptr @str.1724, ptr %why_val72774)
-  %concat72776 = call ptr @ofs_str_concat_ex(ptr %concat72775, ptr @str.1725, i64 1)
+  %concat72775 = call ptr @ofs_str_concat(ptr @str.1723, ptr %why_val72774)
+  %concat72776 = call ptr @ofs_str_concat_ex(ptr %concat72775, ptr @str.1724, i64 1)
   call void @interpreter__rf_note(ptr %concat72776)
   call void @ofs_str_release(ptr %concat72776, i64 1)
   %sf_val72777 = load ptr, ptr %s272653
@@ -174477,7 +174476,7 @@ if_then22709:
   br i1 %cond73348, label %if_then22712, label %if_else22713
 
 if_then22712:
-  call void @interpreter__rf_note(ptr @str.1726)
+  call void @interpreter__rf_note(ptr @str.1725)
   %sf_val73349 = load ptr, ptr %dirty_hi72874
   %afree_null73350 = icmp eq ptr %sf_val73349, null
   br i1 %afree_null73350, label %afree_end22718, label %afree_chk22715
@@ -178292,7 +178291,7 @@ sc_end23260:
   br i1 %sc75127, label %if_then23267, label %if_else23268
 
 if_then23267:
-  call void @interpreter__cr_abandon(ptr @str.1525)
+  call void @interpreter__cr_abandon(ptr @str.1524)
   %sf_val75128 = load ptr, ptr %ft75094
   %sf_own75129 = load i64, ptr %ft75094_own
   call void @ofs_str_release(ptr %sf_val75128, i64 %sf_own75129)
@@ -178933,7 +178932,7 @@ arr_chk23358:
 
 arr_end23359:
   %arr_len75417 = phi i64 [ 0, %arr_nul23360 ], [ %ah75415, %arr_chk23358 ]
-  %call75418 = call ptr @interpreter__rf_plural(i64 %arr_len75417, ptr @str.1727, ptr @str.1728)
+  %call75418 = call ptr @interpreter__rf_plural(i64 %arr_len75417, ptr @str.1726, ptr @str.1727)
   %concat75419 = call ptr @ofs_str_concat(ptr %call75418, ptr @str.298)
   %changed_names_val75420 = load ptr, ptr %changed_names74769
   %call75421 = call ptr @interpreter__rf_join(ptr %changed_names_val75420)
@@ -178983,7 +178982,7 @@ arr_chk23367:
 
 arr_end23368:
   %arr_len75437 = phi i64 [ 0, %arr_nul23369 ], [ %ah75435, %arr_chk23367 ]
-  %call75438 = call ptr @interpreter__rf_plural(i64 %arr_len75437, ptr @str.1729, ptr @str.1730)
+  %call75438 = call ptr @interpreter__rf_plural(i64 %arr_len75437, ptr @str.1728, ptr @str.1729)
   %concat75439 = call ptr @ofs_str_concat(ptr %call75438, ptr @str.298)
   %added_names_val75440 = load ptr, ptr %added_names74547
   %call75441 = call ptr @interpreter__rf_join(ptr %added_names_val75440)
@@ -179034,7 +179033,7 @@ arr_chk23376:
 
 arr_end23377:
   %arr_len75458 = phi i64 [ 0, %arr_nul23378 ], [ %ah75456, %arr_chk23376 ]
-  %call75459 = call ptr @interpreter__rf_plural(i64 %arr_len75458, ptr @str.1731, ptr @str.1732)
+  %call75459 = call ptr @interpreter__rf_plural(i64 %arr_len75458, ptr @str.1730, ptr @str.1731)
   %concat75460 = call ptr @ofs_str_concat(ptr %call75459, ptr @str.298)
   %new_globals_val75461 = load ptr, ptr %new_globals75134
   %call75462 = call ptr @interpreter__rf_join(ptr %new_globals_val75461)
@@ -179085,7 +179084,7 @@ arr_chk23385:
 
 arr_end23386:
   %arr_len75479 = phi i64 [ 0, %arr_nul23387 ], [ %ah75477, %arr_chk23385 ]
-  %call75480 = call ptr @interpreter__rf_plural(i64 %arr_len75479, ptr @str.1733, ptr @str.1734)
+  %call75480 = call ptr @interpreter__rf_plural(i64 %arr_len75479, ptr @str.1732, ptr @str.1733)
   %concat75481 = call ptr @ofs_str_concat(ptr %call75480, ptr @str.298)
   %gone_val75482 = load ptr, ptr %gone72088
   %call75483 = call ptr @interpreter__rf_join(ptr %gone_val75482)
@@ -179166,7 +179165,7 @@ arr_chk23400:
 arr_end23401:
   %arr_len75511 = phi i64 [ 0, %arr_nul23402 ], [ %ah75509, %arr_chk23400 ]
   %op75512 = add i64 %arr_len75506, %arr_len75511
-  %call75513 = call ptr @interpreter__rf_plural(i64 %op75512, ptr @str.1735, ptr @str.1736)
+  %call75513 = call ptr @interpreter__rf_plural(i64 %op75512, ptr @str.1734, ptr @str.1735)
   %call75514 = call ptr @interpreter__rf_reason(ptr %msg_val75501, ptr %call75513)
   %own_old75515 = load ptr, ptr %msg75406
   %own_flag75516 = load i64, ptr %msg75406_own
@@ -179188,7 +179187,7 @@ if_then23403:
   %own_old75520 = load ptr, ptr %msg75406
   %own_flag75521 = load i64, ptr %msg75406_own
   call void @ofs_str_release(ptr %own_old75520, i64 %own_flag75521)
-  store ptr @str.1737, ptr %msg75406
+  store ptr @str.1736, ptr %msg75406
   store i64 0, ptr %msg75406_own
   br label %if_end23405
 
@@ -179338,7 +179337,7 @@ arr_end23427:
 if_then23429:
   %running_val75579 = load ptr, ptr %running74774
   %call75580 = call ptr @interpreter__rf_join(ptr %running_val75579)
-  %concat75581 = call ptr @ofs_str_concat(ptr %call75580, ptr @str.1738)
+  %concat75581 = call ptr @ofs_str_concat(ptr %call75580, ptr @str.1737)
   call void @interpreter__rf_info(ptr %concat75581)
   call void @ofs_str_release(ptr %concat75581, i64 1)
   br label %if_end23431
@@ -179366,7 +179365,7 @@ arr_end23433:
 
 if_then23435:
   %qnames_val75588 = load ptr, ptr %qnames73012
-  call void @interpreter__rf_note_list(ptr @str.1739, ptr %qnames_val75588)
+  call void @interpreter__rf_note_list(ptr @str.1738, ptr %qnames_val75588)
   br label %if_end23437
 
 if_else23436:
@@ -179517,7 +179516,7 @@ sc_end23456:
 if_then23460:
   %bg_val75647 = load ptr, ptr %bg75253
   %call75648 = call ptr @interpreter__rf_join(ptr %bg_val75647)
-  %concat75649 = call ptr @ofs_str_concat(ptr @str.1740, ptr %call75648)
+  %concat75649 = call ptr @ofs_str_concat(ptr @str.1739, ptr %call75648)
   call void @interpreter__rf_info(ptr %concat75649)
   call void @ofs_str_release(ptr %concat75649, i64 1)
   br label %if_end23462
@@ -180573,7 +180572,7 @@ entry:
   %extra75979 = alloca ptr, align 8
   %extra75979_own = alloca i64, align 8
   store i64 0, ptr %extra75979_own
-  %call75980 = call ptr @getenv(ptr @str.1741)
+  %call75980 = call ptr @getenv(ptr @str.1740)
   store ptr %call75980, ptr %extra75979
   %sc_slot75981 = alloca i1, align 1
   %extra_val75982 = load ptr, ptr %extra75979
@@ -180725,7 +180724,7 @@ if_else23656:
 
 if_end23657:
   %mode_val76041 = load ptr, ptr %mode.addr
-  %streq76042 = call i32 @ofs_str_eq(ptr %mode_val76041, ptr @str.1742)
+  %streq76042 = call i32 @ofs_str_eq(ptr %mode_val76041, ptr @str.1741)
   %cond76043 = icmp ne i32 %streq76042, 0
   br i1 %cond76043, label %if_then23662, label %if_else23663
 
@@ -180738,8 +180737,8 @@ if_then23662:
 
 if_then23665:
   %path_val76048 = load ptr, ptr %path.addr
-  %concat76049 = call ptr @ofs_str_concat(ptr @str.1743, ptr %path_val76048)
-  %concat76050 = call ptr @ofs_str_concat_ex(ptr %concat76049, ptr @str.1744, i64 1)
+  %concat76049 = call ptr @ofs_str_concat(ptr @str.1742, ptr %path_val76048)
+  %concat76050 = call ptr @ofs_str_concat_ex(ptr %concat76049, ptr @str.1743, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat76050)
   %sf_val76051 = load ptr, ptr %extra75979
   %sf_own76052 = load i64, ptr %extra75979_own
@@ -180756,7 +180755,7 @@ if_end23667:
   %main_src_val76055 = load ptr, ptr %main_src76020
   %src_hash_val76056 = load i64, ptr %src_hash.addr
   call void @fz_header_write(ptr %main_src_val76055, i64 %src_hash_val76056)
-  %call76057 = call ptr @getenv(ptr @str.1745)
+  %call76057 = call ptr @getenv(ptr @str.1744)
   %streq76058 = call i32 @ofs_str_eq(ptr %call76057, ptr @str.185)
   %cond76059 = icmp ne i32 %streq76058, 0
   %not76060 = xor i1 %cond76059, true
@@ -180784,8 +180783,8 @@ if_end23664:
 
 if_then23668:
   %path_val76070 = load ptr, ptr %path.addr
-  %concat76071 = call ptr @ofs_str_concat(ptr @str.1746, ptr %path_val76070)
-  %concat76072 = call ptr @ofs_str_concat_ex(ptr %concat76071, ptr @str.1744, i64 1)
+  %concat76071 = call ptr @ofs_str_concat(ptr @str.1745, ptr %path_val76070)
+  %concat76072 = call ptr @ofs_str_concat_ex(ptr %concat76071, ptr @str.1743, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat76072)
   %sf_val76073 = load ptr, ptr %extra75979
   %sf_own76074 = load i64, ptr %extra75979_own
@@ -180806,7 +180805,7 @@ if_end23670:
 
 if_then23671:
   %path_val76080 = load ptr, ptr %path.addr
-  %concat76081 = call ptr @ofs_str_concat(ptr @str.1747, ptr %path_val76080)
+  %concat76081 = call ptr @ofs_str_concat(ptr @str.1746, ptr %path_val76080)
   %concat76082 = call ptr @ofs_str_concat_ex(ptr %concat76081, ptr @str.277, i64 1)
   %_fz_hdr_err_val76083 = load ptr, ptr @_fz_hdr_err
   %concat76084 = call ptr @ofs_str_concat_ex(ptr %concat76082, ptr %_fz_hdr_err_val76083, i64 1)
@@ -180830,7 +180829,7 @@ if_end23673:
   br i1 %cmp76092, label %if_then23674, label %if_else23675
 
 if_then23674:
-  call void @interpreter__ffi_stderr(ptr @str.1748)
+  call void @interpreter__ffi_stderr(ptr @str.1747)
   br label %if_end23676
 
 if_else23675:
@@ -180840,7 +180839,7 @@ if_end23676:
   store i64 2, ptr @interpreter___fs_mode
   store i32 1, ptr @interpreter___fs_on
   %to76093 = alloca ptr, align 8
-  %call76094 = call ptr @getenv(ptr @str.1749)
+  %call76094 = call ptr @getenv(ptr @str.1748)
   store ptr %call76094, ptr %to76093
   %to_val76095 = load ptr, ptr %to76093
   %cmp76096 = icmp ne ptr %to_val76095, null
@@ -180855,14 +180854,14 @@ if_else23678:
   br label %if_end23679
 
 if_end23679:
-  %call76098 = call ptr @getenv(ptr @str.1750)
+  %call76098 = call ptr @getenv(ptr @str.1749)
   %call76099 = call i64 @interpreter__fs_int_of(ptr %call76098)
   store i64 %call76099, ptr @interpreter___fs_back
-  %call76100 = call ptr @getenv(ptr @str.1751)
+  %call76100 = call ptr @getenv(ptr @str.1750)
   %streq76101 = call i32 @ofs_str_eq(ptr %call76100, ptr @str.683)
   store i32 %streq76101, ptr @interpreter___fs_talk
   %every76102 = alloca i64, align 8
-  %call76103 = call ptr @getenv(ptr @str.1752)
+  %call76103 = call ptr @getenv(ptr @str.1751)
   %call76104 = call i64 @interpreter__fs_int_of(ptr %call76103)
   store i64 %call76104, ptr %every76102
   %every_val76105 = load i64, ptr %every76102
@@ -180968,7 +180967,7 @@ arr_end23693:
   br i1 %cond76145, label %if_then23695, label %if_else23696
 
 if_then23695:
-  call void @interpreter__ffi_stderr(ptr @str.1753)
+  call void @interpreter__ffi_stderr(ptr @str.1752)
   br label %while_end23687
 
 if_else23696:
@@ -180997,7 +180996,7 @@ if_end23700:
   call void @interpreter__fs_collect_user_globals(i64 %root_id_val76150)
   %so76151 = alloca i64, align 8
   %call76152 = call i64 @interpreter__ffi_rtld_default()
-  %call76153 = call i64 @dlsym(i64 %call76152, ptr @str.1754)
+  %call76153 = call i64 @dlsym(i64 %call76152, ptr @str.1753)
   store i64 %call76153, ptr %so76151
   %so_val76154 = load i64, ptr %so76151
   %cmp76155 = icmp ne i64 %so_val76154, 0
@@ -181016,7 +181015,7 @@ if_else23702:
 if_end23703:
   %se76159 = alloca i64, align 8
   %call76160 = call i64 @interpreter__ffi_rtld_default()
-  %call76161 = call i64 @dlsym(i64 %call76160, ptr @str.1755)
+  %call76161 = call i64 @dlsym(i64 %call76160, ptr @str.1754)
   store i64 %call76161, ptr %se76159
   %se_val76162 = load i64, ptr %se76159
   %cmp76163 = icmp ne i64 %se_val76162, 0
@@ -181039,13 +181038,13 @@ if_end23706:
 
 if_then23707:
   %sc_slot76169 = alloca i1, align 1
-  %call76170 = call i64 @interpreter__fs_libc(ptr @str.1756)
+  %call76170 = call i64 @interpreter__fs_libc(ptr @str.1755)
   %cmp76171 = icmp eq i64 %call76170, 0
   store i1 %cmp76171, ptr %sc_slot76169
   br i1 %cmp76171, label %sc_end23711, label %sc_rhs23710
 
 sc_rhs23710:
-  %call76172 = call i64 @interpreter__fs_libc(ptr @str.1757)
+  %call76172 = call i64 @interpreter__fs_libc(ptr @str.1756)
   %cmp76173 = icmp eq i64 %call76172, 0
   store i1 %cmp76173, ptr %sc_slot76169
   br label %sc_end23711
@@ -181055,7 +181054,7 @@ sc_end23711:
   br i1 %sc76174, label %if_then23712, label %if_else23713
 
 if_then23712:
-  call void @interpreter__ffi_stderr(ptr @str.1758)
+  call void @interpreter__ffi_stderr(ptr @str.1757)
   call void @exit(i64 2)
   br label %if_end23714
 
@@ -181085,8 +181084,8 @@ if_then23715:
 
 if_then23718:
   %interpreter___fs_to_val76182 = load ptr, ptr @interpreter___fs_to
-  %concat76183 = call ptr @ofs_str_concat(ptr @str.1759, ptr %interpreter___fs_to_val76182)
-  %concat76184 = call ptr @ofs_str_concat_ex(ptr %concat76183, ptr @str.1760, i64 1)
+  %concat76183 = call ptr @ofs_str_concat(ptr @str.1758, ptr %interpreter___fs_to_val76182)
+  %concat76184 = call ptr @ofs_str_concat_ex(ptr %concat76183, ptr @str.1759, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat76184)
   call void @exit(i64 2)
   br label %if_end23720
@@ -181590,14 +181589,14 @@ if_then23786:
   %sc_slot76382 = alloca i1, align 1
   %sc_slot76383 = alloca i1, align 1
   %file_val76384 = load ptr, ptr %file76317
-  %streq76385 = call i32 @ofs_str_eq(ptr %file_val76384, ptr @str.1761)
+  %streq76385 = call i32 @ofs_str_eq(ptr %file_val76384, ptr @str.1760)
   %cond76386 = icmp ne i32 %streq76385, 0
   store i1 %cond76386, ptr %sc_slot76383
   br i1 %cond76386, label %sc_end23792, label %sc_rhs23791
 
 sc_rhs23791:
   %file_val76387 = load ptr, ptr %file76317
-  %streq76388 = call i32 @ofs_str_eq(ptr %file_val76387, ptr @str.1762)
+  %streq76388 = call i32 @ofs_str_eq(ptr %file_val76387, ptr @str.1761)
   %cond76389 = icmp ne i32 %streq76388, 0
   store i1 %cond76389, ptr %sc_slot76383
   br label %sc_end23792
@@ -181609,7 +181608,7 @@ sc_end23792:
 
 sc_rhs23789:
   %file_val76391 = load ptr, ptr %file76317
-  %streq76392 = call i32 @ofs_str_eq(ptr %file_val76391, ptr @str.1763)
+  %streq76392 = call i32 @ofs_str_eq(ptr %file_val76391, ptr @str.1762)
   %cond76393 = icmp ne i32 %streq76392, 0
   store i1 %cond76393, ptr %sc_slot76382
   br label %sc_end23790
@@ -182135,7 +182134,7 @@ if_end23875:
   %cast76576 = ptrtoint ptr %call76575 to i64
   store i64 %cast76576, ptr %fds76574
   %fds_val76577 = load i64, ptr %fds76574
-  %call76578 = call i64 @interpreter__fs_c1(ptr @str.1757, i64 %fds_val76577)
+  %call76578 = call i64 @interpreter__fs_c1(ptr @str.1756, i64 %fds_val76577)
   %cmp76579 = icmp ne i64 %call76578, 0
   br i1 %cmp76579, label %if_then23876, label %if_else23877
 
@@ -182158,7 +182157,7 @@ if_end23878:
   %call76588 = call i64 @interpreter__mem_rd(i64 %op76586, i64 %MC_I32_val76587)
   store i64 %call76588, ptr %wfd76584
   %pid76589 = alloca i64, align 8
-  %call76590 = call i64 @interpreter__fs_c0(ptr @str.1756)
+  %call76590 = call i64 @interpreter__fs_c0(ptr @str.1755)
   store i64 %call76590, ptr %pid76589
   %pid_val76591 = load i64, ptr %pid76589
   %cmp76592 = icmp slt i64 %pid_val76591, 0
@@ -182166,9 +182165,9 @@ if_end23878:
 
 if_then23879:
   %rfd_val76593 = load i64, ptr %rfd76580
-  %call76594 = call i64 @interpreter__fs_c1(ptr @str.1640, i64 %rfd_val76593)
+  %call76594 = call i64 @interpreter__fs_c1(ptr @str.1639, i64 %rfd_val76593)
   %wfd_val76595 = load i64, ptr %wfd76584
-  %call76596 = call i64 @interpreter__fs_c1(ptr @str.1640, i64 %wfd_val76595)
+  %call76596 = call i64 @interpreter__fs_c1(ptr @str.1639, i64 %wfd_val76595)
   ret void
 
 if_else23880:
@@ -182190,7 +182189,7 @@ if_else23883:
 
 if_end23884:
   %rfd_val76601 = load i64, ptr %rfd76580
-  %call76602 = call i64 @interpreter__fs_c1(ptr @str.1640, i64 %rfd_val76601)
+  %call76602 = call i64 @interpreter__fs_c1(ptr @str.1639, i64 %rfd_val76601)
   %interpreter___fs_lay_step_val76603 = load ptr, ptr @interpreter___fs_lay_step
   %interpreter___fs_steps_val76604 = load i64, ptr @interpreter___fs_steps
   %arr_isnull76605 = icmp eq ptr %interpreter___fs_lay_step_val76603, null
@@ -182292,7 +182291,7 @@ arr_slow23894:
 arr_end23895:
   %pid_val76654 = load i64, ptr %pid76589
   %stone_to_str76655 = call ptr @ofs_stone_to_obsidian(i64 %pid_val76654)
-  %concat76656 = call ptr @ofs_str_concat(ptr @str.1764, ptr %stone_to_str76655)
+  %concat76656 = call ptr @ofs_str_concat(ptr @str.1763, ptr %stone_to_str76655)
   call void @interpreter__fs_tell(ptr %concat76656)
   call void @ofs_str_release(ptr %concat76656, i64 1)
   ret void
@@ -182341,7 +182340,7 @@ sc_end23903:
 sc_rhs23900:
   %msg_val76670 = load ptr, ptr %msg76659
   %call76671 = call ptr @ofs_str_substr(ptr %msg_val76670, i64 0, i64 3)
-  %streq76672 = call i32 @ofs_str_eq(ptr %call76671, ptr @str.1765)
+  %streq76672 = call i32 @ofs_str_eq(ptr %call76671, ptr @str.1764)
   %cond76673 = icmp ne i32 %streq76672, 0
   %not76674 = xor i1 %cond76673, true
   store i1 %not76674, ptr %sc_slot76662
@@ -182352,7 +182351,7 @@ sc_end23901:
   br i1 %sc76675, label %if_then23904, label %if_else23905
 
 if_then23904:
-  %call76676 = call i64 @interpreter__fs_c1(ptr @str.1766, i64 0)
+  %call76676 = call i64 @interpreter__fs_c1(ptr @str.1765, i64 0)
   br label %if_end23906
 
 if_else23905:
@@ -182369,7 +182368,7 @@ if_end23906:
   store i64 %call76683, ptr %t76677
   call void @interpreter__fs_flush_all()
   %c76684 = alloca i64, align 8
-  %call76685 = call i64 @interpreter__fs_c0(ptr @str.1756)
+  %call76685 = call i64 @interpreter__fs_c0(ptr @str.1755)
   store i64 %call76685, ptr %c76684
   %c_val76686 = load i64, ptr %c76684
   %cmp76687 = icmp eq i64 %c_val76686, 0
@@ -182377,10 +182376,10 @@ if_end23906:
 
 if_then23907:
   %rfd_val76688 = load i64, ptr %rfd.addr
-  %call76689 = call i64 @interpreter__fs_c1(ptr @str.1640, i64 %rfd_val76688)
+  %call76689 = call i64 @interpreter__fs_c1(ptr @str.1639, i64 %rfd_val76688)
   %call76690 = call i64 @getpid()
   %stone_to_str76691 = call ptr @ofs_stone_to_obsidian(i64 %call76690)
-  %concat76692 = call ptr @ofs_str_concat(ptr @str.1767, ptr %stone_to_str76691)
+  %concat76692 = call ptr @ofs_str_concat(ptr @str.1766, ptr %stone_to_str76691)
   call void @interpreter__fs_tell(ptr %concat76692)
   call void @ofs_str_release(ptr %concat76692, i64 1)
   %interpreter___fs_lay_step_val76693 = load ptr, ptr @interpreter___fs_lay_step
@@ -182417,7 +182416,7 @@ arr_slow23911:
 
 arr_end23912:
   %interpreter___fs_lay_pid_val76710 = load ptr, ptr @interpreter___fs_lay_pid
-  %call76711 = call i64 @interpreter__fs_c0(ptr @str.1768)
+  %call76711 = call i64 @interpreter__fs_c0(ptr @str.1767)
   %arr_isnull76712 = icmp eq ptr %interpreter___fs_lay_pid_val76710, null
   br i1 %arr_isnull76712, label %arr_slow23915, label %arr_chk23917
 
@@ -182573,14 +182572,14 @@ arr_end23928:
   %arr_item76782 = load i64, ptr %arr_ptr76781
   store i64 %arr_item76782, ptr %wfd76767
   %pid_val76783 = load i64, ptr %pid76751
-  %call76784 = call i64 @interpreter__fs_c3(ptr @str.1769, i64 %pid_val76783, i64 9, i64 0)
+  %call76784 = call i64 @interpreter__fs_c3(ptr @str.1768, i64 %pid_val76783, i64 9, i64 0)
   %pid_val76785 = load i64, ptr %pid76751
-  %call76786 = call i64 @interpreter__fs_c3(ptr @str.1770, i64 %pid_val76785, i64 0, i64 0)
+  %call76786 = call i64 @interpreter__fs_c3(ptr @str.1769, i64 %pid_val76785, i64 0, i64 0)
   %wfd_val76787 = load i64, ptr %wfd76767
-  %call76788 = call i64 @interpreter__fs_c1(ptr @str.1640, i64 %wfd_val76787)
+  %call76788 = call i64 @interpreter__fs_c1(ptr @str.1639, i64 %wfd_val76787)
   %pid_val76789 = load i64, ptr %pid76751
   %stone_to_str76790 = call ptr @ofs_stone_to_obsidian(i64 %pid_val76789)
-  %concat76791 = call ptr @ofs_str_concat(ptr @str.1771, ptr %stone_to_str76790)
+  %concat76791 = call ptr @ofs_str_concat(ptr @str.1770, ptr %stone_to_str76790)
   call void @interpreter__fs_tell(ptr %concat76791)
   call void @ofs_str_release(ptr %concat76791, i64 1)
   ret void
@@ -182937,7 +182936,7 @@ while_end23968:
 if_then23976:
   %t_val76953 = load i64, ptr %t.addr
   %stone_to_str76954 = call ptr @ofs_stone_to_obsidian(i64 %t_val76953)
-  %concat76955 = call ptr @ofs_str_concat(ptr @str.1772, ptr %stone_to_str76954)
+  %concat76955 = call ptr @ofs_str_concat(ptr @str.1771, ptr %stone_to_str76954)
   %concat76956 = call ptr @ofs_str_concat_ex(ptr %concat76955, ptr @str.3, i64 1)
   call void @interpreter__fs_out(ptr %concat76956)
   call void @interpreter__fs_end(i64 1)
@@ -183026,7 +183025,7 @@ arr_end23987:
   %msg76996 = alloca ptr, align 8
   %t_val76997 = load i64, ptr %t.addr
   %stone_to_str76998 = call ptr @ofs_stone_to_obsidian(i64 %t_val76997)
-  %concat76999 = call ptr @ofs_str_concat(ptr @str.1765, ptr %stone_to_str76998)
+  %concat76999 = call ptr @ofs_str_concat(ptr @str.1764, ptr %stone_to_str76998)
   %concat77000 = call ptr @ofs_str_concat_ex(ptr %concat76999, ptr @str.3, i64 1)
   store ptr %concat77000, ptr %msg76996
   %wfd_val77001 = load i64, ptr %wfd76980
@@ -183078,10 +183077,10 @@ entry:
   call void @interpreter__fs_flush_all()
   %call77020 = call i64 @getpid()
   %stone_to_str77021 = call ptr @ofs_stone_to_obsidian(i64 %call77020)
-  %concat77022 = call ptr @ofs_str_concat(ptr @str.1773, ptr %stone_to_str77021)
+  %concat77022 = call ptr @ofs_str_concat(ptr @str.1772, ptr %stone_to_str77021)
   call void @interpreter__fs_tell(ptr %concat77022)
   call void @ofs_str_release(ptr %concat77022, i64 1)
-  %call77023 = call i64 @interpreter__fs_c1(ptr @str.1766, i64 0)
+  %call77023 = call i64 @interpreter__fs_c1(ptr @str.1765, i64 0)
   ret void
 }
 
@@ -183165,18 +183164,18 @@ if_else23999:
 if_end24000:
   %code_val77052 = load i64, ptr %code.addr
   %stone_to_str77053 = call ptr @ofs_stone_to_obsidian(i64 %code_val77052)
-  %concat77054 = call ptr @ofs_str_concat(ptr @str.1774, ptr %stone_to_str77053)
+  %concat77054 = call ptr @ofs_str_concat(ptr @str.1773, ptr %stone_to_str77053)
   call void @interpreter__fs_tell(ptr %concat77054)
   call void @ofs_str_release(ptr %concat77054, i64 1)
   %code_val77055 = load i64, ptr %code.addr
-  %call77056 = call i64 @interpreter__fs_c1(ptr @str.1766, i64 %code_val77055)
+  %call77056 = call i64 @interpreter__fs_c1(ptr @str.1765, i64 %code_val77055)
   ret void
 }
 
 define void @interpreter__fs_supervisor_start() {
 entry:
   %reaper77057 = alloca i32, align 8
-  %call77058 = call i64 @interpreter__fs_c3(ptr @str.1775, i64 36, i64 1, i64 0)
+  %call77058 = call i64 @interpreter__fs_c3(ptr @str.1774, i64 36, i64 1, i64 0)
   %cmp77059 = icmp eq i64 %call77058, 0
   %zext77060 = zext i1 %cmp77059 to i32
   store i32 %zext77060, ptr %reaper77057
@@ -183185,7 +183184,7 @@ entry:
   %cast77063 = ptrtoint ptr %call77062 to i64
   store i64 %cast77063, ptr %fds77061
   %fds_val77064 = load i64, ptr %fds77061
-  %call77065 = call i64 @interpreter__fs_c1(ptr @str.1757, i64 %fds_val77064)
+  %call77065 = call i64 @interpreter__fs_c1(ptr @str.1756, i64 %fds_val77064)
   %fds_val77066 = load i64, ptr %fds77061
   %MC_I32_val77067 = load i64, ptr @MC_I32
   %call77068 = call i64 @interpreter__mem_rd(i64 %fds_val77066, i64 %MC_I32_val77067)
@@ -183197,14 +183196,14 @@ entry:
   store i64 %call77072, ptr @interpreter___fs_done_w
   call void @interpreter__fs_flush_all()
   %pid77073 = alloca i64, align 8
-  %call77074 = call i64 @interpreter__fs_c0(ptr @str.1756)
+  %call77074 = call i64 @interpreter__fs_c0(ptr @str.1755)
   store i64 %call77074, ptr %pid77073
   %pid_val77075 = load i64, ptr %pid77073
   %cmp77076 = icmp slt i64 %pid_val77075, 0
   br i1 %cmp77076, label %if_then24001, label %if_else24002
 
 if_then24001:
-  call void @interpreter__ffi_stderr(ptr @str.1776)
+  call void @interpreter__ffi_stderr(ptr @str.1775)
   call void @exit(i64 2)
   br label %if_end24003
 
@@ -183218,7 +183217,7 @@ if_end24003:
 
 if_then24004:
   %interpreter___fs_done_r_val77079 = load i64, ptr @interpreter___fs_done_r
-  %call77080 = call i64 @interpreter__fs_c1(ptr @str.1640, i64 %interpreter___fs_done_r_val77079)
+  %call77080 = call i64 @interpreter__fs_c1(ptr @str.1639, i64 %interpreter___fs_done_r_val77079)
   %neg77081 = sub i64 0, 1
   store i64 %neg77081, ptr @interpreter___fs_done_r
   ret void
@@ -183228,7 +183227,7 @@ if_else24005:
 
 if_end24006:
   %interpreter___fs_done_w_val77082 = load i64, ptr @interpreter___fs_done_w
-  %call77083 = call i64 @interpreter__fs_c1(ptr @str.1640, i64 %interpreter___fs_done_w_val77082)
+  %call77083 = call i64 @interpreter__fs_c1(ptr @str.1639, i64 %interpreter___fs_done_w_val77082)
   %neg77084 = sub i64 0, 1
   store i64 %neg77084, ptr @interpreter___fs_done_w
   %pid_val77085 = load i64, ptr %pid77073
@@ -183577,7 +183576,7 @@ arr_end24060:
   %arr_item77218 = load i64, ptr %arr_ptr77217
   store i64 %arr_item77218, ptr %p77203
   %p_val77219 = load i64, ptr %p77203
-  %call77220 = call i64 @interpreter__fs_c3(ptr @str.1769, i64 %p_val77219, i64 9, i64 0)
+  %call77220 = call i64 @interpreter__fs_c3(ptr @str.1768, i64 %p_val77219, i64 9, i64 0)
   %post_old77221 = load i64, ptr %i77194
   %post_new77222 = add i64 %post_old77221, 1
   store i64 %post_new77222, ptr %i77194
@@ -183608,7 +183607,7 @@ while_body24063:
   %w77229 = alloca i64, align 8
   %neg77230 = sub i64 0, 1
   %st_val77231 = load i64, ptr %st77224
-  %call77232 = call i64 @interpreter__fs_c3(ptr @str.1770, i64 %neg77230, i64 %st_val77231, i64 0)
+  %call77232 = call i64 @interpreter__fs_c3(ptr @str.1769, i64 %neg77230, i64 %st_val77231, i64 0)
   store i64 %call77232, ptr %w77229
   br label %while_cond24065
 
@@ -183734,7 +183733,7 @@ if_else24086:
 if_then24088:
   %sig_val77275 = load i64, ptr %sig77270
   %stone_to_str77276 = call ptr @ofs_stone_to_obsidian(i64 %sig_val77275)
-  %concat77277 = call ptr @ofs_str_concat(ptr @str.1777, ptr %stone_to_str77276)
+  %concat77277 = call ptr @ofs_str_concat(ptr @str.1776, ptr %stone_to_str77276)
   %concat77278 = call ptr @ofs_str_concat_ex(ptr %concat77277, ptr @str.336, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat77278)
   %sig_val77279 = load i64, ptr %sig77270
@@ -183868,7 +183867,7 @@ while_body24106:
   %n77309 = alloca i64, align 8
   %fd_val77310 = load i64, ptr %fd.addr
   %interpreter___fs_byte_val77311 = load i64, ptr @interpreter___fs_byte
-  %call77312 = call i64 @interpreter__fs_c3(ptr @str.1778, i64 %fd_val77310, i64 %interpreter___fs_byte_val77311, i64 1)
+  %call77312 = call i64 @interpreter__fs_c3(ptr @str.1777, i64 %fd_val77310, i64 %interpreter___fs_byte_val77311, i64 1)
   store i64 %call77312, ptr %n77309
   %n_val77313 = load i64, ptr %n77309
   %cmp77314 = icmp sle i64 %n_val77313, 0
@@ -183995,8 +183994,8 @@ entry:
 if_then24122:
   %interpreter___fs_steps_val77359 = load i64, ptr @interpreter___fs_steps
   %stone_to_str77360 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_steps_val77359)
-  %concat77361 = call ptr @ofs_str_concat(ptr @str.1779, ptr %stone_to_str77360)
-  %concat77362 = call ptr @ofs_str_concat_ex(ptr %concat77361, ptr @str.1780, i64 1)
+  %concat77361 = call ptr @ofs_str_concat(ptr @str.1778, ptr %stone_to_str77360)
+  %concat77362 = call ptr @ofs_str_concat_ex(ptr %concat77361, ptr @str.1779, i64 1)
   %interpreter___fs_code_val77363 = load i64, ptr @interpreter___fs_code
   %stone_to_str77364 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_code_val77363)
   %concat77365 = call ptr @ofs_str_concat_ex(ptr %concat77362, ptr %stone_to_str77364, i64 1)
@@ -184023,7 +184022,7 @@ if_end24124:
   %vn77376 = alloca ptr, align 8
   %vn77376_own = alloca i64, align 8
   store i64 0, ptr %vn77376_own
-  store ptr @str.1781, ptr %vn77376
+  store ptr @str.1780, ptr %vn77376
   %interpreter___cur_fn_id_val77377 = load i64, ptr @interpreter___cur_fn_id
   %cmp77378 = icmp sge i64 %interpreter___cur_fn_id_val77377, 0
   br i1 %cmp77378, label %if_then24125, label %if_else24126
@@ -184045,8 +184044,8 @@ if_else24126:
 if_end24127:
   %interpreter___fs_steps_val77384 = load i64, ptr @interpreter___fs_steps
   %stone_to_str77385 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_steps_val77384)
-  %concat77386 = call ptr @ofs_str_concat(ptr @str.1782, ptr %stone_to_str77385)
-  %concat77387 = call ptr @ofs_str_concat_ex(ptr %concat77386, ptr @str.1783, i64 1)
+  %concat77386 = call ptr @ofs_str_concat(ptr @str.1781, ptr %stone_to_str77385)
+  %concat77387 = call ptr @ofs_str_concat_ex(ptr %concat77386, ptr @str.1782, i64 1)
   %f_val77388 = load ptr, ptr %f77370
   %call77389 = call ptr @interpreter__fs_base_name(ptr %f_val77388)
   %concat77390 = call ptr @ofs_str_concat_ex(ptr %concat77387, ptr %call77389, i64 1)
@@ -184054,7 +184053,7 @@ if_end24127:
   %ln_val77392 = load i64, ptr %ln77373
   %stone_to_str77393 = call ptr @ofs_stone_to_obsidian(i64 %ln_val77392)
   %concat77394 = call ptr @ofs_str_concat_ex(ptr %concat77391, ptr %stone_to_str77393, i64 1)
-  %concat77395 = call ptr @ofs_str_concat_ex(ptr %concat77394, ptr @str.1784, i64 1)
+  %concat77395 = call ptr @ofs_str_concat_ex(ptr %concat77394, ptr @str.1783, i64 1)
   %vn_val77396 = load ptr, ptr %vn77376
   %concat77397 = call ptr @ofs_str_concat_ex(ptr %concat77395, ptr %vn_val77396, i64 1)
   %concat77398 = call ptr @ofs_str_concat_ex(ptr %concat77397, ptr @str.3, i64 1)
@@ -184075,7 +184074,7 @@ if_then24128:
   %ln_val77406 = load i64, ptr %ln77373
   %stone_to_str77407 = call ptr @ofs_stone_to_obsidian(i64 %ln_val77406)
   %concat77408 = call ptr @ofs_str_concat(ptr @str.251, ptr %stone_to_str77407)
-  %concat77409 = call ptr @ofs_str_concat_ex(ptr %concat77408, ptr @str.1783, i64 1)
+  %concat77409 = call ptr @ofs_str_concat_ex(ptr %concat77408, ptr @str.1782, i64 1)
   %src_val77410 = load ptr, ptr %src77402
   %concat77411 = call ptr @ofs_str_concat_ex(ptr %concat77409, ptr %src_val77410, i64 1)
   %concat77412 = call ptr @ofs_str_concat_ex(ptr %concat77411, ptr @str.3, i64 1)
@@ -184127,7 +184126,7 @@ if_end24136:
   br i1 %cmp77428, label %if_then24137, label %if_else24138
 
 if_then24137:
-  ret ptr @str.1785
+  ret ptr @str.1784
 
 if_else24138:
   br label %if_end24139
@@ -184163,7 +184162,7 @@ if_then24143:
   %n_val77442 = load i64, ptr %n77437
   %stone_to_str77443 = call ptr @ofs_stone_to_obsidian(i64 %n_val77442)
   %concat77444 = call ptr @ofs_str_concat(ptr @str.134, ptr %stone_to_str77443)
-  %concat77445 = call ptr @ofs_str_concat_ex(ptr %concat77444, ptr @str.1786, i64 1)
+  %concat77445 = call ptr @ofs_str_concat_ex(ptr %concat77444, ptr @str.1785, i64 1)
   ret ptr %concat77445
 
 if_else24144:
@@ -184240,11 +184239,11 @@ while_end24148:
 if_then24154:
   %out_val77473 = load ptr, ptr %out77446
   %own_flag77475 = load i64, ptr %out77446_own
-  %concat77474 = call ptr @ofs_str_concat_ex(ptr %out_val77473, ptr @str.1787, i64 %own_flag77475)
+  %concat77474 = call ptr @ofs_str_concat_ex(ptr %out_val77473, ptr @str.1786, i64 %own_flag77475)
   %n_val77476 = load i64, ptr %n77437
   %stone_to_str77477 = call ptr @ofs_stone_to_obsidian(i64 %n_val77476)
   %concat77478 = call ptr @ofs_str_concat_ex(ptr %concat77474, ptr %stone_to_str77477, i64 1)
-  %concat77479 = call ptr @ofs_str_concat_ex(ptr %concat77478, ptr @str.1788, i64 1)
+  %concat77479 = call ptr @ofs_str_concat_ex(ptr %concat77478, ptr @str.1787, i64 1)
   store ptr %concat77479, ptr %out77446
   store i64 1, ptr %out77446_own
   br label %if_end24156
@@ -184321,7 +184320,7 @@ if_end24164:
 
 if_then24165:
   %t_val77511 = load ptr, ptr %t77489
-  %concat77512 = call ptr @ofs_str_concat(ptr %t_val77511, ptr @str.1789)
+  %concat77512 = call ptr @ofs_str_concat(ptr %t_val77511, ptr @str.1788)
   %sf_val77513 = load ptr, ptr %t77489
   %sf_own77514 = load i64, ptr %t77489_own
   call void @ofs_str_release(ptr %sf_val77513, i64 %sf_own77514)
@@ -184393,7 +184392,7 @@ arr_end24174:
   %out77547_own = alloca i64, align 8
   store i64 0, ptr %out77547_own
   %t_val77548 = load ptr, ptr %t77489
-  %concat77549 = call ptr @ofs_str_concat(ptr %t_val77548, ptr @str.1790)
+  %concat77549 = call ptr @ofs_str_concat(ptr %t_val77548, ptr @str.1789)
   store ptr %concat77549, ptr %out77547
   store i64 1, ptr %out77547_own
   %j77550 = alloca i64, align 8
@@ -184746,7 +184745,7 @@ sc_end24218:
   br i1 %sc77712, label %if_then24219, label %if_else24220
 
 if_then24219:
-  call void @interpreter__fs_out(ptr @str.1791)
+  call void @interpreter__fs_out(ptr @str.1790)
   %i77713 = alloca i64, align 8
   %interpreter___current_frame_base_val77714 = load i64, ptr @interpreter___current_frame_base
   store i64 %interpreter___current_frame_base_val77714, ptr %i77713
@@ -184756,7 +184755,7 @@ if_then24219:
   br i1 %cmp77717, label %if_then24222, label %if_else24223
 
 if_then24222:
-  call void @interpreter__fs_out(ptr @str.1792)
+  call void @interpreter__fs_out(ptr @str.1791)
   br label %if_end24224
 
 if_else24223:
@@ -184792,7 +184791,7 @@ if_else24220:
   br label %if_end24221
 
 if_end24221:
-  call void @interpreter__fs_out(ptr @str.1793)
+  call void @interpreter__fs_out(ptr @str.1792)
   %gend77728 = alloca i64, align 8
   %interpreter___globals_count_val77729 = load i64, ptr @interpreter___globals_count
   store i64 %interpreter___globals_count_val77729, ptr %gend77728
@@ -184911,7 +184910,7 @@ while_end24235:
   br i1 %cmp77777, label %if_then24245, label %if_else24246
 
 if_then24245:
-  call void @interpreter__fs_out(ptr @str.1794)
+  call void @interpreter__fs_out(ptr @str.1793)
   br label %if_end24247
 
 if_else24246:
@@ -185229,8 +185228,8 @@ if_end24280:
 
 while_end24277:
   %name_val77914 = load ptr, ptr %name.addr
-  %concat77915 = call ptr @ofs_str_concat(ptr @str.1795, ptr %name_val77914)
-  %concat77916 = call ptr @ofs_str_concat_ex(ptr %concat77915, ptr @str.1796, i64 1)
+  %concat77915 = call ptr @ofs_str_concat(ptr @str.1794, ptr %name_val77914)
+  %concat77916 = call ptr @ofs_str_concat_ex(ptr %concat77915, ptr @str.1795, i64 1)
   call void @interpreter__fs_out(ptr %concat77916)
   %sf_val77917 = load ptr, ptr %name.addr
   %sf_own77918 = load i64, ptr %name.addr_own
@@ -185240,13 +185239,13 @@ while_end24277:
 
 define void @interpreter__fs_help() {
 entry:
+  call void @interpreter__fs_out(ptr @str.1796)
   call void @interpreter__fs_out(ptr @str.1797)
   call void @interpreter__fs_out(ptr @str.1798)
   call void @interpreter__fs_out(ptr @str.1799)
   call void @interpreter__fs_out(ptr @str.1800)
   call void @interpreter__fs_out(ptr @str.1801)
   call void @interpreter__fs_out(ptr @str.1802)
-  call void @interpreter__fs_out(ptr @str.1803)
   ret void
 }
 
@@ -185266,7 +185265,7 @@ while_cond24294:
 while_body24295:
   %loop_stk77921 = call ptr @llvm.stacksave()
   call void asm sideeffect "", ""() inaccessiblememonly nounwind
-  call void @interpreter__fs_out(ptr @str.1804)
+  call void @interpreter__fs_out(ptr @str.1803)
   %line77922 = alloca ptr, align 8
   %line77922_own = alloca i64, align 8
   store i64 0, ptr %line77922_own
@@ -185394,14 +185393,14 @@ if_else24311:
 if_end24312:
   %sc_slot77973 = alloca i1, align 1
   %cmd_val77974 = load ptr, ptr %cmd77949
-  %streq77975 = call i32 @ofs_str_eq(ptr %cmd_val77974, ptr @str.1805)
+  %streq77975 = call i32 @ofs_str_eq(ptr %cmd_val77974, ptr @str.1804)
   %cond77976 = icmp ne i32 %streq77975, 0
   store i1 %cond77976, ptr %sc_slot77973
   br i1 %cond77976, label %sc_end24314, label %sc_rhs24313
 
 sc_rhs24313:
   %cmd_val77977 = load ptr, ptr %cmd77949
-  %streq77978 = call i32 @ofs_str_eq(ptr %cmd_val77977, ptr @str.1806)
+  %streq77978 = call i32 @ofs_str_eq(ptr %cmd_val77977, ptr @str.1805)
   %cond77979 = icmp ne i32 %streq77978, 0
   store i1 %cond77979, ptr %sc_slot77973
   br label %sc_end24314
@@ -185433,7 +185432,7 @@ if_end24320:
   br i1 %cond77988, label %if_then24321, label %if_else24322
 
 if_then24321:
-  call void @interpreter__fs_out(ptr @str.1807)
+  call void @interpreter__fs_out(ptr @str.1806)
   br label %if_end24323
 
 if_else24322:
@@ -185459,14 +185458,14 @@ if_end24323:
 if_else24316:
   %sc_slot77998 = alloca i1, align 1
   %cmd_val77999 = load ptr, ptr %cmd77949
-  %streq78000 = call i32 @ofs_str_eq(ptr %cmd_val77999, ptr @str.1808)
+  %streq78000 = call i32 @ofs_str_eq(ptr %cmd_val77999, ptr @str.1807)
   %cond78001 = icmp ne i32 %streq78000, 0
   store i1 %cond78001, ptr %sc_slot77998
   br i1 %cond78001, label %sc_end24325, label %sc_rhs24324
 
 sc_rhs24324:
   %cmd_val78002 = load ptr, ptr %cmd77949
-  %streq78003 = call i32 @ofs_str_eq(ptr %cmd_val78002, ptr @str.1809)
+  %streq78003 = call i32 @ofs_str_eq(ptr %cmd_val78002, ptr @str.1808)
   %cond78004 = icmp ne i32 %streq78003, 0
   store i1 %cond78004, ptr %sc_slot77998
   br label %sc_end24325
@@ -185526,14 +185525,14 @@ if_end24334:
 if_else24327:
   %sc_slot78025 = alloca i1, align 1
   %cmd_val78026 = load ptr, ptr %cmd77949
-  %streq78027 = call i32 @ofs_str_eq(ptr %cmd_val78026, ptr @str.1810)
+  %streq78027 = call i32 @ofs_str_eq(ptr %cmd_val78026, ptr @str.1809)
   %cond78028 = icmp ne i32 %streq78027, 0
   store i1 %cond78028, ptr %sc_slot78025
   br i1 %cond78028, label %sc_end24336, label %sc_rhs24335
 
 sc_rhs24335:
   %cmd_val78029 = load ptr, ptr %cmd77949
-  %streq78030 = call i32 @ofs_str_eq(ptr %cmd_val78029, ptr @str.1811)
+  %streq78030 = call i32 @ofs_str_eq(ptr %cmd_val78029, ptr @str.1810)
   %cond78031 = icmp ne i32 %streq78030, 0
   store i1 %cond78031, ptr %sc_slot78025
   br label %sc_end24336
@@ -185633,7 +185632,7 @@ if_end24353:
 if_then24354:
   %interpreter___fs_steps_val78069 = load i64, ptr @interpreter___fs_steps
   %stone_to_str78070 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_steps_val78069)
-  %concat78071 = call ptr @ofs_str_concat(ptr @str.1812, ptr %stone_to_str78070)
+  %concat78071 = call ptr @ofs_str_concat(ptr @str.1811, ptr %stone_to_str78070)
   %concat78072 = call ptr @ofs_str_concat_ex(ptr %concat78071, ptr @str.3, i64 1)
   call void @interpreter__fs_out(ptr %concat78072)
   br label %if_end24356
@@ -185652,7 +185651,7 @@ if_else24341:
   br i1 %cond78075, label %if_then24357, label %if_else24358
 
 if_then24357:
-  call void @interpreter__fs_out(ptr @str.1813)
+  call void @interpreter__fs_out(ptr @str.1812)
   br label %if_end24359
 
 if_else24358:
@@ -185689,7 +185688,7 @@ if_then24362:
 
 if_else24363:
   %arg_val78090 = load ptr, ptr %arg77953
-  %concat78091 = call ptr @ofs_str_concat(ptr @str.1814, ptr %arg_val78090)
+  %concat78091 = call ptr @ofs_str_concat(ptr @str.1813, ptr %arg_val78090)
   %concat78092 = call ptr @ofs_str_concat_ex(ptr %concat78091, ptr @str.3, i64 1)
   call void @interpreter__fs_out(ptr %concat78092)
   br label %if_end24364
@@ -185706,14 +185705,14 @@ if_end24342:
 if_else24338:
   %sc_slot78093 = alloca i1, align 1
   %cmd_val78094 = load ptr, ptr %cmd77949
-  %streq78095 = call i32 @ofs_str_eq(ptr %cmd_val78094, ptr @str.1815)
+  %streq78095 = call i32 @ofs_str_eq(ptr %cmd_val78094, ptr @str.1814)
   %cond78096 = icmp ne i32 %streq78095, 0
   store i1 %cond78096, ptr %sc_slot78093
   br i1 %cond78096, label %sc_end24366, label %sc_rhs24365
 
 sc_rhs24365:
   %cmd_val78097 = load ptr, ptr %cmd77949
-  %streq78098 = call i32 @ofs_str_eq(ptr %cmd_val78097, ptr @str.1816)
+  %streq78098 = call i32 @ofs_str_eq(ptr %cmd_val78097, ptr @str.1815)
   %cond78099 = icmp ne i32 %streq78098, 0
   store i1 %cond78099, ptr %sc_slot78093
   br label %sc_end24366
@@ -185730,14 +185729,14 @@ if_then24367:
 if_else24368:
   %sc_slot78102 = alloca i1, align 1
   %cmd_val78103 = load ptr, ptr %cmd77949
-  %streq78104 = call i32 @ofs_str_eq(ptr %cmd_val78103, ptr @str.1817)
+  %streq78104 = call i32 @ofs_str_eq(ptr %cmd_val78103, ptr @str.1816)
   %cond78105 = icmp ne i32 %streq78104, 0
   store i1 %cond78105, ptr %sc_slot78102
   br i1 %cond78105, label %sc_end24371, label %sc_rhs24370
 
 sc_rhs24370:
   %cmd_val78106 = load ptr, ptr %cmd77949
-  %streq78107 = call i32 @ofs_str_eq(ptr %cmd_val78106, ptr @str.1818)
+  %streq78107 = call i32 @ofs_str_eq(ptr %cmd_val78106, ptr @str.1817)
   %cond78108 = icmp ne i32 %streq78107, 0
   store i1 %cond78108, ptr %sc_slot78102
   br label %sc_end24371
@@ -185753,7 +185752,7 @@ if_then24372:
 if_else24373:
   %sc_slot78110 = alloca i1, align 1
   %cmd_val78111 = load ptr, ptr %cmd77949
-  %streq78112 = call i32 @ofs_str_eq(ptr %cmd_val78111, ptr @str.1819)
+  %streq78112 = call i32 @ofs_str_eq(ptr %cmd_val78111, ptr @str.1818)
   %cond78113 = icmp ne i32 %streq78112, 0
   store i1 %cond78113, ptr %sc_slot78110
   br i1 %cond78113, label %sc_end24376, label %sc_rhs24375
@@ -185777,14 +185776,14 @@ if_then24377:
 if_else24378:
   %sc_slot78119 = alloca i1, align 1
   %cmd_val78120 = load ptr, ptr %cmd77949
-  %streq78121 = call i32 @ofs_str_eq(ptr %cmd_val78120, ptr @str.1820)
+  %streq78121 = call i32 @ofs_str_eq(ptr %cmd_val78120, ptr @str.1819)
   %cond78122 = icmp ne i32 %streq78121, 0
   store i1 %cond78122, ptr %sc_slot78119
   br i1 %cond78122, label %sc_end24381, label %sc_rhs24380
 
 sc_rhs24380:
   %cmd_val78123 = load ptr, ptr %cmd77949
-  %streq78124 = call i32 @ofs_str_eq(ptr %cmd_val78123, ptr @str.1821)
+  %streq78124 = call i32 @ofs_str_eq(ptr %cmd_val78123, ptr @str.1820)
   %cond78125 = icmp ne i32 %streq78124, 0
   store i1 %cond78125, ptr %sc_slot78119
   br label %sc_end24381
@@ -185810,14 +185809,14 @@ if_else24383:
   %sc_slot78133 = alloca i1, align 1
   %sc_slot78134 = alloca i1, align 1
   %cmd_val78135 = load ptr, ptr %cmd77949
-  %streq78136 = call i32 @ofs_str_eq(ptr %cmd_val78135, ptr @str.1822)
+  %streq78136 = call i32 @ofs_str_eq(ptr %cmd_val78135, ptr @str.1821)
   %cond78137 = icmp ne i32 %streq78136, 0
   store i1 %cond78137, ptr %sc_slot78134
   br i1 %cond78137, label %sc_end24388, label %sc_rhs24387
 
 sc_rhs24387:
   %cmd_val78138 = load ptr, ptr %cmd77949
-  %streq78139 = call i32 @ofs_str_eq(ptr %cmd_val78138, ptr @str.1823)
+  %streq78139 = call i32 @ofs_str_eq(ptr %cmd_val78138, ptr @str.1822)
   %cond78140 = icmp ne i32 %streq78139, 0
   store i1 %cond78140, ptr %sc_slot78134
   br label %sc_end24388
@@ -185849,8 +185848,8 @@ if_else24390:
 
 if_then24392:
   %cmd_val78148 = load ptr, ptr %cmd77949
-  %concat78149 = call ptr @ofs_str_concat(ptr @str.1824, ptr %cmd_val78148)
-  %concat78150 = call ptr @ofs_str_concat_ex(ptr %concat78149, ptr @str.1825, i64 1)
+  %concat78149 = call ptr @ofs_str_concat(ptr @str.1823, ptr %cmd_val78148)
+  %concat78150 = call ptr @ofs_str_concat_ex(ptr %concat78149, ptr @str.1824, i64 1)
   call void @interpreter__fs_out(ptr %concat78150)
   br label %if_end24394
 
@@ -187228,7 +187227,7 @@ if_end24581:
   %ev78652_own = alloca i64, align 8
   store i64 0, ptr %ev78652_own
   %sym_val78653 = load ptr, ptr %sym.addr
-  %concat78654 = call ptr @ofs_str_concat(ptr @str.1826, ptr %sym_val78653)
+  %concat78654 = call ptr @ofs_str_concat(ptr @str.1825, ptr %sym_val78653)
   %concat78655 = call ptr @ofs_str_concat_ex(ptr %concat78654, ptr @str.264, i64 1)
   %rk_val78656 = load i64, ptr %rk78591
   %stone_to_str78657 = call ptr @ofs_stone_to_obsidian(i64 %rk_val78656)
@@ -187340,7 +187339,7 @@ if_then24611:
   store i64 %call78704, ptr %earg78702
   %earg_val78705 = load i64, ptr %earg78702
   %stone_to_str78706 = call ptr @ofs_stone_to_obsidian(i64 %earg_val78705)
-  %concat78707 = call ptr @ofs_str_concat(ptr @str.1827, ptr %stone_to_str78706)
+  %concat78707 = call ptr @ofs_str_concat(ptr @str.1826, ptr %stone_to_str78706)
   %concat78708 = call ptr @ofs_str_concat_ex(ptr %concat78707, ptr @str.264, i64 1)
   call void @fz_put(ptr %concat78708)
   call void @ofs_str_release(ptr %concat78708, i64 1)
@@ -187389,12 +187388,12 @@ entry:
   %interpreter___fs_events_val78721 = load i64, ptr @interpreter___fs_events
   %op78722 = add i64 %interpreter___fs_events_val78721, 1
   %stone_to_str78723 = call ptr @ofs_stone_to_obsidian(i64 %op78722)
-  %concat78724 = call ptr @ofs_str_concat(ptr @str.1828, ptr %stone_to_str78723)
-  %concat78725 = call ptr @ofs_str_concat_ex(ptr %concat78724, ptr @str.1829, i64 1)
+  %concat78724 = call ptr @ofs_str_concat(ptr @str.1827, ptr %stone_to_str78723)
+  %concat78725 = call ptr @ofs_str_concat_ex(ptr %concat78724, ptr @str.1828, i64 1)
   %interpreter___fs_steps_val78726 = load i64, ptr @interpreter___fs_steps
   %stone_to_str78727 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_steps_val78726)
   %concat78728 = call ptr @ofs_str_concat_ex(ptr %concat78725, ptr %stone_to_str78727, i64 1)
-  %concat78729 = call ptr @ofs_str_concat_ex(ptr %concat78728, ptr @str.1592, i64 1)
+  %concat78729 = call ptr @ofs_str_concat_ex(ptr %concat78728, ptr @str.1591, i64 1)
   %msg_val78730 = load ptr, ptr %msg.addr
   %concat78731 = call ptr @ofs_str_concat_ex(ptr %concat78729, ptr %msg_val78730, i64 1)
   %concat78732 = call ptr @ofs_str_concat_ex(ptr %concat78731, ptr @str.3, i64 1)
@@ -187438,7 +187437,7 @@ entry:
 
 if_then24617:
   %sym_val78737 = load ptr, ptr %sym.addr
-  %concat78738 = call ptr @ofs_str_concat(ptr @str.1830, ptr %sym_val78737)
+  %concat78738 = call ptr @ofs_str_concat(ptr @str.1829, ptr %sym_val78737)
   %concat78739 = call ptr @ofs_str_concat_ex(ptr %concat78738, ptr @str.173, i64 1)
   call void @interpreter__fs_diverge(ptr %concat78739)
   call void @ofs_str_release(ptr %concat78739, i64 1)
@@ -187507,8 +187506,8 @@ if_end24625:
 
 if_then24626:
   %rsym_val78766 = load ptr, ptr %rsym78745
-  %concat78767 = call ptr @ofs_str_concat(ptr @str.1831, ptr %rsym_val78766)
-  %concat78768 = call ptr @ofs_str_concat_ex(ptr %concat78767, ptr @str.1832, i64 1)
+  %concat78767 = call ptr @ofs_str_concat(ptr @str.1830, ptr %rsym_val78766)
+  %concat78768 = call ptr @ofs_str_concat_ex(ptr %concat78767, ptr @str.1831, i64 1)
   %sym_val78769 = load ptr, ptr %sym.addr
   %concat78770 = call ptr @ofs_str_concat_ex(ptr %concat78768, ptr %sym_val78769, i64 1)
   %concat78771 = call ptr @ofs_str_concat_ex(ptr %concat78770, ptr @str.173, i64 1)
@@ -187721,13 +187720,13 @@ if_then24655:
 
 if_then24658:
   %sym_val78866 = load ptr, ptr %sym.addr
-  %concat78867 = call ptr @ofs_str_concat(ptr @str.1833, ptr %sym_val78866)
-  %concat78868 = call ptr @ofs_str_concat_ex(ptr %concat78867, ptr @str.1834, i64 1)
+  %concat78867 = call ptr @ofs_str_concat(ptr @str.1832, ptr %sym_val78866)
+  %concat78868 = call ptr @ofs_str_concat_ex(ptr %concat78867, ptr @str.1833, i64 1)
   %interpreter___fs_events_val78869 = load i64, ptr @interpreter___fs_events
   %op78870 = add i64 %interpreter___fs_events_val78869, 1
   %stone_to_str78871 = call ptr @ofs_stone_to_obsidian(i64 %op78870)
   %concat78872 = call ptr @ofs_str_concat_ex(ptr %concat78868, ptr %stone_to_str78871, i64 1)
-  %concat78873 = call ptr @ofs_str_concat_ex(ptr %concat78872, ptr @str.1835, i64 1)
+  %concat78873 = call ptr @ofs_str_concat_ex(ptr %concat78872, ptr @str.1834, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat78873)
   br label %if_end24660
 
@@ -187850,7 +187849,7 @@ if_end24676:
   store i32 1, ptr @interpreter___fs_finished
   %interpreter___fs_steps_val78915 = load i64, ptr @interpreter___fs_steps
   %stone_to_str78916 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_steps_val78915)
-  %concat78917 = call ptr @ofs_str_concat(ptr @str.1836, ptr %stone_to_str78916)
+  %concat78917 = call ptr @ofs_str_concat(ptr @str.1835, ptr %stone_to_str78916)
   %concat78918 = call ptr @ofs_str_concat_ex(ptr %concat78917, ptr @str.264, i64 1)
   %interpreter___fs_events_val78919 = load i64, ptr @interpreter___fs_events
   %stone_to_str78920 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_events_val78919)
@@ -187865,16 +187864,16 @@ if_end24676:
   call void @fz_close()
   call void @interpreter__fs_flush_all()
   %interpreter___fs_file_val78927 = load ptr, ptr @interpreter___fs_file
-  %concat78928 = call ptr @ofs_str_concat(ptr @str.1837, ptr %interpreter___fs_file_val78927)
+  %concat78928 = call ptr @ofs_str_concat(ptr @str.1836, ptr %interpreter___fs_file_val78927)
   %concat78929 = call ptr @ofs_str_concat_ex(ptr %concat78928, ptr @str.298, i64 1)
   %interpreter___fs_events_val78930 = load i64, ptr @interpreter___fs_events
   %stone_to_str78931 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_events_val78930)
   %concat78932 = call ptr @ofs_str_concat_ex(ptr %concat78929, ptr %stone_to_str78931, i64 1)
-  %concat78933 = call ptr @ofs_str_concat_ex(ptr %concat78932, ptr @str.1838, i64 1)
+  %concat78933 = call ptr @ofs_str_concat_ex(ptr %concat78932, ptr @str.1837, i64 1)
   %interpreter___fs_steps_val78934 = load i64, ptr @interpreter___fs_steps
   %stone_to_str78935 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_steps_val78934)
   %concat78936 = call ptr @ofs_str_concat_ex(ptr %concat78933, ptr %stone_to_str78935, i64 1)
-  %concat78937 = call ptr @ofs_str_concat_ex(ptr %concat78936, ptr @str.1839, i64 1)
+  %concat78937 = call ptr @ofs_str_concat_ex(ptr %concat78936, ptr @str.1838, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat78937)
   ret void
 
@@ -187971,7 +187970,7 @@ if_else24689:
   br i1 %cmp78971, label %if_then24691, label %if_else24692
 
 if_then24691:
-  call void @interpreter__ffi_stderr(ptr @str.1840)
+  call void @interpreter__ffi_stderr(ptr @str.1839)
   br label %if_end24693
 
 if_else24692:
@@ -188001,8 +188000,8 @@ sc_end24695:
 if_then24696:
   %interpreter___fs_steps_val78979 = load i64, ptr @interpreter___fs_steps
   %stone_to_str78980 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_steps_val78979)
-  %concat78981 = call ptr @ofs_str_concat(ptr @str.1841, ptr %stone_to_str78980)
-  %concat78982 = call ptr @ofs_str_concat_ex(ptr %concat78981, ptr @str.1842, i64 1)
+  %concat78981 = call ptr @ofs_str_concat(ptr @str.1840, ptr %stone_to_str78980)
+  %concat78982 = call ptr @ofs_str_concat_ex(ptr %concat78981, ptr @str.1841, i64 1)
   %rec_steps_val78983 = load i64, ptr %rec_steps78962
   %stone_to_str78984 = call ptr @ofs_stone_to_obsidian(i64 %rec_steps_val78983)
   %concat78985 = call ptr @ofs_str_concat_ex(ptr %concat78982, ptr %stone_to_str78984, i64 1)
@@ -188056,7 +188055,7 @@ if_then24705:
   br i1 %cond79000, label %if_then24708, label %if_else24709
 
 if_then24708:
-  call void @interpreter__fs_out(ptr @str.1843)
+  call void @interpreter__fs_out(ptr @str.1842)
   br label %if_end24710
 
 if_else24709:
@@ -188080,8 +188079,8 @@ if_end24707:
 if_then24711:
   call void @interpreter__fs_flush_all()
   %interpreter___fs_to_val79005 = load ptr, ptr @interpreter___fs_to
-  %concat79006 = call ptr @ofs_str_concat(ptr @str.1759, ptr %interpreter___fs_to_val79005)
-  %concat79007 = call ptr @ofs_str_concat_ex(ptr %concat79006, ptr @str.1844, i64 1)
+  %concat79006 = call ptr @ofs_str_concat(ptr @str.1758, ptr %interpreter___fs_to_val79005)
+  %concat79007 = call ptr @ofs_str_concat_ex(ptr %concat79006, ptr @str.1843, i64 1)
   %interpreter___fs_steps_val79008 = load i64, ptr @interpreter___fs_steps
   %stone_to_str79009 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_steps_val79008)
   %concat79010 = call ptr @ofs_str_concat_ex(ptr %concat79007, ptr %stone_to_str79009, i64 1)
@@ -188101,8 +188100,8 @@ if_end24713:
 if_then24714:
   %interpreter___fs_mismatch_val79014 = load i64, ptr @interpreter___fs_mismatch
   %stone_to_str79015 = call ptr @ofs_stone_to_obsidian(i64 %interpreter___fs_mismatch_val79014)
-  %concat79016 = call ptr @ofs_str_concat(ptr @str.1845, ptr %stone_to_str79015)
-  %concat79017 = call ptr @ofs_str_concat_ex(ptr %concat79016, ptr @str.1846, i64 1)
+  %concat79016 = call ptr @ofs_str_concat(ptr @str.1844, ptr %stone_to_str79015)
+  %concat79017 = call ptr @ofs_str_concat_ex(ptr %concat79016, ptr @str.1845, i64 1)
   call void @interpreter__ffi_stderr(ptr %concat79017)
   br label %if_end24716
 
@@ -189186,7 +189185,7 @@ if_end24750:
   br i1 %cmp79504, label %if_then24757, label %if_else24758
 
 if_then24757:
-  call void @echo_obsidian(ptr @str.1847)
+  call void @echo_obsidian(ptr @str.1846)
   ret i64 1
 
 if_else24758:
@@ -189602,14 +189601,14 @@ entry:
   %sc_slot79661 = alloca i1, align 1
   %sc_slot79662 = alloca i1, align 1
   %l_val79663 = load ptr, ptr %l.addr
-  %streq79664 = call i32 @ofs_str_eq(ptr %l_val79663, ptr @str.1849)
+  %streq79664 = call i32 @ofs_str_eq(ptr %l_val79663, ptr @str.1848)
   %cond79665 = icmp ne i32 %streq79664, 0
   store i1 %cond79665, ptr %sc_slot79662
   br i1 %cond79665, label %sc_end24777, label %sc_rhs24776
 
 sc_rhs24776:
   %l_val79666 = load ptr, ptr %l.addr
-  %streq79667 = call i32 @ofs_str_eq(ptr %l_val79666, ptr @str.1850)
+  %streq79667 = call i32 @ofs_str_eq(ptr %l_val79666, ptr @str.1849)
   %cond79668 = icmp ne i32 %streq79667, 0
   store i1 %cond79668, ptr %sc_slot79662
   br label %sc_end24777
@@ -189621,7 +189620,7 @@ sc_end24777:
 
 sc_rhs24774:
   %l_val79670 = load ptr, ptr %l.addr
-  %streq79671 = call i32 @ofs_str_eq(ptr %l_val79670, ptr @str.1848)
+  %streq79671 = call i32 @ofs_str_eq(ptr %l_val79670, ptr @str.1847)
   %cond79672 = icmp ne i32 %streq79671, 0
   store i1 %cond79672, ptr %sc_slot79661
   br label %sc_end24775
@@ -189636,7 +189635,7 @@ if_then24778:
   br label %if_end24780
 
 if_else24779:
-  store ptr @str.1848, ptr @_locale
+  store ptr @str.1847, ptr @_locale
   br label %if_end24780
 
 if_end24780:
@@ -189646,7 +189645,7 @@ if_end24780:
 define void @reporter_detect_locale() {
 entry:
   %l79675 = alloca ptr, align 8
-  %call79676 = call ptr @getenv(ptr @str.1851)
+  %call79676 = call ptr @getenv(ptr @str.1850)
   store ptr %call79676, ptr %l79675
   %l_val79677 = load ptr, ptr %l79675
   %streq79678 = call i32 @ofs_str_eq(ptr %l_val79677, ptr @str.75)
@@ -189654,7 +189653,7 @@ entry:
   br i1 %cond79679, label %if_then24781, label %if_else24782
 
 if_then24781:
-  %call79680 = call ptr @getenv(ptr @str.1852)
+  %call79680 = call ptr @getenv(ptr @str.1851)
   store ptr %call79680, ptr %l79675
   br label %if_end24783
 
@@ -189685,14 +189684,14 @@ if_end24786:
 define i32 @locale_is_pt() {
 entry:
   %_locale_val79687 = load ptr, ptr @_locale
-  %streq79688 = call i32 @ofs_str_eq(ptr %_locale_val79687, ptr @str.1849)
+  %streq79688 = call i32 @ofs_str_eq(ptr %_locale_val79687, ptr @str.1848)
   ret i32 %streq79688
 }
 
 define i32 @locale_is_es() {
 entry:
   %_locale_val79689 = load ptr, ptr @_locale
-  %streq79690 = call i32 @ofs_str_eq(ptr %_locale_val79689, ptr @str.1850)
+  %streq79690 = call i32 @ofs_str_eq(ptr %_locale_val79689, ptr @str.1849)
   ret i32 %streq79690
 }
 
@@ -189741,7 +189740,7 @@ entry:
   br i1 %cmp79703, label %if_then24793, label %if_else24794
 
 if_then24793:
-  ret ptr @str.1853
+  ret ptr @str.1852
 
 if_else24794:
   br label %if_end24795
@@ -189753,7 +189752,7 @@ if_end24795:
   br i1 %cmp79706, label %if_then24796, label %if_else24797
 
 if_then24796:
-  ret ptr @str.1854
+  ret ptr @str.1853
 
 if_else24797:
   br label %if_end24798
@@ -189765,7 +189764,7 @@ if_end24798:
   br i1 %cmp79709, label %if_then24799, label %if_else24800
 
 if_then24799:
-  ret ptr @str.1855
+  ret ptr @str.1854
 
 if_else24800:
   br label %if_end24801
@@ -189777,7 +189776,7 @@ if_end24801:
   br i1 %cmp79712, label %if_then24802, label %if_else24803
 
 if_then24802:
-  ret ptr @str.1856
+  ret ptr @str.1855
 
 if_else24803:
   br label %if_end24804
@@ -189789,7 +189788,7 @@ if_end24804:
   br i1 %cmp79715, label %if_then24805, label %if_else24806
 
 if_then24805:
-  ret ptr @str.1857
+  ret ptr @str.1856
 
 if_else24806:
   br label %if_end24807
@@ -189801,7 +189800,7 @@ if_end24807:
   br i1 %cmp79718, label %if_then24808, label %if_else24809
 
 if_then24808:
-  ret ptr @str.1858
+  ret ptr @str.1857
 
 if_else24809:
   br label %if_end24810
@@ -189813,7 +189812,7 @@ if_end24810:
   br i1 %cmp79721, label %if_then24811, label %if_else24812
 
 if_then24811:
-  ret ptr @str.1859
+  ret ptr @str.1858
 
 if_else24812:
   br label %if_end24813
@@ -189825,7 +189824,7 @@ if_end24813:
   br i1 %cmp79724, label %if_then24814, label %if_else24815
 
 if_then24814:
-  ret ptr @str.1860
+  ret ptr @str.1859
 
 if_else24815:
   br label %if_end24816
@@ -189837,7 +189836,7 @@ if_end24816:
   br i1 %cmp79727, label %if_then24817, label %if_else24818
 
 if_then24817:
-  ret ptr @str.1861
+  ret ptr @str.1860
 
 if_else24818:
   br label %if_end24819
@@ -189856,7 +189855,7 @@ entry:
   br i1 %cmp79730, label %if_then24820, label %if_else24821
 
 if_then24820:
-  ret ptr @str.1862
+  ret ptr @str.1861
 
 if_else24821:
   br label %if_end24822
@@ -189868,7 +189867,7 @@ if_end24822:
   br i1 %cmp79733, label %if_then24823, label %if_else24824
 
 if_then24823:
-  ret ptr @str.1863
+  ret ptr @str.1862
 
 if_else24824:
   br label %if_end24825
@@ -189880,7 +189879,7 @@ if_end24825:
   br i1 %cmp79736, label %if_then24826, label %if_else24827
 
 if_then24826:
-  ret ptr @str.1864
+  ret ptr @str.1863
 
 if_else24827:
   br label %if_end24828
@@ -189892,7 +189891,7 @@ if_end24828:
   br i1 %cmp79739, label %if_then24829, label %if_else24830
 
 if_then24829:
-  ret ptr @str.1865
+  ret ptr @str.1864
 
 if_else24830:
   br label %if_end24831
@@ -189904,7 +189903,7 @@ if_end24831:
   br i1 %cmp79742, label %if_then24832, label %if_else24833
 
 if_then24832:
-  ret ptr @str.1866
+  ret ptr @str.1865
 
 if_else24833:
   br label %if_end24834
@@ -189916,7 +189915,7 @@ if_end24834:
   br i1 %cmp79745, label %if_then24835, label %if_else24836
 
 if_then24835:
-  ret ptr @str.1867
+  ret ptr @str.1866
 
 if_else24836:
   br label %if_end24837
@@ -189928,7 +189927,7 @@ if_end24837:
   br i1 %cmp79748, label %if_then24838, label %if_else24839
 
 if_then24838:
-  ret ptr @str.1868
+  ret ptr @str.1867
 
 if_else24839:
   br label %if_end24840
@@ -189940,7 +189939,7 @@ if_end24840:
   br i1 %cmp79751, label %if_then24841, label %if_else24842
 
 if_then24841:
-  ret ptr @str.1869
+  ret ptr @str.1868
 
 if_else24842:
   br label %if_end24843
@@ -189952,7 +189951,7 @@ if_end24843:
   br i1 %cmp79754, label %if_then24844, label %if_else24845
 
 if_then24844:
-  ret ptr @str.1870
+  ret ptr @str.1869
 
 if_else24845:
   br label %if_end24846
@@ -189971,7 +189970,7 @@ entry:
   br i1 %cmp79757, label %if_then24847, label %if_else24848
 
 if_then24847:
-  ret ptr @str.1862
+  ret ptr @str.1861
 
 if_else24848:
   br label %if_end24849
@@ -189983,7 +189982,7 @@ if_end24849:
   br i1 %cmp79760, label %if_then24850, label %if_else24851
 
 if_then24850:
-  ret ptr @str.1871
+  ret ptr @str.1870
 
 if_else24851:
   br label %if_end24852
@@ -189995,7 +189994,7 @@ if_end24852:
   br i1 %cmp79763, label %if_then24853, label %if_else24854
 
 if_then24853:
-  ret ptr @str.1864
+  ret ptr @str.1863
 
 if_else24854:
   br label %if_end24855
@@ -190007,7 +190006,7 @@ if_end24855:
   br i1 %cmp79766, label %if_then24856, label %if_else24857
 
 if_then24856:
-  ret ptr @str.1872
+  ret ptr @str.1871
 
 if_else24857:
   br label %if_end24858
@@ -190019,7 +190018,7 @@ if_end24858:
   br i1 %cmp79769, label %if_then24859, label %if_else24860
 
 if_then24859:
-  ret ptr @str.1866
+  ret ptr @str.1865
 
 if_else24860:
   br label %if_end24861
@@ -190031,7 +190030,7 @@ if_end24861:
   br i1 %cmp79772, label %if_then24862, label %if_else24863
 
 if_then24862:
-  ret ptr @str.1867
+  ret ptr @str.1866
 
 if_else24863:
   br label %if_end24864
@@ -190043,7 +190042,7 @@ if_end24864:
   br i1 %cmp79775, label %if_then24865, label %if_else24866
 
 if_then24865:
-  ret ptr @str.1873
+  ret ptr @str.1872
 
 if_else24866:
   br label %if_end24867
@@ -190055,7 +190054,7 @@ if_end24867:
   br i1 %cmp79778, label %if_then24868, label %if_else24869
 
 if_then24868:
-  ret ptr @str.1874
+  ret ptr @str.1873
 
 if_else24869:
   br label %if_end24870
@@ -190067,7 +190066,7 @@ if_end24870:
   br i1 %cmp79781, label %if_then24871, label %if_else24872
 
 if_then24871:
-  ret ptr @str.1875
+  ret ptr @str.1874
 
 if_else24872:
   br label %if_end24873
@@ -190083,7 +190082,7 @@ entry:
   %key.addr_own = alloca i64, align 8
   store i64 0, ptr %key.addr_own
   %key_val79782 = load ptr, ptr %key.addr
-  %streq79783 = call i32 @ofs_str_eq(ptr %key_val79782, ptr @str.1876)
+  %streq79783 = call i32 @ofs_str_eq(ptr %key_val79782, ptr @str.1875)
   %cond79784 = icmp ne i32 %streq79783, 0
   br i1 %cond79784, label %if_then24874, label %if_else24875
 
@@ -190093,7 +190092,7 @@ if_then24874:
   br i1 %cond79786, label %if_then24877, label %if_else24878
 
 if_then24877:
-  ret ptr @str.1877
+  ret ptr @str.1876
 
 if_else24878:
   br label %if_end24879
@@ -190104,20 +190103,20 @@ if_end24879:
   br i1 %cond79788, label %if_then24880, label %if_else24881
 
 if_then24880:
-  ret ptr @str.1878
+  ret ptr @str.1877
 
 if_else24881:
   br label %if_end24882
 
 if_end24882:
-  ret ptr @str.1879
+  ret ptr @str.1878
 
 if_else24875:
   br label %if_end24876
 
 if_end24876:
   %key_val79789 = load ptr, ptr %key.addr
-  %streq79790 = call i32 @ofs_str_eq(ptr %key_val79789, ptr @str.1880)
+  %streq79790 = call i32 @ofs_str_eq(ptr %key_val79789, ptr @str.1879)
   %cond79791 = icmp ne i32 %streq79790, 0
   br i1 %cond79791, label %if_then24883, label %if_else24884
 
@@ -190127,7 +190126,7 @@ if_then24883:
   br i1 %cond79793, label %if_then24886, label %if_else24887
 
 if_then24886:
-  ret ptr @str.1881
+  ret ptr @str.1880
 
 if_else24887:
   br label %if_end24888
@@ -190138,20 +190137,20 @@ if_end24888:
   br i1 %cond79795, label %if_then24889, label %if_else24890
 
 if_then24889:
-  ret ptr @str.1882
+  ret ptr @str.1881
 
 if_else24890:
   br label %if_end24891
 
 if_end24891:
-  ret ptr @str.1883
+  ret ptr @str.1882
 
 if_else24884:
   br label %if_end24885
 
 if_end24885:
   %key_val79796 = load ptr, ptr %key.addr
-  %streq79797 = call i32 @ofs_str_eq(ptr %key_val79796, ptr @str.1884)
+  %streq79797 = call i32 @ofs_str_eq(ptr %key_val79796, ptr @str.1883)
   %cond79798 = icmp ne i32 %streq79797, 0
   br i1 %cond79798, label %if_then24892, label %if_else24893
 
@@ -190161,7 +190160,7 @@ if_then24892:
   br i1 %cond79800, label %if_then24895, label %if_else24896
 
 if_then24895:
-  ret ptr @str.1885
+  ret ptr @str.1884
 
 if_else24896:
   br label %if_end24897
@@ -190172,13 +190171,13 @@ if_end24897:
   br i1 %cond79802, label %if_then24898, label %if_else24899
 
 if_then24898:
-  ret ptr @str.1886
+  ret ptr @str.1885
 
 if_else24899:
   br label %if_end24900
 
 if_end24900:
-  ret ptr @str.1887
+  ret ptr @str.1886
 
 if_else24893:
   br label %if_end24894
@@ -190198,7 +190197,7 @@ entry:
   br i1 %cmp79806, label %if_then24901, label %if_else24902
 
 if_then24901:
-  ret ptr @str.1888
+  ret ptr @str.1887
 
 if_else24902:
   br label %if_end24903
@@ -190227,13 +190226,13 @@ sc_end24908:
   br i1 %sc79815, label %if_then24909, label %if_else24910
 
 if_then24909:
-  ret ptr @str.1889
+  ret ptr @str.1888
 
 if_else24910:
   br label %if_end24911
 
 if_end24911:
-  ret ptr @str.1890
+  ret ptr @str.1889
 
 if_else24905:
   br label %if_end24906
@@ -190250,7 +190249,7 @@ if_then24912:
   br i1 %cond79820, label %if_then24915, label %if_else24916
 
 if_then24915:
-  ret ptr @str.1891
+  ret ptr @str.1890
 
 if_else24916:
   br label %if_end24917
@@ -190261,7 +190260,7 @@ if_end24917:
   br i1 %cond79822, label %if_then24918, label %if_else24919
 
 if_then24918:
-  ret ptr @str.1892
+  ret ptr @str.1891
 
 if_else24919:
   br label %if_end24920
@@ -190334,7 +190333,7 @@ if_end24923:
 define void @reporter_detect_color() {
 entry:
   call void @reporter_init_esc()
-  %call79842 = call ptr @getenv(ptr @str.1899)
+  %call79842 = call ptr @getenv(ptr @str.1898)
   %strlen79843 = call i64 @ofs_str_len(ptr %call79842)
   %cmp79844 = icmp sgt i64 %strlen79843, 0
   br i1 %cmp79844, label %if_then24924, label %if_else24925
@@ -190347,8 +190346,8 @@ if_else24925:
   br label %if_end24926
 
 if_end24926:
-  %call79845 = call ptr @getenv(ptr @str.1900)
-  %streq79846 = call i32 @ofs_str_eq(ptr %call79845, ptr @str.1901)
+  %call79845 = call ptr @getenv(ptr @str.1899)
+  %streq79846 = call i32 @ofs_str_eq(ptr %call79845, ptr @str.1900)
   %cond79847 = icmp ne i32 %streq79846, 0
   br i1 %cond79847, label %if_then24927, label %if_else24928
 
@@ -190363,7 +190362,7 @@ if_end24929:
   %t79848 = alloca ptr, align 8
   %t79848_own = alloca i64, align 8
   store i64 0, ptr %t79848_own
-  %call79849 = call ptr @getenv(ptr @str.1900)
+  %call79849 = call ptr @getenv(ptr @str.1899)
   store ptr %call79849, ptr %t79848
   %t_val79850 = load ptr, ptr %t79848
   %streq79851 = call i32 @ofs_str_eq(ptr %t_val79850, ptr @str.75)
@@ -190497,7 +190496,7 @@ if_then24942:
 if_then24945:
   %sym79896 = alloca ptr, align 8
   %_ansi_run_val79897 = load ptr, ptr @_ansi_run
-  %call79898 = call ptr @_colored(ptr %_ansi_run_val79897, ptr @str.1902)
+  %call79898 = call ptr @_colored(ptr %_ansi_run_val79897, ptr @str.1901)
   store ptr %call79898, ptr %sym79896
   %verb79899 = alloca ptr, align 8
   %verb79899_own = alloca i64, align 8
@@ -190545,7 +190544,7 @@ if_then24948:
   call void @anim_finish()
   %sym79921 = alloca ptr, align 8
   %_ansi_ok_val79922 = load ptr, ptr @_ansi_ok
-  %call79923 = call ptr @_colored(ptr %_ansi_ok_val79922, ptr @str.1903)
+  %call79923 = call ptr @_colored(ptr %_ansi_ok_val79922, ptr @str.1902)
   store ptr %call79923, ptr %sym79921
   %verb79924 = alloca ptr, align 8
   %verb79924_own = alloca i64, align 8
@@ -190588,7 +190587,7 @@ if_end24953:
   %field_ptr79942 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
   %field79943 = load double, ptr %field_ptr79942
   %call79944 = call ptr @ofs_crystal_to_obsidian(double %field79943)
-  %concat79945 = call ptr @ofs_str_concat(ptr %call79944, ptr @str.1904)
+  %concat79945 = call ptr @ofs_str_concat(ptr %call79944, ptr @str.1903)
   %call79946 = call ptr @_colored(ptr %_ansi_dim_val79941, ptr %concat79945)
   store ptr %call79946, ptr %ms_txt79940
   %sym_val79947 = load ptr, ptr %sym79921
@@ -190626,7 +190625,7 @@ if_end24950:
 
 if_then24954:
   %sym79967 = alloca ptr, align 8
-  store ptr @str.1905, ptr %sym79967
+  store ptr @str.1904, ptr %sym79967
   %color79968 = alloca ptr, align 8
   %color79968_own = alloca i64, align 8
   store i64 0, ptr %color79968_own
@@ -190639,7 +190638,7 @@ if_then24954:
   br i1 %cmp79973, label %if_then24957, label %if_else24958
 
 if_then24957:
-  store ptr @str.1906, ptr %sym79967
+  store ptr @str.1905, ptr %sym79967
   %_ansi_warn_val79974 = load ptr, ptr @_ansi_warn
   %own_old79975 = load ptr, ptr %color79968
   %own_flag79976 = load i64, ptr %color79968_own
@@ -190659,7 +190658,7 @@ if_end24959:
   br i1 %cmp79980, label %if_then24960, label %if_else24961
 
 if_then24960:
-  store ptr @str.1907, ptr %sym79967
+  store ptr @str.1906, ptr %sym79967
   %_ansi_fault_val79981 = load ptr, ptr @_ansi_fault
   %own_old79982 = load ptr, ptr %color79968
   %own_flag79983 = load i64, ptr %color79968_own
@@ -190754,7 +190753,7 @@ if_end24968:
   %code_part_val80028 = load ptr, ptr %code_part80013
   %concat80029 = call ptr @ofs_str_concat(ptr %call80027, ptr %code_part_val80028)
   %call80030 = call ptr @_colored(ptr %color_val80024, ptr %concat80029)
-  %concat80031 = call ptr @ofs_str_concat(ptr @str.1908, ptr %call80030)
+  %concat80031 = call ptr @ofs_str_concat(ptr @str.1907, ptr %call80030)
   %concat80032 = call ptr @ofs_str_concat_ex(ptr %concat80031, ptr @str.264, i64 1)
   %field_ptr80033 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
   %field80034 = load ptr, ptr %field_ptr80033
@@ -190773,7 +190772,7 @@ if_then24969:
   %field_ptr80042 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
   %field80043 = load ptr, ptr %field_ptr80042
   %call80044 = call ptr @_colored(ptr %_ansi_dim_val80041, ptr %field80043)
-  %concat80045 = call ptr @ofs_str_concat(ptr @str.1908, ptr %call80044)
+  %concat80045 = call ptr @ofs_str_concat(ptr @str.1907, ptr %call80044)
   call void @_emit_line(ptr %concat80045)
   call void @ofs_str_release(ptr %concat80045, i64 1)
   br label %if_end24971
@@ -190793,7 +190792,7 @@ if_then24972:
   %field_ptr80051 = getelementptr inbounds %Event, ptr %e, i32 0, i32 11
   %field80052 = load ptr, ptr %field_ptr80051
   %call80053 = call ptr @_colored(ptr %_ansi_dim_val80050, ptr %field80052)
-  %concat80054 = call ptr @ofs_str_concat(ptr @str.1908, ptr %call80053)
+  %concat80054 = call ptr @ofs_str_concat(ptr @str.1907, ptr %call80053)
   call void @_emit_line(ptr %concat80054)
   call void @ofs_str_release(ptr %concat80054, i64 1)
   br label %if_end24974
@@ -190834,22 +190833,22 @@ if_then24975:
   %field_ptr80069 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
   %field80070 = load double, ptr %field_ptr80069
   %call80071 = call ptr @ofs_crystal_to_obsidian(double %field80070)
-  %concat80072 = call ptr @ofs_str_concat(ptr %call80071, ptr @str.1904)
+  %concat80072 = call ptr @ofs_str_concat(ptr %call80071, ptr @str.1903)
   %call80073 = call ptr @_colored(ptr %_ansi_dim_val80068, ptr %concat80072)
   store ptr %call80073, ptr %ms_txt80067
   %_ansi_ok_val80074 = load ptr, ptr @_ansi_ok
-  %call80075 = call ptr @_colored(ptr %_ansi_ok_val80074, ptr @str.1909)
+  %call80075 = call ptr @_colored(ptr %_ansi_ok_val80074, ptr @str.1908)
   %concat80076 = call ptr @ofs_str_concat(ptr %call80075, ptr @str.264)
   %_ansi_run_val80077 = load ptr, ptr @_ansi_run
   %field_ptr80078 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
   %field80079 = load ptr, ptr %field_ptr80078
   %call80080 = call ptr @_colored(ptr %_ansi_run_val80077, ptr %field80079)
   %concat80081 = call ptr @ofs_str_concat_ex(ptr %concat80076, ptr %call80080, i64 1)
-  %concat80082 = call ptr @ofs_str_concat_ex(ptr %concat80081, ptr @str.1910, i64 1)
+  %concat80082 = call ptr @ofs_str_concat_ex(ptr %concat80081, ptr @str.1909, i64 1)
   %field_ptr80083 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
   %field80084 = load ptr, ptr %field_ptr80083
   %concat80085 = call ptr @ofs_str_concat_ex(ptr %concat80082, ptr %field80084, i64 1)
-  %concat80086 = call ptr @ofs_str_concat_ex(ptr %concat80085, ptr @str.1911, i64 1)
+  %concat80086 = call ptr @ofs_str_concat_ex(ptr %concat80085, ptr @str.1910, i64 1)
   %ms_txt_val80087 = load ptr, ptr %ms_txt80067
   %concat80088 = call ptr @ofs_str_concat_ex(ptr %concat80086, ptr %ms_txt_val80087, i64 1)
   call void @_emit_line(ptr %concat80088)
@@ -190904,7 +190903,7 @@ if_end24983:
   br i1 %cmp80102, label %if_then24984, label %if_else24985
 
 if_then24984:
-  ret ptr @str.1778
+  ret ptr @str.1777
 
 if_else24985:
   br label %if_end24986
@@ -190916,7 +190915,7 @@ if_end24986:
   br i1 %cmp80105, label %if_then24987, label %if_else24988
 
 if_then24987:
-  ret ptr @str.1912
+  ret ptr @str.1911
 
 if_else24988:
   br label %if_end24989
@@ -190928,7 +190927,7 @@ if_end24989:
   br i1 %cmp80108, label %if_then24990, label %if_else24991
 
 if_then24990:
-  ret ptr @str.1913
+  ret ptr @str.1912
 
 if_else24991:
   br label %if_end24992
@@ -190940,7 +190939,7 @@ if_end24992:
   br i1 %cmp80111, label %if_then24993, label %if_else24994
 
 if_then24993:
-  ret ptr @str.1914
+  ret ptr @str.1913
 
 if_else24994:
   br label %if_end24995
@@ -190964,7 +190963,7 @@ if_end24998:
   br i1 %cmp80117, label %if_then24999, label %if_else25000
 
 if_then24999:
-  ret ptr @str.1915
+  ret ptr @str.1914
 
 if_else25000:
   br label %if_end25001
@@ -190976,7 +190975,7 @@ if_end25001:
   br i1 %cmp80120, label %if_then25002, label %if_else25003
 
 if_then25002:
-  ret ptr @str.1909
+  ret ptr @str.1908
 
 if_else25003:
   br label %if_end25004
@@ -190988,7 +190987,7 @@ if_end25004:
   br i1 %cmp80123, label %if_then25005, label %if_else25006
 
 if_then25005:
-  ret ptr @str.1916
+  ret ptr @str.1915
 
 if_else25006:
   br label %if_end25007
@@ -191007,7 +191006,7 @@ entry:
   br i1 %cmp80126, label %if_then25008, label %if_else25009
 
 if_then25008:
-  ret ptr @str.1888
+  ret ptr @str.1887
 
 if_else25009:
   br label %if_end25010
@@ -191019,7 +191018,7 @@ if_end25010:
   br i1 %cmp80129, label %if_then25011, label %if_else25012
 
 if_then25011:
-  ret ptr @str.1890
+  ret ptr @str.1889
 
 if_else25012:
   br label %if_end25013
@@ -191050,7 +191049,7 @@ entry:
   br i1 %cmp80135, label %if_then25017, label %if_else25018
 
 if_then25017:
-  ret ptr @str.1917
+  ret ptr @str.1916
 
 if_else25018:
   br label %if_end25019
@@ -191062,7 +191061,7 @@ if_end25019:
   br i1 %cmp80138, label %if_then25020, label %if_else25021
 
 if_then25020:
-  ret ptr @str.1918
+  ret ptr @str.1917
 
 if_else25021:
   br label %if_end25022
@@ -191074,7 +191073,7 @@ if_end25022:
   br i1 %cmp80141, label %if_then25023, label %if_else25024
 
 if_then25023:
-  ret ptr @str.1919
+  ret ptr @str.1918
 
 if_else25024:
   br label %if_end25025
@@ -191086,7 +191085,7 @@ if_end25025:
   br i1 %cmp80144, label %if_then25026, label %if_else25027
 
 if_then25026:
-  ret ptr @str.1920
+  ret ptr @str.1919
 
 if_else25027:
   br label %if_end25028
@@ -191098,7 +191097,7 @@ if_end25028:
   br i1 %cmp80147, label %if_then25029, label %if_else25030
 
 if_then25029:
-  ret ptr @str.1921
+  ret ptr @str.1920
 
 if_else25030:
   br label %if_end25031
@@ -191239,7 +191238,7 @@ if_end25043:
   %frames_ascii80198 = alloca ptr, align 8
   %frames_ascii80198_own = alloca i64, align 8
   store i64 0, ptr %frames_ascii80198_own
-  store ptr @str.1922, ptr %frames_ascii80198
+  store ptr @str.1921, ptr %frames_ascii80198
   %idx80199 = alloca i64, align 8
   %_anim_frame_val80200 = load i64, ptr @_anim_frame
   %op80201 = srem i64 %_anim_frame_val80200, 4
@@ -191264,7 +191263,7 @@ if_end25043:
   %call80211 = call ptr @_clear_line_seq()
   %concat80212 = call ptr @ofs_str_concat(ptr %call80211, ptr @str.251)
   %_ansi_run_val80213 = load ptr, ptr @_ansi_run
-  %call80214 = call ptr @_colored(ptr %_ansi_run_val80213, ptr @str.1902)
+  %call80214 = call ptr @_colored(ptr %_ansi_run_val80213, ptr @str.1901)
   %concat80215 = call ptr @ofs_str_concat_ex(ptr %concat80212, ptr %call80214, i64 1)
   %concat80216 = call ptr @ofs_str_concat_ex(ptr %concat80215, ptr @str.264, i64 1)
   %verb_val80217 = load ptr, ptr %verb80206
@@ -191362,7 +191361,7 @@ if_end25052:
   %field_ptr80249 = getelementptr inbounds %Event, ptr %e, i32 0, i32 0
   %field80250 = load i64, ptr %field_ptr80249
   %call80251 = call ptr @event_kind_name(i64 %field80250)
-  %concat80252 = call ptr @ofs_str_concat(ptr @str.1923, ptr %call80251)
+  %concat80252 = call ptr @ofs_str_concat(ptr @str.1922, ptr %call80251)
   %concat80253 = call ptr @ofs_str_concat_ex(ptr %concat80252, ptr @str.138, i64 1)
   store ptr %concat80253, ptr %line80248
   store i64 1, ptr %line80248_own
@@ -191388,7 +191387,7 @@ sc_end25054:
 if_then25055:
   %line_val80263 = load ptr, ptr %line80248
   %own_flag80265 = load i64, ptr %line80248_own
-  %concat80264 = call ptr @ofs_str_concat_ex(ptr %line_val80263, ptr @str.1924, i64 %own_flag80265)
+  %concat80264 = call ptr @ofs_str_concat_ex(ptr %line_val80263, ptr @str.1923, i64 %own_flag80265)
   %_locale_val80266 = load ptr, ptr @_locale
   %concat80267 = call ptr @ofs_str_concat_ex(ptr %concat80264, ptr %_locale_val80266, i64 1)
   %concat80268 = call ptr @ofs_str_concat_ex(ptr %concat80267, ptr @str.138, i64 1)
@@ -191424,7 +191423,7 @@ sc_end25059:
 if_then25060:
   %line_val80279 = load ptr, ptr %line80248
   %own_flag80281 = load i64, ptr %line80248_own
-  %concat80280 = call ptr @ofs_str_concat_ex(ptr %line_val80279, ptr @str.1925, i64 %own_flag80281)
+  %concat80280 = call ptr @ofs_str_concat_ex(ptr %line_val80279, ptr @str.1924, i64 %own_flag80281)
   %field_ptr80282 = getelementptr inbounds %Event, ptr %e, i32 0, i32 1
   %field80283 = load i64, ptr %field_ptr80282
   %call80284 = call ptr @stage_name(i64 %field80283)
@@ -191447,7 +191446,7 @@ if_end25062:
 if_then25063:
   %line_val80291 = load ptr, ptr %line80248
   %own_flag80293 = load i64, ptr %line80248_own
-  %concat80292 = call ptr @ofs_str_concat_ex(ptr %line_val80291, ptr @str.1926, i64 %own_flag80293)
+  %concat80292 = call ptr @ofs_str_concat_ex(ptr %line_val80291, ptr @str.1925, i64 %own_flag80293)
   %field_ptr80294 = getelementptr inbounds %Event, ptr %e, i32 0, i32 2
   %field80295 = load i64, ptr %field_ptr80294
   %call80296 = call ptr @level_name(i64 %field80295)
@@ -191457,7 +191456,7 @@ if_then25063:
   store i64 1, ptr %line80248_own
   %line_val80299 = load ptr, ptr %line80248
   %own_flag80301 = load i64, ptr %line80248_own
-  %concat80300 = call ptr @ofs_str_concat_ex(ptr %line_val80299, ptr @str.1927, i64 %own_flag80301)
+  %concat80300 = call ptr @ofs_str_concat_ex(ptr %line_val80299, ptr @str.1926, i64 %own_flag80301)
   %field_ptr80302 = getelementptr inbounds %Event, ptr %e, i32 0, i32 3
   %field80303 = load ptr, ptr %field_ptr80302
   %concat80304 = call ptr @ofs_str_concat_ex(ptr %concat80300, ptr %field80303, i64 1)
@@ -191466,7 +191465,7 @@ if_then25063:
   store i64 1, ptr %line80248_own
   %line_val80306 = load ptr, ptr %line80248
   %own_flag80308 = load i64, ptr %line80248_own
-  %concat80307 = call ptr @ofs_str_concat_ex(ptr %line_val80306, ptr @str.1928, i64 %own_flag80308)
+  %concat80307 = call ptr @ofs_str_concat_ex(ptr %line_val80306, ptr @str.1927, i64 %own_flag80308)
   %field_ptr80309 = getelementptr inbounds %Event, ptr %e, i32 0, i32 7
   %field80310 = load i64, ptr %field_ptr80309
   %stone_to_str80311 = call ptr @ofs_stone_to_obsidian(i64 %field80310)
@@ -191475,7 +191474,7 @@ if_then25063:
   store i64 1, ptr %line80248_own
   %line_val80313 = load ptr, ptr %line80248
   %own_flag80315 = load i64, ptr %line80248_own
-  %concat80314 = call ptr @ofs_str_concat_ex(ptr %line_val80313, ptr @str.1929, i64 %own_flag80315)
+  %concat80314 = call ptr @ofs_str_concat_ex(ptr %line_val80313, ptr @str.1928, i64 %own_flag80315)
   %field_ptr80316 = getelementptr inbounds %Event, ptr %e, i32 0, i32 8
   %field80317 = load i64, ptr %field_ptr80316
   %stone_to_str80318 = call ptr @ofs_stone_to_obsidian(i64 %field80317)
@@ -191491,7 +191490,7 @@ if_then25063:
 if_then25066:
   %line_val80324 = load ptr, ptr %line80248
   %own_flag80326 = load i64, ptr %line80248_own
-  %concat80325 = call ptr @ofs_str_concat_ex(ptr %line_val80324, ptr @str.1930, i64 %own_flag80326)
+  %concat80325 = call ptr @ofs_str_concat_ex(ptr %line_val80324, ptr @str.1929, i64 %own_flag80326)
   %field_ptr80327 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
   %field80328 = load ptr, ptr %field_ptr80327
   %concat80329 = call ptr @ofs_str_concat_ex(ptr %concat80325, ptr %field80328, i64 1)
@@ -191513,7 +191512,7 @@ if_end25068:
 if_then25069:
   %line_val80335 = load ptr, ptr %line80248
   %own_flag80337 = load i64, ptr %line80248_own
-  %concat80336 = call ptr @ofs_str_concat_ex(ptr %line_val80335, ptr @str.1931, i64 %own_flag80337)
+  %concat80336 = call ptr @ofs_str_concat_ex(ptr %line_val80335, ptr @str.1930, i64 %own_flag80337)
   %field_ptr80338 = getelementptr inbounds %Event, ptr %e, i32 0, i32 9
   %field80339 = load ptr, ptr %field_ptr80338
   %call80340 = call ptr @tr_msg(ptr %field80339)
@@ -191530,7 +191529,7 @@ if_end25071:
   %args_part80343 = alloca ptr, align 8
   %args_part80343_own = alloca i64, align 8
   store i64 0, ptr %args_part80343_own
-  store ptr @str.1932, ptr %args_part80343
+  store ptr @str.1931, ptr %args_part80343
   %has_args80344 = alloca i32, align 8
   store i32 0, ptr %has_args80344
   %field_ptr80345 = getelementptr inbounds %Event, ptr %e, i32 0, i32 10
@@ -191635,7 +191634,7 @@ if_end25065:
 if_then25084:
   %line_val80387 = load ptr, ptr %line80248
   %own_flag80389 = load i64, ptr %line80248_own
-  %concat80388 = call ptr @ofs_str_concat_ex(ptr %line_val80387, ptr @str.1933, i64 %own_flag80389)
+  %concat80388 = call ptr @ofs_str_concat_ex(ptr %line_val80387, ptr @str.1932, i64 %own_flag80389)
   %field_ptr80390 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
   %field80391 = load ptr, ptr %field_ptr80390
   %concat80392 = call ptr @ofs_str_concat_ex(ptr %concat80388, ptr %field80391, i64 1)
@@ -191657,7 +191656,7 @@ if_end25086:
 if_then25087:
   %line_val80398 = load ptr, ptr %line80248
   %own_flag80400 = load i64, ptr %line80248_own
-  %concat80399 = call ptr @ofs_str_concat_ex(ptr %line_val80398, ptr @str.1934, i64 %own_flag80400)
+  %concat80399 = call ptr @ofs_str_concat_ex(ptr %line_val80398, ptr @str.1933, i64 %own_flag80400)
   %field_ptr80401 = getelementptr inbounds %Event, ptr %e, i32 0, i32 5
   %field80402 = load ptr, ptr %field_ptr80401
   %concat80403 = call ptr @ofs_str_concat_ex(ptr %concat80399, ptr %field80402, i64 1)
@@ -191678,7 +191677,7 @@ if_end25089:
 if_then25090:
   %line_val80408 = load ptr, ptr %line80248
   %own_flag80410 = load i64, ptr %line80248_own
-  %concat80409 = call ptr @ofs_str_concat_ex(ptr %line_val80408, ptr @str.1935, i64 %own_flag80410)
+  %concat80409 = call ptr @ofs_str_concat_ex(ptr %line_val80408, ptr @str.1934, i64 %own_flag80410)
   %field_ptr80411 = getelementptr inbounds %Event, ptr %e, i32 0, i32 6
   %field80412 = load double, ptr %field_ptr80411
   %call80413 = call ptr @ofs_crystal_to_obsidian(double %field80412)
@@ -191700,7 +191699,7 @@ if_end25092:
 if_then25093:
   %line_val80419 = load ptr, ptr %line80248
   %own_flag80421 = load i64, ptr %line80248_own
-  %concat80420 = call ptr @ofs_str_concat_ex(ptr %line_val80419, ptr @str.1936, i64 %own_flag80421)
+  %concat80420 = call ptr @ofs_str_concat_ex(ptr %line_val80419, ptr @str.1935, i64 %own_flag80421)
   %_json_total_ms_val80422 = load double, ptr @_json_total_ms
   %call80423 = call ptr @ofs_crystal_to_obsidian(double %_json_total_ms_val80422)
   %concat80424 = call ptr @ofs_str_concat_ex(ptr %concat80420, ptr %call80423, i64 1)
@@ -191743,7 +191742,7 @@ if_then25099:
   %field80438 = load i64, ptr %field_ptr80437
   %call80439 = call ptr @tr_stage(i64 %field80438)
   %concat80440 = call ptr @ofs_str_concat(ptr @str.134, ptr %call80439)
-  %concat80441 = call ptr @ofs_str_concat_ex(ptr %concat80440, ptr @str.1937, i64 1)
+  %concat80441 = call ptr @ofs_str_concat_ex(ptr %concat80440, ptr @str.1936, i64 1)
   %field_ptr80442 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
   %field80443 = load ptr, ptr %field_ptr80442
   %concat80444 = call ptr @ofs_str_concat_ex(ptr %concat80441, ptr %field80443, i64 1)
@@ -191805,13 +191804,13 @@ if_end25107:
   %field80465 = load i64, ptr %field_ptr80464
   %call80466 = call ptr @tr_stage(i64 %field80465)
   %concat80467 = call ptr @ofs_str_concat(ptr @str.251, ptr %call80466)
-  %concat80468 = call ptr @ofs_str_concat_ex(ptr %concat80467, ptr @str.1938, i64 1)
+  %concat80468 = call ptr @ofs_str_concat_ex(ptr %concat80467, ptr @str.1937, i64 1)
   %info_txt_val80469 = load ptr, ptr %info_txt80453
   %concat80470 = call ptr @ofs_str_concat_ex(ptr %concat80468, ptr %info_txt_val80469, i64 1)
-  %concat80471 = call ptr @ofs_str_concat_ex(ptr %concat80470, ptr @str.1910, i64 1)
+  %concat80471 = call ptr @ofs_str_concat_ex(ptr %concat80470, ptr @str.1909, i64 1)
   %ms_txt_val80472 = load ptr, ptr %ms_txt80449
   %concat80473 = call ptr @ofs_str_concat_ex(ptr %concat80471, ptr %ms_txt_val80472, i64 1)
-  %concat80474 = call ptr @ofs_str_concat_ex(ptr %concat80473, ptr @str.1904, i64 1)
+  %concat80474 = call ptr @ofs_str_concat_ex(ptr %concat80473, ptr @str.1903, i64 1)
   call void @_emit_line(ptr %concat80474)
   call void @ofs_str_release(ptr %concat80474, i64 1)
   %sf_val80475 = load ptr, ptr %info_txt80453
@@ -191961,14 +191960,14 @@ if_then25120:
   store ptr %field80549, ptr %size_txt80547
   %field_ptr80550 = getelementptr inbounds %Event, ptr %e, i32 0, i32 4
   %field80551 = load ptr, ptr %field_ptr80550
-  %concat80552 = call ptr @ofs_str_concat(ptr @str.1939, ptr %field80551)
-  %concat80553 = call ptr @ofs_str_concat_ex(ptr %concat80552, ptr @str.1910, i64 1)
+  %concat80552 = call ptr @ofs_str_concat(ptr @str.1938, ptr %field80551)
+  %concat80553 = call ptr @ofs_str_concat_ex(ptr %concat80552, ptr @str.1909, i64 1)
   %size_txt_val80554 = load ptr, ptr %size_txt80547
   %concat80555 = call ptr @ofs_str_concat_ex(ptr %concat80553, ptr %size_txt_val80554, i64 1)
-  %concat80556 = call ptr @ofs_str_concat_ex(ptr %concat80555, ptr @str.1911, i64 1)
+  %concat80556 = call ptr @ofs_str_concat_ex(ptr %concat80555, ptr @str.1910, i64 1)
   %ms_txt_val80557 = load ptr, ptr %ms_txt80543
   %concat80558 = call ptr @ofs_str_concat_ex(ptr %concat80556, ptr %ms_txt_val80557, i64 1)
-  %concat80559 = call ptr @ofs_str_concat_ex(ptr %concat80558, ptr @str.1904, i64 1)
+  %concat80559 = call ptr @ofs_str_concat_ex(ptr %concat80558, ptr @str.1903, i64 1)
   call void @_emit_line(ptr %concat80559)
   call void @ofs_str_release(ptr %concat80559, i64 1)
   %sf_val80560 = load ptr, ptr %size_txt80547
@@ -192523,7 +192522,7 @@ if_else25194:
 if_end25195:
   %line_val80776 = load ptr, ptr %line.addr
   %call80777 = call ptr @ofs_str_substr(ptr %line_val80776, i64 0, i64 10)
-  %streq80778 = call i32 @ofs_str_eq(ptr %call80777, ptr @str.1940)
+  %streq80778 = call i32 @ofs_str_eq(ptr %call80777, ptr @str.1939)
   %sf_val80779 = load ptr, ptr %line.addr
   %sf_own80780 = load i64, ptr %line.addr_own
   call void @ofs_str_release(ptr %sf_val80779, i64 %sf_own80780)
@@ -192556,7 +192555,7 @@ if_else25197:
 if_end25198:
   %line_val80788 = load ptr, ptr %line.addr
   %call80789 = call ptr @ofs_str_substr(ptr %line_val80788, i64 0, i64 8)
-  %streq80790 = call i32 @ofs_str_eq(ptr %call80789, ptr @str.1941)
+  %streq80790 = call i32 @ofs_str_eq(ptr %call80789, ptr @str.1940)
   %cond80791 = icmp ne i32 %streq80790, 0
   %not80792 = xor i1 %cond80791, true
   br i1 %not80792, label %if_then25199, label %if_else25200
@@ -192573,7 +192572,7 @@ if_else25200:
 if_end25201:
   %line_val80795 = load ptr, ptr %line.addr
   %call80796 = call ptr @ofs_str_substr(ptr %line_val80795, i64 0, i64 10)
-  %streq80797 = call i32 @ofs_str_eq(ptr %call80796, ptr @str.1940)
+  %streq80797 = call i32 @ofs_str_eq(ptr %call80796, ptr @str.1939)
   %cond80798 = icmp ne i32 %streq80797, 0
   br i1 %cond80798, label %if_then25202, label %if_else25203
 
@@ -192778,7 +192777,7 @@ while_body25229:
 
 if_then25231:
   %out_val80872 = load ptr, ptr %out80857
-  %concat80873 = call ptr @ofs_str_concat(ptr %out_val80872, ptr @str.1942)
+  %concat80873 = call ptr @ofs_str_concat(ptr %out_val80872, ptr @str.1941)
   %sf_val80874 = load ptr, ptr %out80857
   %sf_own80875 = load i64, ptr %out80857_own
   call void @ofs_str_release(ptr %sf_val80874, i64 %sf_own80875)
@@ -192823,7 +192822,7 @@ if_end25236:
 
 while_end25230:
   %out_val80891 = load ptr, ptr %out80857
-  %concat80892 = call ptr @ofs_str_concat(ptr %out_val80891, ptr @str.1942)
+  %concat80892 = call ptr @ofs_str_concat(ptr %out_val80891, ptr @str.1941)
   %sf_val80893 = load ptr, ptr %out80857
   %sf_own80894 = load i64, ptr %out80857_own
   call void @ofs_str_release(ptr %sf_val80893, i64 %sf_own80894)
@@ -193074,7 +193073,7 @@ entry:
   %call80991 = call ptr @hdr_trim(ptr %line_val80990)
   store ptr %call80991, ptr %t80989
   %t_val80992 = load ptr, ptr %t80989
-  %call80993 = call i32 @hdr_starts(ptr %t_val80992, ptr @str.1943)
+  %call80993 = call i32 @hdr_starts(ptr %t_val80992, ptr @str.1942)
   %cond80994 = icmp ne i32 %call80993, 0
   br i1 %cond80994, label %if_then25260, label %if_else25261
 
@@ -193179,14 +193178,14 @@ if_end25272:
   %sc_slot81041 = alloca i1, align 1
   %sc_slot81042 = alloca i1, align 1
   %t_val81043 = load ptr, ptr %t80989
-  %call81044 = call i32 @hdr_starts(ptr %t_val81043, ptr @str.1944)
+  %call81044 = call i32 @hdr_starts(ptr %t_val81043, ptr @str.1943)
   %cond81045 = icmp ne i32 %call81044, 0
   store i1 %cond81045, ptr %sc_slot81042
   br i1 %cond81045, label %sc_end25282, label %sc_rhs25281
 
 sc_rhs25281:
   %t_val81046 = load ptr, ptr %t80989
-  %call81047 = call i32 @hdr_starts(ptr %t_val81046, ptr @str.1945)
+  %call81047 = call i32 @hdr_starts(ptr %t_val81046, ptr @str.1944)
   %cond81048 = icmp ne i32 %call81047, 0
   store i1 %cond81048, ptr %sc_slot81042
   br label %sc_end25282
@@ -193198,7 +193197,7 @@ sc_end25282:
 
 sc_rhs25279:
   %t_val81050 = load ptr, ptr %t80989
-  %call81051 = call i32 @hdr_starts(ptr %t_val81050, ptr @str.1946)
+  %call81051 = call i32 @hdr_starts(ptr %t_val81050, ptr @str.1945)
   %cond81052 = icmp ne i32 %call81051, 0
   store i1 %cond81052, ptr %sc_slot81041
   br label %sc_end25280
@@ -193210,7 +193209,7 @@ sc_end25280:
 
 sc_rhs25277:
   %t_val81054 = load ptr, ptr %t80989
-  %call81055 = call i32 @hdr_starts(ptr %t_val81054, ptr @str.1947)
+  %call81055 = call i32 @hdr_starts(ptr %t_val81054, ptr @str.1946)
   %cond81056 = icmp ne i32 %call81055, 0
   store i1 %cond81056, ptr %sc_slot81040
   br label %sc_end25278
@@ -193222,7 +193221,7 @@ sc_end25278:
 
 sc_rhs25275:
   %t_val81058 = load ptr, ptr %t80989
-  %call81059 = call i32 @hdr_starts(ptr %t_val81058, ptr @str.1948)
+  %call81059 = call i32 @hdr_starts(ptr %t_val81058, ptr @str.1947)
   %cond81060 = icmp ne i32 %call81059, 0
   store i1 %cond81060, ptr %sc_slot81039
   br label %sc_end25276
@@ -193234,7 +193233,7 @@ sc_end25276:
 
 sc_rhs25273:
   %t_val81062 = load ptr, ptr %t80989
-  %call81063 = call i32 @hdr_starts(ptr %t_val81062, ptr @str.1949)
+  %call81063 = call i32 @hdr_starts(ptr %t_val81062, ptr @str.1948)
   %cond81064 = icmp ne i32 %call81063, 0
   store i1 %cond81064, ptr %sc_slot81038
   br label %sc_end25274
@@ -193710,8 +193709,8 @@ if_then25341:
   %file_line_val81247 = load i64, ptr %file_line.addr
   %kw_val81248 = load ptr, ptr %kw81223
   %concat81249 = call ptr @ofs_str_concat(ptr @str.173, ptr %kw_val81248)
-  %concat81250 = call ptr @ofs_str_concat_ex(ptr %concat81249, ptr @str.1950, i64 1)
-  call void @hdr_error(ptr %path_val81246, i64 %file_line_val81247, ptr %concat81250, ptr @str.1951)
+  %concat81250 = call ptr @ofs_str_concat_ex(ptr %concat81249, ptr @str.1949, i64 1)
+  call void @hdr_error(ptr %path_val81246, i64 %file_line_val81247, ptr %concat81250, ptr @str.1950)
   call void @ofs_str_release(ptr %concat81250, i64 1)
   %sf_val81251 = load ptr, ptr %kw81223
   %sf_own81252 = load i64, ptr %kw81223_own
@@ -193729,7 +193728,7 @@ if_else25342:
 
 if_end25343:
   %kw_val81257 = load ptr, ptr %kw81223
-  %streq81258 = call i32 @ofs_str_eq(ptr %kw_val81257, ptr @str.1952)
+  %streq81258 = call i32 @ofs_str_eq(ptr %kw_val81257, ptr @str.1951)
   %cond81259 = icmp ne i32 %streq81258, 0
   br i1 %cond81259, label %if_then25344, label %if_else25345
 
@@ -193835,9 +193834,9 @@ if_then25362:
   %op81301 = sub i64 %strlen81300, 8
   %call81302 = call ptr @ofs_str_substr(ptr %t_val81298, i64 8, i64 %op81301)
   %call81303 = call ptr @hdr_trim(ptr %call81302)
-  %concat81304 = call ptr @ofs_str_concat(ptr @str.1953, ptr %call81303)
-  %concat81305 = call ptr @ofs_str_concat_ex(ptr %concat81304, ptr @str.1954, i64 1)
-  call void @hdr_error(ptr %path_val81296, i64 %file_line_val81297, ptr %concat81305, ptr @str.1955)
+  %concat81304 = call ptr @ofs_str_concat(ptr @str.1952, ptr %call81303)
+  %concat81305 = call ptr @ofs_str_concat_ex(ptr %concat81304, ptr @str.1953, i64 1)
+  call void @hdr_error(ptr %path_val81296, i64 %file_line_val81297, ptr %concat81305, ptr @str.1954)
   call void @ofs_str_release(ptr %concat81305, i64 1)
   %sf_val81306 = load ptr, ptr %v81260
   %sf_own81307 = load i64, ptr %v81260_own
@@ -193866,7 +193865,7 @@ if_end25364:
 if_then25365:
   %path_val81318 = load ptr, ptr %path.addr
   %file_line_val81319 = load i64, ptr %file_line.addr
-  call void @hdr_error(ptr %path_val81318, i64 %file_line_val81319, ptr @str.1956, ptr @str.1957)
+  call void @hdr_error(ptr %path_val81318, i64 %file_line_val81319, ptr @str.1955, ptr @str.1956)
   %sf_val81320 = load ptr, ptr %v81260
   %sf_own81321 = load i64, ptr %v81260_own
   call void @ofs_str_release(ptr %sf_val81320, i64 %sf_own81321)
@@ -193966,7 +193965,7 @@ arr_end25373:
 
 sc_rhs25379:
   %kw_val81368 = load ptr, ptr %kw81223
-  %streq81369 = call i32 @ofs_str_eq(ptr %kw_val81368, ptr @str.1958)
+  %streq81369 = call i32 @ofs_str_eq(ptr %kw_val81368, ptr @str.1957)
   %cond81370 = icmp ne i32 %streq81369, 0
   store i1 %cond81370, ptr %sc_slot81365
   br label %sc_end25380
@@ -194012,11 +194011,11 @@ if_then25384:
   %file_line_val81382 = load i64, ptr %file_line.addr
   %wi_val81383 = load ptr, ptr %wi81344
   %concat81384 = call ptr @ofs_str_concat(ptr @str.173, ptr %wi_val81383)
-  %concat81385 = call ptr @ofs_str_concat_ex(ptr %concat81384, ptr @str.1959, i64 1)
+  %concat81385 = call ptr @ofs_str_concat_ex(ptr %concat81384, ptr @str.1958, i64 1)
   %kw_val81386 = load ptr, ptr %kw81223
   %concat81387 = call ptr @ofs_str_concat_ex(ptr %concat81385, ptr %kw_val81386, i64 1)
   %concat81388 = call ptr @ofs_str_concat_ex(ptr %concat81387, ptr @str.173, i64 1)
-  call void @hdr_error(ptr %path_val81381, i64 %file_line_val81382, ptr %concat81388, ptr @str.1960)
+  call void @hdr_error(ptr %path_val81381, i64 %file_line_val81382, ptr %concat81388, ptr @str.1959)
   call void @ofs_str_release(ptr %concat81388, i64 1)
   %sf_val81389 = load ptr, ptr %wi81344
   %sf_own81390 = load i64, ptr %wi81344_own
@@ -194054,7 +194053,7 @@ if_end25383:
 
 while_end25370:
   %kw_val81404 = load ptr, ptr %kw81223
-  %streq81405 = call i32 @ofs_str_eq(ptr %kw_val81404, ptr @str.1961)
+  %streq81405 = call i32 @ofs_str_eq(ptr %kw_val81404, ptr @str.1960)
   %cond81406 = icmp ne i32 %streq81405, 0
   br i1 %cond81406, label %if_then25387, label %if_else25388
 
@@ -194072,7 +194071,7 @@ if_else25388:
 if_then25390:
   %path_val81411 = load ptr, ptr %path.addr
   %file_line_val81412 = load i64, ptr %file_line.addr
-  call void @hdr_error(ptr %path_val81411, i64 %file_line_val81412, ptr @str.1962, ptr @str.1963)
+  call void @hdr_error(ptr %path_val81411, i64 %file_line_val81412, ptr @str.1961, ptr @str.1962)
   %sf_val81413 = load ptr, ptr %kw81223
   %sf_own81414 = load i64, ptr %kw81223_own
   call void @ofs_str_release(ptr %sf_val81413, i64 %sf_own81414)
@@ -194272,7 +194271,7 @@ entry:
   %p.addr_own = alloca i64, align 8
   store i64 0, ptr %p.addr_own
   %std81494 = alloca ptr, align 8
-  %call81495 = call ptr @_env(ptr @str.1964)
+  %call81495 = call ptr @_env(ptr @str.1963)
   store ptr %call81495, ptr %std81494
   %std_val81496 = load ptr, ptr %std81494
   %strlen81497 = call i64 @ofs_str_len(ptr %std_val81496)
@@ -194315,7 +194314,7 @@ if_then25414:
   %strlen81519 = call i64 @ofs_str_len(ptr %std_val81518)
   %op81520 = sub i64 %strlen81517, %strlen81519
   %call81521 = call ptr @ofs_str_substr(ptr %p_val81513, i64 %strlen81515, i64 %op81520)
-  %concat81522 = call ptr @ofs_str_concat(ptr @str.1965, ptr %call81521)
+  %concat81522 = call ptr @ofs_str_concat(ptr @str.1964, ptr %call81521)
   ret ptr %concat81522
 
 if_else25415:
@@ -194400,7 +194399,7 @@ if_then25424:
   br i1 %cmp81554, label %if_then25427, label %if_else25428
 
 if_then25427:
-  call void @echo_obsidian(ptr @str.1966)
+  call void @echo_obsidian(ptr @str.1965)
   br label %if_end25429
 
 if_else25428:
@@ -194416,7 +194415,7 @@ if_end25429:
   %m_val81558 = load i64, ptr %m81527
   %call81559 = call i64 @ast_mod_stratum(i64 %m_val81558)
   %call81560 = call ptr @ast_stratum_name(i64 %call81559)
-  %concat81561 = call ptr @ofs_str_concat(ptr @str.1945, ptr %call81560)
+  %concat81561 = call ptr @ofs_str_concat(ptr @str.1944, ptr %call81560)
   store ptr %concat81561, ptr %st81557
   store i64 1, ptr %st81557_own
   %sd_val81562 = load i64, ptr %sd81532
@@ -194427,7 +194426,7 @@ if_end25429:
 if_then25430:
   %st_val81565 = load ptr, ptr %st81557
   %own_flag81567 = load i64, ptr %st81557_own
-  %concat81566 = call ptr @ofs_str_concat_ex(ptr %st_val81565, ptr @str.1967, i64 %own_flag81567)
+  %concat81566 = call ptr @ofs_str_concat_ex(ptr %st_val81565, ptr @str.1966, i64 %own_flag81567)
   store ptr %concat81566, ptr %st81557
   store i64 1, ptr %st81557_own
   br label %if_end25432
@@ -194439,7 +194438,7 @@ if_end25432:
   %cl81568 = alloca ptr, align 8
   %cl81568_own = alloca i64, align 8
   store i64 0, ptr %cl81568_own
-  store ptr @str.1968, ptr %cl81568
+  store ptr @str.1967, ptr %cl81568
   %m_val81569 = load i64, ptr %m81527
   %call81570 = call i64 @ast_mod_stratum(i64 %m_val81569)
   %STRATUM_ABYSS_val81571 = load i64, ptr @STRATUM_ABYSS
@@ -194450,7 +194449,7 @@ if_then25433:
   %own_old81573 = load ptr, ptr %cl81568
   %own_flag81574 = load i64, ptr %cl81568_own
   call void @ofs_str_release(ptr %own_old81573, i64 %own_flag81574)
-  store ptr @str.1969, ptr %cl81568
+  store ptr @str.1968, ptr %cl81568
   store i64 0, ptr %cl81568_own
   br label %if_end25435
 
@@ -194462,7 +194461,7 @@ if_else25434:
 if_then25436:
   %al_val81577 = load i64, ptr %al81535
   %call81578 = call ptr @ast_claims_text(i64 %al_val81577)
-  %concat81579 = call ptr @ofs_str_concat(ptr @str.1944, ptr %call81578)
+  %concat81579 = call ptr @ofs_str_concat(ptr @str.1943, ptr %call81578)
   %own_old81580 = load ptr, ptr %cl81568
   %own_flag81581 = load i64, ptr %cl81568_own
   call void @ofs_str_release(ptr %own_old81580, i64 %own_flag81581)
@@ -194509,7 +194508,7 @@ sc_end25440:
 if_then25441:
   %miss_val81597 = load i64, ptr %miss81582
   %call81598 = call ptr @ast_claims_text(i64 %miss_val81597)
-  %concat81599 = call ptr @ofs_str_concat(ptr @str.1970, ptr %call81598)
+  %concat81599 = call ptr @ofs_str_concat(ptr @str.1969, ptr %call81598)
   %concat81600 = call ptr @ofs_str_concat_ex(ptr %concat81599, ptr @str.164, i64 1)
   %own_old81601 = load ptr, ptr %extra81588
   %own_flag81602 = load i64, ptr %extra81588_own
@@ -194552,7 +194551,7 @@ sc_end25445:
 if_then25446:
   %extra_val81619 = load ptr, ptr %extra81588
   %own_flag81621 = load i64, ptr %extra81588_own
-  %concat81620 = call ptr @ofs_str_concat_ex(ptr %extra_val81619, ptr @str.1971, i64 %own_flag81621)
+  %concat81620 = call ptr @ofs_str_concat_ex(ptr %extra_val81619, ptr @str.1970, i64 %own_flag81621)
   %idle_val81622 = load i64, ptr %idle81603
   %call81623 = call ptr @ast_claims_text(i64 %idle_val81622)
   %concat81624 = call ptr @ofs_str_concat_ex(ptr %concat81620, ptr %call81623, i64 1)
@@ -194577,7 +194576,7 @@ if_then25449:
   %own_old81629 = load ptr, ptr %who81626
   %own_flag81630 = load i64, ptr %who81626_own
   call void @ofs_str_release(ptr %own_old81629, i64 %own_flag81630)
-  store ptr @str.1972, ptr %who81626
+  store ptr @str.1971, ptr %who81626
   store i64 0, ptr %who81626_own
   br label %if_end25451
 
@@ -194648,7 +194647,7 @@ if_then25455:
   %own_old81664 = load ptr, ptr %lib81659
   %own_flag81665 = load i64, ptr %lib81659_own
   call void @ofs_str_release(ptr %own_old81664, i64 %own_flag81665)
-  store ptr @str.1973, ptr %lib81659
+  store ptr @str.1972, ptr %lib81659
   store i64 0, ptr %lib81659_own
   br label %if_end25457
 
@@ -194657,7 +194656,7 @@ if_else25456:
 
 if_end25457:
   %lib_val81666 = load ptr, ptr %lib81659
-  %concat81667 = call ptr @ofs_str_concat(ptr @str.1974, ptr %lib_val81666)
+  %concat81667 = call ptr @ofs_str_concat(ptr @str.1973, ptr %lib_val81666)
   call void @echo_obsidian(ptr %concat81667)
   call void @ofs_str_release(ptr %concat81667, i64 1)
   %sf_val81668 = load ptr, ptr %lib81659
@@ -194777,7 +194776,7 @@ if_then25468:
   %call81715 = call ptr @ofs_str_substr(ptr %p_val81710, i64 %start_val81711, i64 %op81714)
   store ptr %call81715, ptr %seg81709
   %seg_val81716 = load ptr, ptr %seg81709
-  %streq81717 = call i32 @ofs_str_eq(ptr %seg_val81716, ptr @str.1975)
+  %streq81717 = call i32 @ofs_str_eq(ptr %seg_val81716, ptr @str.1974)
   %cond81718 = icmp ne i32 %streq81717, 0
   br i1 %cond81718, label %if_then25471, label %if_else25472
 
@@ -194833,7 +194832,7 @@ arr_slow25480:
 arr_end25481:
   %arr_ptr81742 = phi ptr [ %arr_fp81740, %arr_fast25479 ], [ %arr_sp81741, %arr_slow25480 ]
   %arr_item81743 = load ptr, ptr %arr_ptr81742
-  %streq81744 = call i32 @ofs_str_eq(ptr %arr_item81743, ptr @str.1975)
+  %streq81744 = call i32 @ofs_str_eq(ptr %arr_item81743, ptr @str.1974)
   %cond81745 = icmp ne i32 %streq81744, 0
   %not81746 = xor i1 %cond81745, true
   store i1 %not81746, ptr %sc_slot81725
@@ -195148,7 +195147,7 @@ entry:
   %pat81858 = alloca ptr, align 8
   %pat81858_own = alloca i64, align 8
   store i64 0, ptr %pat81858_own
-  store ptr @str.1976, ptr %pat81858
+  store ptr @str.1975, ptr %pat81858
   %m81859 = alloca i64, align 8
   %pat_val81860 = load ptr, ptr %pat81858
   %strlen81861 = call i64 @ofs_str_len(ptr %pat_val81860)
@@ -195284,8 +195283,8 @@ entry:
 
 if_then25541:
   %path_val81918 = load ptr, ptr %path.addr
-  %concat81919 = call ptr @ofs_str_concat(ptr @str.1977, ptr %path_val81918)
-  %concat81920 = call ptr @ofs_str_concat_ex(ptr %concat81919, ptr @str.1978, i64 1)
+  %concat81919 = call ptr @ofs_str_concat(ptr @str.1976, ptr %path_val81918)
+  %concat81920 = call ptr @ofs_str_concat_ex(ptr %concat81919, ptr @str.1977, i64 1)
   call void @echo_obsidian(ptr %concat81920)
   call void @ofs_str_release(ptr %concat81920, i64 1)
   %neg81921 = sub i64 0, 1
@@ -195405,7 +195404,7 @@ entry:
   store i64 8, ptr %ahp81961
   store ptr %arr81958, ptr %out81957
   %std81962 = alloca ptr, align 8
-  %call81963 = call ptr @_env(ptr @str.1964)
+  %call81963 = call ptr @_env(ptr @str.1963)
   store ptr %call81963, ptr %std81962
   %std_val81964 = load ptr, ptr %std81962
   %strlen81965 = call i64 @ofs_str_len(ptr %std_val81964)
@@ -195700,7 +195699,7 @@ entry:
   %v82092 = alloca ptr, align 8
   %v82092_own = alloca i64, align 8
   store i64 0, ptr %v82092_own
-  %call82093 = call ptr @_env(ptr @str.1979)
+  %call82093 = call ptr @_env(ptr @str.1978)
   store ptr %call82093, ptr %v82092
   %n82094 = alloca i64, align 8
   %v_val82095 = load ptr, ptr %v82092
@@ -196104,8 +196103,8 @@ if_end25648:
 
 define i32 @host_is_windows() {
 entry:
-  %call82261 = call ptr @_env(ptr @str.1980)
-  %streq82262 = call i32 @ofs_str_eq(ptr %call82261, ptr @str.1981)
+  %call82261 = call ptr @_env(ptr @str.1979)
+  %streq82262 = call i32 @ofs_str_eq(ptr %call82261, ptr @str.1980)
   ret i32 %streq82262
 }
 
@@ -196139,7 +196138,7 @@ entry:
   %lp82270 = alloca ptr, align 8
   %lp82270_own = alloca i64, align 8
   store i64 0, ptr %lp82270_own
-  %call82271 = call ptr @_env(ptr @str.1982)
+  %call82271 = call ptr @_env(ptr @str.1981)
   store ptr %call82271, ptr %lp82270
   %n82272 = alloca i64, align 8
   %lp_val82273 = load ptr, ptr %lp82270
@@ -196252,7 +196251,7 @@ if_end25659:
 
 while_end25654:
   %home_libs82323 = alloca ptr, align 8
-  %call82324 = call ptr @_env(ptr @str.1983)
+  %call82324 = call ptr @_env(ptr @str.1982)
   store ptr %call82324, ptr %home_libs82323
   %home_libs_val82325 = load ptr, ptr %home_libs82323
   %streq82326 = call i32 @ofs_str_eq(ptr %home_libs_val82325, ptr @str.75)
@@ -196263,7 +196262,7 @@ if_then25667:
   %home82328 = alloca ptr, align 8
   %home82328_own = alloca i64, align 8
   store i64 0, ptr %home82328_own
-  %call82329 = call ptr @_env(ptr @str.1517)
+  %call82329 = call ptr @_env(ptr @str.1516)
   store ptr %call82329, ptr %home82328
   %home_val82330 = load ptr, ptr %home82328
   %streq82331 = call i32 @ofs_str_eq(ptr %home_val82330, ptr @str.75)
@@ -196273,7 +196272,7 @@ if_then25667:
 
 if_then25670:
   %home_val82334 = load ptr, ptr %home82328
-  %concat82335 = call ptr @ofs_str_concat(ptr %home_val82334, ptr @str.1984)
+  %concat82335 = call ptr @ofs_str_concat(ptr %home_val82334, ptr @str.1983)
   store ptr %concat82335, ptr %home_libs82323
   br label %if_end25672
 
@@ -196365,7 +196364,7 @@ entry:
   %std82367 = alloca ptr, align 8
   %std82367_own = alloca i64, align 8
   store i64 0, ptr %std82367_own
-  %call82368 = call ptr @_env(ptr @str.1964)
+  %call82368 = call ptr @_env(ptr @str.1963)
   store ptr %call82368, ptr %std82367
   %short_form_val82369 = load i32, ptr %short_form.addr
   %cond82370 = icmp ne i32 %short_form_val82369, 0
@@ -196848,18 +196847,18 @@ while_end25735:
   %post_new82582 = add i64 %post_old82581, 1
   store i64 %post_new82582, ptr @_attach_errors
   %path_val82583 = load ptr, ptr %path.addr
-  %concat82584 = call ptr @ofs_str_concat(ptr @str.1977, ptr %path_val82583)
+  %concat82584 = call ptr @ofs_str_concat(ptr @str.1976, ptr %path_val82583)
   %concat82585 = call ptr @ofs_str_concat_ex(ptr %concat82584, ptr @str.103, i64 1)
   %file_line_val82586 = load i64, ptr %file_line.addr
   %stone_to_str82587 = call ptr @ofs_stone_to_obsidian(i64 %file_line_val82586)
   %concat82588 = call ptr @ofs_str_concat_ex(ptr %concat82585, ptr %stone_to_str82587, i64 1)
-  %concat82589 = call ptr @ofs_str_concat_ex(ptr %concat82588, ptr @str.1985, i64 1)
+  %concat82589 = call ptr @ofs_str_concat_ex(ptr %concat82588, ptr @str.1984, i64 1)
   %shown_val82590 = load ptr, ptr %shown.addr
   %concat82591 = call ptr @ofs_str_concat_ex(ptr %concat82589, ptr %shown_val82590, i64 1)
-  %concat82592 = call ptr @ofs_str_concat_ex(ptr %concat82591, ptr @str.1986, i64 1)
+  %concat82592 = call ptr @ofs_str_concat_ex(ptr %concat82591, ptr @str.1985, i64 1)
   call void @echo_obsidian(ptr %concat82592)
   call void @ofs_str_release(ptr %concat82592, i64 1)
-  call void @echo_obsidian(ptr @str.1987)
+  call void @echo_obsidian(ptr @str.1986)
   store i64 0, ptr %i82544
   br label %while_cond25746
 
@@ -196923,8 +196922,8 @@ arr_end25754:
 
 while_end25748:
   %call82619 = call ptr @lib_path_sep()
-  %concat82620 = call ptr @ofs_str_concat(ptr @str.1988, ptr %call82619)
-  %concat82621 = call ptr @ofs_str_concat_ex(ptr %concat82620, ptr @str.1989, i64 1)
+  %concat82620 = call ptr @ofs_str_concat(ptr @str.1987, ptr %call82619)
+  %concat82621 = call ptr @ofs_str_concat_ex(ptr %concat82620, ptr @str.1988, i64 1)
   call void @echo_obsidian(ptr %concat82621)
   call void @ofs_str_release(ptr %concat82621, i64 1)
   %sf_val82622 = load ptr, ptr %shown.addr
@@ -197126,8 +197125,8 @@ arr_end25781:
   %arr_ptr82711 = phi ptr [ %arr_fp82709, %arr_fast25779 ], [ %arr_sp82710, %arr_slow25780 ]
   %arr_item82712 = load ptr, ptr %arr_ptr82711
   %concat82713 = call ptr @ofs_str_concat(ptr @str.173, ptr %arr_item82712)
-  %concat82714 = call ptr @ofs_str_concat_ex(ptr %concat82713, ptr @str.1990, i64 1)
-  call void @hdr_error(ptr %path_val82696, i64 %file_line_val82697, ptr %concat82714, ptr @str.1991)
+  %concat82714 = call ptr @ofs_str_concat_ex(ptr %concat82713, ptr @str.1989, i64 1)
+  call void @hdr_error(ptr %path_val82696, i64 %file_line_val82697, ptr %concat82714, ptr @str.1990)
   call void @ofs_str_release(ptr %concat82714, i64 1)
   br label %if_end25778
 
@@ -197237,7 +197236,7 @@ if_end25775:
 
 if_then25800:
   %line_val82746 = load ptr, ptr %line82660
-  %call82747 = call i64 @hdr_find(ptr %line_val82746, ptr @str.1992)
+  %call82747 = call i64 @hdr_find(ptr %line_val82746, ptr @str.1991)
   %cmp82748 = icmp sge i64 %call82747, 0
   br i1 %cmp82748, label %if_then25803, label %if_else25804
 
@@ -197271,7 +197270,7 @@ sc_end25807:
 if_then25808:
   %ob82755 = alloca i64, align 8
   %line_val82756 = load ptr, ptr %line82660
-  %call82757 = call i64 @hdr_find(ptr %line_val82756, ptr @str.1993)
+  %call82757 = call i64 @hdr_find(ptr %line_val82756, ptr @str.1992)
   store i64 %call82757, ptr %ob82755
   %sc_slot82758 = alloca i1, align 1
   %ob_val82759 = load i64, ptr %ob82755
@@ -197281,7 +197280,7 @@ if_then25808:
 
 sc_rhs25811:
   %line_val82761 = load ptr, ptr %line82660
-  %call82762 = call i64 @hdr_find(ptr %line_val82761, ptr @str.1992)
+  %call82762 = call i64 @hdr_find(ptr %line_val82761, ptr @str.1991)
   %ob_val82763 = load i64, ptr %ob82755
   %cmp82764 = icmp slt i64 %call82762, %ob_val82763
   store i1 %cmp82764, ptr %sc_slot82758
@@ -197415,7 +197414,7 @@ if_then25829:
   %base_val82823 = load ptr, ptr %base82628
   %rel_val82824 = load ptr, ptr %rel82817
   %rel_val82825 = load ptr, ptr %rel82817
-  %concat82826 = call ptr @ofs_str_concat(ptr @str.1994, ptr %rel_val82825)
+  %concat82826 = call ptr @ofs_str_concat(ptr @str.1993, ptr %rel_val82825)
   %call82827 = call ptr @resolve_attach(ptr %path_val82821, i64 %file_line_val82822, ptr %base_val82823, ptr %rel_val82824, i32 0, ptr %concat82826)
   call void @ofs_str_release(ptr %concat82826, i64 1)
   store ptr %call82827, ptr %child_path82820
@@ -197651,44 +197650,44 @@ entry:
 
 if_then25852:
   %_ansi_ok_val82923 = load ptr, ptr @_ansi_ok
-  %call82924 = call ptr @_colored(ptr %_ansi_ok_val82923, ptr @str.1995)
-  %concat82925 = call ptr @ofs_str_concat(ptr %call82924, ptr @str.1996)
+  %call82924 = call ptr @_colored(ptr %_ansi_ok_val82923, ptr @str.1994)
+  %concat82925 = call ptr @ofs_str_concat(ptr %call82924, ptr @str.1995)
   call void @echo_obsidian(ptr %concat82925)
   call void @ofs_str_release(ptr %concat82925, i64 1)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_run_val82926 = load ptr, ptr @_ansi_run
-  %call82927 = call ptr @_colored(ptr %_ansi_run_val82926, ptr @str.1997)
-  %concat82928 = call ptr @ofs_str_concat(ptr %call82927, ptr @str.1998)
+  %call82927 = call ptr @_colored(ptr %_ansi_run_val82926, ptr @str.1996)
+  %concat82928 = call ptr @ofs_str_concat(ptr %call82927, ptr @str.1997)
   call void @echo_obsidian(ptr %concat82928)
   call void @ofs_str_release(ptr %concat82928, i64 1)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_run_val82929 = load ptr, ptr @_ansi_run
-  %call82930 = call ptr @_colored(ptr %_ansi_run_val82929, ptr @str.1999)
+  %call82930 = call ptr @_colored(ptr %_ansi_run_val82929, ptr @str.1998)
   call void @echo_obsidian(ptr %call82930)
-  call void @_u(ptr @str.251, ptr @str.2000, ptr @str.2001)
-  call void @_u(ptr @str.251, ptr @str.2002, ptr @str.2003)
-  call void @_u(ptr @str.251, ptr @str.2004, ptr @str.2005)
-  call void @_u(ptr @str.251, ptr @str.2006, ptr @str.2007)
-  call void @_u(ptr @str.251, ptr @str.2008, ptr @str.2009)
-  call void @_u(ptr @str.251, ptr @str.2010, ptr @str.2011)
-  call void @_u(ptr @str.251, ptr @str.2012, ptr @str.2013)
-  call void @_u(ptr @str.251, ptr @str.2014, ptr @str.2015)
-  call void @_u(ptr @str.251, ptr @str.2016, ptr @str.2017)
-  call void @_u(ptr @str.251, ptr @str.2018, ptr @str.2019)
-  call void @_u(ptr @str.251, ptr @str.2020, ptr @str.2021)
-  call void @_u(ptr @str.251, ptr @str.2022, ptr @str.2023)
-  call void @_u(ptr @str.251, ptr @str.2024, ptr @str.2025)
+  call void @_u(ptr @str.251, ptr @str.1999, ptr @str.2000)
+  call void @_u(ptr @str.251, ptr @str.2001, ptr @str.2002)
+  call void @_u(ptr @str.251, ptr @str.2003, ptr @str.2004)
+  call void @_u(ptr @str.251, ptr @str.2005, ptr @str.2006)
+  call void @_u(ptr @str.251, ptr @str.2007, ptr @str.2008)
+  call void @_u(ptr @str.251, ptr @str.2009, ptr @str.2010)
+  call void @_u(ptr @str.251, ptr @str.2011, ptr @str.2012)
+  call void @_u(ptr @str.251, ptr @str.2013, ptr @str.2014)
+  call void @_u(ptr @str.251, ptr @str.2015, ptr @str.2016)
+  call void @_u(ptr @str.251, ptr @str.2017, ptr @str.2018)
+  call void @_u(ptr @str.251, ptr @str.2019, ptr @str.2020)
+  call void @_u(ptr @str.251, ptr @str.2021, ptr @str.2022)
+  call void @_u(ptr @str.251, ptr @str.2023, ptr @str.2024)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_run_val82931 = load ptr, ptr @_ansi_run
-  %call82932 = call ptr @_colored(ptr %_ansi_run_val82931, ptr @str.2026)
+  %call82932 = call ptr @_colored(ptr %_ansi_run_val82931, ptr @str.2025)
   call void @echo_obsidian(ptr %call82932)
-  call void @_u(ptr @str.251, ptr @str.2027, ptr @str.2028)
-  call void @_u(ptr @str.251, ptr @str.2029, ptr @str.2030)
-  call void @_u(ptr @str.251, ptr @str.2031, ptr @str.2032)
-  call void @_u(ptr @str.251, ptr @str.2033, ptr @str.2034)
+  call void @_u(ptr @str.251, ptr @str.2026, ptr @str.2027)
+  call void @_u(ptr @str.251, ptr @str.2028, ptr @str.2029)
+  call void @_u(ptr @str.251, ptr @str.2030, ptr @str.2031)
+  call void @_u(ptr @str.251, ptr @str.2032, ptr @str.2033)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_dim_val82933 = load ptr, ptr @_ansi_dim
-  %call82934 = call ptr @_colored(ptr %_ansi_dim_val82933, ptr @str.2035)
+  %call82934 = call ptr @_colored(ptr %_ansi_dim_val82933, ptr @str.2034)
   call void @echo_obsidian(ptr %call82934)
   ret void
 
@@ -197702,44 +197701,44 @@ if_end25854:
 
 if_then25855:
   %_ansi_ok_val82937 = load ptr, ptr @_ansi_ok
-  %call82938 = call ptr @_colored(ptr %_ansi_ok_val82937, ptr @str.1995)
-  %concat82939 = call ptr @ofs_str_concat(ptr %call82938, ptr @str.1996)
+  %call82938 = call ptr @_colored(ptr %_ansi_ok_val82937, ptr @str.1994)
+  %concat82939 = call ptr @ofs_str_concat(ptr %call82938, ptr @str.1995)
   call void @echo_obsidian(ptr %concat82939)
   call void @ofs_str_release(ptr %concat82939, i64 1)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_run_val82940 = load ptr, ptr @_ansi_run
-  %call82941 = call ptr @_colored(ptr %_ansi_run_val82940, ptr @str.1997)
-  %concat82942 = call ptr @ofs_str_concat(ptr %call82941, ptr @str.2036)
+  %call82941 = call ptr @_colored(ptr %_ansi_run_val82940, ptr @str.1996)
+  %concat82942 = call ptr @ofs_str_concat(ptr %call82941, ptr @str.2035)
   call void @echo_obsidian(ptr %concat82942)
   call void @ofs_str_release(ptr %concat82942, i64 1)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_run_val82943 = load ptr, ptr @_ansi_run
-  %call82944 = call ptr @_colored(ptr %_ansi_run_val82943, ptr @str.1999)
+  %call82944 = call ptr @_colored(ptr %_ansi_run_val82943, ptr @str.1998)
   call void @echo_obsidian(ptr %call82944)
-  call void @_u(ptr @str.251, ptr @str.2000, ptr @str.2037)
-  call void @_u(ptr @str.251, ptr @str.2002, ptr @str.2038)
-  call void @_u(ptr @str.251, ptr @str.2004, ptr @str.2039)
-  call void @_u(ptr @str.251, ptr @str.2006, ptr @str.2040)
-  call void @_u(ptr @str.251, ptr @str.2008, ptr @str.2041)
-  call void @_u(ptr @str.251, ptr @str.2010, ptr @str.2042)
-  call void @_u(ptr @str.251, ptr @str.2012, ptr @str.2043)
-  call void @_u(ptr @str.251, ptr @str.2014, ptr @str.2044)
-  call void @_u(ptr @str.251, ptr @str.2016, ptr @str.2045)
-  call void @_u(ptr @str.251, ptr @str.2018, ptr @str.2046)
-  call void @_u(ptr @str.251, ptr @str.2020, ptr @str.2047)
-  call void @_u(ptr @str.251, ptr @str.2022, ptr @str.2048)
-  call void @_u(ptr @str.251, ptr @str.2024, ptr @str.2049)
+  call void @_u(ptr @str.251, ptr @str.1999, ptr @str.2036)
+  call void @_u(ptr @str.251, ptr @str.2001, ptr @str.2037)
+  call void @_u(ptr @str.251, ptr @str.2003, ptr @str.2038)
+  call void @_u(ptr @str.251, ptr @str.2005, ptr @str.2039)
+  call void @_u(ptr @str.251, ptr @str.2007, ptr @str.2040)
+  call void @_u(ptr @str.251, ptr @str.2009, ptr @str.2041)
+  call void @_u(ptr @str.251, ptr @str.2011, ptr @str.2042)
+  call void @_u(ptr @str.251, ptr @str.2013, ptr @str.2043)
+  call void @_u(ptr @str.251, ptr @str.2015, ptr @str.2044)
+  call void @_u(ptr @str.251, ptr @str.2017, ptr @str.2045)
+  call void @_u(ptr @str.251, ptr @str.2019, ptr @str.2046)
+  call void @_u(ptr @str.251, ptr @str.2021, ptr @str.2047)
+  call void @_u(ptr @str.251, ptr @str.2023, ptr @str.2048)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_run_val82945 = load ptr, ptr @_ansi_run
-  %call82946 = call ptr @_colored(ptr %_ansi_run_val82945, ptr @str.2050)
+  %call82946 = call ptr @_colored(ptr %_ansi_run_val82945, ptr @str.2049)
   call void @echo_obsidian(ptr %call82946)
-  call void @_u(ptr @str.251, ptr @str.2051, ptr @str.2052)
-  call void @_u(ptr @str.251, ptr @str.2029, ptr @str.2053)
-  call void @_u(ptr @str.251, ptr @str.2031, ptr @str.2054)
-  call void @_u(ptr @str.251, ptr @str.2033, ptr @str.2055)
+  call void @_u(ptr @str.251, ptr @str.2050, ptr @str.2051)
+  call void @_u(ptr @str.251, ptr @str.2028, ptr @str.2052)
+  call void @_u(ptr @str.251, ptr @str.2030, ptr @str.2053)
+  call void @_u(ptr @str.251, ptr @str.2032, ptr @str.2054)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_dim_val82947 = load ptr, ptr @_ansi_dim
-  %call82948 = call ptr @_colored(ptr %_ansi_dim_val82947, ptr @str.2035)
+  %call82948 = call ptr @_colored(ptr %_ansi_dim_val82947, ptr @str.2034)
   call void @echo_obsidian(ptr %call82948)
   ret void
 
@@ -197748,44 +197747,44 @@ if_else25856:
 
 if_end25857:
   %_ansi_ok_val82949 = load ptr, ptr @_ansi_ok
-  %call82950 = call ptr @_colored(ptr %_ansi_ok_val82949, ptr @str.1995)
-  %concat82951 = call ptr @ofs_str_concat(ptr %call82950, ptr @str.2056)
+  %call82950 = call ptr @_colored(ptr %_ansi_ok_val82949, ptr @str.1994)
+  %concat82951 = call ptr @ofs_str_concat(ptr %call82950, ptr @str.2055)
   call void @echo_obsidian(ptr %concat82951)
   call void @ofs_str_release(ptr %concat82951, i64 1)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_run_val82952 = load ptr, ptr @_ansi_run
-  %call82953 = call ptr @_colored(ptr %_ansi_run_val82952, ptr @str.2057)
-  %concat82954 = call ptr @ofs_str_concat(ptr %call82953, ptr @str.2058)
+  %call82953 = call ptr @_colored(ptr %_ansi_run_val82952, ptr @str.2056)
+  %concat82954 = call ptr @ofs_str_concat(ptr %call82953, ptr @str.2057)
   call void @echo_obsidian(ptr %concat82954)
   call void @ofs_str_release(ptr %concat82954, i64 1)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_run_val82955 = load ptr, ptr @_ansi_run
-  %call82956 = call ptr @_colored(ptr %_ansi_run_val82955, ptr @str.2059)
+  %call82956 = call ptr @_colored(ptr %_ansi_run_val82955, ptr @str.2058)
   call void @echo_obsidian(ptr %call82956)
-  call void @_u(ptr @str.251, ptr @str.2060, ptr @str.2061)
-  call void @_u(ptr @str.251, ptr @str.2062, ptr @str.2063)
-  call void @_u(ptr @str.251, ptr @str.2064, ptr @str.2065)
-  call void @_u(ptr @str.251, ptr @str.2066, ptr @str.2067)
-  call void @_u(ptr @str.251, ptr @str.2068, ptr @str.2069)
-  call void @_u(ptr @str.251, ptr @str.2070, ptr @str.2071)
-  call void @_u(ptr @str.251, ptr @str.2072, ptr @str.2073)
-  call void @_u(ptr @str.251, ptr @str.2014, ptr @str.2074)
-  call void @_u(ptr @str.251, ptr @str.2016, ptr @str.2075)
-  call void @_u(ptr @str.251, ptr @str.2076, ptr @str.2077)
-  call void @_u(ptr @str.251, ptr @str.2020, ptr @str.2078)
-  call void @_u(ptr @str.251, ptr @str.2022, ptr @str.2079)
-  call void @_u(ptr @str.251, ptr @str.2024, ptr @str.2080)
+  call void @_u(ptr @str.251, ptr @str.2059, ptr @str.2060)
+  call void @_u(ptr @str.251, ptr @str.2061, ptr @str.2062)
+  call void @_u(ptr @str.251, ptr @str.2063, ptr @str.2064)
+  call void @_u(ptr @str.251, ptr @str.2065, ptr @str.2066)
+  call void @_u(ptr @str.251, ptr @str.2067, ptr @str.2068)
+  call void @_u(ptr @str.251, ptr @str.2069, ptr @str.2070)
+  call void @_u(ptr @str.251, ptr @str.2071, ptr @str.2072)
+  call void @_u(ptr @str.251, ptr @str.2013, ptr @str.2073)
+  call void @_u(ptr @str.251, ptr @str.2015, ptr @str.2074)
+  call void @_u(ptr @str.251, ptr @str.2075, ptr @str.2076)
+  call void @_u(ptr @str.251, ptr @str.2019, ptr @str.2077)
+  call void @_u(ptr @str.251, ptr @str.2021, ptr @str.2078)
+  call void @_u(ptr @str.251, ptr @str.2023, ptr @str.2079)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_run_val82957 = load ptr, ptr @_ansi_run
-  %call82958 = call ptr @_colored(ptr %_ansi_run_val82957, ptr @str.2081)
+  %call82958 = call ptr @_colored(ptr %_ansi_run_val82957, ptr @str.2080)
   call void @echo_obsidian(ptr %call82958)
-  call void @_u(ptr @str.251, ptr @str.2082, ptr @str.2083)
-  call void @_u(ptr @str.251, ptr @str.2029, ptr @str.2084)
-  call void @_u(ptr @str.251, ptr @str.2085, ptr @str.2086)
-  call void @_u(ptr @str.251, ptr @str.2033, ptr @str.2087)
+  call void @_u(ptr @str.251, ptr @str.2081, ptr @str.2082)
+  call void @_u(ptr @str.251, ptr @str.2028, ptr @str.2083)
+  call void @_u(ptr @str.251, ptr @str.2084, ptr @str.2085)
+  call void @_u(ptr @str.251, ptr @str.2032, ptr @str.2086)
   call void @echo_obsidian(ptr @str.75)
   %_ansi_dim_val82959 = load ptr, ptr @_ansi_dim
-  %call82960 = call ptr @_colored(ptr %_ansi_dim_val82959, ptr @str.2035)
+  %call82960 = call ptr @_colored(ptr %_ansi_dim_val82959, ptr @str.2034)
   call void @echo_obsidian(ptr %call82960)
   ret void
 }
@@ -197813,7 +197812,7 @@ entry:
   %c_opt.addr = alloca ptr, align 8
   store ptr %c_opt, ptr %c_opt.addr
   %e_in82961 = alloca ptr, align 8
-  %call82962 = call ptr @getenv(ptr @str.2088)
+  %call82962 = call ptr @getenv(ptr @str.2087)
   store ptr %call82962, ptr %e_in82961
   %e_in_val82963 = load ptr, ptr %e_in82961
   %streq82964 = call i32 @ofs_str_eq(ptr %e_in_val82963, ptr @str.75)
@@ -197835,7 +197834,7 @@ if_else25859:
 
 if_end25860:
   %e_out82970 = alloca ptr, align 8
-  %call82971 = call ptr @getenv(ptr @str.2089)
+  %call82971 = call ptr @getenv(ptr @str.2088)
   store ptr %call82971, ptr %e_out82970
   %e_out_val82972 = load ptr, ptr %e_out82970
   %streq82973 = call i32 @ofs_str_eq(ptr %e_out_val82972, ptr @str.75)
@@ -197857,7 +197856,7 @@ if_else25862:
 
 if_end25863:
   %e_c82979 = alloca ptr, align 8
-  %call82980 = call ptr @getenv(ptr @str.2090)
+  %call82980 = call ptr @getenv(ptr @str.2089)
   store ptr %call82980, ptr %e_c82979
   %e_c_val82981 = load ptr, ptr %e_c82979
   %streq82982 = call i32 @ofs_str_eq(ptr %e_c_val82981, ptr @str.75)
@@ -197881,10 +197880,10 @@ if_end25866:
   %e_mode82988 = alloca ptr, align 8
   %e_mode82988_own = alloca i64, align 8
   store i64 0, ptr %e_mode82988_own
-  %call82989 = call ptr @getenv(ptr @str.2091)
+  %call82989 = call ptr @getenv(ptr @str.2090)
   store ptr %call82989, ptr %e_mode82988
   %e_mode_val82990 = load ptr, ptr %e_mode82988
-  %streq82991 = call i32 @ofs_str_eq(ptr %e_mode_val82990, ptr @str.1914)
+  %streq82991 = call i32 @ofs_str_eq(ptr %e_mode_val82990, ptr @str.1913)
   %cond82992 = icmp ne i32 %streq82991, 0
   br i1 %cond82992, label %if_then25867, label %if_else25868
 
@@ -197897,7 +197896,7 @@ if_else25868:
 
 if_end25869:
   %e_mode_val82993 = load ptr, ptr %e_mode82988
-  %streq82994 = call i32 @ofs_str_eq(ptr %e_mode_val82993, ptr @str.2092)
+  %streq82994 = call i32 @ofs_str_eq(ptr %e_mode_val82993, ptr @str.2091)
   %cond82995 = icmp ne i32 %streq82994, 0
   br i1 %cond82995, label %if_then25870, label %if_else25871
 
@@ -197910,7 +197909,7 @@ if_else25871:
 
 if_end25872:
   %e_mode_val82996 = load ptr, ptr %e_mode82988
-  %streq82997 = call i32 @ofs_str_eq(ptr %e_mode_val82996, ptr @str.2093)
+  %streq82997 = call i32 @ofs_str_eq(ptr %e_mode_val82996, ptr @str.2092)
   %cond82998 = icmp ne i32 %streq82997, 0
   br i1 %cond82998, label %if_then25873, label %if_else25874
 
@@ -197923,7 +197922,7 @@ if_else25874:
 
 if_end25875:
   %e_mode_val82999 = load ptr, ptr %e_mode82988
-  %streq83000 = call i32 @ofs_str_eq(ptr %e_mode_val82999, ptr @str.1810)
+  %streq83000 = call i32 @ofs_str_eq(ptr %e_mode_val82999, ptr @str.1809)
   %cond83001 = icmp ne i32 %streq83000, 0
   br i1 %cond83001, label %if_then25876, label %if_else25877
 
@@ -197937,19 +197936,19 @@ if_else25877:
 
 if_end25878:
   %e_opt83003 = alloca ptr, align 8
-  %call83004 = call ptr @getenv(ptr @str.2094)
+  %call83004 = call ptr @getenv(ptr @str.2093)
   store ptr %call83004, ptr %e_opt83003
   %sc_slot83005 = alloca i1, align 1
   %sc_slot83006 = alloca i1, align 1
   %e_opt_val83007 = load ptr, ptr %e_opt83003
-  %streq83008 = call i32 @ofs_str_eq(ptr %e_opt_val83007, ptr @str.2095)
+  %streq83008 = call i32 @ofs_str_eq(ptr %e_opt_val83007, ptr @str.2094)
   %cond83009 = icmp ne i32 %streq83008, 0
   store i1 %cond83009, ptr %sc_slot83006
   br i1 %cond83009, label %sc_end25882, label %sc_rhs25881
 
 sc_rhs25881:
   %e_opt_val83010 = load ptr, ptr %e_opt83003
-  %streq83011 = call i32 @ofs_str_eq(ptr %e_opt_val83010, ptr @str.2096)
+  %streq83011 = call i32 @ofs_str_eq(ptr %e_opt_val83010, ptr @str.2095)
   %cond83012 = icmp ne i32 %streq83011, 0
   store i1 %cond83012, ptr %sc_slot83006
   br label %sc_end25882
@@ -197961,7 +197960,7 @@ sc_end25882:
 
 sc_rhs25879:
   %e_opt_val83014 = load ptr, ptr %e_opt83003
-  %streq83015 = call i32 @ofs_str_eq(ptr %e_opt_val83014, ptr @str.2097)
+  %streq83015 = call i32 @ofs_str_eq(ptr %e_opt_val83014, ptr @str.2096)
   %cond83016 = icmp ne i32 %streq83015, 0
   store i1 %cond83016, ptr %sc_slot83005
   br label %sc_end25880
@@ -198272,11 +198271,11 @@ if_end25917:
   %field83147 = load ptr, ptr %field_ptr83146
   %call83148 = call ptr @vein_display_name(ptr %field83147)
   %concat83149 = call ptr @ofs_str_concat(ptr %out_val83145, ptr %call83148)
-  %concat83150 = call ptr @ofs_str_concat_ex(ptr %concat83149, ptr @str.2098, i64 1)
+  %concat83150 = call ptr @ofs_str_concat_ex(ptr %concat83149, ptr @str.2097, i64 1)
   %field_ptr83151 = getelementptr inbounds %Node, ptr %sobj83112, i32 0, i32 1
   %field83152 = load ptr, ptr %field_ptr83151
   %concat83153 = call ptr @ofs_str_concat_ex(ptr %concat83150, ptr %field83152, i64 1)
-  %concat83154 = call ptr @ofs_str_concat_ex(ptr %concat83153, ptr @str.2098, i64 1)
+  %concat83154 = call ptr @ofs_str_concat_ex(ptr %concat83153, ptr @str.2097, i64 1)
   %sig_val83155 = load ptr, ptr %sig83140
   %concat83156 = call ptr @ofs_str_concat_ex(ptr %concat83154, ptr %sig_val83155, i64 1)
   %concat83157 = call ptr @ofs_str_concat_ex(ptr %concat83156, ptr @str.3, i64 1)
@@ -198356,11 +198355,11 @@ if_then25925:
   %field_ptr83194 = getelementptr inbounds %Node, ptr %sobj83172, i32 0, i32 4
   %field83195 = load i64, ptr %field_ptr83194
   %call83196 = call ptr @ast_src_loc(i64 %field83193, i64 %field83195)
-  %concat83197 = call ptr @ofs_str_concat(ptr @str.2099, ptr %call83196)
-  %concat83198 = call ptr @ofs_str_concat_ex(ptr %concat83197, ptr @str.2100, i64 1)
+  %concat83197 = call ptr @ofs_str_concat(ptr @str.2098, ptr %call83196)
+  %concat83198 = call ptr @ofs_str_concat_ex(ptr %concat83197, ptr @str.2099, i64 1)
   call void @echo_obsidian(ptr %concat83198)
   call void @ofs_str_release(ptr %concat83198, i64 1)
-  call void @echo_obsidian(ptr @str.2101)
+  call void @echo_obsidian(ptr @str.2100)
   ret ptr @str.67
 
 if_else25926:
@@ -198951,10 +198950,10 @@ entry:
   store i64 0, ptr %b.addr_own
   %line83450 = alloca ptr, align 8
   %kind_val83451 = load ptr, ptr %kind.addr
-  %concat83452 = call ptr @ofs_str_concat(ptr %kind_val83451, ptr @str.2098)
+  %concat83452 = call ptr @ofs_str_concat(ptr %kind_val83451, ptr @str.2097)
   %key_val83453 = load ptr, ptr %key.addr
   %concat83454 = call ptr @ofs_str_concat_ex(ptr %concat83452, ptr %key_val83453, i64 1)
-  %concat83455 = call ptr @ofs_str_concat_ex(ptr %concat83454, ptr @str.2098, i64 1)
+  %concat83455 = call ptr @ofs_str_concat_ex(ptr %concat83454, ptr @str.2097, i64 1)
   %a_val83456 = load ptr, ptr %a.addr
   %concat83457 = call ptr @ofs_str_concat_ex(ptr %concat83455, ptr %a_val83456, i64 1)
   store ptr %concat83457, ptr %line83450
@@ -198965,7 +198964,7 @@ entry:
 
 if_then25986:
   %line_val83461 = load ptr, ptr %line83450
-  %concat83462 = call ptr @ofs_str_concat(ptr %line_val83461, ptr @str.2098)
+  %concat83462 = call ptr @ofs_str_concat(ptr %line_val83461, ptr @str.2097)
   %b_val83463 = load ptr, ptr %b.addr
   %concat83464 = call ptr @ofs_str_concat_ex(ptr %concat83462, ptr %b_val83463, i64 1)
   store ptr %concat83464, ptr %line83450
@@ -199254,7 +199253,7 @@ if_else26024:
 if_end26025:
   %v_val83591 = load ptr, ptr %v83493
   %gt_val83592 = load ptr, ptr %gt83575
-  call void @r3_add(ptr @str.2102, ptr %v_val83591, ptr %gt_val83592, ptr @str.75)
+  call void @r3_add(ptr @str.2101, ptr %v_val83591, ptr %gt_val83592, ptr @str.75)
   %sf_val83593 = load ptr, ptr %note83578
   %sf_own83594 = load i64, ptr %note83578_own
   call void @ofs_str_release(ptr %sf_val83593, i64 %sf_own83594)
@@ -199340,7 +199339,7 @@ if_end26034:
 while_end26031:
   %v_val83633 = load ptr, ptr %v83493
   %shape_val83634 = load ptr, ptr %shape83600
-  call void @r3_add(ptr @str.2103, ptr %v_val83633, ptr %shape_val83634, ptr @str.75)
+  call void @r3_add(ptr @str.2102, ptr %v_val83633, ptr %shape_val83634, ptr @str.75)
   %sf_val83635 = load ptr, ptr %shape83600
   %sf_own83636 = load i64, ptr %shape83600_own
   call void @ofs_str_release(ptr %sf_val83635, i64 %sf_own83636)
@@ -199403,7 +199402,7 @@ if_end26042:
   %k_val83664 = load i64, ptr %k83490
   %stone_to_str83665 = call ptr @ofs_stone_to_obsidian(i64 %k_val83664)
   %concat83666 = call ptr @ofs_str_concat_ex(ptr %concat83663, ptr %stone_to_str83665, i64 1)
-  call void @r3_add(ptr @str.2104, ptr %key_val83656, ptr %concat83666, ptr @str.75)
+  call void @r3_add(ptr @str.2103, ptr %key_val83656, ptr %concat83666, ptr @str.75)
   call void @ofs_str_release(ptr %concat83666, i64 1)
   %sf_val83667 = load ptr, ptr %key83645
   %sf_own83668 = load i64, ptr %key83645_own
@@ -199675,7 +199674,7 @@ arr_end26070:
 
 while_end26061:
   %s_val83773 = load ptr, ptr %s83738
-  call void @r3_add(ptr @str.1459, ptr @str.67, ptr %s_val83773, ptr @str.75)
+  call void @r3_add(ptr @str.1458, ptr @str.67, ptr %s_val83773, ptr @str.75)
   %sf_val83774 = load ptr, ptr %s83738
   %sf_own83775 = load i64, ptr %s83738_own
   call void @ofs_str_release(ptr %sf_val83774, i64 %sf_own83775)
@@ -199713,17 +199712,17 @@ if_else26073:
 
 if_end26074:
   %key_val83781 = load ptr, ptr %key.addr
-  %concat83782 = call ptr @ofs_str_concat(ptr @str.2105, ptr %key_val83781)
-  %concat83783 = call ptr @ofs_str_concat_ex(ptr %concat83782, ptr @str.2098, i64 1)
+  %concat83782 = call ptr @ofs_str_concat(ptr @str.2104, ptr %key_val83781)
+  %concat83783 = call ptr @ofs_str_concat_ex(ptr %concat83782, ptr @str.2097, i64 1)
   %fid_val83784 = load i64, ptr %fid.addr
   %call83785 = call i64 @r3_hash(i64 %fid_val83784, i64 1469598103934665603)
   %stone_to_str83786 = call ptr @ofs_stone_to_obsidian(i64 %call83785)
   %concat83787 = call ptr @ofs_str_concat_ex(ptr %concat83783, ptr %stone_to_str83786, i64 1)
-  %concat83788 = call ptr @ofs_str_concat_ex(ptr %concat83787, ptr @str.2098, i64 1)
+  %concat83788 = call ptr @ofs_str_concat_ex(ptr %concat83787, ptr @str.2097, i64 1)
   %fid_val83789 = load i64, ptr %fid.addr
   %call83790 = call ptr @r3_sig(i64 %fid_val83789)
   %concat83791 = call ptr @ofs_str_concat_ex(ptr %concat83788, ptr %call83790, i64 1)
-  %concat83792 = call ptr @ofs_str_concat_ex(ptr %concat83791, ptr @str.2098, i64 1)
+  %concat83792 = call ptr @ofs_str_concat_ex(ptr %concat83791, ptr @str.2097, i64 1)
   %c_val83793 = load ptr, ptr %c83776
   %concat83794 = call ptr @ofs_str_concat_ex(ptr %concat83792, ptr %c_val83793, i64 1)
   %concat83795 = call ptr @ofs_str_concat_ex(ptr %concat83794, ptr @str.3, i64 1)
@@ -200103,10 +200102,10 @@ entry:
   %pre83952_own = alloca i64, align 8
   store i64 0, ptr %pre83952_own
   %kind_val83953 = load ptr, ptr %kind.addr
-  %concat83954 = call ptr @ofs_str_concat(ptr %kind_val83953, ptr @str.2098)
+  %concat83954 = call ptr @ofs_str_concat(ptr %kind_val83953, ptr @str.2097)
   %key_val83955 = load ptr, ptr %key.addr
   %concat83956 = call ptr @ofs_str_concat_ex(ptr %concat83954, ptr %key_val83955, i64 1)
-  %concat83957 = call ptr @ofs_str_concat_ex(ptr %concat83956, ptr @str.2098, i64 1)
+  %concat83957 = call ptr @ofs_str_concat_ex(ptr %concat83956, ptr @str.2097, i64 1)
   store ptr %concat83957, ptr %pre83952
   store i64 1, ptr %pre83952_own
   %pl83958 = alloca i64, align 8
@@ -200298,7 +200297,7 @@ while_end26116:
   %sf_val84047 = load ptr, ptr %kind.addr
   %sf_own84048 = load i64, ptr %kind.addr_own
   call void @ofs_str_release(ptr %sf_val84047, i64 %sf_own84048)
-  ret ptr @str.2098
+  ret ptr @str.2097
 }
 
 define i32 @r3_has(ptr %list, ptr %v) {
@@ -200656,7 +200655,7 @@ if_else26188:
 
 if_end26189:
   %acc_val84177 = load ptr, ptr %acc.addr
-  %concat84178 = call ptr @ofs_str_concat(ptr %acc_val84177, ptr @str.1673)
+  %concat84178 = call ptr @ofs_str_concat(ptr %acc_val84177, ptr @str.1672)
   %msg_val84179 = load ptr, ptr %msg.addr
   %concat84180 = call ptr @ofs_str_concat_ex(ptr %concat84178, ptr %msg_val84179, i64 1)
   %sf_val84181 = load ptr, ptr %acc.addr
@@ -200668,7 +200667,7 @@ if_end26189:
 define void @r3_watch_file() {
 entry:
   %wf84183 = alloca ptr, align 8
-  %call84184 = call ptr @_env(ptr @str.2106)
+  %call84184 = call ptr @_env(ptr @str.2105)
   store ptr %call84184, ptr %wf84183
   %wf_val84185 = load ptr, ptr %wf84183
   %strlen84186 = call i64 @ofs_str_len(ptr %wf_val84185)
@@ -200773,7 +200772,7 @@ entry:
   %out84225 = alloca ptr, align 8
   %out84225_own = alloca i64, align 8
   store i64 0, ptr %out84225_own
-  store ptr @str.2107, ptr %out84225
+  store ptr @str.2106, ptr %out84225
   %i84226 = alloca i64, align 8
   store i64 0, ptr %i84226
   br label %while_cond26203
@@ -201067,10 +201066,10 @@ arr_end26236:
   store i64 0, ptr %bh84362_own
   %base_val84363 = load ptr, ptr %base84302
   %key_val84364 = load ptr, ptr %key84330
-  %call84365 = call ptr @r3_find(ptr %base_val84363, ptr @str.2108, ptr %key_val84364, i64 2)
+  %call84365 = call ptr @r3_find(ptr %base_val84363, ptr @str.2107, ptr %key_val84364, i64 2)
   store ptr %call84365, ptr %bh84362
   %bh_val84366 = load ptr, ptr %bh84362
-  %streq84367 = call i32 @ofs_str_eq(ptr %bh_val84366, ptr @str.2098)
+  %streq84367 = call i32 @ofs_str_eq(ptr %bh_val84366, ptr @str.2097)
   %cond84368 = icmp ne i32 %streq84367, 0
   br i1 %cond84368, label %if_then26238, label %if_else26239
 
@@ -201146,7 +201145,7 @@ arr_end26247:
 if_else26239:
   %base_val84403 = load ptr, ptr %base84302
   %key_val84404 = load ptr, ptr %key84330
-  %call84405 = call ptr @r3_find(ptr %base_val84403, ptr @str.2108, ptr %key_val84404, i64 4)
+  %call84405 = call ptr @r3_find(ptr %base_val84403, ptr @str.2107, ptr %key_val84404, i64 4)
   %streq84406 = call i32 @ofs_str_eq(ptr %call84405, ptr @str.683)
   %cond84407 = icmp ne i32 %streq84406, 0
   br i1 %cond84407, label %if_then26249, label %if_else26250
@@ -201200,7 +201199,7 @@ if_then26256:
   store i64 0, ptr %osig84432_own
   %base_val84433 = load ptr, ptr %base84302
   %key_val84434 = load ptr, ptr %key84330
-  %call84435 = call ptr @r3_find(ptr %base_val84433, ptr @str.2108, ptr %key_val84434, i64 3)
+  %call84435 = call ptr @r3_find(ptr %base_val84433, ptr @str.2107, ptr %key_val84434, i64 3)
   store ptr %call84435, ptr %osig84432
   %nsig84436 = alloca ptr, align 8
   %nsig84436_own = alloca i64, align 8
@@ -201219,14 +201218,14 @@ if_then26259:
   %why_val84444 = load ptr, ptr %why84320
   %key_val84445 = load ptr, ptr %key84330
   %call84446 = call ptr @vein_display_name(ptr %key_val84445)
-  %concat84447 = call ptr @ofs_str_concat(ptr @str.1704, ptr %call84446)
-  %concat84448 = call ptr @ofs_str_concat_ex(ptr %concat84447, ptr @str.2109, i64 1)
+  %concat84447 = call ptr @ofs_str_concat(ptr @str.1703, ptr %call84446)
+  %concat84448 = call ptr @ofs_str_concat_ex(ptr %concat84447, ptr @str.2108, i64 1)
   %osig_val84449 = load ptr, ptr %osig84432
   %concat84450 = call ptr @ofs_str_concat_ex(ptr %concat84448, ptr %osig_val84449, i64 1)
-  %concat84451 = call ptr @ofs_str_concat_ex(ptr %concat84450, ptr @str.2110, i64 1)
+  %concat84451 = call ptr @ofs_str_concat_ex(ptr %concat84450, ptr @str.2109, i64 1)
   %nsig_val84452 = load ptr, ptr %nsig84436
   %concat84453 = call ptr @ofs_str_concat_ex(ptr %concat84451, ptr %nsig_val84452, i64 1)
-  %concat84454 = call ptr @ofs_str_concat_ex(ptr %concat84453, ptr @str.2111, i64 1)
+  %concat84454 = call ptr @ofs_str_concat_ex(ptr %concat84453, ptr @str.2110, i64 1)
   %call84455 = call ptr @r3_reason(ptr %why_val84444, ptr %concat84454)
   %own_old84456 = load ptr, ptr %why84320
   %own_flag84457 = load i64, ptr %why84320_own
@@ -201496,7 +201495,7 @@ arr_slow26295:
 arr_end26296:
   %arr_ptr84574 = phi ptr [ %arr_fp84572, %arr_fast26294 ], [ %arr_sp84573, %arr_slow26295 ]
   %arr_item84575 = load ptr, ptr %arr_ptr84574
-  %streq84576 = call i32 @ofs_str_eq(ptr %arr_item84575, ptr @str.2108)
+  %streq84576 = call i32 @ofs_str_eq(ptr %arr_item84575, ptr @str.2107)
   %cond84577 = icmp ne i32 %streq84576, 0
   store i1 %cond84577, ptr %sc_slot84555
   br label %sc_end26290
@@ -201774,21 +201773,21 @@ arr_end26333:
   %call84707 = call ptr @vein_display_name(ptr %key2_val84706)
   store ptr %call84707, ptr %shown84705
   %kind_val84708 = load ptr, ptr %kind84655
-  %streq84709 = call i32 @ofs_str_eq(ptr %kind_val84708, ptr @str.2102)
+  %streq84709 = call i32 @ofs_str_eq(ptr %kind_val84708, ptr @str.2101)
   %cond84710 = icmp ne i32 %streq84709, 0
   br i1 %cond84710, label %if_then26335, label %if_else26336
 
 if_then26335:
   %old_val84711 = load ptr, ptr %old84700
-  %streq84712 = call i32 @ofs_str_eq(ptr %old_val84711, ptr @str.2098)
+  %streq84712 = call i32 @ofs_str_eq(ptr %old_val84711, ptr @str.2097)
   %cond84713 = icmp ne i32 %streq84712, 0
   br i1 %cond84713, label %if_then26338, label %if_else26339
 
 if_then26338:
   %why_val84714 = load ptr, ptr %why84320
   %shown_val84715 = load ptr, ptr %shown84705
-  %concat84716 = call ptr @ofs_str_concat(ptr @str.2112, ptr %shown_val84715)
-  %concat84717 = call ptr @ofs_str_concat_ex(ptr %concat84716, ptr @str.2113, i64 1)
+  %concat84716 = call ptr @ofs_str_concat(ptr @str.2111, ptr %shown_val84715)
+  %concat84717 = call ptr @ofs_str_concat_ex(ptr %concat84716, ptr @str.2112, i64 1)
   %call84718 = call ptr @r3_reason(ptr %why_val84714, ptr %concat84717)
   %own_old84719 = load ptr, ptr %why84320
   %own_flag84720 = load i64, ptr %why84320_own
@@ -201808,11 +201807,11 @@ if_else26339:
 if_then26341:
   %why_val84726 = load ptr, ptr %why84320
   %shown_val84727 = load ptr, ptr %shown84705
-  %concat84728 = call ptr @ofs_str_concat(ptr @str.1717, ptr %shown_val84727)
-  %concat84729 = call ptr @ofs_str_concat_ex(ptr %concat84728, ptr @str.2114, i64 1)
+  %concat84728 = call ptr @ofs_str_concat(ptr @str.1716, ptr %shown_val84727)
+  %concat84729 = call ptr @ofs_str_concat_ex(ptr %concat84728, ptr @str.2113, i64 1)
   %old_val84730 = load ptr, ptr %old84700
   %concat84731 = call ptr @ofs_str_concat_ex(ptr %concat84729, ptr %old_val84730, i64 1)
-  %concat84732 = call ptr @ofs_str_concat_ex(ptr %concat84731, ptr @str.2110, i64 1)
+  %concat84732 = call ptr @ofs_str_concat_ex(ptr %concat84731, ptr @str.2109, i64 1)
   %val_val84733 = load ptr, ptr %val84685
   %concat84734 = call ptr @ofs_str_concat_ex(ptr %concat84732, ptr %val_val84733, i64 1)
   %concat84735 = call ptr @ofs_str_concat_ex(ptr %concat84734, ptr @str.163, i64 1)
@@ -201835,14 +201834,14 @@ if_end26340:
 
 if_else26336:
   %kind_val84739 = load ptr, ptr %kind84655
-  %streq84740 = call i32 @ofs_str_eq(ptr %kind_val84739, ptr @str.2103)
+  %streq84740 = call i32 @ofs_str_eq(ptr %kind_val84739, ptr @str.2102)
   %cond84741 = icmp ne i32 %streq84740, 0
   br i1 %cond84741, label %if_then26344, label %if_else26345
 
 if_then26344:
   %sc_slot84742 = alloca i1, align 1
   %old_val84743 = load ptr, ptr %old84700
-  %streq84744 = call i32 @ofs_str_eq(ptr %old_val84743, ptr @str.2098)
+  %streq84744 = call i32 @ofs_str_eq(ptr %old_val84743, ptr @str.2097)
   %cond84745 = icmp ne i32 %streq84744, 0
   %not84746 = xor i1 %cond84745, true
   store i1 %not84746, ptr %sc_slot84742
@@ -201864,8 +201863,8 @@ sc_end26348:
 if_then26349:
   %why_val84753 = load ptr, ptr %why84320
   %shown_val84754 = load ptr, ptr %shown84705
-  %concat84755 = call ptr @ofs_str_concat(ptr @str.2115, ptr %shown_val84754)
-  %concat84756 = call ptr @ofs_str_concat_ex(ptr %concat84755, ptr @str.2116, i64 1)
+  %concat84755 = call ptr @ofs_str_concat(ptr @str.2114, ptr %shown_val84754)
+  %concat84756 = call ptr @ofs_str_concat_ex(ptr %concat84755, ptr @str.2115, i64 1)
   %call84757 = call ptr @r3_reason(ptr %why_val84753, ptr %concat84756)
   %own_old84758 = load ptr, ptr %why84320
   %own_flag84759 = load i64, ptr %why84320_own
@@ -201882,14 +201881,14 @@ if_end26351:
 
 if_else26345:
   %kind_val84760 = load ptr, ptr %kind84655
-  %streq84761 = call i32 @ofs_str_eq(ptr %kind_val84760, ptr @str.2104)
+  %streq84761 = call i32 @ofs_str_eq(ptr %kind_val84760, ptr @str.2103)
   %cond84762 = icmp ne i32 %streq84761, 0
   br i1 %cond84762, label %if_then26352, label %if_else26353
 
 if_then26352:
   %sc_slot84763 = alloca i1, align 1
   %old_val84764 = load ptr, ptr %old84700
-  %streq84765 = call i32 @ofs_str_eq(ptr %old_val84764, ptr @str.2098)
+  %streq84765 = call i32 @ofs_str_eq(ptr %old_val84764, ptr @str.2097)
   %cond84766 = icmp ne i32 %streq84765, 0
   %not84767 = xor i1 %cond84766, true
   store i1 %not84767, ptr %sc_slot84763
@@ -201911,8 +201910,8 @@ sc_end26356:
 if_then26357:
   %why_val84774 = load ptr, ptr %why84320
   %shown_val84775 = load ptr, ptr %shown84705
-  %concat84776 = call ptr @ofs_str_concat(ptr @str.1721, ptr %shown_val84775)
-  %concat84777 = call ptr @ofs_str_concat_ex(ptr %concat84776, ptr @str.1722, i64 1)
+  %concat84776 = call ptr @ofs_str_concat(ptr @str.1720, ptr %shown_val84775)
+  %concat84777 = call ptr @ofs_str_concat_ex(ptr %concat84776, ptr @str.1721, i64 1)
   %call84778 = call ptr @r3_reason(ptr %why_val84774, ptr %concat84777)
   %own_old84779 = load ptr, ptr %why84320
   %own_flag84780 = load i64, ptr %why84320_own
@@ -201929,13 +201928,13 @@ if_end26359:
 
 if_else26353:
   %kind_val84781 = load ptr, ptr %kind84655
-  %streq84782 = call i32 @ofs_str_eq(ptr %kind_val84781, ptr @str.1459)
+  %streq84782 = call i32 @ofs_str_eq(ptr %kind_val84781, ptr @str.1458)
   %cond84783 = icmp ne i32 %streq84782, 0
   br i1 %cond84783, label %if_then26360, label %if_else26361
 
 if_then26360:
   %old_val84784 = load ptr, ptr %old84700
-  %streq84785 = call i32 @ofs_str_eq(ptr %old_val84784, ptr @str.2098)
+  %streq84785 = call i32 @ofs_str_eq(ptr %old_val84784, ptr @str.2097)
   %cond84786 = icmp ne i32 %streq84785, 0
   %not84787 = xor i1 %cond84786, true
   br i1 %not84787, label %if_then26363, label %if_else26364
@@ -202010,7 +202009,7 @@ sc_end26367:
 
 if_then26374:
   %why_val84820 = load ptr, ptr %why84320
-  %call84821 = call ptr @r3_reason(ptr %why_val84820, ptr @str.1723)
+  %call84821 = call ptr @r3_reason(ptr %why_val84820, ptr @str.1722)
   %own_old84822 = load ptr, ptr %why84320
   %own_flag84823 = load i64, ptr %why84320_own
   call void @ofs_str_release(ptr %own_old84822, i64 %own_flag84823)
@@ -202069,10 +202068,10 @@ while_end26315:
 
 if_then26377:
   %why_val84837 = load ptr, ptr %why84320
-  %concat84838 = call ptr @ofs_str_concat(ptr @str.2117, ptr %why_val84837)
+  %concat84838 = call ptr @ofs_str_concat(ptr @str.2116, ptr %why_val84837)
   call void @echo_obsidian(ptr %concat84838)
   call void @ofs_str_release(ptr %concat84838, i64 1)
-  call void @echo_obsidian(ptr @str.2118)
+  call void @echo_obsidian(ptr @str.2117)
   store i64 4, ptr @_r3_rc
   %sf_val84839 = load ptr, ptr %gone84524
   %afree_null84840 = icmp eq ptr %sf_val84839, null
@@ -202206,7 +202205,7 @@ arr_end26404:
 if_then26406:
   %gone_val84878 = load ptr, ptr %gone84524
   %call84879 = call ptr @r3_names(ptr %gone_val84878)
-  %concat84880 = call ptr @ofs_str_concat(ptr @str.2119, ptr %call84879)
+  %concat84880 = call ptr @ofs_str_concat(ptr @str.2118, ptr %call84879)
   call void @echo_obsidian(ptr %concat84880)
   call void @ofs_str_release(ptr %concat84880, i64 1)
   br label %if_end26408
@@ -202215,7 +202214,7 @@ if_else26407:
   br label %if_end26408
 
 if_end26408:
-  call void @echo_obsidian(ptr @str.2120)
+  call void @echo_obsidian(ptr @str.2119)
   store i64 3, ptr @_r3_rc
   %sf_val84881 = load ptr, ptr %gone84524
   %afree_null84882 = icmp eq ptr %sf_val84881, null
@@ -202837,7 +202836,7 @@ while_end26489:
   %mf85144 = alloca ptr, align 8
   %mf85144_own = alloca i64, align 8
   store i64 0, ptr %mf85144_own
-  store ptr @str.2107, ptr %mf85144
+  store ptr @str.2106, ptr %mf85144
   store i64 0, ptr %i84321
   br label %while_cond26504
 
@@ -203012,7 +203011,7 @@ arr_end26529:
   store ptr %arr_item85223, ptr %rl85208
   %rl_val85224 = load ptr, ptr %rl85208
   %call85225 = call ptr @ofs_str_substr(ptr %rl_val85224, i64 0, i64 2)
-  %streq85226 = call i32 @ofs_str_eq(ptr %call85225, ptr @str.2121)
+  %streq85226 = call i32 @ofs_str_eq(ptr %call85225, ptr @str.2120)
   %cond85227 = icmp ne i32 %streq85226, 0
   %not85228 = xor i1 %cond85227, true
   br i1 %not85228, label %if_then26531, label %if_else26532
@@ -203178,7 +203177,7 @@ arr_end26552:
 if_then26554:
   %shown_changed_val85297 = load ptr, ptr %shown_changed85238
   %call85298 = call ptr @r3_names(ptr %shown_changed_val85297)
-  %concat85299 = call ptr @ofs_str_concat(ptr @str.2122, ptr %call85298)
+  %concat85299 = call ptr @ofs_str_concat(ptr @str.2121, ptr %call85298)
   call void @echo_obsidian(ptr %concat85299)
   call void @ofs_str_release(ptr %concat85299, i64 1)
   br label %if_end26556
@@ -203207,7 +203206,7 @@ arr_end26558:
 if_then26560:
   %fresh_val85306 = load ptr, ptr %fresh84310
   %call85307 = call ptr @r3_names(ptr %fresh_val85306)
-  %concat85308 = call ptr @ofs_str_concat(ptr @str.2123, ptr %call85307)
+  %concat85308 = call ptr @ofs_str_concat(ptr @str.2122, ptr %call85307)
   call void @echo_obsidian(ptr %concat85308)
   call void @ofs_str_release(ptr %concat85308, i64 1)
   br label %if_end26562
@@ -203236,7 +203235,7 @@ arr_end26564:
 if_then26566:
   %relinked_val85315 = load ptr, ptr %relinked84989
   %call85316 = call ptr @r3_names(ptr %relinked_val85315)
-  %concat85317 = call ptr @ofs_str_concat(ptr @str.2124, ptr %call85316)
+  %concat85317 = call ptr @ofs_str_concat(ptr @str.2123, ptr %call85316)
   call void @echo_obsidian(ptr %concat85317)
   call void @ofs_str_release(ptr %concat85317, i64 1)
   br label %if_end26568
@@ -203265,7 +203264,7 @@ arr_end26570:
 if_then26572:
   %gone_val85324 = load ptr, ptr %gone84524
   %call85325 = call ptr @r3_names(ptr %gone_val85324)
-  %concat85326 = call ptr @ofs_str_concat(ptr @str.2119, ptr %call85325)
+  %concat85326 = call ptr @ofs_str_concat(ptr @str.2118, ptr %call85325)
   call void @echo_obsidian(ptr %concat85326)
   call void @ofs_str_release(ptr %concat85326, i64 1)
   br label %if_end26574
@@ -203294,8 +203293,8 @@ arr_end26576:
 if_then26578:
   %as_value_val85333 = load ptr, ptr %as_value85092
   %call85334 = call ptr @r3_names(ptr %as_value_val85333)
-  %concat85335 = call ptr @ofs_str_concat(ptr @str.2125, ptr %call85334)
-  %concat85336 = call ptr @ofs_str_concat_ex(ptr %concat85335, ptr @str.2126, i64 1)
+  %concat85335 = call ptr @ofs_str_concat(ptr @str.2124, ptr %call85334)
+  %concat85336 = call ptr @ofs_str_concat_ex(ptr %concat85335, ptr @str.2125, i64 1)
   call void @echo_obsidian(ptr %concat85336)
   call void @ofs_str_release(ptr %concat85336, i64 1)
   br label %if_end26580
@@ -203433,11 +203432,11 @@ define i32 @main() {
 entry:
   call void @__ofs_init_globals()
   %input_file85372 = alloca ptr, align 8
-  store ptr @str.2127, ptr %input_file85372
+  store ptr @str.2126, ptr %input_file85372
   %output_file85373 = alloca ptr, align 8
-  store ptr @str.2128, ptr %output_file85373
+  store ptr @str.2127, ptr %output_file85373
   %c_output85374 = alloca ptr, align 8
-  store ptr @str.2129, ptr %c_output85374
+  store ptr @str.2128, ptr %c_output85374
   %check_only85375 = alloca i32, align 8
   store i32 0, ptr %check_only85375
   %print_tokens85376 = alloca i32, align 8
@@ -203445,7 +203444,7 @@ entry:
   %print_ast85377 = alloca i32, align 8
   store i32 0, ptr %print_ast85377
   %c_opt85378 = alloca ptr, align 8
-  store ptr @str.2096, ptr %c_opt85378
+  store ptr @str.2095, ptr %c_opt85378
   %state85379 = alloca ptr, align 8
   %state85379_own = alloca i64, align 8
   store i64 0, ptr %state85379_own
@@ -203485,7 +203484,7 @@ entry:
   %compile_mode85405 = alloca ptr, align 8
   %compile_mode85405_own = alloca i64, align 8
   store i64 0, ptr %compile_mode85405_own
-  %call85406 = call ptr @getenv(ptr @str.2091)
+  %call85406 = call ptr @getenv(ptr @str.2090)
   store ptr %call85406, ptr %compile_mode85405
   %compile_mode_val85407 = load ptr, ptr %compile_mode85405
   %streq85408 = call i32 @ofs_str_eq(ptr %compile_mode_val85407, ptr @str.75)
@@ -203496,7 +203495,7 @@ if_then26605:
   %own_old85410 = load ptr, ptr %compile_mode85405
   %own_flag85411 = load i64, ptr %compile_mode85405_own
   call void @ofs_str_release(ptr %own_old85410, i64 %own_flag85411)
-  store ptr @str.2130, ptr %compile_mode85405
+  store ptr @str.2129, ptr %compile_mode85405
   store i64 0, ptr %compile_mode85405_own
   br label %if_end26607
 
@@ -203511,7 +203510,7 @@ if_end26607:
   %is_run85415 = alloca i32, align 8
   %sc_slot85416 = alloca i1, align 1
   %compile_mode_val85417 = load ptr, ptr %compile_mode85405
-  %streq85418 = call i32 @ofs_str_eq(ptr %compile_mode_val85417, ptr @str.1916)
+  %streq85418 = call i32 @ofs_str_eq(ptr %compile_mode_val85417, ptr @str.1915)
   %cond85419 = icmp ne i32 %streq85418, 0
   store i1 %cond85419, ptr %sc_slot85416
   br i1 %cond85419, label %sc_end26609, label %sc_rhs26608
@@ -203527,13 +203526,13 @@ sc_end26609:
   %zext85423 = zext i1 %sc85422 to i32
   store i32 %zext85423, ptr %is_run85415
   %verbose85424 = alloca i32, align 8
-  %call85425 = call ptr @getenv(ptr @str.1585)
+  %call85425 = call ptr @getenv(ptr @str.1584)
   %streq85426 = call i32 @ofs_str_eq(ptr %call85425, ptr @str.683)
   store i32 %streq85426, ptr %verbose85424
   %fossil_mode85427 = alloca ptr, align 8
   %fossil_mode85427_own = alloca i64, align 8
   store i64 0, ptr %fossil_mode85427_own
-  %call85428 = call ptr @_env(ptr @str.2131)
+  %call85428 = call ptr @_env(ptr @str.2130)
   store ptr %call85428, ptr %fossil_mode85427
   %sc_slot85429 = alloca i1, align 1
   %sc_slot85430 = alloca i1, align 1
@@ -203544,7 +203543,7 @@ sc_end26609:
 
 sc_rhs26612:
   %fossil_mode_val85433 = load ptr, ptr %fossil_mode85427
-  %streq85434 = call i32 @ofs_str_eq(ptr %fossil_mode_val85433, ptr @str.2132)
+  %streq85434 = call i32 @ofs_str_eq(ptr %fossil_mode_val85433, ptr @str.2131)
   %cond85435 = icmp ne i32 %streq85434, 0
   store i1 %cond85435, ptr %sc_slot85430
   br label %sc_end26613
@@ -203555,7 +203554,7 @@ sc_end26613:
   br i1 %sc85436, label %sc_rhs26610, label %sc_end26611
 
 sc_rhs26610:
-  %call85437 = call ptr @_env(ptr @str.2088)
+  %call85437 = call ptr @_env(ptr @str.2087)
   %streq85438 = call i32 @ofs_str_eq(ptr %call85437, ptr @str.75)
   %cond85439 = icmp ne i32 %streq85438, 0
   store i1 %cond85439, ptr %sc_slot85429
@@ -203567,7 +203566,7 @@ sc_end26611:
 
 if_then26614:
   %fsrc85441 = alloca ptr, align 8
-  %call85442 = call ptr @_env(ptr @str.2133)
+  %call85442 = call ptr @_env(ptr @str.2132)
   %call85443 = call ptr @fz_header_source(ptr %call85442)
   store ptr %call85443, ptr %fsrc85441
   %fsrc_val85444 = load ptr, ptr %fsrc85441
@@ -203576,9 +203575,9 @@ if_then26614:
   br i1 %cmp85446, label %if_then26617, label %if_else26618
 
 if_then26617:
-  %call85447 = call ptr @_env(ptr @str.2133)
-  %concat85448 = call ptr @ofs_str_concat(ptr @str.1747, ptr %call85447)
-  %concat85449 = call ptr @ofs_str_concat_ex(ptr %concat85448, ptr @str.2134, i64 1)
+  %call85447 = call ptr @_env(ptr @str.2132)
+  %concat85448 = call ptr @ofs_str_concat(ptr @str.1746, ptr %call85447)
+  %concat85449 = call ptr @ofs_str_concat_ex(ptr %concat85448, ptr @str.2133, i64 1)
   call void @echo_obsidian(ptr %concat85449)
   call void @ofs_str_release(ptr %concat85449, i64 1)
   call void @exit(i64 2)
@@ -203599,11 +203598,11 @@ if_end26616:
   %msg_fmt85451 = alloca ptr, align 8
   %msg_fmt85451_own = alloca i64, align 8
   store i64 0, ptr %msg_fmt85451_own
-  %call85452 = call ptr @getenv(ptr @str.2135)
+  %call85452 = call ptr @getenv(ptr @str.2134)
   store ptr %call85452, ptr %msg_fmt85451
   call void @reporter_detect_locale()
   call void @reporter_detect_color()
-  %call85453 = call ptr @getenv(ptr @str.2136)
+  %call85453 = call ptr @getenv(ptr @str.2135)
   %streq85454 = call i32 @ofs_str_eq(ptr %call85453, ptr @str.185)
   %cond85455 = icmp ne i32 %streq85454, 0
   br i1 %cond85455, label %if_then26620, label %if_else26621
@@ -203618,7 +203617,7 @@ if_else26621:
 
 if_end26622:
   %msg_fmt_val85456 = load ptr, ptr %msg_fmt85451
-  %streq85457 = call i32 @ofs_str_eq(ptr %msg_fmt_val85456, ptr @str.2137)
+  %streq85457 = call i32 @ofs_str_eq(ptr %msg_fmt_val85456, ptr @str.2136)
   %cond85458 = icmp ne i32 %streq85457, 0
   br i1 %cond85458, label %if_then26623, label %if_else26624
 
@@ -203629,7 +203628,7 @@ if_then26623:
 
 if_else26624:
   %msg_fmt_val85460 = load ptr, ptr %msg_fmt85451
-  %streq85461 = call i32 @ofs_str_eq(ptr %msg_fmt_val85460, ptr @str.2138)
+  %streq85461 = call i32 @ofs_str_eq(ptr %msg_fmt_val85460, ptr @str.2137)
   %cond85462 = icmp ne i32 %streq85461, 0
   br i1 %cond85462, label %if_then26626, label %if_else26627
 
@@ -203640,7 +203639,7 @@ if_then26626:
 
 if_else26627:
   %msg_fmt_val85464 = load ptr, ptr %msg_fmt85451
-  %streq85465 = call i32 @ofs_str_eq(ptr %msg_fmt_val85464, ptr @str.2139)
+  %streq85465 = call i32 @ofs_str_eq(ptr %msg_fmt_val85464, ptr @str.2138)
   %cond85466 = icmp ne i32 %streq85465, 0
   br i1 %cond85466, label %if_then26629, label %if_else26630
 
@@ -203686,7 +203685,7 @@ if_end26625:
 
 sc_rhs26635:
   %input_file_val85477 = load ptr, ptr %input_file85372
-  %streq85478 = call i32 @ofs_str_eq(ptr %input_file_val85477, ptr @str.2140)
+  %streq85478 = call i32 @ofs_str_eq(ptr %input_file_val85477, ptr @str.2139)
   %cond85479 = icmp ne i32 %streq85478, 0
   store i1 %cond85479, ptr %sc_slot85473
   br label %sc_end26636
@@ -203719,14 +203718,14 @@ if_end26639:
   %sc_slot85490 = alloca i1, align 1
   %sc_slot85491 = alloca i1, align 1
   %input_file_val85492 = load ptr, ptr %input_file85372
-  %streq85493 = call i32 @ofs_str_eq(ptr %input_file_val85492, ptr @str.2141)
+  %streq85493 = call i32 @ofs_str_eq(ptr %input_file_val85492, ptr @str.2140)
   %cond85494 = icmp ne i32 %streq85493, 0
   store i1 %cond85494, ptr %sc_slot85491
   br i1 %cond85494, label %sc_end26645, label %sc_rhs26644
 
 sc_rhs26644:
   %input_file_val85495 = load ptr, ptr %input_file85372
-  %streq85496 = call i32 @ofs_str_eq(ptr %input_file_val85495, ptr @str.2142)
+  %streq85496 = call i32 @ofs_str_eq(ptr %input_file_val85495, ptr @str.2141)
   %cond85497 = icmp ne i32 %streq85496, 0
   store i1 %cond85497, ptr %sc_slot85491
   br label %sc_end26645
@@ -203738,7 +203737,7 @@ sc_end26645:
 
 sc_rhs26642:
   %input_file_val85499 = load ptr, ptr %input_file85372
-  %streq85500 = call i32 @ofs_str_eq(ptr %input_file_val85499, ptr @str.2143)
+  %streq85500 = call i32 @ofs_str_eq(ptr %input_file_val85499, ptr @str.2142)
   %cond85501 = icmp ne i32 %streq85500, 0
   store i1 %cond85501, ptr %sc_slot85490
   br label %sc_end26643
@@ -203750,7 +203749,7 @@ sc_end26643:
 
 sc_rhs26640:
   %input_file_val85503 = load ptr, ptr %input_file85372
-  %streq85504 = call i32 @ofs_str_eq(ptr %input_file_val85503, ptr @str.2144)
+  %streq85504 = call i32 @ofs_str_eq(ptr %input_file_val85503, ptr @str.2143)
   %cond85505 = icmp ne i32 %streq85504, 0
   store i1 %cond85505, ptr %sc_slot85489
   br label %sc_end26641
@@ -203761,11 +203760,11 @@ sc_end26641:
 
 if_then26646:
   %twin_target85507 = alloca ptr, align 8
-  %call85508 = call ptr @getenv(ptr @str.2145)
+  %call85508 = call ptr @getenv(ptr @str.2144)
   store ptr %call85508, ptr %twin_target85507
   %sc_slot85509 = alloca i1, align 1
   %input_file_val85510 = load ptr, ptr %input_file85372
-  %streq85511 = call i32 @ofs_str_eq(ptr %input_file_val85510, ptr @str.2141)
+  %streq85511 = call i32 @ofs_str_eq(ptr %input_file_val85510, ptr @str.2140)
   %cond85512 = icmp ne i32 %streq85511, 0
   store i1 %cond85512, ptr %sc_slot85509
   br i1 %cond85512, label %sc_rhs26649, label %sc_end26650
@@ -203783,13 +203782,13 @@ sc_end26650:
 
 if_then26651:
   %twin_target_val85517 = load ptr, ptr %twin_target85507
-  %concat85518 = call ptr @ofs_str_concat(ptr @str.2146, ptr %twin_target_val85517)
-  %concat85519 = call ptr @ofs_str_concat_ex(ptr %concat85518, ptr @str.2147, i64 1)
+  %concat85518 = call ptr @ofs_str_concat(ptr @str.2145, ptr %twin_target_val85517)
+  %concat85519 = call ptr @ofs_str_concat_ex(ptr %concat85518, ptr @str.2146, i64 1)
   call void @_emit_line(ptr %concat85519)
   call void @ofs_str_release(ptr %concat85519, i64 1)
   %twin_target_val85520 = load ptr, ptr %twin_target85507
-  %concat85521 = call ptr @ofs_str_concat(ptr @str.2148, ptr %twin_target_val85520)
-  %concat85522 = call ptr @ofs_str_concat_ex(ptr %concat85521, ptr @str.2149, i64 1)
+  %concat85521 = call ptr @ofs_str_concat(ptr @str.2147, ptr %twin_target_val85520)
+  %concat85522 = call ptr @ofs_str_concat_ex(ptr %concat85521, ptr @str.2148, i64 1)
   call void @_emit_line(ptr %concat85522)
   call void @ofs_str_release(ptr %concat85522, i64 1)
   br label %if_end26653
@@ -203801,7 +203800,7 @@ if_end26653:
   %LEVEL_WARN_val85523 = load i64, ptr @LEVEL_WARN
   %input_file_val85524 = load ptr, ptr %input_file85372
   %twin_target_val85525 = load ptr, ptr %twin_target85507
-  call void @event_diagnostic(ptr @str.75, i64 %LEVEL_WARN_val85523, i64 0, i64 0, ptr @str.1876, ptr %input_file_val85524, ptr %twin_target_val85525)
+  call void @event_diagnostic(ptr @str.75, i64 %LEVEL_WARN_val85523, i64 0, i64 0, ptr @str.1875, ptr %input_file_val85524, ptr %twin_target_val85525)
   call void @reporter_flush()
   %sf_val85526 = load ptr, ptr %msg_fmt85451
   %sf_own85527 = load i64, ptr %msg_fmt85451_own
@@ -203822,14 +203821,14 @@ if_else26647:
 
 if_end26648:
   %input_file_val85534 = load ptr, ptr %input_file85372
-  %streq85535 = call i32 @ofs_str_eq(ptr %input_file_val85534, ptr @str.2150)
+  %streq85535 = call i32 @ofs_str_eq(ptr %input_file_val85534, ptr @str.2149)
   %cond85536 = icmp ne i32 %streq85535, 0
   br i1 %cond85536, label %if_then26654, label %if_else26655
 
 if_then26654:
   call void @reporter_detect_locale()
   %_locale_val85537 = load ptr, ptr @_locale
-  %concat85538 = call ptr @ofs_str_concat(ptr @str.2151, ptr %_locale_val85537)
+  %concat85538 = call ptr @ofs_str_concat(ptr @str.2150, ptr %_locale_val85537)
   call void @echo_obsidian(ptr %concat85538)
   call void @ofs_str_release(ptr %concat85538, i64 1)
   %sf_val85539 = load ptr, ptr %msg_fmt85451
@@ -203876,7 +203875,7 @@ if_end26659:
   %rf385556 = alloca ptr, align 8
   %rf385556_own = alloca i64, align 8
   store i64 0, ptr %rf385556_own
-  %call85557 = call ptr @_env(ptr @str.2152)
+  %call85557 = call ptr @_env(ptr @str.2151)
   store ptr %call85557, ptr %rf385556
   %input_file_val85558 = load ptr, ptr %input_file85372
   %call85559 = call ptr @lava_read(ptr %input_file_val85558)
@@ -203892,14 +203891,14 @@ if_end26659:
 sc_rhs26660:
   %sc_slot85565 = alloca i1, align 1
   %rf3_val85566 = load ptr, ptr %rf385556
-  %streq85567 = call i32 @ofs_str_eq(ptr %rf3_val85566, ptr @str.2153)
+  %streq85567 = call i32 @ofs_str_eq(ptr %rf3_val85566, ptr @str.2152)
   %cond85568 = icmp ne i32 %streq85567, 0
   store i1 %cond85568, ptr %sc_slot85565
   br i1 %cond85568, label %sc_end26663, label %sc_rhs26662
 
 sc_rhs26662:
   %rf3_val85569 = load ptr, ptr %rf385556
-  %streq85570 = call i32 @ofs_str_eq(ptr %rf3_val85569, ptr @str.2154)
+  %streq85570 = call i32 @ofs_str_eq(ptr %rf3_val85569, ptr @str.2153)
   %cond85571 = icmp ne i32 %streq85570, 0
   store i1 %cond85571, ptr %sc_slot85565
   br label %sc_end26663
@@ -203919,7 +203918,7 @@ sc_end26661:
 
 if_then26664:
   %src_val85577 = load ptr, ptr %src85555
-  %concat85578 = call ptr @ofs_str_concat(ptr %src_val85577, ptr @str.2155)
+  %concat85578 = call ptr @ofs_str_concat(ptr %src_val85577, ptr @str.2154)
   store ptr %concat85578, ptr %src85555
   br label %if_end26666
 
@@ -203943,7 +203942,7 @@ if_end26666:
   br i1 %cond85588, label %sc_rhs26669, label %sc_end26670
 
 sc_rhs26669:
-  %call85589 = call ptr @_env(ptr @str.2156)
+  %call85589 = call ptr @_env(ptr @str.2155)
   %strlen85590 = call i64 @ofs_str_len(ptr %call85589)
   %cmp85591 = icmp sgt i64 %strlen85590, 0
   store i1 %cmp85591, ptr %sc_slot85586
@@ -203968,9 +203967,9 @@ if_then26671:
   %own_cap85596 = alloca i64, align 8
   %call85597 = call i64 @ast_mod_caprock()
   store i64 %call85597, ptr %own_cap85596
-  %call85598 = call ptr @_env(ptr @str.2156)
-  %concat85599 = call ptr @ofs_str_concat(ptr @str.1946, ptr %call85598)
-  call void @hdr_apply(i64 0, ptr @str.2156, i64 0, ptr %concat85599)
+  %call85598 = call ptr @_env(ptr @str.2155)
+  %concat85599 = call ptr @ofs_str_concat(ptr @str.1945, ptr %call85598)
+  call void @hdr_apply(i64 0, ptr @str.2155, i64 0, ptr %concat85599)
   call void @ofs_str_release(ptr %concat85599, i64 1)
   %sc_slot85600 = alloca i1, align 1
   %own_cap_val85601 = load i64, ptr %own_cap85596
@@ -204019,7 +204018,7 @@ if_else26680:
   br label %if_end26681
 
 if_end26681:
-  %call85611 = call ptr @getenv(ptr @str.2157)
+  %call85611 = call ptr @getenv(ptr @str.2156)
   %streq85612 = call i32 @ofs_str_eq(ptr %call85611, ptr @str.683)
   %cond85613 = icmp ne i32 %streq85612, 0
   br i1 %cond85613, label %if_then26682, label %if_else26683
@@ -204194,8 +204193,8 @@ arr_end26705:
   %field_ptr85698 = getelementptr inbounds %Token, ptr %sobj85681, i32 0, i32 0
   %field85699 = load i64, ptr %field_ptr85698
   %stone_to_str85700 = call ptr @ofs_stone_to_obsidian(i64 %field85699)
-  %concat85701 = call ptr @ofs_str_concat(ptr @str.2158, ptr %stone_to_str85700)
-  %concat85702 = call ptr @ofs_str_concat_ex(ptr %concat85701, ptr @str.2159, i64 1)
+  %concat85701 = call ptr @ofs_str_concat(ptr @str.2157, ptr %stone_to_str85700)
+  %concat85702 = call ptr @ofs_str_concat_ex(ptr %concat85701, ptr @str.2158, i64 1)
   %field_ptr85703 = getelementptr inbounds %Token, ptr %sobj85681, i32 0, i32 1
   %field85704 = load ptr, ptr %field_ptr85703
   %concat85705 = call ptr @ofs_str_concat_ex(ptr %concat85702, ptr %field85704, i64 1)
@@ -204305,7 +204304,7 @@ if_then26716:
   %field_ptr85752 = getelementptr inbounds %Node, ptr %sobj85748, i32 0, i32 0
   %field85753 = load i64, ptr %field_ptr85752
   %call85754 = call ptr @node_kind_name(i64 %field85753)
-  %concat85755 = call ptr @ofs_str_concat(ptr @str.2160, ptr %call85754)
+  %concat85755 = call ptr @ofs_str_concat(ptr @str.2159, ptr %call85754)
   call void @echo_obsidian(ptr %concat85755)
   call void @ofs_str_release(ptr %concat85755, i64 1)
   %sf_val85756 = load ptr, ptr %rf385556
@@ -204329,7 +204328,7 @@ if_else26717:
   br label %if_end26718
 
 if_end26718:
-  %call85766 = call ptr @_env(ptr @str.2161)
+  %call85766 = call ptr @_env(ptr @str.2160)
   %streq85767 = call i32 @ofs_str_eq(ptr %call85766, ptr @str.185)
   %cond85768 = icmp ne i32 %streq85767, 0
   %not85769 = xor i1 %cond85768, true
@@ -204522,7 +204521,7 @@ if_then26746:
   store i64 8, ptr %ahp85836
   store ptr %arr85833, ptr %rf3_inc85832
   %rf3_val85837 = load ptr, ptr %rf385556
-  %streq85838 = call i32 @ofs_str_eq(ptr %rf3_val85837, ptr @str.2153)
+  %streq85838 = call i32 @ofs_str_eq(ptr %rf3_val85837, ptr @str.2152)
   %cond85839 = icmp ne i32 %streq85838, 0
   br i1 %cond85839, label %if_then26749, label %if_else26750
 
@@ -204540,7 +204539,7 @@ if_then26749:
 
 if_else26750:
   %rf3_base85847 = alloca ptr, align 8
-  %call85848 = call ptr @_env(ptr @str.2162)
+  %call85848 = call ptr @_env(ptr @str.2161)
   store ptr %call85848, ptr %rf3_base85847
   %sc_slot85849 = alloca i1, align 1
   %rf3_base_val85850 = load ptr, ptr %rf3_base85847
@@ -204563,7 +204562,7 @@ sc_end26753:
 
 if_then26754:
   %rf3_base_val85858 = load ptr, ptr %rf3_base85847
-  %concat85859 = call ptr @ofs_str_concat(ptr @str.2163, ptr %rf3_base_val85858)
+  %concat85859 = call ptr @ofs_str_concat(ptr @str.2162, ptr %rf3_base_val85858)
   call void @echo_obsidian(ptr %concat85859)
   call void @ofs_str_release(ptr %concat85859, i64 1)
   call void @exit(i64 2)
@@ -204646,7 +204645,7 @@ if_end26762:
 
 if_then26766:
   call void @reporter_flush()
-  %call85884 = call ptr @getenv(ptr @str.2164)
+  %call85884 = call ptr @getenv(ptr @str.2163)
   %streq85885 = call i32 @ofs_str_eq(ptr %call85884, ptr @str.683)
   %cond85886 = icmp ne i32 %streq85885, 0
   br i1 %cond85886, label %if_then26769, label %if_else26770
@@ -204663,14 +204662,14 @@ if_else26770:
 if_end26771:
   %sc_slot85889 = alloca i1, align 1
   %fossil_mode_val85890 = load ptr, ptr %fossil_mode85427
-  %streq85891 = call i32 @ofs_str_eq(ptr %fossil_mode_val85890, ptr @str.1742)
+  %streq85891 = call i32 @ofs_str_eq(ptr %fossil_mode_val85890, ptr @str.1741)
   %cond85892 = icmp ne i32 %streq85891, 0
   store i1 %cond85892, ptr %sc_slot85889
   br i1 %cond85892, label %sc_end26773, label %sc_rhs26772
 
 sc_rhs26772:
   %fossil_mode_val85893 = load ptr, ptr %fossil_mode85427
-  %streq85894 = call i32 @ofs_str_eq(ptr %fossil_mode_val85893, ptr @str.2132)
+  %streq85894 = call i32 @ofs_str_eq(ptr %fossil_mode_val85893, ptr @str.2131)
   %cond85895 = icmp ne i32 %streq85894, 0
   store i1 %cond85895, ptr %sc_slot85889
   br label %sc_end26773
@@ -204684,7 +204683,7 @@ if_then26774:
   %call85898 = call ptr @refract_paths()
   store ptr %call85898, ptr %fpaths85897
   %fossil_mode_val85899 = load ptr, ptr %fossil_mode85427
-  %call85900 = call ptr @_env(ptr @str.2133)
+  %call85900 = call ptr @_env(ptr @str.2132)
   %fpaths_val85901 = load ptr, ptr %fpaths85897
   %call85902 = call i64 @fz_sources_hash(ptr %fpaths_val85901)
   %fpaths_val85903 = load ptr, ptr %fpaths85897
@@ -204743,10 +204742,10 @@ if_end26768:
   store i64 %call85923, ptr %t085553
   %c_output_val85924 = load ptr, ptr %c_output85374
   call void @cg_open(ptr %c_output_val85924)
-  %call85925 = call ptr @getenv(ptr @str.2165)
+  %call85925 = call ptr @getenv(ptr @str.2164)
   call void @llvmgen__set_target(ptr %call85925)
   %compile_mode_val85926 = load ptr, ptr %compile_mode85405
-  %streq85927 = call i32 @ofs_str_eq(ptr %compile_mode_val85926, ptr @str.2166)
+  %streq85927 = call i32 @ofs_str_eq(ptr %compile_mode_val85926, ptr @str.2165)
   %cond85928 = icmp ne i32 %streq85927, 0
   br i1 %cond85928, label %if_then26780, label %if_else26781
 
@@ -204786,10 +204785,10 @@ if_end26782:
   %STAGE_FORGE_val85940 = load i64, ptr @STAGE_FORGE
   %ms_val85941 = load double, ptr %ms85935
   %fop85942 = fdiv double %ms_val85941, 1000.0
-  call void @event_stage_end(i64 %STAGE_FORGE_val85940, double %fop85942, ptr @str.2167)
+  call void @event_stage_end(i64 %STAGE_FORGE_val85940, double %fop85942, ptr @str.2166)
   %sc_slot85943 = alloca i1, align 1
   %compile_mode_val85944 = load ptr, ptr %compile_mode85405
-  %streq85945 = call i32 @ofs_str_eq(ptr %compile_mode_val85944, ptr @str.1810)
+  %streq85945 = call i32 @ofs_str_eq(ptr %compile_mode_val85944, ptr @str.1809)
   %cond85946 = icmp ne i32 %streq85945, 0
   store i1 %cond85946, ptr %sc_slot85943
   br i1 %cond85946, label %sc_end26787, label %sc_rhs26786
@@ -204835,11 +204834,11 @@ if_end26790:
   %obj_file85962_own = alloca i64, align 8
   store i64 0, ptr %obj_file85962_own
   %c_output_val85963 = load ptr, ptr %c_output85374
-  %concat85964 = call ptr @ofs_str_concat(ptr %c_output_val85963, ptr @str.2168)
+  %concat85964 = call ptr @ofs_str_concat(ptr %c_output_val85963, ptr @str.2167)
   store ptr %concat85964, ptr %obj_file85962
   store i64 1, ptr %obj_file85962_own
   %rt85965 = alloca ptr, align 8
-  %call85966 = call ptr @getenv(ptr @str.2169)
+  %call85966 = call ptr @getenv(ptr @str.2168)
   store ptr %call85966, ptr %rt85965
   %rt_val85967 = load ptr, ptr %rt85965
   %streq85968 = call i32 @ofs_str_eq(ptr %rt_val85967, ptr @str.75)
@@ -204847,7 +204846,7 @@ if_end26790:
   br i1 %cond85969, label %if_then26791, label %if_else26792
 
 if_then26791:
-  store ptr @str.2170, ptr %rt85965
+  store ptr @str.2169, ptr %rt85965
   br label %if_end26793
 
 if_else26792:
@@ -204856,7 +204855,7 @@ if_else26792:
 if_end26793:
   %rt_probe85970 = alloca ptr, align 8
   %rt_val85971 = load ptr, ptr %rt85965
-  %call85972 = call ptr @fopen(ptr %rt_val85971, ptr @str.1451)
+  %call85972 = call ptr @fopen(ptr %rt_val85971, ptr @str.0)
   store ptr %call85972, ptr %rt_probe85970
   %rt_probe_val85973 = load ptr, ptr %rt_probe85970
   %cmp85974 = icmp eq ptr %rt_probe_val85973, null
@@ -204865,7 +204864,7 @@ if_end26793:
 if_then26794:
   %LEVEL_FAULT_val85975 = load i64, ptr @LEVEL_FAULT
   %rt_val85976 = load ptr, ptr %rt85965
-  call void @event_diagnostic(ptr @str.75, i64 %LEVEL_FAULT_val85975, i64 0, i64 0, ptr @str.1880, ptr %rt_val85976, ptr @str.75)
+  call void @event_diagnostic(ptr @str.75, i64 %LEVEL_FAULT_val85975, i64 0, i64 0, ptr @str.1879, ptr %rt_val85976, ptr @str.75)
   call void @reporter_flush()
   call void @exit(i64 1)
   br label %if_end26796
@@ -204879,14 +204878,14 @@ if_end26796:
   %compile_cmd85979 = alloca ptr, align 8
   store ptr @str.75, ptr %compile_cmd85979
   %compile_mode_val85980 = load ptr, ptr %compile_mode85405
-  %streq85981 = call i32 @ofs_str_eq(ptr %compile_mode_val85980, ptr @str.2166)
+  %streq85981 = call i32 @ofs_str_eq(ptr %compile_mode_val85980, ptr @str.2165)
   %cond85982 = icmp ne i32 %streq85981, 0
   br i1 %cond85982, label %if_then26797, label %if_else26798
 
 if_then26797:
   %c_opt_val85983 = load ptr, ptr %c_opt85378
-  %concat85984 = call ptr @ofs_str_concat(ptr @str.2171, ptr %c_opt_val85983)
-  %concat85985 = call ptr @ofs_str_concat_ex(ptr %concat85984, ptr @str.1560, i64 1)
+  %concat85984 = call ptr @ofs_str_concat(ptr @str.2170, ptr %c_opt_val85983)
+  %concat85985 = call ptr @ofs_str_concat_ex(ptr %concat85984, ptr @str.1559, i64 1)
   %output_file_val85986 = load ptr, ptr %output_file85373
   %concat85987 = call ptr @ofs_str_concat_ex(ptr %concat85985, ptr %output_file_val85986, i64 1)
   %concat85988 = call ptr @ofs_str_concat_ex(ptr %concat85987, ptr @str.264, i64 1)
@@ -204895,35 +204894,35 @@ if_then26797:
   %concat85991 = call ptr @ofs_str_concat_ex(ptr %concat85990, ptr @str.264, i64 1)
   %rt_val85992 = load ptr, ptr %rt85965
   %concat85993 = call ptr @ofs_str_concat_ex(ptr %concat85991, ptr %rt_val85992, i64 1)
-  %concat85994 = call ptr @ofs_str_concat_ex(ptr %concat85993, ptr @str.2172, i64 1)
+  %concat85994 = call ptr @ofs_str_concat_ex(ptr %concat85993, ptr @str.2171, i64 1)
   store ptr %concat85994, ptr %compile_cmd85979
   br label %if_end26799
 
 if_else26798:
   %c_output_val85995 = load ptr, ptr %c_output85374
-  %concat85996 = call ptr @ofs_str_concat(ptr @str.2173, ptr %c_output_val85995)
-  %concat85997 = call ptr @ofs_str_concat_ex(ptr %concat85996, ptr @str.1560, i64 1)
+  %concat85996 = call ptr @ofs_str_concat(ptr @str.2172, ptr %c_output_val85995)
+  %concat85997 = call ptr @ofs_str_concat_ex(ptr %concat85996, ptr @str.1559, i64 1)
   %obj_file_val85998 = load ptr, ptr %obj_file85962
   %concat85999 = call ptr @ofs_str_concat_ex(ptr %concat85997, ptr %obj_file_val85998, i64 1)
-  %concat86000 = call ptr @ofs_str_concat_ex(ptr %concat85999, ptr @str.2174, i64 1)
+  %concat86000 = call ptr @ofs_str_concat_ex(ptr %concat85999, ptr @str.2173, i64 1)
   %obj_file_val86001 = load ptr, ptr %obj_file85962
   %concat86002 = call ptr @ofs_str_concat_ex(ptr %concat86000, ptr %obj_file_val86001, i64 1)
   %concat86003 = call ptr @ofs_str_concat_ex(ptr %concat86002, ptr @str.264, i64 1)
   %rt_val86004 = load ptr, ptr %rt85965
   %concat86005 = call ptr @ofs_str_concat_ex(ptr %concat86003, ptr %rt_val86004, i64 1)
-  %concat86006 = call ptr @ofs_str_concat_ex(ptr %concat86005, ptr @str.2175, i64 1)
+  %concat86006 = call ptr @ofs_str_concat_ex(ptr %concat86005, ptr @str.2174, i64 1)
   %output_file_val86007 = load ptr, ptr %output_file85373
   %concat86008 = call ptr @ofs_str_concat_ex(ptr %concat86006, ptr %output_file_val86007, i64 1)
-  %concat86009 = call ptr @ofs_str_concat_ex(ptr %concat86008, ptr @str.2176, i64 1)
+  %concat86009 = call ptr @ofs_str_concat_ex(ptr %concat86008, ptr @str.2175, i64 1)
   %obj_file_val86010 = load ptr, ptr %obj_file85962
   %concat86011 = call ptr @ofs_str_concat_ex(ptr %concat86009, ptr %obj_file_val86010, i64 1)
   %concat86012 = call ptr @ofs_str_concat_ex(ptr %concat86011, ptr @str.264, i64 1)
   %rt_val86013 = load ptr, ptr %rt85965
   %concat86014 = call ptr @ofs_str_concat_ex(ptr %concat86012, ptr %rt_val86013, i64 1)
-  %concat86015 = call ptr @ofs_str_concat_ex(ptr %concat86014, ptr @str.2177, i64 1)
+  %concat86015 = call ptr @ofs_str_concat_ex(ptr %concat86014, ptr @str.2176, i64 1)
   %output_file_val86016 = load ptr, ptr %output_file85373
   %concat86017 = call ptr @ofs_str_concat_ex(ptr %concat86015, ptr %output_file_val86016, i64 1)
-  %concat86018 = call ptr @ofs_str_concat_ex(ptr %concat86017, ptr @str.2178, i64 1)
+  %concat86018 = call ptr @ofs_str_concat_ex(ptr %concat86017, ptr @str.2177, i64 1)
   store ptr %concat86018, ptr %compile_cmd85979
   br label %if_end26799
 
@@ -204961,7 +204960,7 @@ if_else26801:
   %c_output_val86037 = load ptr, ptr %c_output85374
   %compile_result_val86038 = load i64, ptr %compile_result86019
   %stone_to_str86039 = call ptr @ofs_stone_to_obsidian(i64 %compile_result_val86038)
-  call void @event_diagnostic(ptr @str.75, i64 %LEVEL_FAULT_val86036, i64 0, i64 0, ptr @str.1884, ptr %c_output_val86037, ptr %stone_to_str86039)
+  call void @event_diagnostic(ptr @str.75, i64 %LEVEL_FAULT_val86036, i64 0, i64 0, ptr @str.1883, ptr %c_output_val86037, ptr %stone_to_str86039)
   call void @reporter_flush()
   call void @exit(i64 1)
   br label %if_end26802

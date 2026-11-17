@@ -196,7 +196,7 @@ vein od_basename(p: obsidian) -> obsidian {
 }
 
 vein od_read(path: obsidian) -> obsidian {
-    forge f = fopen(path, "r")
+    forge f = fopen(path, "rb")
     if (f == null) { return "" }
     fseek(f, 0, 2)
     forge size = ftell(f)
@@ -208,7 +208,7 @@ vein od_read(path: obsidian) -> obsidian {
 }
 
 vein od_exists(path: obsidian) -> bool {
-    forge f = fopen(path, "r")
+    forge f = fopen(path, "rb")
     if (f == null) { return false }
     fclose(f)
     return true

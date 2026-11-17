@@ -355,7 +355,7 @@ vein print_module_claims() -> void {
 }
 
 vein file_exists(p: obsidian) -> bool {
-    forge f = fopen(p, "r")
+    forge f = fopen(p, "rb")
     if (f == null) { return false }
     fclose(f)
     return true

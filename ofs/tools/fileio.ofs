@@ -9,7 +9,7 @@ extern vein ftell(file: obsidian) -> stone
 extern vein ofs_alloc(size: stone) -> obsidian
 
 vein read_file(path: obsidian) -> obsidian {
-    forge file = fopen(path, "r")
+    forge file = fopen(path, "rb")
     if (file == null) { throw "unable to open " + path }
     fseek(file, 0, 2)
     forge size = ftell(file)
