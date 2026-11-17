@@ -4,7 +4,8 @@
 # com instancias vivas e assinatura compativel (parametro com padrao).
 # Cada caso roda o programa em segundo plano, espera pontos marcados na saida
 # (tick=N), edita o arquivo por script e confere pela saida que a vein mudou
-# sem reinicio e que o estado (contador global) continuou.
+# sem reinicio e que o estado (contador global) continuou. Casos 14-17: a
+# lava (rascunho que o editor grava sem salvar) e o OFS_REFRACT_DRAFT=0.
 #   OFSCC_BIN=<ofscc>  (padrao: ofs/dist/ofscc; precisa ser ligado com -rdynamic)
 #   REFRACT_KEEP=1     mantem a pasta temporaria (saidas de cada caso)
 # Memoria: ulimit -v 3000000 e timeout em tudo.
@@ -24,7 +25,10 @@ cleanup() {
 trap cleanup EXIT
 export OFS_STDLIB_PATH="$R/ofs/stdlib" NO_COLOR=1 OFS_PROGRESS=plain OFS_STRICT_FAULT=1
 export OFS_QUARTZ_CACHE="$T/cache" OFS_REFRACT_PERIOD=50
-unset OFS_CRYSTALLIZE_THRESHOLD OFS_QUARTZ_CC OFS_VERBOSE OFS_REFRACT_QUIET
+# lava (rascunho do editor) numa pasta propria do teste, nao na da sessao
+mkdir -p "$T/xdg"; chmod 700 "$T/xdg"
+export XDG_RUNTIME_DIR="$T/xdg"
+unset OFS_CRYSTALLIZE_THRESHOLD OFS_QUARTZ_CC OFS_VERBOSE OFS_REFRACT_QUIET OFS_REFRACT_DRAFT OFSCC_LAVA
 PASS=0
 FAIL=0
 
@@ -453,6 +457,103 @@ caso_assinatura_compat() {
     ok "assinatura compativel (parametro novo com padrao) aceita numa vein em uso"
 }
 
+# ── lava: o rascunho que o editor grava sem salvar ──
+LAVA="$T/xdg/ofs-refract-$(id -u)/lava"
+# lava_de <dir>: pasta espelhada do app.ofs de <dir> dentro da lava
+lava_de() { printf '%s%s' "$LAVA" "$(cd "$1" && pwd)"; }
+# grava_lava <dir> <sed>: escreve o app.ofs editado so na lava (como a extensao: tmp + rename)
+grava_lava() {
+    local l; l="$(lava_de "$1")"; mkdir -p "$l"
+    sed "$2" "$1/app.ofs" > "$l/.app.ofs.tmp" && mv "$l/.app.ofs.tmp" "$l/app.ofs"
+}
+
+# 14. lava: so o rascunho muda (disco intacto) e a vein troca; apagar o
+#     rascunho volta para a versao do disco
+caso_lava() {
+    local d="$T/lava"; mkdir -p "$d"; base_program "$d/app.ofs"
+    inicia "$d" OFS_CRYSTALLIZE=0
+    espera_por "$d/out.txt" '^tick=3 ' || { falha lava "nao comecou" "$d"; para; return; }
+    ls "$T/xdg/ofs-refract-$(id -u)/pulse/" 2>/dev/null | grep -qE '^[0-9]+$' || { falha lava "sem pulse da refract viva" "$d"; para; return; }
+    local antes; antes="$(cksum < "$d/app.ofs")"
+    grava_lava "$d" 's/return 1$/return 5/'
+    espera_por "$d/out.txt" 'ver=5' || { falha lava "o rascunho nao entrou" "$d"; para; return; }
+    [ "$(cksum < "$d/app.ofs")" = "$antes" ] || { falha lava "o arquivo do disco mudou" "$d"; para; return; }
+    rm -f "$(lava_de "$d")/app.ofs"
+    local n; n="$(wc -l < "$d/out.txt")"
+    espera_por "$d/out.txt" "^tick=$((n + 3)) ver=1" || { falha lava "apagar o rascunho nao voltou ao disco" "$d"; para; return; }
+    para
+    ticks_continuos "$d" || { falha lava "o contador recomecou ou pulou" "$d"; return; }
+    sem_reinicio "$d" || { falha lava "o programa reiniciou" "$d"; return; }
+    ok "lava: o rascunho troca a vein sem salvar; apagado, volta ao disco"
+}
+
+# 15. lava com erro de sintaxe: nao troca, nao fala antes de ~1 s, fala uma
+#     vez; corrigir no rascunho troca normalmente
+caso_lava_erro() {
+    local d="$T/lava_erro"; mkdir -p "$d"; base_program "$d/app.ofs"
+    inicia "$d" OFS_CRYSTALLIZE=0
+    espera_por "$d/out.txt" '^tick=3 ' || { falha lava_erro "nao comecou" "$d"; para; return; }
+    grava_lava "$d" 's/return 1$/return 1 +/'
+    sleep 0.6
+    if grep -q 'ERRO\|erro de compilacao' "$d/err.txt"; then falha lava_erro "mostrou o erro antes de ~1 s" "$d"; para; return; fi
+    espera_por "$d/err.txt" 'erro de compilacao no rascunho do editor' 5 || { falha lava_erro "o erro parado nao apareceu" "$d"; para; return; }
+    grep -q 'ERRO SINTATICO' "$d/err.txt" || { falha lava_erro "sem o diagnostico" "$d"; para; return; }
+    # o mesmo erro de novo (sai e volta ao mesmo conteudo) nao se repete
+    grava_lava "$d" 's/return 1$/return 1 + +/'
+    sleep 0.3
+    grava_lava "$d" 's/return 1$/return 1 +/'
+    sleep 1.6
+    [ "$(grep -c 'erro de compilacao no rascunho' "$d/err.txt")" -eq 1 ] || { falha lava_erro "o erro se repetiu" "$d"; para; return; }
+    local n; n="$(wc -l < "$d/out.txt")"
+    espera_por "$d/out.txt" "^tick=$((n + 3)) ver=1" || { falha lava_erro "o programa parou com o erro" "$d"; para; return; }
+    grava_lava "$d" 's/return 1$/return 6/'
+    espera_por "$d/out.txt" 'ver=6' || { falha lava_erro "a correcao no rascunho nao entrou" "$d"; para; return; }
+    para
+    if grep -q 'ERRO' "$d/out.txt"; then falha lava_erro "diagnostico no stdout do programa" "$d"; return; fi
+    ticks_continuos "$d" || { falha lava_erro "o contador recomecou ou pulou" "$d"; return; }
+    ok "lava com erro: sem troca, erro so depois de ~1 s parado e sem repetir"
+}
+
+# 16. OFS_REFRACT_DRAFT=0: a lava e ignorada (so o disco vale)
+caso_lava_desligada() {
+    local d="$T/lava_off"; mkdir -p "$d"; base_program "$d/app.ofs"
+    inicia "$d" OFS_CRYSTALLIZE=0 OFS_REFRACT_DRAFT=0
+    espera_por "$d/out.txt" '^tick=3 ' || { falha lava_desligada "nao comecou" "$d"; para; return; }
+    grava_lava "$d" 's/return 1$/return 8/'
+    sleep 1
+    if grep -q 'ver=8' "$d/out.txt"; then falha lava_desligada "usou o rascunho" "$d"; para; return; fi
+    sed -i 's/return 1$/return 9/' "$d/app.ofs"
+    espera_por "$d/out.txt" 'ver=9' || { falha lava_desligada "o disco deixou de valer" "$d"; para; return; }
+    para
+    grep -q 'lava em' "$d/err.txt" && { falha lava_desligada "anunciou a lava" "$d"; return; }
+    ok "OFS_REFRACT_DRAFT=0 ignora o rascunho"
+}
+
+# 17. --remote sem aparelho: a parte do PC (wrapper) escolhe a lava e o
+#     ofscc le o rascunho no lugar do disco (OFSCC_LAVA)
+caso_lava_remote() {
+    local d="$T/lava_remote"; mkdir -p "$d"
+    printf 'core main() {\n    echo("disco")\n}\n' > "$d/app.ofs"
+    local fns="$T/rf3_lava.sh"
+    sed -n -e '/^rf3_say()/p' -e '/^rf3_lava_init()/,/^}/p' -e '/^rf3_lava_of()/p' -e '/^rf3_hash()/p' -e '/^rf3_watch_sig()/,/^}/p' "$WRAP" > "$fns"
+    local res
+    res="$(cd "$d" && timeout 60 bash -c '
+        set -u; source "$1"; A="$(pwd)/app.ofs"; RF3_WATCH=("$A")
+        rf3_lava_init; rf3_watch_sig; s0="$RF3_SIG"
+        l="$(rf3_lava_of "$A")"; mkdir -p "${l%/*}"; sed "s/disco/lava/" app.ofs > "$l"
+        rf3_watch_sig; echo "live=$RF3_LAVA_LIVE"; [ "$RF3_SIG" != "$s0" ] && echo mudou
+        OFSCC_LAVA="$RF3_LAVA_MAP" OFSCC_INPUT="$A" OFSCC_MODE=run timeout 30 "$2"
+        rm -f "$l"; rf3_watch_sig; echo "live=$RF3_LAVA_LIVE"; [ "$RF3_SIG" = "$s0" ] && echo volta
+        OFS_REFRACT_DRAFT=0 rf3_lava_init; sed "s/disco/lava/" app.ofs > "$l"; rf3_watch_sig; rf3_watch_sig; echo "off=$RF3_LAVA_LIVE"
+        rm -f "$l" "$RF3_PULSE"' _ "$fns" "$CC" 2>&1)"
+    local want; want="$(printf 'live=1\nmudou\nlava\nlive=0\nvolta\noff=0')"
+    if [ "$res" != "$want" ]; then
+        echo "$res" > "$d/err.txt"; : > "$d/out.txt"
+        falha lava_remote "esperado: $(echo $want), veio: $(echo $res)" "$d"; return
+    fi
+    ok "--remote (parte do PC): o wrapper escolhe a lava e o ofscc le o rascunho"
+}
+
 echo "== Fault Refract (ofs/tests/refract) =="
 caso_interpretada
 caso_cristalizada
@@ -467,5 +568,9 @@ caso_osr_main
 caso_osr_nativo
 caso_monolith
 caso_assinatura_compat
+caso_lava
+caso_lava_erro
+caso_lava_desligada
+caso_lava_remote
 echo "refract: $PASS ok, $FAIL falha(s)"
 [ "$FAIL" -eq 0 ]

@@ -1,7 +1,7 @@
-param(
-    [Parameter(ValueFromRemainingArguments = $true)]
-    [object[]] $ArgsFromUser
-)
+# Sem param()/[Parameter]: um script "avancado" ganha parametros comuns do
+# PowerShell (-OutVariable, -OutBuffer...) e entao `-o saida` fica ambiguo.
+# $args recebe tudo como veio da linha de comando.
+$ArgsFromUser = @($args)
 
 $ErrorActionPreference = "Stop"
 $OfsVersion = "__OFS_VERSION__"

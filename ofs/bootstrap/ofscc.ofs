@@ -439,7 +439,7 @@ vein refract_reload(path: obsidian) -> stone {
     _expanded_lines = 0
     _attach_errors = 0
     ast_srcmap_reset()
-    forge src: obsidian = read_file(path)
+    forge src: obsidian = lava_read(path)
     src = expand_attaches(path, src)
     if (_attach_errors > 0) { return -1 }
     forge tokens: Array<Token> = lexer.lex(src)
@@ -472,6 +472,61 @@ vein refract_paths() -> Array<obsidian> {
         i++
     }
     return out
+}
+
+// ── Lava: o rascunho do editor (buffer ainda nao salvo) ──────────────
+// A refract le, para cada arquivo observado cuja lava venceu (mudou por
+// ultimo), o rascunho em vez do disco. Pasta e regra em docs/TOOLS.md
+// (`ofs refract`). O interpretador (rf_files_sig) e o `--remote`
+// (OFSCC_LAVA="real<TAB>rascunho" por linha) preenchem o mapa; vazio = disco.
+forge _lava_real: Array<obsidian> = []
+forge _lava_draft: Array<obsidian> = []
+
+vein lava_reset() -> void {
+    _lava_real = []
+    _lava_draft = []
+}
+
+vein lava_add(real: obsidian, draft: obsidian) -> void {
+    ofs_array_push(_lava_real, normalize_path(real))
+    ofs_array_push(_lava_draft, draft)
+}
+
+vein lava_load_env() -> void {
+    forge v = _env("OFSCC_LAVA")
+    forge n = ofs_str_len(v)
+    forge start = 0
+    forge i = 0
+    while (i <= n) {
+        if (i == n || ofs_str_char_at(v, i) == 10) {
+            forge line = ofs_str_substr(v, start, i - start)
+            forge k = 0
+            forge tab = -1
+            while (k < ofs_str_len(line) && tab < 0) {
+                if (ofs_str_char_at(line, k) == 9) { tab = k }
+                k++
+            }
+            if (tab > 0) { lava_add(ofs_str_substr(line, 0, tab), ofs_str_substr(line, tab + 1, ofs_str_len(line) - tab - 1)) }
+            start = i + 1
+        }
+        i++
+    }
+}
+
+// conteudo de um fonte: o rascunho, se a lava venceu e ele existe; o disco
+vein lava_read(path: obsidian) -> obsidian {
+    if (ofs_array_len(_lava_real) == 0) { return read_file(path) }
+    forge key = normalize_path(path)
+    forge i = 0
+    while (i < ofs_array_len(_lava_real)) {
+        if (ofs_str_eq(ofs_array_get(_lava_real, i), key)) {
+            forge d: obsidian = ofs_array_get(_lava_draft, i)
+            if (file_exists(d)) { return read_file(d) }
+            return read_file(path)
+        }
+        i++
+    }
+    return read_file(path)
 }
 
 // ── Busca dos modulos do `attach` ──────────────────────────────────────
@@ -632,13 +687,13 @@ vein expand_attaches_body(path: obsidian, src: obsidian) -> obsidian {
                 forge shown = ofs_str_substr(line, 8, ofs_str_len(mod_file) - 4)
                 forge mod_path = resolve_attach(path, file_line, base, mod_file, true, shown)
                 if (!ofs_str_eq(mod_path, "")) {
-                    ofs_array_push(out_parts, expand_attaches(mod_path, read_file(mod_path)))
+                    ofs_array_push(out_parts, expand_attaches(mod_path, lava_read(mod_path)))
                 }
             } else if (is_attach_line(line)) {
                 forge rel = attach_path_from_line(line)
                 forge child_path = resolve_attach(path, file_line, base, rel, false, "F:" + rel)
                 if (!ofs_str_eq(child_path, "")) {
-                    forge child_src = read_file(child_path)
+                    forge child_src = lava_read(child_path)
                     ofs_array_push(out_parts, expand_attaches(child_path, child_src))
                 }
             } else {
@@ -1412,9 +1467,12 @@ core main() {
     if (!is_run) { event_stage_start(STAGE_READ, input_file) }
     forge t0 = clock()
     forge src: obsidian = ""
-    src = read_file(input_file)
-    // Fault Refract L3: o build com celulas (e o remendo) leva o agente
+    // Fault Refract L3 (`ofs refract --remote`): o remendo le a lava (rascunho
+    // do editor) dos arquivos que o wrapper indicar em OFSCC_LAVA
+    lava_load_env()
     forge rf3 = _env("OFSCC_REFRACT")
+    src = lava_read(input_file)
+    // Fault Refract L3: o build com celulas (e o remendo) leva o agente
     forge rf3_on = !is_run && (ofs_str_eq(rf3, "cells") || ofs_str_eq(rf3, "patch"))
     if (rf3_on) { src = src + "\nattach {geophone}\n" }
     src = expand_attaches(input_file, src)
@@ -1572,6 +1630,7 @@ core main() {
             if (!interpreter.fs_enable(fossil_mode, _env("OFS_FOSSIL_FILE"), fz_sources_hash(fpaths), fpaths)) { exit(2) }
         }
         forge exit_code = interpreter.run(root_id)
+        interpreter.rf_finish()
         interpreter.fs_finish(exit_code)
         exit(exit_code)
         return

@@ -22,19 +22,34 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Bump patch version
+      - name: Bump version (VERSION base + patch)
         id: bump
         run: |
           git fetch --tags --force
+          # Versao base: arquivo VERSION na raiz (MAJOR.MINOR.PATCH). Se a ultima tag
+          # tem MAJOR.MINOR menor que o do arquivo, a proxima tag e exatamente a do
+          # arquivo (ex.: v2.0.0); senao soma 1 no patch da ultima tag.
+          BASE=$(tr -d '[:space:]' < VERSION 2>/dev/null || true)
+          if ! echo "$BASE" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then BASE=""; fi
           LATEST=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+          NEW=""
           if [ -z "$LATEST" ]; then
-            NEW="v1.0.0"
+            NEW="v${BASE:-1.0.0}"
           else
-            MAJOR=$(echo "$LATEST" | sed 's/v//' | cut -d. -f1)
-            MINOR=$(echo "$LATEST" | cut -d. -f2)
-            PATCH=$(echo "$LATEST" | cut -d. -f3)
-            NEW="v${MAJOR}.${MINOR}.$((PATCH + 1))"
+            L="${LATEST#v}"
+            MAJOR=$(echo "$L" | cut -d. -f1)
+            MINOR=$(echo "$L" | cut -d. -f2)
+            PATCH=$(echo "$L" | cut -d. -f3)
+            if [ -n "$BASE" ]; then
+              BMAJOR=$(echo "$BASE" | cut -d. -f1)
+              BMINOR=$(echo "$BASE" | cut -d. -f2)
+              if [ "$MAJOR" -lt "$BMAJOR" ] || { [ "$MAJOR" -eq "$BMAJOR" ] && [ "$MINOR" -lt "$BMINOR" ]; }; then
+                NEW="v${BASE}"
+              fi
+            fi
+            [ -n "$NEW" ] || NEW="v${MAJOR}.${MINOR}.$((PATCH + 1))"
           fi
+          MAJOR=$(echo "${NEW#v}" | cut -d. -f1); MINOR=$(echo "${NEW#v}" | cut -d. -f2); PATCH=$(echo "${NEW#v}" | cut -d. -f3)
           # Ensure tag does not already exist on remote
           while git ls-remote --tags origin "refs/tags/$NEW" | grep -q "$NEW"; do
             PATCH=$((PATCH + 1))

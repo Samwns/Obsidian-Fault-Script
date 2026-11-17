@@ -2,7 +2,7 @@
 
 Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`). Não edite à mão.
 
-- Compilador: `/tmp/claude-1000/-home-samns-Arquivos-Projetos-Em-Desolvovimento-OFS/d4c4ef1a-118a-45e3-b03e-bd91229ff791/scratchpad/w5/c2` (origem: OFSCC_BIN, sha256 59f430def811) (`OFSCC_MODE=ir` + `clang` + `/tmp/claude-1000/-home-samns-Arquivos-Projetos-Em-Desolvovimento-OFS/d4c4ef1a-118a-45e3-b03e-bd91229ff791/scratchpad/w5/magma.o` (origem: MAGMA_O, sha256 8244582662e9) x `OFSCC_MODE=run`), `OFS_STDLIB_PATH=ofs/stdlib`, `NO_COLOR=1`.
+- Compilador: `ofs/dist/ofscc` (origem: padrão, sha256 400bd5230221) (`OFSCC_MODE=ir` + `clang` + `ofs/dist/magma.o` (origem: padrão, sha256 8244582662e9) x `OFSCC_MODE=run`), `OFS_STDLIB_PATH=ofs/stdlib`, `NO_COLOR=1`.
 - Limites: `ulimit -v` 2 GB e `timeout 20s` por execução; cada modo roda num diretório limpo.
 - Compara stdout, stderr normalizado, exit code e arquivos gerados no cwd.
 - `erro esperado`: programas listados em `EXPECTED_ERR` (`run.sh`) devem falhar (rc ≠ 0) nos dois modos; fora do recurso x modo. Se só um modo falhar, é `difere`.
@@ -11,14 +11,14 @@ Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`).
 
 | Classe | Programas |
 |---|---|
-| igual | 106 |
-| erro esperado | 49 |
+| igual | 113 |
+| erro esperado | 53 |
 | difere | 0 |
 | só nativo | 0 |
 | só interpretado | 0 |
 | nenhum compila | 0 |
-| pulado | 15 |
-| **Total** | 170 |
+| pulado | 17 |
+| **Total** | 183 |
 
 ## Recurso x modo
 
@@ -26,18 +26,18 @@ Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`).
 
 | Recurso | Programas | Nativo passa | Interpretado passa | Igual |
 |---|---|---|---|---|
-| aritmética e controle | 106 | 106/106 | 106/106 | 106/106 |
-| strings | 39 | 39/39 | 39/39 | 39/39 |
-| arrays | 33 | 33/33 | 33/33 | 33/33 |
-| monolith/impl | 23 | 23/23 | 23/23 | 23/23 |
-| namespaces | 6 | 6/6 | 6/6 | 6/6 |
-| strata/match | 6 | 6/6 | 6/6 | 6/6 |
-| `?`/outcome | 3 | 3/3 | 3/3 | 3/3 |
-| `extern` libc / `rift vein` | 32 | 32/32 | 32/32 | 32/32 |
-| ponteiros `*T` / `*p = v` | 30 | 30/30 | 30/30 | 30/30 |
-| `fault_addr`/`fault_call` | 9 | 9/9 | 9/9 | 9/9 |
-| `fracture`/`abyss`/`bedrock` | 42 | 42/42 | 42/42 | 42/42 |
-| `quartz` (assembly inline, híbrido no run) | 5 | 5/5 | 5/5 | 5/5 |
+| aritmética e controle | 113 | 113/113 | 113/113 | 113/113 |
+| strings | 45 | 45/45 | 45/45 | 45/45 |
+| arrays | 36 | 36/36 | 36/36 | 36/36 |
+| monolith/impl | 24 | 24/24 | 24/24 | 24/24 |
+| namespaces | 7 | 7/7 | 7/7 | 7/7 |
+| strata/match | 7 | 7/7 | 7/7 | 7/7 |
+| `?`/outcome | 4 | 4/4 | 4/4 | 4/4 |
+| `extern` libc / `rift vein` | 33 | 33/33 | 33/33 | 33/33 |
+| ponteiros `*T` / `*p = v` | 31 | 31/31 | 31/31 | 31/31 |
+| `fault_addr`/`fault_call` | 10 | 10/10 | 10/10 | 10/10 |
+| `fracture`/`abyss`/`bedrock` | 44 | 44/44 | 44/44 | 44/44 |
+| `quartz` (assembly inline, híbrido no run) | 6 | 6/6 | 6/6 | 6/6 |
 
 ## Por programa
 
@@ -56,6 +56,7 @@ Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`).
 | `ofs/examples/fmt.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/hello.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/hybrid_fault_console.ofs` | igual | 0 | 0 |  |
+| `ofs/examples/magma_cast_demo.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/math_ops.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/monolith_advanced.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/native_site/build.ofs` | igual | 0 | 0 |  |
@@ -64,6 +65,7 @@ Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`).
 | `ofs/examples/pointers.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/recursion.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/refract_demo.ofs` | igual | 0 | 0 |  |
+| `ofs/examples/refract_gif.ofs` | pulado | 124 | 124 | tempo (> 20s nos dois) |
 | `ofs/examples/showcase.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/small_ints.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/string_ops.ofs` | igual | 0 | 0 |  |
@@ -72,6 +74,9 @@ Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`).
 | `ofs/examples/type_cast.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/ui_window_demo.ofs` | pulado | - | - | UI/janela/rede (check-ok) |
 | `ofs/examples/variables.ofs` | igual | 0 | 0 |  |
+| `ofs/examples/vitrine/vitrine_magma.ofs` | igual | 0 | 0 |  |
+| `ofs/examples/vitrine/vitrine.ofs` | igual | 0 | 0 |  |
+| `ofs/examples/vitrine/vitrine_quartz.ofs` | igual | 0 | 0 |  |
 | `ofs/examples/webserver_demo.ofs` | pulado | - | - | UI/janela/rede (check-ok) |
 | `ofs/examples/webui_site.ofs` | pulado | - | - | UI/janela/rede (check-ok) |
 | `ofs/examples/while_loop.ofs` | igual | 0 | 0 |  |
@@ -79,6 +84,7 @@ Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`).
 | `ofs/tests/fmt/cases/estrato_claim.ofs` | igual | 0 | 0 |  |
 | `ofs/tests/fmt/cases/geode.ofs` | igual | 0 | 0 |  |
 | `ofs/tests/fmt/cases/quartz.ofs` | igual | 0 | 0 |  |
+| `ofs/tests/fossil/mundo.ofs` | pulado | - | - | stdin/rede (check-ok) |
 | `ofs/tests/interpreter/01_arithmetic.ofs` | igual | 0 | 0 |  |
 | `ofs/tests/interpreter/02_control_flow.ofs` | igual | 0 | 0 |  |
 | `ofs/tests/interpreter/03_variables_scoping.ofs` | igual | 0 | 0 |  |
@@ -145,6 +151,13 @@ Gerado por `tests/parity/run.sh` (fase F0 de `plans/INTERPRETADOR_PARIDADE.md`).
 | `ofs/tests/regress/interp_memory.ofs` | igual | 0 | 0 |  |
 | `ofs/tests/regress/interp_runtime_error.ofs` | erro esperado | - | 1 | falha nos dois modos (nativo: não compila, interp: rc=1) |
 | `ofs/tests/regress/leak_warn.ofs` | igual | 0 | 0 |  |
+| `ofs/tests/regress/magma/cast_basic.ofs` | igual | 0 | 0 |  |
+| `ofs/tests/regress/magma/cast_errors.ofs` | igual | 1 | 1 |  |
+| `ofs/tests/regress/magma/cast_reload.ofs` | igual | 0 | 0 |  |
+| `ofs/tests/regress/magma_err_caprock.ofs` | erro esperado | - | 1 | falha nos dois modos (nativo: não compila, interp: rc=1) |
+| `ofs/tests/regress/magma_err_claim.ofs` | erro esperado | - | 1 | falha nos dois modos (nativo: não compila, interp: rc=1) |
+| `ofs/tests/regress/magma_err_crust.ofs` | erro esperado | - | 1 | falha nos dois modos (nativo: não compila, interp: rc=1) |
+| `ofs/tests/regress/magma_err_vent_untyped.ofs` | erro esperado | - | 1 | falha nos dois modos (nativo: não compila, interp: rc=1) |
 | `ofs/tests/regress/monolith_nested.ofs` | igual | 0 | 0 |  |
 | `ofs/tests/regress/neg_null_min.ofs` | igual | 0 | 0 |  |
 | `ofs/tests/regress/ptr_widths.ofs` | igual | 0 | 0 |  |

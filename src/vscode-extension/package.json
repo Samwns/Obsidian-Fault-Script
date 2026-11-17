@@ -2,7 +2,7 @@
   "name": "obsidian-fault-script",
   "displayName": "Obsidian Fault Script",
   "description": "Language support, diagnostics, autocomplete and embedded self-hosted LLVM compiler for OFS",
-  "version": "1.0.10",
+  "version": "2.0.0",
   "publisher": "Obsidian-Fault",
   "icon": "media/ofs.png",
   "license": "Apache-2.0",
@@ -26,6 +26,7 @@
   "activationEvents": [
     "onLanguage:ofs",
     "onLanguage:oll",
+    "workspaceContains:**/*.oal",
     "onCommand:ofs.runNative",
     "onCommand:ofs.previewOll",
     "onCommand:ofs.fossilReplay",
@@ -324,6 +325,11 @@
           "type": "boolean",
           "default": true,
           "description": "Prefer compiler binary embedded in extension (bin/<platform>) before workspace/system compiler."
+        },
+        "ofs.refract.liveEdits": {
+          "type": "boolean",
+          "default": true,
+          "description": "Fault Refract (lava): enquanto houver um `ofs refract` rodando, grava o conteudo do editor de .ofs/.oal (sem salvar, ~250 ms depois da ultima tecla) no rascunho que a Refract le; salvar, fechar ou desfazer tudo apaga o rascunho e a Refract volta ao arquivo do disco."
         }
       }
     }

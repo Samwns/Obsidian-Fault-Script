@@ -2979,6 +2979,157 @@ function fossilStepCommand(delta) {
   runFossilTarget(fossilState.file, String(Math.max(1, fossilState.step + delta)));
 }
 
+// ── Fault Refract: lava (rascunho ao vivo do editor) ──────────────────────
+// O `ofs refract` (local e --remote) le, para cada arquivo observado, o
+// rascunho em <raiz>/lava/<caminho absoluto sem a 1a barra> quando ele mudou
+// por ultimo; senao, o arquivo do disco. Raiz: POSIX
+// ${XDG_RUNTIME_DIR:-/tmp}/ofs-refract-<uid>; Windows %TEMP%\ofs-refract
+// (no Windows "C:\a\b.ofs" -> lava\C\a\b.ofs). Cada refract viva deixa
+// <raiz>/pulse/<pid>; sem pulse de processo vivo a extensao nao grava nada.
+// Mesma regra em ofs/ofscc/interpreter.ofs (rf_lava_init) e no wrapper.
+const LAVA_DELAY_MS = 250;
+
+function lavaRoot() {
+  if (process.platform === 'win32') {
+    return path.join(process.env.TEMP || process.env.TMP || os.tmpdir(), 'ofs-refract');
+  }
+  const base = process.env.XDG_RUNTIME_DIR || '/tmp';
+  return path.join(base, `ofs-refract-${process.getuid()}`);
+}
+
+function lavaPathFor(root, filePath) {
+  let abs = path.resolve(filePath);
+  if (process.platform === 'win32') {
+    abs = abs.replace(/\\/g, '/').replace(/^([A-Za-z]):/, '$1');
+  }
+  return path.join(root, 'lava', abs.replace(/^\/+/, ''));
+}
+
+// ha uma refract viva? (pasta 0700 do proprio usuario e um pulse de pid vivo)
+function lavaSessionAlive(root) {
+  try {
+    const st = fs.lstatSync(root);
+    if (!st.isDirectory()) {
+      return false;
+    }
+    if (process.platform !== 'win32' && (st.uid !== process.getuid() || (st.mode & 0o077) !== 0)) {
+      return false;
+    }
+    for (const name of fs.readdirSync(path.join(root, 'pulse'))) {
+      if (!/^\d+$/.test(name)) {
+        continue;
+      }
+      try {
+        process.kill(Number(name), 0);
+        return true;
+      } catch (err) {
+        if (err && err.code === 'EPERM') {
+          return true;
+        }
+      }
+    }
+  } catch (_) {
+    return false;
+  }
+  return false;
+}
+
+function isLavaDocument(document) {
+  if (!document || document.uri.scheme !== 'file') {
+    return false;
+  }
+  const name = document.fileName.toLowerCase();
+  return name.endsWith('.ofs') || name.endsWith('.oal');
+}
+
+function registerRefractLava(context) {
+  const timers = new Map();
+
+  const enabled = () => vscode.workspace.getConfiguration().get('ofs.refract.liveEdits', true)
+    && process.env.OFS_REFRACT_DRAFT !== '0';
+
+  const cancel = (key) => {
+    const t = timers.get(key);
+    if (t) {
+      clearTimeout(t);
+      timers.delete(key);
+    }
+  };
+
+  // apaga o rascunho: a refract volta a usar o arquivo do disco
+  const drop = (document) => {
+    const key = document.uri.toString();
+    cancel(key);
+    try {
+      fs.unlinkSync(lavaPathFor(lavaRoot(), document.fileName));
+    } catch (_) {
+      // ja nao existia
+    }
+  };
+
+  const write = (document) => {
+    const key = document.uri.toString();
+    timers.delete(key);
+    if (document.isClosed || !document.isDirty) {
+      drop(document);
+      return;
+    }
+    const root = lavaRoot();
+    if (!enabled() || !lavaSessionAlive(root)) {
+      return;
+    }
+    const target = lavaPathFor(root, document.fileName);
+    try {
+      fs.mkdirSync(path.dirname(target), { recursive: true, mode: 0o700 });
+      // tmp + rename: a refract nunca le um rascunho pela metade
+      const tmp = path.join(path.dirname(target), `.${path.basename(target)}.${process.pid}.tmp`);
+      fs.writeFileSync(tmp, document.getText(), { mode: 0o600 });
+      fs.renameSync(tmp, target);
+    } catch (_) {
+      // sem lava: a refract segue com o disco
+    }
+  };
+
+  context.subscriptions.push(
+    vscode.workspace.onDidChangeTextDocument((event) => {
+      const document = event.document;
+      if (!isLavaDocument(document)) {
+        return;
+      }
+      const key = document.uri.toString();
+      if (!document.isDirty) {
+        // desfez tudo: o conteudo voltou ao do disco
+        drop(document);
+        return;
+      }
+      if (!enabled()) {
+        return;
+      }
+      cancel(key);
+      timers.set(key, setTimeout(() => write(document), LAVA_DELAY_MS));
+    }),
+    vscode.workspace.onDidSaveTextDocument((document) => {
+      if (isLavaDocument(document)) {
+        drop(document);
+      }
+    }),
+    vscode.workspace.onDidCloseTextDocument((document) => {
+      if (isLavaDocument(document)) {
+        drop(document);
+      }
+    }),
+    {
+      dispose() {
+        for (const document of vscode.workspace.textDocuments) {
+          if (isLavaDocument(document)) {
+            drop(document);
+          }
+        }
+      }
+    }
+  );
+}
+
 function activate(context) {
   extensionContextRef = context;
   if (context.globalStorageUri?.fsPath) {
@@ -3056,6 +3207,7 @@ function activate(context) {
   registerHoverProvider(context);
   registerAttachDecorations(context);
   registerFormattingProvider(context);
+  registerRefractLava(context);
 
   ensureCompilerInstalledOnActivate();
 

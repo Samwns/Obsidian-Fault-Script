@@ -3453,6 +3453,25 @@ namespace interpreter {
     forge _rf_gslot: stone = 0
     forge _rf_gslot_end: stone = 0
     forge _rf_dirty: Array<obsidian> = []
+    // lava: o rascunho que o editor grava sem salvar (rf_lava_init). Por
+    // arquivo observado: ultimo hash visto do disco e da lava e quem mudou
+    // por ultimo (true = a lava vence). "" na raiz = lava desligada.
+    forge _rf_lava_root: obsidian = ""
+    forge _rf_lava_pulse: obsidian = ""
+    forge _rf_lava_eco: obsidian = ""
+    forge _rf_lp: Array<obsidian> = []
+    forge _rf_dh: Array<stone> = []
+    forge _rf_lh: Array<stone> = []
+    forge _rf_lw: Array<bool> = []
+    forge _rf_lava_live: bool = false
+    // erro com fonte da lava (digitacao incompleta): guardado e mostrado so
+    // se o conteudo ficar parado com erro por RF_LAVA_QUIET_MS, uma vez
+    forge RF_LAVA_QUIET_MS: stone = 1000
+    forge _rf_err_wait: bool = false
+    forge _rf_err_sig: stone = 0
+    forge _rf_err_at: stone = 0
+    forge _rf_err_text: obsidian = ""
+    forge _rf_err_shown: obsidian = ""
     // programa em execucao: veins (chave = nome com namespace/monolith),
     // globais, monoliths e externs, com a forma usada na comparacao
     forge _rf_vkey: Array<obsidian> = []
@@ -6648,6 +6667,23 @@ namespace interpreter {
         return saved
     }
 
+    // como acima, mas para um arquivo (diagnostico guardado da lava)
+    abyss vein rf_stdout_to_file(path: obsidian) -> stone {
+        rf_flush()
+        forge dupf = dlsym(ffi_rtld_default(), "dup")
+        forge dup2f = dlsym(ffi_rtld_default(), "dup2")
+        forge filenof = dlsym(ffi_rtld_default(), "fileno")
+        if (filenof == 0) { filenof = dlsym(ffi_rtld_default(), "_fileno") }
+        if (dupf == 0 || dup2f == 0 || filenof == 0) { return rf_stdout_to_stderr() }
+        forge f = fopen(path, "wb")
+        if (f == null) { return rf_stdout_to_stderr() }
+        forge saved = fault_call(dupf, 1) & 4294967295
+        if (saved == 4294967295) { fclose(f); return -1 }
+        fault_call(dup2f, fault_call(filenof, f as stone) & 4294967295, 1)
+        fclose(f)
+        return saved
+    }
+
     abyss vein rf_stdout_restore(saved: stone) -> void {
         rf_flush()
         if (saved < 0) { return }
@@ -6660,6 +6696,13 @@ namespace interpreter {
     // hash do conteudo; arquivo ausente (salvamento atomico em curso) = sem
     // mudanca por enquanto
     vein rf_file_hash(path: obsidian, basis: stone) -> stone {
+        return rf_file_hash_as(path, path, basis)
+    }
+
+    // hash do conteudo de `path` com o nome `key` (a lava de um arquivo com
+    // o mesmo conteudo do disco da o mesmo hash: apagar o rascunho depois de
+    // salvar nao recompila)
+    vein rf_file_hash_as(path: obsidian, key: obsidian, basis: stone) -> stone {
         forge f = fopen(path, "rb")
         if (f == null) { return 0 }
         fseek(f, 0, 2)
@@ -6671,22 +6714,160 @@ namespace interpreter {
         fclose(f)
         forge h = hy_fnv(buf, basis)
         ofs_free(buf)
-        h = hy_fnv(path, h ^ size)
+        h = hy_fnv(key, h ^ size)
         if (h == 0) { h = 1 }
         return h
     }
 
+    // assinatura dos arquivos observados. Para cada um, vale quem mudou por
+    // ultimo: o disco (salvou) ou a lava (o editor gravou o rascunho); a lava
+    // apagada (salvou, fechou, desfez tudo) devolve o arquivo ao disco. O
+    // mapa da lava (lava_add, ofscc.ofs) diz ao refract_reload o que ler.
     vein rf_files_sig() -> stone {
-        forge h = 1469598103934665603
+        forge basis = 1469598103934665603
+        forge h = basis
+        forge live = false
+        lava_reset()
         forge i = 0
         while (i < ofs_array_len(_rf_files)) {
             forge p: obsidian = ofs_array_get(_rf_files, i)
-            forge fh = rf_file_hash(p, h)
+            forge dh = rf_file_hash(p, basis)
+            forge lh = 0
+            forge lp = ""
+            if (i < ofs_array_len(_rf_lp)) {
+                lp = ofs_array_get(_rf_lp, i)
+                if (ofs_str_len(lp) > 0) { lh = rf_file_hash_as(lp, p, basis) }
+            }
+            forge win = false
+            if (i >= ofs_array_len(_rf_dh)) {
+                // primeiro olhar: rascunho que ja existia e velho (so vale se mudar)
+                ofs_array_push(_rf_dh, dh)
+                ofs_array_push(_rf_lh, lh)
+                ofs_array_push(_rf_lw, false)
+            } else {
+                win = ofs_array_get(_rf_lw, i)
+                forge od: stone = ofs_array_get(_rf_dh, i)
+                forge ol: stone = ofs_array_get(_rf_lh, i)
+                if (dh != 0 && dh != od) {
+                    win = false
+                    ofs_array_set(_rf_dh, i, dh)
+                }
+                if (lh != ol) {
+                    win = lh != 0
+                    ofs_array_set(_rf_lh, i, lh)
+                }
+                ofs_array_set(_rf_lw, i, win)
+            }
+            forge fh = dh
+            if (win) {
+                fh = lh
+                live = true
+                lava_add(p, lp)
+            }
             if (fh == 0) { return _rf_sig }
-            h = fh
+            h = hy_fnv(ofs_stone_to_obsidian(fh), h)
             i++
         }
+        _rf_lava_live = live
         return h
+    }
+
+    // ── lava: pasta do rascunho do editor ─────────────────────────────────
+    // POSIX: ${XDG_RUNTIME_DIR:-/tmp}/ofs-refract-<uid>; Windows:
+    // %TEMP%/ofs-refract. Dentro: lava/<caminho absoluto sem a 1a barra>
+    // (no Windows "C:\a\b.ofs" -> lava/C/a/b.ofs) e pulse/<pid>, um por
+    // refract viva; a extensao do VS Code so grava a lava se houver pulse de
+    // um processo vivo. OFS_REFRACT_DRAFT=0 desliga.
+    abyss vein rf_lava_init() -> void {
+        if (ofs_str_eq(hy_env_or("OFS_REFRACT_DRAFT", "1"), "0")) { return }
+        forge root = ""
+        forge uidf = dlsym(ffi_rtld_default(), "getuid")
+        if (uidf != 0) {
+            root = hy_env_or("XDG_RUNTIME_DIR", "/tmp") + "/ofs-refract-" + ofs_stone_to_obsidian(fault_call(uidf, 0) & 4294967295)
+            // so uma pasta 0700 do proprio usuario (em /tmp, outro usuario
+            // poderia te-la criado antes)
+            forge q = hy_q(root)
+            forge cmd = "mkdir -m 700 " + q + " 2>/dev/null; [ -d " + q + " ] && [ ! -L " + q + " ] && [ -O " + q + " ] && chmod 700 " + q + " && mkdir -p " + hy_q(root + "/lava") + " " + hy_q(root + "/pulse") +
+                " && { for p in " + hy_q(root + "/pulse") + "/*; do n=${p##*/}; n=${n%.eco}; kill -0 \"$n\" 2>/dev/null || rm -f \"$p\"; done; true; }"
+            if ((system(cmd) & 4294967295) != 0) {
+                rf_note("lava desligada: " + root + " nao e uma pasta sua (0700); edicoes sem salvar nao entram")
+                return
+            }
+        } else {
+            forge tmp = hy_env_or("TEMP", hy_env_or("TMP", ""))
+            if (ofs_str_len(tmp) == 0) { return }
+            root = rf_slashes(tmp) + "/ofs-refract"
+            forge mk = dlsym(ffi_rtld_default(), "_mkdir")
+            if (mk == 0) { return }
+            fault_call(mk, root as stone)
+            forge lroot = root + "/lava"
+            fault_call(mk, lroot as stone)
+            forge proot = root + "/pulse"
+            fault_call(mk, proot as stone)
+        }
+        _rf_lava_root = root
+        forge pid = ofs_stone_to_obsidian(getpid())
+        _rf_lava_pulse = root + "/pulse/" + pid
+        _rf_lava_eco = root + "/pulse/" + pid + ".eco"
+        forge f = fopen(_rf_lava_pulse, "wb")
+        if (f != null) { fclose(f) }
+        forge cwd = rf_cwd()
+        forge i = 0
+        while (i < ofs_array_len(_rf_files)) {
+            ofs_array_push(_rf_lp, rf_lava_of(ofs_array_get(_rf_files, i), cwd))
+            i++
+        }
+    }
+
+    vein rf_slashes(p: obsidian) -> obsidian {
+        forge out = ""
+        forge start = 0
+        forge i = 0
+        while (i < ofs_str_len(p)) {
+            if (ofs_str_char_at(p, i) == 92) {
+                out = out + ofs_str_substr(p, start, i - start) + "/"
+                start = i + 1
+            }
+            i++
+        }
+        return out + ofs_str_substr(p, start, ofs_str_len(p) - start)
+    }
+
+    abyss vein rf_cwd() -> obsidian {
+        forge g = dlsym(ffi_rtld_default(), "getcwd")
+        if (g == 0) { g = dlsym(ffi_rtld_default(), "_getcwd") }
+        if (g != 0) {
+            forge buf = ofs_alloc(4097) as stone
+            forge r = fault_call(g, buf, 4096)
+            if (r != 0) { return rf_slashes(r as obsidian) }
+        }
+        return rf_slashes(hy_env_or("PWD", "."))
+    }
+
+    // caminho da lava de um arquivo observado
+    vein rf_lava_of(path: obsidian, cwd: obsidian) -> obsidian {
+        forge a = rf_slashes(path)
+        forge n = ofs_str_len(a)
+        if (n >= 2 && ofs_str_char_at(a, 1) == 58) {
+            a = ofs_str_substr(a, 0, 1) + ofs_str_substr(a, 2, n - 2)
+        } else if (n == 0 || ofs_str_char_at(a, 0) != 47) {
+            a = cwd + "/" + a
+            if (ofs_str_len(cwd) >= 2 && ofs_str_char_at(cwd, 1) == 58) {
+                a = ofs_str_substr(a, 0, 1) + ofs_str_substr(a, 2, ofs_str_len(a) - 2)
+            }
+        }
+        a = normalize_path(a)
+        while (ofs_str_len(a) > 0 && ofs_str_char_at(a, 0) == 47) { a = ofs_str_substr(a, 1, ofs_str_len(a) - 1) }
+        return _rf_lava_root + "/lava/" + a
+    }
+
+    // fim do `ofs refract`: o pulse sai (a extensao para de gravar a lava)
+    vein rf_finish() -> void {
+        if (ofs_str_len(_rf_lava_pulse) > 0) {
+            remove(_rf_lava_pulse)
+            remove(_rf_lava_eco)
+            _rf_lava_pulse = ""
+        }
     }
 
     // ── tabelas por no ────────────────────────────────────────────────────
@@ -6975,13 +7156,15 @@ namespace interpreter {
             ofs_array_push(_rf_eshape, rf_eshape(en))
             i++
         }
+        rf_lava_init()
         _rf_sig = rf_files_sig()
         _rf_seen = _rf_sig
         _rf_next = rf_now_ms() + _rf_period
         forge extra = ofs_array_len(_rf_files) - 1
         forge what = _rf_path
         if (extra > 0) { what = what + " (+" + rf_plural(extra, "attach local", "attach locais") + ")" }
-        rf_info("observando " + what + "; salve para refratar")
+        if (ofs_str_len(_rf_lava_root) > 0) { rf_info("observando " + what + "; salve (ou so edite, no VS Code) para refratar") }
+        else { rf_info("observando " + what + "; salve para refratar") }
     }
 
     // chamado no comeco de toda chamada de vein (entre chamadas)
@@ -7015,6 +7198,14 @@ namespace interpreter {
                 _rf_next = rf_now_ms() + _rf_period
             } else {
                 _rf_seen = sig
+            }
+        } else if (_rf_err_wait && sig == _rf_err_sig && now - _rf_err_at >= RF_LAVA_QUIET_MS) {
+            // a lava ficou parada com erro: agora sim, mostra (uma vez)
+            _rf_err_wait = false
+            if (!ofs_str_eq(_rf_err_text, _rf_err_shown)) {
+                _rf_err_shown = _rf_err_text
+                ffi_stderr(_rf_err_text)
+                rf_note("erro de compilacao no rascunho do editor (acima); a versao em execucao continua")
             }
         }
         // laco nativo volta a entrar depois que a edicao foi tratada
@@ -7428,16 +7619,31 @@ namespace interpreter {
 
     vein rf_refract() -> void {
         forge start = node_pool_len()
-        forge saved = rf_stdout_to_stderr()
+        // fonte da lava: o diagnostico vai para o .eco e so aparece se o
+        // conteudo ficar parado com erro (a pessoa ainda pode estar digitando)
+        forge lava = _rf_lava_live && ofs_str_len(_rf_lava_eco) > 0
+        forge saved = -1
+        if (lava) { saved = rf_stdout_to_file(_rf_lava_eco) }
+        else { saved = rf_stdout_to_stderr() }
         forge root2 = refract_reload(_rf_path)
         rf_stdout_restore(saved)
         // nos de tentativas com erro tambem entram nas tabelas (ids globais)
         build_node_tables_from(_n_count)
         rf_extend()
         if (root2 < 0) {
+            if (lava) {
+                _rf_err_text = read_file(_rf_lava_eco)
+                _rf_err_sig = _rf_sig
+                _rf_err_at = rf_now_ms()
+                _rf_err_wait = true
+                return
+            }
             rf_note("erro de compilacao (acima); a versao em execucao continua")
             return
         }
+        // voltou a compilar: o mesmo erro, se voltar, aparece de novo
+        _rf_err_wait = false
+        _rf_err_shown = ""
         rf_apply(root2, start)
     }
 

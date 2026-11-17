@@ -2,9 +2,24 @@
 
 All notable changes to this project are recorded here.
 
-> **Esquema de versão.** As versões oficiais são as tags `vMAJOR.MINOR.PATCH` do GitHub (`v1.0.0` ... `v1.0.181`), com o patch incrementado automaticamente pelo workflow `release.yml`; é esse número que `ofs version` mostra num pacote instalado. O `OFS_VERSION="1.0.169"` do wrapper `src/packaging/linux/ofs` é só o valor de checkout local (o release troca `__OFS_VERSION__`), por isso fica atrás da última tag. Os rótulos `1.1.0`, `1.1.1` e `1.2.0` mais abaixo são marcos históricos de abril de 2026 que **nunca foram tags**; as entradas foram mantidas por ordem de assunto, não de versão. O texto "Unreleased" cobre tudo o que veio depois da `v1.0.151`.
+> **Esquema de versão.** As versões oficiais são as tags `vMAJOR.MINOR.PATCH` do GitHub (`v1.0.0` ... `v1.0.191`, depois `v2.0.0`). A base vem do arquivo `VERSION` na raiz: se a última tag tem `MAJOR.MINOR` menor que o do arquivo, o workflow `release.yml` cria exatamente a tag do arquivo (`v2.0.0`); senão soma 1 no patch, como antes. É esse número que `ofs version` mostra num pacote instalado. O `OFS_VERSION="2.0.0"` do wrapper `src/packaging/linux/ofs` é só o valor de checkout local (o release troca `__OFS_VERSION__`). Os rótulos `1.1.0`, `1.1.1` e `1.2.0` mais abaixo são marcos históricos de abril de 2026 que **nunca foram tags**; as entradas foram mantidas por ordem de assunto, não de versão. A seção `[2.0.0]` cobre tudo o que veio depois da `v1.0.151`.
 
 ## [Unreleased]
+
+## [2.0.0] - 2026-11-17 — Fault Refract, cristalização e baixo nível seguro
+
+Resumo dos destaques (o detalhe está nas seções abaixo):
+
+- **Fault Refract** (`ofs refract`): edição ao vivo, sem reiniciar e sem perder o estado; com OSR de laços, migração de `monolith` e Refract no Android.
+- **Cristalização e OSR**: veins quentes viram código nativo em segundo plano, inclusive laços ativos.
+- **Contratos**: `mineral`, `grain`, `bearing`, `settle` e `ofs assay`.
+- **Arena e `geode`**: `bedrock { }` como arena, aviso de vazamento e closures por valor.
+- **Segurança gradual**: `stratum crust|fault|abyss` por arquivo, com `claim`/`caprock`.
+- **`magma.cast`**: carregar e rodar OFS em execução.
+- **`ofs fossil`**: gravar uma execução e voltar no tempo.
+- **`ofs quarry`**: gerenciador de pacotes (`ofs.lode`).
+- **`quartz`**: assembly inline, e Rift no interpretador.
+- **Android no Windows**: o app Android compila também a partir do Windows.
 
 ### Adicionado — Ideia 2: `ofs fossil` (gravar e voltar no tempo) (2026-11-16)
 
@@ -24,6 +39,7 @@ All notable changes to this project are recorded here.
 ### Adicionado — Fault Refract L0/L1: `ofs refract` (2026-11-15)
 
 - `ofs refract app.ofs` roda o programa e aplica cada edição salva sem reiniciar e sem perder o estado: observa o arquivo e os attach locais, recompila e checa o programa no próprio processo e troca só as veins que mudaram (célula de despacho por vein); a vein em execução termina na versão antiga. Veins cristalizadas (nativas) são recompiladas num `.so` novo em segundo plano. Erro de compilação mantém a versão em execução; mudança de assinatura de vein em uso, layout de `monolith` com instâncias, remoção de vein em uso, tipo de global, `extern` alterada e variantes reordenadas são recusadas com mensagem. Globais novos começam com o valor inicial; os existentes mantêm o valor. `--quiet`, `OFS_REFRACT_PERIOD`. Exemplo `ofs/examples/refract_demo.ofs`, teste `ofs/tests/refract/run.sh`. Sem OSR (onda 4).
+- Lava (2026-11-17): a Refract (local e `--remote`) aplica a edição **sem salvar** no VS Code: a extensão grava o conteúdo do editor (~250 ms, `ofs.refract.liveEdits`) num rascunho em `${XDG_RUNTIME_DIR:-/tmp}/ofs-refract-<uid>/lava/` (Windows: `%TEMP%\ofs-refract`), que vale enquanto for o último a mudar; salvar/fechar/desfazer tudo volta ao disco; erro de digitação só aparece parado por ~1 s e sem repetir; `OFS_REFRACT_DRAFT=0` desliga; fora do VS Code, salvar (ou autosave).
 
 ### Adicionado — F5/F6/F7: quartz, execução híbrida e tipos de vein (2026-11-12)
 

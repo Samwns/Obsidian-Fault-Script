@@ -1,0 +1,31 @@
+// Programa do GIF do README: `ofs refract ofs/examples/refract_gif.ofs`.
+// O gerador em ofs/tools/gif/make_refract_gif.py edita `desenhar` e `barra`
+// com o programa rodando; o contador `passo` nunca reinicia.
+claim rift
+
+extern vein usleep(us: stone) -> stone
+
+forge passo: stone = 0
+
+vein barra(n: stone) -> obsidian {
+    forge s = ""
+    forge i = 0
+    while (i < n) {
+        s = s + "#"
+        i++
+    }
+    return s
+}
+
+vein desenhar(p: stone) -> void {
+    forge t = ofs_stone_to_obsidian(p)
+    echo("passo " + t + "  " + barra(p % 12))
+}
+
+core main() {
+    while (passo < 100000) {
+        passo = passo + 1
+        desenhar(passo)
+        usleep(400000)
+    }
+}

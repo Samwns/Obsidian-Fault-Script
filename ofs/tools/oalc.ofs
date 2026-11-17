@@ -1,6 +1,7 @@
 // oalc — compilador da OAL (Obsidian Android Language), v0
 //
 //   OALC_INPUT=app.oal OALC_OUT_DIR=build OALC_TARGET=android|desktop oalc
+//   (OALC_SOURCE=<arquivo>: conteudo lido dele; caminhos relativos ao INPUT)
 //
 // Gera, em OALC_OUT_DIR:
 //   AndroidManifest.xml   (bloco `app`)
@@ -1122,8 +1123,12 @@ core main() {
     _base_dir = dirname_of(input)
     forge name = basename_noext(input)
 
-    // linhas uteis
-    forge raw = wl_lines(read_file(input))
+    // linhas uteis. OALC_SOURCE: le o conteudo de outro arquivo (a lava, o
+    // rascunho do editor no `ofs refract --remote`) com os caminhos e o nome
+    // ainda relativos a OALC_INPUT
+    forge source = getenv("OALC_SOURCE")
+    if (source == null || ofs_str_len(source) == 0) { source = input }
+    forge raw = wl_lines(read_file(source))
     forge li = 0
     while (li < ofs_array_len(raw)) {
         forge line: obsidian = ofs_array_get(raw, li)

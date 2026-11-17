@@ -2,9 +2,24 @@
 
 Todos los cambios notables de este proyecto se registran aquí.
 
-> **Esquema de versiones.** Las versiones oficiales son las etiquetas `vMAJOR.MINOR.PATCH` de GitHub (`v1.0.0` ... `v1.0.178`), con el parche incrementado automáticamente por el flujo de trabajo `release.yml`; ese es el número que muestra `ofs version` en un paquete instalado. Las etiquetas `1.1.0`, `1.1.1` y `1.2.0` que aparecen más abajo son hitos históricos de abril de 2026 que **nunca fueron etiquetas**; las entradas se mantuvieron por tema, no por versión. El texto "Unreleased" cubre todo lo que llegó después de `v1.0.151`.
+> **Esquema de versiones.** Las versiones oficiales son las etiquetas `vMAJOR.MINOR.PATCH` de GitHub (`v1.0.0` ... `v1.0.191`, luego `v2.0.0`). La base viene del archivo `VERSION` en la raíz: si la última etiqueta tiene `MAJOR.MINOR` menor que el del archivo, el flujo `release.yml` crea exactamente la etiqueta del archivo (`v2.0.0`); si no, suma 1 al parche, como antes. Ese es el número que muestra `ofs version` en un paquete instalado. El `OFS_VERSION="2.0.0"` del wrapper `src/packaging/linux/ofs` es solo el valor de checkout local (el release cambia `__OFS_VERSION__`). Las etiquetas `1.1.0`, `1.1.1` y `1.2.0` que aparecen más abajo son hitos históricos de abril de 2026 que **nunca fueron etiquetas**; las entradas se mantuvieron por tema, no por versión. La sección `[2.0.0]` cubre todo lo que llegó después de `v1.0.151`.
 
 ## [Unreleased]
+
+## [2.0.0] - 2026-11-17 — Fault Refract, cristalización y bajo nivel seguro
+
+Resumen de lo destacado (el detalle está en las secciones de abajo):
+
+- **Fault Refract** (`ofs refract`): edición en vivo, sin reiniciar y sin perder el estado; con OSR de bucles, migración de `monolith` y Refract en Android.
+- **Cristalización y OSR**: las veins calientes pasan a código nativo en segundo plano, incluidos los bucles activos.
+- **Contratos**: `mineral`, `grain`, `bearing`, `settle` y `ofs assay`.
+- **Arena y `geode`**: `bedrock { }` como arena, aviso de fuga y closures por valor.
+- **Seguridad gradual**: `stratum crust|fault|abyss` por archivo, con `claim`/`caprock`.
+- **`magma.cast`**: cargar y ejecutar OFS en ejecución.
+- **`ofs fossil`**: grabar una ejecución y volver en el tiempo.
+- **`ofs quarry`**: gestor de paquetes (`ofs.lode`).
+- **`quartz`**: ensamblador en línea, y Rift en el intérprete.
+- **Android en Windows**: la app Android también se compila desde Windows.
 
 ### Añadido — Idea 2: `ofs fossil` (grabar y volver en el tiempo) (2026-11-16)
 
@@ -24,6 +39,7 @@ Todos los cambios notables de este proyecto se registran aquí.
 ### Añadido — Fault Refract L0/L1: `ofs refract` (2026-11-15)
 
 - `ofs refract app.ofs` ejecuta el programa y aplica cada edición guardada sin reiniciar y sin perder el estado: observa el archivo y sus attach locales, recompila y verifica el programa en el mismo proceso y reemplaza solo las veins que cambiaron (celda de despacho por vein); la vein en ejecución termina en la versión antigua. Las veins cristalizadas (nativas) se recompilan en un `.so` nuevo en segundo plano. Un error de compilación mantiene la versión en ejecución; el cambio de firma de una vein en uso, el cambio de layout de un `monolith` con instancias, la eliminación de una vein en uso, el cambio de tipo de un global, una `extern` modificada y las variantes reordenadas se rechazan con un mensaje. Los globales nuevos empiezan con su valor inicial; los existentes conservan el suyo. `--quiet`, `OFS_REFRACT_PERIOD`. Ejemplo `ofs/examples/refract_demo.ofs`, prueba `ofs/tests/refract/run.sh`. Sin OSR (ola 4).
+- Lava (2026-11-17): la Refract (local y `--remote`) aplica la edición **sin guardar** en VS Code: la extensión escribe el contenido del editor (~250 ms, `ofs.refract.liveEdits`) en un borrador en `${XDG_RUNTIME_DIR:-/tmp}/ofs-refract-<uid>/lava/` (Windows: `%TEMP%\ofs-refract`), que vale mientras sea el último en cambiar; guardar/cerrar/deshacer todo vuelve al disco; un error de escritura solo aparece quieto por ~1 s y sin repetirse; `OFS_REFRACT_DRAFT=0` lo apaga; fuera de VS Code, guardar (o autosave).
 
 ### Añadido — F5/F6/F7: quartz, ejecución híbrida y tipos de vein (2026-11-12)
 

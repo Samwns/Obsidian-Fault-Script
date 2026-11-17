@@ -501,7 +501,7 @@ core main() {
 
 ```bash
 ofs refract live.ofs
-# ofs refract: observando live.ofs; salve para refratar
+# ofs refract: observando live.ofs; salve (ou so edite, no VS Code) para refratar
 # hi 0
 # hi 1
 # (change "hi" to "yo" in the editor and save)
@@ -510,6 +510,8 @@ ofs refract live.ofs
 ```
 
 The `main` loop continues where it was: only the edited `vein` changes. If the file has an error, the diagnostic is printed and the running version carries on. Changes that cannot be made live (for example changing the type of a global) are refused with a message saying what needs a restart.
+
+**Without saving, in VS Code:** with the OFS extension, the change applies while you type, without saving (~250 ms after the last keystroke). While the code is half-typed and does not compile, the running version keeps going and the error only shows if you stop on it for ~1 s. Saving or undoing everything goes back to the file on disk. In other editors, save (or use the editor's auto save). To turn it off: `ofs.refract.liveEdits: false` in the extension or `OFS_REFRACT_DRAFT=0`. Details in [TOOLS.md](TOOLS.md#ofs-refract-live-editing-fault-refract).
 
 **On the phone (Android):** `ofs refract --remote app.oal` keeps the app **running natively on the device** and sends only the veins you edited (over `adb`). See [ANDROID.md](ANDROID.md) to prepare the app and [TOOLS.md](TOOLS.md) for the rules and variables. Language reference: [Live editing](LANGUAGE_REFERENCE.md).
 

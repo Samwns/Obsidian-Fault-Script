@@ -42,7 +42,7 @@ jobs:
               echo "Skipping $tag (already published)"
               continue
             fi
-            gh release create "$tag" "$f" --title "$tag" \
+            gh release create "$tag" "$f" --title "$tag" --latest=false \
               --notes "OFS package ${file%.tar.gz} (ofs quarry). sha256: $(sha256sum "$f" | cut -d' ' -f1)"
           done
 

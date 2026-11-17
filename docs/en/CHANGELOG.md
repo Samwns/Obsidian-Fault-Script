@@ -2,9 +2,24 @@
 
 All notable changes to this project are recorded here.
 
-> **Versioning scheme.** The official versions are the GitHub tags `vMAJOR.MINOR.PATCH` (`v1.0.0` ... `v1.0.178`), with the patch number incremented automatically by the `release.yml` workflow; this is the number `ofs version` shows in an installed package. The labels `1.1.0`, `1.1.1` and `1.2.0` below are historical milestones from April 2026 that **were never tags**; their entries were kept by subject, not by version. The text "Unreleased" covers everything that came after `v1.0.151`.
+> **Versioning scheme.** The official versions are the GitHub tags `vMAJOR.MINOR.PATCH` (`v1.0.0` ... `v1.0.191`, then `v2.0.0`). The base comes from the `VERSION` file at the repository root: if the latest tag has a lower `MAJOR.MINOR` than the file, the `release.yml` workflow creates exactly the file's tag (`v2.0.0`); otherwise it adds 1 to the patch, as before. This is the number `ofs version` shows in an installed package. The `OFS_VERSION="2.0.0"` in the `src/packaging/linux/ofs` wrapper is only the local checkout value (the release replaces `__OFS_VERSION__`). The labels `1.1.0`, `1.1.1` and `1.2.0` below are historical milestones from April 2026 that **were never tags**; their entries were kept by subject, not by version. The `[2.0.0]` section covers everything that came after `v1.0.151`.
 
 ## [Unreleased]
+
+## [2.0.0] - 2026-11-17 — Fault Refract, crystallization and safe low level
+
+Highlights (details are in the sections below):
+
+- **Fault Refract** (`ofs refract`): live editing without restarting or losing state; with loop OSR, `monolith` migration and Refract on Android.
+- **Crystallization and OSR**: hot veins become native code in the background, including running loops.
+- **Contracts**: `mineral`, `grain`, `bearing`, `settle` and `ofs assay`.
+- **Arena and `geode`**: `bedrock { }` as an arena, leak warning and by-value closures.
+- **Gradual safety**: `stratum crust|fault|abyss` per file, with `claim`/`caprock`.
+- **`magma.cast`**: load and run OFS at runtime.
+- **`ofs fossil`**: record a run and travel back in time.
+- **`ofs quarry`**: package manager (`ofs.lode`).
+- **`quartz`**: inline assembly, and Rift in the interpreter.
+- **Android on Windows**: the Android app also builds from Windows.
 
 ### Added — Idea 2: `ofs fossil` (record and travel back in time) (2026-11-16)
 
@@ -24,6 +39,7 @@ All notable changes to this project are recorded here.
 ### Added — Fault Refract L0/L1: `ofs refract` (2026-11-15)
 
 - `ofs refract app.ofs` runs the program and applies every saved edit without restarting and without losing state: it watches the file and its local attaches, recompiles and checks the program in-process and swaps only the veins that changed (per-vein dispatch cell); a running vein finishes on the old version. Crystallized (native) veins are recompiled into a new `.so` in the background. A compile error keeps the running version; a signature change of a vein in use, a `monolith` layout change with instances, removal of a vein in use, a global type change, a changed `extern` and reordered variants are refused with a message. New globals start with their initial value; existing ones keep theirs. `--quiet`, `OFS_REFRACT_PERIOD`. Example `ofs/examples/refract_demo.ofs`, test `ofs/tests/refract/run.sh`. No OSR (wave 4).
+- Lava (2026-11-17): Refract (local and `--remote`) applies the edit **without saving** in VS Code: the extension writes the editor content (~250 ms, `ofs.refract.liveEdits`) to a draft in `${XDG_RUNTIME_DIR:-/tmp}/ofs-refract-<uid>/lava/` (Windows: `%TEMP%\ofs-refract`), which counts while it is the last to change; save/close/undo-all goes back to the disk; a typing error only shows after ~1 s still and is not repeated; `OFS_REFRACT_DRAFT=0` turns it off; outside VS Code, save (or auto save).
 
 ### Added — F5/F6/F7: quartz, hybrid execution and vein types (2026-11-12)
 

@@ -501,7 +501,7 @@ core main() {
 
 ```bash
 ofs refract vivo.ofs
-# ofs refract: observando vivo.ofs; salve para refratar
+# ofs refract: observando vivo.ofs; salve (ou so edite, no VS Code) para refratar
 # ola 0
 # ola 1
 # (troque "ola" por "alo" no editor e salve)
@@ -510,6 +510,8 @@ ofs refract vivo.ofs
 ```
 
 O laço do `main` continua de onde estava: só a `vein` editada muda. Se o arquivo tem erro, o diagnóstico aparece e a versão em execução segue. Mudanças que não dá para fazer ao vivo (por exemplo, trocar o tipo de um global) são recusadas com uma mensagem que diz o que precisa de reinício.
+
+**Sem salvar, no VS Code:** com a extensão do OFS, a mudança vale enquanto você digita, sem salvar (~250 ms depois da última tecla). Enquanto o código está no meio da digitação e não compila, a versão em execução segue e o erro só aparece se você parar com ele por ~1 s. Salvar ou desfazer tudo volta ao arquivo do disco. Em outros editores, salve (ou use o salvamento automático do editor). Para desligar: `ofs.refract.liveEdits: false` na extensão ou `OFS_REFRACT_DRAFT=0`. Detalhes em [TOOLS.md](TOOLS.md#ofs-refract-edição-ao-vivo-fault-refract).
 
 **No celular (Android):** `ofs refract --remote app.oal` mantém o app **nativo rodando no aparelho** e envia só as veins que você editou (por `adb`). Veja [ANDROID.md](ANDROID.md#edição-ao-vivo-no-aparelho-fault-refract-l3) para preparar o app e [TOOLS.md](TOOLS.md#ofs-refract-edição-ao-vivo-fault-refract) para as regras e variáveis. Referência da linguagem: [Edição ao vivo](LANGUAGE_REFERENCE.md#edição-ao-vivo-ofs-refract-fault-refract).
 

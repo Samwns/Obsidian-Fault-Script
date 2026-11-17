@@ -3,7 +3,7 @@ set -euo pipefail
 
 OFS_VERSION="__OFS_VERSION__"
 case "$OFS_VERSION" in
-  __*__) OFS_VERSION="1.0.169" ;;
+  __*__) OFS_VERSION="2.0.0" ;;
 esac
 OFS_REPO="Samwns/Obsidian-Fault-Script"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -50,7 +50,7 @@ _pick_set() {
   local dirs=("$ROOT" "$ROOT/../lib/ofs")
   [ "$IS_TERMUX" = true ] && dirs+=("$TERMUX_LIB")
   dirs+=("$HOME/.local/lib/ofs" "/usr/local/lib/ofs" "/usr/lib/ofs")
-  for d in "${dirs[@]}"; do
+  for d in ${dirs[@]+"${dirs[@]}"}; do
     [ -x "$d/ofscc" ] || continue
     rt="$(_set_runtime_in "$d")" || continue
     sl="$(_set_stdlib_in "$d")" || sl=""
@@ -194,17 +194,17 @@ native_link() {
     if [ -d "$win_lib_dir" ] && [ -x "$linker_win" ]; then
       local win_cmd=("$linker_win" -m i386pep --allow-multiple-definition "$obj")
       if [ "${#win_shims[@]}" -gt 0 ]; then
-        win_cmd+=("${win_shims[@]}")
+        win_cmd+=(${win_shims[@]+"${win_shims[@]}"})
       fi
       win_cmd+=(-L"$win_lib_dir" -lmsvcrt -luser32 -lgdi32 -lkernel32 -lcomctl32 -e main -o "$out_bin")
-      "${win_cmd[@]}"
+      ${win_cmd[@]+"${win_cmd[@]}"}
     elif [ -x /usr/lib64/rocm/llvm/bin/lld-link ]; then
       local win_cmd=(/usr/lib64/rocm/llvm/bin/lld-link /entry:main /subsystem:windows "$obj")
       if [ "${#win_shims[@]}" -gt 0 ]; then
-        win_cmd+=("${win_shims[@]}")
+        win_cmd+=(${win_shims[@]+"${win_shims[@]}"})
       fi
       win_cmd+=(/out:"$out_bin")
-      "${win_cmd[@]}"
+      ${win_cmd[@]+"${win_cmd[@]}"}
     fi
     rm -f "$obj"
     return 0
@@ -225,11 +225,11 @@ native_link() {
     [ -x "$tclang" ] || tclang="$(command -v clang || true)"
     [ -n "$tclang" ] || { echo "ofs: clang nao encontrado (pkg install clang)" >&2; return 1; }
     local tcmd=("$tclang" -Wno-override-module)
-    [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ] && tcmd+=("${OFS_LLVM_IR_FLAGS[@]}")
-    tcmd+=(-Wl,--allow-multiple-definition "${magma_cflag[@]}" "$in_ll")
-    [ "${#magma_objs[@]}" -gt 0 ] && tcmd+=("${magma_objs[@]}")
+    [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ] && tcmd+=(${OFS_LLVM_IR_FLAGS[@]+"${OFS_LLVM_IR_FLAGS[@]}"})
+    tcmd+=(-Wl,--allow-multiple-definition ${magma_cflag[@]+"${magma_cflag[@]}"} "$in_ll")
+    [ "${#magma_objs[@]}" -gt 0 ] && tcmd+=(${magma_objs[@]+"${magma_objs[@]}"})
     tcmd+=(-lm -o "$out_bin")
-    "${tcmd[@]}"
+    ${tcmd[@]+"${tcmd[@]}"}
     return 0
   fi
 
@@ -240,19 +240,19 @@ native_link() {
     local ld_cmd=()
     if [ -x /usr/lib64/rocm/llvm/bin/ld.lld ]; then
       linker_bin="/usr/lib64/rocm/llvm/bin/ld.lld"
-      ld_cmd=("$linker_bin" --allow-multiple-definition "${magma_export[@]}" -L/usr/lib64 -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
+      ld_cmd=("$linker_bin" --allow-multiple-definition ${magma_export[@]+"${magma_export[@]}"} -L/usr/lib64 -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
     else
-      ld_cmd=("$linker_bin" --allow-multiple-definition "${magma_export[@]}" -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
+      ld_cmd=("$linker_bin" --allow-multiple-definition ${magma_export[@]+"${magma_export[@]}"} -dynamic-linker "$DYN_LINKER" "$CRT_DIR/crt1.o" "$CRT_DIR/crti.o" "$obj")
     fi
     if [ "${#magma_objs[@]}" -gt 0 ]; then
-      ld_cmd+=("${magma_objs[@]}")
+      ld_cmd+=(${magma_objs[@]+"${magma_objs[@]}"})
     fi
     ld_cmd+=(-lc)
     if [ "${#extra_libs[@]}" -gt 0 ]; then
-      ld_cmd+=("${extra_libs[@]}")
+      ld_cmd+=(${extra_libs[@]+"${extra_libs[@]}"})
     fi
     ld_cmd+=("$CRT_DIR/crtn.o" -o "$out_bin")
-    "${ld_cmd[@]}"
+    ${ld_cmd[@]+"${ld_cmd[@]}"}
     rm -f "$obj"
     return 0
   fi
@@ -260,20 +260,20 @@ native_link() {
   if command -v clang >/dev/null 2>&1; then
     local clang_cmd=(clang -Wno-override-module)
     if [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ]; then
-      clang_cmd+=("${OFS_LLVM_IR_FLAGS[@]}")
+      clang_cmd+=(${OFS_LLVM_IR_FLAGS[@]+"${OFS_LLVM_IR_FLAGS[@]}"})
     fi
     if [ "$(uname -s)" != "Darwin" ]; then
       clang_cmd+=(-Wl,--allow-multiple-definition)
     fi
-    clang_cmd+=("${magma_cflag[@]}" "$in_ll")
+    clang_cmd+=(${magma_cflag[@]+"${magma_cflag[@]}"} "$in_ll")
     if [ "${#magma_objs[@]}" -gt 0 ]; then
-      clang_cmd+=("${magma_objs[@]}")
+      clang_cmd+=(${magma_objs[@]+"${magma_objs[@]}"})
     fi
     if [ "${#extra_libs[@]}" -gt 0 ]; then
-      clang_cmd+=("${extra_libs[@]}")
+      clang_cmd+=(${extra_libs[@]+"${extra_libs[@]}"})
     fi
     clang_cmd+=(-o "$out_bin")
-    "${clang_cmd[@]}"
+    ${clang_cmd[@]+"${clang_cmd[@]}"}
     return 0
   fi
 
@@ -289,10 +289,10 @@ native_asm() {
   else
     local clang_asm=(clang -S -Wno-override-module)
     if [ "${#OFS_LLVM_IR_FLAGS[@]}" -gt 0 ]; then
-      clang_asm+=("${OFS_LLVM_IR_FLAGS[@]}")
+      clang_asm+=(${OFS_LLVM_IR_FLAGS[@]+"${OFS_LLVM_IR_FLAGS[@]}"})
     fi
     clang_asm+=("$in_ll" -o "$out_s")
-    "${clang_asm[@]}"
+    ${clang_asm[@]+"${clang_asm[@]}"}
   fi
 }
 
@@ -776,7 +776,7 @@ MAN
   else
     android_step "IR aarch64: $(basename "$entry")"
   fi
-  android_ir "$entry" "$OUT/obj/app.ll" "${rf_env[@]}"
+  android_ir "$entry" "$OUT/obj/app.ll" ${rf_env[@]+"${rf_env[@]}"}
 
   android_step "clang do NDK ($TRIPLE) -> lib$libname.so"
   "$CC" --target="$TRIPLE" -O2 -fPIC -Wno-override-module -c "$OUT/obj/app.ll" -o "$OUT/obj/app.o"
@@ -786,7 +786,7 @@ MAN
   "$CC" --target="$TRIPLE" -shared -o "$OUT/apk/lib/arm64-v8a/lib$libname.so" \
     "$OUT/obj/app.o" "$magma_o" \
     -Wl,--allow-multiple-definition -Wl,-init,__ofs_init_globals \
-    -u ANativeActivity_onCreate -Wl,-z,max-page-size=16384 "${rf_link[@]}" \
+    -u ANativeActivity_onCreate -Wl,-z,max-page-size=16384 ${rf_link[@]+"${rf_link[@]}"} \
     -landroid -llog -laaudio -lm
   # para o `ofs refract --remote` (mesmo shell)
   RF3_OUT="$OUT"; RF3_LIB="$libname"; RF3_PKG="$pkg"; RF3_CC="$CC"; RF3_TRIPLE="$TRIPLE"
@@ -799,7 +799,7 @@ MAN
     res_args=("$OUT/res.zip")
   fi
   rm -f "$OUT/unsigned.apk" "$OUT/aligned.apk"
-  "$BT/aapt2" link -o "$OUT/unsigned.apk" --manifest "$manifest" -I "$PLAT/android.jar" "${res_args[@]}"
+  "$BT/aapt2" link -o "$OUT/unsigned.apk" --manifest "$manifest" -I "$PLAT/android.jar" ${res_args[@]+"${res_args[@]}"}
   if [ -d "$OUT/assets" ]; then
     (cd "$OUT" && zip -q -r "$OUT/unsigned.apk" assets)
   fi
@@ -829,8 +829,8 @@ MAN
     local serial="${android_serial:-${ANDROID_SERIAL:-}}"
     [ -n "$serial" ] && ADBS+=(-s "$serial")
     android_step "instalando e abrindo $pkg"
-    "${ADBS[@]}" install -r "$output"
-    "${ADBS[@]}" shell am start -n "$pkg/android.app.NativeActivity"
+    ${ADBS[@]+"${ADBS[@]}"} install -r "$output"
+    ${ADBS[@]+"${ADBS[@]}"} shell am start -n "$pkg/android.app.NativeActivity"
   fi
 }
 
@@ -842,7 +842,8 @@ MAN
 # remendo (diff por vein contra o manifesto que o app mandou + regras), clang
 # do NDK (-shared -fPIC, ligado contra a lib do app), envio e a resposta do
 # app. Env: OFS_REFRACT_PORT (7341), OFS_REFRACT_PERIOD (ms, 300),
-# OFS_REFRACT_ONCE=1 (sai depois do primeiro remendo aceito ou recusado).
+# OFS_REFRACT_ONCE=1 (sai depois do primeiro remendo aceito ou recusado),
+# OFS_REFRACT_DRAFT=0 (ignora a lava, o rascunho nao salvo do editor).
 # ---------------------------------------------------------------------------
 rf3_say() { echo "refract: $*" >&2; }
 
@@ -881,11 +882,63 @@ rf3_fetch_manifest() {
   return 1
 }
 
+# Lava: o rascunho que o editor (extensao do VS Code) grava sem salvar, em
+# ${XDG_RUNTIME_DIR:-/tmp}/ofs-refract-<uid>/lava/<caminho absoluto sem a
+# 1a barra>; pulse/<pid> avisa a extensao que ha uma refract viva. Mesma
+# pasta e regra do `ofs refract` local (interpreter.ofs, rf_lava_init).
+rf3_lava_init() {
+  RF3_LAVA=""; RF3_PULSE=""; RF3_DH=(); RF3_LH=(); RF3_LW=()
+  RF3_LAVA_MAP=""; RF3_LAVA_LIVE=0; RF3_OAL_SRC=""
+  [ "${OFS_REFRACT_DRAFT:-1}" = 0 ] && return 0
+  local root; root="${XDG_RUNTIME_DIR:-/tmp}/ofs-refract-$(id -u)"
+  mkdir -m 700 "$root" 2>/dev/null
+  # so uma pasta 0700 do proprio usuario (em /tmp outro poderia criar antes)
+  if [ -d "$root" ] && [ ! -L "$root" ] && [ -O "$root" ] && chmod 700 "$root" && mkdir -p "$root/lava" "$root/pulse"; then
+    RF3_LAVA="$root"; RF3_PULSE="$root/pulse/$$"
+    : > "$RF3_PULSE"
+  else
+    rf3_say "lava desligada: $root nao e uma pasta sua (0700); edicoes sem salvar nao entram"
+  fi
+}
+
+rf3_lava_of() { printf '%s/lava/%s' "$RF3_LAVA" "${1#/}"; }
+
+rf3_hash() { if [ -f "$1" ]; then cksum < "$1"; else echo "-"; fi; }
+
+# assinatura dos observados em RF3_SIG. Por arquivo vale quem mudou por
+# ultimo: o disco (salvou) ou a lava (editou sem salvar); a lava apagada
+# devolve o arquivo ao disco; uma lava que ja existia ao iniciar so vale se
+# mudar. Preenche RF3_LAVA_MAP (OFSCC_LAVA: "real<TAB>lava" por linha),
+# RF3_OAL_SRC (OALC_SOURCE) e RF3_LAVA_LIVE (1 = algum fonte vem da lava).
 rf3_watch_sig() {
-  local f
-  for f in "${RF3_WATCH[@]}"; do
-    if [ -f "$f" ]; then cksum < "$f"; else echo "-"; fi
-  done | cksum
+  local i=0 f dh lh lp w out=""
+  RF3_LAVA_MAP=""; RF3_LAVA_LIVE=0; RF3_OAL_SRC=""
+  for f in ${RF3_WATCH[@]+"${RF3_WATCH[@]}"}; do
+    dh="$(rf3_hash "$f")"; lh="-"; lp=""
+    if [ -n "$RF3_LAVA" ]; then lp="$(rf3_lava_of "$f")"; lh="$(rf3_hash "$lp")"; fi
+    if [ -z "${RF3_DH[$i]+x}" ]; then
+      RF3_DH[$i]="$dh"; RF3_LH[$i]="$lh"; RF3_LW[$i]=0
+    else
+      w="${RF3_LW[$i]}"
+      if [ "$dh" != "-" ] && [ "$dh" != "${RF3_DH[$i]}" ]; then w=0; RF3_DH[$i]="$dh"; fi
+      if [ "$lh" != "${RF3_LH[$i]}" ]; then
+        if [ "$lh" = "-" ]; then w=0; else w=1; fi
+        RF3_LH[$i]="$lh"
+      fi
+      RF3_LW[$i]="$w"
+    fi
+    if [ "${RF3_LW[$i]}" = 1 ]; then
+      out="$out$lh;"; RF3_LAVA_LIVE=1
+      case "$f" in
+        *.oal) RF3_OAL_SRC="$lp" ;;
+        *) RF3_LAVA_MAP="$RF3_LAVA_MAP$f"$'\t'"$lp"$'\n' ;;
+      esac
+    else
+      out="$out$dh;"
+    fi
+    i=$((i + 1))
+  done
+  RF3_SIG="$(printf '%s' "$out" | cksum)"
 }
 
 refract_remote_run() {
@@ -906,8 +959,9 @@ refract_remote_run() {
   local sock="ofs-refract.$RF3_PKG"
   local st="$RF3_OUT/refract"
   rm -rf "$st"; mkdir -p "$st/gen"
-  "${ADBS[@]}" forward "tcp:$port" "localabstract:$sock" >/dev/null || android_die "adb forward tcp:$port localabstract:$sock falhou"
-  trap '"${ADBS[@]}" forward --remove "tcp:'"$port"'" >/dev/null 2>&1 || true; exec 3>&-' EXIT
+  ${ADBS[@]+"${ADBS[@]}"} forward "tcp:$port" "localabstract:$sock" >/dev/null || android_die "adb forward tcp:$port localabstract:$sock falhou"
+  RF3_PULSE=""
+  trap '${ADBS[@]+"${ADBS[@]}"} forward --remove "tcp:'"$port"'" >/dev/null 2>&1 || true; exec 3>&-; [ -z "$RF3_PULSE" ] || rm -f "$RF3_PULSE" "$RF3_PULSE.eco"' EXIT
   trap 'exit 130' INT TERM
   rf3_connect "$port" || android_die "o agente do app nao respondeu (localabstract:$sock); veja: adb logcat -s ofs-refract"
   rf3_fetch_manifest "$st/base.txt" || android_die "o app nao mandou o manifesto"
@@ -916,31 +970,65 @@ refract_remote_run() {
   case "$RF3_INPUT" in *.oal) RF3_WATCH+=("$RF3_INPUT") ;; esac
   local f
   while IFS= read -r f; do
-    [ -n "$f" ] && [ "$f" != "$RF3_ENTRY" ] && RF3_WATCH+=("$f")
+    # o .ofs gerado pelo oalc sai; num .ofs a entrada e o proprio arquivo
+    [ -n "$f" ] && { [ "$f" != "$RF3_ENTRY" ] || [ "$RF3_ENTRY" = "$RF3_INPUT" ]; } && RF3_WATCH+=("$f")
   done < "$RF3_OUT/obj/refract_watch.txt"
   rf3_say "conectado a $RF3_PKG (pid $RF3_APP_PID, geracao $RF3_GEN, porta $port -> localabstract:$sock)"
   rf3_say "observando: ${RF3_WATCH[*]}"
-  rf3_say "salve um arquivo para trocar as veins no app (Ctrl+C sai)"
+  rf3_lava_init
+  if [ -n "$RF3_LAVA" ]; then
+    rf3_say "salve um arquivo (ou so edite, no VS Code) para trocar as veins no app (Ctrl+C sai)"
+  else
+    rf3_say "salve um arquivo para trocar as veins no app (Ctrl+C sai)"
+  fi
   local period="${OFS_REFRACT_PERIOD:-300}"
   local nap; nap="$(awk "BEGIN { printf \"%.3f\", $period / 1000 }")"
-  local last; last="$(rf3_watch_sig)"
+  rf3_watch_sig
+  local last="$RF3_SIG"
   local base="${RF3_INPUT##*/}"; local app="${base%.*}"
+  # erro com fonte da lava (digitacao incompleta): guardado; so aparece se o
+  # conteudo ficar parado com erro por ~1 s, e o mesmo erro nao se repete
+  local err_wait=0 err_n=0 err_text="" err_shown="" lava_now=0
   while true; do
     sleep "$nap"
-    local now; now="$(rf3_watch_sig)"
-    [ "$now" = "$last" ] && continue
+    rf3_watch_sig
+    local now="$RF3_SIG"
+    if [ "$now" = "$last" ]; then
+      if [ "$err_wait" = 1 ]; then
+        err_n=$((err_n + 1))
+        if [ $(( (err_n + 1) * period )) -ge 1000 ]; then
+          err_wait=0
+          if [ "$err_text" != "$err_shown" ]; then
+            err_shown="$err_text"
+            printf '%s\n' "$err_text" >&2
+            rf3_say "o rascunho do editor nao compila; o app segue como estava"
+          fi
+        fi
+      fi
+      continue
+    fi
     # espera a gravacao terminar (conteudo estavel por um periodo)
     sleep "$nap"
-    [ "$(rf3_watch_sig)" = "$now" ] || continue
+    rf3_watch_sig
+    [ "$RF3_SIG" = "$now" ] || continue
     last="$now"
+    lava_now="$RF3_LAVA_LIVE"
+    err_wait=0
     local entry="$RF3_INPUT"
     case "$RF3_INPUT" in
       *.oal)
         local oalc; oalc="$(android_tool oalc)"
-        if ! OALC_INPUT="$RF3_INPUT" OALC_OUT_DIR="$st/gen" OALC_TARGET=android "$oalc" > "$st/oalc.log" 2>&1; then
+        if ! OALC_INPUT="$RF3_INPUT" OALC_SOURCE="$RF3_OAL_SRC" OALC_OUT_DIR="$st/gen" OALC_TARGET=android "$oalc" > "$st/oalc.log" 2>&1; then
+          if [ "$lava_now" = 1 ]; then
+            err_text="$(cat "$st/oalc.log")"; err_wait=1; err_n=0; continue
+          fi
           cat "$st/oalc.log" >&2; rf3_say "o oalc recusou o .oal; o app segue como estava"; continue
         fi
         if ! cmp -s "$st/gen/AndroidManifest.xml" "$RF3_OUT/AndroidManifest.xml"; then
+          if [ "$lava_now" = 1 ]; then
+            err_text="refract: o cabecalho do app (app/version/permission) mudou no rascunho: isso exige reinstalar (ofs build --target android --refract --install)"
+            err_wait=1; err_n=0; continue
+          fi
           rf3_say "o cabecalho do app (app/version/permission) mudou: isso exige reinstalar (ofs build --target android --refract --install)"
           continue
         fi
@@ -948,7 +1036,12 @@ refract_remote_run() {
     esac
     local rc=0
     OFSCC_TARGET=android OFSCC_REFRACT=patch OFSCC_REFRACT_BASE="$st/base.txt" OFSCC_REFRACT_WATCH="$st/watch.txt" \
-      OFSCC_INPUT="$entry" OFSCC_MODE=ir OFSCC_C_OUT="$st/patch.ll" "$A_OFSCC" > "$st/patch.log" 2>&1 || rc=$?
+      OFSCC_LAVA="$RF3_LAVA_MAP" OFSCC_INPUT="$entry" OFSCC_MODE=ir OFSCC_C_OUT="$st/patch.ll" "$A_OFSCC" > "$st/patch.log" 2>&1 || rc=$?
+    if [ "$rc" != 0 ] && [ "$rc" != 3 ] && [ "$rc" != 4 ] && [ "$lava_now" = 1 ]; then
+      err_text="$(grep -v '^  [A-Z][a-z]* ok\|^  [A-Z][a-z]*ing' "$st/patch.log")"
+      err_wait=1; err_n=0
+      continue
+    fi
     grep '^refract: ' "$st/patch.log" >&2 || true
     if [ "$rc" = 3 ]; then continue; fi
     if [ "$rc" = 4 ]; then [ "${OFS_REFRACT_ONCE:-0}" = 1 ] && return 4; continue; fi
@@ -957,6 +1050,7 @@ refract_remote_run() {
       rf3_say "o programa nao compila; o app segue como estava"
       continue
     fi
+    err_shown=""
     local gen=$((RF3_GEN + 1))
     local so="$st/patch-$gen.so"
     if ! "$RF3_CC" --target="$RF3_TRIPLE" -O2 -fPIC -shared -Wno-override-module "$st/patch.ll" -o "$so" \
@@ -1056,7 +1150,7 @@ cmd_doc() {
     rm -f "$ll"
   fi
   local joined="" i
-  for i in "${inputs[@]}"; do
+  for i in ${inputs[@]+"${inputs[@]}"}; do
     case "$i" in /*) ;; *) i="$(pwd)/$i" ;; esac
     joined="${joined:+$joined:}${i%/}"
   done
@@ -1107,7 +1201,7 @@ cmd_fmt() {
   fi
   [ "${#targets[@]}" -gt 0 ] || targets=(.)
   local files=() t f
-  for t in "${targets[@]}"; do
+  for t in ${targets[@]+"${targets[@]}"}; do
     if [ -d "$t" ]; then
       while IFS= read -r f; do files+=("$f"); done < <(find "$t" -type f -name '*.ofs' -not -path '*/.git/*' | LC_ALL=C sort)
     elif [ -f "$t" ]; then
@@ -1117,7 +1211,7 @@ cmd_fmt() {
     fi
   done
   local changed=0 failed=0
-  for f in "${files[@]}"; do
+  for f in ${files[@]+"${files[@]}"}; do
     rm -f "$tmp/out.ofs"
     OFSFMT_INPUT="$f" OFSFMT_OUTPUT="$tmp/out.ofs" "$bin" >&2
     if [ ! -f "$tmp/out.ofs" ]; then echo "ofs fmt: falhou em $f" >&2; failed=$((failed + 1)); continue; fi
