@@ -40,10 +40,15 @@ for b in $BENCHES; do
   [[ " $LANGS " == *" go "* ]] && [ -f go/$b.go ] && go build -o $OUT/go_$b $S/go/$b.go
 done
 
+# OFS interpretado: OFS_CRYSTALLIZE=0 (sem promoção para nativo).
+# OFS cristalizado: OFS_CRYSTALLIZE=1 com cache temporário deste run; o aquecimento
+# (warm) popula o cache antes da medição, que então pega o cache quente.
+mkdir -p $OUT/quartz
 cmd_for() { # lang bench
   case $1 in
     python) echo "python3 $S/python/$2.py";;
-    ofs-interp) echo "$OFS run $S/ofs/$2.ofs";;
+    ofs-interp) echo "env OFS_CRYSTALLIZE=0 $OFS run $S/ofs/$2.ofs";;
+    ofs-crystal) echo "env OFS_CRYSTALLIZE=1 OFS_QUARTZ_CACHE=$OUT/quartz $OFS run $S/ofs/$2.ofs";;
     *) echo "$OUT/$1_$2";;
   esac
 }
@@ -98,7 +103,7 @@ V_PY=""; command -v python3 >/dev/null && V_PY=$(python3 --version 2>&1)
 jver() { [ -n "$1" ] && jstr "$1" || printf 'null'; }
 
 R="$B/RESULTADOS.md"; J="$B/results.json"; RT="$OUT/RESULTADOS.md"; JT="$OUT/results.json"
-COLS="ofs ofs-interp"; for l in c rust go python; do [[ " $LANGS " == *" $l "* ]] && COLS="$COLS $l"; done
+COLS="ofs ofs-interp ofs-crystal"; for l in c rust go python; do [[ " $LANGS " == *" $l "* ]] && COLS="$COLS $l"; done
 {
 echo "# Resultados dos benchmarks"; echo
 echo "- Data: $DATE"
@@ -113,12 +118,12 @@ echo "- Método: mediana de $RUNS execuções do tempo de parede (ms); OFS inter
 echo "- Reproduzir: \`bash bench/run.sh\`"
 echo
 echo "## Tempo de parede (ms, menor é melhor)"; echo
-printf '| Benchmark | OFS nativo | OFS interpretado |'; [[ " $LANGS " == *" c "* ]] && printf ' C -O2 |'
+printf '| Benchmark | OFS nativo | OFS interpretado | OFS cristalizado |'; [[ " $LANGS " == *" c "* ]] && printf ' C -O2 |'
 for l in rust go python; do [[ " $LANGS " == *" $l "* ]] && printf ' %s |' $l; done; echo
-printf '|---|---|---|'; [[ " $LANGS " == *" c "* ]] && printf -- '---|'; for l in rust go python; do [[ " $LANGS " == *" $l "* ]] && printf -- '---|'; done; echo
+printf '|---|---|---|---|';[[ " $LANGS " == *" c "* ]] && printf -- '---|'; for l in rust go python; do [[ " $LANGS " == *" $l "* ]] && printf -- '---|'; done; echo
 } > "$RT"
 
-LANG_LABELS='{"ofs": "OFS nativo", "ofs-interp": "OFS interpretado", "c": "C -O2", "rust": "Rust -O", "go": "Go", "python": "Python 3"}'
+LANG_LABELS='{"ofs": "OFS nativo", "ofs-interp": "OFS interpretado", "ofs-crystal": "OFS cristalizado", "c": "C -O2", "rust": "Rust -O", "go": "Go", "python": "Python 3"}'
 {
 echo '{'
 echo '  "schema": 3,'
@@ -138,6 +143,9 @@ for b in $BENCHES; do
   row="| $b |"; jr=""
   for l in $COLS; do
     if [ $l = ofs-interp ]; then set -- $(measure $l $b $INTERP_RUNS $INTERP_TIMEOUT); to=$INTERP_TIMEOUT
+    elif [ $l = ofs-crystal ]; then
+      ( ulimit -v $((MEM_LIMIT_MB * 1024)); exec timeout $INTERP_TIMEOUT $(cmd_for $l $b) ) >/dev/null 2>&1  # aquecimento: popula o cache
+      set -- $(measure $l $b $RUNS $INTERP_TIMEOUT); to=$INTERP_TIMEOUT
     else set -- $(measure $l $b $RUNS $NATIVE_TIMEOUT); to=$NATIVE_TIMEOUT; fi
     st=$1; val=$2; txt=$(label $st $val $to)
     row="$row $txt |"

@@ -9,6 +9,10 @@ RUNS=3 INTERP_TIMEOUT=30 MEM_LIMIT_MB=2048 bash bench/run.sh   # rodada mais cur
 
 Variáveis: `RUNS=5` (execuções por medida; vale a mediana), `INTERP_RUNS=1`, `INTERP_TIMEOUT=120` (s, OFS interpretado), `NATIVE_TIMEOUT=300` (s, demais), `MEM_LIMIT_MB=2048`.
 
+- Duas colunas de OFS interpretado, medindo o mesmo binário de `ofs run` com a cristalização (promoção automática de veins quentes para nativo, `OFS_CRYSTALLIZE_THRESHOLD`) em modos diferentes:
+  - **OFS interpretado** (`ofs-interp`): `OFS_CRYSTALLIZE=0`, sem promoção para nativo. É o interpretador puro. `INTERP_RUNS` execuções, limite `INTERP_TIMEOUT`.
+  - **OFS cristalizado** (`ofs-crystal`): `OFS_CRYSTALLIZE=1` com um `OFS_QUARTZ_CACHE` temporário deste run (apagado ao fim). Antes de medir, uma execução de aquecimento por benchmark popula o cache (o `clang -O2` roda em segundo plano); as `RUNS` medições seguintes pegam o cache quente, e a mediana é dessas medições. Não inclui o custo da primeira compilação. Para medir a frio, o tempo de compilação do cache precisa ser somado à parte.
+  - Em `loop`, a coluna cristalizada tende a coincidir com a interpretada: o laço roda dentro de uma única chamada de vein e não troca de modo no meio (não há OSR).
 - O OFS é compilado com o compilador e o runtime do repositório (`ofs/dist/ofscc`, `ofs/dist/magma.o`, `ofs/stdlib`), não com o OFS instalado no sistema.
 - `ofs/`, `python/`, `rust/`: programas equivalentes. `expected/`: saída esperada (todos precisam produzir exatamente isso; o script marca "saída difere" se não).
 - `c/` (referência em C, compilada com `clang -O2`) fica só local, está no `.gitignore`. Sem `bench/c/`, o script omite a coluna C e avisa "referência em C ausente".
