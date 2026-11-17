@@ -1,0 +1,7 @@
+// A5.4: sem OFS_STRICT_FAULT, uso sem `claim` e so aviso (no stderr) ate
+// 2027-03-16; o programa compila e roda igual (o stdout e so do programa)
+extern vein labs(x: stone) -> stone
+
+core main() {
+    echo(labs(-8))
+}

@@ -1,0 +1,8 @@
+// Ideia 5: magma.vent precisa do tipo de vein pedido (forge f: vein(T) -> R = ...)
+attach {magma}
+claim magma
+
+core main() {
+    forge m = magma.cast("magma/mods/forja.ofs")
+    forge f = magma.vent(m, "forjar")
+}

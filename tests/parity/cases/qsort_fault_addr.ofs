@@ -1,4 +1,7 @@
 // qsort da libc com comparador OFS via fault_addr.
+
+claim rift, abyss
+
 rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
 extern vein ofs_alloc(size: stone) -> *stone
 

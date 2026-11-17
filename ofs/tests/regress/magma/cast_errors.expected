@@ -1,0 +1,21 @@
+false
+magma.cast: o mod nao compilou
+true
+true
+true
+true
+magma.vent: 'dobro' no mod e vein(stone)->stone, o tipo pedido e vein(crystal)->stone (parametro 1: stone no mod, o tipo pede crystal)
+magma.vent: 'dobro' no mod e vein(stone)->stone, o tipo pedido e vein(stone)->obsidian (retorno: stone no mod, o tipo pede obsidian)
+true
+magma.vent: o mod nao tem a vein 'triplo' (tem: dobro, oi)
+42
+true
+true
+false
+true
+7
+true
+magma.vent: o mod foi liberado (magma.release); faca outro magma.cast
+10
+magma.cast: arquivo nao encontrado: mods/nao_existe.ofs
+fim

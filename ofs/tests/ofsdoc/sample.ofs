@@ -2,6 +2,8 @@
 //
 // Mostra como comentar: o cabecalho do arquivo vira a descricao do modulo.
 
+claim rift
+
 attach {F:outro.ofs}
 
 extern vein puts(s: obsidian) -> stone
@@ -70,6 +72,17 @@ namespace shapes {
         /* um comentario de bloco com vein fake() { */
         return _hidden()
     }
+}
+
+// Lado positivo (A5.1: tipo com regra).
+mineral Lado = stone grain value > 0
+
+// Divisao exata (A5.1: contratos).
+vein exata(a: stone, b: Lado) -> stone
+    bearing a >= 0
+    settle result * b == a
+{
+    return a / b
 }
 
 core main() {

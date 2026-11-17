@@ -3,6 +3,9 @@
 // fault_addr (no `ofs run` vira o trampolim de callback da F2). Uma extern
 // da libc tambem e um valor de vein, chamado com a assinatura do tipo, e um
 // endereco que vem do C (dlsym) chega tipado.
+
+claim rift
+
 rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: vein(*stone, *stone) -> stone) -> void bind "qsort" abi c
 rift vein c_bsearch(key: *stone, base: *stone, count: stone, size: stone, cmp: vein(*stone, *stone) -> stone) -> *stone bind "bsearch" abi c
 extern vein ofs_array_data(arr: Array<stone>) -> *stone

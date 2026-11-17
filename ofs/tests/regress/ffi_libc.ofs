@@ -1,6 +1,9 @@
 // FFI no interpretador (F1): extern/rift da libc/libm chamados por endereco.
 // Inteiro, i32 com sinal, string (char*) de ida e volta, ponteiro opaco do C
 // (FILE*), double em registrador FP, variadica com double e i64.
+
+claim rift
+
 extern vein strlen(s: obsidian) -> stone
 extern vein abs(x: i32) -> i32
 extern vein atoi(s: obsidian) -> i32

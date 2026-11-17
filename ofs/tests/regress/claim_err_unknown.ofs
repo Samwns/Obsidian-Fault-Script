@@ -1,0 +1,6 @@
+// A5.4: permissao que nao existe
+claim lava
+
+core main() {
+    echo(1)
+}

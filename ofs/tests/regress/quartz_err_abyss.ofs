@@ -1,0 +1,3 @@
+claim quartz
+
+core main() { quartz { "nop" } }

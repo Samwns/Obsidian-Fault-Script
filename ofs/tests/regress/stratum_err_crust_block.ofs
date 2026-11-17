@@ -1,0 +1,8 @@
+// Ideia 4: `stratum crust` nao aceita bloco fracture/abyss
+stratum crust
+
+core main() {
+    forge x: stone = 3
+    fracture { x = x + 1 }
+    echo(x)
+}

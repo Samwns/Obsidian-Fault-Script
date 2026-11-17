@@ -1,4 +1,7 @@
 // monolith passado ao C (memcpy) por endereco.
+
+claim rift
+
 rift vein c_memcpy(dst: *stone, src: *stone, n: stone) -> *stone bind "memcpy" abi c
 
 monolith Par {

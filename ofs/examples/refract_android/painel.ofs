@@ -1,0 +1,25 @@
+// Logica do exemplo refract_android: um contador de segundos.
+// `painel.texto()` e a vein que a demo edita; `contagem` e o estado que
+// precisa continuar depois de cada troca.
+namespace painel {
+    forge contagem: stone = 0
+    forge ultimo: stone = 0
+
+    vein comecar() -> void { oal.set_animating(true) }
+
+    // uma vez por segundo: soma, registra no logcat (tag oal) e reconstroi a tela
+    vein quadro() -> void {
+        if (oal.now_ms - ultimo >= 1000) {
+            ultimo = oal.now_ms
+            contagem++
+            oal.log("painel: " + texto())
+            oal.refresh()
+        }
+    }
+
+    vein texto() -> obsidian { return "contagem " + ofs_stone_to_obsidian(contagem) }
+
+    vein dica() -> obsidian { return "salve painel.ofs: o texto muda, a contagem segue" }
+
+    vein somar() -> void { contagem = contagem + 10 }
+}

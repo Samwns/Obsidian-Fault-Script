@@ -2,7 +2,8 @@
 # Teste do `ofs fmt`.
 #   (a) idempotencia: formatar duas vezes da o mesmo arquivo;
 #   (b) o programa nao muda: o IR (.ll) que o ofscc gera do original e do
-#       formatado e identico (o IR nao leva numero de linha/coluna; se o
+#       formatado e identico (o IR nao leva numero de linha/coluna, salvo
+#       o texto das mensagens de contrato, que e normalizado; se o
 #       original nao compila sozinho, compara-se a sequencia de tokens do ofscc,
 #       OFSCC_MODE=tokens, sem comentarios/espacos);
 #   (c) os casos de cases/ (comentarios, linhas em branco, strings com { e //,
@@ -28,6 +29,8 @@ ir() { # ir <arquivo.ofs> <saida.ll>: 0 se compilou
   ( cd "$(dirname "$1")" && OFSCC_INPUT="$1" OFSCC_MODE=ir OFSCC_C_OUT="$2" timeout 120 "$OFSCC" >/dev/null 2>&1 )
 }
 
+irnorm() { sed -E 's/^(@[^ ]+) = .*CONTRATO VIOLADO .*$/\1 = <mensagem de contrato>/' "$1"; }
+
 fmt --stdin </dev/null >/dev/null 2>&1   # compila a ferramenta uma vez
 
 for src in "$HERE"/cases/*.ofs; do
@@ -42,7 +45,9 @@ for src in "$HERE"/cases/*.ofs; do
   [ -z "$(tail -c1 "$T/$n.1")" ] && ! grep -q ' $' "$T/$n.1" && echo "ok: $n sem espaco no fim e termina com newline" || fail "$n: espaco no fim / sem newline final"
   mkdir -p "$T/ir/o" "$T/ir/f"; cp "$src" "$T/ir/o/$n.ofs"; cp "$T/$n.1" "$T/ir/f/$n.ofs"
   if ir "$T/ir/o/$n.ofs" "$T/ir/o/$n.ll"; then
-    if ir "$T/ir/f/$n.ofs" "$T/ir/f/$n.ll" && cmp -s "$T/ir/o/$n.ll" "$T/ir/f/$n.ll"; then echo "ok: $n IR identico"; else fail "$n: IR mudou depois de formatar"; fi
+    # A5.1: a mensagem de contrato leva arquivo:linha:coluna da regra (muda
+    # com o recuo); fora dela o IR tem de ser identico
+    if ir "$T/ir/f/$n.ofs" "$T/ir/f/$n.ll" && cmp -s <(irnorm "$T/ir/o/$n.ll") <(irnorm "$T/ir/f/$n.ll"); then echo "ok: $n IR identico"; else fail "$n: IR mudou depois de formatar"; fi
   else
     # nao compila sozinho (attach de arquivo ausente): compara a sequencia de tokens do ofscc
     for d in o f; do

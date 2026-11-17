@@ -1,14 +1,50 @@
-// Callback com parametro crystal: os trampolins do interpretador (F2) so
-// passam inteiros/ponteiros; erro claro com rc 1 (o build nativo funciona).
-rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
+// Callback com crystal e f32 (onda 4): o endereco de uma vein interpretada
+// com parametros/retorno de ponto flutuante e um trampolim __ofs_cbx_K, que
+// recebe os registradores float; chamado de volta pelo FFI (como o C faria),
+// da o mesmo resultado do build nativo. f32 no Rift: sqrtf/fabsf/powf da libm.
+
+claim rift, abyss
+
+rift vein c_sqrtf(x: f32) -> f32 bind "sqrtf" abi c
+rift vein c_fabsf(x: f32) -> f32 bind "fabsf" abi c
+rift vein c_powf(b: f32, e: f32) -> f32 bind "powf" abi c
+rift vein c_ldexp(x: crystal, e: i32) -> crystal bind "ldexp" abi c
 
 vein com_crystal(a: crystal, b: crystal) -> stone {
+    if (a < b) { return -1 }
+    if (a > b) { return 1 }
     return 0
 }
 
+vein media(n: stone, a: crystal, b: crystal) -> crystal {
+    return (a + b) / 2.0 + n as crystal
+}
+
+vein escala(x: f32, k: stone) -> f32 {
+    forge y: crystal = x as crystal
+    return (y * 2.0 + k as crystal) as f32
+}
+
 core main() {
+    forge r1: f32 = c_sqrtf(16.0 as f32)
+    echo(r1 as crystal)
+    forge r2: f32 = c_fabsf((0.0 - 2.5) as f32)
+    echo(r2 as crystal)
+    forge r3: f32 = c_powf(2.0 as f32, 10.0 as f32)
+    echo(r3 as crystal)
+    echo(c_ldexp(1.5, 3 as i32))
     abyss {
-        forge f = fault_addr(com_crystal)
-        echo("nao chega aqui")
+        forge pc = fault_addr(com_crystal)
+        forge cmp = pc as vein(crystal, crystal) -> stone
+        echo(cmp(1.5, 2.5))
+        echo(cmp(3.0, 2.0))
+        echo(cmp(2.0, 2.0))
+        forge pm = fault_addr(media)
+        forge med = pm as vein(stone, crystal, crystal) -> crystal
+        echo(med(10, 1.0, 4.0))
+        forge pe = fault_addr(escala)
+        forge esc = pe as vein(f32, stone) -> f32
+        forge e1: f32 = esc(1.25 as f32, 3)
+        echo(e1 as crystal)
     }
 }

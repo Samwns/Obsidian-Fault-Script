@@ -1,0 +1,9 @@
+// A5.3: Array alocado no bedrock guardado numa variavel de fora: [ERRO DE ARENA]
+core main() {
+    forge fora: Array<stone> = []
+    bedrock {
+        forge a = [1, 2, 3]
+        fora = a
+    }
+    echo(ofs_array_len(fora))
+}

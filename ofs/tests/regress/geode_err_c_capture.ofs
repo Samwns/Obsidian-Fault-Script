@@ -1,0 +1,9 @@
+claim rift  // geode com captura passado direto ao C (extern): [ERRO DE GEODE]
+extern vein qsort(base: *stone, n: stone, size: stone, cmp: vein(*stone, *stone) -> i32) -> void
+
+core main() {
+    forge base = 3
+    forge v: *stone = ofs_alloc(16)
+    qsort(v, 2, 8, geode (a: *stone, b: *stone) -> i32 { return base as i32 })
+    ofs_free(v)
+}

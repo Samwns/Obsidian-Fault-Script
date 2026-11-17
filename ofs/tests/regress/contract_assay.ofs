@@ -1,0 +1,18 @@
+// A5.1: `ofs assay` (casos de borda) acha o erro de `metade` com n = 1
+mineral Pos = stone grain value > 0
+
+vein dividir(a: stone, b: stone) -> stone bearing b != 0 settle result * b + a % b == a {
+    return a / b
+}
+
+vein dobro(p: Pos) -> stone settle result > p {
+    return p * 2
+}
+
+vein metade(n: stone) -> stone bearing n >= 0 bearing n <= 10 settle result * 2 == n {
+    return n / 2
+}
+
+core main() {
+    echo(metade(4))
+}

@@ -1,0 +1,9 @@
+// A5.4: modulo que chama a libc declara o que usa no topo
+stratum fault
+claim rift
+
+extern vein abs(x: stone) -> stone
+
+vein distancia(a: stone, b: stone) -> stone {
+    return abs(a - b)
+}

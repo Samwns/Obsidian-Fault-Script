@@ -1,0 +1,5 @@
+// A5.4: `claim` so vale no topo do arquivo
+core main() {
+    echo(1)
+}
+claim rift

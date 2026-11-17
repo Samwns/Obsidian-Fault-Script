@@ -1,0 +1,14 @@
+// A5.4 + Ideia 4: cabecalho do modulo (stratum/claim/caprock e a forma //!)
+stratum fault
+claim rift, abyss
+//! claim quartz
+caprock rift, abyss
+
+extern vein labs(x: stone) -> stone
+
+core main() {
+    abyss {
+        forge v = labs(-2)
+        echo(v)
+    }
+}

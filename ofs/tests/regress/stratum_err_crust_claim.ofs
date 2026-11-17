@@ -1,0 +1,7 @@
+// Ideia 4: `claim` num arquivo `stratum crust` e contradicao
+stratum crust
+claim rift
+
+core main() {
+    echo(1)
+}

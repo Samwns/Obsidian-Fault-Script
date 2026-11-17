@@ -1,0 +1,19 @@
+// A5.4 + Ideia 4: estrato e permissoes por modulo. O principal libera aos
+// anexados so `rift` e `abyss` (caprock); cada modulo declara o que pede.
+caprock rift, abyss
+//! claim abyss
+attach {F:stratum_mods/fonte.ofs}
+attach {F:stratum_mods/puro.ofs}
+attach {F:stratum_mods/cru.ofs}
+
+core main() {
+    echo(distancia(3, 10))
+    echo(soma_quadrados(4))
+    echo(dobra_no_lugar(21))
+    forge x: stone = 5
+    abyss {
+        forge p: *stone = &x
+        *p = 6
+    }
+    echo(x)
+}

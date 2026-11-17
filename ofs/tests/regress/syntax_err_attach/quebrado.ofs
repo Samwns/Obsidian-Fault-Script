@@ -1,0 +1,5 @@
+// modulo com erro de sintaxe na linha 4
+vein ok() -> stone {
+    forge x = (1 + 2
+    return x
+}

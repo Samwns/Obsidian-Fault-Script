@@ -2,6 +2,9 @@
 // trampolim nativo que reentra no interpretador. qsort da libc ordenando um
 // Array<stone> (o ofs_array nativo da coluna de valores) e um Array de
 // monoliths (ponteiros), com comparadores OFS.
+
+claim rift, abyss
+
 rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
 rift vein c_bsearch(key: *stone, base: *stone, count: stone, size: stone, cmp: stone) -> *stone bind "bsearch" abi c
 extern vein ofs_array_data(arr: Array<stone>) -> *stone

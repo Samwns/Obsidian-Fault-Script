@@ -20,6 +20,12 @@ TMO="${PARITY_TIMEOUT:-20}"
 # Criterio: estar nesta lista (caminho relativo a raiz do repo). Se so um modo
 # falhar, e diferenca real (classe `difere`).
 EXPECTED_ERR=(
+  ofs/tests/regress/quartz_err_abyss.ofs
+  ofs/tests/regress/quartz_err_syntax.ofs
+  ofs/tests/regress/quartz_err_operand.ofs
+  ofs/tests/regress/quartz_err_dest.ofs
+  ofs/tests/regress/quartz_err_const.ofs
+  ofs/tests/regress/quartz_err_memory_out.ofs
   ofs/tests/regress/seal_return_inside.ofs
   ofs/tests/regress/undefined_ident.ofs
   ofs/tests/regress/attach_missing.ofs
@@ -42,6 +48,31 @@ EXPECTED_ERR=(
   ofs/tests/regress/vein_type_err_cast.ofs
   ofs/tests/regress/vein_type_null_call.ofs  # chamada de vein null: rc 1 nos dois modos
   ofs/tests/regress/fault_warn_default.ofs  # so aviso sem OFS_STRICT_FAULT; aqui (estrito) e erro
+  ofs/tests/regress/contract_err_bearing.ofs  # A5.1: [ERRO DE CONTRATO] estatico
+  ofs/tests/regress/contract_err_grain.ofs
+  ofs/tests/regress/contract_err_result.ofs
+  ofs/tests/regress/contract_fail_settle.ofs  # A5.1: contrato violado em execucao: rc 1 nos dois modos
+  ofs/tests/regress/contract_fail_grain.ofs
+  ofs/tests/regress/syntax_err_attach.ofs  # erro de sintaxe no modulo do attach
+  ofs/tests/regress/arena_err_escape.ofs  # A5.3: [ERRO DE ARENA] (valor da arena escapa)
+  ofs/tests/regress/arena_err_kept_param.ofs
+  ofs/tests/regress/arena_err_return.ofs
+  ofs/tests/regress/geode_err_capture_assign.ofs  # geode: [ERRO DE GEODE]
+  ofs/tests/regress/geode_err_c_capture.ofs
+  ofs/tests/regress/geode_err_break.ofs
+  ofs/tests/regress/geode_c_runtime.ofs  # geode com captura no C em execucao: rc 1 nos dois modos
+  ofs/tests/regress/stratum_err_crust.ofs  # A5.4 + Ideia 4: [ERRO DE ESTRATO]/[ERRO DE PERMISSAO]
+  ofs/tests/regress/stratum_err_crust_block.ofs
+  ofs/tests/regress/stratum_err_crust_claim.ofs
+  ofs/tests/regress/claim_err_missing.ofs
+  ofs/tests/regress/claim_err_caprock.ofs
+  ofs/tests/regress/claim_err_late.ofs
+  ofs/tests/regress/claim_err_unknown.ofs
+  ofs/tests/regress/claim_warn_default.ofs  # so aviso sem OFS_STRICT_FAULT; aqui (estrito) e erro
+  ofs/tests/regress/magma_err_claim.ofs  # Ideia 5: magma.cast sem 'claim magma', em 'stratum crust', magma.vent sem tipo
+  ofs/tests/regress/magma_err_crust.ofs
+  ofs/tests/regress/magma_err_vent_untyped.ofs
+  ofs/tests/regress/magma_err_caprock.ofs
 )
 is_expected() { # is_expected <arquivo absoluto>
   local r="${1#$ROOT/}" e
@@ -54,11 +85,16 @@ export OFS_STRICT_FAULT=1
 LLVM_FLAGS=()
 clang --version 2>/dev/null | grep -Eq 'version 14\.|clang-1400\.' && LLVM_FLAGS=(-mllvm -opaque-pointers)
 T="$(mktemp -d "${TMPDIR:-/tmp}/ofs-parity-XXXXXX")"
+export OFS_MAGMA_CACHE="$T/magma"   # Ideia 5: .so dos mods so desta rodada
 trap 'rm -rf "$T"' EXIT
+# F5: cache dos modulos nativos do quartz so desta rodada
+export OFS_QUARTZ_CACHE="$T/quartz"
 RES="$T/results.tsv"; : >"$RES"
 
 [ -x "$OFSCC" ] || { echo "parity: ofscc nao encontrado em $OFSCC" >&2; exit 2; }
 [ -f "$MAGMA" ] || { echo "parity: magma.o nao encontrado em $MAGMA" >&2; exit 2; }
+# Ideia 5 (magma.cast): o binario nativo compila o mod com o mesmo ofscc
+export OFS_MAGMA_OFSCC="$OFSCC"
 
 # programas: tudo com `core main` em ofs/tests, ofs/examples, testes do stdlib e casos novos
 mapfile -t PROGS < <(
@@ -68,9 +104,9 @@ mapfile -t PROGS < <(
 )
 [ -n "${PARITY_FILTER:-}" ] && mapfile -t PROGS < <(printf '%s\n' "${PROGS[@]}" | grep -E "$PARITY_FILTER")
 
-norm() { # remove cores, caminhos temporarios e linhas de progresso do compilador
+norm() { # remove cores, caminhos temporarios, linhas de progresso e avisos de compilacao (A5.3: vazamento) do compilador
   sed -E 's/\x1b\[[0-9;]*[A-Za-z]//g' | sed -E "s#$T/[^ :\"']*#<TMP>#g; s#/tmp/[^ :\"']*#<TMP>#g; s#$ROOT/##g" |
-  grep -vE '^[[:space:]]*(Parsing|Checking|Forging|Linking|Running|Interpreting)[[:space:]].*(ok|ms)' || true
+  grep -vE '^[[:space:]]*(Parsing|Checking|Forging|Linking|Running|Interpreting)[[:space:]].*(ok|ms)|^\[AVISO DE VAZAMENTO |OFS_LEAK_WARN=0 silencia$' || true
 }
 limited() { # limited <timeout> cmd... : 2 GB de memoria virtual
   ( ulimit -v 2000000; ulimit -c 0; exec timeout "$@" )
@@ -80,6 +116,9 @@ snap() { # lista arquivos do cwd com hash (ordenada)
 }
 skip_reason() { # skip_reason <arquivo>
   local f="$1" b; b="$(basename "$f")"
+  case "$b" in quartz_*aarch64*) [ "$(uname -m)" = aarch64 ] || [ "$(uname -m)" = arm64 ] || { echo "quartz requer AArch64"; return; };; esac
+  case "$b" in quartz_*x86*) [ "$(uname -m)" = x86_64 ] || { echo "quartz requer x86-64"; return; };; esac
+  case "$b" in quartz_*linux*) [ "$(uname -s)" = Linux ] || { echo "quartz requer Linux"; return; };; esac
   grep -qE 'attach[[:space:]]*\{(F:[^}]*/)?(window|webui|webserver|ui|canvas|oll|http|net)(\.ofs)?\}|attach[[:space:]]*\{window|webserver_|webui|ofs_window|win_create' "$f" && { echo "UI/janela/rede"; return; }
   case "$b" in *window*|*webserver*|*webui*|*canvas*|*oll_*|*ui_*) echo "UI/janela/rede"; return;; esac
   grep -qE 'ofs_read_line|ofs_input|stdin|read_line|tcp_|socket|listen\(' "$f" && { echo "stdin/rede"; return; }
@@ -99,7 +138,7 @@ tags() { # tags de recurso (separadas por virgula) por regex no fonte
   grep -qE '\*(stone|u8|crystal|obsidian|i[0-9]+|u[0-9]+)|fault_step|&[a-z_]+[ ;)]' "$f" && grep -qE 'fracture|abyss|bedrock' "$f" && t+=",ponteiros"
   grep -qE 'fault_addr|fault_call' "$f" && t+=",fault_addr"
   grep -qE 'fracture|abyss|bedrock|tectonic' "$f" && t+=",baixo_nivel"
-  grep -qE '(^|[^A-Za-z_])asm[[:space:]]*[({"]' "$f" && t+=",asm"
+  grep -qE "(^|[^A-Za-z_])quartz[[:space:]]" "$f" && t+=",quartz"
   echo "$t"
 }
 
@@ -119,7 +158,8 @@ run_one() { # run_one <arquivo>  -> linha em $RES
   local nbuild=1 nrun=1 nout="" nerr=""
   if ( cd "$d/b" && { [ -z "$libp" ] || export OFS_LIB_PATH="$libp"; } && OFSCC_MODE=ir OFSCC_INPUT="$f" OFSCC_C_OUT="$d/b/p.ll" limited "$TMO" "$OFSCC" ) >"$d/b/log" 2>&1 \
      && [ -s "$d/b/p.ll" ] \
-     && clang -Wno-override-module "${LLVM_FLAGS[@]}" -Wl,--allow-multiple-definition -no-pie -O1 "$d/b/p.ll" "$MAGMA" -lm -o "$d/b/p" >>"$d/b/log" 2>&1; then
+     && { RDYN=(); grep -q '@magma__cast(' "$d/b/p.ll" && RDYN=(-rdynamic); true; } \
+     && clang -Wno-override-module "${LLVM_FLAGS[@]}" "${RDYN[@]}" -Wl,--allow-multiple-definition -no-pie -O1 "$d/b/p.ll" "$MAGMA" -lm -o "$d/b/p" >>"$d/b/log" 2>&1; then
     nbuild=0
     ( cd "$d/n" && limited "$TMO" "$d/b/p" </dev/null >"$d/n.out" 2>"$d/n.err" ); nrc=$?
     [ "$nrc" -eq 124 ] && nrun=2 || nrun=0
@@ -198,7 +238,7 @@ OUTMD="${PARITY_OUT:-$HERE/MATRIZ.md}"
   echo "\"Passa\": nativo = compila, liga e termina sem estourar o tempo; interpretado = roda sem erro do interpretador (\`Interpreter runtime error\`, \`undefined function\`, erro de sintaxe). \"Igual\" = saída, exit code e arquivos idênticos nos dois modos. Um programa conta em todos os recursos que usa (heurística por regex no fonte); \`pulado\` não conta."
   echo
   echo "| Recurso | Programas | Nativo passa | Interpretado passa | Igual |"; echo "|---|---|---|---|---|"
-  for pair in "base:aritmética e controle" "strings:strings" "arrays:arrays" "monolith:monolith/impl" "namespaces:namespaces" "strata:strata/match" "outcome:\`?\`/outcome" "extern:\`extern\` libc / \`rift vein\`" "ponteiros:ponteiros \`*T\` / \`*p = v\`" "fault_addr:\`fault_addr\`/\`fault_call\`" "baixo_nivel:\`fracture\`/\`abyss\`/\`bedrock\`" "asm:\`asm\`"; do
+  for pair in "base:aritmética e controle" "strings:strings" "arrays:arrays" "monolith:monolith/impl" "namespaces:namespaces" "strata:strata/match" "outcome:\`?\`/outcome" "extern:\`extern\` libc / \`rift vein\`" "ponteiros:ponteiros \`*T\` / \`*p = v\`" "fault_addr:\`fault_addr\`/\`fault_call\`" "baixo_nivel:\`fracture\`/\`abyss\`/\`bedrock\`" "quartz:\`quartz\` (assembly inline, híbrido no run)"; do
     k="${pair%%:*}"; lbl="${pair#*:}"
     awk -F'\t' -v k="$k" 'BEGIN{FS="\t"} NR==FNR{ if($2!="pulado" && $2!="erro esperado" && ("," $6 ",") ~ ("," k ",")) {tot[$1]=1; if($2=="igual") ig[$1]=1}; next}
       { if(($1 in tot)) { if($2=="00") np++; if($3=="0") ip++ } }

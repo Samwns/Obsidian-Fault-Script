@@ -1,0 +1,14 @@
+forge CHAMADAS: stone = 0
+vein contar(n: crystal) -> crystal {
+    CHAMADAS = CHAMADAS + 1
+    return n + 1.0
+}
+vein usar(f: vein(crystal) -> crystal, x: crystal) -> crystal { return f(x) }
+core main() {
+    forge i = 0
+    while (i < 2000) {
+        usar(contar, 2.0)
+        i++
+    }
+    echo(CHAMADAS)
+}

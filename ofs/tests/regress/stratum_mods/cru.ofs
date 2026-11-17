@@ -1,0 +1,9 @@
+// A5.4: modulo de memoria crua: so dentro de `abyss vein`, com o claim
+claim abyss
+
+abyss vein dobra_no_lugar(x: stone) -> stone {
+    forge v: stone = x
+    forge p: *stone = &v
+    *p = *p * 2
+    return v
+}

@@ -5,6 +5,8 @@
 //   ofs build ofs/tests/runtime/test_fault_addr_qsort.ofs -o /tmp/t && /tmp/t
 // Saida esperada: "1 2 3 5 8 13 21 34" e "ok"; codigo de saida 0.
 
+claim rift, abyss
+
 rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
 extern vein ofs_alloc(size: stone) -> *stone
 rift vein c_strlen(s: obsidian) -> stone bind "strlen" abi c

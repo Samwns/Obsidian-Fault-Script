@@ -2,6 +2,9 @@
 // monolith com campo vein passado a outra vein, recursao pelo valor, vein
 // que devolve vein, metodo de impl como valor, vein sem parametros e
 // ponteiro para variavel de vein (abyss).
+
+claim abyss
+
 monolith Caixa {
     f: vein(stone) -> stone
     n: stone

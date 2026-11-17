@@ -1,0 +1,19 @@
+// A5.3: Array da arena passado a uma vein que guarda o parametro (num global)
+forge guardado: Array<stone> = []
+
+vein guardar(a: Array<stone>) -> void {
+    forge b = a
+    guardado = b
+}
+
+vein ler(a: Array<stone>) -> stone {
+    return a[0]
+}
+
+core main() {
+    bedrock {
+        forge a = [1, 2, 3]
+        echo(ler(a))
+        guardar(a)
+    }
+}

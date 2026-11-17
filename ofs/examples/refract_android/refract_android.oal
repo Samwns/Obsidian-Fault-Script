@@ -1,0 +1,17 @@
+// Fault Refract L3: edite painel.ofs com o app aberto no aparelho.
+//   ofs refract --remote refract_android.oal
+// A contagem continua (o global e o do app); o texto muda na hora, sem
+// reinstalar nem reiniciar o processo.
+use "painel.ofs"
+
+app "Refract L3" "org.ofs.refract.demo"
+  version "0.1.0"
+
+screen inicio
+  bar "Fault Refract L3"
+  title "Edite painel.ofs no PC"
+  text painel.texto()
+  text painel.dica()
+  button "Somar 10" -> painel.somar
+on start -> painel.comecar
+on frame -> painel.quadro

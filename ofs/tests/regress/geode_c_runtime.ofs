@@ -1,0 +1,20 @@
+// geode com captura que chega ao C por uma variavel (o compilador nao ve):
+// mensagem no stderr e rc 1 nos dois modos (o que veio antes no stdout fica)
+
+claim rift
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein qsort(base: *stone, n: stone, size: stone, cmp: vein(*stone, *stone) -> i32) -> void
+
+core main() {
+    forge sinal = 1
+    forge cmp = geode (a: *stone, b: *stone) -> i32 {
+        forge r = 0
+        fracture { r = (*a - *b) * sinal }
+        return r as i32
+    }
+    forge v: *stone = ofs_alloc(16)
+    echo(2)
+    qsort(v, 2, 8, cmp)
+    echo("nao chega aqui")
+}

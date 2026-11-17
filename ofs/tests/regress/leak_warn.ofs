@@ -1,0 +1,35 @@
+// A5.3: ofs_alloc que nunca chega a seal/ofs_free, return ou dono: aviso
+// (nao erro) no stderr, com OFS_LEAK_WARN=0 para silenciar. Os outros
+// casos daqui nao avisam (liberado, devolvido, guardado, entregue, arena).
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(p: *stone) -> void
+
+forge guardado: *stone = null
+
+vein cria() -> *stone {
+    forge p: *stone = ofs_alloc(8)
+    return p
+}
+
+vein usa(p: *stone) -> void {
+    fracture { *p = 1 }
+}
+
+core main() {
+    forge vaza: *stone = ofs_alloc(32)
+    fracture { *vaza = 5 }
+    fracture { echo(*vaza) }
+    forge livre: *stone = ofs_alloc(8)
+    seal { ofs_free(livre) }
+    forge q = cria()
+    ofs_free(q)
+    forge g: *stone = ofs_alloc(8)
+    guardado = g
+    forge e: *stone = ofs_alloc(8)
+    usa(e)
+    bedrock {
+        forge tmp: *stone = ofs_alloc(64)
+        fracture { *tmp = 7 }
+    }
+    echo("fim")
+}

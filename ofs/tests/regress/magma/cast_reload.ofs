@@ -1,0 +1,22 @@
+// Ideia 5 (magma.cast): o mod editado e carregado de novo (outro .so); a
+// versao antiga continua valida para quem guardou o valor de vein
+attach {magma}
+claim magma
+
+vein versao(n: stone, fator: stone) -> obsidian {
+    return "forge _usos: stone = 0\nvein nome() -> obsidian { return \"v" + n + "\" }\nvein forjar(x: stone) -> stone {\n    _usos = _usos + 1\n    return x * " + fator + " + _usos\n}\n"
+}
+
+core main() {
+    forge v1 = magma.cast(versao(1, 2))
+    forge forjar1: vein(stone) -> stone = magma.vent(v1, "forjar")
+    forge nome1: vein() -> obsidian = magma.vent(v1, "nome")
+    echo(nome1() + " " + forjar1(10))
+    forge v2 = magma.cast(versao(2, 3))
+    forge forjar2: vein(stone) -> stone = magma.vent(v2, "forjar")
+    forge nome2: vein() -> obsidian = magma.vent(v2, "nome")
+    echo(nome2() + " " + forjar2(10))
+    // a v1 continua carregada, com o estado dela
+    echo(nome1() + " " + forjar1(10))
+    echo(v1 != v2)
+}

@@ -2,6 +2,8 @@
 // desse tipo (sem abyss); chamar o valor e tipado (aridade, argumentos com
 // as conversoes da F3, retorno). Mesmo resultado no nativo e no `ofs run`.
 
+claim abyss
+
 monolith Operacao {
     nome: obsidian
     calc: vein(stone, stone) -> stone

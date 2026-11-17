@@ -1,0 +1,95 @@
+// geode: vein anonima que captura por valor as variaveis de fora no
+// momento em que nasce. Tipo vein(T)->R da F6: passa, guarda (variavel,
+// campo, Array), devolve e chama como qualquer valor de vein. Texto e
+// numero capturados sao copias; Array e monolith capturados sao o mesmo
+// objeto (como um argumento de vein).
+
+claim rift
+
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(p: *stone) -> void
+extern vein qsort(base: *stone, n: stone, size: stone, cmp: vein(*stone, *stone) -> i32) -> void
+
+monolith Caixa {
+    n: stone
+    f: vein(stone) -> stone
+}
+
+vein aplicar(f: vein(stone) -> stone, x: stone) -> stone {
+    return f(x)
+}
+
+vein somador(base: stone) -> vein(stone) -> stone {
+    return geode (x: stone) -> stone { return x + base }
+}
+
+vein compor(f: vein(stone) -> stone, g: vein(stone) -> stone) -> vein(stone) -> stone {
+    return geode (x: stone) -> stone { return g(f(x)) }
+}
+
+core main() {
+    forge k = 10
+    forge dobro = geode (x: stone) -> stone { return x * 2 }
+    forge mais_k = geode (x: stone) -> stone { return x + k }
+    echo(dobro(4))
+    echo(mais_k(5))
+    k = 100
+    echo(mais_k(5))
+    echo(aplicar(mais_k, 1))
+    forge s7 = somador(7)
+    forge s9 = somador(9)
+    echo(s7(1))
+    echo(s9(1))
+    echo(compor(s7, dobro)(1))
+    forge nome = "pedra"
+    forge saud = geode (p: obsidian) -> obsidian { return p + " " + nome }
+    nome = "outra"
+    echo(saud("ola"))
+    forge lista: Array<vein(stone) -> stone> = []
+    ofs_array_push(lista, dobro)
+    ofs_array_push(lista, mais_k)
+    ofs_array_push(lista, somador(1))
+    forge i = 0
+    while (i < ofs_array_len(lista)) {
+        echo(lista[i](3))
+        i++
+    }
+    forge c: Caixa
+    c.n = 5
+    c.f = s9
+    echo(c.f(c.n))
+    echo(dobro)
+    echo(mais_k)
+    echo(mais_k == mais_k)
+    echo(s7 == s9)
+    // Array capturado: o mesmo objeto
+    forge itens: Array<stone> = [1, 2]
+    forge conta = geode () -> stone { return ofs_array_len(itens) }
+    ofs_array_push(itens, 3)
+    echo(conta())
+    // geode dentro de geode (captura em cadeia)
+    forge aninhado = geode (a: stone) -> stone {
+        forge g2 = geode (b: stone) -> stone { return a * 10 + b + k }
+        return g2(1)
+    }
+    echo(aninhado(2))
+    // geode sem captura vai para o C como uma vein comum
+    forge v: *stone = ofs_alloc(24)
+    fracture {
+        *v = 30
+        *fault_step(v, 1) = 10
+        *fault_step(v, 2) = 20
+    }
+    qsort(v, 3, 8, geode (a: *stone, b: *stone) -> i32 {
+        forge r = 0
+        fracture { r = *a - *b }
+        return r as i32
+    })
+    fracture { echo(*v + *fault_step(v, 1) * 100 + *fault_step(v, 2) * 10000) }
+    ofs_free(v)
+    // geode chamado dentro de uma arena (a chamada roda com a arena desligada)
+    bedrock {
+        forge rot = "g=" + ofs_stone_to_obsidian(mais_k(2) + lista[2](1))
+        echo(rot)
+    }
+}

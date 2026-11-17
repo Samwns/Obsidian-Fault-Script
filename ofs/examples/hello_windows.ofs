@@ -1,3 +1,5 @@
+claim rift
+
 extern vein MessageBoxA(hwnd: *stone, text: obsidian, title: obsidian, utype: stone) -> stone
 extern vein ExitProcess(code: stone) -> void
 

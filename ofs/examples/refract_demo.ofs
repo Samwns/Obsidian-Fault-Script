@@ -1,0 +1,58 @@
+// Fault Refract: edicao ao vivo, sem reiniciar e sem perder o estado.
+//
+//   ofs refract ofs/examples/refract_demo.ofs
+//
+// Com o programa rodando, abra este arquivo no editor, mude `desenhar` ou
+// `atualizar` (o texto, a conta, a barra) e salve. Na proxima chamada a vein
+// nova entra no lugar da antiga, e o estado (`passos`, `energia`) continua
+// de onde estava. Experimente tambem:
+//   - um erro de sintaxe: a versao em execucao continua, e o erro aparece
+//     no stderr;
+//   - um parametro novo em `atualizar` (mudando a chamada em `main`): a troca
+//     e recusada, porque `main` esta em execucao e chama a versao antiga;
+//   - uma vein nova chamada por `desenhar`, ou um global novo (comeca com o
+//     valor inicial; os globais que ja existiam mantem o valor).
+//
+// Sem `ofs refract` (ofs run / ofs build), o laco da so algumas voltas.
+
+claim rift
+
+extern vein usleep(us: stone) -> stone
+extern vein getenv(name: obsidian) -> obsidian
+
+forge passos: stone = 0
+forge energia: stone = 10
+
+// regra do estado: edite e salve
+vein atualizar(e: stone) -> stone {
+    forge novo = e + 3
+    if (novo > 40) { novo = 10 }
+    return novo
+}
+
+vein barra(n: stone) -> obsidian {
+    forge s = ""
+    forge i = 0
+    while (i < n) {
+        s = s + "#"
+        i++
+    }
+    return s
+}
+
+// saida de cada volta: edite e salve
+vein desenhar(p: stone, e: stone) -> void {
+    echo("passo " + ofs_stone_to_obsidian(p) + "  energia " + ofs_stone_to_obsidian(e) + "  " + barra(e / 2))
+}
+
+core main() {
+    forge voltas = 4
+    forge modo: obsidian = getenv("OFS_REFRACT")
+    if (modo != null && ofs_str_eq(modo, "1")) { voltas = 100000 }
+    while (passos < voltas) {
+        passos = passos + 1
+        energia = atualizar(energia)
+        desenhar(passos, energia)
+        if (voltas > 4) { usleep(500000) }
+    }
+}

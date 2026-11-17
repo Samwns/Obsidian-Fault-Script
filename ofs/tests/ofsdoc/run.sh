@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Teste do `ofs doc`: o extrator (nomes, assinaturas, comentarios, chama/usado por)
+# Teste do `ofs doc`: o extrator (nomes, assinaturas, comentarios, chama/usado por,
+# estrato/claim do modulo)
 # contra expected.txt e o codigo de saida do --check (CI).
 #   OFS_BIN=<wrapper ofs>  (padrao: src/packaging/linux/ofs)
 set -uo pipefail
@@ -28,4 +29,8 @@ for f in index.html sample.html cobertura.html search.json ofsdoc.css ofsdoc.js;
 done
 grep -q 'id="shapes.area"' "$T/out/sample.html" && grep -q 'abi c' "$T/out/sample.html" \
   && echo "ok: HTML gerado (ancoras e selo abi c)" || fail "HTML sem ancora/selo esperado"
+grep -Eq '<h4>(Contratos|Contracts)</h4>' "$T/out/sample.html" && grep -q 'settle' "$T/out/sample.html" && grep -q 'id="T-Lado"' "$T/out/sample.html" \
+  && echo "ok: HTML com contratos (bearing/settle) e mineral (grain)" || fail "HTML sem a secao de contratos/mineral"
+grep -q 'class="b claim">claim rift' "$T/out/sample.html" \
+  && echo "ok: HTML com o claim do modulo (A5.4)" || fail "HTML sem o selo do claim (A5.4)"
 [ "$FAILED" -eq 0 ] && echo "ofsdoc: tudo ok" || { echo "ofsdoc: $FAILED falha(s)"; exit 1; }

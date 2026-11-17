@@ -1,6 +1,9 @@
 // `&x` de variavel do interpretador passado ao C (F2): a variavel passa a
 // viver num slot de memoria crua que o C le e escreve (stone, i32, crystal,
 // ponteiro de saida), como a alloca do build nativo.
+
+claim rift
+
 rift vein c_memset(dst: *stone, v: stone, n: stone) -> *stone bind "memset" abi c
 rift vein c_sscanf_l(s: obsidian, fmt: obsidian, out: *stone) -> stone bind "sscanf" abi c
 rift vein c_sscanf_i(s: obsidian, fmt: obsidian, out: *i32) -> stone bind "sscanf" abi c

@@ -1,0 +1,6 @@
+// erro de sintaxe dentro de um `attach`: a mensagem diz o arquivo e a linha dele
+attach {F:syntax_err_attach/quebrado.ofs}
+
+core main() {
+    echo(ok())
+}

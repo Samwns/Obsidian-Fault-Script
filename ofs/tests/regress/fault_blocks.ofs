@@ -4,6 +4,9 @@
 //     fault_memcpy, fault_memset;
 //   abyss: tudo isso + fault_call e fault_addr;
 //   `fracture vein` / `abyss vein`: o corpo inteiro vale como o bloco.
+
+claim abyss
+
 extern vein ofs_alloc(size: stone) -> *u8
 
 vein dobro(x: stone) -> stone {

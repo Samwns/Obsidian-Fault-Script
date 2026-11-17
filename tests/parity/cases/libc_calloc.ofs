@@ -1,4 +1,7 @@
 // extern da libc: calloc/free/strlen.
+
+claim rift
+
 rift vein c_calloc(n: stone, size: stone) -> *stone bind "calloc" abi c
 rift vein c_free(p: *stone) -> void bind "free" abi c
 rift vein c_strlen(s: obsidian) -> stone bind "strlen" abi c

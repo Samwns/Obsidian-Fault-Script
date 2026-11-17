@@ -1,0 +1,11 @@
+// geode: shatter/erode no corpo sem laco proprio (o corpo e outra vein)
+core main() {
+    forge i = 0
+    while (i < 3) {
+        forge g = geode () -> void {
+            shatter
+        }
+        g()
+        i++
+    }
+}

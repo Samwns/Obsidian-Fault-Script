@@ -1,0 +1,60 @@
+// OSR (onda 4): lacos longos dentro de uma unica chamada (main) passam para
+// a versao nativa no meio, com as variaveis vivas de cada tipo (inteiro,
+// crystal, bool, texto, Array, monolith, inteiro estreito), global
+// compartilhado com o nativo, chamada de vein, break e laco aninhado.
+monolith Acc {
+    soma: stone
+    media: crystal
+}
+
+forge GLOBAL_TOTAL: stone = 0
+
+vein passo(x: stone) -> stone {
+    GLOBAL_TOTAL = GLOBAL_TOTAL + 1
+    return x % 7
+}
+
+core main() {
+    forge i: stone = 0
+    forge f: crystal = 0.5
+    forge par: bool = false
+    forge texto: obsidian = "inicio"
+    forge lista: Array<stone> = []
+    forge acc: Acc
+    forge pequeno: i32 = 0
+    while (i < 3000000) {
+        acc.soma = acc.soma + passo(i)
+        f = f + 0.25
+        par = !par
+        pequeno = pequeno + 2
+        if (i % 500000 == 0) {
+            ofs_array_push(lista, i)
+            texto = texto + "-" + ofs_stone_to_obsidian(i)
+        }
+        i += 1
+    }
+    acc.media = f / 2.0
+    echo(i)
+    echo(f)
+    echo(par)
+    echo(texto)
+    echo(ofs_array_len(lista))
+    echo(lista[5])
+    echo(acc.soma)
+    echo(acc.media)
+    echo(pequeno)
+    echo(GLOBAL_TOTAL)
+    forge k: stone = 0
+    forge voltas: stone = 0
+    while (true) {
+        k += 3
+        forge j: stone = 0
+        while (j < 4) {
+            voltas += 1
+            j += 1
+        }
+        if (k > 2000000) { break }
+    }
+    echo(k)
+    echo(voltas)
+}

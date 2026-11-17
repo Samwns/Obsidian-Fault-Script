@@ -1,0 +1,35 @@
+// O main fica interpretado; fechamento e globais atravessam a fronteira.
+
+claim abyss, quartz
+
+forge PADRAO: vein(stone) -> stone = auxiliar_quartz
+forge TOTAL: stone = 10
+forge TEXTO: obsidian = "pedra"
+forge VALORES: Array<stone> = [1, 2]
+monolith Pedra { peso: stone }
+forge ROCHA: Pedra
+vein auxiliar_quartz(n: stone) -> stone { return n * 2 }
+vein retorno_quartz(n: stone) -> stone {
+    TOTAL = TOTAL + n
+    return TOTAL
+}
+abyss vein misturar_quartz(n: stone, volta: vein(stone) -> stone) -> stone {
+    quartz { "nop" }
+    TOTAL = TOTAL + 1
+    ROCHA.peso = ROCHA.peso + 2
+    VALORES[0] = VALORES[0] + 3
+    TEXTO = TEXTO + "!"
+    forge r = volta(n)
+    return auxiliar_quartz(r)
+}
+core main() {
+    ROCHA.peso = 4
+    echo(misturar_quartz(3, retorno_quartz))
+    echo(TOTAL)
+    echo(ROCHA.peso)
+    echo(VALORES[0])
+    echo(TEXTO)
+    TOTAL = 20
+    echo(misturar_quartz(1, retorno_quartz))
+    echo(TOTAL)
+}

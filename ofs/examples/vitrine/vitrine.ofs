@@ -1,0 +1,265 @@
+// Vitrine: um programa que usa os recursos da linguagem, uma secao curta por
+// recurso, cada uma imprimindo `ok <recurso>` (ou o valor esperado).
+// Saida esperada em vitrine.expected (igual no nativo, no `ofs run` e na
+// cristalizacao: OFS_CRYSTALLIZE=0 e 1).
+//
+// Como rodar (na raiz do repositorio):
+//   ofs run ofs/examples/vitrine/vitrine.ofs
+//   ofs twin ofs/examples/vitrine/vitrine.ofs
+//   OFS_STRICT_FAULT=1 ofs build ofs/examples/vitrine/vitrine.ofs -o vitrine
+// Ferramentas de execucao (nao sao recursos da linguagem em si):
+//   ofs refract ofs/examples/vitrine/vitrine.ofs   (troca de veins a quente)
+//   ofs fossil  ofs/examples/vitrine/vitrine.ofs   (gravar/repetir execucao)
+// Fora deste arquivo: vitrine_quartz.ofs (so x86-64) e vitrine_magma.ofs
+// (magma.cast com o mod vitrine_mod.ofs).
+stratum fault
+claim rift, abyss
+attach {strbuf}
+
+// -- tipos de dados ---------------------------------------------------------
+mineral Pos = stone grain value > 0
+
+monolith Vec3 {
+    x: stone
+    y: stone
+    z: crystal
+}
+
+monolith Corpo {
+    id: stone
+    pos: Vec3
+    massa: stone
+}
+
+impl Corpo {
+    vein peso(self: Corpo) -> stone { return self.massa * 2 }
+}
+
+namespace geo {
+    vein quadrado(x: stone) -> stone { return x * x }
+}
+
+strata Estado {
+    Solido,
+    Liquido,
+    Gasoso
+}
+
+strata Outcome {
+    Solid,
+    Crack
+}
+
+extern vein strlen(s: obsidian) -> stone
+extern vein ofs_alloc(size: stone) -> *u8
+extern vein ofs_array_data(arr: Array<stone>) -> *stone
+rift vein c_snprintf_d(buf: *u8, n: stone, fmt: obsidian, v: crystal) -> stone bind "snprintf" abi c
+rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
+
+// -- veins de apoio ---------------------------------------------------------
+vein escala(x: stone, k: stone = 2) -> stone { return x * k }
+
+vein aplicar(f: vein(stone) -> stone, x: stone) -> stone { return f(x) }
+
+vein somador(base: stone) -> vein(stone) -> stone {
+    return geode (x: stone) -> stone { return x + base }
+}
+
+vein dividir(a: stone, b: stone) -> stone
+    bearing b != 0
+    settle result * b + a % b == a
+{
+    return a / b
+}
+
+vein nome_estado(e: Estado) -> obsidian {
+    match (e) {
+        Solido => { return "solido" }
+        Liquido => { return "liquido" }
+        _ => { return "gasoso" }
+    }
+}
+
+vein tenta(ok: bool) -> stone {
+    anchor { echo("anchor da tenta") }
+    if (ok) {
+        forge v = Solid(41)?
+        return v + 1
+    }
+    forge f = Crack("falhou")?
+    echo("nao chega aqui")
+    return f
+}
+
+vein recurso() -> stone {
+    seal { echo("seal fechou") }
+    return 5
+}
+
+vein crescente(a: *stone, b: *stone) -> stone {
+    forge x = 0
+    forge y = 0
+    fracture { x = *a; y = *b; }
+    if (x < y) { return -1 }
+    if (x > y) { return 1 }
+    return 0
+}
+
+vein junta(partes: Array<obsidian>) -> obsidian {
+    forge s = ""
+    cycle (p in partes) { s = s + p }
+    return s
+}
+
+core main() {
+    // tipos basicos e conversoes
+    forge a: stone = 7
+    forge c: crystal = 2.5
+    forge o: obsidian = "pedra"
+    forge b: bool = a > 3
+    forge pequeno: u8 = 200 as u8
+    forge medio: i16 = -300 as i16
+    forge grande: i64 = 5000000000
+    echo(a + 1)
+    echo(c * 2.0)
+    echo(o + "!")
+    echo(b)
+    echo(pequeno)
+    echo(medio)
+    echo(grande)
+    echo(c as stone)
+    echo(a as crystal)
+    echo(b as stone)
+    echo("ok tipos")
+
+    // Array<T> e a[i] = v
+    forge arr: Array<stone> = [1, 2, 3]
+    arr[0] = 10
+    arr[1] += 5
+    ofs_array_push(arr, 4)
+    echo(arr[0] + arr[1] + arr[2] + arr[3])
+    echo(ofs_array_len(arr))
+    echo("ok array")
+
+    // monolith, impl, aninhado
+    forge k: Corpo
+    k.id = 1
+    k.massa = 21
+    k.pos.x = 3
+    k.pos.z = 1.5
+    echo(k.pos.x)
+    echo(k.pos.z)
+    echo(k.peso())
+    echo("ok monolith")
+
+    // namespace
+    echo(geo.quadrado(9))
+    echo("ok namespace")
+
+    // strata, match/assay, ?
+    forge e: Estado = Liquido
+    echo(nome_estado(e))
+    assay (e) {
+        Solido => { echo("e solido") }
+        _ => { echo("nao e solido") }
+    }
+    echo(tenta(true))
+    echo(tenta(false))
+    echo("ok strata")
+
+    // seal / anchor
+    echo(recurso())
+    echo("ok seal")
+
+    // cycle / while / shatter / erode
+    forge soma = 0
+    cycle (forge i = 0; i < 10; i++) {
+        if (i == 2) { erode }
+        if (i == 6) { shatter }
+        soma += i
+    }
+    echo(soma)
+    forge n = 0
+    while (n < 3) { n++ }
+    echo(n)
+    cycle (x in arr) { soma += x }
+    echo(soma)
+    echo("ok lacos")
+
+    // tipos de funcao e parametro padrao
+    forge f: vein(stone) -> stone = geo.quadrado
+    echo(f(6))
+    echo(aplicar(geo.quadrado, 4))
+    echo(escala(5))
+    echo(escala(5, 3))
+    echo("ok vein")
+
+    // geode (captura por valor)
+    forge base = 10
+    forge mais = geode (x: stone) -> stone { return x + base }
+    base = 100
+    echo(mais(1))
+    echo(somador(7)(1))
+    echo("ok geode")
+
+    // contratos
+    forge p: Pos = 3
+    echo(p)
+    echo(dividir(7, 2))
+    echo("ok contratos")
+
+    // arena bedrock
+    forge partes: Array<obsidian> = []
+    bedrock {
+        forge tmp: Array<obsidian> = ["a", "b", "c"]
+        forge dentro = junta(tmp)
+        echo(dentro)
+        ofs_array_push(partes, "x")
+    }
+    echo(ofs_array_len(partes))
+    echo("ok bedrock")
+
+    // strbuf
+    forge sb: StrBuf = strbuf.create(4)
+    strbuf.append(sb, "abc")
+    strbuf.append_char(sb, 45)
+    strbuf.append_int(sb, -12)
+    echo(strbuf.to_obsidian(sb))
+    echo(strbuf.length(sb))
+    strbuf.release(sb)
+    echo("ok strbuf")
+
+    // intrinsecos fault_*, ponteiros
+    bedrock {
+        echo(fault_count(255))
+        echo(fault_lead(1))
+        echo(fault_trail(8))
+        echo(fault_swap(0x0102030405060708))
+        echo(fault_cut(0xABCD, 4, 8))
+        forge m: stone = 5
+        forge w: stone = 0
+        fracture {
+            shard pm: *stone = &m
+            shard pw: *stone = &w
+            *pm = 99
+            fault_memcpy(pw, pm, 8)
+        }
+        echo(w)
+    }
+    echo("ok fault")
+
+    // Rift: libc
+    fracture {
+        echo(strlen("obsidian"))
+        forge buf: *u8 = ofs_alloc(64)
+        echo(c_snprintf_d(buf, 64, "%.3f", 3.14159))
+        echo(buf as obsidian)
+    }
+    abyss {
+        forge v: Array<stone> = [42, 7, 19, 3, 88]
+        c_qsort(ofs_array_data(v), ofs_array_len(v), 8, fault_addr(crescente))
+        echo(v[0])
+        echo(v[4])
+    }
+    echo("ok rift")
+}

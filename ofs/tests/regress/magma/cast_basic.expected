@@ -1,0 +1,15 @@
+forjar: vein(stone)->stone
+nome: vein()->obsidian
+media: vein(crystal,crystal)->crystal
+juntar: vein(Array<obsidian>)->obsidian
+aplicar: vein(vein(stone)->stone,stone)->stone
+lava.grau: vein(stone)->obsidian
+21
+22
+forja!
+1.5
+a-b-c
+16
+liquida
+23
+true

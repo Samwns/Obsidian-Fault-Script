@@ -1,3 +1,5 @@
+claim rift
+
 extern vein GetModuleHandleA(name: obsidian) -> *stone
 extern vein CreateWindowExA(ex: stone, cls: obsidian, name: obsidian, style: stone, x: stone, y: stone, w: stone, h: stone, parent: *stone, menu: *stone, inst: *stone, param: *stone) -> *stone
 extern vein ShowWindow(hwnd: *stone, cmd: stone) -> stone

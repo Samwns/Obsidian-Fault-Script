@@ -1,0 +1,10 @@
+// o caprock do principal nao libera magma: o modulo magma (que carrega
+// codigo) nao pode ser anexado
+caprock rift, abyss
+attach {magma}
+claim magma
+
+core main() {
+    forge m = magma.cast("magma/mods/forja.ofs")
+    echo(magma.cooled(m))
+}

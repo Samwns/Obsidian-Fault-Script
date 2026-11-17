@@ -1,4 +1,7 @@
 // snprintf variadico com crystal (double) e stone.
+
+claim rift
+
 extern vein ofs_alloc(size: stone) -> *u8
 rift vein c_snprintf_d(buf: *u8, n: stone, fmt: obsidian, v: crystal) -> stone bind "snprintf" abi c
 rift vein c_snprintf_i(buf: *u8, n: stone, fmt: obsidian, v: stone) -> stone bind "snprintf" abi c

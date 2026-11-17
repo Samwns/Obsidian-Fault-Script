@@ -1,0 +1,9 @@
+// A5.1: chamada com literal que viola o bearing = erro de compilacao
+vein dividir(a: stone, b: stone) -> stone bearing b != 0 {
+    return a / b
+}
+
+core main() {
+    echo(dividir(10, 0))
+    echo("nao chega aqui")
+}

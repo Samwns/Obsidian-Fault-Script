@@ -1,6 +1,9 @@
 // Reentrancia (F2): um callback chamado pelo C dentro de uma chamada C feita
 // pela vein interpretada, e que por sua vez chama o C (qsort aninhado,
 // strlen, fault_call de outro callback) e recursao interpretada.
+
+claim rift, abyss
+
 rift vein c_qsort(base: *stone, count: stone, size: stone, cmp: stone) -> void bind "qsort" abi c
 rift vein c_strlen(s: obsidian) -> stone bind "strlen" abi c
 extern vein ofs_array_data(arr: Array<stone>) -> *stone

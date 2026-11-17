@@ -1,0 +1,19 @@
+// Vitrine: magma.cast (carrega um mod OFS em execucao). Precisa do clang.
+// Rode na pasta deste arquivo ou na raiz do repositorio.
+//   ofs run ofs/examples/vitrine/vitrine_magma.ofs
+attach {magma}
+claim magma
+
+core main() {
+    forge m = magma.cast("ofs/examples/vitrine/vitrine_mod.ofs")
+    if (!magma.cooled(m)) { m = magma.cast("vitrine_mod.ofs") }
+    if (!magma.cooled(m)) {
+        echo(magma.crack(m))
+        return
+    }
+    forge nome: vein() -> obsidian = magma.vent(m, "nome")
+    forge dobro: vein(stone) -> stone = magma.vent(m, "dobro")
+    echo(nome())
+    echo(dobro(21))
+    echo("ok magma.cast")
+}

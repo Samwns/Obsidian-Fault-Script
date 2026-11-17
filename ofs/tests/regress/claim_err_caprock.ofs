@@ -1,0 +1,7 @@
+// A5.4: o principal nao deixa os anexados pedirem nada (caprock crust)
+caprock crust
+attach {F:stratum_mods/fonte.ofs}
+
+core main() {
+    echo(distancia(1, 2))
+}

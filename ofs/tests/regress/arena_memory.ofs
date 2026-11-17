@@ -1,0 +1,20 @@
+// A5.3: a arena do bedrock libera tudo a cada volta. 20 mil voltas de
+// 64 KB de ofs_alloc (1,3 GB sem liberar) + texto e Array temporarios
+// rodam com `ulimit -v` de 256 MB nos dois modos (run.sh, secao 13).
+extern vein ofs_alloc(size: stone) -> *stone
+
+core main() {
+    forge soma = 0
+    forge i = 0
+    while (i < 20000) {
+        bedrock {
+            forge buf: *stone = ofs_alloc(65536)
+            fracture { *buf = i }
+            forge t = "volta " + ofs_stone_to_obsidian(i)
+            forge a = [i, ofs_str_len(t)]
+            fracture { soma = soma + *buf + a[1] }
+        }
+        i++
+    }
+    echo(soma)
+}

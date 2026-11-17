@@ -1,0 +1,18 @@
+// Mod de exemplo do magma_cast_demo.ofs: um arquivo OFS so com veins (sem
+// main do programa), compilado e carregado com o programa rodando (magma.cast).
+// Os globais sao do mod; a conversa com o programa e por argumentos,
+// retornos e valores de vein.
+forge _golpes: stone = 0
+
+vein nome() -> obsidian { return "forja v1" }
+
+// cada golpe deixa a peca um pouco mais dura
+vein forjar(metal: stone) -> stone {
+    _golpes = _golpes + 1
+    return metal * 2 + _golpes
+}
+
+// o programa passa a regra de tempera (valor de vein do programa)
+vein temperar(regra: vein(stone) -> stone, peca: stone) -> stone {
+    return regra(peca) + 1
+}

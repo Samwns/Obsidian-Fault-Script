@@ -1,0 +1,20 @@
+// Ideia 4: modulo sem baixo nivel nenhum (bedrock vale so como arena)
+stratum crust
+
+vein soma_quadrados(n: stone) -> stone {
+    forge total = 0
+    bedrock {
+        forge xs: Array<stone> = []
+        forge i = 1
+        while (i <= n) {
+            ofs_array_push(xs, i * i)
+            i++
+        }
+        forge k = 0
+        while (k < ofs_array_len(xs)) {
+            total = total + xs[k]
+            k++
+        }
+    }
+    return total
+}

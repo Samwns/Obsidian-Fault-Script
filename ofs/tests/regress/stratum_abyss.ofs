@@ -1,0 +1,14 @@
+// Ideia 4: `stratum abyss` libera baixo nivel em qualquer lugar do arquivo
+// (sem bloco) e vale como `claim rift, abyss, quartz`
+stratum abyss
+
+extern vein labs(x: stone) -> stone
+
+core main() {
+    forge a: Array<stone> = [10, 20, 30]
+    forge x: stone = -9
+    forge p: *stone = &x
+    *p = labs(*p)
+    echo(x)
+    echo(a[2])
+}

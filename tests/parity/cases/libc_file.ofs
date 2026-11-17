@@ -1,4 +1,7 @@
 // extern da libc: fopen/fputs/fclose escrevendo um arquivo no cwd.
+
+claim rift
+
 rift vein c_fopen(path: obsidian, mode: obsidian) -> *stone bind "fopen" abi c
 rift vein c_fputs(s: obsidian, f: *stone) -> stone bind "fputs" abi c
 rift vein c_fclose(f: *stone) -> stone bind "fclose" abi c

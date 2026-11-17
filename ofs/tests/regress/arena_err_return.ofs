@@ -1,0 +1,16 @@
+// A5.3: monolith alocado no bedrock devolvido (return): [ERRO DE ARENA]
+monolith P {
+    x: stone
+}
+
+vein fazer() -> P {
+    bedrock {
+        forge p: P
+        p.x = 3
+        return p
+    }
+}
+
+core main() {
+    echo(fazer().x)
+}

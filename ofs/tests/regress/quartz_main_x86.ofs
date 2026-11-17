@@ -1,0 +1,12 @@
+// Quando core main e nativo, os globais ja pertencem ao interpretador.
+
+claim abyss, quartz
+
+forge NUMEROS: Array<stone> = [40, 2]
+monolith Mineral { peso: stone }
+forge MINERAL: Mineral
+core main() {
+    abyss { quartz { "nop" } }
+    MINERAL.peso = NUMEROS[0] + NUMEROS[1]
+    echo(MINERAL.peso)
+}

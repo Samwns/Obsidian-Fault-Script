@@ -1,0 +1,9 @@
+// geode: a captura e uma copia; atribuir a ela dentro do geode e erro
+core main() {
+    forge n = 1
+    forge g = geode () -> stone {
+        n = n + 1
+        return n
+    }
+    echo(g())
+}

@@ -1,0 +1,8 @@
+claim abyss, quartz
+
+abyss vein soma(x: stone) -> stone {
+    forge y: stone = 0
+    quartz { "movq $1, $0" "addq $$2, $0" in "r" x melt "memory" } -> y "=r"
+    return y
+}
+core main() { echo(soma(40)) }

@@ -1,0 +1,9 @@
+// A5.1: `result` so vale no settle
+vein f(a: stone) -> stone bearing result > 0 {
+    return a
+}
+
+core main() {
+    echo(f(1))
+    echo("nao chega aqui")
+}

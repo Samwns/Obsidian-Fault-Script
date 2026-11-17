@@ -1,0 +1,10 @@
+// Assembly AArch64: o compilador preserva as instrucoes do alvo.
+
+claim abyss, quartz
+
+abyss vein barreira_quartz() -> stone {
+    forge n: stone = 0
+    quartz { "mov $0, #42" "dmb ish" melt "memory" } -> n
+    return n
+}
+core main() { echo(barreira_quartz()) }

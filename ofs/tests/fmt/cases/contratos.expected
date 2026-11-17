@@ -1,0 +1,15 @@
+// A5.1: contratos em linha propria ganham um recuo
+mineral Pos = stone grain value > 0
+
+vein dividir(a: stone, b: stone) -> stone
+    bearing b != 0
+    settle result * b == a
+{
+    forge grain = 1
+    grain = grain + 1
+    return a / b
+}
+
+core main() {
+    echo(dividir(6, 3))
+}

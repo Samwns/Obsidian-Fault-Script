@@ -1,0 +1,6 @@
+// A5.4: extern sem `claim rift` no topo (modo estrito: erro)
+extern vein labs(x: stone) -> stone
+
+core main() {
+    echo(labs(-4))
+}

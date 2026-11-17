@@ -1,0 +1,6 @@
+// mod que usa o C (claim rift): recusado com magma.caprock("crust")
+claim rift
+
+extern vein labs(x: stone) -> stone
+
+vein absoluto(x: stone) -> stone { return labs(x) }

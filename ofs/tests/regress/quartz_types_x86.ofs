@@ -1,0 +1,32 @@
+// ABI hibrida: larguras, sinal, crystal, ponteiros e retorno de vein.
+
+claim abyss, quartz
+
+abyss vein estreito_quartz(x: i8) -> i8 { quartz { "nop" }; return x }
+abyss vein largo_quartz(x: u32) -> u32 { quartz { "nop" }; return x }
+abyss vein real_quartz(x: crystal, n: stone) -> crystal { quartz { "nop" }; return x + n }
+abyss vein logico_quartz(x: bool) -> bool { quartz { "nop" }; return x }
+vein dobro_quartz(x: stone) -> stone { return x * 2 }
+abyss vein funcao_quartz() -> vein(stone) -> stone { quartz { "nop" }; return dobro_quartz }
+monolith Amostra { peso: stone }
+abyss vein objeto_quartz(a: Amostra) -> Amostra { quartz { "nop" }; a.peso = a.peso + 1; return a }
+abyss vein array_quartz(a: Array<stone>) -> Array<stone> { quartz { "nop" }; a[0] = a[0] + 1; return a }
+core main() {
+    echo(estreito_quartz((0 - 1) as i8) as stone)
+    echo(largo_quartz(4294967295 as u32) as stone)
+    echo(real_quartz(2.5, 3))
+    echo(logico_quartz(true))
+    echo(logico_quartz(false))
+    forge f: vein(stone) -> stone = funcao_quartz()
+    echo(f(21))
+    echo(f)
+    echo(f == dobro_quartz)
+    forge a: Amostra
+    a.peso = 40
+    forge b: Amostra = objeto_quartz(a)
+    echo(b.peso)
+    forge v: Array<stone> = [41]
+    forge w: Array<stone> = array_quartz(v)
+    echo(v[0])
+    echo(w[0])
+}

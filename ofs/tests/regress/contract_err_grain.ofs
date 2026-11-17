@@ -1,0 +1,7 @@
+// A5.1: literal que nao cumpre a grain do mineral = erro de compilacao
+mineral Email = obsidian grain contains("@")
+
+core main() {
+    forge e: Email = "sem-arroba"
+    echo("nao chega aqui")
+}

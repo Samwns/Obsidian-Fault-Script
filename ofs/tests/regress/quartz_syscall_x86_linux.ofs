@@ -1,0 +1,11 @@
+// syscall write(1, texto, 7), sem libc (Linux x86-64).
+
+claim abyss, quartz
+
+abyss vein escrever_quartz() -> stone {
+    forge n: stone = 0
+    forge texto: obsidian = "quartz\n"
+    quartz { "syscall" in "{rax}" 1 in "{rdi}" 1 in "{rsi}" (texto as *u8) in "{rdx}" 7 melt "rcx" "r11" "memory" } -> n "={rax}"
+    return n
+}
+core main() { echo(escrever_quartz()) }

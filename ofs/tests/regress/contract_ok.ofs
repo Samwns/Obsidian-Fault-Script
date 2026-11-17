@@ -1,0 +1,82 @@
+// A5.1: contratos e minerais validos (os dois modos dao a mesma saida)
+mineral Pos = stone grain value > 0
+mineral Pequeno = Pos grain value < 100
+mineral Nome = obsidian grain len() >= 2
+mineral Email = obsidian grain contains("@")
+const LIMITE: stone = 50
+
+monolith Conta {
+    dono: Nome
+    saldo: Pos
+}
+
+namespace banco {
+    vein sacar(c: Conta, v: stone) -> stone bearing v > 0 bearing v < c.saldo {
+        c.saldo -= v
+        return c.saldo
+    }
+}
+
+impl Conta {
+    vein depositar(self: Conta, v: Pos) -> void settle self.saldo >= v {
+        self.saldo += v
+    }
+}
+
+vein dividir(a: stone, b: stone) -> stone
+    bearing b != 0
+    settle result * b + a % b == a
+{
+    return a / b
+}
+
+// o parametro muda no corpo: o settle compara com o valor de entrada
+vein soma_ate(n: stone) -> stone settle result >= n {
+    forge s = 0
+    while (n > 0) {
+        s += n
+        n--
+    }
+    return s
+}
+
+vein dez_mais(p: Pequeno) -> Pequeno {
+    if (p > 80) { return 99 }
+    return p + 10
+}
+
+vein contar(ate: stone) settle ate < 1000 {
+    if (ate < 0) { return }
+    echo(ate)
+}
+
+vein metade(n: stone) -> stone bearing n >= 0 settle result * 2 <= n {
+    return n / 2
+}
+
+core main() {
+    forge c: Conta
+    c.dono = "ana"
+    c.saldo = LIMITE
+    echo(banco.sacar(c, 20))
+    c.depositar(5)
+    echo(c.saldo)
+    echo(dividir(7, 2))
+    echo(dividir(-9, 4))
+    echo(soma_ate(4))
+    echo(dez_mais(85))
+    echo(dez_mais(5))
+    contar(3)
+    forge e: Email = "a@b.c"
+    echo(e)
+    forge k: Pequeno = 1
+    forge i = 0
+    while (i < 2) {
+        k *= 9
+        echo(k)
+        i++
+    }
+    forge livre: stone = k
+    echo(livre - 100)
+    echo(metade(9))
+}

@@ -1,0 +1,63 @@
+// Ideia 5 (magma.cast): erros voltam como valor (o programa segue): erro
+// de compilacao do mod, assinatura errada, vein que nao existe, mod com
+// core main, teto magma.caprock, release e arquivo que nao existe
+attach {magma}
+claim magma
+
+vein linha1(s: obsidian) -> obsidian {
+    forge i = 0
+    while (i < ofs_str_len(s)) {
+        if (ofs_str_char_at(s, i) == 10) { return ofs_str_substr(s, 0, i) }
+        i++
+    }
+    return s
+}
+
+vein tem(s: obsidian, p: obsidian) -> bool { return ofs_str_contains(s, p) }
+
+core main() {
+    // 1. erro de sintaxe no mod (fonte em texto)
+    forge q = magma.cast("vein quebrada( -> stone { }\n")
+    echo(magma.cooled(q))
+    echo(linha1(magma.crack(q)))
+    echo(tem(magma.crack(q), "SINTATICO <fonte>:1:"))
+    // 2. erro de tipo no mod
+    forge t = magma.cast("vein f(x: stone) -> stone { return x * \"a\" }\n")
+    echo(tem(magma.crack(t), "DE TIPO <fonte>:1:"))
+    // 3. assinatura errada e vein que nao existe: null + motivo
+    forge m = magma.cast("vein dobro(x: stone) -> stone { return x * 2 }\nvein oi() -> obsidian { return \"oi\" }\n")
+    echo(magma.cooled(m))
+    forge errada: vein(crystal) -> stone = magma.vent(m, "dobro")
+    echo(errada == null)
+    echo(magma.crack(m))
+    forge outra: vein(stone) -> obsidian = magma.vent(m, "dobro")
+    echo(magma.crack(m))
+    forge falta: vein(stone) -> stone = magma.vent(m, "triplo")
+    echo(falta == null)
+    echo(magma.crack(m))
+    forge certa: vein(stone) -> stone = magma.vent(m, "dobro")
+    echo(certa(21))
+    echo(magma.crack(m) == "")
+    // 4. mod com core main
+    forge c = magma.cast("core main() { echo(1) }\n")
+    echo(tem(magma.crack(c), "um mod (magma.cast) nao tem 'core main'"))
+    // 5. teto: com magma.caprock("crust") um mod que pede rift e recusado
+    magma.caprock("crust")
+    forge r = magma.cast("mods/claim_rift.ofs")
+    echo(magma.cooled(r))
+    echo(tem(magma.crack(r), "o mod pede 'rift', mas o magma.caprock do programa que o carrega libera so: nada (caprock crust)"))
+    magma.caprock("rift")
+    forge r2 = magma.cast("mods/claim_rift.ofs")
+    forge absoluto: vein(stone) -> stone = magma.vent(r2, "absoluto")
+    echo(absoluto(-7))
+    magma.caprock("")
+    // 6. release: o mod nao entrega mais veins; as ja entregues seguem
+    magma.release(m)
+    forge depois: vein(stone) -> stone = magma.vent(m, "dobro")
+    echo(depois == null)
+    echo(magma.crack(m))
+    echo(certa(5))
+    // 7. arquivo que nao existe
+    echo(magma.crack(magma.cast("mods/nao_existe.ofs")))
+    echo("fim")
+}

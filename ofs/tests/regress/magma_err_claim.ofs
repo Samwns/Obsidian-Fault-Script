@@ -1,0 +1,7 @@
+// Ideia 5: magma.cast sem `claim magma` no topo e [ERRO DE PERMISSAO] (sempre erro)
+attach {magma}
+
+core main() {
+    forge m = magma.cast("mods/forja.ofs")
+    echo(magma.cooled(m))
+}

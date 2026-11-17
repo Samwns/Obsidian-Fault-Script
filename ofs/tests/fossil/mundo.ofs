@@ -1,0 +1,59 @@
+// ofs fossil: programa que depende do mundo de fora (entrada padrao,
+// relogio, aleatorio, ambiente, arquivo e chamadas pelo Rift)
+claim rift
+extern vein time(t: *stone) -> stone
+extern vein rand() -> stone
+extern vein srand(seed: stone) -> void
+extern vein getenv(name: obsidian) -> obsidian
+extern vein fopen(path: obsidian, mode: obsidian) -> obsidian
+extern vein fgets(buf: obsidian, n: stone, f: obsidian) -> obsidian
+extern vein fputs(s: obsidian, f: obsidian) -> stone
+extern vein fclose(f: obsidian) -> stone
+extern vein read(fd: stone, buf: obsidian, n: stone) -> stone
+extern vein strlen(s: obsidian) -> stone
+extern vein ofs_read_line() -> obsidian
+extern vein ofs_alloc(n: stone) -> obsidian
+rift vein relogio(clk: stone, ts: *stone) -> stone bind "clock_gettime" abi c
+
+forge acumulado: stone = 0
+
+vein pesar(nome: obsidian, sorte: stone) -> stone {
+    forge peso = strlen(nome) * 100 + sorte
+    acumulado = acumulado + peso
+    return peso
+}
+
+core main() {
+    forge agora = time(null)
+    srand(agora)
+    forge ts = ofs_alloc(16)
+    fracture { relogio(1, ts as *stone) }
+    forge nano: stone = 0
+    fracture {
+        forge p: *stone = (ts as stone + 8) as *stone
+        nano = *p
+    }
+    // os 4 primeiros bytes da entrada pelo read cru; o resto da linha pelo runtime
+    forge cabeca = ofs_alloc(64)
+    forge lidos = read(0, cabeca, 4)
+    forge nome = ofs_read_line()
+    forge casa = getenv("FOSSIL_CASA")
+    forge f = fopen(getenv("FOSSIL_DADOS"), "r")
+    forge linha = ofs_alloc(128)
+    fgets(linha, 128, f)
+    fclose(f)
+    forge s = fopen(getenv("FOSSIL_SAIDA"), "w")
+    fputs("visto: " + nome + "\n", s)
+    fclose(s)
+    forge rodada = 0
+    while (rodada < 4) {
+        forge sorte = rand() % 1000
+        echo("rodada " + ofs_stone_to_obsidian(rodada) + " peso " + ofs_stone_to_obsidian(pesar(nome, sorte)))
+        rodada++
+    }
+    echo("ola " + nome + " de " + casa)
+    echo("tempo " + ofs_stone_to_obsidian(agora) + " nano " + ofs_stone_to_obsidian(nano))
+    echo("cabeca " + ofs_stone_to_obsidian(lidos) + " " + cabeca)
+    echo("linha " + linha)
+    echo("acumulado " + ofs_stone_to_obsidian(acumulado))
+}

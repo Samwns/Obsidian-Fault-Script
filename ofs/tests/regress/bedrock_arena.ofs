@@ -1,0 +1,136 @@
+// A5.3: `bedrock { }` que aloca e uma arena: o que o proprio bloco aloca
+// (texto, Array, monolith, ofs_alloc) sai de uma vez na saida, em qualquer
+// saida (fim, return, continue/shatter, `?`, seal junto). Texto que sai do
+// bloco e copiado para fora; um bedrock sem alocacao segue so liberando
+// operacoes de baixo nivel (F4).
+extern vein ofs_alloc(size: stone) -> *stone
+extern vein ofs_free(p: *stone) -> void
+
+strata Outcome {
+    Solid,
+    Crack
+}
+
+monolith Ponto {
+    x: stone
+    y: stone
+}
+
+vein soma(a: Array<stone>) -> stone {
+    forge t = 0
+    forge i = 0
+    while (i < ofs_array_len(a)) {
+        t = t + a[i]
+        i++
+    }
+    return t
+}
+
+// texto devolvido de dentro do bedrock: copiado para o heap
+vein rotulo(n: stone) -> obsidian {
+    bedrock {
+        forge s = "item-" + ofs_stone_to_obsidian(n)
+        return s + "!"
+    }
+}
+
+// a vein inteira e uma arena
+bedrock vein juntar(a: obsidian, b: obsidian) -> obsidian {
+    forge partes: Array<obsidian> = [a, "+", b]
+    forge out = ""
+    forge i = 0
+    while (i < ofs_array_len(partes)) {
+        out = out + partes[i]
+        i++
+    }
+    return out
+}
+
+vein primeiro_par(lim: stone) -> stone {
+    forge i = 0
+    while (i < lim) {
+        bedrock {
+            forge a = [i, i + 1, i + 2]
+            if (soma(a) % 2 == 0) {
+                return i
+            }
+        }
+        i++
+    }
+    return -1
+}
+
+vein falha(n: stone) -> stone {
+    bedrock {
+        seal { echo("seal da arena") }
+        forge tmp = "n=" + ofs_stone_to_obsidian(n)
+        echo(tmp)
+        forge v = Crack("parou")?
+        echo("nao chega aqui")
+    }
+    return 0
+}
+
+core main() {
+    forge total = 0
+    forge ultimo = ""
+    forge visto: Array<stone> = []
+    forge copia: Ponto
+    forge k = 0
+    while (k < 3000) {
+        bedrock {
+            forge lista: Array<obsidian> = []
+            forge j = 0
+            while (j < 20) {
+                ofs_array_push(lista, "v" + ofs_stone_to_obsidian(j * k))
+                j++
+            }
+            forge p: Ponto
+            p.x = k
+            p.y = ofs_array_len(lista)
+            copia = p
+            forge buf: *stone = ofs_alloc(256)
+            fracture { *buf = p.x + p.y }
+            fracture { total = total + *buf }
+            ofs_free(buf)
+            ultimo = lista[19]
+            ofs_array_push(visto, k)
+            if (k == 2999) {
+                ultimo += "/fim"
+            }
+        }
+        k++
+    }
+    echo(total)
+    echo(ultimo)
+    echo(ofs_array_len(visto))
+    echo(copia.x + copia.y)
+    echo(rotulo(7))
+    echo(juntar("basalto", "gnaisse"))
+    echo(primeiro_par(10))
+    echo(falha(4))
+    forge acc = ""
+    cycle (forge q: stone = 0; q < 4; q++) {
+        bedrock {
+            forge t = "<" + ofs_stone_to_obsidian(q) + ">"
+            acc += t
+            if (q == 1) { continue }
+            if (q == 3) { shatter }
+            acc = acc + "."
+        }
+    }
+    echo(acc)
+    // bedrock aninhado: a arena de dentro fecha antes da de fora
+    bedrock {
+        forge fora = "a"
+        bedrock {
+            forge dentro = fora + "b"
+            fora = dentro + "c"
+        }
+        echo(fora)
+    }
+    // sem alocacao: so o bloco de baixo nivel da F4
+    bedrock {
+        echo(fault_count(255))
+    }
+}

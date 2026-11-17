@@ -1,0 +1,4 @@
+// Mod da vitrine_magma.ofs: so veins, compilado e carregado em execucao.
+vein nome() -> obsidian { return "mod da vitrine" }
+
+vein dobro(x: stone) -> stone { return x * 2 }

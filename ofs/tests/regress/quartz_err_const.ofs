@@ -1,0 +1,3 @@
+claim abyss, quartz
+
+core main() { const n: stone = 1; abyss { quartz { "nop" } -> n } }

@@ -1,5 +1,7 @@
 // Comprehensive OFS showcase focused on features that currently work end-to-end.
 
+claim abyss
+
 attach {terminal-colors}
 
 extern vein ofs_pow(base: crystal, exp: crystal) -> crystal

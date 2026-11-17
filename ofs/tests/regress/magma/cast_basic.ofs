@@ -1,0 +1,34 @@
+// Ideia 5 (magma.cast): mod num arquivo separado compilado e carregado com
+// o programa rodando; valores de vein tipados; mesmo fonte = mesmo modulo
+attach {magma}
+claim magma
+
+vein triplo(x: stone) -> stone { return x * 3 }
+
+core main() {
+    forge m = magma.cast("mods/forja.ofs")
+    if (!magma.cooled(m)) {
+        echo(magma.crack(m))
+        return
+    }
+    echo(magma.veins(m))
+    forge forjar: vein(stone) -> stone = magma.vent(m, "forjar")
+    echo(forjar(10))
+    echo(forjar(10))
+    forge nome: vein() -> obsidian = magma.vent(m, "nome")
+    echo(nome() + "!")
+    forge media: vein(crystal, crystal) -> crystal = magma.vent(m, "media")
+    echo(media(1.0, 2.0))
+    forge juntar: vein(Array<obsidian>) -> obsidian = magma.vent(m, "juntar")
+    echo(juntar(["a", "b", "c"]))
+    forge aplicar: vein(vein(stone) -> stone, stone) -> stone = magma.vent(m, "aplicar")
+    echo(aplicar(triplo, 5))
+    forge grau: vein(stone) -> obsidian = magma.vent(m, "lava.grau")
+    echo(grau(1200))
+    // o mesmo arquivo de novo: mesmo .so (cache) e o mesmo modulo (os
+    // globais do mod continuam)
+    forge m2 = magma.cast("mods/forja.ofs")
+    forge forjar2: vein(stone) -> stone = magma.vent(m2, "forjar")
+    echo(forjar2(10))
+    echo(magma.crack(m2) == "")
+}

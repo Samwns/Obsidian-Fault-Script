@@ -1,4 +1,7 @@
 // fault_addr / fault_call: endereco de vein OFS e de funcao C.
+
+claim rift, abyss
+
 rift vein c_strlen(s: obsidian) -> stone bind "strlen" abi c
 
 vein soma(a: stone, b: stone) -> stone {

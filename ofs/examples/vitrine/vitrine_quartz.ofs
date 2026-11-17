@@ -1,0 +1,15 @@
+// Vitrine: quartz (assembly em linha), so x86-64. Em outra arquitetura este
+// arquivo nao compila: pule-o (a vitrine principal nao depende dele).
+//   ofs run ofs/examples/vitrine/vitrine_quartz.ofs
+claim abyss, quartz
+
+abyss vein somar_quartz(a: stone, b: stone) -> stone {
+    forge r: stone = 0
+    quartz { "movq $1, $0" "addq $2, $0" in "r" a in "r" b } -> r "=&r"
+    return r
+}
+
+core main() {
+    echo(somar_quartz(40, 2))
+    echo("ok quartz")
+}

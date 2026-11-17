@@ -1,0 +1,87 @@
+// magma.cast (Ideia 5): o programa compila e carrega um mod escrito em OFS
+// enquanto roda, chama as veins dele e carrega de novo a versao editada.
+//
+//   ofs run ofs/examples/magma_cast_demo.ofs       (na raiz do repositorio)
+//   ofs build ofs/examples/magma_cast_demo.ofs -o demo && ./demo
+//
+// O mod (magma_mods/forja.ofs) vira um .so no cache (~/.cache/ofs/magma) e
+// usa o runtime deste programa. Precisa do ofscc e do clang na maquina.
+attach {magma}
+attach {fs}
+claim magma
+
+vein agua(peca: stone) -> stone { return peca - 3 }
+
+// `s` com a primeira ocorrencia de `de` trocada por `para`
+vein trocar(s: obsidian, de: obsidian, para: obsidian) -> obsidian {
+    forge n = ofs_str_len(s)
+    forge k = ofs_str_len(de)
+    forge i = 0
+    while (i + k <= n) {
+        if (ofs_str_eq(ofs_str_substr(s, i, k), de)) {
+            return ofs_str_substr(s, 0, i) + para + ofs_str_substr(s, i + k, n - i - k)
+        }
+        i++
+    }
+    return s
+}
+
+vein primeira_linha(s: obsidian) -> obsidian {
+    forge i = 0
+    while (i < ofs_str_len(s)) {
+        if (ofs_str_char_at(s, i) == 10) { return ofs_str_substr(s, 0, i) }
+        i++
+    }
+    return s
+}
+
+vein achar_mod() -> obsidian {
+    forge lugares: Array<obsidian> = ["magma_mods/forja.ofs", "ofs/examples/magma_mods/forja.ofs", "examples/magma_mods/forja.ofs"]
+    forge i = 0
+    while (i < ofs_array_len(lugares)) {
+        forge p: obsidian = ofs_array_get(lugares, i)
+        if (fs.exists(p)) { return p }
+        i++
+    }
+    return ""
+}
+
+core main() {
+    forge caminho = achar_mod()
+    if (ofs_str_len(caminho) == 0) {
+        echo("rode na raiz do repositorio ou em ofs/examples (o mod e magma_mods/forja.ofs)")
+        return
+    }
+    // 1. carrega o mod do arquivo
+    forge m = magma.cast(caminho)
+    if (!magma.cooled(m)) {
+        echo(primeira_linha(magma.crack(m)))
+        return
+    }
+    echo("o mod entrega:")
+    echo(magma.veins(m))
+    forge nome: vein() -> obsidian = magma.vent(m, "nome")
+    forge forjar: vein(stone) -> stone = magma.vent(m, "forjar")
+    forge temperar: vein(vein(stone) -> stone, stone) -> stone = magma.vent(m, "temperar")
+    echo(nome() + ": " + forjar(10) + ", " + forjar(10) + ", tempera " + temperar(agua, 20))
+
+    // 2. o mod foi editado (num app real: o arquivo mudou e o programa chama
+    //    magma.cast de novo). A versao nova e outro .so; a antiga continua
+    //    valida para quem guardou os valores de vein dela.
+    forge fonte = fs.read(caminho)
+    forge editado = trocar(trocar(fonte, "forja v1", "forja v2"), "metal * 2", "metal * 3")
+    forge m2 = magma.cast(editado)
+    forge nome2: vein() -> obsidian = magma.vent(m2, "nome")
+    forge forjar2: vein(stone) -> stone = magma.vent(m2, "forjar")
+    echo(nome2() + ": " + forjar2(10))
+    echo(nome() + " (ainda carregada): " + forjar(10))
+
+    // 3. uma edicao quebrada nao derruba o programa: o erro volta como valor
+    forge m3 = magma.cast(trocar(fonte, "return metal * 2", "return metal *"))
+    if (!magma.cooled(m3)) { echo("edicao recusada: " + primeira_linha(magma.crack(m3))) }
+
+    // 4. pedir a vein com a assinatura errada da null e o motivo
+    forge errada: vein(obsidian) -> stone = magma.vent(m2, "forjar")
+    if (errada == null) { echo(magma.crack(m2)) }
+    magma.release(m)
+}

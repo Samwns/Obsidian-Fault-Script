@@ -1,0 +1,14 @@
+// A5.1: valor de execucao indo para um mineral: grain conferida
+mineral Pos = stone grain value > 0
+
+vein usar(p: Pos) -> stone {
+    return p * 2
+}
+
+core main() {
+    forge n = 2
+    echo(usar(n))
+    n = n - 5
+    echo(usar(n))
+    echo("nao chega aqui")
+}

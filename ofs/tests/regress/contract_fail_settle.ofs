@@ -1,0 +1,11 @@
+// A5.1: settle violado em execucao: mensagem no stderr e rc 1 nos dois modos
+vein dividir(a: stone, b: stone) -> stone bearing b != 0 settle result * b == a {
+    return a / b
+}
+
+core main() {
+    forge x = 7
+    echo(dividir(8, 2))
+    echo(dividir(x, 2))
+    echo("nao chega aqui")
+}

@@ -1,0 +1,45 @@
+// Assembly x86-64: operandos, memoria, saida ligada, clobbers e Intel.
+
+claim abyss, quartz
+
+abyss vein somar_quartz(a: stone, b: stone) -> stone {
+    forge r: stone = 0
+    quartz { "movq $1, $0" "addq $2, $0" in "r" a in "r" b } -> r "=&r"
+    return r
+}
+abyss vein carregar_quartz() -> stone {
+    forge n: stone = 41
+    forge r: stone = 0
+    quartz { "movq $1, $0" in "m" n } -> r
+    quartz { "addq $$1, $0" } -> r "+r"
+    quartz { "nop" "mfence" melt "memory" }
+    return r
+}
+abyss vein ligar_quartz(x: stone) -> stone {
+    forge n: stone = 40
+    quartz { "addq $1, $0" in "r" x } -> n "+r"
+    return n
+}
+abyss vein relogio_quartz() -> bool {
+    forge t: stone = 0
+    quartz { "rdtsc" "shlq $$32, %rdx" "orq %rdx, %rax" melt "rdx" } -> t "={rax}"
+    return t > 0
+}
+abyss vein fabricante_quartz() -> bool {
+    forge b: stone = 0
+    quartz { "cpuid" in "{rax}" 0 melt "rax" "rcx" "rdx" } -> b "={rbx}"
+    return b != 0
+}
+abyss vein intel_quartz() -> stone {
+    forge n: stone = 0
+    quartz intel { "mov $0, 42" } -> n
+    return n
+}
+core main() {
+    echo(somar_quartz(20, 22))
+    echo(carregar_quartz())
+    echo(ligar_quartz(2))
+    echo(relogio_quartz())
+    echo(fabricante_quartz())
+    echo(intel_quartz())
+}

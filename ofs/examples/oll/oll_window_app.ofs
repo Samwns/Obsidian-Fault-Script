@@ -1,3 +1,5 @@
+claim rift
+
 attach {F:../../stdlib/oll.ofs}
 
 extern vein ofs_alloc(size: stone) -> *stone

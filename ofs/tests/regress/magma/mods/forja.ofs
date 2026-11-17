@@ -1,0 +1,33 @@
+// mod do teste magma/cast_basic.ofs: so veins (sem o main do programa); os globais
+// sao do mod (o programa que carrega nao os ve)
+forge _golpes: stone = 0
+
+vein forjar(x: stone) -> stone {
+    _golpes = _golpes + 1
+    return x * 2 + _golpes
+}
+
+vein nome() -> obsidian { return "forja" }
+
+vein media(a: crystal, b: crystal) -> crystal { return (a + b) / 2.0 }
+
+vein juntar(partes: Array<obsidian>) -> obsidian {
+    forge out = ""
+    forge i = 0
+    while (i < ofs_array_len(partes)) {
+        if (i > 0) { out = out + "-" }
+        out = out + ofs_array_get(partes, i)
+        i++
+    }
+    return out
+}
+
+// recebe um valor de vein do programa que carrega (callback)
+vein aplicar(f: vein(stone) -> stone, x: stone) -> stone { return f(x) + 1 }
+
+namespace lava {
+    vein grau(t: stone) -> obsidian {
+        if (t > 1000) { return "liquida" }
+        return "solida"
+    }
+}

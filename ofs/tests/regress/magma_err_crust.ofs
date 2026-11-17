@@ -1,0 +1,8 @@
+// Ideia 5: um arquivo `stratum crust` nunca chama magma.cast ([ERRO DE ESTRATO])
+stratum crust
+attach {magma}
+
+core main() {
+    forge m = magma.cast("mods/forja.ofs")
+    echo(magma.cooled(m))
+}

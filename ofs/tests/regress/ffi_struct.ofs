@@ -2,6 +2,9 @@
 // crua com os offsets do llvmgen (llvmgen.struct_layout), entao passar `&s`
 // ou `s` ao C ve os mesmos bytes do build nativo; monolith como parametro de
 // vein e por referencia (como o ponteiro do nativo).
+
+claim rift
+
 rift vein c_memcpy(dst: *u8, src: *u8, n: stone) -> *u8 bind "memcpy" abi c
 rift vein c_memcmp(a: *u8, b: *u8, n: stone) -> stone bind "memcmp" abi c
 extern vein ofs_alloc(size: stone) -> *u8

@@ -1,0 +1,8 @@
+// Ideia 4: `stratum crust` nao aceita baixo nivel nem dentro de bloco
+stratum crust
+
+core main() {
+    forge x: stone = 3
+    bedrock { shard p: *stone = &x }
+    echo(x)
+}
